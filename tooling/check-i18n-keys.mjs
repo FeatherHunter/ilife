@@ -108,6 +108,40 @@ export function isFrozen(text) {
  *   ② 开发者报文：含 `：`（全角冒号）或「必须是」的串是 `badInput()` 那种抛给开发者的校验语，不上屏；
  *   ③ 冻结串（命令关键字／开关／模块名／常量名），见 isFrozen。
  *  余下才是「该进词条表的用户可见文案」。 */
+/** 开发者报文的字面量集合：`badInput(...)`／`throw new Error(...)` 这类**抛给开发者**的串。
+ *
+ *  为什么按调用点判而不按字面（#1199 评审返修）：按中文字面子串放行＝「把具体文案当判据」，
+ *  而「必填」这种片段正是**插值句的一段**（`truthy(req,'…') + ' 必填…'`），不是完整文案；
+ *  按调用点豁免才判得准：谁也别想在用户可见文案里蹭这个豁免，除非它真被当错误报文抛出去。 */
+export function devMessageTexts(source) {
+  const out = new Set();
+  const CALL = /\b(?:badInput|assertPlainObject|assertActionId|assertDate|assertShape)\s*\(|\bthrow\s+new\s+\w*Error\s*\(/g;
+  let m;
+  while ((m = CALL.exec(source)) !== null) {
+    let i = CALL.lastIndex;
+    let depth = 1;
+    const start = i;
+    while (i < source.length && depth > 0) {
+      const c = source[i];
+      if (c === "\'" || c === '"' || c === '`') {
+        const q = c;
+        i += 1;
+        while (i < source.length && source[i] !== q) { if (source[i] === '\\') i += 1; i += 1; }
+        i += 1;
+        continue;
+      }
+      if (c === '(') depth += 1;
+      else if (c === ')') depth -= 1;
+      i += 1;
+    }
+    const chunk = source.slice(start, Math.max(start, i - 1));
+    const STR = /['"`]([^'"`]*(?:\.[^'"`]*)*)['"`]/g;
+    let s;
+    while ((s = STR.exec(chunk)) !== null) out.add(s[1]);
+  }
+  return out;
+}
+
 /** 单条字面量在某个语言列下算不算残留。
  *
  *  豁免（都是「这一位本就不该进词条」的机器判据，不是放宽）：
@@ -123,20 +157,34 @@ export function isFrozen(text) {
  *     首词小写开头 ＋ ≥4 个词 ＋ 出现功能词（the／a／an／to／of／and／or／is／are／for／with／in／on），
  *     或出现句末标点（. ! ?）且 ≥3 个词。这样「代码形状的英文」（键、字段路径、标识）不误报，
  *     真句子的英文照样红。 */
-export function residueOf(text, lang) {
+/** 单条字面量在某个语言列下算不算残留。
+ *
+ *  豁免（每条都有机器判据，**不按文案字面放行**）：
+ *   ① 开发者报文：这一条正是 `badInput()`／`throw new Error()` 的实参（由 `devMessageTexts(source)` 现算）；
+ *   ② 代码片段：含 `<`／`>` 的串是 HTML／CSS 片段，不是给读者看的话；
+ *   ③ 标识符串：整串就是点分／连字符标识（命令键、字段路径）——是键不是话；
+ *   ④ 冻结串（命令关键字／开关／模块名／常量名），见 isFrozen。
+ *  余下才是「该进词条表的用户可见文案」。
+ *
+ *  两门语言的判据（名册取自 tooling/i18n-langs.mjs，本件不各写一套）：
+ *   基准语言 zh：出现 CJK 即残留；
+ *   非基准语言：只判**成句的散文**——首词小写 ＋ ≥4 词 ＋ 出现功能词，或句末标点 ＋ ≥3 词；
+ *     这样「代码形状的英文」（键、字段路径、标识）不误报，真句子的英文照样红。
+ *   注：`/\s+/` 那一处曾误写成 `/s+/`（少一个反斜杠）⇒ 英文列一句都判不出来而门全绿；
+ *   本件 `--selftest` 因此同时钉一句中文与一句英文的变异／还原两行。 */
+export function residueOf(text, lang, devTexts = new Set()) {
   const t = String(text);
   const reg = registerOf(lang);
+  if (devTexts.has(t)) return null;
   if (isFrozen(t)) return null;
   if (t.includes(String.fromCharCode(60)) || t.includes(String.fromCharCode(62))) return null;
-  if (t.includes(String.fromCharCode(65306)) || t.includes(String.fromCharCode(24517, 39035, 26159)) || t.includes(String.fromCharCode(24517, 22635)) || t.includes(String.fromCharCode(20043, 19968))) return null;
   if (/^[A-Za-z][A-Za-z0-9_.-]*$/.test(t.trim())) return null;
   if (lang === DEFAULT_LANGUAGE) {
     return new RegExp(reg.scriptRe).test(t) ? "含中文（该进 " + lang + " 词条表）" : null;
   }
-  const words = t.trim().split(/s+/).filter((w) => /[A-Za-z]/.test(w));
+  const words = t.trim().split(/\s+/).filter((w) => /[A-Za-z]/.test(w));
   if (words.length < 3) return null;
-  const first = words[0];
-  const startsLower = /^[a-z]/.test(first);
+  const startsLower = /^[a-z]/.test(words[0]);
   const FUNC = new Set(["the", "a", "an", "to", "of", "and", "or", "is", "are", "for", "with", "in", "on"]);
   const hasFunc = words.some((w) => FUNC.has(w.toLowerCase().replace(/[^a-z]/g, "")));
   const endsSentence = /[.!?]['"]?$/.test(t.trim());
@@ -155,20 +203,24 @@ export function audit(scope, root = ROOT_DIR) {
     const p = join(root, rel);
     if (!existsSync(p)) { blind.push({ file: rel, why: '清单里的件在盘上不存在（删了/改名了：显式更新清单）' }); continue; }
     const src = readFileSync(p, 'utf8');
+    const devTexts = devMessageTexts(src);
     if (!importsEntries(src) || extractKeys(src).length === 0) {
       blind.push({ file: rel, why: '没迁完（没 import 词条层或抽不出 key）——先过缺词条门' });
       continue;
     }
     const lits = literalsOf(src);
-    files.push({ file: rel, literals: lits.length });
+    const found = [];
     for (const l of lits) {
-      literalCount += 1;
       if (allow.has(l.text)) continue;
       for (const lang of LANGUAGES) {
-        const why = residueOf(l.text, lang);
-        if (why) residue.push({ file: rel, line: l.line, lang, why, text: l.text.slice(0, 80) });
+        const why = residueOf(l.text, lang, devTexts);
+        if (why) found.push({ file: rel, line: l.line, lang, why, text: l.text.slice(0, 80) });
       }
     }
+    // 只有「读得动、没报失明」的件才计进读数（否则 files／literals 会把没迁完的件算成查过）。
+    files.push({ file: rel, literals: lits.length });
+    literalCount += lits.length;
+    for (const x of found) residue.push(x);
   }
   return { files, literals: literalCount, residue, blind };
 }
@@ -246,18 +298,51 @@ function selftest(scope) {
     const two = audit({ files: ['demo.ts'], allowlist: [] }, tmp);
     want(two.residue.length === 0, '搬进词条表后必须零残留（实得 ' + two.residue.length + '）');
     console.log('SELFTEST 还原读数：residue=' + two.residue.length);
+    // ②b 英文列同样要能红（`/\s+/` 曾误写成 `/s+/`＝英文半门全失效，这里把它钉住）：
+    //    夹具件里放一句真英文用户文案，英文列必须报「多词句子」。
+    writeFileSync(fixture, [
+      "import { e } from 'base-entries';",
+      "export const a = e('demo.title');",
+      "export const leakEn = 'Save the record to continue.';\n",
+    ].join('\n'), 'utf8');
+    const twoEn = audit({ files: ['demo.ts'], allowlist: [] }, tmp);
+    want(twoEn.residue.some((x) => x.lang === 'en'), '英文用户文案必须被英文列判红（实得 ' + JSON.stringify(twoEn.residue.map((x) => x.lang + ':' + x.text)) + '）');
+    console.log('SELFTEST 英文列读数：residue=' + twoEn.residue.length + '（' + twoEn.residue.map((x) => x.lang).join(',') + '）');
+    // ②c 开发者报文按**调用点**豁免：同一句当 `badInput()` 实参不红、当普通文案要红。
+    writeFileSync(fixture, [
+      "import { e } from 'base-entries';",
+      "export const a = e('demo.title');",
+      "export const guard = badInput('demo: 必须给个值');\n",
+    ].join('\n'), 'utf8');
+    const threeDev = audit({ files: ['demo.ts'], allowlist: [] }, tmp);
+    want(!threeDev.residue.some((x) => x.text.includes('必须给个值')), 'badInput() 实参（开发者报文）不该算残留');
+    writeFileSync(fixture, [
+      "import { e } from 'base-entries';",
+      "export const a = e('demo.title');",
+      "export const copy = 'demo: 必须给个值';\n",
+    ].join('\n'), 'utf8');
+    const fourCopy = audit({ files: ['demo.ts'], allowlist: [] }, tmp);
+    want(fourCopy.residue.some((x) => x.text.includes('必须给个值')), '同一句当普通文案必须判红（豁免不许按字面蹭）');
+    console.log('SELFTEST 开发者报文豁免读数：实参 residue=' + threeDev.residue.length + '／普通文案 residue=' + fourCopy.residue.length);
+    // 清场＋豁免用例：夹具换成「一句被放行的真文案」，放行后必须零残留。
+    writeFileSync(fixture, [
+      "import { e } from 'base-entries';",
+      "export const a = e('demo.title');",
+      "export const allowed = '这句被显式放行';",
+      "",
+    ].join(String.fromCharCode(10)), 'utf8');
     // 豁免：allowlist 里显式放行的那一句不算残留
-    const three = audit({ files: ['demo.ts'], allowlist: ['demo.title'] }, tmp);
-    want(three.residue.length === 0, '放行后仍应零残留（实得 ' + three.residue.length + '）');
+    const threeAllow = audit({ files: ['demo.ts'], allowlist: ['这句被显式放行'] }, tmp);
+    want(threeAllow.residue.length === 0, '放行后仍应零残留（实得 ' + threeAllow.residue.length + '）');
     // 失明：没迁完的件必须报 blind，不许当绿
     writeFileSync(join(tmp, 'raw.ts'), "export const x = '中文但没有迁';", 'utf8');
-    const four = audit({ files: ['raw.ts'], allowlist: [] }, tmp);
-    want(four.blind.length === 1 && four.residue.length === 0, '没迁完的件必须报 blind 而不是 residue');
+    const fourRaw = audit({ files: ['raw.ts'], allowlist: [] }, tmp);
+    want(fourRaw.blind.length === 1 && fourRaw.residue.length === 0, '没迁完的件必须报 blind 而不是 residue');
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
   if (bad.length) { for (const b of bad) console.error('SELFTEST FAIL ' + b); process.exit(1); }
-  console.log('SELFTEST: 空范围显式报数／注释豁免／命令关键字豁免／残留必红／搬走必绿／没迁完报失明 六条自证 OK');
+  console.log('SELFTEST: 空范围显式报数／注释豁免／命令关键字豁免／中文残留必红／英文残留必红／开发者报文按调用点豁免／搬走必绿／没迁完报失明 —— 八条自证 OK');
 }
 
 /** 入口守卫（照 tooling/i18n-langs.mjs／skill-html-snapshot.mjs 的先例）：本件被别处 import 时**不跑** CLI，

@@ -76,10 +76,19 @@ export function extractKeys(source) {
   // 按调用点抽会漏掉常量表那一路（#1202 的两处硬缝正是这一路）。形状判据不会漏，代价是可能把别处的同形串
   // 也数进来——那由「每门语言的词条表里都得有这一条」判红兜住（多收一条＝缺词条红，不会静默放过）。
   const STR = new RegExp("['\"]([A-Za-z0-9_.-]+)['\"]", "g");
-  const KEY = new RegExp("^[a-z][A-Za-z0-9-]*(?:[.][A-Za-z0-9-]+)+$");
+  // key 形状：小写开头、点分、最后一段是词（`progress-list.state.blank`／`progress-list.remain`／
+  // `status-badge.text.ok`）。为什么按形状而不按调用形态：key 既可能直接当 resolve 的实参，也可能先落进
+  // 「闭集→key」的常量表（const X_ID = { ok: … } as const satisfies …）再被下标取用；按调用点抽会漏掉
+  // 常量表那一路（#1202 的两处硬缝正是这一路）。
+  const KEY = new RegExp("^[a-z][A-Za-z0-9-]*(?:\\.[A-Za-z0-9-]+)*\\.[a-z][a-z0-9-]*$");
+  // 冻结的命令键（`bill.record.add`／`calorie.view.home`）也是点分小写：三段以上、**每段都是纯小写**、
+  // **一段 camelCase 都没有**即判它是命令键，排除掉。词条 key 的中间段是 kebab（`progress-list`／
+  // `status-badge`），命令键的中间段也是 kebab，故再补一条：命令键的**首段是包名**——用「全部小写且无
+  // 连字符以外的记号」判不出来，改判「首段在冻结前缀表里」。
+  const CMD_PREFIX = new RegExp("^(bill|calorie|chef|home|memo|schedule|life|ilife)\\.");
   let m;
   while ((m = STR.exec(source)) !== null) {
-    if (KEY.test(m[1])) keys.add(m[1]);
+    if (KEY.test(m[1]) && !CMD_PREFIX.test(m[1])) keys.add(m[1]);
   }
   return [...keys].sort();
 }
