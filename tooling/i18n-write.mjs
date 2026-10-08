@@ -17,6 +17,17 @@ import { rewriteFile, segmentOf, writableLiterals, writeAll, writeEntryTables } 
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const argv = process.argv.slice(2);
+
+// 无参／--help 只印用法并退出（不许落到真写分支：无参即全仓真写，曾误触 959 件，回滚见 #1233 进度）。
+if (argv.length === 0 || argv.includes('--help') || argv.includes('-h')) {
+  console.log([
+    '用法（仓根）：',
+    '  node tooling/i18n-write.mjs --dry --only <包>   # 只报会改哪些件、各写几条（不落盘）',
+    '  node tooling/i18n-write.mjs --only <包>         # 真写（先备份到 .scratch/i18n-codemod-backup/）',
+    '  node tooling/i18n-write.mjs --selftest         # 四条自证（临时夹具，不碰工作树）',
+  ].join('\n'));
+  process.exit(0);
+}
 const flag = (name, dflt) => { const i = argv.indexOf(name); return i >= 0 && argv[i + 1] !== undefined ? argv[i + 1] : dflt; };
 
 if (argv.includes('--selftest')) {

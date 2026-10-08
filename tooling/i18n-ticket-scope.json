@@ -45,25 +45,21 @@
     },
     "1204": {
       "title": "迁移 skill-bill write 批次 2：8 件（689 条）",
-      "state": "open（本轮未动，待确权）",
-      "files": [],
-      "note": "票面只有“8件”与条数，无文件清单。本轮未虚构清单。认领方法：从 packages/skill-bill/src/write/ 池（共55件，literals 2069，copy 1147）按 ledger copy 排序挑选8件，使 literals 合计≈689，挑后跑 --dry 复核可写/人工比，清单经票面确认再登记进 scope.json。候选池见 poolHint。",
-      "poolHint": {
-        "domain": "packages/skill-bill/src/write/",
-        "domainTotals": {
-          "files": 55,
-          "literals": 2069,
-          "copy": 1147
-        },
-        "topByCopy": [
-          "packages/skill-bill/src/write/sayWords.ts",
-          "packages/skill-bill/src/write/userWording.ts",
-          "packages/skill-bill/src/write/receiptPaper.ts",
-          "packages/skill-bill/src/write/outsideScan.ts",
-          "packages/skill-bill/src/write/scene-installment.ts"
-        ],
-        "howto": "node tooling/i18n-write.mjs --dry --only skill-bill 列件级条数；ledger 看 copy/payload/concat三分；两者差额即人工（多行、插值、拼接整句化）。"
-      }
+      "state": "open（第5轮确权8件＋首件迁移中）",
+      "files": [
+        { "path": "packages/skill-bill/src/write/scene-installment.ts", "literals": 31, "byClass": { "copy": 31, "concat": 0 }, "role": "首迁件（本轮完整迁移对象）：纯 copy 零 concat，无整句化，语言链穿透的最小垂直切片" },
+        { "path": "packages/skill-bill/src/write/scene-collect.ts", "literals": 88, "byClass": { "copy": 28, "concat": 59, "ident": 1 }, "role": "批次主体：concat-heavy 场景件，整句化逐处申报＋第二方比对，后续轮次做" },
+        { "path": "packages/skill-bill/src/write/scene-borrow.ts", "literals": 88, "byClass": { "copy": 20, "concat": 67, "ident": 1 }, "role": "批次主体（同上）" },
+        { "path": "packages/skill-bill/src/write/scene-repay.ts", "literals": 88, "byClass": { "copy": 28, "concat": 59, "ident": 1 }, "role": "批次主体（同上）" },
+        { "path": "packages/skill-bill/src/write/scene-reimburse-done.ts", "literals": 85, "byClass": { "copy": 24, "concat": 60, "ident": 1 }, "role": "批次主体（同上）" },
+        { "path": "packages/skill-bill/src/write/scene-lend.ts", "literals": 84, "byClass": { "copy": 20, "concat": 63, "ident": 1 }, "role": "批次主体（同上）" },
+        { "path": "packages/skill-bill/src/write/scene-refund.ts", "literals": 70, "byClass": { "copy": 28, "concat": 41, "ident": 1 }, "role": "批次主体（同上）" },
+        { "path": "packages/skill-bill/src/write/receiptPaper.ts", "literals": 60, "byClass": { "copy": 38, "concat": 22 }, "role": "批次主体（回执纸，copy 占比最高的一件）" }
+      ],
+      "totals": { "literals": 594, "copy": 217, "concat": 371, "ident": 6 },
+      "ticketCountGap": "8 件合计 literals 594，与票面 689 差 95：write/ 下 8 件 literals 上限就是 617（88+88+88+85+84+70+60+54），任何 8 件组合都到不了 689，故票面 689 不是 ledger literals 口径（疑为立项 survey 的 occurrence 计数）。确权不硬凑：取 7 件最大的 concat-heavy 场景件＋首迁件，以本清单为准开工，口径差记在此处待票面确认。",
+      "claimMethod": "ledger copy/concat 三分＋首件可闭环优先（纯 copy 零 concat 才能一轮内走完先红后绿＋中文不变＋英文账本）；件级 --dry 因改写器无参即真写的教训本轮只用包级 dry（189件/2182条不变），件级可写以 ledger copy 与门禁先红读数为准。",
+      "gate": "确权≠挂号：8 件先只落本咨询文件；开工时逐件登记进 tooling/i18n-scope.json 挂号（本轮只挂 scene-installment 一件），挂号即受两道门真判。"
     }
   },
   "remaining": {
