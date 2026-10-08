@@ -1,5 +1,13 @@
 name: ci
 
+# 门禁分级（维护者 2026-10-08 决议 Q1/Q2，不复杂化）：
+# - required（硬门槛，红了不许合，分支保护只认这些）：install／build／gen:check／doctor／
+#   boundaries／base:floor／changeset:status／publish:pre／publish:tarball。
+# - informational（只报告不拦路，带 continue-on-error）：test（含真机 visual 族，拆分是后续子票的事，
+#   在此之前单元回归也不拦路）／snapshot:html:check／gate:selftest:html／help:examples:check／
+#   publish:fresh／模板资产门／打包实证。每盏有主，修绿后凭票晋升 required。
+# - install／build 无 if:always() 是有意为之（合法遮蔽点，见 #295 注释）。
+
 on:
   push:
   pull_request:
@@ -38,14 +46,16 @@ jobs:
       #   在 CI 里**一律 skipped**——等于这 5 道门在 CI 上从来没跑（蓝队实测 master 近 45 次全 failure）。
       #   处置两条：① 每道门各带 `if: always()`，互不短路（任一门红，其余照跑）；
       #   ② 已知恒红的那一步挪到 job 末尾，别挡在别的门前面。
-      #   红仍然是红：失败的步没有 `continue-on-error`，job 整体照旧 failure——这不是把红变绿，
+      #   required 仍然是红：required 的步没有 `continue-on-error`，红了 job 照旧 failure——这不是把红变绿，
       #   是让「哪几道门真跑了」在 CI 里看得见。改这条的判据由 `test/ci-gates-295.test.mjs` 机器盯着。
       - run: pnpm gen:check
         if: always()
       - run: pnpm doctor
         if: always()
+      # 分级 informational（Q1）：含真机 visual 族，只报告不拦路。
       - run: pnpm test
         if: always()
+        continue-on-error: true
       - run: pnpm boundaries
         if: always()
       # #861：依赖下界门——消费方声明的 base-* 下界必须逐字等于仓内那个 base 包的版本。
@@ -55,14 +65,18 @@ jobs:
         if: always()
       # #96：其余 5 技能 HTML 不回归门（per-skill HTML 逐件 sha256；base-* 影响面断言）
       #   本地同口径命令就是这一条：pnpm snapshot:html:check（见 tooling/skill-html-snapshot.mjs）
+      # 分级 informational（Q1）：只报告不拦路。
       - run: pnpm snapshot:html:check
         if: always()
+        continue-on-error: true
       # #96：门禁工具自证（协议 §2.4.6：不在 canonical pnpm test 的 glob 内，须单独触发）
       #   ⚠ 该 script 自身即经持锁包装器，且**用独立锁目录** `.scratch/locks-selftest`
       #   （D-1 自锁修复）：调用方**不得**再套 `run-locked`／`pnpm gate:run`，否则外层持主锁等子进程、
       #   内层等独立锁——虽不再死锁，但会多一层无意义嵌套；本地同口径命令就是这一条。
+      # 分级 informational（Q1）：只报告不拦路。
       - run: pnpm gate:selftest:html
         if: always()
+        continue-on-error: true
       # changeset status 按字面 merge-base master HEAD：显式建本地 master 基线
       # 主仓签出 master 时冒号写法被拒，回退普通 fetch（本地 master 本来就在）
       - name: 取 master 基线
@@ -74,8 +88,10 @@ jobs:
       #   判据与 #81「exec ⟺ exit 0」同源：同一份标准种子库 docs/research/t81-seed.mjs
       #   ⚠ 今天这道门是票外既有红（`calorie.view.exercise-review`，已转票 #308）：它排在最末，
       #   红的是它自己，不再拖累上面任何一道门。
+      # 分级 informational（Q1，#308 已关但灯还红，另立新票跟）：只报告不拦路。
       - run: pnpm help:examples:check
         if: always()
+        continue-on-error: true
 
   publish-gates:
     # #48 发布门禁三门（R2 A+B）：G1 禁 workspace 外泄 + G2 tarball 清单 + G3 fresh-tmp 安装态双路
@@ -102,20 +118,26 @@ jobs:
         if: always()
       - run: pnpm publish:tarball
         if: always()
+      # 分级 informational（Q1）：慢矩阵，只报告不拦路。
       - run: pnpm publish:fresh
         if: always()
+        continue-on-error: true
       # #95：模板资产门（单包显式复跑，不吃 --only 全量口径的漂移）
       #   G2：tarball 清单逐件含 templates/*.html；G3：fresh 安装态 loadTemplate 真读 6 件
       #   返修（A1-1／A1-2／A2-1）：临时根必须在仓库之外（协议 §2.1）＋ 门必须说真话（逐件／未跑记账）
+      # 分级 informational（Q1）：只报告不拦路。
       - name: 模板资产门（skill-calorie）
         if: always()
+        continue-on-error: true
         run: |
           node tooling/check-publish.mjs --tarball --only skill-calorie
           node tooling/check-publish.mjs --fresh-tmp --only skill-calorie
           node tooling/check-publish.mjs --tmp-hygiene
           node docs/research/t95-g3-honesty.mjs
+      # 分级 informational（Q1）：只报告不拦路。
       - name: 打包实证与清理守卫自证（#95 返修）
         if: always()
+        continue-on-error: true
         run: |
           node docs/research/t95-publish-evidence.mjs
           node docs/research/t95-publish-evidence.mjs --mutate
