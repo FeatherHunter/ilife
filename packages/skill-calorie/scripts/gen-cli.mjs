@@ -189,6 +189,11 @@ function renderKeysTs(entries) {
   for (const e of reads) L.push('  ' + q(e.key) + ": { shape: " + q(e.shape) + ' as EnvelopeShape, title: ' + q(e.title) + ' },');
   L.push('} as const;');
   L.push('');
+  L.push('/** 程序面键（surface program，#953）：不进技能说明面三表；示例门覆盖断言用它剔除（#1189）。 */');
+  L.push('export const CALORIE_PROGRAM_KEYS = [');
+  for (const e of entries) if (e.surface === 'program') L.push('  ' + q(e.key) + ',');
+  L.push('] as const;');
+  L.push('');
   L.push('export type CalorieComboKey = keyof typeof CALORIE_COMBOS;');
   L.push('');
   L.push('export function calorieShapeFor(key: string): EnvelopeShape {');

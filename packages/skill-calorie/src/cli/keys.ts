@@ -170,6 +170,12 @@ export const CALORIE_COMBOS = {
   'calorie.view.xunji-key': { shape: 'stat' as EnvelopeShape, title: '查训记KEY状态' },
 } as const;
 
+/** 程序面键（surface program，#953）：不进技能说明面三表；示例门覆盖断言用它剔除（#1189）。 */
+export const CALORIE_PROGRAM_KEYS = [
+  'calorie.data.query',
+  'calorie.data.schema',
+] as const;
+
 export type CalorieComboKey = keyof typeof CALORIE_COMBOS;
 
 export function calorieShapeFor(key: string): EnvelopeShape {

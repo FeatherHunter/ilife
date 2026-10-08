@@ -4,7 +4,7 @@
  *
  * 判据（缺一即 FAIL，exit 1）：
  *   ① AUTO 标记块存在，且块内容 == 生成器输出（`renderSkillMd(text) === text`）——产物不新鲜即红；
- *   ② 示例行数 == `CALORIE_COMBOS` 键数，且**每键恰好一行**（删行／漏行／重复行不能变绿）；
+ *   ② 示例行数 == `CALORIE_COMBOS` 非程序面键数（程序面键另见 CALORIE_PROGRAM_KEYS，#1189），且**每键恰好一行**（删行／漏行／重复行不能变绿）；
  *   ③ 每行 `--params` 可 `JSON.parse`（拼错的 JSON 不能靠「恰好 exit 0」蒙过）；
  *   ④ 每行在**标准种子库**下 spawn 真 CLI → exit 0，且 envelope `key` == 该行 key。
  *
@@ -83,10 +83,10 @@ export function parseExamples(text) {
   return rows;
 }
 
-let START, END, renderSkillMd, CALORIE_COMBOS, harness;
+let START, END, renderSkillMd, CALORIE_COMBOS, CALORIE_PROGRAM_KEYS, harness;
 try {
   ({ START, END, renderSkillMd } = await import('./build-help.mjs'));
-  ({ CALORIE_COMBOS } = await import('../dist/cli/keys.js'));
+  ({ CALORIE_COMBOS, CALORIE_PROGRAM_KEYS } = await import('../dist/cli/keys.js'));
   harness = await import(pathToFileURL(SEED).href);
 } catch (e) {
   console.error('FAIL: 门依赖不可用（先 `pnpm build` 生成 dist/）：' + (e && e.message ? e.message : String(e)));
@@ -95,7 +95,9 @@ try {
 
 const text = readFileSync(SKILL_PATH, 'utf8');
 const rows = parseExamples(text);
-const keys = Object.keys(CALORIE_COMBOS);
+// #1189 · 程序面键（surface program，#953）不进技能说明面：覆盖断言只看非程序面键。
+const PROGRAM_KEYS = new Set(CALORIE_PROGRAM_KEYS ?? []);
+const keys = Object.keys(CALORIE_COMBOS).filter((k) => !PROGRAM_KEYS.has(k));
 const picked = ONLY ? rows.filter((r) => r.key === ONLY) : rows;
 
 if (LIST) {
