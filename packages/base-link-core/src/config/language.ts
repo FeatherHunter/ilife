@@ -14,6 +14,8 @@
 // 不跟随已解析的 text（ADR 原文“每键空串＝跟随调用方，缺省回退 zh”；format 跟随 text
 // 的写法曾考虑过，否决理由：那是另一条回退语义，票面与 ADR 都没写，不能悄悄加魔法）。
 import { ConfigError } from '../errors.js';
+import { loadConfig } from './store.js';
+import type { ConfigRecord } from './yaml.js';
 
 /** 可用语言清单（本期代码常量；后续从词条目录派生）。 */
 export const AVAILABLE_LANGUAGES = ['zh', 'en'] as const;
@@ -44,6 +46,42 @@ export interface ResolveLanguageOptions {
 export interface ResolvedLanguage {
   readonly text: LanguageTag;
   readonly format: LanguageTag;
+}
+
+/** 六家技能出口共用的那一步：读配置 ＋ 解语言，一次给全（#1198）。
+ *
+ *  为什么合成一件：六家 CLI 若各写一遍「先 loadXxxConfig() 再 resolveLanguage({values, argv})」，
+ *  就等于把同一条链抄六处（铁律一）。技能的默认值表是数据，形状六家同构（`language` 组两格），
+ *  故这里只收**表与主体名**，不收技能自己的类型。
+ *
+ *  空串＝跟随调用方（插件透传的设置值，见 docs/agents/多语言-宿主语言来路实测.md）；
+ *  caller 本轮一律不传（正式接线归 #1198 的 CLI 收口那一步），故实际生效链＝
+ *  `--language` ＞ `language.text` ＞ `zh`。 */
+export interface SkillLanguageOptions {
+  /** 技能配置文件主体名（configPaths 的那个 stem）。 */
+  readonly stem: string;
+  /** 该技能的默认值表（含 language 组）。 */
+  readonly defaults: ConfigRecord;
+  /** 已退休键名单（照该技能自己的那份传）。 */
+  readonly retired?: readonly string[] | undefined;
+  /** 完整 argv（含命令本身）；缺省不读参数。 */
+  readonly argv?: readonly string[] | undefined;
+  /** 调用方偏好（宿主读设置透传过来那一位；空串／缺席＝没有）。 */
+  readonly caller?: string | undefined;
+}
+
+/** 读该技能配置并按同一口径解出文本语言与版式语言。 */
+export function resolveSkillLanguage(options: SkillLanguageOptions): ResolvedLanguage {
+  const loaded = loadConfig(options.stem, options.defaults, options.retired);
+  return resolveLanguage({ values: loaded.values, caller: options.caller, argv: options.argv });
+}
+
+/** 出口参数解析件要摘的那两个 token：只认这两个名字，其余一律交回调用方自己判。
+ *
+ *  口径与 `parseLanguageArgs` 同一条：`--language <值>`／`--format-language <值>`，
+ *  值是 BCP 47（大小写不敏感）；**这里只摘不判对错**——值合不合法由 `resolveLanguage` 一处判。 */
+export function isLanguageArg(token: string): boolean {
+  return token === '--language' || token === '--format-language';
 }
 
 /** BCP 47 大小写不敏感：两端去空白后取小写 canonical 形（`EN` → `en`）。 */

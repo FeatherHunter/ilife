@@ -17,8 +17,8 @@
  * （包内页面模板目录）＝上设置页候选 7 项，其中「产物文件名主体」在源码里是两个值（#677 起键数 8）。
  * **#762 起那两个产物名主体出表**（见下面 `BILL_CONFIG_RETIRED`），故本表现为 6 键。
  */
-import { configPaths, loadConfig, resetConfig, saveConfig } from 'base-link-core';
-import type { ConfigRecord } from 'base-link-core';
+import { configPaths, loadConfig, resetConfig, resolveSkillLanguage, saveConfig } from 'base-link-core';
+import type { ConfigRecord, ResolvedLanguage } from 'base-link-core';
 
 /** 配置文件主体名：`<配置目录>/bill.yaml`。 */
 export const BILL_CONFIG_STEM = 'bill' as const;
@@ -42,6 +42,14 @@ export const BILL_CONFIG_DEFAULTS = {
  *  退出条件：下一个大版本删掉这张清单。 */
 export const BILL_CONFIG_RETIRED: readonly string[] = ['html.helpStem', 'html.quickRefStem'];
 
+/** #1198 · 本技能的语言选择入口：读这份配置 ＋ 解语言（text／format 两条链）。
+ *
+ *  唯一实现住 `base-link-core` 的 `config/language`（铁律一）；本件只把「哪份表、哪个主体名」喂进去。
+ *  argv 覆盖 ＞ 配置文件 `language.*` ＞ 调用方偏好 ＞ `zh`；未识别的值抛 `ConfigError`（报文列出可用语言）。
+ *  本轮只接线与校验：不设语言时行为与产物逐字节不变（渲染消费方随词条层 #1200 落地后接）。 */
+export function resolveBillLanguage(options: { readonly argv?: readonly string[] | undefined; readonly caller?: string | undefined } = {}): ResolvedLanguage {
+  return resolveSkillLanguage({ stem: BILL_CONFIG_STEM, defaults: BILL_CONFIG_DEFAULTS, retired: BILL_CONFIG_RETIRED, argv: options.argv, caller: options.caller });
+}
 /** 取值形状由默认值表派生（同一件事只有一个定义地）。 */
 export type BillConfigValues = typeof BILL_CONFIG_DEFAULTS;
 

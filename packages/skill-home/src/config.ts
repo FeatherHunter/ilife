@@ -22,8 +22,8 @@
  * #794 起这条约定的**两半分头**（照记账 #749 样板）：**读**认空串；**写**（首次落文件／保存／重置）
  * 把面板上可改的那一格（`db.dir`）落成算出来的绝对路径——见下面 `writableDefaults()` 的注释。
  */
-import { configPaths, loadConfig, resetConfig, saveConfig } from 'base-link-core';
-import type { ConfigRecord } from 'base-link-core';
+import { configPaths, loadConfig, resetConfig, saveConfig, resolveSkillLanguage } from 'base-link-core';
+import type { ConfigRecord, ResolvedLanguage } from 'base-link-core';
 
 /** 配置文件主体名：`<配置目录>/home.yaml`。 */
 export const HOME_CONFIG_STEM = 'home' as const;
@@ -46,6 +46,14 @@ export const HOME_CONFIG_DEFAULTS = {
  *  退出条件：下一个大版本删掉这张清单。 */
 export const HOME_CONFIG_RETIRED: readonly string[] = ['files.help', 'files.lookup'];
 
+/** #1198 · 本技能的语言选择入口：读这份配置 ＋ 解语言（text／format 两条链）。
+ *
+ *  唯一实现住 `base-link-core` 的 `config/language`（铁律一）；本件只把「哪份表、哪个主体名」喂进去。
+ *  argv 覆盖 ＞ 配置文件 `language.*` ＞ 调用方偏好 ＞ `zh`；未识别的值抛 `ConfigError`（报文列出可用语言）。
+ *  本轮只接线与校验：不设语言时行为与产物逐字节不变（渲染消费方随词条层 #1200 落地后接）。 */
+export function resolveHomeLanguage(options: { readonly argv?: readonly string[] | undefined; readonly caller?: string | undefined } = {}): ResolvedLanguage {
+  return resolveSkillLanguage({ stem: HOME_CONFIG_STEM, defaults: HOME_CONFIG_DEFAULTS, retired: HOME_CONFIG_RETIRED, argv: options.argv, caller: options.caller });
+}
 /** 取值形状由默认值表派生（同一件事只有一个定义地）。 */
 export type HomeConfigValues = typeof HOME_CONFIG_DEFAULTS;
 
