@@ -20,6 +20,8 @@ import { test } from 'node:test';
 import { LANGUAGES, DEFAULT_LANGUAGE, ledgerPath, normalizeLang, registerOf, STRUCTURAL_RULES, EMPTY_SCOPE_VERDICT } from '../i18n-langs.mjs';
 import { audit as entriesAudit } from '../check-i18n-entries.mjs';
 import { audit as keysAudit, literalsOf, residueOf, isFrozen } from '../check-i18n-keys.mjs';
+import { auditRegisters as typoRegisters, auditFixture as typoFixture, compareBaseline, FIXTURE_BASELINE } from '../check-typography-langs.mjs';
+import { LANG_REGISTERS } from '../i18n-langs.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..');
@@ -88,11 +90,44 @@ test('#1199 key 残留门：注释与命令关键字豁免、真残留必红、�
   } finally { rmSync(tmp, { recursive: true, force: true }); }
 });
 
-test('#1199 两道新门在真实仓库上：范围 0 件＝显式报数且 exit 0', () => {
+test('#1199 排印门：结构约束不许按语言放宽、语言阀值不许两边一样', () => {
+  assert.deepEqual(typoRegisters({}), [], '现状名册必须零违规');
+  const weakened = { ...LANG_REGISTERS, en: { ...LANG_REGISTERS.en, overflow: 'allow' } };
+  assert.ok(typoRegisters({ registers: weakened }).some((v) => v.code === 'LANG-WEAKENED-STRUCTURAL'),
+    '按语言放宽结构约束必须红');
+  const narrow = { ...LANG_REGISTERS, en: { ...LANG_REGISTERS.en, maxSegChars: LANG_REGISTERS.zh.maxSegChars } };
+  assert.ok(typoRegisters({ registers: narrow }).some((v) => v.code === 'SEG-LIMIT-NOT-WIDER'),
+    '英文并列段长上限不宽于中文必须红');
+  const identical = { ...LANG_REGISTERS, en: { ...LANG_REGISTERS.zh } };
+  assert.ok(typoRegisters({ registers: identical }).some((v) => v.code === 'REGISTER-NOT-SPLIT'),
+    '两门语言名册一样必须红');
+  const lowerFloor = { ...LANG_REGISTERS, en: { ...LANG_REGISTERS.en, fontFloorPx: 8 } };
+  assert.ok(typoRegisters({ registers: lowerFloor }).some((v) => v.code === 'FONT-FLOOR-ORDER'),
+    '拉丁语言字号下限低于基准语言必须红');
+});
+
+test('#1199 排印门：版式读数与基线账本比对（新债必红、还清要显式改基线）', () => {
+  const fake = { rows: [{ name: 'demo', widths: { '390': { outOfBounds: 1, minFontPxNoSvg: 8, touchSmall: 0 } } }] };
+  const fv = typoFixture(fake);
+  assert.ok(fv.violations.some((v) => v.code === 'OVERFLOW'), 'outOfBounds≠0 必须报（不溢出＝语言无关结构约束）');
+  assert.ok(fv.violations.some((v) => v.code === 'FONT-FLOOR'), '字号跌破下限必须报');
+  const cmp = compareBaseline(fv.violations, FIXTURE_BASELINE);
+  assert.ok(cmp.fresh.length > 0, '基线里没有的读数＝新债，必须报 fresh（不许静默进来）');
+  assert.ok(compareBaseline([], FIXTURE_BASELINE).stale.length === FIXTURE_BASELINE.length,
+    '台面上一条都没有时，基线全部记 stale（还清要显式改基线）');
+  const emptyFix = typoFixture({ rows: [{ name: 'demo', widths: {} }] });
+  assert.ok(emptyFix.skipped.length > 0, '版式读数全空必须报 skipped（门失明不许当绿）');
+});
+
+test('#1199 三道新门在真实仓库上：范围 0 件＝显式报数且 exit 0；排印门绿', () => {
   for (const gate of ['check-i18n-entries.mjs', 'check-i18n-keys.mjs']) {
     const r = spawnSync(NODE, [join(ROOT, 'tooling', gate)], { encoding: 'utf8', cwd: ROOT });
     assert.equal(r.status, 0, gate + ' 范围 0 件必须 exit 0（起步绿）：' + r.stderr);
     assert.match(r.stdout, /EMPTY-SCOPE .*范围 0 件/, gate + ' 必须显式报「范围 0 件」：' + r.stdout);
     assert.match(r.stdout, /PASS: 范围 0 件/, gate + ' 末行必须说清「这一轮什么都没查」：' + r.stdout);
   }
+  const typo = spawnSync(NODE, [join(ROOT, 'tooling', 'check-typography-langs.mjs')], { encoding: 'utf8', cwd: ROOT });
+  assert.equal(typo.status, 0, '排印门必须 exit 0：' + typo.stderr + typo.stdout);
+  assert.match(typo.stdout, /BASELINE: 存续债 \d+ 条/, '排印门必须印基线读数');
+  assert.match(typo.stdout, /PASS: 结构约束语言无关/, '排印门末行必须说清结构约束语言无关');
 });

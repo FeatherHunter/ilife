@@ -124,7 +124,10 @@ export const LANG_REGISTERS = {
       { re: '\\bAI\\b', why: '通用术语 AI' },
     ],
     bareLatinIsFault: false,
-    fontFloorPx: 12,
+    // 存入口径：拉丁字形 x-height 比汉字小、同 px 更小，故拉丁语言的下限**不得低于**基准语言
+    // （判据由 tooling/check-typography-langs.mjs 的 FONT-FLOOR-ORDER 钉住）；具体值待英文列
+    // 真机读数出来后按读数调，**不预设比当刻最小读数更高的值**（那会让门起步就红）。
+    fontFloorPx: 11,
     boxGridPx: 4,
     scriptRe: '[A-Za-z]',
     why: '英文按需：账本骨架先立（0 件＝待录入），迁移票按批次录入；不得与中文列共用同一份账本。',
