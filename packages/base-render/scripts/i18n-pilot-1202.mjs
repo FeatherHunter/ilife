@@ -165,14 +165,25 @@ if (isEntry) {
     for (const s of skipped) console.log('SKIP ' + s.lang + '（' + s.reason + '）');
 
     if (argv.includes('--baseline')) {
+      // 重录**只动被点名的语言列**（默认 zh），别的语言列原样保留——形状与 --check／测试读的同一处：
+      // snap.columns[<lang>].artifacts。评审 S7：原实现写顶层 artifacts，重录一次就把英文列整段抹掉，
+      // 随后 --check 与测试全红（写出的快照自己读不回）。
+      const previous = existsSync(SNAP_PATH) ? JSON.parse(readFileSync(SNAP_PATH, 'utf8')) : undefined;
+      const columns = { ...(previous?.columns ?? {}) };
+      for (const lang of langs) {
+        const own = rows.filter((r) => r.id.startsWith(lang + '/'));
+        columns[lang] = {
+          artifacts: Object.fromEntries(own.map((r) => [r.id, { src: r.src, bytes: r.bytes, sha256: r.sha256 }])),
+        };
+      }
       const snap = {
         generatedBy: 'packages/base-render/scripts/i18n-pilot-1202.mjs',
         ticket: '#1202',
-        purpose: '两处硬缝的中文列读数基座：固定 now 下四段链路产物逐件 sha256；英文列由 --write 另产',
+        purpose: '两处硬缝的读数基座：固定 now 下四段链路产物逐件 sha256（按语言列分开记）',
         hashAlgo: 'sha256(归一化文本) 前 32 hex；归一化＝去 BOM ＋ CRLF→LF',
         fixedNow: FIXED_NOW_TEXT,
-        artifactCount: rows.length,
-        artifacts: Object.fromEntries(rows.map((r) => [r.id, { src: r.src, bytes: r.bytes, sha256: r.sha256 }])),
+        artifactCount: Object.values(columns).reduce((n, c) => n + Object.keys(c.artifacts).length, 0),
+        columns,
       };
       mkdirSync(dirname(SNAP_PATH), { recursive: true });
       writeFileSync(SNAP_PATH, JSON.stringify(snap, null, 2) + '\n', 'utf8');

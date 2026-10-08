@@ -186,7 +186,7 @@ async function main() {
 
   console.log('# #1199 排印门语言无关化（语言列：' + LANGUAGES.join('／') + '；基准语言 ' + DEFAULT_LANGUAGE + '）');
   console.log('ROSTER: 产品侧=' + JSON.stringify(roster.languages || []) + ' 门侧=' + JSON.stringify(LANGUAGES) + ' 同值=' + (roster.ok && sameRoster(roster.languages, LANGUAGES)));
-  console.log('STRUCTURAL（语言无关，所有语言同一套）: ' + STRUCTURAL_RULES.map((r) => r.id).join(', '));
+  console.log('STRUCTURAL（语言无关，所有语言同一套）: ' + STRUCTURAL_RULES.map((r) => r.id + (r.enforced === true ? '' : '(本工具未判)')).join(', '));
   for (const lang of LANGUAGES) {
     const r = LANG_REGISTERS[lang];
     console.log('REGISTER ' + lang + ': separators=' + JSON.stringify(r.separators) + ' maxSegChars=' + r.maxSegChars
@@ -195,7 +195,7 @@ async function main() {
   }
   if (LIST) {
     for (const row of fixtureResult.rows) console.log('FIXTURE ' + row.page + '@' + row.width + ' outOfBounds=' + row.outOfBounds + ' minFontPxNoSvg=' + row.minFontPxNoSvg);
-    console.log('RESULT: langs=' + LANGUAGES.length + ' structural=' + STRUCTURAL_RULES.length + ' fixtures=' + fixtureResult.rows.length + ' violations=' + violations.length);
+    console.log('RESULT: langs=' + LANGUAGES.length + ' structural=' + STRUCTURAL_RULES.filter((r) => r.enforced === true).length + '/' + STRUCTURAL_RULES.length + '（有判据／声明） fixtures=' + fixtureResult.rows.length + ' violations=' + violations.length);
     return;
   }
   for (const s of fixtureResult.skipped) console.log('SKIPPED ' + s);
@@ -207,12 +207,12 @@ async function main() {
   for (const v of violations) console.error('RED [' + v.code + '] ' + v.msg);
   const total = violations.length + cmp.stale.length + cmp.fresh.length;
   console.log('BASELINE: 存续债 ' + FIXTURE_BASELINE.length + ' 条（' + FIXTURE_BASELINE.map((b) => b.code + '@' + b.page + '@' + b.width).join('、') + '）· 命中 ' + (fixtureResult.violations.length - cmp.fresh.length) + ' · 新增 ' + cmp.fresh.length + ' · 已清 ' + cmp.stale.length);
-  console.log('RESULT: langs=' + LANGUAGES.length + ' structural=' + STRUCTURAL_RULES.length + ' fixtures=' + fixtureResult.rows.length + ' violations=' + total);
+  console.log('RESULT: langs=' + LANGUAGES.length + ' structural=' + STRUCTURAL_RULES.filter((r) => r.enforced === true).length + '/' + STRUCTURAL_RULES.length + '（有判据／声明） fixtures=' + fixtureResult.rows.length + ' violations=' + total);
   if (total > 0) {
     console.error('FAIL: 排印门语言无关化未过（' + total + ' 处；结构约束不许按语言放宽，语言阀值不许两边一样，新债不许静默进来）');
     process.exit(1);
   }
-  console.log('PASS: 结构约束语言无关（' + STRUCTURAL_RULES.length + ' 条）× 语言阀值分列（' + LANGUAGES.length + ' 门）＋ 版式夹具 ' + fixtureResult.rows.length + ' 条读数（存续债 ' + FIXTURE_BASELINE.length + ' 条已登记、新增 0）');
+  console.log('PASS: 结构约束语言无关（本工具判 ' + STRUCTURAL_RULES.filter((r) => r.enforced === true).length + '／声明 ' + STRUCTURAL_RULES.length + ' 条）× 语言阀值分列（' + LANGUAGES.length + ' 门）＋ 版式夹具 ' + fixtureResult.rows.length + ' 条读数（存续债 ' + FIXTURE_BASELINE.length + ' 条已登记、新增 0）');
 }
 
 function selftest() {

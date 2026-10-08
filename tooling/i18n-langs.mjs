@@ -80,12 +80,15 @@ export function langFromArgv(argv) {
  *   touchTarget 可点面积下限（px）
  *   boxModel    间距／内边距／宽高必须落在 4px 栅格上
  */
+// enforced＝**当刻本仓真有机器判据**的那几条（读数只许报它——评审 S4：声明数当判据数＝读数夸大）。
+// 没 enforced 的三条是「已声明、判据还在包内探针（base-render 的 check-rendered-text 与真机几何门）里」：
+// 不是没口径，是这条工具还不读它。哪条补上判据就把 enforced 打开，读数随之变。
 export const STRUCTURAL_RULES = [
-  { id: 'overflow', zh: '版心不溢出', kind: 'geometry' },
-  { id: 'noWrap', zh: '版式位不换行', kind: 'geometry' },
-  { id: 'fontFloor', zh: '最小字号下限', kind: 'metric', unit: 'px' },
-  { id: 'touchTarget', zh: '可点面积下限', kind: 'metric', unit: 'px' },
-  { id: 'boxModel', zh: '盒模型落 4px 栅格', kind: 'metric', unit: 'px' },
+  { id: 'overflow', zh: '版心不溢出', kind: 'geometry', enforced: true },
+  { id: 'noWrap', zh: '版式位不换行', kind: 'geometry', enforced: false },
+  { id: 'fontFloor', zh: '最小字号下限', kind: 'metric', unit: 'px', enforced: true },
+  { id: 'touchTarget', zh: '可点面积下限', kind: 'metric', unit: 'px', enforced: false },
+  { id: 'boxModel', zh: '盒模型落 4px 栅格', kind: 'metric', unit: 'px', enforced: false },
 ];
 
 /**
