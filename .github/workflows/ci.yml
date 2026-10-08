@@ -63,6 +63,18 @@ jobs:
       #   装机沿用锁里那份不懂退休清单的 0.3.6 ⇒ 六个配置面板全部读不出配置。
       - run: pnpm base:floor
         if: always()
+      # #1199：多语言两道新门（缺词条门 ＋ key 残留门）。
+      #   状态账号本是 tooling/i18n-scope.json（已迁入词条层的文件清单）：范围 0 件时两道门显式印
+      #   「EMPTY-SCOPE 范围 0 件」并 exit 0——起步必须绿，但空转＝假绿，所以读数必须看得见。
+      #   语言列与排印名册唯一定义地＝tooling/i18n-langs.mjs；迁移票验收命令见
+      #   docs/agents/多语言-门禁改造-验收命令.md。
+      #   受保护名单：test/ci-gates-295.test.mjs 的 GATES 里要有本步一行（加门不加判据＝白加）。
+      - name: 多语言门（缺词条＋key 残留）
+        if: always()
+        run: |
+          node tooling/i18n-langs.mjs --selftest
+          node tooling/check-i18n-entries.mjs
+          node tooling/check-i18n-keys.mjs
       # #96：其余 5 技能 HTML 不回归门（per-skill HTML 逐件 sha256；base-* 影响面断言）
       #   本地同口径命令就是这一条：pnpm snapshot:html:check（见 tooling/skill-html-snapshot.mjs）
       # 分级 informational（Q1）：只报告不拦路。
