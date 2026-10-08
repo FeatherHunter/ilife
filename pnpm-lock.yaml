@@ -38,7 +38,7 @@ importers:
   packages/plugin-bill-ilife:
     dependencies:
       dsh-life-pack:
-        specifier: 0.3.50
+        specifier: 0.3.51
         version: link:../plugin-manager
       skill-bill:
         specifier: 0.3.34
@@ -60,7 +60,7 @@ importers:
   packages/plugin-calorie:
     dependencies:
       dsh-life-pack:
-        specifier: 0.3.50
+        specifier: 0.3.51
         version: link:../plugin-manager
       skill-calorie:
         specifier: 0.3.34
@@ -82,7 +82,7 @@ importers:
   packages/plugin-chef:
     dependencies:
       dsh-life-pack:
-        specifier: 0.3.50
+        specifier: 0.3.51
         version: link:../plugin-manager
       skill-chef:
         specifier: 0.3.34
@@ -104,7 +104,7 @@ importers:
   packages/plugin-home-ilife:
     dependencies:
       dsh-life-pack:
-        specifier: 0.3.50
+        specifier: 0.3.51
         version: link:../plugin-manager
       skill-home:
         specifier: 0.3.34
@@ -127,7 +127,7 @@ importers:
     dependencies:
       dsh-plugin-update:
         specifier: latest
-        version: 0.8.0
+        version: 0.9.0
     devDependencies:
       '@types/react':
         specifier: 19.2.18
@@ -145,7 +145,7 @@ importers:
   packages/plugin-memo-ilife:
     dependencies:
       dsh-life-pack:
-        specifier: 0.3.50
+        specifier: 0.3.51
         version: link:../plugin-manager
       skill-memo-ilife:
         specifier: 0.3.34
@@ -167,7 +167,7 @@ importers:
   packages/plugin-schedule-ilife:
     dependencies:
       dsh-life-pack:
-        specifier: 0.3.50
+        specifier: 0.3.51
         version: link:../plugin-manager
       skill-schedule:
         specifier: 0.3.34
@@ -656,8 +656,8 @@ packages:
     resolution: {integrity: sha512-WkrWp9GR4KXfKGYzOLmTuGVi1UWFfws377n9cc55/tb6DuqyF6pcQ5AbiHEshaDpY9v6oaSr2XCDidGmMwdzIA==}
     engines: {node: '>=8'}
 
-  dsh-plugin-update@0.8.0:
-    resolution: {integrity: sha512-S3c4NBHvbnYBzvEFy5nLrxiPS3ROWrdVCOmAhvBUDfdFWpJAoEqSjL7QIjJAQ3SvGNetZRVWkZ9WEs97kAkpHg==}
+  dsh-plugin-update@0.9.0:
+    resolution: {integrity: sha512-z0K3Q1j1+Ud8tjIvacmUo0Ns49P/U+9/5qlRiyaR6RqnGTPATGejcJrhZCWeeT5GcLudgRmv04h3P1LNbb1ayg==}
     engines: {node: '>=22'}
 
   dts-resolver@3.0.0:
@@ -1419,7 +1419,7 @@ snapshots:
     dependencies:
       path-type: 4.0.0
 
-  dsh-plugin-update@0.8.0: {}
+  dsh-plugin-update@0.9.0: {}
 
   dts-resolver@3.0.0: {}
 
