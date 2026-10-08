@@ -31,6 +31,8 @@ export const CALORIE_CONFIG_DEFAULTS = {
   photos: { dir: '', gifs: 'gifs' },
   xunji: { key: '', cli: '', stateDir: '', catalog: '', backfillDays: 1 },
   land: { xunjiSeconds: 300, landSeconds: 60 },
+  // #1198 语言选择：空串＝跟随调用方，最终回退 zh（判定住 base-link-core 的 config/language）。
+  language: { text: '', format: '' },
 };
 
 /** **已退休键**（#762 过渡件 ＋ #757 真删）：我们自己删过、老配置文件里必然还留着的键的叶子全路径。命中的键跳过校验、

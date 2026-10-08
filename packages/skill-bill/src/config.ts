@@ -30,6 +30,8 @@ export const BILL_CONFIG_DEFAULTS = {
   // 备份目录留空＝库目录下的 backups；主体是那份时间戳文件名的主干。
   backup: { dir: '', stem: 'biscuit_' },
   html: { dir: 'biscuit_accountant_html' },
+  // #1198 语言选择：空串＝跟随调用方，最终回退 zh（判定住 base-link-core 的 config/language）。
+  language: { text: '', format: '' },
 };
 
 /** **已退休键**（#762 过渡件）：我们自己删过、老配置文件里必然还留着的键。命中的键跳过校验、不进取值，

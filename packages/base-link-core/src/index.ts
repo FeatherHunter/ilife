@@ -46,5 +46,5 @@ export {
 } from './data-page.js';
 export type { CursorOrderSpec, CursorRowidSpec } from './data-page.js';
 // 配置件（#694）：定位／读写校验／重置为默认，见 src/config/。
-export { configPaths, loadConfig, saveConfig, resetConfig } from './config/index.js';
-export type { ConfigPaths, LoadedConfig, ConfigRecord, ConfigGroup, ConfigValue } from './config/index.js';
+export { AVAILABLE_LANGUAGES, DEFAULT_LANGUAGE, configPaths, loadConfig, parseLanguageArgs, resolveLanguage, saveConfig, resetConfig } from './config/index.js';
+export type { ConfigPaths, LanguageArgs, LanguageTag, LoadedConfig, ResolveLanguageOptions, ResolvedLanguage, ConfigRecord, ConfigGroup, ConfigValue } from './config/index.js';

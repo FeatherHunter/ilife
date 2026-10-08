@@ -34,6 +34,8 @@ export const CHEF_CONFIG_STEM = 'chef' as const;
 export const CHEF_CONFIG_DEFAULTS = {
   db: { dir: '', name: 'chef_data.db' },
   html: { dir: 'cook_html/help', sceneDir: 'cook_html' },
+  // #1198 语言选择：空串＝跟随调用方，最终回退 zh（判定住 base-link-core 的 config/language）。
+  language: { text: '', format: '' },
 };
 
 /** **已退休键**（#762 过渡件）：我们自己删过、老配置文件里必然还留着的键的叶子全路径。命中的键跳过校验、
