@@ -1,0 +1,79 @@
+{
+  "generatedBy": "#1233 写模式后续 / #1203 核对（本轮推进，未关任何票）",
+  "date": "2026-10-08",
+  "purpose": "票级范围清单：每张迁移票先有文件清单再开工。当前28张迁移票面只有包粒度和条数，本文件给出已核对的两张与剩余票的认领方法，不污染门禁状态账本 tooling/i18n-scope.json。",
+  "notation": {
+    "files": "仓库相对路径（正斜杠），与 tooling/i18n-scope.json 同形，开工时逐件登记进 scope.json 的 files",
+    "byClass": "与 tooling/i18n-codemod.ledger.json 同口径：copy=机械可写候选、payload=整体迁移不动、concat=只标红不改、derived=走生成器不动",
+    "writable": "tooling/i18n-write.mjs --dry 的件级条数（单行无插值单双引号 copy 才可写），与 ledger copy 的差额即人工部分"
+  },
+  "tickets": {
+    "1203": {
+      "title": "迁移 skill-bill write 批次 1：sayWords 与写域声明两件（642 条）",
+      "state": "open（本轮未关）",
+      "files": [
+        {
+          "path": "packages/skill-bill/src/write/sayWords.ts",
+          "literals": 482,
+          "byClass": {
+            "copy": 464,
+            "data": 0,
+            "ident": 18,
+            "cmdkey": 0,
+            "derived": 0,
+            "payload": 0,
+            "concat": 0
+          }
+        },
+        {
+          "path": "packages/skill-bill/src/write/declaration.ts",
+          "literals": 156,
+          "byClass": {
+            "copy": 0,
+            "data": 0,
+            "ident": 0,
+            "cmdkey": 0,
+            "derived": 0,
+            "payload": 156,
+            "concat": 0
+          }
+        }
+      ],
+      "writableDry": "0（实测 node tooling/i18n-write.mjs --dry --only skill-bill 不含此两件；sayWords 头注“改原型后重跑生成器，别手改”，declaration 台账 copy=0 payload=156）",
+      "strategy": "人工迁移：sayWords 改原型 docs/skills/skill-bill/1079-say-数据生成器.mjs 与16件原型口径，不手改生成物；declaration 按 payload 整体迁移。写模式不适用，详见地图进度第3轮取舍。",
+      "gate": "开工时把此两件登记进 tooling/i18n-scope.json 后先跑两道门拿红读数（先红后绿），中文列用 pnpm snapshot:html:check 中文列逐字节不变，英文列按文件名裁决另起账本。"
+    },
+    "1204": {
+      "title": "迁移 skill-bill write 批次 2：8 件（689 条）",
+      "state": "open（本轮未动，待确权）",
+      "files": [],
+      "note": "票面只有“8件”与条数，无文件清单。本轮未虚构清单。认领方法：从 packages/skill-bill/src/write/ 池（共55件，literals 2069，copy 1147）按 ledger copy 排序挑选8件，使 literals 合计≈689，挑后跑 --dry 复核可写/人工比，清单经票面确认再登记进 scope.json。候选池见 poolHint。",
+      "poolHint": {
+        "domain": "packages/skill-bill/src/write/",
+        "domainTotals": {
+          "files": 55,
+          "literals": 2069,
+          "copy": 1147
+        },
+        "topByCopy": [
+          "packages/skill-bill/src/write/sayWords.ts",
+          "packages/skill-bill/src/write/userWording.ts",
+          "packages/skill-bill/src/write/receiptPaper.ts",
+          "packages/skill-bill/src/write/outsideScan.ts",
+          "packages/skill-bill/src/write/scene-installment.ts"
+        ],
+        "howto": "node tooling/i18n-write.mjs --dry --only skill-bill 列件级条数；ledger 看 copy/payload/concat三分；两者差额即人工（多行、插值、拼接整句化）。"
+      }
+    }
+  },
+  "remaining": {
+    "note": "其余26张迁移票（1205-1232，不含已关1200/1202/1230/1234/1235/1236）同样缺文件清单。本文件先立方法，后续每张开工前按“ledger + --dry + 票面确认”三步认领8-10件，认领即更新本文件对应票号的 files 数组，再登记 scope.json。批量认领脚本待后续轮次补（输入票号与条数，输出候选文件组合与差额说明）。",
+    "method": [
+      "1. 读 tooling/i18n-codemod.ledger.json 该包该域的 files 行（copy/payload/concat三分）",
+      "2. 跑 node tooling/i18n-write.mjs --dry --only <包> 拿机械可写件级条数",
+      "3. 票面确认文件清单（生成物与payload件单独标注策略），清单先落本文件，再登记 tooling/i18n-scope.json",
+      "4. 登记后先跑两道门拿红读数（先红后绿），再改，改完跑绿与中文列逐字节不变"
+    ]
+  },
+  "gates": "本文件是咨询清单，不进门禁读取口径。门禁唯一读取 tooling/i18n-scope.json（当前 files=2 件试点）。咨询清单 여기서登记≠已迁入，登记进 scope.json 才算挂号，挂号即受两道门真判。"
+}
