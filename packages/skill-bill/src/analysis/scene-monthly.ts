@@ -15,7 +15,9 @@
 import { listRange } from '../fetch/index.js';
 import { monthRange } from '../shared/dateRange.js';
 import { aggBy, kpiOf, round1 } from './agg.js';
+import { buildAnalysisCopy } from './copyTextAnalysis.js';
 import { money, pctText } from './pageParts.js';
+import { projectWakeWord } from '../triggers/wakeTable.js';
 import { needMonth } from './params.js';
 import type { AnalysisScene } from './scene.js';
 import { buildOverview } from './views.js';
@@ -50,6 +52,11 @@ export const sceneMonthly: AnalysisScene = {
       chips: [month],
       payload: buildOverview(month, [...records]),
       kpi,
+      copy: buildAnalysisCopy({
+        kind: 'period', word: projectWakeWord({ key: 'bill.analysis.overview', kind: 'monthly' }), label: month, kpi,
+        topKey: head === undefined ? null : head.key,
+        topValue: head === undefined ? 0 : head.value,
+      }),
       page: {
         kpis: [
           { label: '支出', value: money(kpi.expense), unit: '元' },

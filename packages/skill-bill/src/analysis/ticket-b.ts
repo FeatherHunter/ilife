@@ -10,6 +10,7 @@
 import { renderLedgerRows, renderSummaryHead } from 'base-paint/blocks';
 import { escapeHtml } from 'base-paint';
 import { ticketDoc } from './ticket.js';
+import type { AnalysisCopy } from './copyTextAnalysis.js';
 import { MISSING, NO_WINDOW, SOURCE_READ } from './pageParts.js';
 import type { BarsPage, DocInput } from './scene.js';
 
@@ -144,6 +145,7 @@ export function toTicketB(input: {
   readonly windowEnd: string;
   readonly count: number;
   readonly conclusion: string;
+  readonly copy?: AnalysisCopy;
 }): string {
   const summary = renderSummaryHead({
     eyebrow: '分析域 · 趋势',
@@ -171,5 +173,6 @@ export function toTicketB(input: {
     source: SOURCE_READ,
     detail: '取到 ' + String(input.count) + ' 条记录',
     actionAt: input.actionAt,
+    ...(input.copy === undefined ? {} : { copy: input.copy }),
   });
 }

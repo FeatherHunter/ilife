@@ -25,6 +25,7 @@ import type { DataTableColumn } from 'base-paint/blocks';
 import { blockedItems, blockedMessage } from './blockedSlots.js';
 import { collectMissingTags, collectProgress, collectSectionTitle } from './collectFrame.js';
 import { copyArea, copyLog, promptCopyArea, COPY_HINTS } from '../shared/copyArea.js';
+import { buildCollectCopyCsv, buildCollectCopyJson, buildCollectCopyText } from "./collectCopyText.js";
 import { duplicateNote, findDuplicates } from './duplicateNote.js';
 import { emptyNote } from './emptyNote.js';
 import { docTitleOf } from '../shared/pageIdentity.js';
@@ -122,7 +123,7 @@ export function bindExpensePages(spec: ExpenseSpec): Pick<Scene, 'collect' | 're
 
 /** 本族多数场景共用的复制 prompt 那段话（记支出／记收入／记一笔三件同句）：说清缺什么、先不写库、补齐后说哪句。 */
 export function plainPrompt(word: string, blocked: readonly BlockedLine[]): string {
-  return '这一笔还差 ' + blocked.length + ' 项：' + blocked.map((i) => i.label).join('、')
+  return '这一笔还差 ' + blocked.length + ' 项：' + blocked.map((i) => i.label).join(String.fromCharCode(10))
     + '。这一页先不写库。补齐后跟助手说一遍「' + word + '」。';
 }
 
@@ -141,7 +142,7 @@ export function missingSubtitle(input: CollectInput, blocked: readonly BlockedLi
  *  `key` 保留在签名里：调用方按同一形状喂，删参数要连带改四处调用点，不属本票写集。 */
 export function sharedPrompt(key: string, blocked: readonly BlockedLine[]): string {
   return '这一笔还差 ' + blocked.length + ' 项：'
-    + blocked.map((i) => i.label + '（' + i.why + '）').join('、')
+    + blocked.map((i) => i.label + '（' + i.why + '）').join(String.fromCharCode(10))
     + '。\n这一页先不写库。补齐之后跟助手说一遍。';
 }
 
@@ -154,8 +155,13 @@ function collectPage(spec: ExpenseSpec, input: CollectInput): string {
   const { pick, probe, facts } = valuesOf({ recent: input.recent, params, kind: spec.kind, today: input.today });
   const bp = blockedPromptOf({ key: input.key, params, blocked, replaces: spec.replaces });
   const envelope = envelopeOf(input.key, false, message);
-  // #1079：本词若有 SAY 采集页数据（16 页那一批），采集页走票据纸那一路；没有就照旧走通用页面壳。
-  const sayOut = sayCollectOut({
+  // #1187-reds 真回归：方向阻断只活在 blockedItems（why 含方向原话），SAY 的 missingLabels 只按 cfg 必填位算，
+  // 全给但方向反时 SAY 会误判 ready（hint“已填齐”＋复制“还差 无”）而信封 blocked（ok:false）——页与信封打架。
+  // 1181 只定“SAY 经 cfg、回落经 params 加 blocked 同源”，未给 SAY 补方向口；方向项在时绕过 SAY 走回落壳
+  // （回落含 blockedBar 方向原话，复制仍走新人话门，t1181 零产出仍成立）。判据：why 非“没给”即方向项。
+  const hasDirectionBlocked = blocked.some((b) => b.why !== '没给');
+  // #1079：本词若有 SAY 采集页数据（16 页那一批），采集页走票据纸那一路；没有就照旧走通用页面壳（方向阻断不走 SAY）。
+  const sayOut = hasDirectionBlocked ? null : sayCollectOut({
     sayKey: spec.kind === '' ? 'plain' : spec.kind,
     key: input.key,
     shape: envelope.shape,
@@ -179,6 +185,7 @@ function collectPage(spec: ExpenseSpec, input: CollectInput): string {
   }
   // 读数行「有内容才出」：用户真给了值才出（#688 裁定 6：采集页不画同形空卡）。
   const grid = spec.factsGrid && hasAnyFact(facts) ? renderKpiGrid(summaryCards(facts)) : '';
+    const collectFacts = { category: facts.category, amount: facts.amount, time: facts.time, account: facts.account, ledger: facts.ledger, note: typeof params.note === "string" ? params.note : "", currency: typeof params.currency === "string" ? params.currency : "", missing: blocked.map(function (b) { return b.label; }) };
   const content = [
     typeBadge({
       kind: spec.kind,
@@ -222,6 +229,9 @@ function collectPage(spec: ExpenseSpec, input: CollectInput): string {
     copyArea({
       hints: COPY_HINTS.sayAcct,
       data: { envelope },
+      dataText: buildCollectCopyText(spec.word, spec.kind, collectFacts),
+      dataJson: buildCollectCopyJson(spec.word, spec.kind, input.key, collectFacts),
+      dataCsv: buildCollectCopyCsv(spec.word, spec.kind, collectFacts),
       log: {
         envelope,
         copyLog: copyLog({

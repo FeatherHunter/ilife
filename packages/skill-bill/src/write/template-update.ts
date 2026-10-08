@@ -23,6 +23,7 @@ import { blockedBar, blockedItems, blockedMessage } from './blockedSlots.js';
 import type { BlockedItem } from './blockedSlots.js';
 import { collectMissingTags, collectSectionTitle } from './collectFrame.js';
 import { copyArea, copyLog, promptCopyArea, COPY_HINTS } from '../shared/copyArea.js';
+import { buildCollectCopyCsv, buildCollectCopyJson, buildCollectCopyText } from "./collectCopyText.js";
 import { diffTable } from './diffTable.js';
 import { emptyNote } from './emptyNote.js';
 import { DOC_SKILL, DOC_VERSION, docTitleOf, sceneKeyOf } from '../shared/pageIdentity.js';
@@ -228,6 +229,7 @@ function collectPage(spec: UpdateSpec, input: CollectInput): string {
   if (sayOut !== null) return sayOut;
   /** 副标题只报缺哪一项（不重复「已出采集页，补齐之后跟助手说一遍」那句）。 */
   const subtitle = page.blocked.length === 0 ? '' : '还差 ' + page.blocked.length + ' 项必需项';
+    const collectFacts = { category: facts.category, amount: facts.amount, time: facts.time, account: facts.account, ledger: facts.ledger, note: textOf(input.params.note), currency: textOf(input.params.currency), missing: page.blocked.map(function (b) { return b.label; }) };
   const content = [
     typeBadge({ kind: '', status: 'danger', state: spec.collectState(page), pageKind: page.id === null ? '挑一条记录' : '核对这一条', next: '' }),
     page.blocked.length === 0 ? '' : collectSectionTitle({ no: 1, title: '先看这一笔缺什么' }),
@@ -241,6 +243,9 @@ function collectPage(spec: UpdateSpec, input: CollectInput): string {
     copyArea({
       hints: COPY_HINTS.sayAcct,
       data: { envelope },
+      dataText: buildCollectCopyText(spec.wake, "", collectFacts),
+      dataJson: buildCollectCopyJson(spec.wake, "", spec.key, collectFacts),
+      dataCsv: buildCollectCopyCsv(spec.wake, "", collectFacts),
       log: {
         envelope,
         copyLog: copyLog({

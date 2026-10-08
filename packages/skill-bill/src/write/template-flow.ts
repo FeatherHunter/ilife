@@ -24,6 +24,7 @@ import { candidatePick, candidateRows } from './candidatePick.js';
 import type { CandidateItem } from './candidatePick.js';
 import { collectMissingTags } from './collectFrame.js';
 import { copyArea, copyLog, COPY_HINTS } from '../shared/copyArea.js';
+import { buildCollectCopyCsv, buildCollectCopyJson, buildCollectCopyText } from "./collectCopyText.js";
 import { flowSteps } from './flowSteps.js';
 import type { FlowField, FlowStepInput } from './flowSteps.js';
 import { DOC_SKILL, DOC_VERSION, docTitleOf, sceneKeyOf } from '../shared/pageIdentity.js';
@@ -300,6 +301,7 @@ function collectPage(spec: FlowSpec, input: CollectInput): string {
   const filled: Record<string, unknown> = { ...params };
   for (const b of blocked) filled[b.name] = '<' + b.label + '>';
   const prompt = spec.prompt(ctx);
+    const collectFacts = { category: facts.category, amount: amount, time: facts.time, account: facts.account, ledger: facts.ledger, note: typeof params.note === "string" ? params.note : "", currency: typeof params.currency === "string" ? params.currency : "", missing: blocked.map(function (b) { return b.label; }) };
   const content = [
     typeBadge({
       kind: spec.kind, status: blocked.length > 0 ? 'danger' : 'warn', next: '', pageKind: '采集页',
@@ -317,6 +319,9 @@ function collectPage(spec: FlowSpec, input: CollectInput): string {
       hints: COPY_HINTS.sayAcct,
       prompt: { text: prompt.text, label: prompt.label },
       data: { envelope },
+      dataText: buildCollectCopyText(spec.word, spec.kind, collectFacts),
+      dataJson: buildCollectCopyJson(spec.word, spec.kind, key, collectFacts),
+      dataCsv: buildCollectCopyCsv(spec.word, spec.kind, collectFacts),
       log: { envelope, copyLog: copyLog({
         command: commandLine(key, params), source: input.source, detail: '没写库（采集页）',
         actionAt: input.actionAt, version: DOC_VERSION,

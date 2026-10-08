@@ -32,6 +32,8 @@ import {
 } from '../shared/docPage.js';
 import { commandLine, writeSection } from '../shared/writeParts.js';
 import type { BillReceipt } from '../shared/writeParts.js';
+import { buildReceiptCopyCsv, buildReceiptCopyJson, buildReceiptCopyText } from './copyTextReceipt.js';
+import type { ReceiptCopyFacts } from './copyTextReceipt.js';
 import { duplicateNote, findDuplicates } from './duplicateNote.js';
 import { envelopeOf, probeOfReceipt } from './pageParts.js';
 import { exitCopyOf } from './receiptSheet.js';
@@ -137,6 +139,26 @@ function pick(value: string): string {
   return value.trim() === '' ? '未给' : value;
 }
 
+/** 明细行取值（库列中文名经 fieldLabelOf；缺行按空串，复制门内统一为未给/null）。 */
+function detailValue(detail: ReceiptPaperInput['detail'], name: string): string {
+  const hit = detail.find((d) => d.k === fieldLabelOf(name));
+  return hit === undefined ? '' : hit.v;
+}
+
+/** 回执复制事实（票面同等 8 格，值与纸面 pick 同源，复制恒等于已显示行）。 */
+function copyFactsOf(input: ReceiptPaperInput): ReceiptCopyFacts {
+  return {
+    recordId: input.receipt.recordId,
+    category: input.facts.category,
+    amount: input.facts.amount,
+    time: input.facts.time,
+    account: input.facts.account,
+    ledger: input.facts.ledger,
+    note: detailValue(input.detail, 'note'),
+    currency: detailValue(input.detail, 'currency'),
+  };
+}
+
 /** 核对那一行（原型 `.check-mini`）：编号 ＋ 异常（本族恒「无」）。 */
 function checkHtml(recordId: number | null): string {
   const text = '编号 ' + (recordId === null ? '还没有' : String(recordId)) + ' ／ 异常：无';
@@ -177,6 +199,9 @@ export function receiptPaper(input: ReceiptPaperInput): string {
     + ticketActions((exit === null ? '' : ticketPrimaryButton(exit)) + copyArea({
       hints: COPY_HINTS.receipt,
       data: { envelope },
+      dataText: buildReceiptCopyText(input.kind, copyFactsOf(input)),
+      dataJson: buildReceiptCopyJson(input.kind, copyFactsOf(input)),
+      dataCsv: buildReceiptCopyCsv(input.kind, copyFactsOf(input)),
       log: {
         envelope,
         copyLog: copyLog({

@@ -31,6 +31,7 @@ import type { BillRow } from '../fetch/index.js';
 import { DB_FILENAME } from '../fetch/index.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { actionStamp, copyArea, copyLog } from '../shared/copyArea.js';
+import { ticketCopyOf } from './list-copy.js';
 import { calcKpi } from '../shared/kpi.js';
 import { DOC_TITLE, DOC_VERSION } from '../shared/pageIdentity.js';
 import { estimateBytes } from '../render/html.js';
@@ -193,6 +194,7 @@ export function queryAccountTicketDoc(input: AccountTicketInput): string {
   const notes = countNotes(input.records, kpi.count);
   const conclusion = conclusionOf(categories);
   const envelope = listEnvelope(input.key, data);
+  const listCopy = ticketCopyOf(input.wakeWord, input.window, input.records);
   const paper = queryStyleTag()
     + sheetHead(DOC_TITLE + ' · ' + input.wakeWord, escapeHtml(input.account + '共 ' + notes.head + '，支出 ' + sumText(kpi.expense) + ' 元'))
     + '<p class="ilife-account-shop-sub">' + escapeHtml(input.window) + '</p>'
@@ -214,6 +216,9 @@ export function queryAccountTicketDoc(input: AccountTicketInput): string {
     + ticketRule()
     + ticketActions(copyArea({
       data: { envelope, title: input.wakeWord },
+      dataText: listCopy.text,
+      dataJson: listCopy.json,
+      dataCsv: listCopy.csv,
       log: {
         envelope,
         copyLog: copyLog({

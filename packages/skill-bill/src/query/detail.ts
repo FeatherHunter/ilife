@@ -11,6 +11,10 @@
  *   对账行内写裸号（两处与原型逐字）；已撤销态住印章、状态行与对账异常三处
  *   （各说各的角度：印章是态、状态行是值、对账是写入证据）。
  *  载荷 `item` 键不动（见 `src/query/read.ts` 的 `viewRecordDetail`）。
+ *
+ * 复制三份（1183：纸面不动、复制展开）——落点仍 6／7 行（t415 锁着），复制经本件人话门
+ *   （10 列＋备注，已撤销加删除时间；field,value 纵表与回执同制不同字段）；薄 envelope
+ *   仍作日志场景标识，三份全覆写（旧 thin 零产出）。方向词走共用位，不另写第二份。
  */
 import { renderDistributionRows, renderLedgerRows, renderSheetFrame, renderSummaryHead } from 'base-paint/blocks';
 import { escapeHtml } from 'base-paint';
@@ -21,6 +25,7 @@ import { queryStyleTag } from './pageParts.js';
 import { commandLine, writeSection } from '../shared/writeParts.js';
 import { assembleSheetPage, sheetHead, ticketActions, ticketRule, ticketSection, ticketSummary } from '../shared/docPage.js';
 import { directionWord } from '../shared/direction.js';
+import { EMPTY_CELL, csvCell, oneLine } from '../shared/copyText.js';
 import type { BillRow } from '../fetch/index.js';
 
 /** 详情页的入参：这一页是谁（命令名／唤醒词）＋ 查到哪一条 ＋ 复制日志的取数（来源与时刻只进复制日志，不上屏）。 */
@@ -41,8 +46,7 @@ export interface QueryDetailInput {
   readonly actionAt: string;
 }
 
-/** 空值占位（字段行永不缺席，无值即此符，空行不算交代）。 */
-const EMPTY_CELL = '—';
+
 
 /** 文本或占位（空串／全空格即占位，前后空格不进页）。 */
 function textOrDash(v: string): string {
@@ -118,6 +122,95 @@ function checkCard(row: BillRow, deleted: boolean): string {
     + escapeHtml(text) + '</span></div>';
 }
 
+/** 详情人话门（1183，纸面不动、复制展开）：10 列＋备注（已撤销加删除时间）的人话三份。
+ *
+ * 为什么住本件：写域只许动本件（禁碰 `copyTextReceipt`／`copyArea` 本体），10 列事实全是本页
+ *   已显示行（复制恒等于已显示行）；机制复用共用件 `../shared/copyText.js`（单行化／统一占位／RFC4180／数仍数），
+ *   字段不同（回执 8 格，详情 10 列＋备注＋删除时间）。占位沿纸面 `—`（落点行永不缺席），
+ *   备注不截行（纸面印全文，截了就不是已显示行）。薄 envelope 不动：仍作复制日志的场景
+ *   标识（shape detail／key 场景名），三份全覆写后旧 thin 零产出。
+ */
+
+/** 复制 JSON 的场景键（`sceneKeyOf('bill.record.detail')` 的值，照回执 `record.add` 硬字面量的先例）。 */
+const DETAIL_COPY_KEY = 'record.detail';
+
+
+
+/** 纸面同值的单行文本（空走纸面占位，见 `EMPTY_CELL`，否则单行化；与落点行同值）。 */
+function dashOne(v: string): string {
+  return oneLine(textOrDash(v));
+}
+
+/** 备注单行（明细卡同值：空走占位；纸面印全文，复制不截行）。 */
+function noteOne(row: BillRow): string {
+  const t = row.note.trim();
+  return t === '' ? EMPTY_CELL : oneLine(t);
+}
+
+/** 详情复制字段（任务序：编号／时间／分类／金额／方向／账户／账本／币种／创建时间／
+ *  ［删除时间］／状态＋备注——值与纸面同表达式，纯文本行与纸面行一一对应）。 */
+function detailCopyFields(row: BillRow, deleted: boolean): readonly (readonly [string, string])[] {
+  const fields: (readonly [string, string])[] = [
+    ['编号', '#' + row.id],
+    ['时间', dashOne(row.time)],
+    ['分类', dashOne(row.category)],
+    ['金额', row.amount.toFixed(2)],
+    ['方向', directionWord(row.amount)],
+    ['账户', dashOne(row.account)],
+    ['账本', dashOne(row.ledger)],
+    ['币种', dashOne(row.currency)],
+    ['创建时间', dashOne(row.created_at)],
+  ];
+  if (deleted) fields.push(['删除时间', oneLine(String(row.deleted_at))]);
+  fields.push(['状态', deleted ? '已撤销' : '有效']);
+  fields.push(['备注', noteOne(row)]);
+  return fields;
+}
+
+/** 纯文本（页身份行＋字段行，LF 连接，无尾换行）。 */
+export function buildDetailCopyText(row: BillRow, wakeWord: string): string {
+  const deleted = row.deleted_at !== null && row.deleted_at !== '';
+  return [DOC_TITLE + ' ' + wakeWord,
+    ...detailCopyFields(row, deleted).map(([k, v]) => k + ' ' + v)].join('\n');
+}
+
+/** JSON 加厚（票面同等，数仍数，2 空格缩进，无尾换行；备注空为 null，其余空串保留）。 */
+export function buildDetailCopyJson(row: BillRow): string {
+  const deleted = row.deleted_at !== null && row.deleted_at !== '';
+  const t = row.note.trim();
+  const payload: Record<string, unknown> = {
+    version: '1.0',
+    skill: 'bill',
+    shape: 'detail',
+    key: DETAIL_COPY_KEY,
+    data: {
+      id: row.id,
+      time: row.time,
+      category: row.category,
+      amount: row.amount,
+      direction: directionWord(row.amount),
+      account: row.account,
+      ledger: row.ledger,
+      currency: row.currency,
+      created_at: row.created_at,
+      deleted_at: row.deleted_at,
+      status: deleted ? '已撤销' : '有效',
+      note: t === '' ? null : oneLine(t),
+    },
+  };
+  return JSON.stringify(payload, null, 2);
+}
+
+
+
+/** CSV 纵表（表头 field,value，LF，无尾换行；金额保留符号，方向单列）。 */
+export function buildDetailCopyCsv(row: BillRow): string {
+  const deleted = row.deleted_at !== null && row.deleted_at !== '';
+  const lines = ['field,value'];
+  for (const [field, value] of detailCopyFields(row, deleted)) lines.push(csvCell(field) + ',' + csvCell(value));
+  return lines.join('\n');
+}
+
 /** 查询详情页（一纸 w17 v2.1：店头三行＋主数字四行＋落点＋占比＋明细＋对账＋复制区＋纸外脚注）。 */
 export function queryDetailDoc(input: QueryDetailInput): string {
   const deleted = input.row.deleted_at !== null && input.row.deleted_at !== '';
@@ -142,6 +235,9 @@ export function queryDetailDoc(input: QueryDetailInput): string {
     + ticketRule()
     + ticketActions(copyArea({
       data: { envelope: input.envelope, title: input.wakeWord },
+      dataText: buildDetailCopyText(input.row, input.wakeWord),
+      dataJson: buildDetailCopyJson(input.row),
+      dataCsv: buildDetailCopyCsv(input.row),
       log: {
         envelope: input.envelope,
         copyLog: copyLog({

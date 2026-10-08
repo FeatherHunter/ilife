@@ -130,5 +130,6 @@ export function ticketChartsBDoc(input: DocInput<ChartsPage>, sceneId: string): 
     windowEnd: r.to === '' ? NO_WINDOW : r.to,
     count: r.count,
     conclusion: r.conclusion,
+    ...(r.copy === undefined ? {} : { copy: r.copy }),
   });
 }

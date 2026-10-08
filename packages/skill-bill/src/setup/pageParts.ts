@@ -29,6 +29,7 @@ import type { PageShellInput } from '../shared/pageShell.js';
 import { sourceLine } from '../shared/sourceLine.js';
 import { commandLine } from '../shared/writeParts.js';
 import { humanBytes } from './backups.js';
+import type { SetupCopy } from './copyTextSetup.js';
 import { STEP_STATE_TEXT } from './steps.js';
 import type { WizardStep } from './steps.js';
 import type { SetupBlocked, SetupSlot } from './params.js';
@@ -173,7 +174,7 @@ export function promptBlockOf(prompt: string, label = '复制给助手：这一�
   });
 }
 
-/** 复制区（数据位 ＋ 日志位；三格式与双按钮由共用件给）。 */
+/** 复制区（数据位 ＋ 日志位；三格式与双按钮由共用件给）。人话三份＋提示由调用方经 `copy` 单对象透传（照分析域范例；缺省走薄信封）。 */
 export function copyZoneOf(input: {
   readonly envelope: SerializableEnvelope;
   readonly title: string;
@@ -182,9 +183,15 @@ export function copyZoneOf(input: {
   readonly source: string;
   readonly detail: string;
   readonly actionAt: string;
+  /** 人话三份＋提示单对象（给了即覆写；不给＝旧投影）。 */
+  readonly copy?: SetupCopy;
 }): string {
   return copyArea({
+    ...(input.copy?.hints === undefined ? {} : { hints: input.copy.hints }),
     data: { envelope: input.envelope, title: input.title },
+    ...(input.copy?.text === undefined ? {} : { dataText: input.copy.text }),
+    ...(input.copy?.json === undefined ? {} : { dataJson: input.copy.json }),
+    ...(input.copy?.csv === undefined ? {} : { dataCsv: input.copy.csv }),
     log: {
       envelope: input.envelope,
       copyLog: copyLog({

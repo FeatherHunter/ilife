@@ -60,6 +60,12 @@ interface CopyAreaInput {
   /** #1136：只换「纯文本」那一份的文案（JSON／CSV／日志不动）。回执页用它把 envelope 行换成 HELP 句；
      不给＝三份全走 `buildDataText`（改前形态，逐字节不变）。 */
   readonly dataText?: string;
+  /** #1180：只换「JSON」那一份的载荷（纯文本／CSV／日志不动）。回执纸用人话门加厚 JSON；
+     不给＝走 `buildDataText`（改前形态，查询/采集页零回归）。 */
+  readonly dataJson?: string;
+  /** #1180：只换「CSV」那一份的载荷（纯文本／JSON／日志不动）。回执纸用人话门纵表 CSV；
+     不给＝走 `buildDataText`（改前形态，查询/采集页零回归）。 */
+  readonly dataCsv?: string;
   /** 给了就出「复制日志」，内部走 `buildLogText`。 */
   readonly log?: LogTextInput;
   /** 三样全没给时的那句话（缺省也有一句，见 `COPY_EMPTY_TEXT`）。 */
@@ -125,7 +131,7 @@ export function copyArea(input: CopyAreaInput): string {
   }
   if (input.data !== undefined || input.log !== undefined) {
     parts.push(renderCopyBlock({
-      ...(input.data === undefined ? {} : { dataFormats: formatsOf(input.data, input.hints, input.dataText) }),
+      ...(input.data === undefined ? {} : { dataFormats: formatsOf(input.data, input.hints, input.dataText, input.dataJson, input.dataCsv) }),
       ...(input.log === undefined ? {} : { logText: buildLogText(input.log) }),
     }));
     return parts.join('');
@@ -137,7 +143,7 @@ export function copyArea(input: CopyAreaInput): string {
 /** 数据位的那份数据 → 三种格式各算一份 ＋ 菜单提示（`buildDataText` 是本仓复制文本的唯一出口）。
  *  上级裁定第 2 条：复制载荷头行 `【bill · record.add】` 算上屏一并改——`text` 那份显式给 `title`，
  *  不再让公共层按 `envelope.skill/key` 拼出命令名；`title` 只写用户说法，不带命令名与 `·`。 */
-function formatsOf(data: DataTextInput, hints?: readonly string[], textOverride?: string): {
+function formatsOf(data: DataTextInput, hints?: readonly string[], textOverride?: string, jsonOverride?: string, csvOverride?: string): {
   readonly text: string;
   readonly json: string;
   readonly csv: string;
@@ -149,8 +155,8 @@ function formatsOf(data: DataTextInput, hints?: readonly string[], textOverride?
     : '记账数据';
   return {
     text: textOverride ?? buildDataText({ ...data, format: 'text', title }),
-    json: buildDataText({ ...data, format: 'json' }),
-    csv: buildDataText({ ...data, format: 'csv' }),
+    json: jsonOverride ?? buildDataText({ ...data, format: 'json' }),
+    csv: csvOverride ?? buildDataText({ ...data, format: 'csv' }),
     hints: hints ?? COPY_HINTS.queryAnalysis,
   };
 }
