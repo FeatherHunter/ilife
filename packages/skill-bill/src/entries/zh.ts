@@ -7,6 +7,8 @@
  *  不变量：本表的中文值**逐字等于改造前写死在场景件里的字面量**——所以不启用多语言时产物逐字节不变。
  *  首批 28 条（#1204 首迁件 `write/scene-installment.ts` 的全部用户可见文案；参数名
  *  `total`／`periods`／`start_date` 是槽位标识、命令键冻结，二者都不进本表）。
+ *  第二批 49 条（#1204 第二件 `write/receiptPaper.ts`：13 页回执纸共用装配的用户可见文案；
+ *  行标签三格复用 `fieldLabelOf`（与摘要行同一口径），不在本表另立 key）。
  */
 export const zh = {
   /* ── 记分期场景（write/scene-installment.ts）── */
@@ -38,4 +40,54 @@ export const zh = {
   'installment.receipt.feedback-detail': '每期日期＝每月同日，该月没有那一天就回退月末。改期数走「改记录」。',
   'installment.receipt.no-shares-chip': '缺分期参数，未分摊，这一笔仍已记下',
   'installment.receipt.caption': '写进去的项与值',
+  /* ── 回执纸（write/receiptPaper.ts，#1204 第二件）：13 页共用装配 ── */
+  'receipt-paper.expense.title': '支出',
+  'receipt-paper.expense.eyebrow': '支出',
+  'receipt-paper.income.title': '收入',
+  'receipt-paper.income.eyebrow': '收入',
+  'receipt-paper.photo.title': '账单',
+  'receipt-paper.photo.eyebrow': '支出',
+  'receipt-paper.batch.eyebrow': '支出',
+  'receipt-paper.batch.plain-title': '这一批记好了',
+  'receipt-paper.refund.title': '退款',
+  'receipt-paper.refund.eyebrow': '退款',
+  'receipt-paper.reimburse.title': '报销',
+  'receipt-paper.reimburse.eyebrow': '支出',
+  'receipt-paper.reimburse-done.title': '到账',
+  'receipt-paper.reimburse-done.eyebrow': '收入',
+  'receipt-paper.lend.title': '借出',
+  'receipt-paper.lend.eyebrow': '支出',
+  'receipt-paper.borrow.title': '借入',
+  'receipt-paper.borrow.eyebrow': '收入',
+  'receipt-paper.collect.title': '收回',
+  'receipt-paper.collect.eyebrow': '收入',
+  'receipt-paper.repay.title': '偿还',
+  'receipt-paper.repay.eyebrow': '支出',
+  'receipt-paper.installment.title': '分期',
+  'receipt-paper.installment.eyebrow': '支出',
+  'receipt-paper.plain.eyebrow': '支出',
+  'receipt-paper.plain.plain-title': '这一笔记好了',
+  'receipt-paper.extra.tag': '标签',
+  'receipt-paper.lend.tag-value': '#借出 #未还',
+  'receipt-paper.borrow.tag-value': '#借入 #未还',
+  'receipt-paper.ledger-fields': '分类、金额、时间、账户、账本',
+  'receipt-paper.note.common': '改了 {count} 笔：{fields}等项已写进账本',
+  'receipt-paper.note.tagged': '改了 {count} 笔：{fields}、标签已写进账本',
+  'receipt-paper.note.photo': '改了 {count} 笔：三要素以外部识别为准，已落账',
+  'receipt-paper.note.batch': '改了 {count} 笔：这次只落了其中一笔',
+  'receipt-paper.title.done': '记好了：{word} {amount}',
+  'receipt-paper.title.done-no-amount': '记好了：{word}',
+  'receipt-paper.check.with-id': '编号 {id} ／ 异常：无',
+  'receipt-paper.check.without-id': '编号 还没有 ／ 异常：无',
+  'receipt-paper.copy.detail-with-fields': '改了 {count} 笔，写进去 {fields}',
+  'receipt-paper.copy.detail-no-fields': '改了 {count} 笔，写进去 没改到任何一项',
+  'receipt-paper.sheet-note': '已经记好，不用再操作。',
+  'receipt-paper.unit': '元',
+  'receipt-paper.stamp': '有效',
+  'receipt-paper.section.where': '记到哪里',
+  'receipt-paper.section.check': '核对',
+  'receipt-paper.cut-line': '✂ 裁切线',
+  'receipt-paper.foot': '{brand}回执',
+  'receipt-paper.doc-title': '{word} 回执',
+  'receipt-paper.missing': '未给',
 };

@@ -1,11 +1,10 @@
 // #1204 首迁件（write/scene-installment.ts）：词条层＋语言链的接线证明。
 //
-// 口径 honesty（先写清楚再断言）：记分期采集页线上走 SAY 原型（`sayWords.ts`，#1203 策略件）
-// ＋回执页走 `receiptPaper.ts`（本批后续件），本件迁入的 28 条里只有 word／kind／family
-// 与 fallback 分支（sections／form／prompt）在本件直连；receipt.* 八字段是模板演进后
-// 留下的死 spec（`template-installment.ts` 的 `receiptPage` 只透传 word／kind 给票据纸）。
-// 故页级英文证明只到「链路不断、中文逐字节不变」；英文整页上屏随 SAY／票据纸迁移票。
-import { describe, it } from 'node:test';
+// 口径 honesty（先写清楚再断言）：记分期采集页线上走 SAY 原型（`sayWords.ts`，#1203 策略件），
+// 本件迁入的 28 条里只有 word／kind／family 与 fallback 分支直连；receipt.* 八字段是模板演进后
+// 留下的死 spec。回执纸（`receiptPaper.ts`，#1204 第二件）已迁：结论／核对／复制明细整句化，
+// 回执页中英各一份可断言；采集页英文整页仍随 SAY 原型票。
+import { before, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync } from 'node:fs';
@@ -17,6 +16,8 @@ import { SCENES, sceneFor } from '../dist/write/scene.js';
 import { sceneInstallment } from '../dist/write/scene-installment.js';
 import { SKILL_BILL_CATALOG } from '../dist/entries/index.js';
 import { billEnv } from './helpers/config-base.mjs';
+
+const FIXTURE_TIME = '2026-09-14 12:00:00';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const bin = join(here, '..', 'dist', 'cli', 'cmd_read.js');
@@ -39,11 +40,11 @@ function cli(db, args) {
 }
 
 describe('#1204 记分期首迁：词条＋语言链', () => {
-  it('词条 zh／en 同 key（28 条）且英文列无空串', () => {
+  it('词条 zh／en 同 key（77 条＝28 首迁＋49 回执纸）且英文列无空串', () => {
     const zhKeys = Object.keys(SKILL_BILL_CATALOG.zh).sort();
     const enKeys = Object.keys(SKILL_BILL_CATALOG.en).sort();
     assert.deepEqual(enKeys, zhKeys);
-    assert.equal(zhKeys.length, 28);
+    assert.equal(zhKeys.length, 77);
     for (const k of enKeys) assert.ok(SKILL_BILL_CATALOG.en[k].length > 0, '英文缺译：' + k);
   });
 
@@ -76,5 +77,50 @@ describe('#1204 记分期首迁：词条＋语言链', () => {
     assert.equal(en.status, 0, 'en stderr: ' + en.stderr);
     const bad = cli(db, [...base, '--language', 'zz']);
     assert.notEqual(bad.status, 0, '未识别语言应非 0');
+  });
+});
+
+describe('#1204 回执纸迁移：词条＋整句化', () => {
+  let receiptPaper;
+  before(async () => {
+    ({ receiptPaper } = await import('../dist/write/receiptPaper.js'));
+  });
+
+  function receiptInput(kind, language) {
+    return {
+      key: 'bill.record.add',
+      params: { kind, category: '餐饮', amount: -12.5, time: FIXTURE_TIME },
+      receipt: {
+        op: 'add', recordId: 7, summary: 'test', affectedRows: 1,
+        writtenFields: ['category'], noChange: false, source: 'test', actionAt: FIXTURE_TIME,
+      },
+      writtenDetail: 'test',
+      detail: [],
+      facts: { amount: -12.5, category: '餐饮', account: '现金', ledger: '生活', time: FIXTURE_TIME },
+      recent: [],
+      word: '记支出',
+      kind,
+      ...(language === undefined ? {} : { language }),
+    };
+  }
+
+  it('默认中文回执：结论标题与核对行沿用旧字面', () => {
+    const html = receiptPaper(receiptInput('expense', undefined));
+    assert.ok(html.includes('记好了：支出 12.50'), '结论标题应为整句');
+    assert.ok(html.includes('编号 7 ／ 异常：无'), '核对行应为整句');
+    assert.ok(html.includes('已经记好，不用再操作。'), '纸注应存在');
+  });
+
+  it('en 回执：结论与核对走英文整句', () => {
+    const html = receiptPaper(receiptInput('expense', 'en'));
+    assert.ok(html.includes('Recorded: Expense 12.50'), '英文结论标题应为整句');
+    assert.ok(html.includes('No. 7 / exceptions: none'), '英文核对行应为整句');
+    assert.ok(!html.includes('记好了：支出'), '英文页不许留中文结论句');
+  });
+
+  it('无金额与无编号分支走第二整句', () => {
+    const noAmount = receiptInput('batch', undefined);
+    const html = receiptPaper(noAmount);
+    assert.ok(html.includes('这一批记好了'), '批量整句标题');
   });
 });

@@ -11,6 +11,7 @@
   "files": [
     "packages/base-render/src/components/progress-list/model.ts",
     "packages/base-render/src/components/progress-list/attrs.ts",
-    "packages/skill-bill/src/write/scene-installment.ts"
+    "packages/skill-bill/src/write/scene-installment.ts",
+    "packages/skill-bill/src/write/receiptPaper.ts"
   ]
 }
