@@ -22,6 +22,7 @@ import { audit as entriesAudit } from '../check-i18n-entries.mjs';
 import { audit as keysAudit, literalsOf, residueOf, isFrozen } from '../check-i18n-keys.mjs';
 import { auditRegisters as typoRegisters, auditFixture as typoFixture, compareBaseline, FIXTURE_BASELINE } from '../check-typography-langs.mjs';
 import { LANG_REGISTERS } from '../i18n-langs.mjs';
+import { loadEnColumn, enGaps } from '../calorie-html-snapshot.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..');
@@ -117,6 +118,27 @@ test('#1199 排印门：版式读数与基线账本比对（新债必红、还�
     '台面上一条都没有时，基线全部记 stale（还清要显式改基线）');
   const emptyFix = typoFixture({ rows: [{ name: 'demo', widths: {} }] });
   assert.ok(emptyFix.skipped.length > 0, '版式读数全空必须报 skipped（门失明不许当绿）');
+});
+
+test('#1199 calorie 列：英文列空列＝0 件待录入（不当绿也不当红）；同哈希记录必须抛', () => {
+  const zhPath = join(ROOT, 'tooling', 'calorie-html.snapshot.json');
+  const enPath = join(ROOT, 'tooling', 'calorie-html.snapshot.en.json');
+  const col = loadEnColumn(enPath, zhPath);
+  assert.equal(col.lang, 'en');
+  assert.equal(Object.keys(col.records).length, 0, '英文列骨架起步必须是 0 件');
+  assert.equal(Object.keys(col.artifacts).length, 2, '中文列须有 2 件（help-html／help-meta）');
+  assert.equal(enGaps(col, null).pending, true, '没有英文列对照读数时必须报 pending');
+  const same = { 'calorie/help-html': { sha256: col.artifacts['calorie/help-html'].sha256 } };
+  assert.deepEqual(enGaps(col, same).undocumented, [], '与中文列同哈希＝没偏离，不算漏记');
+  const diff = { 'calorie/help-html': { sha256: '11111111111111111111111111111111' } };
+  assert.deepEqual(enGaps(col, diff).undocumented, ['calorie/help-html'], '偏离中文列又没记录＝漏记，必须点出来');
+  const tmp = join(tmpdir(), 't1199-cal-en-' + process.pid + '.json');
+  writeFileSync(tmp, JSON.stringify({
+    lang: 'en', basedOn: 'tooling/calorie-html.snapshot.json',
+    records: { 'calorie/help-html': { sha256: col.artifacts['calorie/help-html'].sha256 } },
+  }), 'utf8');
+  assert.throws(() => loadEnColumn(tmp, zhPath), /同件同哈希/, '英文列记一条与中文列同哈希的记录必须抛');
+  rmSync(tmp, { force: true });
 });
 
 test('#1199 三道新门在真实仓库上：范围 0 件＝显式报数且 exit 0；排印门绿', () => {

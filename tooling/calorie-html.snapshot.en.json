@@ -1,0 +1,17 @@
+{
+  "generatedBy": "tooling/calorie-html-snapshot.mjs",
+  "ticket": "#1234",
+  "purpose": "skill-calorie HTML 产物账本的**英文列**记录：键＝英文列偏离中文列的那些产物；未偏离的不进本账本（中文列本身就是它的基线）",
+  "lang": "en",
+  "basedOn": "tooling/calorie-html.snapshot.json",
+  "hashAlgo": "sha256(归一化文本) 前 32 hex；归一化＝去 BOM ＋ CRLF→LF（与中文列同一口径）",
+  "fixedNow": "2026-01-02T03:04:05",
+  "notation": {
+    "records": "id → { sha256, bytes, note }；键集必须是中文列 artifacts 的子集；记录的 sha256 必须 ≠ 中文列同件（相等＝没记，空转绿）",
+    "emptyColumn": "records={} 合法（0 件＝待录入）：门显式印 PENDING 与 recorded=0，不当绿也不当红",
+    "writeChannel": "node tooling/calorie-html-snapshot.mjs --write-en（显式动作）"
+  },
+  "readonlyUntilMigrated": true,
+  "artifactCount": 0,
+  "records": {}
+}
