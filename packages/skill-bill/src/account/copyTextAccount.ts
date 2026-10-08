@@ -16,6 +16,7 @@
  */
 import { DOC_TITLE } from '../shared/pageIdentity.js';
 import { MISSING, csvCell, oneLine } from '../shared/copyText.js';
+import { projectWakeWord } from '../triggers/wakeTable.js';
 import type { AccountCard, AccountSummary } from './accounts.js';
 
 /** 账户复制三份（单对象透传 `pageParts.copyZoneOf` 的 `copy` 位；缺省走薄信封零回归）。 */
@@ -55,9 +56,9 @@ export function accountTotalLineOf(summary: AccountSummary): string {
   return '合计 ｜ 余额 ' + money2(summary.totals.balance) + ' ' + UNIT + ' ｜ 流水 ' + String(summary.flow_count) + ' 笔';
 }
 
-/** 页身份行（空格分隔）：饼干记账 + 唤醒词（与纸面 brand 同词不同分隔符）。 */
+/** 页身份行（空格分隔）：饼干记账 + 唤醒词（与纸面 brand 同词不同分隔符；空走投影，不写第二处字面量）。 */
 function pageLine(wakeWord: string): string {
-  const w = typeof wakeWord === 'string' && wakeWord.trim() !== '' ? wakeWord.trim() : '看账户汇总';
+  const w = typeof wakeWord === 'string' && wakeWord.trim() !== '' ? wakeWord.trim() : projectWakeWord({ key: 'bill.account.query' });
   return DOC_TITLE + ' ' + w;
 }
 

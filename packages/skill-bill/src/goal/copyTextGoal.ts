@@ -16,6 +16,7 @@
  */
 import { DOC_TITLE } from '../shared/pageIdentity.js';
 import { MISSING, csvCell, oneLine } from '../shared/copyText.js';
+import { projectWakeWord } from '../triggers/wakeTable.js';
 import type { BudgetExecution, BudgetItem, SavingItem, SavingProgress } from './goalData.js';
 
 /** 目标复制三份（单对象透传 `pageParts.copyZoneOf` 的 `copy` 位）。 */
@@ -80,7 +81,7 @@ function savingTotalLineOf(p: SavingProgress): string {
     + ' ｜ 流水 ' + String(p.records) + ' 笔';
 }
 
-/** 页身份行：饼干记账 + 唤醒词。 */
+/** 页身份行：饼干记账 + 唤醒词（空走投影，不写第二处字面量；预算/目标两支各算各的代表词）。 */
 function pageLine(wakeWord: string, fallback: string): string {
   const w = typeof wakeWord === 'string' && wakeWord.trim() !== '' ? wakeWord.trim() : fallback;
   return DOC_TITLE + ' ' + w;
@@ -91,12 +92,12 @@ export function buildGoalCopyText(wakeWord: string, budget: BudgetExecution | nu
   if (budget !== null) {
     const lines = budget.budgets.map((b) => budgetLineOf(b));
     const conclusion = '已查到 ' + String(budget.budgets.length) + ' 条预算';
-    return [pageLine(wakeWord, '看预算'), conclusion, ...lines, budgetTotalLineOf(budget)].join('\n');
+    return [pageLine(wakeWord, projectWakeWord({ key: 'bill.goal.query', op: 'budget' })), conclusion, ...lines, budgetTotalLineOf(budget)].join('\n');
   }
   const p = saving as SavingProgress;
   const lines = p.savings.map((s) => savingLineOf(s));
   const conclusion = '已查到 ' + String(p.savings.length) + ' 个目标';
-  return [pageLine(wakeWord, '看目标'), conclusion, ...lines, savingTotalLineOf(p)].join('\n');
+  return [pageLine(wakeWord, projectWakeWord({ key: 'bill.goal.query', op: 'saving' })), conclusion, ...lines, savingTotalLineOf(p)].join('\n');
 }
 
 /** JSON 加厚（数仍数，2 空格，无尾换行；合计与进度同源，另附派生结论）。 */

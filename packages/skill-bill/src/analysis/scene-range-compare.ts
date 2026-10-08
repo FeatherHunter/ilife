@@ -19,6 +19,7 @@ import { listRange } from '../fetch/index.js';
 import { normalizeDate } from '../shared/dateRange.js';
 import { aggByL1, compareTwo, kpiOf, round1, round2 } from './agg.js';
 import { buildAnalysisCopy } from './copyTextAnalysis.js';
+import { projectWakeWord } from '../triggers/wakeTable.js';
 import { sideKpisOf } from './cards.js';
 import { money, pctText, signedMoney } from './pageParts.js';
 import type { AnalysisScene } from './scene.js';
@@ -123,7 +124,7 @@ export const sceneRangeCompare: AnalysisScene = {
       payload: buildCompare({ labelA: winA.label, labelB: winB.label, a: [...ra], b: [...rb] }),
       kpi: kpiOf([...ra, ...rb]),
       copy: buildAnalysisCopy({
-        kind: 'range', word: '看双区间',
+        kind: 'range', word: projectWakeWord({ key: 'bill.analysis.compare', kind: 'range' }),
         a: { label: winA.label, count: cmp.a.count, expense: cmp.a.expense, income: cmp.a.income },
         b: { label: winB.label, count: cmp.b.count, expense: cmp.b.expense, income: cmp.b.income },
         diff, pct: cmp.change.pct,
