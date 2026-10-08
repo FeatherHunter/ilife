@@ -1,0 +1,12 @@
+{
+  "generatedBy": "#1199（门禁改造）",
+  "ticket": "#1199",
+  "purpose": "**已迁入词条层的文件清单**（缺词条门与 key 残留门的状态账号本）：范围 0 件＝门显式报「范围 0 件」，不许空转当绿",
+  "notation": {
+    "files": "仓库相对路径（正斜杠），逐件登记；文件被删/改名由门报 removed 并要人显式更新",
+    "allowlist": "残留豁免（逐条带 why）；放行只许是「语义上本就不该进词条的位」（命令关键字冻结／用户数据不译／派生件）",
+    "scopeIsEmpty": "files=[] 时两道门都过，但必须显式印 EMPTY-SCOPE 与「范围 0 件」读数（照 tooling/check-base-floor.mjs:139 先例）"
+  },
+  "allowlist": [],
+  "files": []
+}

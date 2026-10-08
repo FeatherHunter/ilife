@@ -1,0 +1,18 @@
+{
+  "generatedBy": "tooling/skill-html-snapshot.mjs",
+  "ticket": "#1199",
+  "purpose": "5 技能 HTML 产物账本的**英文列**记录：键＝英文列偏离中文列的那些产物；未偏离的不进本账本（中文列本身就是它的基线）",
+  "lang": "en",
+  "basedOn": "tooling/skill-html.snapshot.json",
+  "hashAlgo": "sha256(归一化文本) 前 32 hex；归一化＝去 BOM ＋ CRLF→LF（与中文列同一口径）",
+  "notations": [
+    "记录形：{ \"<产物 id>\": { \"sha256\": \"<32hex>\", \"bytes\": <n>, \"note\": \"<为什么偏离中文列>\" } }",
+    "键集必须是中文列 artifacts 的子集（英文列不许凭空多产物）",
+    "记录的 sha256 必须 ≠ 中文列同件（相等＝没记，空转绿）",
+    "本账本只记**偏离中文列**的产物；中文列 194 件的绝大多数在英文列里与中文列逐字节相同，不进这里",
+    "readonlyUntilMigrated: true＝迁移尚未开始：0 件是「待录入」而不是「英文页通过」；门会显式印 0 件，不当绿"
+  ],
+  "readonlyUntilMigrated": true,
+  "artifactCount": 0,
+  "records": {}
+}
