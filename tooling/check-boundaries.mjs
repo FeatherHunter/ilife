@@ -11,6 +11,7 @@ const assert = (cond, msg) => { if (cond) console.log(`OK: ${msg}`); else { cons
 
 const core = pkg('base-link-core');
 assert(Object.keys(core.dependencies ?? {}).length === 0, 'link-core 零依赖');
+assert(Object.keys(pkg('base-entries').dependencies ?? {}).length === 0, 'base-entries 零依赖');
 const render = pkg('base-render');
 assert(Object.keys(render.dependencies ?? {}).length === 0, 'render 无运行时依赖（link-core 仅 dev/typeof）');
 assert(!JSON.stringify(render).includes('base-combos'), 'render 不依赖 combos');
