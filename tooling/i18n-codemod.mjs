@@ -68,7 +68,7 @@ export function tokenize(text) {
         if (text[j] === '\\' && j + 1 < n) { val += text[j + 1]; j += 2; continue; }
         val += text[j]; j++;
       }
-      if (j < n && text[j] === q) { lits.push({ kind: 'str', value: val, line: startLine }); i = j + 1; continue; }
+      if (j < n && text[j] === q) { lits.push({ kind: 'str', value: val, line: startLine, start: i, end: j + 1 }); i = j + 1; continue; }
       i++; continue;
     }
     if (ch === `\``) {
@@ -83,7 +83,7 @@ export function tokenize(text) {
         if (c === '\n') line++;
         val += c; j++;
       }
-      lits.push({ kind: 'tpl', value: val, line: startLine, hasExpr });
+      lits.push({ kind: 'tpl', value: val, line: startLine, hasExpr, start: i, end: (j < n) ? j + 1 : j });
       i = (j < n) ? j + 1 : j; continue;
     }
     if (ch === '\n') line++;
