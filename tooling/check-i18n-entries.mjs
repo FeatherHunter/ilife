@@ -25,7 +25,7 @@
  * 末行固定：RESULT: files=<n> keys=<n> missing=<n>
  * 依赖：零第三方；读源码与词条表，**不写任何文件**。
  */
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -61,35 +61,83 @@ export function loadScope(path = SCOPE_PATH) {
   return data;
 }
 
-/** 一件已迁入词条层的源文件：源文本 → 用到的 key 集（按 base-entries 的调用形态抽）。 */
+/** 一件已迁入词条层的源文件：源文本 → 用到的 key 集（按 #1200 冻结的接口形态抽）。
+ *
+ *  两条调用形态（#1202 试点落地的正是这两条，见 base-render 的 status.ts／model.ts）：
+ *   ① resolve(CATALOG, language, 常量 key, params?)——第三位是字符串常量 key；
+ *   ② const X_ID = { ok: 常量 key, … } as const satisfies …——闭集→key 的常量表。
+ *  另兼容早先那套 e／t 两形态（JSON 词条表路线）。
+ *  只认字符串常量实参：拼出来的 key 抽不到 ⇒ 调用方按「抽不出 key＝门失明」报红，不当绿。 */
 export function extractKeys(source) {
   const keys = new Set();
-  // 调用形态：e('ns.id')／t('ns.id')／ent.t('ns.id')；只认**字符串常量**实参（模板拼出来的 key 抽不到，见下面的失明判据）。
-  const call = /(?:\bent\s*\.\s*)?\b[et]\s*\(\s*['\"]([A-Za-z0-9_.-]+)['\"]/g;
+  // 口径：**形状判据**——源码里每个字符串字面量，凡形如「至少两段点分、小写开头」（progress-list.state.blank、
+  // status-badge.text.ok）即算一个词条 key。为什么按形状而不按调用形态：key 既可能直接当 resolve 的实参，
+  // 也可能先落进「闭集→key」的常量表（const X_ID = { ok: … } as const satisfies …）再被下标取用；
+  // 按调用点抽会漏掉常量表那一路（#1202 的两处硬缝正是这一路）。形状判据不会漏，代价是可能把别处的同形串
+  // 也数进来——那由「每门语言的词条表里都得有这一条」判红兜住（多收一条＝缺词条红，不会静默放过）。
+  const STR = new RegExp("['\"]([A-Za-z0-9_.-]+)['\"]", "g");
+  const KEY = new RegExp("^[a-z][A-Za-z0-9-]*(?:[.][A-Za-z0-9-]+)+$");
   let m;
-  while ((m = call.exec(source)) !== null) keys.add(m[1]);
+  while ((m = STR.exec(source)) !== null) {
+    if (KEY.test(m[1])) keys.add(m[1]);
+  }
   return [...keys].sort();
 }
 
 /** 这一件是否真的 import 了词条层（没 import＝没迁完就挂号）。 */
+/** 这一件是否真的 import 了词条层（没 import＝没迁完就挂号）。
+ *
+ *  两种形态都算：① 直接 from base-entries（走冻结接口）；
+ *  ② 相对 import 进本包词条表 …/entries/index.js 或 …/entries/<语言>.js（表随包存放，组件就近取）。
+ *  只认这两条：别的 import 不算「已迁入」，免得没迁完的件挂号后当绿。 */
 export function importsEntries(source) {
-  return /from\s*['\"][^'\"]*base-entries[^'\"]*['\"]/.test(source);
+  return /from\s*['"][^'"]*base-entries[^'"]*['"]/.test(source)
+    || /from\s*['"][^'"]*\/entries\/(?:index|[a-z-]+)\.js['"]/.test(source);
 }
 
-/** 词条表文件路径：packages/base-entries/src/entries/<lang>.json（形状见 docs/agents/多语言-门禁改造-验收命令.md）。 */
-export function entryTablePath(root, lang) {
-  return join(root, 'packages', 'base-entries', 'src', 'entries', normalizeLang(lang) + '.json');
+/** 词条表：**逐包现找**（词条随包存放，ADR-0004 §3）——`packages/<包>/src/entries/<语言>.{ts,json}`。
+ *
+ *  为什么不是写死一条路径：词条表按包分命名空间，加一个包＝多一处表；写死路径会让「表不在那儿」被读成
+ *  「没有表」。#1202 试点落在 base-render，JSON 路线（base-entries 的 entries/*.json）也认，两条一起扫。 */
+export function entryTableCandidates(root, lang) {
+  const want = normalizeLang(lang);
+  const pkgs = join(root, "packages");
+  const out = [];
+  if (!existsSync(pkgs)) return out;
+  for (const dirent of readdirSync(pkgs, { withFileTypes: true })) {
+    if (!dirent.isDirectory()) continue;
+    for (const ext of [".ts", ".json"]) {
+      const p = join(pkgs, dirent.name, "src", "entries", want + ext);
+      if (existsSync(p)) out.push(p);
+    }
+  }
+  return out;
 }
 
-/** 读一门语言的词条表：缺失／坏 JSON → {ok:false, why}（由调用方决定报法，不静默）。 */
+/** 读一门语言的词条表（可跨包多份：并集）。一份都没有 → {ok:false}（由调用方决定报法，不静默）。 */
 export function loadEntryTable(root, lang) {
-  const p = entryTablePath(root, lang);
-  if (!existsSync(p)) return { ok: false, why: '词条表不存在：' + p };
-  let data;
-  try { data = JSON.parse(readFileSync(p, 'utf8')); } catch (e) { return { ok: false, why: '词条表 JSON 坏：' + p + ' → ' + e.message }; }
-  if (!data || typeof data !== 'object' || Array.isArray(data)) return { ok: false, why: '词条表必须是对象（key → 词条）：' + p };
-  return { ok: true, path: p, keys: new Set(Object.keys(data)) };
+  const paths = entryTableCandidates(root, lang);
+  if (paths.length === 0) return { ok: false, why: "这门语言的词条表一份都没有（找过 packages/*/src/entries/<语言>.{ts,json}）" };
+  const keys = new Set();
+  for (const p of paths) {
+    const raw = readFileSync(p, "utf8");
+    if (p.endsWith(".json")) {
+      let data;
+      try { data = JSON.parse(raw); } catch (e) { return { ok: false, why: "词条表 JSON 坏：" + p + " → " + e.message }; }
+      if (!data || typeof data !== "object" || Array.isArray(data)) return { ok: false, why: "词条表必须是对象（key → 词条）：" + p };
+      for (const k of Object.keys(data)) keys.add(k);
+      continue;
+    }
+    // .ts 形态：抽对象字面量里的字符串 key（`key: 值`）。抽不到 key ⇒ 形状变了，报红不许当绿。
+    const ENT = new RegExp("['\"]([A-Za-z0-9_.-]+)['\"]\\s*:", "g");
+    let m;
+    let n = 0;
+    while ((m = ENT.exec(raw)) !== null) { keys.add(m[1]); n += 1; }
+    if (n === 0) return { ok: false, why: "词条表抽不出 key（形状变了：期望 `key: 值`）：" + p };
+  }
+  return { ok: true, path: paths.join(", "), keys };
 }
+
 
 /** 主判据：返回 {files, keys, missing:[{file,key,lang}], blind:[{file,why}], tableErrors:[{lang,why}]}。 */
 export function audit(scope, root = ROOT_DIR, langs = LANGUAGES) {
@@ -214,4 +262,7 @@ function selftest(scope) {
   console.log('SELFTEST: 空范围显式报数／缺词条必红／补上必绿／没迁完必红／缺表必红／失明必红 六条自证 OK');
 }
 
-main();
+/** 入口守卫（照 tooling/i18n-langs.mjs／skill-html-snapshot.mjs 的先例）：本件被别处 import 时**不跑** CLI，
+ *  免得一红就把 import 它的那道门与测试一起吃掉。 */
+const isMain = process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isMain) main();

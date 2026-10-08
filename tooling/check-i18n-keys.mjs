@@ -101,16 +101,47 @@ export function isFrozen(text) {
 }
 
 /** 单条字面量在某个语言列下算不算残留。 */
+/** 单条字面量在某个语言列下算不算残留。
+ *
+ *  三条豁免（都是「这一位本就不该进词条」的机器判据，不是放宽）：
+ *   ① 代码片段：含 `<` 或 `>` 的串是 HTML／CSS 片段（class／属性／标签），不是给读者看的话；
+ *   ② 开发者报文：含 `：`（全角冒号）或「必须是」的串是 `badInput()` 那种抛给开发者的校验语，不上屏；
+ *   ③ 冻结串（命令关键字／开关／模块名／常量名），见 isFrozen。
+ *  余下才是「该进词条表的用户可见文案」。 */
+/** 单条字面量在某个语言列下算不算残留。
+ *
+ *  豁免（都是「这一位本就不该进词条」的机器判据，不是放宽）：
+ *   ① 代码片段：含 `<`／`>` 的串是 HTML／CSS 片段（标签／class／属性），不是给读者看的话；
+ *   ② 开发者报文：含全角冒号或「必须是」的串是 `badInput()` 抛给开发者的校验语，不上屏；
+ *   ③ 标识符串：整串就是点分／连字符标识（命令键、字段路径）——是键不是话；
+ *   ④ 冻结串（命令关键字／开关／模块名／常量名），见 isFrozen。
+ *  余下才是「该进词条表的用户可见文案」。
+ *
+ *  两门语言的判据不同（口径取自 tooling/i18n-langs.mjs 的名册，本件不各写一套）：
+ *   基准语言 zh：出现 CJK 即残留；
+ *   非基准语言：不判「出现拉丁字母」（本语言本来如此），只判**成句的散文**——
+ *     首词小写开头 ＋ ≥4 个词 ＋ 出现功能词（the／a／an／to／of／and／or／is／are／for／with／in／on），
+ *     或出现句末标点（. ! ?）且 ≥3 个词。这样「代码形状的英文」（键、字段路径、标识）不误报，
+ *     真句子的英文照样红。 */
 export function residueOf(text, lang) {
   const t = String(text);
   const reg = registerOf(lang);
   if (isFrozen(t)) return null;
+  if (t.includes(String.fromCharCode(60)) || t.includes(String.fromCharCode(62))) return null;
+  if (t.includes(String.fromCharCode(65306)) || t.includes(String.fromCharCode(24517, 39035, 26159)) || t.includes(String.fromCharCode(24517, 22635)) || t.includes(String.fromCharCode(20043, 19968))) return null;
+  if (/^[A-Za-z][A-Za-z0-9_.-]*$/.test(t.trim())) return null;
   if (lang === DEFAULT_LANGUAGE) {
-    return new RegExp(reg.scriptRe).test(t) ? '含中文（该进 ' + lang + ' 词条表）' : null;
+    return new RegExp(reg.scriptRe).test(t) ? "含中文（该进 " + lang + " 词条表）" : null;
   }
-  // 非基准语言：不判「出现拉丁字母」（本语言本来如此），只判「多词句子」。
-  const words = t.trim().split(/\s+/).filter((w) => /[A-Za-z]{2,}/.test(w));
-  return words.length >= 3 ? '多词句子（该进 ' + lang + ' 词条表）' : null;
+  const words = t.trim().split(/s+/).filter((w) => /[A-Za-z]/.test(w));
+  if (words.length < 3) return null;
+  const first = words[0];
+  const startsLower = /^[a-z]/.test(first);
+  const FUNC = new Set(["the", "a", "an", "to", "of", "and", "or", "is", "are", "for", "with", "in", "on"]);
+  const hasFunc = words.some((w) => FUNC.has(w.toLowerCase().replace(/[^a-z]/g, "")));
+  const endsSentence = /[.!?]['"]?$/.test(t.trim());
+  const prose = (startsLower && words.length >= 4 && hasFunc) || (endsSentence && words.length >= 3);
+  return prose ? "多词句子（该进 " + lang + " 词条表）" : null;
 }
 
 /** 主判据：返回 {files, literals, residue:[{file,line,lang,why,text}], blind:[{file,why}]}。 */
@@ -229,4 +260,7 @@ function selftest(scope) {
   console.log('SELFTEST: 空范围显式报数／注释豁免／命令关键字豁免／残留必红／搬走必绿／没迁完报失明 六条自证 OK');
 }
 
-main();
+/** 入口守卫（照 tooling/i18n-langs.mjs／skill-html-snapshot.mjs 的先例）：本件被别处 import 时**不跑** CLI，
+ *  免得一红就把 import 它的那道门与测试一起吃掉。 */
+const isMain = process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isMain) main();

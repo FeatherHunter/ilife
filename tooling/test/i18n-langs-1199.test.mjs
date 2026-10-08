@@ -141,12 +141,14 @@ test('#1199 calorie 列：英文列空列＝0 件待录入（不当绿也不当�
   rmSync(tmp, { force: true });
 });
 
-test('#1199 三道新门在真实仓库上：范围 0 件＝显式报数且 exit 0；排印门绿', () => {
+test('#1199 三道新门在真实仓库上：真范围读得动（缺词条 0／残留 0）；排印门绿', () => {
+  // 范围账号本现在**非空**（#1202 试点迁入的两件，tooling/i18n-scope.json）。这一条因此断两件事：
+  // ① 门真读得动真范围（files ≥ 1）；② 末行说清「这一轮查了几件」。空范围那条路径由本件上面的夹具用例管。
   for (const gate of ['check-i18n-entries.mjs', 'check-i18n-keys.mjs']) {
     const r = spawnSync(NODE, [join(ROOT, 'tooling', gate)], { encoding: 'utf8', cwd: ROOT });
-    assert.equal(r.status, 0, gate + ' 范围 0 件必须 exit 0（起步绿）：' + r.stderr);
-    assert.match(r.stdout, /EMPTY-SCOPE .*范围 0 件/, gate + ' 必须显式报「范围 0 件」：' + r.stdout);
-    assert.match(r.stdout, /PASS: 范围 0 件/, gate + ' 末行必须说清「这一轮什么都没查」：' + r.stdout);
+    assert.equal(r.status, 0, gate + ' 真范围必须 exit 0：' + r.stderr + r.stdout);
+    assert.match(r.stdout, /RESULT: files=[1-9]\d* /, gate + ' 必须读到真范围（files ≥ 1）：' + r.stdout);
+    assert.match(r.stdout, /PASS: [1-9]\d* 件已迁入文件/, gate + ' 末行必须说清查了几件：' + r.stdout);
   }
   const typo = spawnSync(NODE, [join(ROOT, 'tooling', 'check-typography-langs.mjs')], { encoding: 'utf8', cwd: ROOT });
   assert.equal(typo.status, 0, '排印门必须 exit 0：' + typo.stderr + typo.stdout);
