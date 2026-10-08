@@ -238,7 +238,7 @@ describe('印章卷轴 · 糙边滤镜与弹层', () => {
   it('行首三枚朱砂小印有印泥质感：材质层过印那条糙边滤镜、字独立成层', () => {
     const tree = expand(React.createElement(SealScroll, { ...PROPS, role: 'help', tier: 'gold' }));
     const marks = nodesOf(tree, (node) => node.props?.['aria-hidden'] === true && typeof node.props?.style?.filter === 'string' && node.props.style.filter.includes('dshLifeSealInkEdge'));
-    assert.equal(marks.length, 3, '进／状／计 三枚，各带一层过糙边滤镜的印泥');
+    assert.equal(marks.length, 3, '状／进／计 三枚，各带一层过糙边滤镜的印泥');
     // expand 对独子不包成数组，统一成列再查。
     const kidsOf = (n) => (Array.isArray(n.children) ? n.children : n.children ? [n.children] : []);
     for (const m of marks) {
@@ -250,7 +250,7 @@ describe('印章卷轴 · 糙边滤镜与弹层', () => {
       assert.ok(!String(mot.props.style.background).includes('#ffffff'), '墨色不匀只许用同色系深浅，不许用白');
     }
     const glyphs = nodesOf(tree, (node) => node.props?.style?.color === '#fdf7ea');
-    assert.deepEqual(glyphs.map((n) => textsOf(n).join('')), ['进', '状', '计'], '字住在滤镜之外（清晰层）');
+    assert.deepEqual(glyphs.map((n) => textsOf(n).join('')), ['状', '进', '计'], '字住在滤镜之外（清晰层）');
   });
 
   it('绦带只借档位金属那一条边：主体恒朱砂，边随金／银／铜走', () => {

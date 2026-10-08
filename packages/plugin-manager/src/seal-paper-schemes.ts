@@ -1,7 +1,7 @@
 /** 卷轴纸面字排 ＋ 关闭钮样子 · **定稿件**（2026-10-06 定档，原型选型期结束）。
  *
  * 定稿形状（逐值锁死，改动须同步 `test/seal-scroll.test.mjs` 与 `test/seal-bundle-1158.test.mjs`）：
- *   纸面：三段紧凑行内（进展／状态／计划），行首一枚朱砂小方印（进／状／计），标签与正文同行基线对齐；
+ *   纸面：三段紧凑行内（状态／进展／计划），行首一枚朱砂小方印（状／进／计），标签与正文同行基线对齐；
  *       末行吃回 0.5em 行距（不然底比顶空一截）；饰线上距加宽到 `0.5em 0 0.75em`；纸底与头部沿用原样式。
  *   档位语：该档金属渐变压进字里（金＝鎏金／银＝冷银／铜＝暖铜），不再一律金。
  *   关闭钮：右上角斜披的朱砂菱形绦带（正立「收卷」字独立成层），两条飘尾沿菱形两条下边各向底尖收，
@@ -186,8 +186,8 @@ function inlineRows(st: PaperStyles, ctx: PaperCtx): React.ReactNode {
       React.createElement('span', { style: { ...st.text, flex: '1 1 auto', display: 'inline', margin: 0, fontSize: '0.9em' } }, text),
     );
   return React.createElement(React.Fragment, null,
-    one('progress', SECTION_LABEL.progress, ctx.progress),
     one('status', SECTION_LABEL.status, ctx.status),
+    one('progress', SECTION_LABEL.progress, ctx.progress),
     one('plan', SECTION_LABEL.plan, ctx.plan, true));
 }
 
