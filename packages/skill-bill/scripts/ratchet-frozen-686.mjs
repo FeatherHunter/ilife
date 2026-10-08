@@ -53,7 +53,8 @@ export const FROZEN = {
   lineCaps: {
     // #1198 下调 276→270：出口件上两摊活各自独立成件——失败口搬进 `src/cli/fail.ts`（语言选择包装件也要用它，
     // 两件互相 import 会成环），参数解析搬进 `src/cli/args.ts`（语言两枚参数走同一处解析）。外壳只多一行调用。
-    'src/cli/cmd_read.ts': 271,
+    // #1204 下调 271→270：`void language` 占位行删除，语言透传进 `runRegistered`（`language.text` 实参一行）。
+    'src/cli/cmd_read.ts': 270,
     'src/render/envelope.ts': 56,
   },
 };

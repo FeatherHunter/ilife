@@ -148,14 +148,14 @@ function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
  *  故 `dispatch` 的 switch 里**不再有**它们的 case（一个命令恰住一处）。
  *  #691 起**不再按域写死入口**（改前是 `spec.kind === 'write' ? runRecordWrite : runQueryRead` 两条）：
  *  声明里本来就带着 `run`，第三个域进来时这一支一行不动——入口跟着声明走，域不需要在外壳上挂号。 */
-function runRegistered(key: string, params: Record<string, unknown>): WriteOut | ViewOut {
+function runRegistered(key: string, params: Record<string, unknown>, language?: string): WriteOut | ViewOut {
   const spec = REGISTRY[key];
   if (spec === undefined) fail(3, '未知 bill 命令：' + key);
   const dbPath = resolveDbPath();
   const handle = openBillDb(dbPath);
   try {
     if (handle.initialized) note('记账 DB 已初始化：' + dbPath);
-    return spec.run(params, handle);
+    return spec.run(params, handle, language);
   } finally {
     try { closeBillDb(handle); } catch { /* ignore */ }
   }
@@ -218,7 +218,6 @@ async function main() {
   // 本轮只接线与校验：不设语言时行为与产物逐字节不变（渲染消费方随词条层 #1200 落地后接）。
   // 位置：**配置 key 拦下之后**——配置面那几条命令（含首次落配置文件）不该被语言解析拦在前头。
   const language = resolveLanguageOrFail(process.argv.slice(2));
-  void language;
   // #706 · 配置体检（`bill.config.check`）：同样是设置页专用的只读命令，同样在预检之前拦下——
   // 它要报的正是「库在哪、通不通」，不能先要求库目录已配。只读：不建目录、不写文件、不落默认配置。
   if (isHealthCheckKey(key)) {
@@ -237,7 +236,7 @@ async function main() {
     // #144：HELP 在开库之前分派（只读页不建库）；迁移过的命令（写入域两条＋查询域四条）先查注册表走能力目录；
     // 其余照旧走 dispatch。
     const help = key === 'bill.help.lookup' ? dispatchHelp(params) : null;
-    const abilityOut: WriteOut | ViewOut | null = help === null && REGISTRY[key] !== undefined ? runRegistered(key, params) : null;
+    const abilityOut: WriteOut | ViewOut | null = help === null && REGISTRY[key] !== undefined ? runRegistered(key, params, language.text) : null;
     const built = buildBillEnvelope(key, abilityOut ? abilityOut.data : (help ? help.data : dispatch(key, params)));
     env = built;
     // B4 既有语义：`--html` 套模板输出完整收据页（section 片段经 CONTENT 注入模板，非片段直写）。
