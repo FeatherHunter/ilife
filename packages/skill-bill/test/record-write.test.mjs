@@ -253,9 +253,11 @@ describe('t406 · 改记录（bill.record.update）真跑', () => {
     const text = pageOf(file);
     // #1079 换页：老那两处（「照这句跟助手说一遍」prompt 区、`ilife-block-param-form`）随老采集页退役；
     // 同一件事改由新页的缺项徽章列（`.slot miss`）＋ 提示行 ＋ `#say-cfg` 的 `template` 字段 ＋ 主话术钮担。
+    // #1181 采集分行：信封原话 `缺必需槽位：记录编号` 不再进页与复制三份（旧 thin 长句零产出，t1181 第 59 行）；
+    // 页内同一件事改由 SAY 提示行 `还差 1 项：记录编号。` ＋ 复制文本 `还差 记录编号` 担（已给/还差/下一步分行）。
     for (const needle of [
       'data-slot="ilife:bill:collect"', 'data-page="collect"', 'data-key="record.update"',
-      '缺必需槽位：记录编号', 'class="slot miss"', 'data-chip="rid"', '还差 1 项：记录编号。',
+      '还差 记录编号', 'class="slot miss"', 'data-chip="rid"', '还差 1 项：记录编号。',
       'id="say-form"', 'id="say-cfg"', 'id="say-btn"',
     ]) {
       assert.ok(text.includes(needle), '改记录采集页缺：' + needle);
