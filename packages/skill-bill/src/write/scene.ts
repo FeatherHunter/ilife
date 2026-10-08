@@ -25,7 +25,7 @@ import type { BillReceipt } from '../shared/writeParts.js';
 import type { RecordSlot } from './slots.js';
 import { SCENE as sceneBorrow } from './scene-borrow.js';
 import { SCENE as sceneBatch } from './scene-batch.js';
-import { SCENE as sceneCollect } from './scene-collect.js';
+import { SCENE as sceneCollect, sceneCollect as buildCollectScene } from './scene-collect.js';
 import { SCENE as sceneExpense } from './scene-expense.js';
 import { SCENE as sceneIncome } from './scene-income.js';
 import { SCENE as sceneInstallment, sceneInstallment as buildInstallmentScene } from './scene-installment.js';
@@ -108,12 +108,13 @@ const BY_OP = new Map(SCENES.filter((s) => s.op !== '').map((s) => [s.op, s]));
 
 /** 取件（判定只有四条，见件头；认不得的 kind 落「记一笔」，不猜、不抛——命令本身已由注册表拦过）。
  *
- *  `language` 只决定**已迁入词条层**的件（当前仅记分期一件）按哪门语言取值：`zh`（含不给）走落点表里
+ *  `language` 只决定**已迁入词条层**的件（记分期、记收回两件，其余随各自迁移票加入）按哪门语言取值：`zh`（含不给）走落点表里
  *  那一行静态件（与改造前同一对象）；其余语言现算。未迁移的件任何语言都走静态件（＝中文页）。 */
 export function sceneFor(input: { readonly key: string; readonly kind?: string; readonly op?: string }, language: string = 'zh'): Scene {
   const kind = typeof input.kind === 'string' ? input.kind : '';
   const op = typeof input.op === 'string' ? input.op : '';
   if (kind === 'installment' && language !== 'zh') return buildInstallmentScene(language);
+  if (kind === 'collect' && language !== 'zh') return buildCollectScene(language);
   const byKind = BY_KIND.get(kind);
   if (kind !== '' && byKind !== undefined) return byKind;
   const byOp = BY_OP.get(op);

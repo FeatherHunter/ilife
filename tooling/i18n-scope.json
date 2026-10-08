@@ -7,11 +7,12 @@
     "allowlist": "残留豁免（逐条带 why）；放行只许是「语义上本就不该进词条的位」（命令关键字冻结／用户数据不译／派生件）",
     "scopeIsEmpty": "files=[] 时两道门都过，但必须显式印 EMPTY-SCOPE 与「范围 0 件」读数（照 tooling/check-base-floor.mjs:139 先例）"
   },
-  "allowlist": [],
+  "allowlist": ["#借出", "#未还", "#已还", "#收回", "借贷/收回"],
   "files": [
     "packages/base-render/src/components/progress-list/model.ts",
     "packages/base-render/src/components/progress-list/attrs.ts",
     "packages/skill-bill/src/write/scene-installment.ts",
-    "packages/skill-bill/src/write/receiptPaper.ts"
+    "packages/skill-bill/src/write/receiptPaper.ts",
+    "packages/skill-bill/src/write/scene-collect.ts"
   ]
 }
