@@ -49,6 +49,7 @@ const SCRIPT_REL = 'tooling/check-real-home-untouched.mjs';
 /** 全量测试表：与 `package.json` 的 `test` 脚本逐字同一份 glob（改这里＝改本门的判据面）。 */
 export const SUITE_GLOBS = [
   'test/*.test.mjs',
+  'packages/base-entries/test/*.test.mjs',
   'packages/base-render/test/*.test.mjs',
   'packages/skill-calorie/test/*.test.mjs',
   'packages/skill-memo-ilife/test/*.test.mjs',

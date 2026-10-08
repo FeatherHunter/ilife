@@ -13,7 +13,10 @@ const core = pkg('base-link-core');
 assert(Object.keys(core.dependencies ?? {}).length === 0, 'link-core 零依赖');
 assert(Object.keys(pkg('base-entries').dependencies ?? {}).length === 0, 'base-entries 零依赖');
 const render = pkg('base-render');
-assert(Object.keys(render.dependencies ?? {}).length === 0, 'render 无运行时依赖（link-core 仅 dev/typeof）');
+// #1199：旧断言是「render 的 dependencies 必须空」。公共层要出词条层之后它不再成立——base-render
+// **有意**依赖同层的零依赖包 base-entries（#1200／#1202）。按维护者裁决把它**收窄**成下面那条白名单
+// （公共层包之间只许依赖同样零依赖的公共层包），**不是放宽**：旧断言能拦的越界依赖，白名单照样拦，
+// 只是多认了「同层零依赖包」这一种合法边。留在这里只会让 base-entries 落地那天永远红。
 assert(!JSON.stringify(render).includes('base-combos'), 'render 不依赖 combos');
 const combos = pkg('base-combos');
 assert(combos.dependencies?.['base-link-core'] !== undefined, 'combos 强依赖 link-core');
