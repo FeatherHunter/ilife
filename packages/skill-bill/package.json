@@ -21,7 +21,6 @@
     "bill-cmd-read": "./dist/cli/cmd_read.js"
   },
   "dependencies": {
-    "base-entries": "0.3.34",
     "base-link-core": "0.3.34",
     "base-paint": "0.3.34"
   },

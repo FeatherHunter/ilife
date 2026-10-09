@@ -7,34 +7,19 @@
  *  见 `docs/base/base-render/组件目录架构.md`。
  */
 
-import { resolve } from 'base-entries';
 import { assertActionId, assertPlainObject, badInput, esc, isStatusKind } from './shared.js';
-import { BASE_RENDER_CATALOG, type BaseRenderMessageId } from '../../entries/index.js';
 import { ACTION_BAR_DEFAULTS, ACTION_ID_ATTR, COPY_ACTION_IDS, DEFAULT_DATA_ATTR, EmptyStateInput, ErrorReceiptInput, RenderEmptyState, RenderErrorReceipt, RenderStatusBadge, STATUS_DEFAULT_TEXT, StatusBadgeInput, StatusKind } from '../../spec/index.js';
 import { STYLE_PREFIX } from '../../style.js';
 
 /* ── 状态三控件 ───────────────────────────────────────────────────────── */
 
-/** 状态闭集 → 词条 key（**逐格写死**：拼错 key 编译期红）。这是「契约 key 化」的落点：
- *  契约上留的种类是**机器键**（STATUS_KINDS），默认字按 key 从词条表取，不再写死在渲染函数里。 */
-const STATUS_TEXT_ID = {
-  ok: 'status-badge.text.ok',
-  warn: 'status-badge.text.warn',
-  danger: 'status-badge.text.danger',
-  empty: 'status-badge.text.empty',
-} as const satisfies Readonly<Record<StatusKind, BaseRenderMessageId>>;
-
 /** 冻结签名：`renderStatusBadge(input: StatusBadgeInput): string`。
- *  非法 `status` 降级 `'empty'`（不抛错，防无样式徽章）；`text` 缺省／空串取`STATUS_DEFAULT_TEXT`。
- *  `language` 给了就按 key 取词条（走回退链）；不给（空串）⇒ 取到 zh 那一条，逐字等于
- *  `STATUS_DEFAULT_TEXT`，故既有产物逐字节不变。 */
+ *  非法 `status` 降级 `'empty'`（不抛错，防无样式徽章）；`text` 缺省／空串取 `STATUS_DEFAULT_TEXT`。 */
 export const renderStatusBadge: RenderStatusBadge = (input) => {
   const badge = input === null || input === undefined || typeof input !== 'object' ? undefined : (input as StatusBadgeInput);
   const status: StatusKind = badge !== undefined && isStatusKind(badge.status) ? badge.status : 'empty';
   const text = badge === undefined ? undefined : badge.text;
-  const label = typeof text === 'string' && text !== ''
-    ? text
-    : resolve(BASE_RENDER_CATALOG, badge?.language ?? '', STATUS_TEXT_ID[status]);
+  const label = typeof text === 'string' && text !== '' ? text : STATUS_DEFAULT_TEXT[status];
   return '<span class="' + STYLE_PREFIX + 'status-badge ' + STYLE_PREFIX + 'status-badge-' + status + '">' + esc(label) + '</span>';
 };
 

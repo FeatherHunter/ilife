@@ -13,8 +13,6 @@
  */
 
 /** 本件的类名根：全部槽位类名都是 `<前缀>block-progress-list-<槽名>`。 */
-import { zh as ZH } from '../../entries/zh.js';
-
 export const PROGRESS_LIST_CLASS = 'ilife-block-progress-list';
 
 /** 槽位闭集（标记契约的一部分：`render.ts` 与判据都用这里的名字拼类名，不各抄一份字面量）。 */
@@ -64,15 +62,12 @@ export type ProgressListForm = (typeof PROGRESS_LIST_FORMS)[number];
 export const PROGRESS_LIST_STATES = ['blank', 'on-track', 'done', 'over'] as const;
 export type ProgressListState = (typeof PROGRESS_LIST_STATES)[number];
 
-/** 状态字（状态闭集 → 屏上那句话；判据从这里取，不抄字面量）。
- *
- *  **词的唯一出处是词条表**（`src/entries/zh.ts`，ADR-0004 §3）；本常量是它按闭集取的**派生视图**，
- *  `language` 不给时（＝不启用多语言）逐字等于改造前那四个词，故既有产物逐字节不变。 */
+/** 状态字（状态闭集 → 屏上那句话；唯一出处，判据从这里取，不抄字面量）。 */
 export const PROGRESS_LIST_STATE_WORDS: Readonly<Record<ProgressListState, string>> = Object.freeze({
-  blank: ZH['progress-list.state.blank'],
-  'on-track': ZH['progress-list.state.on-track'],
-  done: ZH['progress-list.state.done'],
-  over: ZH['progress-list.state.over'],
+  blank: '未记录',
+  'on-track': '进行中',
+  done: '已达标',
+  over: '已超',
 });
 
 /** 语气闭集（只改**视觉**档，不改语义）：`none` ＝ 不上语气色（走强调色）。 */
@@ -82,18 +77,12 @@ export type ProgressListTone = (typeof PROGRESS_LIST_TONES)[number];
 /** 缺值的写法：**缺值写成 `—`，不许写 0、不许留空**（全仓同一条地板）。 */
 export const PROGRESS_LIST_MISSING = '—';
 
-/** 整句模板的左端词取法（**派生视图**）：句子的整句形态住词条表 `src/entries/zh.ts`，
- *  本常量只为既有取值口保留——`model.ts` 不再按它拼句（拼接串已整句化进词条表）。 */
-const leadOf = (template: string): string => {
-  const at = template.indexOf('{');
-  return (at < 0 ? template : template.slice(0, at)).trimEnd();
-};
-/** 「还差」那句的左端词。 */
-export const PROGRESS_LIST_REMAIN_WORD = leadOf(ZH['progress-list.remain']);
+/** 「还差」那句的左端词：句子的形状住这里，`model.ts` 只按它拼。 */
+export const PROGRESS_LIST_REMAIN_WORD = '还差';
 /** 刚好走到目标的写法（与「已超」区分：一个是到点，一个是过点）。 */
-export const PROGRESS_LIST_EXACT_WORD = ZH['progress-list.exact'];
+export const PROGRESS_LIST_EXACT_WORD = '刚好达标';
 /** 过目标时的左端词。 */
-export const PROGRESS_LIST_OVER_WORD = leadOf(ZH['progress-list.over']);
+export const PROGRESS_LIST_OVER_WORD = '已超';
 
 /** 一行（一个目标）。数字是**机器值**（要算比例），屏上的字由本件按 `formatNumber` 一律排出来。 */
 export interface ProgressListRow {
@@ -131,7 +120,4 @@ export interface ProgressListInput {
   readonly form?: ProgressListForm;
   /** 附加类名（空格分隔；逐个过类名正则）。 */
   readonly extraClass?: string;
-  /** 语言（BCP 47）。**不给＝既有形状**（中文列逐字节不变）；给了才走词条表：
-   *  词住 `src/entries/<语言>.ts`，缺那一条走回退链（请求语言 → zh → en）。 */
-  readonly language?: string;
 }

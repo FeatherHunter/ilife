@@ -340,9 +340,6 @@ export const STATUS_DEFAULT_TEXT = Object.freeze({
 export interface StatusBadgeInput {
   readonly status: StatusKind;
   readonly text?: string;
-  /** 语言（BCP 47）。**不给＝既有形状**（中文列逐字节不变）：给了才按 key 走词条表
-   *  （key 表住 `src/components/controls/status.ts`，词住 `src/entries/<语言>.ts`）。 */
-  readonly language?: string;
 }
 
 /** 非法 status 允许清单降级 empty（不抛错，防无样式徽章）。 */

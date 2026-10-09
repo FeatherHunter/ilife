@@ -29,5 +29,5 @@ export function recordCollectDoc(input: CollectInput): string {
     key: input.key,
     kind: textOf(input.params['kind']),
     op: textOf(input.params['op']),
-  }, input.language).collect(input);
+  }).collect(input);
 }

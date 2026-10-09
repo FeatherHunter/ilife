@@ -25,10 +25,10 @@ import type { BillReceipt } from '../shared/writeParts.js';
 import type { RecordSlot } from './slots.js';
 import { SCENE as sceneBorrow } from './scene-borrow.js';
 import { SCENE as sceneBatch } from './scene-batch.js';
-import { SCENE as sceneCollect, sceneCollect as buildCollectScene } from './scene-collect.js';
+import { SCENE as sceneCollect } from './scene-collect.js';
 import { SCENE as sceneExpense } from './scene-expense.js';
 import { SCENE as sceneIncome } from './scene-income.js';
-import { SCENE as sceneInstallment, sceneInstallment as buildInstallmentScene } from './scene-installment.js';
+import { SCENE as sceneInstallment } from './scene-installment.js';
 import { SCENE as sceneLend } from './scene-lend.js';
 import { SCENE as scenePhoto } from './scene-photo.js';
 import { SCENE as scenePlain } from './scene-plain.js';
@@ -52,8 +52,6 @@ export interface CollectInput {
   readonly today: string;
   /** 近期记录（按时间倒序，最近在先）；取数由处理体给，页面不碰库。 */
   readonly recent: readonly BillRow[];
-  /** 本页的文本语言（BCP 47；不给＝`zh`，与改造前逐字节相同）。#1204 起由命令行透传进来。 */
-  readonly language?: string;
 }
 
 /** 回执页入参：回执事实 ＋ 本次写入的明细行 ＋ 一句写入去向的说明（`receiptStatusCard` 要它）
@@ -69,8 +67,6 @@ export interface ReceiptInput {
   readonly detail: readonly { readonly k: string; readonly v: string }[];
   readonly facts: SummaryFacts;
   readonly recent: readonly BillRow[];
-  /** 本页的文本语言（BCP 47；不给＝`zh`，与改造前逐字节相同）。#1204 起由命令行透传进来。 */
-  readonly language?: string;
 }
 
 /** 一件场景件：一条唤醒词的落点。 */
@@ -106,15 +102,10 @@ export const SCENES: readonly Scene[] = [
 const BY_KIND = new Map(SCENES.filter((s) => s.kind !== '').map((s) => [s.kind, s]));
 const BY_OP = new Map(SCENES.filter((s) => s.op !== '').map((s) => [s.op, s]));
 
-/** 取件（判定只有四条，见件头；认不得的 kind 落「记一笔」，不猜、不抛——命令本身已由注册表拦过）。
- *
- *  `language` 只决定**已迁入词条层**的件（记分期、记收回两件，其余随各自迁移票加入）按哪门语言取值：`zh`（含不给）走落点表里
- *  那一行静态件（与改造前同一对象）；其余语言现算。未迁移的件任何语言都走静态件（＝中文页）。 */
-export function sceneFor(input: { readonly key: string; readonly kind?: string; readonly op?: string }, language: string = 'zh'): Scene {
+/** 取件（判定只有四条，见件头；认不得的 kind 落「记一笔」，不猜、不抛——命令本身已由注册表拦过）。 */
+export function sceneFor(input: { readonly key: string; readonly kind?: string; readonly op?: string }): Scene {
   const kind = typeof input.kind === 'string' ? input.kind : '';
   const op = typeof input.op === 'string' ? input.op : '';
-  if (kind === 'installment' && language !== 'zh') return buildInstallmentScene(language);
-  if (kind === 'collect' && language !== 'zh') return buildCollectScene(language);
   const byKind = BY_KIND.get(kind);
   if (kind !== '' && byKind !== undefined) return byKind;
   const byOp = BY_OP.get(op);

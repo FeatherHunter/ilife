@@ -6,7 +6,6 @@
   },
   "references": [
     { "path": "./packages/base-link-core" },
-    { "path": "./packages/base-entries" },
     { "path": "./packages/base-render" },
     { "path": "./packages/base-combos" },
     { "path": "./packages/skill-calorie" },

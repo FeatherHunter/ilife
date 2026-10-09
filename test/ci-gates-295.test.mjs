@@ -29,9 +29,6 @@ const GATES = [
   ...['pnpm gen:check', 'pnpm doctor', 'pnpm test', 'pnpm boundaries', 'pnpm base:floor',
     'pnpm snapshot:html:check', 'pnpm gate:selftest:html', 'pnpm help:examples:check',
   ].map((gate) => ({ job: 'build-test', hit: 'run: ' + gate, label: gate })),
-  // #1199：多语言门（缺词条 ＋ key 残留 ＋ 排印名册）——这道门要么被机器盯着，要么明确不受保护。
-  //   用 `name:` 命中（该步正文跑 4 条命令，`run:` 那一行不是判据的稳定落点）。
-  { job: 'build-test', hit: 'name: 多语言门（缺词条＋key 残留＋排印名册）', label: '多语言门（缺词条＋key 残留＋排印名册）' },
   // #311：publish-gates 是同一类遮蔽面——三道发布门 ＋ 两道复核门一并入册。
   //   实测（run 34761515902）：第 9 步 pnpm publish:fresh 一红，其后两步被判 skipped，从未真跑过。
   ...[
