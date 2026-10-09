@@ -13,6 +13,13 @@
     "packages/base-render/src/components/progress-list/attrs.ts",
     "packages/skill-bill/src/write/scene-installment.ts",
     "packages/skill-bill/src/write/receiptPaper.ts",
-    "packages/skill-bill/src/write/scene-collect.ts"
+    "packages/skill-bill/src/write/scene-collect.ts",
+    "packages/skill-bill/src/write/blockedFold.ts",
+    "packages/skill-bill/src/write/errorReceipt.ts",
+    "packages/skill-bill/src/write/sourceNote.ts",
+    "packages/skill-bill/src/write/commands.ts",
+    "packages/skill-bill/src/write/receiptParts.ts",
+    "packages/skill-bill/src/write/slots.ts",
+    "packages/skill-bill/src/write/scene-batch.ts"
   ]
 }
