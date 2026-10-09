@@ -3,7 +3,17 @@
  * 本件的场景差异：候选**只列带 `#借出` 且还带 `#未还` 的记录**（老侧 `scripts/render_write.py:312` 的 `pool`，已还的不列）、
  *   收回这一笔落「借贷/收回」＋ `#收回`、金额写正数，原记录把 `#未还` 换成 `#已还`（金额不动）。
  *   消标与金额都要用户确认，不按最近一笔顶替（施工图第二节「缺项阻断」那一格）。
+ *
+ *  #1204 第三件（多语言文本外置）：本件的用户可见文案不住这里，住 `../entries/zh.ts`（中文基准）
+ *  与 `../entries/en.ts`（英文列）；`sceneCollect(language)` 按语言取值，`SCENE` 是 `zh`
+ *  的那一份（不启用多语言时与改造前逐字节相同）。写入库的用户数据（分类与标签，
+ *  跟'餐饮'同类）不进词条表：`CATEGORY` 与 `TAG_*` 留在源码，展示侧保持源语言，
+ *  插标签的整句以 `{tag}`／`{tagUnpaid}`… 为参（运行时值恒为中文标签）。
+ *  参数名（`source_id`）与命令键冻结，不进词条表。`WORD`（`wakeWordOf` 运行时算）不动。
+ *  `family` 与回执计数行复用记分期那一组的 key（同一概念只一处定义）。
  */
+import { resolve } from 'base-entries';
+import { SKILL_BILL_CATALOG, type SkillBillMessageId } from '../entries/index.js';
 import { money2 } from './summaryRow.js';
 import { wakeWordOf } from './typeBadge.js';
 import type { Scene } from './scene.js';
@@ -12,147 +22,183 @@ import { bindFlowPages, candidatesFrom, crumbOf, idOf, promptButton, promptHead,
 const KIND = 'collect';
 const KEY = 'bill.record.add';
 const WORD: string = wakeWordOf(KIND);
-/** 收回一律落这个分类（老侧同一处口径）。 */
+/** 收回一律落这个分类（老侧同一处口径）。用户数据：写入库的分类，不进词条表。 */
 const CATEGORY = '借贷/收回';
 /** 这一格：哪一笔借出收回来了。 */
 const SOURCE_NAME = 'source_id';
-const SOURCE_LABEL = '借出记录编号';
-/** 借贷标签：只列没还的那一批。 */
+/** 借贷标签：只列没还的那一批。用户数据：写入库的标签，不进词条表。 */
 const TAG_LEND = '#借出';
 const TAG_UNPAID = '#未还';
 const TAG_PAID = '#已还';
 const TAG_COLLECT = '#收回';
 
-export const SCENE: Scene = {
-  id: 'collect',
-  key: KEY,
-  kind: KIND,
-  op: '',
-  family: '特殊收支族',
-  ...bindFlowPages({
-    word: WORD,
+/** 按语言取本件的差异声明（key 拼错编译期红：`SkillBillMessageId` 从 zh 表派生）。 */
+export function sceneCollect(language: string = 'zh'): Scene {
+  const t = (id: SkillBillMessageId, params?: { readonly [key: string]: string | number }): string =>
+    resolve(SKILL_BILL_CATALOG, language, id, params);
+  return {
+    id: 'collect',
+    key: KEY,
     kind: KIND,
-    category: CATEGORY,
-    sourceSlot: {
-      name: SOURCE_NAME,
-      label: SOURCE_LABEL,
-      why: '没给：收回要指名销哪一笔的 ' + TAG_UNPAID + '，不拿最近一笔顶替',
-    },
-    candidates: (values) => {
-      const amount = values.amount;
-      return candidatesFrom({
-        recent: values.input.recent,
-        keep: (r) => r.note.includes(TAG_LEND) && r.note.includes(TAG_UNPAID),
-        same: (r) => amount !== null && Math.abs(Math.abs(r.amount) - amount) <= 0.005,
-        why: (_r, same) => (same
-          ? '还带 ' + TAG_UNPAID + '，金额与收回额一致'
-          : '还带 ' + TAG_UNPAID + '，金额与收回额不符'),
-      });
-    },
-    chips: () => [
-      '收回记正数',
-      '分类 ' + crumbOf(CATEGORY),
-      '原记录 ' + TAG_UNPAID + ' 换 ' + TAG_PAID,
-      '金额不动',
-    ],
-    cards: (ctx) => {
-      const { id: source, row: original } = ctx.source;
-      const diff = ctx.amount === null || original === null
-        ? null
-        : Math.round((ctx.amount - Math.abs(original.amount)) * 100) / 100;
-      return [
-        { label: '收回金额', value: money2(ctx.amount), detail: '收入记正数，归在「' + crumbOf(CATEGORY) + '」下面' },
+    op: '',
+    family: t('installment.family'),
+    ...bindFlowPages({
+      word: WORD,
+      kind: KIND,
+      category: CATEGORY,
+      sourceSlot: {
+        name: SOURCE_NAME,
+        label: t('scene-collect.source.label'),
+        why: t('scene-collect.source.why', { tag: TAG_UNPAID }),
+      },
+      candidates: (values) => {
+        const amount = values.amount;
+        return candidatesFrom({
+          recent: values.input.recent,
+          keep: (r) => r.note.includes(TAG_LEND) && r.note.includes(TAG_UNPAID),
+          same: (r) => amount !== null && Math.abs(Math.abs(r.amount) - amount) <= 0.005,
+          why: (_r, same) => (same
+            ? t('scene-collect.candidates.why-same', { tag: TAG_UNPAID })
+            : t('scene-collect.candidates.why-different', { tag: TAG_UNPAID })),
+        });
+      },
+      chips: () => [
+        t('scene-collect.chips.positive'),
+        t('scene-collect.chips.category', { crumb: crumbOf(CATEGORY) }),
+        t('scene-collect.chips.swap', { tagUnpaid: TAG_UNPAID, tagPaid: TAG_PAID }),
+        t('scene-collect.chips.amount-steady'),
+      ],
+      cards: (ctx) => {
+        const { id: source, row: original } = ctx.source;
+        const diff = ctx.amount === null || original === null
+          ? null
+          : Math.round((ctx.amount - Math.abs(original.amount)) * 100) / 100;
+        return [
+          {
+            label: t('scene-collect.cards.amount.label'),
+            value: money2(ctx.amount),
+            detail: t('scene-collect.cards.amount.detail', { crumb: crumbOf(CATEGORY) }),
+          },
+          {
+            label: t('scene-collect.cards.source.label'),
+            value: original === null ? t('scene-collect.cards.source.unknown') : money2(original.amount),
+            detail: source === null
+              ? t('scene-collect.cards.source.no-id')
+              : original === null
+                ? t('scene-collect.cards.source.missing', { source })
+                : t('scene-collect.cards.source.with-row', { source, category: original.category, time: original.time }),
+          },
+          {
+            label: t('scene-collect.cards.diff.label'),
+            value: diff === null ? t('scene-collect.cards.diff.pending') : money2(diff),
+            detail: diff === null
+              ? t('scene-collect.cards.diff.pending-detail')
+              : (diff === 0 ? t('scene-collect.cards.diff.full') : t('scene-collect.cards.diff.partial')),
+          },
+        ];
+      },
+      note: () => ({
+        msg: t('scene-collect.note.msg'),
+        detail: t('scene-collect.note.detail', { tagLend: TAG_LEND, tagUnpaid: TAG_UNPAID }),
+        icon: 'info',
+      }),
+      flow: {
+        first: {
+          title: t('scene-collect.flow.first.title'),
+          note: t('scene-collect.flow.first.note', { tagLend: TAG_LEND, tagUnpaid: TAG_UNPAID }),
+          done: (ctx) => ctx.source.id !== null,
+          state: (ctx) => {
+            const sid = ctx.source.id;
+            return sid === null
+              ? t('scene-collect.cards.source.unknown')
+              : t('scene-collect.flow.first.state.known', { id: sid });
+          },
+          pick: {
+            name: SOURCE_NAME,
+            label: t('scene-collect.source.label'),
+            selectedId: (ctx) => ctx.source.id,
+            hint: t('scene-collect.flow.first.pick.hint'),
+          },
+        },
+        second: {
+          title: t('scene-collect.flow.second.title'),
+          note: t('scene-collect.flow.second.note', { crumb: crumbOf(CATEGORY) }),
+          field: (slot, ctx) => ({
+            name: slot.name,
+            label: slot.name === 'amount'
+              ? t('scene-collect.cards.amount.label')
+              : slot.name === 'category' ? t('scene-collect.flow.second.field.category') : slot.label,
+            hint: slot.name === 'category'
+              ? t('scene-collect.flow.second.field.category-hint', { crumb: crumbOf(CATEGORY) })
+              : slot.hint,
+            ...(slot.required ? { required: true } : {}),
+            value: slot.name === 'category' && textOf(ctx.params['category']) === ''
+              ? CATEGORY
+              : textOf(ctx.params[slot.name]),
+          }),
+        },
+        third: {
+          title: t('scene-collect.flow.third.title'),
+          note: (ctx) => {
+            const sid = ctx.source.id;
+            return sid === null
+              ? t('scene-collect.flow.third.note.pending', { tagUnpaid: TAG_UNPAID, tagPaid: TAG_PAID, tagCollect: TAG_COLLECT })
+              : t('scene-collect.flow.third.note.done', { id: sid, tagUnpaid: TAG_UNPAID, tagPaid: TAG_PAID, tagCollect: TAG_COLLECT });
+          },
+        },
+      },
+      prompt: (ctx) => {
+        const sid = ctx.source.id;
+        const row = ctx.source.row;
+        const sourceText = sid === null
+          ? t('scene-collect.prompt.source.missing')
+          : row === null
+            ? t('scene-collect.prompt.source.no-row', { id: sid })
+            : t('scene-collect.prompt.source.with-row', {
+              id: sid, category: row.category, amount: money2(row.amount), time: row.time,
+            });
+        return {
+          text: promptHead(t('scene-collect.prompt.head'), ctx.blocked)
+            + t('scene-collect.prompt.body', {
+              wakeWord: WORD,
+              source: sourceText,
+              amount: money2(ctx.amount),
+              category: CATEGORY,
+              account: ctx.facts.account || t('scene-collect.prompt.account-missing'),
+              ledger: ctx.facts.ledger || t('scene-collect.prompt.ledger-missing'),
+              sourceId: sid ?? t('scene-collect.prompt.source.missing'),
+              tagCollect: TAG_COLLECT,
+              tagUnpaid: TAG_UNPAID,
+              tagPaid: TAG_PAID,
+            }),
+          label: promptButton(ctx.blocked, t('scene-collect.prompt.label')),
+        };
+      },
+      receiptTail: (input) => [
         {
-          label: '借出原记录',
-          value: original === null ? '未认准' : money2(original.amount),
-          detail: original === null
-            ? (source === null ? '还没认准是哪一笔，候选里点一行' : '#' + source + '近期记录里没读到借出记录')
-            : '#' + source + '　' + original.category + '　' + original.time,
+          label: t('installment.receipt.rows-label'),
+          value: t('scene-collect.receipt.rows-count', { count: input.receipt.affectedRows }),
+          detail: t('installment.receipt.rows-detail'),
         },
         {
-          label: '未收净差',
-          value: diff === null ? '未算' : money2(diff),
-          detail: diff === null
-            ? '认准借出记录后这里出净差'
-            : (diff === 0 ? '全额收回，未留尾' : '收回额与借出额不等，尾差照记、不阻断'),
+          label: t('scene-collect.receipt.pair.label'),
+          value: idOf(input.params[SOURCE_NAME]) === null ? TAG_COLLECT : TAG_UNPAID + ' → ' + TAG_PAID,
+          detail: t('scene-collect.receipt.pair.detail'),
         },
-      ];
-    },
-    note: () => ({
-      msg: '按标签销账，不按金额猜',
-      detail: '候选只列带 ' + TAG_LEND + ' 且还带 ' + TAG_UNPAID + ' 的记录，一条都没有就直接反问。',
-      icon: 'info',
+      ],
+      receiptNote: (input) => {
+        const source = idOf(input.params[SOURCE_NAME]);
+        return {
+          msg: source === null
+            ? t('scene-collect.receipt-note.msg.without-source', { tagCollect: TAG_COLLECT })
+            : t('scene-collect.receipt-note.msg.with-source', { tagCollect: TAG_COLLECT, source, tagPaid: TAG_PAID }),
+          detail: t('scene-collect.receipt-note.detail', { tagUnpaid: TAG_UNPAID }),
+          icon: 'ok',
+        };
+      },
+      receiptEyebrow: WORD,
     }),
-    flow: {
-      first: {
-        title: '借出记录',
-        note: '候选只列带 ' + TAG_LEND + ' 且还带 ' + TAG_UNPAID + ' 的记录。',
-        done: (ctx) => ctx.source.id !== null,
-        state: (ctx) => (ctx.source.id === null ? '未认准' : '已认准 #' + ctx.source.id),
-        pick: {
-          name: SOURCE_NAME,
-          label: SOURCE_LABEL,
-          selectedId: (ctx) => ctx.source.id,
-          hint: '要的是还没还回来的那笔借出，未认准不代选。',
-        },
-      },
-      second: {
-        title: '收回这一步',
-        note: '收回额写正数。分类固定为「' + crumbOf(CATEGORY) + '」。',
-        field: (slot, ctx) => ({
-          name: slot.name,
-          label: slot.name === 'amount' ? '收回金额' : slot.name === 'category' ? '分类' : slot.label,
-          hint: slot.name === 'category' ? '固定为 ' + crumbOf(CATEGORY) : slot.hint,
-          ...(slot.required ? { required: true } : {}),
-          value: slot.name === 'category' && textOf(ctx.params['category']) === ''
-            ? CATEGORY
-            : textOf(ctx.params[slot.name]),
-        }),
-      },
-      third: {
-        title: '结果',
-        note: (ctx) => (ctx.source.id === null
-          ? '认准原记录后：把它的 ' + TAG_UNPAID + ' 换成 ' + TAG_PAID + '，金额不动。这一笔补 ' + TAG_COLLECT + '。'
-          : '原记录 #' + ctx.source.id + ' 的 ' + TAG_UNPAID + ' 换成 ' + TAG_PAID
-            + '，金额不动。这一笔补 ' + TAG_COLLECT + '。'),
-      },
-    },
-    prompt: (ctx) => ({
-      text: promptHead('照下面这个口径记这一笔收回，并把原记录的标签换过来。', ctx.blocked)
-        + '\n请加载「饼干记账」技能，帮我记一笔收回。\n唤醒词：记收回\n'
-        + '借出记录：' + (ctx.source.id === null
-          ? '<借出记录编号>'
-          : '#' + ctx.source.id + '　' + (ctx.source.row === null
-            ? '近期记录里没读到'
-            : ctx.source.row.category + '　' + money2(ctx.source.row.amount) + '　' + ctx.source.row.time)) + '\n'
-        + '收回金额：' + money2(ctx.amount) + '　收入记正数\n'
-        + '分类：' + CATEGORY + '\n'
-        + '账户：' + (ctx.facts.account || '<钱回到哪张卡>') + '\n'
-        + '账本：' + (ctx.facts.ledger || '<账本>') + '\n'
-        + '请办两件：\n'
-        + '① 记一笔收入，分类「' + CATEGORY + '」，备注写「' + TAG_COLLECT + ' 原记录 #'
-        + (ctx.source.id ?? '<借出记录编号>') + '」\n'
-        + '② 原记录 #' + (ctx.source.id ?? '<借出记录编号>') + ' 的备注把 ' + TAG_UNPAID + ' 换成 ' + TAG_PAID
-        + '，金额不动',
-      label: promptButton(ctx.blocked, '照这个口径写两笔，点这颗复制'),
-    }),
-    receiptTail: (input) => [
-      { label: '这次记了几笔', value: input.receipt.affectedRows + ' 笔', detail: '按库里的改动算' },
-      {
-        label: '配对标签',
-        value: idOf(input.params[SOURCE_NAME]) === null ? TAG_COLLECT : TAG_UNPAID + ' → ' + TAG_PAID,
-        detail: '原记录只动标签，金额不动',
-      },
-    ],
-    receiptNote: (input) => {
-      const source = idOf(input.params[SOURCE_NAME]);
-      return {
-        msg: '这一笔打 ' + TAG_COLLECT
-          + (source === null ? '，原记录这次没给到' : '，原记录 #' + source + ' 换成 ' + TAG_PAID),
-        detail: '「查欠款」按 ' + TAG_UNPAID + ' 数，写完少一笔。撤销见下方按钮。',
-        icon: 'ok',
-      };
-    },
-    receiptEyebrow: WORD,
-  }),
-};
+  };
+}
+
+export const SCENE: Scene = sceneCollect('zh');

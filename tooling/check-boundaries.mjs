@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /** P4 三包边界冻结断言（CI 可执行）：破界即 fail。 */
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -11,11 +11,47 @@ const assert = (cond, msg) => { if (cond) console.log(`OK: ${msg}`); else { cons
 
 const core = pkg('base-link-core');
 assert(Object.keys(core.dependencies ?? {}).length === 0, 'link-core 零依赖');
+assert(Object.keys(pkg('base-entries').dependencies ?? {}).length === 0, 'base-entries 零依赖');
 const render = pkg('base-render');
-assert(Object.keys(render.dependencies ?? {}).length === 0, 'render 无运行时依赖（link-core 仅 dev/typeof）');
+// #1199：旧断言是「render 的 dependencies 必须空」。公共层要出词条层之后它不再成立——base-render
+// **有意**依赖同层的零依赖包 base-entries（#1200／#1202）。按维护者裁决把它**收窄**成下面那条白名单
+// （公共层包之间只许依赖同样零依赖的公共层包），**不是放宽**：旧断言能拦的越界依赖，白名单照样拦，
+// 只是多认了「同层零依赖包」这一种合法边。留在这里只会让 base-entries 落地那天永远红。
 assert(!JSON.stringify(render).includes('base-combos'), 'render 不依赖 combos');
 const combos = pkg('base-combos');
 assert(combos.dependencies?.['base-link-core'] !== undefined, 'combos 强依赖 link-core');
+
+// ── #1199 · 公共层包之间的依赖白名单（**收窄**，不是放宽）──────────────────────────
+// 上面那条 `render 无运行时依赖` 的口径在「公共层要出词条层」之后不再成立：词条层（#1200 的
+// packages/base-entries）本身就是公共层包，它要与 base-render 同处一层并可被 render 依赖。
+// 于是把它改写成**收窄后的白名单**：
+//   ① 公共层包（base-*）之间只许依赖**同样零依赖**的公共层包——今天只有 base-entries 一个名字；
+//   ② base-entries 自己必须零运行时依赖（照 base-link-core 的先例）；
+//   ③ 白名单之外出现任何公共层包名即红（＝新开一条公共层依赖必须先改这里并走审查）。
+// 与旧断言相比只多不少：旧的「dependencies 空」被换成「公共层依赖只许指向零依赖的公共层包」，
+// 不是把判据去掉（存量 base-link-core 就是零依赖包，故 base-render／base-combos 对它的依赖照旧合法）。
+// ⚠ pilot-1202 之后 `base-entries` 若声明在 devDependencies 里——本白名单**三个依赖位一起看**，
+//   正是不让「挪到 dev 就绕开」。
+const PUBLIC_PKGS = ['base-link-core', 'base-render', 'base-combos', 'base-entries'];
+const PUBLIC_ALIAS = { 'base-paint': 'base-render' }; // 目录名／包名两种写法都算同一个公共层包
+const pubId = (name) => PUBLIC_ALIAS[name] ?? name;
+const pkgExists = (n) => existsSync(join(root, 'packages', n, 'package.json'));
+const zeroDepPublic = PUBLIC_PKGS.filter((n) => pkgExists(n) && Object.keys(pkg(n).dependencies ?? {}).length === 0);
+assert(zeroDepPublic.length > 0, `公共层零依赖包至少得有一个（实得 ${zeroDepPublic.length}：${zeroDepPublic.join('、') || '无'}）`);
+const zeroDepSet = new Set(zeroDepPublic.map(pubId));
+for (const n of PUBLIC_PKGS) {
+  if (!pkgExists(n)) continue;
+  const p = pkg(n);
+  const selfId = pubId(p.name ?? n);
+  const baseDeps = ['dependencies', 'devDependencies', 'peerDependencies']
+    .flatMap((k) => Object.keys(p[k] ?? {}))
+    .map(pubId)
+    .filter((d) => d.startsWith('base-') && d !== selfId);
+  const seen = [...new Set(baseDeps)];
+  const outside = seen.filter((d) => !zeroDepSet.has(d));
+  assert(outside.length === 0,
+    `公共层包之间的依赖白名单：${n} 只许依赖零依赖的公共层包（${zeroDepPublic.join('、')}）；实得越界 ${outside.join('、') || '无'}（全部公共层依赖：${seen.join('、') || '无'}）`);
+}
 const present = readFileSync(join(root, 'packages/base-combos/src/present.ts'), 'utf8');
 assert(!present.includes('base-paint') && !/from\s+['"].*(?:render|paint)/.test(present), 'present 只许字符串级引用，禁 import render');
 // #694：`src/` 下新增了能力子目录（`config/`），扁平 `readdirSync` ＋ `readFileSync` 会把子目录当文件读、

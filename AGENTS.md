@@ -4,14 +4,6 @@
 
 ## Agent skills
 
-### ISSUE 创建纪律（开票凭判据）
-
-**指不出读数就不建。** 建之前先在票面写清**真值从哪儿读出来**：验它真假的那条命令、那条外部读数、或那条带证据的结论。取哪种形式都行——命令、别处的读数、写进票里带证据的结论各有各的票。但**必须指得出来**：说不出「谁看哪个读数」的，就是不建——想法、改进、看不顺眼的、拿不准的，一律写进文档，不占票。
-
-建之前还要过 `docs/agents/编排纪律.md` 第十条的三问（能复现／有现存票或 MAP 可认领／是已承诺的目标），**三问全过**才建；有现存票就回写那张，不另起新票。照这三问回头自检已建的票，过不了的自己关掉；判据形式的完整口径见同份「判据可终止」。
-
-违反：指不出读数也建 = 这张票没人能认领、没人能验收，落在仓库里当噪音；指得出读数但只够 S3／无主／未承诺仍强行建，同样是噪音，开票者负责关掉。少建与多建都按同一条判：以读数＋归属＋承诺三件是否齐全为准，不以数量多寡为准。
-
 ### Issue tracker
 
 Issue tracker（`gh` CLI）：建／读／评论／打标签／关 issue、外部 PR 分流、技能说 publish／fetch 时的转译、`/wayfinder` 的 map／child／blocking／frontier —— 见 `docs/agents/issue-tracker.md`。
@@ -59,15 +51,3 @@ Default five canonical roles, label string equals role name. See `docs/agents/tr
 ### awesome 插件市场投稿
 
 要把插件上架到 awesome 精选列表、改条目里的描述或分类、或补截图／下载量／README 时读 `docs/agents/awesome插件市场投稿.md`——那一份自包含，可以整份拷给别的项目；本仓七个插件上架到哪一步、下载量与截图的现场读数看 `docs/agents/awesome插件市场-上架台账.md`。
-
-### 终端纪律
-
-一切终端命令一律在原生终端里执行；不用 `pwsh` 工具直接跑。长命令落盘＋等标记＋只读尾，编译／测试／git 写操作经 `node tooling/run-locked.mjs` 排队。细则见 `docs/subagent-concurrency-protocol.md` §2–§4。
-
-### 编排纪律
-
-切票、派活、收活之前，或盯窗口、没有票的一人一活时，读 `docs/agents/编排纪律.md`；窗口内的机械做法见 `docs/subagent-concurrency-protocol.md`。
-
-### 并发纪律（共享工作区，硬规矩）
-
-多席共用同一个工作区，**禁止**切分支（`git switch`／`git checkout <分支>`）、`git reset`、`git stash`、`git clean`、`git restore .`、`--amend`／`rebase`／`push --force*`——它们会把别席已提交或在途的产出孤儿化（2026-09-15 实测发生过两次）。**只许** `git add <自己声明的路径>` ＋ `git commit -m "<中文信息>" -- <路径>`，且提交前用 `git diff --cached --name-only` 复核暂存区只含自己的件；编译／测试／git 写操作一律经 `node tooling/run-locked.mjs --ticket <票号> -- <命令>` 排队。编译入口写死 `node node_modules/typescript/bin/tsc -b <包>`（本机 `node_modules\.bin` 不存在，`npx tsc` 是假出口、不编译却可能出假绿）。细则见 `docs/subagent-concurrency-protocol.md` §2–§3。

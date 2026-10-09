@@ -18,7 +18,10 @@
  */
 
 import * as React from 'react';
-import { MANAGER_PLUGIN, MANAGER_TABS, MORE_PLUGINS, PANEL_LINKS, recoFor } from './nav.js';
+import { MANAGER_PLUGIN, MANAGER_TABS, MANUAL_ENTRY, MORE_PLUGINS, PANEL_LINKS, recoFor } from './nav.js';
+import { clampSpread, planManual, spreadOfPage } from './manual-plan.js';
+import type { ManualScene, ManualSheet } from './manual-plan.js';
+import { SCENES, manualContentCss, renderManualPage } from './manual-content.js';
 import type { ManagerTab } from './nav.js';
 import { CONFIG_TAB_SLOT } from './update-contract.js';
 import { managerCallAdapter, mountLifeBatchEntry } from './update-dialog.js';
@@ -88,6 +91,192 @@ const S = {
     textDecoration: 'none',
     fontSize: 14,
     lineHeight: 1,
+  } as React.CSSProperties,
+  /** #1237：甲腰封书入口（书的样子逐字取定版甲：红封＋书脊＋米色腰封＋名牌）。 */
+  manualWrap: { position: 'relative', display: 'inline-flex', flex: '0 0 auto' } as React.CSSProperties,
+  manualBook: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 10,
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    padding: '6px 10px 10px',
+  } as React.CSSProperties,
+  manualStage: { position: 'relative', width: 76, height: 104, filter: 'drop-shadow(0 10px 10px #00000088)' } as React.CSSProperties,
+  manualCover: {
+    display: 'block',
+    position: 'relative',
+    width: 72,
+    height: 100,
+    borderRadius: '5px 8px 8px 5px',
+    background: 'linear-gradient(135deg,#9c2f2f,#5f1616 65%,#3a0d0d)',
+    border: '1px solid #d9ab3c',
+    boxShadow: '5px 7px 12px #0009',
+  } as React.CSSProperties,
+  manualSpine: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 12,
+    background: 'linear-gradient(90deg,#320b0b,#571414)',
+    borderRadius: '5px 0 0 5px',
+  } as React.CSSProperties,
+  manualBand: {
+    position: 'absolute',
+    left: -4,
+    right: -4,
+    top: 34,
+    height: 26,
+    background: '#ece0c2',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#5c1010',
+    fontSize: 12,
+    letterSpacing: '.2em',
+    boxShadow: '0 2px 4px #00000066',
+  } as React.CSSProperties,
+  manualPlate: {
+    marginTop: 14,
+    background: 'linear-gradient(#4a1f1a,#2a0f0c)',
+    border: '1px solid #8a6a15',
+    borderRadius: 4,
+    color: '#e8c96a',
+    fontSize: 13,
+    letterSpacing: '.3em',
+    textIndent: '.3em',
+    padding: '4px 18px',
+  } as React.CSSProperties,
+  /** #1237：空壳书（书体是 #1238 的活，这里只留壳＋标题＋关闭）。 */
+  manualShell: {
+    position: 'fixed',
+    top: 16,
+    left: '50%',
+    transform: 'translateX(-50%)',
+    zIndex: 50,
+    width: 'min(620px, calc(100vw - 32px))',
+    maxHeight: 'calc(100vh - 32px)',
+    overflowY: 'auto',
+    background: 'var(--dsw-alias-background-primary, #fff)',
+    color: 'var(--dsw-alias-label-primary, inherit)',
+    border: '1px solid var(--dsw-alias-border-l1, rgba(128,128,128,.35))',
+    borderRadius: 8,
+    padding: '10px 12px',
+  } as React.CSSProperties,
+  manualShellHead: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 } as React.CSSProperties,
+  manualClose: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 26,
+    height: 26,
+    borderRadius: 6,
+    border: '1px solid transparent',
+    background: 'transparent',
+    color: 'inherit',
+    cursor: 'pointer',
+    fontSize: 14,
+    lineHeight: 1,
+  } as React.CSSProperties,
+  /** #1238：书壳（壳的样子逐字取定版：红框金边＋米纸＋零宽脊鎏金线＋签＋框下铜扣）。
+   * 面板里的纸宽基准与整页原型不同（面板 560 上限，原型 1080），比值与几何口径一致。 */
+  manualRoot: {
+    position: 'relative',
+    marginTop: 'calc(var(--paper-w) * .054 + 16px)',
+  } as React.CSSProperties,
+  manualFrame: {
+    position: 'absolute',
+    inset: 0,
+    borderRadius: '1em',
+    background: 'linear-gradient(180deg,#c63d2a,#a32216)',
+    border: '3px double #f5d97a',
+    boxShadow: 'inset 0 2px 0 #ffffff33,inset 0 -3px 6px #0000004d,0 0 0 5px #2a140c,0 0 0 6px #c9a22755,0 18px 40px #000000aa',
+    filter: 'url(#ilife-rough-frame)',
+  } as React.CSSProperties,
+  manualWeave: {
+    position: 'absolute',
+    inset: 0,
+    borderRadius: '1em',
+    pointerEvents: 'none',
+    opacity: .35,
+    backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'120\' height=\'120\'%3E%3Cfilter id=\'f\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.5\' numOctaves=\'3\'/%3E%3CfeColorMatrix type=\'matrix\' values=\'0 0 0 0 0.2 0 0 0 0 0.08 0 0 0 0 0.05 0 0 0 0.25 0\'/%3E%3C/filter%3E%3Crect width=\'120\' height=\'120\' filter=\'url(%23f)\'/%3E%3C/svg%3E")',
+  } as React.CSSProperties,
+  manualPaper: {
+    position: 'relative',
+    borderRadius: '.25em',
+    background: '#ece0c2',
+    backgroundImage: 'radial-gradient(ellipse at 20% 0%,#fff8e2aa,transparent 55%),radial-gradient(ellipse at 85% 100%,#b89b5e55,transparent 50%),radial-gradient(circle at 88% 12%,#8a6a3526,transparent 30%),radial-gradient(circle at 8% 78%,#8a6a351e,transparent 26%)',
+    boxShadow: '0 1px 3px #3d241052,0 0 0 1px #e6d9bd,inset 0 0 110px #b89b5e55,inset 0 0 0 3px #3a2413,inset 0 1px 0 #fffefb',
+    padding: '20px 22px',
+    margin: '0 16px 12px 0',
+  } as React.CSSProperties,
+  manualFiber: {
+    position: 'absolute',
+    inset: 0,
+    borderRadius: '.25em',
+    pointerEvents: 'none',
+    opacity: .8,
+    backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'160\' height=\'160\'%3E%3Cfilter id=\'p\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'2\'/%3E%3CfeColorMatrix type=\'matrix\' values=\'0 0 0 0 0.45 0 0 0 0 0.36 0 0 0 0 0.22 0 0 0 0.05 0\'/%3E%3C/filter%3E%3Crect width=\'160\' height=\'160\' filter=\'url(%23p)\'/%3E%3C/svg%3E")',
+  } as React.CSSProperties,
+  manualVolume: {
+    display: 'flex',
+    position: 'relative',
+    perspective: '6000px',
+    minHeight: 'min(calc(var(--paper-w) / 1.41421356), 80vh)',
+  } as React.CSSProperties,
+  manualPage: { flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'visible' } as React.CSSProperties,
+  manualPageL: { position: 'relative', paddingRight: 0 } as React.CSSProperties,
+  manualPageR: { position: 'relative', paddingLeft: 0, transformOrigin: 'left center' } as React.CSSProperties,
+  manualSpineSlot: { width: 0, position: 'relative', flex: 'none' } as React.CSSProperties,
+  manualSpineLine: {
+    position: 'absolute',
+    left: -1,
+    top: 0,
+    bottom: 0,
+    width: 2,
+    margin: 0,
+    backgroundImage: 'linear-gradient(to bottom,#f8e7ae,#d9ab3c),radial-gradient(circle .6px at 50% 50%,rgba(232,201,106,.75) 40%,rgba(232,201,106,0) 42%),radial-gradient(circle .5px at 50% 50%,rgba(248,231,174,.65) 40%,rgba(248,231,174,0) 42%)',
+    backgroundSize: '1px 100%,2px 9px,2px 13px',
+    backgroundPosition: 'center top,center top,center 4px',
+    backgroundRepeat: 'no-repeat,repeat,repeat',
+  } as React.CSSProperties,
+  manualTabLayer: { position: 'absolute', left: 0, right: 0, top: 0, height: 0, zIndex: 8, pointerEvents: 'none' } as React.CSSProperties,
+  manualDeck: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, margin: '.5em auto 0' } as React.CSSProperties,
+  manualBrass: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
+    cursor: 'pointer',
+    border: '1px solid #2a140c',
+    borderRadius: 6,
+    padding: '6px 13px',
+    whiteSpace: 'nowrap',
+    flex: 'none',
+    fontFamily: 'inherit',
+    fontSize: 12,
+    letterSpacing: '.12em',
+    color: '#3a2607',
+    textShadow: '0 1px 0 #ffeaa8',
+    userSelect: 'none',
+    background: 'linear-gradient(#f8e7ae,#dcb047 26%,#b1831f 60%,#8a6a15)',
+    boxShadow: 'inset 0 1px 0 #fff8dc,inset 0 -2px 4px #00000066,0 3px 0 #6b5210,0 8px 16px #000000aa',
+  } as React.CSSProperties,
+  manualBrassOff: { opacity: .55, cursor: 'default' } as React.CSSProperties,
+  manualHoverCard: {
+    position: 'fixed',
+    zIndex: 60,
+    background: 'linear-gradient(#fbf3da,#efdfb4)',
+    border: '1px solid #c9a227',
+    borderRadius: '.55em',
+    boxShadow: '0 14px 30px #00000066,inset 0 1px 0 #fffdf3',
+    color: '#2e2418',
+    fontSize: 13,
+    lineHeight: 1.7,
+    padding: '.45em .7em',
+    cursor: 'pointer',
   } as React.CSSProperties,
   /** #933：页签格里「配置卡 ＋ 体检卡」这一列的堆叠间距（唯一口径，别再给某一张卡加 margin）。 */
   tabStack: { display: 'flex', flexDirection: 'column', gap: 10 } as React.CSSProperties,
@@ -236,6 +425,284 @@ function PanelLinkIcon(props: { readonly filled: boolean; readonly path: string 
       focusable: 'false',
     },
     React.createElement('path', { d: props.path }),
+  );
+}
+
+/** 书签（一枚纸一枚：点签直达，悬停出卡；几何与在不在读的都是 plan 那份结果）。 */
+function tabButton(
+  sh: ManualSheet,
+  at: number,
+  tab: { width: number; height: number; font: number; radius: number },
+  goPage: (pg: number) => void,
+  setHover: (h: { pg: number; x: number; y: number } | null) => void,
+): React.ReactElement {
+  const on = sh.facing === at * 2 + 1 || sh.facing === at * 2 + 2;
+  return React.createElement(
+    'span',
+    {
+      key: 'sh' + sh.sheet,
+      role: 'button',
+      tabIndex: 0,
+      'aria-label': '翻到第' + sh.facing + '页',
+      title: '翻到第' + sh.facing + '页',
+      'data-ilife-manual': 'tab',
+      'data-pg': sh.facing,
+      onClick: () => { goPage(sh.facing); },
+      onKeyDown: (e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') goPage(sh.facing); },
+      onMouseEnter: (e: React.MouseEvent) => { setHover({ pg: sh.facing, x: e.clientX, y: e.clientY }); },
+      onMouseLeave: () => { setHover(null); },
+      style: {
+        position: 'absolute',
+        width: 'calc(var(--paper-w) * ' + tab.width / 100 + ')',
+        height: 'calc(var(--paper-w) * ' + tab.height / 100 + ')',
+        paddingTop: 'calc(var(--paper-w) * .008)',
+        boxSizing: 'border-box',
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'center',
+        fontFamily: "Georgia,'Times New Roman',serif",
+        fontSize: 'calc(var(--paper-w) * ' + tab.font / 100 + ')',
+        lineHeight: 1,
+        color: on ? '#3a2607' : '#4a3a22',
+        background: on ? 'linear-gradient(#f8e7ae,#d9ab3c)' : 'linear-gradient(#f2e8cc,#d3c098)',
+        border: '1px solid #8a7a55',
+        borderBottom: 'none',
+        borderRadius: 'calc(var(--paper-w) * ' + tab.radius / 100 + ') calc(var(--paper-w) * ' + tab.radius / 100 + ') 0 0',
+        boxShadow: on ? '0 -2px 6px #00000088,inset 0 1px 0 #fffbe8' : '0 -2px 5px #00000055,inset 0 1px 0 #fffdf3',
+        cursor: 'pointer',
+        pointerEvents: 'auto',
+        bottom: 0,
+        [sh.side === 'left' ? 'right' : 'left']: 'calc(50% + ' + sh.tabOffset + '%)',
+      } as React.CSSProperties,
+    },
+    String(sh.facing),
+  );
+}
+
+/** popover 书籍壳（票 #1238 空壳跑通；票 #1239 加 renderPage 注入点喂真场景，默认仍是空框）。
+ *
+ * 排版口径唯一出处是 planManual（本组件只读结果，不自算）；页内正文是 #1239 的活，
+ * 页框留空（data-ilife-manual="page-frame"）。翻页协议＝预显目标页＋无目标页预清空＋
+ * 交接无入场动画（票面口径）；冻高＝开书瞬间量遍各跨页取最高、上限锁 A4 高
+ * （量具缺席如测试替身时退回自然高度，不硬写）。旧外壳定稿件已背离，不跟它。 */
+function ManualBookShell(props: { scenes: ManualScene[]; renderPage?: (page: { page: number; key: string; state: string } | null, goPage: (pg: number) => void) => React.ReactNode }): React.ReactElement {
+  const scenes = props.scenes;
+  const renderPage = props.renderPage ?? (() => null);
+  const [spread, setSpread] = React.useState(0);
+  const at = clampSpread(scenes, spread);
+  const [frozen, setFrozen] = React.useState<number | null>(null);
+  const [measuring, setMeasuring] = React.useState(-1);
+  const [hover, setHover] = React.useState<{ pg: number; x: number; y: number } | null>(null);
+  const bookRef = React.useRef<HTMLDivElement | null>(null);
+  const leftRef = React.useRef<HTMLDivElement | null>(null);
+  const rightRef = React.useRef<HTMLDivElement | null>(null);
+  const heights = React.useRef<number[]>([]);
+  const plan = planManual(scenes, at);
+  // 量遍各跨页：逐跨页渲染（视觉隐藏）读框高推进；量具缺席直接收工。
+  React.useEffect(() => {
+    heights.current = [];
+    setMeasuring(-1);
+    setFrozen(null);
+  }, [scenes.length]);
+  React.useEffect(() => {
+    if (measuring < 0) {
+      if (bookRef.current === null) return;
+      heights.current = [];
+      setMeasuring(0);
+      return;
+    }
+    const book = bookRef.current;
+    if (book === null) { setMeasuring(-1); return; }
+    const h = Math.max(leftRef.current?.scrollHeight ?? 0, rightRef.current?.scrollHeight ?? 0);
+    heights.current[measuring] = h;
+    if (measuring + 1 < plan.spreadCount) { setMeasuring(measuring + 1); return; }
+    const tallest = heights.current.reduce((m, v) => Math.max(m, v), 0);
+    const capped = Math.floor(book.clientWidth / 1.41421356);
+    setFrozen(tallest > 0 && capped > 0 ? Math.min(tallest, capped) : null);
+    setMeasuring(-1);
+  });
+  // 窗口变化重冻：只认元素量具，观察器缺席即跳过（禁 window 直写）。
+  React.useEffect(() => {
+    const book = bookRef.current;
+    if (book === null || typeof ResizeObserver === 'undefined') return;
+    const watcher = new ResizeObserver(() => { heights.current = []; setMeasuring(0); });
+    watcher.observe(book);
+    return () => { watcher.disconnect(); };
+  }, []);
+  const shown = measuring >= 0 ? planManual(scenes, measuring) : plan;
+  const goPage = (pg: number) => { setHover(null); setSpread(spreadOfPage(scenes, pg)); };
+  const left = shown.pages.find((p) => p.side === 'left') ?? null;
+  const right = shown.pages.find((p) => p.side === 'right') ?? null;
+  const prevOff = at === 0;
+  const nextOff = at === plan.spreadCount - 1;
+  const hoverScene = hover === null ? null : scenes[hover.pg - 1] ?? null;
+  const frame = (page: { page: number; key: string; state: string } | null, side: 'left' | 'right', ref: React.Ref<HTMLDivElement>) => React.createElement(
+    'div',
+    {
+      key: side,
+      ref,
+      'data-ilife-manual': 'page-frame',
+      'data-ilife-page': page === null ? 'empty' : page.page,
+      'data-ilife-state': page === null ? 'empty' : page.state,
+      style: { ...(side === 'left' ? S.manualPageL : S.manualPageR), ...S.manualPage },
+    },
+    page === null ? null : renderPage(page, goPage),
+  );
+  return React.createElement(
+    'div',
+    { style: { '--paper-w': 'min(560px, 100%)', ...S.manualRoot } as React.CSSProperties, 'data-ilife-manual': 'shell' },
+    React.createElement(
+      'svg',
+      { width: 0, height: 0, style: { position: 'absolute' }, 'aria-hidden': 'true' },
+      React.createElement(
+        'defs',
+        null,
+        React.createElement('filter', { id: 'ilife-rough-frame', x: '-6%', y: '-6%', width: '112%', height: '112%' },
+          React.createElement('feTurbulence', { baseFrequency: '0.6', numOctaves: '3', result: 'n' }),
+          React.createElement('feDisplacementMap', { in: 'SourceGraphic', in2: 'n', scale: '6.5' }),
+        ),
+      ),
+    ),
+    React.createElement('style', { 'data-ilife-manual': 'content-css' }, manualContentCss()),
+    React.createElement('div', { style: S.manualFrame, 'aria-hidden': 'true' }),
+    React.createElement('div', { style: S.manualWeave, 'aria-hidden': 'true' }),
+    React.createElement(
+      'div',
+      { style: S.manualPaper },
+      React.createElement('div', { style: S.manualFiber, 'aria-hidden': 'true' }),
+      React.createElement(
+        'div',
+        {
+          ref: bookRef,
+          'data-ilife-manual': 'book',
+          style: {
+            ...S.manualVolume,
+            ...(frozen === null ? null : { height: frozen, minHeight: frozen }),
+            ...(measuring >= 0 ? { visibility: 'hidden' } : null),
+          } as React.CSSProperties,
+        },
+        React.createElement(
+          'div',
+          { style: S.manualTabLayer },
+          plan.sheets.map((sh) => tabButton(sh, at, plan.tab, goPage, setHover)),
+        ),
+        frame(left, 'left', leftRef),
+        React.createElement('div', { style: S.manualSpineSlot, 'aria-hidden': 'true' },
+          React.createElement('span', { style: S.manualSpineLine })),
+        frame(right, 'right', rightRef),
+      ),
+    ),
+    React.createElement(
+      'div',
+      { style: S.manualDeck },
+      React.createElement(
+        'button',
+        {
+          type: 'button',
+          style: { ...S.manualBrass, ...(prevOff ? S.manualBrassOff : null) },
+          disabled: prevOff,
+          'aria-label': '上一跨页',
+          'data-ilife-manual': 'prev',
+          'data-ilife-press': 'manual-prev',
+          onClick: () => { setSpread(clampSpread(scenes, at - 1)); },
+        },
+        '‹ 上一页',
+      ),
+      React.createElement(
+        'button',
+        {
+          type: 'button',
+          style: { ...S.manualBrass, ...(nextOff ? S.manualBrassOff : null) },
+          disabled: nextOff,
+          'aria-label': '下一跨页',
+          'data-ilife-manual': 'next',
+          'data-ilife-press': 'manual-next',
+          onClick: () => { setSpread(clampSpread(scenes, at + 1)); },
+        },
+        '下一页 ›',
+      ),
+    ),
+    hover === null
+      ? null
+      : React.createElement(
+        'div',
+        {
+          role: 'status',
+          'data-ilife-manual': 'tab-card',
+          onClick: () => { goPage(hover.pg); },
+          style: { ...S.manualHoverCard, left: hover.x + 12, top: hover.y + 16 },
+        },
+        React.createElement('div', null, '第' + hover.pg + '页' + (hoverScene === null ? '' : ' · ' + hoverScene.title)),
+        React.createElement('div', null, '点一下翻到这一页 ›'),
+      ),
+  );
+}
+
+/** 面板顶部使用手册入口（票 #1237）：甲腰封书按钮，点开弹出书（空壳，书体是 #1238 的活）。
+ *
+ * 开合态只用 useState（面板禁 document／window 直写）；文案取导航表那份镜像。 */
+function ManualEntry(): React.ReactElement {
+  const [open, setOpen] = React.useState(false);
+  return React.createElement(
+    'span',
+    { style: S.manualWrap },
+    React.createElement(
+      'button',
+      {
+        type: 'button',
+        style: S.manualBook,
+        title: MANUAL_ENTRY.tip,
+        'aria-label': MANUAL_ENTRY.title,
+        'aria-expanded': open,
+        'aria-controls': 'ilife-manual-book',
+        // #1174：入口挂 press（悬停洗色＋按压收缩＋焦点双环；链接只做反馈不做标记）。
+        'data-ilife-press': MANUAL_ENTRY.key,
+        onClick: () => { setOpen(true); },
+      },
+      React.createElement(
+        'span',
+        { style: S.manualStage, 'aria-hidden': 'true' },
+        React.createElement(
+          'span',
+          { style: S.manualCover },
+          React.createElement('span', { style: S.manualSpine }),
+          React.createElement('span', { style: S.manualBand }, MANUAL_ENTRY.title),
+        ),
+      ),
+      React.createElement('span', { style: S.manualPlate, 'aria-hidden': 'true' }, MANUAL_ENTRY.title),
+    ),
+    open
+      ? React.createElement(
+        'div',
+        {
+          role: 'dialog',
+          id: 'ilife-manual-book',
+          'aria-label': MANUAL_ENTRY.title,
+          style: S.manualShell,
+          'data-ilife-manual': 'book-shell',
+        },
+        React.createElement(
+          'div',
+          { style: S.manualShellHead },
+          React.createElement('span', null, MANUAL_ENTRY.title),
+          React.createElement(
+            'button',
+            {
+              type: 'button',
+              style: S.manualClose,
+              'aria-label': '关闭' + MANUAL_ENTRY.title,
+              'data-ilife-press': 'manual-close',
+              onClick: () => { setOpen(false); },
+            },
+            '×',
+          ),
+        ),
+        React.createElement(ManualBookShell, {
+          scenes: [...SCENES],
+          renderPage: (page, goPage) => page === null ? null : renderManualPage(SCENES, page, goPage),
+        }),
+      )
+      : null,
   );
 }
 
@@ -479,6 +946,8 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
       React.createElement(
         'div',
         { style: S.headActions },
+        // #1237：使用手册入口挂头，排在更新入口与星／气泡之前。
+        React.createElement(ManualEntry, null),
         React.createElement('span', {
           style: S.updateEntrySlot,
           ref: (element: HTMLSpanElement | null) => {

@@ -116,6 +116,21 @@ export const PANEL_LINKS: readonly PanelLinkRow[] = [
   { key: 'feedback', icon: { path: 'M5 4h14a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-7.5L7 18v-4H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z', filled: false }, tip: '反馈问题', url: 'https://github.com/FeatherHunter/ilife/issues/new' },
 ];
 
+/** 面板顶部使用手册入口（票 #1237）：甲腰封书（红封＋书脊＋米色腰封＋名牌），点开弹出书。
+ *
+ * 文案住表、组件只画（map #671 的 Q11 决议同 PANEL_LINKS）；书的样子逐字取定版甲，书体是 #1238 的活。 */
+export interface ManualEntryRow {
+  readonly key: 'manual';
+  readonly title: string;
+  readonly tip: string;
+}
+
+export const MANUAL_ENTRY: ManualEntryRow = {
+  key: 'manual',
+  title: '使用手册',
+  tip: '打开使用手册',
+};
+
 /** 底部「作者其他插件」卡里的一行：包名 ＋ 一句说明 ＋ 行尾外链图标指向的仓库。 */
 export interface MorePluginRow {
   readonly pkg: string;
