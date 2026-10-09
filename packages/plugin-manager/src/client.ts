@@ -21,6 +21,7 @@ import * as React from 'react';
 import { MANAGER_PLUGIN, MANAGER_TABS, MANUAL_ENTRY, MORE_PLUGINS, PANEL_LINKS, recoFor } from './nav.js';
 import { clampSpread, planManual, spreadOfPage } from './manual-plan.js';
 import type { ManualScene, ManualSheet } from './manual-plan.js';
+import { SCENES, manualContentCss, renderManualPage } from './manual-content.js';
 import type { ManagerTab } from './nav.js';
 import { CONFIG_TAB_SLOT } from './update-contract.js';
 import { managerCallAdapter, mountLifeBatchEntry } from './update-dialog.js';
@@ -476,18 +477,19 @@ function tabButton(
   );
 }
 
-/** popover 书籍壳（票 #1238）：内容无关，先空壳跑通。
+/** popover 书籍壳（票 #1238 空壳跑通；票 #1239 加 renderPage 注入点喂真场景，默认仍是空框）。
  *
  * 排版口径唯一出处是 planManual（本组件只读结果，不自算）；页内正文是 #1239 的活，
  * 页框留空（data-ilife-manual="page-frame"）。翻页协议＝预显目标页＋无目标页预清空＋
  * 交接无入场动画（票面口径）；冻高＝开书瞬间量遍各跨页取最高、上限锁 A4 高
  * （量具缺席如测试替身时退回自然高度，不硬写）。旧外壳定稿件已背离，不跟它。 */
-function ManualBookShell(props: { scenes: ManualScene[] }): React.ReactElement {
+function ManualBookShell(props: { scenes: ManualScene[]; renderPage?: (page: { page: number; key: string; state: string } | null, goPage: (pg: number) => void) => React.ReactNode }): React.ReactElement {
   const scenes = props.scenes;
+  const renderPage = props.renderPage ?? (() => null);
   const [spread, setSpread] = React.useState(0);
   const at = clampSpread(scenes, spread);
   const [frozen, setFrozen] = React.useState<number | null>(null);
-  const [measuring, setMeasuring] = React.useState(0);
+  const [measuring, setMeasuring] = React.useState(-1);
   const [hover, setHover] = React.useState<{ pg: number; x: number; y: number } | null>(null);
   const bookRef = React.useRef<HTMLDivElement | null>(null);
   const leftRef = React.useRef<HTMLDivElement | null>(null);
@@ -497,11 +499,16 @@ function ManualBookShell(props: { scenes: ManualScene[] }): React.ReactElement {
   // 量遍各跨页：逐跨页渲染（视觉隐藏）读框高推进；量具缺席直接收工。
   React.useEffect(() => {
     heights.current = [];
-    setMeasuring(0);
+    setMeasuring(-1);
     setFrozen(null);
   }, [scenes.length]);
   React.useEffect(() => {
-    if (measuring < 0) return;
+    if (measuring < 0) {
+      if (bookRef.current === null) return;
+      heights.current = [];
+      setMeasuring(0);
+      return;
+    }
     const book = bookRef.current;
     if (book === null) { setMeasuring(-1); return; }
     const h = Math.max(leftRef.current?.scrollHeight ?? 0, rightRef.current?.scrollHeight ?? 0);
@@ -527,7 +534,7 @@ function ManualBookShell(props: { scenes: ManualScene[] }): React.ReactElement {
   const prevOff = at === 0;
   const nextOff = at === plan.spreadCount - 1;
   const hoverScene = hover === null ? null : scenes[hover.pg - 1] ?? null;
-  const frame = (page: { page: number; state: string } | null, side: 'left' | 'right', ref: React.Ref<HTMLDivElement>) => React.createElement(
+  const frame = (page: { page: number; key: string; state: string } | null, side: 'left' | 'right', ref: React.Ref<HTMLDivElement>) => React.createElement(
     'div',
     {
       key: side,
@@ -537,6 +544,7 @@ function ManualBookShell(props: { scenes: ManualScene[] }): React.ReactElement {
       'data-ilife-state': page === null ? 'empty' : page.state,
       style: { ...(side === 'left' ? S.manualPageL : S.manualPageR), ...S.manualPage },
     },
+    page === null ? null : renderPage(page, goPage),
   );
   return React.createElement(
     'div',
@@ -553,6 +561,7 @@ function ManualBookShell(props: { scenes: ManualScene[] }): React.ReactElement {
         ),
       ),
     ),
+    React.createElement('style', { 'data-ilife-manual': 'content-css' }, manualContentCss()),
     React.createElement('div', { style: S.manualFrame, 'aria-hidden': 'true' }),
     React.createElement('div', { style: S.manualWeave, 'aria-hidden': 'true' }),
     React.createElement(
@@ -686,7 +695,10 @@ function ManualEntry(): React.ReactElement {
             '×',
           ),
         ),
-        React.createElement(ManualBookShell, { scenes: [] }),
+        React.createElement(ManualBookShell, {
+          scenes: [...SCENES],
+          renderPage: (page, goPage) => page === null ? null : renderManualPage(SCENES, page, goPage),
+        }),
       )
       : null,
   );
