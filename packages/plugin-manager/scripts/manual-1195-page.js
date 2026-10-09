@@ -10,6 +10,7 @@ window.addEventListener('error', function (e) {
 var hookStore1195 = [];
 var hookCursor1195 = 0;
 var pending1195 = 0;
+var pendingEffects1195 = [];
 var React = {
   createElement: function (t, p) {
     var o = {};
@@ -46,9 +47,9 @@ var React = {
       }
     }
     hookStore1195[i] = { deps: deps || null };
-    if (chg) {
-      try { fn(); } catch (e) { /* 量具缺席即跳过 */ }
-    }
+    // 效果排在**挂载之后**跑（React 口径）：组件函数跑在子元素创建之前，
+    // 当场调就连 ref 都还没交回来 —— 冻高量书框会永远量不到。
+    if (chg) pendingEffects1195.push(fn);
   },
   useCallback: function (fn) { return fn; },
   useMemo: function (fn) { return fn(); }
@@ -79,11 +80,23 @@ function mount1195(node, parent, svg) {
     for (var sk in p.style) {
       var sv = p.style[sk];
       if (sv === null || sv === undefined) continue;
-      try { el.style[sk] = (typeof sv === 'number' && !UNITLESS1195[sk]) ? sv + 'px' : String(sv); } catch (e) {}
+      try {
+        var v1195 = (typeof sv === 'number' && !UNITLESS1195[sk]) ? sv + 'px' : String(sv);
+        // 自定义属性只能走 setProperty（`el.style['--x']=` 静默无效，量尺会把书量成没有纸宽基准的样子）。
+        if (sk.indexOf('--') === 0) { el.style.setProperty(sk, v1195); } else { el.style[sk] = v1195; }
+      } catch (e) {}
     }
   }
   for (var k in p) {
-    if (k === 'children' || k === 'style' || k === 'key' || k === 'ref') continue;
+    if (k === 'children' || k === 'style' || k === 'key') continue;
+    // ref 要真交回去：冻高（量书框）靠 ref 拿到元素，丢掉 ref 就永远量不到，量尺读数跟着失真。
+    if (k === 'ref') {
+      try {
+        if (p[k] && typeof p[k] === 'object') p[k].current = el;
+        else if (typeof p[k] === 'function') p[k](el);
+      } catch (e) {}
+      continue;
+    }
     if (k === 'className') { el.setAttribute('class', String(p[k])); continue; }
     if (k === 'dangerouslySetInnerHTML' && p[k] && typeof p[k].__html === 'string') {
       el.innerHTML = p[k].__html;
@@ -134,9 +147,14 @@ var P1195 = {
 };
 function draw1195() {
   hookCursor1195 = 0;
+  pendingEffects1195 = [];
   var host = document.getElementById('panel');
   host.innerHTML = '';
   mount1195(Section1195(P1195), host, false);
+  for (var e = 0; e < pendingEffects1195.length; e++) {
+    try { pendingEffects1195[e](); } catch (err) { /* 量具缺席即跳过 */ }
+  }
+  pendingEffects1195 = [];
 }
 function settle1195() {
   var g = 0;
