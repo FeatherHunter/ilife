@@ -435,9 +435,11 @@ function tabButton(
   at: number,
   tab: { width: number; height: number; font: number; radius: number },
   goPage: (pg: number) => void,
-  setHover: (h: { pg: number; x: number; y: number } | null) => void,
+  setHover: (h: { pg: number; other: number | null; x: number; y: number } | null) => void,
 ): React.ReactElement {
   const on = sh.facing === at * 2 + 1 || sh.facing === at * 2 + 2;
+  // 反面那一页：露出的若是正面就取反面，反之取正面（原型 data-other 口径）；首签那张纸没有反面。
+  const other = sh.facing === sh.front ? sh.back : sh.front;
   return React.createElement(
     'span',
     {
@@ -450,7 +452,7 @@ function tabButton(
       'data-pg': sh.facing,
       onClick: () => { goPage(sh.facing); },
       onKeyDown: (e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') goPage(sh.facing); },
-      onMouseEnter: (e: React.MouseEvent) => { setHover({ pg: sh.facing, x: e.clientX, y: e.clientY }); },
+      onMouseEnter: (e: React.MouseEvent) => { setHover({ pg: sh.facing, other, x: e.clientX, y: e.clientY }); },
       onMouseLeave: () => { setHover(null); },
       style: {
         position: 'absolute',
@@ -480,6 +482,14 @@ function tabButton(
   );
 }
 
+/** 悬停卡上的一行：页号＋场景名（原型取 name || title），待补充条目名后带锁；没有这一页就不出行。 */
+function tabCardLine(page: number | null, scene: ManualScene | null): React.ReactElement | null {
+  if (page === null || scene === null) return null;
+  // 短名住内容层（ManualScene 只管页与状态），取法与原型 renderTabs 同一处口径。
+  const named = scene as ManualScene & { readonly name?: string };
+  return React.createElement('div', null, String(page) + ' ' + (named.name || scene.title) + (scene.state === 'pending' ? ' 🔒' : ''));
+}
+
 /** popover 书籍壳（票 #1238 空壳跑通；票 #1239 加 renderPage 注入点喂真场景，默认仍是空框）。
  *
  * 排版口径唯一出处是 planManual（本组件只读结果，不自算）；页内正文是 #1239 的活，
@@ -493,7 +503,7 @@ function ManualBookShell(props: { scenes: ManualScene[]; renderPage?: (page: { p
   const at = clampSpread(scenes, spread);
   const [frozen, setFrozen] = React.useState<number | null>(null);
   const [measuring, setMeasuring] = React.useState(-1);
-  const [hover, setHover] = React.useState<{ pg: number; x: number; y: number } | null>(null);
+  const [hover, setHover] = React.useState<{ pg: number; other: number | null; x: number; y: number } | null>(null);
   const bookRef = React.useRef<HTMLDivElement | null>(null);
   const leftRef = React.useRef<HTMLDivElement | null>(null);
   const rightRef = React.useRef<HTMLDivElement | null>(null);
@@ -537,6 +547,9 @@ function ManualBookShell(props: { scenes: ManualScene[]; renderPage?: (page: { p
   const prevOff = at === 0;
   const nextOff = at === plan.spreadCount - 1;
   const hoverScene = hover === null ? null : scenes[hover.pg - 1] ?? null;
+  // 悬停卡的第二行＝这张纸的反面那一页（原型 data-other 口径；首签那张纸没有反面）。
+  const hoverOtherPage = hover === null ? null : hover.other;
+  const hoverOtherScene = hoverOtherPage === null ? null : scenes[hoverOtherPage - 1] ?? null;
   const frame = (page: { page: number; key: string; state: string } | null, side: 'left' | 'right', ref: React.Ref<HTMLDivElement>) => React.createElement(
     'div',
     {
@@ -633,7 +646,8 @@ function ManualBookShell(props: { scenes: ManualScene[]; renderPage?: (page: { p
           onClick: () => { goPage(hover.pg); },
           style: { ...S.manualHoverCard, left: hover.x + 12, top: hover.y + 16 },
         },
-        React.createElement('div', null, '第' + hover.pg + '页' + (hoverScene === null ? '' : ' · ' + hoverScene.title)),
+        tabCardLine(hover.pg, hoverScene),
+        tabCardLine(hoverOtherPage, hoverOtherScene),
         React.createElement('div', null, '点一下翻到这一页 ›'),
       ),
   );
