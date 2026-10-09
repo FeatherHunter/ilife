@@ -168,6 +168,9 @@ function copper1195(which) {
 }
 function measure1195(tag) {
   var panel = document.getElementById('panel');
+  var dlg = document.querySelector('[role=dialog]');
+  var dr = dlg ? dlg.getBoundingClientRect() : { left: -1, right: -1, width: 0 };
+  var vw = document.documentElement.clientWidth;
   var book = document.querySelector('[data-ilife-manual=book]');
   var r = book ? book.getBoundingClientRect() : { width: 0 };
   return {
@@ -178,6 +181,8 @@ function measure1195(tag) {
     nextOff: copper1195('next'),
     titles: titles1195(),
     overflowX: panel.scrollWidth - panel.clientWidth,
+    bodyOx: document.documentElement.scrollWidth - vw,
+    dlgL: Math.round(dr.left), dlgR: Math.round(dr.right), dlgW: Math.round(dr.width), vw: vw,
     bookW: Math.round(r.width)
   };
 }
