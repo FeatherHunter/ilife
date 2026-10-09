@@ -150,43 +150,54 @@ const S = {
     textIndent: '.3em',
     padding: '4px 18px',
   } as React.CSSProperties,
-  /** #1237：空壳书（书体是 #1238 的活，这里只留壳＋标题＋关闭）。 */
+  /** #1240：书式弹出层＝**原型那一页**（页面底色铺满 ＋ 四周 20px 页边），书与铜扣直接铺在底色上。
+   *
+   * 原型里开书就是「把 `.scroll`＋`.deck` 显出来」：没有白卡、没有标题条、也没有框住书的第二层壳
+   * （`proto-manual-4scenes.html` L183-197）。纸宽口径只在这里定义一次（`--paper-w`），
+   * 壳与铜扣都只读它——与原型 `:root{--paper-w:…}` 同一处口径。 */
   manualShell: {
     position: 'fixed',
-    top: 16,
-    left: '50%',
-    transform: 'translateX(-50%)',
+    inset: 0,
     zIndex: 50,
-    width: 'min(620px, calc(100vw - 40px))',
     boxSizing: 'border-box',
-    maxHeight: 'calc(100vh - 32px)',
     overflowY: 'auto',
-    background: 'var(--dsw-alias-background-primary, #fff)',
-    color: 'var(--dsw-alias-label-primary, inherit)',
-    border: '1px solid var(--dsw-alias-border-l1, rgba(128,128,128,.35))',
-    borderRadius: 8,
-    padding: '10px 12px',
+    background: '#15130f',
+    padding: 20,
+    // 字体口径照抄原型 `body{font-family:system-ui,'Microsoft YaHei',sans-serif}`：
+    // 换一套字，同一段话的断行位置就变，逐像素对照必然对不上。
+    fontFamily: "system-ui,'Microsoft YaHei',sans-serif",
+    '--paper-w': 'min(1080px, calc(100vw - 40px - 2.25em))',
   } as React.CSSProperties,
-  manualShellHead: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 } as React.CSSProperties,
+  /** 关闭钮（#1237 的关闭位不改）：钉在页面右上角，不占书的位置、不进书框。 */
   manualClose: {
+    position: 'absolute',
+    top: 14,
+    right: 16,
+    zIndex: 2,
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    width: 26,
-    height: 26,
+    width: 28,
+    height: 28,
     borderRadius: 6,
-    border: '1px solid transparent',
-    background: 'transparent',
-    color: 'inherit',
+    border: '1px solid #3a352c',
+    background: '#1c1913cc',
+    color: '#cfc4ad',
     cursor: 'pointer',
-    fontSize: 14,
+    fontSize: 15,
     lineHeight: 1,
   } as React.CSSProperties,
-  /** #1238：书壳（壳的样子逐字取定版：红框金边＋米纸＋零宽脊鎏金线＋签＋框下铜扣）。
-   * 面板里的纸宽基准与整页原型不同（面板 560 上限，原型 1080），比值与几何口径一致。 */
+  /** 书的舞台层：书壳与铜扣行都铺在这一层上（原型里是 `body` 上并列的 `.scroll` 与 `.deck`）。 */
+  manualStageLayer: { position: 'relative' } as React.CSSProperties,
+  /** 书壳（`proto-manual-4scenes.html` 的 `.scroll`）。红框金边＋米纸＋零宽脊鎏金线＋签。
+   *
+   * 三条口径逐条照抄原型：壳宽＝纸宽（`--paper-w`）＋两侧 1.125em 内缩（框贴壳、纸缩在框里），
+   * 顶部让出标签高度的 `margin-top`，纸铺满壳的内缩区（纸自己不带内衬）。 */
   manualRoot: {
     position: 'relative',
-    marginTop: 'calc(var(--paper-w) * .054 + 16px)',
+    maxWidth: 'var(--paper-w)',
+    padding: '1.125em',
+    margin: 'calc(var(--paper-w) * .054 + 16px) auto 0',
   } as React.CSSProperties,
   manualFrame: {
     position: 'absolute',
@@ -205,14 +216,11 @@ const S = {
     opacity: .35,
     backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'120\' height=\'120\'%3E%3Cfilter id=\'f\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.5\' numOctaves=\'3\'/%3E%3CfeColorMatrix type=\'matrix\' values=\'0 0 0 0 0.2 0 0 0 0 0.08 0 0 0 0 0.05 0 0 0 0.25 0\'/%3E%3C/filter%3E%3Crect width=\'120\' height=\'120\' filter=\'url(%23f)\'/%3E%3C/svg%3E")',
   } as React.CSSProperties,
+  /** 纸面：原型冻结版把纸口改成「铺满、无内衬、无高光斑、无内阴影」（`.paper{margin:0;padding:0;box-shadow:none;background-image:none}`）。 */
   manualPaper: {
     position: 'relative',
     borderRadius: '.25em',
     background: '#ece0c2',
-    backgroundImage: 'radial-gradient(ellipse at 20% 0%,#fff8e2aa,transparent 55%),radial-gradient(ellipse at 85% 100%,#b89b5e55,transparent 50%),radial-gradient(circle at 88% 12%,#8a6a3526,transparent 30%),radial-gradient(circle at 8% 78%,#8a6a351e,transparent 26%)',
-    boxShadow: '0 1px 3px #3d241052,0 0 0 1px #e6d9bd,inset 0 0 110px #b89b5e55,inset 0 0 0 3px #3a2413,inset 0 1px 0 #fffefb',
-    padding: '20px 22px',
-    margin: '0 16px 12px 0',
   } as React.CSSProperties,
   manualFiber: {
     position: 'absolute',
@@ -228,7 +236,15 @@ const S = {
     perspective: '6000px',
     minHeight: 'min(calc(var(--paper-w) / 1.41421356), 80vh)',
   } as React.CSSProperties,
-  manualPage: { flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'visible' } as React.CSSProperties,
+  /** 页根字号＝纸宽的 1.5%（原型 `.page{font-size:calc(var(--paper-w)*.015)}`）：页内一切 `em` 尺寸都由它派生。 */
+  manualPage: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    minHeight: 0,
+    overflow: 'visible',
+    fontSize: 'calc(var(--paper-w) * .015)',
+  } as React.CSSProperties,
   manualPageL: { position: 'relative', paddingRight: 0 } as React.CSSProperties,
   manualPageR: { position: 'relative', paddingLeft: 0, transformOrigin: 'left center' } as React.CSSProperties,
   manualSpineSlot: { width: 0, position: 'relative', flex: 'none' } as React.CSSProperties,
@@ -245,19 +261,28 @@ const S = {
     backgroundRepeat: 'no-repeat,repeat,repeat',
   } as React.CSSProperties,
   manualTabLayer: { position: 'absolute', left: 0, right: 0, top: 0, height: 0, zIndex: 8, pointerEvents: 'none' } as React.CSSProperties,
-  manualDeck: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, margin: '.5em auto 0' } as React.CSSProperties,
+  /** 铜扣行：在**红框之外**的页面底色上居中（原型 `.deck` 是 `.scroll` 的兄弟节点），间距随纸宽。 */
+  manualDeck: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 'max(8px, calc(var(--paper-w) * .009))',
+    margin: '.5em auto 0',
+    maxWidth: 'var(--paper-w)',
+    position: 'relative',
+  } as React.CSSProperties,
   manualBrass: {
     display: 'inline-flex',
     alignItems: 'center',
-    gap: 4,
+    gap: 'calc(var(--paper-w) * .005)',
     cursor: 'pointer',
     border: '1px solid #2a140c',
-    borderRadius: 6,
-    padding: '6px 13px',
+    borderRadius: 'calc(var(--paper-w) * .0065)',
+    padding: 'max(6px, calc(var(--paper-w) * .0065)) max(13px, calc(var(--paper-w) * .015))',
     whiteSpace: 'nowrap',
     flex: 'none',
     fontFamily: 'inherit',
-    fontSize: 12,
+    fontSize: 'max(12px, calc(var(--paper-w) * .0125))',
     letterSpacing: '.12em',
     color: '#3a2607',
     textShadow: '0 1px 0 #ffeaa8',
@@ -499,15 +524,19 @@ function ManualBookShell(props: { scenes: ManualScene[]; renderPage?: (page: { p
   const rightRef = React.useRef<HTMLDivElement | null>(null);
   const heights = React.useRef<number[]>([]);
   const plan = planManual(scenes, at);
+  /** 冻高闸门：一趟量完就落下（原型 freezeHeight 用 `FIXED_H` 缓存同一口径：开书量一次、resize 重来）。
+   *  没有这个闸门，effect（无依赖数组）每渲染一次就重启一轮量尺 ⇒ 状态机空转，书停在被量到的那一跨页。 */
+  const freezePending = React.useRef(true);
   // 量遍各跨页：逐跨页渲染（视觉隐藏）读框高推进；量具缺席直接收工。
   React.useEffect(() => {
+    freezePending.current = true;
     heights.current = [];
     setMeasuring(-1);
     setFrozen(null);
   }, [scenes.length]);
   React.useEffect(() => {
     if (measuring < 0) {
-      if (bookRef.current === null) return;
+      if (!freezePending.current || bookRef.current === null) return;
       heights.current = [];
       setMeasuring(0);
       return;
@@ -520,13 +549,14 @@ function ManualBookShell(props: { scenes: ManualScene[]; renderPage?: (page: { p
     const tallest = heights.current.reduce((m, v) => Math.max(m, v), 0);
     const capped = Math.floor(book.clientWidth / 1.41421356);
     setFrozen(tallest > 0 && capped > 0 ? Math.min(tallest, capped) : null);
+    freezePending.current = false;
     setMeasuring(-1);
   });
   // 窗口变化重冻：只认元素量具，观察器缺席即跳过（禁 window 直写）。
   React.useEffect(() => {
     const book = bookRef.current;
     if (book === null || typeof ResizeObserver === 'undefined') return;
-    const watcher = new ResizeObserver(() => { heights.current = []; setMeasuring(0); });
+    const watcher = new ResizeObserver(() => { freezePending.current = true; heights.current = []; setMeasuring(0); });
     watcher.observe(book);
     return () => { watcher.disconnect(); };
   }, []);
@@ -551,7 +581,10 @@ function ManualBookShell(props: { scenes: ManualScene[]; renderPage?: (page: { p
   );
   return React.createElement(
     'div',
-    { style: { '--paper-w': 'min(560px, 100%)', ...S.manualRoot } as React.CSSProperties, 'data-ilife-manual': 'shell' },
+    { style: S.manualStageLayer, 'data-ilife-manual': 'stage' },
+    React.createElement(
+    'div',
+    { style: S.manualRoot, 'data-ilife-manual': 'shell' },
     React.createElement(
       'svg',
       { width: 0, height: 0, style: { position: 'absolute' }, 'aria-hidden': 'true' },
@@ -578,8 +611,10 @@ function ManualBookShell(props: { scenes: ManualScene[]; renderPage?: (page: { p
           'data-ilife-manual': 'book',
           style: {
             ...S.manualVolume,
-            ...(frozen === null ? null : { height: frozen, minHeight: frozen }),
-            ...(measuring >= 0 ? { visibility: 'hidden' } : null),
+            // 冻高按原型 freezeHeight 两步走：量的时候先把 min-height 归零量**自然高**（否则量到的是被撑开的那一版），
+            // 量完再把冻住的值写回 height／min-height，并用 80vh 兜住上限（原型 cap＝min(纸宽×.707, 窗高×.8)）。
+            ...(measuring >= 0 ? { visibility: 'hidden', height: 'auto', minHeight: 0 } : null),
+            ...(frozen === null ? null : { height: frozen, minHeight: frozen, maxHeight: '80vh' }),
           } as React.CSSProperties,
         },
         React.createElement(
@@ -592,6 +627,7 @@ function ManualBookShell(props: { scenes: ManualScene[]; renderPage?: (page: { p
           React.createElement('span', { style: S.manualSpineLine })),
         frame(right, 'right', rightRef),
       ),
+    ),
     ),
     React.createElement(
       'div',
@@ -683,20 +719,15 @@ function ManualEntry(): React.ReactElement {
           'data-ilife-manual': 'book-shell',
         },
         React.createElement(
-          'div',
-          { style: S.manualShellHead },
-          React.createElement('span', null, MANUAL_ENTRY.title),
-          React.createElement(
-            'button',
-            {
-              type: 'button',
-              style: S.manualClose,
-              'aria-label': '关闭' + MANUAL_ENTRY.title,
-              'data-ilife-press': 'manual-close',
-              onClick: () => { setOpen(false); },
-            },
-            '×',
-          ),
+          'button',
+          {
+            type: 'button',
+            style: S.manualClose,
+            'aria-label': '关闭' + MANUAL_ENTRY.title,
+            'data-ilife-press': 'manual-close',
+            onClick: () => { setOpen(false); },
+          },
+          '×',
         ),
         React.createElement(ManualBookShell, {
           scenes: [...SCENES],
