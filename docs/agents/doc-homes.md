@@ -23,7 +23,7 @@
 - 长期文档用主题名：`docs/skills/skill-calorie/architecture.md`。
 - 跟票走的文档保留票号前缀：`docs/skills/skill-calorie/t87-output-naming.md`。同一票的脚本／快照／基线同目录同前缀（`.mjs`／`.md`／`.txt`）。
 - 件名已经在目录里，文件名不重复它：写 `t87-output-naming.md`，不写 `t87-calorie-output-naming.md`。
-- 同一件的两个票共用一个目录，靠 `t<票号>-` 前缀保持文件级不重叠；并发协议的路径所有权不因目录共用而放松。
+- 同一件的两个票共用一个目录，靠 `t<票号>-` 前缀保持文件级不重叠。
 
 ## 例外
 
@@ -53,6 +53,6 @@
 | `memo-migration-split.md` | skill-memo-ilife | `docs/skills/skill-memo-ilife/` |
 | `base-paint-contract.md`（正本实现面在 `packages/base-render/src/spec/`） | base-render | `docs/base/base-render/contract-v1.md` |
 | `visual-spec-help.md`、`visual-spec-blocks.md` | base-render | `docs/base/base-render/` |
-| `env.md`、`public-installer-47.md`、`skill-landing-r2.md`、`p10-scaffold.md`、`subagent-concurrency-protocol.md` | 跨件 | `docs/agents/` |
+| `env.md`、`public-installer-47.md`、`skill-landing-r2.md`、`p10-scaffold.md`、`wording.md` | 跨件 | `docs/agents/` |
 
 `docs/research/` 里 372 份的「票号 → 件名」映射**不出现成表**：那份映射只在改动某一份老文档时才需要，判一次即可；手写索引迟早没人维护、变成说不清哪行还对的旧账。真要索引就写脚本生成。

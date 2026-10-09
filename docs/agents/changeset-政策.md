@@ -28,5 +28,5 @@
 
 ## 新记录怎么写
 
-- 路径：`.changeset/<票号专属名>.md`，每票一件，文件名不得与他人重复（见 `docs/subagent-concurrency-protocol.md` §1）。
+- 路径：`.changeset/<票号专属名>.md`，每票一件。
 - 内容：这一票对外行为变没变；变了写清改成什么。级别（patch／minor／major）按惯例写，但如上所述，它不决定本仓的版本落点。

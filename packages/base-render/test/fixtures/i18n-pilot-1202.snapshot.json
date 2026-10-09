@@ -1,0 +1,60 @@
+{
+  "generatedBy": "packages/base-render/scripts/i18n-pilot-1202.mjs",
+  "ticket": "#1202",
+  "purpose": "两处硬缝的语言列读数基座：固定 now 下四段链路产物逐件 sha256。中文列＝改造前基线（未声明的差异为零）；英文列＝声明过的差异（拼接串整句化＋词条化带来的换词），逐件列出。",
+  "hashAlgo": "sha256(归一化文本) 前 32 hex；归一化＝去 BOM ＋ CRLF→LF",
+  "fixedNow": "2026-01-02 03:04:05",
+  "columns": {
+    "zh": {
+      "declared": false,
+      "artifacts": {
+        "zh/entry": {
+          "src": "packages/base-render/scripts/i18n-pilot-1202.mjs",
+          "bytes": 330,
+          "sha256": "4a66149f9080b0c755d2107bf0555b52"
+        },
+        "zh/help": {
+          "src": "packages/base-render/src/helpShell.ts",
+          "bytes": 118577,
+          "sha256": "f9bccb1c98909da49f32398a7aae219a"
+        },
+        "zh/page": {
+          "src": "packages/base-render/src/components/progress-list",
+          "bytes": 19677,
+          "sha256": "84522d4f6235150ad51401000e918d2a"
+        },
+        "zh/receipt": {
+          "src": "packages/base-render/src/spec/controls.ts",
+          "bytes": 18545,
+          "sha256": "1c94f74b2ea0d296040e42354f67b3dd"
+        }
+      }
+    },
+    "en": {
+      "declared": true,
+      "note": "英文列：词从词条表 en 那份取；entry／help 两段与中文逐字节相同（那两段的话由夹具给，不住词条表），page／receipt 两段换词。",
+      "artifacts": {
+        "en/entry": {
+          "src": "packages/base-render/scripts/i18n-pilot-1202.mjs",
+          "bytes": 330,
+          "sha256": "4a66149f9080b0c755d2107bf0555b52"
+        },
+        "en/help": {
+          "src": "packages/base-render/src/helpShell.ts",
+          "bytes": 118577,
+          "sha256": "f9bccb1c98909da49f32398a7aae219a"
+        },
+        "en/page": {
+          "src": "packages/base-render/src/components/progress-list",
+          "bytes": 19681,
+          "sha256": "ed8d2c65f6d6d203aa8caa7a408cafc9"
+        },
+        "en/receipt": {
+          "src": "packages/base-render/src/spec/controls.ts",
+          "bytes": 18545,
+          "sha256": "4394d6e43d7d621335a7dfaabd54003b"
+        }
+      }
+    }
+  }
+}

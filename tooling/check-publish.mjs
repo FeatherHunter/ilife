@@ -178,6 +178,11 @@ function gateTarball() {
     // #601：预置动作库按源布局随包发（tsc 不复制资源，同 templates 机制；
     // .npmignore 无覆盖已查——仓根与包下均无 .npmignore）。缺即安装态读不到，exit 1 点名。
     if (s === 'skill-calorie') {
+      // ⚠ #1199 逐条审过：这里的 `训记官方动作.json` 看着像中文，但**不是文案字面**——
+      //   它是**数据资产的固定路径**（读法：packages/skill-calorie/src/xunji/catalog.ts 的 preset，
+      //   与 packages/skill-calorie/package.json 的 files 清单逐字同一串）。门只判结构与行为、不锁文案
+      //   （ADR-0004 §6）：这条判的是**安装态能不能读到那份资产**，路径本身不随语言变，故**保留**；
+      //   若哪天路径真的按语言分叉，那要先改资产读法，再改这里（改动会显式红，不会静默）。
       if (!out.includes('src/xunji/data/训记官方动作.json')) fail(s + ' tarball 缺 src/xunji/data/训记官方动作.json（预置动作库未随包发，#601）');
       else ok(s + ' tarball 含 src/xunji/data/训记官方动作.json（预置动作库随包发，#601）');
     }

@@ -22,5 +22,5 @@ export function recordReceiptDoc(input: ReceiptInput): string {
     key: input.key,
     kind: typeof input.params['kind'] === 'string' ? String(input.params['kind']) : '',
     op,
-  }).receipt(input);
+  }, input.language).receipt(input);
 }

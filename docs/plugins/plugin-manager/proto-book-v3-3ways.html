@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang='zh-CN'><head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width,initial-scale=1'>
+<title>书籍效果：三版原型对照</title>
+<style>
+body{margin:0;background:#16130f;color:#e8dfc8;font-family:system-ui,'Microsoft YaHei',sans-serif;padding:22px}
+h1{font-size:16px;letter-spacing:.14em;color:#e8c96a;margin:0 0 6px;font-weight:600}
+p.hint{font-size:12px;color:#8f8672;margin:0 0 18px;line-height:1.8}
+.row{display:flex;gap:16px;align-items:flex-start}
+.cell{flex:1;background:#1e1a14;border:1px solid #3a352c;border-radius:8px;padding:12px}
+.cap{font-size:12px;color:#cfc4ad;margin-bottom:10px;line-height:1.9;min-height:112px}
+.cap b{color:#e8c96a;font-weight:600}
+.vp{position:relative;width:100%;height:330px;overflow:hidden;border-radius:4px;background:#100d0a}
+.vp iframe{position:absolute;top:0;left:0;width:760px;height:880px;border:0;transform-origin:0 0}
+</style></head><body>
+<h1>书籍效果：三版原型对照</h1>
+<p class='hint'>A 已选。三版共用同一个外框与同一套翻页动画；纸面留空。要看清细节就单独打开对应的 html。</p>
+<div class='row'>
+  <div class='cell'><div class='cap'><b><b>A 铜扣（已选）</b>　摊开的对开本；左下角铜扣是「上一页」、右下角是「下一页」，名字常显，中间铜牌显示页码，到头的一侧变灰按不动。纸口横纹去掉、纸面四边贴紧红框、翻页动画重做。</b></div><div class='vp'><iframe src='proto-book-v3-clasp.html?bare=1'></iframe></div></div>
+  <div class='cell'><div class='cap'><b><b>B 缎带拉手（备选，未选）</b>　一次只摊一页，左半是封面内衬；左右各垂一条缎带，拉左＝上一页、拉右＝下一页。留作对照。</b></div><div class='vp'><iframe src='proto-book-v3-ribbon.html?bare=1'></iframe></div></div>
+  <div class='cell'><div class='cap'><b><b>C 掀角（备选，未选）</b>　掀左下角＝上一页、掀右下角＝下一页，角旁边写着名字。留作对照。</b></div><div class='vp'><iframe src='proto-book-v3-corner.html?bare=1'></iframe></div></div>
+</div>
+<script>
+function fit() {
+  var vps = document.querySelectorAll('.vp');
+  for (var i = 0; i < vps.length; i++) {
+    var vp = vps[i], f = vp.querySelector("iframe");
+    var s = vp.clientWidth / 760;
+    f.style.transform = 'scale(' + s + ')';
+    vp.style.height = Math.round(880 * s) + "px";
+  }
+}
+window.addEventListener("load", fit); window.addEventListener("resize", fit); fit();
+</script>
+</body></html>

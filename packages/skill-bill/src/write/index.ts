@@ -20,8 +20,8 @@ export { buildRecordReceipt } from './receiptOut.js';
 const BY_KEY = new Map(RECORD_COMMANDS.map((c) => [c.key, c]));
 
 /** 写命令入口：命中即走它的处理函数；命令名不属记账写入域即抛——**不猜**。 */
-export function runRecordWrite(key: string, params: Record<string, unknown>, db: BillDb): WriteOut {
+export function runRecordWrite(key: string, params: Record<string, unknown>, db: BillDb, language?: string): WriteOut {
   const spec = BY_KEY.get(key);
   if (!spec) throw new BillPolicyError('POLICY_BAD_INPUT', '不是记账写入域的命令：' + key);
-  return spec.run(params, db);
+  return spec.run(params, db, language);
 }
