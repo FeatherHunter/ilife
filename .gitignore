@@ -12,6 +12,8 @@ packages/*/deliver-*.html
 .dsh-mattskillsdeck-cache/
 # DSH 自己的会话消息落盘（各包根与仓根的 .dsh-im/）：传输件、非源码，不入库
 .dsh-im/
+# git worktree 工作区（各票施工检出）：本地施工位，不入库
+.worktrees/
 # P0 清账（#624）：ed87c79 曾把根目录施工作业副本误入库；以下全部锚定仓库根（/ 前缀），子目录不受影响
 /_r*.txt
 /_*.ps1
