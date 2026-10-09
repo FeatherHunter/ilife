@@ -913,8 +913,12 @@ describe('#118 契约补遗（CONTENT 槽位／载荷槽规则／包裹约定／
 });
 
 describe('门禁红线（AC-7／AC-13／browser-safe）', () => {
-  it('base-paint 无运行时依赖、files 覆盖发布面', () => {
-    assert.deepEqual(Object.keys(pkg.dependencies ?? {}), []);
+  it('base-paint 只许依赖同层零依赖包、files 覆盖发布面', () => {
+    // #1199：原判据是「dependencies 必须空」。公共层出词条层之后它不再成立——base-render **有意**
+    // 依赖同层的零依赖包 base-entries（#1200／#1202）。收窄成白名单（判据正本住 tooling/check-boundaries.mjs
+    // 的那条「公共层包之间的依赖白名单」），**不是放宽**：白名单外的任何依赖照旧红。
+    const deps = Object.keys(pkg.dependencies ?? {});
+    assert.deepEqual(deps.filter((d) => d !== 'base-entries'), [], '只许依赖同层零依赖包 base-entries，实得 ' + JSON.stringify(deps));
     assert.ok(pkg.files.includes('dist'), 'files 必须含 dist（契约资产随 dist 发布）');
     assert.ok(!JSON.stringify(pkg).includes('base-combos'), 'L16：package.json 不得出现 base-combos 字样');
   });

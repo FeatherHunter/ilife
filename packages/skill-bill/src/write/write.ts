@@ -114,6 +114,7 @@ function collectOut(input: {
   readonly missing: readonly RecordSlot[];
   readonly blocked: readonly BlockedItem[];
   readonly db: BillDb;
+  readonly language?: string;
 }): WriteOut {
   const message = blockedMessage(input.missing, input.blocked);
   const today = todayOf();
@@ -130,6 +131,7 @@ function collectOut(input: {
       actionAt: nowStamp(),
       today,
       recent: listRecent(input.db, anchor, RECENT_WINDOW_DAYS),
+      language: input.language,
     }),
   };
 }
@@ -147,6 +149,7 @@ function finish(input: {
   readonly noChange: boolean;
   readonly writtenDetail: string;
   readonly detail: readonly DetailRow[];
+  readonly language?: string;
 }): WriteOut {
   const receipt: BillReceipt = {
     op: input.op,
@@ -166,19 +169,20 @@ function finish(input: {
       writtenDetail: input.writtenDetail, detail: input.detail,
       facts: rowFacts(input.row),
       recent: listRecent(input.db, input.row.time, RECENT_WINDOW_DAYS),
+      language: input.language,
     }),
   };
 }
 
 /** `bill.record.add`（记一笔，**录入路径**）：有阻断项（缺分类或金额／金额符号与这一型不符）即出采集页，
  *  清空即写库出回执整页。方向判定只在这一支传 `kind`。 */
-export function writeRecordAdd(params: Record<string, unknown>, db: BillDb): WriteOut {
+export function writeRecordAdd(params: Record<string, unknown>, db: BillDb, language?: string): WriteOut {
   const key = 'bill.record.add';
   const slots = RECORD_SLOTS[key];
   const missing = missingSlots(params, slots);
   const kind = typeof params.kind === 'string' ? params.kind : '';
   const blocked = blockedItems({ params, missing, kind });
-  if (blocked.length > 0) return collectOut({ key, params, slots, missing, blocked, db });
+  if (blocked.length > 0) return collectOut({ key, params, slots, missing, blocked, db, language });
   const before = totalChanges(db.db);
   const input = validateAddInput(params);
   const r = addBill(db, input);
@@ -188,7 +192,7 @@ export function writeRecordAdd(params: Record<string, unknown>, db: BillDb): Wri
     ? '（三要素以外部识别为准）'
     : kind === 'batch' ? '（只落了其中一笔）' : kind ? '（' + wakeWordOf(kind) + '）' : '';
   return finish({
-    db, key, params, op: 'add', row: r, fields: ADD_FIELDS, before, noChange: false,
+    db, key, params, language, op: 'add', row: r, fields: ADD_FIELDS, before, noChange: false,
     summary: `已记录：${r.category} ${r.amount.toFixed(2)}${extra}（记录编号 ${r.id}，这一页可以复制）`,
     writtenDetail: '这一笔已记进账本',
     detail: rowDetail(r),
@@ -197,19 +201,19 @@ export function writeRecordAdd(params: Record<string, unknown>, db: BillDb): Wri
 
 /** `bill.record.update`（改记录）：有阻断项（缺 `id`）即出采集页；op 决定改字段／撤销／恢复三支。
  *  **这一支不判金额方向**：撤销／恢复本来就不带 `kind`＋`amount`，带上也不该被方向判定拦下、改出采集页。 */
-export function writeRecordUpdate(params: Record<string, unknown>, db: BillDb): WriteOut {
+export function writeRecordUpdate(params: Record<string, unknown>, db: BillDb, language?: string): WriteOut {
   const key = 'bill.record.update';
   const slots = RECORD_SLOTS[key];
   const missing = missingSlots(params, slots);
   const blocked = blockedItems({ params, missing, kind: '' });
-  if (blocked.length > 0) return collectOut({ key, params, slots, missing, blocked, db });
+  if (blocked.length > 0) return collectOut({ key, params, slots, missing, blocked, db, language });
   const op = parseRecordOp(params);
   const before = totalChanges(db.db);
   if (op === 'undo') {
     const id = needId(params);
     const r = undoBill(db, id);
     return finish({
-      db, key, params, op: 'undo', row: r, fields: ['deleted_at'], before, noChange: false,
+      db, key, params, language, op: 'undo', row: r, fields: ['deleted_at'], before, noChange: false,
       summary: `已撤销，记录还在，随时可恢复（记录编号 ${r.id}）`,
       writtenDetail: '已标记撤销（记录还在库里，只是不再算进查询与统计）',
       detail: [{ k: fieldLabelOf('op'), v: statusNoteOf('软删打标（deleted_at = now，不物理删）') }, { k: fieldLabelOf('id'), v: String(r.id) }],
@@ -219,7 +223,7 @@ export function writeRecordUpdate(params: Record<string, unknown>, db: BillDb): 
     const id = needId(params);
     const r = restoreBill(db, id);
     return finish({
-      db, key, params, op: 'restore', row: r, fields: ['deleted_at'], before, noChange: false,
+      db, key, params, language, op: 'restore', row: r, fields: ['deleted_at'], before, noChange: false,
       summary: `已恢复（记录编号 ${r.id}）`,
       writtenDetail: '已恢复（撤销标记清掉，这一笔回到查询与统计里）',
       detail: [{ k: fieldLabelOf('op'), v: statusNoteOf('置 NULL（deleted_at 清空）') }, { k: fieldLabelOf('id'), v: String(r.id) }],
@@ -231,7 +235,7 @@ export function writeRecordUpdate(params: Record<string, unknown>, db: BillDb): 
   const fields = Object.keys(patch);
   const noChange = fields.every((f) => preValue(pre, f) === patch[f]);
   return finish({
-    db, key, params, op: 'update', row: r, fields, before, noChange,
+    db, key, params, language, op: 'update', row: r, fields, before, noChange,
     summary: `已修改：${r.id}（改了 ${fields.map((f) => fieldLabelOf(f)).join('、')}）`,
     writtenDetail: '这一条已改好',
     detail: [

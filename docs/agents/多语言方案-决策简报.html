@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>爱生活多语言方案 · 决策简报</title>
+<style>
+  :root { --ink:#1a1a1a; --muted:#5b6570; --line:#d8dee6; --bg:#fbfcfd; --rec:#f2f7fd; --rec2:#fdf6ec; --rec3:#f0f9f2; }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:28px 18px 60px; background:var(--bg); color:var(--ink);
+         font:15px/1.75 system-ui, "Microsoft YaHei", "PingFang SC", sans-serif; }
+  .wrap { max-width: 1020px; margin:0 auto; }
+  h1 { font-size:24px; margin:0 0 6px; }
+  h2 { font-size:19px; margin:34px 0 10px; padding-bottom:6px; border-bottom:2px solid var(--line); }
+  h3 { font-size:15px; margin:20px 0 6px; color:var(--muted); }
+  p { margin:8px 0; }
+  ul { margin:6px 0 6px 20px; padding:0; }
+  li { margin:3px 0; }
+  .meta { color:var(--muted); font-size:13px; margin:2px 0; }
+  .q { background:#fff; border-left:4px solid #4a6fa5; padding:10px 14px; margin:12px 0; }
+  .bg { background:#fff; border:1px solid var(--line); border-radius:6px; padding:10px 14px; margin:10px 0; }
+  .bg b { color:var(--muted); font-weight:600; }
+  .rev { border-radius:6px; padding:10px 14px; margin:10px 0; border:1px solid var(--line); }
+  .rev1 { background:var(--rec); }
+  .rev2 { background:var(--rec2); }
+  .rev3 { background:var(--rec3); border-color:#bcdcc4; }
+  .rev b { display:block; margin-bottom:4px; }
+  table { width:100%; border-collapse:collapse; margin:10px 0; background:#fff; font-size:14px; }
+  th, td { border:1px solid var(--line); padding:7px 10px; text-align:left; vertical-align:top; }
+  th { background:#eef2f7; font-weight:600; }
+  .pc th:first-child { background:#eef7ee; } .pc th:last-child { background:#fdf1ee; }
+  code { background:#eef1f5; padding:1px 5px; border-radius:3px; font-size:13px; }
+  .tag { display:inline-block; font-size:12px; padding:1px 7px; border-radius:10px; background:#e7ecf3; color:#33475f; margin-right:6px; }
+  footer { margin-top:36px; padding-top:12px; border-top:1px solid var(--line); color:var(--muted); font-size:13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>爱生活 · 多语言方案决策简报</h1>
+<p class="meta">范围：3 个公共层包（base-combos、base-link-core、base-render）＋ 6 个技能包 ＋ 7 个插件包。</p>
+<p class="meta">证据：8 份现场调查（调查结束后各自独立完成，含网页一手来源核对）＋ 1 份地图草稿，共 291 KB。生成时间：2026-10-08。</p>
+<p class="meta">状态：<b>尚未建地图</b>，等负责人对第 6 节的四个决策点给出裁决。</p>
+
+<h2>0. 总判断</h2>
+<p>行业一侧（VS Code、Chrome 扩展、Home Assistant、Grafana）与本机宿主 DSH 的多语言组件，指向同一个形状：<b>词条随包自带，宿主统一协商与加载，回退链终止于 en，程序读取的标识符永不翻译</b>。</p>
+<p>本仓的差距不在"没有选一个库"，而在<b>没有词条层</b>：源码里 47,296 条中文直接写在字符串里，<code>Intl.</code> 出现 0 次，语言变量全仓无人读取。因此这件事应当按<b>文本架构工程</b>处理，而不是按一次翻译工程处理。</p>
+
+<h2>1. 地图走到什么算结束</h2>
+<p class="q"><b>问题：</b>这张地图走到什么算结束——交一份方案规格，还是先把机制和一个技能做完？</p>
+<div class="bg"><b>背景</b>
+<ul>
+  <li>工作方法（wayfinder）默认只做决策与调查，不做交付；除非在地图的说明里明确覆盖。</li>
+  <li>存量规模（本次实测）：1,697 个源文件、254,854 行、<b>47,296 条中文字符串</b>；测试里另有 22,530 条以上中文断言。</li>
+  <li>现有验证账本：194 件 HTML 产物的内容哈希（覆盖 5 个技能，不含 skill-calorie）、44 张 skill-bill 页面哈希、真实 <code>~/.ilife</code> 目录树哈希；而文本规则门把"当前中文写法"当作判据本体。</li>
+  <li>视觉验收要求人对页面逐页签字。</li>
+</ul></div>
+<div class="rev rev1"><b>初版推荐</b>交"规格 ＋ 一条端到端最小实现 ＋ 迁移台账与批次清单"，不做全量翻译。</div>
+<table class="pc"><tr><th>优点</th><th>缺点</th></tr>
+<tr><td>契约与门先冻结，避免 47,296 条规模的返工；最小实现可跑，不是纸面方案；把"翻译多少"降级成可分批、可后置的决策。</td>
+<td>短期内拿不到"双语可用"的产品；规格与全量落地之间仍有差距；最小实现要同时动公共层、一个技能、一个插件，周期不短。</td></tr></table>
+<div class="rev rev2"><b>对抗式审查后的推荐</b>给"到达"加可跑判据：最小实现必须在同一技能上产出中文与英文两份产物，并且"不启用多语言时所有产物逐字节不变"；台账生成脚本必须能跑起来。否则不算到达。同时明确一条退路：若你的目标是"现在就能双语使用"，本方案应改成全量落地，验收随之改成"用户必经路径英文可用率 100% ＋ 人签字"。</div>
+<div class="rev rev3"><b>第一性原理后的推荐（定稿）</b>你的原话是"考虑支持多语言的可能性"——目标是<b>可扩展性</b>，不是翻译完成度。因此地图的结束条件定为四件：① 一份决策记录（语言机制、源语言、语言选择、回退链、词条归属）；② 公共层机制可用（词条类型安全、消息求值、语言选择）；③ 一条端到端最小实现跑通且留下读数；④ 存量台账与迁移批次成文。存量翻译与全量落地<b>另起实施地图</b>。</div>
+
+<h2>2. 首批做哪些语言、覆盖哪些面</h2>
+<p class="q"><b>问题：</b>首批做哪些语言？哪些面必须翻译，哪些面绝对不能翻译？</p>
+<div class="bg"><b>背景</b>
+<ul>
+  <li>宿主 DSH 内置只有中文与英文；词条注册在类型上要求两种语言同时给全；回退链必须终止于 en。</li>
+  <li>宿主在 Node 进程侧<b>没有任何翻译接口</b>（语言服务只注册在浏览器一侧）。</li>
+  <li>技能产出的 HTML、图片、文档与工具返回文本，不在宿主的任何词条体系内。</li>
+  <li>7 个插件包一处都不引用公共层（插件界面是 React）。</li>
+  <li>唤醒词同时是路由命中词：skill-calorie 的唤醒词资产有 436 条场景、7,509 行。</li>
+</ul></div>
+<div class="rev rev1"><b>初版推荐</b>首批中文（保持现状）＋ 英文（新增）；按读者分三层（程序标识符／模型读取的描述与词表／用户阅读的文本）；插件总管单独一批。</div>
+<table class="pc"><tr><th>优点</th><th>缺点</th></tr>
+<tr><td>贴合宿主硬约束（en 是回退终点，不是随便选的语种）；三层分法避免"翻译了标识符就破坏契约"；英文可用性可以验收。</td>
+<td>存量 47,296 条，全量英文工作量极大；唤醒词按语言增补会扩大生成物与自动检查门的规模；插件总管单独一批会拉长关键路径。</td></tr></table>
+<div class="rev rev2"><b>对抗式审查后的推荐</b>引入行业已有分工（MCP 的 SEP-2792 草案、LSP 3.16 语言字段）：程序解释的名称、方法名、枚举与错误码保持稳定、不翻译；标题类字段应当翻译；面向模型的消息可以翻译，但规范明确警告<b>翻译会改变模型行为</b>。本仓更硬的一点：唤醒词既是提示词又是路由命中词，只能"按语言增加同义词、命令关键字冻结"，而且这条必须由人裁决。</div>
+<div class="rev rev3"><b>第一性原理后的推荐（定稿）</b>翻译义务按<b>读者</b>分配，不按文件分配。程序标识符：冻结。模型读取的描述与词表：按语言<b>增补</b>（英文用户说"log a meal"必须能路由到同一条命令）。用户阅读的文本：必做，第一批只做<b>用户必经路径</b>（命令入口、回执、设置页、页签、帮助、错误提示）。</div>
+
+<h2>3. 质量要求与自动检查门</h2>
+<p class="q"><b>问题：</b>什么样的质量要求算"成熟"？用哪些自动检查门来保证？</p>
+<div class="bg"><b>背景</b>
+<ul>
+  <li>仓库没有 ESLint、Prettier 等通用检查器，全部是自研 Node 脚本（<code>tooling/check-*.mjs</code>）。</li>
+  <li>已有三套内容哈希账本（194 件、44 页、真实目录树），失败即红。</li>
+  <li>实测缺陷：27 处 <code>localeCompare</code> 中约 8 处未指定语言（结果依赖实现），8 处 <code>toLocale*</code> 中 6 处未指定语言。</li>
+  <li>渲染文本规则门（#883）是面向中文排印的规则（禁止间隔号、竖线、半角标点与裸英文），英文页面会整批变红。</li>
+  <li><code>Intl.</code> 在源码里出现 0 次。</li>
+</ul></div>
+<div class="rev rev1"><b>初版推荐</b>消息格式用 ICU 子集，语言数据用运行时自带的 <code>Intl</code>，并设四道门：禁止硬编码、双语言词条对齐、生成链不引入第二份语言表、伪本地化检查。</div>
+<table class="pc"><tr><th>优点</th><th>缺点</th></tr>
+<tr><td>零依赖（公共层三包有"零运行时依赖"红线），不需要引入第三方运行时；复用运行时自带的语言数据，质量有保证；四道门都是本仓已有的脚本形状，接线成本低。</td>
+<td>顺序错了：把"先清空存量"排在前面；自研消息解析器没有一致性测试可对照；伪本地化对中文源只是半把尺子（常见的 40% 膨胀经验来自英文源）。</td></tr></table>
+<div class="rev rev2"><b>对抗式审查后的推荐</b>顺序改为：① 排序与格式化确定性门（当天可上，且现在就能抓出真实缺陷）；② 硬编码串先跑"报告模式"产出存量台账，先不当门禁；③ 语言标签门（107 处 <code>&lt;html lang="zh-CN"&gt;</code>，注入点集中在两个常量）；④ 双语言词条对齐门；⑤ 消息求值用"窄接口 ＋ 可替换后端"，<b>不自研解析器</b>（边界没有一致性测试可对照）；⑥ 伪本地化等词条表存在后再上。渲染文本规则门必须按域重写名册，不允许"按语言关闭"。</div>
+<div class="rev rev3"><b>第一性原理后的推荐（定稿）</b>自动检查门的职责是<b>阻止新增</b>，不是一次清空存量。必做四道门：存量只减不增门、双语言词条对齐门、语言标签门、排序与格式化确定性门。另加一条硬不变量：<b>不启用多语言时，所有产物逐字节不变</b>——否则"改造"与"重新录制基线"两类读数混在一起，判据失去分辨力。覆盖率阈值类指标没有规范来源，不采用。</div>
+
+<h2>4. 机制放在哪里、词条归谁、语言从哪里来</h2>
+<p class="q"><b>问题：</b>机制放在哪个包？词条归谁维护？语言从哪里读出来？</p>
+<div class="bg"><b>背景</b>
+<ul>
+  <li>宿主在 Node 侧没有翻译接口；插件层声明的 <code>locale?: string</code> 实际是"槽位词条命名空间"，不是语言标签，且全仓没有任何地方读取它。</li>
+  <li>公共层三包有硬约束：零运行时依赖、跨包边界断言、消费方必须精确声明版本。</li>
+  <li>仓库已有一个"唯一来源 → 构建期生成多份"的现成形状：<code>seals.yaml</code> → <code>tooling/gen-seals.mjs</code> → 6 份生成文件。</li>
+  <li>生态四家的一致做法：词条随包自带，宿主统一协商与加载。</li>
+  <li>同一句话在仓库里有 2 到 7 份副本（例如"高级"在 6 个插件的设置页里各有一份），并且有测试断言这些副本必须一致。</li>
+</ul></div>
+<div class="rev rev1"><b>初版推荐</b>新增第四个公共层包存放机制；词条随各包存放；插件读取语言后显式传给技能命令行。</div>
+<table class="pc"><tr><th>优点</th><th>缺点</th></tr>
+<tr><td>机制只有一个定义地，符合"同一概念只允许一个定义地"；词条随包符合生态惯例，也避免中央大文件；语言显式传参，可测试、可复现。</td>
+<td>新增公共层包要改边界断言、精确版本声明、版本同步与发布顺序，成本真实；词条随包会让 6 个技能各自维护英文词条，术语一致性需要额外约束；依赖"插件能读到语言"这个前提，而该前提尚未验证。</td></tr></table>
+<div class="rev rev2"><b>对抗式审查后的推荐</b>三处修正。①"插件是唯一知道语言的一侧"被推翻——<b>今天没有任何一侧知道</b>，必须先做一次实测（宿主设置读取、客户端经 RPC 下传、桌面外壳三种候选路径）。② 机制载体三选一并列出取舍：住 base-render 共用位（零新增结构，但 7 个插件够不到）／新增公共层包（概念最干净，插件也够得到，但有结构成本）／先在一个技能内验证（风险最低，最符合"共用位从第二个用法长出来"，但慢一档）。③ 跨包重复的句子必须走生成，不许各写一份，否则同一个界面会出现两种语言，并撞上副本一致性断言。</div>
+<div class="rev rev3"><b>第一性原理后的推荐（定稿）</b>机制是"文本"这件事的定义地，不是渲染的一部分——因此放<b>新的公共层包</b>（推荐），但先用最小实现验证形状；词条随包；语言来源必须先实测；语言作为<b>显式参数</b>进入命令行，默认中文以保持现有行为，插件客户端一侧走宿主已有的语言服务。</div>
+
+<h2>5. "不依赖 locale 保证判据确定"与多语言是否冲突</h2>
+<p class="q"><b>问题：</b>仓库有"不依赖 locale、保证判据确定"的纪律，多语言与它冲突吗？</p>
+<div class="bg"><b>背景</b>
+<ul>
+  <li>原纪律原文：金额只有一条排法（两位小数 ＋ 千分位 ＋ 自算不依赖 locale），理由是"同一入参在任何机器上排一样，判据才断得准"。</li>
+  <li>成因是门禁本身：base-render 测试里"逐字节"出现 443 处（皮肤矩阵、加法式、两次渲染一致性）。</li>
+  <li>现状不一致：公共层有一处明确固定 en-US 的用法（正确），技能侧有 6 处未指定语言的 <code>toLocaleString</code>（不正确）。</li>
+  <li>未指定语言的 <code>localeCompare</code> 结果依赖实现（MDN 原文）。</li>
+</ul></div>
+<div class="rev rev1"><b>初版推荐</b>内容文本走多语言，判据敏感的数字与日期保持确定性。</div>
+<table class="pc"><tr><th>优点</th><th>缺点</th></tr>
+<tr><td>保住现有门禁的可判性；不推翻既有纪律，改动可控。</td>
+<td>"确定性"与"本地化"的边界没有定义清楚，容易各处理解不同；哈希账本没有说明按语言如何扩展；排序问题被掩盖（未指定语言在中文名上已经是错的）。</td></tr></table>
+<div class="rev rev2"><b>对抗式审查后的推荐</b>把确定性从"忽略语言"改成"输入与语言共同决定结果"，并二选一：语言显式进入渲染入参（要动渲染契约版本与三处冻结面同步），或每种语言各锁一份基线；两条<b>不允许混用</b>。排序改为显式指定语言的排序器，并把"排序用的键"与"显示的文本"分开。哈希账本按语言增加列：中文列逐字节不变，英文列新录。</div>
+<div class="rev rev3"><b>第一性原理后的推荐（定稿）</b>不变量是"（输入，语言）→ 输出确定"，不是"忽略语言"。具体三条：账本与算式与语言无关（数值恒等）；呈现层按语言格式化（显示本地化）；基线与判据按语言分别固定，<b>不许依赖环境默认语言</b>。</div>
+
+<h2>6. 需要裁决的四个决策点</h2>
+<table>
+<tr><th>编号</th><th>决策点</th><th>我的推荐</th><th>备选</th></tr>
+<tr><td>D1</td><td>地图形态</td><td>规格 ＋ 端到端最小实现 ＋ 台账与批次（全量另起实施地图）</td><td>全量落地（需同步修改第 2、3 节的验收条款）</td></tr>
+<tr><td>D2</td><td>机制载体</td><td>新增公共层包（概念最干净，插件也够得到）</td><td>住 base-render 共用位（零新增结构，插件够不到）／先在一个技能内验证（风险最低，慢一档）</td></tr>
+<tr><td>D3</td><td>存量翻译是否进本图</td><td>不进，只出台账与自动检查门</td><td>进（规模约 10 倍，需要人签字）</td></tr>
+<tr><td>D4</td><td>源语言策略</td><td>以词条为源，新增时中英同时写</td><td>以中文为源，英文由生成或补写（英文会长期滞后）</td></tr>
+</table>
+
+<h2>7. 下一步</h2>
+<ul>
+  <li>四个决策点裁决后，建立地图（标签 <code>wayfinder:map</code>），正文包含结束条件、说明、决定记录、待开发项、不做项。</li>
+  <li>建立 22 张子票（研究、讨论、任务、原型四类），每张票面写明"真值从哪里读出来"。</li>
+  <li>第二轮单独建立关系边：父子边挂到地图，阻塞边用原生依赖，之后读回地图快照核对子票数量与完成比例。</li>
+</ul>
+
+<h2>附录 A · 调查证据清单（<code>.scratch/i18n-survey/</code>）</h2>
+<table>
+<tr><th>文件</th><th>内容</th><th>大小</th></tr>
+<tr><td>dsh-host-locale.md</td><td>DSH 宿主的语言能力：设置项、语言服务位置、Node 侧缺口</td><td>27.1 KB</td></tr>
+<tr><td>help-pipeline.md</td><td>6 个技能的帮助内容来源、结构与共享模板</td><td>10.1 KB</td></tr>
+<tr><td>base-render.md</td><td>公共层 3 包的文本面、渲染契约、逐字节门禁成因</td><td>33.6 KB</td></tr>
+<tr><td>plugin-layer.md</td><td>7 个插件的文本面、语言变量流向、重复副本</td><td>36.0 KB</td></tr>
+<tr><td>test-gates.md</td><td>三套哈希账本、CI 门清单、新增门可照抄的形状</td><td>26.3 KB</td></tr>
+<tr><td>research-library.md</td><td>主流多语言库对比与选型结论（含一手来源）</td><td>41.9 KB</td></tr>
+<tr><td>research-architecture.md</td><td>4 家生态的组织方式、回退链规范、面向模型文本的分工</td><td>37.1 KB</td></tr>
+<tr><td>research-quality.md</td><td>16 条检查门、测试策略、中文排印与断行的一手依据</td><td>67.9 KB</td></tr>
+<tr><td>map-draft.md</td><td>地图草稿：结束条件、说明、22 张子票与依赖</td><td>11.0 KB</td></tr>
+</table>
+
+<h2>附录 B · 关键读数</h2>
+<table>
+<tr><th>读数</th><th>数值</th></tr>
+<tr><td>源码文件 / 行数 / 中文字符串条数</td><td>1,697 / 254,854 / 47,296</td></tr>
+<tr><td>测试里的中文断言</td><td>22,530 条以上</td></tr>
+<tr><td><code>Intl.</code> 出现次数 / 语言变量消费处</td><td>0 / 0</td></tr>
+<tr><td>未指定语言的 <code>localeCompare</code> / <code>toLocale*</code></td><td>约 8 处（共 27）／ 6 处（共 8）</td></tr>
+<tr><td><code>&lt;html lang="zh-CN"&gt;</code></td><td>107 处，注入点集中在两个常量</td></tr>
+<tr><td>内容哈希账本</td><td>194 件 HTML（5 个技能）＋ 44 张页面 ＋ 真实目录树</td></tr>
+<tr><td>宿主语言能力</td><td>内置中文与英文；双语同时给全；回退链终止于 en；Node 侧无翻译接口</td></tr>
+<tr><td>唤醒词资产</td><td>436 条场景 / 7,509 行</td></tr>
+<tr><td>公共层可见词常量</td><td>95 处</td></tr>
+</table>
+
+<footer>
+本简报为决策辅助材料，尚未建立地图，也未创建任何议题。所有数字均为 2026-10-08 的现场读数；外部结论均附一手来源，见附录 A 对应报告。
+</footer>
+
+</div>
+</body>
+</html>

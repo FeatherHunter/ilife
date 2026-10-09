@@ -4,7 +4,15 @@
  *   ① 分摊三格（总额／期数／首期日）在本型的槽位表之外，参数名与中文名照域声明，本件把它们交给模板；
  *   ② 缺项那三句「为什么写不进去」逐格写法不同（不分总额就摊不了期／分几期由用户定／首期日不定就算不出日期）；
  *   ③ 期数角标五枚：前三枚是三格的中文名，后两枚是尾差与合计的口径。
+ *
+ *  #1204 首迁件（多语言文本外置）：本件的用户可见文案不住这里，住 `../entries/zh.ts`（中文基准）
+ *  与 `../entries/en.ts`（英文列）；`sceneInstallment(language)` 按语言取值，`SCENE` 是 `zh`
+ *  的那一份（不启用多语言时与改造前逐字节相同）。期数角标前三枚**复用**三格中文名的 key
+ *  （同一概念只一处定义，见本件头注③）。参数名（`total`／`periods`／`start_date`）是槽位标识、
+ *  命令键冻结，二者都不进词条表。
  */
+import { resolve } from 'base-entries';
+import { SKILL_BILL_CATALOG, type SkillBillMessageId } from '../entries/index.js';
 import { wakeWordOf } from './typeBadge.js';
 import type { Scene } from './scene.js';
 import { bindInstallmentPages } from './template-installment.js';
@@ -12,44 +20,50 @@ import { bindInstallmentPages } from './template-installment.js';
 const KIND = 'installment';
 const WORD: string = wakeWordOf(KIND);
 
-export const SCENE: Scene = {
-  id: 'installment',
-  key: 'bill.record.add',
-  kind: KIND,
-  op: '',
-  family: '特殊收支族',
-  ...bindInstallmentPages({
-    word: WORD,
+/** 按语言取本件的差异声明（key 拼错编译期红：`SkillBillMessageId` 从 zh 表派生）。 */
+export function sceneInstallment(language: string = 'zh'): Scene {
+  const t = (id: SkillBillMessageId): string => resolve(SKILL_BILL_CATALOG, language, id);
+  return {
+    id: 'installment',
+    key: 'bill.record.add',
     kind: KIND,
-    totalName: 'total',
-    totalLabel: '总额',
-    totalHint: '总价，如 1200',
-    totalWhy: '没给：不分总额就摊不了期',
-    periodsName: 'periods',
-    periodsLabel: '期数',
-    periodsHint: '分几期，如 12',
-    periodsWhy: '没给：分几期由用户定，不许默认',
-    firstDateName: 'start_date',
-    firstDateLabel: '首期日',
-    firstDateHint: '第 1 期哪一天，如 2026-10-01',
-    firstDateWhy: '没给：首期日不定就算不出每期日期',
-    section1: '先看这一笔缺什么',
-    chips: ['总额', '期数', '首期日', '尾差归最后一期', '合计等于总价'],
-    section2: '分期参数只供核对',
-    description: '参数只供核对，改值重说。',
-    section3: '分摊预览',
-    noSharesChip: '三样齐了才算得出分摊',
-    foldTitle: '还缺什么，以及补齐后照抄的那条',
-    promptLabel: '照这个口径逐期记，点这颗复制',
-    promptLabelBlocked: '补齐后照这句跟助手说一遍',
-    receiptState: '写库成功',
-    receiptNext: '这一笔已记下，撤销见下方按钮。',
-    receiptRowsLabel: '这次记了几笔',
-    receiptRowsDetail: '按库里的改动算',
-    receiptPeriodsLabel: '分期参数',
-    receiptFeedbackDetail: '每期日期＝每月同日，该月没有那一天就回退月末。改期数走「改记录」。',
-    receiptNoSharesChip: '缺分期参数，未分摊，这一笔仍已记下',
-    receiptCaption: '写进去的项与值',
-    receiptEyebrow: WORD,
-  }),
-};
+    op: '',
+    family: t('installment.family'),
+    ...bindInstallmentPages({
+      word: WORD,
+      kind: KIND,
+      totalName: 'total',
+      totalLabel: t('installment.total.label'),
+      totalHint: t('installment.total.hint'),
+      totalWhy: t('installment.total.why'),
+      periodsName: 'periods',
+      periodsLabel: t('installment.periods.label'),
+      periodsHint: t('installment.periods.hint'),
+      periodsWhy: t('installment.periods.why'),
+      firstDateName: 'start_date',
+      firstDateLabel: t('installment.first-date.label'),
+      firstDateHint: t('installment.first-date.hint'),
+      firstDateWhy: t('installment.first-date.why'),
+      section1: t('installment.section1'),
+      chips: [t('installment.total.label'), t('installment.periods.label'), t('installment.first-date.label'), t('installment.chips.tail-diff'), t('installment.chips.total-check')],
+      section2: t('installment.section2'),
+      description: t('installment.description'),
+      section3: t('installment.section3'),
+      noSharesChip: t('installment.no-shares-chip'),
+      foldTitle: t('installment.fold-title'),
+      promptLabel: t('installment.prompt-label'),
+      promptLabelBlocked: t('installment.prompt-label-blocked'),
+      receiptState: t('installment.receipt.state'),
+      receiptNext: t('installment.receipt.next'),
+      receiptRowsLabel: t('installment.receipt.rows-label'),
+      receiptRowsDetail: t('installment.receipt.rows-detail'),
+      receiptPeriodsLabel: t('installment.receipt.periods-label'),
+      receiptFeedbackDetail: t('installment.receipt.feedback-detail'),
+      receiptNoSharesChip: t('installment.receipt.no-shares-chip'),
+      receiptCaption: t('installment.receipt.caption'),
+      receiptEyebrow: WORD,
+    }),
+  };
+}
+
+export const SCENE: Scene = sceneInstallment('zh');

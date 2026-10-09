@@ -126,8 +126,11 @@ describe('injector 装配归一', () => {
     openPage(down, page('memo', 80));
     assert.equal(down.calls.open.length, 0);
   });
-  it('render 包无运行时依赖（红线钉死）', () => {
+  it('render 包只许依赖同层零依赖包（#1199 收窄后的红线）', () => {
+    // #1199：原判据是「dependencies 必须空」；公共层出词条层之后收窄成「只许依赖同层零依赖包」。
+    // 判据正本＝tooling/check-boundaries.mjs 的公共层依赖白名单（本件只作包内快速对照）。
     const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
-    assert.deepEqual(Object.keys(pkg.dependencies ?? {}), []);
+    const deps = Object.keys(pkg.dependencies ?? {});
+    assert.deepEqual(deps.filter((d) => d !== 'base-entries'), [], '只许依赖同层零依赖包 base-entries，实得 ' + JSON.stringify(deps));
   });
 });
