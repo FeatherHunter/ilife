@@ -16,7 +16,7 @@
  * 实施后全绿；把本票记录删掉即回红（改坏必红的机械证明见门测试 ⑤，此处不重复跑 `--check`）。
  *
  * 运行（持锁，票 651）：先 `tsc -b packages/skill-calorie`，再
- * `node tooling/run-locked.mjs --ticket 651 -- node --test packages/skill-calorie/test/t651-代表词路由.test.mjs`
+ * `node --test packages/skill-calorie/test/t651-代表词路由.test.mjs`
  */
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';

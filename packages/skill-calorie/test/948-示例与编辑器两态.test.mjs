@@ -28,7 +28,7 @@
  *
  * 跑法：先 `node node_modules/typescript/bin/tsc -b packages/skill-calorie`，再
  *   `node --test packages/skill-calorie/test/948-示例与编辑器两态.test.mjs`；两条都经
- *   `node tooling/run-locked.mjs --ticket 948 -- <命令>`。
+ *   `<命令>`。
  */
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';

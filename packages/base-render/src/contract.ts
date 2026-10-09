@@ -39,6 +39,19 @@ export function escapeHtml(s: string): string {
   return s.replace(ESCAPE_PATTERN, (ch) => ESCAPE_ENTITY[ch]);
 }
 
+/** 文档 `lang` 属性：文本语言 → HTML 文档语言标签（#1201，ADR-0004 §4）。
+ *
+ *  唯一定义地：help 壳（`components/help/template.ts`）与文档壳（`docShell.ts`）都调这里，
+ *  不各写一份映射（铁律二）。BCP 47 大小写不敏感（`EN` → `en`，`en-US` 按 `en` 归并）；
+ *  可用语言清单不在这里——唯一权威是 `base-link-core/src/config/language.ts`
+ *  （`AVAILABLE_LANGUAGES`），未知值在配置选择层就已报错，本层只做渲染回退：
+ *  未给／空串／未知一律 `'zh-CN'`，缺省中文产物逐字节不变。 */
+export function documentLang(language?: string): 'zh-CN' | 'en' {
+  const tag = String(language ?? '').trim().toLowerCase();
+  if (tag === 'en' || tag.startsWith('en-')) return 'en';
+  return 'zh-CN';
+}
+
 function head(page: PageDescriptor): string {
   return '<section class="' + cx('page') + '" data-slot="' + escapeHtml(page.slotId) + '" data-skill="' + escapeHtml(page.skill) + '"><h1>' + escapeHtml(page.title) + '</h1>';
 }

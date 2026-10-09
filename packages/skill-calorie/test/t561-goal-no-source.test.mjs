@@ -27,7 +27,7 @@
  *
  * 跑法：先编译再跑 `node --test packages/skill-calorie/test/t561-goal-no-source.test.mjs`
  * （编译入口 `node node_modules/typescript/bin/tsc -b packages/skill-calorie`）。
- * 会改工作区的动作一律走 `node tooling/run-locked.mjs --ticket 561 -- <命令>`；
+ * 会改工作区的动作一律走 `<命令>`；
  * 复跑配方＝临时库 `mkdtemp` ＋ `SKILLS_DB_PATH` 指向它 ＋ `docs/research/t81-seed.mjs` 的 `seedFull()`
  * ＋ `CALORIE_TODAY=SEED_TODAY`（种子数据日 `2026-09-07`）。
  */

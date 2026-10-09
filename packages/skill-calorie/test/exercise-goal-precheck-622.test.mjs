@@ -15,7 +15,7 @@
  * 写经 `calorie.goal.exercise`（#621）。运动窗口无记录时仍走原缺失阻断（保 #267 空库档）。
  *
  * 运行：先 `node node_modules/typescript/bin/tsc -b packages/skill-calorie`，再
- * `node tooling/run-locked.mjs --ticket 622 -- node --test packages/skill-calorie/test/exercise-goal-precheck-622.test.mjs`
+ * `node --test packages/skill-calorie/test/exercise-goal-precheck-622.test.mjs`
  */
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';

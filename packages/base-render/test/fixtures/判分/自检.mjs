@@ -2,7 +2,7 @@
 /** #868 · 夹具自检：正例两条 ＋ 反例四条，逐条判红绿（可重跑）。
  *
  *  跑法（仓根）：
- *    node tooling/run-locked.mjs --ticket 868 -- node packages/base-render/test/fixtures/判分/自检.mjs
+ *    node packages/base-render/test/fixtures/判分/自检.mjs
  *
  *  六条：
  *    正例① 引擎跑夹具备——exit 0，末两行给「一致性自证差 0」与「页分／每维≥80%」

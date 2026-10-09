@@ -24,7 +24,7 @@
  * 负向对照（机器读数见 `docs/skills/skill-calorie/t343-代表词门-证据.md`）：在某个 `commands.ts` 里
  * 故意写一个假词 ⇒ `gen-cli.mjs --check` 失败并点名键／词／文件；逐字节还原 ⇒ 全绿。
  *
- * 运行：`node tooling/run-locked.mjs --ticket 343 -- node --test packages/skill-calorie/test/wakeword-gate-343.test.mjs`
+ * 运行：`node --test packages/skill-calorie/test/wakeword-gate-343.test.mjs`
  * 前提：读 `dist/`（须先 `tsc -b packages/skill-calorie`）；⑤ 另需内容印记新鲜（即 `pnpm build` 之后的样子）。
  * 只读：本件不写任何文件（⑤ 只跑 `--check` 模式，不落盘）。
  */

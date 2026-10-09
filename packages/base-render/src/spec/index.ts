@@ -176,7 +176,7 @@ export const SPEC_FROZEN_SURFACE: readonly FrozenSurfaceEntry[] = Object.freeze(
   { name: 'charts', kind: 'runtime', ticket: '#78', status: 'implemented', section: '3.5', signature: 'ChartsApi' },
   { name: 'SceneData', kind: 'type', ticket: '#78', status: 'implemented', section: '3.5', signature: '{ skill_name: string; title: string; subtitle?: string; meta_blocks?: readonly SceneMetaBlock[]; groups: readonly SceneGroup[]; init_banner?: SceneInitBanner; contact?: SceneContact; version?: string; recommendations?: readonly SceneRecommendation[] }' },
   { name: 'Scene', kind: 'type', ticket: '#78', status: 'implemented', section: '3.5', signature: "{ id: string; title: string; wake_word: string; types?: readonly (string | SceneTypeBadge)[]; status: SceneStatus; prompt_template: string; editable_fields?: readonly SceneEditableField[] }" },
-  { name: 'HelpShellInput', kind: 'type', ticket: '#78', status: 'implemented', section: '3.5', signature: '{ sceneData: SceneData; assets: TemplateAssets; strict?: boolean; template?: string }' },
+  { name: 'HelpShellInput', kind: 'type', ticket: '#78', status: 'implemented', section: '3.5', signature: '{ sceneData: SceneData; assets: TemplateAssets; strict?: boolean; language?: string; template?: string }' },
   { name: 'RenderHelpShell', kind: 'type', ticket: '#78', status: 'implemented', section: '3.5', signature: '(input: HelpShellInput) => FillTemplateOutput' },
   { name: 'renderHelpShell', kind: 'runtime', ticket: '#78', status: 'implemented', section: '3.5', signature: '(input: HelpShellInput): FillTemplateOutput' },
   { name: 'ChartsHelpersInput', kind: 'type', ticket: '#78', status: 'implemented', section: '3.5', signature: '{ prefix?: string; styleId?: string }' },

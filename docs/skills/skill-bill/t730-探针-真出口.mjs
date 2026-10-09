@@ -1,7 +1,7 @@
 // #730 · goal 域**真出口探针**（证据件之一，可复跑）：4 条唤醒词逐条真跑 ＋ 进度条两处卡口 ＋ 三态预测。
 //
 // 跑法（持锁，与仓规一致）：
-//   node tooling/run-locked.mjs --ticket 730 -- node docs/skills/skill-bill/t730-探针-真出口.mjs
+//   node docs/skills/skill-bill/t730-探针-真出口.mjs
 // 它只读 `packages/skill-bill/dist/`，产物与库都落临时目录（不改工作区）；末行打 `RESULT: n/m`。
 //
 // 「今天」钉在 2026-09-15（`test/helpers/freeze-clock.cjs` 预载）：月底预测三态与目标期算法都要一个固定的今天，

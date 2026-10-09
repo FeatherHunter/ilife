@@ -11,7 +11,7 @@
  *      并核对打印类**是否真由版面根那一个元素承载**（不是子元素）、样式段里三条打印规则是否齐。
  *
  * 只读：不改仓库任何被审件；产物取 `.scratch/t423/out/*.html`（本探针不重跑命令）。
- * 运行：`node tooling/run-locked.mjs --ticket 423 -- node docs/skills/skill-calorie/t423-review-probe.mjs`
+ * 运行：`node docs/skills/skill-calorie/t423-review-probe.mjs`
  * 退出码：全部 PASS=0；任一 FAIL=1。
  */
 import { createHash } from 'node:crypto';

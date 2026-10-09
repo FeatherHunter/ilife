@@ -8,7 +8,7 @@
  *
  * 若 HEAD 版本也是红 ⇒ 两条 RED 与本票无关（他席在途）；若 HEAD 版本绿 ⇒ 是本票引入，必须修。
  * 用法（必须持外层锁）：
- *   node tooling/run-locked.mjs --ticket 722 -- node .scratch/t722/baseline.mjs
+ *   node .scratch/t722/baseline.mjs
  */
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';

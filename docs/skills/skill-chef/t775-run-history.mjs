@@ -2,8 +2,8 @@
 /** t775 历史域端到端运行器（#775 验收命令的唯一入口）。
  *
  * 跑法（票面验收命令）：
- *   node tooling/run-locked.mjs --ticket 775 -- node docs/skills/skill-chef/t775-run-history.mjs
- *   node tooling/run-locked.mjs --ticket 775 -- node docs/skills/skill-chef/t775-run-history.mjs --check
+ *   node docs/skills/skill-chef/t775-run-history.mjs
+ *   node docs/skills/skill-chef/t775-run-history.mjs --check
  *
  * 做的事（4 卡逐卡一行读数 ＋ 写侧回读）：
  *   1. 沙箱：`t840-沙箱.mjs --ticket 775` 刷出一份 pristine 副本（真库只读）；

@@ -5,7 +5,7 @@
  * 变异红＝判据有鉴别力；盲区段查判据没覆盖的项（单文件性、锚点完整性）。
  *
  * 运行（会写工作区，必须持锁）：
- *   node tooling/run-locked.mjs --ticket 394 -- node docs/skills/skill-calorie/t394-review-probe.mjs
+ *   node docs/skills/skill-calorie/t394-review-probe.mjs
  * 机器读数行以 PROBE- 开头；全部符合预期 exit 0，否则 exit 1。
  */
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';

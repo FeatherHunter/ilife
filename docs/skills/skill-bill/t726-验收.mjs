@@ -10,7 +10,7 @@
  *      `html.quickRefStem`／`backup.dir`／`backup.stem` 八项逐项改写后，真出口的落点逐项跟着改。
  *
  * 跑法（**持锁**，见 `docs/subagent-concurrency-protocol.md` §2.4；前置＝`tsc -b packages/skill-bill --force`）：
- *   node tooling/run-locked.mjs --ticket 726 -- node docs/skills/skill-bill/t726-验收.mjs
+ *   node docs/skills/skill-bill/t726-验收.mjs
  * 末行固定：`RESULT: n/m`；exit 0 绿、1 红。临时目录用完即清（路径守卫见 `cleanup`）。
  */
 import { spawnSync } from 'node:child_process';

@@ -22,7 +22,7 @@
  * 照旧（页外键，还在）；`T676_LAND_FIXTURE`／`T676_LAND_FIXTURE_LOG` 照旧（同一份脚本读同一套环境）。
  *
  * 并发与崩溃：
- * - 本仓测试一律经 `node tooling/run-locked.mjs` 排队（并发纪律），同一时刻只有一个测试进程在跑，
+ * - 本仓测试各在自己 worktree 里跑，同一时刻只有一个测试进程动这两份文件，
  *   故暂放期间没有别的测试会读到这两份文件；
  * - `after` 保证还原（断言失败也走）；若进程崩溃没走到还原，兄弟包那两份 `dist` 会残留 fixture——
  *   下次跑兄弟包测试前重编一次即可（`tsc -b packages/skill-schedule packages/skill-memo-ilife`）。

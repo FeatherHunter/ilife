@@ -15,7 +15,7 @@
  *
  * 交付位：`docs/skills/skill-calorie/t475-review-probe.mjs`；草稿位 `.scratch/t475-review/probe.mjs`（两处同字节）。
  * 跑法（必须持锁，否则读到他席半写的 dist）：
- *   node tooling/run-locked.mjs --ticket 475 -- node docs/skills/skill-calorie/t475-review-probe.mjs
+ *   node docs/skills/skill-calorie/t475-review-probe.mjs
  */
 import { spawnSync } from 'node:child_process';
 import crypto from 'node:crypto';

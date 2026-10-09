@@ -5,7 +5,7 @@
 // 新写的 lockstep 断言「页面每一行都有对应的技能键，且技能每一个键都有对应行」必红。
 //
 // 跑法（**整个窗口由外层持锁包装器持锁**，本脚本内部直接调 node --test，不重复抢锁）：
-//   node tooling/run-locked.mjs --ticket 676-变异 -- node docs/plugins/plugin-calorie/t676-变异.mjs
+//   node docs/plugins/plugin-calorie/t676-变异.mjs
 //
 // 输出只留两行机器读数（协议 §2.2：变异只报红没红 / 还原后是否一致）：
 //   MUTANT-RED  fail=<n> exit=<n>

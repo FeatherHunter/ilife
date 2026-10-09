@@ -17,7 +17,7 @@
  * 本脚本任何分支都不拼生产路径、不读生产库。
  *
  * 用法（仓根，经排队）：
- *   node tooling/run-locked.mjs --ticket 802 --max-wait-ms 600000 -- node packages/skill-home/scripts/seed-scenes.mjs [--reset|--check]
+ *   node packages/skill-home/scripts/seed-scenes.mjs [--reset|--check]
  */
 import { existsSync, mkdirSync, rmSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';

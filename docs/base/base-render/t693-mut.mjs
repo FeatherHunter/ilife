@@ -9,7 +9,7 @@
  * 任一步抛错都在 `finally` 里还原并重跑生成管线，不把变异留在树里。
  *
  * 跑法（**必须在外层持锁的窗口里**跑，脚本内部一律不抢锁，见协议 §2）：
- *   node tooling/run-locked.mjs --ticket 693 -- node docs/base/base-render/t693-mut.mjs
+ *   node docs/base/base-render/t693-mut.mjs
  */
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';

@@ -1,7 +1,7 @@
 // #731 · setup 域**真出口探针**（evidence 件之一，可复跑）：5 条唤醒词／6 个场景逐条真跑 ＋ 三件套／四件／同源。
 //
 // 跑法（持锁，与仓规一致）：
-//   node tooling/run-locked.mjs --ticket 731 -- node docs/skills/skill-bill/t731-探针-真出口.mjs
+//   node docs/skills/skill-bill/t731-探针-真出口.mjs
 // 它只读 `packages/skill-bill/dist/`，产物、库、备份目录都落临时目录（不改工作区）；末行打 `RESULT: n/m`。
 //
 // 判据对照（本票 `## 判据` 第 1～6 条）：① 六场景真跑；② 恢复三件套（D1）；③ 导入四件（D2）；

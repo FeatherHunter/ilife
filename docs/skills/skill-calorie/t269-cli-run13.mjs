@@ -10,7 +10,7 @@ import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { assertSafeToRemove } from '../../../tooling/run-locked.mjs';
+import { assertSafeToRemove } from '../../../tooling/path-guard.mjs';
 
 const ROOT = resolve('.scratch/t269-final/artifacts');
 const BIN = resolve('packages/skill-calorie/dist/cli/cmd_read.js');

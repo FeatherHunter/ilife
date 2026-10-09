@@ -23,8 +23,8 @@
  *      真身（源码级）变异红／还原绿两行读数记在 `docs/skills/skill-calorie/t256-锁票-证据.md` 第二轮段。
  *
  * 跑法（编译／测试都要持锁，见 `docs/subagent-concurrency-protocol.md` §2–§3）：
- *   node tooling/run-locked.mjs --ticket 256 -- node node_modules/typescript/bin/tsc -b packages/skill-calorie --force
- *   node tooling/run-locked.mjs --ticket 256 -- node --test packages/skill-calorie/test/goal-lock-256.test.mjs
+ *   node node_modules/typescript/bin/tsc -b packages/skill-calorie --force
+ *   node --test packages/skill-calorie/test/goal-lock-256.test.mjs
  *
  * 真库零接触：库路径恒走 `mkdtemp` 的临时目录（每个用例一份独立副本），真库只读 sha256 前后比一次；见判定⑥。
  * 时钟：`test/freeze-clock.cjs` ＋ `FAKE_NOW_ISO` 钉住当刻（饮水推荐按**当季**取值，只钉 `CALORIE_TODAY` 不够），

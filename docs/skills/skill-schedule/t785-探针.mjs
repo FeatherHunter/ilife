@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /** #785 探针 —— 查询与浏览·范围与跨天「出页」的**票面验收命令**（真出口读数）。
  *
- *   node tooling/run-locked.mjs --ticket 785 -- node docs/skills/skill-schedule/t785-探针.mjs
+ *   node docs/skills/skill-schedule/t785-探针.mjs
  *
  *  它跑什么（逐条对票面「怎么算绿」）：
  *   ① **逐场景行有交代**：从清单 `docs/skills/skill-schedule/场景清单.json` 读本域（`domain=query`）里
@@ -189,7 +189,7 @@ function compileFingerprint() {
   return fp.trim();
 }
 
-/** 本次门禁运行的 runId（`tooling/run-locked.mjs` 写的 owner.json；没持锁时取不到，返回空串）。 */
+/** 本次门禁运行的标识（锁机制已退役：恒返回空串，调用方只看 exit）。 */
 function gateRunId() {
   try {
     return String(JSON.parse(readFileSync(join(REPO, '.scratch', 'locks', 'owner.json'), 'utf8')).runId ?? '');

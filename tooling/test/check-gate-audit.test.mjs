@@ -13,7 +13,7 @@ import {
 /**
  * tooling/check-gate-audit.mjs 的行为测试（协议 §2.4 证据对账，严格默认口径）。
  * 本文件自身**必须**经持锁包装器跑（自我示范）：
- *   node tooling/run-locked.mjs --ticket 88 -- node --test tooling/test/check-gate-audit.test.mjs
+ *   node --test tooling/test/check-gate-audit.test.mjs
  *
  * 覆盖：缺失 exit≠0／一条记录不得顶两次声称／默认 require-claims／**反向对账**／
  * **runId 一对一绑定**／**exit=0 才认领**／放宽必须写进证据（GATE-RELAX）／`--export`。

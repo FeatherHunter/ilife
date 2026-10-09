@@ -15,7 +15,7 @@
  *      产物含「已写入运动目标」与「看目标状态」复查指引。
  *
  * 运行：先 `node node_modules/typescript/bin/tsc -b packages/skill-calorie`，再
- * `node tooling/run-locked.mjs --ticket 621 -- node --test packages/skill-calorie/test/exercise-goal-write-621.test.mjs`
+ * `node --test packages/skill-calorie/test/exercise-goal-write-621.test.mjs`
  */
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';

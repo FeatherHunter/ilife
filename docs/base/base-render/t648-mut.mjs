@@ -6,7 +6,7 @@
  *  与 #647 那套 `mut.mjs` 的差别（这就是「新探针」的意思）：那边打的是**配比页**接线（`nutritionPortDocs.ts`），
  *  这边打的是**复盘 8 词**接线（`review.ts`）——两处互为对方的盲区，各自被打坏时对方的探针不会红。
  *
- *  必须在持锁包装里跑：`node tooling/run-locked.mjs --ticket 648 -- node .scratch/t648/mut.mjs`
+ *  必须在持锁包装里跑：`node .scratch/t648/mut.mjs`
  *  （本件会临时改 `src/diet/review.ts` 并重编 ⇒ 走锁；`finally` 无条件还原源码并重编）。
  */
 import { spawnSync } from 'node:child_process';

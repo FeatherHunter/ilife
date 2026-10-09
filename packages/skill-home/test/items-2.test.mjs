@@ -6,7 +6,7 @@
 // 落 `.scratch/807/`，再跑墙自检与三件判据。add_form 只读调用，不改 #806 的文件。
 //
 // 跑法（仓根，经排队，一件事一持锁）：
-//   node tooling/run-locked.mjs --ticket 807 --max-wait-ms 600000 -- node --test packages/skill-home/test/items-2.test.mjs
+//   node --test packages/skill-home/test/items-2.test.mjs
 //
 // 前提：`node node_modules/typescript/bin/tsc -b packages/skill-home`
 // （页模块经 `dist/<域>/pages/<族>.js` 进入本用例）。

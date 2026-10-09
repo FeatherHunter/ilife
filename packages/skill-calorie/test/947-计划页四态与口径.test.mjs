@@ -26,7 +26,7 @@
  *
  * 跑法：先 `node node_modules/typescript/bin/tsc -b packages/skill-calorie`，再
  * `node --test packages/skill-calorie/test/947-计划页四态与口径.test.mjs`；两条都经
- * `node tooling/run-locked.mjs --ticket 947 -- <命令>`。
+ * `<命令>`。
  */
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';

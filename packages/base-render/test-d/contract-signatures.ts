@@ -351,7 +351,7 @@ type _H07 = Expect<Equal<Mod['SCENE_TYPE_FIELD'], 'types'>>;
 type _H08 = Expect<Equal<Scene['types'], readonly (string | SceneTypeBadge)[] | undefined>>;
 type _H09 = Expect<Equal<'type' extends keyof Scene ? true : false, false>>;
 type _H10 = Expect<Equal<keyof SceneData, 'skill_name' | 'title' | 'subtitle' | 'meta_blocks' | 'groups' | 'init_banner' | 'contact' | 'version' | 'recommendations'>>;
-type _H11 = Expect<Equal<HelpShellInput, { readonly sceneData: SceneData; readonly assets: TemplateAssets; readonly strict?: boolean; readonly template?: string }>>;
+type _H11 = Expect<Equal<HelpShellInput, { readonly sceneData: SceneData; readonly assets: TemplateAssets; readonly strict?: boolean; readonly language?: string; readonly template?: string }>>;
 type _H12 = Expect<Equal<RenderHelpShell, (input: HelpShellInput) => FillTemplateOutput>>;
 /* #78 落地（契约 §3.5 施工面 5 条 pending）：3 条 runtime 出口**必须存在**（原 `Absent<>` 按契约
  * 「实现后必须翻转清单」翻转为 `Present<>`），且出口类型与冻结签名逐字相等（签名值零改动）；

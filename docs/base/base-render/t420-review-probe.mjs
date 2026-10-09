@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /** #420 独立审查探针（审查席自设件，与实施席脚本不同人不同脚本）。
  *
- * 用法（会写工作区的动作必须先持锁，见 `tooling/run-locked.mjs`）：
+ * 用法：
  *   node docs/base/base-render/t420-review-probe.mjs          # P1／P2／P3（只读：读 dist ＋ git 只读子命令）
- *   node docs/base/base-render/t420-review-probe.mjs --p4     # 另跑 P4（`tsc -b`／`pnpm build`，**须持锁**）
+ *   node docs/base/base-render/t420-review-probe.mjs --p4     # 另跑 P4（`tsc -b`／`pnpm build`）
  *
  * 四条探针各打实施席脚本的一处盲区：
  *   P1 打印 opt-in 在**真实页面**上成立：走技能侧整页装配（`src/shared/docPage.ts` 的 `assembleDocPage`，

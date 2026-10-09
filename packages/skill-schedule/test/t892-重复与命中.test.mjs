@@ -1,7 +1,7 @@
 /** #892 事实重复与命中区回归：制定次日计划结果页的同一句事实只许出现一处；
  *  向导页验证复选框命中区 ≥44×44；产物里不得出现 `pxpx`。
  *
- *  运行：先 `node tooling/run-locked.mjs --ticket 892 -- node node_modules/typescript/bin/tsc -b packages/skill-schedule --force`
+ *  运行：先 `node node_modules/typescript/bin/tsc -b packages/skill-schedule --force`
  *  （用例读 `dist/**`），再 `node --test --test-concurrency=1 packages/skill-schedule/test/t892-重复与命中.test.mjs`。
  *
  *  「改坏必红」：把 `discussDocs.ts` 历史贴合提示的 `lines` 加回去 → V1 红（同一句出现两次）；

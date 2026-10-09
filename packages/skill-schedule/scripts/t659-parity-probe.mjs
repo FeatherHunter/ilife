@@ -5,7 +5,7 @@
  * 一趟跑完即退场，**不进常驻测试**：老实现（仓外 Python）与新实现（仓内 TS）喂同一份输入，
  * 比三个边界上的痕迹——命令行回执、本地库行、远端平台收到的调用——用来**产出**不变量清单的读数。
  *
- * 跑法：`node tooling/run-locked.mjs --ticket 659 -- node packages/skill-schedule/scripts/t659-parity-probe.mjs`
+ * 跑法：`node packages/skill-schedule/scripts/t659-parity-probe.mjs`
  * 产出：`docs/skills/skill-schedule/t659-对拍读数.json`（机器件）＋ stdout 人读表。
  *
  * 安全门：老实现那一侧的 lark-cli 查找链被喂成挡板（PATH＋APPDATA），跑前逐条 `assertStubIsTheOne()`
