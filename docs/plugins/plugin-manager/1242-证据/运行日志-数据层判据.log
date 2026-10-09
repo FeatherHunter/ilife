@@ -1,0 +1,27 @@
+  ✔ 原型文件 SHA256 ≡ 1195 证据基线 2F297C…   ← 2F297C2356A3B3B4C39D22051F30F20A4E9CD4D6AED010AAC3FCF31805F34280
+  ✔ 成品源码里找得到 SCENES 字面量
+  ✔ ①源码 SCENES ≡ 原型 SCENES（逐字）
+  ✔ ①产物 SCENES ≡ 原型 SCENES（逐字）
+  ✔ ①条目键 5 条＝contents/basic/datadir/im/upcoming   ← contents,basic,datadir,im,upcoming
+  ✔ ①步骤数 6/3/6   ← 6/3/6
+  ✔ ①frag 全空（三场景）   ← ["","",""]
+  ✔ ①note 唯数据目录有   ← datadir
+  ✔ ①panelStatic 唯数据目录有   ← 
+  ✔ ①warn 仅作数据携带（三场景各一条）   ← 
+  ✔ ①第 4 个正文场景不存在（正文恰 3）   ← 3
+  ✔ ①待补充组 5 条 4/5/6/7/8   ← 待定 4,待定 5,待定 6,待定 7,待定 8
+  ✔ ②页数 5   ← 5
+  ✔ ②跨页 3   ← 3
+  ✔ ②纸 3   ← 3
+  ✔ ②书签几何未收窄（5.9%）   ← 5.9
+  ✔ ②未越界（overflow=false）   ← false
+  ✔ ②首跨页书签 1L 2R 4R   ← 1L,2R,4R
+  书签分布：1L,2R,4R  |  1L,3L,4R  |  1L,3L,5L
+  各跨页页：1+2  |  3+4  |  5
+  ✔ ④源码手册件内无「switchHtml」   ← 
+  ✔ ④源码手册件内无「lightbox」   ← 
+  ✔ ④源码手册件内无「data-shot」   ← 
+  ✔ ④源码手册件内无「a-chat」   ← 
+  ✔ ④源码手册件内无「出错总览」   ← 
+
+M1242-DATA-RESULT=PASS
