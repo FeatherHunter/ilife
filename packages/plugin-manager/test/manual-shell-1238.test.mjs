@@ -3,6 +3,7 @@
 // 前提：先出产物（pnpm --filter dsh-life-pack run build），再跑本文件。
 // 说明：#1239 起入口改喂真场景（5 页），故本文件验真书下的壳 chrome；
 // 空框 degenerate 只保 renderPage 缺席默认（见 manual-content-1239 首跨页），翻签/铜扣交互进 #1239 验。
+// #1242 补：悬停卡两行（本页＋反面页，按原型 renderTabs 口径），并给开书回路加 render()（悬停后要重渲）。
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -84,19 +85,19 @@ async function openBook() {
     effect: (cb) => cb(),
     connection: { rpc: { call: async () => ({ ok: false, error: { code: 'bad-request', message: '替身不发电话', details: {} } }) } },
   });
-  react.cursor = 0;
-  let tree = expand(Section({ useTabs: (sel) => sel([]), renderSlot: () => null }));
-  const entry = findAll(tree, (n) => n.type === 'button' && n.props?.['data-ilife-press'] === 'manual')[0];
+  const render = () => {
+    react.cursor = 0;
+    return expand(Section({ useTabs: (sel) => sel([]), renderSlot: () => null }));
+  };
+  const entry = findAll(render(), (n) => n.type === 'button' && n.props?.['data-ilife-press'] === 'manual')[0];
   assert.ok(entry, '找不到手册入口');
   entry.props.onClick();
-  react.cursor = 0;
-  tree = expand(Section({ useTabs: (sel) => sel([]), renderSlot: () => null }));
-  return tree;
+  return { tree: render(), render };
 }
 
 describe('#1238 书籍壳', () => {
   it('书在：框纸脊书签层铜扣齐，首跨页框为第 1/2 页', async () => {
-    const tree = await openBook();
+    const { tree } = await openBook();
     const shell = findAll(tree, (n) => n.props?.['data-ilife-manual'] === 'shell');
     assert.equal(shell.length, 1, '壳须恰好一个');
     assert.equal(findAll(tree, (n) => n.props?.['data-ilife-manual'] === 'book').length, 1, '书须一本');
@@ -107,7 +108,7 @@ describe('#1238 书籍壳', () => {
   });
 
   it('A4 高比与铜扣首跨页态（上一页禁用、下一页可用）', async () => {
-    const tree = await openBook();
+    const { tree } = await openBook();
     const book = findAll(tree, (n) => n.props?.['data-ilife-manual'] === 'book')[0];
     assert.ok(String(book.props?.style?.minHeight ?? '').includes('1.41421356'), '书高须锁 A4 比');
     const prev = findAll(tree, (n) => n.props?.['data-ilife-manual'] === 'prev')[0];
@@ -117,5 +118,41 @@ describe('#1238 书籍壳', () => {
     assert.equal(next.props?.disabled, false, '首跨页下一页须可用（共 3 跨页）');
     assert.equal(texts(prev).join(''), '‹ 上一页');
     assert.equal(texts(next).join(''), '下一页 ›');
+  });
+
+  // #1242：悬停卡两行（原型 renderTabs mouseenter，proto 第 349–372 行）——
+  // 第一行本页、第二行这张纸的反面那一页，都是「页号＋name || title」，待补充条目名后带锁；
+  // 反面不存在（首签那张纸）就不出第二行。
+  it('悬停卡两行：本页＋反面页（页号＋name || title，待补充带 🔒）', async () => {
+    const { render } = await openBook();
+    const tabs = (t) => findAll(t, (n) => n.props?.['data-ilife-manual'] === 'tab');
+    const tab = (t, pg) => tabs(t).filter((n) => n.props?.['data-pg'] === pg)[0];
+    const card = (t) => findAll(t, (n) => n.props?.['data-ilife-manual'] === 'tab-card')[0];
+    const hover = (pg) => {
+      const t = render();
+      const el = tab(t, pg);
+      assert.ok(el, '须有 ' + pg + ' 号签');
+      el.props.onMouseEnter({ clientX: 200, clientY: 300 });
+      return card(render());
+    };
+
+    // 2 号签：反面是 3 号页；本页印短名（name 优先于 title）。
+    const c2 = hover(2);
+    assert.ok(c2, '悬停须出卡');
+    assert.equal(texts(c2.props.children[1]).join(''), '3 数据目录', '第二行＝反面页（原型 data-other 口径：页号＋场景名）');
+    assert.equal(texts(c2.props.children[0]).join(''), '2 基本使用', '第一行＝本页（页号＋name || title，不用整条 title）');
+    assert.equal(texts(c2.props.children[2]).join(''), '点一下翻到这一页 ›', '末行仍是那句点一下');
+
+    // 4 号签：反面是 5 号待补充页，名后带锁。
+    assert.equal(texts(hover(4).props.children[1]).join(''), '5 后续场景，待补充 🔒', '待补充的反面页带 🔒');
+
+    // 1 号签那张纸没有反面页：卡上只有本页一行。
+    assert.equal(texts(hover(1)).join(''), '1 目录点一下翻到这一页 ›', '无反面页就不出第二行');
+
+    // 5 号签自己是待补充页：本页名后也带锁（原型 l1）。
+    const next = () => findAll(render(), (n) => n.props?.['data-ilife-manual'] === 'next')[0];
+    next().props.onClick();
+    next().props.onClick();
+    assert.equal(texts(hover(5).props.children[0]).join(''), '5 后续场景，待补充 🔒', '本页自身是待补充也带 🔒');
   });
 });
