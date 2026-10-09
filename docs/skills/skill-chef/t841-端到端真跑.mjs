@@ -17,7 +17,7 @@
  *
  * 跑法（先造副本与隔离家目录）：
  *   node docs/skills/skill-chef/t840-沙箱.mjs --ticket 841
- *   node tooling/run-locked.mjs --ticket 841 -- node docs/skills/skill-chef/t841-端到端真跑.mjs
+ *   node docs/skills/skill-chef/t841-端到端真跑.mjs
  *
  * 真库主文件与 mtime 全程不得变（本件在开跑前后各记一次）。
  */

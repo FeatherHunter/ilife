@@ -11,7 +11,7 @@ import { saveBaseline, compareBaseline } from '../baseline.mjs';
 /**
  * tooling/baseline.mjs 的靶向测试（#327 其二）。
  * 跑法（持锁单写者）：
- *   node tooling/run-locked.mjs --ticket 327 --lock-dir .scratch/locks-land --stale-minutes 30 -- node --test tooling/test/baseline.test.mjs
+ *   node --test tooling/test/baseline.test.mjs
  * 覆盖：开窗存→收窗比一致（绿）；源码／派生／冻结三面坏样例点名差异面（红）；
  * 复现"他窗回滚留下陈旧 dist"（翻转一枚派生哈希即报 差异面 dist）。
  */

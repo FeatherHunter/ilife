@@ -8,7 +8,7 @@
  *    跑 `audit-separators.mjs <该页>` ⇒ 期望 `RESULT: 0/1`（红）；还原后 ⇒ 期望 `RESULT: 1/1`／`PASS`。
  *
  *  只动本票写集内的墙产物，且**逐字节还原**；另打两行 `MANIFEST-BEFORE/AFTER` 证明清单未被污染。
- *  本件走锁：`node tooling/run-locked.mjs --ticket 619 -- node docs/skills/skill-calorie/t619-变异.mjs`
+ *  本件走锁：`node docs/skills/skill-calorie/t619-变异.mjs`
  *  （协议 §5：变异须在持锁期间做、释放锁前复原）。
  */
 import { spawnSync } from 'node:child_process';

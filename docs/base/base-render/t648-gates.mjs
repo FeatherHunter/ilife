@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /** t648 判据电池（12 项）：编译 → 靶向测试 → 同族回归 → 台账门 → 门禁（分隔符）。
  *
- *  用法：node tooling/run-locked.mjs --ticket 648 -- node .scratch/t648/gates.mjs
+ *  用法：node .scratch/t648/gates.mjs
  *  读数逐行落 .scratch/t648/gates.log；末行给「硬失败 n → PASS/FAIL」。
  *  注：**本脚本与 t647 那套分开**（#648 是独立复核席，不采信实施者的判据包装）。
  */

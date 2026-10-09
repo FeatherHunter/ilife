@@ -9,22 +9,29 @@
  *   分「块」与「整页」的分工也照它：整页装配住同目录 `docPage.ts`，本文件只出页内的两块。
  * 一处由调用方给的措辞：**写入去向那句说明**（`writtenDetail`）——记一笔写的是账单、改记录改的是同一条，
  *   两边说法不同，故它是必填参数，不给默认值，免得哪张页悄悄用了别处的说法。
+ *
+ *  #1206 首切件（多语言文本外置）：状态字与对账区文案不住这里，住 `../entries/zh.ts`（中文基准）
+ *  与 `../entries/en.ts`（英文列）；各函数末参 `language` 按语言取值（不给＝`zh`，
+ *  与改造前逐字节相同）。
  */
+import { resolve } from 'base-entries';
+import { SKILL_BILL_CATALOG } from '../entries/index.js';
 import { renderDataTable, renderDisclosure } from 'base-paint/blocks';
 import type { KpiCardInput } from 'base-paint/blocks';
 import type { BillReceipt } from '../shared/writeParts.js';
 import { RECEIPT_FORMAT } from '../shared/writeParts.js';
 
 /** 一格的状态值：值 ＋ 一句说明（说明由调用方按本页措辞传入）。 */
-export function statusCard(value: string, detail: string): KpiCardInput {
-  return { label: '状态', value, detail };
+export function statusCard(value: string, detail: string, language: string = 'zh'): KpiCardInput {
+  return { label: resolve(SKILL_BILL_CATALOG, language, 'receipt-parts.status.label'), value, detail };
 }
 
 /** 回执页的状态卡：无改动／已改动 ＋ 一句写入去向的说明。 */
-export function receiptStatusCard(receipt: BillReceipt, writtenDetail: string): KpiCardInput {
+export function receiptStatusCard(receipt: BillReceipt, writtenDetail: string, language: string = 'zh'): KpiCardInput {
   return statusCard(
-    receipt.noChange ? '无改动' : '已改动',
-    receipt.noChange ? '值与改前一致' : writtenDetail,
+    receipt.noChange ? resolve(SKILL_BILL_CATALOG, language, 'receipt-parts.status.unchanged') : resolve(SKILL_BILL_CATALOG, language, 'receipt-parts.status.changed'),
+    receipt.noChange ? resolve(SKILL_BILL_CATALOG, language, 'receipt-parts.status.unchanged-detail') : writtenDetail,
+    language,
   );
 }
 
@@ -32,14 +39,14 @@ export function receiptStatusCard(receipt: BillReceipt, writtenDetail: string): 
  *  这次记了几笔与写进去的项已在上方卡片上，这里不重写。
  *  本轮整改删掉两行内部话（照 `docs/skills/skill-bill/t407-文字审查.md` 第 54 条）：
  *  `本地时钟` 与 `回执格式 / v1（写库回执）`——前者是实现细节，后者是版本自指，用户都拿它没动作可做。 */
-export function reconcileDisclosure(receipt: BillReceipt): string {
+export function reconcileDisclosure(receipt: BillReceipt, language: string = 'zh'): string {
   return renderDisclosure({
-    title: '对账信息',
+    title: resolve(SKILL_BILL_CATALOG, language, 'receipt-parts.reconcile.title'),
     contentHtml: renderDataTable({
-      columns: [{ key: 'k', label: '字段' }, { key: 'v', label: '值' }],
+      columns: [{ key: 'k', label: resolve(SKILL_BILL_CATALOG, language, 'receipt-parts.reconcile.field') }, { key: 'v', label: resolve(SKILL_BILL_CATALOG, language, 'receipt-parts.reconcile.value') }],
       rows: [
-        { k: '记录编号', v: receipt.recordId === null ? '还没有' : String(receipt.recordId) },
-        { k: '写入时间', v: receipt.actionAt },
+        { k: resolve(SKILL_BILL_CATALOG, language, 'receipt-parts.reconcile.record-id'), v: receipt.recordId === null ? resolve(SKILL_BILL_CATALOG, language, 'receipt-parts.reconcile.record-id-missing') : String(receipt.recordId) },
+        { k: resolve(SKILL_BILL_CATALOG, language, 'receipt-parts.reconcile.action-at'), v: receipt.actionAt },
       ],
     }),
   });

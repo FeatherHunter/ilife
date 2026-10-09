@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /** #782 样板：三张成品页（**按人裁过的页型配方**出整页，种子库真跑落盘）。
  *
- *  票面验收命令之一：`node tooling/run-locked.mjs --ticket 782 -- node docs/skills/skill-schedule/t782-样板.mjs`
+ *  票面验收命令之一：`node docs/skills/skill-schedule/t782-样板.mjs`
  *  绿＝exit 0 且读数如实：三张页各自「是整页（doctype／viewport／页面级配方根类／图表助手）」、
  *  「必现块一块不少」、「零外部引用」；产物落 `.scratch/t782/成品/`，落盘走本包**唯一落盘点**
  *  `deliverHtml`（#843 的交付面）。

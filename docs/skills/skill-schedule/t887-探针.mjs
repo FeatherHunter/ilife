@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /** #887 探针 —— 「作息复制区」这一票的**验收命令**（真产物读数，不跑出口、只量盘上那 61 件）。
  *
- *   node tooling/run-locked.mjs --ticket 887 -- node docs/skills/skill-schedule/t887-探针.mjs
+ *   node docs/skills/skill-schedule/t887-探针.mjs
  *
  *  前置：八个域的探针都跑过（`.scratch/t783…t790/成品/` 里是**真出口**刚落的产物与清单）。
  *  它量什么（逐条对票面「验收」那一节）：

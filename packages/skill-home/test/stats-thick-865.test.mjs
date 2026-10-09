@@ -1,7 +1,7 @@
 // #865 · 统计取数补齐用例（分布明细／价值与趋势／闲置过期回执字段／盘点明细）。
 //
 // 跑法（仓根，经排队）：
-//   node tooling/run-locked.mjs --ticket 865 --max-wait-ms 600000 -- node --test packages/skill-home/test/stats-thick-865.test.mjs
+//   node --test packages/skill-home/test/stats-thick-865.test.mjs
 // 前提：`node node_modules/typescript/bin/tsc -b packages/skill-home`（页模块走 dist）。
 // 隔离：家目录指临时目录，不碰生产库与种子源。
 import { describe, it, before } from 'node:test';

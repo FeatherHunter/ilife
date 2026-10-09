@@ -306,7 +306,7 @@ async function main() {
   if (opts.help) { console.log(usage()); return 0; }
 
   if (!existsSync(opts.dist)) {
-    console.error(`FAIL: 缺 ${rel(opts.dist)}——请先在该仓跑 \`pnpm build\`（持锁：node tooling/run-locked.mjs --ticket <票号> -- pnpm build）。`);
+    console.error(`FAIL: 缺 ${rel(opts.dist)}——请先在该仓跑 \`pnpm build\`。`);
     return 2;
   }
   const distSha = sha256(readFileSync(opts.dist));

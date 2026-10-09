@@ -3,8 +3,8 @@
  * 夹具＝种子库同日子合计（09-01:650／09-02:500／09-05:650／09-06:850／09-07:1189，
  * 合计 3839；7 天窗旧日均 548＝3839/7，新日均 768＝3839/5（票面 477/668 是同机理的另一窗读数，
  * 本夹具按种子库同日子合计自算，机理相同）。
- * 运行：先持锁编 `node tooling/run-locked.mjs --ticket 497 -- node node_modules/typescript/bin/tsc -b packages/skill-calorie`，
- * 再 `node tooling/run-locked.mjs --ticket 497 -- node --test packages/skill-calorie/test/t497-caliber.test.mjs`。
+ * 运行：先持锁编 `node node_modules/typescript/bin/tsc -b packages/skill-calorie`，
+ * 再 `node --test packages/skill-calorie/test/t497-caliber.test.mjs`。
  */
 import { strict as assert } from 'node:assert';
 import { mkdtempSync } from 'node:fs';

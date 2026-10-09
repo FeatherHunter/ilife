@@ -1,7 +1,7 @@
 // #729 · analysis 域**真出口探针**（证据件之一，可复跑）：25 条唤醒词逐条真跑 ＋ 逐条读数对照。
 //
 // 跑法（持锁，与仓规一致）：
-//   node tooling/run-locked.mjs --ticket 729 -- node docs/skills/skill-bill/t729-探针-真出口.mjs
+//   node docs/skills/skill-bill/t729-探针-真出口.mjs
 // 它只读 `packages/skill-bill/dist/`；产物与库都落临时目录（不改工作区）；末行打 `RESULT: n/m`。
 //
 // 每条场景查三档：

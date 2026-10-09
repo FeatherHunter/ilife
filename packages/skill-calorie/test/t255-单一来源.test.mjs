@@ -7,7 +7,7 @@
  * 假（红）：合成输入里删掉一个目标唤醒词（`看目标配置`）→ `checkGoalCoverage()` 必抛
  * 且点名该词；逐字节还原后必绿（自证见证据 `t255-单一来源-证据.md`）。
  *
- * 运行：`node tooling/run-locked.mjs --ticket 255 -- node --test packages/skill-calorie/test/t255-单一来源.test.mjs`
+ * 运行：`node --test packages/skill-calorie/test/t255-单一来源.test.mjs`
  * 只读 `dist/`，不写任何东西（`build-help.mjs` 被 import 时零副作用）。
  */
 import { strict as assert } from 'node:assert';

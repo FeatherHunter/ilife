@@ -26,7 +26,7 @@
  *   读数   `.scratch/t844/seed-meta.json`（锚点／窗口／条数／内容摘要／库 sha256）
  *
  * 用法（仓根，一律经排队）：
- *   node tooling/run-locked.mjs --ticket 844 -- node packages/skill-schedule/scripts/seed.mjs --check
+ *   node packages/skill-schedule/scripts/seed.mjs --check
  *     --check    ＝ 灌库 ＋ 全部核验 ＋ 真家目录断言（票面验收命令；与无参同一趟，名字点明跑的是验收）
  *     --anchor   ＝ 钉住锚点日期（缺省今天）——跨天复现同一份数据用
  *     --reset    ＝ 先删掉种子目录里自己造的东西，再跑同一趟

@@ -2,7 +2,7 @@
 /** #777 · 收口 A 批量驱动器：合并 7 份册子片段 → 落验收副本 → 写 manifest.json。
  *
  * 跑法（仓根）：
- *   node tooling/run-locked.mjs --ticket 777 -- node docs/skills/skill-chef/t777-run-all.mjs
+ *   node docs/skills/skill-chef/t777-run-all.mjs
  *     → 打印 `卡 48／复制 48／变体 4／HELP 1／缺失 0` 且 exit 0
  *
  * 只读 7 份册子片段（写集表：收口 A 只读片段，不重跑域票的写库）：

@@ -26,6 +26,7 @@ import type { ManagerTab } from './nav.js';
 import { CONFIG_TAB_SLOT } from './update-contract.js';
 import { managerCallAdapter, mountLifeBatchEntry } from './update-dialog.js';
 import { tabInteractionCss } from './config-panel-view.js';
+import { ManualEntryButton, ManualPopoverShell, manualEntryCss } from './manual-entry.js';
 import { LIQUID_BASE_MS, LIQUID_DIST_FACTOR, LIQUID_EASE, LIQUID_GHOST_MS, LIQUID_MAX_MS, LIQUID_MIN_MS, LIQUID_STRETCH_X, LIQUID_STRETCH_Y } from './config-panel-contract.js';
 import { summaryErrorOf, useHealthPanel } from './health-panel.js';
 import { HealthSummaryLine, HealthTable, STATUS_TEXT, TAB_DOT, TAB_NOTE_STYLE, lightsOf, tabDotColor, tabNote } from './health-view.js';
@@ -837,6 +838,8 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
   );
   const lightOf = (id: string) => lights.find((light) => light.id === id);
   const [activeId, setActiveId] = React.useState<string | undefined>(undefined);
+  /** 使用手册弹出开合（票 #1237：纯 UI 状态，不进脏基线；书体是 #1238 的活）。 */
+  const [manualOpen, setManualOpen] = React.useState(false);
   /** 批量入口挂载位（一颗按钮看七家聚合；0.5.4 #49 到达，弹窗 dialog 由入口件内置，开关态亦归上游）。 */
   const entryRef = React.useRef<HTMLSpanElement | null>(null);
   const callReady = props.getCall() !== null;
@@ -986,6 +989,13 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
             entryRef.current = element;
           },
         }),
+        React.createElement(
+          'span',
+          { style: { position: 'relative', display: 'inline-flex' } },
+          React.createElement('style', null, manualEntryCss()),
+          React.createElement(ManualEntryButton, { onOpen: () => { setManualOpen(true); } }),
+          React.createElement(ManualPopoverShell, { open: manualOpen, onClose: () => { setManualOpen(false); } }),
+        ),
         React.createElement(PanelActions, null),
       ),
     ),

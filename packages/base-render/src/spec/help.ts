@@ -311,6 +311,8 @@ export interface HelpShellInput {
   /** 共享资产走同一填充器（B3）：HELP模板不得自填。 */
   readonly assets: TemplateAssets;
   readonly strict?: boolean;
+  /** 文本语言（BCP 47；空串／缺席＝中文，产物与改前逐字节相同；`en` 时文档 `lang` 为 `en`，模板静态文案的词条化归各迁移票）。 */
+  readonly language?: string;
   /** 覆盖内置help模板；缺省用 base-paint 自带模板。 */
   readonly template?: string;
 }

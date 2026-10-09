@@ -9,25 +9,37 @@
  *
  * 本票只这两条：13 条 `record.add` 的字段矩阵与 8 条特殊收支的确认页是后票的事，这里不铺。
  * 加一条命令＝只改这个文件＋它那个子功能文件；`src/cli/registry.ts` 与 `src/cli/cmd_read.ts` 一行不动。
+ *
+ *  #1206 首切件（多语言文本外置）：标题与可执行示例不住这里，住 `../entries/zh.ts`（中文基准）
+ *  与 `../entries/en.ts`（英文列）；`recordCommands(language)` 按语言取值（不给＝`zh`，
+ *  与改造前逐字节相同）。两条例句 en 与 zh 同值：示例含可运行的中文样例数据，译了就跑不通。
  */
-import type { CommandSpec } from '../shared/commandSpec.js';
+import { resolve } from 'base-entries';
+import { SKILL_BILL_CATALOG } from '../entries/index.js';
 import { writeRecordAdd, writeRecordUpdate } from './write.js';
 
-export const RECORD_COMMANDS = [
-  {
-    kind: 'write',
-    key: 'bill.record.add',
-    shape: 'receipt',
-    title: '记一笔',
-    example: 'bill-cmd-read bill.record.add --params \'{"category":"餐饮","amount":-12.5,"time":"2026-09-14 12:00:00","account":"支付宝","ledger":"生活"}\'',
-    run: writeRecordAdd,
-  },
-  {
-    kind: 'write',
-    key: 'bill.record.update',
-    shape: 'receipt',
-    title: '改记录',
-    example: 'bill-cmd-read bill.record.update --params \'{"note":"改过"}\'',
-    run: writeRecordUpdate,
-  },
-] satisfies readonly CommandSpec[];
+/** 两条写命令的声明（按语言取值；`RECORD_COMMANDS` 是 `zh` 那一份，保持既有形状）。
+ *  判别位（kind／key／shape）保持字面量推断：`run` 的联合调用才能收窄到 `WriteOut`
+ * （`src/write/index.ts` 的 `runRecordWrite` 依赖这一条；拓宽成 `CommandSpec[]` 即红）。 */
+export function recordCommands(language: string = 'zh') {
+  return [
+    {
+      kind: 'write' as const,
+      key: 'bill.record.add' as const,
+      shape: 'receipt' as const,
+      title: resolve(SKILL_BILL_CATALOG, language, 'command.record-add.title'),
+      example: resolve(SKILL_BILL_CATALOG, language, 'command.record-add.example'),
+      run: writeRecordAdd,
+    },
+    {
+      kind: 'write' as const,
+      key: 'bill.record.update' as const,
+      shape: 'receipt' as const,
+      title: resolve(SKILL_BILL_CATALOG, language, 'command.record-update.title'),
+      example: resolve(SKILL_BILL_CATALOG, language, 'command.record-update.example'),
+      run: writeRecordUpdate,
+    },
+  ];
+}
+
+export const RECORD_COMMANDS = recordCommands('zh');

@@ -18,7 +18,7 @@
  * 备份文件名）由前置步骤与前面场景**真跑**出来的回执现取，不写死。
  *
  * 用法（仓根）：
- *   node tooling/run-locked.mjs --ticket 817 --max-wait-ms 600000 -- node docs/skills/skill-home/t817-run-70-scenes.mjs
+ *   node docs/skills/skill-home/t817-run-70-scenes.mjs
  *   … --keep-home    复用上一次的隔离家目录（默认每次重建，保证跑批可复现）
  *   … --out <目录>   换产物根（默认 `.scratch/817`）；#859 命名改版重跑用 `.scratch/859/batch70`
  * 退出码：0＝70 条全部 exit 0 且产物齐；1＝有场景失败（逐条点名）；2＝用法／环境错。

@@ -7,7 +7,7 @@
  *   ② 真跑：spawn dist/cli/cmd_read.js 的 25 条命令，逐页落 <id>-真跑.html；产物与原型的字节／sha256 逐条记。
  *
  * 隔离落点：$env:TEMP\tick-1076（本票号命名，不碰真实家目录的库）。
- * 用法：node tooling/run-locked.mjs --ticket 1076 -- node .scratch/1076-analysis/run-1076.mjs
+ * 用法：node .scratch/1076-analysis/run-1076.mjs
  */
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';

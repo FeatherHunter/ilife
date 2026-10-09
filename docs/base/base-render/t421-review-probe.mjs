@@ -9,7 +9,7 @@
  *      → P1 色值字面量零出现／P2 判据鉴别力／P4 提交边界。
  *   2) 追加 P3 新旧零变 A/B（**会临时改源**：换入 `a187b537:packages/base-render/src/blocks.ts`，
  *      编译采集后逐文件还原并复编；必须走加锁包装器）：
- *        node tooling/run-locked.mjs --ticket 421 -- node docs/base/base-render/t421-review-probe.mjs --ab
+ *        node docs/base/base-render/t421-review-probe.mjs --ab
  *
  * 口径说明：本探针只打印读数与逐条 PASS／FAIL，**恒以 exit 0 收尾**（它是读数工具，
  * 不是门禁命令；避免在 gate-runs 台账里落非零退出条目）。P2.3 的「实测退化仍全绿」

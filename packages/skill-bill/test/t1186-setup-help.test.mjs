@@ -1,5 +1,5 @@
 // t1186 设置向导帮助：步骤人话加空态（TDD 红测先行）
-// 跑法：node tooling/run-locked.mjs --ticket 1186 -- node --test packages/skill-bill/test/t1186-setup-help.test.mjs
+// 跑法：node --test packages/skill-bill/test/t1186-setup-help.test.mjs
 // 判据：向导页三份可读，帮助页可验；步骤条人话行（第N+标题+状态+现状数），无数据页空态有下一步，复制=显示行，旧thin零产出。
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';

@@ -17,7 +17,7 @@
  * 禁区：`src/weight/` 其余件、公共层（`packages/base-render/*`）、`src/home/` 一行不碰；
  * 本件只读源码文本（`readFileSync`），不 `import` 任何能力件。
  *
- * 运行：`node tooling/run-locked.mjs --ticket 514 -- node --test packages/skill-calorie/test/514-caliber-exemption.test.mjs`
+ * 运行：`node --test packages/skill-calorie/test/514-caliber-exemption.test.mjs`
  */
 import { strict as assert } from 'node:assert';
 import { readFileSync, existsSync } from 'node:fs';

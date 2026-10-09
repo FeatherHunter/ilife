@@ -17,7 +17,7 @@
  *   ⑩ 再记一次五家 `src` 指纹 ⇒ 与 ① 相等（窗口内没有别人改这些包的 src）。
  *
  * 用法（必须在持有外层锁时调用）：
- *   node tooling/run-locked.mjs --ticket 722 -- node .scratch/t722/judge.mjs
+ *   node .scratch/t722/judge.mjs
  * 明细日志写 .scratch/t722/，stdout 只出判据行 ＋ 末行 `RESULT:`。
  */
 import { spawnSync } from 'node:child_process';

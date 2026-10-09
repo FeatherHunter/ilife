@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /** #841 · 登记面对账的变异电池：逐个登记面注入一处假状态，看对账件是否都红并点名。
  *
- * 跑法：`node tooling/run-locked.mjs --ticket 841 -- node docs/skills/skill-chef/t841-变异电池.mjs`
+ * 跑法：`node docs/skills/skill-chef/t841-变异电池.mjs`
  * **不碰真件**：先把 `packages/skill-chef` 的登记面三件复制到 `.scratch/t841/repo/`，
  * 变异只落在副本上，再让对账件用 `--repo` 指那份副本；跑完逐字节核对真件未动。
  * 每个用例都必须 exit 1 且报文含期望的关键词；有一条没红或没点名即本件 exit 1。

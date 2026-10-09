@@ -5,7 +5,7 @@
  * 锁周 add-train／pick-slot／set-slot 三路都不改变结构；母版周同一套派发照常生效。
  * add-train 守卫与 pick-slot 守卫是 e656ee64 既有（本票不冒领）；本票只补 set-slot。
  * 退出码：全断言过 exit 0，否则 exit 1。用法一律经加锁包装器：
- * node tooling/run-locked.mjs --ticket 558 --run-id <标识> -- node docs/skills/skill-calorie/t558-lock-probe.mjs
+ * node docs/skills/skill-calorie/t558-lock-probe.mjs
  */
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';

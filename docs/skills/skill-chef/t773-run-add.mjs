@@ -3,7 +3,7 @@
 // 正例：6 卡逐卡经真出口写副本库 → 出回执页 → 写后回读；打印 6 行 `卡 → exit=0 → 产物绝对路径`。
 // 反例：`--fail-case` 故意少给必填字段 → 必须走失败页且 exit≠0，且不写半条脏数据。
 // `--check`：打印「片段行数＝本票卡数」与「vision 审查缺陷」两行判据，缺一即红。
-// 跑法一律：`node tooling/run-locked.mjs --ticket 773 -- node docs/skills/skill-chef/t773-run-add.mjs`
+// 跑法一律：`node docs/skills/skill-chef/t773-run-add.mjs`
 import { spawnSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';

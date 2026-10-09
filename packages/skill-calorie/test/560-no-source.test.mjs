@@ -21,7 +21,7 @@
  * 别家页（排行榜／营养／运动／目标／体重）的来源断言本票一行不碰，不在本件判。
  *
  * 跑法：先编译再跑 `node --test packages/skill-calorie/test/560-no-source.test.mjs`。
- * 会改工作区的动作一律走 `node tooling/run-locked.mjs --ticket 560 -- <命令>`。
+ * 会改工作区的动作一律走 `<命令>`。
  */
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';

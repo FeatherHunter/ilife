@@ -2,9 +2,9 @@
 /** #777 · 收口 A 链路总表：50 行 prompt → 唤醒词 → 命令 → HTML 绝对路径（一页可点）。
  *
  * 跑法（仓根）：
- *   node tooling/run-locked.mjs --ticket 777 -- node docs/skills/skill-chef/t777-链路总表.mjs
+ *   node docs/skills/skill-chef/t777-链路总表.mjs
  *     → 打印 `词 50／卡 48／链接 50 条／缺失 0` 且 exit 0
- *   node tooling/run-locked.mjs --ticket 777 -- node docs/skills/skill-chef/t777-链路总表.mjs --open-check
+ *   node docs/skills/skill-chef/t777-链路总表.mjs --open-check
  *     → 真浏览器逐行打开链接，打印 `可打开 50／死链 0` 且 exit 0
  *
  * 只读三处真源：唤醒词与卡表取权威资产 `packages/skill-chef/src/triggers/chef-scenes.ts`

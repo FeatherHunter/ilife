@@ -18,7 +18,7 @@
  *      另记**据实读数**（不下判定）：占比 SCALE（ilife-block-dist-row）／明细 DETAIL（ilife-ticket-entries）／
  *      复制区（ilife-block-copy-block）／对账 CHECK（可见文本含 CHECK）／✂ 裁切线文本各行是否在位。
  *
- * 用法：node tooling/run-locked.mjs --ticket 1074 -- node .scratch/1074-query/run-1074.mjs
+ * 用法：node .scratch/1074-query/run-1074.mjs
  * 红线：只读 src/dist/原型，只写本票自己的目录；不改任何 packages/ 代码、不改原型、不重建 dist（W2 规则三）。
  */
 import { spawnSync } from 'node:child_process';

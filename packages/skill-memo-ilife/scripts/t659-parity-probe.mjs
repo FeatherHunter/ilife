@@ -5,7 +5,7 @@
  * 与 `packages/skill-schedule/scripts/t659-parity-probe.mjs` 同一形态、同一接缝件：老实现（仓外 Python）
  * 与新实现（仓内 TS）喂同一份输入，比三个边界上的痕迹——命令行回执、本地库行、远端平台收到的调用。
  *
- * 跑法：`node tooling/run-locked.mjs --ticket 659 -- node packages/skill-memo-ilife/scripts/t659-parity-probe.mjs`
+ * 跑法：`node packages/skill-memo-ilife/scripts/t659-parity-probe.mjs`
  * 产出：`docs/skills/skill-memo-ilife/t659-对拍读数.json`（机器件）＋ stdout 人读表。
  */
 import { spawnSync } from 'node:child_process';

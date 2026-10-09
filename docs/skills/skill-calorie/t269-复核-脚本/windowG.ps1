@@ -6,7 +6,7 @@
 #     ② `node --check` 这些件的语法；
 #     ③ 真出口冒烟：`calorie.diet.add` 跑一次、产物是严格完整文档。
 #   三条全过才跑整段；任一不过则记 `BASE-NOT-GREEN` 并**不落任何变异结论**。
-# 命令面：node tooling/run-locked.mjs --ticket 269r --poll-ms 2000 --max-wait-ms 900000 -- pwsh -File .scratch/t269r/windowG.ps1
+# 命令面：pwsh -File .scratch/t269r/windowG.ps1
 $ErrorActionPreference = 'Continue'
 $ProgressPreference = 'SilentlyContinue'
 $OutputEncoding = [System.Text.Encoding]::UTF8

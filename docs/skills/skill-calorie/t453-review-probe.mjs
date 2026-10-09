@@ -1,7 +1,7 @@
 /** #453 独立对抗审查席·自设探针（与实施席判据件不同源，逐条独立复算）。
  *
  *  用法（全程建议走包装器）：
- *    node tooling/run-locked.mjs --ticket 453 -- node docs/skills/skill-calorie/t453-review-probe.mjs
+ *    node docs/skills/skill-calorie/t453-review-probe.mjs
  *    加 `--gates`  连跑四道门禁（判据件／doc-page-assert／告警线／pnpm build）
  *    加 `--mutate` 连跑变异四步序（**只在本件 git 干净时执行；不干净即中止、不碰真件**）
  *
@@ -457,17 +457,16 @@ if (process.argv.includes('--counter')) {
 /* ───────────────────────── 十、四道门禁（可选） ───────────────────────── */
 
 if (process.argv.includes('--gates')) {
-  head('十、门禁复跑（全部走 run-locked --ticket 453）');
+  head('十、门禁复跑（直调）');
   const gates = [
     ['新判据件', ['node', 'packages/skill-calorie/test/exercise-dist-strength-cardio-fusion-453.test.mjs']],
     ['doc-page-assert', ['node', '--test', 'packages/skill-calorie/test/doc-page-assert.mjs']],
     ['告警线台账门', ['node', 'packages/skill-calorie/scripts/check-warning-line.mjs']],
   ];
   for (const [name, cmd] of gates) {
-    const r = spawnSync(process.execPath, ['tooling/run-locked.mjs', '--ticket', '453', '--', ...cmd], { cwd: REPO, encoding: 'utf8' });
+    const r = spawnSync(process.execPath, cmd, { cwd: REPO, encoding: 'utf8' });
     const out = String(r.stdout || '') + String(r.stderr || '');
-    const runId = (/runId=([0-9a-f-]+)/.exec(out) ?? [])[1] ?? '';
-    console.log('  GATE ' + name + ' runId=' + runId + ' exit=' + r.status);
+    console.log('  GATE ' + name + ' exit=' + r.status);
     for (const l of out.split('\n')) if (/^(RESULT:|PASS:|RED |ℹ (tests|pass|fail))/.test(l)) console.log('       ' + l);
   }
 }
