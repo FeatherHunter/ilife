@@ -4,11 +4,9 @@
  * 与 `fixtures.mjs`／`inpage-probe.js` 同族）。票面要求「同一个门只在仓里一份」，故落点＝本目录，
  * 夹具与页内探针改为**同目录**、路径一律相对本件（换工作目录也能跑）。
  *
- * 用法（会改动工作区／生成物 ⇒ **一律经加锁包装器**）：
- *   node tooling/run-locked.mjs --ticket 554 --run-id t554-gate \
- *     -- node docs/skills/skill-calorie/t554-plan-editor-gate.mjs --phase=gate
- *   node tooling/run-locked.mjs --ticket 554 --run-id t554-collect \
- *     -- node docs/skills/skill-calorie/t554-plan-editor-gate.mjs --phase=collect
+ * 用法：
+ *   node docs/skills/skill-calorie/t554-plan-editor-gate.mjs --phase=gate
+ *   node docs/skills/skill-calorie/t554-plan-editor-gate.mjs --phase=collect
  *
  * 两个相位（口径写清楚，免得拿 green 冒充结论）：
  *   --phase=collect = **取证链**：真出口重出样张 ＋ headless Chrome 实测取回读数。exit 0 只表示

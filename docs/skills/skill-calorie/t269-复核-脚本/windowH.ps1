@@ -9,7 +9,7 @@
 #      若**只剩包外件**的类型错，则记为「范围外红」并**继续**跑电池（dist 是好的、三条守卫已过）；
 #      若错落在本包源码里，则判 `BASE-NOT-GREEN`，不落任何变异结论。
 #   ④ 抗污染：电池首尾各取一次五个关键件的 sha256，不一致即标「污染」。
-# 命令面：node tooling/run-locked.mjs --ticket 269r --poll-ms 2000 --max-wait-ms 900000 -- pwsh -File .scratch/t269r/windowH.ps1
+# 命令面：pwsh -File .scratch/t269r/windowH.ps1
 $ErrorActionPreference = 'Continue'
 $ProgressPreference = 'SilentlyContinue'
 $OutputEncoding = [System.Text.Encoding]::UTF8

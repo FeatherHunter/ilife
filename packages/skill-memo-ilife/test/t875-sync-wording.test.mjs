@@ -16,7 +16,7 @@
  *
  * 跑法（**cwd 必须是包目录**：出口依赖包内 `node_modules` 的 junction 依赖 `base-paint`，
  * 从仓根跑会 `ERR_MODULE_NOT_FOUND`，那是跑法问题不是被测行为——同 t832）：
- *   node tooling/run-locked.mjs --ticket 875 -- node .scratch/t875/run-in-pkg.mjs --test test/t875-sync-wording.test.mjs
+ *   node .scratch/t875/run-in-pkg.mjs --test test/t875-sync-wording.test.mjs
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';

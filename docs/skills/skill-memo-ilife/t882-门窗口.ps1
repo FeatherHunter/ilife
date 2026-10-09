@@ -1,9 +1,9 @@
 # #882 门窗口（受版本控制的复跑脚本，随证据入仓 —— 协议 §2.3 第 4 条／§5.1）
 #
 # 用法（工作目录＝仓根；必须经加锁包装器起，窗口内直调不再嵌套）：
-#   node tooling/run-locked.mjs --ticket 882 -- pwsh -NoProfile -File docs/skills/skill-memo-ilife/t882-门窗口.ps1
+#   pwsh -NoProfile -File docs/skills/skill-memo-ilife/t882-门窗口.ps1
 #   带基线对比（证「只动了该动的那几格」）：
-#   node tooling/run-locked.mjs --ticket 882 -- pwsh -NoProfile -File docs/skills/skill-memo-ilife/t882-门窗口.ps1 -Baseline packages/skill-memo-ilife/.scratch/t882/墙
+#   pwsh -NoProfile -File docs/skills/skill-memo-ilife/t882-门窗口.ps1 -Baseline packages/skill-memo-ilife/.scratch/t882/墙
 #
 # 阶段：① 指纹＋编译（t540：src 与 dist 同一行同证）② 新用例 ③ 全包用例（包目录内直跑）
 #       ④ 行数门 ⑤ 重铺墙（＋与基线对账：对象行／整份载荷）⑥ 机审 ⑦ 变异自证（族侧改回旧写法必红 → 逐文件字节还原必绿）

@@ -5,7 +5,7 @@
 // lockstep 断言「页面每一行都有对应的技能键，且技能每一个键都有对应行」必红。
 //
 // 跑法（**整个窗口由外层持锁包装器持锁**，本脚本内部直接调 node --test 与 tsc，不重复抢锁）：
-//   node tooling/run-locked.mjs --ticket 677-变异 -- node docs/plugins/plugin-bill-ilife/t677-变异.mjs
+//   node docs/plugins/plugin-bill-ilife/t677-变异.mjs
 //
 // 输出只留两行机器读数（协议 §2.2）：
 //   MUTANT-RED  fail=<n> exit=<n>

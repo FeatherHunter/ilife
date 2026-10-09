@@ -7,8 +7,8 @@
  * （`t777-run-all.mjs` 的卡片归一 ＋ `t767-命名` 的 slug 规则），不另立一套。
  *
  * 用法（仓根；**须在锁内跑**，它会重出产物与册子片段）：
- *   node tooling/run-locked.mjs --ticket 873 -- node docs/skills/skill-chef/t873-席跑.mjs <域中文名>
- *   node tooling/run-locked.mjs --ticket 873 -- node docs/skills/skill-chef/t873-席跑.mjs <域中文名> --keep-shot
+ *   node docs/skills/skill-chef/t873-席跑.mjs <域中文名>
+ *   node docs/skills/skill-chef/t873-席跑.mjs <域中文名> --keep-shot
  *
  * 域中文名（＝产物目录名，逐字）：做菜／查看／搜索筛选／修改／历史／采购／录入／派生／开始使用／数据管理
  * 落点：`.scratch/t873-<域>/`（`<域>/*.html` ＋ `manifest.json` ＋ `shots/`）

@@ -11,7 +11,7 @@
 #      且其中一条正是本单派单里点名的当刻已知范围外红）⇒ 记「范围外红」并**继续**；若错落进本席判据
 #      路径（`src/diet/receipt.ts`／`src/cli/write.ts`），才判 `BASE-NOT-GREEN` 中止。
 #      ④ 电池首尾取五件 sha256，不一致即标「污染」。
-# 命令面：node tooling/run-locked.mjs --ticket 269r --poll-ms 2000 --max-wait-ms 900000 -- pwsh -File .scratch/t269r/windowI.ps1
+# 命令面：pwsh -File .scratch/t269r/windowI.ps1
 $ErrorActionPreference = 'Continue'
 $ProgressPreference = 'SilentlyContinue'
 $OutputEncoding = [System.Text.Encoding]::UTF8

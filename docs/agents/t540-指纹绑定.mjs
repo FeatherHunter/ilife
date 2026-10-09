@@ -73,7 +73,7 @@ function parseArgs(argv) {
   return opts;
 }
 
-/** 机读字段值：含空白或引号时用 JSON 双引号包裹（与 tooling/run-locked.mjs 同形）。 */
+/** 机读字段值：含空白或引号时用 JSON 双引号包裹。 */
 const fieldValue = (value) => (/[\s"]/.test(String(value ?? '')) ? JSON.stringify(String(value)) : String(value ?? ''));
 
 const short = (sha) => (sha ? sha.slice(0, 16) : '无');

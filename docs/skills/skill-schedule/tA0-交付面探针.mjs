@@ -82,24 +82,7 @@ function checkQuietWindow() {
     die2('窗口不安静：本包 src 有未提交改动（可能是别人正在写），读数作废：\n' + dirty
       + '\n（本票的改动要先提交，再在安静窗口里跑本探针）');
   }
-  const owner = join(REPO, '.scratch', 'locks', 'owner.json');
-  if (existsSync(owner)) {
-    let live = false;
-    let info = '';
-    try {
-      const raw = readFileSync(owner, 'utf8');
-      info = raw.trim();
-      const o = JSON.parse(raw);
-      const pid = Number(o.pid);
-      if (Number.isFinite(pid) && pid > 0) {
-        try { process.kill(pid, 0); live = true; } catch { live = false; }
-      }
-      // 「安静」＝没有**别人**在写包：本探针按票面口径经 `run-locked --ticket <本票号>` 在窗口内跑，
-      // 那把锁的属主就是本票自己（owner ticket 相同即放行）；别人持锁即作废。
-      if (live && String(o.ticket) === OPTS.ownerTicket) live = false;
-    } catch { live = false; }
-    if (live) die2('窗口不安静：锁目录里有别人在持锁（' + info + '），读数作废');
-  }
+  // 锁机制已退役：不再读 owner.json；安静只看上面那道 git 状态。
   return true;
 }
 

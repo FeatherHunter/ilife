@@ -20,7 +20,7 @@
  *
  * 跑法：先 `node node_modules/typescript/bin/tsc -b packages/skill-calorie`，再
  * `node --test packages/skill-calorie/test/goal-h1-date-566.test.mjs`；两条都经
- * `node tooling/run-locked.mjs --ticket 292 -- <命令>`。
+ * `<命令>`。
  * 实跑配方＝临时库 `mkdtemp` ＋ `docs/research/t81-seed.mjs` 的 `seedFull()` ＋ `SKILLS_DB_PATH` 指临时目录
  * ＋ `CALORIE_TODAY=SEED_TODAY`（种子数据日 `2026-09-07`）。
  */

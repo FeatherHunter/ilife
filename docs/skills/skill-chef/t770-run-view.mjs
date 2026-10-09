@@ -2,11 +2,11 @@
 /** #770 查看域批量驱动：8 卡逐卡真跑 → 结果型 HTML → 册子片段。
  *
  * 用法（均在仓根跑）：
- *   node tooling/run-locked.mjs --ticket 770 -- node docs/skills/skill-chef/t770-run-view.mjs
+ *   node docs/skills/skill-chef/t770-run-view.mjs
  *     → 打印 8 行 `卡 → exit=0 → 产物绝对路径`，`缺卡 0` 且 exit 0
- *   node tooling/run-locked.mjs --ticket 770 -- node docs/skills/skill-chef/t770-run-view.mjs --mutate <卡id>
+ *   node docs/skills/skill-chef/t770-run-view.mjs --mutate <卡id>
  *     → 反例：把该卡的数据源改坏（删菜），该行必须 exit≠0 并点名该卡（不许返空页冒充）
- *   node tooling/run-locked.mjs --ticket 770 -- node docs/skills/skill-chef/t770-run-view.mjs --check
+ *   node docs/skills/skill-chef/t770-run-view.mjs --check
  *     → 判据：片段行数＝本票卡数 ＋ 质量门全绿 ＋ vision 审查缺陷 0（或逐条已改），缺一即红
  *
  * 数据一律走票 17 沙箱：副本 `.scratch/t770/chef_data.db`（不存在即先跑 t840-沙箱.mjs）。

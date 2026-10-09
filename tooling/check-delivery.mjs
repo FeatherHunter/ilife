@@ -42,7 +42,7 @@
  *   RESULT: PASS|FAIL 绿=<n>/6 [作废=<家>] …
  * 退出码：0＝六家全绿；1＝至少一家不合或有读数作废；2＝用法／守卫失败（家目录注入没生效、包入口找不到）。
  *
- * 纪律：本件**只写临时家目录与自己的 stdout**，不动工作区（故不经 `tooling/run-locked.mjs` 排队）；
+ * 纪律：本件**只写临时家目录与自己的 stdout**，不动工作区；
  * 删临时家目录前做路径守卫（必须在自己建的那个 tmp 根之下、且不是真实家目录）。
  */
 import { spawnSync } from 'node:child_process';
@@ -78,7 +78,7 @@ export const PROBES = [
   { family: '大厨', pkg: 'skill-chef', key: 'chef.history.query', title: '查看历史', params: {} },
 ];
 
-/** 机读字段值：含空白或引号时用 JSON 双引号包裹（与 `tooling/run-locked.mjs` 同形）。 */
+/** 机读字段值：含空白或引号时用 JSON 双引号包裹。 */
 const fieldValue = (value) => (/[\s"\\]/.test(String(value ?? '')) ? JSON.stringify(String(value ?? '')) : String(value ?? ''));
 
 /** 路径相等（win32 大小写不敏感）。 */

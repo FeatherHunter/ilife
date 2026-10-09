@@ -29,7 +29,7 @@
  *      B 支：凡行内声明了位置／长度的那一枚，**屏上必须真的兑现**（中心或近端边钉在声明的位置上，
  *      长度＝百分比 × 容器，容差 1.5px）。
  *
- *  **跑法**（经 `node tooling/run-locked.mjs --ticket 950 -- …` 排队）：
+ *  **跑法**（经 `…` 排队）：
  *    `node --test packages/base-render/test/跨件不变量.test.mjs`
  *  开关：`ILIFE_CROSS_DIST=<目录>` 换一份编译产物（自证／故障注入用；默认本包 `dist/`）；
  *       `ILIFE_CROSS_NO_MACHINE=1` 不起浏览器（④⑤ 退成「真机未跑」读数）；起不来浏览器时**照实打出来**，

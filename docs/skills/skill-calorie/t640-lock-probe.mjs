@@ -11,7 +11,7 @@
  * headless Chrome 里绕过控件合成派发：
  * 锁周 L1-L6 全部结构不变；母版周 M1-M3 照常（T558原样）＋M4/M5/M6 照常（本票新增）。
  * 退出码：全断言过 exit 0，否则 exit 1。用法一律经加锁包装器：
- * node tooling/run-locked.mjs --ticket 640 --run-id <标识> -- node docs/skills/skill-calorie/t640-lock-probe.mjs
+ * node docs/skills/skill-calorie/t640-lock-probe.mjs
  */
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';

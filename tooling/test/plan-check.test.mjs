@@ -8,7 +8,7 @@ import { loadEditSet, checkEditSet } from '../plan-check.mjs';
 /**
  * tooling/plan-check.mjs 的靶向测试（#327 其一）。
  * 跑法（持锁单写者）：
- *   node tooling/run-locked.mjs --ticket 327 --lock-dir .scratch/locks-land --stale-minutes 30 -- node --test tooling/test/plan-check.test.mjs
+ *   node --test tooling/test/plan-check.test.mjs
  * 覆盖：好样例 PASS；5 种坏因逐条点名报错（先红）；形状错抛错（exit 2 口径）。
  */
 const here = path.dirname(fileURLToPath(import.meta.url));

@@ -2,7 +2,7 @@
 /** t776 小域合并运行器：8 卡逐卡一行读数（验收正例）＋ 成环反例 ＋ 册子片段 ＋ --check 判据。
  *
  * 用法：
- *   node tooling/run-locked.mjs --ticket 776 -- node docs/skills/skill-chef/t776-run-small-domains.mjs
+ *   node docs/skills/skill-chef/t776-run-small-domains.mjs
  *     → 打印 8 行 `卡 → exit=0 → 产物绝对路径`（备份卡另打印字节数），全绿 exit 0
  *   node .../t776-run-small-domains.mjs --check
  *     → 打印「片段行数＝本票卡数」与「vision 审查缺陷 0（或逐条已改）」，缺一即红

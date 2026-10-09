@@ -13,9 +13,8 @@
  * 逐词参数**一律从冻结表现取**（`dist/triggers/scene-04-exercise.js` 的 `main_prompt.cli`），
  * 本件不另抄一份参数：票面词改了，样张跟着改（口径同 #265 的 D2④ 同源）。
  *
- * 跑法（持锁）：
- *   node tooling/run-locked.mjs --ticket 156-samples --run-id <标识> -- \
- *     node docs/skills/skill-calorie/t156-现状取样.mjs
+ * 跑法：
+ *   node docs/skills/skill-calorie/t156-现状取样.mjs
  *
  * 前置：`packages/skill-calorie/dist/` 已是可跑状态。本席**不重建 dist**（树上有多席在途的
  * 生成物，重建会覆写他人在途件），只核对并登记 `src` 与 `dist` 的新旧关系（末段 `STALE` 行）。

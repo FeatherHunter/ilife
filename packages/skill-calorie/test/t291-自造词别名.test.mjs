@@ -10,8 +10,8 @@
  *   ⑤ 三条 view 命令在 seedFull 临时库真出口 exit 0（seed 照抄 `goal-wizard-251.test.mjs:29-39`）。
  *
  * 运行（持锁，票 291）：
- *   node tooling/run-locked.mjs --ticket 291 -- node node_modules/typescript/bin/tsc -b packages/skill-calorie
- *   node tooling/run-locked.mjs --ticket 291 -- node --test packages/skill-calorie/test/t291-自造词别名.test.mjs
+ *   node node_modules/typescript/bin/tsc -b packages/skill-calorie
+ *   node --test packages/skill-calorie/test/t291-自造词别名.test.mjs
  */
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';

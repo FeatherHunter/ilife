@@ -6,8 +6,8 @@
  * 而是五条机械判据（生成 banner／在 gen-cli 的 targets 数组里／gen-routes 靠声明源清单出声／
  * 声明源齐／记录面真落在这里）钉住的——**改动对应事实，判据必须变红**。
  *
- * 跑法（持锁；本件自己会 spawn 探针，故**不要**在探针外面再套一层 run-locked）：
- *   node tooling/run-locked.mjs --ticket 313b4 -- node docs/skills/skill-calorie/t313b4-变异自证.mjs
+ * 跑法：
+ *   node docs/skills/skill-calorie/t313b4-变异自证.mjs
  *
  * 判红口径：看 P1 的**判据行**（不是只看状态）——因为变异同时会让沙箱基线变脏（那也判红，
  * 但那是另一条判据），所以每个变异都断言「该判据自己的话」出现在 P1 输出里。

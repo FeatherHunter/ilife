@@ -13,8 +13,7 @@
  *    改成本次产物根（原样与它自己给的 `--out` 用法对不上，一跑就抛错）；② 行过滤写成
  *    `/组×/.test(cells[2])`，而 `cells[2]` 是对象 ⇒ 恒不命中（真值行断言恒红、⑥ 的「逐行齐」恒真，
  *    属自证式假绿），改成 `cells[2].text`；③ 副行内的裸词口径与产品侧同步（细化词里的 `iso` 中文化去重）。
- * 用法（持锁）：node tooling/run-locked.mjs --ticket 351 --run-id t351-a2-<短名> -- \
- *   node .scratch/t351-fix/final-v3/run-realdata-v3.mjs --out .scratch/t351-fix/final-v4/realdata
+ * 用法：node .scratch/t351-fix/final-v3/run-realdata-v3.mjs --out .scratch/t351-fix/final-v4/realdata
  */
 import { spawnSync } from 'node:child_process';
 import { copyFileSync, mkdirSync, readFileSync, writeFileSync, existsSync, rmSync, statSync } from 'node:fs';

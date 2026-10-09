@@ -31,8 +31,7 @@
  * 退出码：0＝快照逐字相同且（跑了命令时）命令 exit 0；1＝快照有差异或命令失败；2＝用法／守卫失败。
  *
  * 纪律：本件是**门禁**，不是测试件（不在 `test/*.test.mjs` 的 glob 内）；
- * 全量测试经 `node tooling/run-locked.mjs --ticket <票号> -- node tooling/check-real-home-untouched.mjs --run`
- * 排队跑。
+ * 全量测试直接跑 `node tooling/check-real-home-untouched.mjs --run`。
  */
 import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -115,7 +114,7 @@ function parseArgs(argv) {
   return opts;
 }
 
-/** 机读字段值：含空白或引号时用 JSON 双引号包裹（与 tooling/run-locked.mjs 同形）。 */
+/** 机读字段值：含空白或引号时用 JSON 双引号包裹。 */
 const fieldValue = (value) => (/[\s"]/.test(String(value ?? '')) ? JSON.stringify(String(value ?? '')) : String(value ?? ''));
 const short = (sha) => (sha ? sha.slice(0, 16) : '无');
 

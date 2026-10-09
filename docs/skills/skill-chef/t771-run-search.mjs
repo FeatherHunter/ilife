@@ -5,11 +5,11 @@
  * `.scratch/t771/chef_data.db`（源只读、写只在副本）；不许与其他票共用副本。
  *
  * 用法：
- *   node tooling/run-locked.mjs --ticket 771 -- node docs/skills/skill-chef/t771-run-search.mjs
+ *   node docs/skills/skill-chef/t771-run-search.mjs
  *     → 打印 13 行 `卡 → exit=0 → 产物绝对路径`，且 `缺卡 0`、`路由错位 0`，exit 0
- *   node tooling/run-locked.mjs --ticket 771 -- node docs/skills/skill-chef/t771-run-search.mjs --check
+ *   node docs/skills/skill-chef/t771-run-search.mjs --check
  *     → 另打印「片段行数＝本票卡数」与「vision 审查缺陷 0（或逐条已改）」，缺一即红（exit 1）
- *   node tooling/run-locked.mjs --ticket 771 -- node docs/skills/skill-chef/t771-run-search.mjs --shots
+ *   node docs/skills/skill-chef/t771-run-search.mjs --shots
  *     → 另出双端截图（390／1280，26 张）供 vision 审查与册子
  *
  * 反例（必跑）：把筛选口味的映射改回 cuisine（`src/search/run.ts` 里 flavor 查询改查

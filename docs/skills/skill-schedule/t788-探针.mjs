@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /** #788 探针 —— 日程与计划·复盘与飞书「出页」的**票面验收命令**（真出口读数）。
  *
- *   node tooling/run-locked.mjs --ticket 788 -- node docs/skills/skill-schedule/t788-探针.mjs
+ *   node docs/skills/skill-schedule/t788-探针.mjs
  *
  *  它跑什么（逐条对票面「怎么算绿」）：
  *   ① **逐场景行有交代**：从清单 `docs/skills/skill-schedule/场景清单.json` 读本域（`domain=plan`）里

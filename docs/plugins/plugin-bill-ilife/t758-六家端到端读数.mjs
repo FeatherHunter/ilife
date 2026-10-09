@@ -9,7 +9,7 @@
  *
  * 定稿出处：记账 #747／卡路里 #748／备忘 #759／作息 #761／居家 #793／大厨 #795。
  * 隔离：真实 `~/.ilife` 一行不碰（基座自证＋用后清理）。用法：
- *   node tooling/run-locked.mjs --ticket 758 -- node docs/plugins/plugin-bill-ilife/t758-六家端到端读数.mjs
+ *   node docs/plugins/plugin-bill-ilife/t758-六家端到端读数.mjs
  */
 import { isAbsolute } from 'node:path';
 import { join } from 'node:path';

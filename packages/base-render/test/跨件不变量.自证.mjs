@@ -15,7 +15,7 @@
  *      ＝「点一下拿起整条通路是坏的」）；
  *   ⑤ 逐条对账：给 `gap-band` 的第 2 枚纵轴刻度加 30px 位移（首末不动、中间那枚漂走的老写法）。
  *
- *  跑法（经 `node tooling/run-locked.mjs --ticket 950 -- …` 排队；本脚本自己起 `node --test`）：
+ *  跑法（经 `…` 排队；本脚本自己起 `node --test`）：
  *    `node packages/base-render/test/跨件不变量.自证.mjs`
  *  收尾读数：`SELF-PROOF n/6 …` ＋ 每个自证的红读数原文；**6 条全 PASS 才算这条门的自证成立**。
  */

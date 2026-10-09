@@ -9,7 +9,7 @@
  *   故差异只可能来自说明面或**他席在途的 dist**；后者由「同一窗口内 dist 指纹不变」一条排掉。
  *
  * 用法（必须持外层锁）：
- *   node tooling/run-locked.mjs --ticket 722 -- node .scratch/t722/ab-examples.mjs
+ *   node .scratch/t722/ab-examples.mjs
  */
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';

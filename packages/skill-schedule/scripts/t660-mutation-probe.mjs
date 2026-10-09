@@ -11,8 +11,8 @@
  * 全过程日志落 `.scratch/t660-mut/`，回执只给判定与两行读数。
  *
  * 跑法（编译／测试一律经排队）：
- *   node tooling/run-locked.mjs --ticket 660 -- node packages/skill-schedule/scripts/t660-mutation-probe.mjs
- *   node tooling/run-locked.mjs --ticket 660 -- node packages/skill-schedule/scripts/t660-mutation-probe.mjs M1
+ *   node packages/skill-schedule/scripts/t660-mutation-probe.mjs
+ *   node packages/skill-schedule/scripts/t660-mutation-probe.mjs M1
  */
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';

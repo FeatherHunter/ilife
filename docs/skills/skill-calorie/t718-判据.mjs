@@ -12,7 +12,7 @@
  *   ⑧ 再记一次 src 指纹 ⇒ 与 ① 相等（窗口内没有别人改本包 src）。
  *
  * 用法（必须在持有外层锁时调用）：
- *   node tooling/run-locked.mjs --ticket 718 -- node docs/skills/skill-calorie/t718-判据.mjs
+ *   node docs/skills/skill-calorie/t718-判据.mjs
  * 可选：`--test <相对路径>` 换目标测试件（默认 `packages/skill-calorie/test/photo-gif-page-352.test.mjs`）。
  * 明细日志写 `.scratch/t718/`，stdout 只出判据行 ＋ 末行 `RESULT:`。
  */
