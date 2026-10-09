@@ -69,10 +69,8 @@ jobs:
       - run: pnpm snapshot:html:check
         if: always()
         continue-on-error: true
-      # #96：门禁工具自证（协议 §2.4.6：不在 canonical pnpm test 的 glob 内，须单独触发）
-      #   ⚠ 该 script 自身即经持锁包装器，且**用独立锁目录** `.scratch/locks-selftest`
-      #   （D-1 自锁修复）：调用方**不得**再套 `run-locked`／`pnpm gate:run`，否则外层持主锁等子进程、
-      #   内层等独立锁——虽不再死锁，但会多一层无意义嵌套；本地同口径命令就是这一条。
+      # #96：门禁工具自证（不在 canonical pnpm test 的 glob 内，须单独触发）。
+      #   本地同口径命令就是这一条。
       # 分级 informational（Q1）：只报告不拦路。
       - run: pnpm gate:selftest:html
         if: always()
