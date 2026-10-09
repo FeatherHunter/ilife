@@ -116,9 +116,6 @@ describe('#762 记账：真老配置文件 ＋ 已退休键', () => {
     const a = parse(after);
     // 老那份里那两个死键还在（`parseConfigYaml` 不认得「已退休」，它只解析）——对账前按本票口径去掉。
     const bLive = { ...b, html: { ...b.html } };
-    // #1198 起默认值表多了 `language` 组：老文件里没有它、保存后按默认补齐（空串＝跟随调用方）。
-    // 这是**新增键**，不是「其余取值变了」，故对账前把它按默认值补进老那份。
-    bLive.language = { text: '', format: '' };
     delete bLive.html.helpStem;
     delete bLive.html.quickRefStem;
     assert.equal(b.html.helpStem, '饼干记账_HELP', '老文件里死键的取值确实在（本票的素材）');

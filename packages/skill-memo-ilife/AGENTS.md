@@ -54,15 +54,14 @@
 | `src/checkin/index.ts` | 7 | 7 | 未越线，在册备查 |
 | `src/checkin/receipt.ts` | 82 | 84 | 未越线，在册备查 |
 | `src/checkin/routes.ts` | 36 | 40 | 未越线，在册备查 |
-| `src/cli/cmd_read.ts` | 367 | 328 | 已回线内（挂号值 367 留档，只许变短） |
-| `src/cli/config.ts` | 113 | 127 | 未越线，在册备查 |
+| `src/cli/cmd_read.ts` | 367 | 318 | 已回线内（挂号值 367 留档，只许变短） |
+| `src/cli/config.ts` | 113 | 139 | 未越线，在册备查 |
 | `src/cli/health.ts` | 37 | 38 | 未越线，在册备查 |
 | `src/cli/health/configRead.ts` | 208 | 208 | 未越线，在册备查 |
 | `src/cli/health/index.ts` | 17 | 17 | 未越线，在册备查 |
-| `src/cli/health/items.ts` | 240 | 231 | 未越线，在册备查 |
-| `src/cli/health/probe.ts` | 185 | 192 | 未越线，在册备查 |
-| `src/cli/language.ts` | 18 | 18 | 未越线，在册备查 |
-| `src/config.ts` | 154 | 165 | 未越线，在册备查 |
+| `src/cli/health/items.ts` | 240 | 227 | 未越线，在册备查 |
+| `src/cli/health/probe.ts` | 185 | 185 | 未越线，在册备查 |
+| `src/config.ts` | 154 | 154 | 未越线，在册备查 |
 | `src/data/commands.ts` | 35 | 35 | 未越线，在册备查 |
 | `src/data/index.ts` | 7 | 7 | 未越线，在册备查 |
 | `src/data/query.ts` | 34 | 34 | 未越线，在册备查 |

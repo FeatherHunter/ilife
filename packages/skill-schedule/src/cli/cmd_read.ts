@@ -2,7 +2,6 @@
 // 作息管家唯一出口 cmd_read：argv+JSON(stdout)+exit；非 0 走 stderr；超时 terminate+TOAST 降级标记。
 // 退出码对齐 skilllink 冻结：0 ok；1 预检；2 用法/参数；3 key；4 取数/超时；5 envelope/渲染/落盘。
 // stdout 纯净：成功只打 envelope JSON 一行（**缺省即落盘**：给 `delivery{mode,path,bytes}`，#843）。
-import { isLanguageArg } from 'base-link-core';
 import type { Envelope } from 'base-link-core';
 import { DatabaseSync } from 'node:sqlite';
 import { REGISTRY } from './registry.js';
@@ -20,7 +19,6 @@ import {
   ScheduleRenderError,
 } from '../render/index.js';
 import { isConfigKey, runConfigKey } from './config.js';
-import { resolveLanguageOrFail } from './language.js';
 // #706 · 配置体检：设置页专用的一条只读命令，同走「进分派层之前拦下」这条口（判据住 src/health.ts）。
 import { isHealthCheckKey, runHealthCheckKey } from './health.js';
 // #843 · 交付面：落盘唯一那条链（`delivery/output.ts`）＋ 文件名主体一处定义（`delivery/naming.ts`）。
@@ -82,16 +80,12 @@ function runWithDbReadOnly(spec: CommandSpec, params: Record<string, unknown>): 
 }
 
 
-function parseArgs(a: string[]): { key: string | undefined; params: string | undefined; html: string | undefined; timeout: number; language: string | undefined; formatLanguage: string | undefined } {
-  const o: { key: string | undefined; params: string | undefined; html: string | undefined; timeout: number; language: string | undefined; formatLanguage: string | undefined } = { key: a[0], params: undefined, html: undefined, timeout: DEFAULT_TIMEOUT_MS, language: undefined, formatLanguage: undefined };
+function parseArgs(a: string[]): { key: string | undefined; params: string | undefined; html: string | undefined; timeout: number } {
+  const o: { key: string | undefined; params: string | undefined; html: string | undefined; timeout: number } = { key: a[0], params: undefined, html: undefined, timeout: DEFAULT_TIMEOUT_MS };
   for (let i = 1; i < a.length; i++) {
     // `--html <路径>`＝显式落点（逐字覆盖写）；不给它＝落通式名的缺省产物（#843）。
     if (a[i] === '--params' && i + 1 < a.length) o.params = a[++i];
     else if (a[i] === '--html' && i + 1 < a.length) o.html = a[++i];
-    else if (isLanguageArg(a[i] as string) && i + 1 < a.length) {
-      if (a[i] === '--language') o.language = a[++i];
-      else o.formatLanguage = a[++i];
-    }
     else if (a[i] === '--timeout' && i + 1 < a.length) {
       o.timeout = Number(a[++i]);
       if (!Number.isFinite(o.timeout) || o.timeout <= 0) fail(2, '--timeout 须为正数毫秒');
@@ -103,8 +97,7 @@ function parseArgs(a: string[]): { key: string | undefined; params: string | und
 
 async function main() {
   const o = parseArgs(process.argv.slice(2));
-  if (!o.key) fail(2, '用法：schedule-cmd-read <schedule.key> [--params JSON对象] [--html 输出路径] [--timeout 毫秒] [--language zh|en]（不给 --html 即落缺省产物：产物根目录下按通式命名）');
-
+  if (!o.key) fail(2, '用法：schedule-cmd-read <schedule.key> [--params JSON对象] [--html 输出路径] [--timeout 毫秒]（不给 --html 即落缺省产物：产物根目录下按通式命名）');
   let params: Record<string, unknown> = {};
   if (o.params !== undefined) {
     try { params = JSON.parse(o.params); } catch (e) { fail(2, '--params 须为 JSON'); }
@@ -116,11 +109,6 @@ async function main() {
     process.stdout.write(runConfigKey(o.key, params) + '\n');
     return;
   }
-  // #1198 · 语言选择链（ADR-0004 §4）：argv 覆盖 ＞ 配置文件 language.* ＞ 调用方 ＞ zh。未识别的值＝exit 1（报文列可用语言）。
-  // 本轮只接线与校验：不设语言时行为与产物逐字节不变（渲染消费方随词条层 #1200 落地后接）。
-  // 位置：**配置 key 拦下之后**——配置面那几条命令（含首次落配置文件）不该被语言解析拦在前头。
-  const language = resolveLanguageOrFail(process.argv.slice(2));
-  void language;
   // #706 · 配置体检（`schedule.config.check`）：同样是设置页专用的只读命令，同样在预检之前拦下——
   // 它要报的正是「库在哪、通不通」，不能先要求库目录已配。只读：不建目录、不写文件、不落默认配置。
   if (isHealthCheckKey(o.key)) {

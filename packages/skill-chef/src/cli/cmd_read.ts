@@ -5,7 +5,6 @@
 // 取数（#839 起按域落位，以各域签名为准）：开闭库与多域查询住 `fetch/db.ts`；
 // 单域独占的取数住各域 run（search／history／shopping／data 内；旧址由 `fetch/index.ts` 转出）。
 // 口径：policy WriteOp（add/update/deprecate）+ RecipeOp（add/update/discard/add-ingredient/add-step，CLI 兼容 discard=deprecate）；queryHistory 无参返全量；buildShoppingList 合并行含 optional/category 标记（住 shopping）。
-import { isLanguageArg } from 'base-link-core';
 import { join, resolve } from 'node:path';
 import { writeFileSync } from 'node:fs';
 import {
@@ -14,7 +13,6 @@ import {
 } from '../fetch/index.js';
 import { resolveDbPath, resolveDbDir, resolveSceneDir, dbFilename } from '../fetch/paths.js';
 import { isConfigKey, runConfigKey } from './config.js';
-import { resolveLanguageOrFail } from './language.js';
 // #706 · 配置体检：设置页专用的一条只读命令，同走「进分派层之前拦下」这条口（判据住 src/health.ts）。
 import { isHealthCheckKey, runHealthCheckKey } from './health.js';
 import type { ChefDb } from '../fetch/db.js';
@@ -176,15 +174,11 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
   }
 }
 
-function parseArgs(a: string[]): { key: string | undefined; params: string | undefined; html: string | undefined; timeout: number; language: string | undefined; formatLanguage: string | undefined } {
-  const o: { key: string | undefined; params: string | undefined; html: string | undefined; timeout: number; language: string | undefined; formatLanguage: string | undefined } = { key: a[0], params: undefined, html: undefined, timeout: DEFAULT_TIMEOUT_MS, language: undefined, formatLanguage: undefined };
+function parseArgs(a: string[]): { key: string | undefined; params: string | undefined; html: string | undefined; timeout: number } {
+  const o: { key: string | undefined; params: string | undefined; html: string | undefined; timeout: number } = { key: a[0], params: undefined, html: undefined, timeout: DEFAULT_TIMEOUT_MS };
   for (let i = 1; i < a.length; i++) {
     if (a[i] === '--params' && i + 1 < a.length) o.params = a[++i];
     else if (a[i] === '--html' && i + 1 < a.length) o.html = a[++i];
-    else if (isLanguageArg(a[i] as string) && i + 1 < a.length) {
-      if (a[i] === '--language') o.language = a[++i];
-      else o.formatLanguage = a[++i];
-    }
     else if (a[i] === '--timeout' && i + 1 < a.length) {
       o.timeout = Number(a[++i]);
       if (!Number.isFinite(o.timeout) || o.timeout <= 0) fail(2, '--timeout 须为正数毫秒');
@@ -196,7 +190,7 @@ function parseArgs(a: string[]): { key: string | undefined; params: string | und
 
 async function main() {
   const o = parseArgs(process.argv.slice(2));
-  if (!o.key) fail(2, '用法：chef-cmd-read <chef.key> [--params JSON对象] [--html 输出路径] [--timeout 毫秒] [--language zh|en]');
+  if (!o.key) fail(2, '用法：chef-cmd-read <chef.key> [--params JSON对象] [--html 输出路径] [--timeout 毫秒]');
   let params: Record<string, unknown> = {};
   if (o.params !== undefined) {
     try { params = JSON.parse(o.params) as Record<string, unknown>; } catch (e) { fail(2, '--params 须为 JSON'); }
@@ -208,11 +202,6 @@ async function main() {
     process.stdout.write(runConfigKey(o.key, params) + '\n');
     return;
   }
-  // #1198 · 语言选择链（ADR-0004 §4）：argv 覆盖 ＞ 配置文件 language.* ＞ 调用方 ＞ zh。未识别的值＝exit 1（报文列可用语言）。
-  // 本轮只接线与校验：不设语言时行为与产物逐字节不变（渲染消费方随词条层 #1200 落地后接）。
-  // 位置：**配置 key 拦下之后**——配置面那几条命令（含首次落配置文件）不该被语言解析拦在前头。
-  const language = resolveLanguageOrFail(process.argv.slice(2));
-  void language;
   // #706 · 配置体检（`chef.config.check`）：同样是设置页专用的只读命令，同样在预检之前拦下——
   // 它要报的正是「库在哪、通不通」，不能先要求库目录已配。只读：不建目录、不写文件、不落默认配置。
   if (isHealthCheckKey(o.key)) {

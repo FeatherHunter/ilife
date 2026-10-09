@@ -4,6 +4,6 @@
     "outDir": "./dist",
     "rootDir": "./src"
   },
-  "references": [{ "path": "../base-link-core" }, { "path": "../base-entries" }],
+  "references": [{ "path": "../base-link-core" }],
   "include": ["src"]
 }

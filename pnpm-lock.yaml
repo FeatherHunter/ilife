@@ -27,15 +27,9 @@ importers:
         specifier: 0.3.34
         version: link:../base-link-core
 
-  packages/base-entries: {}
-
   packages/base-link-core: {}
 
   packages/base-render:
-    dependencies:
-      base-entries:
-        specifier: 0.3.34
-        version: link:../base-entries
     devDependencies:
       base-link-core:
         specifier: 0.3.34
@@ -194,9 +188,6 @@ importers:
 
   packages/skill-bill:
     dependencies:
-      base-entries:
-        specifier: 0.3.34
-        version: link:../base-entries
       base-link-core:
         specifier: 0.3.34
         version: link:../base-link-core

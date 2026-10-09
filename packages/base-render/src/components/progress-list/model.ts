@@ -6,30 +6,20 @@
  *   3. **算得出来的都不许调用方再给**：「还差多少」那句、条的比例、状态字三样都是本件算的
  *      （不给才轮到调用方覆盖），免得同一个事实在调用点与本件各写一遍。
  */
-import { resolve } from 'base-entries';
 import { assertPlainObject, badInput, optExtraClass, optText, reqText } from '../shared/validate.js';
-import { BASE_RENDER_CATALOG, type BaseRenderMessageId } from '../../entries/index.js';
 import {
-  PROGRESS_LIST_MISSING,
+  PROGRESS_LIST_EXACT_WORD,
   PROGRESS_LIST_FORMS,
+  PROGRESS_LIST_MISSING,
+  PROGRESS_LIST_OVER_WORD,
+  PROGRESS_LIST_REMAIN_WORD,
+  PROGRESS_LIST_STATE_WORDS,
   PROGRESS_LIST_TONES,
   type ProgressListForm,
   type ProgressListRow,
   type ProgressListState,
   type ProgressListTone,
 } from './attrs.js';
-
-/** 状态闭集 → 词条 key（**逐格写死**：拼错 key 编译期红，不做字符串拼 key）。 */
-const STATE_WORD_ID = {
-  blank: 'progress-list.state.blank',
-  'on-track': 'progress-list.state.on-track',
-  done: 'progress-list.state.done',
-  over: 'progress-list.state.over',
-} as const satisfies Readonly<Record<ProgressListState, BaseRenderMessageId>>;
-
-/** 一句话里的数字／单位一律经词条模板的具名占位进句（模板只认 {name}）。 */
-const sentence = (language: string, id: BaseRenderMessageId, params: { readonly value: string; readonly unit: string }): string =>
-  resolve(BASE_RENDER_CATALOG, language, id, params);
 
 /** 归一化后的一行：每个字段都已校验，算得出来的（比例／状态字／还差多少）已经算好。 */
 export interface ProgressListRowModel {
@@ -95,7 +85,7 @@ function optNumOrNull(value: unknown, field: string): number | null {
 }
 
 /** 一行：校验 ＋ 算比例、状态、状态字、还差多少。 */
-function rowModel(value: unknown, index: number, language: string): ProgressListRowModel {
+function rowModel(value: unknown, index: number): ProgressListRowModel {
   assertPlainObject(value, 'progress-list: input.rows[' + index + ']');
   const raw = value as ProgressListRow;
   const label = reqText(raw.label, 'progress-list: input.rows[' + index + '].label');
@@ -111,7 +101,7 @@ function rowModel(value: unknown, index: number, language: string): ProgressList
   else state = 'on-track';
 
   const stateWord = optText(raw.state, 'progress-list: input.rows[' + index + '].state')
-    ?? resolve(BASE_RENDER_CATALOG, language, STATE_WORD_ID[state]);
+    ?? PROGRESS_LIST_STATE_WORDS[state];
 
   const toneGiven = raw.tone;
   if (toneGiven !== undefined && !(PROGRESS_LIST_TONES as readonly unknown[]).includes(toneGiven)) {
@@ -134,10 +124,9 @@ function rowModel(value: unknown, index: number, language: string): ProgressList
 
   let remain = optText(raw.remainText, 'progress-list: input.rows[' + index + '].remainText');
   if (remain === undefined && current !== null) {
-    // 拼接串一律整句化：句子的形状住词条表（zh 那份逐字等于改造前拼出来的那句话）。
-    if (state === 'done') remain = resolve(BASE_RENDER_CATALOG, language, 'progress-list.exact');
-    else if (state === 'over') remain = sentence(language, 'progress-list.over', { value: formatProgressNumber(current - goal), unit: unitTail });
-    else remain = sentence(language, 'progress-list.remain', { value: formatProgressNumber(goal - current), unit: unitTail });
+    if (state === 'done') remain = PROGRESS_LIST_EXACT_WORD;
+    else if (state === 'over') remain = PROGRESS_LIST_OVER_WORD + ' ' + formatProgressNumber(current - goal) + unitTail;
+    else remain = PROGRESS_LIST_REMAIN_WORD + ' ' + formatProgressNumber(goal - current) + unitTail;
   }
 
   return { label, valueText, goalText, unit, state, stateWord, tone, fillPct, pct, remain, ariaText };
@@ -171,9 +160,7 @@ export function normalizeProgressList(input: unknown): ProgressListModel {
 
   const rowsGiven: unknown = raw.rows;
   if (!Array.isArray(rowsGiven)) badInput('progress-list: input.rows 必须是数组');
-  // 语言维度（不给＝空串）：词条层拿它走回退链，空串退化为 [zh, en] ⇒ 中文列逐字节不变。
-  const language = optText(raw.language, 'progress-list: input.language') ?? '';
-  const rows = rowsGiven.map((r, i) => rowModel(r, i, language));
+  const rows = rowsGiven.map((r, i) => rowModel(r, i));
 
   return {
     form: form as ProgressListForm,
