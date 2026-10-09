@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang='zh-CN'><head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width,initial-scale=1'>
+<title>原型A：单页长卷＋节锚点</title>
+<style>body{font-family:system-ui,'Microsoft YaHei',sans-serif;background:#2b2620;margin:0;padding:24px;color:#222}.man{max-width:640px;margin:0 auto;background:#fdfaf2;border:1px solid #e6d9bd;border-radius:6px;box-shadow:0 0 0 6px #7a1f1f,0 0 0 7px #c9a227,0 8px 30px #000a;padding:28px 32px;position:relative}.man:before{content:'';position:absolute;inset:0;pointer-events:none;opacity:.5;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.55 0 0 0 0 0.45 0 0 0 0 0.25 0 0 0 0.06 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E")}.gold{color:#8a6a15;letter-spacing:.3em;font-size:12px;text-align:center}.entry{display:inline-block;background:#7a1f1f;color:#f8f1e2;border:1px solid #c9a227;border-radius:4px;padding:8px 26px;letter-spacing:.2em;cursor:pointer;font-weight:700}@keyframes unroll{from{opacity:0;transform:translateY(-10px) scaleY(.7)}to{opacity:1;transform:none}}.open{animation:unroll 240ms ease-out;transform-origin:50% 0}h2.sec{font-size:16px;color:#42506b;border-bottom:1px solid #e6d9bd;padding-bottom:4px}p.st{font-size:14px;line-height:1.9;margin:6px 0 18px}nav.a a{font-size:13px;color:#7a1f1f;margin-right:12px}@media (prefers-reduced-motion:reduce){.open{animation:none}}</style></head><body>
+<div style='text-align:center;margin-bottom:16px'><span class='entry' onclick="document.getElementById('m').style.display='block'">指导手册 HELP</span></div>
+<div class='man open' id='m' style='display:none'>
+<div class='gold'>总管爱生活 · 指导手册</div>
+<nav class='a'><a href='#s1'>1 基本使用</a><a href='#s2'>2 数据目录</a><a href='#s3'>3 装IM</a><a href='#s4'>4 全流程</a></nav>
+<h2 class='sec' id='s1'>1 基本使用：对 AI 说 xxx help</h2><p class='st'>跟 AI 说一句“〈技能名〉 HELP”，比如“饼干记账 HELP”。拿到 HELP HTML 后打开，找到对得上的场景，把 prompt 复制出来发给 AI，等它执行。</p>
+<h2 class='sec' id='s2'>2 数据目录：自己备份，不加密</h2><p class='st'>到配置面板找到“数据目录”，填好位置，这个技能的 db 文件就落在这里。备份自己做。我们不加密：密码一旦忘了，一手资料就永远找不回来。</p>
+<h2 class='sec' id='s3'>3 增强体验：装 IM 插件绑飞书</h2><p class='st'>装上 dsh-im 和 dsh-im-companion，绑好 bot，推荐飞书机器人。配好后 HELP 和结果 HTML 直接在飞书 App 里看。</p>
+<h2 class='sec' id='s4'>4 增强流程：IM 全流程 8 步</h2><p class='st'>飞书里发“xxx help”；dsh 生成 HELP HTML 并经飞书发回；打开找到场景，把 prompt 复制出来发给 AI；AI 执行完，结果 HTML 再经飞书发回来。</p>
+</div></body></html>

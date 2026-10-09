@@ -48,6 +48,11 @@ const SCRIPT_REL = 'tooling/check-real-home-untouched.mjs';
 /** 全量测试表：与 `package.json` 的 `test` 脚本逐字同一份 glob（改这里＝改本门的判据面）。 */
 export const SUITE_GLOBS = [
   'test/*.test.mjs',
+  // #1199 评审 S6：tooling/ 下的门自证件原先既不在这里也不在 CI ⇒「改坏必红」没人守。收进本套全局。
+  // ⚠ 收进来即暴露三条既有红（skill-html-snapshot.test.mjs 的覆盖集合／写读闭环／快照过期）：那是
+  //   #1199 登记的「中文账本陈旧＋89 处影响面标记」同一件事的两面，不是本行引入；见 ADR-0004 的既有红段。
+  'tooling/test/*.test.mjs',
+  'packages/base-entries/test/*.test.mjs',
   'packages/base-render/test/*.test.mjs',
   'packages/skill-calorie/test/*.test.mjs',
   'packages/skill-memo-ilife/test/*.test.mjs',

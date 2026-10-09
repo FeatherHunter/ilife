@@ -12,7 +12,13 @@
  *
  * 件史：本件此前是 `src/write/collectBody.ts` 的通用采集页装配体，那件已无任何调用方（场景件都走模板了），
  *  随票删除；那个装配体里只剩这一个函数还有用，故搬到件名说了它是什么的本件。
+ *
+ *  #1206 首切件（多语言文本外置）：折叠标题不住这里，复用 `installment.fold-title`
+ *  （同句只一处定义，见 `../entries/zh.ts` 头注第三批）；`input.language` 按语言取值
+ *  （不给＝`zh`，与改造前逐字节相同）。
  */
+import { resolve } from 'base-entries';
+import { SKILL_BILL_CATALOG } from '../entries/index.js';
 import { renderDisclosure } from 'base-paint/blocks';
 import { blockedBar } from './blockedSlots.js';
 import type { BlockedItem } from './blockedSlots.js';
@@ -24,10 +30,12 @@ export function collectBlockedFold(input: {
   readonly command: string;
   /** 补齐之后会发生什么（不给＝走共用件那句缺省口径）。 */
   readonly note?: string;
+  /** 本块的文本语言（BCP 47；不给＝`zh`，与改造前逐字节相同）。 */
+  readonly language?: string;
 }): string {
   if (input.items.length === 0) return '';
   return renderDisclosure({
-    title: '还缺什么，以及补齐后照抄的那条',
+    title: resolve(SKILL_BILL_CATALOG, input.language ?? 'zh', 'installment.fold-title'),
     contentHtml: blockedBar({
       items: input.items,
       command: input.command,

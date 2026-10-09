@@ -17,6 +17,7 @@
     "snapshot:html": "node tooling/skill-html-snapshot.mjs --write",
     "snapshot:html:check": "node tooling/skill-html-snapshot.mjs --check",
     "snapshot:html:list": "node tooling/skill-html-snapshot.mjs --list",
+    "gate:i18n": "node tooling/check-i18n-entries.mjs && node tooling/check-i18n-keys.mjs && node tooling/check-typography-langs.mjs && node tooling/calorie-html-snapshot.mjs --check",
     "help:build": "node packages/skill-calorie/scripts/build-help.mjs",
     "help:examples:check": "node packages/skill-calorie/scripts/check-examples.mjs",
     "boundaries": "node tooling/check-boundaries.mjs",

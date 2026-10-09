@@ -35,9 +35,26 @@ import { readFileSync, writeFileSync, readdirSync, statSync, existsSync, renameS
 import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { DEFAULT_LANGUAGE, langFromArgv, ledgerPath, normalizeLang } from './i18n-langs.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const SNAP_PATH = join(root, 'tooling/skill-html.snapshot.json');
+const SNAP_BASE = 'tooling/skill-html.snapshot.json';
+const SNAP_PATH = join(root, SNAP_BASE);
+
+/** 语言列的账本路径：中文列＝存量路径（逐字节不动），英文列＝tooling/skill-html.snapshot.en.json。
+ *  语言身份由**文件名**承载，账本正文一个字段都不加（加字段＝字节变＝破坏「中文列逐字节不变」）。 */
+export function snapPathOf(lang) {
+  return join(root, ledgerPath(SNAP_BASE, normalizeLang(lang)));
+}
+
+/** 解析语言列：argv 的 --lang 优先，其次调用方给的 fallback，最后缺省语言（zh）。 */
+export function resolveLang(argv, fallback) {
+  const a = argv ?? process.argv.slice(2);
+  const fromArgv = langFromArgv(a);
+  if (fromArgv !== DEFAULT_LANGUAGE || a.some((t) => t === '--lang' || t.startsWith('--lang='))) return fromArgv;
+  return normalizeLang(fallback === undefined ? DEFAULT_LANGUAGE : fallback);
+}
 
 /** 本门覆盖的 5 个技能（顺序固定，产物 id 与快照排序都按此）。 */
 export const SKILLS = [
@@ -83,16 +100,37 @@ const R1 = {
 };
 const R2 = { ...R1, id: 2, category: '交通/地铁', time: '2026-01-03 08:00:00', amount: 5, note: '' };
 
-export const PAYLOAD = {
+
+/** 渲染面形状：本门喂夹具、取 section 片段的那 6 个（出处 base-link-core 的 ENVELOPE_SHAPES）。 */
+export const SHAPES = ['list', 'detail', 'stat', 'receipt', 'analysis', 'fallback'];
+
+/** 非渲染面形状：进了形状闭集、但**本门不取片段**——不取片段不等于不管，见 assertShapeClosure()。
+ *  resultset（数据族，#952「不参与渲染」）就是这一类：registry 里有 2 条命令落它
+ *  （bill.data.schema／bill.data.query）；本门只认「它不渲染」这条事实，不假装有它的页面。 */
+export const NON_RENDER_SHAPES = ['resultset'];
+
+/** 形状闭集 = 渲染面 ∪ 非渲染面（取形状名册，不手抄第二份）。 */
+export const ALL_SHAPES = [...SHAPES, ...NON_RENDER_SHAPES];
+
+/** 载荷夹具：**逐形状**给一份结构合法的对抗夹具（形状名 → 载荷）。
+ *  补新形状忘了补夹具时，本门会显式红（见 assertShapeClosure），不再出现
+ *  「夹具查表得 undefined → 建 envelope 抛」这种把**门自己**摔死、读数作废的形态。 */
+const RENDER_FIXTURE = {
   list: { items: [R1, R2], total: 2 },
   detail: { item: R1 },
   stat: { metrics: { a: 1, b: 2.5, c: 0 } },
   receipt: { ok: true, message: '已记录 <&>' },
   analysis: { summary: '汇总 <&>\n第二行' },
-  fallback: { reason: '降级 <&>', degraded: true },
+  fallback: { reason: '降级 <&>', degraded: true }
 };
 
-export const SHAPES = ['list', 'detail', 'stat', 'receipt', 'analysis', 'fallback'];
+/** 非渲染面夹具（带上＝本门知道这个形状的 envelope 怎么建，只是不取片段）。 */
+const NON_RENDER_FIXTURE = { resultset: { results: [] } };
+
+/** 全部形状的夹具（渲染面 ＋ 非渲染面）。 */
+export const PAYLOAD = { ...RENDER_FIXTURE, ...NON_RENDER_FIXTURE };
+
+
 
 /** 空列表探针（第 7 件形状探针）：5 技能都有 `!items.length` 空态分支，非空载荷打不到它。 */
 export const LIST_EMPTY = { items: [], total: 0 };
@@ -122,7 +160,30 @@ async function loadLinkCore() {
  * 采集全部产物：返回 Map<id, {text, src}>（id 已排序）。
  * 纯读：只 import dist、只 readFileSync 模板；不写任何文件。
  */
+/** 形状闭集自证：**每一件**（渲染面／非渲染面）都必须有夹具，且两面并集必须正好盖住闭集。
+ *  不通过即抛——读数作废、不静默、不落盘。把「夹具查表得 undefined → 建 envelope 抛」这种
+ *  摔死形态治成显式红：**门自己的缺件**不许伪装成产物缺陷。 */
+export function assertShapeClosure() {
+  const all = ALL_SHAPES;
+  const missing = all.filter((sh) => !Object.prototype.hasOwnProperty.call(PAYLOAD, sh));
+  if (missing.length) {
+    throw new Error('形状夹具缺件：' + missing.join('、')
+      + '（补 PAYLOAD 夹具；形状闭集出处 base-link-core 的 ENVELOPE_SHAPES）');
+  }
+  const extra = Object.keys(PAYLOAD).filter((sh) => !all.includes(sh));
+  if (extra.length) throw new Error('夹具里有闭集外形状：' + extra.join('、'));
+  const dup = all.filter((sh, i) => all.indexOf(sh) !== i);
+  if (dup.length) throw new Error('形状名册有重复：' + dup.join('、'));
+  return { render: SHAPES.length, nonRender: NON_RENDER_SHAPES.length, total: all.length };
+}
+
+/** 形状名册分面（CLI 与自证用）：渲染面／非渲染面各自的清单。 */
+export function shapeRoster() {
+  return { render: [...SHAPES], nonRender: [...NON_RENDER_SHAPES] };
+}
+
 export async function collectArtifacts() {
+  assertShapeClosure();
   const core = await loadLinkCore();
   const out = new Map();
   const put = (id, text, src) => {
@@ -145,7 +206,10 @@ export async function collectArtifacts() {
     put(`${entry.id}/keys`, JSON.stringify(keys.map((k) => [k, shapes[k]])), envSrc);
 
     // ② 每个 key 的 section 片段（按该 key 分配的形状喂统一夹具）
+    //   只取**渲染面**形状的片段：非渲染面形状（resultset，#952 不参与渲染）在渲染入口必拒，
+    //   给它取片段＝让门自己摔死；它由 ③′ 的显式拒绝探针覆盖。
     for (const k of keys) {
+      if (!SHAPES.includes(shapes[k])) continue;
       const env = m[`build${entry.camel}Envelope`](k, PAYLOAD[shapes[k]]);
       put(`${entry.id}/frag/${k}`, m.renderEnvelopeHtml(env), envSrc);
     }
@@ -171,6 +235,9 @@ export async function collectArtifacts() {
         : `WRONG-ERROR: name=${e && e.name} code=${code} message=${e && e.message}`;
     }
     put(`${entry.id}/shape-throw`, threw, htmlSrc);
+    // 非渲染面形状（resultset）**不落账本**：账本记的是渲染产物，拒渲染是它在渲染入口上的行为，
+    //   不是一件产物。它由 compareShapeClosure() 的「必须显式拒」判据盖住（见该函数），
+    //   这样既不把结构事实塞进产物账本，也不新增账本条目（#96 的 194 件读数逐字不动）。
 
     // ④ 模板清单 ＋ 每件模板的填充页
     put(`${entry.id}/templates`, JSON.stringify([...templates]), `packages/${entry.dir}/src/render/templates.ts`);
@@ -191,6 +258,61 @@ export async function collectArtifacts() {
   }
 
   return new Map([...out.entries()].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)));
+}
+
+// ---------------------------------------------------------------- 语言列账本
+
+/** 语言列账本的**前半**（除 artifacts 之外的元信息）：两种语言同形，故共用。 */
+function snapMeta(snap) {
+  const { artifacts, ...meta } = snap;
+  return meta;
+}
+
+/** 英文列的**记录文件**（不是中文列的复制）：中文列没记的产物＝英文列没记；键是**英文列偏离中文列**
+ *  的那些产物。完整性三条（缺一即抛，不许当成「英文列没问题」）：
+ *   ① 记录里的 id 必须在中文列里有（英文列不许凭空多产物）；
+ *   ② 记录的 sha256 必须 ≠ 中文列同件（相等＝没记＝空转绿，见 #1199 的「空转绿＝假绿」）；
+ *   ③ 记录与中文列的元信息除语言列口径外必须自洽（见 loadLangColumn 的 baseLang 校验）。 */
+export function loadLangColumn(lang, { snapPath = undefined, basePath = SNAP_PATH } = {}) {
+  const L = normalizeLang(lang);
+  if (L === DEFAULT_LANGUAGE) {
+    const snap = readSnapshot(snapPath === undefined ? basePath : snapPath);
+    return { lang: L, kind: 'base', meta: snapMeta(snap), artifacts: snap.artifacts || {}, records: null };
+  }
+  const p = snapPath === undefined ? snapPathOf(L) : snapPath;
+  if (!existsSync(p)) throw new Error('英文列账本缺失：' + p + '（语言列骨架必须随本票入仓，不能等迁移票补）');
+  const snap = readSnapshot(p);
+  if (snap.lang !== L) throw new Error('英文列账本声明的语言不对：' + p + ' 写的是 ' + JSON.stringify(snap.lang) + '，请求的是 ' + L);
+  if (snap.basedOn !== SNAP_BASE) throw new Error('英文列账本必须声明 basedOn=' + SNAP_BASE + '（实得 ' + JSON.stringify(snap.basedOn) + '）');
+  const records = snap.records;
+  if (records === undefined || records === null || typeof records !== 'object') throw new Error('英文列账本缺 records 对象：' + p);
+  const base = readSnapshot(basePath);
+  const baseArtifacts = base.artifacts || {};
+  for (const [id, rec] of Object.entries(records)) {
+    const b = baseArtifacts[id];
+    if (!b) throw new Error('英文列记了一条中文列没有的产物：' + id);
+    if (!rec || typeof rec !== 'object') throw new Error('英文列记录必须是对象：' + id);
+    if (typeof rec.sha256 !== 'string') throw new Error('英文列记录缺 sha256：' + id);
+    if (rec.sha256 === b.sha256) throw new Error('英文列记录与中文列同件同哈希（＝没记，空转绿）：' + id);
+  }
+  return { lang: L, kind: 'records', meta: snapMeta(snap), artifacts: baseArtifacts, records };
+}
+
+/** 英文列记录 vs **英文列当刻实际**：只有拿到英文列对照读数（--en-artifacts）才判漏记。
+ *  没给对照读数＝**待对照**，既不当绿也不当红——这是「0 件＝待录入」的显式形态：
+ *  英文页还没生成，就没有「英文页通过了」这句话可说。 */
+export function englishGaps(col, enArtifacts) {
+  const recorded = col.kind === 'records' ? Object.keys(col.records).length : 0;
+  if (!enArtifacts) return { recorded, pending: true, unrecorded: [], extra: [] };
+  const unrecorded = [];
+  const extra = [];
+  for (const [id, cur] of enArtifacts) {
+    const zh = col.artifacts[id];
+    if (!zh) { extra.push(id); continue; }
+    const curSha = sha256(cur.text);
+    if (curSha !== zh.sha256 && col.records[id] === undefined) unrecorded.push(id);
+  }
+  return { recorded, pending: false, unrecorded, extra };
 }
 
 // ---------------------------------------------------------------- 快照读写
@@ -353,6 +475,54 @@ if (isEntry) {
   const has = (f) => argv.includes(f);
   const valOf = (f) => { const i = argv.indexOf(f); return i >= 0 ? argv[i + 1] : undefined; };
   const fullDiff = has('--full-diff');
+  const lang = resolveLang(argv);
+  // --en-artifacts：英文列对照读数入口（迁移票生成英文产物后从这里喂进来，本门才判「英文列漏记」）。
+  const enArtifactsFile = valOf('--en-artifacts');
+  if (has('--selftest')) {
+    const bad = [];
+    const want = (cond, msg) => { if (!cond) bad.push(msg); };
+    // ① 形状闭集：渲染面 ∪ 非渲染面，每件都有夹具
+    const closure = assertShapeClosure();
+    want(closure.render === 6 && closure.nonRender === 1 && closure.total === 7, '形状闭集读数：' + JSON.stringify(closure));
+    // ② 语言列路径：中文列＝存量路径（逐字节不动），英文列另起
+    want(snapPathOf('zh') === SNAP_PATH, '中文列必须落在存量路径 tooling/skill-html.snapshot.json 上');
+    want(snapPathOf('en').endsWith('skill-html.snapshot.en.json'), '英文列必须另起账本：' + snapPathOf('en'));
+    want(snapPathOf('zh') !== snapPathOf('en'), '中英两列不许共用同一个账本文件');
+    // ③ 英文列账本完整性：空 records 合法（0 件＝待录入），但必须显式带 lang／basedOn
+    const enCol = loadLangColumn('en', { snapPath: snapPathOf('en'), basePath: SNAP_PATH });
+    want(enCol.lang === 'en' && enCol.kind === 'records', '英文列账本形态：' + JSON.stringify({ lang: enCol.lang, kind: enCol.kind }));
+    want(enCol.meta.basedOn === SNAP_BASE, '英文列必须声明 basedOn=' + SNAP_BASE);
+    const gaps0 = englishGaps(enCol, null);
+    want(gaps0.pending === true, '没给英文列对照读数时必须报 pending（0 件＝待录入），不许当绿');
+    console.log('SELFTEST 读数：形状闭集 ' + JSON.stringify(closure) + '；英文列 recorded=' + gaps0.recorded + ' pending=' + gaps0.pending);
+    // ④ 变异：往英文列记录里塞一条与中文列同哈希的假记录 → 必须抛（同件同哈希＝没记＝空转绿）
+    const zhNow = readSnapshot(SNAP_PATH);
+    const anyId = Object.keys(zhNow.artifacts)[0];
+    const fakeRecords = { [anyId]: { sha256: zhNow.artifacts[anyId].sha256, bytes: zhNow.artifacts[anyId].bytes, note: 'selftest-mutation' } };
+    const fakeCol = { lang: 'en', kind: 'records', meta: enCol.meta, artifacts: zhNow.artifacts, records: fakeRecords };
+    let threwSame = false;
+    try {
+      const tmpFile = join(tmpdir(), 'snapshot-selftest-' + process.pid + '.json');
+      writeFileSync(tmpFile, JSON.stringify({ ...enCol.meta, lang: 'en', basedOn: SNAP_BASE, records: fakeRecords }), 'utf8');
+      loadLangColumn('en', { snapPath: tmpFile, basePath: SNAP_PATH });
+    } catch { threwSame = true; }
+    want(threwSame, '英文列记一条与中文列同哈希的记录必须抛（空转绿＝假绿）');
+    void fakeCol;
+    // ⑤ 变异：把中文列账本的一个值改掉 → compare 必须报 changed
+    const artsNow = await collectArtifacts();
+    const mutated = { ...zhNow, artifacts: { ...zhNow.artifacts, [anyId]: { ...zhNow.artifacts[anyId], sha256: 'deadbeefdeadbeefdeadbeefdeadbeef' } } };
+    const cMut = compare(mutated, artsNow);
+    want(cMut.changed.includes(anyId), '账本值被改必须报 changed（改坏必红）');
+    const cBase = compare(zhNow, artsNow);
+    want(!cBase.staleText.length, '账本自洽性：text 与 sha256 必须一致');
+    console.log('SELFTEST 变异读数：同哈希假记录 threw=' + threwSame + '；改账本值 changed=' + cMut.changed.length + '（含 ' + anyId + '=' + cMut.changed.includes(anyId) + '）');
+    if (bad.length) { for (const b of bad) console.error('SELFTEST FAIL ' + b); process.exit(1); }
+    console.log('SELFTEST: 形状闭集／语言列路径／英文列记录通道／改坏必红 四条自证 OK');
+    console.log('SELFTEST: 还原必绿 = 下面这次 --check 的读数');
+    process.exit(0);
+  }
+  const zhPath = snapPathOf(DEFAULT_LANGUAGE);
+  const enPath = snapPathOf('en');
   const showId = valOf('--show');
 
   try {
@@ -378,7 +548,23 @@ if (isEntry) {
       process.exit(0);
     }
 
-    const snap = readSnapshot();
+    // 中文列：与改造前完全同一个账本、同一套比较（默认动作＝中文列）。
+    const snap = readSnapshot(zhPath);
+    // 英文列：另起一份账本（records 形）。空列＝0 件待录入，显式报，不当绿。
+    const enCol = loadLangColumn('en', { snapPath: enPath, basePath: zhPath });
+    const enCount = enCol.kind === 'records' ? Object.keys(enCol.records).length : 0;
+    const gaps = englishGaps(enCol, null);
+    console.log('COLUMN zh  artifacts=' + artifacts.size + ' ledger=' + snapPathOf(DEFAULT_LANGUAGE).slice(root.length + 1));
+    console.log('COLUMN en  recorded=' + enCount + ' ledger=' + enPath.slice(root.length + 1)
+      + (enCount === 0 ? '（0 件＝待录入：英文列骨架已立，迁移票按批次录入；空列不许当绿，故此处显式报数）' : '')
+      + ' 未录入=' + gaps.unrecorded.length);
+    const roster = shapeRoster();
+    console.log('SHAPES render=' + roster.render.join(',') + ' nonRender=' + roster.nonRender.join(',') + '（非渲染面不取片段，只在渲染入口上判「必须拒」）');
+    if (lang === 'en' && enCount === 0) {
+      console.log('PENDING: 英文列 0 件（骨架已立、无记录可比）：这不是「英文页通过」，是「还没有英文页」。');
+      console.log('RESULT: lang=en recorded=0 pending=1 zhArtifacts=' + artifacts.size);
+      process.exit(0);
+    }
 
     if (showId) {
       const prev = snap.artifacts?.[showId];
@@ -394,6 +580,29 @@ if (isEntry) {
     const cmp = compare(snap, artifacts);
     const warn = staleness();
     for (const w of warn) console.error(`WARN: dist 可能陈旧 → ${w}`);
+
+    // 英文列：只有**已录入**的产物上判「实际 == 记录」，没录入的走上面那条「未录入」读数。
+    const enBad = [];
+    for (const [id, rec] of Object.entries(enCol.records || {})) {
+      const cur = artifacts.get(id);
+      if (!cur) { enBad.push(id + '（产物已消失，中文列会先报 removed）'); continue; }
+      const curSha = sha256(cur.text);
+      if (curSha !== rec.sha256) enBad.push(id + ' 记录 ' + rec.sha256 + ' 实际 ' + curSha);
+    }
+    if (enBad.length) {
+      console.error('FAIL: 英文列记录与实际不符 ' + enBad.length + ' 件（英文列是**偏离中文列**的记录，不是中文列的复制）');
+      for (const x of enBad.slice(0, 40)) console.error('  ! ' + x);
+      console.error('  处置：英文列产物确有变更 → 显式重录英文列账本；不该变 → 修回。');
+      console.error('RESULT: lang=en recorded=' + enCount + ' mismatch=' + enBad.length);
+      process.exit(1);
+    }
+    if (gaps.unrecorded.length) {
+      console.error('FAIL: 英文列有 ' + gaps.unrecorded.length + ' 件产物偏离中文列却没录入英文列账本（漏记＝假绿）');
+      for (const id of gaps.unrecorded.slice(0, 40)) console.error('  ! ' + id);
+      console.error('  处置：这些产物的英文列版本必须显式录入 ' + enPath.slice(root.length + 1) + ' 的 records。');
+      console.error('RESULT: lang=en recorded=' + enCount + ' unrecorded=' + gaps.unrecorded.length);
+      process.exit(1);
+    }
 
     if (cmp.staleText.length) {
       console.error(`FAIL: 快照自洽性：${cmp.staleText.length} 件条目的 text 与其 sha256 不符（手改快照）`);
@@ -424,7 +633,8 @@ if (isEntry) {
       console.error(`RESULT: artifacts=${artifacts.size} changed=${cmp.changed.length} added=${cmp.added.length} removed=${cmp.removed.length} base-* fingerprint=${fp.sha256}`);
       process.exit(1);
     }
-    console.log(`OK: 5 技能 HTML 快照 == 实际（${artifacts.size} 件产物，base-* 指纹 ${fp.sha256}，base-* 文件 ${fp.files} 件）`);
+    console.log(`OK: 5 技能 HTML 快照 == 实际（${artifacts.size} 件产物，中文列账本 ${SNAP_BASE}，base-* 指纹 ${fp.sha256}，base-* 文件 ${fp.files} 件）`);
+    console.log(`COLUMN en  recorded=${enCount} unrecorded=0（未录入口为 0 即英文列已追上中文列）`);
     console.log(`RESULT: artifacts=${artifacts.size} changed=0 added=0 removed=0 base-* fingerprint=${fp.sha256}`);
     process.exit(0);
   } catch (e) {

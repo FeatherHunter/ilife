@@ -40,7 +40,7 @@
 | `src/write/template-flow.ts` | — | 343 | **已落回线内、不再触发第四步**（#1117：回执支改走票据纸，块位拼装搬进 `src/write/receiptPaper.ts`，本件只留采集页，365→338）。历史挂号读数与超因：流程确认族六场景共用的块位序列模板——1059 落地回执眉标加可复写位（spec 一行＋回执调用改两行，共 +2 LF，349→351，仅过线 1 行）。拆法＝按族切分（借贷流转与退款到账各一件）或把 `FlowValues`／`FlowCtx` 类型另立姊妹件。挂号值 `—`＝1059 建件即挂号，首次读数就是「当场实测」列；#1117 起本件已在线内，拆法留作后续若再超线时的首选。 |
 | `src/write/template-installment.ts` | — | 305 | **已落回线内、不再触发第四步**（#1117：回执支改走票据纸，块位拼装搬进 `src/write/receiptPaper.ts`，本件只留采集页，362→300）。历史超因：分期确认族单场景共用的块位序列模板——采集页的三格分摊回显、分摊预览表、阻断条与两张复制区同处一件。若再超线，拆法＝把分摊那三格与预览的取值加工另立姊妹件，或按「采集／回执」两段落切分。 |
 | `src/shared/docPage.ts` | — | 290 | **已落回线内、不再触发第四步**（#1124 第一步：两段票据 CSS 常量 `TICKET_CSS`／`TICKET_FURNITURE_CSS` 逐字节上移 `packages/base-render/src/components/style/ticket-family.ts`，369→242；13 页真跑 sha256 前后逐页相同）。历史超因：本件是**票据纸家具的唯一住所**——文档壳装配（`assembleDocPage`／`assembleSheetPage`）＋ 票据纸 CSS 段（含店头／段落／主数字／账目行／明细卡／对账卡／复制区家具）＋ 六个纯函数（`sheetHead`／`ticketRule`／`ticketSection`／`ticketSummary`／`ticketActions`／`ticketPrimaryButton`）——#1080 把开始使用域的页内家具从 `src/setup/pageParts.ts` 上浮到这里（+45 LF 过线）。历史拆法（留作再超线时的首选）：样式段另立姊妹件，本件只留装配函数与薄转出；#1124 第一步已按这条拆掉两段常量。 |
-| `src/cli/cmd_read.ts` | 558 | 276 | 挂号值 558＝首次挂号当刻的读数，历史事实、不回改；当场实测 276 已落回线内、不再触发第四步（t406 挂号时的分派＋argv＋envelope＋HELP 装配仍在，但历次搬迁已把各域分派搬进能力目录）。#905 那次 +29 行的「非 HELP 命令缺省落支」在 #1091 搬进 `src/delivery/landing.ts`（棘轮上限同窗下调 280→276），外壳只认各域的门与交付能力的门。 |
+| `src/cli/cmd_read.ts` | 558 | 270 | 挂号值 558＝首次挂号当刻的读数，历史事实、不回改；当场实测 276 已落回线内、不再触发第四步（t406 挂号时的分派＋argv＋envelope＋HELP 装配仍在，但历次搬迁已把各域分派搬进能力目录）。#905 那次 +29 行的「非 HELP 命令缺省落支」在 #1091 搬进 `src/delivery/landing.ts`（棘轮上限同窗下调 280→276），外壳只认各域的门与交付能力的门。 |
 <!-- warning-line-ledger:end -->
 
 ## 本包现状（机器对账，不再手抄行数）

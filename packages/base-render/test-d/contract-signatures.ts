@@ -241,7 +241,10 @@ type _C14 = Expect<Equal<ActionBarInput, { readonly buttons?: readonly import('.
 type _C14b = Expect<Equal<CopyButtonInput, { readonly actionId: string; readonly label?: string; readonly text?: string; readonly format?: CopyFormat; readonly formats?: CopyFormatTexts }>>;
 type _C14c = Expect<Equal<Required<CopyButtonInput>['actionId'], string>>;
 type _C15 = Expect<Equal<RenderActionBar, (input: ActionBarInput) => string>>;
-type _C16 = Expect<Equal<StatusBadgeInput, { readonly status: StatusKind; readonly text?: string }>>;
+// _C16 原式锁的是「status ＋ 可选 text」两格。**#1202 有意追加第三格**：`language?`（BCP 47，可选）——
+// 这是 D4「只追加」那一类（既有调用方一字不改、不给 language 时产物逐字节不变），故按新形状重锁；
+// 原式与 _C16b 的差别**只有多一格可选位**，没有删改任何既有位。
+type _C16 = Expect<Equal<StatusBadgeInput, { readonly status: StatusKind; readonly text?: string; readonly language?: string }>>;
 type _C17 = Expect<Equal<RenderStatusBadge, (input: StatusBadgeInput) => string>>;
 type _C18 = Expect<Equal<EmptyStateInput, { readonly icon?: string; readonly text: string; readonly hint?: string; readonly actionHtml?: string }>>;
 type _C19 = Expect<Equal<RenderEmptyState, (input: EmptyStateInput) => string>>;
@@ -348,7 +351,7 @@ type _H07 = Expect<Equal<Mod['SCENE_TYPE_FIELD'], 'types'>>;
 type _H08 = Expect<Equal<Scene['types'], readonly (string | SceneTypeBadge)[] | undefined>>;
 type _H09 = Expect<Equal<'type' extends keyof Scene ? true : false, false>>;
 type _H10 = Expect<Equal<keyof SceneData, 'skill_name' | 'title' | 'subtitle' | 'meta_blocks' | 'groups' | 'init_banner' | 'contact' | 'version' | 'recommendations'>>;
-type _H11 = Expect<Equal<HelpShellInput, { readonly sceneData: SceneData; readonly assets: TemplateAssets; readonly strict?: boolean; readonly template?: string }>>;
+type _H11 = Expect<Equal<HelpShellInput, { readonly sceneData: SceneData; readonly assets: TemplateAssets; readonly strict?: boolean; readonly language?: string; readonly template?: string }>>;
 type _H12 = Expect<Equal<RenderHelpShell, (input: HelpShellInput) => FillTemplateOutput>>;
 /* #78 落地（契约 §3.5 施工面 5 条 pending）：3 条 runtime 出口**必须存在**（原 `Absent<>` 按契约
  * 「实现后必须翻转清单」翻转为 `Present<>`），且出口类型与冻结签名逐字相等（签名值零改动）；

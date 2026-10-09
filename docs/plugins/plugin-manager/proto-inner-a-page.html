@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang='zh-CN'><head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width,initial-scale=1'>
+<title>A 书页式（4 场景 + 4 待定）</title>
+<style>
+body{font-family:system-ui,'Microsoft YaHei',sans-serif;background:#16130f;margin:0;padding:28px;color:#222}
+.scroll{position:relative;padding:1.125em;max-width:720px;margin:0 auto}
+.frame{position:absolute;inset:0;border-radius:1em;background:linear-gradient(180deg,#c63d2a,#a32216);border:3px double #f5d97a;box-shadow:inset 0 2px 0 #ffffff33,inset 0 -3px 6px #0000004d,0 0 0 5px #2a140c,0 0 0 6px #c9a22755,0 18px 40px #000000aa;filter:url(#roughFrame)}
+.frameweave{position:absolute;inset:0;border-radius:1em;pointer-events:none;opacity:.35;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.5' numOctaves='3'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.2 0 0 0 0 0.08 0 0 0 0 0.05 0 0 0 0.25 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23f)'/%3E%3C/svg%3E")}
+.paper{position:relative;border-radius:.25em;background:#ece0c2;background-image:radial-gradient(ellipse at 20% 0%,#fff8e2aa,transparent 55%),radial-gradient(ellipse at 85% 100%,#b89b5e55,transparent 50%),radial-gradient(circle at 88% 12%,#8a6a3526,transparent 30%),radial-gradient(circle at 8% 78%,#8a6a351e,transparent 26%);box-shadow:0 1px 3px #3d241052,0 0 0 1px #e6d9bd,inset 0 0 110px #b89b5e55,inset 0 0 0 3px #3a2413,inset 0 1px 0 #fffefb;padding:20px 22px;margin:0 16px 12px 0}
+.paperfiber{position:absolute;inset:0;border-radius:.25em;pointer-events:none;opacity:.8;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.45 0 0 0 0 0.36 0 0 0 0 0.22 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23p)'/%3E%3C/svg%3E")}
+.book{display:flex;position:relative;perspective:1400px;min-height:560px}
+.page{flex:1;display:flex;flex-direction:column;min-height:0;overflow-y:auto}
+.page.L{padding-right:20px}
+.page.R{padding-left:20px;transform-origin:left center;position:relative}
+.curlL{position:absolute;top:0;bottom:0;right:-4px;width:44px;background:linear-gradient(to left,#3d2c1422,transparent);pointer-events:none}
+.curlR{position:absolute;top:0;bottom:0;left:-4px;width:44px;background:linear-gradient(to right,#3d2c1422,transparent);pointer-events:none}
+.spine{width:26px;flex:none;background:radial-gradient(ellipse at 50% 50%,#14100b 24%,#3d322626 58%,transparent 80%)}
+.spine:after{content:'';display:block;width:2px;height:100%;margin:0 auto;background:repeating-linear-gradient(to bottom,#c9b98f99 0 5px,transparent 5px 10px)}
+.book:before{content:'';position:absolute;top:0;bottom:0;left:50%;width:130px;transform:translateX(-50%);background:linear-gradient(90deg,transparent,#2a201522 62%,#14100b44 50%,#2a201522 38%,transparent);pointer-events:none;z-index:5}
+.leaf{position:absolute;top:0;bottom:0;width:50%;z-index:10;pointer-events:none;transform-style:preserve-3d}
+.leaf.R{right:0;transform-origin:left center}
+.leaf.L{left:0;transform-origin:right center}
+.leaf .face{position:absolute;inset:0;backface-visibility:hidden;overflow:hidden;background:#ece0c2;padding:20px 22px}
+.leaf .back{transform:rotateY(180deg)}
+.leaf.toL{animation:toLeft .62s ease-in-out}
+.leaf.toR{animation:toRight .62s ease-in-out}
+@keyframes toLeft{0%{transform:rotateY(0);filter:brightness(1)}45%{transform:rotateY(-88deg);filter:brightness(.7)}55%{transform:rotateY(-88deg);filter:brightness(.7)}100%{transform:rotateY(-180deg);filter:brightness(1)}}
+@keyframes toRight{0%{transform:rotateY(0);filter:brightness(1)}45%{transform:rotateY(88deg);filter:brightness(.7)}55%{transform:rotateY(88deg);filter:brightness(.7)}100%{transform:rotateY(180deg);filter:brightness(1)}}
+@keyframes bookOpen{from{opacity:0;transform:perspective(1200px) rotateY(-24deg) scale(.97)}to{opacity:1;transform:none}}
+.bookOpen{animation:bookOpen .5s ease-out}
+@media (prefers-reduced-motion:reduce){.bookOpen,.leaf.toL,.leaf.toR{animation:none}}
+.foreR{position:absolute;top:1.125em;bottom:calc(1.125em + 12px);right:1.125em;width:12px;background:repeating-linear-gradient(to bottom,transparent 0 2px,#3a2c1426 2px 3px),linear-gradient(to right,#6e5f42,#f2ead2 35%,#d9c8a2 72%,#9a865e);border-left:2px solid #2a1c10;border-radius:0 3px 3px 0;box-shadow:-2px 0 4px #00000066;z-index:1}
+.foreB{position:absolute;left:1.125em;right:calc(1.125em + 16px);bottom:1.125em;height:9px;background:repeating-linear-gradient(to right,transparent 0 2px,#3a2c1426 2px 3px),linear-gradient(to bottom,#cfbd92,#f2ead2 40%,#d9c8a2 75%,#8a795a);border-top:2px solid #2a1c10;border-radius:0 0 3px 3px;z-index:1}
+:root{--book-w:1080px;--paper-w:min(var(--book-w),calc(100vw - 40px - 2.25em))}
+.note{max-width:1080px;margin:0 auto 14px;color:#cfc4ad;font-size:13px;line-height:1.8}
+.note b{color:#e8c96a;font-weight:600;letter-spacing:.08em}
+.note.foot{margin:20px auto 0;color:#8f8672;font-size:12px}
+body{padding:20px;background:var(--stage,#15130f)}
+body.alpha{background:#f4f4f4;background-image:linear-gradient(45deg,#e2e2e2 25%,transparent 25%,transparent 75%,#e2e2e2 75%),linear-gradient(45deg,#e2e2e2 25%,transparent 25%,transparent 75%,#e2e2e2 75%);background-size:24px 24px;background-position:0 0,12px 12px}
+.scroll{max-width:var(--paper-w)}
+.book{min-height:min(calc(var(--book-w)*.76),72vw)}
+.book{perspective:6000px}
+.page.L{position:relative;padding-right:0}
+.page.R{padding-left:0}
+.page{overflow:visible}
+.book:before{display:none}
+.curlL,.curlR{display:none}
+.spine{background:none}
+.spine:after{width:1px;background:linear-gradient(to bottom,#8a7a5500 0%,#8a7a5599 12%,#8a7a5599 88%,#8a7a5500 100%)}
+.foreR,.foreB{display:none}
+.paper{margin:0;padding:0;box-shadow:none}
+.paper{background-image:none}
+.leaf .face{padding:0}
+.leaf{will-change:transform;backface-visibility:hidden}
+.leaf .face{overflow:visible;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.leaf .face:after{content:'';position:absolute;inset:0;background:#2a1c0c;opacity:0;pointer-events:none}
+.leaf.toL .face:after,.leaf.toR .face:after{animation:shadeTurn .66s ease-in-out both}
+@keyframes shadeTurn{0%{opacity:0}50%{opacity:.38}100%{opacity:0}}
+.leaf.toL{animation:toLeft .66s cubic-bezier(.45,.05,.55,.95) both}
+.leaf.toR{animation:toRight .66s cubic-bezier(.45,.05,.55,.95) both}
+@keyframes toLeft{0%{transform:rotateY(0deg)}100%{transform:rotateY(-180deg)}}
+@keyframes toRight{0%{transform:rotateY(0deg)}100%{transform:rotateY(180deg)}}
+.tablayer{position:absolute;left:0;right:0;top:0;height:0;z-index:8;pointer-events:none}
+.tablayer .tab{bottom:0}
+.leaf .face .tab{bottom:100%}
+.tab{position:absolute;width:calc(var(--paper-w)*.059);height:calc(var(--paper-w)*.054);padding-top:calc(var(--paper-w)*.008);box-sizing:border-box;
+  display:flex;align-items:flex-start;justify-content:center;
+  font-family:Georgia,'Times New Roman',serif;font-size:calc(var(--paper-w)*.019);line-height:1;color:#4a3a22;
+  background:linear-gradient(#f2e8cc,#d3c098);border:1px solid #8a7a55;border-bottom:none;
+  border-radius:calc(var(--paper-w)*.009) calc(var(--paper-w)*.009) 0 0;box-shadow:0 -2px 5px #00000055,inset 0 1px 0 #fffdf3;
+  transition:background .2s ease,color .2s ease}
+.tab.on{background:linear-gradient(#f8e7ae,#d9ab3c);color:#3a2607;
+  box-shadow:0 -2px 6px #00000088,inset 0 1px 0 #fffbe8}
+.deck{position:absolute;left:50%;bottom:.34em;transform:translateX(-50%);z-index:12;display:flex;align-items:center;gap:max(8px,calc(var(--paper-w)*.009))}
+.brass{display:flex;align-items:center;gap:calc(var(--paper-w)*.005);cursor:pointer;border:1px solid #2a140c;border-radius:calc(var(--paper-w)*.0065);
+  padding:max(6px,calc(var(--paper-w)*.0065)) max(13px,calc(var(--paper-w)*.015));white-space:nowrap;flex:none;
+  font-family:inherit;font-size:max(12px,calc(var(--paper-w)*.0125));letter-spacing:.12em;color:#3a2607;text-shadow:0 1px 0 #ffeaa8;user-select:none;
+  background:linear-gradient(#f8e7ae,#dcb047 26%,#b1831f 60%,#8a6a15);
+  box-shadow:inset 0 1px 0 #fff8dc,inset 0 -2px 4px #00000066,0 3px 0 #6b5210,0 8px 16px #000000aa;
+  transition:transform .12s ease,filter .12s ease}
+.brass:hover{filter:brightness(1.07)}
+.brass:active{transform:translateY(2px);box-shadow:inset 0 2px 5px #00000055,0 1px 0 #6b5210,0 3px 8px #000000aa}
+.brass[disabled]{opacity:.55;cursor:default;filter:saturate(.45)}
+.brass[disabled]:active{transform:none;box-shadow:inset 0 1px 0 #fff8dc,inset 0 -2px 4px #00000066,0 3px 0 #6b5210,0 8px 16px #000000aa}
+body.bare{padding:10px}
+body.bare .note{display:none}
+.page{font-size:calc(var(--paper-w)*.0165)}
+.pg{padding:7% 9%;display:flex;flex-direction:column;height:100%;box-sizing:border-box}
+.pg-no{font-family:Georgia,serif;font-size:1.6em;color:#b08a2e;letter-spacing:.1em}
+.pg h2{font-family:Georgia,"Songti SC",serif;font-size:1.5em;line-height:1.5;margin:.2em 0 .1em;color:#2e2418;font-weight:600}
+.pg .kp{font-size:.82em;color:#8a7550;letter-spacing:.16em;margin-bottom:1.1em}
+.pg .rl{height:1px;background:linear-gradient(to right,#b08a2e99,transparent);margin:.2em 0 1.2em}
+.pg p{font-size:1em;line-height:2.05;margin:0 0 .9em;color:#33291c;text-align:justify}
+.pg .errm{margin-top:auto;border-top:1px solid #c9b98f;padding-top:.8em;font-size:.82em;line-height:1.9;color:#6b5f45}
+.pg .errm b{color:#8e1f14;font-weight:600;letter-spacing:.1em}
+.pg .todo{margin:auto;text-align:center;color:#a89a7c;font-family:Georgia,serif;font-size:1.2em;letter-spacing:.4em}
+.pg .todo small{display:block;font-size:.6em;letter-spacing:.2em;margin-top:.8em;color:#b8ab90}
+</style>
+</head><body>
+<svg width='0' height='0' style='position:absolute'><filter id='roughSeal'><feTurbulence baseFrequency='0.9' numOctaves='2' result='n'/><feDisplacementMap in='SourceGraphic' in2='n' scale='1.4'/></filter><filter id='roughFrame' x='-6%' y='-6%' width='112%' height='112%'><feTurbulence baseFrequency='0.6' numOctaves='3' result='n'/><feDisplacementMap in='SourceGraphic' in2='n' scale='6.5'/></filter></svg>
+<div class='note'><b>A 书页式</b>　像一本老书的内页：场景号 ＋ 衬线标题 ＋ 一段金线，正文两端对齐、行距放开，页脚一条细线下面是「出错去哪」。信息最少，读起来最像书。</div>
+<div class='scroll' id='bk'>
+<div class='frame'></div><div class='frameweave'></div>
+<div class='paper'><div class='paperfiber'></div>
+  <div class='book' id='sp'>
+    <div class='tablayer' id='tabs'></div>
+    <div class='page L' id='pl'></div>
+    <div class='spine'></div>
+    <div class='page R' id='pr'></div>
+  </div>
+</div>
+<div class='deck'>
+  <button class='brass' id='prev' type='button'>‹ 上一页</button>
+  <button class='brass' id='next' type='button'>下一页 ›</button>
+</div>
+</div>
+<div class='note foot'>原型：外框与排版计划都是定稿那一套（红＋金外框、manual-plan.ts 算页与书签）；这一版只试页面里的排法。</div>
+<script type="module">
+// 手册书排版（票 #1193 → 施工 #1195）：场景表 → 页／跨页／纸／书签，一次算清。
+// 纯计算：零 DOM、零宿主知识。界面只读这里算出来的结果，不自己再算一遍。
+// 几何口径见 docs/plugins/plugin-manager/书籍外壳-定稿.md（用户 2026-10-08 认可的定稿）。
+//
+// 规则：一个场景＝一页 → 页数＝场景数 → 跨页＝⌈页数/2⌉ → 纸＝⌊页数/2⌋+1。
+// 一张纸一个书签：正面印偶数页、反面印奇数页，翻过去号码自动换成反面那一页；
+// 纸一多，书签与间距一起等比收窄，保证最外那枚不越出「中缝 → 纸边」这半边。
+// 书签几何。单位一律是「纸面宽度的百分比」，取自定稿件；要调形状改这一处。
+const TAB_WIDTH = 5.9;
+const TAB_HEIGHT = 5.4;
+const TAB_FONT = 1.9;
+const TAB_RADIUS = 0.9;
+const TAB_FIRST = 5.5; // 第一枚离中缝多远
+const TAB_PITCH = 7.1; // 相邻两枚的间距
+const HALF = 50; // 中缝到纸边的跨度
+const EDGE = 1; // 留一点边，别贴到红框
+const MIN_WIDTH = 3; // 再窄就印不下号了
+/** 纸一多就等比收窄：缩小倍数取「排得下」与「不放大」里小的那个。 */
+function tabScale(sheetCount) {
+    const span = TAB_FIRST + TAB_PITCH * (sheetCount - 1) + TAB_WIDTH;
+    return Math.min(1, (HALF - EDGE) / span);
+}
+/**
+ * 把场景表排成一本书在某一跨页上的样子。
+ * @param scenes 场景清单，顺序就是页码顺序
+ * @param spread 要看第几个跨页（从 0 起）；越界会被夹到第一／最后一跨页
+ */
+export function planManual(scenes, spread) {
+    const pageCount = scenes.length;
+    const spreadCount = Math.max(1, Math.ceil(pageCount / 2));
+    const at = Math.min(Math.max(spread, 0), spreadCount - 1);
+    const pages = [];
+    if (pageCount > 0) {
+        for (const page of [2 * at + 1, 2 * at + 2]) {
+            if (page > pageCount)
+                continue;
+            const scene = scenes[page - 1];
+            pages.push({ page, key: scene.key, title: scene.title, side: page % 2 === 1 ? 'left' : 'right', state: scene.state });
+        }
+    }
+    const sheetCount = pageCount === 0 ? 0 : Math.floor(pageCount / 2) + 1;
+    const scale = tabScale(sheetCount === 0 ? 1 : sheetCount);
+    const sheets = [];
+    for (let sheet = 0; sheet < sheetCount; sheet++) {
+        const front = sheet === 0 ? 1 : 2 * sheet;
+        const backRaw = sheet === 0 ? null : 2 * sheet + 1;
+        const back = backRaw !== null && backRaw <= pageCount ? backRaw : null;
+        const onLeft = sheet === 0 || sheet <= at;
+        sheets.push({
+            sheet,
+            front,
+            back,
+            facing: sheet === 0 ? 1 : onLeft ? (back ?? front) : front,
+            side: onLeft ? 'left' : 'right',
+            tabOffset: (TAB_FIRST + TAB_PITCH * sheet) * scale,
+        });
+    }
+    return {
+        spread: at,
+        spreadCount,
+        pageCount,
+        pages,
+        sheets,
+        tab: {
+            width: TAB_WIDTH * scale,
+            height: TAB_HEIGHT * scale,
+            font: TAB_FONT * scale,
+            radius: TAB_RADIUS * scale,
+            overflow: TAB_WIDTH * scale < MIN_WIDTH,
+        },
+    };
+}
+//# sourceMappingURL=manual-plan.js.map
+var SCENES = [{"key":"basic","title":"基本使用：对 AI 说 xxx help","state":"written","kicker":"给 AI 一句话，换回一份手册","steps":["跟 AI 说一句「〈技能名〉 HELP」，比如「饼干记账 HELP」。","拿到 HELP HTML 后打开，找到对得上的场景，把 prompt 复制出来发给 AI，等它执行。"],"err":"没收到文件，看回执里失败那一句；场景对不上，换个关键词再查一次 HELP。"},{"key":"datadir","title":"数据目录：自己备份，不加密","state":"written","kicker":"数据放哪儿，你自己定","steps":["到配置面板找到「数据目录」，填好位置，这个技能的 db 文件就落在这里。","备份自己做；我们不加密——密码一旦忘了，一手资料就永远找不回来。"],"err":"面板告警只看 message 那一句，按它说的改目录或改权限。"},{"key":"im","title":"增强体验：装 IM 插件绑飞书","state":"written","kicker":"让结果直接飞到你手机里","steps":["装上 dsh-im 与 dsh-im-companion，绑好 bot，推荐飞书机器人。","配好后 HELP 与结果 HTML 直接在飞书 App 里看。"],"err":"收不到消息，先看绑定还在不在，再看插件装没装上。"},{"key":"imflow","title":"增强流程：IM 全流程 8 步","state":"written","kicker":"在飞书里发一句话，结果也回到飞书","steps":["飞书里发「xxx help」；dsh 生成 HELP HTML 并经飞书发回。","打开找到场景，把 prompt 复制出来发给 AI。","AI 执行完，结果 HTML 再经飞书发回来。"],"err":"卡在哪一步，就查那一步的回执；HELP 的事回场景 1，绑定的事回场景 3。"},{"key":"p5","title":"场景 5（待定）","state":"pending","kicker":"","steps":[],"err":""},{"key":"p6","title":"场景 6（待定）","state":"pending","kicker":"","steps":[],"err":""},{"key":"p7","title":"场景 7（待定）","state":"pending","kicker":"","steps":[],"err":""},{"key":"p8","title":"场景 8（待定）","state":"pending","kicker":"","steps":[],"err":""}];
+
+var sp = 0, busy = false;
+var layer = document.getElementById('tabs');
+var prev = document.getElementById('prev'), next = document.getElementById('next');
+
+function applyTabGeometry(plan) {
+  var r = document.documentElement.style;
+  r.setProperty('--tab-w', plan.tab.width + '%');
+  r.setProperty('--tab-h', 'calc(var(--paper-w) * ' + (plan.tab.height / 100) + ')');
+  r.setProperty('--tab-font', 'calc(var(--paper-w) * ' + (plan.tab.font / 100) + ')');
+  r.setProperty('--tab-r', 'calc(var(--paper-w) * ' + (plan.tab.radius / 100) + ')');
+}
+function renderTabs(plan) {
+  var html = "";
+  for (var i = 0; i < plan.sheets.length; i++) {
+    var s = plan.sheets[i];
+    var on = (s.facing === plan.spread * 2 + 1 || s.facing === plan.spread * 2 + 2) ? " on" : "";
+    var side = s.side === "left" ? "right" : "left";
+    html += "<span class='tab" + on + "' id='sh" + s.sheet + "' style='" + side + ":calc(50% + " + s.tabOffset + "%)'>" + s.facing + "</span>";
+  }
+  layer.innerHTML = html;
+}
+function sceneOf(page) {
+  for (var i = 0; i < SCENES.length; i++) if (SCENES[i].key === page.key) return SCENES[i];
+  return null;
+}
+function esc(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+function pageBody(page) {
+  if (location.search.indexOf("debug") >= 0) return "<div class='dbg'>第 " + page.page + " 页 · " + page.side + " · " + page.key + "</div>";
+  var s = sceneOf(page);
+  if (!s) return "";
+  if (s.state === 'pending') return "<div class='pg'><div class='todo'>待定<small>这个场景还没写</small></div></div>";
+  var p = "";
+  for (var i = 0; i < s.steps.length; i++) p += "<p>" + esc(s.steps[i]) + "</p>";
+  return "<div class='pg'><div class='pg-no'>" + page.page + "</div><h2>" + esc(s.title) + "</h2><div class='kp'>" + esc(s.kicker) + "</div><div class='rl'></div>" + p + "<div class='errm'><b>出错去哪</b>　" + esc(s.err) + "</div></div>";
+}
+function renderPages(plan) {
+  var left = null, right = null;
+  for (var i = 0; i < plan.pages.length; i++) {
+    if (plan.pages[i].side === "left") left = plan.pages[i]; else right = plan.pages[i];
+  }
+  document.getElementById('pl').innerHTML = left ? pageBody(left) : '';
+  document.getElementById('pr').innerHTML = right ? pageBody(right) : '';
+}
+function render() {
+  var plan = planManual(SCENES, sp);
+  applyTabGeometry(plan); renderTabs(plan); renderPages(plan);
+  prev.disabled = (plan.spread === 0);
+  next.disabled = (plan.spread === plan.spreadCount - 1);
+  if (location.search.indexOf('debug') >= 0) {
+    document.querySelector('.note').textContent = '页数 ' + plan.pageCount + ' · 跨页 ' + plan.spreadCount + ' · 纸 ' + plan.sheets.length + ' · 书签宽 ' + plan.tab.width.toFixed(2) + '%';
+  }
+}
+function faceTab(pg, side, off) {
+  return "<span class='tab on' style='" + side + ":" + (off * 2) + "%'>" + pg + "</span>";
+}
+function pageByNumber(plan, n) {
+  if (n === null) return null;
+  for (var i = 0; i < plan.pages.length; i++) if (plan.pages[i].page === n) return plan.pages[i];
+  return null;
+}
+function turnLeaf(dir) {
+  if (busy) return;
+  var plan = planManual(SCENES, sp);
+  var k = dir > 0 ? sp + 1 : sp;
+  var sheet = plan.sheets[k];
+  if (!sheet) return;
+  var facing = sheet.facing;
+  var other = facing === sheet.front ? sheet.back : sheet.front;
+  if (facing === null || other === null) return;
+  busy = true;
+  var book = document.getElementById('sp');
+  var leaf = document.createElement('div');
+  leaf.className = 'leaf ' + (dir > 0 ? 'R' : 'L');
+  var target = planManual(SCENES, sp + dir);
+  var frontPage = pageByNumber(plan, facing);
+  var backPage = pageByNumber(target, other);
+  leaf.innerHTML = "<div class='face front'>" + (frontPage ? pageBody(frontPage) : '') + faceTab(facing, dir > 0 ? 'left' : 'right', sheet.tabOffset) + "</div>" +
+                   "<div class='face back'>" + (backPage ? pageBody(backPage) : '') + faceTab(other, dir > 0 ? 'right' : 'left', sheet.tabOffset) + "</div>";
+  var hidden = document.getElementById("sh" + k);
+  if (hidden) hidden.style.visibility = "hidden";
+  book.appendChild(leaf);
+  void leaf.offsetWidth;
+  leaf.classList.add(dir > 0 ? 'toL' : 'toR');
+  leaf.addEventListener('animationend', function (e) {
+    if (e.target !== leaf) return;
+    sp += dir; render(); leaf.remove(); busy = false;
+  });
+}
+prev.addEventListener('click', function () { if (sp > 0) turnLeaf(-1); });
+next.addEventListener('click', function () { if (sp < planManual(SCENES, sp).spreadCount - 1) turnLeaf(1); });
+render();
+if (location.search.indexOf('bare') >= 0) document.body.classList.add('bare');
+if (location.search.indexOf('alpha') >= 0) document.body.classList.add('alpha');
+if (location.search.indexOf('turn') >= 0) setTimeout(function () { document.getElementById('next').click(); }, 120);
+</script>
+</body></html>

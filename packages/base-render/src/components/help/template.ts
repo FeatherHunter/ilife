@@ -7,6 +7,7 @@
  */
 
 import { attr, renderAboutPage, renderGroupPage, renderHero, renderInitBanner, renderMetaBlocks, renderTabBar, text } from './render.js';
+import { documentLang } from '../../contract.js';
 import { HELP_CLASS_ROOT, LF, cls } from './shared.js';
 import { HELP_SHELL_ID, SceneData } from '../../spec/help.js';
 import { ASSET_WRAPPERS, CONTAINER_CHECK_RULE, TEMPLATE_MARKERS } from '../../spec/template.js';
@@ -32,8 +33,9 @@ function documentTitle(data: SceneData): string {
  *  完整文档而非片段：`<meta charset="utf-8">` 是含中文的 UTF-8 文件经 `file://` 打开不乱码的前提
  *  （Windows 尤甚），速查台是独立页面（仓内各技能包的 `templates` 目录与旧
  *  `help_template.html` 同为完整文档）。两个共享资产标记仍是**裸标记**（不得预包裹，不变量②），
- *  包裹由 `fillTemplate` 按 `ASSET_WRAPPERS` 完成。 */
-export function buildShellTemplate(data: SceneData): string {
+ *  包裹由 `fillTemplate` 按 `ASSET_WRAPPERS` 完成。 *
+ *  @param language 文本语言（BCP 47；缺席／空串＝中文，`lang` 保持 `zh-CN`，产物与改前逐字节相同）。 */
+export function buildShellTemplate(data: SceneData, language?: string): string {
   const groups = data.groups;
   const sceneCount = groups.reduce(
     (total, group) => total + group.subgroups.reduce((sub, item) => sub + item.scenes.length, 0),
@@ -43,7 +45,7 @@ export function buildShellTemplate(data: SceneData): string {
 
   const parts: string[] = [];
   parts.push('<!DOCTYPE html>');
-  parts.push('<html lang="zh-CN">');
+  parts.push('<html lang="' + documentLang(language) + '">');
   parts.push('<head>');
   parts.push('<meta charset="utf-8">');
   parts.push('<meta name="viewport" content="width=device-width, initial-scale=1">');
