@@ -34,6 +34,7 @@ import { CalorieRenderError } from '../render/errors.js';
 import { USAGE, bodySceneFor, parseReadArgs, preflight, toast } from './readArgs.js';
 // #676 · 设置页的三个配置 key 由本文件在分派层之前拦下（见下行 main 里那一处拦截与 cli/config.ts 的件头）。
 import { isConfigKey, runConfigKey } from './config.js';
+import { resolveLanguageOrFail } from './language.js';
 // #706 · 配置体检：设置页专用的一条只读命令，同走「进分派层之前拦下」这条口（判据住 src/health.ts）。
 import { isHealthCheckKey, runHealthCheckKey } from './health.js';
 import { buildDeliveredEnvelope, describeDeliveryTarget, failWithBodyReceipt, failWithReceipt } from './delivery.js';
@@ -48,6 +49,7 @@ import { dispatchWrite } from './write.js';
 // #294 · 命令索引：命中即走能力目录里的实现；未命中即未知键（#320 起老 switch 已删）。
 import { REGISTRY } from './registry.js';
 import type { ViewOut } from '../shared/commandSpec.js';
+import { isLanguageArg } from 'base-link-core';
 import type { EnvelopeShape } from 'base-link-core';
 
 /** #294 · 读命令产物的形状（含交付种类）唯一定义地已上移 `shared/commandSpec.ts`：
@@ -88,6 +90,11 @@ async function main(): Promise<void> {
     process.stdout.write(runConfigKey(o.key as string, params) + '\n');
     return;
   }
+  // #1198 · 语言选择链（ADR-0004 §4）：argv 覆盖 ＞ 配置文件 language.* ＞ 调用方 ＞ zh。未识别的值＝exit 1（报文列可用语言）。
+  // 本轮只接线与校验：不设语言时行为与产物逐字节不变（渲染消费方随词条层 #1200 落地后接）。
+  // 位置：**配置 key 拦下之后**——配置面那几条命令（含首次落配置文件）不该被语言解析拦在前头。
+  const language = resolveLanguageOrFail(process.argv.slice(2));
+  void language;
   // #706 · 配置体检（`calorie.config.check`）：同样是设置页专用的只读命令，同样在预检之前拦下——
   // 它要报的正是「库在哪、通不通」，不能先要求库目录已配。只读：不建目录、不写文件、不落默认配置。
   if (isHealthCheckKey(o.key as string)) {

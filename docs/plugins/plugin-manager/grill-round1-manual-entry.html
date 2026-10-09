@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>指导手册入口：第一轮问题</title>
+<style>
+body{font-family:system-ui,"Microsoft YaHei",sans-serif;max-width:900px;margin:32px auto;padding:0 20px;color:#222;line-height:1.7}
+h1{font-size:22px}h2{font-size:18px;margin-top:32px;border-bottom:2px solid #42506b;padding-bottom:6px}
+h3{font-size:15px;margin:16px 0 6px;color:#42506b}
+table{border-collapse:collapse;width:100%;font-size:14px;margin:8px 0}
+th,td{border:1px solid #d8cfae;padding:8px 10px;text-align:left;vertical-align:top}
+th{background:#fdfaf2}.rec{background:#f2f7f2;border-left:4px solid #2e7d32;padding:8px 12px;margin:8px 0;font-size:14px}
+.warn{background:#fff8e6;border-left:4px solid #b58900;padding:8px 12px;margin:8px 0;font-size:14px}
+.first{background:#eef3ff;border-left:4px solid #42506b;padding:8px 12px;margin:8px 0;font-size:14px}
+.small{font-size:13px;color:#666}.q{background:#fdfaf2;border:1px solid #e6d9bd;padding:12px 14px;margin:10px 0}
+</style></head><body>
+<h1>指导手册入口：第一轮问题</h1>
+<p class="small">范围：在爱生活设置面板增加一个入口，打开指导手册，说明插件、技能、帮助页面的使用方法。入口与手册采用卷轴与 HELP 印章风格，排版支持单页完整显示，是否分页与翻页动效待定。本文列出 5 个待确认问题，每个给出背景、推荐答案、选项对比、对抗式审查结论、从基本目标推导的结论。</p>
+<h2>Q1 这次做到哪一步为止</h2>
+<div class="q"><b>问题：</b>你希望本轮交付的是 A 可施工规格加原型（只做决定不施工），B 直接在仓库中做出可用功能，还是 C 先出规格，原型比选风格后再定是否施工？</div>
+<h3>背景</h3><p>需求中入口风格未定，还需要原型比选。按常规做法，应先把决定做清楚，再施工，避免返工。</p>
+<h3>推荐答案</h3><div class="rec">选 A：先定规格加原型，不直接施工。</div>
+<h3>选项对比</h3>
+<table><tr><th>选项</th><th>优点</th><th>缺点</th></tr>
+<tr><td>A 规格加原型</td><td>决定做透，施工一次做对</td><td>本轮看不到最终成品</td></tr>
+<tr><td>B 直接做出功能</td><td>最快看到成品</td><td>风格未定，返工量大</td></tr>
+<tr><td>C 先规格再定</td><td>分步确认，风险小</td><td>多一轮等待，时间长</td></tr></table>
+<div class="warn"><b>对抗式审查：</b>若选 B，风格争论会拖入施工，七个包重复改动的代价最大。故仍选 A。</div>
+<div class="first"><b>从基本目标推导：</b>目标是“一次做对”。决定不清时施工只会增加修改量。故选 A。</div>
+<h2>Q2 入口放在哪里</h2>
+<div class="q"><b>问题：</b>入口放在 A 仅总管爱生活卡上，B 六家设置页每页各放一个，C 仅边栏功能页，还是 D 总管加边栏都要？</div>
+<h3>背景</h3><p>你说的是“插件面板”，最接近的是总管爱生活卡。多处放置意味着多处维护同一份手册入口。</p>
+<h3>推荐答案</h3><div class="rec">选 A：只在总管爱生活卡上放一个。</div>
+<h3>选项对比</h3>
+<table><tr><th>选项</th><th>优点</th><th>缺点</th></tr>
+<tr><td>A 仅总管</td><td>位置唯一，好找，好维护</td><td>在分页面时需回总管打开</td></tr>
+<tr><td>B 每页各一个</td><td>就近打开</td><td>六处重复，样式走散</td></tr>
+<tr><td>C 仅边栏</td><td>使用时顺手</td><td>未装边栏时没有入口</td></tr>
+<tr><td>D 总管加边栏</td><td>两处都方便</td><td>两处状态需一致，工作量翻倍</td></tr></table>
+<div class="warn"><b>对抗式审查：</b>假设以后手册分家，A 只需在总管页加分组，不用改六页。故仍选 A。</div>
+<div class="first"><b>从基本目标推导：</b>手册只有一份，入口也应只有一处权威位置。故选 A。</div>
+<h2>Q3 手册讲哪些内容、多深</h2>
+<div class="q"><b>问题：</b>A 七家都讲，只讲用法、细节链到各家帮助页面；B 只讲总管与打开方式，用一家做示范；C 七家全文搬进手册。</div>
+<h3>背景</h3><p>各家已有帮助页面。手册若重复全文，两份内容会不一致；若太薄，则不值得单独做一卷。</p>
+<h3>推荐答案</h3><div class="rec">选 A：七家都讲用法，细节用链接指向各家帮助页面。</div>
+<table><tr><th>选项</th><th>优点</th><th>缺点</th></tr>
+<tr><td>A 讲用法加链接</td><td>手册薄而全，不重复</td><td>需定链接规则</td></tr>
+<tr><td>B 只讲总管</td><td>最快完成</td><td>六家仍无指引</td></tr>
+<tr><td>C 全文搬入</td><td>一处看全</td><td>两份重复，更新必错位</td></tr></table>
+<div class="warn"><b>对抗式审查：</b>C 在第二次更新帮助页面时即失效，无人能同时改两处。故排除 C，选 A。</div>
+<div class="first"><b>从基本目标推导：</b>手册的职责是带路，不是替代帮助页面。故选 A。</div>
+<h2>Q4 单页显示还是分页</h2>
+<div class="q"><b>问题：</b>A 以单页完整显示为基础，翻页动效作为增强；B 必须分页，每页一屏，带舒展翻页动效；C 单页与分页各做一个原型，看后再定。</div>
+<h3>背景</h3><p>你同时提到“单页完整展示”与“下一页舒展翻过去”。两者对排版与动效的要求不同，需先定基础。</p>
+<h3>推荐答案</h3><div class="rec">选 C：各做一个原型，对比后再定。</div>
+<table><tr><th>选项</th><th>优点</th><th>缺点</th></tr>
+<tr><td>A 单页为基础</td><td>实现简单，阅读连贯</td><td>内容长时翻页动效无处放</td></tr>
+<tr><td>B 必须分页</td><td>像纸质手册，有仪式感</td><td>内容少时分页生硬，手机适配难</td></tr>
+<tr><td>C 各做原型再定</td><td>看到实物再选，不猜</td><td>多花一个原型时间</td></tr></table>
+<div class="warn"><b>对抗式审查：</b>若现在锁死 A 或 B，手机窄屏或内容增减都会推翻决定。原型代价最小。故选 C。</div>
+<div class="first"><b>从基本目标推导：</b>排版只有看到实物才能判断阅读是否顺畅。故选 C。</div>
+<h2>Q5 风格如何定</h2>
+<div class="q"><b>问题：</b>A 锁死为卷轴加 HELP 印章风格，不做其他；B 以该风格为起点，再做 2 到 3 个低保真原型比选；C 完全开放，不预设卷轴。</div>
+<h3>背景</h3><p>你目前希望是卷轴与印章风格，但也愿意看其他方案。现有卷轴是点章弹出的三段式，与整本手册的体量不同。</p>
+<h3>推荐答案</h3><div class="rec">选 B：以卷轴加印章为起点，再做少量原型比选。</div>
+<table><tr><th>选项</th><th>优点</th><th>缺点</th></tr>
+<tr><td>A 锁死</td><td>最快，与现有印章一致</td><td>可能错过更合适的形式</td></tr>
+<tr><td>B 起点加比选</td><td>有比较，不走极端</td><td>需评审时间</td></tr>
+<tr><td>C 完全开放</td><td>选择最多</td><td>无起点，发散难收</td></tr></table>
+<div class="warn"><b>对抗式审查：</b>A 若整卷套用现有三段式外框，大内容会显得笨重；C 若无起点，评审无标准。B 保留一致又留比较。故选 B。</div>
+<div class="first"><b>从基本目标推导：</b>入口与手册应与现有印章一致，但手册体量不同，需看实物验证。故选 B。</div>
+<h2>附：四个用词确认（各一句话）</h2>
+<table><tr><th>你的词</th><th>确认含义</th></tr>
+<tr><td>卷轴</td><td>指现有外框照抄印章材质、中间纯纸的弹出卷样式，还是泛指横向展开的纸筒？推荐按前者理解。</td></tr>
+<tr><td>HELP 章</td><td>指现有 help 角色旧版 2b 印那枚，还是泛指红色印泥质感？推荐按前者理解。</td></tr>
+<tr><td>插件面板</td><td>指总管爱生活卡，还是六家设置页统称？推荐按总管爱生活卡理解。</td></tr>
+<tr><td>帮助页面</td><td>指各技能生成的可打开帮助文件，还是设置页中的说明文字？推荐按前者理解。</td></tr></table>
+<p class="small">你回复 Q1-Q5 各选哪项、附表是否如此理解，我即按此写地图与任务清单。</p>
+</body></html>

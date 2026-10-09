@@ -23,6 +23,7 @@ import { buildSharedHelpersJs } from './controls.js';
 import { textEntryFloorCss } from './components/page-ui/index.js';
 import { PAGE_UI_CLASS, PAGE_UI_VIEWPORT } from './pageUi.js';
 import { buildStyleSheet, STYLE_PREFIX } from './style.js';
+import { documentLang } from './contract.js';
 import { fillTemplate } from './template.js';
 
 /** 文档版本声明（doctype）的两种写法：**本件是唯一书写位**，调用方只给名字、不给字面量。
@@ -50,6 +51,8 @@ export interface DocShellInput {
   readonly pageUi?: boolean;
   /** 文档版本声明的写法（缺省 `'lower'`，即 `<!doctype html>`）。 */
   readonly doctypeCase?: DocShellDoctypeCase;
+  /** 文本语言（BCP 47；空串／缺席＝中文，产物与改前逐字节相同；`en` 时文档 `lang` 为 `en`）。 */
+  readonly language?: string;
   /** **组件层随页挂载**：为真时把用到的那几件组件的样式段拼进共享样式槽、运行时拼进共享 helpers 槽。
    *
    *  当前挂的是就地可编辑值（`editableValue`：`editableValueCss()` ＋ `buildEditableValueJs()`）；
@@ -73,7 +76,7 @@ export interface DocShellInput {
  *  `pageUi` 只改两处、都在启用时才发生：viewport 串加 `viewport-fit=cover`
  *  （`env(safe-area-inset-*)` 在 iOS 上不写它恒取 0）＋版面根多一颗 `ilife-page-ui`。
  *  `charts` 只在启用时才多出 `<!--CHARTS-HELPERS-->` 那一行（位置与两侧现状件逐字一致）。 */
-function docTemplate(docTitle: string, charts: boolean, pageUi: boolean, doctypeCase: DocShellDoctypeCase, popoverFullText: boolean): string {
+function docTemplate(docTitle: string, charts: boolean, pageUi: boolean, doctypeCase: DocShellDoctypeCase, popoverFullText: boolean, lang: string): string {
   const viewport = pageUi ? PAGE_UI_VIEWPORT : 'width=device-width,initial-scale=1';
   const wrapClass = 'wrap ilife-page' + (pageUi ? ' ' + PAGE_UI_CLASS : '');
   const chartsSlot = charts ? '<!--CHARTS-HELPERS-->\n' : '';
@@ -83,7 +86,7 @@ function docTemplate(docTitle: string, charts: boolean, pageUi: boolean, doctype
      连就绪层一起压掉（a06 反过来冒出 1 处）。`<noscript>` 让两者**根本不在同一条竞争链上**：
      有脚本 ⇒ 这段不解析，降级层不存在；无脚本 ⇒ 主样式段里的就绪层也就不生效，全文摊开。 */
   const popoverSlot = popoverFullText ? '\n' + popoverNoScriptHtml() : '';
-  return DOCTYPE_HTML5[doctypeCase] + '\n<html lang="zh-CN">\n<head>\n<meta charset="utf-8">\n'
+  return DOCTYPE_HTML5[doctypeCase] + '\n<html lang="' + lang + '">\n<head>\n<meta charset="utf-8">\n'
     + '<meta name="viewport" content="' + viewport + '">\n'
     + '<title>' + docTitle + '</title>\n<!--SHARED-CSS-->' + popoverSlot
     + '\n</head>\n<body>\n'
@@ -116,7 +119,7 @@ export function renderDocShell(input: DocShellInput): string {
   };
   if (charts) assets.chartsHelpersJs = buildChartsHelpersJs();
   return fillTemplate({
-    template: docTemplate(input.docTitle, charts, pageUi, doctypeCase, popoverFullText),
+    template: docTemplate(input.docTitle, charts, pageUi, doctypeCase, popoverFullText, documentLang(input.language)),
     assets,
     content: input.bodyHtml,
   }).html;

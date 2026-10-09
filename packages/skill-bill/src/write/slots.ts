@@ -16,7 +16,13 @@
  *  `missingSlots` 只做「在不在」的探针；方向不符那一半住 `../shared/blockedSlots.ts` 的 `blockedItems`，
  *  **只服务录入路径**（`bill.record.add` 采集页传 `kind`；`bill.record.update` 那一支不判方向）。
  *  真值校验仍走 `./record.js` 的 `validateAddInput`／`validateUpdateInput`（阻断项清空后才走到那一步）。
+ *
+ *  #1206 首切件（多语言文本外置）：提示句不住这里，住 `../entries/zh.ts`（中文基准）
+ *  与 `../entries/en.ts`（英文列）；`recordSlots(language)` 按语言取值（不给＝`zh`，
+ *  与改造前逐字节相同）。中文名仍走 `fieldLabelOf` 映射件（同一概念只一处定义，不另起 key）。
  */
+import { resolve } from 'base-entries';
+import { SKILL_BILL_CATALOG, type SkillBillMessageId } from '../entries/index.js';
 import { fieldLabelOf } from './userWording.js';
 
 /** 一个槽位：参数名／中文名／怎么给／是否必需。
@@ -29,34 +35,39 @@ export interface RecordSlot {
   readonly required: boolean;
 }
 
-/** 一条槽位（中文名走映射件，不在这里另写一份对照）。 */
-function slot(name: string, hint: string, required: boolean): RecordSlot {
-  return { name, label: fieldLabelOf(name), hint, required };
+/** 一条槽位（中文名走映射件，不在这里另写一份对照；提示句走词条表）。 */
+function slot(name: string, hintId: SkillBillMessageId, required: boolean, language: string): RecordSlot {
+  return { name, label: fieldLabelOf(name), hint: resolve(SKILL_BILL_CATALOG, language, hintId), required };
 }
 
-/** 两条写命令的槽位表。提示句都是**用户说法**：`缺省＝…` 这类口径词不上屏（本轮整改）。 */
-export const RECORD_SLOTS: Record<string, readonly RecordSlot[]> = {
-  'bill.record.add': [
-    slot('category', '要选到最细那一级，如「午餐」', true),
-    slot('amount', '支出记负数、收入记正数，如 -12.5', true),
-    slot('time', '不填就记成今天 12:00:00', false),
-    slot('account', '不填就记到默认账户', false),
-    slot('ledger', '不填就记到默认账本', false),
-    slot('currency', '不填就用默认币种', false),
-    slot('note', '自由文本，名目写在这里，可带 #标签', false),
-  ],
-  'bill.record.update': [
-    slot('id', '要改的那条记录的编号（撤销／恢复同样要它）', true),
-    slot('op', '不填就改字段。撤销写 undo，恢复写 restore', false),
-    slot('category', '不改就别给', false),
-    slot('amount', '不改就别给', false),
-    slot('time', '不改就别给', false),
-    slot('account', '不改就别给', false),
-    slot('ledger', '不改就别给', false),
-    slot('currency', '不改就别给', false),
-    slot('note', '不改就别给', false),
-  ],
-};
+/** 两条写命令的槽位表。提示句都是**用户说法**：`缺省＝…` 这类口径词不上屏（本轮整改）。
+ *  `RECORD_SLOTS` 是 `zh` 那一份，保持既有形状（名目仍走映射件派生）。 */
+export function recordSlots(language: string = 'zh'): Record<string, readonly RecordSlot[]> {
+  return {
+    'bill.record.add': [
+      slot('category', 'slots.add.category.hint', true, language),
+      slot('amount', 'slots.add.amount.hint', true, language),
+      slot('time', 'slots.add.time.hint', false, language),
+      slot('account', 'slots.add.account.hint', false, language),
+      slot('ledger', 'slots.add.ledger.hint', false, language),
+      slot('currency', 'slots.add.currency.hint', false, language),
+      slot('note', 'slots.add.note.hint', false, language),
+    ],
+    'bill.record.update': [
+      slot('id', 'slots.update.id.hint', true, language),
+      slot('op', 'slots.update.op.hint', false, language),
+      slot('category', 'slots.update.category.hint', false, language),
+      slot('amount', 'slots.update.amount.hint', false, language),
+      slot('time', 'slots.update.time.hint', false, language),
+      slot('account', 'slots.update.account.hint', false, language),
+      slot('ledger', 'slots.update.ledger.hint', false, language),
+      slot('currency', 'slots.update.currency.hint', false, language),
+      slot('note', 'slots.update.note.hint', false, language),
+    ],
+  };
+}
+
+export const RECORD_SLOTS: Record<string, readonly RecordSlot[]> = recordSlots('zh');
 
 /** 一个值算不算「给了」：`undefined`／`null`／空白串都不算。数字 `0` 视同没给（金额 0 本仓不记，裁定第 3 条）。 */
 export function isGiven(v: unknown): boolean {

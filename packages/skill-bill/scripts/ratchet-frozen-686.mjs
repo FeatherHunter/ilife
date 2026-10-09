@@ -51,7 +51,10 @@ export const FROZEN = {
    *  #1091 下调 280→276：把 #905 的「非 HELP 命令缺省落支」那一摊从外壳搬进交付能力
    *  （`src/delivery/landing.ts`）——外壳只认各域的门与交付能力的门，行数照搬迁同窗下调。 */
   lineCaps: {
-    'src/cli/cmd_read.ts': 276,
+    // #1198 下调 276→270：出口件上两摊活各自独立成件——失败口搬进 `src/cli/fail.ts`（语言选择包装件也要用它，
+    // 两件互相 import 会成环），参数解析搬进 `src/cli/args.ts`（语言两枚参数走同一处解析）。外壳只多一行调用。
+    // #1204 下调 271→270：`void language` 占位行删除，语言透传进 `runRegistered`（`language.text` 实参一行）。
+    'src/cli/cmd_read.ts': 270,
     'src/render/envelope.ts': 56,
   },
 };

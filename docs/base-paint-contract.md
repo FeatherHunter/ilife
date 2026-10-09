@@ -776,7 +776,7 @@ export interface LogTextInput { envelope: SerializableEnvelope; format?: CopyFor
 | `charts` | runtime | #78 | implemented | 3.5 | `ChartsApi` |
 | `SceneData` | type | #78 | implemented | 3.5 | `{ skill_name: string; title: string; subtitle?: string; meta_blocks?: readonly SceneMetaBlock[]; groups: readonly SceneGroup[]; init_banner?: SceneInitBanner; contact?: SceneContact; version?: string; recommendations?: readonly SceneRecommendation[] }` |
 | `Scene` | type | #78 | implemented | 3.5 | `{ id: string; title: string; wake_word: string; types?: readonly (string \| SceneTypeBadge)[]; status: SceneStatus; prompt_template: string; editable_fields?: readonly SceneEditableField[] }` |
-| `HelpShellInput` | type | #78 | implemented | 3.5 | `{ sceneData: SceneData; assets: TemplateAssets; strict?: boolean; template?: string }` |
+| `HelpShellInput` | type | #78 | implemented | 3.5 | `{ sceneData: SceneData; assets: TemplateAssets; strict?: boolean; language?: string; template?: string }` |
 | `RenderHelpShell` | type | #78 | implemented | 3.5 | `(input: HelpShellInput) => FillTemplateOutput` |
 | `renderHelpShell` | runtime | #78 | implemented | 3.5 | `(input: HelpShellInput): FillTemplateOutput` |
 | `ChartsHelpersInput` | type | #78 | implemented | 3.5 | `{ prefix?: string; styleId?: string }` |
@@ -833,6 +833,7 @@ export interface HelpShellInput {
   readonly sceneData: SceneData;      // 技能包提供的场景数据（唯一数据源）
   readonly assets: TemplateAssets;    // 共享资产：走同一填充器（B3）
   readonly strict?: boolean;          // 透传给 fillTemplate
+  readonly language?: string;         // 文本语言（BCP 47；缺席＝中文；#1201 语言注入点）
   readonly template?: string;         // 覆盖内置壳模板
 }
 export type RenderHelpShell = (input: HelpShellInput) => FillTemplateOutput;

@@ -13,14 +13,14 @@
  *
  * 谁在用（五个调用点，指名）：`src/write/template-{expense,flow,batch,installment,update}.ts`——
  *  每张模板的两页各引它一次（回执页 `receiptSourceNote`、采集页 `collectSourceNote`）。
+ *
+ *  #1206 首切件（多语言文本外置）：两句来源不住这里，住 `../entries/zh.ts`（中文基准）
+ *  与 `../entries/en.ts`（英文列）；`receiptSourceNote(time, changed, language)`／
+ *  `collectSourceNote(time, language)` 按语言取值（不给＝`zh`，与改造前逐字节相同）。
  */
+import { resolve } from 'base-entries';
+import { SKILL_BILL_CATALOG } from '../entries/index.js';
 import { sourceLine } from '../shared/sourceLine.js';
-
-/** 回执页那句来源（＝`./write.ts` 的 `SOURCE_RECEIPT` 那句的人话版）。 */
-const SOURCE_RECEIPT_TEXT = '记账库（写入）';
-
-/** 采集页那句来源（＝`./write.ts` 的 `SOURCE_COLLECT` 那句的人话版：这一页只读、不写库）。 */
-const SOURCE_COLLECT_TEXT = '记账库（只读）';
 
 /** 缺值占位（照裁定 4「缺值一律 `—`」，不写 0、不写空串、不拿缺省值顶替）。 */
 const MISSING = '—';
@@ -32,11 +32,11 @@ function sourceNote(time: string, count: number, source: string): string {
 }
 
 /** 结果型回执页（④）的来源脚注：窗口＝这一笔的时间、条数＝本次改动笔数。 */
-export function receiptSourceNote(time: string, changed: number): string {
-  return sourceNote(time, changed, SOURCE_RECEIPT_TEXT);
+export function receiptSourceNote(time: string, changed: number, language: string = 'zh'): string {
+  return sourceNote(time, changed, resolve(SKILL_BILL_CATALOG, language, 'source-note.receipt'));
 }
 
 /** 过程型采集页（①）的来源脚注：窗口＝这一笔的时间、条数＝本次改动笔数（这一页没写库 ⇒ 0）。 */
-export function collectSourceNote(time: string): string {
-  return sourceNote(time, 0, SOURCE_COLLECT_TEXT);
+export function collectSourceNote(time: string, language: string = 'zh'): string {
+  return sourceNote(time, 0, resolve(SKILL_BILL_CATALOG, language, 'source-note.collect'));
 }

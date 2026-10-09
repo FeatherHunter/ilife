@@ -15,7 +15,10 @@
  *   node packages/skill-bill/scripts/gen-page-fingerprints.mjs --check          # 门禁（与账本比对）
  *   node packages/skill-bill/scripts/gen-page-fingerprints.mjs --write --declare-layout-change <票号>
  *                                                                              # 重录（只有声明改版式的票才许）
- * 末两行固定：`LEDGER: <账本路径>` 与 `RESULT: n/m`；exit 0 绿、1 红。
+ *   … --lang zh|en  # 语言列（缺省 zh；名册出处 tooling/i18n-langs.mjs）。zh 不加任何渲染参数
+ *                   #   （行为与输出逐字节不变）；en 每页经 dist CLI 加 --language en 渲染，指纹记入
+ *                   #   test/t689-页面指纹.en.json（与中文账本同形），RESULT 带 lang=en 后缀。
+ * 末两行固定：`LEDGER: <账本路径>` 与 `RESULT: n/m[ lang=en]`；exit 0 绿、1 红。
  * **本脚本不提供跳过比对的开关**（跳过＝放宽）；重录必须带 `--declare-layout-change`，且会把新旧差异集打出来。
  */
 import { spawnSync } from 'node:child_process';
@@ -24,9 +27,11 @@ import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { DEFAULT_LANGUAGE, langFromArgv, ledgerPath } from '../../../tooling/i18n-langs.mjs';
 
 const PKG_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const LEDGER = join(PKG_ROOT, 'test', 't689-页面指纹.json');
+/** 中文列账本基名：英文列经 ledgerPath 另起 test/t689-页面指纹.en.json（与中文账本同形）。 */
+const LEDGER_BASE = 't689-页面指纹.json';
 const BIN = join(PKG_ROOT, 'dist', 'cli', 'cmd_read.js');
 
 /** 32 张页的夹具：16 条词 × 采集／回执两页，**与 t410 验收墙清单 `.scratch/t410-wall/manifest.json` 逐条同参**
@@ -85,6 +90,23 @@ const PAGES = [
 const argv = process.argv.slice(2);
 const MODE_WRITE = argv.includes('--write');
 const DECLARED = argv[argv.indexOf('--declare-layout-change') + 1];
+
+/** #1199 · 语言列入口 --lang zh|en（缺省 zh）。zh 不加任何渲染参数（逐字节不变）；
+ *  en 每页经 dist CLI 加 --language en 渲染（SAY 原型与票据纸尚未迁移，en 与 zh
+ *  相同是诚实读数：账本照记，门禁照判，不为造差异而改页）。未知语言即 RED。 */
+let LANG = DEFAULT_LANGUAGE;
+try {
+  LANG = langFromArgv(argv);
+} catch (err) {
+  console.log('RED ' + (err && err.message || err));
+  console.log('RESULT: 0/' + PAGES.length);
+  process.exit(1);
+}
+const LEDGER = join(PKG_ROOT, 'test', ledgerPath(LEDGER_BASE, LANG));
+const LANG_SUFFIX = LANG === DEFAULT_LANGUAGE ? '' : ' lang=' + LANG;
+const resultLine = (ok, total) => 'RESULT: ' + ok + '/' + total + LANG_SUFFIX;
+/** zh 为空（逐字节不变）；en 加 --language en（种子与页面同一口径，全程 en 模式）。 */
+const LANG_ARGS = LANG === DEFAULT_LANGUAGE ? [] : ['--language', LANG];
 const DATE_FIXTURE = '2026-09-14 12:00:00';
 
 function pad(n) { return String(n).padStart(2, '0'); }
@@ -107,6 +129,7 @@ const NODE = process.execPath;
 function run(key, params, html) {
   const args = [BIN, key, '--params', JSON.stringify(params)];
   if (html) args.push('--html', html);
+  args.push(...LANG_ARGS);
   return spawnSync(NODE, args, { encoding: 'utf8', env });
 }
 function lastJson(stdout) {
@@ -152,13 +175,13 @@ for (const [word, kind, key, rawParams, seedFor] of PAGES) {
 console.log('渲染 ' + ok + '/' + total + ' 张（库=' + DB + '）');
 if (ok !== total) {
   console.log('LEDGER: ' + LEDGER);
-  console.log('RESULT: 0/' + total);
+  console.log(resultLine(0, total));
   process.exit(1);
 }
 
 const nextText = JSON.stringify({ note: 't689 页面指纹账本（归一化见 scripts/gen-page-fingerprints.mjs 件头）', pages }, null, 2) + '\n';
 if (!MODE_WRITE) {
-  if (!existsSync(LEDGER)) { console.log('RED 账本不存在：' + LEDGER); console.log('RESULT: 0/' + total); process.exit(1); }
+  if (!existsSync(LEDGER)) { console.log('RED 账本不存在：' + LEDGER); console.log(resultLine(0, total)); process.exit(1); }
   const old = JSON.parse(readFileSync(LEDGER, 'utf8')).pages;
   const changed = Object.keys(pages).filter((k) => old[k] !== pages[k]);
   const added = Object.keys(pages).filter((k) => old[k] === undefined);
@@ -167,7 +190,7 @@ if (!MODE_WRITE) {
   for (const k of changed) console.log('RED 页指纹变了：' + k);
   for (const k of added) console.log('RED 账本没这一页：' + k);
   for (const k of gone) console.log('RED 账本多这一页（产物已不再出）：' + k);
-  console.log('RESULT: ' + (total - changed.length - added.length - gone.length) + '/' + total);
+  console.log(resultLine(total - changed.length - added.length - gone.length, total));
   if (changed.length + added.length + gone.length > 0) {
     console.log('修法：本次若**声明**要改版式，跑 `--write --declare-layout-change <票号>` 重录，'
       + '并把上面的差异集与「改动只动一个模板件」的读数一起写进证据。');
@@ -180,7 +203,7 @@ if (!MODE_WRITE) {
 if (DECLARED === undefined || !/^\d+$/.test(DECLARED)) {
   console.log('RED 重录必须声明票号：--write --declare-layout-change <票号>');
   console.log('LEDGER: ' + LEDGER);
-  console.log('RESULT: 0/' + total);
+  console.log(resultLine(0, total));
   process.exit(1);
 }
 if (existsSync(LEDGER)) {
@@ -190,6 +213,6 @@ if (existsSync(LEDGER)) {
 }
 writeFileSync(LEDGER, nextText, 'utf8');
 console.log('LEDGER: ' + LEDGER);
-console.log('RESULT: ' + total + '/' + total);
+console.log(resultLine(total, total));
 console.log('PASS: 已重录（12 位指纹以当刻产物为准）');
 process.exit(0);
