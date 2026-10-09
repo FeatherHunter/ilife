@@ -114,3 +114,17 @@ export function planManual(scenes: ManualScene[], spread: number): ManualPlan {
     },
   };
 }
+
+/** 跨页夹取：翻页目标越界时夹到第一／最后一跨页（与 planManual 内口径同一处，壳的铜扣与签直达都走它）。 */
+export function clampSpread(scenes: ManualScene[], spread: number): number {
+  const spreadCount = Math.max(1, Math.ceil(scenes.length / 2));
+  return Math.min(Math.max(spread, 0), spreadCount - 1);
+}
+
+/** 页码→跨页：点签／目录行直达用（页码从 1 起；越界页码先夹到首末页再换算）。 */
+export function spreadOfPage(scenes: ManualScene[], page: number): number {
+  const pageCount = scenes.length;
+  if (pageCount === 0) return 0;
+  const at = Math.min(Math.max(page, 1), pageCount);
+  return Math.floor((at - 1) / 2);
+}
