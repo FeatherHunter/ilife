@@ -1,8 +1,8 @@
-// 票 #1238 自证回路：popover 书籍壳（内容无关，空壳跑通）。
+// 票 #1238 自证回路：popover 书籍壳（壳 chrome：框纸脊书签层铜扣齐、A4 高比、铜扣禁用态）。
 // 读真产物，自带最小 react 替身（与 manual-entry-1237 同形，自包含以便点按重渲）。
 // 前提：先出产物（pnpm --filter dsh-life-pack run build），再跑本文件。
-// 说明：壳默认场景为空（内容是 #1239 的活），故本文件只验空壳 degenerate：
-// 框/纸/脊/铜扣在、无签、空页无字、A4 高比；翻签/铜扣交互随场景进 #1239 验。
+// 说明：#1239 起入口改喂真场景（5 页），故本文件验真书下的壳 chrome；
+// 空框 degenerate 只保 renderPage 缺席默认（见 manual-content-1239 首跨页），翻签/铜扣交互进 #1239 验。
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -94,22 +94,19 @@ async function openBook() {
   return tree;
 }
 
-describe('#1238 书籍壳空壳', () => {
-  it('书在：框纸脊书签层铜扣齐，空页无字', async () => {
+describe('#1238 书籍壳', () => {
+  it('书在：框纸脊书签层铜扣齐，首跨页框为第 1/2 页', async () => {
     const tree = await openBook();
     const shell = findAll(tree, (n) => n.props?.['data-ilife-manual'] === 'shell');
     assert.equal(shell.length, 1, '壳须恰好一个');
     assert.equal(findAll(tree, (n) => n.props?.['data-ilife-manual'] === 'book').length, 1, '书须一本');
     const frames = findAll(tree, (n) => n.props?.['data-ilife-manual'] === 'page-frame');
     assert.equal(frames.length, 2, '左右页框各一');
-    for (const f of frames) {
-      assert.equal(f.props?.['data-ilife-page'], 'empty', '空壳页框须标 empty');
-      assert.deepEqual(texts(f).filter((t) => t.trim().length > 0), [], '空页框里一字不许有');
-    }
-    assert.equal(findAll(tree, (n) => n.props?.['data-ilife-manual'] === 'tab').length, 0, '空书无签');
+    assert.deepEqual(frames.map((f) => f.props?.['data-ilife-page']), [1, 2], '#1239 起入口喂真场景');
+    assert.equal(findAll(tree, (n) => n.props?.['data-ilife-manual'] === 'tab').length, 3, '5 页书须 3 枚签');
   });
 
-  it('A4 高比与铜扣两端禁用（空书恒一跨页）', async () => {
+  it('A4 高比与铜扣首跨页态（上一页禁用、下一页可用）', async () => {
     const tree = await openBook();
     const book = findAll(tree, (n) => n.props?.['data-ilife-manual'] === 'book')[0];
     assert.ok(String(book.props?.style?.minHeight ?? '').includes('1.41421356'), '书高须锁 A4 比');
@@ -117,7 +114,7 @@ describe('#1238 书籍壳空壳', () => {
     const next = findAll(tree, (n) => n.props?.['data-ilife-manual'] === 'next')[0];
     assert.ok(prev && next, '铜扣须两颗');
     assert.equal(prev.props?.disabled, true, '首跨页上一页须禁用');
-    assert.equal(next.props?.disabled, true, '末跨页下一页须禁用');
+    assert.equal(next.props?.disabled, false, '首跨页下一页须可用（共 3 跨页）');
     assert.equal(texts(prev).join(''), '‹ 上一页');
     assert.equal(texts(next).join(''), '下一页 ›');
   });
