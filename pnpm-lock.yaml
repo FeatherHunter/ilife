@@ -132,7 +132,7 @@ importers:
   packages/plugin-manager:
     dependencies:
       dsh-plugin-update:
-        specifier: 0.10.0
+        specifier: latest
         version: 0.10.0
     devDependencies:
       '@types/react':
