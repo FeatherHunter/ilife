@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang='zh-CN'><head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width,initial-scale=1'>
+<title>复用盘点证据（1192）</title><style>body{font-family:system-ui,'Microsoft YaHei',sans-serif;max-width:860px;margin:32px auto;padding:0 20px;color:#222;line-height:1.8}h1{font-size:22px}h2{font-size:17px;margin-top:28px;border-bottom:2px solid #42506b;padding-bottom:6px}table{border-collapse:collapse;width:100%;font-size:14px;margin:8px 0}th,td{border:1px solid #d8cfae;padding:8px 10px;text-align:left;vertical-align:top}th{background:#fdfaf2}.small{font-size:13px;color:#666}.box{background:#fdfaf2;border:1px solid #e6d9bd;padding:12px 14px;margin:10px 0;font-size:14px}</style></head><body>
+<h1>复用盘点：现有卷轴印章与手册内容源（已关闭）</h1>
+<p class='small'>票 1192，地图 1190。读仓得出，行号为证据。</p>
+<h2>可直接复用（走公开接口，不复制）</h2>
+<table><tr><th>件</th><th>接口</th><th>结论</th></tr>
+<tr><td>seal-scroll.ts 卷轴对话框</td><td>SealScrollDialog、SealFilterDefs、SEAL_ROUGH_EDGE_ID、TIER_TEXT</td><td>外框材质纸糙边复用；内容区三段需扩展，新手册另起新件</td></tr>
+<tr><td>seal-stamp.ts 印章</td><td>SealStamp、sealTipOf</td><td>入口用 role help 那枚 HELP 旧版 2b 印</td></tr>
+<tr><td>seal-palette.ts 调色板</td><td>SEAL_PALETTE、SEAL_RIVET</td><td>外框底色边线逐值照抄</td></tr>
+<tr><td>seal-paper-schemes.ts</td><td>paperParts、closeLook</td><td>纸面字排与关闭钮</td></tr>
+<tr><td>config-panel-contract.ts 200～216 行</td><td>SealRole、SealTier、SealInstance</td><td>类型唯一定义地，只引用</td></tr>
+<tr><td>config-panel-view.ts 919～972 行</td><td>PanelBody seals 接线</td><td>总管卡加一枚，按 role 查，不按位置取</td></tr></table>
+<h2>明确不复用</h2><div class='box'>config-panel.ts 状态机与 config-panel-value.ts：手册只读，不保存不重置，不引用（用户追加：不改卷轴代码）。</div>
+<h2>HELP 落点（六家）</h2><div class='box'>饼干记账_HELP、卡路里_HELP（另有照片HELP）、私家大厨_HELP、居家管家_HELP、备忘录_HELP、作息管家_HELP。<br>通式：主体_YYYYMMDD_HHMMSS_N.html，目录形 xxx_html/help，共享模板 base-render/assets/help-template.html。</div>
+<h2>三组内容源</h2><div class='box'>插件使用：plugin 七件 package.json＋install.ts。技能使用：skill 六件 SKILL.md＋help lookup。HELP 使用：各家 src/help＋共享模板＋已落盘文件；手册只写用法，细节链到文件。</div>
+</body></html>
