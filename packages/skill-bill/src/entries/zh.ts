@@ -9,7 +9,11 @@
  *  `total`／`periods`／`start_date` 是槽位标识、命令键冻结，二者都不进本表）。
  *  第二批 49 条（#1204 第二件 `write/receiptPaper.ts`：13 页回执纸共用装配的用户可见文案；
  *  行标签三格复用 `fieldLabelOf`（与摘要行同一口径），不在本表另立 key）。
- */
+  *  第三批 42 条（#1206 首切 7 件：blockedFold 复用 `installment.fold-title`、errorReceipt 复用
+  *  `installment.prompt-label-blocked`、scene-batch 复用 `installment.receipt.state` 与
+  *  `installment.receipt.rows-label`，同句只一处定义；commands 两条例句 en 与 zh 同值——示例含可运行的中文
+  *  样例数据，译了就跑不通，en 同值并在票面记）。
+  */
 export const zh = {
   /* ── 记分期场景（write/scene-installment.ts）── */
   'installment.family': '特殊收支族',
@@ -138,4 +142,47 @@ export const zh = {
   'scene-collect.receipt-note.msg.without-source': '这一笔打 {tagCollect}，原记录这次没给到',
   'scene-collect.receipt-note.msg.with-source': '这一笔打 {tagCollect}，原记录 #{source} 换成 {tagPaid}',
   'scene-collect.receipt-note.detail': '「查欠款」按 {tagUnpaid} 数，写完少一笔。撤销见下方按钮。',
+  /* ── #1206 首切 7 件（write 批次 4 前锋：纯 copy 件）── */
+  'source-note.receipt': '记账库（写入）',
+  'source-note.collect': '记账库（只读）',
+  'command.record-add.title': '记一笔',
+  'command.record-add.example': "bill-cmd-read bill.record.add --params '{\"category\":\"餐饮\",\"amount\":-12.5,\"time\":\"2026-09-14 12:00:00\",\"account\":\"支付宝\",\"ledger\":\"生活\"}'",
+  'command.record-update.title': '改记录',
+  'command.record-update.example': "bill-cmd-read bill.record.update --params '{\"note\":\"改过\"}'",
+  'receipt-parts.status.label': '状态',
+  'receipt-parts.status.unchanged': '无改动',
+  'receipt-parts.status.changed': '已改动',
+  'receipt-parts.status.unchanged-detail': '值与改前一致',
+  'receipt-parts.reconcile.title': '对账信息',
+  'receipt-parts.reconcile.field': '字段',
+  'receipt-parts.reconcile.value': '值',
+  'receipt-parts.reconcile.record-id': '记录编号',
+  'receipt-parts.reconcile.record-id-missing': '还没有',
+  'receipt-parts.reconcile.action-at': '写入时间',
+  'slots.add.category.hint': '要选到最细那一级，如「午餐」',
+  'slots.add.amount.hint': '支出记负数、收入记正数，如 -12.5',
+  'slots.add.time.hint': '不填就记成今天 12:00:00',
+  'slots.add.account.hint': '不填就记到默认账户',
+  'slots.add.ledger.hint': '不填就记到默认账本',
+  'slots.add.currency.hint': '不填就用默认币种',
+  'slots.add.note.hint': '自由文本，名目写在这里，可带 #标签',
+  'slots.update.id.hint': '要改的那条记录的编号（撤销／恢复同样要它）',
+  'slots.update.op.hint': '不填就改字段。撤销写 undo，恢复写 restore',
+  'slots.update.category.hint': '不改就别给',
+  'slots.update.amount.hint': '不改就别给',
+  'slots.update.time.hint': '不改就别给',
+  'slots.update.account.hint': '不改就别给',
+  'slots.update.ledger.hint': '不改就别给',
+  'slots.update.currency.hint': '不改就别给',
+  'slots.update.note.hint': '不改就别给',
+  'batch.family': '批量与修正族',
+  'batch.section1': '先看缺什么',
+  'batch.caliber': '本批一次只落一笔。',
+  'batch.fold-note': '补齐后照上面那条口令跟助手说一遍。',
+  'batch.section2': '核对这一屏',
+  'batch.total-label': '这一屏合计',
+  'batch.prompt-title': '这一段就是补齐后要发给助手的话',
+  'batch.section3': '补齐了再请助手记',
+  'batch.receipt-caliber': '本批一次只落一笔，回执里的编号就是它。',
+  'batch.receipt-caption': '本次写入',
 };
