@@ -10,11 +10,17 @@
  *  锁住的那条口径：**消息句必填**（不许出一段没有事由的红块），`retryPrompt` 缺省写「补齐后照这句跟助手说一遍」——
  *  本仓页面不写内联脚本，那段话是提示不是按钮动作。
  *
+ *  #1206 首切件（多语言文本外置）：缺省 `retryPrompt` 复用 `installment.prompt-label-blocked`
+ *  （同句只一处定义）；`message` 为空抛的那句是开发期契约错（stderr，不上屏），原样保留、
+ *  不进词条表（残留门机器判据①：`throw` 实参自动豁免）。
+ *
  * 整页替换这条**债务**（写在件头，不装作做过）：`docs/skills/skill-bill/t407-页面块清单-16词.md` 第一节末列
  *  把「JSON／状态异常、缺 id、参数不合法」也划给这个块。今天这些情形仍走 stderr ＋ 非 0 退出码
  *  （`test/record-write.test.mjs`「id 有值但不是记录编号 → 仍走口径失败」那条钉着这条行为），
  *  整页替换归后票；本票只把这一件冻好、并给它一个真落点（缺项阻断条）。
  */
+import { resolve } from 'base-entries';
+import { SKILL_BILL_CATALOG } from '../entries/index.js';
 import { renderFeedbackBlock } from 'base-paint/blocks';
 import type { ErrorReceiptInput, ToastInput } from 'base-paint/blocks';
 
@@ -26,6 +32,8 @@ interface ErrorReceipt {
   readonly message: string;
   /** 出错后怎么重来（缺省「补齐后照这句跟助手说一遍」）。 */
   readonly retryPrompt?: string;
+  /** 本块的文本语言（BCP 47；不给＝`zh`，与改造前逐字节相同）。 */
+  readonly language?: string;
   /** 可复制的数据文本（给了才出「复制数据」按钮）。 */
   readonly dataText?: string;
   /** 可复制的日志文本（给了才出「复制日志」按钮）。 */
@@ -40,9 +48,10 @@ export function errorReceipt(input: ErrorReceipt): string {
   if (typeof input.message !== 'string' || input.message.trim() === '') {
     throw new Error('errorReceipt: message 不能为空（不许出一段没有事由的红块）');
   }
+  const language = input.language ?? 'zh';
   const error: ErrorReceiptInput = {
     message: input.message,
-    retryPrompt: input.retryPrompt === undefined || input.retryPrompt === '' ? '补齐后照这句跟助手说一遍' : input.retryPrompt,
+    retryPrompt: input.retryPrompt === undefined || input.retryPrompt === '' ? resolve(SKILL_BILL_CATALOG, language, 'installment.prompt-label-blocked') : input.retryPrompt,
     ...(input.dataText === undefined ? {} : { dataText: input.dataText }),
     ...(input.logText === undefined ? {} : { logText: input.logText }),
   };
