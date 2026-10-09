@@ -38,7 +38,7 @@ if (!isShots) {
   const out = readoutOf(dom);
   if (typeof out === 'string') { console.log(out); process.exit(1); }
   if (!out) { console.log('M1195-RESULT=FAIL no-readout'); process.exit(1); }
-  const line = out.spreads.map(function (s) { return s.tag + ':' + s.pages.join(',') + '/t' + s.tabs + '/ov' + s.overflowX; });
+  const line = out.spreads.map(function (s) { return s.tag + ':' + s.pages.join(',') + '/t' + s.tabs + '/ov' + s.overflowX + '/dlg' + s.dlgL + '-' + s.dlgR + 'w' + s.dlgW + '/vw' + s.vw; });
   console.log('M1195-READOUT=' + line.join(' '));
   console.log('M1195-RESULT=' + (out.ok ? 'PASS' : 'FAIL ' + out.fails.join(';')));
   process.exit(out.ok ? 0 : 1);
