@@ -79,7 +79,10 @@ function codeLiterals(text) {
         j += 1;
       }
       const before = text.slice(Math.max(0, i - 16), i);
-      out.push({ value: v, line, field: /title:\s*$/.test(before) ? 'title' : '' });
+      // #1206：词条表里的展示标题（`*.title'` 值位）与 `title:` 值位同类——命令显示名本就允许与唤醒词同字
+      // （旧址 `title: '记一笔'` 即此豁免；迁移只换房子、不添第二书写位）。只认该值位，不豁免整目录。
+      const isTitle = /title:\s*$/.test(before) || /\.title':\s*$/.test(before);
+      out.push({ value: v, line, field: isTitle ? 'title' : '' });
       i = j + 1;
       continue;
     }
