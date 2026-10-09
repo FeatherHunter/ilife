@@ -18,7 +18,7 @@
  */
 
 import * as React from 'react';
-import { MANAGER_PLUGIN, MANAGER_TABS, MORE_PLUGINS, PANEL_LINKS, recoFor } from './nav.js';
+import { MANAGER_PLUGIN, MANAGER_TABS, MANUAL_ENTRY, MORE_PLUGINS, PANEL_LINKS, recoFor } from './nav.js';
 import type { ManagerTab } from './nav.js';
 import { CONFIG_TAB_SLOT } from './update-contract.js';
 import { managerCallAdapter, mountLifeBatchEntry } from './update-dialog.js';
@@ -86,6 +86,92 @@ const S = {
     border: '1px solid transparent',
     color: 'var(--dsw-alias-label-primary, inherit)',
     textDecoration: 'none',
+    fontSize: 14,
+    lineHeight: 1,
+  } as React.CSSProperties,
+  /** #1237：甲腰封书入口（书的样子逐字取定版甲：红封＋书脊＋米色腰封＋名牌）。 */
+  manualWrap: { position: 'relative', display: 'inline-flex', flex: '0 0 auto' } as React.CSSProperties,
+  manualBook: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 10,
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    padding: '6px 10px 10px',
+  } as React.CSSProperties,
+  manualStage: { position: 'relative', width: 76, height: 104, filter: 'drop-shadow(0 10px 10px #00000088)' } as React.CSSProperties,
+  manualCover: {
+    display: 'block',
+    position: 'relative',
+    width: 72,
+    height: 100,
+    borderRadius: '5px 8px 8px 5px',
+    background: 'linear-gradient(135deg,#9c2f2f,#5f1616 65%,#3a0d0d)',
+    border: '1px solid #d9ab3c',
+    boxShadow: '5px 7px 12px #0009',
+  } as React.CSSProperties,
+  manualSpine: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 12,
+    background: 'linear-gradient(90deg,#320b0b,#571414)',
+    borderRadius: '5px 0 0 5px',
+  } as React.CSSProperties,
+  manualBand: {
+    position: 'absolute',
+    left: -4,
+    right: -4,
+    top: 34,
+    height: 26,
+    background: '#ece0c2',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#5c1010',
+    fontSize: 12,
+    letterSpacing: '.2em',
+    boxShadow: '0 2px 4px #00000066',
+  } as React.CSSProperties,
+  manualPlate: {
+    marginTop: 14,
+    background: 'linear-gradient(#4a1f1a,#2a0f0c)',
+    border: '1px solid #8a6a15',
+    borderRadius: 4,
+    color: '#e8c96a',
+    fontSize: 13,
+    letterSpacing: '.3em',
+    textIndent: '.3em',
+    padding: '4px 18px',
+  } as React.CSSProperties,
+  /** #1237：空壳书（书体是 #1238 的活，这里只留壳＋标题＋关闭）。 */
+  manualShell: {
+    position: 'absolute',
+    top: '100%',
+    right: 0,
+    zIndex: 50,
+    minWidth: 320,
+    background: 'var(--dsw-alias-background-primary, #fff)',
+    color: 'var(--dsw-alias-label-primary, inherit)',
+    border: '1px solid var(--dsw-alias-border-l1, rgba(128,128,128,.35))',
+    borderRadius: 8,
+    padding: '10px 12px',
+  } as React.CSSProperties,
+  manualShellHead: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 } as React.CSSProperties,
+  manualClose: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 26,
+    height: 26,
+    borderRadius: 6,
+    border: '1px solid transparent',
+    background: 'transparent',
+    color: 'inherit',
+    cursor: 'pointer',
     fontSize: 14,
     lineHeight: 1,
   } as React.CSSProperties,
@@ -236,6 +322,70 @@ function PanelLinkIcon(props: { readonly filled: boolean; readonly path: string 
       focusable: 'false',
     },
     React.createElement('path', { d: props.path }),
+  );
+}
+
+/** 面板顶部使用手册入口（票 #1237）：甲腰封书按钮，点开弹出书（空壳，书体是 #1238 的活）。
+ *
+ * 开合态只用 useState（面板禁 document／window 直写）；文案取导航表那份镜像。 */
+function ManualEntry(): React.ReactElement {
+  const [open, setOpen] = React.useState(false);
+  return React.createElement(
+    'span',
+    { style: S.manualWrap },
+    React.createElement(
+      'button',
+      {
+        type: 'button',
+        style: S.manualBook,
+        title: MANUAL_ENTRY.tip,
+        'aria-label': MANUAL_ENTRY.title,
+        'aria-expanded': open,
+        'aria-controls': 'ilife-manual-book',
+        // #1174：入口挂 press（悬停洗色＋按压收缩＋焦点双环；链接只做反馈不做标记）。
+        'data-ilife-press': MANUAL_ENTRY.key,
+        onClick: () => { setOpen(true); },
+      },
+      React.createElement(
+        'span',
+        { style: S.manualStage, 'aria-hidden': 'true' },
+        React.createElement(
+          'span',
+          { style: S.manualCover },
+          React.createElement('span', { style: S.manualSpine }),
+          React.createElement('span', { style: S.manualBand }, MANUAL_ENTRY.title),
+        ),
+      ),
+      React.createElement('span', { style: S.manualPlate, 'aria-hidden': 'true' }, MANUAL_ENTRY.title),
+    ),
+    open
+      ? React.createElement(
+        'div',
+        {
+          role: 'dialog',
+          id: 'ilife-manual-book',
+          'aria-label': MANUAL_ENTRY.title,
+          style: S.manualShell,
+          'data-ilife-manual': 'book-shell',
+        },
+        React.createElement(
+          'div',
+          { style: S.manualShellHead },
+          React.createElement('span', null, MANUAL_ENTRY.title),
+          React.createElement(
+            'button',
+            {
+              type: 'button',
+              style: S.manualClose,
+              'aria-label': '关闭' + MANUAL_ENTRY.title,
+              'data-ilife-press': 'manual-close',
+              onClick: () => { setOpen(false); },
+            },
+            '×',
+          ),
+        ),
+      )
+      : null,
   );
 }
 
@@ -479,6 +629,8 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
       React.createElement(
         'div',
         { style: S.headActions },
+        // #1237：使用手册入口挂头，排在更新入口与星／气泡之前。
+        React.createElement(ManualEntry, null),
         React.createElement('span', {
           style: S.updateEntrySlot,
           ref: (element: HTMLSpanElement | null) => {
