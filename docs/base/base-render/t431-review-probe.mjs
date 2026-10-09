@@ -2,8 +2,8 @@
 //
 // 读法：`node docs/base/base-render/t431-review-probe.mjs`（仓根运行；读 `dist/`，先跑 `pnpm build` 或
 // `pnpm -C packages/base-render exec tsc -b`）。每条读一行 `PROBE <编号> …读数=…`；末行给结论，读数与
-// 预期不符即 exit 1。变异两条（改坏必红／改回必绿）不在本件：那是改工作区的动作，走
-// `tooling/run-locked.mjs`，脚本与日志落 `.scratch/t431-review/`（见 t431-review-报告.md 机器证据段）。
+// 预期不符即 exit 1。变异两条（改坏必红／改回必绿）不在本件：那是改工作区的动作，
+// 脚本与日志落 `.scratch/t431-review/`（见 t431-review-报告.md 机器证据段）。
 //
 // 本件对应的被审交付：提交 3e2a9b7（`packages/base-render/src/blocks.ts`／`test/page-viz-421.test.mjs`／
 // `docs/base/base-render/t431-四件判据补硬.md`）。探针只做交叉核对：判据说的值是不是当刻产物的值、

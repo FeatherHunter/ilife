@@ -17,7 +17,7 @@
 - **两家的半边各有其主**：私家大厨的「页 → 命令出口」接线归本体图〔[私家大厨本体图](https://github.com/FeatherHunter/ilife/issues/765)〕——它自己的「已知现状」已记两条 ⚠️（业务命令的 HTML 不是页面／绝对路径回执只有 HELP 有）；本图只指路，不为它另建票。
 - **备忘不是缺口**（2026-09-22 复核）：`memo.stats` 随 #858 整条退役（零唤醒词、HELP 无场景），键不在注册表里，属不可达的遗留函数；四家（含备忘）本就缺省落页。
 - **第⑤格不做**（agent 工具能不能指定落点）：见 Out of scope。
-- 跑读数、编译与 git 写操作按并发纪律走：`node tooling/run-locked.mjs --ticket <票号> -- <命令>`；编译入口写死 `node node_modules/typescript/bin/tsc -b <包>`。
+- 跑读数、编译与 git 写操作按并发纪律走；编译入口写死 `node node_modules/typescript/bin/tsc -b <包>`。
 - 不许动页面外观与页内内容（快照／指纹件）；HELP 三支交付口径冻结（饼干 #144、大厨 #215）。
 
 ## Decisions so far

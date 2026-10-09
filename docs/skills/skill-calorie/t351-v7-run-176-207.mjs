@@ -36,8 +36,7 @@
  *
  * 产物落 `--out` 指的目录（**必填**：`final-v4`／`final-v3` 是前两轮交付的对照基准，原地重跑会覆盖它们）；
  * 库在 `<out>/dbs/`；读数在 `<out>/detail.json`。任何一条红 → exit 1。
- * 用法（持锁）：node tooling/run-locked.mjs --ticket 351 --run-id t351-v5-<短名> -- \
- *   node .scratch/t351-fix/v5/run-176-207-v5.mjs --out .scratch/t351-fix/final-v5
+ * 用法：node .scratch/t351-fix/v5/run-176-207-v5.mjs --out .scratch/t351-fix/final-v5
  */
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';

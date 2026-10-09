@@ -10,9 +10,8 @@
  * 还差一点：原件写在 `.scratch/t387/` 下（日志／种子库／读数同处）；本件把同样四样
  * （`db/` `logs/` `out/` `html/` `results.json`）都落在 `<产物目录>` 里，自带一套、互不干扰。
  *
- * 用法（须持锁）：
- *   node tooling/run-locked.mjs --ticket 532 --lock-dir .scratch/locks-m158v2 --max-wait-ms 2700000 --poll-ms 15000 \
- *     -- node docs/skills/skill-calorie/t532-run-all.mjs .scratch/t532/regen
+ * 用法：
+ *   node docs/skills/skill-calorie/t532-run-all.mjs .scratch/t532/regen
  * 出：<产物目录>/{db,logs,out,html}/ ＋ <产物目录>/results.json
  * 退出码：31/31 exit 0 → 0；有一件失败 → 1。
  *

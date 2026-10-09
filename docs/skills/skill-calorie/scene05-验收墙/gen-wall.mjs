@@ -25,8 +25,7 @@
  *   node gen-wall.mjs --check <产物目录>            只跑自检（**反例测试就是这条**，改清单即红）
  *
  * 本批重跑方式（票 #351，最近一轮＝收口窗 T351-v19）：
- *   产物先由持锁跑批件出（`node tooling/run-locked.mjs --ticket 157 --run-id t157-final-run -- \
- *   node docs/skills/skill-calorie/t351-v7-run-176-207.mjs --out .scratch/t157-final/products`），
+ *   产物先由跑批件出（`node docs/skills/skill-calorie/t351-v7-run-176-207.mjs --out .scratch/t157-final/products`），
  *   再 `cd docs/skills/skill-calorie/scene05-验收墙` 跑
  *   `node gen-wall.mjs --stage ../../../../.scratch/t157-final/products .`（复制 ＋ 出双墙 ＋ 出索引 ＋ 自检），
  *   最后 `node gen-wall.mjs --check .` 就是票面那条验收命令。

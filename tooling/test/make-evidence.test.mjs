@@ -8,8 +8,8 @@ import { parseSummary, fillTemplate, checkFormat } from '../make-evidence.mjs';
 
 /**
  * tooling/make-evidence.mjs 的靶向测试（#327 其三）。
- * 跑法（持锁单写者）：
- *   node tooling/run-locked.mjs --ticket 327 --lock-dir .scratch/locks-land --stale-minutes 30 -- node --test tooling/test/make-evidence.test.mjs
+ * 跑法：
+ *   node --test tooling/test/make-evidence.test.mjs
  * 覆盖：好模板＋好日志填数（绿）；缺数点名（红→补数绿）；格式门 6 项逐条点名（红）。
  */
 const here = path.dirname(fileURLToPath(import.meta.url));

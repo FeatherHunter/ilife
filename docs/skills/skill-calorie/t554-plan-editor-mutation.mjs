@@ -9,9 +9,8 @@
  *   M4（改坏）锁周参数**改回纯文本**（S1-① 复现）             期望 C3.4／C3.5／X1 变红
  *   M5（改坏）锁周「加一次训练」**摘掉 disabled**（结构禁）    期望 C3.1 变红
  *
- * 用法（**整体必须在加锁包装器下**跑）：
- *   node tooling/run-locked.mjs --ticket 554 --run-id t554-mutation \
- *     -- node docs/skills/skill-calorie/t554-plan-editor-mutation.mjs --under-lock
+ * 用法（自己 worktree 里直接跑）：
+ *   node docs/skills/skill-calorie/t554-plan-editor-mutation.mjs
  *
  * `tsc -b` 是全包一次编译：他席在途件随时可让整树临时变红，所以**不拿它的 exit 当判据**，
  * 拿「产物里有没有这次的印记」＋「还原后 dist 逐件 sha256 与基线全等」当判据。
@@ -34,38 +33,31 @@ const SRC = [CSS, DOCS, RT];
 const DIST = SRC.map((p) => resolve(ROOT, 'packages/skill-calorie/dist/render', p.split(/[\\/]/).pop().replace(/\.ts$/, '.js')));
 const DIST_CSS = DIST[0], DIST_RT = DIST[2];
 const TSC = resolve(ROOT, 'node_modules/typescript/bin/tsc');
-const WRAP = resolve(ROOT, 'tooling/run-locked.mjs');
-const INNER_LOCK = '.scratch/locks-t554-inner';   // 嵌套调用用隔离锁目录（免得等自己持有的主锁）
 const sha = (p) => createHash('sha256').update(readFileSync(p)).digest('hex');
 const say = (s) => process.stdout.write(s + '\n');
 
 mkdirSync(join(OUT, 'backup'), { recursive: true });
 mkdirSync(join(OUT, 'logs'), { recursive: true });
-/* 加锁纪律自证：本套件必须**整体**在加锁包装器下跑（它持主锁，别席的编译排我后面）。
- * 套件内部的每一次编译／复跑再各走一次包装器（换隔离锁目录，免得等自己持有的主锁）。 */
-if (!process.argv.includes('--under-lock')) {
-  say('RED: 本套件必须在加锁包装器下运行：node tooling/run-locked.mjs --ticket 554 --run-id t554-mutation -- node docs/skills/skill-calorie/t554-plan-editor-mutation.mjs --under-lock');
-  process.exit(2);
-}
+/* 本套件直调内层命令（自己 worktree 里跑，无需排队）。
+ * 套件内部的每一次编译／复跑都是直调。 */
 const backup = new Map(SRC.map((p) => [p, readFileSync(p)]));
 const baseSrc = new Map(SRC.map((p) => [p, sha(p)]));
 const baseDist = new Map(DIST.map((p) => [p, sha(p)]));
 for (const [p, buf] of backup) copyFileSync(p, join(OUT, 'backup', p.split(/[\\/]/).pop() + '.bak'));
 
 let innerSeq = 0;
-say(`== 加锁自证：已在包装器下运行（外层持主锁）；内层编译／复跑各再走一次包装器，隔离锁目录 ${INNER_LOCK} ==`);
-function runLocked(tag, args, extraEnv = {}) {
+say('== 内层编译／复跑直调（无锁；自己 worktree 里跑） ==');
+function runInner(tag, args, extraEnv = {}) {
   innerSeq += 1;
-  const runId = `t554-mut-${tag}-${innerSeq}`;
-  const argv = [WRAP, '--ticket', '554', '--run-id', runId, '--lock-dir', INNER_LOCK, '--', ...args];
+  const [, ...rest] = args;
   try {
-    return { code: 0, out: execFileSync(process.execPath, argv, { encoding: 'utf8', cwd: ROOT, env: { ...process.env, ...extraEnv }, maxBuffer: 32 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] }) || '' };
+    return { code: 0, out: execFileSync(process.execPath, rest, { encoding: 'utf8', cwd: ROOT, env: { ...process.env, ...extraEnv }, maxBuffer: 32 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] }) || '' };
   } catch (e) {
     return { code: (e && e.status) || 1, out: String((e && e.stdout) || '') + String((e && e.stderr) || '') };
   }
 }
 function build() {
-  return runLocked('build', [process.execPath, TSC, '-b']);
+  return runInner('build', [process.execPath, TSC, '-b']);
 }
 function emitChecked(file, marker, tries = 4) {
   for (let i = 0; i < tries; i++) {
@@ -82,7 +74,7 @@ function restoreDist(tries = 6) {
   return DIST.every((p) => sha(p) === baseDist.get(p));
 }
 function runGate(outDir) {
-  const r = runLocked('gate', [process.execPath, GATE, '--phase=gate'], { PE_OUT: outDir });
+  const r = runInner('gate', [process.execPath, GATE, '--phase=gate'], { PE_OUT: outDir });
   const out = r.out;
   const st = {};
   for (const m of out.matchAll(/^\s*(PASS|RED)\s+(\S+)\s/gm)) st[m[2]] = m[1];
