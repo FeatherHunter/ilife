@@ -11,7 +11,7 @@
  *      同一条命令文本被两条词命中时（若存在）产物逐字节相同。
  *
  * 跑法（**必须持锁**，否则会读到他席半写的 dist）：
- *   node tooling/run-locked.mjs --ticket 267 -- node docs/skills/skill-calorie/t267-review-probe.mjs
+ *   node docs/skills/skill-calorie/t267-review-probe.mjs
  * 真库零接触：库路径一律指向系统临时根下的夹具副本。
  */
 import { strict as assert } from 'node:assert';

@@ -16,7 +16,7 @@
  *  ③ 变异自证（字串级）：塞回任一窗来源脚注 ⇒ 判据必红；还原 ⇒ 必绿。
  *
  * 跑法：先编译再跑 `node --test packages/skill-calorie/test/560-weight-no-source.test.mjs`。
- * 会改工作区的动作一律走 `node tooling/run-locked.mjs --ticket 560 -- <命令>`。
+ * 会改工作区的动作一律走 `<命令>`。
  */
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';

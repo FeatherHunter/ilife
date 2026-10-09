@@ -1,7 +1,7 @@
 // #811 · 统计总览域用例（SM4-1～SM4-4）：真命令链 → 页族装配 → 三件判据。
 //
 // 跑法（仓根，经排队）：
-//   node tooling/run-locked.mjs --ticket 811 --max-wait-ms 600000 -- node --test packages/skill-home/test/stats-pages.test.mjs
+//   node --test packages/skill-home/test/stats-pages.test.mjs
 // 前提：`node node_modules/typescript/bin/tsc -b packages/skill-home`（页模块走 dist）。
 // 隔离：家目录指临时目录，不碰生产库与种子源。
 import { describe, it, before } from 'node:test';

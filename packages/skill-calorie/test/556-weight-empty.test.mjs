@@ -18,7 +18,7 @@
  *  ④ 两态出口不同（塌成一条即红）＋ 变异自证（删守卫必红、还原必绿，见证据件 §六）。
  *
  * 跑法：先编译再跑 `node --test packages/skill-calorie/test/556-weight-empty.test.mjs`。
- * 会改工作区的动作一律走 `node tooling/run-locked.mjs --ticket 556 -- <命令>`。
+ * 会改工作区的动作一律走 `<命令>`。
  */
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';

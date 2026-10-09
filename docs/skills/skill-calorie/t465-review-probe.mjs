@@ -2,7 +2,7 @@
 /**
  * t465 独立对抗审查 · 自设探针（**不 import 被审判据件**，读数全部本席自算／自跑）。
  *
- * 用法（全部走 `node tooling/run-locked.mjs --ticket 465 -- …`）：
+ * 用法（全部走 `…`）：
  *   node docs/skills/skill-calorie/t465-review-probe.mjs fact       # 只读：当刻产物事实面读数（真 dist ＋ 真 CLI 面）
  *   node docs/skills/skill-calorie/t465-review-probe.mjs mirror     # 搭隔离镜像（.scratch/t465-review/mirror）并全量编译
  *   node docs/skills/skill-calorie/t465-review-probe.mjs mut <id>   # 在镜像里改坏→增量编译→跑两张判据件

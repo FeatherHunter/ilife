@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /** t772 做菜域运行脚本（票 #772 验收命令本体）。
  *
- * 正例：`node tooling/run-locked.mjs --ticket 772 -- node docs/skills/skill-chef/t772-run-cooking.mjs`
+ * 正例：`node docs/skills/skill-chef/t772-run-cooking.mjs`
  *   → 5 卡逐卡走通（命令 exit=0 ＋ 过程型 HTML 落盘），打印 5 行 `卡 → exit=0 → 产物绝对路径` 且 `缺卡 0`，exit 0。
  *   产物落 `.scratch/t772/`（与副本库同目录，前例 `t768` 同形）；册子片段落
  *   `docs/skills/skill-chef/t772-册子片段.json`（5 行，供收口 A 合并，不碰共用册子）。

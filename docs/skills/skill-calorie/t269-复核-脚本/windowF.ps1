@@ -1,5 +1,5 @@
 # #269 收口复核席（本席）· 单一持锁窗口 F：先编译，后立刻跑（全部产物读数都在本窗口内取）。
-# 命令面：node tooling/run-locked.mjs --ticket 269r --poll-ms 2000 --max-wait-ms 900000 -- pwsh -File .scratch/t269r/windowF.ps1
+# 命令面：pwsh -File .scratch/t269r/windowF.ps1
 # 目录纪律：仓内只被读；本席的写只落 .scratch/t269r/**（编译产物 dist 的改写窗口首尾逐字节取回并断言 sha 相等）。
 $ErrorActionPreference = 'Continue'
 $ProgressPreference = 'SilentlyContinue'

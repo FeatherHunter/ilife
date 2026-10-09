@@ -11,7 +11,7 @@
  * 还原后**重编 ＋ 重签**（§5：只重编不重签会留陈旧产物），再对 sha256 与 `git diff` 两条复核。
  *
  * 跑法（必须持锁，且由外层包装器持锁后**直接调用**，别在本脚本里再抢锁）：
- *   node tooling/run-locked.mjs --ticket 272 -- node docs/skills/skill-calorie/t272-收口复核-变异.mjs
+ *   node docs/skills/skill-calorie/t272-收口复核-变异.mjs
  */
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';

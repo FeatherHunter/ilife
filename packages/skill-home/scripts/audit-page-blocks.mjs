@@ -18,8 +18,8 @@
  * 合同条目，不改本件。未补之前本件只守骨架不断，不谎报领域齐。
  *
  * 用法（仓根，经排队）：
- *   node tooling/run-locked.mjs --ticket 803 --max-wait-ms 600000 -- node packages/skill-home/scripts/audit-page-blocks.mjs --dir <样例产物目录> --blocks packages/skill-home/scripts/page-blocks.json [--json <路径>]
- *   node tooling/run-locked.mjs --ticket 866 --max-wait-ms 600000 -- node packages/skill-home/scripts/audit-page-blocks.mjs --dir <样例产物目录> --blocks packages/skill-home/scripts/page-blocks.json --manifest <产物目录>/manifest.json
+ *   node packages/skill-home/scripts/audit-page-blocks.mjs --dir <样例产物目录> --blocks packages/skill-home/scripts/page-blocks.json [--json <路径>]
+ *   node packages/skill-home/scripts/audit-page-blocks.mjs --dir <样例产物目录> --blocks packages/skill-home/scripts/page-blocks.json --manifest <产物目录>/manifest.json
  *     清单作用域（票 #866：只审清单 `rows[].file` 点名的产物文件，清单文件名相对
  *     产物目录解；墙与索引是生成器产物，走墙自检，不进本门）。清单读不动／`rows` 空／
  *     有行缺 `file` → exit 2；清单点名却没有文件 → 按 READ-FAIL 计，exit 1。

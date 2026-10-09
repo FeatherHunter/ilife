@@ -6,7 +6,7 @@
  * 修复：回执只带 `authReady` 布尔位（不带 openId 原串，隐私），页上两处改读
  * `report.authenticated`（见 `src/plan/probe.ts` 件头）。
  *
- * 跑法：`node tooling/run-locked.mjs --ticket 896 -- node --test packages/skill-schedule/test/t896-飞书探测自洽.test.mjs`
+ * 跑法：`node --test packages/skill-schedule/test/t896-飞书探测自洽.test.mjs`
  * （先 `node node_modules/typescript/bin/tsc -b packages/skill-schedule`）。
  *
  * 变异自证：把 `handlers.ts` 的 `authenticated: data.authReady === true` 改回

@@ -1,7 +1,7 @@
 // #691 · account 域**真出口探针**（evidence 件之一，可复跑）：4 条唤醒词逐条真跑 ＋ 转账双写与边界。
 //
 // 跑法（持锁，与仓规一致）：
-//   node tooling/run-locked.mjs --ticket 691 -- node docs/skills/skill-bill/t691-探针-真出口.mjs
+//   node docs/skills/skill-bill/t691-探针-真出口.mjs
 // 它只读 `packages/skill-bill/dist/`，产物与库都落临时目录（不改工作区）；末行打 `RESULT: n/m`。
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, statSync, writeFileSync } from 'node:fs';

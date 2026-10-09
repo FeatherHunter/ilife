@@ -2,7 +2,7 @@
 /** #272 整改 · 可复跑脚本（一跑到底：两态探针 → 回归 → 变异自证 → 别的族未受影响）。
  *
  * 跑法（**必须由外壳持锁**；本脚本内不再抢锁，与 `t272-收口复核-变异.mjs` 同一约定）：
- *   node tooling/run-locked.mjs --ticket 272 --max-wait-ms 900000 -- node docs/skills/skill-calorie/t272-整改-run.mjs
+ *   node docs/skills/skill-calorie/t272-整改-run.mjs
  * 只要读数不要锁的写法（自查用）：
  *   node docs/skills/skill-calorie/t272-整改-run.mjs
  *

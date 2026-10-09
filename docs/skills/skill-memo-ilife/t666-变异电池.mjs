@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * #666 · 变异电池（改坏必红／还原必绿，两轮）。
- * 跑法（经排队锁）：node tooling/run-locked.mjs --ticket 666 -- node docs/skills/skill-memo-ilife/t666-变异电池.mjs
+ * 跑法（经排队锁）：node docs/skills/skill-memo-ilife/t666-变异电池.mjs
  * 机理（沿 #665 两条实操教训）：
  *  1. Windows `copyFileSync` 保留源 mtime ⇒ 还原后必须把源码 mtime 拨到当下，否则 `tsc -b`
  *     判「已是最新」不重编、`dist` 里留着改坏那一版——还原后必断言产物里真有／真没有那段行。

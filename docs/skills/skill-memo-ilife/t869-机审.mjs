@@ -32,7 +32,7 @@
  *     缺件不判（本目录不是整批），只报「命中 N／名单 M」；一件都没命中即 exit 2。
  *
  * 用法（仓根）：
- *   node tooling/run-locked.mjs --ticket <票号> -- node docs/skills/skill-memo-ilife/t869-机审.mjs --dir <页群目录>
+ *   node docs/skills/skill-memo-ilife/t869-机审.mjs --dir <页群目录>
  *   node docs/skills/skill-memo-ilife/t869-机审.mjs --dir <不存在的目录>     → 反例，exit 2
  * 选项：`--dir <目录>`（必给）／`--json <落点>`（逐件读数落盘）／`--quiet`（不打逐行明细）。
  * 退出码：0 全绿；1 有命中或缺件；2 用法错。

@@ -25,9 +25,9 @@
  * t407 同口径）；标题写法位逐处在行里标出，不进红。
  *
  * 用法（仓根，经排队）：
- *   node tooling/run-locked.mjs --ticket 803 --max-wait-ms 600000 -- node packages/skill-home/scripts/audit-separators.mjs <a.html> [<b.html> …]
- *   node tooling/run-locked.mjs --ticket 803 --max-wait-ms 600000 -- node packages/skill-home/scripts/audit-separators.mjs --dir <样例产物目录> [--json <路径>] [--quiet]
- *   node tooling/run-locked.mjs --ticket 866 --max-wait-ms 600000 -- node packages/skill-home/scripts/audit-separators.mjs --dir <样例产物目录> --manifest <产物目录>/manifest.json
+ *   node packages/skill-home/scripts/audit-separators.mjs <a.html> [<b.html> …]
+ *   node packages/skill-home/scripts/audit-separators.mjs --dir <样例产物目录> [--json <路径>] [--quiet]
+ *   node packages/skill-home/scripts/audit-separators.mjs --dir <样例产物目录> --manifest <产物目录>/manifest.json
  *     清单作用域（票 #866：只审清单 `rows[].file` 点名的产物文件；墙与索引是生成器
  *     产物，走墙自检，不进本门）。清单读不动／`rows` 空／有行缺 `file` → exit 2；
  *     清单点名却没有文件 → 按 PARSE-FAIL 计，exit 1。`--manifest` 须与 `--dir` 同给，

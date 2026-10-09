@@ -1,7 +1,7 @@
 // #810 · 穿搭出行域 5 条真页面（真命令链＋真装配＋产物落盘＋清单）。
 //
 // 运行（仓根，一律经排队，只跑自己这份）：
-//   node tooling/run-locked.mjs --ticket 810 --max-wait-ms 600000 -- node --test packages/skill-home/test/outfit-scenes.test.mjs
+//   node --test packages/skill-home/test/outfit-scenes.test.mjs
 // 前提：`node node_modules/typescript/bin/tsc -b packages/skill-home`（页模块经 dist 进入本用例）。
 // 隔离：家目录指临时目录（同 cli.test.mjs 的家目录通道），生产库与生产产物目录一律不碰。
 // 产物：`.scratch/810/`（5 份真产物＋manifest.json，bytes 现算）；墙与链路页随后由

@@ -16,7 +16,7 @@
  * 库由**真交付出口**种出来（`calorie.workout.plan-set`），真库一个字节不动。
  * 跑法：先 `node node_modules/typescript/bin/tsc -b packages/skill-calorie`（本机没有 `node_modules/.bin`，别用 npx），
  *   再 `node --test packages/skill-calorie/test/946-写前预览页.test.mjs`；两条都经
- *   `node tooling/run-locked.mjs --ticket 946 -- <命令>`。
+ *   `<命令>`。
  */
 import { strict as assert } from 'node:assert';
 import { spawn, spawnSync } from 'node:child_process';

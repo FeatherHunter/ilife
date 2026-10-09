@@ -24,7 +24,7 @@
  *
  * 跑法：先 `node node_modules/typescript/bin/tsc -b packages/skill-calorie`，再
  * `node --test packages/skill-calorie/test/goal-result-290.test.mjs`（编译／测试经
- * `node tooling/run-locked.mjs --ticket 290 -- <命令>` 持锁）。
+ * `<命令>` 持锁）。
  */
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';

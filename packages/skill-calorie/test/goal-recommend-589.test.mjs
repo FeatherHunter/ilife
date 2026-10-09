@@ -23,8 +23,8 @@
  * `new Date().getMonth()`）；`CALORIE_TODAY=SEED_TODAY` 钉数据日。
  *
  * 跑法（编译／测试都要持锁）：先
- * `node tooling/run-locked.mjs --ticket 589 -- node node_modules/typescript/bin/tsc -b packages/skill-calorie --force`
- * 再 `node tooling/run-locked.mjs --ticket 589 -- node --test packages/skill-calorie/test/goal-recommend-589.test.mjs`。
+ * `node node_modules/typescript/bin/tsc -b packages/skill-calorie --force`
+ * 再 `node --test packages/skill-calorie/test/goal-recommend-589.test.mjs`。
  * 真库零触碰：库路径恒走 `mkdtemp` 的临时目录。
  */
 import { strict as assert } from 'node:assert';

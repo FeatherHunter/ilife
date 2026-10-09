@@ -9,7 +9,7 @@
  * 三轮合起来覆盖本窗四个搬走件的产出面；**面外页一条都不许红**（红了说明归因不成立）。
  *
  * 必须在**持锁窗口**里跑（脚本自己要重编）：
- *   node tooling/run-locked.mjs --ticket 716 -- node .scratch/t716/mutate.mjs
+ *   node .scratch/t716/mutate.mjs
  * 用法：node .scratch/t716/mutate.mjs [--rounds 3]
  */
 import { spawnSync } from 'node:child_process';
