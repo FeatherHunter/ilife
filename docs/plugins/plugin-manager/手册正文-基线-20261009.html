@@ -40,7 +40,7 @@ body{padding:20px;background:var(--stage,#15130f)}
 body.alpha{background:#f4f4f4;background-image:linear-gradient(45deg,#e2e2e2 25%,transparent 25%,transparent 75%,#e2e2e2 75%),linear-gradient(45deg,#e2e2e2 25%,transparent 25%,transparent 75%,#e2e2e2 75%);background-size:24px 24px;background-position:0 0,12px 12px}
 .scroll{max-width:var(--paper-w)}
 .scroll{margin-top:calc(calc(var(--paper-w)*.054) + 16px)}
-.book{min-height:min(calc(var(--paper-w)/1.41421356),80vh)}
+.book{min-height:min(calc(var(--book-w)*.76),72vw)}
 .book{perspective:6000px}
 .page.L{position:relative;padding-right:0}
 .page.R{padding-left:0}
@@ -48,7 +48,7 @@ body.alpha{background:#f4f4f4;background-image:linear-gradient(45deg,#e2e2e2 25%
 .book:before{display:none}
 .curlL,.curlR{display:none}
 .spine{width:0;position:relative;background:none}
-.spine:after{content:"";position:absolute;left:-1px;top:0;bottom:0;width:2px;margin:0;background-image:linear-gradient(to bottom,#f8e7ae,#d9ab3c),radial-gradient(circle .6px at 50% 50%,rgba(232,201,106,.75) 40%,rgba(232,201,106,0) 42%),radial-gradient(circle .5px at 50% 50%,rgba(248,231,174,.65) 40%,rgba(248,231,174,0) 42%);background-size:1px 100%,2px 9px,2px 13px;background-position:center top,center top,center 4px;background-repeat:no-repeat,repeat,repeat}
+.spine:after{content:"";position:absolute;left:-.5px;top:0;bottom:0;width:1px;margin:0;background:linear-gradient(to bottom,#8a7a5500 0%,#8a7a5599 12%,#8a7a5599 88%,#8a7a5500 100%)}
 .foreR,.foreB{display:none}
 .paper{margin:0;padding:0;box-shadow:none}
 .paper{background-image:none}
@@ -115,7 +115,7 @@ body.bare .note{display:none}
 .pg .lead{font-size:1.04em;line-height:2;margin:.2em 0 .1em;color:#3a2f1e}
 .pg .ol{margin:.3em 0 0;padding:0;list-style:none}
 .pg .ol li{display:flex;gap:.75em;margin:.62em 0;font-size:1em;line-height:1.95}
-.pg .ol .n{flex:none;width:1.55em;height:1.55em;border-radius:50%;border:1px solid #8a6a15;background:linear-gradient(#f8e7ae,#d9ab3c);color:#3a2607;display:flex;align-items:center;justify-content:center;font-size:.82em;font-weight:700;margin-top:.22em;box-shadow:inset 0 1px 0 #fffbe8,0 1px 3px #00000044}
+.pg .ol .n{flex:none;width:1.55em;height:1.55em;border-radius:50%;border:1px solid #c9a227;color:#8a6a15;display:flex;align-items:center;justify-content:center;font-size:.82em;margin-top:.22em}
 .pg .frag{display:inline-flex;align-items:center;gap:.5em;margin-top:auto;font-family:ui-monospace,Consolas,monospace;font-size:.82em;color:#3a2607;
 background:linear-gradient(#f4ecd8,#e6d9b8);border:1px solid #8a7a55;border-radius:.4em;padding:.4em .8em;cursor:pointer;align-self:flex-start;
 box-shadow:inset 0 1px 0 #fffef8,0 2px 0 #8a7a55;transition:transform .14s cubic-bezier(.2,.9,.25,1.5),box-shadow .14s ease}
@@ -124,8 +124,8 @@ box-shadow:inset 0 1px 0 #fffef8,0 2px 0 #8a7a55;transition:transform .14s cubic
 .pg .frag em{font-style:normal;color:#8a7550;font-size:.92em}
 .pg .shot{display:flex;align-items:center;gap:.7em;margin-top:.9em}
 .pg .thumb{width:4.4em;height:2.8em;border-radius:.3em;border:1px solid #8a7a55;background:linear-gradient(#f7f1dd,#e6d9bc);cursor:zoom-in;position:relative;overflow:hidden;transition:transform .2s cubic-bezier(.2,.9,.25,1.5)}
-.pg .thumb img{width:100%;height:100%;object-fit:cover;display:block}
-.lightbox img{width:100%;height:calc(100% - 2.2em);object-fit:contain;background:#fffdf6;border:1px solid #ddd0b0;border-radius:.4em}
+.pg .thumb:before{content:"";position:absolute;left:.4em;top:.45em;right:1.4em;height:.32em;background:#c9b98f;border-radius:1em}
+.pg .thumb:after{content:"";position:absolute;left:.4em;top:1.05em;right:.8em;height:.32em;background:#d9cbb0;border-radius:1em}
 .pg .thumb:hover{transform:scale(1.05) rotate(-1deg)}
 .pg .shot span{font-size:.76em;color:#8a7550}
 .lightbox{position:absolute;inset:5% 6%;border-radius:.5em;background:#fbf6e8;border:1px solid #c9a227aa;box-shadow:0 22px 44px #00000055;z-index:30;padding:1em 1.2em;animation:pop .28s cubic-bezier(.2,1.3,.3,1)}
@@ -147,8 +147,7 @@ box-shadow:0 10px 22px #00000033;font-style:normal;font-size:.78em;line-height:1
 .pg .todo .t{letter-spacing:.3em;font-size:1.05em}
 .pg .todo .s{display:block;font-size:.72em;letter-spacing:.14em;margin-top:.7em;color:#b8ab90}
 .pg .toc{margin:.6em 0 0;padding:0;list-style:none}
-.pg .toc li{display:flex;align-items:center;gap:.9em;border-bottom:1px solid #ddd0b0;padding:.8em .3em;font-size:1.15em;cursor:pointer}
-.pg .toc li:hover{background:#f4ecd8}
+.pg .toc li{display:flex;align-items:center;gap:.9em;border-bottom:1px solid #ddd0b0;padding:.8em 0;font-size:1.15em}
 .pg .toc .no{flex:none;width:2em;height:2em;border-radius:.25em;background:linear-gradient(#e6d9bc,#c9b98f);border:1px solid #6b5636;display:flex;align-items:center;justify-content:center;font-size:.85em;font-weight:700;color:#4a3a22}
 .pg .toc .pg-no{margin-left:auto;color:#8a7550;font-size:.9em}
 .pg .toc li.todo-row{color:#8a8578}
@@ -164,17 +163,6 @@ box-shadow:0 10px 22px #00000033;font-style:normal;font-size:.78em;line-height:1
 .tabpop .tp-sub{margin-top:.45em}
 .tabpop .tp-go{margin-top:.5em;padding-top:.45em;border-top:1px solid #c9b98f88;font-size:1em;font-weight:700;color:#4a3a22;letter-spacing:.08em}
 .tabpop .tp-lock{margin-left:.3em}
-.pg .panel{background:#151310;border:1px solid #3a352c;border-radius:.5em;padding:.9em 1em;color:#c9c2b4;font-size:.86em;pointer-events:none;margin-top:.9em}
-.pg .panel .p-title b{color:#f2ede2;font-size:1.15em}
-.pg .panel .p-mod{display:inline-block;margin-left:.6em;font-size:.78em;color:#ffd9a0;border:1px solid #b26a1b;border-radius:.3em;padding:.1em .6em;vertical-align:middle}
-.pg .panel .p-desc{color:#8f8672;margin:.4em 0 .7em}
-.pg .panel .p-input{background:#0c0a08;border:1px solid #3a352c;border-radius:.35em;padding:.45em .7em;color:#e8e2d4;font-family:ui-monospace,Consolas,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:.6em}
-.pg .panel .p-btns{display:flex;gap:.5em;margin-bottom:.7em}
-.pg .panel .p-btn{border:1px solid #4a4438;border-radius:.35em;padding:.3em .9em;color:#a89f8d;background:#24211c;cursor:default}
-.pg .panel .p-bar{display:flex;gap:.5em;align-items:center;border-top:1px solid #2e2a22;padding-top:.7em}
-.pg .panel .p-note{margin-left:auto;color:#6e675c;font-size:.85em}
-.pg .dbadge{display:inline-block;background:#1c1913;color:#f7f4ec;border:1px solid #1c1913;border-radius:.28em;padding:.1em .55em;font-size:.86em;margin:0 .15em;white-space:nowrap;letter-spacing:.06em;box-shadow:inset 0 1px 0 #ffffff22}
-.pg .dbadge::before{content:"";display:inline-block;width:1.15em;height:1.15em;margin-right:.4em;vertical-align:-.22em;background:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAB1klEQVR4nO2avW7DMAyExYMXAxnz/k/YsUDGFh4MFIYjk9TRplN+W1L++RSppJLWiqIoiqIobsLr++uHGQ/tn4swtSSFz4+njPhfJsDrTVHrA2mK1jx8FGIxjlgBy8Pv5feKt8aavImzsNbmFRIW48xo69zayWhABtrVs54nGnt4EzFh51viaWOiJcFS9FEcre38eAqy7fnRXsEKtMnP5Iw6VjFxZlJmg8UCLTFRIvz1Ry/RJ4qw9UO7AQwRFts9+6ndhEUE66pr7EWrbpZtou30tGJNWscsgniGnx6T19Hac7PjsRYAjCDvDhiLf+91JGAGG7mc2M4CTEF7YK8Yb2Jr8j1YImhBRFDPltAevmwQGXz0vs8TxwpaMGff+FrzYe9N9v/4K6+9j0BLCOt2SIOsCc9YteiH8tSMrF+CfOwWmINE8MZFzznLBBgJjgzusBVG4oER5M7nATRGmbfCqJAS0ZJaBpoRcRmfIliMPcUeNTWs212aAHPQijFFYJ4f8CTwrupVE18P6f1x5Pc9R76s3oN+CI5+3WzxYTZgXiEk6xBzlgiiNczcC4R/ArL8dihibJdPmeu9yIjzJ1ydCSvQ1S2tF4kMvhUlywRYFEVRFEWxKPALURpUQsGttUcAAAAASUVORK5CYII=") no-repeat center/contain}
 #bk{display:none}
 </style>
 </head><body>
@@ -196,7 +184,7 @@ box-shadow:0 10px 22px #00000033;font-style:normal;font-size:.78em;line-height:1
   <button class='brass' id='next' type='button'>下一页 ›</button>
 </div>
 <script>
-function openBook(){var b=document.getElementById('bk');b.style.display='block';if(window.__freezeBook)window.__freezeBook();var sp=document.getElementById('sp');sp.classList.remove('bookOpen');void sp.offsetWidth;sp.classList.add('bookOpen');}
+function openBook(){var b=document.getElementById('bk');b.style.display='block';var sp=document.getElementById('sp');sp.classList.remove('bookOpen');void sp.offsetWidth;sp.classList.add('bookOpen');}
 </script>
 <script type="module">
 // 手册书排版（票 #1193 → 施工 #1195）：场景表 → 页／跨页／纸／书签，一次算清。
@@ -273,7 +261,7 @@ export function planManual(scenes, spread) {
 }
 //# sourceMappingURL=manual-plan.js.map
 
-var SCENES = [{"key":"contents","title":"目录","state":"written","kind":"contents","kicker":"这本手册里有什么"},{"key":"basic","title":"基本使用：对 DSH 说什么 help","state":"written","name":"基本使用","kicker":"给 DSH 一句话，换回一份手册","lead":"","steps":["对 <span class=\"dbadge\">DSH</span> 说「技能名 help」，比如「饼干记账 help」。","打开 <span class=\"dbadge\">DSH</span> 落下的 help.html 文件（看<span class=\"po\">回执<i>DSH 回复里那句结果说明</i></span>里那一句）。","在文件里找到自己想用的场景。","点复制按钮，把 <span class=\"po\">prompt<i>手册里让你复制的那句话，原样发给 DSH 就行</i></span>提示词模板复制出来。","把复制出来的模板发给 <span class=\"dbadge\">DSH</span>。","<span class=\"dbadge\">DSH</span> 执行成功，把结果返回给你。"],"tags":[],"apps":[],"frag":"","shot":false,"warn":"没收到文件，看回执里失败那一句。"},{"key":"datadir","title":"数据目录：你专属的数据存放位置","state":"written","name":"数据目录","kicker":"你的数据你做主","lead":"数据目录就是你专属的数据存放位置。","steps":["点 <span class=\"ctag\">配置面板 › 数据目录</span>蓝底那一行进去；它不在顶层，要先进这一区。","按你要用的技能，把数据存放在哪个目录下设置好。","点保存。"],"tags":["配置面板 › 数据目录"],"apps":[],"frag":"","shot":false,"panelStatic":true,"note":"备注：我们不对你数据目录里的数据库文件加密，由你自己保证数据安全——避免因密码遗忘导致的数据丢失与损坏。","warn":"目录填错或没权限，db 就落不下去；面板告警只看 message 那一句，按它说的改。"},{"key":"im","title":"增强体验：装 IM 插件手机远程用","state":"written","name":"增强体验","kicker":"手机远程使用全部功能","lead":"利用 IM 插件搭配手机App远程使用：","steps":["在 DSH 里装上 IM 插件，比如 <span class=\"capp\">dsh-im</span> <span class=\"capp\">dsh-im-companion</span> 这一对。","绑好<span class=\"po\">机器人<i>飞书里的机器人，插件靠它把消息发给你</i></span>，推荐飞书等对 HTML 支持好的App。","在IM如飞书里发一句「技能名 help」，比如「饼干记账 help」。","DSH 通过 IM 插件把 help.html 文件发回来。","复制出想用场景的 prompt 提示词模板，通过 IM 插件发给 <span class=\"dbadge\">DSH</span>。","<span class=\"dbadge\">DSH</span> 执行完，把结果通过 IM 插件发回到你手机上。"],"tags":[],"apps":["dsh-im","dsh-im-companion"],"frag":"","shot":false,"warn":"收不到消息，先看绑定还在不在，再看插件装没装上。"},{"key":"upcoming","title":"后续场景，待补充","state":"pending","items":["待定 4","待定 5","待定 6","待定 7","待定 8"]}];
+var SCENES = [{"key":"contents","title":"目录","state":"written","kind":"contents","kicker":"这本手册里有什么"},{"key":"basic","title":"基本使用：对 AI 说 xxx help","state":"written","name":"基本使用","kicker":"给 AI 一句话，换回一份手册","lead":"跟 AI 说一句「〈技能名〉 HELP」，比如「饼干记账 HELP」。","steps":["HELP 到：饼干记账_HELP_….html，打开找到对得上的场景。","把 <span class=\"po\">prompt<i>手册里让你复制的那句话，原样发给 AI 就行</i></span> 复制出来发给 AI，等它执行。"],"tags":[],"apps":[],"frag":"饼干记账 HELP","shot":false,"warn":"没收到文件，看 <span class=\"po\">回执<i>AI 回复里那句结果说明，失败原因写在里面</i></span> 里失败那一句；场景对不上，换个关键词再查一次 HELP。"},{"key":"datadir","title":"数据目录：自己备份，不加密","state":"written","name":"数据目录","kicker":"数据放哪儿，你自己定","lead":"这个技能的 db 文件就落在你填的位置，备份自己做。","steps":["到配置面板填好位置；找不到入口就照下面那张图点。","我们不加密——密码一旦忘了，一手资料就永远找不回来。"],"tags":["配置面板 › 数据目录"],"apps":[],"frag":"","shot":true,"warn":"目录填错或没权限，db 就落不下去；面板告警只看 message 那一句，按它说的改。"},{"key":"im","title":"增强体验：装 IM 插件绑飞书","state":"written","name":"增强体验","kicker":"让结果直接飞到你手机里","lead":"装好两个插件、绑好 bot，HELP 与结果 HTML 直接在飞书 App 里看。","steps":["装上两个插件，绑好 <span class=\"po\">bot<i>飞书里的机器人，插件靠它把消息发给你</i></span>，推荐飞书机器人。","配好后不用回电脑，手机上就能收手册与结果。"],"tags":[],"apps":["dsh-im","dsh-im-companion"],"frag":"","shot":false,"warn":"收不到消息，先看绑定还在不在，再看插件装没装上。"},{"key":"imflow","title":"增强流程：IM 全流程 8 步","state":"written","name":"增强流程","kicker":"在飞书里发一句话，结果也回到飞书","lead":"整条链路都在飞书里走完，中间不用切到别的地方。","steps":["飞书里发「xxx help」，HELP HTML 生成后经飞书发回。","打开找到场景，把 prompt 复制出来发给 AI。","AI 执行完，结果 HTML 再经飞书发回来。"],"tags":[],"apps":["dsh-im","dsh-im-companion"],"frag":"xxx help","shot":false,"warn":"卡在哪一步，就查那一步的回执；HELP 的事回场景 1，绑定的事回场景 3。"},{"key":"upcoming","title":"后续场景，待补充","state":"pending","items":["待定 6","待定 7","待定 8","待定 9"]}];
 var sp = 0, busy = false, jumpTo = -1;
 var layer = document.getElementById('tabs');
 var prev = document.getElementById('prev'), next = document.getElementById('next');
@@ -286,7 +274,7 @@ function tocBody(ec) {
   var ps = allPages(), rows = '';
   for (var i = 0; i < ps.length; i++) {
     var p = ps[i], s = sceneOf(p), pend = p.state === 'pending';
-    rows += "<li" + (pend ? " class='todo-row'" : "") + " data-jump='" + (pend ? ps[ps.length - 1].page : p.page) + "'><span class='no'>" + p.page + "</span><span>" + esc(s && s.kind === 'contents' ? '目录' : p.title) + "</span><span class='pg-no'>" + (pend ? '待补充' : '第 ' + p.page + ' 页') + "</span></li>";
+    rows += "<li" + (pend ? " class='todo-row'" : "") + "><span class='no'>" + p.page + "</span><span>" + esc(s && s.kind === 'contents' ? '目录' : p.title) + "</span><span class='pg-no'>" + (pend ? '待补充' : '第 ' + p.page + ' 页') + "</span></li>";
   }
   return "<div class='pg" + ec + "'><h2>目录</h2><div class='kick'>这本手册里有什么</div><div class='hr'></div><ul class='toc'>" + rows + "</ul></div>";
 }
@@ -299,26 +287,29 @@ function switchHtml(cur) {
   }
   return "<div class='switch' style='display:flex;gap:2px;background:#efe3c6;border:1px solid #ddd0b0;border-radius:6px;padding:2px;margin-bottom:10px;align-self:flex-start'><i style='position:absolute'></i>" + h + "</div>";
 }
-
+function ctlHtml(s) {
+  var h = '';
+  for (var i = 0; i < (s.tags || []).length; i++) h += "<span class='ctag'>" + esc(s.tags[i]) + "</span>";
+  for (var j = 0; j < (s.apps || []).length; j++) h += "<span class='capp'>" + esc(s.apps[j]) + "</span>";
+  return h === '' ? '' : "<div class='ctl'>用到的</div><div>" + h + "</div><div class='hr'></div>";
+}
 function stepsHtml(s, page) {
   var h = '';
   for (var i = 0; i < s.steps.length; i++) h += "<li><span class='n'>" + (i + 1) + "</span><span>" + s.steps[i] + "</span></li>";
   return "<ul class='ol'>" + h + "</ul>";
 }
-function shotHtml(src) { return "<div class='shot'><div class='thumb' data-shot='" + src + "'><img src='" + src + "' alt='配置面板数据目录示意'></div><span>点开看整张图</span></div>"; }
+function shotHtml() { return "<div class='shot'><div class='thumb' data-shot></div><span>点开看整张图</span></div>"; }
 function fragHtml(s) { return s.frag ? "<div class='frag' data-copy='" + esc(s.frag) + "'>" + esc(s.frag) + "<em>点一下复制</em></div>" : ''; }
 function pageBody(page, enter) {
   var ec = enter === false ? '' : ' enter';
   var s = sceneOf(page);
   if (!s) return '';
   if (s.kind === 'contents') return tocBody(ec);
-  if (s.state === 'pending') { var rows = ''; var items = s.items || []; for (var k = 0; k < items.length; k++) { var nb = String(items[k]).replace(/\D/g, '') || String(k + 1); rows += "<div class='bar todo'><span class='num'>" + esc(nb) + "</span><span>后续场景，待补充</span><span class='lock'>🔒</span></div>"; } return "<div class='pg" + ec + "'><h2>后续场景</h2><div class='hr'></div>" + rows + "</div>"; }
+  if (s.state === 'pending') { var rows = ''; var items = s.items || []; for (var k = 0; k < items.length; k++) { var nb = String(items[k]).replace(/\D/g, '') || String(k + 1); rows += "<div class='bar todo'><span class='num'>" + esc(nb) + "</span><span>后续场景，待补充</span><span class='lock'>🔒</span></div>"; } return "<div class='pg" + ec + "'><h2>后续场景</h2><div class='kick'>新增场景按这个样子加</div><div class='hr'></div>" + rows + "<p class='small'>场景可增减，锁定位留给以后。</p></div>"; }
   return "<div class='pg" + ec + "'>" + "<h2>" + esc(s.title) + "</h2><div class='kick'>" + esc(s.kicker) + "</div><div class='hr'></div>" +
-    (s.lead ? "<p class='lead'>" + s.lead + "</p>" : '') + stepsHtml(s, page) + shotHtmlIf(s) + fragHtml(s) + noteHtml(s) + "</div>";
+    ctlHtml(s) + "<p class='lead'>" + esc(s.lead) + "</p>" + stepsHtml(s, page) + shotHtmlIf(s) + fragHtml(s) + "</div>";
 }
-function panelHtml() { return "<div class='panel'><div class='p-title'><b>数据目录</b><span class='p-mod'>可改</span></div><div class='p-desc'>库文件与备份的根目录。留空 = 用默认目录。</div><div class='p-input'>D:\\2Study\\StudyNotes\\.db</div><div class='p-btns'><span class='p-btn'>浏览文件夹</span><span class='p-btn'>复制</span></div><div class='p-bar'><span class='p-btn'>保存</span><span class='p-btn'>重置为默认</span><span class='p-btn'>重新读取</span><span class='p-note'>没有未保存的改动</span></div></div>"; }
-function shotHtmlIf(s) { if (s.panelStatic) return panelHtml(); return s.shot ? shotHtml(s.shot) : ''; }
-function noteHtml(s) { return s.note ? "<div class='tail'>" + s.note + "</div>" : ''; }
+function shotHtmlIf(s) { return s.shot ? shotHtml() : ''; }
 function applyTabGeometry(plan) {
   var r = document.documentElement.style;
   r.setProperty('--tab-w', plan.tab.width + '%');
@@ -402,31 +393,6 @@ function render(enter) {
   if (prev) prev.disabled = (plan.spread === 0);
   if (next) next.disabled = (plan.spread === plan.spreadCount - 1);
 }
-var FIXED_H = -1;
-function freezeHeight() {
-  var book = document.getElementById('sp');
-  if (FIXED_H >= 0) { book.style.height = FIXED_H + 'px'; book.style.minHeight = FIXED_H + 'px'; return FIXED_H; }
-  var keep = sp, maxH = 0, counts = planManual(SCENES, 0).spreadCount, i, h;
-  book.style.visibility = 'hidden';
-  book.style.minHeight = '0px';
-  book.style.height = 'auto';
-  for (i = 0; i < counts; i++) {
-    sp = i; render(false);
-    h = Math.max(document.getElementById('pl').scrollHeight, document.getElementById('pr').scrollHeight);
-    if (h > maxH) maxH = h;
-  }
-  sp = keep; render(false);
-  book.style.visibility = '';
-  var cap = Math.min(book.clientWidth / 1.41421356, window.innerHeight * 0.8);
-  FIXED_H = Math.max(1, Math.min(maxH, Math.floor(cap)));
-  book.style.height = FIXED_H + 'px';
-  book.style.minHeight = FIXED_H + 'px';
-  window.__bookStats = { fixed: FIXED_H, tallest: maxH, cap: Math.floor(cap), spreads: counts };
-  if (window.console) console.log('[manual] 书高冻住', window.__bookStats);
-  return FIXED_H;
-}
-window.__freezeBook = freezeHeight;
-window.addEventListener('resize', function () { FIXED_H = -1; var book = document.getElementById('sp'); if (book) { book.style.height = ''; book.style.minHeight = ''; } });
 function faceTab(pg, side, off) { return "<span class='tab on' style='" + side + ":" + (off * 2) + "%'>" + pg + "</span>"; }
 function pageByNumber(plan, n) { for (var i = 0; i < plan.pages.length; i++) if (plan.pages[i].page === n) return plan.pages[i]; return null; }
 function turnLeaf(dir) {
@@ -443,7 +409,7 @@ function turnLeaf(dir) {
   var preSide = dir > 0 ? 'right' : 'left', prePage = null;
   for (var pi = 0; pi < target.pages.length; pi++) if (target.pages[pi].side === preSide) prePage = target.pages[pi];
   var preEl = document.getElementById(dir > 0 ? 'pr' : 'pl');
-  if (preEl) { if (prePage) { preEl.innerHTML = pageBody(prePage, false); wire(preEl); dimSwitcher(preEl); } else { preEl.innerHTML = ''; } }
+  if (prePage && preEl) { preEl.innerHTML = pageBody(prePage, false); wire(preEl); dimSwitcher(preEl); }
   leaf.innerHTML = "<div class='face front'>" + (fp ? pageBody(fp, false) : '') + faceTab(facing, dir > 0 ? 'left' : 'right', sheet.tabOffset) + "</div>" +
                    "<div class='face back'>" + (bp ? pageBody(bp, false) : '') + faceTab(other, dir > 0 ? 'right' : 'left', sheet.tabOffset) + "</div>";
   var hidden = document.getElementById('sh' + k);
@@ -460,16 +426,6 @@ if (prev) prev.addEventListener('click', function () { if (sp > 0) turnLeaf(-1);
 if (next) next.addEventListener('click', function () { if (sp < planManual(SCENES, sp).spreadCount - 1) turnLeaf(1); });
 function wire(page) {
   if (!page || !page.querySelector) return;
-  var jumps = page.querySelectorAll('[data-jump]');
-  for (var ji = 0; ji < jumps.length; ji++) (function (j) {
-    j.addEventListener('click', function () {
-      var pg = parseInt(j.getAttribute('data-jump'), 10);
-      if (!pg || busy) return;
-      var target = Math.floor((pg - 1) / 2);
-      if (target === sp) return;
-      sp = target; render();
-    });
-  })(jumps[ji]);
   var sw = page.querySelector('.switch');
   if (sw) {
     var tabs = sw.querySelectorAll('b'), ind = sw.querySelector('i');
@@ -493,7 +449,7 @@ function wire(page) {
   if (thumb) thumb.addEventListener('click', function () {
     var box = document.createElement('div');
     box.className = 'lightbox';
-    box.innerHTML = "<b>配置面板 › 数据目录</b><img src='" + thumb.getAttribute('data-shot') + "' alt='配置面板数据目录大图'><span class='x'>✕ 收起</span>";
+    box.innerHTML = "<b>配置面板 › 数据目录</b><div class='mock'><i></i><i></i><i></i></div><span class='x'>✕ 收起</span>";
     page.appendChild(box);
     box.addEventListener('click', function (e) { if (e.target === box || e.target.className === 'x') box.remove(); });
   });
