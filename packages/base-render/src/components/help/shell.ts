@@ -20,13 +20,14 @@ import { fillTemplate } from '../../template.js';
  * → **一律走 `fillTemplate`**（共享资产与 JSON 载荷由填充器注入，help模板不得自填）。
  *
  * `strict` 原样透传给 `fillTemplate`（契约 §3.5.3「透传」）；`template` 覆盖时按调用方模板填充。
+ * `language` 原样透传给内置模板（缺席＝中文；`template` 覆盖时调用方自理 `lang`）。
  */
 export function renderHelpShell(input: HelpShellInput): FillTemplateOutput {
   const source = input ?? ({} as HelpShellInput);
   const sceneData: unknown = source.sceneData;
   validateSceneData(sceneData);
 
-  const template = typeof source.template === 'string' ? source.template : buildShellTemplate(sceneData);
+  const template = typeof source.template === 'string' ? source.template : buildShellTemplate(sceneData, source.language);
   return fillTemplate({
     template,
     assets: source.assets,
