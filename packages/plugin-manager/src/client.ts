@@ -609,7 +609,9 @@ function ManualBookShell(props: { scenes: ManualScene[]; renderPage?: (page: { p
 function PanelActions(): React.ReactElement {
   return React.createElement(
     'div',
-    { style: S.headActions },
+    // 2026-10-10（用户：右上角挤）：给外链两枚图标 8px 的左侧间隙——「检查更新」是有边框的重控件、
+    // ★／💬 是没有底色的轻图标，两组之间要一眼分得开；星与气泡彼此仍是 2px（同一组内部）。
+    { style: { ...S.headActions, marginLeft: 8 } },
     PANEL_LINKS.map((link) =>
       React.createElement(
         'a',
@@ -676,9 +678,14 @@ declare const __LIFE_PACK_VERSION__: string;
 /** 版本胶囊那一行字：只在这里拼一次，屏上与用例读的是同一串。 */
 const MANAGER_VERSION_TEXT = MANAGER_PLUGIN + ' · ' + __LIFE_PACK_VERSION__;
 
-/** 右上角那本书占的宽度（书 34px ＋ 按钮两侧内边各 6px）：前两行共用这段右边距，
- *  好让书横跨两行而不压住「检查更新」「体检一次」那两枚右端控件。改书宽时这里跟着改。 */
-const MANUAL_ENTRY_RESERVE = 46;
+/** 右上角那本书占的那条竖带宽度：书 34px ＋ 按钮两侧内边各 6px（＝46px 的盒子）＋ 与卡片右沿
+ *  留 8px 呼吸 ＋ 与右边那排控件留 10px 间隙 ⇒ 64px。前两行共用这段右边距，于是「检查更新／星／
+ *  气泡」和「体检一次」的右端落在**同一条竖线**上，谁也不会撞到书的左下角。
+ *  改书宽时这里跟着改（书宽 34 ＋ 12 ＋ 18 ＝ 留白，就是这条式子）。 */
+const MANUAL_ENTRY_RESERVE = 64;
+
+/** 书盒子离卡片右沿的距离（上面那 8px 呼吸位）。 */
+const MANUAL_ENTRY_INSET = 8;
 
 /** 爱生活面板：总设置区 ＋ 检查更新（七家）＋ 爱生活页签条（slot 驱动）＋ 技能设置页投影/缺席卡。 */
 function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallFace | null }): React.ReactElement {
@@ -840,7 +847,7 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
     // 右侧区域展示出来」）。第一版那种负边距会把这枚带阴影的书顶裁掉，这里不再用。
     React.createElement(
       'span',
-      { style: { position: 'absolute', top: 2, right: 0, display: 'inline-flex', zIndex: 2 } },
+      { style: { position: 'absolute', top: 2, right: MANUAL_ENTRY_INSET, display: 'inline-flex', zIndex: 2 } },
       React.createElement('style', null, manualEntryCss()),
       React.createElement(ManualEntryButton, { onOpen: () => { setManualOpen(true); } }),
       // 书体挂在同一个弹层里（#1240：弹层从空壳改成真书；定位与外观在 manualEntryCss 的
