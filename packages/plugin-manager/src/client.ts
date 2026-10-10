@@ -454,6 +454,90 @@ function PanelLinkIcon(props: { readonly filled: boolean; readonly path: string 
   );
 }
 
+/** 掀页动效的样式（逐条取自冻结原型 `.leaf` 一族；选择器加前缀，免得与宿主类名撞）。
+ *
+ * 三条不动：660ms cubic-bezier(.45,.05,.55,.95) 的 3D 掀页、`.face:after` 的明暗遮罩、
+ * 反面 `rotateY(180deg)`；叶宽 50%，转轴落在中缝（右叶转轴在左缘、左叶在右缘）。 */
+function manualTurnCss(): string {
+  return [
+    '.ilife-manual-leaf{position:absolute;top:0;bottom:0;width:50%;z-index:10;pointer-events:none;transform-style:preserve-3d;will-change:transform;backface-visibility:hidden}',
+    '.ilife-manual-leaf-r{right:0;transform-origin:left center}',
+    '.ilife-manual-leaf-l{left:0;transform-origin:right center}',
+    '.ilife-manual-leaf .face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:visible;background:#ece0c2;padding:0;font-size:calc(var(--paper-w) * .015)}',
+    '.ilife-manual-leaf .face.back{transform:rotateY(180deg)}',
+    '.ilife-manual-leaf .face:after{content:"";position:absolute;inset:0;background:#2a1c0c;opacity:0;pointer-events:none}',
+    '.ilife-manual-leaf .face .tab{bottom:100%}',
+    '.ilife-manual-leaf.to-left .face:after,.ilife-manual-leaf.to-right .face:after{animation:ilifeShadeTurn .66s ease-in-out both}',
+    '.ilife-manual-leaf.to-left{animation:ilifeToLeft .66s cubic-bezier(.45,.05,.55,.95) both}',
+    '.ilife-manual-leaf.to-right{animation:ilifeToRight .66s cubic-bezier(.45,.05,.55,.95) both}',
+    '@keyframes ilifeToLeft{0%{transform:rotateY(0deg)}100%{transform:rotateY(-180deg)}}',
+    '@keyframes ilifeToRight{0%{transform:rotateY(0deg)}100%{transform:rotateY(180deg)}}',
+    '@keyframes ilifeShadeTurn{0%{opacity:0}50%{opacity:.38}100%{opacity:0}}',
+    '@media (prefers-reduced-motion:reduce){.ilife-manual-leaf.to-left,.ilife-manual-leaf.to-right,.ilife-manual-leaf.to-left .face:after,.ilife-manual-leaf.to-right .face:after{animation:none}}',
+  ].join('');
+}
+
+/** 掀页时长（原型 660ms）；动画缺席时的兜底落定比它多一点。 */
+const TURN_MS = 660;
+
+/** 一趟掀页：翻走哪张纸（sheet）、从哪个跨页到哪个跨页、朝哪边翻。 */
+interface ManualTurn {
+  readonly dir: 1 | -1;
+  readonly from: number;
+  readonly to: number;
+  readonly sheet: number;
+}
+
+/** 书签的样子（纸层里的与纸面上的同一份口径；只差挂在哪儿：`sideValue`／`bottom` 由调用方给）。 */
+function tabFaceStyle(
+  tab: { width: number; height: number; font: number; radius: number },
+  on: boolean,
+  side: 'left' | 'right',
+  sideValue: string,
+  bottom: number | string,
+): React.CSSProperties {
+  return {
+    position: 'absolute',
+    width: 'calc(var(--paper-w) * ' + tab.width / 100 + ')',
+    height: 'calc(var(--paper-w) * ' + tab.height / 100 + ')',
+    paddingTop: 'calc(var(--paper-w) * .008)',
+    boxSizing: 'border-box',
+    display: 'flex',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    fontFamily: "Georgia,'Times New Roman',serif",
+    fontSize: 'calc(var(--paper-w) * ' + tab.font / 100 + ')',
+    lineHeight: 1,
+    color: on ? '#3a2607' : '#4a3a22',
+    background: on ? 'linear-gradient(#f8e7ae,#d9ab3c)' : 'linear-gradient(#f2e8cc,#d3c098)',
+    border: '1px solid #8a7a55',
+    borderBottom: 'none',
+    borderRadius: 'calc(var(--paper-w) * ' + tab.radius / 100 + ') calc(var(--paper-w) * ' + tab.radius / 100 + ') 0 0',
+    boxShadow: on ? '0 -2px 6px #00000088,inset 0 1px 0 #fffbe8' : '0 -2px 5px #00000055,inset 0 1px 0 #fffdf3',
+    bottom,
+    [side]: sideValue,
+  } as React.CSSProperties;
+}
+
+/** 纸上的那枚签（原型 `faceTab`）：叶只有半本书宽，横向偏移按两倍算，签骑在纸面之上。 */
+function leafTab(
+  pg: number,
+  side: 'left' | 'right',
+  offset: number,
+  tab: { width: number; height: number; font: number; radius: number },
+): React.ReactElement {
+  return React.createElement(
+    'span',
+    {
+      'data-ilife-manual': 'tab',
+      'data-ilife-leaf-tab': String(pg),
+      'aria-hidden': 'true',
+      style: tabFaceStyle(tab, true, side, offset * 2 + '%', '100%'),
+    },
+    String(pg),
+  );
+}
+
 /** 书签（一枚纸一枚：点签直达，悬停出卡；几何与在不在读的都是 plan 那份结果）。 */
 function tabButton(
   sh: ManualSheet,
@@ -461,6 +545,7 @@ function tabButton(
   tab: { width: number; height: number; font: number; radius: number },
   goPage: (pg: number) => void,
   setHover: (h: { pg: number; x: number; y: number } | null) => void,
+  hidden: boolean,
 ): React.ReactElement {
   const on = sh.facing === at * 2 + 1 || sh.facing === at * 2 + 2;
   return React.createElement(
@@ -478,28 +563,12 @@ function tabButton(
       onMouseEnter: (e: React.MouseEvent) => { setHover({ pg: sh.facing, x: e.clientX, y: e.clientY }); },
       onMouseLeave: () => { setHover(null); },
       style: {
-        position: 'absolute',
-        width: 'calc(var(--paper-w) * ' + tab.width / 100 + ')',
-        height: 'calc(var(--paper-w) * ' + tab.height / 100 + ')',
-        paddingTop: 'calc(var(--paper-w) * .008)',
-        boxSizing: 'border-box',
-        display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'center',
-        fontFamily: "Georgia,'Times New Roman',serif",
-        fontSize: 'calc(var(--paper-w) * ' + tab.font / 100 + ')',
-        lineHeight: 1,
-        color: on ? '#3a2607' : '#4a3a22',
-        background: on ? 'linear-gradient(#f8e7ae,#d9ab3c)' : 'linear-gradient(#f2e8cc,#d3c098)',
-        border: '1px solid #8a7a55',
-        borderBottom: 'none',
-        borderRadius: 'calc(var(--paper-w) * ' + tab.radius / 100 + ') calc(var(--paper-w) * ' + tab.radius / 100 + ') 0 0',
-        boxShadow: on ? '0 -2px 6px #00000088,inset 0 1px 0 #fffbe8' : '0 -2px 5px #00000055,inset 0 1px 0 #fffdf3',
+        ...tabFaceStyle(tab, on, sh.side === 'left' ? 'right' : 'left', 'calc(50% + ' + sh.tabOffset + '%)', 0),
         cursor: 'pointer',
         pointerEvents: 'auto',
-        bottom: 0,
-        [sh.side === 'left' ? 'right' : 'left']: 'calc(50% + ' + sh.tabOffset + '%)',
-      } as React.CSSProperties,
+        // 掀页期间纸上的那枚签由纸自己带着走，纸层里这枚先隐掉（原型 visibility:hidden）。
+        ...(hidden ? { visibility: 'hidden' as const } : null),
+      },
     },
     String(sh.facing),
   );
@@ -560,10 +629,64 @@ function ManualBookShell(props: { scenes: ManualScene[]; renderPage?: (page: { p
     watcher.observe(book);
     return () => { watcher.disconnect(); };
   }, []);
-  const shown = measuring >= 0 ? planManual(scenes, measuring) : plan;
-  const goPage = (pg: number) => { setHover(null); setSpread(spreadOfPage(scenes, pg)); };
-  const left = shown.pages.find((p) => p.side === 'left') ?? null;
-  const right = shown.pages.find((p) => p.side === 'right') ?? null;
+  /** 掀页状态机（原型 `turnLeaf`）：一趟只翻一张纸，翻的过程中压住一切跳转（忙锁）。 */
+  const [turn, setTurn] = React.useState<ManualTurn | null>(null);
+  const pendingTurn = React.useRef<ManualTurn | null>(null);
+  const turnTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clearTurnTimer = () => {
+    if (turnTimer.current !== null) { clearTimeout(turnTimer.current); turnTimer.current = null; }
+  };
+  /** 落定一趟：跨页换到目标、收掉纸、解忙锁（原型 `animationend` 那一段）。 */
+  const settleTurn = () => {
+    const t = pendingTurn.current;
+    if (t === null) return;
+    pendingTurn.current = null;
+    clearTurnTimer();
+    setSpread(t.to);
+    setTurn(null);
+  };
+  React.useEffect(() => () => { clearTurnTimer(); }, []);
+  /** 起一趟掀页：算翻哪张纸、承接边先预显目标页、纸上正反面各印一页，动画跑完才落定。
+   *
+   * 没有 DOM 就没有动效（用例替身、无浏览器）：直接落定，别把忙锁挂死。 */
+  const startTurn = (dir: 1 | -1) => {
+    if (pendingTurn.current !== null || measuring >= 0) return;
+    const fromPlan = planManual(scenes, at);
+    const sheet = fromPlan.sheets[dir > 0 ? at + 1 : at];
+    if (sheet === undefined) return;
+    const facing = sheet.facing;
+    const other = facing === sheet.front ? sheet.back : sheet.front;
+    if (facing === null || other === null) return;
+    const to = clampSpread(scenes, at + dir);
+    if (to === at) return;
+    if (typeof document === 'undefined' || typeof document.createElement !== 'function') { setSpread(to); return; }
+    const nextTurn: ManualTurn = { dir, from: at, to, sheet: sheet.sheet };
+    pendingTurn.current = nextTurn;
+    setTurn(nextTurn);
+    if (typeof setTimeout === 'function') {
+      // 兜底：动效被系统关掉（prefers-reduced-motion）或事件没到，也不能把书锁死。
+      turnTimer.current = setTimeout(() => { settleTurn(); }, TURN_MS + 140);
+    }
+  };
+  const base = turn === null ? at : turn.from;
+  const basePlan = planManual(scenes, base);
+  const targetPlan = turn === null ? basePlan : planManual(scenes, turn.to);
+  const shown = measuring >= 0 ? planManual(scenes, measuring) : basePlan;
+  /** 承接边：翻页时先把这一边预显成目标页（原型 `preEl`），翻走的那一边保持原样。 */
+  const preSide: 'left' | 'right' | null = turn === null || measuring >= 0 ? null : (turn.dir > 0 ? 'right' : 'left');
+  const framePage = (side: 'left' | 'right') => {
+    const source = preSide === side ? targetPlan : shown;
+    return source.pages.find((p) => p.side === side) ?? null;
+  };
+  const leafSheet = turn === null || measuring >= 0 ? null : basePlan.sheets[turn.sheet] ?? null;
+  const leafOther = leafSheet === null ? null : (leafSheet.facing === leafSheet.front ? leafSheet.back : leafSheet.front);
+  const leafFront = leafSheet === null ? null : basePlan.pages.find((p) => p.page === leafSheet.facing) ?? null;
+  const leafBack = leafOther === null ? null : targetPlan.pages.find((p) => p.page === leafOther) ?? null;
+  const goPage = (pg: number) => {
+    if (pendingTurn.current !== null) return;
+    setHover(null);
+    setSpread(spreadOfPage(scenes, pg));
+  };
   const prevOff = at === 0;
   const nextOff = at === plan.spreadCount - 1;
   const hoverScene = hover === null ? null : scenes[hover.pg - 1] ?? null;
@@ -598,6 +721,7 @@ function ManualBookShell(props: { scenes: ManualScene[]; renderPage?: (page: { p
       ),
     ),
     React.createElement('style', { 'data-ilife-manual': 'content-css' }, manualContentCss()),
+    React.createElement('style', { 'data-ilife-manual': 'turn-css' }, manualTurnCss()),
     React.createElement('div', { style: S.manualFrame, 'aria-hidden': 'true' }),
     React.createElement('div', { style: S.manualWeave, 'aria-hidden': 'true' }),
     React.createElement(
@@ -620,12 +744,38 @@ function ManualBookShell(props: { scenes: ManualScene[]; renderPage?: (page: { p
         React.createElement(
           'div',
           { style: S.manualTabLayer },
-          plan.sheets.map((sh) => tabButton(sh, at, plan.tab, goPage, setHover)),
+          plan.sheets.map((sh) => tabButton(sh, at, plan.tab, goPage, setHover, turn !== null && turn.sheet === sh.sheet)),
         ),
-        frame(left, 'left', leftRef),
+        frame(framePage('left'), 'left', leftRef),
         React.createElement('div', { style: S.manualSpineSlot, 'aria-hidden': 'true' },
           React.createElement('span', { style: S.manualSpineLine })),
-        frame(right, 'right', rightRef),
+        frame(framePage('right'), 'right', rightRef),
+        // 掀页的纸：正面＝正翻走的那一页，反面＝翻过来要露出的那一页；两页各带自己那枚签。
+        leafSheet === null || turn === null
+          ? null
+          : React.createElement(
+            'div',
+            {
+              key: 'leaf-' + turn.sheet + '-' + turn.dir,
+              'data-ilife-manual': 'leaf',
+              'data-ilife-leaf': turn.dir > 0 ? 'next' : 'prev',
+              'aria-hidden': 'true',
+              className: 'ilife-manual-leaf ' + (turn.dir > 0 ? 'ilife-manual-leaf-r to-left' : 'ilife-manual-leaf-l to-right'),
+              onAnimationEnd: (e: React.AnimationEvent) => { if (e.target === e.currentTarget) settleTurn(); },
+            },
+            React.createElement(
+              'div',
+              { className: 'face front' },
+              leafFront === null ? null : renderPage(leafFront, goPage),
+              leafTab(leafSheet.facing, turn.dir > 0 ? 'left' : 'right', leafSheet.tabOffset, plan.tab),
+            ),
+            React.createElement(
+              'div',
+              { className: 'face back' },
+              leafBack === null ? null : renderPage(leafBack, goPage),
+              leafOther === null ? null : leafTab(leafOther, turn.dir > 0 ? 'right' : 'left', leafSheet.tabOffset, plan.tab),
+            ),
+          ),
       ),
     ),
     ),
@@ -641,7 +791,7 @@ function ManualBookShell(props: { scenes: ManualScene[]; renderPage?: (page: { p
           'aria-label': '上一跨页',
           'data-ilife-manual': 'prev',
           'data-ilife-press': 'manual-prev',
-          onClick: () => { setSpread(clampSpread(scenes, at - 1)); },
+          onClick: () => { startTurn(-1); },
         },
         '‹ 上一页',
       ),
@@ -654,7 +804,7 @@ function ManualBookShell(props: { scenes: ManualScene[]; renderPage?: (page: { p
           'aria-label': '下一跨页',
           'data-ilife-manual': 'next',
           'data-ilife-press': 'manual-next',
-          onClick: () => { setSpread(clampSpread(scenes, at + 1)); },
+          onClick: () => { startTurn(1); },
         },
         '下一页 ›',
       ),
