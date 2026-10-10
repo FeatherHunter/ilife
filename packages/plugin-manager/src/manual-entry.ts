@@ -25,12 +25,14 @@ export interface ManualEntryButtonProps {
   readonly onOpen: () => void;
 }
 
-/** 弹出弹层 props：开合＋关闭回调（两格都是行为）＋书体（#1240 起由调用方传进来）。 */
+/** 弹出弹层 props：开合＋关闭回调（两格都是行为）＋书体＋dialog 元素那枚 ref。 */
 export interface ManualPopoverShellProps {
   readonly open: boolean;
   readonly onClose: () => void;
   /** 书体：开着时铺在弹层里（关着整框不渲染）。 */
   readonly children?: React.ReactNode;
+  /** 弹层那枚 `<dialog>` 的 ref：由调用方在 effect 里 `showModal()` 把它送进 top layer。 */
+  readonly dialogRef?: React.Ref<HTMLDialogElement>;
 }
 
 /** 入口 CSS（书那五条源自 v2 甲）＋弹层两组（透明点外关闭层 ＋ 书那一格，关闭钮）。
@@ -52,7 +54,10 @@ export function manualEntryCss(): string {
     '.eabook{display:block;position:relative;width:32px;height:44px;border-radius:2px 4px 4px 2px;background:linear-gradient(135deg,#9c2f2f,#5f1616 65%,#3a0d0d);border:1px solid #d9ab3c;position:relative;box-shadow:2px 3px 6px #0009}' +
     ".eabook:before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:linear-gradient(90deg,#320b0b,#571414);border-radius:2px 0 0 2px}" +
     '.eabook .eaband{position:absolute;left:-2px;right:-2px;top:17px;height:11px;background:#ece0c2;display:flex;align-items:center;justify-content:center;color:#5c1010;font-size:6px;letter-spacing:.06em;box-shadow:0 1px 2px #00000066}' +
-    '.manual-layer{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;background:transparent}' +
+    '.manual-layer{position:fixed;inset:0;box-sizing:border-box;width:auto;height:auto;max-width:none;max-height:none;margin:0;padding:0;border:0;background:transparent;color:inherit;z-index:2147483000;display:flex;align-items:center;justify-content:center}' +
+    // 弹层是 <dialog>：能 showModal 的宿主会把它送进浏览器 top layer（那里 z-index 说了不算，
+    // 谁也压不住）；::backdrop 是 UA 默认那层半黑，必须清掉（用户：「不要有黑色背景的框」）。
+    '.manual-layer::backdrop{background:transparent}' +
     '.manual-popover{position:relative;box-sizing:border-box;width:min(900px,calc(100vw - 48px));max-height:min(88vh,900px);overflow:auto;color:#e8dcc2;font-family:system-ui,"Microsoft YaHei",sans-serif;--paper-w:min(780px,calc(100vw - 96px))}' +
     // 选择器带 `.manual-popover` 前缀是必须的：本体触发器的交互样式里有一条
     // `[data-ilife-press]{position:relative;overflow:hidden}`（config-panel-view.ts），
@@ -104,11 +109,19 @@ export function ManualEntryButton(props: ManualEntryButtonProps): React.ReactEle
 export function ManualPopoverShell(props: ManualPopoverShellProps): React.ReactElement | null {
   if (!props.open) return null;
   return React.createElement(
-    'div',
+    // `<dialog>`：调用方拿到 ref 后 showModal() 即进 top layer —— 面板底栏、插件浮层都压不住它
+    // （2026-10-10 用户实测那两层都盖在书上）。**这里不写 `open`**：带 open 的 dialog 是
+    // 「已按普通方式打开」，此时 showModal() 会抛 InvalidStateError（实测原文：The dialog is
+    // already open as a non-modal dialog…）；由调用方 showModal 成功、或失败时补 `open` 兜底。
+    'dialog',
     {
       className: 'manual-layer',
-      // 点书以外的任何地方＝关（这一层的点击被吃掉，不会穿到下面的控件上）
+      ref: props.dialogRef,
+      // 点书以外的任何地方＝关（与 ::backdrop 同一层，点和背景都落在这一格上）
       onClick: props.onClose,
+      // ESC 关（浏览器原生 cancel→close）也要把调用方的开合态收回来，否则书会「自己没了、状态还开着」
+      onCancel: props.onClose,
+      onClose: props.onClose,
     },
     React.createElement(
       'div',

@@ -83,10 +83,16 @@ describe('#1237 使用手册入口与弹出空壳', () => {
     // 传 children：书体原样铺进书那一格（#1240 起弹层不再只是空壳）
     const filled = ManualPopoverShell({ open: true, onClose: () => {}, children: '基本使用' });
     assert.ok(JSON.stringify(filled).includes('基本使用'), 'children 里的书体没铺进去');
-    // 形制（2026-10-10 第六轮）：透明满屏点外层（最高层）＋ 书那一格**没有黑底框**
+    // 形制（2026-10-10 第六轮）：`<dialog>` 点外层（top layer，不留黑底）＋ 书那一格**没有黑底框**
+    assert.equal(bare?.type, 'dialog', '外层须是 <dialog>（showModal 才能进 top layer）');
+    assert.equal(bare?.props?.open, undefined, '不许带 open：带 open 时 showModal 会抛「已按普通方式打开」');
+    assert.equal(typeof bare?.props?.onCancel, 'function', 'ESC 关（原生 cancel）也要把开合态收回来');
+    assert.equal(typeof bare?.props?.onClose, 'function', '原生 close 同样要收回开合态');
     const css = ENTRY.manualEntryCss();
-    assert.ok(css.includes('.manual-layer{position:fixed;inset:0;z-index:2147483000'), '点外关闭层须满屏且压在最上面');
+    assert.ok(css.includes('.manual-layer{position:fixed;inset:0;box-sizing:border-box'), '点外层须满屏且清掉 UA 的框');
+    assert.ok(css.includes('z-index:2147483000'), '点外层仍给最高 z-index 兜底');
     assert.ok(css.includes('background:transparent'), '外层必须透明（不许黑底）');
+    assert.ok(css.includes('.manual-layer::backdrop{background:transparent}'), 'UA 那层半黑 backdrop 必须清掉');
     assert.ok(!css.includes('background:#15130f'), '书的深色舞台底已去掉');
     assert.ok(!css.includes('border-radius:16px') && !css.includes('box-shadow:0 24px 64px'), '黑框的圆角与投影已去掉');
     assert.ok(css.includes('.manual-popover{position:relative;box-sizing:border-box'), '书那一格不再自带定位与底框');

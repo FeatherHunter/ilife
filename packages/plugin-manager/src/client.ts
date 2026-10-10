@@ -712,6 +712,32 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
   const [activeId, setActiveId] = React.useState<string | undefined>(undefined);
   /** 使用手册弹出开合（票 #1237：纯 UI 状态，不进脏基线；书体是 #1238 的活）。 */
   const [manualOpen, setManualOpen] = React.useState(false);
+  /** 使用手册弹层那枚 `<dialog>`（#1240）。**挂上 DOM 的那一刻**就 `showModal()` 送进浏览器
+   *  top layer——2026-10-10 用户实测：面板底部那条「保存／重置为默认／重新读取」与右上角那组
+   *  插件浮层都盖在书上，只靠 z-index 压不住，top layer 才是不看 z-index 的那一层。
+   *  用回调 ref 而不是 effect：元素每次真正挂上去都会调一次（宿主重挂也跟得上）；`showModal()`
+   *  拿不到时补一个 `open` 属性兜底，至少保证书看得见。 */
+  const attachManualDialog = React.useCallback((element: HTMLDialogElement | null) => {
+    if (element === null) return;
+    try {
+      element.showModal();
+      return;
+    } catch {
+      // 还没挂进文档（个别自制渲染器先交 ref 再 append）或宿主没有 showModal：先补 open 兜底，
+      // 再等一帧重试一次（重试前要把 open 摘掉，带 open 的 dialog 调 showModal 会抛）。
+      try { element.setAttribute('open', ''); } catch { /* 属性也写不了就作罢 */ }
+    }
+    try {
+      setTimeout(() => {
+        try {
+          element.removeAttribute('open');
+          element.showModal();
+        } catch {
+          try { element.setAttribute('open', ''); } catch { /* 作罢 */ }
+        }
+      }, 0);
+    } catch { /* 没有 setTimeout 的宿主：保持兜底态 */ }
+  }, []);
   /** 批量入口挂载位（一颗按钮看七家聚合；0.5.4 #49 到达，弹窗 dialog 由入口件内置，开关态亦归上游）。 */
   const entryRef = React.useRef<HTMLSpanElement | null>(null);
   const callReady = props.getCall() !== null;
@@ -854,7 +880,7 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
       // `.manual-popover` 一处定义，关着不渲染）。
       React.createElement(
         ManualPopoverShell,
-        { open: manualOpen, onClose: () => { setManualOpen(false); } },
+        { open: manualOpen, onClose: () => { setManualOpen(false); }, dialogRef: attachManualDialog },
         React.createElement(ManualBookShell, {
           scenes: [...SCENES],
           renderPage: (page, goPage) => page === null ? null : renderManualPage(SCENES, page, goPage),
