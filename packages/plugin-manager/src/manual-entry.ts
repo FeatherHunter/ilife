@@ -41,8 +41,8 @@ export interface ManualPopoverShellProps {
  * ① 76×104 → 34×46（先按「太大」收 62%，再按「整体缩小」收到现在的 34×46），
  *    后按「放大 30%」放到 44×60（书体 32×44 → 42×57，书脊／腰封同步放大），
  *    再按「入口图标放大 30%」放到 57×78（书体 42×57 → 55×74）；
- * ② 背光（用户：「背景焦点框太素，要碎金／鎏金／金光」）：书后垫一层 `.eaaura`
- *   （放射金晕＋稀疏金屑＋鎏金边＋外发光），压住宿主那个棱角生硬的深色焦点框；
+ * ② 背光（用户：「不要放射条纹，要沿图标周围一圈贴体的金色光」）：书外紧贴一层
+ *   `.eaaura`（细金边＋三层由近及远的金光晕），无放射、无屑纹；
  * ③ 金字（用户：「使用手册这四个字要发金光」）：腰封改成深红金匾——金字＋两层金光晕；
  * ④ **删掉底部那张名牌**（用户：「删掉底部的那个使用手册那个字的控件」）——「使用手册」
  *    只剩腰封上印一次，名牌那条 `.plate` 连同样式一并去掉；
@@ -55,7 +55,7 @@ export interface ManualPopoverShellProps {
 export function manualEntryCss(): string {
   return (
     '.bkbtn{position:relative;display:flex;flex-direction:column;align-items:center;background:none;border:none;cursor:pointer;padding:2px 6px 0}' +
-    '.eaaura{position:absolute;inset:-12px -14px;border-radius:16px;background:radial-gradient(circle at 50% 36%,#f8e7ae66,transparent 62%),repeating-conic-gradient(from 0deg at 50% 50%,#d9ab3c30 0deg 5deg,transparent 5deg 11deg);border:1px solid #d9ab3c99;box-shadow:0 0 14px #d9ab3c77,0 0 34px #d9ab3c44,inset 0 0 10px #d9ab3c55;pointer-events:none}' +
+    '.eaaura{position:absolute;inset:-5px -6px;border-radius:9px;background:radial-gradient(circle at 50% 42%,#f8e7ae40,transparent 68%);border:1px solid #f5d97acc;box-shadow:0 0 5px #ffe9a8,0 0 13px #e8c96acc,0 0 28px #d9ab3c77;pointer-events:none}' +
     '.stage{position:relative;width:57px;height:78px;filter:drop-shadow(0 7px 9px #00000088)}' +
     '.eabook{display:block;position:relative;width:55px;height:74px;border-radius:4px 7px 7px 4px;background:linear-gradient(135deg,#9c2f2f,#5f1616 65%,#3a0d0d);border:1px solid #d9ab3c;position:relative;box-shadow:4px 5px 10px #0009}' +
     ".eabook:before{content:'';position:absolute;left:0;top:0;bottom:0;width:9px;background:linear-gradient(90deg,#320b0b,#571414);border-radius:4px 0 0 4px}" +
