@@ -847,7 +847,12 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
         // 本处删掉 client.ts 内联那一枚，只留 manual-entry.ts 的那份（冻结原型六条样式＋用例在它身上）。
         React.createElement(
           'span',
-          { style: { position: 'relative', display: 'inline-flex' } },
+          {
+            // 2026-10-10（用户验收）：这一格给负的上下边距——书比同行的按钮高，靠这 8px 让它上下
+            // 「探出」行框，而不是把标题行撑高（用户原话：「允许这个入口横跨多个区域而不是把同一行
+            // 给弄得很高」）。行框高度仍由「检查更新」那类控件决定。
+            style: { position: 'relative', display: 'inline-flex', margin: '-8px 0' },
+          },
           React.createElement('style', null, manualEntryCss()),
           React.createElement(ManualEntryButton, { onOpen: () => { setManualOpen(true); } }),
           // 书体挂在同一个弹层里（#1240：弹层从空壳改成真书；定位与外观在 manualEntryCss 的

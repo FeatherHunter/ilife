@@ -33,29 +33,34 @@ export interface ManualPopoverShellProps {
   readonly children?: React.ReactNode;
 }
 
-/** 入口六条 ENTRY_CSS（源自 v2 甲）＋弹层两条（框与关闭钮，书体不在这里）。
+/** 入口 CSS（书那五条源自 v2 甲）＋弹层两条（框与关闭钮，书体不在这里）。
  *
- * 前六条出自冻结原型 `:93-98`；**2026-10-10 用户验收改尺寸**：原型那套 76×104 在真面板里
- * 显得过大（用户原话「这个入口图标太大了」），按 ≈62% 收成 48×66（书体 44×62、书脊 7px、
- * 腰封 16px／8px、名牌 10px）。除尺寸外其余取值（红封渐变、书脊色、腰封米色、名牌字距）
- * 一字未改；这次改尺寸记在票 #1240，别再照原型那六个像素值把它改回去。
+ * **2026-10-10 用户验收三改（记在票 #1240）**：
+ * ① 76×104 → 34×46（真面板里显大，先收 62%，再按「整体缩小」收到现在的 34×46）；
+ * ② **删掉底部那张名牌**（用户原话「删掉底部的那个使用手册那个字的控件」）——「使用手册」
+ *    只剩腰封上印一次，名牌那条 `.plate` 连同样式一并去掉；
+ * ③ 入口不再往行里加高：调用方那格里给了负下边距（见 `client.ts` 的 `manualEntrySlot`），
+ *    书可以往下探进「配置体检」那一行的留白，但不把标题行撑高（用户：「允许这个入口横跨
+ *    多个区域而不是把同一行给弄得很高」）。
+ * 除尺寸与删名牌外，其余取值（红封渐变、书脊色、腰封米色）一字未改；别再照原型那六个像素值改回去。
  */
 export function manualEntryCss(): string {
   return (
-    '.bkbtn{display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:none;cursor:pointer;padding:4px 8px 6px}' +
-    '.stage{position:relative;width:48px;height:66px;filter:drop-shadow(0 6px 6px #00000088)}' +
-    '.eabook{display:block;position:relative;width:44px;height:62px;border-radius:3px 5px 5px 3px;background:linear-gradient(135deg,#9c2f2f,#5f1616 65%,#3a0d0d);border:1px solid #d9ab3c;position:relative;box-shadow:3px 4px 8px #0009}' +
-    ".eabook:before{content:'';position:absolute;left:0;top:0;bottom:0;width:7px;background:linear-gradient(90deg,#320b0b,#571414);border-radius:3px 0 0 3px}" +
-    '.eabook .eaband{position:absolute;left:-3px;right:-3px;top:21px;height:16px;background:#ece0c2;display:flex;align-items:center;justify-content:center;color:#5c1010;font-size:8px;letter-spacing:.14em;box-shadow:0 1px 3px #00000066}' +
-    '.plate{margin-top:9px;background:linear-gradient(#4a1f1a,#2a0f0c);border:1px solid #8a6a15;border-radius:3px;color:#e8c96a;font-size:10px;letter-spacing:.3em;text-indent:.3em;padding:3px 12px;text-shadow:0 -1px 1px #000;}' +
+    '.bkbtn{display:flex;flex-direction:column;align-items:center;background:none;border:none;cursor:pointer;padding:2px 6px 0}' +
+    '.stage{position:relative;width:34px;height:46px;filter:drop-shadow(0 4px 5px #00000088)}' +
+    '.eabook{display:block;position:relative;width:32px;height:44px;border-radius:2px 4px 4px 2px;background:linear-gradient(135deg,#9c2f2f,#5f1616 65%,#3a0d0d);border:1px solid #d9ab3c;position:relative;box-shadow:2px 3px 6px #0009}' +
+    ".eabook:before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:linear-gradient(90deg,#320b0b,#571414);border-radius:2px 0 0 2px}" +
+    '.eabook .eaband{position:absolute;left:-2px;right:-2px;top:17px;height:11px;background:#ece0c2;display:flex;align-items:center;justify-content:center;color:#5c1010;font-size:6px;letter-spacing:.06em;box-shadow:0 1px 2px #00000066}' +
     '.manual-popover{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:50;box-sizing:border-box;width:min(900px,calc(100vw - 48px));max-height:min(88vh,900px);overflow:auto;padding:20px;border-radius:16px;border:1px solid rgba(217,171,60,.45);background:#15130f;color:#e8dcc2;box-shadow:0 24px 64px rgba(0,0,0,.55);font-family:system-ui,"Microsoft YaHei",sans-serif;--paper-w:min(780px,calc(100vw - 96px))}' +
     '.manual-popover-close{position:sticky;top:0;display:flex;margin-left:auto;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;border:1px solid #3a352c;background:#1c1913cc;color:#cfc4ad;font-size:16px;line-height:1;cursor:pointer;z-index:3}'
   );
 }
 
-/** 入口图标（红封＋书脊＋米色腰封＋名牌）：原型 ENTRY_HTML 逐字结构，onclick 接出点开。
+/** 入口图标（红封＋书脊＋米色腰封）：原型 ENTRY_HTML 的书那一段，onclick 接出点开。
  *
- * 无障碍：button 语义＋aria-label＋title，键盘可达；按压反馈走 data-ilife-press（与标题行两入口同语言）。
+ * 2026-10-10 按用户要求**删掉底部名牌**（`.plate`）：「使用手册」只剩下腰封上那一处；
+ * 无障碍：button 语义＋aria-label＋title（`MANUAL_ENTRY.tip`），键盘可达；按压反馈走
+ * data-ilife-press（与标题行两入口同语言）。
  */
 export function ManualEntryButton(props: ManualEntryButtonProps): React.ReactElement {
   return React.createElement(
@@ -78,7 +83,6 @@ export function ManualEntryButton(props: ManualEntryButtonProps): React.ReactEle
         React.createElement('span', { className: 'eaband' }, MANUAL_ENTRY_LABEL),
       ),
     ),
-    React.createElement('span', { className: 'plate' }, MANUAL_ENTRY_LABEL),
   );
 }
 
