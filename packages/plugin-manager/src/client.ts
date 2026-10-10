@@ -18,7 +18,7 @@
  */
 
 import * as React from 'react';
-import { MANAGER_PLUGIN, MANAGER_TABS, MANUAL_ENTRY, MORE_PLUGINS, PANEL_LINKS, recoFor } from './nav.js';
+import { MANAGER_PLUGIN, MANAGER_TABS, MORE_PLUGINS, PANEL_LINKS, recoFor } from './nav.js';
 import { clampSpread, planManual, spreadOfPage } from './manual-plan.js';
 import type { ManualScene, ManualSheet } from './manual-plan.js';
 import { SCENES, manualContentCss, renderManualPage } from './manual-content.js';
@@ -91,101 +91,6 @@ const S = {
     color: 'var(--dsw-alias-label-primary, inherit)',
     textDecoration: 'none',
     fontSize: 14,
-    lineHeight: 1,
-  } as React.CSSProperties,
-  /** #1237：甲腰封书入口（书的样子逐字取定版甲：红封＋书脊＋米色腰封＋名牌）。 */
-  manualWrap: { position: 'relative', display: 'inline-flex', flex: '0 0 auto' } as React.CSSProperties,
-  manualBook: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: 10,
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    padding: '6px 10px 10px',
-  } as React.CSSProperties,
-  manualStage: { position: 'relative', width: 76, height: 104, filter: 'drop-shadow(0 10px 10px #00000088)' } as React.CSSProperties,
-  manualCover: {
-    display: 'block',
-    position: 'relative',
-    width: 72,
-    height: 100,
-    borderRadius: '5px 8px 8px 5px',
-    background: 'linear-gradient(135deg,#9c2f2f,#5f1616 65%,#3a0d0d)',
-    border: '1px solid #d9ab3c',
-    boxShadow: '5px 7px 12px #0009',
-  } as React.CSSProperties,
-  manualSpine: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 12,
-    background: 'linear-gradient(90deg,#320b0b,#571414)',
-    borderRadius: '5px 0 0 5px',
-  } as React.CSSProperties,
-  manualBand: {
-    position: 'absolute',
-    left: -4,
-    right: -4,
-    top: 34,
-    height: 26,
-    background: '#ece0c2',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: '#5c1010',
-    fontSize: 12,
-    letterSpacing: '.2em',
-    boxShadow: '0 2px 4px #00000066',
-  } as React.CSSProperties,
-  manualPlate: {
-    marginTop: 14,
-    background: 'linear-gradient(#4a1f1a,#2a0f0c)',
-    border: '1px solid #8a6a15',
-    borderRadius: 4,
-    color: '#e8c96a',
-    fontSize: 13,
-    letterSpacing: '.3em',
-    textIndent: '.3em',
-    padding: '4px 18px',
-  } as React.CSSProperties,
-  /** #1240：书式弹出层＝**原型那一页**（页面底色铺满 ＋ 四周 20px 页边），书与铜扣直接铺在底色上。
-   *
-   * 原型里开书就是「把 `.scroll`＋`.deck` 显出来」：没有白卡、没有标题条、也没有框住书的第二层壳
-   * （`proto-manual-4scenes.html` L183-197）。纸宽口径只在这里定义一次（`--paper-w`），
-   * 壳与铜扣都只读它——与原型 `:root{--paper-w:…}` 同一处口径。 */
-  manualShell: {
-    position: 'fixed',
-    inset: 0,
-    zIndex: 50,
-    boxSizing: 'border-box',
-    overflowY: 'auto',
-    background: '#15130f',
-    padding: 20,
-    // 字体口径照抄原型 `body{font-family:system-ui,'Microsoft YaHei',sans-serif}`：
-    // 换一套字，同一段话的断行位置就变，逐像素对照必然对不上。
-    fontFamily: "system-ui,'Microsoft YaHei',sans-serif",
-    '--paper-w': 'min(1080px, calc(100vw - 40px - 2.25em))',
-  } as React.CSSProperties,
-  /** 关闭钮（#1237 的关闭位不改）：钉在页面右上角，不占书的位置、不进书框。 */
-  manualClose: {
-    position: 'absolute',
-    top: 14,
-    right: 16,
-    zIndex: 2,
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 28,
-    height: 28,
-    borderRadius: 6,
-    border: '1px solid #3a352c',
-    background: '#1c1913cc',
-    color: '#cfc4ad',
-    cursor: 'pointer',
-    fontSize: 15,
     lineHeight: 1,
   } as React.CSSProperties,
   /** 书的舞台层：书壳与铜扣行都铺在这一层上（原型里是 `body` 上并列的 `.scroll` 与 `.deck`）。 */
@@ -695,69 +600,6 @@ function ManualBookShell(props: { scenes: ManualScene[]; renderPage?: (page: { p
   );
 }
 
-/** 面板顶部使用手册入口（票 #1237）：甲腰封书按钮，点开弹出书（空壳，书体是 #1238 的活）。
- *
- * 开合态只用 useState（面板禁 document／window 直写）；文案取导航表那份镜像。 */
-function ManualEntry(): React.ReactElement {
-  const [open, setOpen] = React.useState(false);
-  return React.createElement(
-    'span',
-    { style: S.manualWrap },
-    React.createElement(
-      'button',
-      {
-        type: 'button',
-        style: S.manualBook,
-        title: MANUAL_ENTRY.tip,
-        'aria-label': MANUAL_ENTRY.title,
-        'aria-expanded': open,
-        'aria-controls': 'ilife-manual-book',
-        // #1174：入口挂 press（悬停洗色＋按压收缩＋焦点双环；链接只做反馈不做标记）。
-        'data-ilife-press': MANUAL_ENTRY.key,
-        onClick: () => { setOpen(true); },
-      },
-      React.createElement(
-        'span',
-        { style: S.manualStage, 'aria-hidden': 'true' },
-        React.createElement(
-          'span',
-          { style: S.manualCover },
-          React.createElement('span', { style: S.manualSpine }),
-          React.createElement('span', { style: S.manualBand }, MANUAL_ENTRY.title),
-        ),
-      ),
-      React.createElement('span', { style: S.manualPlate, 'aria-hidden': 'true' }, MANUAL_ENTRY.title),
-    ),
-    open
-      ? React.createElement(
-        'div',
-        {
-          role: 'dialog',
-          id: 'ilife-manual-book',
-          'aria-label': MANUAL_ENTRY.title,
-          style: S.manualShell,
-          'data-ilife-manual': 'book-shell',
-        },
-        React.createElement(
-          'button',
-          {
-            type: 'button',
-            style: S.manualClose,
-            'aria-label': '关闭' + MANUAL_ENTRY.title,
-            'data-ilife-press': 'manual-close',
-            onClick: () => { setOpen(false); },
-          },
-          '×',
-        ),
-        React.createElement(ManualBookShell, {
-          scenes: [...SCENES],
-          renderPage: (page, goPage) => page === null ? null : renderManualPage(SCENES, page, goPage),
-        }),
-      )
-      : null,
-  );
-}
-
 /** 标题行右上角两件：星（去本仓点 Star）＋ 气泡（去本仓开 issue），SVG 图标＋悬停说明＋按压反馈（#1174）。
  *
  * 三件并排里的第三件「检查更新」住隔壁票（#678）：本票只留位子——它就接在本组件之前，
@@ -1001,20 +843,30 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
         'div',
         { style: S.headActions },
         // #1237：使用手册入口挂头，排在更新入口与星／气泡之前。
-        React.createElement(ManualEntry, null),
+        // 2026-10-10（用户验收）：入口只此一处——先前 #1237 被两条线各做一遍，合并后屏上出现两枚，
+        // 本处删掉 client.ts 内联那一枚，只留 manual-entry.ts 的那份（冻结原型六条样式＋用例在它身上）。
+        React.createElement(
+          'span',
+          { style: { position: 'relative', display: 'inline-flex' } },
+          React.createElement('style', null, manualEntryCss()),
+          React.createElement(ManualEntryButton, { onOpen: () => { setManualOpen(true); } }),
+          // 书体挂在同一个弹层里（#1240：弹层从空壳改成真书；定位与外观在 manualEntryCss 的
+          // `.manual-popover` 一处定义，关着不渲染）。
+          React.createElement(
+            ManualPopoverShell,
+            { open: manualOpen, onClose: () => { setManualOpen(false); } },
+            React.createElement(ManualBookShell, {
+              scenes: [...SCENES],
+              renderPage: (page, goPage) => page === null ? null : renderManualPage(SCENES, page, goPage),
+            }),
+          ),
+        ),
         React.createElement('span', {
           style: S.updateEntrySlot,
           ref: (element: HTMLSpanElement | null) => {
             entryRef.current = element;
           },
         }),
-        React.createElement(
-          'span',
-          { style: { position: 'relative', display: 'inline-flex' } },
-          React.createElement('style', null, manualEntryCss()),
-          React.createElement(ManualEntryButton, { onOpen: () => { setManualOpen(true); } }),
-          React.createElement(ManualPopoverShell, { open: manualOpen, onClose: () => { setManualOpen(false); } }),
-        ),
         React.createElement(PanelActions, null),
       ),
     ),

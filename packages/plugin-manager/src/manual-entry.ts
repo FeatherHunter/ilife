@@ -1,49 +1,55 @@
-/** 使用手册入口与弹出空壳（票 #1237，只做入口与弹出，不做书体）。
+/** 使用手册入口与书式弹层（票 #1237 起；#1240 接线书体、2026-10-10 按用户验收改尺寸与形态）。
  *
- * 真值（冲突以冻结原型为准）：
+ * 真值：
  * - 冻结原型 docs/plugins/plugin-manager/proto-manual-4scenes.html（最高真值，每字每像素）；
- * - 定版 docs/plugins/plugin-manager/手册正文-定版-20261009.html 的入口六条（逐字 v2 甲）。
- * 本件的 manualEntryCss() 即那六条逐字，不重新设计；书体一律不做（书体是 #1238 的活）。
+ * - 定版 docs/plugins/plugin-manager/手册正文-定版-20261009.html 的入口六条（v2 甲）。
+ * **两处 2026-10-10 的用户改动（记在票 #1240）**：① 入口图标按 ≈62% 收小（原型 76×104 → 48×66）；
+ * ② 打开书从「整屏舞台」改成「居中限制尺寸的弹层＋常驻关闭钮」。除这两处，其余取值照原型。
  *
  * 形态：纯函数，吃 props 回元素树，不留状态、不取数、不碰 DOM（document／window／process）。
  * 手写 React.createElement（本包 client 束禁 JSX）。样式只此一处生成，挂法照 config-panel-view
  * 的 interactionCss 先例：调用方在卡片首位挂一枚 <style>，类名即原型那六个（bkbtn／stage／
- * eabook／eaband／plate），外加本票的新壳 manual-popover（空壳定位与关闭，与书体无关）。
+ * eabook／eaband／plate），外加弹层两条（manual-popover／manual-popover-close）。
  *
  * 卷轴旧实现只读不改：本件不引用旧卷轴两件。
  */
 
 import * as React from 'react';
+import { MANUAL_ENTRY } from './nav.js';
 
-/** 入口上的两处字样（腰封＋名牌各印一次，定义只此一处）。 */
-export const MANUAL_ENTRY_LABEL = '使用手册' as const;
+/** 入口上的两处字样（腰封＋名牌各印一次，定义只此一处）。单一来源＝导航表那行。 */
+export const MANUAL_ENTRY_LABEL = MANUAL_ENTRY.title;
 
 /** 入口按钮 props：点开回调（唯一真干活的那一格）。 */
 export interface ManualEntryButtonProps {
   readonly onOpen: () => void;
 }
 
-/** 弹出空壳 props：开合＋关闭回调（两格都是行为，无展示配置）。 */
+/** 弹出弹层 props：开合＋关闭回调（两格都是行为）＋书体（#1240 起由调用方传进来）。 */
 export interface ManualPopoverShellProps {
   readonly open: boolean;
   readonly onClose: () => void;
+  /** 书体：开着时铺在弹层里（关着整框不渲染）。 */
+  readonly children?: React.ReactNode;
 }
 
-/** 入口六条 ENTRY_CSS（逐字 v2 甲）＋本票空壳两条（壳定位与标题行，书体不在这里）。
+/** 入口六条 ENTRY_CSS（源自 v2 甲）＋弹层两条（框与关闭钮，书体不在这里）。
  *
- * 前六条与冻结原型 :93-98 逐字同值：红封渐变／书脊 12px／米色腰封／名牌字距，一字不改；
- * 后两条是 1237 新壳（popover 定位＋空壳占位），与书体无关，1238 做书体时不动它们。
+ * 前六条出自冻结原型 `:93-98`；**2026-10-10 用户验收改尺寸**：原型那套 76×104 在真面板里
+ * 显得过大（用户原话「这个入口图标太大了」），按 ≈62% 收成 48×66（书体 44×62、书脊 7px、
+ * 腰封 16px／8px、名牌 10px）。除尺寸外其余取值（红封渐变、书脊色、腰封米色、名牌字距）
+ * 一字未改；这次改尺寸记在票 #1240，别再照原型那六个像素值把它改回去。
  */
 export function manualEntryCss(): string {
   return (
-    '.bkbtn{display:flex;flex-direction:column;align-items:center;gap:10px;background:none;border:none;cursor:pointer;padding:6px 10px 10px}' +
-    '.stage{position:relative;width:76px;height:104px;filter:drop-shadow(0 10px 10px #00000088)}' +
-    '.eabook{display:block;position:relative;width:72px;height:100px;border-radius:5px 8px 8px 5px;background:linear-gradient(135deg,#9c2f2f,#5f1616 65%,#3a0d0d);border:1px solid #d9ab3c;position:relative;box-shadow:5px 7px 12px #0009}' +
-    ".eabook:before{content:'';position:absolute;left:0;top:0;bottom:0;width:12px;background:linear-gradient(90deg,#320b0b,#571414);border-radius:5px 0 0 5px}" +
-    '.eabook .eaband{position:absolute;left:-4px;right:-4px;top:34px;height:26px;background:#ece0c2;display:flex;align-items:center;justify-content:center;color:#5c1010;font-size:12px;letter-spacing:.2em;box-shadow:0 2px 4px #00000066}' +
-    '.plate{margin-top:14px;background:linear-gradient(#4a1f1a,#2a0f0c);border:1px solid #8a6a15;border-radius:4px;color:#e8c96a;font-size:13px;letter-spacing:.3em;text-indent:.3em;padding:4px 18px;text-shadow:0 -1px 1px #000;}' +
-    '.manual-popover{position:absolute;top:34px;right:0;z-index:40;min-width:220px;max-width:320px;padding:12px 14px;border-radius:10px;border:1px solid var(--dsw-alias-border-l1, rgba(128,128,128,.35));background:var(--dsw-alias-bg-layer-1, #232324);color:var(--dsw-alias-label-primary, inherit);box-shadow:0 14px 30px rgba(0,0,0,.4)}' +
-    '.manual-popover-title{font-size:13px;font-weight:700;margin-bottom:6px}'
+    '.bkbtn{display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:none;cursor:pointer;padding:4px 8px 6px}' +
+    '.stage{position:relative;width:48px;height:66px;filter:drop-shadow(0 6px 6px #00000088)}' +
+    '.eabook{display:block;position:relative;width:44px;height:62px;border-radius:3px 5px 5px 3px;background:linear-gradient(135deg,#9c2f2f,#5f1616 65%,#3a0d0d);border:1px solid #d9ab3c;position:relative;box-shadow:3px 4px 8px #0009}' +
+    ".eabook:before{content:'';position:absolute;left:0;top:0;bottom:0;width:7px;background:linear-gradient(90deg,#320b0b,#571414);border-radius:3px 0 0 3px}" +
+    '.eabook .eaband{position:absolute;left:-3px;right:-3px;top:21px;height:16px;background:#ece0c2;display:flex;align-items:center;justify-content:center;color:#5c1010;font-size:8px;letter-spacing:.14em;box-shadow:0 1px 3px #00000066}' +
+    '.plate{margin-top:9px;background:linear-gradient(#4a1f1a,#2a0f0c);border:1px solid #8a6a15;border-radius:3px;color:#e8c96a;font-size:10px;letter-spacing:.3em;text-indent:.3em;padding:3px 12px;text-shadow:0 -1px 1px #000;}' +
+    '.manual-popover{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:50;box-sizing:border-box;width:min(900px,calc(100vw - 48px));max-height:min(88vh,900px);overflow:auto;padding:20px;border-radius:16px;border:1px solid rgba(217,171,60,.45);background:#15130f;color:#e8dcc2;box-shadow:0 24px 64px rgba(0,0,0,.55);font-family:system-ui,"Microsoft YaHei",sans-serif;--paper-w:min(780px,calc(100vw - 96px))}' +
+    '.manual-popover-close{position:sticky;top:0;display:flex;margin-left:auto;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;border:1px solid #3a352c;background:#1c1913cc;color:#cfc4ad;font-size:16px;line-height:1;cursor:pointer;z-index:3}'
   );
 }
 
@@ -57,9 +63,10 @@ export function ManualEntryButton(props: ManualEntryButtonProps): React.ReactEle
     {
       type: 'button',
       className: 'bkbtn',
-      title: MANUAL_ENTRY_LABEL,
-      'aria-label': '打开' + MANUAL_ENTRY_LABEL,
-      'data-ilife-press': 'manual-entry',
+      title: MANUAL_ENTRY.tip,
+      'aria-label': MANUAL_ENTRY.tip,
+      // 按压反馈的键取导航表那一行（'manual'）——四个手册用例按它找入口，别再各写一份。
+      'data-ilife-press': MANUAL_ENTRY.key,
       onClick: props.onOpen,
     },
     React.createElement(
@@ -75,18 +82,36 @@ export function ManualEntryButton(props: ManualEntryButtonProps): React.ReactEle
   );
 }
 
-/** 弹出 popover 书空壳：关着回 null，开着回空壳（标题＋占位＋关闭钮，无书体）。
+/** 弹出弹层：关着回 null，开着回**浮在面板上的限制尺寸框**（关闭钮 ＋ children 里的书体）。
  *
- * 空壳即验收口径：书体是 #1238 的活，这里只给框，不给场景文案（基本使用／数据目录／
- * 增强体验任一出现即越界）。关闭经 onClose 接出，调用方置 open 即可。
+ * 2026-10-10 用户验收改形态（记在 #1240）：原先打开书是 `position:fixed;inset:0` 的整屏舞台
+ * （把面板整个盖掉），用户要求「popover 的形式不干扰其他 UI ＋ 提供一个关闭按钮」。
+ * 现形制＝居中限制尺寸框（`min(900px,calc(100vw - 48px))`、高不超 88vh、内部滚动），
+ * 面板其余部分照旧可见可点；右上角关闭钮常驻（内容滚动时钉住）。
+ * 框内的书体由调用方经 children 传入；不传 children 时框里只有关闭钮。
  */
 export function ManualPopoverShell(props: ManualPopoverShellProps): React.ReactElement | null {
   if (!props.open) return null;
   return React.createElement(
     'div',
-    { className: 'manual-popover', role: 'dialog', 'aria-label': MANUAL_ENTRY_LABEL },
-    React.createElement('div', { className: 'manual-popover-title' }, MANUAL_ENTRY_LABEL),
-    React.createElement('div', null, '书体待后续补（空壳）'),
-    React.createElement('button', { type: 'button', onClick: props.onClose }, '关闭'),
+    {
+      className: 'manual-popover',
+      role: 'dialog',
+      'aria-label': MANUAL_ENTRY_LABEL,
+      'data-ilife-manual': 'book-shell',
+    },
+    React.createElement(
+      'button',
+      {
+        type: 'button',
+        className: 'manual-popover-close',
+        title: '关闭' + MANUAL_ENTRY_LABEL,
+        'aria-label': '关闭' + MANUAL_ENTRY_LABEL,
+        'data-ilife-press': 'manual-close',
+        onClick: props.onClose,
+      },
+      '×',
+    ),
+    props.children ?? null,
   );
 }
