@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>1196 双端视觉墙 · 使用手册（手册书）成品 vs 冻结原型（4 格）</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:#f2efe8;color:#1d1d1f}
+.wrap{padding:24px 20px 60px;max-width:1560px}
+h1{font-size:22px;font-weight:600;margin-bottom:6px}
+.sub{color:#6b6154;font-size:13.5px;margin-bottom:10px;line-height:1.75}
+.sub code{background:#e7e1d5;border-radius:4px;padding:1px 5px;font-size:12.5px}
+/* 长哈希这类不可断词会撑破 390 视口（实测 scrollWidth 484 > 390），一律允许任意处断行。 */
+code{overflow-wrap:anywhere;word-break:break-all}
+.sub,.facts,.segnote,.ask,.verdict,.excluded,figcaption,footer{overflow-wrap:anywhere}
+img{max-width:100%}
+.facts{background:#fff;border:1px solid #d8d1c2;border-radius:10px;padding:12px 14px;margin:14px 0 6px;font-size:12.5px;line-height:1.9;color:#4a4238}
+.facts b{color:#1d1d1f}
+h2{font-size:15.5px;font-weight:600;margin:28px 0 6px;padding-left:9px;border-left:4px solid #a5281b}
+h2 span{color:#86868b;font-weight:400;font-size:12.5px;margin-left:8px}
+.segnote{color:#6b6154;font-size:12.5px;line-height:1.7;margin:0 0 12px 13px}
+.grid{display:grid;grid-template-columns:1fr;gap:18px}
+figure{background:#fff;border:1px solid #d8d1c2;border-radius:12px;overflow:hidden}
+figcaption{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;padding:9px 12px;font-size:12.5px;font-weight:600;border-bottom:1px solid #ece7dc}
+.no{background:#1c1913;color:#f7f4ec;border-radius:5px;padding:1px 7px;font-size:12px;letter-spacing:.04em}
+.pos{font-weight:600}
+.view{color:#86868b;font-weight:400}
+figcaption a{margin-left:auto;color:#007aff;text-decoration:none;font-weight:500}
+figcaption a+a{margin-left:0}
+.ask{padding:6px 12px;font-size:12px;color:#6b6154;border-bottom:1px solid #ece7dc;line-height:1.7}
+.ask b{color:#8a5a12}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px;background:#faf8f4}
+.side{min-width:0}
+.tag{font-size:11.5px;color:#5b5346;margin-bottom:5px;line-height:1.6;word-break:break-all}
+.tag b{color:#a5281b}
+.side img{display:block;width:auto;max-width:100%;height:auto;border:1px solid #d8d1c2;border-radius:6px;background:#fff}
+.seg-desktop .side img{max-height:430px}
+.verdict{padding:9px 12px;font-size:12.5px;line-height:1.8;border-top:1px solid #ece7dc}
+.verdict .badge{display:inline-block;border-radius:5px;padding:1px 7px;font-size:11.5px;font-weight:600;margin-right:7px}
+.verdict.diff .badge{background:#fdf0d5;color:#8a5a12;border:1px solid #e6cd97}
+.verdict.same .badge{background:#e6f4ea;color:#1e6b3a;border:1px solid #b6ddc4}
+.excluded{margin-top:26px;background:#fff;border:1px solid #d8d1c2;border-radius:12px;padding:14px 16px;font-size:12.5px;line-height:1.95;color:#4a4238}
+.excluded h3{font-size:13.5px;margin-bottom:8px;color:#1d1d1f}
+.excluded li{margin-left:18px}
+footer{margin-top:22px;color:#6b6154;font-size:12.5px;line-height:1.9}
+@media (max-width:700px){
+  .pair{grid-template-columns:1fr}
+  .seg-desktop .side img{max-height:none}
+  figcaption a{margin-left:0}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>1196 双端视觉墙 · 使用手册（手册书）成品 vs 冻结原型</h1>
+  <div class="sub">
+    每格＝一格<b>成品图</b> vs 对应<b>原型图</b>（宽处并排、窄处上下），格标写明跨页／页位与视口。点格内右上角链接在新标签打开整图。
+    这一页给人滚一遍看，<b>不是</b>交付产物，也不产出机器判据 —— 机器读数在 <code>t1196-wall.mjs</code> 的 <code>T1196-WALL-RESULT</code> 行与 <code>t1196-证据.md</code>。
+  </div>
+  <div class="facts">
+    <b>真值原型</b>：<code>proto-manual-4scenes.html</code> ｜ SHA256 <code>2F297C2356A3B3B4C39D22051F30F20A4E9CD4D6AED010AAC3FCF31805F34280</code>（#1241 冻结身份）<br>
+    <b>成品图</b>：<code>#1242</code> 产物 ＋ <code>#1240</code> 壳对齐（分支 <code>fix/manual-tabcard-1196</code>，基线 <code>origin/master</code> <code>be983a57</code>；含 <code>2a4887b0</code> 的 <code>.pg .dbadge::before</code> 黑徽与 <code>28bfc266</code> 的纸宽字号）——四张成品图已按该源码重出，读数见 <code>t1196-证据.md</code> §10<br>
+    <b>原型图</b>：<code>1242-证据/proto-*-r2.png</code>（第二轮的同一枚，与首轮逐字节相同）＋ <code>t1196-proto-1280-跨页2.png</code>（#1196 席自出，见下）<br>
+    <b>截图通道</b>：CDP <code>Emulation.setDeviceMetricsOverride</code>（绕开 Chrome <code>--window-size</code> 的 500 宽下限）；重出时同页读 DOM 自证画到了真跨页（<code>h2</code> 为「目录＋基本使用」／「后续场景」，<code>page-frame</code> 两框），不是空白页
+  </div>
+
+  <h2>桌面段（1280 主档 ＋ 741 中宽补档）<span>3 格</span></h2>
+  <div class="segnote">1280 主档两格＝首跨页与尾跨页两个页位；741 一格＝中宽补档（非 1280，避免隐去中间档读数，如实标注档位）。</div>
+  <div class="grid seg-desktop">
+
+    <figure data-cell="D1">
+      <figcaption>
+        <span class="no">D1</span>
+        <span class="pos">跨页 0（首跨页）· 左页目录 ／ 右页「基本使用」</span>
+        <span class="view">视口 1280×900</span>
+        <a href="t1196-made-1280-跨页0.png" target="_blank" rel="noopener">成品整图</a>
+        <a href="1242-证据/proto-1280-r2.png" target="_blank" rel="noopener">原型整图</a>
+      </figcaption>
+      <div class="ask">该确认：<b>双栏、书签 1·2·4、框下两颗铜扣（上一页暗＝禁用）、正文不被页框截断</b>——这四点两张是否都在，以及正文相对页宽的大小。</div>
+      <div class="pair">
+        <div class="side"><div class="tag"><b>成品</b> · t1196-made-1280-跨页0.png（247,948 B）</div><img src="t1196-made-1280-跨页0.png" alt="成品：使用手册首跨页，1280 宽"></div>
+        <div class="side"><div class="tag"><b>原型</b> · 1242-证据/proto-1280-r2.png（298,420 B）</div><img src="1242-证据/proto-1280-r2.png" alt="冻结原型：同一跨页，1280 宽"></div>
+      </div>
+      <div class="verdict diff"><span class="badge">差异</span>双栏／书签 1·2·4／框下两颗铜扣（上一页暗＝禁用）／正文不越框——<b>四点一致</b>；正文相对页宽的字号也已一致（1280 下纸宽 1116px、页根字号两张同为 16.2px，见 <code>t1196-缺陷清单.md</code> X1「已修」）；<code>DSH</code> 胶囊左侧那枚黑徽两张都有（本轮放大局部复验）。剩下的差异是<b>取景／外壳</b>：原型那一页把演示面板卡一起拍进来、整册下移，铜扣落在 900px 视口外；成品是整屏舞台（与原型同底色），整套可见、右上角一枚关闭按钮。属取景，不是缺件。</div>
+    </figure>
+
+    <figure data-cell="D2">
+      <figcaption>
+        <span class="no">D2</span>
+        <span class="pos">跨页 2（尾跨页）· 左页「后续场景，待补充」／ 右页空白</span>
+        <span class="view">视口 1280×900</span>
+        <a href="t1196-made-1280-跨页2.png" target="_blank" rel="noopener">成品整图</a>
+        <a href="t1196-proto-1280-跨页2.png" target="_blank" rel="noopener">原型整图</a>
+      </figcaption>
+      <div class="ask">该确认：<b>两张是否停在同一个末跨页</b>（左页 5 行待办行全带锁、右页空白、书签 1·3·5），以及下一页铜扣是否暗＝禁用。</div>
+      <div class="pair">
+        <div class="side"><div class="tag"><b>成品</b> · t1196-made-1280-跨页2.png（178,392 B）</div><img src="t1196-made-1280-跨页2.png" alt="成品：使用手册尾跨页，1280 宽"></div>
+        <div class="side"><div class="tag"><b>原型</b> · t1196-proto-1280-跨页2.png（229,299 B，#1196 席自出）</div><img src="t1196-proto-1280-跨页2.png" alt="冻结原型：末跨页，1280 宽"></div>
+      </div>
+      <div class="verdict same"><span class="badge">一致</span>同为末跨页：左页「后续场景，待补充」<b>5 行、每行带锁</b>，右页空白，书签 <b>1·3·5</b> 两侧一致；成品框下两颗铜扣（<b>下一页暗＝禁用</b>）。差异只在取景——原型整册放大，铜扣落在 900px 视口外。本页无 <code>dbadge</code>，与黑徽补丁无关。</div>
+    </figure>
+
+    <figure data-cell="D3">
+      <figcaption>
+        <span class="no">D3</span>
+        <span class="pos">跨页 0（首跨页）· 741 中宽补档</span>
+        <span class="view">视口 741×1200</span>
+        <a href="t1196-made-741-跨页0.png" target="_blank" rel="noopener">成品整图</a>
+        <a href="1242-证据/proto-741-r2.png" target="_blank" rel="noopener">原型整图</a>
+      </figcaption>
+      <div class="ask">该确认：<b>中间档会不会先塌</b>——双栏是否还在、书签 1·2·4 是否还在、两颗铜扣是否还在框下。</div>
+      <div class="pair">
+        <div class="side"><div class="tag"><b>成品</b> · t1196-made-741-跨页0.png（152,489 B）</div><img src="t1196-made-741-跨页0.png" alt="成品：使用手册首跨页，741 宽"></div>
+        <div class="side"><div class="tag"><b>原型</b> · 1242-证据/proto-741-r2.png（228,936 B）</div><img src="1242-证据/proto-741-r2.png" alt="冻结原型：同一跨页，741 宽"></div>
+      </div>
+      <div class="verdict diff"><span class="badge">差异</span>双栏、书签 1·2·4、框下两颗铜扣（左暗＝禁用／右亮＝可用）<b>都在，未塌列</b>；正文每行字数与换行位置和原型一致（741 下纸宽 701px、页根字号两张同为 9.975px）。差异只剩<b>取景／外壳</b>：成品右上角一枚关闭按钮，原型顶部是演示面板卡与书框外那圈金饰。</div>
+    </figure>
+
+  </div>
+
+  <h2>手机段（390）<span>1 格</span></h2>
+  <div class="segnote">390 一格＝首跨页（唯一有成品图的手机档）。两张图都按 1:1 原尺寸铺在墙上，不做缩放。</div>
+  <div class="grid seg-mobile">
+
+    <figure data-cell="M1">
+      <figcaption>
+        <span class="no">M1</span>
+        <span class="pos">跨页 0（首跨页）· 左页目录 ／ 右页「基本使用」</span>
+        <span class="view">视口 390×1500（真视口，非缩略图）</span>
+        <a href="t1196-made-390-跨页0.png" target="_blank" rel="noopener">成品整图</a>
+        <a href="1242-证据/proto-390-r2.png" target="_blank" rel="noopener">原型整图</a>
+      </figcaption>
+      <div class="ask">该确认：<b>390 会不会退化单栏</b>（两边都不退）、书签 1·2·4 是否还在、正文有没有溢出页框。</div>
+      <div class="pair">
+        <div class="side"><div class="tag"><b>成品</b> · t1196-made-390-跨页0.png（81,579 B）</div><img src="t1196-made-390-跨页0.png" alt="成品：使用手册首跨页，390 宽手机视口"></div>
+        <div class="side"><div class="tag"><b>原型</b> · 1242-证据/proto-390-r2.png（126,033 B）</div><img src="1242-证据/proto-390-r2.png" alt="冻结原型：同一跨页，390 宽手机视口"></div>
+      </div>
+      <div class="verdict diff"><span class="badge">差异</span>两张<b>都不做单栏退化</b>（都是左目录右正文双栏）、书签 1·2·4 都在、正文都没溢出页框；整册在画面里的占比与字号也一致（390 下纸宽 350px、页根字号两张同为 4.71px，整册同样缩到约 250px 高）。差异只剩<b>取景／外壳</b>：原型顶部带演示面板卡与书框外那圈金饰，成品右上角一枚关闭按钮；两张下半那片近黑都是舞台底色 <code>#15130f</code>，不是破图。</div>
+    </figure>
+
+  </div>
+
+  <div class="excluded">
+    <h3>有意不出产物及其原因</h3>
+    <ul>
+      <li><b>手机段跨页 2（390×尾跨页）</b>：#1242 只出了 390 首跨页，成品侧无图；原型侧可自出但无对照，故不出格。</li>
+      <li><b>741 尾跨页、1280／741／390 的其他页位</b>：同批只拍了首跨页与 1280 尾跨页两处，其余页位无成品图。</li>
+      <li><b><code>made-*-r2.png</code> 一套（同批第二轮成品）</b>：本墙取票面点名的那一套（首轮成品 ＋ r2 原型）。r2 一套里 <code>made-1280-s0-r2</code>／<code>made-741-s0-r2</code>／<code>made-390-s0-r2</code> 三张 SHA256 与本墙所用不同（<code>made-1280-s2-r2</code> 与所用那张逐字节相同）；#1242 §7 只对 1280-s0 给出 <code>0.0593</code> 的抗锯齿／字形栅格差读数，741／390 未逐图判读，故不并排出格，避免同一页位重复计数。</li>
+      <li><b>原型的瞬态动效（<code>.pg.enter</code> 进场动画）</b>：静态截图照不到，见 <code>t1196-缺陷清单.md</code> X2。</li>
+    </ul>
+  </div>
+
+  <footer>
+    格数：桌面段 3 ＋ 手机段 1 ＝ <b>4 格</b>（＝本页清单条目数，自检脚本 <code>t1196-wall.mjs</code> 断言）。逐格缺陷见 <code>t1196-缺陷清单.md</code>，判据与机器读数见 <code>t1196-证据.md</code>。
+  </footer>
+</div>
+
+<script type="application/json" id="t1196-manifest">
+{
+  "ticket": "1196",
+  "proto": { "file": "proto-manual-4scenes.html", "sha256": "2F297C2356A3B3B4C39D22051F30F20A4E9CD4D6AED010AAC3FCF31805F34280" },
+  "base": "docs/plugins/plugin-manager",
+  "segments": [
+    { "id": "desktop", "title": "桌面段（1280 主档 ＋ 741 中宽补档）", "cells": ["D1", "D2", "D3"] },
+    { "id": "mobile", "title": "手机段（390）", "cells": ["M1"] }
+  ],
+  "rows": [
+    { "cell": "D1", "seg": "desktop", "spread": "跨页 0（首跨页）", "viewport": "1280x900",
+      "made": "t1196-made-1280-跨页0.png", "proto": "1242-证据/proto-1280-r2.png", "verdict": "差异" },
+    { "cell": "D2", "seg": "desktop", "spread": "跨页 2（尾跨页）", "viewport": "1280x900",
+      "made": "t1196-made-1280-跨页2.png", "proto": "t1196-proto-1280-跨页2.png", "verdict": "一致" },
+    { "cell": "D3", "seg": "desktop", "spread": "跨页 0（首跨页，741 中宽补档）", "viewport": "741x1200",
+      "made": "t1196-made-741-跨页0.png", "proto": "1242-证据/proto-741-r2.png", "verdict": "差异" },
+    { "cell": "M1", "seg": "mobile", "spread": "跨页 0（首跨页）", "viewport": "390x1500",
+      "made": "t1196-made-390-跨页0.png", "proto": "1242-证据/proto-390-r2.png", "verdict": "差异" }
+  ]
+}
+</script>
+</body>
+</html>
