@@ -108,8 +108,10 @@ describe('#1237 使用手册入口与弹出空壳', () => {
     assert.ok(src.includes('MANUAL_CLOSE_SLOT'), '关闭钮那一格须走 MANUAL_CLOSE_SLOT 定位');
     assert.ok(/manual-close/.test(src), '关闭钮须带 data-ilife-press=manual-close');
     assert.ok(/closeSlot: React\.createElement\([\s\S]{0,400}?S\.manualBrass/.test(src), '关闭钮须用 S.manualBrass（与上一页／下一页同一份铜色材质）');
-    // 用户口径（右下角常驻）：入口 fixed 脱离文档流钉死右下角，不占标题行右边距，不随列表滑动消失
-    assert.ok(/position: 'fixed', bottom: MANUAL_ENTRY_BOTTOM, right: MANUAL_ENTRY_INSET/.test(src), '入口须 fixed 钉在右下角');
+    // 用户口径（右下角常驻）：入口 sticky 吸附在面板右下角、住卡片末尾，不随列表滑走
+    assert.ok(/position: 'sticky', bottom: MANUAL_ENTRY_BOTTOM/.test(src), '入口须 sticky 吸附在右下角');
+    assert.ok(src.indexOf('MorePluginsCard') < src.indexOf("position: 'sticky'"), '入口块须住卡片末尾（置顶会被上面滑走）');
+    assert.ok(src.includes("'data-ilife-manual': 'entry-dock'"), '吸附壳须带 entry-dock 标记位');
     assert.ok(!src.includes('MANUAL_ENTRY_RESERVE'), '旧的标题行右边距竖带须已撤掉');
   });
 

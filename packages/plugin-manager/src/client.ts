@@ -859,9 +859,8 @@ declare const __LIFE_PACK_VERSION__: string;
 /** 版本胶囊那一行字：只在这里拼一次，屏上与用例读的是同一串。 */
 const MANAGER_VERSION_TEXT = MANAGER_PLUGIN + ' · ' + __LIFE_PACK_VERSION__;
 
-/** 右下角那本书离视口两沿的距离：用户口径「一直处于面板右下角、不在页面内、
- *  不随列表滑动消失」⇒ 用 `position:fixed` 脱离文档流钉死，不再占标题行的右边距
- *  （旧的右边距竖带随本次一并撤掉）。 */
+/** 右下角那本书离面板两沿的距离：用户口径「一直处于面板右下角、不随列表滑动消失」
+ *  ⇒ sticky 吸附（面板相对，视口多大都落在面板角上）；INSET＝右沿，BOTTOM＝底沿。 */
 const MANUAL_ENTRY_INSET = 16;
 
 /** 书盒子离视口底沿的距离（与上条同一次口径）。 */
@@ -1058,42 +1057,7 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
   return React.createElement(
     'div',
     { style: { position: 'relative' } },
-    // 用户口径（右下角常驻）：使用手册入口放大 30% 后钉在**面板右下角**——`fixed` 脱离
-    // 文档流，不占任何一行的位置，不随列表滑动消失；弹层仍走 dialog top layer 居中。
-    React.createElement(
-      'span',
-      { style: { position: 'fixed', bottom: MANUAL_ENTRY_BOTTOM, right: MANUAL_ENTRY_INSET, display: 'inline-flex', zIndex: 60 } },
-      React.createElement('style', null, manualEntryCss()),
-      React.createElement(ManualEntryButton, { onOpen: () => { setManualOpen(true); } }),
-      // 书体挂在同一个弹层里（#1240：弹层从空壳改成真书；定位与外观在 manualEntryCss 的
-      // `.manual-popover` 一处定义，关着不渲染）。
-      React.createElement(
-        ManualPopoverShell,
-        { open: manualOpen, onClose: () => { setManualOpen(false); }, dialogRef: attachManualDialog },
-        React.createElement(ManualBookShell, {
-          scenes: [...SCENES],
-          renderPage: (page, goPage) => page === null ? null : renderManualPage(SCENES, page, goPage),
-          // 关闭钮（2026-10-10 用户口径）：材质照「上一页／下一页」那两枚（同一份 S.manualBrass），
-          // 钉在**书框**右上角**外侧**——那一格挂在书壳里，所以它跟着书走，不跟弹层框走。
-          closeSlot: React.createElement(
-            'span',
-            { style: MANUAL_CLOSE_SLOT, 'data-ilife-manual': 'close-slot' },
-            React.createElement(
-              'button',
-              {
-                type: 'button',
-                style: S.manualBrass,
-                title: '关闭使用手册',
-                'aria-label': '关闭使用手册',
-                'data-ilife-press': 'manual-close',
-                onClick: () => { setManualOpen(false); },
-              },
-              '关闭',
-            ),
-          ),
-        }),
-      ),
-    ),
+    // 使用手册入口住卡片末尾（右下角常驻，见文件尾 sticky 块）。
     React.createElement(
       'div',
       { style: S.headRow },
@@ -1270,6 +1234,47 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
       );
     }),
     React.createElement(MorePluginsCard, null),
+    // 用户口径（右下角常驻）：入口放大 30%，吸附在**面板**右下角——sticky 贴着滚动视口底沿，
+    // 面板相对（视口多大都落在面板角上，不随列表滑走）；只能住末尾（置顶会被上面滑走）。
+    // 外层点透（整条只剩书可点），marginTop 撑开与上一张卡的距离；弹层仍走 dialog top layer 居中。
+    React.createElement(
+      'div',
+      { style: { position: 'sticky', bottom: MANUAL_ENTRY_BOTTOM, zIndex: 60, display: 'flex', justifyContent: 'flex-end', paddingRight: MANUAL_ENTRY_INSET, marginTop: 8, pointerEvents: 'none' }, 'data-ilife-manual': 'entry-dock' },
+      React.createElement(
+        'span',
+        { style: { display: 'inline-flex', pointerEvents: 'auto' } },
+        React.createElement('style', null, manualEntryCss()),
+        React.createElement(ManualEntryButton, { onOpen: () => { setManualOpen(true); } }),
+        // 书体挂在同一个弹层里（#1240：弹层从空壳改成真书；定位与外观在 manualEntryCss 的
+        // `.manual-popover` 一处定义，关着不渲染）。
+        React.createElement(
+          ManualPopoverShell,
+          { open: manualOpen, onClose: () => { setManualOpen(false); }, dialogRef: attachManualDialog },
+          React.createElement(ManualBookShell, {
+            scenes: [...SCENES],
+            renderPage: (page, goPage) => page === null ? null : renderManualPage(SCENES, page, goPage),
+            // 关闭钮（2026-10-10 用户口径）：材质照「上一页／下一页」那两枚（同一份 S.manualBrass），
+            // 钉在**书框**右上角**外侧**——那一格挂在书壳里，所以它跟着书走，不跟弹层框走。
+            closeSlot: React.createElement(
+              'span',
+              { style: MANUAL_CLOSE_SLOT, 'data-ilife-manual': 'close-slot' },
+              React.createElement(
+                'button',
+                {
+                  type: 'button',
+                  style: S.manualBrass,
+                  title: '关闭使用手册',
+                  'aria-label': '关闭使用手册',
+                  'data-ilife-press': 'manual-close',
+                  onClick: () => { setManualOpen(false); },
+                },
+                '关闭',
+              ),
+            ),
+          }),
+        ),
+      ),
+    ),
   );
 }
 
