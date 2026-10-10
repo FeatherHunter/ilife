@@ -119,6 +119,9 @@ describe('#1237 使用手册入口与弹出空壳', () => {
     assert.ok(/closeSlot: React\.createElement\([\s\S]{0,400}?S\.manualBrass/.test(src), '关闭钮须用 S.manualBrass（与上一页／下一页同一份铜色材质）');
     // 用户口径（三枚钮与书同层）：铜扣行与关闭槽 z40，压住页内浮层（z30），开图时钮不被盖
     assert.equal((src.match(/zIndex: 40/g) ?? []).length, 2, '翻页行与关闭槽须各一处 z40');
+    // 开图时整组藏起（谁也不盖谁）：壳有开着的浮层就藏铜扣行与关闭槽，图一关就回来
+    assert.ok(src.includes("'data-ilife-manual': 'deck'"), '铜扣行须带 deck 标记位');
+    assert.ok(src.includes(':has(.pop.open)'), '开图藏钮须走 :has');
     // 用户口径（右下角常驻）：入口 sticky 吸附在面板右下角、住卡片末尾，不随列表滑走
     assert.ok(/position: 'sticky', bottom: MANUAL_ENTRY_BOTTOM/.test(src), '入口须 sticky 吸附在右下角');
     assert.ok(src.indexOf('MorePluginsCard') < src.indexOf("position: 'sticky'"), '入口块须住卡片末尾（置顶会被上面滑走）');

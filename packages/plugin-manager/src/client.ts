@@ -391,6 +391,11 @@ function manualTurnCss(): string {
     '@keyframes ilifeToRight{0%{transform:rotateY(0deg)}100%{transform:rotateY(180deg)}}',
     '@keyframes ilifeShadeTurn{0%{opacity:0}50%{opacity:.38}100%{opacity:0}}',
     '@media (prefers-reduced-motion:reduce){.ilife-manual-leaf.to-left,.ilife-manual-leaf.to-right,.ilife-manual-leaf.to-left .face:after,.ilife-manual-leaf.to-right .face:after{animation:none}}',
+    // 开图时藏钮：浮层一开，铜扣行与关闭钮整组消失（谁也不盖谁，不存在半遮半点不动）；
+    // 图一关就回来。铜扣行是壳的后兄弟，关闭钮住在壳里，各走各的找法。
+    // 铜扣行的 display 写在行内样式里，藏它只能上 !important（壳里复评已有 !important 先例）。
+    '[data-ilife-manual="shell"]:has(.pop.open)~[data-ilife-manual="deck"]{display:none!important}',
+    '[data-ilife-manual="shell"]:has(.pop.open) [data-ilife-manual="close-slot"]{display:none}',
   ].join('');
 }
 
@@ -781,8 +786,8 @@ function ManualBookShell(props: {
     ),
     React.createElement(
       'div',
-      // 铜扣行与书同层：zIndex 压住页内浮层（.view z30），开图时翻页钮不被盖住。
-      { style: { ...S.manualDeck, zIndex: 40 } },
+      // 铜扣行与书同层；开图时整组由 :has 规则藏起（见 manualTurnCss 尾），平时 z40 保底。
+      { style: { ...S.manualDeck, zIndex: 40 }, 'data-ilife-manual': 'deck' },
       React.createElement(
         'button',
         {

@@ -118,7 +118,7 @@ describe('#1240 手册壳与冻结原型同口径', () => {
     const inStage = findAll(stage, (n) => n.props?.['data-ilife-manual'] === 'prev' || n.props?.['data-ilife-manual'] === 'next');
     assert.equal(inStage.length, 2, '两颗铜扣都在舞台上（框外页面底色）');
     const stageKids = (stage.props.children ?? []).filter(Boolean).map((c) => c.props?.['data-ilife-manual']);
-    assert.deepEqual(stageKids, ['shell', undefined], '舞台层先书壳、后铜扣行');
+    assert.deepEqual(stageKids.slice(0, 2), ['shell', 'deck'], '舞台层先书壳、后铜扣行（铜扣带 deck 位供开图藏钮）');
   });
 
   it('页根字号与纸面内衬照原型：字号＝纸宽×1.5%，纸面无内衬', async () => {
