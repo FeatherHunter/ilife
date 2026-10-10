@@ -1,4 +1,4 @@
-// 票 #1237 入口与弹层：总管爱生活卡上的使用手册图标（红封＋书脊＋米色腰封），点开弹出书式弹层。
+// 票 #1237 入口与弹层：总管爱生活卡上的使用手册图标（红封＋书脊＋金匾腰封＋鎏金背光），点开弹出书式弹层。
 // 真值：docs/plugins/plugin-manager/proto-manual-4scenes.html（冻结原型，最高）＋ 手册正文-定版-20261009.html ENTRY（v2 甲）。
 // 2026-10-10 用户验收三改（记在 #1240）：删底部名牌、整体缩小、开书改限制尺寸弹层——本文件的断言按改后口径。
 // 读的是编译产物（tsc -b 之后再跑），与 manual-plan-1193 同一套写法。
@@ -14,14 +14,15 @@ const CLIENT = readFileSync(join(HERE, '..', 'dist', 'client.js'), 'utf8');
 const ENTRY_SRC = readFileSync(join(HERE, '..', 'dist', 'manual-entry.js'), 'utf8');
 
 describe('#1237 使用手册入口与弹出空壳', () => {
-  it('入口图标：红色封皮＋米色腰封（腰封上印「使用手册」），点开回调可接', () => {
+  it('入口图标：红色封皮＋金匾腰封（腰封上印发光的「使用手册」），背垫鎏金光晕，点开回调可接', () => {
     const { ManualEntryButton } = ENTRY;
     assert.equal(typeof ManualEntryButton, 'function');
     let opened = 0;
     const el = ManualEntryButton({ onOpen: () => { opened += 1; } });
     const dump = JSON.stringify(el);
     assert.ok(dump.includes('eabook'), '缺红封书体 eabook');
-    assert.ok(dump.includes('eaband'), '缺米色腰封 eaband');
+    assert.ok(dump.includes('eaband'), '缺腰封 eaband');
+    assert.ok(dump.includes('eaaura'), '缺鎏金背光 eaaura');
     assert.ok(dump.includes('bkbtn'), '缺入口按钮 bkbtn');
     // 2026-10-10 用户验收：「删掉底部的那个使用手册那个字的控件」⇒ 名牌（.plate）连同字样一并去掉
     assert.ok(!dump.includes('plate'), '底部名牌已删，不许再出现 plate');
@@ -34,19 +35,21 @@ describe('#1237 使用手册入口与弹出空壳', () => {
     assert.equal(opened, 1);
   });
 
-  it('入口样式：书那五条在场（红封＋书脊＋腰封），尺寸按用户 2026-10-10 收小', () => {
+  it('入口样式：书那六条在场（红封＋书脊＋金匾腰封＋背光），尺寸按用户口径放大', () => {
     const css = ENTRY.manualEntryCss();
-    for (const needle of ['.bkbtn', '.stage', '.eabook', '.eabook:before', '.eabook .eaband']) {
+    for (const needle of ['.bkbtn', '.eaaura', '.stage', '.eabook', '.eabook:before', '.eabook .eaband']) {
       assert.ok(css.includes(needle), 'ENTRY_CSS 缺 ' + needle);
     }
     assert.ok(!css.includes('.plate'), '名牌那格样式应已删');
-    // 逐字抽查：红封渐变、腰封米色（这两条照冻结原型不改）
+    // 逐字抽查：红封渐变（照冻结原型不改）、腰封金匾、四字金光、背光
     assert.ok(css.includes('linear-gradient(135deg,#9c2f2f,#5f1616 65%,#3a0d0d)'), '红封底色不对');
-    assert.ok(css.includes('background:#ece0c2'), '腰封米色不对');
-    // 用户验收「放大 30%」：34×46 → 44×60（书体 32×44 → 42×57，书脊 5px → 7px）。这条挡的是「照旧尺寸回去」。
-    assert.ok(css.includes('.stage{position:relative;width:44px;height:60px'), '入口舞台尺寸应为 44×60');
-    assert.ok(css.includes('.eabook{display:block;position:relative;width:42px;height:57px'), '书体尺寸应为 42×57');
-    assert.ok(css.includes('width:7px'), '书脊宽度应为 7px');
+    assert.ok(css.includes('linear-gradient(180deg,#7a2323,#4a1212)'), '腰封金匾底色不对');
+    assert.ok(css.includes('text-shadow:0 0 6px #ffd97a'), '使用手册四字须发金光');
+    assert.ok(css.includes('repeating-conic-gradient'), '背光须带碎金');
+    // 用户验收「入口图标放大 30%」：44×60 → 57×78（书体 42×57 → 55×74，书脊 7px → 9px）。这条挡的是「照旧尺寸回去」。
+    assert.ok(css.includes('.stage{position:relative;width:57px;height:78px'), '入口舞台尺寸应为 57×78');
+    assert.ok(css.includes('.eabook{display:block;position:relative;width:55px;height:74px'), '书体尺寸应为 55×74');
+    assert.ok(css.includes('width:9px'), '书脊宽度应为 9px');
   });
 
   it('弹出：关着返回空；开着是透明点外关闭层＋书那一格（关闭钮已挪到书壳上）', () => {
@@ -89,7 +92,10 @@ describe('#1237 使用手册入口与弹出空壳', () => {
     assert.ok(css.includes('background:transparent'), '外层必须透明（不许黑底）');
     assert.ok(css.includes('.manual-layer::backdrop{background:transparent}'), 'UA 那层半黑 backdrop 必须清掉');
     assert.ok(!css.includes('background:#15130f'), '书的深色舞台底已去掉');
-    assert.ok(!css.includes('border-radius:16px') && !css.includes('box-shadow:0 24px 64px'), '黑框的圆角与投影已去掉');
+    // 黑框守的是书那一格（.manual-popover），不管入口背光（.eaaura 自带圆角与金光，两码事）
+    const popStart = css.indexOf('.manual-popover{');
+    const popRule = popStart < 0 ? '' : css.slice(popStart, css.indexOf('}', popStart));
+    assert.ok(!popRule.includes('border-radius') && !popRule.includes('box-shadow'), '黑框的圆角与投影已去掉');
     assert.ok(css.includes('.manual-popover{position:relative;box-sizing:border-box'), '书那一格不再自带定位与底框');
     assert.ok(!css.includes('manual-popover-close'), '弹层 CSS 里不该再有关闭钮那格');
   });

@@ -39,10 +39,14 @@ export interface ManualPopoverShellProps {
  *
  * **2026-10-10 用户验收（记在票 #1240）**：
  * ① 76×104 → 34×46（先按「太大」收 62%，再按「整体缩小」收到现在的 34×46），
- *    后按「放大 30%」放到 44×60（书体 32×44 → 42×57，书脊／腰封同步放大）；
- * ② **删掉底部那张名牌**（用户：「删掉底部的那个使用手册那个字的控件」）——「使用手册」
+ *    后按「放大 30%」放到 44×60（书体 32×44 → 42×57，书脊／腰封同步放大），
+ *    再按「入口图标放大 30%」放到 57×78（书体 42×57 → 55×74）；
+ * ② 背光（用户：「背景焦点框太素，要碎金／鎏金／金光」）：书后垫一层 `.eaaura`
+ *   （放射金晕＋稀疏金屑＋鎏金边＋外发光），压住宿主那个棱角生硬的深色焦点框；
+ * ③ 金字（用户：「使用手册这四个字要发金光」）：腰封改成深红金匾——金字＋两层金光晕；
+ * ④ **删掉底部那张名牌**（用户：「删掉底部的那个使用手册那个字的控件」）——「使用手册」
  *    只剩腰封上印一次，名牌那条 `.plate` 连同样式一并去掉；
- * ③ 开书不再动行高，也不再有深色框：`manual-layer`（透明、满屏、最高层）只干两件事——
+ * ⑤ 开书不再动行高，也不再有深色框：`manual-layer`（透明、满屏、最高层）只干两件事——
  *    吃掉书以外的点击（点书外即关）与把书摆在正中；`manual-popover` 就是书那一格，
  *    **没有底色、没有边框、没有圆角框、没有投影**（用户：「不要有黑色背景的框」）。
  *    z-index 取到 int 上限附近：用户实测面板里「保存／重置为默认／重新读取」那条底栏会盖在
@@ -50,11 +54,12 @@ export interface ManualPopoverShellProps {
  */
 export function manualEntryCss(): string {
   return (
-    '.bkbtn{display:flex;flex-direction:column;align-items:center;background:none;border:none;cursor:pointer;padding:2px 6px 0}' +
-    '.stage{position:relative;width:44px;height:60px;filter:drop-shadow(0 5px 7px #00000088)}' +
-    '.eabook{display:block;position:relative;width:42px;height:57px;border-radius:3px 5px 5px 3px;background:linear-gradient(135deg,#9c2f2f,#5f1616 65%,#3a0d0d);border:1px solid #d9ab3c;position:relative;box-shadow:3px 4px 8px #0009}' +
-    ".eabook:before{content:'';position:absolute;left:0;top:0;bottom:0;width:7px;background:linear-gradient(90deg,#320b0b,#571414);border-radius:3px 0 0 3px}" +
-    '.eabook .eaband{position:absolute;left:-3px;right:-3px;top:22px;height:14px;background:#ece0c2;display:flex;align-items:center;justify-content:center;color:#5c1010;font-size:8px;letter-spacing:.06em;box-shadow:0 1px 3px #00000066}' +
+    '.bkbtn{position:relative;display:flex;flex-direction:column;align-items:center;background:none;border:none;cursor:pointer;padding:2px 6px 0}' +
+    '.eaaura{position:absolute;inset:-12px -14px;border-radius:16px;background:radial-gradient(circle at 50% 36%,#f8e7ae66,transparent 62%),repeating-conic-gradient(from 0deg at 50% 50%,#d9ab3c30 0deg 5deg,transparent 5deg 11deg);border:1px solid #d9ab3c99;box-shadow:0 0 14px #d9ab3c77,0 0 34px #d9ab3c44,inset 0 0 10px #d9ab3c55;pointer-events:none}' +
+    '.stage{position:relative;width:57px;height:78px;filter:drop-shadow(0 7px 9px #00000088)}' +
+    '.eabook{display:block;position:relative;width:55px;height:74px;border-radius:4px 7px 7px 4px;background:linear-gradient(135deg,#9c2f2f,#5f1616 65%,#3a0d0d);border:1px solid #d9ab3c;position:relative;box-shadow:4px 5px 10px #0009}' +
+    ".eabook:before{content:'';position:absolute;left:0;top:0;bottom:0;width:9px;background:linear-gradient(90deg,#320b0b,#571414);border-radius:4px 0 0 4px}" +
+    '.eabook .eaband{position:absolute;left:-4px;right:-4px;top:29px;height:18px;background:linear-gradient(180deg,#7a2323,#4a1212);border:1px solid #f5d97a;display:flex;align-items:center;justify-content:center;color:#f8e7ae;font-size:10px;letter-spacing:.06em;text-shadow:0 0 6px #ffd97a,0 0 12px #d9ab3c,0 1px 0 #2a0d0d;box-shadow:0 0 8px #d9ab3c88,0 2px 4px #00000066}' +
     '.manual-layer{position:fixed;inset:0;box-sizing:border-box;width:auto;height:auto;max-width:none;max-height:none;margin:0;padding:0;border:0;background:transparent;color:inherit;z-index:2147483000;display:flex;align-items:center;justify-content:center}' +
     // 弹层是 <dialog>：能 showModal 的宿主会把它送进浏览器 top layer（那里 z-index 说了不算，
     // 谁也压不住）；::backdrop 是 UA 默认那层半黑，必须清掉（用户：「不要有黑色背景的框」）。
@@ -63,7 +68,7 @@ export function manualEntryCss(): string {
   );
 }
 
-/** 入口图标（红封＋书脊＋米色腰封）：原型 ENTRY_HTML 的书那一段，onclick 接出点开。
+/** 入口图标（红封＋书脊＋金匾腰封＋鎏金背光）：原型 ENTRY_HTML 的书那一段，onclick 接出点开。
  *
  * 2026-10-10 按用户要求**删掉底部名牌**（`.plate`）：「使用手册」只剩下腰封上那一处；
  * 无障碍：button 语义＋aria-label＋title（`MANUAL_ENTRY.tip`），键盘可达；按压反馈走
@@ -81,6 +86,8 @@ export function ManualEntryButton(props: ManualEntryButtonProps): React.ReactEle
       'data-ilife-press': MANUAL_ENTRY.key,
       onClick: props.onOpen,
     },
+    // 鎏金背光：先画、垫在书下（同为定位元素且无 z-index，照 DOM 序先画的在下），点透。
+    React.createElement('span', { className: 'eaaura', 'aria-hidden': 'true' }),
     React.createElement(
       'span',
       { className: 'stage' },
