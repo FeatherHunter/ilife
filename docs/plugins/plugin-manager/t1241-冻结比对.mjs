@@ -31,9 +31,11 @@ import { join, resolve } from 'node:path';
  *  2026-10-10 重冻：浮层改 span＋委托开关（Chrome 在 details 边界无视 nowrap 硬断行），
  *  原型与成品同步改，身份随之更新。
  *  2026-10-10 重冻：大小写规范＋徽标去句号＋等宽滚动＋去下划线＋悬停动画，
+ *  原型与成品同步改，身份随之更新。
+ *  2026-10-10 重冻：场景一换 DSH 新图＋浮层破框居中免滚动，
  *  原型与成品同步改，身份随之更新。 */
-const FROZEN_SHA256 = 'c00c6ad6d30faa0b5b70d4ae46bc8d67225bae1901724c5f102c5cfdfc88b8c2';
-const FROZEN_BLOB = '9a94b4cd970c3356f6b574e37efea2a371f22804';
+const FROZEN_SHA256 = '87eda90ccfe6fa290c2b3dfb07f8a55c4b271f58233f92f8e4dece490a7ea166';
+const FROZEN_BLOB = '59b9d2e7635d978ab09985fc2e5787c99b966baa';
 const PROTO_REL = 'docs/plugins/plugin-manager/proto-manual-4scenes.html';
 const CONTENT_REL = 'packages/plugin-manager/src/manual-content.ts';
 

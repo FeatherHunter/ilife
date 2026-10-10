@@ -217,6 +217,8 @@ describe('#1239 内容接线', () => {
     const VIEW_SRC = readFileSync(join(HERE, '..', 'src', 'manual-content.ts'), 'utf8');
     assert.ok(!VIEW_SRC.includes('<details'), '内容件不许再用 details');
     assert.ok(VIEW_SRC.includes('.pop.open>.view'), '浮层开合走 .open（委托切 class）');
+    assert.ok(VIEW_SRC.includes('.pop.open>.view{') && VIEW_SRC.includes('position:fixed'), '浮层须破框居中（不受书容器裁剪）');
+    assert.ok(VIEW_SRC.includes('.pop.open>.view>.x'), '× 须跟图走（挂在浮层框上）');
     assert.ok(VIEW_SRC.includes('a.capp{text-decoration:none}'), '红徽外链不许带下划线');
     assert.ok(VIEW_SRC.includes(':hover{transform:translateY(-1px)'), '可点徽标悬停须有上浮');
     assert.ok(nowHtml.includes('data:image/jpeg;base64,'), '浮层图须内联（宿主无图床可取）');

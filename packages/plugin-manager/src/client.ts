@@ -662,13 +662,20 @@ function ManualBookShell(props: {
     const open = host.querySelector('.pop.open');
     if (open !== null) open.classList.remove('open');
   };
-  /** 键盘等价：聚焦徽标回车／空格即开关（span 无原生行为，逻辑里补上）。 */
+  /** 键盘等价：聚焦徽标回车／空格即开关，聚焦 × 即关闭（span 无原生行为，逻辑里补上）。 */
   const toggleShotKey = (e: React.KeyboardEvent) => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
     const t = e.target as unknown as Element | null;
-    if (t === null || typeof t.closest !== 'function' || t.closest('[data-pop-toggle]') === null) return;
-    e.preventDefault();
+    if (t === null || typeof t.closest !== 'function') return;
     const host = e.currentTarget as unknown as Element | null;
+    if (t.closest('[data-pop-x]') !== null) {
+      e.preventDefault();
+      const near = t.closest('.pop.open') ?? (host !== null && typeof host.querySelector === 'function' ? host.querySelector('.pop.open') : null);
+      if (near !== null) near.classList.remove('open');
+      return;
+    }
+    if (t.closest('[data-pop-toggle]') === null) return;
+    e.preventDefault();
     const pop = t.closest('.pop');
     const wasOpen = pop !== null && pop.classList.contains('open');
     if (host !== null && typeof host.querySelectorAll === 'function') {
