@@ -258,3 +258,31 @@ describe('#1239 内容接线', () => {
     assert.equal(findAll(now, (n) => n.props?.className === 'small').length, 0, '合页无小字脚注');
   });
 });
+
+// 票 #1242 · F4 偏差回归：`.pg .dbadge::before` 黑徽标识（原型渲染路径产出、影响静态像素）
+// 曾经整条缺席（#1242 首轮判据 FAIL 5/6 的独苗）。判据与原型同源：现场从原型抽原文，不抄第二份。
+describe('#1242 样式冻结', () => {
+  const SRC = join(MANAGER_DIR, 'src', 'manual-content.ts');
+  const HEAD = '.pg .dbadge::before{';
+  const norm = (s) => s.replace(/\s+/g, ' ').replace(/\s*([;{},:])\s*/g, '$1').trim();
+
+  it('.pg .dbadge::before 规则与冻结原型逐字一致地在场（黑徽标识）', () => {
+    const proto = readFileSync(PROTO, 'utf8');
+    const at = proto.indexOf(HEAD);
+    assert.ok(at >= 0, '原型里找不到 ' + HEAD);
+    const rule = proto.slice(at, proto.indexOf('}', at) + 1);
+    assert.ok(rule.length > 500, '原型该条规则应含内嵌 PNG 的 base64，实长 ' + rule.length);
+    assert.ok(rule.endsWith('}'), '原型该条规则须以 } 收尾');
+
+    const src = readFileSync(SRC, 'utf8');
+    // 成品用单引号字符串字面量：规则原文（含内嵌 "…" 与 base64）整条在场
+    assert.ok(src.includes("'" + rule + "'"), '成品缺这条规则（原文在场性）：' + rule.slice(0, 80) + '…');
+
+    // 同一套字面量口径下的规则清单，逐条比对（整形后）
+    const body = src.slice(src.indexOf('export function manualContentCss'), src.indexOf('].join(', src.indexOf('export function manualContentCss')));
+    const rules = [...body.matchAll(/'((?:[^'\\]|\\.)*)'/g)].map((m) => m[1].replace(/\\(['"\\])/g, '$1'));
+    const hit = rules.filter((r) => norm(r) === norm(rule));
+    assert.equal(hit.length, 1, '整形后与原型一致的 .pg .dbadge::before 规则须恰 1 条，实为 ' + hit.length);
+    assert.equal(hit[0], rule, '.pg .dbadge::before 须与原型逐字相同');
+  });
+});
