@@ -839,33 +839,30 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
         { style: S.versionCapsule, 'data-ilife-version': 'capsule' },
         MANAGER_VERSION_TEXT,
       ),
+      // #1237／2026-10-10（用户验收两轮）：使用手册入口——**只此一处**，跟在版本胶囊后面，
+      // 与左半边那组「身份」控件（标题＋版本）同簇；右半边整簇留给「检查更新／星／气泡」那排
+      // 平控件，不再从这排平控件中间插进去（用户：「右上角排版布局感觉很丑」）。
+      // 也**不再用负边距**：第一版那样会把这枚带 3D 阴影的书顶裁掉（用户：「使用手册图被裁剪，
+      // 顶部不见了」）。行高就按书的高度来，这一簇里没有比它更高的东西，谁也不用让谁。
+      React.createElement(
+        'span',
+        { style: { position: 'relative', display: 'inline-flex', flex: '0 0 auto' } },
+        React.createElement('style', null, manualEntryCss()),
+        React.createElement(ManualEntryButton, { onOpen: () => { setManualOpen(true); } }),
+        // 书体挂在同一个弹层里（#1240：弹层从空壳改成真书；定位与外观在 manualEntryCss 的
+        // `.manual-popover` 一处定义，关着不渲染）。
+        React.createElement(
+          ManualPopoverShell,
+          { open: manualOpen, onClose: () => { setManualOpen(false); } },
+          React.createElement(ManualBookShell, {
+            scenes: [...SCENES],
+            renderPage: (page, goPage) => page === null ? null : renderManualPage(SCENES, page, goPage),
+          }),
+        ),
+      ),
       React.createElement(
         'div',
         { style: S.headActions },
-        // #1237：使用手册入口挂头，排在更新入口与星／气泡之前。
-        // 2026-10-10（用户验收）：入口只此一处——先前 #1237 被两条线各做一遍，合并后屏上出现两枚，
-        // 本处删掉 client.ts 内联那一枚，只留 manual-entry.ts 的那份（冻结原型六条样式＋用例在它身上）。
-        React.createElement(
-          'span',
-          {
-            // 2026-10-10（用户验收）：这一格给负的上下边距——书比同行的按钮高，靠这 8px 让它上下
-            // 「探出」行框，而不是把标题行撑高（用户原话：「允许这个入口横跨多个区域而不是把同一行
-            // 给弄得很高」）。行框高度仍由「检查更新」那类控件决定。
-            style: { position: 'relative', display: 'inline-flex', margin: '-8px 0' },
-          },
-          React.createElement('style', null, manualEntryCss()),
-          React.createElement(ManualEntryButton, { onOpen: () => { setManualOpen(true); } }),
-          // 书体挂在同一个弹层里（#1240：弹层从空壳改成真书；定位与外观在 manualEntryCss 的
-          // `.manual-popover` 一处定义，关着不渲染）。
-          React.createElement(
-            ManualPopoverShell,
-            { open: manualOpen, onClose: () => { setManualOpen(false); } },
-            React.createElement(ManualBookShell, {
-              scenes: [...SCENES],
-              renderPage: (page, goPage) => page === null ? null : renderManualPage(SCENES, page, goPage),
-            }),
-          ),
-        ),
         React.createElement('span', {
           style: S.updateEntrySlot,
           ref: (element: HTMLSpanElement | null) => {
