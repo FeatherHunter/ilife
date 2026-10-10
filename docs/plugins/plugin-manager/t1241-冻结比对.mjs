@@ -22,10 +22,12 @@ import { join, resolve } from 'node:path';
 /** 冻结身份（2026-10-09 冻结基线：#af750fa5／#368ee94a 起未变）。
  *  2026-10-10 重冻：用户改基本使用标题（对 DSH 说什么 help → 对 DSH 说 技能名help），
  *  原型与成品同步改，身份随之更新。
- *  2026-10-10 重冻：用户改数据目录两步文案（进技能页区域／浏览文件夹选目录），
+ *  2026-10-10 重冻：用户改 IM 场景（两条外链＋五图浮层＋新规则同步进原型样式），
+ *  原型与成品同步改，身份随之更新。
+ *  2026-10-10 重冻：IM 徽标重映射（复制／prompt／结果各挂图，IM 还原文案）＋图示，
  *  原型与成品同步改，身份随之更新。 */
-const FROZEN_SHA256 = 'd958e8cd9a2e0b2b1de38d7e6f23e7e6cbcd178362faca8e86c6fcc0ba114632';
-const FROZEN_BLOB = 'a8037723f255f11e98095d044f4d34618ace3d21';
+const FROZEN_SHA256 = 'de64b0977c8737e3676c796de72c0acf630c340c8dee56333a4471fa9d3c04a2';
+const FROZEN_BLOB = '29bc0c81d62c839b6471b547d9a2cc2bf34d7ae6';
 const PROTO_REL = 'docs/plugins/plugin-manager/proto-manual-4scenes.html';
 const CONTENT_REL = 'packages/plugin-manager/src/manual-content.ts';
 
@@ -247,7 +249,9 @@ if (existsSync(contentPath)) {
     ['纸顶场景切换条', /\bswitch\b|\.switch\{/],
     ['缩略图点开大图', /data-shot|\.thumb|lightbox/i],
     ['出错总览独立场景', /出错总览/],
-    ['HELP 死链写法', /href\s*=/],
+    // HELP 死链写法：只认白名单外的 href（2026-10-10 两条外链逐条验活，HTTP 200，
+    // 用户点名要可点；白名单外再出现 href 仍按死链记）。
+    ['HELP 死链写法', /href\s*=\s*"(?!https:\/\/github\.com\/(xmanrui\/dsh-im|FeatherHunter\/dsh-im-companion)")/],
   ];
   const hit = banned.filter(([, re]) => re.test(src)).map(([name]) => name);
   const written = implScenes === null ? -1 : implScenes.filter((s) => s.state === 'written' && s.kind !== 'contents').length;

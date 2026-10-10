@@ -203,6 +203,13 @@ describe('#1239 内容接线', () => {
     assert.ok(body.includes('不对你数据目录里的数据库文件加密'), '备注须在');
     const stepHtml = rawHtml(tree).join(' ');
     assert.ok(stepHtml.includes('饼干记账 help'), '步骤串须带原文');
+    const nowHtml = rawHtml(now).join(' ');
+    assert.ok(nowHtml.includes('https://github.com/xmanrui/dsh-im'), 'dsh-im 外链须在');
+    assert.ok(nowHtml.includes('https://github.com/FeatherHunter/dsh-im-companion'), 'companion 外链须在');
+    assert.ok(nowHtml.includes('target="_blank"'), '外链须新窗口开');
+    assert.equal((nowHtml.match(/<details/g) ?? []).length, 5, 'IM 页须 5 处图片浮层');
+    assert.ok(nowHtml.includes('<svg'), '图片徽标须带图示');
+    assert.ok(nowHtml.includes('data:image/jpeg;base64,'), '浮层图须内联（宿主无图床可取）');
     assert.ok(stepHtml.includes('dbadge') && stepHtml.includes('ctag') === false, '基本使用页签徽在');
     assert.equal(findAll(now, (n) => n.props?.['data-ilife-manual'] === 'frag-copy').length, 0, '片段为空，不许有复制按钮');
     for (const w of WARNS) assert.ok(!body.includes(w), 'warn 不渲染：' + w);
