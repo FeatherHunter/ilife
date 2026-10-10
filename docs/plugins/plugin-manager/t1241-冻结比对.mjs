@@ -22,10 +22,10 @@ import { join, resolve } from 'node:path';
 /** 冻结身份（2026-10-09 冻结基线：#af750fa5／#368ee94a 起未变）。
  *  2026-10-10 重冻：用户改基本使用标题（对 DSH 说什么 help → 对 DSH 说 技能名help），
  *  原型与成品同步改，身份随之更新。
- *  2026-10-10 重冻：用户改基本使用四步文案（交付／点「复制」按钮／prompt 提示词／返回结果），
+ *  2026-10-10 重冻：用户改数据目录两步文案（进技能页区域／浏览文件夹选目录），
  *  原型与成品同步改，身份随之更新。 */
-const FROZEN_SHA256 = 'a3d78043aac94c98d0f658addea3783f05df2cee9afdc2261a7442d9f419ba93';
-const FROZEN_BLOB = 'b1fba0c529e7127089ec47189748bddd1897e0ed';
+const FROZEN_SHA256 = 'd958e8cd9a2e0b2b1de38d7e6f23e7e6cbcd178362faca8e86c6fcc0ba114632';
+const FROZEN_BLOB = 'a8037723f255f11e98095d044f4d34618ace3d21';
 const PROTO_REL = 'docs/plugins/plugin-manager/proto-manual-4scenes.html';
 const CONTENT_REL = 'packages/plugin-manager/src/manual-content.ts';
 

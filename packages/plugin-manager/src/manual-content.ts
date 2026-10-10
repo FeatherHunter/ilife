@@ -48,8 +48,8 @@ export const SCENES: readonly ManualContentScene[] = [
     key: 'datadir', title: '数据目录：你专属的数据存放位置', state: 'written', name: '数据目录',
     kicker: '你的数据你做主', lead: '数据目录就是你专属的数据存放位置。',
     steps: [
-      '点 <span class="ctag">配置面板 › 数据目录</span>蓝底那一行进去；它不在顶层，要先进这一区。',
-      '按你要用的技能，把数据存放在哪个目录下设置好。',
+      '进入 「技能」页面的 <span class="ctag">配置面板 › 数据目录</span> 区域。',
+      '「浏览文件夹」，选择目录。',
       '点保存。',
     ],
     tags: ['配置面板 › 数据目录'], apps: [], frag: '', shot: false, panelStatic: true,
