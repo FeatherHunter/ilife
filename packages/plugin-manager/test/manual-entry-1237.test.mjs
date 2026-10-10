@@ -43,10 +43,10 @@ describe('#1237 使用手册入口与弹出空壳', () => {
     // 逐字抽查：红封渐变、腰封米色（这两条照冻结原型不改）
     assert.ok(css.includes('linear-gradient(135deg,#9c2f2f,#5f1616 65%,#3a0d0d)'), '红封底色不对');
     assert.ok(css.includes('background:#ece0c2'), '腰封米色不对');
-    // 2026-10-10 用户验收「整体缩小」：76×104 → 34×46（书脊 12px → 5px）。这条挡的是「照原型改回去」。
-    assert.ok(css.includes('.stage{position:relative;width:34px;height:46px'), '入口舞台尺寸应为 34×46');
-    assert.ok(css.includes('.eabook{display:block;position:relative;width:32px;height:44px'), '书体尺寸应为 32×44');
-    assert.ok(css.includes('width:5px'), '书脊宽度应为 5px');
+    // 用户验收「放大 30%」：34×46 → 44×60（书体 32×44 → 42×57，书脊 5px → 7px）。这条挡的是「照旧尺寸回去」。
+    assert.ok(css.includes('.stage{position:relative;width:44px;height:60px'), '入口舞台尺寸应为 44×60');
+    assert.ok(css.includes('.eabook{display:block;position:relative;width:42px;height:57px'), '书体尺寸应为 42×57');
+    assert.ok(css.includes('width:7px'), '书脊宽度应为 7px');
   });
 
   it('弹出：关着返回空；开着是透明点外关闭层＋书那一格（关闭钮已挪到书壳上）', () => {
@@ -108,6 +108,9 @@ describe('#1237 使用手册入口与弹出空壳', () => {
     assert.ok(src.includes('MANUAL_CLOSE_SLOT'), '关闭钮那一格须走 MANUAL_CLOSE_SLOT 定位');
     assert.ok(/manual-close/.test(src), '关闭钮须带 data-ilife-press=manual-close');
     assert.ok(/closeSlot: React\.createElement\([\s\S]{0,400}?S\.manualBrass/.test(src), '关闭钮须用 S.manualBrass（与上一页／下一页同一份铜色材质）');
+    // 用户口径（右下角常驻）：入口 fixed 脱离文档流钉死右下角，不占标题行右边距，不随列表滑动消失
+    assert.ok(/position: 'fixed', bottom: MANUAL_ENTRY_BOTTOM, right: MANUAL_ENTRY_INSET/.test(src), '入口须 fixed 钉在右下角');
+    assert.ok(!src.includes('MANUAL_ENTRY_RESERVE'), '旧的标题行右边距竖带须已撤掉');
   });
 
   it('总管卡已挂入口：产物 client.js 里有图标、popover 框与铜色关闭钮', () => {

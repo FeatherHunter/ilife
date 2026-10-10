@@ -859,14 +859,13 @@ declare const __LIFE_PACK_VERSION__: string;
 /** 版本胶囊那一行字：只在这里拼一次，屏上与用例读的是同一串。 */
 const MANAGER_VERSION_TEXT = MANAGER_PLUGIN + ' · ' + __LIFE_PACK_VERSION__;
 
-/** 右上角那本书占的那条竖带宽度：书 34px ＋ 按钮两侧内边各 6px（＝46px 的盒子）＋ 与卡片右沿
- *  留 8px 呼吸 ＋ 与右边那排控件留 10px 间隙 ⇒ 64px。标题行留这段右边距，于是「体检／检查更新／星／
- *  气泡」的右端落在**同一条竖线**上，谁也不会撞到书的左下角。
- *  改书宽时这里跟着改（书宽 34 ＋ 12 ＋ 18 ＝ 留白，就是这条式子）。 */
-const MANUAL_ENTRY_RESERVE = 64;
+/** 右下角那本书离视口两沿的距离：用户口径「一直处于面板右下角、不在页面内、
+ *  不随列表滑动消失」⇒ 用 `position:fixed` 脱离文档流钉死，不再占标题行的右边距
+ *  （旧的右边距竖带随本次一并撤掉）。 */
+const MANUAL_ENTRY_INSET = 16;
 
-/** 书盒子离卡片右沿的距离（上面那 8px 呼吸位）。 */
-const MANUAL_ENTRY_INSET = 8;
+/** 书盒子离视口底沿的距离（与上条同一次口径）。 */
+const MANUAL_ENTRY_BOTTOM = 16;
 
 /** 书框**右下角外侧**那枚关闭钮那一格（2026-10-10 用户口径：与「上一页／下一页」同一行、放在右侧，
  *  钮的右边与书框右边对齐）：`right:0` 贴住书框右边；`bottom:0` ＋ `translateY(100% + 8px)` 把它
@@ -1059,14 +1058,11 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
   return React.createElement(
     'div',
     { style: { position: 'relative' } },
-    // #1237／2026-10-10 第四轮（用户口径）：使用手册入口钉在**卡片右上角**——书的顶边与「爱生活」
-    // 标题行顶边齐平，往下的那截悬在标题行下方的留白里（配置体检那行已删，见标题行体检按钮）。
-    // 关键是**绝对定位**：它不在任何一行的流里，标题行的高度仍由那排控件决定，书的出现不把
-    // 任何一行撑高（用户原话：「使用手册的存在并没有增加标题栏那一栏的高度，只是在第一行
-    // 右侧区域展示出来」）。第一版那种负边距会把这枚带阴影的书顶裁掉，这里不再用。
+    // 用户口径（右下角常驻）：使用手册入口放大 30% 后钉在**面板右下角**——`fixed` 脱离
+    // 文档流，不占任何一行的位置，不随列表滑动消失；弹层仍走 dialog top layer 居中。
     React.createElement(
       'span',
-      { style: { position: 'absolute', top: 2, right: MANUAL_ENTRY_INSET, display: 'inline-flex', zIndex: 2 } },
+      { style: { position: 'fixed', bottom: MANUAL_ENTRY_BOTTOM, right: MANUAL_ENTRY_INSET, display: 'inline-flex', zIndex: 60 } },
       React.createElement('style', null, manualEntryCss()),
       React.createElement(ManualEntryButton, { onOpen: () => { setManualOpen(true); } }),
       // 书体挂在同一个弹层里（#1240：弹层从空壳改成真书；定位与外观在 manualEntryCss 的
@@ -1098,14 +1094,9 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
         }),
       ),
     ),
-    // 标题行留这段右边距：给右上角那本书让出一条 46px 的竖带（书 34 ＋ 按钮两侧内边各 6），
-    // 「体检」「检查更新」这些右端控件照旧右对齐，只是不再顶到卡片边缘、不会被书压住。
     React.createElement(
       'div',
-      { style: { paddingRight: MANUAL_ENTRY_RESERVE } },
-      React.createElement(
-        'div',
-        { style: S.headRow },
+      { style: S.headRow },
         React.createElement('div', { style: S.head }, '爱生活'),
         // #986：版本号构建期注入，首帧就是真值；不再有读中／读不到两态（漂移由构建门守）。
         React.createElement(
@@ -1140,7 +1131,6 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
           React.createElement(PanelActions, null),
         ),
       ),
-    ),
     React.createElement(
       'div',
       { role: 'tablist', 'aria-label': '爱生活技能页签', style: { ...S.tablist, position: 'relative', isolation: 'isolate' }, 'data-ilife-tablist': 't6' },

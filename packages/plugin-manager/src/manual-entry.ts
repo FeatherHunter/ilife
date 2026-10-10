@@ -38,7 +38,8 @@ export interface ManualPopoverShellProps {
 /** 入口 CSS（书那五条源自 v2 甲）＋弹层两组（透明点外关闭层 ＋ 书那一格，关闭钮）。
  *
  * **2026-10-10 用户验收（记在票 #1240）**：
- * ① 76×104 → 34×46（先按「太大」收 62%，再按「整体缩小」收到现在的 34×46）；
+ * ① 76×104 → 34×46（先按「太大」收 62%，再按「整体缩小」收到现在的 34×46），
+ *    后按「放大 30%」放到 44×60（书体 32×44 → 42×57，书脊／腰封同步放大）；
  * ② **删掉底部那张名牌**（用户：「删掉底部的那个使用手册那个字的控件」）——「使用手册」
  *    只剩腰封上印一次，名牌那条 `.plate` 连同样式一并去掉；
  * ③ 开书不再动行高，也不再有深色框：`manual-layer`（透明、满屏、最高层）只干两件事——
@@ -50,10 +51,10 @@ export interface ManualPopoverShellProps {
 export function manualEntryCss(): string {
   return (
     '.bkbtn{display:flex;flex-direction:column;align-items:center;background:none;border:none;cursor:pointer;padding:2px 6px 0}' +
-    '.stage{position:relative;width:34px;height:46px;filter:drop-shadow(0 4px 5px #00000088)}' +
-    '.eabook{display:block;position:relative;width:32px;height:44px;border-radius:2px 4px 4px 2px;background:linear-gradient(135deg,#9c2f2f,#5f1616 65%,#3a0d0d);border:1px solid #d9ab3c;position:relative;box-shadow:2px 3px 6px #0009}' +
-    ".eabook:before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:linear-gradient(90deg,#320b0b,#571414);border-radius:2px 0 0 2px}" +
-    '.eabook .eaband{position:absolute;left:-2px;right:-2px;top:17px;height:11px;background:#ece0c2;display:flex;align-items:center;justify-content:center;color:#5c1010;font-size:6px;letter-spacing:.06em;box-shadow:0 1px 2px #00000066}' +
+    '.stage{position:relative;width:44px;height:60px;filter:drop-shadow(0 5px 7px #00000088)}' +
+    '.eabook{display:block;position:relative;width:42px;height:57px;border-radius:3px 5px 5px 3px;background:linear-gradient(135deg,#9c2f2f,#5f1616 65%,#3a0d0d);border:1px solid #d9ab3c;position:relative;box-shadow:3px 4px 8px #0009}' +
+    ".eabook:before{content:'';position:absolute;left:0;top:0;bottom:0;width:7px;background:linear-gradient(90deg,#320b0b,#571414);border-radius:3px 0 0 3px}" +
+    '.eabook .eaband{position:absolute;left:-3px;right:-3px;top:22px;height:14px;background:#ece0c2;display:flex;align-items:center;justify-content:center;color:#5c1010;font-size:8px;letter-spacing:.06em;box-shadow:0 1px 3px #00000066}' +
     '.manual-layer{position:fixed;inset:0;box-sizing:border-box;width:auto;height:auto;max-width:none;max-height:none;margin:0;padding:0;border:0;background:transparent;color:inherit;z-index:2147483000;display:flex;align-items:center;justify-content:center}' +
     // 弹层是 <dialog>：能 showModal 的宿主会把它送进浏览器 top layer（那里 z-index 说了不算，
     // 谁也压不住）；::backdrop 是 UA 默认那层半黑，必须清掉（用户：「不要有黑色背景的框」）。
