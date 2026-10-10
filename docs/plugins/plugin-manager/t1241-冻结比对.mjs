@@ -29,9 +29,11 @@ import { join, resolve } from 'node:path';
  *  2026-10-10 重冻：基本页六徽标＋防孤字（pretty＋nowrap 粘连）＋浮层放大关钮，
  *  原型与成品同步改，身份随之更新。
  *  2026-10-10 重冻：浮层改 span＋委托开关（Chrome 在 details 边界无视 nowrap 硬断行），
+ *  原型与成品同步改，身份随之更新。
+ *  2026-10-10 重冻：大小写规范＋徽标去句号＋等宽滚动＋去下划线＋悬停动画，
  *  原型与成品同步改，身份随之更新。 */
-const FROZEN_SHA256 = '023e81d0bb24be9bb309b166a9caf1e05e0f76932b1bfa53dff0861bea93b686';
-const FROZEN_BLOB = '1bd1c527a73128afe966c54fbfa3bf13aacdbf1f';
+const FROZEN_SHA256 = 'c00c6ad6d30faa0b5b70d4ae46bc8d67225bae1901724c5f102c5cfdfc88b8c2';
+const FROZEN_BLOB = '9a94b4cd970c3356f6b574e37efea2a371f22804';
 const PROTO_REL = 'docs/plugins/plugin-manager/proto-manual-4scenes.html';
 const CONTENT_REL = 'packages/plugin-manager/src/manual-content.ts';
 
