@@ -175,7 +175,7 @@ describe('#1239 内容接线', () => {
     const html = rawHtml(tree).join(' ');
     assert.ok(html.includes('dbadge'), '基本使用须有黑徽入句');
     assert.ok(html.includes('prompt'), '基本使用须有术语悬停');
-    assert.ok(texts(tree).join(' ').includes('基本使用：对 DSH 说什么 help'), '基本使用标题须在');
+    assert.ok(texts(tree).join(' ').includes('基本使用：对 DSH 说 技能名help'), '基本使用标题须在');
     assert.equal(findAll(tree, (n) => n.props?.['data-ilife-manual'] === 'frag-copy').length, 0, '片段为空，不许有复制按钮');
     assert.equal(findAll(tree, (n) => n.props?.['data-ilife-manual'] === 'tags-row').length, 0, 'tags 只作数据携带，不单独成行');
     for (const w of WARNS) assert.ok(!texts(tree).join(' ').includes(w), 'warn 不渲染：' + w);

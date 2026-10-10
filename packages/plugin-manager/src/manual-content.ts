@@ -32,7 +32,7 @@ export interface ManualContentScene extends ManualScene {
 export const SCENES: readonly ManualContentScene[] = [
   { key: 'contents', title: '目录', state: 'written', kind: 'contents', kicker: '这本手册里有什么' },
   {
-    key: 'basic', title: '基本使用：对 DSH 说什么 help', state: 'written', name: '基本使用',
+    key: 'basic', title: '基本使用：对 DSH 说 技能名help', state: 'written', name: '基本使用',
     kicker: '给 DSH 一句话，换回一份手册', lead: '',
     steps: [
       '对 <span class="dbadge">DSH</span> 说「技能名 help」，比如「饼干记账 help」。',

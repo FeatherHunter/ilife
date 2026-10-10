@@ -19,9 +19,11 @@ import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
-/** 冻结身份（2026-10-09 冻结基线：#af750fa5／#368ee94a 起未变）。 */
-const FROZEN_SHA256 = '2f297c2356a3b3b4c39d22051f30f20a4e9cd4d6aed010aac3fcf31805f34280';
-const FROZEN_BLOB = '61faa5e8d845ad0bc6ffd330e813db69856d8c6c';
+/** 冻结身份（2026-10-09 冻结基线：#af750fa5／#368ee94a 起未变）。
+ *  2026-10-10 重冻：用户改基本使用标题（对 DSH 说什么 help → 对 DSH 说 技能名help），
+ *  原型与成品同步改，身份随之更新。 */
+const FROZEN_SHA256 = '7b82e50dc79440f5890f7271bfd6a1ff40562e93ce68179058d1dc7f3064806f';
+const FROZEN_BLOB = 'd1b52e273e59fbd9894a8645d877dc57c7dc8666';
 const PROTO_REL = 'docs/plugins/plugin-manager/proto-manual-4scenes.html';
 const CONTENT_REL = 'packages/plugin-manager/src/manual-content.ts';
 
