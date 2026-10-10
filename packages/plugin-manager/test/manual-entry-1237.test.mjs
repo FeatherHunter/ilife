@@ -49,33 +49,49 @@ describe('#1237 使用手册入口与弹出空壳', () => {
     assert.ok(css.includes('width:5px'), '书脊宽度应为 5px');
   });
 
-  it('弹出：关着返回空；开着是限制尺寸的弹层＋常驻关闭钮，书体由 children 传入', () => {
+  it('弹出：关着返回空；开着是透明点外关闭层＋书那一格＋常驻关闭钮，书体由 children 传入', () => {
     const { ManualPopoverShell } = ENTRY;
     assert.equal(typeof ManualPopoverShell, 'function');
     assert.equal(ManualPopoverShell({ open: false, onClose: () => {} }), null);
-    // 不传 children：框里只有关闭钮，不许自带任何书体文案（书体是调用方传的）
+    // 不传 children：书那一格里只有关闭钮，不许自带任何书体文案（书体是调用方传的）
     let closed = 0;
     const bare = ManualPopoverShell({ open: true, onClose: () => { closed += 1; } });
     const bareDump = JSON.stringify(bare);
-    assert.ok(bareDump.includes('manual-popover'), '缺 popover 框');
-    assert.ok(bareDump.includes('使用手册'), '框上须有「使用手册」（aria-label）');
+    assert.ok(bareDump.includes('manual-layer'), '缺透明点外关闭层 manual-layer');
+    assert.ok(bareDump.includes('manual-popover'), '缺书那一格 manual-popover');
+    assert.ok(bareDump.includes('使用手册'), '弹层上须有「使用手册」（aria-label）');
     assert.ok(bareDump.includes('manual-popover-close'), '缺常驻关闭钮 manual-popover-close');
     for (const body of ['基本使用', '数据目录', '增强体验']) {
-      assert.ok(!bareDump.includes(body), '不传 children 时框里不许出现书体：' + body);
+      assert.ok(!bareDump.includes(body), '不传 children 时不许出现书体：' + body);
     }
+    // 点书以外的任何地方＝关：外层那一格的 onClick 就是 onClose
+    assert.equal(typeof bare?.props?.onClick, 'function', '点外关闭层须有 onClick');
+    bare.props.onClick();
+    assert.equal(closed, 1, '点书以外必须能关');
+    // 书那一格自己的点击不外传（否则点书也会被外层当成「书外」）
+    const wrap = [bare?.props?.children].flat().find((c) => c !== null && c !== undefined && JSON.stringify(c).includes('manual-popover"'));
+    assert.ok(wrap !== undefined, '找不到书那一格');
+    let stopped = 0;
+    wrap.props.onClick({ stopPropagation: () => { stopped += 1; } });
+    assert.equal(stopped, 1, '书那一格须拦住冒泡');
+    assert.equal(closed, 1, '点书不许触发关闭');
     // 关闭钮经 onClose 接出（点它必须能关）
-    const kids = Array.isArray(bare?.props?.children) ? bare.props.children : [bare?.props?.children];
-    const btn = kids.find((c) => c !== null && c !== undefined && JSON.stringify(c).includes('manual-popover-close'));
+    const btn = [wrap?.props?.children].flat().find((c) => c !== null && c !== undefined && JSON.stringify(c).includes('manual-popover-close'));
     assert.ok(btn !== undefined, '找不到关闭钮那一格');
     btn.props.onClick();
-    assert.equal(closed, 1, '关闭钮须经 onClose 接出');
-    // 传 children：书体原样铺进框里（#1240 起弹层不再只是空壳）
+    assert.equal(closed, 2, '关闭钮须经 onClose 接出');
+    // 传 children：书体原样铺进书那一格（#1240 起弹层不再只是空壳）
     const filled = ManualPopoverShell({ open: true, onClose: () => {}, children: '基本使用' });
-    assert.ok(JSON.stringify(filled).includes('基本使用'), 'children 里的书体没铺进框里');
-    // 弹层 CSS 是「居中限制尺寸框」，不是原先的整屏舞台
+    assert.ok(JSON.stringify(filled).includes('基本使用'), 'children 里的书体没铺进去');
+    // 形制（2026-10-10 第六轮）：透明满屏点外层（最高层）＋ 书那一格**没有黑底框**
     const css = ENTRY.manualEntryCss();
-    assert.ok(css.includes('.manual-popover{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%)'), '弹层应为居中限制尺寸框');
-    assert.ok(!css.includes('inset:0'), '弹层不许再铺满整屏');
+    assert.ok(css.includes('.manual-layer{position:fixed;inset:0;z-index:2147483000'), '点外关闭层须满屏且压在最上面');
+    assert.ok(css.includes('background:transparent'), '外层必须透明（不许黑底）');
+    assert.ok(!css.includes('background:#15130f'), '书的深色舞台底已去掉');
+    assert.ok(!css.includes('border-radius:16px') && !css.includes('box-shadow:0 24px 64px'), '黑框的圆角与投影已去掉');
+    assert.ok(css.includes('.manual-popover{position:relative;box-sizing:border-box'), '书那一格不再自带定位与底框');
+    // 关闭钮的选择器必须带前缀压过 `[data-ilife-press]{position:relative}` 那条同权重的规则
+    assert.ok(css.includes('.manual-popover .manual-popover-close{position:absolute'), '关闭钮须用带前缀的选择器钉在右上角');
   });
 
   it('屏上只许一枚入口：client.ts 只留 manual-entry.ts 那一条接线', () => {

@@ -33,16 +33,17 @@ export interface ManualPopoverShellProps {
   readonly children?: React.ReactNode;
 }
 
-/** 入口 CSS（书那五条源自 v2 甲）＋弹层两条（框与关闭钮，书体不在这里）。
+/** 入口 CSS（书那五条源自 v2 甲）＋弹层两组（透明点外关闭层 ＋ 书那一格，关闭钮）。
  *
- * **2026-10-10 用户验收三改（记在票 #1240）**：
- * ① 76×104 → 34×46（真面板里显大，先收 62%，再按「整体缩小」收到现在的 34×46）；
- * ② **删掉底部那张名牌**（用户原话「删掉底部的那个使用手册那个字的控件」）——「使用手册」
+ * **2026-10-10 用户验收（记在票 #1240）**：
+ * ① 76×104 → 34×46（先按「太大」收 62%，再按「整体缩小」收到现在的 34×46）；
+ * ② **删掉底部那张名牌**（用户：「删掉底部的那个使用手册那个字的控件」）——「使用手册」
  *    只剩腰封上印一次，名牌那条 `.plate` 连同样式一并去掉；
- * ③ 入口不再往行里加高：调用方那格里给了负下边距（见 `client.ts` 的 `manualEntrySlot`），
- *    书可以往下探进「配置体检」那一行的留白，但不把标题行撑高（用户：「允许这个入口横跨
- *    多个区域而不是把同一行给弄得很高」）。
- * 除尺寸与删名牌外，其余取值（红封渐变、书脊色、腰封米色）一字未改；别再照原型那六个像素值改回去。
+ * ③ 开书不再动行高，也不再有深色框：`manual-layer`（透明、满屏、最高层）只干两件事——
+ *    吃掉书以外的点击（点书外即关）与把书摆在正中；`manual-popover` 就是书那一格，
+ *    **没有底色、没有边框、没有圆角框、没有投影**（用户：「不要有黑色背景的框」）。
+ *    z-index 取到 int 上限附近：用户实测面板里「保存／重置为默认／重新读取」那条底栏会盖在
+ *    书上（用户：「多个按钮的层级超过了这个书籍的层级」），开书时必须压住它。
  */
 export function manualEntryCss(): string {
   return (
@@ -51,8 +52,13 @@ export function manualEntryCss(): string {
     '.eabook{display:block;position:relative;width:32px;height:44px;border-radius:2px 4px 4px 2px;background:linear-gradient(135deg,#9c2f2f,#5f1616 65%,#3a0d0d);border:1px solid #d9ab3c;position:relative;box-shadow:2px 3px 6px #0009}' +
     ".eabook:before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:linear-gradient(90deg,#320b0b,#571414);border-radius:2px 0 0 2px}" +
     '.eabook .eaband{position:absolute;left:-2px;right:-2px;top:17px;height:11px;background:#ece0c2;display:flex;align-items:center;justify-content:center;color:#5c1010;font-size:6px;letter-spacing:.06em;box-shadow:0 1px 2px #00000066}' +
-    '.manual-popover{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:50;box-sizing:border-box;width:min(900px,calc(100vw - 48px));max-height:min(88vh,900px);overflow:auto;padding:20px;border-radius:16px;border:1px solid rgba(217,171,60,.45);background:#15130f;color:#e8dcc2;box-shadow:0 24px 64px rgba(0,0,0,.55);font-family:system-ui,"Microsoft YaHei",sans-serif;--paper-w:min(780px,calc(100vw - 96px))}' +
-    '.manual-popover-close{position:sticky;top:0;display:flex;margin-left:auto;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;border:1px solid #3a352c;background:#1c1913cc;color:#cfc4ad;font-size:16px;line-height:1;cursor:pointer;z-index:3}'
+    '.manual-layer{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;background:transparent}' +
+    '.manual-popover{position:relative;box-sizing:border-box;width:min(900px,calc(100vw - 48px));max-height:min(88vh,900px);overflow:auto;color:#e8dcc2;font-family:system-ui,"Microsoft YaHei",sans-serif;--paper-w:min(780px,calc(100vw - 96px))}' +
+    // 选择器带 `.manual-popover` 前缀是必须的：本体触发器的交互样式里有一条
+    // `[data-ilife-press]{position:relative;overflow:hidden}`（config-panel-view.ts），
+    // 与单类选择器同权重、排在后头 —— 只写 `.manual-popover-close` 的话会被它压成 relative，
+    // 关闭钮就落到书那一格的左上角去了（2026-10-10 实测：computed position=relative）。
+    '.manual-popover .manual-popover-close{position:absolute;top:0;right:0;z-index:3;display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;border:1px solid #3a352c;background:#1c1913cc;color:#cfc4ad;font-size:16px;line-height:1;cursor:pointer}'
   );
 }
 
@@ -88,34 +94,45 @@ export function ManualEntryButton(props: ManualEntryButtonProps): React.ReactEle
 
 /** 弹出弹层：关着回 null，开着回**浮在面板上的限制尺寸框**（关闭钮 ＋ children 里的书体）。
  *
- * 2026-10-10 用户验收改形态（记在 #1240）：原先打开书是 `position:fixed;inset:0` 的整屏舞台
- * （把面板整个盖掉），用户要求「popover 的形式不干扰其他 UI ＋ 提供一个关闭按钮」。
- * 现形制＝居中限制尺寸框（`min(900px,calc(100vw - 48px))`、高不超 88vh、内部滚动），
- * 面板其余部分照旧可见可点；右上角关闭钮常驻（内容滚动时钉住）。
- * 框内的书体由调用方经 children 传入；不传 children 时框里只有关闭钮。
+ * 2026-10-10 用户验收两改（记在 #1240）：
+ * ① 去掉深色框——**不再有整屏舞台、也不再有黑色底框／边框／投影**；现在外面那层
+ *    `manual-layer` 是透明的满屏层，只负责「吃书以外的点击」与「把书摆正中」；
+ * ② **点书以外任何地方即关**（点空白处不会漏到下面的面板控件上），关闭钮仍常驻在书的右上角。
+ * 开书时这一层压在最上面（`z-index:2147483000`），面板底部那条「保存／重置为默认／重新读取」
+ * 也盖不住它。框内的书体由调用方经 children 传入；不传 children 时只有关闭钮。
  */
 export function ManualPopoverShell(props: ManualPopoverShellProps): React.ReactElement | null {
   if (!props.open) return null;
   return React.createElement(
     'div',
     {
-      className: 'manual-popover',
-      role: 'dialog',
-      'aria-label': MANUAL_ENTRY_LABEL,
-      'data-ilife-manual': 'book-shell',
+      className: 'manual-layer',
+      // 点书以外的任何地方＝关（这一层的点击被吃掉，不会穿到下面的控件上）
+      onClick: props.onClose,
     },
     React.createElement(
-      'button',
+      'div',
       {
-        type: 'button',
-        className: 'manual-popover-close',
-        title: '关闭' + MANUAL_ENTRY_LABEL,
-        'aria-label': '关闭' + MANUAL_ENTRY_LABEL,
-        'data-ilife-press': 'manual-close',
-        onClick: props.onClose,
+        className: 'manual-popover',
+        role: 'dialog',
+        'aria-label': MANUAL_ENTRY_LABEL,
+        'data-ilife-manual': 'book-shell',
+        // 书自己那一格的点击不外传（否则点书也会被上面那层当成「书外」）
+        onClick: (event: React.MouseEvent) => { event.stopPropagation(); },
       },
-      '×',
+      React.createElement(
+        'button',
+        {
+          type: 'button',
+          className: 'manual-popover-close',
+          title: '关闭' + MANUAL_ENTRY_LABEL,
+          'aria-label': '关闭' + MANUAL_ENTRY_LABEL,
+          'data-ilife-press': 'manual-close',
+          onClick: props.onClose,
+        },
+        '×',
+      ),
+      props.children ?? null,
     ),
-    props.children ?? null,
   );
 }
