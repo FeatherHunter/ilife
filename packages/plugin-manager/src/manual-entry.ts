@@ -1,55 +1,72 @@
-/** 使用手册入口与弹出空壳（票 #1237，只做入口与弹出，不做书体）。
+/** 使用手册入口与书式弹层（票 #1237 起；#1240 接线书体、2026-10-10 按用户验收改尺寸与形态）。
  *
- * 真值（冲突以冻结原型为准）：
+ * 真值：
  * - 冻结原型 docs/plugins/plugin-manager/proto-manual-4scenes.html（最高真值，每字每像素）；
- * - 定版 docs/plugins/plugin-manager/手册正文-定版-20261009.html 的入口六条（逐字 v2 甲）。
- * 本件的 manualEntryCss() 即那六条逐字，不重新设计；书体一律不做（书体是 #1238 的活）。
+ * - 定版 docs/plugins/plugin-manager/手册正文-定版-20261009.html 的入口六条（v2 甲）。
+ * **两处 2026-10-10 的用户改动（记在票 #1240）**：① 入口图标按 ≈62% 收小（原型 76×104 → 48×66）；
+ * ② 打开书从「整屏舞台」改成「居中限制尺寸的弹层＋常驻关闭钮」。除这两处，其余取值照原型。
  *
  * 形态：纯函数，吃 props 回元素树，不留状态、不取数、不碰 DOM（document／window／process）。
  * 手写 React.createElement（本包 client 束禁 JSX）。样式只此一处生成，挂法照 config-panel-view
  * 的 interactionCss 先例：调用方在卡片首位挂一枚 <style>，类名即原型那六个（bkbtn／stage／
- * eabook／eaband／plate），外加本票的新壳 manual-popover（空壳定位与关闭，与书体无关）。
+ * eabook／eaband／plate），外加弹层两条（manual-popover／manual-popover-close）。
  *
  * 卷轴旧实现只读不改：本件不引用旧卷轴两件。
  */
 
 import * as React from 'react';
+import { MANUAL_ENTRY } from './nav.js';
 
-/** 入口上的两处字样（腰封＋名牌各印一次，定义只此一处）。 */
-export const MANUAL_ENTRY_LABEL = '使用手册' as const;
+/** 入口上的两处字样（腰封＋名牌各印一次，定义只此一处）。单一来源＝导航表那行。 */
+export const MANUAL_ENTRY_LABEL = MANUAL_ENTRY.title;
 
 /** 入口按钮 props：点开回调（唯一真干活的那一格）。 */
 export interface ManualEntryButtonProps {
   readonly onOpen: () => void;
 }
 
-/** 弹出空壳 props：开合＋关闭回调（两格都是行为，无展示配置）。 */
+/** 弹出弹层 props：开合＋关闭回调（两格都是行为）＋书体＋dialog 元素那枚 ref。 */
 export interface ManualPopoverShellProps {
   readonly open: boolean;
   readonly onClose: () => void;
+  /** 书体：开着时铺在弹层里（关着整框不渲染）。 */
+  readonly children?: React.ReactNode;
+  /** 弹层那枚 `<dialog>` 的 ref：由调用方在 effect 里 `showModal()` 把它送进 top layer。 */
+  readonly dialogRef?: React.Ref<HTMLDialogElement>;
 }
 
-/** 入口六条 ENTRY_CSS（逐字 v2 甲）＋本票空壳两条（壳定位与标题行，书体不在这里）。
+/** 入口 CSS（书那五条源自 v2 甲）＋弹层两组（透明点外关闭层 ＋ 书那一格，关闭钮）。
  *
- * 前六条与冻结原型 :93-98 逐字同值：红封渐变／书脊 12px／米色腰封／名牌字距，一字不改；
- * 后两条是 1237 新壳（popover 定位＋空壳占位），与书体无关，1238 做书体时不动它们。
+ * **2026-10-10 用户验收（记在票 #1240）**：
+ * ① 76×104 → 34×46（先按「太大」收 62%，再按「整体缩小」收到现在的 34×46）；
+ * ② **删掉底部那张名牌**（用户：「删掉底部的那个使用手册那个字的控件」）——「使用手册」
+ *    只剩腰封上印一次，名牌那条 `.plate` 连同样式一并去掉；
+ * ③ 开书不再动行高，也不再有深色框：`manual-layer`（透明、满屏、最高层）只干两件事——
+ *    吃掉书以外的点击（点书外即关）与把书摆在正中；`manual-popover` 就是书那一格，
+ *    **没有底色、没有边框、没有圆角框、没有投影**（用户：「不要有黑色背景的框」）。
+ *    z-index 取到 int 上限附近：用户实测面板里「保存／重置为默认／重新读取」那条底栏会盖在
+ *    书上（用户：「多个按钮的层级超过了这个书籍的层级」），开书时必须压住它。
  */
 export function manualEntryCss(): string {
   return (
-    '.bkbtn{display:flex;flex-direction:column;align-items:center;gap:10px;background:none;border:none;cursor:pointer;padding:6px 10px 10px}' +
-    '.stage{position:relative;width:76px;height:104px;filter:drop-shadow(0 10px 10px #00000088)}' +
-    '.eabook{display:block;position:relative;width:72px;height:100px;border-radius:5px 8px 8px 5px;background:linear-gradient(135deg,#9c2f2f,#5f1616 65%,#3a0d0d);border:1px solid #d9ab3c;position:relative;box-shadow:5px 7px 12px #0009}' +
-    ".eabook:before{content:'';position:absolute;left:0;top:0;bottom:0;width:12px;background:linear-gradient(90deg,#320b0b,#571414);border-radius:5px 0 0 5px}" +
-    '.eabook .eaband{position:absolute;left:-4px;right:-4px;top:34px;height:26px;background:#ece0c2;display:flex;align-items:center;justify-content:center;color:#5c1010;font-size:12px;letter-spacing:.2em;box-shadow:0 2px 4px #00000066}' +
-    '.plate{margin-top:14px;background:linear-gradient(#4a1f1a,#2a0f0c);border:1px solid #8a6a15;border-radius:4px;color:#e8c96a;font-size:13px;letter-spacing:.3em;text-indent:.3em;padding:4px 18px;text-shadow:0 -1px 1px #000;}' +
-    '.manual-popover{position:absolute;top:34px;right:0;z-index:40;min-width:220px;max-width:320px;padding:12px 14px;border-radius:10px;border:1px solid var(--dsw-alias-border-l1, rgba(128,128,128,.35));background:var(--dsw-alias-bg-layer-1, #232324);color:var(--dsw-alias-label-primary, inherit);box-shadow:0 14px 30px rgba(0,0,0,.4)}' +
-    '.manual-popover-title{font-size:13px;font-weight:700;margin-bottom:6px}'
+    '.bkbtn{display:flex;flex-direction:column;align-items:center;background:none;border:none;cursor:pointer;padding:2px 6px 0}' +
+    '.stage{position:relative;width:34px;height:46px;filter:drop-shadow(0 4px 5px #00000088)}' +
+    '.eabook{display:block;position:relative;width:32px;height:44px;border-radius:2px 4px 4px 2px;background:linear-gradient(135deg,#9c2f2f,#5f1616 65%,#3a0d0d);border:1px solid #d9ab3c;position:relative;box-shadow:2px 3px 6px #0009}' +
+    ".eabook:before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:linear-gradient(90deg,#320b0b,#571414);border-radius:2px 0 0 2px}" +
+    '.eabook .eaband{position:absolute;left:-2px;right:-2px;top:17px;height:11px;background:#ece0c2;display:flex;align-items:center;justify-content:center;color:#5c1010;font-size:6px;letter-spacing:.06em;box-shadow:0 1px 2px #00000066}' +
+    '.manual-layer{position:fixed;inset:0;box-sizing:border-box;width:auto;height:auto;max-width:none;max-height:none;margin:0;padding:0;border:0;background:transparent;color:inherit;z-index:2147483000;display:flex;align-items:center;justify-content:center}' +
+    // 弹层是 <dialog>：能 showModal 的宿主会把它送进浏览器 top layer（那里 z-index 说了不算，
+    // 谁也压不住）；::backdrop 是 UA 默认那层半黑，必须清掉（用户：「不要有黑色背景的框」）。
+    '.manual-layer::backdrop{background:transparent}' +
+    '.manual-popover{position:relative;box-sizing:border-box;width:min(1000px,calc(100vw - 48px));max-height:min(88vh,900px);overflow:auto;color:#e8dcc2;font-family:system-ui,"Microsoft YaHei",sans-serif;--paper-w:min(760px,calc(100vw - 200px))}'
   );
 }
 
-/** 入口图标（红封＋书脊＋米色腰封＋名牌）：原型 ENTRY_HTML 逐字结构，onclick 接出点开。
+/** 入口图标（红封＋书脊＋米色腰封）：原型 ENTRY_HTML 的书那一段，onclick 接出点开。
  *
- * 无障碍：button 语义＋aria-label＋title，键盘可达；按压反馈走 data-ilife-press（与标题行两入口同语言）。
+ * 2026-10-10 按用户要求**删掉底部名牌**（`.plate`）：「使用手册」只剩下腰封上那一处；
+ * 无障碍：button 语义＋aria-label＋title（`MANUAL_ENTRY.tip`），键盘可达；按压反馈走
+ * data-ilife-press（与标题行两入口同语言）。
  */
 export function ManualEntryButton(props: ManualEntryButtonProps): React.ReactElement {
   return React.createElement(
@@ -57,9 +74,10 @@ export function ManualEntryButton(props: ManualEntryButtonProps): React.ReactEle
     {
       type: 'button',
       className: 'bkbtn',
-      title: MANUAL_ENTRY_LABEL,
-      'aria-label': '打开' + MANUAL_ENTRY_LABEL,
-      'data-ilife-press': 'manual-entry',
+      title: MANUAL_ENTRY.tip,
+      'aria-label': MANUAL_ENTRY.tip,
+      // 按压反馈的键取导航表那一行（'manual'）——四个手册用例按它找入口，别再各写一份。
+      'data-ilife-press': MANUAL_ENTRY.key,
       onClick: props.onOpen,
     },
     React.createElement(
@@ -71,22 +89,48 @@ export function ManualEntryButton(props: ManualEntryButtonProps): React.ReactEle
         React.createElement('span', { className: 'eaband' }, MANUAL_ENTRY_LABEL),
       ),
     ),
-    React.createElement('span', { className: 'plate' }, MANUAL_ENTRY_LABEL),
   );
 }
 
-/** 弹出 popover 书空壳：关着回 null，开着回空壳（标题＋占位＋关闭钮，无书体）。
+/** 弹出弹层：关着回 null，开着回**透明的满屏 `<dialog>`**（书体由调用方经 children 传进来）。
  *
- * 空壳即验收口径：书体是 #1238 的活，这里只给框，不给场景文案（基本使用／数据目录／
- * 增强体验任一出现即越界）。关闭经 onClose 接出，调用方置 open 即可。
+ * 2026-10-10 用户验收（记在 #1240）：
+ * ① 去掉深色框——不再有整屏舞台、也不再有黑色底框／边框／投影；`manual-layer` 只负责
+ *    「吃书以外的点击」与「把书摆正中」；
+ * ② **点书以外任何地方即关**（点空白处不会漏到下面的面板控件上）；
+ * ③ 关闭钮**不在这里**了：用户口径是「放在书籍右上角、在书籍之外的区域」，而且要用
+ *    「上一页／下一页」那套铜色材质 —— 它现在由 `client.ts` 挂在书壳（`ManualBookShell`）的
+ *    `closeSlot` 上，跟着**书**的几何走。
+ * 开书时这一层进浏览器 top layer（`showModal()`），面板底栏与插件浮层都压不住它。
  */
 export function ManualPopoverShell(props: ManualPopoverShellProps): React.ReactElement | null {
   if (!props.open) return null;
   return React.createElement(
-    'div',
-    { className: 'manual-popover', role: 'dialog', 'aria-label': MANUAL_ENTRY_LABEL },
-    React.createElement('div', { className: 'manual-popover-title' }, MANUAL_ENTRY_LABEL),
-    React.createElement('div', null, '书体待后续补（空壳）'),
-    React.createElement('button', { type: 'button', onClick: props.onClose }, '关闭'),
+    // `<dialog>`：调用方拿到 ref 后 showModal() 即进 top layer —— 面板底栏、插件浮层都压不住它
+    // （2026-10-10 用户实测那两层都盖在书上）。**这里不写 `open`**：带 open 的 dialog 是
+    // 「已按普通方式打开」，此时 showModal() 会抛 InvalidStateError（实测原文：The dialog is
+    // already open as a non-modal dialog…）；由调用方 showModal 成功、或失败时补 `open` 兜底。
+    'dialog',
+    {
+      className: 'manual-layer',
+      ref: props.dialogRef,
+      // 点书以外的任何地方＝关（与 ::backdrop 同一层，点和背景都落在这一格上）
+      onClick: props.onClose,
+      // ESC 关（浏览器原生 cancel→close）也要把调用方的开合态收回来，否则书会「自己没了、状态还开着」
+      onCancel: props.onClose,
+      onClose: props.onClose,
+    },
+    React.createElement(
+      'div',
+      {
+        className: 'manual-popover',
+        role: 'dialog',
+        'aria-label': MANUAL_ENTRY_LABEL,
+        'data-ilife-manual': 'book-shell',
+        // 书自己那一格的点击不外传（否则点书也会被上面那层当成「书外」）
+        onClick: (event: React.MouseEvent) => { event.stopPropagation(); },
+      },
+      props.children ?? null,
+    ),
   );
 }

@@ -106,6 +106,11 @@ function mount1195(node, parent, svg) {
       (function (h) { el.addEventListener('click', h); })(p[k]);
       continue;
     }
+    // 动画收尾也要接：掀页靠 animationend 落定（不接就等于动效永远跑不完，忙锁挂死）。
+    if (k === 'onAnimationEnd') {
+      (function (h) { el.addEventListener('animationend', h); })(p[k]);
+      continue;
+    }
     if (k.indexOf('on') === 0 || typeof p[k] === 'function') continue;
     if (p[k] === null || p[k] === undefined || p[k] === false) continue;
     if (p[k] === true) { el.setAttribute(k.toLowerCase(), ''); continue; }
@@ -168,6 +173,33 @@ function click1195(sel) {
   settle1195();
   return 'ok';
 }
+function leaf1195() { return document.querySelector('[data-ilife-manual=leaf]'); }
+function leafText1195(which) {
+  var leaf = leaf1195();
+  if (!leaf) return '';
+  var face = leaf.querySelector('.face.' + which);
+  return face ? String(face.textContent || '') : '';
+}
+function hiddenTab1195() {
+  var list = document.querySelectorAll('[data-ilife-manual=tab]');
+  var n = 0;
+  for (var i = 0; i < list.length; i++) if (list[i].style.visibility === 'hidden') n++;
+  return n;
+}
+/** 掀页落定：派一个 animationend 给那张纸（动画真在跑时由浏览器自己派，这里给同步读数用）。 */
+function finishTurn1195() {
+  var leaf = leaf1195();
+  if (!leaf) return 'no-leaf';
+  leaf.dispatchEvent(new Event('animationend', { bubbles: true }));
+  settle1195();
+  return leaf1195() ? 'leaf-still-there' : 'ok';
+}
+/** 翻一趟并落定（截图路径用：要的是落位后的那一跨页）。 */
+function turnOnce1195(sel) {
+  var r = click1195(sel);
+  if (r !== 'ok') return r;
+  return finishTurn1195();
+}
 function pages1195() {
   var out = [];
   var list = document.querySelectorAll('[data-ilife-manual=page-frame]');
@@ -217,10 +249,21 @@ function runAll1195() {
   need1195(out, m0.prevOff === true && m0.nextOff === false, 's0copper');
   need1195(out, m0.titles.length > 0 && m0.titles[0] === '目录', 's0titles');
   need1195(out, click1195('[data-ilife-manual=next]') === 'ok', 'next1');
+  // 掀页（票 #1240）：点下一页先起一张纸，正面印正翻走的那页、反面印要露出的那页；
+  // 纸层里那枚签要让位（挂在纸自己身上）；忙锁期间再点上一页页码不许动；animationend 到了才落定。
+  need1195(out, !!leaf1195(), 'next1-leaf');
+  need1195(out, leafText1195('front').indexOf('基本使用') >= 0, 'leaf-front:' + leafText1195('front').slice(0, 10));
+  need1195(out, leafText1195('back').indexOf('数据目录') >= 0, 'leaf-back:' + leafText1195('back').slice(0, 10));
+  need1195(out, hiddenTab1195() === 1, 'turn-tab-hidden:' + hiddenTab1195());
+  var during = pages1195().join(',');
+  click1195('[data-ilife-manual=prev]');
+  need1195(out, pages1195().join(',') === during, 'busy-lock:' + pages1195().join(','));
+  need1195(out, finishTurn1195() === 'ok', 'turn-finish');
   var m1 = measure1195('spread1');
   need1195(out, m1.pages.join(',') === '3,4', 's1:' + m1.pages.join(','));
   need1195(out, m1.prevOff === false && m1.nextOff === false, 's1copper');
   need1195(out, click1195('[data-ilife-manual=next]') === 'ok', 'next2');
+  need1195(out, finishTurn1195() === 'ok', 'turn-finish2');
   var m2 = measure1195('spread2');
   need1195(out, m2.pages[0] === '5', 's2:' + m2.pages.join(','));
   need1195(out, m2.nextOff === true, 's2nextoff');
@@ -228,6 +271,13 @@ function runAll1195() {
   need1195(out, hasPending, 's2pending');
   var noOverflow = m0.overflowX <= 1 && m1.overflowX <= 1 && m2.overflowX <= 1;
   need1195(out, noOverflow, 'overflow');
+  // 反向一趟：尾跨页翻回中跨页——纸正面＝当前左页（合页），反面＝回退后露出的右页。
+  need1195(out, click1195('[data-ilife-manual=prev]') === 'ok', 'prev1');
+  need1195(out, !!leaf1195(), 'prev1-leaf');
+  need1195(out, (leaf1195() || {}).getAttribute && leaf1195().getAttribute('data-ilife-leaf') === 'prev', 'prev1-dir');
+  need1195(out, leafText1195('front').indexOf('后续场景') >= 0, 'prev-front:' + leafText1195('front').slice(0, 10));
+  need1195(out, finishTurn1195() === 'ok', 'prev-finish');
+  need1195(out, pages1195().join(',') === '3,4', 'prev-lands:' + pages1195().join(','));
   out.spreads = [m0, m1, m2];
   document.title = out.ok ? 'M1195-PASS' : 'M1195-FAIL:' + out.fails.join(';');
   var ro = document.getElementById('readout');
@@ -237,8 +287,10 @@ function runAll1195() {
 (function auto1195() {
   var q = String(window.location.search || '');
   var go = q.indexOf('go=2') >= 0 ? 2 : (q.indexOf('shot=1') >= 0 ? 0 : -1);
+  var mid = q.indexOf('turn=1') >= 0;
   settle1195();
   click1195('[data-ilife-press=manual]');
-  for (var i = 0; i < go; i++) click1195('[data-ilife-manual=next]');
+  if (mid) { click1195('[data-ilife-manual=next]'); return; }
+  for (var i = 0; i < go; i++) turnOnce1195('[data-ilife-manual=next]');
   if (go < 0) runAll1195();
 })();
