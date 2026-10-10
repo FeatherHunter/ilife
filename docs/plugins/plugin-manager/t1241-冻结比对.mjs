@@ -25,9 +25,13 @@ import { join, resolve } from 'node:path';
  *  2026-10-10 重冻：用户改 IM 场景（两条外链＋五图浮层＋新规则同步进原型样式），
  *  原型与成品同步改，身份随之更新。
  *  2026-10-10 重冻：IM 徽标重映射（复制／prompt／结果各挂图，IM 还原文案）＋图示，
+ *  原型与成品同步改，身份随之更新。
+ *  2026-10-10 重冻：基本页六徽标＋防孤字（pretty＋nowrap 粘连）＋浮层放大关钮，
+ *  原型与成品同步改，身份随之更新。
+ *  2026-10-10 重冻：浮层改 span＋委托开关（Chrome 在 details 边界无视 nowrap 硬断行），
  *  原型与成品同步改，身份随之更新。 */
-const FROZEN_SHA256 = 'de64b0977c8737e3676c796de72c0acf630c340c8dee56333a4471fa9d3c04a2';
-const FROZEN_BLOB = '29bc0c81d62c839b6471b547d9a2cc2bf34d7ae6';
+const FROZEN_SHA256 = '023e81d0bb24be9bb309b166a9caf1e05e0f76932b1bfa53dff0861bea93b686';
+const FROZEN_BLOB = '1bd1c527a73128afe966c54fbfa3bf13aacdbf1f';
 const PROTO_REL = 'docs/plugins/plugin-manager/proto-manual-4scenes.html';
 const CONTENT_REL = 'packages/plugin-manager/src/manual-content.ts';
 

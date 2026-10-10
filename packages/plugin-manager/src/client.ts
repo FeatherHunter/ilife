@@ -642,6 +642,40 @@ function ManualBookShell(props: {
   // 悬停卡第二行＝这张纸的反面那一页（原型 data-other 口径；首签那张纸没有反面 ⇒ 不出这一行）。
   const hoverOtherPage = hover === null ? null : hover.other;
   const hoverOtherScene = hoverOtherPage === null ? null : scenes[hoverOtherPage - 1] ?? null;
+  /** 页内图片浮层的开关委托：点徽标开关它那一枚（先关别人，一次只看一张），
+   *  点图外任意处或 × 即收；点图本身保持打开。无打开的浮层且没点中徽标时直接返回，
+   *  不影响签跳与铜扣。状态全在 DOM class 上，不进 React 状态（翻页重渲染即清场）。 */
+  const toggleShot = (e: React.MouseEvent) => {
+    const host = e.currentTarget as unknown as Element | null;
+    if (host === null || typeof host.querySelector !== 'function') return;
+    const t = e.target as unknown as Element | null;
+    const at = (sel: string): Element | null => (t !== null && typeof t.closest === 'function' ? t.closest(sel) : null);
+    const hit = at('[data-pop-toggle]');
+    if (hit !== null) {
+      const pop = hit.closest('.pop');
+      const wasOpen = pop !== null && pop.classList.contains('open');
+      host.querySelectorAll('.pop.open').forEach((one) => { one.classList.remove('open'); });
+      if (pop !== null && !wasOpen) pop.classList.add('open');
+      return;
+    }
+    if (at('img') !== null) return;
+    const open = host.querySelector('.pop.open');
+    if (open !== null) open.classList.remove('open');
+  };
+  /** 键盘等价：聚焦徽标回车／空格即开关（span 无原生行为，逻辑里补上）。 */
+  const toggleShotKey = (e: React.KeyboardEvent) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const t = e.target as unknown as Element | null;
+    if (t === null || typeof t.closest !== 'function' || t.closest('[data-pop-toggle]') === null) return;
+    e.preventDefault();
+    const host = e.currentTarget as unknown as Element | null;
+    const pop = t.closest('.pop');
+    const wasOpen = pop !== null && pop.classList.contains('open');
+    if (host !== null && typeof host.querySelectorAll === 'function') {
+      host.querySelectorAll('.pop.open').forEach((one) => { one.classList.remove('open'); });
+    }
+    if (pop !== null && !wasOpen) pop.classList.add('open');
+  };
   const frame = (page: { page: number; key: string; state: string } | null, side: 'left' | 'right', ref: React.Ref<HTMLDivElement>) => React.createElement(
     'div',
     {
@@ -651,6 +685,8 @@ function ManualBookShell(props: {
       'data-ilife-page': page === null ? 'empty' : page.page,
       'data-ilife-state': page === null ? 'empty' : page.state,
       style: { ...(side === 'left' ? S.manualPageL : S.manualPageR), ...S.manualPage },
+      onClick: toggleShot,
+      onKeyDown: toggleShotKey,
     },
     page === null ? null : renderPage(page, goPage),
   );
