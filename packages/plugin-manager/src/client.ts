@@ -676,6 +676,10 @@ declare const __LIFE_PACK_VERSION__: string;
 /** 版本胶囊那一行字：只在这里拼一次，屏上与用例读的是同一串。 */
 const MANAGER_VERSION_TEXT = MANAGER_PLUGIN + ' · ' + __LIFE_PACK_VERSION__;
 
+/** 右上角那本书占的宽度（书 34px ＋ 按钮两侧内边各 6px）：前两行共用这段右边距，
+ *  好让书横跨两行而不压住「检查更新」「体检一次」那两枚右端控件。改书宽时这里跟着改。 */
+const MANUAL_ENTRY_RESERVE = 46;
+
 /** 爱生活面板：总设置区 ＋ 检查更新（七家）＋ 爱生活页签条（slot 驱动）＋ 技能设置页投影/缺席卡。 */
 function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallFace | null }): React.ReactElement {
   const tabsId = React.useId();
@@ -828,57 +832,63 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
   }, [active]);
   return React.createElement(
     'div',
-    null,
+    { style: { position: 'relative' } },
+    // #1237／2026-10-10 第四轮（用户口径）：使用手册入口钉在**卡片右上角**——书的顶边与「爱生活」
+    // 标题行顶边齐平，往下的那截横跨到第二行（配置体检那行）的右侧留白里。
+    // 关键是**绝对定位**：它不在任何一行的流里，两行的高度仍由各自那排平控件决定，书的出现不把
+    // 任何一行撑高（用户原话：「使用手册的存在并没有增加标题栏那一栏的高度，只是在第一行第二行
+    // 右侧区域展示出来」）。第一版那种负边距会把这枚带阴影的书顶裁掉，这里不再用。
     React.createElement(
-      'div',
-      { style: S.headRow },
-      React.createElement('div', { style: S.head }, '爱生活'),
-      // #986：版本号构建期注入，首帧就是真值；不再有读中／读不到两态（漂移由构建门守）。
+      'span',
+      { style: { position: 'absolute', top: 2, right: 0, display: 'inline-flex', zIndex: 2 } },
+      React.createElement('style', null, manualEntryCss()),
+      React.createElement(ManualEntryButton, { onOpen: () => { setManualOpen(true); } }),
+      // 书体挂在同一个弹层里（#1240：弹层从空壳改成真书；定位与外观在 manualEntryCss 的
+      // `.manual-popover` 一处定义，关着不渲染）。
       React.createElement(
-        'span',
-        { style: S.versionCapsule, 'data-ilife-version': 'capsule' },
-        MANAGER_VERSION_TEXT,
-      ),
-      // #1237／2026-10-10（用户验收两轮）：使用手册入口——**只此一处**，跟在版本胶囊后面，
-      // 与左半边那组「身份」控件（标题＋版本）同簇；右半边整簇留给「检查更新／星／气泡」那排
-      // 平控件，不再从这排平控件中间插进去（用户：「右上角排版布局感觉很丑」）。
-      // 也**不再用负边距**：第一版那样会把这枚带 3D 阴影的书顶裁掉（用户：「使用手册图被裁剪，
-      // 顶部不见了」）。行高就按书的高度来，这一簇里没有比它更高的东西，谁也不用让谁。
-      React.createElement(
-        'span',
-        { style: { position: 'relative', display: 'inline-flex', flex: '0 0 auto' } },
-        React.createElement('style', null, manualEntryCss()),
-        React.createElement(ManualEntryButton, { onOpen: () => { setManualOpen(true); } }),
-        // 书体挂在同一个弹层里（#1240：弹层从空壳改成真书；定位与外观在 manualEntryCss 的
-        // `.manual-popover` 一处定义，关着不渲染）。
-        React.createElement(
-          ManualPopoverShell,
-          { open: manualOpen, onClose: () => { setManualOpen(false); } },
-          React.createElement(ManualBookShell, {
-            scenes: [...SCENES],
-            renderPage: (page, goPage) => page === null ? null : renderManualPage(SCENES, page, goPage),
-          }),
-        ),
-      ),
-      React.createElement(
-        'div',
-        { style: S.headActions },
-        React.createElement('span', {
-          style: S.updateEntrySlot,
-          ref: (element: HTMLSpanElement | null) => {
-            entryRef.current = element;
-          },
+        ManualPopoverShell,
+        { open: manualOpen, onClose: () => { setManualOpen(false); } },
+        React.createElement(ManualBookShell, {
+          scenes: [...SCENES],
+          renderPage: (page, goPage) => page === null ? null : renderManualPage(SCENES, page, goPage),
         }),
-        React.createElement(PanelActions, null),
       ),
     ),
-    React.createElement(HealthSummaryLine, {
-      lights,
-      running: health.running,
-      // #735：取数失败也要在这一行看得见（各家的错只画在那家页签里的表上，摘要行沉默＝用户以为按钮坏了）。
-      error: summaryErrorOf(health),
-      onRun: health.run,
-    }),
+    // 前两行共用这段右边距：给右上角那本书让出一条 46px 的竖带（书 34 ＋ 按钮两侧内边各 6），
+    // 「检查更新」「体检一次」这些右端控件照旧右对齐，只是不再顶到卡片边缘、不会被书压住。
+    React.createElement(
+      'div',
+      { style: { paddingRight: MANUAL_ENTRY_RESERVE } },
+      React.createElement(
+        'div',
+        { style: S.headRow },
+        React.createElement('div', { style: S.head }, '爱生活'),
+        // #986：版本号构建期注入，首帧就是真值；不再有读中／读不到两态（漂移由构建门守）。
+        React.createElement(
+          'span',
+          { style: S.versionCapsule, 'data-ilife-version': 'capsule' },
+          MANAGER_VERSION_TEXT,
+        ),
+        React.createElement(
+          'div',
+          { style: S.headActions },
+          React.createElement('span', {
+            style: S.updateEntrySlot,
+            ref: (element: HTMLSpanElement | null) => {
+              entryRef.current = element;
+            },
+          }),
+          React.createElement(PanelActions, null),
+        ),
+      ),
+      React.createElement(HealthSummaryLine, {
+        lights,
+        running: health.running,
+        // #735：取数失败也要在这一行看得见（各家的错只画在那家页签里的表上，摘要行沉默＝用户以为按钮坏了）。
+        error: summaryErrorOf(health),
+        onRun: health.run,
+      }),
+    ),
     React.createElement(
       'div',
       { role: 'tablist', 'aria-label': '爱生活技能页签', style: { ...S.tablist, position: 'relative', isolation: 'isolate' }, 'data-ilife-tablist': 't6' },
