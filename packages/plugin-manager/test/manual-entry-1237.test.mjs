@@ -45,6 +45,7 @@ describe('#1237 使用手册入口与弹出空壳', () => {
     assert.ok(css.includes('linear-gradient(135deg,#9c2f2f,#5f1616 65%,#3a0d0d)'), '红封底色不对');
     assert.ok(css.includes('linear-gradient(180deg,#7a2323,#4a1212)'), '腰封金匾底色不对');
     assert.ok(css.includes('text-shadow:0 0 6px #ffd97a'), '使用手册四字须发金光');
+    assert.ok(css.includes('border-radius:14px'), '按钮须带圆角（焦点光环跟它走，直角变圆角）');
     assert.ok(!css.includes('repeating-conic-gradient'), '背光不许再有放射条纹');
     assert.ok(css.includes('box-shadow:0 0 5px #ffe9a8'), '背光须是贴体金光');
     // 用户验收「入口图标放大 30%」：44×60 → 57×78（书体 42×57 → 55×74，书脊 7px → 9px）。这条挡的是「照旧尺寸回去」。

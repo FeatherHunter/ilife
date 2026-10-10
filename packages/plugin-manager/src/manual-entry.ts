@@ -44,9 +44,11 @@ export interface ManualPopoverShellProps {
  * ② 背光（用户：「不要放射条纹，要沿图标周围一圈贴体的金色光」）：书外紧贴一层
  *   `.eaaura`（细金边＋三层由近及远的金光晕），无放射、无屑纹；
  * ③ 金字（用户：「使用手册这四个字要发金光」）：腰封改成深红金匾——金字＋两层金光晕；
- * ④ **删掉底部那张名牌**（用户：「删掉底部的那个使用手册那个字的控件」）——「使用手册」
+ * ④ 焦点框（用户：「焦点态外圈直角须变圆角」）：焦点光环跟按钮圆角走，`.bkbtn` 给 14px
+ *    圆角（按钮本身透明，只塑形不着色）；
+ * ⑤ **删掉底部那张名牌**（用户：「删掉底部的那个使用手册那个字的控件」）——「使用手册」
  *    只剩腰封上印一次，名牌那条 `.plate` 连同样式一并去掉；
- * ⑤ 开书不再动行高，也不再有深色框：`manual-layer`（透明、满屏、最高层）只干两件事——
+ * ⑥ 开书不再动行高，也不再有深色框：`manual-layer`（透明、满屏、最高层）只干两件事——
  *    吃掉书以外的点击（点书外即关）与把书摆在正中；`manual-popover` 就是书那一格，
  *    **没有底色、没有边框、没有圆角框、没有投影**（用户：「不要有黑色背景的框」）。
  *    z-index 取到 int 上限附近：用户实测面板里「保存／重置为默认／重新读取」那条底栏会盖在
@@ -54,7 +56,7 @@ export interface ManualPopoverShellProps {
  */
 export function manualEntryCss(): string {
   return (
-    '.bkbtn{position:relative;display:flex;flex-direction:column;align-items:center;background:none;border:none;cursor:pointer;padding:2px 6px 0}' +
+    '.bkbtn{position:relative;display:flex;flex-direction:column;align-items:center;background:none;border:none;border-radius:14px;cursor:pointer;padding:2px 6px 0}' +
     '.eaaura{position:absolute;inset:-5px -6px;border-radius:9px;background:radial-gradient(circle at 50% 42%,#f8e7ae40,transparent 68%);border:1px solid #f5d97acc;box-shadow:0 0 5px #ffe9a8,0 0 13px #e8c96acc,0 0 28px #d9ab3c77;pointer-events:none}' +
     '.stage{position:relative;width:57px;height:78px;filter:drop-shadow(0 7px 9px #00000088)}' +
     '.eabook{display:block;position:relative;width:55px;height:74px;border-radius:4px 7px 7px 4px;background:linear-gradient(135deg,#9c2f2f,#5f1616 65%,#3a0d0d);border:1px solid #d9ab3c;position:relative;box-shadow:4px 5px 10px #0009}' +
