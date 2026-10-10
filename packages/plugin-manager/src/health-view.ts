@@ -241,7 +241,7 @@ export const COUNT_CAPSULE_STYLE: React.CSSProperties = {
 
 /** 汇总行那一句：绿要显眼（它是「正常」这件事本身），没通道的那几家不冒充绿。
  *
- *  「没有体检出口」与「还没跑过体检」是**两件事**（票 #735）：前者那颗「体检一次」按下去不会有任何反应，
+ *  「没有体检出口」与「还没跑过体检」是**两件事**（票 #735）：前者那颗「体检」按下去不会有任何反应，
  *  必须自己说出来——两态共用一句「还没体检」时，用户与诊断都会被引到「点了没跑」上去。 */
 function overallText(lights: readonly HealthLightRow[]): React.ReactElement {
   const pending = lights.filter((light) => !light.hasChannel).length;
@@ -351,7 +351,7 @@ export function HealthSummaryLine(props: {
         'data-ilife-press': 'health-run',
         'data-ilife-longpress': 'health-run',
       },
-      props.running ? '体检中…' : '体检一次',
+      props.running ? '体检中…' : '体检',
     ),
     // #1163 T4：同一生成处 interactionCss()，一枚 style 罩本行内两类属性；更新面无渲染点（见票内豁免证据）。
     React.createElement('style', { 'data-ilife-interaction': 't1' }, interactionCss()),
@@ -401,7 +401,7 @@ export function HealthTable(props: {
       report ? headerCounts(report) : null,
     ),
     props.phase === 'idle'
-      ? React.createElement('div', { style: HEALTH_STYLE.meta }, '还没体检：点上面那个「体检一次」。')
+      ? React.createElement('div', { style: HEALTH_STYLE.meta }, '还没体检：点标题行那个「体检」。')
       : null,
     props.phase === 'running' ? React.createElement('div', { style: HEALTH_STYLE.meta }, '正在体检…') : null,
     props.error !== null ? React.createElement('div', { style: HEALTH_STYLE.error }, props.error) : null,

@@ -322,7 +322,7 @@ describe('#706 配置体检 · 面板侧', () => {
       assert.equal((PANEL.match(/loadHealthReports\(/g) || []).length, 1, '取数件里 loadHealthReports 的调用点必须只有一处');
       const VIEW = readFileSync(join(HERE, '..', 'src', 'health-view.ts'), 'utf8');
       assert.equal((VIEW.match(/loadHealthReports|config\.check/g) || []).length, 0, '渲染件不许自己取数（它只吃传进来的报告）');
-      assert.ok(CLIENT.includes('体检一次'), '产物里没有那个按钮');
+      assert.ok(CLIENT.includes('health-run') && CLIENT.includes('体检'), '产物里没有那个按钮');
       // 「只看不改」从屏上撤到按钮悬停里了（票 #732：它原先和两排圆点的图例挤在一行）。
       // 这句话本身不许消失——它是这个功能的口径，悬停是它现在唯一的出口。
       assert.ok(CLIENT.includes('只看不改'), '产物里没有「只看不改」那句口径');
@@ -524,7 +524,7 @@ describe('#706 配置体检 · 面板侧', () => {
 
       // ③ 画一遍（面板自己把状态源交到 `__T706_FACE_SINK__` 上），再点一次「体检一次」
       const html0 = paint(Section(props));
-      assert.ok(html0.includes('体检一次'), '那行汇总里的「体检一次」没画出来');
+      assert.ok(html0.includes('>体检<'), '标题行里的「体检」没画出来');
       assert.equal(typeof (face === null ? null : face.run), 'function', '面板没把状态源交出来（出图台那条通道没了）');
       face.run(); // ＝那颗按钮的 onClick（`onRun: health.run`）
       await tick();
@@ -533,7 +533,7 @@ describe('#706 配置体检 · 面板侧', () => {
       const htmlMid = paint(Section(props));
       const visibleMid = htmlMid.replace(/<[^>]*>/g, '|');
       assert.ok(htmlMid.includes('体检中…'),
-        '整批还没落定，汇总行应当仍写着「体检中…」；现在是：' + visibleMid.slice(0, 400)
+        '整批还没落定，标题行应当仍写着「体检中…」；现在是：' + visibleMid.slice(0, 400)
         + ' ／ diag=' + JSON.stringify(sandbox.__T706_RUN__) + ' ／ face=' + JSON.stringify(Object.keys(face.rows)));
       assert.equal((htmlMid.match(/data-ilife-health="tab-note"/g) || []).length, 1,
         '两家里只有先回来那一家该带读数（攒齐了一起画就是 0 家）');
@@ -615,7 +615,7 @@ describe('#706 配置体检 · 面板侧', () => {
         React.createElement(HealthSummaryLine, { lights, running: false, error: null, onRun: () => {} }),
       ));
       const normal = light('green', { red: 0, yellow: 0, green: 5 });
-      assert.match(line([normal, { ...normal, id: 'y' }]), /配置体检.*六家正常.*体检一次/, '全绿那一档没把话写对');
+      assert.match(line([normal, { ...normal, id: 'y' }]), /配置体检.*六家正常.*体检/, '全绿那一档没把话写对');
       assert.match(line([light(null, allGreen)]), /还没体检/, '没跑过那一档没把话写对');
       const text = line([light('red', { red: 2, yellow: 3, green: 0 })]);
       assert.ok(!/红 |黄 |绿 /.test(text), '总账数字里不许再带档位字 (#951)');
@@ -643,7 +643,8 @@ describe('#706 配置体检 · 面板侧', () => {
 
     it('顶部不再是一家一盏灯按钮（改版后在位的那件事，守着别长回去）', () => {
       assert.ok(CLIENT.includes('data-ilife-health'), '产物里没有体检的标记位');
-      assert.ok(CLIENT.includes('"summary"'), '产物里没有那一行汇总');
+      // 用户口径：汇总行已删，体检按钮搬进标题行（health-run 缝不变）；这一行只守“体检还在位”，不守旧位置。
+      assert.ok(CLIENT.includes('health-run'), '产物里没有标题行那颗体检按钮');
       assert.ok(CLIENT.includes('tab-note'), '产物里没有页签上那枚小数字');
       assert.ok(CLIENT.includes('tab-dot'), '产物里没有页签圆点');
       assert.ok(CLIENT.includes('TAB_DOT'), '产物里没有页签圆点的缺席态');

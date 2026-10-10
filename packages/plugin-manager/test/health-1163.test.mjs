@@ -79,7 +79,7 @@ describe('#1163 T4: health-run button carries all five live markers (both runnin
     assert.equal(btns[0].props['data-ilife-press'], 'health-run');
     assert.equal(btns[0].props['data-ilife-longpress'], 'health-run');
     assert.equal(btns[0].props.disabled, false);
-    assert.equal(btns[0].props.children, '体检一次');
+    assert.equal(btns[0].props.children, '体检');
   });
   it('running: same markers, disabled (shake applies), busy text', () => {
     const tree = health.HealthSummaryLine({ lights: LIGHTS, running: true, error: null, onRun: () => {} });

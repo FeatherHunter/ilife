@@ -25,11 +25,11 @@ import { SCENES, manualContentCss, renderManualPage } from './manual-content.js'
 import type { ManagerTab } from './nav.js';
 import { CONFIG_TAB_SLOT } from './update-contract.js';
 import { managerCallAdapter, mountLifeBatchEntry } from './update-dialog.js';
-import { tabInteractionCss } from './config-panel-view.js';
+import { interactionCss, tabInteractionCss } from './config-panel-view.js';
 import { ManualEntryButton, ManualPopoverShell, manualEntryCss } from './manual-entry.js';
 import { LIQUID_BASE_MS, LIQUID_DIST_FACTOR, LIQUID_EASE, LIQUID_GHOST_MS, LIQUID_MAX_MS, LIQUID_MIN_MS, LIQUID_STRETCH_X, LIQUID_STRETCH_Y } from './config-panel-contract.js';
-import { summaryErrorOf, useHealthPanel } from './health-panel.js';
-import { HealthSummaryLine, HealthTable, STATUS_TEXT, TAB_DOT, TAB_NOTE_STYLE, lightsOf, tabDotColor, tabNote } from './health-view.js';
+import { useHealthPanel } from './health-panel.js';
+import { HealthTable, STATUS_TEXT, TAB_DOT, TAB_NOTE_STYLE, lightsOf, tabDotColor, tabNote } from './health-view.js';
 import { HEALTH_ENDPOINT } from './health-contract.js';
 import type {
   ClientCtx,
@@ -308,6 +308,17 @@ const S = {
     display: 'inline-flex',
     alignItems: 'center',
   } as React.CSSProperties,
+  /** 标题行体检按钮：接原来第二行汇总行里那颗「体检一次」（行删了搬上来），改名「体检」放「检查更新」左侧；
+   *  形状照页签 pill（999 圆角、13 字、4px 12px），颜色走主题别名。 */
+  healthBtn: {
+    border: '1px solid var(--dsw-alias-border-l1, rgba(128,128,128,.35))',
+    background: 'transparent',
+    color: 'var(--dsw-alias-label-primary, inherit)',
+    borderRadius: 999,
+    padding: '4px 12px',
+    fontSize: 13,
+    cursor: 'pointer',
+  } as React.CSSProperties,
 };
 
 /** 更新区（票 1170 薄接线，完全上游 UI）：标题行挂上游入口按钮，点开即上游 dialog 七目标批量面板；缺席页签仍显示静态推荐，不进批量 targets。 */
@@ -512,11 +523,13 @@ function ManualBookShell(props: {
   const at = clampSpread(scenes, spread);
   const [frozen, setFrozen] = React.useState<number | null>(null);
   const [measuring, setMeasuring] = React.useState(-1);
+  const [lockH, setLockH] = React.useState<number | null>(null);
   const [hover, setHover] = React.useState<{ pg: number; other: number | null; x: number; y: number } | null>(null);
   const bookRef = React.useRef<HTMLDivElement | null>(null);
   const leftRef = React.useRef<HTMLDivElement | null>(null);
   const rightRef = React.useRef<HTMLDivElement | null>(null);
   const heights = React.useRef<number[]>([]);
+  const bookW = React.useRef(0);
   const plan = planManual(scenes, at);
   /** 冻高闸门：一趟量完就落下（原型 freezeHeight 用 `FIXED_H` 缓存同一口径：开书量一次、resize 重来）。
    *  没有这个闸门，effect（无依赖数组）每渲染一次就重启一轮量尺 ⇒ 状态机空转，书停在被量到的那一跨页。 */
@@ -527,10 +540,14 @@ function ManualBookShell(props: {
     heights.current = [];
     setMeasuring(-1);
     setFrozen(null);
+    setLockH(null);
   }, [scenes.length]);
   React.useEffect(() => {
     if (measuring < 0) {
       if (!freezePending.current || bookRef.current === null) return;
+      const bw = bookRef.current.clientWidth;
+      bookW.current = bw;
+      setLockH(frozen ?? (bw > 0 ? Math.floor(bw / 1.41421356) : null));
       heights.current = [];
       setMeasuring(0);
       return;
@@ -543,14 +560,21 @@ function ManualBookShell(props: {
     const tallest = heights.current.reduce((m, v) => Math.max(m, v), 0);
     const capped = Math.floor(book.clientWidth / 1.41421356);
     setFrozen(tallest > 0 && capped > 0 ? Math.min(tallest, capped) : null);
+    bookW.current = book.clientWidth;
     freezePending.current = false;
     setMeasuring(-1);
   });
   // 窗口变化重冻：只认元素量具，观察器缺席即跳过（禁 window 直写）。
+  // 高度自扰不重来：冻高落定与量尺塌陷都是高度变化，会再次触发 RO；只认宽度变化才重冻。
   React.useEffect(() => {
     const book = bookRef.current;
     if (book === null || typeof ResizeObserver === 'undefined') return;
-    const watcher = new ResizeObserver(() => { freezePending.current = true; heights.current = []; setMeasuring(0); });
+    const watcher = new ResizeObserver(() => {
+      const w = book.clientWidth;
+      if (w === bookW.current) return;
+      bookW.current = w;
+      freezePending.current = true; heights.current = []; setMeasuring(0);
+    });
     watcher.observe(book);
     return () => { watcher.disconnect(); };
   }, []);
@@ -665,7 +689,8 @@ function ManualBookShell(props: {
             ...S.manualVolume,
             // 冻高按原型 freezeHeight 两步走：量的时候先把 min-height 归零量**自然高**（否则量到的是被撑开的那一版），
             // 量完再把冻住的值写回 height／min-height，并用 80vh 兜住上限（原型 cap＝min(纸宽×.707, 窗高×.8)）。
-            ...(measuring >= 0 ? { visibility: 'hidden', height: 'auto', minHeight: 0 } : null),
+            // 锁高量自然高：读的是框的 scrollHeight，与书定多高无关；首开无锁时回退旧行为。
+            ...(measuring >= 0 ? (lockH !== null && lockH > 0 ? { visibility: 'hidden', height: lockH, minHeight: lockH, maxHeight: lockH, overflow: 'hidden' } : { visibility: 'hidden', height: 'auto', minHeight: 0 }) : null),
             ...(frozen === null ? null : { height: frozen, minHeight: frozen, maxHeight: '80vh' }),
           } as React.CSSProperties,
         },
@@ -835,8 +860,8 @@ declare const __LIFE_PACK_VERSION__: string;
 const MANAGER_VERSION_TEXT = MANAGER_PLUGIN + ' · ' + __LIFE_PACK_VERSION__;
 
 /** 右上角那本书占的那条竖带宽度：书 34px ＋ 按钮两侧内边各 6px（＝46px 的盒子）＋ 与卡片右沿
- *  留 8px 呼吸 ＋ 与右边那排控件留 10px 间隙 ⇒ 64px。前两行共用这段右边距，于是「检查更新／星／
- *  气泡」和「体检一次」的右端落在**同一条竖线**上，谁也不会撞到书的左下角。
+ *  留 8px 呼吸 ＋ 与右边那排控件留 10px 间隙 ⇒ 64px。标题行留这段右边距，于是「体检／检查更新／星／
+ *  气泡」的右端落在**同一条竖线**上，谁也不会撞到书的左下角。
  *  改书宽时这里跟着改（书宽 34 ＋ 12 ＋ 18 ＝ 留白，就是这条式子）。 */
 const MANUAL_ENTRY_RESERVE = 64;
 
@@ -1035,9 +1060,9 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
     'div',
     { style: { position: 'relative' } },
     // #1237／2026-10-10 第四轮（用户口径）：使用手册入口钉在**卡片右上角**——书的顶边与「爱生活」
-    // 标题行顶边齐平，往下的那截横跨到第二行（配置体检那行）的右侧留白里。
-    // 关键是**绝对定位**：它不在任何一行的流里，两行的高度仍由各自那排平控件决定，书的出现不把
-    // 任何一行撑高（用户原话：「使用手册的存在并没有增加标题栏那一栏的高度，只是在第一行第二行
+    // 标题行顶边齐平，往下的那截悬在标题行下方的留白里（配置体检那行已删，见标题行体检按钮）。
+    // 关键是**绝对定位**：它不在任何一行的流里，标题行的高度仍由那排控件决定，书的出现不把
+    // 任何一行撑高（用户原话：「使用手册的存在并没有增加标题栏那一栏的高度，只是在第一行
     // 右侧区域展示出来」）。第一版那种负边距会把这枚带阴影的书顶裁掉，这里不再用。
     React.createElement(
       'span',
@@ -1073,8 +1098,8 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
         }),
       ),
     ),
-    // 前两行共用这段右边距：给右上角那本书让出一条 46px 的竖带（书 34 ＋ 按钮两侧内边各 6），
-    // 「检查更新」「体检一次」这些右端控件照旧右对齐，只是不再顶到卡片边缘、不会被书压住。
+    // 标题行留这段右边距：给右上角那本书让出一条 46px 的竖带（书 34 ＋ 按钮两侧内边各 6），
+    // 「体检」「检查更新」这些右端控件照旧右对齐，只是不再顶到卡片边缘、不会被书压住。
     React.createElement(
       'div',
       { style: { paddingRight: MANUAL_ENTRY_RESERVE } },
@@ -1091,6 +1116,21 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
         React.createElement(
           'div',
           { style: S.headActions },
+          React.createElement(
+            'button',
+            {
+              type: 'button',
+              style: health.running ? { ...S.healthBtn, opacity: 0.55, cursor: 'default' } : S.healthBtn,
+              disabled: health.running,
+              onClick: health.run,
+              title: '对六家各跑一次配置体检（只看不改：不建目录、不改配置、不自动重置）',
+              'aria-label': '体检',
+              'data-ilife-press': 'health-run',
+              'data-ilife-longpress': 'health-run',
+            },
+            health.running ? '体检中…' : '体检',
+          ),
+          React.createElement('style', { 'data-ilife-interaction': 't1' }, interactionCss()),
           React.createElement('span', {
             style: S.updateEntrySlot,
             ref: (element: HTMLSpanElement | null) => {
@@ -1100,13 +1140,6 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
           React.createElement(PanelActions, null),
         ),
       ),
-      React.createElement(HealthSummaryLine, {
-        lights,
-        running: health.running,
-        // #735：取数失败也要在这一行看得见（各家的错只画在那家页签里的表上，摘要行沉默＝用户以为按钮坏了）。
-        error: summaryErrorOf(health),
-        onRun: health.run,
-      }),
     ),
     React.createElement(
       'div',
