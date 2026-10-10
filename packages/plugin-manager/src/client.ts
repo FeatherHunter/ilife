@@ -432,7 +432,12 @@ function tabCardLine(page: number | null, scene: ManualScene | null): React.Reac
  * 页框留空（data-ilife-manual="page-frame"）。翻页协议＝预显目标页＋无目标页预清空＋
  * 交接无入场动画（票面口径）；冻高＝开书瞬间量遍各跨页取最高、上限锁 A4 高
  * （量具缺席如测试替身时退回自然高度，不硬写）。旧外壳定稿件已背离，不跟它。 */
-function ManualBookShell(props: { scenes: ManualScene[]; renderPage?: (page: { page: number; key: string; state: string } | null, goPage: (pg: number) => void) => React.ReactNode }): React.ReactElement {
+function ManualBookShell(props: {
+  scenes: ManualScene[];
+  renderPage?: (page: { page: number; key: string; state: string } | null, goPage: (pg: number) => void) => React.ReactNode;
+  /** 书框右上角外侧那一格（2026-10-10 用户口径：关闭钮要挂在**书**的右上角、在书外，不是弹层框的角）。 */
+  closeSlot?: React.ReactNode;
+}): React.ReactElement {
   const scenes = props.scenes;
   const renderPage = props.renderPage ?? (() => null);
   const [spread, setSpread] = React.useState(0);
@@ -552,6 +557,9 @@ function ManualBookShell(props: { scenes: ManualScene[]; renderPage?: (page: { p
         frame(right, 'right', rightRef),
       ),
     ),
+    // 书框右上角外侧那一格（关闭钮）：挂在 manualRoot（红框本体）里、绝对定位到框外 —— 它跟着
+    // **书**的几何走，不跟弹层走（用户 2026-10-10 口径：「放在书籍右上角，在书籍之外的区域」）。
+    props.closeSlot ?? null,
     ),
     React.createElement(
       'div',
@@ -686,6 +694,17 @@ const MANUAL_ENTRY_RESERVE = 64;
 
 /** 书盒子离卡片右沿的距离（上面那 8px 呼吸位）。 */
 const MANUAL_ENTRY_INSET = 8;
+
+/** 书框右上角**外侧**那枚关闭钮那一格：`right:0` 贴住书框右边，再整体 `translateX(100% + 8px)`
+ *  挪到框外（宽度不写死，改字、改内边距都跟得上）；`top:-4` 让钮的中线压在框的顶边上。
+ *  它挂在书壳（红框本体）里，所以永远是「书的右上角」，与弹层框多大无关。 */
+const MANUAL_CLOSE_SLOT: React.CSSProperties = {
+  position: 'absolute',
+  top: -4,
+  right: 0,
+  transform: 'translateX(calc(100% + 8px))',
+  zIndex: 3,
+};
 
 /** 爱生活面板：总设置区 ＋ 检查更新（七家）＋ 爱生活页签条（slot 驱动）＋ 技能设置页投影/缺席卡。 */
 function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallFace | null }): React.ReactElement {
@@ -884,6 +903,24 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
         React.createElement(ManualBookShell, {
           scenes: [...SCENES],
           renderPage: (page, goPage) => page === null ? null : renderManualPage(SCENES, page, goPage),
+          // 关闭钮（2026-10-10 用户口径）：材质照「上一页／下一页」那两枚（同一份 S.manualBrass），
+          // 钉在**书框**右上角**外侧**——那一格挂在书壳里，所以它跟着书走，不跟弹层框走。
+          closeSlot: React.createElement(
+            'span',
+            { style: MANUAL_CLOSE_SLOT, 'data-ilife-manual': 'close-slot' },
+            React.createElement(
+              'button',
+              {
+                type: 'button',
+                style: S.manualBrass,
+                title: '关闭使用手册',
+                'aria-label': '关闭使用手册',
+                'data-ilife-press': 'manual-close',
+                onClick: () => { setManualOpen(false); },
+              },
+              '关闭',
+            ),
+          ),
         }),
       ),
     ),

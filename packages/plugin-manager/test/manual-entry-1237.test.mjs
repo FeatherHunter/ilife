@@ -49,18 +49,18 @@ describe('#1237 使用手册入口与弹出空壳', () => {
     assert.ok(css.includes('width:5px'), '书脊宽度应为 5px');
   });
 
-  it('弹出：关着返回空；开着是透明点外关闭层＋书那一格＋常驻关闭钮，书体由 children 传入', () => {
+  it('弹出：关着返回空；开着是透明点外关闭层＋书那一格（关闭钮已挪到书壳上）', () => {
     const { ManualPopoverShell } = ENTRY;
     assert.equal(typeof ManualPopoverShell, 'function');
     assert.equal(ManualPopoverShell({ open: false, onClose: () => {} }), null);
-    // 不传 children：书那一格里只有关闭钮，不许自带任何书体文案（书体是调用方传的）
+    // 不传 children：书那一格是空的（关闭钮 2026-10-10 起挂在书壳上，见下面那条源码断言）
     let closed = 0;
     const bare = ManualPopoverShell({ open: true, onClose: () => { closed += 1; } });
     const bareDump = JSON.stringify(bare);
     assert.ok(bareDump.includes('manual-layer'), '缺透明点外关闭层 manual-layer');
     assert.ok(bareDump.includes('manual-popover'), '缺书那一格 manual-popover');
     assert.ok(bareDump.includes('使用手册'), '弹层上须有「使用手册」（aria-label）');
-    assert.ok(bareDump.includes('manual-popover-close'), '缺常驻关闭钮 manual-popover-close');
+    assert.ok(!bareDump.includes('manual-popover-close'), '关闭钮不该再住在弹层框里（要挂在书籍右上角外侧）');
     for (const body of ['基本使用', '数据目录', '增强体验']) {
       assert.ok(!bareDump.includes(body), '不传 children 时不许出现书体：' + body);
     }
@@ -75,15 +75,10 @@ describe('#1237 使用手册入口与弹出空壳', () => {
     wrap.props.onClick({ stopPropagation: () => { stopped += 1; } });
     assert.equal(stopped, 1, '书那一格须拦住冒泡');
     assert.equal(closed, 1, '点书不许触发关闭');
-    // 关闭钮经 onClose 接出（点它必须能关）
-    const btn = [wrap?.props?.children].flat().find((c) => c !== null && c !== undefined && JSON.stringify(c).includes('manual-popover-close'));
-    assert.ok(btn !== undefined, '找不到关闭钮那一格');
-    btn.props.onClick();
-    assert.equal(closed, 2, '关闭钮须经 onClose 接出');
     // 传 children：书体原样铺进书那一格（#1240 起弹层不再只是空壳）
     const filled = ManualPopoverShell({ open: true, onClose: () => {}, children: '基本使用' });
     assert.ok(JSON.stringify(filled).includes('基本使用'), 'children 里的书体没铺进去');
-    // 形制（2026-10-10 第六轮）：`<dialog>` 点外层（top layer，不留黑底）＋ 书那一格**没有黑底框**
+    // 形制（2026-10-10）：`<dialog>` 点外层（top layer，不留黑底）＋ 书那一格**没有黑底框**
     assert.equal(bare?.type, 'dialog', '外层须是 <dialog>（showModal 才能进 top layer）');
     assert.equal(bare?.props?.open, undefined, '不许带 open：带 open 时 showModal 会抛「已按普通方式打开」');
     assert.equal(typeof bare?.props?.onCancel, 'function', 'ESC 关（原生 cancel）也要把开合态收回来');
@@ -96,8 +91,7 @@ describe('#1237 使用手册入口与弹出空壳', () => {
     assert.ok(!css.includes('background:#15130f'), '书的深色舞台底已去掉');
     assert.ok(!css.includes('border-radius:16px') && !css.includes('box-shadow:0 24px 64px'), '黑框的圆角与投影已去掉');
     assert.ok(css.includes('.manual-popover{position:relative;box-sizing:border-box'), '书那一格不再自带定位与底框');
-    // 关闭钮的选择器必须带前缀压过 `[data-ilife-press]{position:relative}` 那条同权重的规则
-    assert.ok(css.includes('.manual-popover .manual-popover-close{position:absolute'), '关闭钮须用带前缀的选择器钉在右上角');
+    assert.ok(!css.includes('manual-popover-close'), '弹层 CSS 里不该再有关闭钮那格');
   });
 
   it('屏上只许一枚入口：client.ts 只留 manual-entry.ts 那一条接线', () => {
@@ -109,13 +103,21 @@ describe('#1237 使用手册入口与弹出空壳', () => {
     assert.ok(!/function ManualEntry\(/.test(src), 'client.ts 里不许再有内联的手册入口组件');
     assert.ok(!src.includes("'ilife-manual-book'"), '旧的内联弹层 id 不许留');
     assert.ok(src.includes('ManualBookShell'), '书体须挂在弹层里');
+    // 关闭钮（2026-10-10 用户口径）：挂在**书壳**的 closeSlot 上、用「上一页／下一页」那套铜色材质
+    assert.ok(src.includes('closeSlot'), '书壳须有 closeSlot 那一格');
+    assert.ok(src.includes('MANUAL_CLOSE_SLOT'), '关闭钮那一格须走 MANUAL_CLOSE_SLOT 定位');
+    assert.ok(/manual-close/.test(src), '关闭钮须带 data-ilife-press=manual-close');
+    assert.ok(/closeSlot: React\.createElement\([\s\S]{0,400}?S\.manualBrass/.test(src), '关闭钮须用 S.manualBrass（与上一页／下一页同一份铜色材质）');
   });
 
-  it('总管卡已挂入口：产物 client.js 里有图标与 popover 框', () => {
+  it('总管卡已挂入口：产物 client.js 里有图标、popover 框与铜色关闭钮', () => {
     assert.ok(CLIENT.includes('使用手册'), '产物里没有“使用手册”');
     assert.ok(CLIENT.includes('eabook'), '产物里没有红封 eabook');
     assert.ok(CLIENT.includes('manual-popover'), '产物里没有 popover 框 manual-popover');
-    assert.ok(CLIENT.includes('manual-popover-close'), '产物里没有关闭钮');
+    assert.ok(CLIENT.includes('manual-close'), '产物里没有关闭钮');
+    // 关闭钮那格不许再住在弹层件里（注释里提到旧名不算，查的是代码那一行）
+    const entrySrc = readFileSync(join(HERE, '..', 'src', 'manual-entry.ts'), 'utf8');
+    assert.ok(!entrySrc.includes("className: 'manual-popover-close'"), '关闭钮不该还在弹层框里');
   });
 
   it('未碰卷轴旧代码：本件不 import seal-scroll/seal-stamp', () => {

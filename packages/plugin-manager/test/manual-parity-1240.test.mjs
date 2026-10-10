@@ -97,9 +97,10 @@ describe('#1240 手册壳与冻结原型同口径', () => {
     assert.equal(dialog.props.className, 'manual-popover', '弹层走 .manual-popover 那一格 CSS（2026-10-10 起不再挂内联样式）');
     // 口径一处：整份弹层 CSS 里 `--paper-w` 只许出现一次
     assert.equal(ENTRY_CSS_TEXT.split('--paper-w').length - 1, 1, '--paper-w 只许定义一处');
-    // 2026-10-10 用户验收改形态：弹层是限制尺寸框，纸宽随之由弹层内容宽派生（原先取原型 :root 那式）
-    assert.ok(ENTRY_CSS_TEXT.includes('--paper-w:min(780px,calc(100vw - 96px))'), '纸宽基准＝弹层内容宽');
-    assert.ok(ENTRY_CSS_TEXT.includes('width:min(900px,calc(100vw - 48px))'), '弹层宽＝min(900px, 100vw-48px)');
+    // 2026-10-10 用户验收改形态：弹层仍是限制尺寸框，但为给「书框右上角外侧那枚关闭钮」让出一条
+    // 空带，框宽 900→1000、纸宽上限 780→760（左右各约 100px 空带）。
+    assert.ok(ENTRY_CSS_TEXT.includes('--paper-w:min(760px,calc(100vw - 200px))'), '纸宽基准＝弹层内容宽');
+    assert.ok(ENTRY_CSS_TEXT.includes('width:min(1000px,calc(100vw - 48px))'), '弹层宽＝min(1000px, 100vw-48px)');
     const shell = findAll(tree, (n) => n.props?.['data-ilife-manual'] === 'shell')[0];
     assert.ok(shell, '书壳须在');
     assert.equal(shell.props.style?.['--paper-w'], undefined, '壳不许再定义一份（口径一处）');

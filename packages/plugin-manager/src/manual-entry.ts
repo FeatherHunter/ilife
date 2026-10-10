@@ -58,12 +58,7 @@ export function manualEntryCss(): string {
     // 弹层是 <dialog>：能 showModal 的宿主会把它送进浏览器 top layer（那里 z-index 说了不算，
     // 谁也压不住）；::backdrop 是 UA 默认那层半黑，必须清掉（用户：「不要有黑色背景的框」）。
     '.manual-layer::backdrop{background:transparent}' +
-    '.manual-popover{position:relative;box-sizing:border-box;width:min(900px,calc(100vw - 48px));max-height:min(88vh,900px);overflow:auto;color:#e8dcc2;font-family:system-ui,"Microsoft YaHei",sans-serif;--paper-w:min(780px,calc(100vw - 96px))}' +
-    // 选择器带 `.manual-popover` 前缀是必须的：本体触发器的交互样式里有一条
-    // `[data-ilife-press]{position:relative;overflow:hidden}`（config-panel-view.ts），
-    // 与单类选择器同权重、排在后头 —— 只写 `.manual-popover-close` 的话会被它压成 relative，
-    // 关闭钮就落到书那一格的左上角去了（2026-10-10 实测：computed position=relative）。
-    '.manual-popover .manual-popover-close{position:absolute;top:0;right:0;z-index:3;display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;border:1px solid #3a352c;background:#1c1913cc;color:#cfc4ad;font-size:16px;line-height:1;cursor:pointer}'
+    '.manual-popover{position:relative;box-sizing:border-box;width:min(1000px,calc(100vw - 48px));max-height:min(88vh,900px);overflow:auto;color:#e8dcc2;font-family:system-ui,"Microsoft YaHei",sans-serif;--paper-w:min(760px,calc(100vw - 200px))}'
   );
 }
 
@@ -97,14 +92,16 @@ export function ManualEntryButton(props: ManualEntryButtonProps): React.ReactEle
   );
 }
 
-/** 弹出弹层：关着回 null，开着回**浮在面板上的限制尺寸框**（关闭钮 ＋ children 里的书体）。
+/** 弹出弹层：关着回 null，开着回**透明的满屏 `<dialog>`**（书体由调用方经 children 传进来）。
  *
- * 2026-10-10 用户验收两改（记在 #1240）：
- * ① 去掉深色框——**不再有整屏舞台、也不再有黑色底框／边框／投影**；现在外面那层
- *    `manual-layer` 是透明的满屏层，只负责「吃书以外的点击」与「把书摆正中」；
- * ② **点书以外任何地方即关**（点空白处不会漏到下面的面板控件上），关闭钮仍常驻在书的右上角。
- * 开书时这一层压在最上面（`z-index:2147483000`），面板底部那条「保存／重置为默认／重新读取」
- * 也盖不住它。框内的书体由调用方经 children 传入；不传 children 时只有关闭钮。
+ * 2026-10-10 用户验收（记在 #1240）：
+ * ① 去掉深色框——不再有整屏舞台、也不再有黑色底框／边框／投影；`manual-layer` 只负责
+ *    「吃书以外的点击」与「把书摆正中」；
+ * ② **点书以外任何地方即关**（点空白处不会漏到下面的面板控件上）；
+ * ③ 关闭钮**不在这里**了：用户口径是「放在书籍右上角、在书籍之外的区域」，而且要用
+ *    「上一页／下一页」那套铜色材质 —— 它现在由 `client.ts` 挂在书壳（`ManualBookShell`）的
+ *    `closeSlot` 上，跟着**书**的几何走。
+ * 开书时这一层进浏览器 top layer（`showModal()`），面板底栏与插件浮层都压不住它。
  */
 export function ManualPopoverShell(props: ManualPopoverShellProps): React.ReactElement | null {
   if (!props.open) return null;
@@ -133,18 +130,6 @@ export function ManualPopoverShell(props: ManualPopoverShellProps): React.ReactE
         // 书自己那一格的点击不外传（否则点书也会被上面那层当成「书外」）
         onClick: (event: React.MouseEvent) => { event.stopPropagation(); },
       },
-      React.createElement(
-        'button',
-        {
-          type: 'button',
-          className: 'manual-popover-close',
-          title: '关闭' + MANUAL_ENTRY_LABEL,
-          'aria-label': '关闭' + MANUAL_ENTRY_LABEL,
-          'data-ilife-press': 'manual-close',
-          onClick: props.onClose,
-        },
-        '×',
-      ),
       props.children ?? null,
     ),
   );
