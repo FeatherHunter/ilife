@@ -219,6 +219,9 @@ describe('#1239 内容接线', () => {
     assert.ok(VIEW_SRC.includes('.pop.open>.view'), '浮层开合走 .open（委托切 class）');
     assert.ok(VIEW_SRC.includes('.pop.open>.view{') && VIEW_SRC.includes('position:fixed'), '浮层须破框居中（不受书容器裁剪）');
     assert.ok(VIEW_SRC.includes('.pop.open>.view>.x'), '× 须跟图走（挂在浮层框上）');
+    assert.ok(VIEW_SRC.includes('[data-pop-toggle]:hover'), '悬停也要呼吸（鼠标用户不用 Tab）');
+    // 场景一两处复制徽标须各挂各的图（步骤 4 与步骤 5 不许共用一张）
+    assert.equal((stepHtml.match(/DSH 饼干记账复制 prompt/g) ?? []).length, 2, '两处复制徽标须各就各位');
     assert.ok(VIEW_SRC.includes('a.capp{text-decoration:none}'), '红徽外链不许带下划线');
     assert.ok(VIEW_SRC.includes(':hover{transform:translateY(-1px)'), '可点徽标悬停须有上浮');
     assert.ok(VIEW_SRC.includes('@keyframes ilifeFocusBreath'), '聚焦须有呼吸金光');

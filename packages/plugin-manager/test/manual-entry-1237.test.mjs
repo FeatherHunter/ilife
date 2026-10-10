@@ -99,6 +99,7 @@ describe('#1237 使用手册入口与弹出空壳', () => {
     const popRule = popStart < 0 ? '' : css.slice(popStart, css.indexOf('}', popStart));
     assert.ok(!popRule.includes('border-radius') && !popRule.includes('box-shadow'), '黑框的圆角与投影已去掉');
     assert.ok(css.includes('.manual-popover{position:relative;box-sizing:border-box'), '书那一格不再自带定位与底框');
+    assert.ok(css.includes('overflow:visible'), '书那一格不设内滚动（滚轮不许带着书滑）');
     assert.ok(!css.includes('manual-popover-close'), '弹层 CSS 里不该再有关闭钮那格');
   });
 
@@ -116,6 +117,8 @@ describe('#1237 使用手册入口与弹出空壳', () => {
     assert.ok(src.includes('MANUAL_CLOSE_SLOT'), '关闭钮那一格须走 MANUAL_CLOSE_SLOT 定位');
     assert.ok(/manual-close/.test(src), '关闭钮须带 data-ilife-press=manual-close');
     assert.ok(/closeSlot: React\.createElement\([\s\S]{0,400}?S\.manualBrass/.test(src), '关闭钮须用 S.manualBrass（与上一页／下一页同一份铜色材质）');
+    // 用户口径（三枚钮与书同层）：铜扣行与关闭槽 z40，压住页内浮层（z30），开图时钮不被盖
+    assert.equal((src.match(/zIndex: 40/g) ?? []).length, 2, '翻页行与关闭槽须各一处 z40');
     // 用户口径（右下角常驻）：入口 sticky 吸附在面板右下角、住卡片末尾，不随列表滑走
     assert.ok(/position: 'sticky', bottom: MANUAL_ENTRY_BOTTOM/.test(src), '入口须 sticky 吸附在右下角');
     assert.ok(src.indexOf('MorePluginsCard') < src.indexOf("position: 'sticky'"), '入口块须住卡片末尾（置顶会被上面滑走）');

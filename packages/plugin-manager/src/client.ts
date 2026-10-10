@@ -781,7 +781,8 @@ function ManualBookShell(props: {
     ),
     React.createElement(
       'div',
-      { style: S.manualDeck },
+      // 铜扣行与书同层：zIndex 压住页内浮层（.view z30），开图时翻页钮不被盖住。
+      { style: { ...S.manualDeck, zIndex: 40 } },
       React.createElement(
         'button',
         {
@@ -912,13 +913,13 @@ const MANUAL_ENTRY_BOTTOM = 16;
 /** 书框**右下角外侧**那枚关闭钮那一格（2026-10-10 用户口径：与「上一页／下一页」同一行、放在右侧，
  *  钮的右边与书框右边对齐）：`right:0` 贴住书框右边；`bottom:0` ＋ `translateY(100% + 8px)` 把它
  *  整枚挪到框的下方，正好落进翻页钮那一行的带子里。它挂在书壳（红框本体）里，所以左右永远跟书框
- *  对齐，与弹层框多大无关。 */
+ *  对齐，与弹层框多大无关。zIndex 与铜扣行同取 40：三枚钮与书同层，页内浮层（z30）盖不住它们。 */
 const MANUAL_CLOSE_SLOT: React.CSSProperties = {
   position: 'absolute',
   right: 0,
   bottom: 0,
   transform: 'translateY(calc(100% + 8px))',
-  zIndex: 3,
+  zIndex: 40,
 };
 
 /** 爱生活面板：总设置区 ＋ 检查更新（七家）＋ 爱生活页签条（slot 驱动）＋ 技能设置页投影/缺席卡。 */

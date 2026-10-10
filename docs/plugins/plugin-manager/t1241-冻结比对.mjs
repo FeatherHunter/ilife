@@ -35,9 +35,11 @@ import { join, resolve } from 'node:path';
  *  2026-10-10 重冻：场景一换 DSH 新图＋浮层破框居中免滚动，
  *  原型与成品同步改，身份随之更新。
  *  2026-10-10 重冻：可点徽标聚焦呼吸金光，
+ *  原型与成品同步改，身份随之更新。
+ *  2026-10-10 重冻：悬停呼吸＋第二复制换图＋三钮同层，
  *  原型与成品同步改，身份随之更新。 */
-const FROZEN_SHA256 = 'f21e1c37797e4677da09834b6e7e697bcb8b1a2f9943250693a5f195fec087d0';
-const FROZEN_BLOB = 'ebddcfb9ec3e1fac3e2a4230deb9e6122c9d642c';
+const FROZEN_SHA256 = 'e3e6e6d223c597b6cc26cb49ce672c297723ef7a7a72abf2e6f0c8d9541d482d';
+const FROZEN_BLOB = 'b512662ce95141cb2b5942eeec25fa93563dfe66';
 const PROTO_REL = 'docs/plugins/plugin-manager/proto-manual-4scenes.html';
 const CONTENT_REL = 'packages/plugin-manager/src/manual-content.ts';
 
