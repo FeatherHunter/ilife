@@ -221,6 +221,8 @@ describe('#1239 内容接线', () => {
     assert.ok(VIEW_SRC.includes('.pop.open>.view>.x'), '× 须跟图走（挂在浮层框上）');
     assert.ok(VIEW_SRC.includes('a.capp{text-decoration:none}'), '红徽外链不许带下划线');
     assert.ok(VIEW_SRC.includes(':hover{transform:translateY(-1px)'), '可点徽标悬停须有上浮');
+    assert.ok(VIEW_SRC.includes('@keyframes ilifeFocusBreath'), '聚焦须有呼吸金光');
+    assert.ok(VIEW_SRC.includes('prefers-reduced-motion'), '动效须有关闭退路');
     assert.ok(nowHtml.includes('data:image/jpeg;base64,'), '浮层图须内联（宿主无图床可取）');
     assert.ok(stepHtml.includes('dbadge') && stepHtml.includes('ctag') === false, '基本使用页签徽在');
     assert.equal(findAll(now, (n) => n.props?.['data-ilife-manual'] === 'frag-copy').length, 0, '片段为空，不许有复制按钮');

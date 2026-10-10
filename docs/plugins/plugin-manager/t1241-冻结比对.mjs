@@ -33,9 +33,11 @@ import { join, resolve } from 'node:path';
  *  2026-10-10 重冻：大小写规范＋徽标去句号＋等宽滚动＋去下划线＋悬停动画，
  *  原型与成品同步改，身份随之更新。
  *  2026-10-10 重冻：场景一换 DSH 新图＋浮层破框居中免滚动，
+ *  原型与成品同步改，身份随之更新。
+ *  2026-10-10 重冻：可点徽标聚焦呼吸金光，
  *  原型与成品同步改，身份随之更新。 */
-const FROZEN_SHA256 = '87eda90ccfe6fa290c2b3dfb07f8a55c4b271f58233f92f8e4dece490a7ea166';
-const FROZEN_BLOB = '59b9d2e7635d978ab09985fc2e5787c99b966baa';
+const FROZEN_SHA256 = 'f21e1c37797e4677da09834b6e7e697bcb8b1a2f9943250693a5f195fec087d0';
+const FROZEN_BLOB = 'ebddcfb9ec3e1fac3e2a4230deb9e6122c9d642c';
 const PROTO_REL = 'docs/plugins/plugin-manager/proto-manual-4scenes.html';
 const CONTENT_REL = 'packages/plugin-manager/src/manual-content.ts';
 

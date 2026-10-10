@@ -124,7 +124,9 @@ body.bare .note{display:none}
 .pg .cappim[data-pop-toggle],.pg a.capp{transition:transform .14s ease,filter .14s ease}
 .pg .cappim[data-pop-toggle]:hover,.pg a.capp:hover{transform:translateY(-1px);filter:brightness(1.12)}
 .pg .cappim[data-pop-toggle]:active,.pg a.capp:active{transform:translateY(1px)}
-.pg .cappim[data-pop-toggle]:focus-visible{outline:2px solid #8fd0c8;outline-offset:1px}
+.pg .cappim[data-pop-toggle]:focus-visible,.pg a.capp:focus-visible{outline:none;animation:ilifeFocusBreath 1s ease-in-out infinite}
+@keyframes ilifeFocusBreath{0%,100%{box-shadow:0 0 4px #ffd97a,0 0 10px #d9ab3c66}50%{box-shadow:0 0 10px #ffd97a,0 0 22px #d9ab3ccc}}
+@media (prefers-reduced-motion:reduce){.pg .cappim[data-pop-toggle]:focus-visible,.pg a.capp:focus-visible{animation:none;box-shadow:0 0 4px #ffd97a}}
 .pg .ol li{display:flex;gap:.75em;margin:.62em 0;font-size:1em;line-height:1.95;text-wrap:pretty}
 .pg .nw{white-space:nowrap}
 .pg .lead{font-size:1.04em;line-height:2;margin:.2em 0 .1em;color:#3a2f1e}
