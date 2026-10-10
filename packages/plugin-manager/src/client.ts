@@ -18,7 +18,7 @@
  */
 
 import * as React from 'react';
-import { MANAGER_PLUGIN, MANAGER_TABS, MANUAL_ENTRY, MORE_PLUGINS, PANEL_LINKS, recoFor } from './nav.js';
+import { MANAGER_PLUGIN, MANAGER_TABS, MORE_PLUGINS, PANEL_LINKS, recoFor } from './nav.js';
 import { clampSpread, planManual, spreadOfPage } from './manual-plan.js';
 import type { ManualScene, ManualSheet } from './manual-plan.js';
 import { SCENES, manualContentCss, renderManualPage } from './manual-content.js';
@@ -91,101 +91,6 @@ const S = {
     color: 'var(--dsw-alias-label-primary, inherit)',
     textDecoration: 'none',
     fontSize: 14,
-    lineHeight: 1,
-  } as React.CSSProperties,
-  /** #1237：甲腰封书入口（书的样子逐字取定版甲：红封＋书脊＋米色腰封＋名牌）。 */
-  manualWrap: { position: 'relative', display: 'inline-flex', flex: '0 0 auto' } as React.CSSProperties,
-  manualBook: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: 10,
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    padding: '6px 10px 10px',
-  } as React.CSSProperties,
-  manualStage: { position: 'relative', width: 76, height: 104, filter: 'drop-shadow(0 10px 10px #00000088)' } as React.CSSProperties,
-  manualCover: {
-    display: 'block',
-    position: 'relative',
-    width: 72,
-    height: 100,
-    borderRadius: '5px 8px 8px 5px',
-    background: 'linear-gradient(135deg,#9c2f2f,#5f1616 65%,#3a0d0d)',
-    border: '1px solid #d9ab3c',
-    boxShadow: '5px 7px 12px #0009',
-  } as React.CSSProperties,
-  manualSpine: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 12,
-    background: 'linear-gradient(90deg,#320b0b,#571414)',
-    borderRadius: '5px 0 0 5px',
-  } as React.CSSProperties,
-  manualBand: {
-    position: 'absolute',
-    left: -4,
-    right: -4,
-    top: 34,
-    height: 26,
-    background: '#ece0c2',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: '#5c1010',
-    fontSize: 12,
-    letterSpacing: '.2em',
-    boxShadow: '0 2px 4px #00000066',
-  } as React.CSSProperties,
-  manualPlate: {
-    marginTop: 14,
-    background: 'linear-gradient(#4a1f1a,#2a0f0c)',
-    border: '1px solid #8a6a15',
-    borderRadius: 4,
-    color: '#e8c96a',
-    fontSize: 13,
-    letterSpacing: '.3em',
-    textIndent: '.3em',
-    padding: '4px 18px',
-  } as React.CSSProperties,
-  /** #1240：书式弹出层＝**原型那一页**（页面底色铺满 ＋ 四周 20px 页边），书与铜扣直接铺在底色上。
-   *
-   * 原型里开书就是「把 `.scroll`＋`.deck` 显出来」：没有白卡、没有标题条、也没有框住书的第二层壳
-   * （`proto-manual-4scenes.html` L183-197）。纸宽口径只在这里定义一次（`--paper-w`），
-   * 壳与铜扣都只读它——与原型 `:root{--paper-w:…}` 同一处口径。 */
-  manualShell: {
-    position: 'fixed',
-    inset: 0,
-    zIndex: 50,
-    boxSizing: 'border-box',
-    overflowY: 'auto',
-    background: '#15130f',
-    padding: 20,
-    // 字体口径照抄原型 `body{font-family:system-ui,'Microsoft YaHei',sans-serif}`：
-    // 换一套字，同一段话的断行位置就变，逐像素对照必然对不上。
-    fontFamily: "system-ui,'Microsoft YaHei',sans-serif",
-    '--paper-w': 'min(1080px, calc(100vw - 40px - 2.25em))',
-  } as React.CSSProperties,
-  /** 关闭钮（#1237 的关闭位不改）：钉在页面右上角，不占书的位置、不进书框。 */
-  manualClose: {
-    position: 'absolute',
-    top: 14,
-    right: 16,
-    zIndex: 2,
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 28,
-    height: 28,
-    borderRadius: 6,
-    border: '1px solid #3a352c',
-    background: '#1c1913cc',
-    color: '#cfc4ad',
-    cursor: 'pointer',
-    fontSize: 15,
     lineHeight: 1,
   } as React.CSSProperties,
   /** 书的舞台层：书壳与铜扣行都铺在这一层上（原型里是 `body` 上并列的 `.scroll` 与 `.deck`）。 */
@@ -527,7 +432,13 @@ function tabCardLine(page: number | null, scene: ManualScene | null): React.Reac
  * 页框留空（data-ilife-manual="page-frame"）。翻页协议＝预显目标页＋无目标页预清空＋
  * 交接无入场动画（票面口径）；冻高＝开书瞬间量遍各跨页取最高、上限锁 A4 高
  * （量具缺席如测试替身时退回自然高度，不硬写）。旧外壳定稿件已背离，不跟它。 */
-function ManualBookShell(props: { scenes: ManualScene[]; renderPage?: (page: { page: number; key: string; state: string } | null, goPage: (pg: number) => void) => React.ReactNode }): React.ReactElement {
+function ManualBookShell(props: {
+  scenes: ManualScene[];
+  renderPage?: (page: { page: number; key: string; state: string } | null, goPage: (pg: number) => void) => React.ReactNode;
+  /** 书框**右下角外侧**那一格（2026-10-10 用户口径：关闭钮与「上一页／下一页」同一行、放右侧，
+   *  钮的右边与书框右边对齐 —— 所以它挂在书壳上，跟着书的几何走）。 */
+  closeSlot?: React.ReactNode;
+}): React.ReactElement {
   const scenes = props.scenes;
   const renderPage = props.renderPage ?? (() => null);
   const [spread, setSpread] = React.useState(0);
@@ -647,6 +558,10 @@ function ManualBookShell(props: { scenes: ManualScene[]; renderPage?: (page: { p
         frame(right, 'right', rightRef),
       ),
     ),
+    // 书框右下角外侧那一格（关闭钮）：挂在 manualRoot（红框本体）里、绝对定位到框的下方 —— 它跟着
+    // **书**的几何走，不跟弹层走（用户 2026-10-10 口径：与「上一页／下一页」同一行、放右侧，
+    // 钮的右边与书框右边对齐）。
+    props.closeSlot ?? null,
     ),
     React.createElement(
       'div',
@@ -695,69 +610,6 @@ function ManualBookShell(props: { scenes: ManualScene[]; renderPage?: (page: { p
   );
 }
 
-/** 面板顶部使用手册入口（票 #1237）：甲腰封书按钮，点开弹出书（空壳，书体是 #1238 的活）。
- *
- * 开合态只用 useState（面板禁 document／window 直写）；文案取导航表那份镜像。 */
-function ManualEntry(): React.ReactElement {
-  const [open, setOpen] = React.useState(false);
-  return React.createElement(
-    'span',
-    { style: S.manualWrap },
-    React.createElement(
-      'button',
-      {
-        type: 'button',
-        style: S.manualBook,
-        title: MANUAL_ENTRY.tip,
-        'aria-label': MANUAL_ENTRY.title,
-        'aria-expanded': open,
-        'aria-controls': 'ilife-manual-book',
-        // #1174：入口挂 press（悬停洗色＋按压收缩＋焦点双环；链接只做反馈不做标记）。
-        'data-ilife-press': MANUAL_ENTRY.key,
-        onClick: () => { setOpen(true); },
-      },
-      React.createElement(
-        'span',
-        { style: S.manualStage, 'aria-hidden': 'true' },
-        React.createElement(
-          'span',
-          { style: S.manualCover },
-          React.createElement('span', { style: S.manualSpine }),
-          React.createElement('span', { style: S.manualBand }, MANUAL_ENTRY.title),
-        ),
-      ),
-      React.createElement('span', { style: S.manualPlate, 'aria-hidden': 'true' }, MANUAL_ENTRY.title),
-    ),
-    open
-      ? React.createElement(
-        'div',
-        {
-          role: 'dialog',
-          id: 'ilife-manual-book',
-          'aria-label': MANUAL_ENTRY.title,
-          style: S.manualShell,
-          'data-ilife-manual': 'book-shell',
-        },
-        React.createElement(
-          'button',
-          {
-            type: 'button',
-            style: S.manualClose,
-            'aria-label': '关闭' + MANUAL_ENTRY.title,
-            'data-ilife-press': 'manual-close',
-            onClick: () => { setOpen(false); },
-          },
-          '×',
-        ),
-        React.createElement(ManualBookShell, {
-          scenes: [...SCENES],
-          renderPage: (page, goPage) => page === null ? null : renderManualPage(SCENES, page, goPage),
-        }),
-      )
-      : null,
-  );
-}
-
 /** 标题行右上角两件：星（去本仓点 Star）＋ 气泡（去本仓开 issue），SVG 图标＋悬停说明＋按压反馈（#1174）。
  *
  * 三件并排里的第三件「检查更新」住隔壁票（#678）：本票只留位子——它就接在本组件之前，
@@ -767,7 +619,9 @@ function ManualEntry(): React.ReactElement {
 function PanelActions(): React.ReactElement {
   return React.createElement(
     'div',
-    { style: S.headActions },
+    // 2026-10-10（用户：右上角挤）：给外链两枚图标 8px 的左侧间隙——「检查更新」是有边框的重控件、
+    // ★／💬 是没有底色的轻图标，两组之间要一眼分得开；星与气泡彼此仍是 2px（同一组内部）。
+    { style: { ...S.headActions, marginLeft: 8 } },
     PANEL_LINKS.map((link) =>
       React.createElement(
         'a',
@@ -834,6 +688,27 @@ declare const __LIFE_PACK_VERSION__: string;
 /** 版本胶囊那一行字：只在这里拼一次，屏上与用例读的是同一串。 */
 const MANAGER_VERSION_TEXT = MANAGER_PLUGIN + ' · ' + __LIFE_PACK_VERSION__;
 
+/** 右上角那本书占的那条竖带宽度：书 34px ＋ 按钮两侧内边各 6px（＝46px 的盒子）＋ 与卡片右沿
+ *  留 8px 呼吸 ＋ 与右边那排控件留 10px 间隙 ⇒ 64px。前两行共用这段右边距，于是「检查更新／星／
+ *  气泡」和「体检一次」的右端落在**同一条竖线**上，谁也不会撞到书的左下角。
+ *  改书宽时这里跟着改（书宽 34 ＋ 12 ＋ 18 ＝ 留白，就是这条式子）。 */
+const MANUAL_ENTRY_RESERVE = 64;
+
+/** 书盒子离卡片右沿的距离（上面那 8px 呼吸位）。 */
+const MANUAL_ENTRY_INSET = 8;
+
+/** 书框**右下角外侧**那枚关闭钮那一格（2026-10-10 用户口径：与「上一页／下一页」同一行、放在右侧，
+ *  钮的右边与书框右边对齐）：`right:0` 贴住书框右边；`bottom:0` ＋ `translateY(100% + 8px)` 把它
+ *  整枚挪到框的下方，正好落进翻页钮那一行的带子里。它挂在书壳（红框本体）里，所以左右永远跟书框
+ *  对齐，与弹层框多大无关。 */
+const MANUAL_CLOSE_SLOT: React.CSSProperties = {
+  position: 'absolute',
+  right: 0,
+  bottom: 0,
+  transform: 'translateY(calc(100% + 8px))',
+  zIndex: 3,
+};
+
 /** 爱生活面板：总设置区 ＋ 检查更新（七家）＋ 爱生活页签条（slot 驱动）＋ 技能设置页投影/缺席卡。 */
 function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallFace | null }): React.ReactElement {
   const tabsId = React.useId();
@@ -859,6 +734,32 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
   const [activeId, setActiveId] = React.useState<string | undefined>(undefined);
   /** 使用手册弹出开合（票 #1237：纯 UI 状态，不进脏基线；书体是 #1238 的活）。 */
   const [manualOpen, setManualOpen] = React.useState(false);
+  /** 使用手册弹层那枚 `<dialog>`（#1240）。**挂上 DOM 的那一刻**就 `showModal()` 送进浏览器
+   *  top layer——2026-10-10 用户实测：面板底部那条「保存／重置为默认／重新读取」与右上角那组
+   *  插件浮层都盖在书上，只靠 z-index 压不住，top layer 才是不看 z-index 的那一层。
+   *  用回调 ref 而不是 effect：元素每次真正挂上去都会调一次（宿主重挂也跟得上）；`showModal()`
+   *  拿不到时补一个 `open` 属性兜底，至少保证书看得见。 */
+  const attachManualDialog = React.useCallback((element: HTMLDialogElement | null) => {
+    if (element === null) return;
+    try {
+      element.showModal();
+      return;
+    } catch {
+      // 还没挂进文档（个别自制渲染器先交 ref 再 append）或宿主没有 showModal：先补 open 兜底，
+      // 再等一帧重试一次（重试前要把 open 摘掉，带 open 的 dialog 调 showModal 会抛）。
+      try { element.setAttribute('open', ''); } catch { /* 属性也写不了就作罢 */ }
+    }
+    try {
+      setTimeout(() => {
+        try {
+          element.removeAttribute('open');
+          element.showModal();
+        } catch {
+          try { element.setAttribute('open', ''); } catch { /* 作罢 */ }
+        }
+      }, 0);
+    } catch { /* 没有 setTimeout 的宿主：保持兜底态 */ }
+  }, []);
   /** 批量入口挂载位（一颗按钮看七家聚合；0.5.4 #49 到达，弹窗 dialog 由入口件内置，开关态亦归上游）。 */
   const entryRef = React.useRef<HTMLSpanElement | null>(null);
   const callReady = props.getCall() !== null;
@@ -986,45 +887,81 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
   }, [active]);
   return React.createElement(
     'div',
-    null,
+    { style: { position: 'relative' } },
+    // #1237／2026-10-10 第四轮（用户口径）：使用手册入口钉在**卡片右上角**——书的顶边与「爱生活」
+    // 标题行顶边齐平，往下的那截横跨到第二行（配置体检那行）的右侧留白里。
+    // 关键是**绝对定位**：它不在任何一行的流里，两行的高度仍由各自那排平控件决定，书的出现不把
+    // 任何一行撑高（用户原话：「使用手册的存在并没有增加标题栏那一栏的高度，只是在第一行第二行
+    // 右侧区域展示出来」）。第一版那种负边距会把这枚带阴影的书顶裁掉，这里不再用。
     React.createElement(
-      'div',
-      { style: S.headRow },
-      React.createElement('div', { style: S.head }, '爱生活'),
-      // #986：版本号构建期注入，首帧就是真值；不再有读中／读不到两态（漂移由构建门守）。
+      'span',
+      { style: { position: 'absolute', top: 2, right: MANUAL_ENTRY_INSET, display: 'inline-flex', zIndex: 2 } },
+      React.createElement('style', null, manualEntryCss()),
+      React.createElement(ManualEntryButton, { onOpen: () => { setManualOpen(true); } }),
+      // 书体挂在同一个弹层里（#1240：弹层从空壳改成真书；定位与外观在 manualEntryCss 的
+      // `.manual-popover` 一处定义，关着不渲染）。
       React.createElement(
-        'span',
-        { style: S.versionCapsule, 'data-ilife-version': 'capsule' },
-        MANAGER_VERSION_TEXT,
-      ),
-      React.createElement(
-        'div',
-        { style: S.headActions },
-        // #1237：使用手册入口挂头，排在更新入口与星／气泡之前。
-        React.createElement(ManualEntry, null),
-        React.createElement('span', {
-          style: S.updateEntrySlot,
-          ref: (element: HTMLSpanElement | null) => {
-            entryRef.current = element;
-          },
+        ManualPopoverShell,
+        { open: manualOpen, onClose: () => { setManualOpen(false); }, dialogRef: attachManualDialog },
+        React.createElement(ManualBookShell, {
+          scenes: [...SCENES],
+          renderPage: (page, goPage) => page === null ? null : renderManualPage(SCENES, page, goPage),
+          // 关闭钮（2026-10-10 用户口径）：材质照「上一页／下一页」那两枚（同一份 S.manualBrass），
+          // 钉在**书框**右上角**外侧**——那一格挂在书壳里，所以它跟着书走，不跟弹层框走。
+          closeSlot: React.createElement(
+            'span',
+            { style: MANUAL_CLOSE_SLOT, 'data-ilife-manual': 'close-slot' },
+            React.createElement(
+              'button',
+              {
+                type: 'button',
+                style: S.manualBrass,
+                title: '关闭使用手册',
+                'aria-label': '关闭使用手册',
+                'data-ilife-press': 'manual-close',
+                onClick: () => { setManualOpen(false); },
+              },
+              '关闭',
+            ),
+          ),
         }),
-        React.createElement(
-          'span',
-          { style: { position: 'relative', display: 'inline-flex' } },
-          React.createElement('style', null, manualEntryCss()),
-          React.createElement(ManualEntryButton, { onOpen: () => { setManualOpen(true); } }),
-          React.createElement(ManualPopoverShell, { open: manualOpen, onClose: () => { setManualOpen(false); } }),
-        ),
-        React.createElement(PanelActions, null),
       ),
     ),
-    React.createElement(HealthSummaryLine, {
-      lights,
-      running: health.running,
-      // #735：取数失败也要在这一行看得见（各家的错只画在那家页签里的表上，摘要行沉默＝用户以为按钮坏了）。
-      error: summaryErrorOf(health),
-      onRun: health.run,
-    }),
+    // 前两行共用这段右边距：给右上角那本书让出一条 46px 的竖带（书 34 ＋ 按钮两侧内边各 6），
+    // 「检查更新」「体检一次」这些右端控件照旧右对齐，只是不再顶到卡片边缘、不会被书压住。
+    React.createElement(
+      'div',
+      { style: { paddingRight: MANUAL_ENTRY_RESERVE } },
+      React.createElement(
+        'div',
+        { style: S.headRow },
+        React.createElement('div', { style: S.head }, '爱生活'),
+        // #986：版本号构建期注入，首帧就是真值；不再有读中／读不到两态（漂移由构建门守）。
+        React.createElement(
+          'span',
+          { style: S.versionCapsule, 'data-ilife-version': 'capsule' },
+          MANAGER_VERSION_TEXT,
+        ),
+        React.createElement(
+          'div',
+          { style: S.headActions },
+          React.createElement('span', {
+            style: S.updateEntrySlot,
+            ref: (element: HTMLSpanElement | null) => {
+              entryRef.current = element;
+            },
+          }),
+          React.createElement(PanelActions, null),
+        ),
+      ),
+      React.createElement(HealthSummaryLine, {
+        lights,
+        running: health.running,
+        // #735：取数失败也要在这一行看得见（各家的错只画在那家页签里的表上，摘要行沉默＝用户以为按钮坏了）。
+        error: summaryErrorOf(health),
+        onRun: health.run,
+      }),
+    ),
     React.createElement(
       'div',
       { role: 'tablist', 'aria-label': '爱生活技能页签', style: { ...S.tablist, position: 'relative', isolation: 'isolate' }, 'data-ilife-tablist': 't6' },
