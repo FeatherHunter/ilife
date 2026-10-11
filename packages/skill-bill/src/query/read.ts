@@ -24,6 +24,8 @@ import { projectWakeWord } from '../triggers/wakeTable.js';
 import { calcKpi } from '../shared/kpi.js';
 import { calcCategories } from '../analysis/index.js';
 import { toBillItem } from './items.js';
+import { filterInstallments } from './installmentFilter.js';
+import { resolveLedgerWindow } from './ledgerWindow.js';
 import { somedayTicketOut } from './ticket-day.js';
 import { emptyTicketOut } from './ticket-empty.js';
 import { accountTicketOut } from './ticketAccount.js';
@@ -302,7 +304,14 @@ export function viewRecordRange(params: Record<string, unknown>, db: BillDb): Vi
       return accountTicketOut({ key, params, wakeWord, window, records, account }); // w10 查账户 v2.1 票据纸（原型 w10-查账户-v2.1.html：结论80%／占比80/10/7/3／载荷键不动）
     }
     if (ledger !== undefined && category === undefined && account === undefined) {
-      return ledgerTicketOut({ key, params, wakeWord, window, records, ledger }); // w11 查账本 v2.1 票据纸（原型 w11-查账本-v2.1.html：结论100%单条／载荷键不动）
+      const win = resolveLedgerWindow(params, typeof params.today === 'string' ? params.today : undefined);
+      if (win === null) {
+        return ledgerTicketOut({ key, params, wakeWord, window, records, ledger }); // w11 查账本 v2.1 票据纸（原型 w11-查账本-v2.1.html：结论100%单条／载荷键不动）
+      }
+      const timed = fetchAll(db, { ...cond, fromTime: win.start + ' 00:00:00', toTime: win.end + ' 23:59:59' });
+      if (!timed.length) throw new BillFetchError('BILL_EMPTY_RANGE', `区间无记录：${win.start}~${win.end}（缺失阻断，不返空统计）`);
+      const timeLabel = win.start === win.end ? win.start + ' 这一天' : win.start + ' ~ ' + win.end + (win.tag !== '' ? '，' + win.tag : '');
+      return ledgerTicketOut({ key, params, wakeWord, window: '账本＝' + ledger + '（' + timeLabel + '）', records: timed, ledger }); // 1275 四段：周／月／年／区间（开始＝结束即某天）
     }
     if (category !== undefined && account === undefined && ledger === undefined) {
       const mine = calcKpi([...records]).expense;
@@ -366,9 +375,23 @@ export function viewRecordSearch(params: Record<string, unknown>, db: BillDb): V
     label = 'reimburse';
     window = '等着报销的那些账';
   } else if (kind === 'installment') {
-    records = fetchAll(db).filter(isInstallmentRow);
+    const base = fetchAll(db).filter(isInstallmentRow);
+    // 1276 条目 14：三个可选维度（名目／账户／状态）。全缺席＝原样返回（存量行为不动）；
+    // 非法 status 即 exit 2（坏输入阻断，不冒充正常）。HELP 表单名 `item_name` 直传，另认 `item` 别名。
+    const rawItem = params.item_name ?? params.item;
+    let filtered: BillRow[];
+    try {
+      filtered = filterInstallments(base, { itemName: rawItem, account: params.account, status: params.status });
+    } catch (e) {
+      throw new BillPolicyError('POLICY_BAD_INPUT', e instanceof Error ? e.message : String(e));
+    }
+    records = filtered;
     label = 'installment';
-    window = '分期还款的那些账';
+    const bits: string[] = [];
+    if (typeof rawItem === 'string' && rawItem.trim() !== '') bits.push('名目含「' + rawItem.trim() + '」');
+    if (typeof params.account === 'string' && (params.account as string).trim() !== '') bits.push('账户＝' + (params.account as string).trim());
+    if (typeof params.status === 'string' && (params.status as string).trim() !== '' && (params.status as string).trim() !== '全部') bits.push((params.status as string).trim());
+    window = bits.length === 0 ? '分期还款的那些账' : '分期还款的那些账（' + bits.join('、') + '）';
   } else {
     const rawQ = params.q;
     if (typeof rawQ !== 'string' || !rawQ.trim()) {

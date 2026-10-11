@@ -42,8 +42,9 @@ const DECLARATION_FILES = [
  *  历史值：'93099ecd345b85c65d69231c348fea663af40617a72509968e3829d6e2e108a0'（搬运 0 差异的机器证据，见 docs/skills/skill-bill/t721-证据.md）。 */
 const LEGACY_DIGEST = '93099ecd345b85c65d69231c348fea663af40617a72509968e3829d6e2e108a0';
 /** 74 条重写后（#977：卡路里式首行＋{{}}＋editable_fields；返修：标题去括号机制注记＋date hint 收选择器口径）的 SHA-256——今天的内容事实。
- *  口径＝canonical（id/title/wake_word/status/prompt_template/types）；editable_fields 另由 #977 专项断言覆盖。 */
-const PRODUCT_DIGEST = 'f15a71f9c5d1dea99d6e394c80de61b9db15408c7977368fea59cdcfea111cf3';
+ *  口径＝canonical（id/title/wake_word/status/prompt_template/types）；editable_fields 另由 #977 专项断言覆盖。
+ *  1275 重钉：查某天／查账单标题＋提示词写清区分（必选日期 vs 默认今天），查账本加一句话说明＋时间四段（周/月/年/区间），查账单详情 hint 补查某天。 */
+const PRODUCT_DIGEST = 'b52d7ff9a9d45d067952fb1306275c871356f4d547f913f94fd5e61f6efa4200';
 /** 词 → 命令 表（77 条，按词排序）的 SHA-256——取自**改前**那份手写词表（#721 搬运前当刻）。
  *  它钉的是「一条词还路由到与今天相同的命令」，属搬运 0 差异的机器证据。 */
 const ROUTE_DIGEST = 'd51353d5fda05cb39de7aad5909ae533d7d6408868f0ff3d7098b4b88c7bc9b9';
