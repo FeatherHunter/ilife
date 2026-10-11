@@ -117,8 +117,13 @@ describe('#1237 使用手册入口与弹出空壳', () => {
     assert.ok(src.includes('MANUAL_CLOSE_SLOT'), '关闭钮那一格须走 MANUAL_CLOSE_SLOT 定位');
     assert.ok(/manual-close/.test(src), '关闭钮须带 data-ilife-press=manual-close');
     assert.ok(/closeSlot: React\.createElement\([\s\S]{0,400}?S\.manualBrass/.test(src), '关闭钮须用 S.manualBrass（与上一页／下一页同一份铜色材质）');
-    // 用户口径（三枚钮与书同层）：铜扣行与关闭槽 z40，压住页内浮层（z30），开图时钮不被盖
-    assert.equal((src.match(/zIndex: 40/g) ?? []).length, 2, '翻页行与关闭槽须各一处 z40');
+    // 用户口径（三枚钮与书同层）：铜扣行 z40 压住页内浮层（z30），关闭槽 z41 再压住铜扣行
+    // （#1240 关闭钮被挡：同 z 时后画的 deck 透明盒吃掉关闭左侧点击，关闭必须高一层）。
+    // deck 盒本身点透、钮自己可点（父 none 子 auto），空区不再挡关闭。
+    assert.equal((src.match(/zIndex: 40/g) ?? []).length, 1, '铜扣行须一处 z40');
+    assert.ok(src.includes('zIndex: 41'), '关闭槽须一处 z41（压住铜扣行）');
+    assert.ok(/manualDeck: \{[\s\S]{0,600}?pointerEvents: 'none'/.test(src), '铜扣行空区须点透（pointerEvents none）');
+    assert.ok(/manualBrass: \{[\s\S]{0,600}?pointerEvents: 'auto'/.test(src), '铜钮自己须可点（pointerEvents auto）');
     // 开图时整组藏起（谁也不盖谁）：壳有开着的浮层就藏铜扣行与关闭槽，图一关就回来
     assert.ok(src.includes("'data-ilife-manual': 'deck'"), '铜扣行须带 deck 标记位');
     assert.ok(src.includes(':has(.pop.open)'), '开图藏钮须走 :has');

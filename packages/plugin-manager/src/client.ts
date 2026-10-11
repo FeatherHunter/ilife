@@ -167,7 +167,11 @@ const S = {
     backgroundRepeat: 'no-repeat,repeat,repeat',
   } as React.CSSProperties,
   manualTabLayer: { position: 'absolute', left: 0, right: 0, top: 0, height: 0, zIndex: 8, pointerEvents: 'none' } as React.CSSProperties,
-  /** 铜扣行：在**红框之外**的页面底色上居中（原型 `.deck` 是 `.scroll` 的兄弟节点），间距随纸宽。 */
+  /** 铜扣行：在**红框之外**的页面底色上居中（原型 `.deck` 是 `.scroll` 的兄弟节点），间距随纸宽。
+   *
+   * #1240 关闭钮被挡：deck 盒（满宽透明区）与关闭槽同处书下同一带、z 同为 40 且 deck 后画，
+   * 盒的空区会吃掉关闭钮左侧约 50px 的点击。盒本身点透、钮自己可点（父 none 子 auto），
+   * 空区不再挡关闭，铜扣仍可点。 */
   manualDeck: {
     display: 'flex',
     alignItems: 'center',
@@ -176,12 +180,14 @@ const S = {
     margin: '.5em auto 0',
     maxWidth: 'var(--paper-w)',
     position: 'relative',
+    pointerEvents: 'none',
   } as React.CSSProperties,
   manualBrass: {
     display: 'inline-flex',
     alignItems: 'center',
     gap: 'calc(var(--paper-w) * .005)',
     cursor: 'pointer',
+    pointerEvents: 'auto',
     border: '1px solid #2a140c',
     borderRadius: 'calc(var(--paper-w) * .0065)',
     padding: 'max(6px, calc(var(--paper-w) * .0065)) max(13px, calc(var(--paper-w) * .015))',
@@ -918,13 +924,15 @@ const MANUAL_ENTRY_BOTTOM = 16;
 /** 书框**右下角外侧**那枚关闭钮那一格（2026-10-10 用户口径：与「上一页／下一页」同一行、放在右侧，
  *  钮的右边与书框右边对齐）：`right:0` 贴住书框右边；`bottom:0` ＋ `translateY(100% + 8px)` 把它
  *  整枚挪到框的下方，正好落进翻页钮那一行的带子里。它挂在书壳（红框本体）里，所以左右永远跟书框
- *  对齐，与弹层框多大无关。zIndex 与铜扣行同取 40：三枚钮与书同层，页内浮层（z30）盖不住它们。 */
+ *  对齐，与弹层框多大无关。zIndex 与铜扣行同取 40：三枚钮与书同层，页内浮层（z30）盖不住它们。
+ *  #1240 窄屏真重叠：纸窄时铜扣会伸到关闭钮底下，同 z 时后画的 deck 压住关闭，关闭取 41 压回去
+ * （仍在悬停卡 z60 之下）。 */
 const MANUAL_CLOSE_SLOT: React.CSSProperties = {
   position: 'absolute',
   right: 0,
   bottom: 0,
   transform: 'translateY(calc(100% + 8px))',
-  zIndex: 40,
+  zIndex: 41,
 };
 
 /** 爱生活面板：总设置区 ＋ 检查更新（七家）＋ 爱生活页签条（slot 驱动）＋ 技能设置页投影/缺席卡。 */
