@@ -51,6 +51,8 @@ export interface ManualPopoverShellProps {
  * ⑥ 开书不再动行高，也不再有深色框：`manual-layer`（透明、满屏、最高层）只干两件事——
  *    吃掉书以外的点击（点书外即关）与把书摆在正中；`manual-popover` 就是书那一格，
  *    **没有底色、没有边框、没有圆角框、没有投影**（用户：「不要有黑色背景的框」）。
+ *    书那一格不设内滚动（`overflow:visible`）：滚轮落在书上时书不许自己上下滑动，
+ *    高度只认冻高（上限 80vh 由书自己兜）。
  *    z-index 取到 int 上限附近：用户实测面板里「保存／重置为默认／重新读取」那条底栏会盖在
  *    书上（用户：「多个按钮的层级超过了这个书籍的层级」），开书时必须压住它。
  */
@@ -66,7 +68,7 @@ export function manualEntryCss(): string {
     // 弹层是 <dialog>：能 showModal 的宿主会把它送进浏览器 top layer（那里 z-index 说了不算，
     // 谁也压不住）；::backdrop 是 UA 默认那层半黑，必须清掉（用户：「不要有黑色背景的框」）。
     '.manual-layer::backdrop{background:transparent}' +
-    '.manual-popover{position:relative;box-sizing:border-box;width:min(1000px,calc(100vw - 48px));max-height:min(88vh,900px);overflow:auto;color:#e8dcc2;font-family:system-ui,"Microsoft YaHei",sans-serif;--paper-w:min(760px,calc(100vw - 200px))}'
+    '.manual-popover{position:relative;box-sizing:border-box;width:min(1000px,calc(100vw - 48px));overflow:visible;color:#e8dcc2;font-family:system-ui,"Microsoft YaHei",sans-serif;--paper-w:min(760px,calc(100vw - 200px))}'
   );
 }
 
