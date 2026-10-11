@@ -273,6 +273,14 @@ T.push("    assert.ok(src.includes(slot), '源缺槽契约：' + slot);");
 T.push('  }');
 T.push('});');
 T.push('');
+T.push("test('#1274 关于页版本与快照接线：about_meta 在场主行技能版本＋小字模板与快照，缺席回落旧文案', () => {");
+T.push("  assert.ok(HELP_SHELL_SUFFIX.includes('ABOUT_META'), '壳须读 about_meta');");
+T.push("  assert.ok(HELP_SHELL_SUFFIX.includes('skill_package_version'), '壳须读技能包版本');");
+T.push("  assert.ok(HELP_SHELL_SUFFIX.includes('snapshot_at'), '壳须读快照时刻');");
+T.push("  assert.ok(HELP_SHELL_SUFFIX.includes('快照于'), '壳须有快照行文案');");
+T.push("  assert.ok(HELP_SHELL_SUFFIX.includes('HELP 模板 v4'), '无 about_meta 回落旧文案');");
+T.push('});');
+T.push('');
 const outTest = T.join('\n');
 
 if (CHECK) {

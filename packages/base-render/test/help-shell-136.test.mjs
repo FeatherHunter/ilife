@@ -22,15 +22,15 @@ const sha = (s) => createHash('sha256').update(s, 'utf8').digest('hex');
 const FIXTURE = {"skill_name":"卡路里","title":"唤醒词速查台","subtitle":"1 分类 · 1 场景 · 更新于 2026-09-06 22:07","contact":{"items":[{"label":"作者","value":"ilife"}]},"groups":[{"id":"g","icon":"x","label":"L","subgroups":[{"id":"s","label":"S","scenes":[{"id":"a","title":"T","wake_word":"w","status":"","prompt_template":"p","types":["结果"]}]}]}]};
 
 test('#136 ① 模板值 verbatim：前后缀哈希与搬家基线一致', () => {
-  assert.equal(sha(HELP_SHELL_PREFIX), '2efad45594fee1ca25698fe600d2daa8fabb07a5cc9c85d532541a42133f9190');
-  assert.equal(sha(HELP_SHELL_SUFFIX), '19509f03dcaead7be3b720d85478c62fe39a7316a0590038553fda2f2c21250b');
+  assert.equal(sha(HELP_SHELL_PREFIX), '2eeb31e7bb51cd3c33847f3d2869d32295fc6ae373a2604cd00a0df26acc411a');
+  assert.equal(sha(HELP_SHELL_SUFFIX), '121a50ca5c693b7652490967661951bdac119e83ba5156a6a27c060deff39c1f');
   assert.equal(HELP_SHELL_DATA_OPEN, '<script id="help-data" type="application/json">');
   assert.ok(HELP_SHELL_PREFIX.endsWith(HELP_SHELL_DATA_OPEN), 'PREFIX 须止于 help-data 开标签尾');
   assert.ok(HELP_SHELL_SUFFIX.startsWith('</script>'), 'SUFFIX 须起于 help-data 配对闭标签');
 });
 
 test('#136 ② 固定夹具渲染逐字节一致＋空分组抛 missing-data', () => {
-  assert.equal(sha(renderHelpShellHtml(FIXTURE)), '12ad491a307dc4a4170bfb1c036f2fff29095c6e0dc6eec3902de8feb6c77135');
+  assert.equal(sha(renderHelpShellHtml(FIXTURE)), 'bdbba86b04ed66124b320b038331327040306b9997ee1f54713d315ea03aae94');
   assert.equal(renderHelpShell, renderHelpShellHtml, '标准出口须为同一实现');
   assert.throws(() => renderHelpShellHtml({ ...FIXTURE, groups: [] }),
     (e) => e instanceof HelpShellError && e.code === 'missing-data');
@@ -62,4 +62,12 @@ test('#136 ④ 源可复现：assets 源切分即得前后缀（删生成物重�
   for (const slot of ['SLOT:1/INJECT-DATA', 'SLOT:2/SHARED-HELPERS', 'SLOT:3/SHARED-CSS', '__HELP_TITLE__']) {
     assert.ok(src.includes(slot), '源缺槽契约：' + slot);
   }
+});
+
+test('#1274 关于页版本与快照接线：about_meta 在场主行技能版本＋小字模板与快照，缺席回落旧文案', () => {
+  assert.ok(HELP_SHELL_SUFFIX.includes('ABOUT_META'), '壳须读 about_meta');
+  assert.ok(HELP_SHELL_SUFFIX.includes('skill_package_version'), '壳须读技能包版本');
+  assert.ok(HELP_SHELL_SUFFIX.includes('snapshot_at'), '壳须读快照时刻');
+  assert.ok(HELP_SHELL_SUFFIX.includes('快照于'), '壳须有快照行文案');
+  assert.ok(HELP_SHELL_SUFFIX.includes('HELP 模板 v4'), '无 about_meta 回落旧文案');
 });

@@ -10,9 +10,10 @@ export type { BillTemplate } from './templates.js';
 // 由消费方直接取新家，不再经本模块与包门转出（包门只许收窄）。
 export {
   HELP_FILE_STEM, HELP_FILE_SKILL_NAME, HELP_FILE_TITLE, HELP_FILE_VERSION, HELP_INIT_SCENE_ID, HELP_CONTACT,
-  formatHelpMinute, deriveSummaryLine, buildMetaBlocks, buildInitBanner, buildHelpFileData, renderHelpFileHtml,
+  HELP_SKILL_PACKAGE_VERSION, HELP_TEMPLATE_VERSION, HELP_SNAPSHOT_REUSE_HOURS,
+  formatHelpMinute, deriveSummaryLine, buildMetaBlocks, buildInitBanner, buildAboutMeta, buildHelpFileData, renderHelpFileHtml,
   buildHelpIndex,
 } from '../help/helpFile.js';
-export type { HelpContact, HelpContactItem, HelpMetaBlock, HelpInitBanner, HelpFileData, HelpFileOptions, HelpIndex, HelpIndexItem } from '../help/helpFile.js';
+export type { HelpContact, HelpContactItem, HelpMetaBlock, HelpInitBanner, HelpAboutMeta, HelpFileData, HelpFileOptions, HelpIndex, HelpIndexItem } from '../help/helpFile.js';
 /** #237：时间戳／通式／初候选已收进共用件 `base-paint/save-html`（本模块只剩本技能自己的落点值）。 */
 export { HELP_HTML_DIR_NAME, LOOKUP_FILE_STEM } from '../help/helpPaths.js';

@@ -31,6 +31,13 @@ export const HELP_FILE_SKILL_NAME = '饼干记账' as const;
 export const HELP_FILE_TITLE = '饼干记账 · 使用手册(HELP)' as const;
 /** 技能数据世代版本（老口径 `summary.version`，非 npm 包版本）。 */
 export const HELP_FILE_VERSION = '2.0' as const;
+/** 技能 npm 包版本镜像（`packages/skill-bill/package.json` 的 `version`；改版本时同步改。
+ *  关于页主行「饼干记账 v2.0」后面跟的就是它（条目 15）：模板硬写的「HELP 模板 v4」退居小字。 */
+export const HELP_SKILL_PACKAGE_VERSION = '0.3.54' as const;
+/** HELP 模板代际（`packages/base-render/assets/help-template.html` 的模板代际；改模板代际时同步改）。 */
+export const HELP_TEMPLATE_VERSION = 'v4' as const;
+/** 快照复用窗口（小时；镜像 `base-paint` 的 `HELP_REUSE_DEFAULT_HOURS = 24`，见 `saveHtml.ts:69`）。 */
+export const HELP_SNAPSHOT_REUSE_HOURS = 24 as const;
 /** 首次使用横幅的 prompt 取自该场景（老 `SETUP_INIT_SCENE_ID`）。 */
 export const HELP_INIT_SCENE_ID = 'setup_init_wizard' as const;
 
@@ -78,6 +85,17 @@ export interface HelpInitBanner {
   readonly hidden: boolean;
 }
 
+/** 关于页边界元信息（条目 10 快照时效 ＋ 条目 15 版本注入是同一组显示值，单概念单键）。
+ *  共享 help 模板运行时读它；缺席即回落旧渲染（其余 5 家技能不发它，行为不变）。
+ *  快照候选的注入本身归 #1270，本键只给「快照于何时、一天内有效」的边界说法。 */
+export interface HelpAboutMeta {
+  readonly skill_package_version: string;
+  readonly template_version: string;
+  readonly snapshot_at: string;
+  readonly reuse_hours: number;
+  readonly snapshot_note: string;
+}
+
 /** 老 5 键 ＋ 三块可选键（共享 help 模板运行时契约的超集）。 */
 export interface HelpFileData {
   readonly skill_name: typeof HELP_FILE_SKILL_NAME;
@@ -88,6 +106,7 @@ export interface HelpFileData {
   readonly meta_blocks: readonly HelpMetaBlock[];
   readonly version: typeof HELP_FILE_VERSION;
   readonly init_banner: HelpInitBanner;
+  readonly about_meta: HelpAboutMeta;
 }
 
 export interface HelpFileOptions {
@@ -138,6 +157,18 @@ export function buildInitBanner(initialized: boolean): HelpInitBanner {
   };
 }
 
+/** 关于页边界元信息：版本取上面两个常量，快照时刻取调用方传入的 `now`（与 subtitle 同源）。
+ *  纯函数（零 IO；`now` 非法即抛，口径同 `formatHelpMinute`）。 */
+export function buildAboutMeta(now: Date = new Date()): HelpAboutMeta {
+  return {
+    skill_package_version: HELP_SKILL_PACKAGE_VERSION,
+    template_version: HELP_TEMPLATE_VERSION,
+    snapshot_at: formatHelpMinute(now),
+    reuse_hours: HELP_SNAPSHOT_REUSE_HOURS,
+    snapshot_note: '一天前的标签都在',
+  };
+}
+
 /** 内容资产 ＋ 派生 → 全量 HELP JSON（纯函数；`now` 显式传入以保证可复现）。 */
 export function buildHelpFileData(now: Date = new Date(), opts: HelpFileOptions = {}): HelpFileData {
   if (WAKE_GROUPS.length === 0 || WAKE_ASSETS.length === 0) {
@@ -153,6 +184,7 @@ export function buildHelpFileData(now: Date = new Date(), opts: HelpFileOptions 
     meta_blocks: buildMetaBlocks(summaryLine),
     version: HELP_FILE_VERSION,
     init_banner: buildInitBanner(opts.initialized === true),
+    about_meta: buildAboutMeta(now),
   };
 }
 

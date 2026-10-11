@@ -140,7 +140,13 @@
   .sheet .s-close{position:absolute;top:16px;right:16px;width:30px;height:30px;border-radius:50%;border:0;background:var(--bg);color:var(--fg3);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center}
   .sheet .prompt-box{background:#1d1d1d;color:#f5f5f7;border-radius:12px;padding:11px 13px;white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:1.65;margin-top:9px;word-break:break-all}
   .sheet .pform{margin-top:9px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:9px 10px}
-  .sheet .pfield{display:flex;align-items:center;gap:7px;margin-bottom:7px}
+  .sheet .pfield{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-bottom:7px}
+  /* 条目 23：hint 行全量可读（可滚动承载长提示，不再只靠单行占位） */
+  .sheet .phint{flex:1 1 100%;margin:1px 0 2px 79px;font-size:11px;line-height:1.5;color:var(--fg3);word-break:break-all;max-height:4.6em;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  /* 条目 8：缺必填控件的醒目动画（抖动＋红框，0.4s，全站统一） */
+  .sheet .pfield .hm-missing{border-color:var(--red)!important;box-shadow:0 0 0 2px rgba(255,59,48,.18);animation:hmShake .4s ease}
+  @keyframes hmShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}50%{transform:translateX(4px)}75%{transform:translateX(-2px)}}
+  @media (prefers-reduced-motion:reduce){.sheet .pfield .hm-missing{animation:none}}
   .sheet .pfield:last-of-type{margin-bottom:0}
   .sheet .pfield label{font-size:12px;color:var(--fg2);font-weight:600;flex-shrink:0;min-width:72px}
   .sheet .pfield label em{color:var(--fg3);font-weight:400;font-size:9px}
@@ -1688,6 +1694,7 @@ var META_BLOCKS = HELP.meta_blocks || [];
 var INIT_BANNER = HELP.init_banner || null;
 var CONTACT = HELP.contact || null;
 var SKILL_VERSION = HELP.version || '';
+var ABOUT_META = HELP.about_meta || null;
 var ABOUT_EXTRA = {};
 var RECOMMENDATIONS = HELP.recommendations || [];
 
@@ -1914,8 +1921,10 @@ if (CONTACT && CONTACT.items && CONTACT.items.length) {
   }
   h += '</div></div>';
 }
-/* ② 版本（第二位）*/
-h += '<div class="about-sec"><div class="as-head"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;flex-shrink:0"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg> 版本</div><div class="as-body"><div class="about-row"><span class="a-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></span><div class="a-t"><b>' + esc(SKILL_NAME) + '</b><span>v' + esc(SKILL_VERSION) + ' · HELP 模板 v4</span></div></div></div></div>';
+/* ② 版本（第二位 · 条目 15：主行跟技能包版本，模板代际退居小字；无 about_meta 即回落旧文案）*/
+var verMain = 'v' + esc(SKILL_VERSION) + ((ABOUT_META && ABOUT_META.skill_package_version) ? ' · 技能 v' + esc(ABOUT_META.skill_package_version) : ' · HELP 模板 v4');
+var snapRow = (ABOUT_META && ABOUT_META.snapshot_at) ? '<div class="about-row"><div class="a-t"><span style="font-size:12px;color:#6e6e73">HELP 模板 ' + esc(ABOUT_META.template_version || 'v4') + ' · 快照于 ' + esc(ABOUT_META.snapshot_at) + (ABOUT_META.snapshot_note ? ' · ' + esc(ABOUT_META.snapshot_note) : '') + '</span></div></div>' : '';
+h += '<div class="about-sec"><div class="as-head"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;flex-shrink:0"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg> 版本</div><div class="as-body"><div class="about-row"><span class="a-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></span><div class="a-t"><b>' + esc(SKILL_NAME) + '</b><span>' + verMain + '</span></div></div>' + snapRow + '</div></div>';
 /* ③ 其他技能（第三位 · SVG 图标）*/
 if (RECOMMENDATIONS && RECOMMENDATIONS.length) {
   h += '<div class="about-sec"><div class="as-head"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;flex-shrink:0"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.4 1 2.3h6c0-.9.4-1.8 1-2.3A7 7 0 0 0 12 2z"/></svg> 其他技能</div><div class="as-body">';
@@ -2025,7 +2034,8 @@ function openSheet(s){
     form = '<div class="pform" data-pid="' + s.id + '">';
     s.params.forEach(function(p){
       form += '<div class="pfield"><label>' + esc(p.label) + (p.req ? '' : '<em>选填</em>') + '</label>' +
-        fieldControlHTML(p) + '</div>';
+        fieldControlHTML(p) +
+        (p.hint ? '<div class="phint" tabindex="0">' + esc(p.hint) + '</div>' : '') + '</div>';
     });
     form += '</div>';
   }
@@ -2164,13 +2174,45 @@ document.addEventListener('click', function(e){
   if (s && s.params && s.params.length) {
     var v = readParams(s.id);
     var miss = getMissing(s, v);
-    if (miss.length) { toastMsg(miss.join('、')); return; }
+    if (miss.length) {
+      if (b.closest('.sheet')) {
+        /* 详情页：依旧阻断 ＋ 缺的必填控件抖动红框（条目 8） */
+        flagMissing(s, v);
+        toastMsg(miss.join('、'));
+        return;
+      }
+      /* 场景页：允许复制 ＋ toast 列出缺项、提醒手动填写（条目 4） */
+      text = buildPrompt(s, v);
+      doCopy(text);
+      toast('已复制，还缺：' + miss.join('、'), '必填字段没有填写，需手动填写', {icon:'warn', badge:{text:'待补齐', type:'warn'}});
+      return;
+    }
     text = buildPrompt(s, v);
   }
   doCopy(text);
   showToast();
   /* B3: 复制后不自动关弹窗 */
 });
+/* 条目 8：给缺的必填控件挂醒目类（抖动＋红框 0.4s，全站统一 hmShake），填上或超时即摘 */
+function flagMissing(s, v){
+  var fm = document.querySelector('.pform[data-pid="' + s.id + '"]');
+  if (!fm) return;
+  (s.params || []).forEach(function(p){
+    if (!(p.req && !((v[p.key] || '').trim()))) return;
+    var inp = fm.querySelector('[data-p="' + p.key + '"]');
+    if (!inp) return;
+    inp.classList.remove('hm-missing');
+    void inp.offsetWidth;
+    inp.classList.add('hm-missing');
+    var clear = function(){ inp.classList.remove('hm-missing'); };
+    inp.addEventListener('input', clear, {once:true});
+    inp.addEventListener('change', clear, {once:true});
+  });
+  setTimeout(function(){
+    var olds = fm.querySelectorAll('.hm-missing');
+    for (var i = 0; i < olds.length; i++) olds[i].classList.remove('hm-missing');
+  }, 1200);
+}
 
 /* ===== 搜索（全局跨 Tab + 自动跳转 + 高亮）===== */
 var sB = document.getElementById('sB');
