@@ -92,9 +92,15 @@ export function manualContentCss(): string {
     '.pg .cappim svg{width:1em;height:1em;margin-left:.35em;vertical-align:-.15em}',
     '.pg .pop{display:inline}',
     '.pg .pop>.view,.pg .pop>.x{display:none}',
-    '.pg .pop.open>.view{display:block;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);max-width:94vw;max-height:88vh;overflow:hidden;background:#fffdf6;border:1px solid #c9a227;border-radius:.4em;box-shadow:0 22px 44px #00000066;z-index:30}',
-    '.pg .pop.open>.view>img{display:block;max-width:90vw;max-height:80vh}',
-    '.pg .pop.open>.view>.x{display:flex;position:absolute;top:.4em;right:.4em;width:2em;height:2em;align-items:center;justify-content:center;background:#2e2418ee;color:#f6efdd;border:1px solid #c9a227;border-radius:50%;font-size:1em;cursor:pointer}',
+    '.pg .pop.open>.view{display:block;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);max-width:94vw;max-height:88vh;overflow:visible;background:#fffdf6;border:1px solid #c9a227;border-radius:.4em;box-shadow:0 22px 44px #00000066;z-index:30}',
+    '.pg .pop.open>.view>img{display:block;max-width:90vw;max-height:80vh;border-radius:.35em}',
+    // #1240 问题四：× 从图内右上挪到图外右下（图内压着照片看不清；框外悬空 1em 不会被裁，
+    // overflow 顺势改 visible，图角收 .35em 仍不出框）。悬停／聚焦／按压三态与徽标同语言。
+    '.pg .pop.open>.view>.x{display:flex;position:absolute;bottom:-1em;right:-1em;width:2em;height:2em;align-items:center;justify-content:center;background:#2e2418ee;color:#f6efdd;border:1px solid #c9a227;border-radius:50%;font-size:1em;cursor:pointer;transition:transform .14s ease,filter .14s ease}',
+    '.pg .pop.open>.view>.x:hover{filter:brightness(1.3);transform:scale(1.12)}',
+    '.pg .pop.open>.view>.x:focus-visible{outline:2px solid #ffd97a;outline-offset:2px;filter:brightness(1.3)}',
+    '.pg .pop.open>.view>.x:active{transform:scale(.94)}',
+    '@media (prefers-reduced-motion:reduce){.pg .pop.open>.view>.x{transition:none}.pg .pop.open>.view>.x:hover,.pg .pop.open>.view>.x:active{transform:none}}',
     '.pg a.capp{text-decoration:none}',
     '.pg .cappim[data-pop-toggle],.pg a.capp{transition:transform .14s ease,filter .14s ease}',
     '.pg .cappim[data-pop-toggle]:hover,.pg a.capp:hover{transform:translateY(-1px);filter:brightness(1.12)}',

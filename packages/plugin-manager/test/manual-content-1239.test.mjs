@@ -219,6 +219,12 @@ describe('#1239 内容接线', () => {
     assert.ok(VIEW_SRC.includes('.pop.open>.view'), '浮层开合走 .open（委托切 class）');
     assert.ok(VIEW_SRC.includes('.pop.open>.view{') && VIEW_SRC.includes('position:fixed'), '浮层须破框居中（不受书容器裁剪）');
     assert.ok(VIEW_SRC.includes('.pop.open>.view>.x'), '× 须跟图走（挂在浮层框上）');
+    // #1240 问题四：× 在图外右下（图内压照片看不清），三态反馈齐，动效有关闭退路
+    assert.ok(VIEW_SRC.includes('bottom:-1em;right:-1em'), '× 须在图外右下');
+    assert.ok(!VIEW_SRC.includes('.view>.x{display:flex;position:absolute;top:'), '× 不许再压在图内右上');
+    assert.ok(VIEW_SRC.includes('.pop.open>.view>.x:hover') && VIEW_SRC.includes('.pop.open>.view>.x:active'), '× 须有悬停与按压反馈');
+    assert.ok(VIEW_SRC.includes('.pop.open>.view>.x:focus-visible'), '× 须有键盘聚焦可见态');
+    assert.ok(VIEW_SRC.includes('max-height:88vh;overflow:visible'), '浮层框须不裁外面的 ×');
     assert.ok(VIEW_SRC.includes('[data-pop-toggle]:hover'), '悬停也要呼吸（鼠标用户不用 Tab）');
     // 场景一两处复制徽标须各挂各的图（步骤 4 与步骤 5 不许共用一张）
     assert.equal((stepHtml.match(/DSH 饼干记账复制 prompt/g) ?? []).length, 2, '两处复制徽标须各就各位');
