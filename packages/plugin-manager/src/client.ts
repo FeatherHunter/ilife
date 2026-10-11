@@ -399,8 +399,11 @@ function manualTurnCss(): string {
     '@media (prefers-reduced-motion:reduce){.ilife-manual-leaf.to-left,.ilife-manual-leaf.to-right,.ilife-manual-leaf.to-left .face:after,.ilife-manual-leaf.to-right .face:after{animation:none}}',
     // 开图时藏钮：浮层一开，铜扣行与关闭钮整组消失（谁也不盖谁，不存在半遮半点不动）；
     // 图一关就回来。铜扣行是壳的后兄弟，关闭钮住在壳里，各走各的找法。
-    // 铜扣行的 display 写在行内样式里，藏它只能上 !important（壳里复评已有 !important 先例）。
-    '[data-ilife-manual="shell"]:has(.pop.open)~[data-ilife-manual="deck"]{display:none!important}',
+    // #1240 开图抖动：铜扣行原来用 display:none 藏，整行（含 .5em 上边距）从布局里抽掉，
+    // 弹层 flex 居中重算，书上下跳。改占位藏（visibility）：盒子留着、钮隐身且点不到，
+    // 书所在容器高度不动。visibility 没有行内对手，不用 !important；关闭槽是绝对定位
+    //（本来就不占布局），display 藏它不抖，保持不动。
+    '[data-ilife-manual="shell"]:has(.pop.open)~[data-ilife-manual="deck"]{visibility:hidden}',
     '[data-ilife-manual="shell"]:has(.pop.open) [data-ilife-manual="close-slot"]{display:none}',
   ].join('');
 }

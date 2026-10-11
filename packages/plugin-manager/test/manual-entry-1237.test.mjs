@@ -127,6 +127,8 @@ describe('#1237 使用手册入口与弹出空壳', () => {
     // 开图时整组藏起（谁也不盖谁）：壳有开着的浮层就藏铜扣行与关闭槽，图一关就回来
     assert.ok(src.includes("'data-ilife-manual': 'deck'"), '铜扣行须带 deck 标记位');
     assert.ok(src.includes(':has(.pop.open)'), '开图藏钮须走 :has');
+    // #1240 开图抖动：铜扣行须占位藏（visibility），不许 display:none（整行抽掉会让书上下跳）
+    assert.ok(src.includes('~[data-ilife-manual="deck"]{visibility:hidden}'), '铜扣行开图须占位藏（书不动）');
     // 用户口径（右下角常驻）：入口 sticky 吸附在面板右下角、住卡片末尾，不随列表滑走
     assert.ok(/position: 'sticky', bottom: MANUAL_ENTRY_BOTTOM/.test(src), '入口须 sticky 吸附在右下角');
     assert.ok(src.indexOf('MorePluginsCard') < src.indexOf("position: 'sticky'"), '入口块须住卡片末尾（置顶会被上面滑走）');
