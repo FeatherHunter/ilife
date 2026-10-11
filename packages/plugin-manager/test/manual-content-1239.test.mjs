@@ -232,6 +232,29 @@ describe('#1239 内容接线', () => {
     for (const w of WARNS) assert.ok(!body.includes(w), 'warn 不渲染：' + w);
   });
 
+  it('图片浮层关钮归位：每 view 内恰一枚 ×（无重复无遗漏），冻结原文不动', async () => {
+    const react = makeReact();
+    const { render } = await openBook(react);
+    const next = () => findAll(render(), (n) => n.props?.['data-ilife-manual'] === 'next')[0];
+    const pages = [render()];
+    next().props.onClick(); pages.push(render());
+    next().props.onClick(); pages.push(render());
+    const html = pages.map((t) => rawHtml(t).join(' ')).join(' ');
+    const views = html.match(/<span class="view">/g) ?? [];
+    assert.ok(views.length > 0, '正文须有图片浮层');
+    const xs = html.match(/data-pop-x/g) ?? [];
+    assert.equal(xs.length, views.length, '每 view 恰一枚 ×（多是重复、少是遗漏）：view ' + views.length + ' vs × ' + xs.length);
+    const inside = html.match(/<span class="view"><img[^>]*><span class="x" data-pop-x[^>]*>×<\/span><\/span>/g) ?? [];
+    assert.equal(inside.length, views.length, '× 须在自家 view 里图后（CSS 与键鼠委托只认这一巢，错位即永藏）');
+    // 冻结原文保持 × 在 view 外 —— 归位是渲染层的事；若日后重冻把 × 收进 view，withShotClose 即多余（本条会红，删它）。
+    // 注：直接拼步骤串（不经 JSON.stringify，避免转义干扰子串判定）。
+    const { SCENES } = await import('../dist/manual-content.js');
+    const rawSteps = SCENES.flatMap((s) => s.steps ?? []).join(' ');
+    assert.ok(rawSteps.includes('</span><span class="x"'), '冻结原文保持 × 在 view 外（归位归渲染层）');
+    const CLIENT_SRC = readFileSync(join(HERE, '..', 'src', 'client.ts'), 'utf8');
+    assert.ok(CLIENT_SRC.includes("const x = at('[data-pop-x]')"), '点 × 即收须走显式分支（不靠兜底穿透）');
+  });
+
   it('签点跳＋铜扣首尾禁用', async () => {
     const react = makeReact();
     const { tree, render } = await openBook(react);

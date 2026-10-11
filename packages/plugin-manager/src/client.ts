@@ -672,6 +672,13 @@ function ManualBookShell(props: {
       if (pop !== null && !wasOpen) pop.classList.add('open');
       return;
     }
+    // #1240 问题三：点 × 即收它那一枚（关钮由内容层随 view 配发，见 manual-content.ts 的 withShotClose）。
+    const x = at('[data-pop-x]');
+    if (x !== null) {
+      const pop = x.closest('.pop');
+      if (pop !== null) pop.classList.remove('open');
+      return;
+    }
     if (at('img') !== null) return;
     const open = host.querySelector('.pop.open');
     if (open !== null) open.classList.remove('open');

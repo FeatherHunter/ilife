@@ -165,6 +165,19 @@ function staticPanel(): React.ReactElement {
   );
 }
 
+/** 图片浮层关钮归位（#1240 问题三）：`.x` 在数据里是 `.view` 的后兄弟，
+ * 但 CSS（`.pop.open>.view>.x`）与键盘委托都只认 view 里面的那枚 —— 错位导致它永远 hidden，
+ * 用户看到的就是“打开的图片没有关闭按钮”。SCENES 是冻结原文，一个字不动 ——
+ * 渲染时把这枚现成的 × 挪进它自家的 view（不增不减，每 view 恰一枚；内容 parity 照旧比原文）。
+ * 鼠标走 client.ts 的 `[data-pop-x]` 分支，键盘走既有分支；平时藏、开图才显，走同一条 CSS。 */
+function withShotClose(step: string): string {
+  if (step.indexOf('<span class="view">') < 0) return step;
+  return step.replace(
+    /<span class="view">(<img[^>]*>)<\/span>(<span class="x"[^>]*>×<\/span>)/g,
+    '<span class="view">$1$2</span>',
+  );
+}
+
 /** 一页正文（组合逐字取原型：目录／步骤链／静态面板／片段／备注／合页）。
  * frag 为空不渲染按钮（#1242 纠偏）；warn 不渲染（仅备注留）。 */
 export function renderManualPage(
@@ -250,8 +263,8 @@ export function renderManualPage(
         'li',
         { key: 'st' + i },
         React.createElement('span', { className: 'n' }, String(i + 1)),
-        // 步骤串即冻结原文（含签徽内联），可信源，不拼用户输入。
-        React.createElement('span', { dangerouslySetInnerHTML: { __html: step } }),
+        // 步骤串即冻结原文（含签徽内联），可信源，不拼用户输入；图片浮层关钮渲染时配（见 withShotClose）。
+        React.createElement('span', { dangerouslySetInnerHTML: { __html: withShotClose(step) } }),
       )),
     ),
     scene.panelStatic === true ? staticPanel() : null,
