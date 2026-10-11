@@ -101,10 +101,45 @@ export const SETUP_DECLARATION: DomainDeclaration = {
         },
       ],
     },
+    {
+      phrase: '查看当前配置',
+      key: 'bill.setup.run',
+      preset: { op: 'config-read' },
+      scenes: [
+        {
+          id: 'setup_config_read',
+          title: '查看当前配置',
+          status: '',
+          prompt_template: '请你加载技能 饼干记账,执行唤醒词「查看当前配置」。\n\n我想看看饼干记账的当前配置（数据目录／库文件／备份／产物目录，路径已脱敏）。',
+          types: ['查看'],
+        },
+      ],
+    },
+    {
+      phrase: '设置当前配置',
+      key: 'bill.setup.run',
+      preset: { op: 'config-write' },
+      scenes: [
+        {
+          id: 'setup_config_write',
+          title: '设置当前配置',
+          status: '',
+          prompt_template: '请你加载技能 饼干记账,执行唤醒词「设置当前配置」。\n\n我要改饼干记账的当前配置。改哪格填哪格，不填的不改。\n\n数据目录(选填):{{db_dir}}\n库文件名(选填):{{db_name}}\n备份目录(选填):{{backup_dir}}\n产物目录名(选填):{{html_dir}}',
+          types: ['向导'],
+          editable_fields: [
+            { name: 'db_dir', label: '数据目录(选填)', value: '', hint: '如 D:/记账库，空＝不改', required: false, kind: 'text' },
+            { name: 'db_name', label: '库文件名(选填)', value: '', hint: '如 biscuit_accountant.db，空＝不改', required: false, kind: 'text' },
+            { name: 'backup_dir', label: '备份目录(选填)', value: '', hint: '空＝不改', required: false, kind: 'text' },
+            { name: 'html_dir', label: '产物目录名(选填)', value: '', hint: '空＝不改', required: false, kind: 'text' },
+          ],
+        },
+      ],
+    },
   ],
   subgroups: [
     { id: 'setup_1', label: '初始化', scenes: ['setup_init_wizard', 'setup_init_status'] },
     { id: 'setup_2', label: '备份恢复', scenes: ['setup_backup_create', 'setup_backup_list', 'setup_restore'] },
     { id: 'setup_3', label: '导入', scenes: ['setup_import'] },
+    { id: 'setup_4', label: '当前配置', scenes: ['setup_config_read', 'setup_config_write'] },
   ],
 };

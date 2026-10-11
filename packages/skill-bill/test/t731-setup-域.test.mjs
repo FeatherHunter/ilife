@@ -37,22 +37,22 @@ function legacyDb(dir) {
   return p;
 }
 
-describe('t731 · 场景件与域声明逐条对上（6 场景／3 片页型）', () => {
-  it('六件场景件、六个 sceneId、op 唯一，且与域声明的场景逐条同集', () => {
-    assert.equal(scene.SETUP_SCENES.length, 6, '六条场景各一件');
-    assert.equal(new Set(scene.SETUP_SCENES.map((s) => s.op)).size, 6, 'op 不许重复');
-    assert.equal(new Set(scene.SETUP_SCENES.map((s) => s.id)).size, 6, '件名不许重复');
+describe('t731 · 场景件与域声明逐条对上（8 场景／3 片页型）', () => {
+  it('八件场景件、八个 sceneId、op 唯一，且与域声明的场景逐条同集', () => {
+    assert.equal(scene.SETUP_SCENES.length, 8, '八条场景各一件');
+    assert.equal(new Set(scene.SETUP_SCENES.map((s) => s.op)).size, 8, 'op 不许重复');
+    assert.equal(new Set(scene.SETUP_SCENES.map((s) => s.id)).size, 8, '件名不许重复');
     const declared = decl.SETUP_DECLARATION.entries.flatMap((e) => e.scenes.map((s) => s.id)).sort();
     const mounted = scene.SETUP_SCENES.map((s) => s.sceneId).sort();
     assert.deepEqual(mounted, declared, '场景件的 sceneId 与域声明里的场景不是同一集');
   });
-  it('三片页型的分片＝3／1／2（向导／结果回执／记录列表）', () => {
+  it('三片页型的分片＝4／1／3（向导／结果回执／记录列表）', () => {
     const byPage = { wizard: 0, receipt: 0, list: 0 };
     for (const s of scene.SETUP_SCENES) byPage[s.page] += 1;
-    assert.deepEqual(byPage, { wizard: 3, receipt: 1, list: 2 });
+    assert.deepEqual(byPage, { wizard: 4, receipt: 1, list: 3 });
     for (const s of scene.SETUP_SCENES) {
       assert.equal(params.PAGE_OF_OP[s.op], s.page, s.op + ' 的页型两处不一致');
-      assert.equal(s.key, 'bill.setup.run', '六件同一条命令');
+      assert.equal(s.key, 'bill.setup.run', '八件同一条命令');
     }
   });
   it('「备份」一词两支各出一件（一词两场景）', () => {
@@ -281,7 +281,7 @@ describe('t731 · 缺项阻断与两枚域内件（裁定 9／步骤条两件）
     assert.deepEqual(params.setupBlocked('restore', {}), []);
     assert.deepEqual(params.setupBlocked('backup-list', {}), []);
   });
-  it('六个 op 的槽位表：只有导入有一个必填格', () => {
+  it('八个 op 的槽位表：只有导入有一个必填格', () => {
     for (const op of params.SETUP_OPS) {
       const required = params.SETUP_SLOTS[op].filter((s) => s.required).map((s) => s.name);
       assert.deepEqual(required, op === 'import' ? ['file'] : [], op + ' 的必填格不对');

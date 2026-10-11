@@ -17,16 +17,16 @@
 import { isGiven, numberOf, textOf } from '../shared/params.js';
 import { BillPolicyError } from '../fetch/errors.js';
 
-/** 六种 op（顺序＝域声明里那五条词的书写顺序，`备份` 一词两支）。 */
-export type SetupOp = 'init' | 'init-status' | 'backup-create' | 'backup-list' | 'restore' | 'import';
+/** 八种 op（顺序＝域声明里那七条词的书写顺序，`备份` 一词两支；1276 起加查看／设置当前配置两支）。 */
+export type SetupOp = 'init' | 'init-status' | 'backup-create' | 'backup-list' | 'restore' | 'import' | 'config-read' | 'config-write';
 
-/** 六种 op 的取值面（`parseSetupOp` 认的就是它；导出给测试与页面共用一处）。 */
-export const SETUP_OPS: readonly SetupOp[] = ['init', 'init-status', 'backup-create', 'backup-list', 'restore', 'import'];
+/** 八种 op 的取值面（`parseSetupOp` 认的就是它；导出给测试与页面共用一处）。 */
+export const SETUP_OPS: readonly SetupOp[] = ['init', 'init-status', 'backup-create', 'backup-list', 'restore', 'import', 'config-read', 'config-write'];
 
 /** 三种页型（`t685-按域页型表.md` §2.7 那三行）。 */
 export type SetupPage = 'wizard' | 'receipt' | 'list';
 
-/** op → 页型（**唯一定义地**：三片页型盖住六个场景的那张对照表）。 */
+/** op → 页型（**唯一定义地**：三片页型盖住八个场景的那张对照表）。 */
 export const PAGE_OF_OP: Readonly<Record<SetupOp, SetupPage>> = {
   init: 'wizard',
   'init-status': 'list',
@@ -34,6 +34,8 @@ export const PAGE_OF_OP: Readonly<Record<SetupOp, SetupPage>> = {
   'backup-list': 'list',
   restore: 'wizard',
   import: 'wizard',
+  'config-read': 'list',
+  'config-write': 'wizard',
 };
 
 /** `op` 的读法：不给＝**初始化状态**（老侧出口 `cmd_read.ts` 的老分支同一缺省）；认不得即抛，不猜。 */
@@ -63,8 +65,9 @@ function slot(name: string, label: string, hint: string, required: boolean): Set
   return { name, label, hint, required };
 }
 
-/** 六个 op 的槽位表（**唯一定义地**）：字段卡照它出，缺项探针照它算。
- *  四条 op（初始化／初始化状态／一键备份／查看备份）是**零决策**的：老侧这四张页都不收参数。 */
+/** 八个 op 的槽位表（**唯一定义地**）：字段卡照它出，缺项探针照它算。
+ *  五条 op（初始化／初始化状态／一键备份／查看备份／查看当前配置）是**零决策**的：都不收参数。
+ *  设置当前配置四格全选填（空＝预览页，不落盘；给了＋`confirm:true` 才落盘）。 */
 export const SETUP_SLOTS: Readonly<Record<SetupOp, readonly SetupSlot[]>> = {
   init: [],
   'init-status': [],
@@ -76,6 +79,13 @@ export const SETUP_SLOTS: Readonly<Record<SetupOp, readonly SetupSlot[]>> = {
   import: [
     slot('file', 'CSV 文件路径', '要导入的 CSV 文件，如 D:\\账单导出.csv', true),
     slot('mapping', '列映射', '选填，不写就按表头自动认；要写就写「日期=第1列,金额=第3列」这样', false),
+  ],
+  'config-read': [],
+  'config-write': [
+    slot('db_dir', '数据目录', '选填；如 D:/记账库，空＝不改这一格', false),
+    slot('db_name', '库文件名', '选填；如 biscuit_accountant.db，空＝不改', false),
+    slot('backup_dir', '备份目录', '选填；空＝不改这一格', false),
+    slot('html_dir', '产物目录名', '选填；空＝不改这一格', false),
   ],
 };
 
@@ -103,7 +113,7 @@ export function importFileOf(params: Record<string, unknown>): string {
  *
  *  这里只判**参数面**：那一份备份在不在、那个 CSV 在不在，由调用方（`./run.js`）查完再并进来
  *  ——「文件在不在」是文件系统的事实，本件不碰文件。
- *  四条零决策 op 恒空表（老侧这四张页都不收参数，也就没有缺项可言）。 */
+ *  五条零决策 op 恒空表（这五张页都不收参数，也就没有缺项可言）。 */
 export function setupBlocked(op: SetupOp, params: Record<string, unknown>): readonly SetupBlocked[] {
   const out: SetupBlocked[] = [];
   for (const s of SETUP_SLOTS[op]) {
