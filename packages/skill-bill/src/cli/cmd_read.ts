@@ -3,7 +3,6 @@
 // 退出码对齐 skilllink 冻结：0 ok；1 预检；2 用法/参数；3 key；4 取数/超时；5 envelope/渲染/落盘。
 // stdout 纯净：成功只打 envelope JSON 一行。写走 receipt（直通即真相）。
 import { fail } from './fail.js';
-import { existsSync } from 'node:fs';
 import {
   BillFetchError, BillPolicyError,
   resolveDbPath, resolveGoalsPath, openBillDb, closeBillDb,
@@ -16,7 +15,7 @@ import {
 // #691 起 `../account/` 的四个名字也从本文件消失：账户域两条命令搬进能力目录，
 // 出口只查注册表（`runRegistered`）再调命令声明里的 `run`；本域的门只转出命令声明一件。
 // #731 起开始使用域同理：`bill.setup.run` 的六种 op（含备份目录与 CSV 那两摊）搬进 `src/setup/`，
-// 本文件不再 import `../fetch/paths.js` 的备份两件、也不再用 fs 的读／写／拷三件（`existsSync` 仍用于 HELP 判定）。
+// 本文件不再 import `../fetch/paths.js` 的备份两件、也不再用 fs 的读／写／拷三件（HELP 的现场读取已搬进 `../help/helpSources.js`）。
 // #730 起目标域同理：两条命令（`bill.goal.write`／`query`）搬进 `src/goal/`，本文件不再 import `../goal/`——
 // 一个域里读写两类命令同域时，域门也只转出命令声明一件（结论写在 `src/goal/index.ts` 的门注释里）。
 import { monthRange, resolveRange } from '../shared/dateRange.js';
@@ -33,7 +32,9 @@ import { resolveHtmlDir } from '../fetch/paths.js';
 import type { HtmlDelivery, HtmlLanding } from '../output.js';
 import { landHtml } from '../delivery/landing.js';
 import { helpReuseWindowOf } from 'base-paint/save-html';
-import { buildHelpLookup, buildHelpItems, renderLookupPageHtml } from '../help/index.js';
+import {
+  buildHelpLookup, buildHelpItems, readHelpSources, renderLookupPageHtml,
+} from '../help/index.js';
 import { REGISTRY } from './registry.js';
 // #677 · 设置页的三个配置 key 由本文件在**预检与分派层之前**拦下（见下行 main 里那一处拦截与 cli/config.ts 的件头）。
 import { isConfigKey, runConfigKey } from './config.js';
@@ -101,12 +102,6 @@ function windowForHelpDelivery(stem: string, params: Record<string, unknown>): n
   return windowOf(params);
 }
 
-/** 初始化状态：DB **文件存在**＝已初始化（照老 `render_help._is_initialized`）；
- *  判定本身异常 ⇒ `false`＝横幅照显（fail-open，理由见 render/helpFile.ts 头注释）。 */
-function helpInitialized(): boolean {
-  try { return existsSync(resolveDbPath()); } catch { return false; }
-}
-
 function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
   const now = new Date();
   const mode = params.mode === undefined ? undefined : String(params.mode);
@@ -129,7 +124,7 @@ function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
       },
     };
   }
-  const html = renderHelpFileHtml(buildHelpFileData(now, { initialized: helpInitialized() }));
+  const html = renderHelpFileHtml(buildHelpFileData(now, readHelpSources()));
   const stem = HELP_FILE_STEM;
   return {
     data: { ...buildHelpIndex(), mode: 'file', bytes: Buffer.byteLength(html, 'utf8') },

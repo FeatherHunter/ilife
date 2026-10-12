@@ -31,6 +31,11 @@ export interface SceneTypeBadge {
  *  缺 `kind` 视为 `text`。`time` 值形态 `HH:MM`（00:00–23:59；24:00 由调用方先归一到 23:59，本层不收）。 */
 export type SceneFieldKind = 'text' | 'number' | 'select' | 'date' | 'week' | 'month' | 'year' | 'time';
 
+/** 候选来源闭集（#1270 定案；条目 10：「查标签」详情页要从**已有标签**里选）。
+ *  语义：声明只写**来源名**，值由**生成期**填进 `options`；生成期读不到就退回自由文本（`kind` 保持 `text`）。
+ *  这一格回答「候选从哪儿来」，与 `options`（写死的候选）互斥：两者同时在场时以写死的 `options` 为准。 */
+export type SceneFieldSource = 'tags';
+
 export interface SceneEditableField {
   readonly name: string;
   readonly label: string;
@@ -38,6 +43,7 @@ export interface SceneEditableField {
   readonly hint?: string;
   readonly required?: boolean;
   readonly kind?: SceneFieldKind;
+  readonly source?: SceneFieldSource;
   readonly options?: readonly (string | { readonly value: string; readonly label: string })[];
   readonly min?: string | number;
   readonly max?: string | number;
@@ -202,6 +208,7 @@ export const SCENE_DATA_SCHEMA = Object.freeze({
                             hint: { type: 'string' },
                             required: { type: 'boolean' },
                             kind: { enum: ['text', 'number', 'select', 'date', 'week', 'month', 'year', 'time'] },
+                            source: { enum: ['tags'] },
                             options: {
                               type: 'array',
                               items: {

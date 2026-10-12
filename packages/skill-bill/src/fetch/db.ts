@@ -176,6 +176,25 @@ export function listByTag(h: BillDb, tag: string): BillRow[] {
   return fetchAll(h).filter((r) => tagMatch(r.note, tag.trim()));
 }
 
+/** 从备注里切出全部 `#词`（分隔符与 `tagMatch` 同一套；同一行里重复的词只出一次，保序）。
+ *  #1270：生成期取「真标签」词表用（`help/tagCandidates.ts`），与匹配口径同源，
+ *  故 `tagsInNote(note)` 里每个词都必然 `tagMatch(note, 词) === true`（有测试钉住）。 */
+export function tagsInNote(note: string): string[] {
+  const text = typeof note === 'string' ? note : '';
+  const hash = String.fromCharCode(35);
+  const out: string[] = [];
+  const seen = new Set<string>();
+  let at = text.indexOf(hash);
+  while (at >= 0) {
+    let j = at + 1;
+    let word = '';
+    while (j < text.length && !isSep(text.charAt(j))) { word += text.charAt(j); j += 1; }
+    if (word !== '' && !seen.has(word)) { seen.add(word); out.push(word); }
+    at = text.indexOf(hash, at + 1);
+  }
+  return out;
+}
+
 // 写入：7 字段直写；返回行由读回确认；失败 throw 不谎报回执。
 export function addBill(h: BillDb, input: { category: string; amount: number; time: string; account: string; ledger: string; currency: string; note: string }): BillRow {
   try {

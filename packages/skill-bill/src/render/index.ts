@@ -15,5 +15,7 @@ export {
   buildHelpIndex,
 } from '../help/helpFile.js';
 export type { HelpContact, HelpContactItem, HelpMetaBlock, HelpInitBanner, HelpFileData, HelpFileOptions, HelpIndex, HelpIndexItem } from '../help/helpFile.js';
+// #1270（条目 10）：生成期候选——库里的真标签词表，供 HELP 里「查标签」这类槽位做预置候选。
+export { TAG_CANDIDATE_LIMIT, rankTagCandidates, readTagCandidates } from '../help/tagCandidates.js';
 /** #237：时间戳／通式／初候选已收进共用件 `base-paint/save-html`（本模块只剩本技能自己的落点值）。 */
 export { HELP_HTML_DIR_NAME, LOOKUP_FILE_STEM } from '../help/helpPaths.js';

@@ -241,7 +241,7 @@ export const QUERY_DECLARATION: DomainDeclaration = {
           prompt_template: '请你加载技能 饼干记账,执行唤醒词「查标签」。\n\n我想按标签聚合查账。\n\n标签:{{tag}}',
           types: ['查看'],
           editable_fields: [
-            { name: 'tag', label: '标签', value: '', hint: '如 #旅行、#待报销', required: true, kind: 'text' },
+            { name: 'tag', label: '标签', value: '', hint: '如 #旅行、#待报销', required: true, kind: 'text', source: 'tags' },
           ],
         },
       ],
