@@ -139,14 +139,52 @@
   .sheet .s-title{font-size:17px;font-weight:700;flex-basis:100%;line-height:1.3}
   .sheet .s-close{position:absolute;top:16px;right:16px;width:30px;height:30px;border-radius:50%;border:0;background:var(--bg);color:var(--fg3);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center}
   .sheet .prompt-box{background:#1d1d1d;color:#f5f5f7;border-radius:12px;padding:11px 13px;white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:1.65;margin-top:9px;word-break:break-all}
-  .sheet .pform{margin-top:9px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:9px 10px}
-  .sheet .pfield{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-bottom:7px}
-  /* 条目 23：hint 行全量可读（可滚动承载长提示，不再只靠单行占位） */
-  .sheet .phint{flex:1 1 100%;margin:1px 0 2px 79px;font-size:11px;line-height:1.5;color:var(--fg3);word-break:break-all;max-height:4.6em;overflow-y:auto;-webkit-overflow-scrolling:touch}
-  /* 条目 8：缺必填控件的醒目动画（抖动＋红框，0.4s，全站统一） */
+  .sheet .pform{margin-top:9px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 10px}
+  .sheet .pfield{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-bottom:10px}
+  /* 条目 23（用户 2026-10-12 定稿 · C 方案）：长提示不再占一整行——
+     文本框内单行承载（超出截断＋右侧渐隐），框右侧 ⓘ 点开轻量 popover 看全文；
+     date／select 天生不渲染框内文字，提示落到框下一行（同样单行截断）＋「看全文」。 */
+  .sheet .inwrap{position:relative;flex:1;min-width:0;display:flex}
+  .sheet .inwrap input,.sheet .inwrap select{flex:1;min-width:0;padding-right:34px}
+  .sheet .phline{position:absolute;left:11px;right:34px;top:50%;transform:translateY(-50%);font-size:16px;color:#8e8e93;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;-webkit-mask-image:linear-gradient(90deg,#000 78%,transparent 100%);mask-image:linear-gradient(90deg,#000 78%,transparent 100%)}
+  .sheet .optfold .phline{color:#b0b0b8}
+  .sheet .pfield.filled .phline{display:none}
+  .sheet .phline2{flex:1 1 100%;min-width:0;margin:0 0 2px 79px;display:flex;align-items:center;gap:5px;font-size:11.5px;color:#8e8e93}
+  .sheet .phline2 .ph2-t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;-webkit-mask-image:linear-gradient(90deg,#000 86%,transparent 100%);mask-image:linear-gradient(90deg,#000 86%,transparent 100%)}
+  .sheet .optfold .phline2{color:#b0b0b8}
+  .sheet .ib{position:absolute;right:2px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:50%;border:0;background:#eef0f4;color:var(--blue);font:700 13px/1 -apple-system,"Microsoft YaHei",sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+  .sheet .ib:active{transform:translateY(-50%) scale(.94);background:#dde2ea}
+  .sheet .ib.on{background:var(--blue);color:#fff}
+  .sheet .ib2{display:inline-block;margin-left:6px;border:0;background:none;color:var(--blue);font:700 11.5px/1 -apple-system,"Microsoft YaHei",sans-serif;cursor:pointer;padding:0;flex-shrink:0}
+  .sheet .ib2.on{text-decoration:underline}
+  /* 轻量 popover：贴图标弹出的小气泡（不是整幅面板） */
+  #pop{position:fixed;z-index:99998;max-width:252px;background:#fff;color:var(--fg);border:1px solid #e3e3e8;border-radius:11px;padding:9px 11px;font:400 12.5px/1.55 -apple-system,"Microsoft YaHei",sans-serif;box-shadow:0 8px 26px rgba(0,0,0,.16);display:none}
+  #pop.show{display:block;animation:popIn .14s ease-out both}
+  #pop.below.show{animation-name:popInDown}
+  #pop b{display:block;font-size:10.5px;font-weight:600;color:#86868b;margin-bottom:3px}
+  #pop span{display:block;color:var(--fg2);word-break:break-word}
+  /* 小尾巴用真元素（`#642` 守卫把 `::after` 全量当命中区审计，装饰层不进那张表）*/
+  #pop .tail{position:absolute;left:calc(var(--pop-tail,16px) - 4.5px);bottom:-5px;width:9px;height:9px;background:#fff;border-right:1px solid #e3e3e8;border-bottom:1px solid #e3e3e8;transform:rotate(45deg)}
+  #pop.below .tail{bottom:auto;top:-5px;border-right:none;border-bottom:none;border-left:1px solid #e3e3e8;border-top:1px solid #e3e3e8}
+  @keyframes popIn{from{opacity:0;transform:translateY(4px) scale(.98)}to{opacity:1;transform:none}}
+  @keyframes popInDown{from{opacity:0;transform:translateY(-4px) scale(.98)}to{opacity:1;transform:none}}
+  /* 条目 8（用户定稿）：必填＝左侧红竖条＋红徽标；选填整段折进一行，默认收起 */
+  .sheet .pfield.req{border-left:3px solid var(--red);padding-left:7px;margin-left:-10px}
+  .sheet .pfield label em.req{color:#c0392b;background:#ffe8e6;border-radius:4px;padding:1px 4px;font-weight:700;font-size:9px}
+  .sheet .optfold{margin:12px 0 10px;background:#f7f7f9;border:1px solid #e8e8ee;border-radius:10px;padding:6px 10px}
+  .sheet .optfold>summary.fold{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;margin:0 -4px;padding:0 4px;border-radius:8px;cursor:pointer;font:600 12.5px/1.4 -apple-system,"Microsoft YaHei",sans-serif;color:var(--fg2);list-style:none;-webkit-tap-highlight-color:transparent}
+  .sheet .optfold>summary.fold::-webkit-details-marker{display:none}
+  .sheet .optfold>summary.fold:active{background:#ececf1}
+  .sheet .optfold .chev{display:block;width:26px;height:26px;flex-shrink:0;border-radius:50%;background:#eef0f4;border:0;color:var(--fg2);transition:transform .22s cubic-bezier(.32,.72,.24,1),background .2s,color .2s}
+  .sheet .optfold>summary.fold:active .chev{background:#dfe3ea;color:var(--fg)}
+  .sheet .optfold[open] summary.fold .chev{transform:rotate(180deg)}
+  .sheet .optfold .pfield:first-of-type{margin-top:8px}
+  .sheet .optfold[open] .pfield{animation:rise .22s ease-out both}
+  @keyframes rise{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  /* 条目 8：缺必填时抖红框（幅度 4px→3px，用户 2026-10-12 反馈"幅度太大"）*/
   .sheet .pfield .hm-missing{border-color:var(--red)!important;box-shadow:0 0 0 2px rgba(255,59,48,.18);animation:hmShake .4s ease}
-  @keyframes hmShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}50%{transform:translateX(4px)}75%{transform:translateX(-2px)}}
-  @media (prefers-reduced-motion:reduce){.sheet .pfield .hm-missing{animation:none}}
+  @keyframes hmShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}50%{transform:translateX(3px)}75%{transform:translateX(-2px)}}
+  @media (prefers-reduced-motion:reduce){.sheet .pfield .hm-missing{animation:none}.sheet .optfold[open] .pfield{animation:none}}
   .sheet .pfield:last-of-type{margin-bottom:0}
   .sheet .pfield label{font-size:12px;color:var(--fg2);font-weight:600;flex-shrink:0;min-width:72px}
   .sheet .pfield label em{color:var(--fg3);font-weight:400;font-size:9px}
@@ -154,9 +192,23 @@
   .sheet .pfield input:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(0,122,255,.12)}
   .sheet .pfield select{flex:1;min-width:0;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:16px;background:#fff;outline:none;font-family:inherit;color:var(--fg)}
   .sheet .pfield select:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(0,122,255,.12)}
-  /* 未填时：灰淡背景 + 提示文字（placeholder 由技能方提供）*/
-  .sheet .pfield input:placeholder-shown{background:#f2f2f4;border-color:#e0e0e4;color:#8e8e93}
+  /* 空着时不再灰底灰字（条目 8：必填看着像禁用态就是这儿来的）；必填与选填的框同一套，
+     差别只走左侧红竖条／红徽标与提示字深浅（用户 2026-10-12 定稿）*/
+  .sheet .pfield input:placeholder-shown{background:#fff;border-color:#e6e6eb;color:var(--fg)}
   .sheet .pfield input:placeholder-shown:focus{background:#fff;border-color:var(--blue)}
+  .sheet .pfield ::placeholder{color:#8e8e93;opacity:1}
+  /* 交互动效层（用户 2026-10-12 要求：每条都对着一个具体判断成本，不为动而动）*/
+  .sheet .pfield input,.sheet .pfield select{transition:border-color .16s ease,box-shadow .16s ease,background-color .16s ease}
+  .sheet button{transition:transform .12s ease,background-color .14s ease,color .14s ease,box-shadow .14s ease,filter .14s ease}
+  .sheet button:active{transform:scale(.97)}
+  @media (hover:hover) and (pointer:fine){.sheet .ib:hover{background:#e2e6ee}.sheet .optfold>summary.fold:hover{background:#f0f0f3}}
+  /* toast 贴底 24px 会盖住复制按钮（实测）⇒ 弹层开着时抬到按钮上方 */
+  html.sheet-open .hm-toast-stack{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+  /* 复制成功：反馈落在按钮本身（离手最近），toast 只补充细节 */
+  .copy-btn.ok{background:#1f8c3d!important;box-shadow:0 0 0 3px rgba(31,140,61,.18)}
+  /* 缺项：滚到第一个缺项居中＋轻弹 */
+  .sheet .pfield.nudge{animation:nudge .5s cubic-bezier(.36,.07,.19,.97)}
+  @keyframes nudge{0%{transform:translateX(0)}18%{transform:translateX(-3px)}38%{transform:translateX(3px)}58%{transform:translateX(-2px)}78%{transform:translateX(2px)}100%{transform:translateX(0)}}
   .sheet .pprev{margin-top:9px;background:#1d1d1d;color:#f5f5f7;border-radius:12px;padding:11px 13px;font-size:12px;line-height:1.65;word-break:break-all;white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
   .sheet .pprev .pv-label{font-size:9px;color:#8e8e93;display:block;letter-spacing:.05em;margin-bottom:4px}
   /* 预览折叠钮：分隔线托雪佛龙，零文案；无参页不渲染折叠钮（#970 用户验收） */
@@ -210,6 +262,7 @@
   </div>
 
   <div class="toast" id="toast" style="display:none"></div>
+  <div id="pop" role="tooltip"></div>
 </div>
 
 <!-- 公共组件注入管线 -->
@@ -2031,12 +2084,37 @@ function openSheet(s){
   var form = '';
   var hasParams = s.params && s.params.length;
   if (hasParams) {
+    /* 条目 8/23（用户 2026-10-12 定稿 · C 方案）：必填在前（红竖条＋红徽标），
+       选填整段折进一行；长提示改由框内单行承载＋ⓘ 轻量 popover 看全文 */
+    var fieldHTML = function(p){
+      var hint = p.hint ? String(p.hint) : '';
+      var lab = String(p.label == null ? '' : p.label);
+      /* 选填段的「(选填)」由组头交代，label 里不再重复（声明里 71 条自带该后缀）*/
+      if (!p.req) lab = lab.replace(/[（(]\s*选填\s*[)）]\s*$/, '');
+      var native = /^(select|date|week|month|time)$/.test(fieldKindOf(p));
+      var head = '<div class="pfield' + (p.req ? ' req' : '') + '"><label>' + esc(lab) +
+        (p.req ? '<em class="req">必填</em>' : '') + '</label>';
+      if (!hint) return head + fieldControlHTML(p) + '</div>';
+      if (native) {
+        /* date／select 天生不渲染框内文字：提示落框下一行，同样单行截断＋「看全文」 */
+        return head + fieldControlHTML(p) +
+          '<div class="phline2"><span class="ph2-t">' + esc(hint) + '</span>' +
+          '<button class="ib2" type="button" data-pop="' + esc(p.key) + '">看全文</button></div></div>';
+      }
+      return head + '<div class="inwrap">' + fieldControlHTML(p) +
+        '<span class="phline">' + esc(hint) + '</span>' +
+        '<button class="ib" type="button" data-pop="' + esc(p.key) + '" aria-label="看提示全文">i</button></div></div>';
+    };
+    var reqs = s.params.filter(function(p){ return p.req; });
+    var opts = s.params.filter(function(p){ return !p.req; });
     form = '<div class="pform" data-pid="' + s.id + '">';
-    s.params.forEach(function(p){
-      form += '<div class="pfield"><label>' + esc(p.label) + (p.req ? '' : '<em>选填</em>') + '</label>' +
-        fieldControlHTML(p) +
-        (p.hint ? '<div class="phint" tabindex="0">' + esc(p.hint) + '</div>' : '') + '</div>';
-    });
+    reqs.forEach(function(p){ form += fieldHTML(p); });
+    if (opts.length) {
+      form += '<details class="optfold"><summary class="fold"><span>选填 ' + opts.length + ' 项</span>' +
+        '<svg class="chev" viewBox="0 0 16 10" aria-hidden="true"><path d="M3.5 7.5 8 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>';
+      opts.forEach(function(p){ form += fieldHTML(p); });
+      form += '</details>';
+    }
     form += '</div>';
   }
   /* 预览：代值后 prompt 全文 + 末尾 label:value（有参数时实时重组，#969）*/
@@ -2047,6 +2125,18 @@ function openSheet(s){
     ? '<details class="pprev-fold"><summary class="fold" aria-label="提示词预览"><span class="pv-cap">提示词预览</span><svg class="chev" viewBox="0 0 16 10" aria-hidden="true"><path d="M3.5 7.5 8 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>' + prevInner + '</details>'
     : prevInner;
   shBody.innerHTML = form + prev;
+  /* 框内提示：有值时让位；填上／清空即时切换（原生 placeholder 抹成空格，避免与框内提示叠字）*/
+  var inw = sheet.querySelectorAll('.inwrap input');
+  for (var wi = 0; wi < inw.length; wi++) {
+    (function(el){
+      var pf = el.closest('.pfield');
+      el.setAttribute('placeholder', ' ');
+      var sync = function(){ if (pf) pf.classList.toggle('filled', !!String(el.value || '').trim()); };
+      el.addEventListener('input', sync);
+      el.addEventListener('change', sync);
+      sync();
+    })(inw[wi]);
+  }
   shCopy.dataset.pid = s.id;
   shCopy.dataset.c = buildPrompt(s, initVals);
   /* 参数化实时预览 */
@@ -2061,11 +2151,14 @@ function openSheet(s){
   }
   mask.classList.add('show');
   sheet.classList.add('show');
+  document.documentElement.classList.add('sheet-open');
   sheet.querySelector('.s-scroll').scrollTop = 0;
 }
 function closeSheet(){
   mask.classList.remove('show');
   sheet.classList.remove('show');
+  document.documentElement.classList.remove('sheet-open');
+  popHide();
   if (kbFix) kbFix.reset();
 }
 mask.addEventListener('click', closeSheet);
@@ -2163,6 +2256,18 @@ function doCopy(text){
   try { document.execCommand('copy'); } catch(e){}
   document.body.removeChild(ta);
 }
+/* 复制成功：反馈落在按钮本身（离手最近），toast 只补充细节 */
+function markCopied(){
+  if (!shCopy) return;
+  if (!shCopy.dataset.idle) shCopy.dataset.idle = shCopy.textContent;
+  shCopy.classList.add('ok');
+  shCopy.textContent = '已复制 ✓';
+  clearTimeout(shCopy._ok);
+  shCopy._ok = setTimeout(function(){
+    shCopy.classList.remove('ok');
+    shCopy.textContent = shCopy.dataset.idle || '复制';
+  }, 1600);
+}
 
 /* ===== 全局复制（含参数校验）===== */
 document.addEventListener('click', function(e){
@@ -2175,8 +2280,9 @@ document.addEventListener('click', function(e){
     var v = readParams(s.id);
     var miss = getMissing(s, v);
     if (miss.length) {
+      /* 条目 4/8（用户 2026-10-12 定稿）：场景页放行复制并列出缺项；详情页依旧阻断并指出缺在哪 */
       if (b.closest('.sheet')) {
-        /* 详情页：依旧阻断 ＋ 缺的必填控件抖动红框（条目 8） */
+        /* 详情页：依旧阻断 ＋ 缺的必填控件抖红框、滚到第一个缺项（条目 8） */
         flagMissing(s, v);
         toastMsg(miss.join('、'));
         return;
@@ -2190,17 +2296,20 @@ document.addEventListener('click', function(e){
     text = buildPrompt(s, v);
   }
   doCopy(text);
+  if (b.id === 'shCopy') markCopied();
   showToast();
   /* B3: 复制后不自动关弹窗 */
 });
-/* 条目 8：给缺的必填控件挂醒目类（抖动＋红框 0.4s，全站统一 hmShake），填上或超时即摘 */
+/* 条目 8（用户 2026-10-12 定稿）：缺必填时抖红框＋滚到第一个缺项居中 */
 function flagMissing(s, v){
   var fm = document.querySelector('.pform[data-pid="' + s.id + '"]');
   if (!fm) return;
+  var first = null;
   (s.params || []).forEach(function(p){
     if (!(p.req && !((v[p.key] || '').trim()))) return;
     var inp = fm.querySelector('[data-p="' + p.key + '"]');
     if (!inp) return;
+    if (!first) first = inp.closest('.pfield');
     inp.classList.remove('hm-missing');
     void inp.offsetWidth;
     inp.classList.add('hm-missing');
@@ -2208,11 +2317,58 @@ function flagMissing(s, v){
     inp.addEventListener('input', clear, {once:true});
     inp.addEventListener('change', clear, {once:true});
   });
+  if (first) setTimeout(function(){
+    first.classList.remove('nudge');
+    void first.offsetWidth;
+    first.classList.add('nudge');
+    try { first.scrollIntoView({block:'center', behavior:'smooth'}); } catch(err){ try { first.scrollIntoView(); } catch(e2){} }
+  }, 40);
   setTimeout(function(){
     var olds = fm.querySelectorAll('.hm-missing');
     for (var i = 0; i < olds.length; i++) olds[i].classList.remove('hm-missing');
   }, 1200);
 }
+
+/* ===== 轻量 popover：提示全文贴图标弹出（条目 23 定稿）===== */
+var popEl = document.getElementById('pop');
+var popAnchor = null;
+function popHide(){
+  if (!popEl) return;
+  popEl.classList.remove('show');
+  if (popAnchor) popAnchor.classList.remove('on');
+  popAnchor = null;
+}
+function popShow(anchor, label, text){
+  if (!popEl || !anchor) return;
+  if (popAnchor === anchor && popEl.classList.contains('show')) { popHide(); return; }
+  popHide();
+  popAnchor = anchor;
+  popEl.innerHTML = '<b>' + esc(label) + '</b><span>' + esc(text) + '</span><i class="tail"></i>';
+  popEl.classList.add('show');
+  anchor.classList.add('on');
+  var r = anchor.getBoundingClientRect();
+  var w = popEl.offsetWidth, h = popEl.offsetHeight, GAP = 9, M = 8;
+  var left = Math.min(Math.max(M, r.left + r.width / 2 - w / 2), window.innerWidth - w - M);
+  var above = r.top - h - GAP, below = above < M;
+  popEl.style.left = Math.round(left) + 'px';
+  popEl.style.top = Math.round(below ? Math.min(r.bottom + GAP, window.innerHeight - h - M) : above) + 'px';
+  popEl.style.setProperty('--pop-tail', Math.round(Math.min(Math.max(14, r.left + r.width / 2 - left), w - 14)) + 'px');
+  popEl.classList.toggle('below', below);
+}
+document.addEventListener('click', function(e){
+  var t = e.target;
+  if (!t || !t.closest) return;
+  var btn = t.closest('[data-pop]');
+  if (btn) {
+    var p = null;
+    ((curScene && curScene.params) || []).forEach(function(x){ if (x.key === btn.dataset.pop) p = x; });
+    popShow(btn, p ? p.label : '', p && p.hint ? p.hint : '');
+    return;
+  }
+  if (popEl && popEl.classList.contains('show') && !t.closest('#pop')) popHide();
+}, true);
+document.addEventListener('keydown', function(e){ if (e.key === 'Escape') popHide(); });
+window.addEventListener('scroll', popHide, true);
 
 /* ===== 搜索（全局跨 Tab + 自动跳转 + 高亮）===== */
 var sB = document.getElementById('sB');
