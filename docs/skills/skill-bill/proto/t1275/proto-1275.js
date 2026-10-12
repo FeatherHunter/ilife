@@ -1,14 +1,14 @@
 /* proto-1275.js —— #1275 讨论用原型补丁（只进原型 HTML，不进产品模板）
  *
+ * v4（第 4 轮，用户 2026-10-13 定：选 A）：筛选下拉的**面板改成悬浮层**——挂到 <body>、按框位置定位，
+ *   字段本身永远只有一行，不撑高控件、不推挤下面的字段；同时撤掉方案 B（smartSelect 对照）。
  * v3（第 3 轮，用户 m00453 五点）：
  *   ① 选填一律折叠（撤销 v2「只剩一项就不折叠」——用户定：选填只有一个时也折叠）
  *   ② 「时间」槽位：kind:'period' → 粒度分段（不限／某天／周／月／年／区间）＋对应原生控件，取值是人话表达式
  *   ③ 提示按钮统一成 ⓘ（原生控件那支模板印的「看全文」与文本框那支的 ⓘ 不是同一个东西）
  *   ④ 点输入框任意处＝点右侧选择器图标（showPicker）；点字段空白处也开（字段里只有一个可开控件时）
- *   ⑤ 候选多（>12）的下拉加输入筛选框，两个方案并排摆出来给用户挑：
- *        方案 A 紧凑下拉（一行框 → 展开筛选输入＋列表）挂 query_category.分类（真候选 141 项）
- *        方案 B 复用模板自带 smartSelect（候选 chips＋输入过滤＋展开全部）挂 query_account.账户（真候选 23 项）
- *   ⑥ 页签标题带「原型 r3」：一眼看出手上这份是不是最新构建（v2 之前的构建没有 ②③④）
+ *   ⑤ 候选多（>12）的下拉加输入筛选框
+ *   ⑥ 页签标题带轮次号「原型 r4」：一眼看出手上这份是不是最新构建
  *
  * 约定：不动模板函数体，只在 openSheet 之后做 DOM 手术；取值口仍是原 [data-p] 输入框，
  * 因此 readParams／buildPrompt／预览／复制四条链路一行不改地复用。
@@ -17,11 +17,10 @@
   'use strict';
 
   var PROTO = 'proto1275';
-  var ROUND = 'r3';
+  var ROUND = 'r4';
   var PERIOD_KEY = 'period';
   var PICKABLE = /^(date|week|month|time|datetime-local)$/;
   var FILTER_MIN = 12; /* 候选（不含空项）超过这个数才换「框＋筛选」 */
-  var SMART_SCENE = 'query_account'; /* 方案 B 的对照场景 */
   var MODES = [
     { k: 'none', t: '不限' },
     { k: 'day', t: '某天' },
@@ -31,7 +30,7 @@
     { k: 'range', t: '区间' },
   ];
 
-  var STATS = { round: ROUND, pickCalls: 0, pickErr: '', filterMounts: [], smartMounts: [] };
+  var STATS = { round: ROUND, pickCalls: 0, pickErr: '', filterMounts: [], panelMode: 'inline' };
   window.__t1275 = STATS;
   if (document.title.indexOf('原型') < 0) document.title += ' · 原型 ' + ROUND;
 
@@ -64,24 +63,20 @@
     '.sheet .pfield .pf-val.has{color:var(--fg)}',
     '.sheet .pfield .pf-caret{width:11px;height:7px;color:var(--fg3);flex-shrink:0;transition:transform .16s ease}',
     '.sheet .pfield .pf-pick.open .pf-caret{transform:rotate(180deg)}',
-    '.sheet .pfield .pf-panel{display:none;margin-top:6px;border:1px solid var(--line);border-radius:11px;' +
-      'background:#fff;box-shadow:0 8px 26px rgba(0,0,0,.10);overflow:hidden}',
-    '.sheet .pfield .pf-pick.open .pf-panel{display:block}',
-    '.sheet .pfield .pf-q{width:100%;box-sizing:border-box;border:0;border-bottom:1px solid var(--line);' +
-      'border-radius:0;padding:9px 11px;font-size:15px;background:#fafafc;outline:none}',
-    '.sheet .pfield .pf-list{max-height:212px;overflow:auto;-webkit-overflow-scrolling:touch}',
-    '.sheet .pfield .pf-opt{padding:9px 11px;font-size:14.5px;color:var(--fg);cursor:pointer;border-bottom:1px solid #f4f4f6}',
-    '.sheet .pfield .pf-opt:last-child{border-bottom:0}',
-    '.sheet .pfield .pf-opt.on{color:var(--blue);font-weight:700;background:var(--soft)}',
-    '.sheet .pfield .pf-opt.none{color:var(--fg3)}',
-    '.sheet .pfield .pf-foot{padding:6px 11px;font-size:11.5px;color:var(--fg3);background:#fafafc;border-top:1px solid #f0f0f3}',
-    /* ⑤ 方案 B：模板自带 smartSelect（查询场景不该有「新建」，原型里摘掉那一行） */
-    '.sheet .pfield .pf-ss .ss-new,.sheet .pfield .pf-ss .ss-empty{display:none}',
-    '.sheet .pfield .pf-ss{margin-top:2px}',
-    /* 控件长高了以后：标签顶端对齐；框右侧那个 ⓘ（模板 .ib 是绝对定位居中）钉回首行，别飘到列表中间 */
-    '.sheet .pfield.pf-tall{align-items:flex-start}',
-    '.sheet .pfield.pf-tall>label{padding-top:11px}',
-    '.sheet .pfield .pf-pick.open ~ .ib,.sheet .pfield .pf-ss ~ .ib{top:22px}',
+    /* ⑤ 方案 A 的面板＝**悬浮层**：不改字段高度，展开时把它挂到 <body>（脱离滚动容器的裁剪与 transform 包含块），
+       由 JS 按框的位置定位；所以这些规则不带 .sheet 前缀（元素已经不在 .sheet 里）。 */
+    '.pf-panel{display:none;border:1px solid var(--line);border-radius:11px;background:#fff;' +
+      'box-shadow:0 8px 26px rgba(0,0,0,.14);overflow:hidden}',
+    '.pf-panel.pf-float{display:block;position:fixed;z-index:9500}',
+    '.pf-q{width:100%;box-sizing:border-box;border:0;border-bottom:1px solid var(--line);border-radius:0;' +
+      'padding:9px 11px;font-size:15px;background:#fafafc;outline:none;font-family:inherit;color:var(--fg)}',
+    '.pf-list{max-height:212px;overflow:auto;-webkit-overflow-scrolling:touch}',
+    '.pf-opt{padding:9px 11px;font-size:14.5px;color:var(--fg);cursor:pointer;border-bottom:1px solid #f4f4f6}',
+    '.pf-opt:last-child{border-bottom:0}',
+    '.pf-opt.on{color:var(--blue);font-weight:700;background:var(--soft)}',
+    '.pf-opt.none{color:var(--fg3)}',
+    '.pf-foot{padding:6px 11px;font-size:11.5px;color:var(--fg3);background:#fafafc;border-top:1px solid #f0f0f3}',
+    /* 悬浮面板：字段本身永远只有一行（41px），不改变分类控件的高度；标签仍与框垂直居中（模板默认对齐）。 */
   ].join('');
   var st = document.createElement('style');
   st.setAttribute('data-proto', PROTO);
@@ -112,7 +107,7 @@
   document.addEventListener('click', function (ev) {
     var t = ev.target;
     if (!t || !t.closest) return;
-    if (t.closest('.ib, .ib2, .pop, .s-close, .pp-btn, .pf-pick')) return;
+    if (t.closest('.ib, .ib2, .pop, .s-close, .pp-btn, .pf-pick, .pf-panel')) return;
     var inp = t.closest('input');
     if (inp) { openPicker(inp); return; }
     var pf = t.closest('.pfield'); /* 点字段空白处：该字段只有一个可开控件时才替它开 */
@@ -124,7 +119,7 @@
   /* 点别处收起已展开的筛选下拉（移动端没有 Esc） */
   document.addEventListener('click', function (ev) {
     var t = ev.target;
-    if (t && t.closest && t.closest('.pf-pick')) return;
+    if (t && t.closest && t.closest('.pf-pick, .pf-panel')) return;
     Array.prototype.forEach.call(document.querySelectorAll('.sheet .pfield .pf-pick.open'), function (w) {
       var row = w.querySelector('.pf-row');
       if (row) row.click();
@@ -248,12 +243,11 @@
   }
 
   /* ── ⑤ 方案 A：候选多的下拉换成「一行框 ＋ 展开筛选输入 ＋ 列表」 ── */
-  function mountFilterSelect(scene) {
+  function mountFilterSelect() {
     var fm = sheet.querySelector('.pform');
     if (!fm) return;
     Array.prototype.forEach.call(fm.querySelectorAll('select[data-p]'), function (sel) {
       if (sel.getAttribute('data-proto') === PROTO) return;
-      if (scene && scene.id === SMART_SCENE && sel.getAttribute('data-p') === 'account') return; /* 留给方案 B 对照 */
       var all = Array.prototype.map.call(sel.options, function (o) { return { v: o.value, t: o.textContent }; });
       var real = all.filter(function (o) { return o.v; });
       if (real.length < FILTER_MIN) return; /* 候选少：原生下拉够用，不换 */
@@ -277,6 +271,7 @@
 
       var row = wrap.querySelector('.pf-row');
       var val = wrap.querySelector('.pf-val');
+      var panel = wrap.querySelector('.pf-panel');
       var q = wrap.querySelector('.pf-q');
       var listEl = wrap.querySelector('.pf-list');
       var foot = wrap.querySelector('.pf-foot');
@@ -284,10 +279,11 @@
       function draw() {
         var kw = q.value.trim().toLowerCase();
         var hit = real.filter(function (o) { return !kw || o.t.toLowerCase().indexOf(kw) >= 0 || o.v.toLowerCase().indexOf(kw) >= 0; });
-        var html = '<div class="pf-opt none' + (sel.value ? '' : ' on') + '" role="option" data-v="">' + esc(emptyText) + '</div>';
+        var html = kw ? '' : '<div class="pf-opt none' + (sel.value ? '' : ' on') + '" role="option" data-v="">' + esc(emptyText) + '</div>';
         hit.forEach(function (o) {
           html += '<div class="pf-opt' + (o.v === sel.value ? ' on' : '') + '" role="option" data-v="' + esc(o.v) + '">' + esc(o.t) + '</div>';
         });
+        if (!hit.length) html += '<div class="pf-opt none">没有匹配的候选</div>';
         listEl.innerHTML = html;
         foot.textContent = kw ? ('匹配 ' + hit.length + ' 项／共 ' + real.length + ' 项')
           : ('共 ' + real.length + ' 项，可输入筛选');
@@ -297,18 +293,45 @@
         val.textContent = cur || emptyText;
         val.classList.toggle('has', !!cur);
       }
+      /* 悬浮定位：面板挂到 <body>（脱离弹层的滚动裁剪与 transform 包含块），按触发框的位置摆。
+         空间不够就先压列表高度（列表自己滚），再不够才翻到框上方；上下都紧就贴着近的一边。 */
+      var LIST_MAX = 212, LIST_MIN = 150, GAP = 6, EDGE = 8; /* 最少留 150px 列表（≈4 行），不然宁可翻到框上方 */
+      function place() {
+        var r = row.getBoundingClientRect();
+        panel.style.left = Math.round(r.left) + 'px';
+        panel.style.width = Math.round(r.width) + 'px';
+        listEl.style.maxHeight = LIST_MAX + 'px';
+        var chromeH = panel.offsetHeight - listEl.offsetHeight; /* 输入行＋脚＋边框 */
+        var below = window.innerHeight - r.bottom - EDGE - GAP;
+        var above = r.top - EDGE - GAP;
+        var useBelow = (below >= chromeH + LIST_MIN) || (below >= above);
+        var avail = (useBelow ? below : above) - chromeH;
+        listEl.style.maxHeight = Math.max(LIST_MIN, Math.min(LIST_MAX, avail)) + 'px';
+        var h = panel.offsetHeight;
+        panel.style.top = Math.round(useBelow ? r.bottom + GAP : Math.max(EDGE, r.top - GAP - h)) + 'px';
+      }
       function setOpen(on) {
         wrap.classList.toggle('open', on);
-        var pf = wrap.closest('.pfield');
-        if (pf) pf.classList.toggle('pf-tall', on);
         row.setAttribute('aria-expanded', on ? 'true' : 'false');
-        if (!on) return;
-        q.value = '';
-        draw();
-        try { q.focus(); } catch (e) {}
-        var cur = listEl.querySelector('.pf-opt.on');
-        if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: 'center' });
+        if (on) {
+          document.body.appendChild(panel);
+          panel.classList.add('pf-float');
+          q.value = '';
+          draw();
+          place();
+          try { q.focus(); } catch (e) {}
+          var cur = listEl.querySelector('.pf-opt.on');
+          if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: 'center' });
+          place(); /* 列表滚过之后高度可能变，再摆一次 */
+        } else {
+          panel.classList.remove('pf-float');
+          wrap.appendChild(panel);
+        }
+        STATS.panelMode = on ? 'float' : 'inline';
       }
+      var reflow = function () { if (panel.classList.contains('pf-float')) place(); };
+      window.addEventListener('scroll', reflow, true);
+      window.addEventListener('resize', reflow);
       row.addEventListener('click', function () { setOpen(!wrap.classList.contains('open')); });
       q.addEventListener('input', draw);      q.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') { setOpen(false); row.focus(); }
@@ -331,34 +354,6 @@
     return sel.getAttribute('data-p') + '(' + (sel.closest('.pfield').querySelector('label') || {}).textContent + ')';
   }
 
-  /* ── ⑤ 方案 B：对照——模板自带 smartSelect 点亮（候选 chips＋输入过滤＋展开全部） ── */
-  function mountSmartSelect() {
-    if (!sheet.querySelector('.pform')) return;
-    var fm = sheet.querySelector('.pform');
-    var sel = fm.querySelector('select[data-p="account"]');
-    if (!sel || sel.getAttribute('data-proto') === PROTO) return;
-    var opts = Array.prototype.map.call(sel.options, function (o) { return o.value; }).filter(Boolean);
-    if (opts.length < 2) return;
-    sel.setAttribute('data-proto', PROTO);
-    var inp = document.createElement('input');
-    inp.type = 'text';
-    inp.setAttribute('data-p', 'account');
-    inp.autocomplete = 'off';
-    inp.value = sel.value || '';
-    sel.parentNode.insertBefore(inp, sel);
-    sel.parentNode.removeChild(sel); /* 换成 input（smartSelect 只吃 <input>），取值口仍是 data-p=account */
-    smartSelect(inp, {
-      options: opts.map(function (n) { return { name: n }; }),
-      maxChips: 8,
-      texts: { candTitle: '候选（点击选择 · 输入过滤）', emptyButton: '还没选', cardSrc: { empty: '点下面的候选选一个' } },
-    });
-    var root = inp.parentNode.querySelector('.ss-root');
-    if (root) root.classList.add('pf-ss');
-    var pf = inp.closest('.pfield');
-    if (pf) pf.classList.add('pf-tall');
-    STATS.smartMounts.push('account:' + opts.length);
-  }
-
   /* ── 入口：openSheet 之后做手术 ── */
   var _openSheet = openSheet;
   openSheet = function (s) {
@@ -366,8 +361,7 @@
     try {
       mountPeriod();
       unifyHintButtons();
-      mountFilterSelect(s);
-      if (s && s.id === SMART_SCENE) mountSmartSelect();
+      mountFilterSelect();
     } catch (err) {
       try { console.warn('proto-1275 补丁失败:', err); } catch (e) {}
     }
