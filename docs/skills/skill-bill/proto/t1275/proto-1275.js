@@ -1,11 +1,11 @@
 /* proto-1275.js —— #1275 讨论用原型补丁（只进原型 HTML，不进产品模板）
  *
- * 只做四件事（其余一律沿用真模板真数据）：
- *   ① 合并卡的别名唤醒词：查某天／查账单是同一个命令（bill.record.today），合并后把另一个唤醒词印在同一张卡上；
- *   ② 选填折叠补丁：选填只有 1 项时不折叠（#1272 规则在「0 必填 + 1 选填」场景下弹窗只剩一个折叠头）；
- *   ③ 「时间」槽位：kind:'period' 的字段渲染成「粒度分段（不限／某天／周／月／年／区间）＋ 对应原生控件」，
+ * 只做这几件事（其余一律沿用真模板真数据）：
+ *   ① 选填折叠补丁：选填只有 1 项时不折叠（#1272 规则在「0 必填 + 1 选填」场景下弹窗只剩一个折叠头）；
+ *   ② 「时间」槽位：kind:'period' 的字段渲染成「粒度分段（不限／某天／周／月／年／区间）＋ 对应原生控件」，
  *      取值是人话时间表达式（周／月另带起止日期），空＝全部时间；
- *   ④ 账本一句话：账本字段的提示文案（数据侧已写进 hint）。
+ *   ③ 提示按钮统一成 ⓘ：原生控件（date／select）那一支模板印的是文字「看全文」，与文本框那支的 ⓘ 不是同一个东西；
+ *   ④ 点输入框任意处＝点右侧那个选择器图标（chrome 的 showPicker；日期／周／月／时间都吃）。
  *
  * 约定：不动模板函数体，只在 openSheet 之后做 DOM 手术；取值口仍是原 [data-p] 输入框（改为 hidden），
  * 因此 readParams／buildPrompt／预览／复制四条链路一行不改地复用。
@@ -15,6 +15,7 @@
 
   var PROTO = 'proto1275';
   var PERIOD_KEY = 'period';
+  var PICKABLE = /^(date|week|month|time|datetime-local)$/;
   var MODES = [
     { k: 'none', t: '不限' },
     { k: 'day', t: '某天' },
@@ -24,9 +25,11 @@
     { k: 'range', t: '区间' },
   ];
 
-  /* ── 样式（只挂 .pp* / .proto-alias，不覆盖模板既有类） ── */
+  var STATS = { pickCalls: 0, pickErr: '' };
+  window.__t1275 = STATS;
+
+  /* ── 样式（只挂 .pp* / .proto-*，不覆盖模板既有类） ── */
   var css = [
-    '.mini .m-top .chip.proto-alias{margin-right:0;background:#eef2f7;color:#5b6b7f;padding:1px 7px}',
     '.sheet .pfield .pp{display:flex;flex-wrap:wrap;gap:6px;flex:1 1 100%;align-items:center}',
     '.pp-seg{display:flex;flex-wrap:wrap;gap:6px;flex:1 1 100%}',
     '.pp-btn{appearance:none;border:1px solid var(--line);background:#fff;color:var(--fg2);' +
@@ -38,32 +41,40 @@
     '.pp-sum{flex:1 1 100%;font-size:11.5px;color:var(--blue2);background:#eef4ff;border-radius:8px;' +
       'padding:6px 9px;line-height:1.5}',
     '.pp-sum.empty{color:var(--fg3);background:#f6f6f8}',
+    /* ③ 「看全文」文字按钮 → 与 .ib 同款的 ⓘ 圆钮 */
+    '.sheet .ib2.proto-i{width:20px;height:20px;border-radius:50%;background:#eef0f4;color:var(--blue);' +
+      'font:700 12px/1 -apple-system,"Microsoft YaHei",sans-serif;display:inline-flex;align-items:center;' +
+      'justify-content:center;margin-left:6px;padding:0;flex-shrink:0}',
+    '.sheet .ib2.proto-i.on{text-decoration:none;background:var(--blue);color:#fff}',
   ].join('');
   var st = document.createElement('style');
   st.setAttribute('data-proto', PROTO);
   st.textContent = css;
   document.head.appendChild(st);
 
-  /* ── ① 别名唤醒词：紧挨着主唤醒词再印一个（不是类型徽章，所以插在徽章之前） ── */
-  function stampAlias(root) {
-    var tops = [];
-    Array.prototype.push.apply(tops, (root || document).querySelectorAll('.mini[data-key="query_bills"] .m-top'));
-    if (typeof curScene !== 'undefined' && curScene && curScene.id === 'query_bills') {
-      var head = document.getElementById('shHead');
-      if (head) tops.push(head);
-    }
-    tops.forEach(function (top) {
-      if (top.querySelector('.proto-alias')) return;
-      var first = top.querySelector('.chip');
-      if (!first) return;
-      var a = document.createElement('span');
-      a.className = 'chip proto-alias';
-      a.textContent = '查某天';
-      first.parentNode.insertBefore(a, first.nextSibling);
+  /* ── ③ 提示按钮统一成 ⓘ ── */
+  function unifyHintButtons() {
+    var btns = document.querySelectorAll('.sheet .ib2');
+    Array.prototype.forEach.call(btns, function (b) {
+      if (b.getAttribute('data-proto') === PROTO) return;
+      b.setAttribute('data-proto', PROTO);
+      b.classList.add('proto-i');
+      b.textContent = 'i';
+      b.setAttribute('aria-label', '看提示全文');
     });
   }
-  document.addEventListener('input', function () { stampAlias(); });
-  stampAlias();
+
+  /* ── ④ 点输入框任意处＝点右侧选择器图标 ── */
+  document.addEventListener('click', function (ev) {
+    var t = ev.target;
+    if (!t || !t.closest) return;
+    if (t.closest('.ib, .ib2, .pop, .s-close, .pp-btn')) return;
+    var inp = t.closest('input');
+    if (!inp || !PICKABLE.test(inp.type || '')) return;
+    if (typeof inp.showPicker !== 'function') return;
+    STATS.pickCalls++;
+    try { inp.showPicker(); } catch (e) { STATS.pickErr = String((e && e.name) || e); }
+  }, true);
 
   /* ── 时间表达式：把控件值翻成人话（周／月另带起止日期，命令侧不必懂 ISO 周号） ── */
   function pad2(n) { return (n < 10 ? '0' : '') + n; }
@@ -114,7 +125,7 @@
     return '';
   }
 
-  /* ── ③ 挂「时间」槽位 ── */
+  /* ── ② 挂「时间」槽位 ── */
   function mountPeriod() {
     var fm = sheet.querySelector('.pform');
     if (!fm) return;
@@ -150,7 +161,7 @@
       seg.appendChild(b);
     });
 
-    function refresh(summaryOnly) {
+    function refresh() {
       var val = compose(state.mode, state.v);
       raw.value = val;
       if (state.mode === 'none') sum.textContent = '空＝全部时间';
@@ -158,11 +169,10 @@
       else sum.textContent = '还没选（空＝全部时间）';
       sum.classList.toggle('empty', !val);
       raw.dispatchEvent(new Event('input', { bubbles: true }));
-      if (!summaryOnly) return;
     }
     function paint() {
       ctl.innerHTML = ctlHTML(state.mode, state.v);
-      refresh(false);
+      refresh();
     }
     seg.addEventListener('click', function (e) {
       var b = e.target.closest('.pp-btn');
@@ -177,12 +187,12 @@
       var el = e.target.closest('[data-pp]');
       if (!el) return;
       state.v[el.getAttribute('data-pp')] = el.value;
-      refresh(true); /* 不重画，免得输入中丢焦点 */
+      refresh(); /* 不重画，免得输入中丢焦点 */
     });
     paint();
   }
 
-  /* ── ② 选填只有 1 项时不折叠（修 #1272 在「0 必填」场景只剩折叠头） ── */
+  /* ── ① 选填只有 1 项时不折叠（修 #1272 在「0 必填」场景只剩折叠头） ── */
   function unfoldSingle() {
     var fm = sheet.querySelector('.pform');
     if (!fm) return;
@@ -201,7 +211,7 @@
     try {
       unfoldSingle();
       mountPeriod();
-      stampAlias();
+      unifyHintButtons();
     } catch (err) {
       try { console.warn('proto-1275 补丁失败:', err); } catch (e) {}
     }
