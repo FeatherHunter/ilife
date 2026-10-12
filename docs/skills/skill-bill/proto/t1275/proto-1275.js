@@ -1,5 +1,7 @@
 /* proto-1275.js —— #1275 讨论用原型补丁（只进原型 HTML，不进产品模板）
  *
+ * v6（第 6 轮，用户 2026-10-13 定）：「向上展开列表，输入筛选框在列表底端」——面板**一律**摆在触发框上方、
+ *   底边贴框；筛选行在面板最底端（离框最近），列表在它上面向上长，空间不够压列表高度（最少 60px）。
  * v5（第 5 轮，用户 2026-10-13 定）：筛选输入框挪到列表**下面**，与「共 N 项，可输入筛选」同一行——
  *   省掉顶部一整行，列表多显示一行候选；输入框 placeholder 收短成「输入筛选」。
  * v4（第 4 轮，用户 2026-10-13 定：选 A）：筛选下拉的**面板改成悬浮层**——挂到 <body>、按框位置定位，
@@ -19,7 +21,7 @@
   'use strict';
 
   var PROTO = 'proto1275';
-  var ROUND = 'r5';
+  var ROUND = 'r6';
   var PERIOD_KEY = 'period';
   var PICKABLE = /^(date|week|month|time|datetime-local)$/;
   var FILTER_MIN = 12; /* 候选（不含空项）超过这个数才换「框＋筛选」 */
@@ -300,21 +302,20 @@
         val.classList.toggle('has', !!cur);
       }
       /* 悬浮定位：面板挂到 <body>（脱离弹层的滚动裁剪与 transform 包含块），按触发框的位置摆。
-         空间不够就先压列表高度（列表自己滚），再不够才翻到框上方；上下都紧就贴着近的一边。 */
-      var LIST_MAX = 212, LIST_MIN = 150, GAP = 6, EDGE = 8; /* 最少留 150px 列表（≈4 行），不然宁可翻到框上方 */
+         用户 2026-10-13 定：**一律向上展开**——面板底边贴着触发框上方，筛选行在面板最底端（离框最近），
+         列表在它上面、需要多高就向上长；上面空间不够就压列表高度（最少 60px），列表自己滚。 */
+      var LIST_MAX = 212, LIST_MIN = 60, GAP = 6, EDGE = 8;
       function place() {
         var r = row.getBoundingClientRect();
         panel.style.left = Math.round(r.left) + 'px';
         panel.style.width = Math.round(r.width) + 'px';
         listEl.style.maxHeight = LIST_MAX + 'px';
-        var chromeH = panel.offsetHeight - listEl.offsetHeight; /* 输入行＋脚＋边框 */
-        var below = window.innerHeight - r.bottom - EDGE - GAP;
+        var chromeH = panel.offsetHeight - listEl.offsetHeight; /* 筛选行＋边框 */
         var above = r.top - EDGE - GAP;
-        var useBelow = (below >= chromeH + LIST_MIN) || (below >= above);
-        var avail = (useBelow ? below : above) - chromeH;
-        listEl.style.maxHeight = Math.max(LIST_MIN, Math.min(LIST_MAX, avail)) + 'px';
+        listEl.style.maxHeight = Math.max(LIST_MIN, Math.min(LIST_MAX, above - chromeH)) + 'px';
         var h = panel.offsetHeight;
-        panel.style.top = Math.round(useBelow ? r.bottom + GAP : Math.max(EDGE, r.top - GAP - h)) + 'px';
+        panel.style.top = Math.round(Math.max(EDGE, r.top - GAP - h)) + 'px';
+        STATS.panelSide = 'above';
       }
       function setOpen(on) {
         wrap.classList.toggle('open', on);
