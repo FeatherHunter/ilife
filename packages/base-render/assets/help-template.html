@@ -141,22 +141,20 @@
   .sheet .prompt-box{background:#1d1d1d;color:#f5f5f7;border-radius:12px;padding:11px 13px;white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:1.65;margin-top:9px;word-break:break-all}
   .sheet .pform{margin-top:9px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 10px}
   .sheet .pfield{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-bottom:10px}
-  /* 条目 23（用户 2026-10-12 定稿 · C 方案）：长提示不再占一整行——
-     文本框内单行承载（超出截断＋右侧渐隐），框右侧 ⓘ 点开轻量 popover 看全文；
-     date／select 天生不渲染框内文字，提示落到框下一行（同样单行截断）＋「看全文」。 */
+  /* 条目 23（用户 2026-10-12 定稿 · C 方案；2026-10-13 用户裁定统一形态）：长提示不再占一整行——
+     提示一律挂在框右侧 ⓘ 上（点开轻量 popover 看全文）：文本框里同时用单行承载（超出截断＋右侧渐隐）；
+     date／select 这类原生控件天生不渲染框内文字，提示只走 ⓘ，不再有「看全文」那一行。 */
   .sheet .inwrap{position:relative;flex:1;min-width:0;display:flex}
   .sheet .inwrap input,.sheet .inwrap select{flex:1;min-width:0;padding-right:34px}
+  /* 原生控件（select／date 类）：右侧留给控件自带的箭头／日历图标，ⓘ 落在它左边 */
+  .sheet .inwrap.native input,.sheet .inwrap.native select{padding-right:66px}
+  .sheet .inwrap.native .ib{right:30px}
   .sheet .phline{position:absolute;left:11px;right:34px;top:50%;transform:translateY(-50%);font-size:16px;color:#8e8e93;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;-webkit-mask-image:linear-gradient(90deg,#000 78%,transparent 100%);mask-image:linear-gradient(90deg,#000 78%,transparent 100%)}
   .sheet .optfold .phline{color:#b0b0b8}
   .sheet .pfield.filled .phline{display:none}
-  .sheet .phline2{flex:1 1 100%;min-width:0;margin:0 0 2px 79px;display:flex;align-items:center;gap:5px;font-size:11.5px;color:#8e8e93}
-  .sheet .phline2 .ph2-t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;-webkit-mask-image:linear-gradient(90deg,#000 86%,transparent 100%);mask-image:linear-gradient(90deg,#000 86%,transparent 100%)}
-  .sheet .optfold .phline2{color:#b0b0b8}
   .sheet .ib{position:absolute;right:2px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:50%;border:0;background:#eef0f4;color:var(--blue);font:700 13px/1 -apple-system,"Microsoft YaHei",sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
   .sheet .ib:active{transform:translateY(-50%) scale(.94);background:#dde2ea}
   .sheet .ib.on{background:var(--blue);color:#fff}
-  .sheet .ib2{display:inline-block;margin-left:6px;border:0;background:none;color:var(--blue);font:700 11.5px/1 -apple-system,"Microsoft YaHei",sans-serif;cursor:pointer;padding:0;flex-shrink:0}
-  .sheet .ib2.on{text-decoration:underline}
   /* 轻量 popover：贴图标弹出的小气泡（不是整幅面板） */
   #pop{position:fixed;z-index:99998;max-width:252px;background:#fff;color:var(--fg);border:1px solid #e3e3e8;border-radius:11px;padding:9px 11px;font:400 12.5px/1.55 -apple-system,"Microsoft YaHei",sans-serif;box-shadow:0 8px 26px rgba(0,0,0,.16);display:none}
   #pop.show{display:block;animation:popIn .14s ease-out both}
@@ -2089,7 +2087,7 @@ function openSheet(s){
   var hasParams = s.params && s.params.length;
   if (hasParams) {
     /* 条目 8/23（用户 2026-10-12 定稿 · C 方案）：必填在前（红竖条＋红徽标），
-       选填整段折进一行；长提示改由框内单行承载＋ⓘ 轻量 popover 看全文 */
+       选填整段折进一行；提示一律走框右侧 ⓘ（点开 popover 看全文），不再有「看全文」那一行 */
     var fieldHTML = function(p){
       var hint = p.hint ? String(p.hint) : '';
       var lab = String(p.label == null ? '' : p.label);
@@ -2100,10 +2098,9 @@ function openSheet(s){
         (p.req ? '<em class="req">必填</em>' : '') + '</label>';
       if (!hint) return head + fieldControlHTML(p) + '</div>';
       if (native) {
-        /* date／select 天生不渲染框内文字：提示落框下一行，同样单行截断＋「看全文」 */
-        return head + fieldControlHTML(p) +
-          '<div class="phline2"><span class="ph2-t">' + esc(hint) + '</span>' +
-          '<button class="ib2" type="button" data-pop="' + esc(p.key) + '">看全文</button></div></div>';
+        /* date／select 天生不渲染框内文字：提示挂右侧 ⓘ（与文本框同一形态，省掉框下那一行） */
+        return head + '<div class="inwrap native">' + fieldControlHTML(p) +
+          '<button class="ib" type="button" data-pop="' + esc(p.key) + '" aria-label="看提示全文">i</button></div></div>';
       }
       return head + '<div class="inwrap">' + fieldControlHTML(p) +
         '<span class="phline">' + esc(hint) + '</span>' +
