@@ -53,7 +53,7 @@ export const QUERY_DECLARATION: DomainDeclaration = {
       scenes: [
         {
           id: 'query_date',
-          title: '查某一天的账（必选日期）',
+          title: '查某一天的账',
           status: '',
           prompt_template: '请你加载技能 饼干记账,执行唤醒词「查某天」。\n\n我想查某一天的账，必须指定日期。\n\n日期:{{query_date}}\n\n与「查账单」区分：本入口必须填日期；默认看今天请用「查今天」，可选日期看账单列表请用「查账单」。',
           types: ['查看'],
@@ -88,7 +88,7 @@ export const QUERY_DECLARATION: DomainDeclaration = {
       scenes: [
         {
           id: 'query_bills',
-          title: '查账单（默认今天，可选日期）',
+          title: '查账单',
           status: '',
           prompt_template: '请你加载技能 饼干记账,执行唤醒词「查账单」。\n\n我想查账单列表，空即今天。\n\n日期(选填):{{query_date}}\n\n与「查某天」区分：本入口空即今天，查到列表后可说「查账单详情」看单条；查指定某天更明确请用「查某天」。',
           types: ['查看'],
