@@ -127,20 +127,6 @@ export function backupFileName(stamp: string): string {
   return backupStem() + stamp + '.db';
 }
 
-/** 本机路径脱敏（条目 24 边界：HELP 与复制区不得出现完整本机路径）。
- *
- *  只遮用户名一段：`C:\Users\<名>` → `C:\Users\****`（`C:/Users/<名>` 同）、
- *  `/home/<名>` → `/home/****`、`/Users/<名>` → `/Users/****`；其余原样返回。
- *  Windows 盘符大小写不敏感，用户名含空格照遮；非用户目录下的路径原样返回。
- *  备份清单页本来就不印路径（`src/setup/template-list.ts` 只用文件名／时刻／字节数）；
- *  #1276 的「设置当前配置」场景显示电脑路径时调它。纯函数，不读配置、不碰盘。 */
-export function desensitizeLocalPath(p: string): string {
-  return String(p)
-    .replace(/^([A-Za-z]:[\\/]Users[\\/])[^\\/]+/i, '$1****')
-    .replace(/^(\/home\/)[^/]+/, '$1****')
-    .replace(/^(\/Users\/)[^/]+/, '$1****');
-}
-
 /** 一组**解析后的绝对路径**（#749 样板）：设置页的只读行显示的就是这一组，面板不自己拼路径
  *  （#677 冻结的边界）。六家的 `*.config.read` 回执都扩这样一组，每家的格子按自家落点项来；
  *  记账这一组＝面板那 5 行只读 ＋ 生效数据目录。 */

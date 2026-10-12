@@ -172,14 +172,19 @@ if (isEntry) {
       const columns = { ...(previous?.columns ?? {}) };
       for (const lang of langs) {
         const own = rows.filter((r) => r.id.startsWith(lang + '/'));
+        // 重录只换 `artifacts`：列上别的东西（`declared`／`note` 这类**声明**）是评审写的判据说明，
+        // 一次重录抹掉就等于把「哪些差异是声明过的」这条信息也一起抹了（#1274 实测踩到）。
         columns[lang] = {
+          ...(previous?.columns?.[lang] ?? {}),
           artifacts: Object.fromEntries(own.map((r) => [r.id, { src: r.src, bytes: r.bytes, sha256: r.sha256 }])),
         };
       }
       const snap = {
         generatedBy: 'packages/base-render/scripts/i18n-pilot-1202.mjs',
         ticket: '#1202',
-        purpose: '两处硬缝的读数基座：固定 now 下四段链路产物逐件 sha256（按语言列分开记）',
+        // 同理：`purpose` 是**这份快照的用途说明**，不是本次采数的日志行，已在文件里就原样留着。
+        purpose: previous?.purpose
+          ?? '两处硬缝的读数基座：固定 now 下四段链路产物逐件 sha256（按语言列分开记）',
         hashAlgo: 'sha256(归一化文本) 前 32 hex；归一化＝去 BOM ＋ CRLF→LF',
         fixedNow: FIXED_NOW_TEXT,
         artifactCount: Object.values(columns).reduce((n, c) => n + Object.keys(c.artifacts).length, 0),

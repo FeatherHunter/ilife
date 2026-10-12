@@ -4,6 +4,7 @@
   "purpose": "两处硬缝的语言列读数基座：固定 now 下四段链路产物逐件 sha256。中文列＝改造前基线（未声明的差异为零）；英文列＝声明过的差异（拼接串整句化＋词条化带来的换词），逐件列出。",
   "hashAlgo": "sha256(归一化文本) 前 32 hex；归一化＝去 BOM ＋ CRLF→LF",
   "fixedNow": "2026-01-02 03:04:05",
+  "artifactCount": 8,
   "columns": {
     "zh": {
       "declared": false,
@@ -15,8 +16,8 @@
         },
         "zh/help": {
           "src": "packages/base-render/src/helpShell.ts",
-          "bytes": 118577,
-          "sha256": "f9bccb1c98909da49f32398a7aae219a"
+          "bytes": 132815,
+          "sha256": "d4e3ce233bbd5919c9998a3ff8e1c54b"
         },
         "zh/page": {
           "src": "packages/base-render/src/components/progress-list",
@@ -41,8 +42,8 @@
         },
         "en/help": {
           "src": "packages/base-render/src/helpShell.ts",
-          "bytes": 118577,
-          "sha256": "f9bccb1c98909da49f32398a7aae219a"
+          "bytes": 132815,
+          "sha256": "d4e3ce233bbd5919c9998a3ff8e1c54b"
         },
         "en/page": {
           "src": "packages/base-render/src/components/progress-list",

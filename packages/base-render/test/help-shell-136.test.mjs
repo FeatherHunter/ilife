@@ -23,14 +23,14 @@ const FIXTURE = {"skill_name":"卡路里","title":"唤醒词速查台","subtitle
 
 test('#136 ① 模板值 verbatim：前后缀哈希与搬家基线一致', () => {
   assert.equal(sha(HELP_SHELL_PREFIX), '512653008fa05110661150e770e894ee75696a9dd4b64b34b3ef73e1da152c38');
-  assert.equal(sha(HELP_SHELL_SUFFIX), 'd23633de91ff05f7c88b3781d7b65b882e51b44e88cea8c20059abaf1a0cb5c9');
+  assert.equal(sha(HELP_SHELL_SUFFIX), '6543c8244c22868a9881ca0f1ebf8be1fb6ff50ebe60d112477cfe5cdfd6ea44');
   assert.equal(HELP_SHELL_DATA_OPEN, '<script id="help-data" type="application/json">');
   assert.ok(HELP_SHELL_PREFIX.endsWith(HELP_SHELL_DATA_OPEN), 'PREFIX 须止于 help-data 开标签尾');
   assert.ok(HELP_SHELL_SUFFIX.startsWith('</script>'), 'SUFFIX 须起于 help-data 配对闭标签');
 });
 
 test('#136 ② 固定夹具渲染逐字节一致＋空分组抛 missing-data', () => {
-  assert.equal(sha(renderHelpShellHtml(FIXTURE)), '21008060f833e007e5508e1528c4a4f6ceefc9483963799da527e57fae6fbbde');
+  assert.equal(sha(renderHelpShellHtml(FIXTURE)), 'd6fab5ee6064ec5d369c70e72810d9786f3cc17c7afc26bc57e9151ba3248f7b');
   assert.equal(renderHelpShell, renderHelpShellHtml, '标准出口须为同一实现');
   assert.throws(() => renderHelpShellHtml({ ...FIXTURE, groups: [] }),
     (e) => e instanceof HelpShellError && e.code === 'missing-data');
@@ -64,10 +64,11 @@ test('#136 ④ 源可复现：assets 源切分即得前后缀（删生成物重�
   }
 });
 
-test('#1274 关于页版本与快照接线：about_meta 在场主行技能版本＋小字模板与快照，缺席回落旧文案', () => {
-  assert.ok(HELP_SHELL_SUFFIX.includes('ABOUT_META'), '壳须读 about_meta');
-  assert.ok(HELP_SHELL_SUFFIX.includes('skill_package_version'), '壳须读技能包版本');
-  assert.ok(HELP_SHELL_SUFFIX.includes('snapshot_at'), '壳须读快照时刻');
-  assert.ok(HELP_SHELL_SUFFIX.includes('快照于'), '壳须有快照行文案');
-  assert.ok(HELP_SHELL_SUFFIX.includes('HELP 模板 v4'), '无 about_meta 回落旧文案');
+test('#1274 关于页版本接线（条目 15）：主行＝数据世代＋技能包版本，模板代际不上页，只印本页生成时刻', () => {
+  assert.ok(HELP_SHELL_SUFFIX.includes('HELP.skill_version'), '壳须从 HELP 取 skill_version');
+  assert.ok(HELP_SHELL_SUFFIX.includes('HELP.generated_at'), '壳须从 HELP 取 generated_at');
+  assert.ok(HELP_SHELL_SUFFIX.includes('本页数据生成于'), '壳须印本页生成时刻');
+  assert.ok(!HELP_SHELL_SUFFIX.includes('about_meta'), 'about_meta 命名空间已撤回（键住技能侧自己的载荷）');
+  assert.ok(!HELP_SHELL_SUFFIX.includes('HELP 模板 v4'), '模板代际不上页（用户原话：这段字意义不明）');
+  assert.ok(!HELP_SHELL_SUFFIX.includes('快照于'), '不再印快照行（复用窗口是调用方的策略参数）');
 });

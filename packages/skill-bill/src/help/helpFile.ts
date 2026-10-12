@@ -1,6 +1,8 @@
 /** #145 · 「饼干记账help」的交付**内容**：内容资产 ＋ 派生 → 共享 help 模板（`base-paint/help-shell`）全页 HTML。
  *
- * 本模块**零 IO、零落盘**：落点与写盘全在 CLI 交付管线（#144：`src/help/helpPaths.ts` ＋ `src/output.ts`）；
+ * 本模块**零落盘**：落点与写盘全在 CLI 交付管线（#144：`src/help/helpPaths.ts` ＋ `src/output.ts`）；
+ * 唯一的读＝模块初始化时读一次自身 `package.json` 的 `version`（关于页那个「技能 v…」，唯一真相源，
+ * 见下方 `SKILL_PACKAGE_VERSION`）；除此之外本模块零 IO，`buildHelpFileData` 是纯函数。
  * 文件名主体是编译期常量 `HELP_FILE_STEM`（#762 起配置项 `html.helpStem` 已退休，本件不再读盘）。
  * 逐字对照老口径（只读基线 `D:\2Study\StudyNotes\SKILLS\饼干记账\scripts\render_help.py:build_help_contract`）：
  *  - `skill_name`／`title`／`contact`／`version` 照老实样（`:197-214`）；
@@ -17,6 +19,9 @@
  *    （`help-template.html` 的 `INIT_BANNER && !INIT_BANNER.hidden`），故新线**键常在、显隐走 `hidden`**：
  *    payload 形状不随状态变，下游用例能断言同一个键集。初始化状态由调用方传入（本模块零 IO）。
  */
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { renderHelpShellHtml } from 'base-paint/help-shell';
 import { HELP_WAKE_WORDS, SCENE_BY_ID, WAKE_ASSETS, WAKE_GROUPS } from '../triggers/wake-assets.js';
 import { BillRenderError } from '../render/errors.js';
@@ -31,13 +36,38 @@ export const HELP_FILE_SKILL_NAME = '饼干记账' as const;
 export const HELP_FILE_TITLE = '饼干记账 · 使用手册(HELP)' as const;
 /** 技能数据世代版本（老口径 `summary.version`，非 npm 包版本）。 */
 export const HELP_FILE_VERSION = '2.0' as const;
-/** 技能 npm 包版本镜像（`packages/skill-bill/package.json` 的 `version`；改版本时同步改。
- *  关于页主行「饼干记账 v2.0」后面跟的就是它（条目 15）：模板硬写的「HELP 模板 v4」退居小字。 */
-export const HELP_SKILL_PACKAGE_VERSION = '0.3.54' as const;
-/** HELP 模板代际（`packages/base-render/assets/help-template.html` 的模板代际；改模板代际时同步改）。 */
-export const HELP_TEMPLATE_VERSION = 'v4' as const;
-/** 快照复用窗口（小时；镜像 `base-paint` 的 `HELP_REUSE_DEFAULT_HOURS = 24`，见 `saveHtml.ts:69`）。 */
-export const HELP_SNAPSHOT_REUSE_HOURS = 24 as const;
+
+/** 本包 `package.json` 的路径（`dist/help/helpFile.js` → 上两级＝包根）。相对 `import.meta.url`
+ *  算而不是相对 `process.cwd()`：装到哪个 profile、从哪个目录被调起，读到的都是这一份。 */
+const PACKAGE_MANIFEST = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'package.json');
+
+/** 技能包版本（关于页主行「技能 v…」那一个数）：**取包自身 `package.json` 的 `version`，不写常量**。
+ *
+ *  口径裁定（用户 2026-09-23 图报卡路里「关于」Tab 时拍定，本票 2026-10-13 按同一条口径落地）：
+ *  屏上那个数要回答的是「用户装的这份技能是几版」，唯一真相源＝包清单的 `version`。写一份常量就是
+ *  第二真相源——发版只 bump `package.json` 时页上那个数立刻撒谎。兄弟件先例＝
+ *  `packages/skill-calorie/src/photo/helpFile.ts:39-73`（同一条注释链）。
+ *
+ *  读不到即抛（缺失阻断，与 `formatHelpMinute` 的坏参同一条家法）：这是**静态读一次**，读不到属
+ *  「发布包缺 `package.json`」的故障，不静默降级回空版本。
+ *
+ *  条目 15 的另一半（数据世代 `2.0` 仍照老样印在主行前面）在 `HELP_FILE_VERSION`：那一位是技能数据
+ *  世代，不是包版本，两者不同义、不能合并。 */
+export const SKILL_PACKAGE_VERSION: string = ((): string => {
+  let manifest: unknown;
+  try {
+    manifest = JSON.parse(readFileSync(PACKAGE_MANIFEST, 'utf8'));
+  } catch (cause) {
+    throw new BillRenderError('BILL_HELP_MISSING_DATA', 'HELP 技能包版本取不到：读不了 ' + PACKAGE_MANIFEST
+      + '（' + (cause instanceof Error ? cause.message : String(cause)) + '）');
+  }
+  const version = (manifest as { version?: unknown } | null | undefined)?.version;
+  if (typeof version !== 'string' || version === '') {
+    throw new BillRenderError('BILL_HELP_MISSING_DATA', 'HELP 技能包版本取不到：' + PACKAGE_MANIFEST
+      + ' 的 version 不是非空字符串');
+  }
+  return version;
+})();
 /** 首次使用横幅的 prompt 取自该场景（老 `SETUP_INIT_SCENE_ID`）。 */
 export const HELP_INIT_SCENE_ID = 'setup_init_wizard' as const;
 
@@ -85,18 +115,7 @@ export interface HelpInitBanner {
   readonly hidden: boolean;
 }
 
-/** 关于页边界元信息（条目 10 快照时效 ＋ 条目 15 版本注入是同一组显示值，单概念单键）。
- *  共享 help 模板运行时读它；缺席即回落旧渲染（其余 5 家技能不发它，行为不变）。
- *  快照候选的注入本身归 #1270，本键只给「快照于何时、一天内有效」的边界说法。 */
-export interface HelpAboutMeta {
-  readonly skill_package_version: string;
-  readonly template_version: string;
-  readonly snapshot_at: string;
-  readonly reuse_hours: number;
-  readonly snapshot_note: string;
-}
-
-/** 老 5 键 ＋ 三块可选键（共享 help 模板运行时契约的超集）。 */
+/** 老 5 键 ＋ 三块可选键（共享 help 模板运行时契约的超集）＋ 两块关于页事实键。 */
 export interface HelpFileData {
   readonly skill_name: typeof HELP_FILE_SKILL_NAME;
   readonly title: typeof HELP_FILE_TITLE;
@@ -106,7 +125,11 @@ export interface HelpFileData {
   readonly meta_blocks: readonly HelpMetaBlock[];
   readonly version: typeof HELP_FILE_VERSION;
   readonly init_banner: HelpInitBanner;
-  readonly about_meta: HelpAboutMeta;
+  /** 关于页主行「技能 v…」（条目 15）：本包装的是哪一版，取包清单 `version`（`SKILL_PACKAGE_VERSION`）。 */
+  readonly skill_version: string;
+  /** 关于页小字「本页数据生成于 …」（条目 15 的边界）：**这一页自己的文件事实**，与 `subtitle` 同源。
+   *  不印复用窗口（那是调用方的策略参数）、不印任何业务承诺（候选完整性归各技能自己的数据来源）。 */
+  readonly generated_at: string;
 }
 
 export interface HelpFileOptions {
@@ -157,18 +180,6 @@ export function buildInitBanner(initialized: boolean): HelpInitBanner {
   };
 }
 
-/** 关于页边界元信息：版本取上面两个常量，快照时刻取调用方传入的 `now`（与 subtitle 同源）。
- *  纯函数（零 IO；`now` 非法即抛，口径同 `formatHelpMinute`）。 */
-export function buildAboutMeta(now: Date = new Date()): HelpAboutMeta {
-  return {
-    skill_package_version: HELP_SKILL_PACKAGE_VERSION,
-    template_version: HELP_TEMPLATE_VERSION,
-    snapshot_at: formatHelpMinute(now),
-    reuse_hours: HELP_SNAPSHOT_REUSE_HOURS,
-    snapshot_note: '一天前的标签都在',
-  };
-}
-
 /** 内容资产 ＋ 派生 → 全量 HELP JSON（纯函数；`now` 显式传入以保证可复现）。 */
 export function buildHelpFileData(now: Date = new Date(), opts: HelpFileOptions = {}): HelpFileData {
   if (WAKE_GROUPS.length === 0 || WAKE_ASSETS.length === 0) {
@@ -184,7 +195,8 @@ export function buildHelpFileData(now: Date = new Date(), opts: HelpFileOptions 
     meta_blocks: buildMetaBlocks(summaryLine),
     version: HELP_FILE_VERSION,
     init_banner: buildInitBanner(opts.initialized === true),
-    about_meta: buildAboutMeta(now),
+    skill_version: SKILL_PACKAGE_VERSION,
+    generated_at: formatHelpMinute(now),
   };
 }
 

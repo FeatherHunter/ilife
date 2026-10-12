@@ -1747,7 +1747,8 @@ var META_BLOCKS = HELP.meta_blocks || [];
 var INIT_BANNER = HELP.init_banner || null;
 var CONTACT = HELP.contact || null;
 var SKILL_VERSION = HELP.version || '';
-var ABOUT_META = HELP.about_meta || null;
+var SKILL_PKG_VERSION = HELP.skill_version || '';
+var GENERATED_AT = HELP.generated_at || '';
 var ABOUT_EXTRA = {};
 var RECOMMENDATIONS = HELP.recommendations || [];
 
@@ -1974,10 +1975,13 @@ if (CONTACT && CONTACT.items && CONTACT.items.length) {
   }
   h += '</div></div>';
 }
-/* ② 版本（第二位 · 条目 15：主行跟技能包版本，模板代际退居小字；无 about_meta 即回落旧文案）*/
-var verMain = 'v' + esc(SKILL_VERSION) + ((ABOUT_META && ABOUT_META.skill_package_version) ? ' · 技能 v' + esc(ABOUT_META.skill_package_version) : ' · HELP 模板 v4');
-var snapRow = (ABOUT_META && ABOUT_META.snapshot_at) ? '<div class="about-row"><div class="a-t"><span style="font-size:12px;color:#6e6e73">HELP 模板 ' + esc(ABOUT_META.template_version || 'v4') + ' · 快照于 ' + esc(ABOUT_META.snapshot_at) + (ABOUT_META.snapshot_note ? ' · ' + esc(ABOUT_META.snapshot_note) : '') + '</span></div></div>' : '';
-h += '<div class="about-sec"><div class="as-head"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;flex-shrink:0"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg> 版本</div><div class="as-body"><div class="about-row"><span class="a-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></span><div class="a-t"><b>' + esc(SKILL_NAME) + '</b><span>' + verMain + '</span></div></div>' + snapRow + '</div></div>';
+/* ② 版本（第二位 · 条目 15）：主行＝数据世代 v<version> ＋ 技能包版本 v<skill_version>。
+   模板代际不上页：那是维护者的问题，用户拿它做不了动作；缺 skill_version 即只印数据世代。 */
+var verMain = 'v' + esc(SKILL_VERSION) + (SKILL_PKG_VERSION ? ' · 技能 v' + esc(SKILL_PKG_VERSION) : '');
+/* 文件事实（条目 15 的边界）：只印这一页自己的生成时刻。
+   复用窗口是调用方的策略参数，候选完整性的业务承诺归各技能自己的数据来源，两者都不进共享模板。 */
+var genRow = GENERATED_AT ? '<div class="about-row"><div class="a-t"><span style="font-size:12px;color:#6e6e73">本页数据生成于 ' + esc(GENERATED_AT) + '</span></div></div>' : '';
+h += '<div class="about-sec"><div class="as-head"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;flex-shrink:0"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg> 版本</div><div class="as-body"><div class="about-row"><span class="a-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></span><div class="a-t"><b>' + esc(SKILL_NAME) + '</b><span>' + verMain + '</span></div></div>' + genRow + '</div></div>';
 /* ③ 其他技能（第三位 · SVG 图标）*/
 if (RECOMMENDATIONS && RECOMMENDATIONS.length) {
   h += '<div class="about-sec"><div class="as-head"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;flex-shrink:0"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.4 1 2.3h6c0-.9.4-1.8 1-2.3A7 7 0 0 0 12 2z"/></svg> 其他技能</div><div class="as-body">';
