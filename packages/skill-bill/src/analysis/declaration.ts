@@ -100,7 +100,7 @@ export const ANALYSIS_DECLARATION: DomainDeclaration = {
           types: ['查看'],
           editable_fields: [
             { name: 'period', label: '时间(选填)', value: '', hint: '如 本月、5月、5月1到10号', required: false, kind: 'text' },
-            { name: 'account', label: '账户(选填)', value: '', hint: '如 支付宝', required: false, kind: 'text' },
+            { name: 'account', label: '账户(选填)', value: '', hint: '如 支付宝', required: false, kind: 'text', source: 'accounts' },
             { name: 'direction', label: '收支(选填)', value: '', hint: '空＝支出', required: false, kind: 'select', options: ['支出', '收入', '全部'] },
           ],
         },
@@ -270,7 +270,7 @@ export const ANALYSIS_DECLARATION: DomainDeclaration = {
           prompt_template: '请你加载技能 饼干记账,执行唤醒词「看分类趋势」。\n\n我想看某个分类的月度变化。\n\n分类:{{category}}\n月数(选填):{{months}}',
           types: ['查看'],
           editable_fields: [
-            { name: 'category', label: '分类', value: '', hint: '如 餐饮、出行', required: true, kind: 'text' },
+            { name: 'category', label: '分类', value: '', hint: '如 餐饮、出行', required: true, kind: 'text', source: 'categories' },
             { name: 'months', label: '月数(选填)', value: '', hint: '空＝12；如 6、12', required: false, kind: 'number' },
           ],
         },

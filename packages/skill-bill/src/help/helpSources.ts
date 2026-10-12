@@ -1,4 +1,4 @@
-/** #1270 · 生成 HELP 前的**本机来源读取**（条目 10 标签候选；#1276 条目 24 配置现值）：把「这次生成要从现场读一次」的东西收在一处。
+/** #1270 · 生成 HELP 前的**本机来源读取**（条目 10／9／12／13 候选清单；#1276 条目 24 配置现值）：把「这次生成要从现场读一次」的东西收在一处。
  *
  * 为什么只能在生成期读：#1273 查清 HELP 页是静态产物（浏览器里没有库），而 HELP 那支跑在开库之前
  * （`packages/skill-bill/src/cli/cmd_read.ts` 里先渲染、后 `openBillDb`），所以本件自己**只读**取数：
@@ -16,19 +16,19 @@
 import { existsSync } from 'node:fs';
 import { resolveDbPath } from '../fetch/index.js';
 import { configPrefillValues } from '../setup/configPrefill.js';
-import { readTagCandidates } from './tagCandidates.js';
+import { EMPTY_CANDIDATE_LISTS, readCandidateLists, type HelpCandidateLists } from './candidateLists.js';
 
 /** 生成期来源快照：`buildHelpFileData` 的 `opts` 直接吃这一份（多出来的键它不认，故只放它认识的）。 */
 export interface HelpGenerationSources {
   /** 库里已有数据（DB 文件存在）＝已初始化，与老 `render_help._is_initialized` 同口径。 */
   readonly initialized: boolean;
-  /** 「查标签」这类槽位的预置候选；读不出即空表（见 `help/tagCandidates.ts`）。 */
-  readonly tagCandidates: readonly string[];
+  /** 「查标签」「查分类」「查账户」「查账本」这类槽位的预置候选；读不出即四张空表（见 `help/candidateLists.ts`）。 */
+  readonly candidates: HelpCandidateLists;
   /** 「设置当前配置」这类槽位的预填现值（键＝字段名）；文件不在／键没写即少那一位（见 `setup/configPrefill.ts`）。 */
   readonly configValues: Readonly<Record<string, string>>;
 }
 
-/** 读一次现场：配置现值 ＋ 库在不在 ＋ 标签候选。整条链任何一步失败都退回「没有这份数据」。
+/** 读一次现场：配置现值 ＋ 库在不在 ＋ 四张候选清单。整条链任何一步失败都退回「没有这份数据」。
  *
  *  **顺序有讲究**：配置先读、库后读。`resolveDbPath()` 走 `loadBillConfig()`，配置文件不在时会**落一份默认件**
  *  （老行为，不是本件引入）；先读配置才读得出「用户自己写了哪些键」，否则读到的会是刚被写下的那份默认件，
@@ -40,10 +40,10 @@ export function readHelpSources(): HelpGenerationSources {
     const dbFile = resolveDbPath();
     return {
       initialized: existsSync(dbFile),
-      tagCandidates: readTagCandidates(dbFile),
+      candidates: readCandidateLists(dbFile),
       configValues,
     };
   } catch {
-    return { initialized: false, tagCandidates: [], configValues: {} };
+    return { initialized: false, candidates: EMPTY_CANDIDATE_LISTS, configValues: {} };
   }
 }

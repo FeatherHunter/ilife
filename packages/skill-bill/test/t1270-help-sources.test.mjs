@@ -22,24 +22,29 @@ const { resolveDbPath } = await import('../dist/fetch/index.js');
 test('#1270 · 库不在 ⇒ 未初始化 ＋ 候选空表（页面照出、横幅照显）', () => {
   const sources = readHelpSources();
   assert.equal(sources.initialized, false, '库文件不在即未初始化');
-  assert.deepEqual(sources.tagCandidates, [], '读不出候选即空表，不是故障');
+  assert.deepEqual(sources.candidates, { tags: [], categories: [], accounts: [], ledgers: [] },
+    '读不出候选即四张空表，不是故障');
 });
 
-test('#1270 · 库在 ⇒ 已初始化 ＋ 候选＝真标签（全数字编号不算标签）', () => {
+test('#1270 · 库在 ⇒ 已初始化 ＋ 候选＝真标签与三列真值（全数字编号不算标签）', () => {
   const dbFile = resolveDbPath();
   const db = new DatabaseSync(dbFile);
-  db.exec('CREATE TABLE bills (id INTEGER PRIMARY KEY, note TEXT, deleted_at TEXT)');
-  const insert = db.prepare('INSERT INTO bills (note, deleted_at) VALUES (?, ?)');
-  insert.run('午饭 #待报销', null);
-  insert.run('#待报销 #分期', null);
-  insert.run('编号单 #10385', null);
-  insert.run('删掉的那条 #退款', '2026-10-13 00:00:00');
+  db.exec(`CREATE TABLE bills (
+    id INTEGER PRIMARY KEY, category TEXT, account TEXT, ledger TEXT, note TEXT, deleted_at TEXT)`);
+  const insert = db.prepare('INSERT INTO bills (category, account, ledger, note, deleted_at) VALUES (?, ?, ?, ?, ?)');
+  insert.run('餐饮', '支付宝', '生活', '午饭 #待报销', null);
+  insert.run('餐饮', '微信', '旅行', '#待报销 #分期', null);
+  insert.run('出行', '支付宝', '生活', '编号单 #10385', null);
+  insert.run('退款', '支付宝', '生活', '删掉的那条 #退款', '2026-10-13 00:00:00');
   db.close();
 
   const sources = readHelpSources();
   assert.equal(sources.initialized, true, '库文件在即已初始化');
-  assert.deepEqual(sources.tagCandidates, ['待报销', '分期'],
+  assert.deepEqual(sources.candidates.tags, ['待报销', '分期'],
     '次数降序（待报销 ×2 → 分期 ×1）、全数字词丢掉、已删记录不进候选');
+  assert.deepEqual(sources.candidates.categories, ['餐饮', '出行'], '分类按次数降序，已删记录不进候选');
+  assert.deepEqual(sources.candidates.accounts, ['支付宝', '微信']);
+  assert.deepEqual(sources.candidates.ledgers, ['生活', '旅行']);
 });
 
 test('#1270 · 库件坏了 ⇒ 仍算已初始化，候选退回空表（不抛错）', () => {
@@ -47,5 +52,6 @@ test('#1270 · 库件坏了 ⇒ 仍算已初始化，候选退回空表（不抛
   writeFileSync(dbFile, '这不是一个 sqlite 库件', 'utf8');
   const sources = readHelpSources();
   assert.equal(sources.initialized, true, '文件在就是已初始化——初始化判据是文件存在，不是能不能读');
-  assert.deepEqual(sources.tagCandidates, [], '打不开即空表，槽位退回自由文本');
+  assert.deepEqual(sources.candidates.categories, [], '打不开即空表，槽位退回自由文本');
+  assert.deepEqual(sources.candidates.tags, []);
 });

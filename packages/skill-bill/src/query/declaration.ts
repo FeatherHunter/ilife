@@ -162,10 +162,10 @@ export const QUERY_DECLARATION: DomainDeclaration = {
           prompt_template: '请你加载技能 饼干记账,执行唤醒词「查分类」。\n\n我想查某个分类的账。\n\n分类:{{category}}\n时间(选填):{{period}}\n账户(选填):{{account}}\n账本(选填):{{ledger}}\n收支(选填):{{direction}}',
           types: ['查看'],
           editable_fields: [
-            { name: 'category', label: '分类', value: '', hint: '如 餐饮、出行、奶茶', required: true, kind: 'text' },
+            { name: 'category', label: '分类', value: '', hint: '如 餐饮、出行、奶茶', required: true, kind: 'text', source: 'categories' },
             { name: 'period', label: '时间(选填)', value: '', hint: '如 本月、5月、5月1到10号', required: false, kind: 'text' },
-            { name: 'account', label: '账户(选填)', value: '', hint: '如 支付宝', required: false, kind: 'text' },
-            { name: 'ledger', label: '账本(选填)', value: '', hint: '', required: false, kind: 'text' },
+            { name: 'account', label: '账户(选填)', value: '', hint: '如 支付宝', required: false, kind: 'text', source: 'accounts' },
+            { name: 'ledger', label: '账本(选填)', value: '', hint: '', required: false, kind: 'text', source: 'ledgers' },
             { name: 'direction', label: '收支(选填)', value: '', hint: '空＝全部', required: false, kind: 'select', options: ['支出', '收入', '全部'] },
           ],
         },
@@ -183,7 +183,7 @@ export const QUERY_DECLARATION: DomainDeclaration = {
           prompt_template: '请你加载技能 饼干记账,执行唤醒词「查账户」。\n\n我想查某个账户的流水。\n\n账户:{{account}}\n时间(选填):{{period}}',
           types: ['查看'],
           editable_fields: [
-            { name: 'account', label: '账户', value: '', hint: '如 支付宝、微信、招行', required: true, kind: 'text' },
+            { name: 'account', label: '账户', value: '', hint: '如 支付宝、微信、招行', required: true, kind: 'text', source: 'accounts' },
             { name: 'period', label: '时间(选填)', value: '', hint: '如 本月、上月', required: false, kind: 'text' },
           ],
         },
@@ -201,7 +201,7 @@ export const QUERY_DECLARATION: DomainDeclaration = {
           prompt_template: '请你加载技能 饼干记账,执行唤醒词「查账本」。\n\n我想查某个账本的记录。账本是对记录的分组（例如生活、旅行），本场景按指定账本过滤记录。\n\n账本:{{ledger}}\n周(选填，与月/年/区间四选一):{{period_week}}\n月(选填，与周/年/区间四选一):{{period_month}}\n年(选填，与周/月/区间四选一):{{period_year}}\n开始日期(选填，区间):{{period_start}}\n结束日期(选填，区间):{{period_end}}',
           types: ['查看'],
           editable_fields: [
-            { name: 'ledger', label: '账本（对记录的分组）', value: '', hint: '账本是对记录的分组（例如生活、旅行），本场景按指定账本过滤；如 生活、旅行、借贷', required: true, kind: 'text' },
+            { name: 'ledger', label: '账本（对记录的分组）', value: '', hint: '账本是对记录的分组（例如生活、旅行），本场景按指定账本过滤；如 生活、旅行、借贷', required: true, kind: 'text', source: 'ledgers' },
             { name: 'period_week', label: '周(选填，四选一)', value: '', hint: '如 本周、上周；与月/年/区间四选一，空＝全部时间', required: false, kind: 'text' },
             { name: 'period_month', label: '月(选填，四选一)', value: '', hint: '如 本月、上月、2026-05；与周/年/区间四选一', required: false, kind: 'text' },
             { name: 'period_year', label: '年(选填，四选一)', value: '', hint: '如 今年、2026；与周/月/区间四选一', required: false, kind: 'text' },
@@ -291,7 +291,7 @@ export const QUERY_DECLARATION: DomainDeclaration = {
           editable_fields: [
             { name: 'item_name', label: '名目(选填)', value: '', hint: '空＝全部；如 手机', required: false, kind: 'text' },
             { name: 'status', label: '状态(选填)', value: '', hint: '空＝全部', required: false, kind: 'select', options: ['全部', '进行中', '已还清'] },
-            { name: 'account', label: '账户(选填)', value: '', hint: '空＝全部；如 支付宝', required: false, kind: 'text' },
+            { name: 'account', label: '账户(选填)', value: '', hint: '空＝全部；如 支付宝', required: false, kind: 'text', source: 'accounts' },
           ],
         },
       ],

@@ -25,6 +25,7 @@ import { fileURLToPath } from 'node:url';
 import { renderHelpShellHtml } from 'base-paint/help-shell';
 import { HELP_WAKE_WORDS, SCENE_BY_ID, WAKE_ASSETS, WAKE_GROUPS } from '../triggers/wake-assets.js';
 import { BillRenderError } from '../render/errors.js';
+import { EMPTY_CANDIDATE_LISTS, type HelpCandidateLists } from './candidateLists.js';
 
 /** 「饼干记账help」交付文件的文件名主体：**代码常量**（#762 起配置项 `html.helpStem` 已退休——
  *  用户改的曾经是配置文件，现在没有可改处；对外也不接受调用方传入，照 #139 S3-3）。
@@ -135,9 +136,9 @@ export interface HelpFileData {
 export interface HelpFileOptions {
   /** 库是否已初始化（`true` ⇒ 首次使用横幅隐藏）。缺省 `false`＝照显（见模块头：误显的代价小于误藏）。 */
   readonly initialized?: boolean;
-  /** #1270 生成期候选（条目 10）：库里的真标签词表，由调用方**只读**读出后传入
-   *  （见 `help/tagCandidates.ts`）。空缺 `[]` ⇒ 声明里写了 `source: 'tags'` 的槽位退回自由文本。 */
-  readonly tagCandidates?: readonly string[];
+  /** #1270 生成期候选（条目 10 标签 ＋ 条目 9／12／13 查询页的分类／账户／账本）：由调用方**只读**读出后传入
+   *  （见 `help/candidateLists.ts`）。某张清单为空 ⇒ 声明里写了对应 `source` 的槽位退回自由文本。 */
+  readonly candidates?: HelpCandidateLists;
   /** #1276 生成期预填（条目 24）：当前配置里**已有**的现值，键＝字段名，由调用方**只读**读出后传入
    *  （见 `setup/configPrefill.ts`）。缺位的键 ⇒ 声明里写了 `source: 'config'` 的槽位留空＝「空＝不改」。 */
   readonly configValues?: Readonly<Record<string, string>>;
@@ -186,31 +187,45 @@ export function buildInitBanner(initialized: boolean): HelpInitBanner {
   };
 }
 
-/** #1270（条目 10）：把生成期读到的候选填进声明里写了 `source: 'tags'` 的槽位——
- *  升级成 `kind: 'select'` ＋ `options: 候选词表`，页面就是一个「从已有标签里选一个」的下拉。
+const SOURCE_LISTS: Readonly<Record<string, keyof HelpCandidateLists>> = {
+  tags: 'tags',
+  categories: 'categories',
+  accounts: 'accounts',
+  ledgers: 'ledgers',
+};
+
+/** #1270（条目 10／9／12／13）：把生成期读到的候选清单填进声明里写了清单类 `source` 的槽位——
+ *  升级成 `kind: 'select'` ＋ `options: 该清单`，页面就是一个「从已有值里选一个」的下拉。
  *
- *  三条边界：① 候选为空 ⇒ **原样返回**（槽位保持自由文本，用户照敲，不出现空下拉）；
+ *  三条边界：① 该清单为空 ⇒ **原样返回**（槽位保持自由文本，用户照敲，不出现空下拉）；
  *  ② 声明里同时写了写死的 `options` ⇒ 以写死的为准（本函数不动它）；
  *  ③ 只 clone 真被改到的层（分组／二级组／场景／字段），其余仍只读引用资产，省掉整棵树的拷贝。 */
-function fillTagCandidates(
+function fillCandidates(
   groups: typeof WAKE_GROUPS,
-  candidates: readonly string[],
+  lists: HelpCandidateLists,
 ): typeof WAKE_GROUPS {
-  if (candidates.length === 0) return groups;
+  const optionsOf = (field: { readonly source?: string; readonly options?: unknown }): readonly string[] | undefined => {
+    if (field.options !== undefined) return undefined;
+    const key = field.source === undefined ? undefined : SOURCE_LISTS[field.source];
+    if (key === undefined) return undefined;
+    const list = lists[key];
+    return list.length === 0 ? undefined : list;
+  };
   let changed = false;
   const nextGroups = groups.map((group) => {
     const nextSubs = group.subgroups.map((sub) => {
       const nextScenes = sub.scenes.map((scene) => {
         const fields = scene.editable_fields;
-        if (fields === undefined || !fields.some((f) => f.source === 'tags' && f.options === undefined)) {
+        if (fields === undefined || !fields.some((f) => optionsOf(f) !== undefined)) {
           return scene;
         }
         changed = true;
         return {
           ...scene,
-          editable_fields: fields.map((f) => (f.source === 'tags' && f.options === undefined
-            ? { ...f, kind: 'select' as const, options: candidates }
-            : f)),
+          editable_fields: fields.map((f) => {
+            const options = optionsOf(f);
+            return options === undefined ? f : { ...f, kind: 'select' as const, options };
+          }),
         };
       });
       const sameScenes = nextScenes.every((s, i) => s === sub.scenes[i]);
@@ -226,7 +241,7 @@ function fillTagCandidates(
  *  填的是字段的 `value`（页面一打开就写着现值，用户只改要改的那格）。
  *
  *  两条边界：① 这一格没值（文件里没写／读不出）⇒ 原样返回，字段留空＝「空＝不改」语义不动；
- *  ② 只 clone 真被改到的层（同 `fillTagCandidates` 的省拷贝口径）。 */
+ *  ② 只 clone 真被改到的层（同 `fillCandidates` 的省拷贝口径）。 */
 function fillConfigValues(
   groups: typeof WAKE_GROUPS,
   values: Readonly<Record<string, string>>,
@@ -269,7 +284,7 @@ export function buildHelpFileData(now: Date = new Date(), opts: HelpFileOptions 
     title: HELP_FILE_TITLE,
     subtitle: summaryLine,
     contact: HELP_CONTACT,
-    groups: fillConfigValues(fillTagCandidates(WAKE_GROUPS, opts.tagCandidates ?? []), opts.configValues ?? {}),
+    groups: fillConfigValues(fillCandidates(WAKE_GROUPS, opts.candidates ?? EMPTY_CANDIDATE_LISTS), opts.configValues ?? {}),
     meta_blocks: buildMetaBlocks(summaryLine),
     version: HELP_FILE_VERSION,
     init_banner: buildInitBanner(opts.initialized === true),

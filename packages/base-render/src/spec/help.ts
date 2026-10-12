@@ -31,11 +31,13 @@ export interface SceneTypeBadge {
  *  缺 `kind` 视为 `text`。`time` 值形态 `HH:MM`（00:00–23:59；24:00 由调用方先归一到 23:59，本层不收）。 */
 export type SceneFieldKind = 'text' | 'number' | 'select' | 'date' | 'week' | 'month' | 'year' | 'time';
 
-/** 候选／现值来源闭集（#1270、#1276 定案）。
- *  语义：声明只写**来源名**，值由**生成期**填进载荷（`tags` 填 `options`，`config` 填 `value`）；
- *  生成期读不到就退回自由文本（`kind` 保持 `text`；`config` 的 `value` 保持声明里的空串）。
- *  这一格回答「这份值的来源」，与 `options`（写死的候选）互斥：两者同时在场时以写死的 `options` 为准。 */
-export type SceneFieldSource = 'tags' | 'config';
+/** 候选／现值来源闭集（#1270、#1276 定案；#1270 第二刀扩分类／账户／账本）。
+ *  语义：声明只写**来源名**，值由**生成期**填进载荷——清单类（`tags`／`categories`／`accounts`／`ledgers`）
+ *  填 `options`，单值类（`config`）填 `value`；生成期读不到就退回自由文本（`kind` 保持 `text`，
+ *  `config` 的 `value` 保持声明里的空串）。
+ *  这一格回答「这份值的来源」，与 `options`（写死的候选）互斥：两者同时在场时以写死的 `options` 为准。
+ *  名字是**来源种类**（标签／分类／账户／账本／配置），不是某个技能的概念：具体从哪儿读由各技能的生成期定。 */
+export type SceneFieldSource = 'tags' | 'categories' | 'accounts' | 'ledgers' | 'config';
 
 export interface SceneEditableField {
   readonly name: string;
@@ -209,7 +211,7 @@ export const SCENE_DATA_SCHEMA = Object.freeze({
                             hint: { type: 'string' },
                             required: { type: 'boolean' },
                             kind: { enum: ['text', 'number', 'select', 'date', 'week', 'month', 'year', 'time'] },
-                            source: { enum: ['tags', 'config'] },
+                            source: { enum: ['tags', 'categories', 'accounts', 'ledgers', 'config'] },
                             options: {
                               type: 'array',
                               items: {

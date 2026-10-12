@@ -177,7 +177,7 @@ export function listByTag(h: BillDb, tag: string): BillRow[] {
 }
 
 /** 从备注里切出全部 `#词`（分隔符与 `tagMatch` 同一套；同一行里重复的词只出一次，保序）。
- *  #1270：生成期取「真标签」词表用（`help/tagCandidates.ts`），与匹配口径同源，
+ *  #1270：生成期取「真标签」词表用（`help/candidateLists.ts`），与匹配口径同源，
  *  故 `tagsInNote(note)` 里每个词都必然 `tagMatch(note, 词) === true`（有测试钉住）。 */
 export function tagsInNote(note: string): string[] {
   const text = typeof note === 'string' ? note : '';

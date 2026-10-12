@@ -1,6 +1,6 @@
-// #1270 · 生成期候选（条目 10：查标签详情页从已有标签里选一个）
-// 判据：① 词表口径（`#词` 切分、全数字编号丢掉、次数降序）②只读开库 fail-open ③声明里写了
-// `source: 'tags'` 的槽位在有候选时升级成下拉、没候选时保持自由文本。
+// #1270 · 生成期候选（条目 10 标签 ＋ 条目 9／12／13 查询页的分类／账户／账本：从已有值里选一个）
+// 判据：① 四张清单口径（`#词` 切分＋全数字丢掉；三列去重按次数降序）②只读开库 fail-open
+// ③声明里写了清单类 `source` 的槽位在有候选时升级成下拉、没候选时保持自由文本、写死 options 的仍以写死为准。
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync } from 'node:fs';
@@ -9,24 +9,32 @@ import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 
 import {
-  buildHelpFileData, renderHelpFileHtml, rankTagCandidates, readTagCandidates, TAG_CANDIDATE_LIMIT,
+  buildHelpFileData, renderHelpFileHtml, LIST_CANDIDATE_LIMIT, TAG_CANDIDATE_LIMIT,
+  rankByFrequency, rankTagCandidates, readCandidateLists,
 } from '../dist/render/index.js';
 import { tagMatch, tagsInNote } from '../dist/fetch/db.js';
 
 const NOW = new Date(2026, 9, 13, 1, 30, 0);
 
-function sceneFieldOf(data, name) {
+/** 载荷里某个场景的某个字段；找不到即 null。 */
+function fieldOf(data, sceneId, name) {
   for (const g of data.groups) {
     for (const s of g.subgroups) {
       for (const scene of s.scenes) {
-        for (const f of scene.editable_fields ?? []) {
-          if (f.name === name) return f;
-        }
+        if (scene.id !== sceneId) continue;
+        for (const f of scene.editable_fields ?? []) if (f.name === name) return f;
       }
     }
   }
   return null;
 }
+
+const LISTS = {
+  tags: ['待报销', '分期', '未还'],
+  categories: ['餐饮', '出行'],
+  accounts: ['支付宝', '微信'],
+  ledgers: ['生活', '旅行'],
+};
 
 test('#1270 · 词形切分与 tagMatch 同源：切出来的词，match 必然为真', () => {
   const note = '午饭 #待报销 与 #旅行计划 以及 #借给小明，#分期；编号 #10385';
@@ -40,7 +48,7 @@ test('#1270 · 词形切分与 tagMatch 同源：切出来的词，match 必然�
   assert.deepEqual(tagsInNote(''), []);
 });
 
-test('#1270 · 候选词表：全数字编号丢掉，次数降序、同次数按首次出现序，遵守上限', () => {
+test('#1270 · 标签候选：全数字编号丢掉，次数降序、同次数按首次出现序，遵守上限', () => {
   const notes = ['#待报销 #10385', '#待报销 #分期', '#分期 #未还', '#MHL'];
   const got = rankTagCandidates(notes);
   assert.deepEqual(got, ['待报销', '分期', '未还', 'MHL']);
@@ -51,60 +59,111 @@ test('#1270 · 候选词表：全数字编号丢掉，次数降序、同次数�
   assert.equal(TAG_CANDIDATE_LIMIT > 0, true);
 });
 
+test('#1270 · 分类／账户／账本候选：三列去重、次数降序、空白值丢掉、遵守上限', () => {
+  const values = ['餐饮', '餐饮', '出行', '', '  ', '奶茶'];
+  assert.deepEqual(rankByFrequency(values, LIST_CANDIDATE_LIMIT), ['餐饮', '出行', '奶茶']);
+  assert.deepEqual(rankByFrequency(values, 2), ['餐饮', '出行']);
+  assert.deepEqual(rankByFrequency([], 5), []);
+  assert.equal(rankByFrequency(['a'], 0).length, 0);
+  assert.equal(LIST_CANDIDATE_LIMIT >= TAG_CANDIDATE_LIMIT, true, '账目结构要能选到任何一个，上限不紧于标签');
+});
+
 test('#1270 · 只读读库：真结构、老结构（无 deleted_at）、文件不在、不是库——四种都不抛', () => {
   const dir = mkdtempSync(join(tmpdir(), 't1270-'));
 
   // ① 真结构（有 deleted_at，删掉的行不参与）
   const full = join(dir, 'full.db');
   const a = new DatabaseSync(full);
-  a.exec('CREATE TABLE bills (id INTEGER PRIMARY KEY AUTOINCREMENT, note TEXT DEFAULT \'\', deleted_at TEXT DEFAULT NULL)');
-  a.exec("INSERT INTO bills (note) VALUES ('#旅行 #10385'), ('#旅行 #待报销')");
-  a.exec("INSERT INTO bills (note, deleted_at) VALUES ('#已删除', '2026-01-01')");
+  a.exec(`CREATE TABLE bills (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, category TEXT NOT NULL, account TEXT DEFAULT '',
+    ledger TEXT DEFAULT '生活', note TEXT DEFAULT '', deleted_at TEXT DEFAULT NULL)`);
+  a.exec(`INSERT INTO bills (category, account, ledger, note) VALUES
+    ('餐饮', '支付宝', '生活', '#旅行 #10385'),
+    ('餐饮', '微信', '旅行', '#旅行 #待报销'),
+    ('出行', '支付宝', '生活', '')`);
+  a.exec("INSERT INTO bills (category, account, note, deleted_at) VALUES ('已删', '已删', '#已删除', '2026-01-01')");
   a.close();
-  assert.deepEqual(readTagCandidates(full), ['旅行', '待报销']);
+  const lists = readCandidateLists(full);
+  assert.deepEqual(lists.tags, ['旅行', '待报销']);
+  assert.deepEqual(lists.categories, ['餐饮', '出行'], '次数降序：餐饮 2 次在前');
+  assert.deepEqual(lists.accounts, ['支付宝', '微信']);
+  assert.deepEqual(lists.ledgers, ['生活', '旅行']);
 
   // ② 老结构：没有 deleted_at 列 ⇒ 退回不带过滤的读，不抛
   const old = join(dir, 'old.db');
   const b = new DatabaseSync(old);
-  b.exec('CREATE TABLE bills (id INTEGER PRIMARY KEY, note TEXT)');
-  b.exec("INSERT INTO bills (note) VALUES ('#借入')");
+  b.exec('CREATE TABLE bills (id INTEGER PRIMARY KEY, category TEXT, account TEXT, ledger TEXT, note TEXT)');
+  b.exec("INSERT INTO bills (category, account, ledger, note) VALUES ('借入', '现金', '借贷', '#借入')");
   b.close();
-  assert.deepEqual(readTagCandidates(old), ['借入']);
+  const oldLists = readCandidateLists(old);
+  assert.deepEqual(oldLists.tags, ['借入']);
+  assert.deepEqual(oldLists.categories, ['借入']);
+  assert.deepEqual(oldLists.accounts, ['现金']);
+  assert.deepEqual(oldLists.ledgers, ['借贷']);
 
-  // ③ 文件不在 / ④ 不是 sqlite 库 ⇒ 空表，不抛（fail-open：候选缺席退化成自由文本）
-  assert.deepEqual(readTagCandidates(join(dir, 'none.db')), []);
+  // ③ 文件不在 / ④ 不是 sqlite 库 ⇒ 四张空表，不抛（fail-open：候选缺席退化成自由文本）
+  for (const empty of [readCandidateLists(join(dir, 'none.db')), readCandidateLists('')]) {
+    assert.deepEqual(empty, { tags: [], categories: [], accounts: [], ledgers: [] });
+  }
   const junk = join(dir, 'junk.db');
   writeFileSync(junk, 'not a sqlite file');
-  assert.deepEqual(readTagCandidates(junk), []);
-  assert.deepEqual(readTagCandidates(''), []);
+  assert.deepEqual(readCandidateLists(junk).categories, []);
 });
 
-test('#1270 · 声明里的 source: tags ——有候选就升级成下拉，没候选就保持自由文本', () => {
-  const candidates = ['待报销', '分期', '未还'];
+test('#1270 · 清单类 source：有候选就升级成下拉，没候选就保持自由文本', () => {
+  const plain = buildHelpFileData(NOW, {});
 
-  const withOut = sceneFieldOf(buildHelpFileData(NOW, {}), 'tag');
-  assert.ok(withOut, '查标签那条字段必须在载荷里');
-  assert.equal(withOut.source, 'tags');
-  assert.equal(withOut.kind, 'text');
-  assert.equal(withOut.options, undefined, '没候选时不许出现空下拉');
+  // 没候选：四格都还是自由文本，且不许出现空下拉
+  for (const [sceneId, name] of [
+    ['query_tag', 'tag'], ['query_category', 'category'],
+    ['query_account', 'account'], ['query_ledger', 'ledger'],
+  ]) {
+    const f = fieldOf(plain, sceneId, name);
+    assert.ok(f, sceneId + '.' + name + ' 必须在载荷里');
+    assert.equal(typeof f.source, 'string', '声明里必须写下来源名');
+    assert.equal(f.kind, 'text');
+    assert.equal(f.options, undefined, '没候选时不许出现空下拉');
+  }
 
-  const withC = sceneFieldOf(buildHelpFileData(NOW, { tagCandidates: candidates }), 'tag');
-  assert.equal(withC.kind, 'select');
-  assert.deepEqual(withC.options, candidates);
-  assert.equal(withC.required, true, '必填与提示语都照旧');
-  assert.equal(withC.hint, '如 #旅行、#待报销');
+  const filled = buildHelpFileData(NOW, { candidates: LISTS });
+  const cases = [
+    ['query_tag', 'tag', 'tags', LISTS.tags, true],
+    ['query_category', 'category', 'categories', LISTS.categories, true],
+    ['query_category', 'account', 'accounts', LISTS.accounts, false],
+    ['query_category', 'ledger', 'ledgers', LISTS.ledgers, false],
+    ['query_account', 'account', 'accounts', LISTS.accounts, true],
+    ['query_ledger', 'ledger', 'ledgers', LISTS.ledgers, true],
+    ['query_installment', 'account', 'accounts', LISTS.accounts, false],
+  ];
+  for (const [sceneId, name, source, options, required] of cases) {
+    const f = fieldOf(filled, sceneId, name);
+    assert.equal(f.source, source, sceneId + '.' + name + ' 的来源名');
+    assert.equal(f.kind, 'select', sceneId + '.' + name + ' 有候选即下拉');
+    assert.deepEqual(f.options, options, sceneId + '.' + name + ' 候选原序透传');
+    assert.equal(f.required, required, '必填与提示语都照旧');
+  }
+
+  // 写死 options 的仍以写死为准（收支那格不是清单来源，没被换掉）
+  const direction = fieldOf(filled, 'query_category', 'direction');
+  assert.deepEqual(direction.options, ['支出', '收入', '全部']);
+  assert.equal(direction.source, undefined);
+
+  // 写入页这次不动：记一笔的分类要能输新值（「已有＋新建」的控件归 #1269），仍是自由文本
+  const writeCategory = fieldOf(filled, 'write_expense', 'category');
+  assert.equal(writeCategory.kind, 'text');
+  assert.equal(writeCategory.source, undefined);
 
   // 载荷里真的带上了候选；整页 HTML 里也读得到
-  const html = renderHelpFileHtml(buildHelpFileData(NOW, { tagCandidates: candidates }));
+  const html = renderHelpFileHtml(filled);
   assert.match(html, /"options":\["待报销","分期","未还"\]/);
+  assert.match(html, /"options":\["餐饮","出行"\]/);
 
-  // 别把资产改坏：无候选那次与有候选那次，非目标字段仍是同一批（引用相等＝没被 clone 走样）
-  const plain = buildHelpFileData(NOW, {});
-  const filled = buildHelpFileData(NOW, { tagCandidates: candidates });
+  // 别把资产改坏：没被改到的分组仍只读引用资产（引用相等＝没被 clone 走样）
   assert.equal(plain.groups.length, filled.groups.length);
-  assert.equal(plain.groups[0], filled.groups[0], '没被改到的分组仍只读引用资产（不 clone）');
+  assert.equal(plain.groups[0], filled.groups[0]);
 
-  // 次数降序口径进载荷：候选顺序原样透传，不在渲染层重排
-  const two = sceneFieldOf(buildHelpFileData(NOW, { tagCandidates: ['b', 'a'] }), 'tag');
-  assert.deepEqual(two.options, ['b', 'a']);
+  // 只给一张清单时，别的清单类槽位保持自由文本（互不串）
+  const onlyTags = buildHelpFileData(NOW, { candidates: { tags: ['a'], categories: [], accounts: [], ledgers: [] } });
+  assert.equal(fieldOf(onlyTags, 'query_tag', 'tag').kind, 'select');
+  assert.equal(fieldOf(onlyTags, 'query_category', 'category').kind, 'text');
 });
