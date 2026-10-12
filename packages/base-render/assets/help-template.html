@@ -156,6 +156,45 @@
   .sheet .ib{position:absolute;right:2px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:50%;border:0;background:#eef0f4;color:var(--blue);font:700 13px/1 -apple-system,"Microsoft YaHei",sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
   .sheet .ib:active{transform:translateY(-50%) scale(.94);background:#dde2ea}
   .sheet .ib.on{background:var(--blue);color:#fff}
+  /* 可开系统选择器的框（date／week／month／time）：整块盖一层透明盾——点哪儿都只开选择器，
+     不进编辑态（用户 2026-10-13 定：能出选择器就不该能手敲出 0001 这类异常值；手敲／粘贴／拖放都改不了值）。
+     实测口径：只读属性会被 showPicker 拒（InvalidStateError）、点输入框自身的处理器拿不到用户激活
+     （NotAllowedError）——覆盖层是「点哪儿都开」＋「不许手敲」同时成立的落点。 */
+  .sheet .pick-hold{position:relative;display:flex;flex:1;min-width:0}
+  .sheet .pick-shield{position:absolute;inset:0;z-index:1;cursor:pointer}
+  .sheet .pform .ib{z-index:2}
+  /* 时间槽位（kind:'period'）：粒度分段（不限／某天／周／月／年／区间）＋对应原生控件；
+     取值是**人话表达式**（周／月另带起止日期）写回同名字段——命令侧不必懂 ISO 周号。 */
+  .sheet .period{display:flex;flex-wrap:wrap;gap:6px;flex:1 1 100%;min-width:0;align-items:center}
+  .sheet .period-seg{display:flex;flex-wrap:wrap;gap:6px;flex:1 1 100%;min-width:0}
+  .sheet .period-btn{appearance:none;border:1px solid var(--line);background:#fff;color:var(--fg2);border-radius:999px;padding:7px 13px;font:600 12.5px/1 -apple-system,"Microsoft YaHei",sans-serif;cursor:pointer}
+  .sheet .period-btn.on{background:var(--blue);border-color:var(--blue);color:#fff}
+  .sheet .period-ctl{display:flex;flex-wrap:wrap;gap:6px;flex:1 1 100%;min-width:0;align-items:center}
+  .sheet .period-ctl .inwrap{flex:1 1 100%;min-width:0}
+  .sheet .period-ctl input{flex:1 1 130px;min-width:0}
+  .sheet .period-ctl .period-sep{color:var(--fg3);font-size:12px;flex-shrink:0}
+  /* 候选多的下拉（>12 项）：一行框 ＋ 悬浮筛选面板。面板挂到 <body>、**一律向上展开**——
+     字段本身永远只有一行，不改控件高度（用户 2026-10-13 定：筛选输入框与「共 N 项」在面板底端同一行）。 */
+  .sheet .filt{flex:1;min-width:0;display:block}
+  .sheet .filt-row{display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:9px;padding:8px 36px 8px 10px;background:#fff;font:400 16px/1.2 -apple-system,"Microsoft YaHei",sans-serif;color:var(--fg);cursor:pointer;text-align:left}
+  .sheet .filt.open .filt-row{border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,122,255,.12)}
+  .sheet .filt-val{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--fg3)}
+  .sheet .filt-val.has{color:var(--fg)}
+  .sheet .filt-caret{width:11px;height:7px;color:var(--fg3);flex-shrink:0;transition:transform .16s ease}
+  .sheet .filt.open .filt-caret{transform:rotate(180deg)}
+  .filt-panel{display:none;border:1px solid var(--line);border-radius:11px;background:#fff;box-shadow:0 8px 26px rgba(0,0,0,.14);overflow:hidden}
+  .filt-panel.filt-float{display:block;position:fixed;z-index:9500}
+  .filt-list{max-height:212px;overflow:auto;-webkit-overflow-scrolling:touch}
+  .filt-opt{padding:9px 11px;font-size:14.5px;color:var(--fg);cursor:pointer;border-bottom:1px solid #f4f4f6}
+  .filt-opt:last-child{border-bottom:0}
+  .filt-opt.on{color:var(--blue);font-weight:700;background:var(--soft)}
+  .filt-opt.none{color:var(--fg3)}
+  .filt-foot{display:flex;align-items:center;gap:8px;padding:7px 9px;font-size:11.5px;color:var(--fg3);background:#fafafc;border-top:1px solid #f0f0f3}
+  .filt-q{flex:1;min-width:0;box-sizing:border-box;border:1px solid var(--line);border-radius:8px;height:32px;padding:0 9px;font-size:13.5px;background:#fff;outline:none;font-family:inherit;color:var(--fg)}
+  .filt-count{flex-shrink:0;white-space:nowrap}
+  /* 唤起失败／浏览器不支持时的可见提示（不静默） */
+  .help-note{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;z-index:99999;max-width:88vw;background:rgba(28,28,30,.92);color:#fff;font:400 12.5px/1.5 -apple-system,"Microsoft YaHei",sans-serif;padding:9px 12px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .18s ease}
+  .help-note.show{opacity:1}
   /* 轻量 popover：贴图标弹出的小气泡（不是整幅面板）。
      宽度（用户 2026-10-13 定稿）：先按内容取宽（`width:max-content`，能一行显完就窄），
      上限＝**这一格输入框的宽度**（`popShow` 里按 `.inwrap` 实测后写进 `max-width`），向左展开；
@@ -1769,7 +1808,7 @@ function normalizeScenes(scenes){
       dev: (s.status === '【待开发】'),
       prompt: s.prompt_template,
       params: (s.editable_fields || []).map(function(f){
-        var k = (f.kind === 'number' || f.kind === 'select' || f.kind === 'date' || f.kind === 'week' || f.kind === 'month' || f.kind === 'year' || f.kind === 'time') ? f.kind : 'text';
+        var k = (f.kind === 'number' || f.kind === 'select' || f.kind === 'date' || f.kind === 'week' || f.kind === 'month' || f.kind === 'year' || f.kind === 'time' || f.kind === 'period') ? f.kind : 'text';
         if (f.kind !== undefined && f.kind !== null && k === 'text' && f.kind !== 'text') { try{console.warn('help-template: 非法 kind 降级 text: ' + f.kind);}catch(e){} }
         return { key: f.name, label: f.label, value: f.value || '', req: !!f.required, hint: f.hint || '', kind: k, options: f.options || [], emptyLabel: f.empty_label || '', min: f.min, max: f.max, step: f.step, placeholder: f.placeholder || f.hint || '' };
       })
@@ -1850,10 +1889,29 @@ function tabIconHTML(g){
 /* ===== 参数机制：代值后 prompt 全文 + 末尾每行「label: value」（#969）===== */
 function fieldKindOf(f){
   var k = f && f.kind;
-  if (k === 'number' || k === 'select' || k === 'date' || k === 'week' || k === 'month' || k === 'year' || k === 'time') return k;
+  if (k === 'number' || k === 'select' || k === 'date' || k === 'week' || k === 'month' || k === 'year' || k === 'time' || k === 'period') return k;
   if (k !== undefined && k !== null && k !== 'text') { try{console.warn('help-template: 非法 kind 降级 text: ' + k);}catch(e){} }
   return 'text';
 }
+/* ===== 字段挂载口径（用户 2026-10-13 定稿，#1269 装控件 ＋ #1275 定边界）=====
+   ① kind:'period' 的字段＝粒度分段（不限／某天／周／月／年／区间）＋对应原生控件；取值是**人话表达式**
+      写回同名字段（周／月另带起止日期）——命令侧不必懂 ISO 周号。
+   ② 候选超过 12 项的下拉换成「一行框 ＋ 悬浮筛选面板」：面板挂 <body>、一律向上展开，字段本身永远只有一行。
+   ③ 能开系统选择器的框（date／week／month／time）整块盖一层透明盾：点哪儿都只开选择器，不进编辑态、
+      手敲／粘贴／拖放改不了值。 */
+var HELP_PICKABLE = /^(date|week|month|time|datetime-local)$/;
+var HELP_FILTER_MIN = 12;
+var HELP_PERIOD_MODES = [
+  { k: 'none', t: '不限' }, { k: 'day', t: '某天' }, { k: 'week', t: '周' },
+  { k: 'month', t: '月' }, { k: 'year', t: '年' }, { k: 'range', t: '区间' }
+];
+var HELP_PERIOD_HINTS = {
+  day: '某天：填一个日期（YYYY-MM-DD），如 2026-05-03；空＝全部时间。',
+  week: '周：选 ISO 周，如 2026 年第 18 周（2026-04-27 至 2026-05-03）。',
+  month: '月：选一个月份，如 2026 年 5 月（2026-05-01 至 2026-05-31）。',
+  year: '年：如 2026。',
+  range: '区间：填开始与结束；开始＝结束即某天。'
+};
 function substitutePrompt(tpl, fields, v){
   var out = String(tpl || '');
   (fields || []).forEach(function(f){
@@ -1926,6 +1984,18 @@ function fieldControlHTML(p){
   }
   if (kind === 'time') {
     return '<input data-p="' + esc(p.key) + '" type="time" value="' + esc(String(p.value || '')) + '" placeholder="' + esc(ph) + '">';
+  }
+  if (kind === 'period') {
+    /* 时间槽位：粒度分段（不限／某天／周／月／年／区间）＋对应原生控件；取值是**人话表达式**
+       （周／月另带起止日期）写回本字段——命令侧不必懂 ISO 周号（用户 2026-10-13 定稿）。 */
+    var segs = '';
+    for (var pi = 0; pi < HELP_PERIOD_MODES.length; pi++) {
+      segs += '<button type="button" class="period-btn' + (pi === 0 ? ' on' : '') + '" data-period-seg="' + esc(HELP_PERIOD_MODES[pi].k) + '">' + esc(HELP_PERIOD_MODES[pi].t) + '</button>';
+    }
+    return '<div class="period" data-period="' + esc(p.key) + '">' +
+      '<input type="hidden" data-p="' + esc(p.key) + '" value="' + esc(String(p.value || '')) + '">' +
+      '<div class="period-seg" role="group" aria-label="时间粒度">' + segs + '</div>' +
+      '<div class="period-ctl"></div></div>';
   }
   return '<input data-p="' + esc(p.key) + '" type="text" value="' + esc(String(p.value || '')) + '" placeholder="' + esc(ph) + '">';
 }
@@ -2102,7 +2172,7 @@ function openSheet(s){
       var lab = String(p.label == null ? '' : p.label);
       /* 选填段的「(选填)」由组头交代，label 里不再重复（声明里 71 条自带该后缀）*/
       if (!p.req) lab = lab.replace(/[（(]\s*选填\s*[)）]\s*$/, '');
-      var native = /^(select|date|week|month|time)$/.test(fieldKindOf(p));
+      var native = /^(select|date|week|month|time|period)$/.test(fieldKindOf(p));
       var head = '<div class="pfield' + (p.req ? ' req' : '') + '"><label>' + esc(lab) +
         (p.req ? '<em class="req">必填</em>' : '') + '</label>';
       if (!hint) return head + fieldControlHTML(p) + '</div>';
@@ -2147,6 +2217,8 @@ function openSheet(s){
       sync();
     })(inw[wi]);
   }
+  /* 字段挂载：时间槽位、候选多的下拉、可开系统选择器的框（#1269/#1275 定稿口径） */
+  mountFields(sheet);
   shCopy.dataset.pid = s.id;
   shCopy.dataset.c = buildPrompt(s, initVals);
   /* 参数化实时预览 */
@@ -2173,6 +2245,278 @@ function closeSheet(){
 }
 mask.addEventListener('click', closeSheet);
 document.getElementById('sheetClose').addEventListener('click', closeSheet);
+
+/* ===== 字段挂载：时间槽位 / 候选多的下拉 / 可开系统选择器的框（口径见文件上方常量段）===== */
+/** 唤起失败／浏览器不支持时的可见提示（不静默：用户点框没反应要知道为什么）。 */
+function helpNote(msg){
+  var el = document.querySelector('.help-note');
+  if (!el) {
+    el = document.createElement('div');
+    el.className = 'help-note';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(helpNote._t);
+  helpNote._t = setTimeout(function(){ el.classList.remove('show'); }, 4600);
+}
+/** 时间槽位取值 → 人话表达式（空＝没选；周／月另带起止日期，命令侧不必懂 ISO 周号）。 */
+function pad2(n){ return (n < 10 ? '0' : '') + n; }
+function dayText(d){ return d.getUTCFullYear() + '-' + pad2(d.getUTCMonth() + 1) + '-' + pad2(d.getUTCDate()); }
+function isoMonday(y, w){
+  var jan4 = new Date(Date.UTC(y, 0, 4));
+  var dow = (jan4.getUTCDay() + 6) % 7; /* 周一＝0 */
+  return new Date(jan4.getTime() - dow * 86400000 + (w - 1) * 7 * 86400000);
+}
+function periodText(mode, v){
+  if (mode === 'none') return '';
+  if (mode === 'day') return v.day || '';
+  if (mode === 'week') {
+    var m = /^(\d{4})-W(\d{2})$/.exec(v.week || '');
+    if (!m) return '';
+    var y = Number(m[1]), w = Number(m[2]);
+    var mon = isoMonday(y, w), sun = new Date(mon.getTime() + 6 * 86400000);
+    return y + ' 年第 ' + w + ' 周（' + dayText(mon) + ' 至 ' + dayText(sun) + '）';
+  }
+  if (mode === 'month') {
+    if (!/^\d{4}-\d{2}$/.test(v.month || '')) return '';
+    var yy = Number(v.month.slice(0, 4)), mm = Number(v.month.slice(5, 7));
+    var last = new Date(Date.UTC(yy, mm, 0)).getUTCDate();
+    return yy + ' 年 ' + mm + ' 月（' + v.month + '-01 至 ' + v.month + '-' + pad2(last) + '）';
+  }
+  if (mode === 'year') return /^\d{4}$/.test(v.year || '') ? v.year + ' 年' : '';
+  if (mode === 'range') {
+    var a = v.start || '', b = v.end || '';
+    if (a && b) { if (a > b) { var t = a; a = b; b = t; } return a + ' 至 ' + b; }
+    if (a) return a + ' 起';
+    if (b) return '至 ' + b + ' 止';
+    return '';
+  }
+  return '';
+}
+/** 分段对应的控件（与原生控件同一形态：.inwrap native ＋ 框内右侧 ⓘ，提示只进 popover）。 */
+function periodCtlHTML(mode, v){
+  var inner;
+  if (mode === 'day') inner = '<input type="date" data-period-ctl="day" value="' + esc(v.day || '') + '">';
+  else if (mode === 'week') inner = '<input type="week" data-period-ctl="week" value="' + esc(v.week || '') + '">';
+  else if (mode === 'month') inner = '<input type="month" data-period-ctl="month" value="' + esc(v.month || '') + '">';
+  else if (mode === 'year') inner = '<input type="number" inputmode="numeric" min="2000" max="2100" step="1" placeholder="如 2026" data-period-ctl="year" value="' + esc(v.year || '') + '">';
+  else if (mode === 'range') inner = '<input type="date" data-period-ctl="start" value="' + esc(v.start || '') + '">' +
+    '<span class="period-sep">至</span><input type="date" data-period-ctl="end" value="' + esc(v.end || '') + '">';
+  else return ''; /* 不限：没有控件，就不带 ⓘ */
+  return '<div class="inwrap native">' + inner +
+    '<button class="ib" type="button" data-period-i="1" aria-label="看提示全文">i</button></div>';
+}
+/* 点框任意处＝点框右侧的选择器图标（用户 2026-10-13 定，全场景通用）。 */
+var HELP_LAST_PICK = { el: null, t: 0 };
+function openPicker(inp){
+  if (!inp || !HELP_PICKABLE.test(inp.type || '')) return;
+  var now = Date.now();
+  if (HELP_LAST_PICK.el === inp && now - HELP_LAST_PICK.t < 400) return; /* 同一次手势别开两枪 */
+  HELP_LAST_PICK = { el: inp, t: now };
+  if (typeof inp.showPicker !== 'function') {
+    helpNote('这个浏览器没有 showPicker()：点框唤起不了选择器，只能点框右侧的图标。');
+    return;
+  }
+  try { inp.showPicker(); }
+  catch (e) {
+    helpNote('唤起选择器被浏览器挡下（' + ((e && e.name) || e) + '）：只能点框右侧的图标。');
+  }
+}
+document.addEventListener('click', function(ev){
+  var t = ev.target;
+  if (!t || !t.closest) return;
+  if (t.closest('.ib, .pop, .s-close, .period-btn, .filt, .filt-panel')) return;
+  var inp = t.closest('input');
+  if (inp) { openPicker(inp); return; }
+  var pf = t.closest('.pfield'); /* 点字段空白处：该字段只有一个可开控件时才替它开 */
+  if (!pf) return;
+  var ins = pf.querySelectorAll('input');
+  if (ins.length === 1) openPicker(ins[0]);
+}, true);
+/** 盾：能开选择器的框整块盖上——点哪儿只开选择器，不进编辑态；键盘／粘贴／拖放改不了值。 */
+function helpBlockEdit(e){
+  if (e.type === 'keydown') {
+    var k = e.key;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;                              /* 放行复制等组合键 */
+    if (k === 'Tab' || k === 'Escape' || k === 'Enter' || k === 'Shift') return; /* 放行离开 */
+  }
+  e.preventDefault();
+}
+function mountPickers(root){
+  var ins = root.querySelectorAll('input');
+  for (var i = 0; i < ins.length; i++) {
+    (function(inp){
+      if (!HELP_PICKABLE.test(inp.type || '')) return;
+      if (inp.getAttribute('data-pick')) return;
+      inp.setAttribute('data-pick', '1');
+      var holder = document.createElement('span');
+      holder.className = 'pick-hold';
+      inp.parentNode.insertBefore(holder, inp);
+      holder.appendChild(inp);
+      var sh = document.createElement('span');
+      sh.className = 'pick-shield';
+      holder.appendChild(sh);
+      sh.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); openPicker(inp); });
+      ['keydown', 'beforeinput', 'paste', 'drop'].forEach(function(t){ inp.addEventListener(t, helpBlockEdit); });
+    })(ins[i]);
+  }
+}
+/** 时间槽位：分段＋控件（取值写回原字段，readParams／预览／复制三条链路一行不改）。 */
+function mountPeriods(root){
+  var hosts = root.querySelectorAll('[data-period]');
+  for (var hi = 0; hi < hosts.length; hi++) {
+    (function(host){
+      var raw = host.querySelector('input[data-p]');
+      if (!raw || host.getAttribute('data-mounted')) return;
+      host.setAttribute('data-mounted', '1');
+      var seg = host.querySelector('.period-seg');
+      var ctl = host.querySelector('.period-ctl');
+      var state = { mode: 'none', v: {} };
+      function refresh(){
+        raw.value = periodText(state.mode, state.v);
+        raw.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      function paint(){
+        ctl.innerHTML = periodCtlHTML(state.mode, state.v);
+        refresh();
+        mountPickers(ctl); /* 控件是重画的，盾要重挂 */
+      }
+      seg.addEventListener('click', function(e){
+        var b = e.target.closest('.period-btn');
+        if (!b) return;
+        state.mode = b.getAttribute('data-period-seg');
+        var all = seg.querySelectorAll('.period-btn');
+        for (var i = 0; i < all.length; i++) all[i].classList.toggle('on', all[i] === b);
+        paint();
+      });
+      ctl.addEventListener('input', function(e){
+        var el = e.target.closest('[data-period-ctl]');
+        if (!el) return;
+        state.v[el.getAttribute('data-period-ctl')] = el.value;
+        refresh(); /* 不重画，免得输入中丢焦点 */
+      });
+      ctl.addEventListener('click', function(e){
+        var b = e.target.closest('[data-period-i]');
+        if (!b) return;
+        popShow(b, '时间', HELP_PERIOD_HINTS[state.mode] || '空＝全部时间。');
+      });
+      paint();
+    })(hosts[hi]);
+  }
+}
+/** 候选多的下拉：一行框＋悬浮筛选面板（面板向上展开，不改字段高度）。 */
+function mountFilterSelects(root){
+  var sels = root.querySelectorAll('select[data-p]');
+  for (var si = 0; si < sels.length; si++) {
+    (function(sel){
+      if (sel.getAttribute('data-filt')) return;
+      var all = [];
+      for (var oi = 0; oi < sel.options.length; oi++) all.push({ v: sel.options[oi].value, t: sel.options[oi].textContent });
+      var real = all.filter(function(o){ return o.v; });
+      if (real.length < HELP_FILTER_MIN) return; /* 候选少：原生下拉够用，不换 */
+      var emptyText = (all.length && !all[0].v) ? all[0].t : '请选择'; /* 空项文案沿用声明给的那一个 */
+      sel.setAttribute('data-filt', '1');
+      sel.hidden = true; /* 原 select 留作取值口（readParams 连 hidden 一起读） */
+      var wrap = document.createElement('div');
+      wrap.className = 'filt';
+      wrap.innerHTML =
+        '<button type="button" class="filt-row" aria-haspopup="listbox" aria-expanded="false">' +
+        '<span class="filt-val"></span>' +
+        '<svg class="filt-caret" viewBox="0 0 16 10" aria-hidden="true"><path d="M3.5 7.5 8 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+        '</button>' +
+        '<div class="filt-panel"><div class="filt-list" role="listbox"></div>' +
+        '<div class="filt-foot"><input type="text" class="filt-q" placeholder="输入筛选" autocomplete="off">' +
+        '<span class="filt-count"></span></div></div>';
+      sel.parentNode.insertBefore(wrap, sel);
+      var row = wrap.querySelector('.filt-row');
+      var val = wrap.querySelector('.filt-val');
+      var panel = wrap.querySelector('.filt-panel');
+      var q = wrap.querySelector('.filt-q');
+      var listEl = wrap.querySelector('.filt-list');
+      var count = wrap.querySelector('.filt-count');
+      function draw(){
+        var kw = q.value.trim().toLowerCase();
+        var hit = real.filter(function(o){ return !kw || o.t.toLowerCase().indexOf(kw) >= 0 || o.v.toLowerCase().indexOf(kw) >= 0; });
+        var html = kw ? '' : '<div class="filt-opt none' + (sel.value ? '' : ' on') + '" role="option" data-v="">' + esc(emptyText) + '</div>';
+        hit.forEach(function(o){
+          html += '<div class="filt-opt' + (o.v === sel.value ? ' on' : '') + '" role="option" data-v="' + esc(o.v) + '">' + esc(o.t) + '</div>';
+        });
+        if (!hit.length) html += '<div class="filt-opt none">没有匹配的候选</div>';
+        listEl.innerHTML = html;
+        count.textContent = kw ? ('匹配 ' + hit.length + ' 项／共 ' + real.length + ' 项')
+          : ('共 ' + real.length + ' 项，可输入筛选');
+      }
+      function syncRow(){
+        val.textContent = sel.value || emptyText;
+        val.classList.toggle('has', !!sel.value);
+      }
+      /* 面板挂到 <body>（脱离弹层的滚动裁剪与 transform 包含块），按触发框的位置摆：
+         一律向上展开——面板底边贴着触发框上方，筛选行在面板最底端（离框最近），
+         列表在它上面、需要多高就向上长；上面空间不够就压列表高度（最少 60px），列表自己滚。 */
+      var LIST_MAX = 212, LIST_MIN = 60, GAP = 6, EDGE = 8;
+      function place(){
+        var r = row.getBoundingClientRect();
+        panel.style.left = Math.round(r.left) + 'px';
+        panel.style.width = Math.round(r.width) + 'px';
+        listEl.style.maxHeight = LIST_MAX + 'px';
+        var chromeH = panel.offsetHeight - listEl.offsetHeight; /* 筛选行＋边框 */
+        var above = r.top - EDGE - GAP;
+        listEl.style.maxHeight = Math.max(LIST_MIN, Math.min(LIST_MAX, above - chromeH)) + 'px';
+        panel.style.top = Math.round(Math.max(EDGE, r.top - GAP - panel.offsetHeight)) + 'px';
+      }
+      function setOpen(on){
+        wrap.classList.toggle('open', on);
+        row.setAttribute('aria-expanded', on ? 'true' : 'false');
+        if (on) {
+          document.body.appendChild(panel);
+          panel.classList.add('filt-float');
+          q.value = '';
+          draw();
+          place();
+          try { q.focus(); } catch (e) {}
+          var cur = listEl.querySelector('.filt-opt.on');
+          if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: 'center' });
+          place(); /* 列表滚过之后高度可能变，再摆一次 */
+        } else {
+          panel.classList.remove('filt-float');
+          wrap.appendChild(panel);
+        }
+      }
+      var reflow = function(){ if (panel.classList.contains('filt-float')) place(); };
+      window.addEventListener('scroll', reflow, true);
+      window.addEventListener('resize', reflow);
+      row.addEventListener('click', function(){ setOpen(!wrap.classList.contains('open')); });
+      q.addEventListener('input', draw);
+      q.addEventListener('keydown', function(e){ if (e.key === 'Escape') { setOpen(false); row.focus(); } });
+      listEl.addEventListener('click', function(e){
+        var o = e.target.closest('.filt-opt');
+        if (!o) return;
+        sel.value = o.getAttribute('data-v');
+        sel.dispatchEvent(new Event('change', { bubbles: true }));
+        syncRow();
+        setOpen(false);
+      });
+      syncRow();
+      draw();
+    })(sels[si]);
+  }
+}
+/* 点别处收起已展开的筛选面板（移动端没有 Esc） */
+document.addEventListener('click', function(ev){
+  var t = ev.target;
+  if (t && t.closest && t.closest('.filt, .filt-panel')) return;
+  var open = document.querySelectorAll('.filt.open');
+  for (var i = 0; i < open.length; i++) {
+    var r = open[i].querySelector('.filt-row');
+    if (r) r.click();
+  }
+});
+function mountFields(root){
+  mountPeriods(root);
+  mountFilterSelects(root);
+  mountPickers(root);
+}
 
 /* ===== #984 软键盘遮挡纠正 BEGIN =====
    病根：软键盘弹起不收缩 layout viewport，fixed 贴底的弹层整块留在键盘后面；输入框又在 .s-scroll 内，

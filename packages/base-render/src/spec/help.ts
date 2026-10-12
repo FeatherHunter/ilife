@@ -27,9 +27,11 @@ export interface SceneTypeBadge {
   readonly fg?: string;
 }
 
-/** 场景可编辑字段输入类型闭集（#966 定案；#969 落契约；#978 T2 扩 month／year；#975 扩 time）。
+/** 场景可编辑字段输入类型闭集（#966 定案；#969 落契约；#978 T2 扩 month／year；#975 扩 time；
+ *  #1275 扩 period：时间槽位＝粒度分段（不限／某天／周／月／年／区间）＋对应原生控件，
+ *  取值是**人话表达式**（周／月另带起止日期）——命令侧不必懂 ISO 周号）。
  *  缺 `kind` 视为 `text`。`time` 值形态 `HH:MM`（00:00–23:59；24:00 由调用方先归一到 23:59，本层不收）。 */
-export type SceneFieldKind = 'text' | 'number' | 'select' | 'date' | 'week' | 'month' | 'year' | 'time';
+export type SceneFieldKind = 'text' | 'number' | 'select' | 'date' | 'week' | 'month' | 'year' | 'time' | 'period';
 
 /** 候选／现值来源闭集（#1270、#1276 定案；#1270 第二刀扩分类／账户／账本）。
  *  语义：声明只写**来源名**，值由**生成期**填进载荷——清单类（`tags`／`categories`／`accounts`／`ledgers`）
@@ -215,7 +217,7 @@ export const SCENE_DATA_SCHEMA = Object.freeze({
                             value: { type: 'string' },
                             hint: { type: 'string' },
                             required: { type: 'boolean' },
-                            kind: { enum: ['text', 'number', 'select', 'date', 'week', 'month', 'year', 'time'] },
+                            kind: { enum: ['text', 'number', 'select', 'date', 'week', 'month', 'year', 'time', 'period'] },
                             source: { enum: ['tags', 'categories', 'accounts', 'ledgers', 'config'] },
                             empty_label: { type: 'string', minLength: 1 },
                             options: {
