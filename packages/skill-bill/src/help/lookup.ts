@@ -24,7 +24,7 @@ function exampleParams(key: BillKey, e: { readonly needs?: readonly string[]; re
 const DESCS: Record<string, string> = {
   'bill.record.add': '记一笔（须 category+amount，note 可选；含借贷/分期/退款/报销，拍账单图片识别以外置为准）',
   'bill.record.update': '改/撤销（软删）/恢复（须 id）',
-  'bill.record.today': '查今天/昨天/某天/最近/查账单',
+  'bill.record.today': '查今天/昨天/某天/最近',
   'bill.record.range': '查周/月/区间/分类/账户/账本',
   'bill.record.search': '搜备注/查标签/查欠款/查待报销/查分期',
   'bill.record.detail': '看单条详情（须 id）',

@@ -17,23 +17,23 @@ function payloadOf(html) {
 const docTitleOf = (html) => (html.match(/<title>([^<]*)<\/title>/) || [])[1];
 
 describe('#145 饼干记账 HELP 渲染接线', () => {
-  it('全壳 HTML：标题不重复技能名 ＋ 7 域／74 场景都在', () => {
+  it('全壳 HTML：标题不重复技能名 ＋ 7 域／75 场景都在', () => {
     const html = renderHelpFileHtml(buildHelpFileData(NOW));
     assert.equal(docTitleOf(html), '饼干记账 · 使用手册(HELP)');
     assert.ok(html.startsWith('<!DOCTYPE html>'), '整页（壳前缀）');
     const data = payloadOf(html);
     assert.equal(data.groups.length, 7);
-    assert.equal(data.groups.flatMap((g) => g.subgroups.flatMap((s) => s.scenes)).length, 74);
+    assert.equal(data.groups.flatMap((g) => g.subgroups.flatMap((s) => s.scenes)).length, 75);
     assert.deepEqual(data.groups, WAKE_GROUPS, 'groups 由内容资产直转（零改写）');
     assert.ok(html.includes('id="help-data"') && html.includes('ilife-help-shell') === false, '壳标记来自共享模板，不自造');
   });
 
-  it('5 键取值照老实样；subtitle 由计数派生（不写死 7／74）', () => {
+  it('5 键取值照老实样；subtitle 由计数派生（不写死 7／75）', () => {
     const data = buildHelpFileData(NOW);
     assert.equal(data.skill_name, '饼干记账');
     assert.equal(data.title, HELP_FILE_TITLE);
     assert.equal(data.subtitle, `${WAKE_GROUPS.length} 功能域 · ${WAKE_ASSETS.length} 场景 · 版本 2.0 · 更新于 2026-09-11 14:30`);
-    assert.equal(data.subtitle, `7 功能域 · 74 场景 · 版本 2.0 · 更新于 2026-09-11 14:30`);
+    assert.equal(data.subtitle, `7 功能域 · 75 场景 · 版本 2.0 · 更新于 2026-09-11 14:30`);
     assert.equal(data.contact.items.length, 3);
     assert.deepEqual(data.contact.items.map((i) => i.label), ['邮箱', 'GitHub', 'Issues']);
     assert.equal(data.contact.items[1].url, true);

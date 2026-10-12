@@ -1,8 +1,9 @@
-// t412 时间页锁：bill.record.today 五词（查今天／查昨天／查某天／查最近／查账单别名）
+// t412 时间页锁：bill.record.today 四词（查今天／查昨天／查某天／查最近）
 // 判据三组：
-//   ① 标题按参判：无参→查今天／yesterday→查昨天／显式 date→查某天／recent→查最近；查账单别名同页（无参同标题）。
+//   ① 标题按参判：无参→查今天／yesterday→查昨天／显式 date→查某天／recent→查最近；查某天不填日期＝今天（同页）。
 //   ② 空态四句：今天还没有记录／昨天还没有记录／这一天没有记录／库里还没有记录（各带下一步 hint）。
-//   ③ 回归锁定：详情不被吞／查某天缺 date 路由抛／recent 越界 exit2／12:00 补时可查到。
+//   ③ 回归锁定：详情不被吞／查某天日期可选（不拦、给了就带）／recent 越界 exit2／12:00 补时可查到。
+//   #1275：`查账单` 词条整条删（用户裁定「不保留，完全一致」），别名注随 `TODAY_ALIAS_NOTE` 一起删。
 //
 // 计数纪律：判别性标记一律数整段开标签（t411 M1 假绿教训：裸子串会命中 CSS 选择器名）。
 // 红线：只读临时库；只往临时目录写 --html 产物。
@@ -65,7 +66,7 @@ before(() => {
   for (const s of seed) assert.equal(run(['bill.record.add', '--params', P(s)]).status, 0, '样本应写进临时库');
 });
 
-describe('t412 ① 标题按参判（五词四态＋别名同页）', () => {
+describe('t412 ① 标题按参判（四词四态）', () => {
   it('无参→查今天（w01 票据纸 v2.1：店头＋H2 今天句式＋票据纸，载荷键不动）', () => {
     const { text, stdout } = page('bill.record.today', {}, 't412-today');
     const env = JSON.parse(stdout);
@@ -74,7 +75,7 @@ describe('t412 ① 标题按参判（五词四态＋别名同页）', () => {
     assert.ok(text.includes('饼干记账 · 查今天'), '店头品牌行应为查今天');
     // 笔数取值源＝kpi.count（收支口径，转账不计；#1110 起两处笔数各标口径，本样本无转账故无注记）。
     assert.ok(text.includes('今天共 ' + env.data.kpi.count + ' 笔，支出 '), 'H2 今天句式（含笔数与支出）');
-    assert.ok(text.includes('查账单和查今天是一样的。'), '别名注（w01 v2.1 逐字）');
+    assert.ok(!text.includes('查账单和查今天是一样的。'), '别名注已随 #1275 删（全页不再出现该行）');
     assert.ok(text.includes('<section class="ilife-block-sheet is-ticket">'), '票据纸一枚');
     assert.ok(text.includes('复制数据'), '复制区');
     assert.ok(text.includes('✂ 裁切线'), '裁切线');
@@ -122,10 +123,12 @@ describe('t412 ① 标题按参判（五词四态＋别名同页）', () => {
     assert.ok(text.includes('<div class="ilife-recent-foot">饼干记账 · 查最近</div>'), '页脚查最近');
     assert.ok(!text.includes('<h1 class="ilife-block-page-shell-title">'), '票据纸不出老列表 H1');
   });
-  it('查账单别名同页：同无参同标题查今天', () => {
-    assert.equal(routeWakeword('帮我查账单').key, 'bill.record.today', '查账单路由到 today');
-    const { text } = page('bill.record.today', {}, 't412-alias');
-    assert.ok(text.includes('饼干记账 · 查今天'), '别名页仍为查今天票据纸（Q2 别名同页）');
+  it('查某天不填日期＝今天（同页同标题）', () => {
+    const r = routeWakeword('查某天');
+    assert.equal(r.key, 'bill.record.today', '查某天路由到 today');
+    assert.deepEqual(r.params, {}, '日期可选：不填就是空参（空＝今天）');
+    const { text } = page('bill.record.today', {}, 't412-someday-empty');
+    assert.ok(text.includes('饼干记账 · 查今天'), '空日期页仍是查今天票据纸（同页同标题）');
   });
 });
 
@@ -170,7 +173,7 @@ describe('t412 ② 空态四句（空库上四态各一句）', () => {
 describe('t412 ③ 回归锁定（详情不被吞／缺槽／越界／补时）', () => {
   it('详情不被吞：查账单详情走 detail（最长匹配）', () => {
     assert.equal(routeWakeword('查账单详情', { id: 1 }).key, 'bill.record.detail');
-    assert.equal(routeWakeword('查账单').key, 'bill.record.today');
+    assert.throws(() => routeWakeword('查账单'), /无命中/, '查账单已删：不留路由别名（#1275 用户 m00453 第 1 条）');
     assert.equal(routeWakeword('帮我查账单详情看看', { id: 2 }).key, 'bill.record.detail', '长句含详情仍走 detail');
     const s = page('bill.record.search', { q: '午饭' }, 't412-detail-src');
     const id = JSON.parse(s.stdout).data.items[0].id;
@@ -185,14 +188,11 @@ describe('t412 ③ 回归锁定（详情不被吞／缺槽／越界／补时）'
     assert.ok(d.text.includes('✂ 裁切线'), '裁切线');
     assert.ok(!d.text.includes('<h1 class="ilife-block-page-shell-title">'), '票据纸不出老列表 H1');
   });
-  it('查某天缺 date 路由抛（反问入口）', () => {
-    assert.throws(() => routeWakeword('查某天', {}), /缺槽位 date/);
-    try {
-      routeWakeword('查某天', {});
-      assert.fail('应抛');
-    } catch (e) {
-      assert.equal(e.name, 'BillPolicyError');
-    }
+  it('查某天日期可选：不填不抛（空＝今天），给了就带下去', () => {
+    const bare = routeWakeword('查某天', {});
+    assert.equal(bare.key, 'bill.record.today');
+    assert.deepEqual(bare.params, {}, '空＝今天：路由不拦、不带');
+    assert.equal(routeWakeword('查某天', { date: '2026-09-06' }).params.date, '2026-09-06', '给了 date 就带下去');
   });
   it('recent 越界 exit2（0／201／非整数）', () => {
     for (const limit of [0, 201, 1.5, '10']) {

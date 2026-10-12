@@ -41,12 +41,12 @@ function helpWakeWords(p) {
 /** 一条词路由到哪条命令（判据只看命令名，不看内部结构）。 */
 
 describe('#721 · 内容目录（从产物上读）', () => {
-  it('域序照声明自带的 order：7 域／20 二级组／74 场景', () => {
+  it('域序照声明自带的 order：7 域／21 二级组／75 场景', () => {
     const p = payload();
     assert.deepEqual(p.groups.map((g) => g.id), GROUP_IDS, '域序与老权威不同');
     assert.equal(p.groups.length, 7);
-    assert.equal(p.groups.reduce((n, g) => n + g.subgroups.length, 0), 20);
-    assert.equal(scenesOf(p).length, 74);
+    assert.equal(p.groups.reduce((n, g) => n + g.subgroups.length, 0), 21);
+    assert.equal(scenesOf(p).length, 75);
   });
 
   it('场景的 wake_word 是词条投影（词条拥有它，声明里不写第二遍）', () => {
@@ -69,11 +69,11 @@ describe('#721 · 内容目录（从产物上读）', () => {
     assert.deepEqual(help.filter((w) => sceneWords.has(w)), [], 'HELP 短语自指：进了场景目录');
   });
 
-  it('74 条场景归 73 个词条（「备份」一词两场景的形状没搬丢）', () => {
+  it('75 条场景归 74 个词条（「备份」一词两场景的形状没搬丢）', () => {
     const p = payload();
     const words = scenesOf(p).map((s) => s.wake_word);
-    assert.equal(words.length, 74);
-    assert.equal(new Set(words).size, 73);
+    assert.equal(words.length, 75);
+    assert.equal(new Set(words).size, 74);
     assert.equal(words.filter((w) => w === '备份').length, 2);
   });
 });
@@ -81,7 +81,7 @@ describe('#721 · 内容目录（从产物上读）', () => {
 describe('#721 · 路由（从包门读）', () => {
   it('老 70 个唯一唤醒词逐条还在表里、逐条有落点', () => {
     const p = payload();
-    const legacy = scenesOf(p).filter((s) => !['write_record', 'query_bills', 'query_bill_detail'].includes(s.id));
+    const legacy = scenesOf(p).filter((s) => !['write_record', 'query_bill_detail', 'setup_config_read', 'setup_config_write'].includes(s.id));
     assert.equal(legacy.length, 71);
     const uniq = [...new Set(legacy.map((s) => s.wake_word))];
     assert.equal(uniq.length, LEGACY_UNIQUE_WORDS);

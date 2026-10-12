@@ -31,15 +31,15 @@ describe('饼干口径 policy', () => {
     const r = validateRecord({ category: '餐饮', amount: -20, time: '2026-09-06 12:00:00' });
     assert.equal(r.ledger, '生活');
   });
-  it('唤醒词 77 全量 + 最长匹配 + 缺槽位', () => {
-    assert.equal(WAKE_TABLE.length, 77);
+  it('唤醒词 78 全量 + 最长匹配 + 缺槽位', () => {
+    assert.equal(WAKE_TABLE.length, 78);
     assert.equal(routeWakeword('看分类对比一下').key, 'bill.analysis.compare');
     assert.equal(routeWakeword('看分类').key, 'bill.analysis.overview');
     assert.equal(routeWakeword('初始化状态看看').key, 'bill.setup.run');
     assert.equal(routeWakeword('报销到账了').key, 'bill.record.add');
     assert.equal(routeWakeword('帮我查今天花了多少').key, 'bill.record.today');
     assert.equal(routeWakeword('帮我记一笔午饭').key, 'bill.record.add');
-    assert.equal(routeWakeword('帮我查账单').key, 'bill.record.today');
+    assert.throws(() => routeWakeword('帮我查账单'), /无命中/, '查账单已删：不留路由别名（#1275 用户裁定）');
     assert.equal(routeWakeword('查账单详情', { id: 1 }).key, 'bill.record.detail');
     assert.throws(() => routeWakeword('同步记账到云端'), /无命中/);
     // 三条修正词（改记录／撤销／恢复）在 t407 批量与修正族改了口径：**不再由路由层报「缺槽位 id」**——

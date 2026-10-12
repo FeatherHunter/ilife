@@ -5,9 +5,10 @@
  * 合并方：`src/triggers/wakeTable.ts`（词表＋路由＋派生）与 `src/triggers/wake-assets.ts`（HELP 目录）。
  *
  * #977 · 第一性重写（Q1–Q4定调）：首行统一卡路里式；意图句去冗余；参数行 `____`→`{{name}}`。
- * kind 第一性设计：单日（查某天／查账单／区间起止）`date`（只吃 YYYY-MM-DD，“5月1号／上周五／昨天”
- * 由执行侧解 ISO，hint 写空语义）；周／月／时间窗（本周／本月／近30天／5月1到10号）一律 `text`
- * （窗口表达式，非单日；`week` 禁用——现有“周”非 ISO 周，见 REPORT §3.2）；
+ * kind 第一性设计：单日（查某天／区间起止）`date`（只吃 YYYY-MM-DD，“5月1号／上周五／昨天”
+ * 由执行侧解 ISO，hint 写空语义）；时间窗（周／月／年／区间）一律 `period`——粒度分段＋原生控件，
+ * 取值是人话表达式（周／月另带起止日期），命令侧不必懂 ISO 周号（#1275 定稿；`week` 仍禁用——
+ * 现有“周”非 ISO 周，见 REPORT §3.2）；
  * 条数 `number`；分类／账户／账本／关键词／标签／对象／名目／记录 id／排序 `text`（开放）；
  * 收支 `select`（支出／收入／全部三项封闭，`options` 必填，空＝默认进 `hint`）。
  */
@@ -49,16 +50,18 @@ export const QUERY_DECLARATION: DomainDeclaration = {
     {
       phrase: '查某天',
       key: 'bill.record.today',
-      needs: ['date'],
+      // 日期**可选**（空＝今天）：不拦路由（`needs` 不写 date），但给了就带下去，
+      // 并且它是投影认词（`projectWakeWord` 规则②）的线索——店头才印「查某天」而不是通用词「查今天」。
+      carries: ['date'],
       scenes: [
         {
           id: 'query_date',
-          title: '查某一天的账',
+          title: '查某天的账',
           status: '',
-          prompt_template: '请你加载技能 饼干记账,执行唤醒词「查某天」。\n\n我想查某一天的账，必须指定日期。\n\n日期:{{query_date}}\n\n与「查账单」区分：本入口必须填日期；默认看今天请用「查今天」，可选日期看账单列表请用「查账单」。',
+          prompt_template: '请你加载技能 饼干记账,执行唤醒词「查某天」。\n\n我想查某一天的账，不填日期就是今天。\n\n日期(选填):{{query_date}}',
           types: ['查看'],
           editable_fields: [
-            { name: 'query_date', label: '日期', value: '', hint: '必填；格式 YYYY-MM-DD，如 2026-05-01；默认看今天请用查今天', required: true, kind: 'date' },
+            { name: 'query_date', label: '日期(选填)', value: '', hint: '空＝今天；格式 YYYY-MM-DD，如 2026-05-01', required: false, kind: 'date' },
           ],
         },
       ],
@@ -78,22 +81,6 @@ export const QUERY_DECLARATION: DomainDeclaration = {
             { name: 'limit', label: '条数(选填)', value: '', hint: '空＝10；纯数字', required: false, kind: 'number' },
             { name: 'sort', label: '排序(选填)', value: '', hint: '如 金额从大到小', required: false, kind: 'text' },
             { name: 'recent_days', label: '近几天(选填)', value: '', hint: '如 近7天、近30天；与条数二选一', required: false, kind: 'text' },
-          ],
-        },
-      ],
-    },
-    {
-      phrase: '查账单',
-      key: 'bill.record.today',
-      scenes: [
-        {
-          id: 'query_bills',
-          title: '查账单',
-          status: '',
-          prompt_template: '请你加载技能 饼干记账,执行唤醒词「查账单」。\n\n我想查账单列表，空即今天。\n\n日期(选填):{{query_date}}\n\n与「查某天」区分：本入口空即今天，查到列表后可说「查账单详情」看单条；查指定某天更明确请用「查某天」。',
-          types: ['查看'],
-          editable_fields: [
-            { name: 'query_date', label: '日期(选填)', value: '', hint: '空＝今天；填了必须是 YYYY-MM-DD；查指定某天更明确请用查某天', required: false, kind: 'date' },
           ],
         },
       ],
@@ -163,9 +150,9 @@ export const QUERY_DECLARATION: DomainDeclaration = {
           types: ['查看'],
           editable_fields: [
             { name: 'category', label: '分类', value: '', hint: '如 餐饮、出行、奶茶', required: true, kind: 'text', source: 'categories' },
-            { name: 'period', label: '时间(选填)', value: '', hint: '如 本月、5月、5月1到10号', required: false, kind: 'text' },
+            { name: 'period', label: '时间(选填)', value: '', hint: '', required: false, kind: 'period' },
             { name: 'account', label: '账户(选填)', value: '', hint: '如 支付宝', required: false, kind: 'text', source: 'accounts' },
-            { name: 'ledger', label: '账本(选填)', value: '', hint: '', required: false, kind: 'text', source: 'ledgers' },
+            { name: 'ledger', label: '账本(选填)', value: '', hint: '账本＝记录的分组（如 生活、旅行）；一笔记录只归一个账本', required: false, kind: 'text', source: 'ledgers' },
             { name: 'direction', label: '收支(选填)', value: '', hint: '空＝全部', required: false, kind: 'select', options: ['支出', '收入', '全部'] },
           ],
         },
@@ -184,7 +171,7 @@ export const QUERY_DECLARATION: DomainDeclaration = {
           types: ['查看'],
           editable_fields: [
             { name: 'account', label: '账户', value: '', hint: '如 支付宝、微信、招行', required: true, kind: 'text', source: 'accounts' },
-            { name: 'period', label: '时间(选填)', value: '', hint: '如 本月、上月', required: false, kind: 'text' },
+            { name: 'period', label: '时间(选填)', value: '', hint: '', required: false, kind: 'period' },
           ],
         },
       ],
@@ -198,15 +185,11 @@ export const QUERY_DECLARATION: DomainDeclaration = {
           id: 'query_ledger',
           title: '查某账本的记录',
           status: '',
-          prompt_template: '请你加载技能 饼干记账,执行唤醒词「查账本」。\n\n我想查某个账本的记录。账本是对记录的分组（例如生活、旅行），本场景按指定账本过滤记录。\n\n账本:{{ledger}}\n周(选填，与月/年/区间四选一):{{period_week}}\n月(选填，与周/年/区间四选一):{{period_month}}\n年(选填，与周/月/区间四选一):{{period_year}}\n开始日期(选填，区间):{{period_start}}\n结束日期(选填，区间):{{period_end}}',
+          prompt_template: '请你加载技能 饼干记账,执行唤醒词「查账本」。\n\n我想查某个账本的记录。\n\n账本:{{ledger}}\n时间(选填):{{period}}',
           types: ['查看'],
           editable_fields: [
-            { name: 'ledger', label: '账本（对记录的分组）', value: '', hint: '账本是对记录的分组（例如生活、旅行），本场景按指定账本过滤；如 生活、旅行、借贷', required: true, kind: 'text', source: 'ledgers' },
-            { name: 'period_week', label: '周(选填，四选一)', value: '', hint: '如 本周、上周；与月/年/区间四选一，空＝全部时间', required: false, kind: 'text' },
-            { name: 'period_month', label: '月(选填，四选一)', value: '', hint: '如 本月、上月、2026-05；与周/年/区间四选一', required: false, kind: 'text' },
-            { name: 'period_year', label: '年(选填，四选一)', value: '', hint: '如 今年、2026；与周/月/区间四选一', required: false, kind: 'text' },
-            { name: 'period_start', label: '开始日期(选填，区间)', value: '', hint: '格式 YYYY-MM-DD；与周/月/年四选一，开始＝结束即查某天', required: false, kind: 'date' },
-            { name: 'period_end', label: '结束日期(选填，区间)', value: '', hint: '格式 YYYY-MM-DD，如查全年结束填当年12-31', required: false, kind: 'date' },
+            { name: 'ledger', label: '账本', value: '', hint: '账本＝记录的分组（如 生活、旅行）；一笔记录只归一个账本', required: true, kind: 'text', source: 'ledgers' },
+            { name: 'period', label: '时间(选填)', value: '', hint: '', required: false, kind: 'period' },
           ],
         },
       ],
@@ -308,14 +291,14 @@ export const QUERY_DECLARATION: DomainDeclaration = {
           prompt_template: '请你加载技能 饼干记账,执行唤醒词「查账单详情」。\n\n我想看一条账单的详情。\n\n记录 id:{{record_id}}',
           types: ['查看'],
           editable_fields: [
-            { name: 'record_id', label: '记录 id', value: '', hint: '从查账单或查今天或查某天的列表里取', required: true, kind: 'text' },
+            { name: 'record_id', label: '记录 id', value: '', hint: '从查某天或查今天或查最近的列表里取', required: true, kind: 'text' },
           ],
         },
       ],
     },
   ],
   subgroups: [
-    { id: 'query_1', label: '按时间', scenes: ['query_today', 'query_yesterday', 'query_date', 'query_recent', 'query_week', 'query_month', 'query_range', 'query_bills', 'query_bill_detail'] },
+    { id: 'query_1', label: '按时间', scenes: ['query_today', 'query_yesterday', 'query_date', 'query_recent', 'query_week', 'query_month', 'query_range', 'query_bill_detail'] },
     { id: 'query_2', label: '按条件', scenes: ['query_category', 'query_search', 'query_tag', 'query_account', 'query_ledger'] },
     { id: 'query_3', label: '按状态', scenes: ['query_debt', 'query_pending_reimburse', 'query_installment'] },
   ],

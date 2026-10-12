@@ -1,6 +1,6 @@
 // #148 · 真出口锁：spawn `bill-cmd-read`（argv＋JSON＋exit），锁四件事——
 //  ① 文件名通式与落点（`饼干记账_HELP_<TS>[_N].html` 落 biscuit_accountant_html，回执绝对路径）；
-//  ② 壳层：产物 = 共享 help 模板前后缀逐字 ＋ `help-data` 载荷（7 域／74 场景／两块 meta）；
+//  ② 壳层：产物 = 共享 help 模板前后缀逐字 ＋ `help-data` 载荷（7 域／75 场景／两块 meta）；
 //  ③ 独占与递补（用 `reuseHours:0` 验：并发调用落点两两不同、内容互不覆盖；同秒时后到者 `_2`）
 //     ＋ ③b `#245` 复用（缺省一天：再跑一次复用已有那份，目录不涨、已有文件一字未动）；
 //  ④ 两支产物互不串（缺省 HELP 文件 vs `mode:"lookup"` 速查表）。
@@ -99,11 +99,11 @@ test('#148 ① 缺省＝HELP 文件：名字通式／落点／回执绝对路径
   assert.deepEqual(Object.keys(r.env), ['version', 'skill', 'shape', 'key', 'data', 'delivery'], 'delivery 顶层追加、五字段序不变');
   assert.equal(r.env.data.mode, 'file');
   assert.equal(r.env.data.total, 7, '域级索引 7 行');
-  assert.equal(r.env.data.sceneTotal, 74);
-  assert.equal(r.env.data.subgroupTotal, 20);
+  assert.equal(r.env.data.sceneTotal, 75);
+  assert.equal(r.env.data.subgroupTotal, 21);
 });
 
-test('#148 ② 壳层锁：产物 = 共享 help 模板前后缀逐字 ＋ help-data 载荷（7 域／74 场景／两块 meta）', () => {
+test('#148 ② 壳层锁：产物 = 共享 help 模板前后缀逐字 ＋ help-data 载荷（7 域／75 场景／两块 meta）', () => {
   const dir = mkDir('shell');
   const out = runOk(dir, undefined).env.delivery.path;
   const html = readFileSync(out, 'utf8');
@@ -118,10 +118,10 @@ test('#148 ② 壳层锁：产物 = 共享 help 模板前后缀逐字 ＋ help-d
 
   // 载荷（老实物两代共同口径）
   assert.equal(data.groups.length, 7, '7 域');
-  assert.equal(scenesOf(data).length, 74, '71＋3 场景');
+  assert.equal(scenesOf(data).length, 75, '74＋1 场景（#1275 删查账单卡）');
   assert.deepEqual(data.meta_blocks.map((m) => m.id), ['help_summary', 'help_wake_words'], '两块 meta 在');
   assert.equal(data.meta_blocks[1].html, '<p>饼干记账 HELP / 饼干记账帮助 / 查帮助 / 能做什么</p>');
-  assert.ok(data.subtitle.includes('74 场景') && data.subtitle.includes('版本 2.0'), 'subtitle 派生：' + data.subtitle);
+  assert.ok(data.subtitle.includes('75 场景') && data.subtitle.includes('版本 2.0'), 'subtitle 派生：' + data.subtitle);
   assert.equal(data.contact.items.length, 3);
   assert.equal(data.groups[0].subgroups[0].scenes[0].prompt_template.length > 0, true, '场景卡带指令正文');
 });
@@ -138,7 +138,7 @@ test('#148 ③ 独占与递补：并发 6 次内容互不覆盖；`reuseHours:0`
   for (const r of rs) {
     const html = readFileSync(r.env.delivery.path, 'utf8');
     assert.equal(Buffer.byteLength(html, 'utf8'), r.env.delivery.bytes, '每份内容与自己的回执字节数一致');
-    assert.equal(scenesOf(helpData(html)).length, 74, '每份都是完整壳（未被截断）');
+    assert.equal(scenesOf(helpData(html)).length, 75, '每份都是完整壳（未被截断）');
   }
   // 同秒情形：各次必须占**不同槽位**，且必有一次拿到本体名（无 `_N`）——谁先到是任意的，
   // 故不断言「首个不带 _N」（那是把进程调度当作契约）；跨秒则各自独立，两种都合法（#139 去时间竞态口径）。
@@ -167,7 +167,7 @@ test('#148 ③b #245 复用：并发后目录不涨（再跑一次复用已有�
   assert.deepEqual(before.map((n) => statSync(join(htmlDirOf(dir), n)).size), bytesBefore,
     '已有那些文件的字节数一字未动（复用＝只读，不改写）');
   assert.equal(again.env.delivery.bytes, statSync(reusePath).size, '回执的 bytes ＝复用那份的实际字节数');
-  assert.equal(scenesOf(helpData(readFileSync(reusePath, 'utf8'))).length, 74, '复用的那份仍是完整壳');
+  assert.equal(scenesOf(helpData(readFileSync(reusePath, 'utf8'))).length, 75, '复用的那份仍是完整壳');
 });
 
 test('#148 ④ 两支产物互不串：缺省 HELP 文件 vs mode=lookup 速查表', () => {
@@ -185,7 +185,7 @@ test('#148 ④ 两支产物互不串：缺省 HELP 文件 vs mode=lookup 速查�
   assert.ok(hHtml.includes('<!DOCTYPE html>') && hHtml.includes(HELP_SHELL_DATA_OPEN), '缺省＝全壳页');
   assert.equal(sHtml.includes(HELP_SHELL_DATA_OPEN), false, '速查表不是 HELP 壳');
   assert.match(sHtml, /<section/, '速查表＝分节页');
-  assert.equal(sheet.env.data.total, 77, '速查表含全量 77 短语');
+  assert.equal(sheet.env.data.total, 78, '速查表含全量 78 短语');
   assert.equal(help.env.data.total, 7, '缺省回的是域级索引（不是短语表）');
   assert.equal(readdirSync(htmlDirOf(dir)).length, 2, '两份产物同时在，互不覆盖');
 });

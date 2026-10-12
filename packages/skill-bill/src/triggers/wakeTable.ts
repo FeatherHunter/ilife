@@ -113,9 +113,12 @@ export function projectWakeWord(scope: WakeScope): string {
       .filter((e) => e.preset !== undefined && Object.entries(e.preset).every(([k, v]) => clues[k] === v))
       .sort((a, b) => Object.keys(b.preset ?? {}).length - Object.keys(a.preset ?? {}).length);
     if (byPreset.length > 0) return byPreset[0].phrase;
-    // ② needs 命中：`查某天`（要 date）／`查区间`（要 start＋end）／`查分类`… 这类词靠必需槽位认。
-    const byNeeds = pool.filter((e) => e.needs !== undefined
-      && e.needs.every((n) => clues[n] !== undefined && clues[n] !== null && clues[n] !== ''));
+    // ② needs／carries 命中：`查某天`（要 date）／`查区间`（要 start＋end）／`查分类`… 这类词靠槽位认。
+    //    `carries` 一并算线索：同 key 下两词只差一个**可选**槽位时（`查某天` 的 date 可选、空＝今天），
+    //    路由不拦，但「这一页是哪条词」仍要认得出（#1275）。
+    const clueNames = (e: WakeEntryDecl): readonly string[] => [...(e.needs || []), ...(e.carries || [])];
+    const byNeeds = pool.filter((e) => clueNames(e).length > 0
+      && clueNames(e).every((n) => clues[n] !== undefined && clues[n] !== null && clues[n] !== ''));
     if (byNeeds.length > 0) return byNeeds[0].phrase;
   }
   // ③ 通用词（第一条不带 preset 的词条）；都没有就第一条。

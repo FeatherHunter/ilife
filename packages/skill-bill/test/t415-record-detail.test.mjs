@@ -4,7 +4,7 @@
 //      ＋落点键值行六行＋明细卡两行＋复制区＋页标记；
 //   ② 软删三态：同 id 正常→撤销后（整页＋已撤销印章 danger＋删除时间原值＋落点七行）→恢复后（正常）；
 //   ③ 红线：缺 id／坏 id→exit 2 且 stdout 空，真无此号→exit 4 且 stdout 空（不冒充正常）；
-//   ④ 路由回归：查账单→today，查账单详情→detail，含两词的长句走长者（最长匹配）；
+//   ④ 路由回归：查账单详情→detail（长句含详情仍走 detail）；`查账单` 已随 #1275 整条删、不留别名；
 //   ⑤ 真跑：每条 exit 0＋shape detail＋店头写账单详情＋落点键值行（整段开标签计数）。
 //
 // #1071 起查询域重建为票据纸（12 个场景页）：详情页＝票据纸＋落点账目行＋明细卡，唤醒词住店头
@@ -176,13 +176,13 @@ describe('t415 ③ 红线：缺 id／坏 id→exit 2，真无此号→exit 4（�
   });
 });
 
-describe('t415 ④ 路由回归：查账单与查账单详情互不吞词（最长匹配）', () => {
-  it('查账单→today，查账单详情→detail', () => {
-    assert.equal(routeWakeword('查账单', {}).key, 'bill.record.today');
+describe('t415 ④ 路由回归：查账单详情走 detail（最长匹配），查账单已删', () => {
+  it('查账单详情→detail；查账单无命中', () => {
     assert.equal(routeWakeword('查账单详情', { id: 1 }).key, 'bill.record.detail');
+    assert.throws(() => routeWakeword('查账单', {}), /无命中/, '查账单已删：不留路由别名（#1275 用户 m00453 第 1 条）');
   });
   it('含两词的长句走长者', () => {
     assert.equal(routeWakeword('帮我查账单详情里的那笔', { id: 1 }).key, 'bill.record.detail');
-    assert.equal(routeWakeword('查账单', {}).key, 'bill.record.today', '短词不反吞长词');
+    assert.equal(routeWakeword('查账单详情', { id: 1 }).key, 'bill.record.detail', '详情词不反吞长句');
   });
 });

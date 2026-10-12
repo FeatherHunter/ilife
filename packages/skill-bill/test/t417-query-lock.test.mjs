@@ -1,6 +1,6 @@
-// t417 查询程序锁：17 个唤醒词逐条真出口（exit 0＋落盘＋绝对路径＋字段正确），另附空态 1 条与阻断 5 条。
+// t417 查询程序锁：16 个唤醒词逐条真出口（exit 0＋落盘＋绝对路径＋字段正确），另附空态 1 条与阻断 5 条。
 //
-// 词→调用对照 SKILL.md:51-67（查今天／查昨天／查某天／查最近／查账单→today；周月区间分类账户账本→range；
+// 词→调用对照 SKILL.md 联动块（查今天／查昨天／查某天／查最近→today；周月区间分类账户账本→range；
 // 备注标签欠款待报销分期→search；账单详情→detail）。种子日期用相对日期（今天／昨天），周月窗天然命中，
 // 不写死种子日期（#413 G4）。红线：本文件只读临时库；产物只落本票临时目录。
 import { describe, it, before } from 'node:test';
@@ -82,10 +82,10 @@ describe('t417 程序锁：today 五词真出口', () => {
     assert.equal(env.data.date, 'recent');
     assert.ok(text.includes('最近 3 笔'));
   });
-  it('查账单别名（同页，标题查今天）', () => {
-    const a = page('bill.record.today', {}, 'w05-bill');
-    const b = page('bill.record.today', {}, 'w05-bill-again');
-    assert.equal(a.env.data.total, b.env.data.total, '别名与查今天同页同数');
+  it('查某天不填日期＝今天（同页同数）', () => {
+    const a = page('bill.record.today', {}, 'w05-someday-empty');
+    const b = page('bill.record.today', {}, 'w05-someday-empty-again');
+    assert.equal(a.env.data.total, b.env.data.total, '空日期与查今天同页同数');
   });
 });
 

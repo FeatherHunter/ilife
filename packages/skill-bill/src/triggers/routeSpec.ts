@@ -32,7 +32,9 @@ export type BillKey =
 export interface WakeRoute { readonly key: BillKey; readonly params: Record<string, unknown>; }
 
 /** 路由项（＝域声明里去掉场景的那半）；`needs`＝必需槽位（给不出就在路由层报错）；
- *  `carries`＝**不拦**、上下文里给了就带下去的槽位（改记录／撤销／恢复三条词的 `id` 住这里）。
+ *  `carries`＝**不拦**、上下文里给了就带下去的槽位（改记录／撤销／恢复三条词的 `id` 住这里；
+ *  同 `key` 下两词只差一个可选槽位时也住这里——如 `查某天` 的 `date`：日期可选、空＝今天，
+ *  路由不拦，但给了就带下去，且它是 `projectWakeWord` 认词的线索，见 `wakeTable.ts` 规则②）。
  *  分两格的理由见本件的 `WakeEntry`（逐字保留自旧的 `src/policy/wakewords.ts`——那件已随 #689 第三批删掉）。 */
 export interface WakeEntry {
   readonly phrase: string;

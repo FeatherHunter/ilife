@@ -1,6 +1,6 @@
 ---
 name: skill-bill
-description: "「饼干记账HELP」→bill.help.lookup 缺省落一份老技能同款 HELP 文件（7 域／74 场景，与卡路里同一套共享 help 模板）；唯一出口 bill-cmd-read。触发词：饼干记账 HELP、饼干记账帮助、查帮助、能做什么、记支出、记收入、拍账单、批量录入、记退款、记报销、报销到账、记借出、记借入、记收回、记偿还、记分期、记一笔、改记录、撤销、恢复、查今天、查昨天、查某天、查最近、查账单、查周、查月、查区间、查分类、查账户、查账本、搜备注、查标签、查欠款、查待报销、查分期、查账单详情、看月度、看年度、看总览、看周报、看分类、看账户、看账本、看结构、做统计、看对比、看双区间、看同比、看分类对比、看趋势、看分类趋势、看大额、看高频、看分布、看活跃、看洞察、看异常、看借贷、看报销、看分期、看退款、设定预算、设定目标、看预算、看目标、新增账户、改账户、账户转账、看账户汇总、买东西、吃饭、初始化、初始化状态、备份、恢复备份、导入"
+description: "「饼干记账HELP」→bill.help.lookup 缺省落一份老技能同款 HELP 文件（7 域／75 场景，与卡路里同一套共享 help 模板）；唯一出口 bill-cmd-read。触发词：饼干记账 HELP、饼干记账帮助、查帮助、能做什么、记支出、记收入、拍账单、批量录入、记退款、记报销、报销到账、记借出、记借入、记收回、记偿还、记分期、记一笔、改记录、撤销、恢复、查今天、查昨天、查某天、查最近、查周、查月、查区间、查分类、查账户、查账本、搜备注、查标签、查欠款、查待报销、查分期、查账单详情、看月度、看年度、看总览、看周报、看分类、看账户、看账本、看结构、做统计、看对比、看双区间、看同比、看分类对比、看趋势、看分类趋势、看大额、看高频、看分布、看活跃、看洞察、看异常、看借贷、看报销、看分期、看退款、设定预算、设定目标、看预算、看目标、新增账户、改账户、账户转账、看账户汇总、买东西、吃饭、初始化、初始化状态、备份、恢复备份、导入"
 ---
 
 # 饼干记账（bill）SKILL
@@ -67,7 +67,6 @@ bill-cmd-read bill.record.add --params '{"category":"餐饮/外卖/午餐","amou
 | 查昨天 | bill.record.today | list | `bill-cmd-read bill.record.today --params '{"date":"yesterday"}'` |
 | 查某天 | bill.record.today | list | `bill-cmd-read bill.record.today --params '{"date":"2026-09-06"}'` |
 | 查最近 | bill.record.today | list | `bill-cmd-read bill.record.today --params '{"recent":true}'` |
-| 查账单 | bill.record.today | list | `bill-cmd-read bill.record.today` |
 | 查周 | bill.record.range | list | `bill-cmd-read bill.record.range --params '{"range":"week"}'` |
 | 查月 | bill.record.range | list | `bill-cmd-read bill.record.range --params '{"range":"month"}'` |
 | 查区间 | bill.record.range | list | `bill-cmd-read bill.record.range --params '{"start":"2026-09-01","end":"2026-09-01"}'` |
@@ -120,6 +119,8 @@ bill-cmd-read bill.record.add --params '{"category":"餐饮/外卖/午餐","amou
 | 备份 | bill.setup.run | receipt | `bill-cmd-read bill.setup.run --params '{"op":"backup-create"}'` |
 | 恢复备份 | bill.setup.run | receipt | `bill-cmd-read bill.setup.run --params '{"op":"restore"}'` |
 | 导入 | bill.setup.run | receipt | `bill-cmd-read bill.setup.run --params '{"op":"import","file":"bills.csv"}'` |
+| 查看当前配置 | bill.setup.run | receipt | `bill-cmd-read bill.setup.run --params '{"op":"config-read"}'` |
+| 设置当前配置 | bill.setup.run | receipt | `bill-cmd-read bill.setup.run --params '{"op":"config-write"}'` |
 
 相关场景：bill.account.query、bill.account.write、bill.analysis.compare、bill.analysis.overview、bill.analysis.trend、bill.goal.query、bill.goal.write、bill.help.lookup、bill.link.submit、bill.record.add、bill.record.detail、bill.record.range、bill.record.search、bill.record.today、bill.record.update、bill.setup.run（16 联动，key 字符串后续票落表时冻结）。
 <!-- HELP-AUTO-END -->

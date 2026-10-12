@@ -56,8 +56,8 @@ const PAGE_BYTE_BUDGET = 240_000;
 /** 分类聚合卡的类数上限（与 `./list.js` 的 `CATEGORY_LIMIT` 同数，老页 `slice(0,8)` 同）。 */
 const CATEGORY_LIMIT = 8;
 
-/** 查今天别名注（w01 v2.1 原型逐字：副题第二行；`唤醒词／本纸` 字样已删，只留这一句）。 */
-const TODAY_ALIAS_NOTE = '查账单和查今天是一样的。';
+/** 查今天别名注（w01 v2.1 原型逐字：副题第二行）——**已删**：`查账单` 词条整条删（用户 2026-10-13 定，
+ *  不留不印出来的路由别名），这句话失去指代对象，页面不再印（`#1275`）。 */
 
 
 
@@ -207,7 +207,6 @@ export function queryTodayTicketDoc(input: TodayTicketInput): string {
   const paper = queryStyleTag()
     + sheetHead(DOC_TITLE + ' · ' + input.wakeWord, escapeHtml('今天共 ' + notes.head + '，支出 ' + sumText(kpi.expense) + ' 元'))
     + '<p class="ilife-today-shop-sub">' + escapeHtml(input.window) + '</p>'
-    + '<p class="ilife-today-alias">' + escapeHtml(TODAY_ALIAS_NOTE) + '</p>'
     + ticketRule()
     + ticketSummary(renderSummaryHead({
       eyebrow: '本页支出 · 共 ' + String(kpi.count) + ' 笔',
