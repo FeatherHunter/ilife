@@ -33,7 +33,7 @@ export const GOAL_DECLARATION: DomainDeclaration = {
           editable_fields: [
             { name: 'amount', label: '金额', value: '', hint: '纯数字，不带单位，如 3000', required: true, kind: 'number' },
             { name: 'month', label: '月份(选填)', value: '', hint: '空＝本月起；如 本月、8月', required: false, kind: 'text' },
-            { name: 'category', label: '分类(选填)', value: '', hint: '空＝总预算；如 餐饮', required: false, kind: 'text', source: 'categories' },
+            { name: 'category', label: '分类(选填)', value: '', hint: '空＝总预算；如 餐饮', required: false, kind: 'text', source: 'categories', empty_label: '总预算' },
           ],
         },
       ],

@@ -156,12 +156,15 @@
   .sheet .ib{position:absolute;right:2px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:50%;border:0;background:#eef0f4;color:var(--blue);font:700 13px/1 -apple-system,"Microsoft YaHei",sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
   .sheet .ib:active{transform:translateY(-50%) scale(.94);background:#dde2ea}
   .sheet .ib.on{background:var(--blue);color:#fff}
-  /* 轻量 popover：贴图标弹出的小气泡（不是整幅面板） */
-  #pop{position:fixed;z-index:99998;max-width:252px;background:#fff;color:var(--fg);border:1px solid #e3e3e8;border-radius:11px;padding:9px 11px;font:400 12.5px/1.55 -apple-system,"Microsoft YaHei",sans-serif;box-shadow:0 8px 26px rgba(0,0,0,.16);display:none}
+  /* 轻量 popover：贴图标弹出的小气泡（不是整幅面板）。
+     宽度（用户 2026-10-13 定稿）：先按内容取宽（`width:max-content`，能一行显完就窄），
+     上限＝**这一格输入框的宽度**（`popShow` 里按 `.inwrap` 实测后写进 `max-width`），向左展开；
+     长到顶格还显不完就折行，最多 3 行（`#pop span` 的 line-clamp）。 */
+  #pop{position:fixed;z-index:99998;width:max-content;max-width:252px;min-width:96px;background:#fff;color:var(--fg);border:1px solid #e3e3e8;border-radius:11px;padding:9px 11px;font:400 12.5px/1.55 -apple-system,"Microsoft YaHei",sans-serif;box-shadow:0 8px 26px rgba(0,0,0,.16);display:none}
   #pop.show{display:block;animation:popIn .14s ease-out both}
   #pop.below.show{animation-name:popInDown}
   #pop b{display:block;font-size:10.5px;font-weight:600;color:#86868b;margin-bottom:3px}
-  #pop span{display:block;color:var(--fg2);word-break:break-word}
+  #pop span{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;color:var(--fg2);word-break:break-word}
   /* 小尾巴用真元素（`#642` 守卫把 `::after` 全量当命中区审计，装饰层不进那张表）*/
   #pop .tail{position:absolute;left:calc(var(--pop-tail,16px) - 4.5px);bottom:-5px;width:9px;height:9px;background:#fff;border-right:1px solid #e3e3e8;border-bottom:1px solid #e3e3e8;transform:rotate(45deg)}
   #pop.below .tail{bottom:auto;top:-5px;border-right:none;border-bottom:none;border-left:1px solid #e3e3e8;border-top:1px solid #e3e3e8}
@@ -1768,7 +1771,7 @@ function normalizeScenes(scenes){
       params: (s.editable_fields || []).map(function(f){
         var k = (f.kind === 'number' || f.kind === 'select' || f.kind === 'date' || f.kind === 'week' || f.kind === 'month' || f.kind === 'year' || f.kind === 'time') ? f.kind : 'text';
         if (f.kind !== undefined && f.kind !== null && k === 'text' && f.kind !== 'text') { try{console.warn('help-template: 非法 kind 降级 text: ' + f.kind);}catch(e){} }
-        return { key: f.name, label: f.label, value: f.value || '', req: !!f.required, hint: f.hint || '', kind: k, options: f.options || [], min: f.min, max: f.max, step: f.step, placeholder: f.placeholder || f.hint || '' };
+        return { key: f.name, label: f.label, value: f.value || '', req: !!f.required, hint: f.hint || '', kind: k, options: f.options || [], emptyLabel: f.empty_label || '', min: f.min, max: f.max, step: f.step, placeholder: f.placeholder || f.hint || '' };
       })
     };
   });
@@ -1890,7 +1893,9 @@ function fieldControlHTML(p){
   var ph = String(p.placeholder || p.hint || '');
   if (kind === 'select') {
     var opts = Array.isArray(p.options) ? p.options : [];
-    var emptyLabel = p.req ? '请选择' : '（选填，未选）';
+    // 空项文案（用户 2026-10-13 定稿）：必填＝请选择；选填＝不限（留空即不筛这一维）。
+    // 留空不等于「不限」的格由声明里的 empty_label 写清（如分类留空＝总预算、收支留空＝支出）。
+    var emptyLabel = p.emptyLabel || (p.req ? '请选择' : '不限');
     var h = '<select data-p="' + esc(p.key) + '"><option value="">' + esc(emptyLabel) + '</option>';
     opts.forEach(function(o){
       var ov = (o && typeof o === 'object') ? String(o.value != null ? o.value : o.label) : String(o);
@@ -2352,8 +2357,15 @@ function popShow(anchor, label, text){
   popEl.classList.add('show');
   anchor.classList.add('on');
   var r = anchor.getBoundingClientRect();
-  var w = popEl.offsetWidth, h = popEl.offsetHeight, GAP = 9, M = 8;
-  var left = Math.min(Math.max(M, r.left + r.width / 2 - w / 2), window.innerWidth - w - M);
+  var box = (anchor.parentElement && anchor.parentElement.getBoundingClientRect) ? anchor.parentElement.getBoundingClientRect() : r;
+  var GAP = 9, M = 8;
+  /* 宽度（用户 2026-10-13 定稿）：上限＝这一格输入框的宽度；内容短就按内容窄着来。 */
+  var cap = Math.max(140, Math.min(box.width, window.innerWidth - M * 2));
+  popEl.style.maxWidth = Math.round(cap) + 'px';
+  var w = popEl.offsetWidth, h = popEl.offsetHeight;
+  /* 向左展开：右缘贴输入框右缘（图标就在最右），不够宽往左长，再兜一道视口边距。 */
+  var right = Math.min(window.innerWidth - M, Math.max(box.right, r.right));
+  var left = Math.max(M, right - w);
   var above = r.top - h - GAP, below = above < M;
   popEl.style.left = Math.round(left) + 'px';
   popEl.style.top = Math.round(below ? Math.min(r.bottom + GAP, window.innerHeight - h - M) : above) + 'px';

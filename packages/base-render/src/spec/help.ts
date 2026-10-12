@@ -48,6 +48,11 @@ export interface SceneEditableField {
   readonly kind?: SceneFieldKind;
   readonly source?: SceneFieldSource;
   readonly options?: readonly (string | { readonly value: string; readonly label: string })[];
+  /** `select` 空项（没选任何候选那一档）的文案（用户 2026-10-13 定稿）。
+   *  缺省按 `required` 二分：必填＝`请选择`、选填＝`不限`——选填那档回答的是「留空＝什么」，
+   *  而多数选填下拉就是筛选维度，留空即不筛这一维。留空不等于「不限」的格（如分类留空＝总预算、
+   *  收支留空＝支出）在这一格写清自己的那一个词，别让模板去猜。 */
+  readonly empty_label?: string;
   readonly min?: string | number;
   readonly max?: string | number;
   readonly step?: string | number;
@@ -212,6 +217,7 @@ export const SCENE_DATA_SCHEMA = Object.freeze({
                             required: { type: 'boolean' },
                             kind: { enum: ['text', 'number', 'select', 'date', 'week', 'month', 'year', 'time'] },
                             source: { enum: ['tags', 'categories', 'accounts', 'ledgers', 'config'] },
+                            empty_label: { type: 'string', minLength: 1 },
                             options: {
                               type: 'array',
                               items: {

@@ -983,4 +983,12 @@ describe('#969 详情页重构：填参＋复制载荷＋双端（共享模板�
     assert.equal(tpl.includes('请先填写：'), true, '必填缺失 toast 文案沿原型票（全角冒号）');
     assert.equal(tpl.includes("querySelectorAll('[data-p]')"), true, 'readParams 必须同时读 input 与 select');
   });
+
+  it('select 空项文案按 required 二分（用户 2026-10-13 定稿：必填＝请选择／选填＝不限）', () => {
+    const tpl = readFileSync(new URL('../assets/help-template.html', import.meta.url), 'utf8');
+    assert.equal(tpl.includes("var emptyLabel = p.emptyLabel || (p.req ? '请选择' : '不限');"), true,
+      '空项文案须按 required 二分，并让声明里的 empty_label 覆盖');
+    assert.equal(tpl.includes("emptyLabel: f.empty_label || ''"), true, '载荷字段的 empty_label 须透传进 params');
+    assert.equal(tpl.includes('（选填，未选）'), false, '旧括号文案（选填，未选）已撤：折叠头已写「选填 N 项」');
+  });
 });
