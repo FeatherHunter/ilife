@@ -1,0 +1,344 @@
+{
+  "原话来源": "https://github.com/FeatherHunter/ilife/issues/1267",
+  "编号外补充": "第九点，补充，因为当前页面功能都是提供查询的，因此那些多选一的一般不提供新建能力。\n1～14中 如果是新增 我们需要设计下 生成的 help html 能够根据用户选择了分类的新增，或者账户的新增，在 prompt 能让 ai 知道这一步还有分类、账户等的新增",
+  "条目": [
+    {
+      "no": 1,
+      "text": "查某天和查账单 两者都是选择日期 是否是重复场景？",
+      "imgNo": "图01",
+      "imgFile": "图01-HELP首页-按时间9张卡片.jpg",
+      "imgAbs": "D:\\ilife\\docs\\skills\\skill-bill\\assets\\bill-help-26\\图01-HELP首页-按时间9张卡片.jpg",
+      "sha256": "4a3546af7f8c7a060ac4b30f0621b4518d84b4e02228fe0be22d8b338fab6575",
+      "bytes": 166315,
+      "caption": "HELP首页-按时间9张卡片",
+      "imgItems": [
+        1,
+        4,
+        5,
+        7
+      ]
+    },
+    {
+      "no": 2,
+      "text": "查某天的详情页的日期选择框不明显，不好看",
+      "imgNo": "图02",
+      "imgFile": "图02-查某一天的账-弹窗.jpg",
+      "imgAbs": "D:\\ilife\\docs\\skills\\skill-bill\\assets\\bill-help-26\\图02-查某一天的账-弹窗.jpg",
+      "sha256": "87b622ca899d8a0c64221a8f45058da135bccf535867d7a1a6dfde4e96b19085",
+      "bytes": 131204,
+      "caption": "查某一天的账-弹窗",
+      "imgItems": [
+        2
+      ]
+    },
+    {
+      "no": 3,
+      "text": "查最近的详情页 这些输入框没有重点，看起来都是灰色的。",
+      "imgNo": "图03",
+      "imgFile": "图03-查最近记录-弹窗.jpg",
+      "imgAbs": "D:\\ilife\\docs\\skills\\skill-bill\\assets\\bill-help-26\\图03-查最近记录-弹窗.jpg",
+      "sha256": "0de2d2120e0a4631ab4e4999112923f9cb3dd07b38d92b3be1bf7bd8c910f358",
+      "bytes": 134213,
+      "caption": "查最近记录-弹窗",
+      "imgItems": [
+        3
+      ]
+    },
+    {
+      "no": 4,
+      "text": "help 场景页面的复制按钮 没有填写必填字段时也可以复制（详情页依旧不可以），但是在 toast 提示信息中要告诉用户 必填字段没有填写，需手动填写",
+      "imgNo": "图01",
+      "imgFile": "图01-HELP首页-按时间9张卡片.jpg",
+      "imgAbs": "D:\\ilife\\docs\\skills\\skill-bill\\assets\\bill-help-26\\图01-HELP首页-按时间9张卡片.jpg",
+      "sha256": "4a3546af7f8c7a060ac4b30f0621b4518d84b4e02228fe0be22d8b338fab6575",
+      "bytes": 166315,
+      "caption": "HELP首页-按时间9张卡片",
+      "imgItems": [
+        1,
+        4,
+        5,
+        7
+      ]
+    },
+    {
+      "no": 5,
+      "text": "查某周查某月的详情页需要支持周和月的选择器",
+      "imgNo": "图01",
+      "imgFile": "图01-HELP首页-按时间9张卡片.jpg",
+      "imgAbs": "D:\\ilife\\docs\\skills\\skill-bill\\assets\\bill-help-26\\图01-HELP首页-按时间9张卡片.jpg",
+      "sha256": "4a3546af7f8c7a060ac4b30f0621b4518d84b4e02228fe0be22d8b338fab6575",
+      "bytes": 166315,
+      "caption": "HELP首页-按时间9张卡片",
+      "imgItems": [
+        1,
+        4,
+        5,
+        7
+      ]
+    },
+    {
+      "no": 6,
+      "text": "查任意时间段的开始和结束日期选择器的入口不好看，右侧一个小箭头应该是明显能看出来是选择日期的",
+      "imgNo": "图04",
+      "imgFile": "图04-查任意时间段-弹窗.jpg",
+      "imgAbs": "D:\\ilife\\docs\\skills\\skill-bill\\assets\\bill-help-26\\图04-查任意时间段-弹窗.jpg",
+      "sha256": "8e8c12ac7faf9176b0bd812634f18081a4210de8dc8c1dd92e39a7a55eb86dcb",
+      "bytes": 128010,
+      "caption": "查任意时间段-弹窗",
+      "imgItems": [
+        6
+      ]
+    },
+    {
+      "no": 7,
+      "text": "查账单详情，这个场景需要优化，一般用户很难知道某个记录的 id。",
+      "imgNo": "图01",
+      "imgFile": "图01-HELP首页-按时间9张卡片.jpg",
+      "imgAbs": "D:\\ilife\\docs\\skills\\skill-bill\\assets\\bill-help-26\\图01-HELP首页-按时间9张卡片.jpg",
+      "sha256": "4a3546af7f8c7a060ac4b30f0621b4518d84b4e02228fe0be22d8b338fab6575",
+      "bytes": 166315,
+      "caption": "HELP首页-按时间9张卡片",
+      "imgItems": [
+        1,
+        4,
+        5,
+        7
+      ]
+    },
+    {
+      "no": 8,
+      "text": "详情页必填写字段不填写需要有醒目的 ui 动画效果 提醒下",
+      "imgNo": null,
+      "imgFile": null,
+      "imgAbs": null
+    },
+    {
+      "no": 9,
+      "text": "查某分类的账的详情页，分类支持在已有分类中选择，并额外支持一个新建分类能力。账户也是支持在已有的选择，也支持新建 账本也是如此。技术是 help html 需要支持这种已有类型的参数，让 ai 构造时提供自己有已有的分类，并且根据 type help html 知道应该提供新建的按钮（可以通过开关设置，不提供新建能力） 这部分需求我们需要对齐",
+      "imgNo": "图05",
+      "imgFile": "图05-查某分类的账-弹窗.jpg",
+      "imgAbs": "D:\\ilife\\docs\\skills\\skill-bill\\assets\\bill-help-26\\图05-查某分类的账-弹窗.jpg",
+      "sha256": "6d3c6d2880e5af2691cf91330c153ba772302b2a5db5a8bb105af333df541106",
+      "bytes": 134933,
+      "caption": "查某分类的账-弹窗",
+      "imgItems": [
+        9
+      ]
+    },
+    {
+      "no": 10,
+      "text": "查标签 详情页的标签是预置的，可以多选一。因为目前 help html 有一天复用机制，因此我们只保证一天前的标签都在",
+      "imgNo": "图06",
+      "imgFile": "图06-查标签-弹窗.jpg",
+      "imgAbs": "D:\\ilife\\docs\\skills\\skill-bill\\assets\\bill-help-26\\图06-查标签-弹窗.jpg",
+      "sha256": "a17ba7c7343999f173899bcad9eddc4be366a3d6e5bddebf1bc29cf289525912",
+      "bytes": 127958,
+      "caption": "查标签-弹窗",
+      "imgItems": [
+        10
+      ]
+    },
+    {
+      "no": 11,
+      "text": "查账户流水 的 账户提供所选一，时间提供 月度，周度，日期的不同选择器。提供不同区间的选择器，因为可能查某个时间段内的流水",
+      "imgNo": "图07",
+      "imgFile": "图07-查某账户流水-弹窗.jpg",
+      "imgAbs": "D:\\ilife\\docs\\skills\\skill-bill\\assets\\bill-help-26\\图07-查某账户流水-弹窗.jpg",
+      "sha256": "5868e6e5349a044ad770b9d523626bdfd27a89775d1293450df52f6902c696c6",
+      "bytes": 130778,
+      "caption": "查某账户流水-弹窗",
+      "imgItems": [
+        11
+      ]
+    },
+    {
+      "no": 12,
+      "text": "查某账本的记录 没太看懂是查什么的，此外时间选择器应该提供 周 月 年 以及提供区间的选择器 可以到某天，也可以是某个区间",
+      "imgNo": "图08",
+      "imgFile": "图08-查某账本的记录-弹窗.jpg",
+      "imgAbs": "D:\\ilife\\docs\\skills\\skill-bill\\assets\\bill-help-26\\图08-查某账本的记录-弹窗.jpg",
+      "sha256": "c0dee9e1338f8d7f51ca0358aa8e87947b8beaa114742bb2cb60e783d719184f",
+      "bytes": 127319,
+      "caption": "查某账本的记录-弹窗",
+      "imgItems": [
+        12
+      ]
+    },
+    {
+      "no": 13,
+      "text": "查未还欠款 需要提供选择",
+      "imgNo": "图09",
+      "imgFile": "图09-查未还欠款-弹窗.jpg",
+      "imgAbs": "D:\\ilife\\docs\\skills\\skill-bill\\assets\\bill-help-26\\图09-查未还欠款-弹窗.jpg",
+      "sha256": "957348c96b9bcb14556e6029cc7a0723a0501aa3d0622e1801d4517785031620",
+      "bytes": 125812,
+      "caption": "查未还欠款-弹窗",
+      "imgItems": [
+        13
+      ]
+    },
+    {
+      "no": 14,
+      "text": "查进行中的分期 看起来 选项很少",
+      "imgNo": "图10",
+      "imgFile": "图10-查进行中的分期-弹窗.jpg",
+      "imgAbs": "D:\\ilife\\docs\\skills\\skill-bill\\assets\\bill-help-26\\图10-查进行中的分期-弹窗.jpg",
+      "sha256": "8c20d3dbfe05f3eafde363e505a6662fc1332d4aa7061da810dd17f677d8a237",
+      "bytes": 126778,
+      "caption": "查进行中的分期-弹窗",
+      "imgItems": [
+        14
+      ]
+    },
+    {
+      "no": 15,
+      "text": "关于页面底部的文本 饼干记账 v2.0是 ok 的 但是后面不要写 help 模板 v4 应该写当前饼干 skill 的版本号",
+      "imgNo": "图11",
+      "imgFile": "图11-关于页-联系作者与版本.jpg",
+      "imgAbs": "D:\\ilife\\docs\\skills\\skill-bill\\assets\\bill-help-26\\图11-关于页-联系作者与版本.jpg",
+      "sha256": "51b274967bb479f527f81bab316e928a9233189892734a5d61d41338f97b7c97",
+      "bytes": 152011,
+      "caption": "关于页-联系作者与版本",
+      "imgItems": [
+        15
+      ]
+    },
+    {
+      "no": 16,
+      "text": "设月度预算 月份提供选择器\n分类提供所选一和新建",
+      "imgNo": "图12",
+      "imgFile": "图12-设定月度预算-弹窗.jpg",
+      "imgAbs": "D:\\ilife\\docs\\skills\\skill-bill\\assets\\bill-help-26\\图12-设定月度预算-弹窗.jpg",
+      "sha256": "205226f33f2d7bfac9d375d2f61aa26095fd79d941827c4ad23dd9a339535ac8",
+      "bytes": 137785,
+      "caption": "设定月度预算-弹窗",
+      "imgItems": [
+        16
+      ]
+    },
+    {
+      "no": 17,
+      "text": "查看预算执行，需要提供月度选择器",
+      "imgNo": "图13",
+      "imgFile": "图13-查看预算执行-弹窗.jpg",
+      "imgAbs": "D:\\ilife\\docs\\skills\\skill-bill\\assets\\bill-help-26\\图13-查看预算执行-弹窗.jpg",
+      "sha256": "548c0ea1babd722fd9529ed303719f645135980c92318e88ad90507e510b9172",
+      "bytes": 129999,
+      "caption": "查看预算执行-弹窗",
+      "imgItems": [
+        17
+      ]
+    },
+    {
+      "no": 18,
+      "text": "储蓄目标的截止日期提供日期选择器",
+      "imgNo": "图14",
+      "imgFile": "图14-设定储蓄目标-弹窗.jpg",
+      "imgAbs": "D:\\ilife\\docs\\skills\\skill-bill\\assets\\bill-help-26\\图14-设定储蓄目标-弹窗.jpg",
+      "sha256": "a1823cdce47e70cf9778eff7fdf86ba633aec1b014d60bbef9afd4e26c4a3b40",
+      "bytes": 133862,
+      "caption": "设定储蓄目标-弹窗",
+      "imgItems": [
+        18
+      ]
+    },
+    {
+      "no": 19,
+      "text": "新增账户 的 类型支持多选一",
+      "imgNo": "图15",
+      "imgFile": "图15-新增账户-弹窗.jpg",
+      "imgAbs": "D:\\ilife\\docs\\skills\\skill-bill\\assets\\bill-help-26\\图15-新增账户-弹窗.jpg",
+      "sha256": "ab43ee14958765ceac109cb0e9be07052c37e8a64926d2c1fac31120b9aae558",
+      "bytes": 132591,
+      "caption": "新增账户-弹窗",
+      "imgItems": [
+        19
+      ]
+    },
+    {
+      "no": 20,
+      "text": "修改账户支持选择已有账户，或者独立输入",
+      "imgNo": "图16",
+      "imgFile": "图16-修改账户-弹窗.jpg",
+      "imgAbs": "D:\\ilife\\docs\\skills\\skill-bill\\assets\\bill-help-26\\图16-修改账户-弹窗.jpg",
+      "sha256": "dc5e2a62f67a0df470aa9a30fe8f4287a6064786e9ce06229daeeb626d5d2a32",
+      "bytes": 130210,
+      "caption": "修改账户-弹窗",
+      "imgItems": [
+        20
+      ]
+    },
+    {
+      "no": 21,
+      "text": "从账户到账户都应该是已有的选择的。也允许自定义输入",
+      "imgNo": "图17",
+      "imgFile": "图17-账户间转账-弹窗.jpg",
+      "imgAbs": "D:\\ilife\\docs\\skills\\skill-bill\\assets\\bill-help-26\\图17-账户间转账-弹窗.jpg",
+      "sha256": "1909281b3e73dfc5b2d9835bdfbd151bdbbd880dadc9540665d6ad82dab0a1b7",
+      "bytes": 125886,
+      "caption": "账户间转账-弹窗",
+      "imgItems": [
+        21
+      ]
+    },
+    {
+      "no": 22,
+      "text": "从备份恢复的详情页 允许从已有备份中选择。",
+      "imgNo": "图18",
+      "imgFile": "图18-初始化备份恢复导入-整页.jpg",
+      "imgAbs": "D:\\ilife\\docs\\skills\\skill-bill\\assets\\bill-help-26\\图18-初始化备份恢复导入-整页.jpg",
+      "sha256": "de16ba707cfe1605527bc458b94081b348fac3e2def16293704b3fb44b79c6a5",
+      "bytes": 132204,
+      "caption": "初始化备份恢复导入-整页",
+      "imgItems": [
+        22
+      ]
+    },
+    {
+      "no": 23,
+      "text": "列映射底部的 hint 提示需要可以滚动 不然看不全，或者有更好的交互方式",
+      "imgNo": "图19",
+      "imgFile": "图19-导入CSV账单-弹窗.jpg",
+      "imgAbs": "D:\\ilife\\docs\\skills\\skill-bill\\assets\\bill-help-26\\图19-导入CSV账单-弹窗.jpg",
+      "sha256": "37f43d956db5ef4f0c97e622df5581143e97088bdfb67cb497a42599fbbb5932",
+      "bytes": 137026,
+      "caption": "导入CSV账单-弹窗",
+      "imgItems": [
+        23
+      ]
+    },
+    {
+      "no": 24,
+      "text": "开始使用这个模块需要增加 场景关于 设置当前配置 json 里面的字段的能力的场景。比如 db 文件所在的电脑路径等",
+      "imgNo": null,
+      "imgFile": null,
+      "imgAbs": null
+    },
+    {
+      "no": 25,
+      "text": "买东西联动 需要分类多选一",
+      "imgNo": "图20",
+      "imgFile": "图20-买东西联动-弹窗.jpg",
+      "imgAbs": "D:\\ilife\\docs\\skills\\skill-bill\\assets\\bill-help-26\\图20-买东西联动-弹窗.jpg",
+      "sha256": "f2e11e256ba3065dae1f389af274881202618fb700db538f0319f0917c47535b",
+      "bytes": 129190,
+      "caption": "买东西联动-弹窗",
+      "imgItems": [
+        25
+      ]
+    },
+    {
+      "no": 26,
+      "text": "吃饭联动 需要支持类型多选一",
+      "imgNo": "图21",
+      "imgFile": "图21-吃饭联动-弹窗.jpg",
+      "imgAbs": "D:\\ilife\\docs\\skills\\skill-bill\\assets\\bill-help-26\\图21-吃饭联动-弹窗.jpg",
+      "sha256": "8230700ba006c6b6cc09e828366472e5ccf3f7295a09cb77ba3d8ef16b0f4198",
+      "bytes": 127014,
+      "caption": "吃饭联动-弹窗",
+      "imgItems": [
+        26
+      ]
+    }
+  ]
+}
