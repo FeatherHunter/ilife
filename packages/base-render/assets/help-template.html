@@ -162,6 +162,12 @@
      （NotAllowedError）——覆盖层是「点哪儿都开」＋「不许手敲」同时成立的落点。 */
   .sheet .pick-hold{position:relative;display:flex;flex:1;min-width:0}
   .sheet .pick-shield{position:absolute;inset:0;z-index:1;cursor:pointer}
+  /* 日历图标由页面自己画：各浏览器对 `input[type=date]` 的原生指示器长得不一样（Chrome 是日历、
+     部分手机浏览器是一个小箭头、窄框时还会被挤没），所以原生指示器一律隐掉，改画同一枚 SVG，
+     位置固定、任何浏览器都在（点击由 `.pick-shield` 接管，图标本身 pointer-events:none）。 */
+  .sheet .pick-icon{position:absolute;right:38px;top:50%;transform:translateY(-50%);z-index:2;pointer-events:none;display:flex;align-items:center;justify-content:center;width:17px;height:17px;color:var(--fg3)}
+  .sheet .pick-icon svg{display:block;width:17px;height:17px}
+  .sheet .inwrap.native input::-webkit-calendar-picker-indicator{opacity:0}
   .sheet .pform .ib{z-index:2}
   /* 时间槽位（kind:'period'）：粒度分段（不限／某天／周／月／年／区间）＋对应原生控件；
      取值是**人话表达式**（周／月另带起止日期）写回同名字段——命令侧不必懂 ISO 周号。 */
@@ -172,7 +178,12 @@
   .sheet .period-ctl{display:flex;flex-wrap:wrap;gap:6px;flex:1 1 100%;min-width:0;align-items:center}
   .sheet .period-ctl .inwrap{flex:1 1 100%;min-width:0}
   .sheet .period-ctl input{flex:1 1 130px;min-width:0}
-  .sheet .period-ctl .period-sep{color:var(--fg3);font-size:12px;flex-shrink:0}
+  .sheet .period-ctl .period-sep{color:var(--fg3);font-size:12px;flex-shrink:0;align-self:center;line-height:1}
+  /* 时间槽位里的 ⓘ 属于**整行**（区间是两个框），所以它不进框、排在行尾；
+     框内只留自画的日历图标（原生指示器已隐）。 */
+  .sheet .period-ctl .inwrap.native input{padding-right:34px}
+  .sheet .period-ctl .inwrap.native .pick-icon{right:10px}
+  .sheet .period-ctl .ib{position:static;transform:none;flex:0 0 auto;align-self:center;margin-left:2px}
   /* 候选多的下拉（>12 项）：一行框 ＋ 悬浮筛选面板。面板挂到 <body>、**一律向上展开**——
      字段本身永远只有一行，不改控件高度（用户 2026-10-13 定：筛选输入框与「共 N 项」在面板底端同一行）。 */
   .sheet .filt{flex:1;min-width:0;display:block}
@@ -2357,6 +2368,12 @@ function mountPickers(root){
       var sh = document.createElement('span');
       sh.className = 'pick-shield';
       holder.appendChild(sh);
+      /* 自画日历图标：原生指示器各浏览器不一（窄框还会被挤没），这里统一画一枚，位置由 CSS 钉住。 */
+      var ic = document.createElement('span');
+      ic.className = 'pick-icon';
+      ic.setAttribute('aria-hidden', 'true');
+      ic.innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><rect x="2.2" y="3.4" width="11.6" height="10.4" rx="2"></rect><path d="M2.2 6.6h11.6M5.4 2.2v2.4M10.6 2.2v2.4"></path></svg>';
+      holder.appendChild(ic);
       sh.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); openPicker(inp); });
       ['keydown', 'beforeinput', 'paste', 'drop'].forEach(function(t){ inp.addEventListener(t, helpBlockEdit); });
     })(ins[i]);
