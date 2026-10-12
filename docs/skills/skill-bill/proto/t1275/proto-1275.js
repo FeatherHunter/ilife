@@ -21,7 +21,7 @@
   'use strict';
 
   var PROTO = 'proto1275';
-  var ROUND = 'r7';
+  var ROUND = 'r8';
   var PERIOD_KEY = 'period';
   var PICKABLE = /^(date|week|month|time|datetime-local)$/;
   var FILTER_MIN = 12; /* 候选（不含空项）超过这个数才换「框＋筛选」 */
@@ -35,7 +35,7 @@
   ];
 
   var STATS = {
-    round: ROUND, pickCalls: 0, pickErr: '', pickUnsupported: 0,
+    round: ROUND, pickCalls: 0, pickErr: '', pickUnsupported: 0, shielded: 0,
     hasShowPicker: typeof HTMLInputElement.prototype.showPicker === 'function',
     filterMounts: [], panelMode: 'inline',
   };
@@ -73,6 +73,12 @@
       'background:rgba(28,28,30,.92);color:#fff;font:400 12.5px/1.5 -apple-system,"Microsoft YaHei",sans-serif;' +
       'padding:9px 12px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .18s ease}',
     '.proto-note.show{opacity:1}',
+    /* 有日历可开的输入框：整块盖一层透明盾，点哪儿都只开日历；键盘／粘贴改不了值 */
+    '.proto-hold{position:relative;display:flex;flex:1;min-width:0}',
+    '.pp-ctl .proto-hold{flex:1 1 130px;min-width:0}',
+    '.proto-shield{position:absolute;inset:0;z-index:1;cursor:pointer}',
+    /* ⓘ 必须压在盾上面，否则点 ⓘ 会被盾吃掉（变成开日历） */
+    '.sheet .pform .ib{z-index:2}',
     /* ③ 「看全文」文字按钮 → 与 .ib 同款的 ⓘ 圆钮 */
     '.sheet .ib2.proto-i{width:20px;height:20px;border-radius:50%;background:#eef0f4;color:var(--blue);' +
       'font:700 12px/1 -apple-system,"Microsoft YaHei",sans-serif;display:inline-flex;align-items:center;' +
@@ -152,6 +158,36 @@
     var ins = pf.querySelectorAll('input');
     if (ins.length === 1) openPicker(ins[0]);
   }, true);
+
+  /* ── ④b 有日历可开的输入框：整块盖一层透明盾 ──
+     目的：点哪儿都只开日历，**不再进编辑态**（选中「年/月/日」某一段手敲 0001 这种异常值不该出现）；
+     键盘／粘贴／拖放一律改不了值。盾只盖输入框本身，不盖右侧 ⓘ。 */
+  function blockEdit(e) {
+    if (e.type === 'keydown') {
+      var k = e.key;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;           /* 放行复制等组合键 */
+      if (k === 'Tab' || k === 'Escape' || k === 'Enter' || k === 'Shift') return; /* 放行离开 */
+    }
+    e.preventDefault();
+  }
+  function shieldPickers() {
+    Array.prototype.forEach.call(document.querySelectorAll('#sheet .pform input'), function (inp) {
+      if (!PICKABLE.test(inp.type || '')) return;
+      if (inp.getAttribute('data-proto-shield') === PROTO) return;
+      inp.setAttribute('data-proto-shield', PROTO);
+      var holder = document.createElement('span');
+      holder.className = 'proto-hold';
+      inp.parentNode.insertBefore(holder, inp);
+      holder.appendChild(inp);
+      var sh = document.createElement('span');
+      sh.className = 'proto-shield';
+      sh.setAttribute('data-proto-shield', PROTO);
+      holder.appendChild(sh);
+      sh.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); openPicker(inp); });
+      ['keydown', 'beforeinput', 'paste', 'drop'].forEach(function (t) { inp.addEventListener(t, blockEdit); });
+      STATS.shielded++;
+    });
+  }
 
   /* 点别处收起已展开的筛选下拉（移动端没有 Esc） */
   document.addEventListener('click', function (ev) {
@@ -267,6 +303,7 @@
     function paint() {
       ctl.innerHTML = ctlHTML(state.mode, state.v);
       refresh();
+      shieldPickers(); /* 控件是重画的，盾要重挂 */
     }
     seg.addEventListener('click', function (e) {
       var b = e.target.closest('.pp-btn');
@@ -411,6 +448,7 @@
       mountPeriod();
       unifyHintButtons();
       mountFilterSelect();
+      shieldPickers(); /* 模板原生的日期／周／月字段也一并盖盾 */
     } catch (err) {
       try { console.warn('proto-1275 补丁失败:', err); } catch (e) {}
     }
