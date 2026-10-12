@@ -165,9 +165,12 @@
   /* 日历图标由页面自己画：各浏览器对 `input[type=date]` 的原生指示器长得不一样（Chrome 是日历、
      部分手机浏览器是一个小箭头、窄框时还会被挤没），所以原生指示器一律隐掉，改画同一枚 SVG，
      位置固定、任何浏览器都在（点击由 `.pick-shield` 接管，图标本身 pointer-events:none）。 */
-  .sheet .pick-icon{position:absolute;right:38px;top:50%;transform:translateY(-50%);z-index:2;pointer-events:none;display:flex;align-items:center;justify-content:center;width:17px;height:17px;color:var(--fg3)}
+  .sheet .pick-icon{position:absolute;right:38px;top:50%;transform:translateY(-50%);z-index:2;pointer-events:none;box-sizing:content-box;display:flex;align-items:center;justify-content:center;width:17px;height:17px;padding:2px;border-radius:6px;background:#fff;color:var(--fg3)}
   .sheet .pick-icon svg{display:block;width:17px;height:17px}
-  .sheet .inwrap.native input::-webkit-calendar-picker-indicator{opacity:0}
+  /* 原生指示器一律隐掉；白底图标同时**盖住**那些不认这个伪元素的引擎（比如手机 App 内嵌 WebView
+     把它画成一个小箭头）——盖不住也不影响功能：点击始终由 `.pick-shield` 接管。 */
+  .sheet .inwrap.native input::-webkit-calendar-picker-indicator{display:none;opacity:0;width:0;height:0;margin:0;padding:0}
+  .sheet .inwrap.native input::-webkit-inner-spin-button,.sheet .inwrap.native input::-webkit-clear-button{display:none}
   .sheet .pform .ib{z-index:2}
   /* 时间槽位（kind:'period'）：粒度分段（不限／某天／周／月／年／区间）＋对应原生控件；
      取值是**人话表达式**（周／月另带起止日期）写回同名字段——命令侧不必懂 ISO 周号。 */
@@ -182,7 +185,7 @@
   /* 时间槽位里的 ⓘ 属于**整行**（区间是两个框），所以它不进框、排在行尾；
      框内只留自画的日历图标（原生指示器已隐）。 */
   .sheet .period-ctl .inwrap.native input{padding-right:34px}
-  .sheet .period-ctl .inwrap.native .pick-icon{right:10px}
+  .sheet .period-ctl .inwrap.native .pick-icon{right:5px}
   .sheet .period-ctl .ib{position:static;transform:none;flex:0 0 auto;align-self:center;margin-left:2px}
   /* 候选多的下拉（>12 项）：一行框 ＋ 悬浮筛选面板。面板挂到 <body>、**一律向上展开**——
      字段本身永远只有一行，不改控件高度（用户 2026-10-13 定：筛选输入框与「共 N 项」在面板底端同一行）。 */
@@ -223,11 +226,13 @@
   /* 条目 8（用户定稿）：必填＝左侧红竖条＋红徽标；选填整段折进一行，默认收起 */
   .sheet .pfield.req{border-left:3px solid var(--red);padding-left:7px;margin-left:-10px}
   .sheet .pfield label em.req{color:#c0392b;background:#ffe8e6;border-radius:4px;padding:1px 4px;font-weight:700;font-size:9px}
-  .sheet .optfold{margin:12px 0 10px;background:#f7f7f9;border:1px solid #e8e8ee;border-radius:10px;padding:6px 10px}
-  .sheet .optfold>summary.fold{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;margin:0 -4px;padding:0 4px;border-radius:8px;cursor:pointer;font:600 12.5px/1.4 -apple-system,"Microsoft YaHei",sans-serif;color:var(--fg2);list-style:none;-webkit-tap-highlight-color:transparent}
+  /* 行高有下限：`summary` 的 44px 是 #507／#642 守卫钉的触摸目标（视觉可压、命中区不能压），
+     所以这里只收外框留白与右侧图标（26→21px），不降 min-height。 */
+  .sheet .optfold{margin:12px 0 10px;background:#f7f7f9;border:1px solid #e8e8ee;border-radius:10px;padding:0 7px}
+  .sheet .optfold>summary.fold{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;margin:0 -2px;padding:0 2px;border-radius:8px;cursor:pointer;font:600 12.5px/1.4 -apple-system,"Microsoft YaHei",sans-serif;color:var(--fg2);list-style:none;-webkit-tap-highlight-color:transparent}
   .sheet .optfold>summary.fold::-webkit-details-marker{display:none}
   .sheet .optfold>summary.fold:active{background:#ececf1}
-  .sheet .optfold .chev{display:block;width:26px;height:26px;flex-shrink:0;border-radius:50%;background:#eef0f4;border:0;color:var(--fg2);transition:transform .22s cubic-bezier(.32,.72,.24,1),background .2s,color .2s}
+  .sheet .optfold .chev{display:block;width:21px;height:21px;flex-shrink:0;border-radius:50%;background:#eef0f4;border:0;color:var(--fg2);transition:transform .22s cubic-bezier(.32,.72,.24,1),background .2s,color .2s}
   .sheet .optfold>summary.fold:active .chev{background:#dfe3ea;color:var(--fg)}
   .sheet .optfold[open] summary.fold .chev{transform:rotate(180deg)}
   .sheet .optfold .pfield:first-of-type{margin-top:8px}
@@ -1911,6 +1916,9 @@ function fieldKindOf(f){
    ③ 能开系统选择器的框（date／week／month／time）整块盖一层透明盾：点哪儿都只开选择器，不进编辑态、
       手敲／粘贴／拖放改不了值。 */
 var HELP_PICKABLE = /^(date|week|month|time|datetime-local)$/;
+/* 自画日历图标（各浏览器原生指示器长得不一样、窄框还会被挤没；`period` 的「年」是键入框也带它，
+   让六个分段长得一样）。 */
+var HELP_PICK_ICON = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><rect x="2.2" y="3.4" width="11.6" height="10.4" rx="2"></rect><path d="M2.2 6.6h11.6M5.4 2.2v2.4M10.6 2.2v2.4"></path></svg>';
 var HELP_FILTER_MIN = 12;
 var HELP_PERIOD_MODES = [
   { k: 'none', t: '不限' }, { k: 'day', t: '某天' }, { k: 'week', t: '周' },
@@ -2311,7 +2319,7 @@ function periodCtlHTML(mode, v){
   if (mode === 'day') inner = '<input type="date" data-period-ctl="day" value="' + esc(v.day || '') + '">';
   else if (mode === 'week') inner = '<input type="week" data-period-ctl="week" value="' + esc(v.week || '') + '">';
   else if (mode === 'month') inner = '<input type="month" data-period-ctl="month" value="' + esc(v.month || '') + '">';
-  else if (mode === 'year') inner = '<input type="number" inputmode="numeric" min="2000" max="2100" step="1" placeholder="如 2026" data-period-ctl="year" value="' + esc(v.year || '') + '">';
+  else if (mode === 'year') inner = '<span class="pick-hold"><input type="number" inputmode="numeric" min="2000" max="2100" step="1" placeholder="如 2026" data-period-ctl="year" value="' + esc(v.year || '') + '"><span class="pick-icon" aria-hidden="true">' + HELP_PICK_ICON + '</span></span>';
   else if (mode === 'range') inner = '<input type="date" data-period-ctl="start" value="' + esc(v.start || '') + '">' +
     '<span class="period-sep">至</span><input type="date" data-period-ctl="end" value="' + esc(v.end || '') + '">';
   else return ''; /* 不限：没有控件，就不带 ⓘ */
@@ -2372,7 +2380,7 @@ function mountPickers(root){
       var ic = document.createElement('span');
       ic.className = 'pick-icon';
       ic.setAttribute('aria-hidden', 'true');
-      ic.innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><rect x="2.2" y="3.4" width="11.6" height="10.4" rx="2"></rect><path d="M2.2 6.6h11.6M5.4 2.2v2.4M10.6 2.2v2.4"></path></svg>';
+      ic.innerHTML = HELP_PICK_ICON;
       holder.appendChild(ic);
       sh.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); openPicker(inp); });
       ['keydown', 'beforeinput', 'paste', 'drop'].forEach(function(t){ inp.addEventListener(t, helpBlockEdit); });
