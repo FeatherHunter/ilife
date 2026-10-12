@@ -2478,8 +2478,10 @@ function mountFilterSelects(root){
       }
       /* 面板挂到 <body>（脱离弹层的滚动裁剪与 transform 包含块），按触发框的位置摆：
          一律向上展开——面板底边贴着触发框上方，筛选行在面板最底端（离框最近），
-         列表在它上面、需要多高就向上长；上面空间不够就压列表高度（最少 60px），列表自己滚。 */
-      var LIST_MAX = 212, LIST_MIN = 60, GAP = 6, EDGE = 8;
+         列表在它上面、需要多高就向上长；上面空间不够就压列表高度（最少 60px），列表自己滚。
+         `LIST_MAX` 按「开面板就先看全一屏候选」定（用户 2026-10-13：默认最少 12 项）：
+         一行 41px ⇒ 560px ≈ 13 行；候选少于一屏时列表按内容收缩，不留空。 */
+      var LIST_MAX = 560, LIST_MIN = 60, GAP = 6, EDGE = 8;
       function place(){
         var r = row.getBoundingClientRect();
         panel.style.left = Math.round(r.left) + 'px';
@@ -2512,7 +2514,7 @@ function mountFilterSelects(root){
       window.addEventListener('scroll', reflow, true);
       window.addEventListener('resize', reflow);
       row.addEventListener('click', function(){ setOpen(!wrap.classList.contains('open')); });
-      q.addEventListener('input', draw);
+      q.addEventListener('input', function(){ draw(); place(); }); /* 筛完重摆：列表变短，面板跟着收 */
       q.addEventListener('keydown', function(e){ if (e.key === 'Escape') { setOpen(false); row.focus(); } });
       listEl.addEventListener('click', function(e){
         var o = e.target.closest('.filt-opt');
