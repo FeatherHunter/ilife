@@ -5,7 +5,7 @@
  *
  * 两页同形（照 `./template-list.js` 的票据纸）：店头 → 主数字 → 段 01（配置行）→ 段 02（落点）
  * → 复制区 → 裁切线。写那一页多一段确认态（未给 `confirm` 即预览＋确认口令，给了即回执）。
- * 上屏路径已在 `./configOps.js` 脱敏（家目录→`~`），本件不拼路径、不读配置，只摆样子。
+ * 上屏路径就是真路径（用户 2026-10-13 裁定：脱敏后用户找不到文件），本件不拼路径、不读配置，只摆样子。
  *
  * 载荷与口径一字不动：出口 `data = { ok, message, receipt }` 由 `./run.js` 装配，本件只出 HTML。
  */
@@ -50,12 +50,12 @@ export interface ConfigWriteDocInput {
 
 export type ConfigDocInput = ConfigReadDocInput | ConfigWriteDocInput;
 
-/** 配置行→明细卡行（序号按行序，副行写键名，脱敏值已在 `view` 里）。 */
+/** 配置行→明细卡行（序号按行序，副行写键名，值就是 `view` 里的真值）。 */
 function rowsOf(rows: readonly { readonly key: string; readonly label: string; readonly value: string }[]): readonly SetupRowInput[] {
   return rows.map((r, i) => ({
     no: String(i + 1),
     text: r.label + ' · ' + r.value,
-    sub: r.key + '（上屏已脱敏，绝对路径进载荷）',
+    sub: r.key,
     tone: 'done' as const,
   }));
 }
@@ -65,7 +65,7 @@ function readBody(input: ConfigReadDocInput): string {
     + sheetHead(DOC_TITLE + ' · ' + input.scene.title, '当前配置就长这样', input.scene.subtitle)
     + ticketSummary(renderSummaryHead({
       eyebrow: '当前配置 · 6 项', value: String(input.view.rows.length), unit: '项',
-      note: '配置文件里的当刻值，路径已脱敏', layout: 'ticket',
+      note: '配置文件里的当刻值（真路径，已不脱敏）', layout: 'ticket',
     }), '')
     + ticketRule()
     + ticketSection({ title: '配置行', tag: '01', content: setupEntryCard(rowsOf(input.view.rows)) })
@@ -80,7 +80,7 @@ function readBody(input: ConfigReadDocInput): string {
           { label: '产物目录', value: input.view.resolved.find((r) => r.label === '产物目录')?.value ?? '—' },
         ],
         layout: 'ticket',
-      }) + setupCheck('路径里的 `~` 即家目录。要改哪格，跟助手说一遍「设置当前配置」。'),
+      }) + setupCheck('路径就是这台机器上的真路径，照着它去找文件即可。要改哪格，跟助手说一遍「设置当前配置」。'),
     })
     + ticketActions(copyZoneOf({
       envelope: input.envelope, title: input.scene.title, key: input.key, params: input.params,

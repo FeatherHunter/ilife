@@ -3,8 +3,9 @@
 // 判据：
 //   ① 查分期默认不收窄（存量 3 笔）；item_name 子串收窄；account 精确收窄；status 非法 exit 2；
 //      status 已还清/进行中按名目分组（解析不出按进行中留）；三维可叠加；空结果 exit 0 空态。
-//   ② 查看当前配置只读 6 项、上屏脱敏（`~`）、载荷带绝对路径；设置当前配置四格全空即预览不落盘；
-//      给值不确认只预览；给了＋confirm:true 才落盘且回读一致；写后文件仍可被 `bill.config.read` 读出。
+//   ② 查看当前配置只读 6 项、上屏印**真路径**（用户 2026-10-13 裁定不脱敏）、载荷带绝对路径；
+//      设置当前配置四格全空即预览不落盘；给值不确认只预览；给了＋confirm:true 才落盘且回读一致；
+//      写后文件仍可被 `bill.config.read` 读出。生成期预填另见 `t1276-预填当前配置.test.mjs`。
 // 红线：只读临时家目录；只往临时目录写 --html 产物；不碰真实 `~/.ilife`。
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
@@ -76,14 +77,14 @@ describe('1276 ① 查分期三维度（名目／账户／状态）', () => {
   });
 });
 
-describe('1276 ② 查看／设置当前配置（读／写 bill.yaml，路径脱敏）', () => {
-  it('查看当前配置：只读 6 项，上屏脱敏，载荷无脱敏', () => {
+describe('1276 ② 查看／设置当前配置（读／写 bill.yaml，路径不脱敏）', () => {
+  it('查看当前配置：只读 6 项，上屏印真路径（用户 2026-10-13 裁定：脱敏后找不到文件）', () => {
     const { text, stdout } = page('bill.setup.run', { op: 'config-read' }, 't1276-config-read');
     const env = JSON.parse(stdout);
     assert.equal(env.data.ok, true);
     assert.equal(env.data.receipt.rows, 6);
-    assert.ok(text.includes('~'), '上屏路径应脱敏（含 ~）');
-    assert.ok(!text.includes(DB.replace(/\\/g, '/')), '上屏不得印临时家目录绝对路径');
+    assert.ok(text.includes(DB), '上屏应印真路径（家目录那份）：' + DB);
+    assert.ok(!/~[\\/]\.ilife/.test(text), '上屏不得再把家目录缩成 ~');
   });
   it('设置当前配置：四格全空即预览不落盘', () => {
     const { stdout } = page('bill.setup.run', { op: 'config-write' }, 't1276-config-empty');

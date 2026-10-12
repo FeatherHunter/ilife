@@ -31,10 +31,11 @@ export interface SceneTypeBadge {
  *  缺 `kind` 视为 `text`。`time` 值形态 `HH:MM`（00:00–23:59；24:00 由调用方先归一到 23:59，本层不收）。 */
 export type SceneFieldKind = 'text' | 'number' | 'select' | 'date' | 'week' | 'month' | 'year' | 'time';
 
-/** 候选来源闭集（#1270 定案；条目 10：「查标签」详情页要从**已有标签**里选）。
- *  语义：声明只写**来源名**，值由**生成期**填进 `options`；生成期读不到就退回自由文本（`kind` 保持 `text`）。
- *  这一格回答「候选从哪儿来」，与 `options`（写死的候选）互斥：两者同时在场时以写死的 `options` 为准。 */
-export type SceneFieldSource = 'tags';
+/** 候选／现值来源闭集（#1270、#1276 定案）。
+ *  语义：声明只写**来源名**，值由**生成期**填进载荷（`tags` 填 `options`，`config` 填 `value`）；
+ *  生成期读不到就退回自由文本（`kind` 保持 `text`；`config` 的 `value` 保持声明里的空串）。
+ *  这一格回答「这份值的来源」，与 `options`（写死的候选）互斥：两者同时在场时以写死的 `options` 为准。 */
+export type SceneFieldSource = 'tags' | 'config';
 
 export interface SceneEditableField {
   readonly name: string;
@@ -208,7 +209,7 @@ export const SCENE_DATA_SCHEMA = Object.freeze({
                             hint: { type: 'string' },
                             required: { type: 'boolean' },
                             kind: { enum: ['text', 'number', 'select', 'date', 'week', 'month', 'year', 'time'] },
-                            source: { enum: ['tags'] },
+                            source: { enum: ['tags', 'config'] },
                             options: {
                               type: 'array',
                               items: {

@@ -138,6 +138,9 @@ export interface HelpFileOptions {
   /** #1270 生成期候选（条目 10）：库里的真标签词表，由调用方**只读**读出后传入
    *  （见 `help/tagCandidates.ts`）。空缺 `[]` ⇒ 声明里写了 `source: 'tags'` 的槽位退回自由文本。 */
   readonly tagCandidates?: readonly string[];
+  /** #1276 生成期预填（条目 24）：当前配置里**已有**的现值，键＝字段名，由调用方**只读**读出后传入
+   *  （见 `setup/configPrefill.ts`）。缺位的键 ⇒ 声明里写了 `source: 'config'` 的槽位留空＝「空＝不改」。 */
+  readonly configValues?: Readonly<Record<string, string>>;
 }
 
 /** 老 `%Y-%m-%d %H:%M` 等价物（本地时区，零填充；非法 Date 即坏参，不返空串）。 */
@@ -219,6 +222,42 @@ function fillTagCandidates(
   return changed ? nextGroups : groups;
 }
 
+/** #1276（条目 24）：把生成期读到的配置现值填进声明里写了 `source: 'config'` 的槽位——
+ *  填的是字段的 `value`（页面一打开就写着现值，用户只改要改的那格）。
+ *
+ *  两条边界：① 这一格没值（文件里没写／读不出）⇒ 原样返回，字段留空＝「空＝不改」语义不动；
+ *  ② 只 clone 真被改到的层（同 `fillTagCandidates` 的省拷贝口径）。 */
+function fillConfigValues(
+  groups: typeof WAKE_GROUPS,
+  values: Readonly<Record<string, string>>,
+): typeof WAKE_GROUPS {
+  if (Object.keys(values).length === 0) return groups;
+  let changed = false;
+  const nextGroups = groups.map((group) => {
+    const nextSubs = group.subgroups.map((sub) => {
+      const nextScenes = sub.scenes.map((scene) => {
+        const fields = scene.editable_fields;
+        if (fields === undefined || !fields.some((f) => f.source === 'config' && values[f.name] !== undefined)) {
+          return scene;
+        }
+        changed = true;
+        return {
+          ...scene,
+          editable_fields: fields.map((f) => {
+            const value = f.source === 'config' ? values[f.name] : undefined;
+            return value === undefined || value === f.value ? f : { ...f, value };
+          }),
+        };
+      });
+      const sameScenes = nextScenes.every((s, i) => s === sub.scenes[i]);
+      return sameScenes ? sub : { ...sub, scenes: nextScenes };
+    });
+    const sameSubs = nextSubs.every((s, i) => s === group.subgroups[i]);
+    return sameSubs ? group : { ...group, subgroups: nextSubs };
+  });
+  return changed ? nextGroups : groups;
+}
+
 /** 内容资产 ＋ 派生 → 全量 HELP JSON（纯函数；`now` 显式传入以保证可复现）。 */
 export function buildHelpFileData(now: Date = new Date(), opts: HelpFileOptions = {}): HelpFileData {
   if (WAKE_GROUPS.length === 0 || WAKE_ASSETS.length === 0) {
@@ -230,7 +269,7 @@ export function buildHelpFileData(now: Date = new Date(), opts: HelpFileOptions 
     title: HELP_FILE_TITLE,
     subtitle: summaryLine,
     contact: HELP_CONTACT,
-    groups: fillTagCandidates(WAKE_GROUPS, opts.tagCandidates ?? []),
+    groups: fillConfigValues(fillTagCandidates(WAKE_GROUPS, opts.tagCandidates ?? []), opts.configValues ?? {}),
     meta_blocks: buildMetaBlocks(summaryLine),
     version: HELP_FILE_VERSION,
     init_banner: buildInitBanner(opts.initialized === true),

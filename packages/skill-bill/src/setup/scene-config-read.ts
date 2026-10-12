@@ -11,6 +11,6 @@ export const SCENE: SetupScene = {
   page: 'list',
   title: '查看当前配置',
   caliber: '配置只读',
-  subtitle: '配置文件里的当刻值 · 路径已脱敏',
+  subtitle: '配置文件里的当刻值 · 真路径',
   promptOf: () => '请加载「饼干记账」技能,帮我看看当前配置(唤醒词:查看当前配置):\n',
 };

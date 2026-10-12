@@ -2,31 +2,18 @@
  *
  * 谁在用（两个调用点，指名）：`./run.js` 的 `runConfigRead`／`runConfigWrite`。
  * 本件只做三件事：读那份 YAML（经 `../config.js` 的门，不自己解析）、写那份 YAML（经同一道门）、
- * 上屏路径脱敏。页面块序不住这里（住 `./template-config.js`），场景差异不住这里（住 `scene-config-*.js`）。
+ * 把当刻值摆成上屏行。页面块序不住这里（住 `./template-config.js`），场景差异不住这里（住 `scene-config-*.js`）。
  *
- * 脱敏口径（1276 条目 24 ＋ 1274 守边界的路径脱敏同义）：上屏的绝对路径一律把家目录前缀换成 `~`
- * （`C:\Users\alice\.ilife\data` → `~/.ilife/data`），分隔符统一正斜杠。原始绝对路径仍进载荷
- * （机器要拿它干活），页面只印脱敏串。配置里没有口令类字段（6 键全是目录／文件名／语言），故脱敏只做路径。
+ * 路径口径（用户 2026-10-13 裁定，票 #1276 条目 24）：**上屏就是真路径，不脱敏**——
+ * 「路径不能脱敏，用户需要看到，不然给一个脱敏的路径，用户都找不到文件」。
+ * （`2a3a255b` 曾在 `./configOps.js` 里把家目录前缀换成 `~`；那一版已删，见本件 git 历史。）
  */
-import { homedir } from 'node:os';
 import { BILL_CONFIG_DEFAULTS } from '../config.js';
 import { loadBillConfig, saveBillConfig } from '../config.js';
 import { resolvedBillPaths } from '../fetch/paths.js';
 import type { ConfigRecord } from 'base-link-core';
 
-/** 上屏路径脱敏（家目录→`~`，反斜杠→正斜杠；空串原样返回）。 */
-export function desensitizePath(p: string): string {
-  if (typeof p !== 'string' || p === '') return p;
-  const home = homedir();
-  let out = p.replace(/\\/g, '/');
-  const homeSlash = home.replace(/\\/g, '/');
-  if (out === homeSlash) return '~';
-  if (out.startsWith(homeSlash + '/')) return '~' + out.slice(homeSlash.length);
-  // 家目录换盘符／换用户名的极端形态：只摘最后两段（`.ilife/data` 那种尾巴），前面抹掉。
-  return out;
-}
-
-/** 当前配置的上屏行（脱敏后）：设置页那 6 键的当刻值 ＋ 解析后的落点（脱敏）。 */
+/** 当前配置的上屏行：设置页那 6 键的当刻值 ＋ 解析后的落点（真路径）。 */
 export interface ConfigView {
   readonly configPath: string;
   readonly dataDir: string;
@@ -40,19 +27,19 @@ export function readConfigView(): ConfigView {
   const v = c.values;
   const paths = resolvedBillPaths();
   const rows = [
-    { key: 'db.dir', label: '数据目录', value: desensitizePath(v.db.dir === '' ? c.dataDir : v.db.dir) },
+    { key: 'db.dir', label: '数据目录', value: v.db.dir === '' ? c.dataDir : v.db.dir },
     { key: 'db.name', label: '库文件名', value: v.db.name === '' ? BILL_CONFIG_DEFAULTS.db.name : v.db.name },
     { key: 'db.goals', label: '目标文件名', value: v.db.goals === '' ? BILL_CONFIG_DEFAULTS.db.goals : v.db.goals },
-    { key: 'backup.dir', label: '备份目录', value: desensitizePath(v.backup.dir === '' ? paths.backupDir : v.backup.dir) },
+    { key: 'backup.dir', label: '备份目录', value: v.backup.dir === '' ? paths.backupDir : v.backup.dir },
     { key: 'backup.stem', label: '备份名前缀', value: v.backup.stem === '' ? BILL_CONFIG_DEFAULTS.backup.stem : v.backup.stem },
     { key: 'html.dir', label: '产物目录名', value: v.html.dir === '' ? BILL_CONFIG_DEFAULTS.html.dir : v.html.dir },
   ];
   const resolved = [
-    { label: '库文件', value: desensitizePath(paths.dbFile) },
-    { label: '产物目录', value: desensitizePath(paths.htmlDir) },
-    { label: '备份目录', value: desensitizePath(paths.backupDir) },
+    { label: '库文件', value: paths.dbFile },
+    { label: '产物目录', value: paths.htmlDir },
+    { label: '备份目录', value: paths.backupDir },
   ];
-  return { configPath: desensitizePath(c.path), dataDir: desensitizePath(c.dataDir), rows, resolved };
+  return { configPath: c.path, dataDir: c.dataDir, rows, resolved };
 }
 
 /** 写参→`ConfigRecord`（只收本场景露出的四格；空串＝没给，不覆盖现值）。 */
