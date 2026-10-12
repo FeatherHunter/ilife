@@ -1,5 +1,7 @@
 /* proto-1275.js —— #1275 讨论用原型补丁（只进原型 HTML，不进产品模板）
  *
+ * v5（第 5 轮，用户 2026-10-13 定）：筛选输入框挪到列表**下面**，与「共 N 项，可输入筛选」同一行——
+ *   省掉顶部一整行，列表多显示一行候选；输入框 placeholder 收短成「输入筛选」。
  * v4（第 4 轮，用户 2026-10-13 定：选 A）：筛选下拉的**面板改成悬浮层**——挂到 <body>、按框位置定位，
  *   字段本身永远只有一行，不撑高控件、不推挤下面的字段；同时撤掉方案 B（smartSelect 对照）。
  * v3（第 3 轮，用户 m00453 五点）：
@@ -17,7 +19,7 @@
   'use strict';
 
   var PROTO = 'proto1275';
-  var ROUND = 'r4';
+  var ROUND = 'r5';
   var PERIOD_KEY = 'period';
   var PICKABLE = /^(date|week|month|time|datetime-local)$/;
   var FILTER_MIN = 12; /* 候选（不含空项）超过这个数才换「框＋筛选」 */
@@ -68,14 +70,17 @@
     '.pf-panel{display:none;border:1px solid var(--line);border-radius:11px;background:#fff;' +
       'box-shadow:0 8px 26px rgba(0,0,0,.14);overflow:hidden}',
     '.pf-panel.pf-float{display:block;position:fixed;z-index:9500}',
-    '.pf-q{width:100%;box-sizing:border-box;border:0;border-bottom:1px solid var(--line);border-radius:0;' +
-      'padding:9px 11px;font-size:15px;background:#fafafc;outline:none;font-family:inherit;color:var(--fg)}',
+    '.pf-q{flex:1;min-width:0;box-sizing:border-box;border:1px solid var(--line);border-radius:8px;height:32px;' +
+      'padding:0 9px;font-size:13.5px;background:#fff;outline:none;font-family:inherit;color:var(--fg)}',
     '.pf-list{max-height:212px;overflow:auto;-webkit-overflow-scrolling:touch}',
     '.pf-opt{padding:9px 11px;font-size:14.5px;color:var(--fg);cursor:pointer;border-bottom:1px solid #f4f4f6}',
     '.pf-opt:last-child{border-bottom:0}',
     '.pf-opt.on{color:var(--blue);font-weight:700;background:var(--soft)}',
     '.pf-opt.none{color:var(--fg3)}',
-    '.pf-foot{padding:6px 11px;font-size:11.5px;color:var(--fg3);background:#fafafc;border-top:1px solid #f0f0f3}',
+    /* 筛选输入框与计数同一行、一起放在列表**下面**：省掉顶部一整行，列表多显示一行候选（用户 2026-10-13 定） */
+    '.pf-foot{display:flex;align-items:center;gap:8px;padding:7px 9px;font-size:11.5px;color:var(--fg3);' +
+      'background:#fafafc;border-top:1px solid #f0f0f3}',
+    '.pf-count{flex-shrink:0;white-space:nowrap}',
     /* 悬浮面板：字段本身永远只有一行（41px），不改变分类控件的高度；标签仍与框垂直居中（模板默认对齐）。 */
   ].join('');
   var st = document.createElement('style');
@@ -265,8 +270,9 @@
         '<svg class="pf-caret" viewBox="0 0 16 10" aria-hidden="true"><path d="M3.5 7.5 8 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
         '</button>' +
         '<div class="pf-panel">' +
-        '<input type="text" class="pf-q" placeholder="输入筛选，如 餐饮" autocomplete="off">' +
-        '<div class="pf-list" role="listbox"></div><div class="pf-foot"></div></div>';
+        '<div class="pf-list" role="listbox"></div>' +
+        '<div class="pf-foot"><input type="text" class="pf-q" placeholder="输入筛选" autocomplete="off">' +
+        '<span class="pf-count"></span></div></div>';
       sel.parentNode.insertBefore(wrap, sel);
 
       var row = wrap.querySelector('.pf-row');
@@ -274,7 +280,7 @@
       var panel = wrap.querySelector('.pf-panel');
       var q = wrap.querySelector('.pf-q');
       var listEl = wrap.querySelector('.pf-list');
-      var foot = wrap.querySelector('.pf-foot');
+      var count = wrap.querySelector('.pf-count');
 
       function draw() {
         var kw = q.value.trim().toLowerCase();
@@ -285,7 +291,7 @@
         });
         if (!hit.length) html += '<div class="pf-opt none">没有匹配的候选</div>';
         listEl.innerHTML = html;
-        foot.textContent = kw ? ('匹配 ' + hit.length + ' 项／共 ' + real.length + ' 项')
+        count.textContent = kw ? ('匹配 ' + hit.length + ' 项／共 ' + real.length + ' 项')
           : ('共 ' + real.length + ' 项，可输入筛选');
       }
       function syncRow() {
