@@ -198,8 +198,12 @@
   .sheet .filt.open .filt-caret{transform:rotate(180deg)}
   .filt-panel{display:none;border:1px solid var(--line);border-radius:11px;background:#fff;box-shadow:0 8px 26px rgba(0,0,0,.14);overflow:hidden}
   .filt-panel.filt-float{display:block;position:fixed;z-index:9500}
-  .filt-list{max-height:212px;overflow:auto;-webkit-overflow-scrolling:touch}
-  .filt-opt{padding:9px 11px;font-size:14.5px;color:var(--fg);cursor:pointer;border-bottom:1px solid #f4f4f6}
+  /* 列表宽度必须**从头到尾一个值**（用户 2026-10-13：滚动一开始宽度会抖一下）：
+     ① 不要 `-webkit-overflow-scrolling:touch`（旧属性会把列表提成独立滚动层，滚动时父级圆角裁剪会丢一帧，
+        看着就是「变宽一点点」）② 横向绝不滚（`overflow-x:hidden`，行内文字自己省略号）
+     ③ 滚动条占位固定（`scrollbar-gutter:stable`，经典滚动条出现/消失不改内容宽）④ 不把滚动链传给页面。 */
+  .filt-list{max-height:560px;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-gutter:stable}
+  .filt-opt{padding:9px 11px;font-size:14.5px;color:var(--fg);cursor:pointer;border-bottom:1px solid #f4f4f6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .filt-opt:last-child{border-bottom:0}
   .filt-opt.on{color:var(--blue);font-weight:700;background:var(--soft)}
   .filt-opt.none{color:var(--fg3)}
@@ -2505,12 +2509,19 @@ function mountFilterSelects(root){
           var cur = listEl.querySelector('.filt-opt.on');
           if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: 'center' });
           place(); /* 列表滚过之后高度可能变，再摆一次 */
+          requestAnimationFrame(place);
+          setTimeout(place, 300); /* 弹层动画／软键盘引起的视口变化结束后再钉一次，免得首帧用的是动画中的尺寸 */
         } else {
           panel.classList.remove('filt-float');
           wrap.appendChild(panel);
         }
       }
-      var reflow = function(){ if (panel.classList.contains('filt-float')) place(); };
+      /* 只跟「触发框会不会动」有关：列表**自己滚**（事件源在面板内）不重摆——省掉每帧重写宽度，
+         也避免滚动过程中宽度被反复写（用户 2026-10-13 报的宽度抖动就在这里被放大）。 */
+      var reflow = function(ev){
+        if (ev && ev.target && ev.target.nodeType === 1 && panel.contains(ev.target)) return;
+        if (panel.classList.contains('filt-float')) place();
+      };
       window.addEventListener('scroll', reflow, true);
       window.addEventListener('resize', reflow);
       row.addEventListener('click', function(){ setOpen(!wrap.classList.contains('open')); });
