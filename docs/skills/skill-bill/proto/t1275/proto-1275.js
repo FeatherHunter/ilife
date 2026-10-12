@@ -21,7 +21,7 @@
   'use strict';
 
   var PROTO = 'proto1275';
-  var ROUND = 'r6';
+  var ROUND = 'r7';
   var PERIOD_KEY = 'period';
   var PICKABLE = /^(date|week|month|time|datetime-local)$/;
   var FILTER_MIN = 12; /* 候选（不含空项）超过这个数才换「框＋筛选」 */
@@ -34,24 +34,45 @@
     { k: 'range', t: '区间' },
   ];
 
-  var STATS = { round: ROUND, pickCalls: 0, pickErr: '', filterMounts: [], panelMode: 'inline' };
+  var STATS = {
+    round: ROUND, pickCalls: 0, pickErr: '', pickUnsupported: 0,
+    hasShowPicker: typeof HTMLInputElement.prototype.showPicker === 'function',
+    filterMounts: [], panelMode: 'inline',
+  };
   window.__t1275 = STATS;
   if (document.title.indexOf('原型') < 0) document.title += ' · 原型 ' + ROUND;
+
+  /** 页面内的可见提示（唤起失败时说清原因，不静默） */
+  function note(msg) {
+    var el = document.querySelector('.proto-note');
+    if (!el) {
+      el = document.createElement('div');
+      el.className = 'proto-note';
+      document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(note._t);
+    note._t = setTimeout(function () { el.classList.remove('show'); }, 4600);
+  }
 
   /* ── 样式（只挂 .pp* / .pf-* / .proto-*，选择器带 .sheet .pfield 前缀压过模板基础规则） ── */
   var css = [
     /* ② 时间槽位 */
-    '.sheet .pfield .pp{display:flex;flex-wrap:wrap;gap:6px;flex:1 1 100%;align-items:center}',
-    '.pp-seg{display:flex;flex-wrap:wrap;gap:6px;flex:1 1 100%}',
+    '.sheet .pfield .pp{display:flex;flex-wrap:wrap;gap:6px;flex:1 1 100%;min-width:0;align-items:center}',
+    '.pp-seg{display:flex;flex-wrap:wrap;gap:6px;flex:1 1 100%;min-width:0}',
     '.pp-btn{appearance:none;border:1px solid var(--line);background:#fff;color:var(--fg2);' +
       'border-radius:999px;padding:7px 13px;font:600 12.5px/1 -apple-system,"Microsoft YaHei",sans-serif;cursor:pointer}',
     '.pp-btn.on{background:var(--blue);border-color:var(--blue);color:#fff}',
-    '.pp-ctl{display:flex;flex-wrap:wrap;gap:6px;flex:1 1 100%;align-items:center}',
+    '.pp-ctl{display:flex;flex-wrap:wrap;gap:6px;flex:1 1 100%;min-width:0;align-items:center}',
+    '.pp-ctl .inwrap{flex:1 1 100%;min-width:0}',
     '.pp-ctl input{flex:1 1 130px;min-width:0}',
-    '.pp-ctl .pp-sep{color:var(--fg3);font-size:12px}',
-    '.pp-sum{flex:1 1 100%;font-size:11.5px;color:var(--blue2);background:#eef4ff;border-radius:8px;' +
-      'padding:6px 9px;line-height:1.5}',
-    '.pp-sum.empty{color:var(--fg3);background:#f6f6f8}',
+    '.pp-ctl .pp-sep{color:var(--fg3);font-size:12px;flex-shrink:0}',
+    /* 唤起失败／不支持时的可见提示（不静默） */
+    '.proto-note{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;z-index:99999;max-width:88vw;' +
+      'background:rgba(28,28,30,.92);color:#fff;font:400 12.5px/1.5 -apple-system,"Microsoft YaHei",sans-serif;' +
+      'padding:9px 12px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .18s ease}',
+    '.proto-note.show{opacity:1}',
     /* ③ 「看全文」文字按钮 → 与 .ib 同款的 ⓘ 圆钮 */
     '.sheet .ib2.proto-i{width:20px;height:20px;border-radius:50%;background:#eef0f4;color:var(--blue);' +
       'font:700 12px/1 -apple-system,"Microsoft YaHei",sans-serif;display:inline-flex;align-items:center;' +
@@ -104,12 +125,21 @@
   /* ── ④ 点输入框任意处＝点右侧选择器图标 ── */
   var LAST = { el: null, t: 0 };
   function openPicker(inp) {
-    if (!inp || !PICKABLE.test(inp.type || '') || typeof inp.showPicker !== 'function') return;
+    if (!inp || !PICKABLE.test(inp.type || '')) return;
     var now = Date.now();
     if (LAST.el === inp && now - LAST.t < 400) return; /* 同一次手势别开两枪 */
     LAST = { el: inp, t: now };
+    if (typeof inp.showPicker !== 'function') {
+      STATS.pickUnsupported++;
+      note('这个浏览器没有 showPicker()：点框唤起不了日历，只能点框右侧的图标。');
+      return;
+    }
     STATS.pickCalls++;
-    try { inp.showPicker(); } catch (e) { STATS.pickErr = String((e && e.name) || e) + ':' + String((e && e.message) || '').slice(0, 60); }
+    try { inp.showPicker(); }
+    catch (e) {
+      STATS.pickErr = String((e && e.name) || e) + ':' + String((e && e.message) || '').slice(0, 60);
+      note('唤起日历被浏览器挡下（' + ((e && e.name) || e) + '）：只能点框右侧的图标。');
+    }
   }
   document.addEventListener('click', function (ev) {
     var t = ev.target;
@@ -168,19 +198,32 @@
     }
     return '';
   }
+  /** 控件＋框内右侧 ⓘ（与模板原生控件那一支同款：.inwrap native ＋ .ib，提示只进 popover，不再占一行） */
   function ctlHTML(mode, v) {
-    if (mode === 'day') return '<input type="date" data-pp="day" value="' + esc(v.day || '') + '">';
-    if (mode === 'week') return '<input type="week" data-pp="week" value="' + esc(v.week || '') + '">';
-    if (mode === 'month') return '<input type="month" data-pp="month" value="' + esc(v.month || '') + '">';
-    if (mode === 'year') {
-      return '<input type="number" inputmode="numeric" min="2000" max="2100" step="1" placeholder="如 2026" data-pp="year" value="' + esc(v.year || '') + '">';
-    }
-    if (mode === 'range') {
-      return '<input type="date" data-pp="start" value="' + esc(v.start || '') + '">' +
+    var inner;
+    if (mode === 'day') inner = '<input type="date" data-pp="day" value="' + esc(v.day || '') + '">';
+    else if (mode === 'week') inner = '<input type="week" data-pp="week" value="' + esc(v.week || '') + '">';
+    else if (mode === 'month') inner = '<input type="month" data-pp="month" value="' + esc(v.month || '') + '">';
+    else if (mode === 'year') {
+      inner = '<input type="number" inputmode="numeric" min="2000" max="2100" step="1" placeholder="如 2026" data-pp="year" value="' + esc(v.year || '') + '">';
+    } else if (mode === 'range') {
+      inner = '<input type="date" data-pp="start" value="' + esc(v.start || '') + '">' +
         '<span class="pp-sep">至</span><input type="date" data-pp="end" value="' + esc(v.end || '') + '">';
+    } else {
+      return ''; /* 不限：没有输入框，就不带 ⓘ */
     }
-    return '';
+    return '<div class="inwrap native">' + inner +
+      '<button class="ib" type="button" data-proto-i="1" aria-label="看提示全文">i</button></div>';
   }
+
+  /** ⓘ 的正文按分段给（时间槽位一个字段管六种取值） */
+  var PERIOD_HINTS = {
+    day: '某天：填一个日期（YYYY-MM-DD），如 2026-05-03；空＝全部时间。',
+    week: '周：选 ISO 周，如 2026 年第 18 周（2026-04-27 至 2026-05-03）。',
+    month: '月：选一个月份，如 2026 年 5 月（2026-05-01 至 2026-05-31）。',
+    year: '年：如 2026。',
+    range: '区间：填开始与结束；开始＝结束即某天。',
+  };
 
   /* ── ② 挂「时间」槽位 ── */
   function mountPeriod() {
@@ -198,7 +241,7 @@
     var hold = document.createElement('div');
     hold.className = 'pp';
     hold.innerHTML = '<div class="pp-seg" role="group" aria-label="时间粒度"></div>' +
-      '<div class="pp-ctl"></div><div class="pp-sum"></div>';
+      '<div class="pp-ctl"></div>';
     raw.type = 'hidden';
     raw.value = '';
     pf.innerHTML = '';
@@ -208,7 +251,6 @@
 
     var seg = hold.querySelector('.pp-seg');
     var ctl = hold.querySelector('.pp-ctl');
-    var sum = hold.querySelector('.pp-sum');
     MODES.forEach(function (m) {
       var b = document.createElement('button');
       b.type = 'button';
@@ -219,12 +261,7 @@
     });
 
     function refresh() {
-      var val = compose(state.mode, state.v);
-      raw.value = val;
-      if (state.mode === 'none') sum.textContent = '空＝全部时间';
-      else if (val) sum.textContent = '取值：' + val;
-      else sum.textContent = '还没选（空＝全部时间）';
-      sum.classList.toggle('empty', !val);
+      raw.value = compose(state.mode, state.v);
       raw.dispatchEvent(new Event('input', { bubbles: true }));
     }
     function paint() {
@@ -245,6 +282,11 @@
       if (!el) return;
       state.v[el.getAttribute('data-pp')] = el.value;
       refresh(); /* 不重画，免得输入中丢焦点 */
+    });
+    ctl.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-proto-i]');
+      if (!b) return;
+      if (typeof popShow === 'function') popShow(b, '时间', PERIOD_HINTS[state.mode] || '空＝全部时间。');
     });
     paint();
   }
