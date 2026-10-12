@@ -146,9 +146,10 @@
      date／select 这类原生控件天生不渲染框内文字，提示只走 ⓘ，不再有「看全文」那一行。 */
   .sheet .inwrap{position:relative;flex:1;min-width:0;display:flex}
   .sheet .inwrap input,.sheet .inwrap select{flex:1;min-width:0;padding-right:34px}
-  /* 原生控件（select／date 类）：右侧留给控件自带的箭头／日历图标，ⓘ 落在它左边 */
+  /* 原生控件（select／date 类）：ⓘ 落在最右边，控件自带的箭头／日历图标在它左边（用户 2026-10-13 裁定）。
+     select 的箭头改成自绘（见下面 `.pfield .inwrap.native select`）：原生箭头贴死右边框，padding 推不动它。 */
   .sheet .inwrap.native input,.sheet .inwrap.native select{padding-right:66px}
-  .sheet .inwrap.native .ib{right:30px}
+  .sheet .inwrap.native .ib{right:6px}
   .sheet .phline{position:absolute;left:11px;right:34px;top:50%;transform:translateY(-50%);font-size:16px;color:#8e8e93;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;-webkit-mask-image:linear-gradient(90deg,#000 78%,transparent 100%);mask-image:linear-gradient(90deg,#000 78%,transparent 100%)}
   .sheet .optfold .phline{color:#b0b0b8}
   .sheet .pfield.filled .phline{display:none}
@@ -190,6 +191,9 @@
   .sheet .pfield input:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(0,122,255,.12)}
   .sheet .pfield select{flex:1;min-width:0;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:16px;background:#fff;outline:none;font-family:inherit;color:var(--fg)}
   .sheet .pfield select:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(0,122,255,.12)}
+  /* select 的箭头自绘（用户 2026-10-13 裁定：ⓘ 要落在那枚箭头的右边）：
+     原生箭头由浏览器画在右边框内固定位置，padding 推不动它，只能 appearance:none 后自己画一枚。 */
+  .sheet .pfield .inwrap.native select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2.5 4.5L6 8l3.5-3.5' fill='none' stroke='%238e8e93' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/></svg>");background-repeat:no-repeat;background-position:right 34px center;background-size:12px 12px}
   /* 空着时不再灰底灰字（条目 8：必填看着像禁用态就是这儿来的）；必填与选填的框同一套，
      差别只走左侧红竖条／红徽标与提示字深浅（用户 2026-10-12 定稿）*/
   .sheet .pfield input:placeholder-shown{background:#fff;border-color:#e6e6eb;color:var(--fg)}
