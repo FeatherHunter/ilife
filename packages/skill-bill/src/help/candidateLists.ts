@@ -110,35 +110,62 @@ export function readAccountTypes(goalsFile: string, limit: number = LIST_CANDIDA
   }
 }
 
+/** `bills` 一行里本域要的四列（`readCandidateLists` 与 `readCategoryCounts` 共用一份读法）。 */
+interface BillRow {
+  note?: unknown;
+  category?: unknown;
+  account?: unknown;
+  ledger?: unknown;
+}
+
+/** 只读打开库、把 `bills` 读一遍（老库没有 `deleted_at` —— 那一列由 `openBillDb` 迁移加 ⇒ 退回不带过滤的读）。
+ *  库不在／打不开／表读不出即 `null`，由调用方按「没有这份数据」处理（见模块头 fail-open）。 */
+function readBillRows(dbFile: string): BillRow[] | null {
+  if (typeof dbFile !== 'string' || dbFile === '' || !existsSync(dbFile)) return null;
+  let db: DatabaseSync | null = null;
+  try {
+    db = new DatabaseSync(dbFile, { readOnly: true });
+    const columns = 'note, category, account, ledger';
+    try {
+      return db.prepare(`SELECT ${columns} FROM bills WHERE deleted_at IS NULL`).all() as BillRow[];
+    } catch {
+      return db.prepare(`SELECT ${columns} FROM bills`).all() as BillRow[];
+    }
+  } catch {
+    return null;
+  } finally {
+    try { db?.close(); } catch { /* 关不上不影响已经算出的结果 */ }
+  }
+}
+
 /** 只读读一遍库，返回库侧那四张候选清单（`accountTypes` 不住库、由 `readAccountTypes` 另读）。
  *  库不在／读不出即全空（见模块头 fail-open）。 */
 export function readCandidateLists(
   dbFile: string,
   limit: number = LIST_CANDIDATE_LIMIT,
 ): Omit<HelpCandidateLists, 'accountTypes'> {
-  if (typeof dbFile !== 'string' || dbFile === '' || !existsSync(dbFile)) return EMPTY_DB_LISTS;
-  let db: DatabaseSync | null = null;
-  try {
-    db = new DatabaseSync(dbFile, { readOnly: true });
-    type Row = { note?: unknown; category?: unknown; account?: unknown; ledger?: unknown };
-    let rows: Row[];
-    const columns = 'note, category, account, ledger';
-    try {
-      // 老库没有 deleted_at（那一列由 openBillDb 迁移加）⇒ 退回不带过滤的读。
-      rows = db.prepare(`SELECT ${columns} FROM bills WHERE deleted_at IS NULL`).all() as Row[];
-    } catch {
-      rows = db.prepare(`SELECT ${columns} FROM bills`).all() as Row[];
-    }
-    const textOf = (row: Row, key: keyof Row): string => String(row[key] ?? '');
-    return {
-      tags: rankTagCandidates(rows.map((row) => textOf(row, 'note')), TAG_CANDIDATE_LIMIT),
-      categories: rankByFrequency(rows.map((row) => textOf(row, 'category')), limit),
-      accounts: rankByFrequency(rows.map((row) => textOf(row, 'account')), limit),
-      ledgers: rankByFrequency(rows.map((row) => textOf(row, 'ledger')), limit),
-    };
-  } catch {
-    return EMPTY_DB_LISTS;
-  } finally {
-    try { db?.close(); } catch { /* 关不上不影响已经算出的结果 */ }
+  const rows = readBillRows(dbFile);
+  if (rows === null) return EMPTY_DB_LISTS;
+  const textOf = (row: BillRow, key: keyof BillRow): string => String(row[key] ?? '');
+  return {
+    tags: rankTagCandidates(rows.map((row) => textOf(row, 'note')), TAG_CANDIDATE_LIMIT),
+    categories: rankByFrequency(rows.map((row) => textOf(row, 'category')), limit),
+    accounts: rankByFrequency(rows.map((row) => textOf(row, 'account')), limit),
+    ledgers: rankByFrequency(rows.map((row) => textOf(row, 'ledger')), limit),
+  };
+}
+
+/** #1280 候选项附注的取数：`分类 → 该分类的账目笔数`（HELP 页「合并分类」原分类那格，行右侧印「N 笔」）。
+ *  与候选清单同一条只读口径：库不在／打不开／表读不出＝空表 ⇒ 页面不印附注，也不报错。
+ *  口径：未删账目按 `category` 分组计数；空白分类不进表（与候选清单「空白值丢掉」同一条）。 */
+export function readCategoryCounts(dbFile: string): Readonly<Record<string, number>> {
+  const rows = readBillRows(dbFile);
+  if (rows === null) return {};
+  const counts: Record<string, number> = {};
+  for (const row of rows) {
+    const value = String(row.category ?? '').trim();
+    if (value === '') continue;
+    counts[value] = (counts[value] ?? 0) + 1;
   }
+  return counts;
 }

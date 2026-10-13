@@ -84,6 +84,16 @@ export interface SceneEditableField {
    *  清空后其余字段恢复可用。组名在同一场景内唯一（跨字段指同一个组）。用在「给了 A 就不该给 B」
    *  的槽位对上（如 条数 ↔ 近几天）；不在任何组里的字段不受影响。 */
   readonly exclusive_group?: string;
+  /** 候选项附注（#1280 初版 · 用户 2026-10-13）：**值 → 行右侧那行小字**（如分类那格印「3 笔」）。
+   *  旁路键：`options` 仍是 `string[]`，一个字不动——技能侧生成期按值补一份映射（值＝候选字面量，
+   *  小字＝该值的事实，公共层不认识它的含义）；控件渲染时印在行右侧，这份映射里没有的值就不印。
+   *  只在候选弹层里印得出来（原生 `<select>` 的一行装不下两段字）⇒ 声明了 `notes` 的格走弹层形态，
+   *  与 `allow_new` 无关：`allow_new` 为假时弹层是 pick-only 形态（不出新建／前缀）。 */
+  readonly notes?: Readonly<Record<string, string>>;
+  /** 候选分组口径（#1280 初版 · 可选，缺省行为不变）：缺省＝值里首个 `/` 前那一段
+   *  （没有 `/`、或起手就是 `/` 的归「其他」）；`'none'`＝不分组，前景列表只出一层、不出分组小标题。
+   *  公共层只认这两种口径，不推导、不认识领域词。 */
+  readonly group_by?: 'slash' | 'none';
 }
 
 export interface Scene {
@@ -271,6 +281,11 @@ export const SCENE_DATA_SCHEMA = Object.freeze({
                               items: { oneOf: [{ type: 'string' }, { type: 'number' }] },
                             },
                             exclusive_group: { type: 'string', minLength: 1 },
+                            /* 候选项附注（#1280）：**值 → 右侧小字**的映射。子集校验器只认
+                               `additionalProperties:false`（不认 schema 形式的 additionalProperties），
+                               故这一格只判「是对象」；值是字符串这一条由控件挂载时严格校验（不合即抛）。 */
+                            notes: { type: 'object' },
+                            group_by: { enum: ['slash', 'none'] },
                           },
                         },
                       },

@@ -1,4 +1,5 @@
-/** #1270 · 生成 HELP 前的**本机来源读取**（条目 10／9／12／13 候选清单；#1276 条目 24 配置现值）：把「这次生成要从现场读一次」的东西收在一处。
+/** #1270 · 生成 HELP 前的**本机来源读取**（条目 10／9／12／13 候选清单；#1276 条目 24 配置现值；
+ *  #1280 候选项附注）：把「这次生成要从现场读一次」的东西收在一处。
  *
  * 为什么只能在生成期读：#1273 查清 HELP 页是静态产物（浏览器里没有库），而 HELP 那支跑在开库之前
  * （`packages/skill-bill/src/cli/cmd_read.ts` 里先渲染、后 `openBillDb`），所以本件自己**只读**取数：
@@ -16,7 +17,25 @@
 import { existsSync } from 'node:fs';
 import { resolveDbPath, resolveGoalsPath } from '../fetch/index.js';
 import { configPrefillValues } from '../setup/configPrefill.js';
-import { EMPTY_CANDIDATE_LISTS, readAccountTypes, readCandidateLists, type HelpCandidateLists } from './candidateLists.js';
+import { EMPTY_CANDIDATE_LISTS, readAccountTypes, readCandidateLists, readCategoryCounts, type HelpCandidateLists } from './candidateLists.js';
+
+/** #1280 候选项附注挂在哪些格上：`<场景 id>.<字段名>`（值 → 行右侧小字）。
+ *  住技能侧：公共层只认「值 → 右侧小字」这一格通用能力，不认识「笔」这个领域量词、也不认识哪个场景的哪一格。 */
+const CATEGORY_COUNT_FIELDS: readonly (readonly [string, string])[] = [['write_merge', 'from']];
+
+/** #1280：把「分类 → 笔数」折成声明键 `notes` 要的 `{值: 小字}`——只收真出现在候选清单里的值
+ *  （候选位的行就是这些值，其余键印不出来，不进载荷）。一个字都没有 ⇒ 空对象（页面不印附注）。 */
+function categoryCountNotes(
+  categories: readonly string[],
+  counts: Readonly<Record<string, number>>,
+): Readonly<Record<string, string>> {
+  const out: Record<string, string> = {};
+  for (const name of categories) {
+    const n = counts[name];
+    if (typeof n === 'number' && n > 0) out[name] = String(n) + ' 笔';
+  }
+  return out;
+}
 
 /** 生成期来源快照：`buildHelpFileData` 的 `opts` 直接吃这一份（多出来的键它不认，故只放它认识的）。 */
 export interface HelpGenerationSources {
@@ -26,6 +45,8 @@ export interface HelpGenerationSources {
   readonly candidates: HelpCandidateLists;
   /** 「设置当前配置」这类槽位的预填现值（键＝字段名）；文件不在／键没写即少那一位（见 `setup/configPrefill.ts`）。 */
   readonly configValues: Readonly<Record<string, string>>;
+  /** #1280 候选项附注（键＝`<场景 id>.<字段名>`，值＝`{候选值: 行右侧小字}`）；读库读不出即空对象。 */
+  readonly fieldNotes: Readonly<Record<string, Readonly<Record<string, string>>>>;
 }
 
 /** 读一次现场：配置现值 ＋ 库在不在 ＋ 四张候选清单。整条链任何一步失败都退回「没有这份数据」。
@@ -38,12 +59,20 @@ export function readHelpSources(): HelpGenerationSources {
   try {
     const configValues = configPrefillValues();
     const dbFile = resolveDbPath();
+    const candidates = { ...readCandidateLists(dbFile), accountTypes: readAccountTypes(resolveGoalsPath()) };
+    /* #1280 候选项附注：本机库读得出就给（读不出＝空对象，页面照出、不报错）。 */
+    const notes = categoryCountNotes(candidates.categories, readCategoryCounts(dbFile));
+    const fieldNotes: Record<string, Readonly<Record<string, string>>> = {};
+    if (Object.keys(notes).length > 0) {
+      for (const [scene, field] of CATEGORY_COUNT_FIELDS) fieldNotes[scene + '.' + field] = notes;
+    }
     return {
       initialized: existsSync(dbFile),
-      candidates: { ...readCandidateLists(dbFile), accountTypes: readAccountTypes(resolveGoalsPath()) },
+      candidates,
       configValues,
+      fieldNotes,
     };
   } catch {
-    return { initialized: false, candidates: EMPTY_CANDIDATE_LISTS, configValues: {} };
+    return { initialized: false, candidates: EMPTY_CANDIDATE_LISTS, configValues: {}, fieldNotes: {} };
   }
 }

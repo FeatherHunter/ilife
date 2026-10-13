@@ -26,6 +26,8 @@ import { renderHelpShellHtml } from 'base-paint/help-shell';
 import { HELP_WAKE_WORDS, SCENE_BY_ID, WAKE_ASSETS, WAKE_GROUPS } from '../triggers/wake-assets.js';
 import { BillRenderError } from '../render/errors.js';
 import { EMPTY_CANDIDATE_LISTS, type HelpCandidateLists } from './candidateLists.js';
+/* #1280 候选项附注那一步住在自己的件里（见 `fieldNotes.ts` 件头：超线条按能力拆的一刀）。 */
+import { fillNotes } from './fieldNotes.js';
 
 /** 「饼干记账help」交付文件的文件名主体：**代码常量**（#762 起配置项 `html.helpStem` 已退休——
  *  用户改的曾经是配置文件，现在没有可改处；对外也不接受调用方传入，照 #139 S3-3）。
@@ -142,6 +144,9 @@ export interface HelpFileOptions {
   /** #1276 生成期预填（条目 24）：当前配置里**已有**的现值，键＝字段名，由调用方**只读**读出后传入
    *  （见 `setup/configPrefill.ts`）。缺位的键 ⇒ 声明里写了 `source: 'config'` 的槽位留空＝「空＝不改」。 */
   readonly configValues?: Readonly<Record<string, string>>;
+  /** #1280 生成期候选项附注：键＝`<场景 id>.<字段名>`，值＝`{候选值: 行右侧小字}`，由调用方**只读**读出后传入
+   *  （见 `help/helpSources.ts`）。没有这一格／这一格没候选 ⇒ 不填，页面照旧不印附注。 */
+  readonly fieldNotes?: Readonly<Record<string, Readonly<Record<string, string>>>>;
 }
 
 /** 老 `%Y-%m-%d %H:%M` 等价物（本地时区，零填充；非法 Date 即坏参，不返空串）。 */
@@ -285,7 +290,8 @@ export function buildHelpFileData(now: Date = new Date(), opts: HelpFileOptions 
     title: HELP_FILE_TITLE,
     subtitle: summaryLine,
     contact: HELP_CONTACT,
-    groups: fillConfigValues(fillCandidates(WAKE_GROUPS, opts.candidates ?? EMPTY_CANDIDATE_LISTS), opts.configValues ?? {}),
+    /* 三步填充次序固定：候选 → 配置现值 → 候选项附注（附注印在候选行上，故必须排在候选之后）。 */
+    groups: fillNotes(fillConfigValues(fillCandidates(WAKE_GROUPS, opts.candidates ?? EMPTY_CANDIDATE_LISTS), opts.configValues ?? {}), opts.fieldNotes ?? {}),
     meta_blocks: buildMetaBlocks(summaryLine),
     version: HELP_FILE_VERSION,
     init_banner: buildInitBanner(opts.initialized === true),
