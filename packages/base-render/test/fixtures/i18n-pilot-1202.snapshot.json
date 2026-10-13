@@ -16,8 +16,8 @@
         },
         "zh/help": {
           "src": "packages/base-render/src/helpShell.ts",
-          "bytes": 206255,
-          "sha256": "33e770ce95f08c41673aac52537215a0"
+          "bytes": 207576,
+          "sha256": "34133b7df4ed4a577e3ba9ec77e092eb"
         },
         "zh/page": {
           "src": "packages/base-render/src/components/progress-list",
@@ -42,8 +42,8 @@
         },
         "en/help": {
           "src": "packages/base-render/src/helpShell.ts",
-          "bytes": 206255,
-          "sha256": "33e770ce95f08c41673aac52537215a0"
+          "bytes": 207576,
+          "sha256": "34133b7df4ed4a577e3ba9ec77e092eb"
         },
         "en/page": {
           "src": "packages/base-render/src/components/progress-list",

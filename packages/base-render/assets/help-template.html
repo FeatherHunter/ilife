@@ -218,11 +218,16 @@
   .filt-count{flex-shrink:0;white-space:nowrap}
   /* 新建行（声明 `allow_new` 的格才有）：夹在列表与筛选行**之间**——列表在上面长、筛选行贴着触发框，
      新建行在中间，输入框里敲着串就地看得见。`new_prefixes` 有值时前缀胶囊占上面一行。
-     输入为空、或敲的串在候选里已有同键写法时，整行不出现（`hidden`，由 draw() 控）。 */
+     **面板一打开就在**（用户 2026-10-14：空输入时整行藏起来＝能力看不见）：
+     · 未激活态 `data-idle="1"`（输入为空、或敲的串在候选里已有同键写法）：弱色＋省略写法「＋ 新建 "…"」，
+       点了只把焦点送进筛选框，不提交任何值；
+     · 激活态：实文「＋ 新建 "串"」，点了才追加 option ＋ 回填。 */
   .filt-new{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:7px 9px;background:#fafafc;border-top:1px solid #f0f0f3}
-  .filt-new[hidden]{display:none}
   .filt-new-btn{flex:1 1 100%;min-width:0;box-sizing:border-box;text-align:left;border:1px dashed var(--line);background:#fff;color:var(--fg2);border-radius:8px;padding:7px 10px;font:600 12.5px/1.35 -apple-system,"Microsoft YaHei",sans-serif;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .filt-new-btn:active{background:#ececf1}
+  .filt-new-btn[data-idle="1"]{color:var(--fg3);font-weight:400;cursor:text}
+  .filt-new-tip{flex:1 1 100%;font-size:11px;line-height:1.3;color:var(--fg3)}
+  .filt-new-tip[hidden]{display:none}
   .filt-pfx-row{flex:1 1 100%;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
   .filt-pfx-cap{flex:none;font-size:11.5px;color:var(--fg3)}
   .filt-pfx{flex:none;border:1px dashed var(--line);background:#fff;color:var(--fg2);border-radius:999px;padding:4px 10px;font:600 11.5px/1 -apple-system,"Microsoft YaHei",sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -2884,7 +2889,8 @@ function mountFilterSelects(root){
         '<svg class="filt-caret" viewBox="0 0 16 10" aria-hidden="true"><path d="M3.5 7.5 8 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
         '</button>' +
         '<div class="filt-panel"><div class="filt-list" role="listbox"></div>' +
-        (allowNew ? '<div class="filt-new" hidden>' + pfxHTML + '<button type="button" class="filt-new-btn" data-new="1"></button></div>' : '') +
+        (allowNew ? '<div class="filt-new">' + pfxHTML + '<button type="button" class="filt-new-btn" data-new="1" data-idle="1" aria-disabled="true"></button>' +
+          '<div class="filt-new-tip">在筛选框里敲名字即可新建</div></div>' : '') +
         '<div class="filt-foot"><input type="text" class="filt-q" placeholder="输入筛选" autocomplete="off">' +
         '<span class="filt-count"></span></div></div>';
       sel.parentNode.insertBefore(wrap, sel);
@@ -2896,6 +2902,7 @@ function mountFilterSelects(root){
       var count = wrap.querySelector('.filt-count');
       var newEl = wrap.querySelector('.filt-new');
       var newBtn = wrap.querySelector('.filt-new-btn');
+      var tip = wrap.querySelector('.filt-new-tip');
       /* 库里有没有同键写法（比较键口径与 smartSelect 同一支 `ssNameKey`：NFKC＋空白折叠＋大小写折叠）。 */
       function findSame(raw){
         var key = ssNameKey(raw);
@@ -2912,13 +2919,17 @@ function mountFilterSelects(root){
         }
         sel.dispatchEvent(new Event('change', { bubbles: true }));
       }
-      /* 新建行：输入框里有串、且候选里没有同键写法时才出现（空串＝不出现，比禁用态简单，也不用管灰化样式）。 */
+      /* 新建行（只有 `allow_new` 的格有这个节点）：面板一打开就在，两种态——
+         未激活（输入为空、或敲的串在候选里已有同键写法）：弱色＋「＋ 新建 "…"」，点了只送焦点；
+         激活（敲了一个候选里没有的串）：实文「＋ 新建 "串"」，点了才追加 option ＋ 回填。 */
       function syncNew(){
         if (!newEl) return;
         var raw = q.value.trim();
-        var show = !!(raw && !findSame(raw));
-        newEl.hidden = !show;
-        if (show) newBtn.textContent = '＋ 新建 "' + raw + '"';
+        var act = !!(raw && !findSame(raw));
+        newBtn.setAttribute('data-idle', act ? '0' : '1');
+        newBtn.setAttribute('aria-disabled', act ? 'false' : 'true');
+        newBtn.textContent = act ? ('＋ 新建 "' + raw + '"') : '＋ 新建 "…"';
+        if (tip) tip.hidden = act; /* 激活后那句提示是废话，收掉 */
       }
       function draw(){
         var kw = q.value.trim().toLowerCase();
@@ -3029,7 +3040,11 @@ function mountFilterSelects(root){
         }
         if (!(t && t.closest && t.closest('[data-new]'))) return;
         var raw = q.value.trim();
-        if (!raw) return;
+        if (newBtn.getAttribute('data-idle') === '1' || !raw) {
+          /* 未激活态：不提交任何值，只把焦点送进筛选框（光标落到末尾，接着敲就是新名字）。 */
+          try { q.focus(); var n0 = q.value.length; q.setSelectionRange(n0, n0); } catch (err) {}
+          return;
+        }
         var same = findSame(raw);
         if (same) {
           writeBack(same, 'existing'); /* 候选里已有同键写法：选已有那个拼写，不新建 */
