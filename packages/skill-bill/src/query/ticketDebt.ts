@@ -4,7 +4,7 @@
  * 纸头 `饼干记账 · 查欠款` ＋ H2 `还欠着 N 笔，X 元` ＋ 副题 `还欠着的那些账` ＋
  * 主数字（待还欠款 · N 笔／支出唯一）＋ 结论标准句 ＋ 落点 LEDGER（收入／净额／落点账本／币种）＋
  * 分类占比 SCALE ＋ 明细 DETAIL（序号／备注／分类·账户·时刻·#编号／金额）＋
- * 对账 CHECK（编号序列 ／ 共 N 笔 ／ 异常：无）＋ 复制区（复制数据▾三格式＋复制日志）＋
+ * 对账 CHECK（两列三行：编号、笔数、异常）＋ 复制区（复制数据▾三格式＋复制日志）＋
  * 裁切线 `✂ 裁切线` ＋ 页脚 `饼干记账 · 查欠款`。口径句已删（1045 全删），本页无 scale-note。
  *
  * 谁在用（一个调用点，指名）：`./read.js` 的 `viewRecordSearch` 的 `debt` 分支（有数时）。
@@ -33,7 +33,7 @@ import { fitTicketPage } from './pageFit.js';
 import { queryStyleTag } from './pageParts.js';
 import { assembleSheetPage, sheetHead, ticketActions, ticketRule, ticketSection, ticketSummary } from '../shared/docPage.js';
 import { commandLine, writeSection } from '../shared/writeParts.js';
-import { checkIdText } from './checkLine.js';
+import { checkListHtml, checkRowsOf } from './checkLine.js';
 
 /** 本次数据来源（复制日志第 3 段，与 `./read.js` 的查询来源同字）。 */
 const SOURCE_QUERY = DB_FILENAME + '（查询结果：只读，不改库）';
@@ -141,11 +141,10 @@ function entriesHtml(records: readonly BillRow[]): string {
   }).join('') + '</ol></div>';
 }
 
-/** 对账 CHECK（原型逐字：编号序列 ／ 共 N 笔 ／ 异常：无；全角斜线与冒号）。 */
+/** 对账 CHECK（两列三行：编号、笔数、异常；卡壳与状态点照本页原型）。 */
 function checkHtml(records: readonly BillRow[]): string {
-  const ids = checkIdText(records.map((r) => r.id));
   return '<div class="ilife-debt-check"><span class="ilife-debt-check-dot" aria-hidden="true"></span>'
-    + '<span>编号 ' + escapeHtml(ids) + ' ／ 共 ' + String(records.length) + ' 笔 ／ 异常：无</span></div>';
+    + checkListHtml(checkRowsOf({ ids: records.map((r) => r.id), countText: String(records.length) + ' 笔' })) + '</div>';
 }
 
 /** 查欠款票据纸的入参（调用方 `./read.js` 的 debt 分支已按未还口径取好窗）。 */

@@ -5,7 +5,7 @@
  * 纸头 `饼干记账 · 查月` ＋ H2 `本月共 N 笔，支出 X 元` ＋ 副题 `start ~ end（本月）` ＋
  * 主数字（`本月支出 · 共 N 笔`＋支出唯一＋结论句进小字）＋ 落点 LEDGER（收入／净额／落点账本／币种）＋
  * 分类占比 SCALE（64/36，条宽整数和 100，下见 `intPcts`）＋ 明细 DETAIL（备注／分类·账户·时刻·#编号／金额）＋
- * 对账 CHECK（编号序列 ／ 共 N 笔 ／ 异常：无）＋ 复制区（复制数据▾三格式＋复制日志，原样走 `copyArea`）＋
+ * 对账 CHECK（两列三行：编号、笔数、异常）＋ 复制区（复制数据▾三格式＋复制日志，原样走 `copyArea`）＋
  * 裁切线 `✂ 裁切线` ＋ 页脚 `饼干记账 · 查月`。口径段无（1045 全删，与 v2.1 同）。
  *
  * 谁在用（一个调用点，指名）：`./read.js` 的 `viewRecordRange` 的 `month` 分支（有数时；
@@ -32,7 +32,7 @@ import { actionStamp, copyArea, copyLog } from '../shared/copyArea.js';
 import { ticketCopyOf } from './list-copy.js';
 import { calcKpi } from '../shared/kpi.js';
 import { DOC_TITLE, DOC_VERSION } from '../shared/pageIdentity.js';
-import { checkIdText } from './checkLine.js';
+import { checkListHtml, checkRowsOf } from './checkLine.js';
 import { countNotes } from './countLabel.js';
 import { toBillItem } from './items.js';
 import { listEnvelope } from './list.js';
@@ -164,11 +164,10 @@ function entriesHtml(records: readonly BillRow[]): string {
   return '<div class="ilife-ticket-card"><ol class="ilife-ticket-entries">' + items + '</ol></div>';
 }
 
-/** 对账 CHECK（原型逐字：编号序列 ／ 共 N 笔 ／ 异常：无；全角斜线）。 */
+/** 对账 CHECK（两列三行：编号、笔数、异常；卡壳与状态点照本页原型）。 */
 function checkHtml(records: readonly BillRow[], countText: string): string {
-  const ids = checkIdText(records.map((r) => r.id));
   return '<div class="ilife-month-check"><span class="ilife-month-check-dot" aria-hidden="true"></span>'
-    + '<span>编号 ' + escapeHtml(ids) + ' ／ 共 ' + countText + ' ／ 异常：无</span></div>';
+    + checkListHtml(checkRowsOf({ ids: records.map((r) => r.id), countText })) + '</div>';
 }
 
 /** 查月票据纸的入参（调用方 `./read.js` 的 month 分支已按月初..锚点取好窗）。 */

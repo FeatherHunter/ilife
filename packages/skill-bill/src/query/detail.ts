@@ -2,7 +2,7 @@
  *  店头三行（品牌／编号备注确认标题／单记录副题）→ 主数字（单笔药丸／金额／结论／时刻，
  *  印章只在已撤销时出）→ 落点 6 行（编号带#／账户／账本／币种／创建时间／状态纯文本；
  *  已撤销才加删除时间行）→ 单条 100% 占比条 → 明细 2 行（收付行加粗＋备注行）→
- *  对账卡（编号／写入／异常）→ 复制区 → 纸外脚注。口径无：1045 全删，原型即无此行。
+ *  对账卡（编号、写入、异常）→ 复制区 → 纸外脚注。口径无：1045 全删，原型即无此行。
  *
  * 谁在用（一个调用点，指名）：`src/query/read.ts` 的 `viewRecordDetail`（查账单详情）——
  *   today／range／search 三支仍走 `./list.js` 的 `queryListDoc`，本件不动它们。
@@ -21,6 +21,7 @@ import { escapeHtml } from 'base-paint';
 import type { SerializableEnvelope } from 'base-paint';
 import { copyArea, copyLog } from '../shared/copyArea.js';
 import { DOC_TITLE, DOC_VERSION } from '../shared/pageIdentity.js';
+import { checkListHtml } from './checkLine.js';
 import { queryStyleTag } from './pageParts.js';
 import { commandLine, writeSection } from '../shared/writeParts.js';
 import { assembleSheetPage, sheetHead, ticketActions, ticketRule, ticketSection, ticketSummary } from '../shared/docPage.js';
@@ -114,12 +115,15 @@ function entryCard(row: BillRow): string {
     + '</ol></div>';
 }
 
-/** 对账卡（原型 CHECK 行）：编号／写入时刻／异常（正常无，已撤销标出）。 */
+/** 对账卡（两列三行：编号、写入、异常；未撤销时「异常」那一行的值走绿字）。 */
 function checkCard(row: BillRow, deleted: boolean): string {
-  const text = '编号 ' + row.id + ' / 写入 ' + textOrDash(row.created_at) + ' / 异常：' + (deleted ? '已撤销' : '无');
   return '<div class="ilife-ticket-check' + (deleted ? ' is-danger' : '') + '">'
-    + '<span class="ilife-ticket-check-dot" aria-hidden="true"></span><span>'
-    + escapeHtml(text) + '</span></div>';
+    + '<span class="ilife-ticket-check-dot" aria-hidden="true"></span>'
+    + checkListHtml([
+      { label: '编号', value: String(row.id) },
+      { label: '写入', value: textOrDash(row.created_at) },
+      { label: '异常', value: deleted ? '已撤销' : '无', ok: !deleted },
+    ]) + '</div>';
 }
 
 /** 详情人话门（1183，纸面不动、复制展开）：10 列＋备注（已撤销加删除时间）的人话三份。

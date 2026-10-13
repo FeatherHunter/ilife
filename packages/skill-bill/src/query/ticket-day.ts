@@ -36,7 +36,7 @@ import { actionStamp, copyArea, copyLog } from '../shared/copyArea.js';
 import { ticketCopyOf } from './list-copy.js';
 import { calcKpi } from '../shared/kpi.js';
 import { DOC_TITLE, DOC_VERSION } from '../shared/pageIdentity.js';
-import { checkIdText } from './checkLine.js';
+import { checkListHtml, checkRowsOf } from './checkLine.js';
 import { countNotes } from './countLabel.js';
 import { toBillItem } from './items.js';
 import { listEnvelope } from './list.js';
@@ -168,11 +168,10 @@ function entriesHtml(records: readonly BillRow[]): string {
   return '<div class="ilife-ticket-card"><ol class="ilife-ticket-entries">' + items + '</ol></div>';
 }
 
-/** 对账 CHECK（w03 原型字面：编号序列 ／ 共 N 笔 ／ 异常：无；分隔是全角斜线，见件头）。 */
+/** 对账 CHECK（两列三行：编号／笔数／异常；卡壳、状态点与页脚照本页原型）。 */
 function checkHtml(records: readonly BillRow[], countText: string): string {
-  const ids = checkIdText(records.map((r) => r.id));
   return '<div class="ilife-someday-check"><span class="ilife-someday-check-dot" aria-hidden="true"></span>'
-    + '<span>编号 ' + escapeHtml(ids) + ' ／ 共 ' + countText + ' ／ 异常：无</span></div>';
+    + checkListHtml(checkRowsOf({ ids: records.map((r) => r.id), countText })) + '</div>';
 }
 
 /** 查某天票据纸的入参（调用方 `./read.js` 的 date 分支已按当天取好窗；零行不进本件）。 */

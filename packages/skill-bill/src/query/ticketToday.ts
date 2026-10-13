@@ -5,8 +5,8 @@
  * 纸头 `饼干记账 · 查今天` ＋ H2 `今天共 N 笔，支出 X 元` ＋ 副题 `{date} 这一天` ＋ 别名一句
  * `查账单和查今天是一样的。` ＋ 主数字（`本页支出 · 共 N 笔`＋支出唯一＋结论句进小字）＋
  * 落点 LEDGER（收入／净额／落点账本／币种）＋ 分类占比 SCALE（条宽整数和 100，下见 `intPcts`）＋
- * 明细 DETAIL（`备注：`／分类·账户·时刻·#编号／金额）＋ 对账 CHECK（编号序列 ／ 共 N 笔 ／
- * 异常：无，半角斜线）＋ 复制区（复制数据▾三格式＋复制日志，原样走 `copyArea`）＋
+ * 明细 DETAIL（`备注：`／分类·账户·时刻·#编号／金额）＋ 对账 CHECK（两列三行：编号、笔数、异常；
+ * 卡壳与状态点照本页原型）＋ 复制区（复制数据▾三格式＋复制日志，原样走 `copyArea`）＋
  * 裁切线 `✂ 裁切线` ＋ 页脚 `饼干记账 · 查今天`。口径段无（1045 全删，与 v2.1 同）。
  *
  * 谁在用（一个调用点，指名）：`./read.js` 的 `viewRecordToday` 的 date 分支（唤醒词是查今天且
@@ -35,7 +35,7 @@ import { actionStamp, copyArea, copyLog } from '../shared/copyArea.js';
 import { ticketCopyOf } from './list-copy.js';
 import { calcKpi } from '../shared/kpi.js';
 import { DOC_TITLE, DOC_VERSION } from '../shared/pageIdentity.js';
-import { checkIdText } from './checkLine.js';
+import { checkListHtml, checkRowsOf } from './checkLine.js';
 import { countNotes } from './countLabel.js';
 import { toBillItem } from './items.js';
 import { listEnvelope } from './list.js';
@@ -171,11 +171,10 @@ function entriesHtml(records: readonly BillRow[]): string {
   return '<div class="ilife-ticket-card"><ol class="ilife-ticket-entries">' + items + '</ol></div>';
 }
 
-/** 对账 CHECK（w01 原型字面：编号序列 ／ 共 N 笔 ／ 异常：无；分隔是半角斜线，见件头）。 */
+/** 对账 CHECK（两列三行：编号、笔数、异常；卡壳与状态点照本页原型）。 */
 function checkHtml(records: readonly BillRow[], countText: string): string {
-  const ids = checkIdText(records.map((r) => r.id));
   return '<div class="ilife-today-check"><span class="ilife-today-check-dot" aria-hidden="true"></span>'
-    + '<span>编号 ' + escapeHtml(ids) + ' / 共 ' + countText + ' / 异常：无</span></div>';
+    + checkListHtml(checkRowsOf({ ids: records.map((r) => r.id), countText })) + '</div>';
 }
 
 /** 查今天票据纸的入参（调用方 `./read.js` 的 date 分支已按当天取好窗；零行不进本件）。 */

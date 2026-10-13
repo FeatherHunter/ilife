@@ -11,7 +11,7 @@
  * 占比 SHARE（entry-card 内逐类一行：`类 · 金额 元 · N 笔 · 均 X`＋该类占本页支出的条）＋
  * 备注 NOTES（entry-card 内逐笔一行：`备注 · 备注 分类 · 账户 · 时刻`，**无金额**；
  * 编号接占比行续排，故第二张卡的计数器起值＝占比行数）＋
- * 对账 CHECK（编号序列 ／ 共 N 笔 ／ 异常：无，全角斜线 ／、顿号）＋
+ * 对账 CHECK（两列三行：编号、笔数、异常）＋
  * 复制区（复制数据▾三格式＋复制日志，原样走 `copyArea`；▾ 的补位口径住 `./pageParts.js` 的
  * `QUERY_COPY_CSS`——v2.2 相对 v2.1 的全部差别即那一处，本件零命中）＋
  * 裁切线 `✂ 裁切线` ＋ 页脚 `饼干记账 · 查分类`。口径段无（1045 全删，与 v2.1 同）。
@@ -53,7 +53,7 @@ import { fitTicketPage } from './pageFit.js';
 import { queryStyleTag } from './pageParts.js';
 import { assembleSheetPage, sheetHead, ticketActions, ticketRule, ticketSection, ticketSummary } from '../shared/docPage.js';
 import { commandLine, writeSection } from '../shared/writeParts.js';
-import { checkIdText } from './checkLine.js';
+import { checkListHtml, checkRowsOf } from './checkLine.js';
 
 /** 本次数据来源（复制日志第 3 段，与 `./read.js` 的查询来源同字）。 */
 const SOURCE_QUERY = DB_FILENAME + '（查询结果：只读，不改库）';
@@ -178,11 +178,10 @@ function notesHtml(records: readonly BillRow[], start: number): string {
     + '>' + items + '</ol></div>';
 }
 
-/** 对账 CHECK（原型 `checkHTML` 同式：编号序列 ／ 共 N 笔 ／ 异常：无；全角斜线）。 */
+/** 对账 CHECK（两列三行：编号、笔数、异常；卡壳与状态点照本页原型）。 */
 function checkHtml(records: readonly BillRow[], countText: string): string {
-  const ids = checkIdText(records.map((r) => r.id));
   return '<div class="ilife-category-check"><span class="ilife-category-check-dot" aria-hidden="true"></span>'
-    + '<span>编号 ' + escapeHtml(ids) + ' ／ 共 ' + countText + ' ／ 异常：无</span></div>';
+    + checkListHtml(checkRowsOf({ ids: records.map((r) => r.id), countText })) + '</div>';
 }
 
 /** 查分类票据纸的入参（调用方 `./read.js` 的条件分支已按分类取好窗；`sharePct` 与 `shareChip` 同口径）。 */

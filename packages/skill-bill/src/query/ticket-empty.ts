@@ -7,7 +7,7 @@
  *   ／落点 LEDGER 三行（笔数 0 ／ 币种 CNY ／ 说明 只看不改，转账不算收支）
  *   ／分类占比 SCALE 一句 `本窗无支出，无占比。`
  *   ／明细 DETAIL 空态块（空态句 ＋ 引导句，走公共层 `renderEmptyBlock`，与列表页空态同一件）
- *   ／对账 CHECK `笔数 0 ／ 查到 0 笔 ／ 异常：无` ／复制区（`copyArea` 三格式）／裁切线 `✂ 裁切线`／页脚。
+ *   ／对账 CHECK（两列：笔数、异常） ／复制区（`copyArea` 三格式）／裁切线 `✂ 裁切线`／页脚。
  *
  * **空态句与引导句由调用方给**（`./read.js` 的 `todayEmpty()` 那四句是这几页的既有判地，一字不动）：
  *   今天＝`今天还没有记录`／昨天＝`昨天还没有记录`／某天＝`这一天没有记录`／最近＝`库里还没有记录`，
@@ -25,6 +25,7 @@ import { DB_FILENAME } from '../fetch/index.js';
 import { renderEmptyBlock, renderLedgerRows, renderSheetFrame, renderSummaryHead } from 'base-paint/blocks';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { actionStamp, copyArea, copyLog } from '../shared/copyArea.js';
+import { checkListHtml, checkRowsOf } from './checkLine.js';
 import { ticketCopyOf } from './list-copy.js';
 import { calcKpi } from '../shared/kpi.js';
 import { DOC_TITLE, DOC_VERSION } from '../shared/pageIdentity.js';
@@ -54,8 +55,8 @@ const LEDGER_ROWS = [
 /** 分类占比那一句（w00 判地逐字）。 */
 const SCALE_NOTE = '本窗无支出，无占比。';
 
-/** 对账 CHECK 那一句（w00 判地逐字；分隔是全角斜线）。 */
-const CHECK_TEXT = '笔数 0 ／ 查到 0 笔 ／ 异常：无';
+/** 对账 CHECK 的笔数片段（零行页：只发笔数、异常两行，编号那一行不发）。 */
+const CHECK_COUNT = '0 笔';
 
 
 
@@ -110,7 +111,7 @@ export function queryEmptyTicketDoc(input: EmptyTicketInput): string {
     + ticketSection({
       title: '对账', tag: 'CHECK',
       content: '<div class="ilife-empty-check"><span class="ilife-empty-check-dot" aria-hidden="true"></span>'
-        + '<span>' + CHECK_TEXT + '</span></div>',
+        + checkListHtml(checkRowsOf({ countText: CHECK_COUNT })) + '</div>',
     })
     + ticketRule()
     + ticketActions(copyArea({

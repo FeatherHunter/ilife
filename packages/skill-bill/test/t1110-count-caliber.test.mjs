@@ -58,10 +58,11 @@ function headCount(text) {
   const m = text.match(/<h1 class="ilife-sheet-title">[^<]*?(\d+)\s*笔/);
   return m ? Number(m[1]) : NaN;
 }
-/** 对账 CHECK 段的笔数：形如 `编号 1、2 ／ 共 3 笔（含转账 2） ／ 异常：无`。 */
+/** 对账 CHECK 段的笔数：形如 `<dt>编号</dt><dd>1、2</dd><dt>笔数</dt><dd>3（含转账 2）</dd><dt>异常</dt><dd class="is-ok">无</dd>`。
+ *  正则同时钉住「编号」那一行在（编号段与笔数行之间只隔一个 `</dd>`），笔数本身照旧取数字。 */
 function checkCount(text) {
   const seg = text.split('<span class="ilife-ticket-sec-no">CHECK</span>')[1] ?? '';
-  const m = seg.match(/编号[^<]*?共\s*(\d+)\s*笔/);
+  const m = seg.match(/<dt>编号<\/dt><dd>[^<]*<\/dd><dt>笔数<\/dt><dd>(\d+)/);
   return m ? Number(m[1]) : NaN;
 }
 /** 无转账窗口：两处注记一个都不许有。 */
@@ -85,31 +86,31 @@ function assertReadings(text, env, k, label) {
   assert.equal(m - n, k, label + '：不变量 对账笔数 − 页头笔数 应＝转账数 ' + k);
 }
 
-/** 8 页的取数与「无转账窗口的字面」（head(n) ＋ ` 笔` ＋ tail；对账 tail 按分隔符分半角／全角）。 */
+/** 8 页的取数与「无转账窗口的字面」（head(n) ＋ ` 笔` ＋ tail；对账那一块八页同一套两列结构）。 */
 const PAGES = [
-  { name: '查今天', key: 'bill.record.today', sep: 'half', head: (n) => '今天共 ' + n, tail: '，支出 ',
+  { name: '查今天', key: 'bill.record.today', head: (n) => '今天共 ' + n, tail: '，支出 ',
     neg: {}, pos: {}, kT: 2 },
-  { name: '查昨天', key: 'bill.record.today', sep: 'full', head: (n) => '昨天 ' + n, tail: '，支出 ',
+  { name: '查昨天', key: 'bill.record.today', head: (n) => '昨天 ' + n, tail: '，支出 ',
     neg: { date: 'yesterday' }, pos: { date: 'yesterday' }, kT: 1 },
-  { name: '查某天', key: 'bill.record.today', sep: 'full', head: (n) => '共 ' + n, tail: '，支出 ',
+  { name: '查某天', key: 'bill.record.today', head: (n) => '共 ' + n, tail: '，支出 ',
     neg: { date: DAY }, pos: { date: DAY }, kT: 1 },
-  { name: '查周', key: 'bill.record.range', sep: 'full', head: (n) => '本周共 ' + n, tail: '，支出 ',
+  { name: '查周', key: 'bill.record.range', head: (n) => '本周共 ' + n, tail: '，支出 ',
     neg: { range: 'week', today: NOW }, pos: { range: 'week', today: NOW }, kT: 3 },
-  { name: '查月', key: 'bill.record.range', sep: 'full', head: (n) => '本月共 ' + n, tail: '，支出 ',
+  { name: '查月', key: 'bill.record.range', head: (n) => '本月共 ' + n, tail: '，支出 ',
     neg: { range: 'month', today: NOW }, pos: { range: 'month', today: NOW }, kT: 3 },
-  { name: '查分类', key: 'bill.record.range', sep: 'full', head: (n) => '查分类共记 ' + n, tail: '',
+  { name: '查分类', key: 'bill.record.range', head: (n) => '查分类共记 ' + n, tail: '',
     neg: { category: '餐饮' }, pos: { category: '转账' }, kT: 4 },
-  { name: '查账户', key: 'bill.record.range', sep: 'full', head: (n) => '支付宝共 ' + n, tail: '，支出 ',
+  { name: '查账户', key: 'bill.record.range', head: (n) => '支付宝共 ' + n, tail: '，支出 ',
     neg: { account: '支付宝' }, pos: { account: '支付宝' }, kT: 2 },
-  { name: '查账本', key: 'bill.record.range', sep: 'full', head: (n) => '旅行账本 ' + n, tail: '，支出 ',
+  { name: '查账本', key: 'bill.record.range', head: (n) => '旅行账本 ' + n, tail: '，支出 ',
     neg: { ledger: '旅行' }, pos: { ledger: '转账' }, kT: 4, posHead: (n) => '转账账本 ' + n },
 ];
 
-/** 无转账窗口的对账字面尾巴（编号序列之后那一段）。 */
-const checkTail = (m, sep) => (sep === 'half' ? ' / 共 ' + m + ' 笔 / 异常：无' : ' ／ 共 ' + m + ' 笔 ／ 异常：无');
+/** 无转账窗口的对账字面尾巴（编号序列那一格之后那一段；八页同一套两列结构，原先的半角／全角斜线之别已收掉）。 */
+const checkTail = (m) => '</dd><dt>笔数</dt><dd>' + m + '</dd><dt>异常</dt><dd class="is-ok">无</dd>';
 /** 含转账窗口的对账字面尾巴。 */
-const checkTailK = (m, k, sep) =>
-  sep === 'half' ? ' / 共 ' + m + ' 笔（含转账 ' + k + '） / 异常：无' : ' ／ 共 ' + m + ' 笔（含转账 ' + k + '） ／ 异常：无';
+const checkTailK = (m, k) =>
+  '</dd><dt>笔数</dt><dd>' + m + '（含转账 ' + k + '）</dd><dt>异常</dt><dd class="is-ok">无</dd>';
 
 before(() => {
   DBN = mkdtempSync(join(tmpdir(), 't1110-db-n-'));
@@ -163,7 +164,7 @@ describe('t1110 ① 无转账窗口：两处笔数逐字保持现状、不许出
       const n = env.data.kpi.count;
       const m = env.data.total;
       assert.ok(text.includes(p.head(n) + ' 笔' + p.tail), p.name + '：页头字面应与现状逐字相同（' + p.head(n) + ' 笔' + p.tail + '）');
-      assert.ok(text.includes(checkTail(m, p.sep)), p.name + '：对账字面应与现状逐字相同（' + checkTail(m, p.sep) + '）');
+      assert.ok(text.includes(checkTail(m)), p.name + '：对账字面应为两列结构逐字（' + checkTail(m) + '）');
     });
   }
 });
@@ -179,7 +180,7 @@ describe('t1110 ② 含转账窗口：两处注记都在，不变量 对账 − 
       const m = env.data.total;
       const head = (p.posHead ?? p.head)(n);
       assert.ok(text.includes(head + ' 笔（不含转账）' + p.tail), p.name + '：页头应写「' + head + ' 笔（不含转账）' + p.tail + '」');
-      assert.ok(text.includes(checkTailK(m, p.kT, p.sep)), p.name + '：对账应写「' + checkTailK(m, p.kT, p.sep) + '」');
+      assert.ok(text.includes(checkTailK(m, p.kT)), p.name + '：对账应写「' + checkTailK(m, p.kT) + '」');
     });
   }
 });

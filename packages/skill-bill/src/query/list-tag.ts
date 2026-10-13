@@ -11,7 +11,7 @@
  *  纸头（品牌＋`标签「X」N 笔，支出 Y 元`＋副题窗口）／主数字（`标签命中 · X`＋支出唯一＋
  *  结论句）／落点 LEDGER（收入／净额／落点账本／币种）／分类占比 SCALE（条宽整数和 100，
  *  下见 `intPcts`）／明细 DETAIL（备注＋分类·账户·时刻·编号＋右对齐金额）／对账 CHECK
- *  （编号全列／共 N 笔／异常无）／复制区（数据三格式＋日志，原样走 `copyArea`）／
+ *  （编号全列、笔数、异常无）／复制区（数据三格式＋日志，原样走 `copyArea`）／
  *  页脚注（纸外一行 `饼干记账 · 查标签`，与详情页同式）／口径（无口径段，1045 全删）。
  *
  * 载荷一字不动：复制区直接序列化调用方给的 `envelope`（已按显示截断、与表同截，
@@ -36,7 +36,7 @@ import { DOC_TITLE, DOC_VERSION } from '../shared/pageIdentity.js';
 import { commandLine, writeSection } from '../shared/writeParts.js';
 import { queryStyleTag } from './pageParts.js';
 import type { QueryListInput, QueryTableRow } from './list.js';
-import { checkIdText } from './checkLine.js';
+import { checkListHtml, checkRowsOf } from './checkLine.js';
 
 /** 本页是不是查标签（`./list.ts` 分支判据，唯一定义地）。 */
 export function isTagList(input: { readonly key: string; readonly params: Record<string, unknown> }): boolean {
@@ -141,10 +141,10 @@ function detailHtml(args: TagTicketArgs): string {
 /** 对账 CHECK（编号按全窗列，KPI 与结论同口径；表截断只截明细表，不截对账）。 */
 function checkHtml(input: QueryListInput): string {
   const ids = input.rows.map((r) => r.id);
-  const text = ids.length === 0
-    ? '共 0 笔 ／ 异常：无'
-    : '编号 ' + checkIdText(ids) + ' ／ 共 ' + input.rows.length + ' 笔 ／ 异常：无';
-  return '<div class="check-mini"><span class="dot"></span><span>' + escapeHtml(text) + '</span></div>';
+  const rows = ids.length === 0
+    ? checkRowsOf({ countText: '0 笔' })
+    : checkRowsOf({ ids, countText: String(input.rows.length) + ' 笔' });
+  return '<div class="check-mini"><span class="dot"></span>' + checkListHtml(rows) + '</div>';
 }
 
 /** 查标签票据纸整页（非本页即 `null`，调用方走老路；标记位 `slot/page/shape/key` 与老页同值）。 */

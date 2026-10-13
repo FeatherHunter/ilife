@@ -46,7 +46,7 @@ import { BILL_HTML_MAX_BYTES, estimateBytes } from '../render/html.js';
 import { pageBody, pageNav } from '../shared/pageSections.js';
 import type { PageBlock } from '../shared/pageSections.js';
 import { isTagList, queryTagDoc } from './list-tag.js';
-import { checkIdText } from './checkLine.js';
+import { checkListHtml, checkRowsOf } from './checkLine.js';
 
 /** 数据表的一行（值一律是已文本化的字符串：表格不吃对象，也不做二次格式化）。
  *  写成 `type` 别名而不是 `interface`：公共层的表格与复制载荷收 `Record<string, unknown>`，
@@ -270,7 +270,7 @@ function pageEnvelopeOf(input: QueryListInput, shownCount: number): Serializable
  *  与 w01／w03 同式）／H2 `备注含「q」共 N 笔，支出 X 元`／副题 `备注里有「q」的记录`（即 window，
  *  t411 钉着这一句）／主数字（`备注命中 · q`＋支出）／结论标准句／落点 LEDGER（收入／净额／
  *  落点账本／币种）／分类占比 SCALE／明细 DETAIL（首行 `备注：`全角冒号＋次行分类·账户·时刻·#编号，
- *  OCR 逐字核对）／对账 CHECK（`编号 序列 ／ 共 N 笔 ／ 异常：无`，全角斜线，OCR 逐字核对）／
+ *  OCR 逐字核对）／对账 CHECK（两列三行：编号、笔数、异常，OCR 逐字核对）／
  *  复制区（`copyArea` 原样）／裁切线 `✂ 裁切线`／页脚 `饼干记账 · 搜备注`（`ilife-ticket-foot`，
  *  与 w17 同件）。口径无（v2.1 已删，不另出）。
  *  版式照 `./detail.ts` 票据纸一路（`assembleSheetPage`＋`renderSheetFrame ticket`＋
@@ -326,13 +326,13 @@ function searchTicketDetail(input: QueryListInput, shown: readonly QueryTableRow
 }
 
 function searchTicketCheck(input: QueryListInput): string {
-  const text = input.rows.length === 0
-    ? '笔数 0 ／ 查到 0 笔 ／ 异常：无'
-    : '编号 ' + checkIdText(input.rows.map((r) => r.id)) + ' ／ 共 ' + String(input.rows.length) + ' 笔 ／ 异常：无';
+  const rows = input.rows.length === 0
+    ? checkRowsOf({ countText: '0 笔' })
+    : checkRowsOf({ ids: input.rows.map((r) => r.id), countText: String(input.rows.length) + ' 笔' });
   return '<div class="ilife-ticket-card" style="border-color:color-mix(in srgb, var(--ilife-ok) 30%, var(--ilife-ok-soft));background:var(--ilife-ok-soft);">'
     + '<span style="display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.6;">'
     + '<span aria-hidden="true" style="flex:none;width:8px;height:8px;margin-top:6px;border-radius:999px;background:var(--ilife-ok);"></span>'
-    + '<span>' + escapeHtml(text) + '</span></span></div>';
+    + checkListHtml(rows) + '</span></div>';
 }
 
 function searchTicketDoc(input: QueryListInput): string {

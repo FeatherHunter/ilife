@@ -2,8 +2,10 @@
  *
  *  本件是**搬家件**：逐条规则按它的选择器主人归属（见每条前的 `owner:` 注），但**拼接顺序保持搬家前逐字不变**
  *  （`assembleSheetPage` 的注释写明：族样式与皮肤在前、本页家具在后——家具那几条是页面级几何覆盖，靠「后出现」取胜）。
- *  所以：`ticketFamilyCss()` 的返回值与搬家前 `docPage.ts` 的 `TICKET_CSS` **逐字节相同**；
- *  `ticketFurnitureCss()` 与 `TICKET_FURNITURE_CSS` **逐字节相同**。
+ *  所以：`ticketFamilyCss()` 在**搬家当时**与搬家前 `docPage.ts` 的 `TICKET_CSS` 逐字节相同（#1124 的验收读数）；
+ *  `ticketFurnitureCss()` 与 `TICKET_FURNITURE_CSS` 逐字节相同。
+ *  #1279（2026-10-13）起不再逐字节冻结：对账卡改成「标签→值」两列后，13 处卡壳由居中改顶部对齐、
+ *  13 处状态点加 `margin-top: 6px`，并在段尾追加 4 条 `.ilife-check-list`（改动是逐条就地改，不重排）。
  *
  *  归属（§23 的 12 目录清单里与本段相关的 8 个）：
  *    sheet-frame（页与纸的几何／窄档）／summary-head（主数字块）／ledger-rows（账目行）／
@@ -265,21 +267,21 @@ const TICKET_PAGE_CSS = [
   '.ilife-ticket-detail .ilife-yesterday-sub { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12.5px; font-weight: 400; color: var(--ilife-ink-2); margin-top: 2px; }',
   '.ilife-ticket-detail .ilife-yesterday-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }',
   '.ilife-ticket-detail .ilife-yesterday-amt { flex: 0 0 auto; font-variant-numeric: tabular-nums; font-weight: 800; white-space: nowrap; }',
-  '.ilife-ticket-detail .ilife-yesterday-check { display: flex; align-items: center; gap: 8px; background: var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }',
-  '.ilife-ticket-detail .ilife-yesterday-check-dot { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 999px; background: var(--ilife-ok); }',
+  '.ilife-ticket-detail .ilife-yesterday-check { display: flex; align-items: flex-start; gap: 8px; background: var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }',
+  '.ilife-ticket-detail .ilife-yesterday-check-dot { flex: 0 0 auto; width: 8px; height: 8px; margin-top: 6px; border-radius: 999px; background: var(--ilife-ok); }',
   '.ilife-yesterday-foot { text-align: center; color: var(--ilife-ink-3); font-size: 11.5px; padding: 10px 0 2px; letter-spacing: .4px; line-height: 1.7; }',
   /* #1124 §21：WEEK_TICKET_CSS 从 src/query/ticketWeek.ts 逐字节搬来（选择器一字不动）——页面侧不再自出这一段。 */
   '.ilife-ticket-detail .ilife-week-shop-sub { margin: 8px 0 0; font-size: 12.5px; line-height: 1.6; color: var(--ilife-ink-2); text-align: center; overflow-wrap: anywhere; }',
   '.ilife-ticket-detail .ilife-week-sub { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12.5px; font-weight: 400; color: var(--ilife-ink-2); margin-top: 2px; }',
   '.ilife-ticket-detail .ilife-week-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }',
   '.ilife-ticket-detail .ilife-week-amt { flex: 0 0 auto; font-variant-numeric: tabular-nums; font-weight: 800; white-space: nowrap; }',
-  '.ilife-ticket-detail .ilife-week-check { display: flex; align-items: center; gap: 8px; background: var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }',
-  '.ilife-ticket-detail .ilife-week-check-dot { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 999px; background: var(--ilife-ok); }',
+  '.ilife-ticket-detail .ilife-week-check { display: flex; align-items: flex-start; gap: 8px; background: var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }',
+  '.ilife-ticket-detail .ilife-week-check-dot { flex: 0 0 auto; width: 8px; height: 8px; margin-top: 6px; border-radius: 999px; background: var(--ilife-ok); }',
   '.ilife-week-foot { text-align: center; color: var(--ilife-ink-3); font-size: 11.5px; padding: 10px 0 2px; letter-spacing: .4px; line-height: 1.7; }',
   /* #1124 §21：EMPTY_TICKET_CSS 从 src/query/ticket-empty.ts 逐字节搬来（选择器一字不动）——页面侧不再自出这一段。 */
   '.ilife-ticket-detail .ilife-empty-shop-sub { margin: 8px 0 0; font-size: 12.5px; line-height: 1.6; color: var(--ilife-ink-2); text-align: center; overflow-wrap: anywhere; }',
-  '.ilife-ticket-detail .ilife-empty-check { display: flex; align-items: center; gap: 8px; background: var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }',
-  '.ilife-ticket-detail .ilife-empty-check-dot { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 999px; background: var(--ilife-ok); }',
+  '.ilife-ticket-detail .ilife-empty-check { display: flex; align-items: flex-start; gap: 8px; background: var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }',
+  '.ilife-ticket-detail .ilife-empty-check-dot { flex: 0 0 auto; width: 8px; height: 8px; margin-top: 6px; border-radius: 999px; background: var(--ilife-ok); }',
   '.ilife-empty-foot { text-align: center; color: var(--ilife-ink-3); font-size: 11.5px; padding: 10px 0 2px; letter-spacing: .4px; line-height: 1.7; }',
   /* #1124 §21：TODAY_TICKET_CSS 从 src/query/ticketToday.ts 逐字节搬来（选择器一字不动）——页面侧不再自出这一段。 */
   '.ilife-ticket-detail .ilife-today-shop-sub { margin: 8px 0 0; font-size: 12.5px; line-height: 1.6; color: var(--ilife-ink-2); text-align: center; overflow-wrap: anywhere; }',
@@ -287,64 +289,64 @@ const TICKET_PAGE_CSS = [
   '.ilife-ticket-detail .ilife-today-sub { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12.5px; font-weight: 400; color: var(--ilife-ink-2); margin-top: 2px; }',
   '.ilife-ticket-detail .ilife-today-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }',
   '.ilife-ticket-detail .ilife-today-amt { flex: 0 0 auto; font-variant-numeric: tabular-nums; font-weight: 800; white-space: nowrap; }',
-  '.ilife-ticket-detail .ilife-today-check { display: flex; align-items: center; gap: 8px; background: var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }',
-  '.ilife-ticket-detail .ilife-today-check-dot { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 999px; background: var(--ilife-ok); }',
+  '.ilife-ticket-detail .ilife-today-check { display: flex; align-items: flex-start; gap: 8px; background: var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }',
+  '.ilife-ticket-detail .ilife-today-check-dot { flex: 0 0 auto; width: 8px; height: 8px; margin-top: 6px; border-radius: 999px; background: var(--ilife-ok); }',
   '.ilife-today-foot { text-align: center; color: var(--ilife-ink-3); font-size: 11.5px; padding: 10px 0 2px; letter-spacing: .4px; line-height: 1.7; }',
   /* #1124 §21：LEDGER_TICKET_CSS 从 src/query/ticketLedger.ts 逐字节搬来（选择器一字不动）——页面侧不再自出这一段。 */
   '.ilife-ticket-detail .ilife-ledger-shop-sub { margin: 8px 0 0; font-size: 12.5px; line-height: 1.6; color: var(--ilife-ink-2); text-align: center; overflow-wrap: anywhere; }',
   '.ilife-ticket-detail .ilife-ledger-sub { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12.5px; font-weight: 400; color: var(--ilife-ink-2); margin-top: 2px; }',
   '.ilife-ticket-detail .ilife-ledger-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }',
   '.ilife-ticket-detail .ilife-ledger-amt { flex: 0 0 auto; font-variant-numeric: tabular-nums; font-weight: 800; white-space: nowrap; }',
-  '.ilife-ticket-detail .ilife-ledger-check { display: flex; align-items: center; gap: 8px; background: var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }',
-  '.ilife-ticket-detail .ilife-ledger-check-dot { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 999px; background: var(--ilife-ok); }',
+  '.ilife-ticket-detail .ilife-ledger-check { display: flex; align-items: flex-start; gap: 8px; background: var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }',
+  '.ilife-ticket-detail .ilife-ledger-check-dot { flex: 0 0 auto; width: 8px; height: 8px; margin-top: 6px; border-radius: 999px; background: var(--ilife-ok); }',
   '.ilife-ledger-foot { text-align: center; color: var(--ilife-ink-3); font-size: 11.5px; padding: 10px 0 2px; letter-spacing: .4px; line-height: 1.7; }',
   /* #1124 §21：CATEGORY_TICKET_CSS 从 src/query/ticketCategory.ts 逐字节搬来（选择器一字不动）——页面侧不再自出这一段。 */
   '.ilife-ticket-detail .ilife-category-bar { display: block; height: 6px; margin-top: 6px; border-radius: var(--ilife-radius-pill); background: var(--ilife-line); overflow: hidden; }',
   /* #1113：占比条填充读皮肤号 `bar-fill`（票据纸＝判地 `.entry-text .bar i{background:#3f7fbf}`；
      兜底到 `--blue` ⇒ 没挂皮肤／别的皮肤与改动前逐字节同）。 */
   '.ilife-ticket-detail .ilife-category-bar > i { display: block; height: 100%; border-radius: var(--ilife-radius-pill); background: var(--ilife-bar-fill, var(--blue)); }',
-  '.ilife-ticket-detail .ilife-category-check { display: flex; align-items: center; gap: 8px; background: var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }',
-  '.ilife-ticket-detail .ilife-category-check-dot { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 999px; background: var(--ilife-ok); }',
+  '.ilife-ticket-detail .ilife-category-check { display: flex; align-items: flex-start; gap: 8px; background: var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }',
+  '.ilife-ticket-detail .ilife-category-check-dot { flex: 0 0 auto; width: 8px; height: 8px; margin-top: 6px; border-radius: 999px; background: var(--ilife-ok); }',
   '.ilife-category-foot { text-align: center; color: var(--ilife-ink-3); font-size: 11.5px; padding: 10px 0 2px; letter-spacing: .4px; line-height: 1.7; }',
   /* #1124 §21：REIMBURSE_TICKET_CSS 从 src/query/ticketReimburse.ts 逐字节搬来（选择器一字不动）——页面侧不再自出这一段。 */
   '.ilife-ticket-detail .ilife-reimburse-shop-sub { margin: 8px 0 0; font-size: 12.5px; line-height: 1.6; color: var(--ilife-ink-2); text-align: center; }',
   '.ilife-ticket-detail .ilife-reimburse-sub { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12.5px; font-weight: 400; color: var(--ilife-ink-2); margin-top: 2px; }',
   '.ilife-ticket-detail .ilife-reimburse-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }',
   '.ilife-ticket-detail .ilife-reimburse-amt { flex: 0 0 auto; font-variant-numeric: tabular-nums; font-weight: 800; }',
-  '.ilife-ticket-detail .ilife-reimburse-check { display: flex; align-items: center; gap: 8px; background: var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; }',
-  '.ilife-ticket-detail .ilife-reimburse-check-dot { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 999px; background: var(--ilife-ok); }',
+  '.ilife-ticket-detail .ilife-reimburse-check { display: flex; align-items: flex-start; gap: 8px; background: var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; }',
+  '.ilife-ticket-detail .ilife-reimburse-check-dot { flex: 0 0 auto; width: 8px; height: 8px; margin-top: 6px; border-radius: 999px; background: var(--ilife-ok); }',
   '.ilife-ticket-detail .ilife-reimburse-foot { text-align: center; color: var(--ilife-ink-3); font-size: 11.5px; padding: 10px 0 2px; letter-spacing: .4px; line-height: 1.7; }',
   /* #1124 §21：SOMEDAY_TICKET_CSS 从 src/query/ticket-day.ts 逐字节搬来（选择器一字不动）——页面侧不再自出这一段。 */
   '.ilife-ticket-detail .ilife-someday-shop-sub { margin: 8px 0 0; font-size: 12.5px; line-height: 1.6; color: var(--ilife-ink-2); text-align: center; overflow-wrap: anywhere; }',
   '.ilife-ticket-detail .ilife-someday-sub { display: block; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12.5px; font-weight: 400; color: var(--ilife-ink-2); margin-top: 2px; }',
   '.ilife-ticket-detail .ilife-someday-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }',
   '.ilife-ticket-detail .ilife-someday-amt { flex: 0 0 auto; font-variant-numeric: tabular-nums; font-weight: 800; white-space: nowrap; }',
-  '.ilife-ticket-detail .ilife-someday-check { display: flex; align-items: center; gap: 8px; background: var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }',
-  '.ilife-ticket-detail .ilife-someday-check-dot { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 999px; background: var(--ilife-ok); }',
+  '.ilife-ticket-detail .ilife-someday-check { display: flex; align-items: flex-start; gap: 8px; background: var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }',
+  '.ilife-ticket-detail .ilife-someday-check-dot { flex: 0 0 auto; width: 8px; height: 8px; margin-top: 6px; border-radius: 999px; background: var(--ilife-ok); }',
   '.ilife-someday-foot { text-align: center; color: var(--ilife-ink-3); font-size: 11.5px; padding: 10px 0 2px; letter-spacing: .4px; line-height: 1.7; }',
   /* #1124 §21：ACCOUNT_TICKET_CSS 从 src/query/ticketAccount.ts 逐字节搬来（选择器一字不动）——页面侧不再自出这一段。 */
   '.ilife-ticket-detail .ilife-account-shop-sub { margin: 8px 0 0; font-size: 12.5px; line-height: 1.6; color: var(--ilife-ink-2); text-align: center; overflow-wrap: anywhere; }',
   '.ilife-ticket-detail .ilife-account-sub { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12.5px; font-weight: 400; color: var(--ilife-ink-2); margin-top: 2px; }',
   '.ilife-ticket-detail .ilife-account-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }',
   '.ilife-ticket-detail .ilife-account-amt { flex: 0 0 auto; font-variant-numeric: tabular-nums; font-weight: 800; white-space: nowrap; }',
-  '.ilife-ticket-detail .ilife-account-check { display: flex; align-items: center; gap: 8px; background: var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }',
-  '.ilife-ticket-detail .ilife-account-check-dot { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 999px; background: var(--ilife-ok); }',
+  '.ilife-ticket-detail .ilife-account-check { display: flex; align-items: flex-start; gap: 8px; background: var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }',
+  '.ilife-ticket-detail .ilife-account-check-dot { flex: 0 0 auto; width: 8px; height: 8px; margin-top: 6px; border-radius: 999px; background: var(--ilife-ok); }',
   '.ilife-account-foot { text-align: center; color: var(--ilife-ink-3); font-size: 11.5px; padding: 10px 0 2px; letter-spacing: .4px; line-height: 1.7; }',
   /* #1124 §21：DEBT_TICKET_CSS 从 src/query/ticketDebt.ts 逐字节搬来（选择器一字不动）——页面侧不再自出这一段。 */
   '.ilife-ticket-detail .ilife-debt-shop-sub { margin: 8px 0 0; font-size: 12.5px; line-height: 1.6; color: var(--ilife-ink-2); text-align: center; }',
   '.ilife-ticket-detail .ilife-debt-sub { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12.5px; font-weight: 400; color: var(--ilife-ink-2); margin-top: 2px; }',
   '.ilife-ticket-detail .ilife-debt-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }',
   '.ilife-ticket-detail .ilife-debt-amt { flex: 0 0 auto; font-variant-numeric: tabular-nums; font-weight: 800; }',
-  '.ilife-ticket-detail .ilife-debt-check { display: flex; align-items: center; gap: 8px; background: var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; }',
-  '.ilife-ticket-detail .ilife-debt-check-dot { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 999px; background: var(--ilife-ok); }',
+  '.ilife-ticket-detail .ilife-debt-check { display: flex; align-items: flex-start; gap: 8px; background: var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; }',
+  '.ilife-ticket-detail .ilife-debt-check-dot { flex: 0 0 auto; width: 8px; height: 8px; margin-top: 6px; border-radius: 999px; background: var(--ilife-ok); }',
   '.ilife-debt-foot { text-align: center; color: var(--ilife-ink-3); font-size: 11.5px; padding: 10px 0 2px; letter-spacing: .4px; line-height: 1.7; }',
   /* #1124 §21：INSTALLMENT_TICKET_CSS 从 src/query/ticketInstallment.ts 逐字节搬来（选择器一字不动）——页面侧不再自出这一段。 */
   '.ilife-ticket-detail .ilife-installment-shop-sub { margin: 8px 0 0; font-size: 12.5px; line-height: 1.6; color: var(--ilife-ink-2); text-align: center; }',
   '.ilife-ticket-detail .ilife-installment-sub { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12.5px; font-weight: 400; color: var(--ilife-ink-2); margin-top: 2px; }',
   '.ilife-ticket-detail .ilife-installment-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }',
   '.ilife-ticket-detail .ilife-installment-amt { flex: 0 0 auto; font-variant-numeric: tabular-nums; font-weight: 800; }',
-  '.ilife-ticket-detail .ilife-installment-check { display: flex; align-items: center; gap: 8px; background: var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; }',
-  '.ilife-ticket-detail .ilife-installment-check-dot { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 999px; background: var(--ilife-ok); }',
+  '.ilife-ticket-detail .ilife-installment-check { display: flex; align-items: flex-start; gap: 8px; background: var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; }',
+  '.ilife-ticket-detail .ilife-installment-check-dot { flex: 0 0 auto; width: 8px; height: 8px; margin-top: 6px; border-radius: 999px; background: var(--ilife-ok); }',
   '.ilife-ticket-detail .ilife-installment-foot { text-align: center; color: var(--ilife-ink-3); font-size: 11.5px; padding: 10px 0 2px; letter-spacing: .4px; line-height: 1.7; }',
   /* #1124 §21：INTERVAL_TICKET_CSS 从 src/query/ticketInterval.ts 逐字节搬来（选择器一字不动）——页面侧不再自出这一段。 */
   '.ilife-ticket-detail .ilife-interval-shop-sub { margin: 8px 0 0; font-size: 12.5px; line-height: 1.6; color: var(--ilife-ink-2); text-align: center; overflow-wrap: anywhere; }',
@@ -359,8 +361,8 @@ const TICKET_PAGE_CSS = [
   '.ilife-ticket-detail .ilife-recent-sub { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12.5px; font-weight: 400; color: var(--ilife-ink-2); margin-top: 2px; }',
   '.ilife-ticket-detail .ilife-recent-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }',
   '.ilife-ticket-detail .ilife-recent-amt { flex: 0 0 auto; font-variant-numeric: tabular-nums; font-weight: 800; }',
-  '.ilife-ticket-detail .ilife-recent-check { display: flex; align-items: center; gap: 8px; background: var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; }',
-  '.ilife-ticket-detail .ilife-recent-check-dot { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 999px; background: var(--ilife-ok); }',
+  '.ilife-ticket-detail .ilife-recent-check { display: flex; align-items: flex-start; gap: 8px; background: var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; }',
+  '.ilife-ticket-detail .ilife-recent-check-dot { flex: 0 0 auto; width: 8px; height: 8px; margin-top: 6px; border-radius: 999px; background: var(--ilife-ok); }',
   '.ilife-recent-foot { text-align: center; color: var(--ilife-ink-3); font-size: 11.5px; padding: 10px 0 2px; letter-spacing: .4px; line-height: 1.7; }',
   /* #1124 §21：TAG_CSS 从 src/query/list-tag.ts 逐字节搬来（选择器一字不动）——页面侧不再自出这一段。 */
   '.ilife-taglist .shop-sub{margin:8px 0 0;font-size:12.5px;line-height:1.6;color:var(--ilife-ink-2);text-align:center;overflow-wrap:anywhere}',
@@ -374,9 +376,15 @@ const TICKET_PAGE_CSS = [
   '.ilife-ticket-detail .ilife-month-sub { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12.5px; font-weight: 400; color: var(--ilife-ink-2); margin-top: 2px; }',
   '.ilife-ticket-detail .ilife-month-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }',
   '.ilife-ticket-detail .ilife-month-amt { flex: 0 0 auto; font-variant-numeric: tabular-nums; font-weight: 800; white-space: nowrap; }',
-  '.ilife-ticket-detail .ilife-month-check { display: flex; align-items: center; gap: 8px; background: var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }',
-  '.ilife-ticket-detail .ilife-month-check-dot { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 999px; background: var(--ilife-ok); }',
+  '.ilife-ticket-detail .ilife-month-check { display: flex; align-items: flex-start; gap: 8px; background: var(--ilife-ok-soft); border-radius: var(--ilife-radius-sm); padding: 10px 12px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }',
+  '.ilife-ticket-detail .ilife-month-check-dot { flex: 0 0 auto; width: 8px; height: 8px; margin-top: 6px; border-radius: 999px; background: var(--ilife-ok); }',
   '.ilife-month-foot { text-align: center; color: var(--ilife-ink-3); font-size: 11.5px; padding: 10px 0 2px; letter-spacing: .4px; line-height: 1.7; }',
+  /* 对账卡改版（#1269，用户 2026-10-13 裁定「斜杠分隔太丑」）：卡的左边留状态点，右边三行「标签→值」
+     （编号／笔数／异常）；值多行（长编号列）时点与标签顶对齐，行距 3px。 */
+  '.ilife-check-list { display: grid; grid-template-columns: auto 1fr; column-gap: 10px; row-gap: 3px; margin: 0; }',
+  '.ilife-check-list dt { margin: 0; color: var(--ilife-ink-2); font-weight: 400; white-space: nowrap; }',
+  '.ilife-check-list dd { margin: 0; overflow-wrap: anywhere; }',
+  '.ilife-check-list dd.is-ok { color: var(--ilife-ok); font-weight: 600; }',
 ].join(LF);
 
 /** 票据纸族·**复制区形状**（规格 §6）：从 `components/style/copy-button.ts` 的通用段**搬来**（#1114 H-10 返修）。
