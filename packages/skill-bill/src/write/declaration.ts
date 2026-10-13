@@ -45,7 +45,7 @@ export const WRITE_DECLARATION: DomainDeclaration = {
           types: ['采集'],
           editable_fields: [
             { name: 'amount', label: '金额', value: '', hint: '纯数字，不带单位', required: true, kind: 'number' },
-            { name: 'category', label: '分类/名目', value: '', hint: '从候选里选；没有的先点前缀再敲名字', required: true, kind: 'text', source: 'categories', allow_new: true },
+            { name: 'category', label: '分类/名目', value: '', hint: '从候选里选；没有的直接敲新名字', required: true, kind: 'text', source: 'categories', allow_new: true },
             { name: 'note', label: '备注(选填)', value: '', hint: '', required: false, kind: 'text' },
             { name: 'record_time', label: '时间(选填)', value: '', hint: '空＝现在；填了必须是 YYYY-MM-DD', required: false, kind: 'date' },
             { name: 'account', label: '账户(选填)', value: '', hint: '如 支付宝、微信', required: false, kind: 'text' },
@@ -68,7 +68,7 @@ export const WRITE_DECLARATION: DomainDeclaration = {
           types: ['采集'],
           editable_fields: [
             { name: 'amount', label: '金额', value: '', hint: '纯数字，不带单位', required: true, kind: 'number' },
-            { name: 'category', label: '分类/名目', value: '', hint: '从候选里选；没有的先点前缀再敲名字', required: true, kind: 'text', source: 'categories', allow_new: true },
+            { name: 'category', label: '分类/名目', value: '', hint: '从候选里选；没有的直接敲新名字', required: true, kind: 'text', source: 'categories', allow_new: true },
             { name: 'note', label: '备注(选填)', value: '', hint: '', required: false, kind: 'text' },
             { name: 'record_time', label: '时间(选填)', value: '', hint: '空＝现在；填了必须是 YYYY-MM-DD', required: false, kind: 'date' },
             { name: 'account', label: '账户(选填)', value: '', hint: '如 银行卡、微信', required: false, kind: 'text' },
@@ -141,7 +141,7 @@ export const WRITE_DECLARATION: DomainDeclaration = {
           types: ['采集'],
           editable_fields: [
             { name: 'amount', label: '金额', value: '', hint: '纯数字，不带单位', required: true, kind: 'number' },
-            { name: 'category', label: '分类(选填)', value: '', hint: '从候选里选；没有的先点前缀再敲名字', required: false, kind: 'text', source: 'categories', allow_new: true },
+            { name: 'category', label: '分类(选填)', value: '', hint: '从候选里选；没有的直接敲新名字', required: false, kind: 'text', source: 'categories', allow_new: true },
             { name: 'note', label: '备注(选填)', value: '', hint: '自动加 #待报销', required: false, kind: 'text' },
             { name: 'record_time', label: '时间(选填)', value: '', hint: '空＝现在；填了必须是 YYYY-MM-DD', required: false, kind: 'date' },
           ],
@@ -272,7 +272,7 @@ export const WRITE_DECLARATION: DomainDeclaration = {
           types: ['采集'],
           editable_fields: [
             { name: 'amount', label: '金额', value: '', hint: '纯数字，不带单位；支出填负数，收入填正数', required: true, kind: 'number' },
-            { name: 'category', label: '分类/名目', value: '', hint: '从候选里选；没有的先点前缀再敲名字', required: true, kind: 'text', source: 'categories', allow_new: true },
+            { name: 'category', label: '分类/名目', value: '', hint: '从候选里选；没有的直接敲新名字', required: true, kind: 'text', source: 'categories', allow_new: true },
             { name: 'note', label: '备注(选填)', value: '', hint: '', required: false, kind: 'text' },
             { name: 'record_time', label: '时间(选填)', value: '', hint: '空＝现在；填了必须是 YYYY-MM-DD', required: false, kind: 'date' },
             { name: 'account', label: '账户(选填)', value: '', hint: '如 支付宝、微信', required: false, kind: 'text' },
@@ -347,7 +347,7 @@ export const WRITE_DECLARATION: DomainDeclaration = {
           types: ['采集'],
           editable_fields: [
             { name: 'from', label: '原分类', value: '', hint: '要改掉的那个写法，如 餐饮/夜宵', required: true, kind: 'text', source: 'categories' },
-            { name: 'to', label: '新分类', value: '', hint: '并进去的那个写法，如 餐饮；没有的先点前缀再敲名字', required: true, kind: 'text', source: 'categories', allow_new: true },
+            { name: 'to', label: '新分类', value: '', hint: '并进去的那个写法，如 餐饮；没有的直接敲新名字', required: true, kind: 'text', source: 'categories', allow_new: true },
           ],
         },
       ],
