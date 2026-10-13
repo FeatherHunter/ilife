@@ -40,7 +40,7 @@ describe('饼干口径 policy', () => {
     assert.equal(routeWakeword('帮我查今天花了多少').key, 'bill.record.today');
     assert.equal(routeWakeword('帮我记一笔午饭').key, 'bill.record.add');
     assert.throws(() => routeWakeword('帮我查账单'), /无命中/, '查账单已删：不留路由别名（#1275 用户裁定）');
-    assert.equal(routeWakeword('查账单详情', { id: 1 }).key, 'bill.record.detail');
+    assert.equal(routeWakeword('查某编号的账', { id: 1 }).key, 'bill.record.detail');
     assert.throws(() => routeWakeword('同步记账到云端'), /无命中/);
     // 三条修正词（改记录／撤销／恢复）在 t407 批量与修正族改了口径：**不再由路由层报「缺槽位 id」**——
     // 只说唤醒词也落采集页，由候选记录列表让用户挑一条（施工图第二节「撤销」「恢复」两行的缺项阻断那条

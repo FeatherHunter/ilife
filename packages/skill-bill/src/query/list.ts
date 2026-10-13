@@ -4,7 +4,7 @@
  *
  * 谁在用（一个能力、四个调用点，指名）：`src/query/read.ts` 的四条读命令各出一页——
  *   `viewRecordToday`（查今天那一族）／`viewRecordRange`（查区间那一族）／`viewRecordSearch`
- *   （搜备注那一族）三条走本件；`viewRecordDetail`（查账单详情）走 `./detail.js`。
+ *   （搜备注那一族）三条走本件；`viewRecordDetail`（查某编号的账）走 `./detail.js`。
  *
  * **块序在本件只写一份**（本域页型表的第二层）：块清单 `blocks` 既拼正文也派生页内导航，
  *  锚点与条目不由两处各写一次（见 `../shared/pageSections.js`）。列序同理，只住下面的 `COLUMNS`。
@@ -27,7 +27,7 @@
  *
  * 数据表的列（本页**唯一一处**定义；表头文本与每格 `data-label` 同源）：
  *   时间／分类／金额／账户／账本／备注／编号——「编号」列留着是为了说得出口的下一步：
- *   用户拿它就能说「查账单详情」（老页没有这一列、也没有 detail 分支；这是新仓补的读链）。
+ *   用户拿它就能说「查某编号的账」（老页没有这一列、也没有 detail 分支；这是新仓补的读链）。
  */
 import { renderCaliberLine, renderChips, renderConclusionBar, renderDataTable, renderDistributionRows, renderDisclosure, renderEmptyBlock, renderKpiGrid, renderLedgerRows, renderSheetFrame, renderSummaryHead } from 'base-paint/blocks';
 import type { KpiCardInput } from 'base-paint/blocks';
@@ -46,7 +46,7 @@ import { BILL_HTML_MAX_BYTES, estimateBytes } from '../render/html.js';
 import { pageBody, pageNav } from '../shared/pageSections.js';
 import type { PageBlock } from '../shared/pageSections.js';
 import { isTagList, queryTagDoc } from './list-tag.js';
-import { checkListHtml, checkRowsOf } from './checkLine.js';
+import { checkListHtml, checkRowsOf } from '../shared/checkLine.js';
 
 /** 数据表的一行（值一律是已文本化的字符串：表格不吃对象，也不做二次格式化）。
  *  写成 `type` 别名而不是 `interface`：公共层的表格与复制载荷收 `Record<string, unknown>`，

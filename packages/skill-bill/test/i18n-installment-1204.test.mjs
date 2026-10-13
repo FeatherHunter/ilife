@@ -43,11 +43,11 @@ function cli(db, args) {
 }
 
 describe('#1204 记分期首迁：词条＋语言链', () => {
-  it('词条 zh／en 同 key（166 条＝124 既有＋42 首切 #1206）且英文列无空串', () => {
+  it('词条 zh／en 同 key（168 条＝124 既有＋42 首切 #1206＋回执核对两列净增 2）且英文列无空串', () => {
     const zhKeys = Object.keys(SKILL_BILL_CATALOG.zh).sort();
     const enKeys = Object.keys(SKILL_BILL_CATALOG.en).sort();
     assert.deepEqual(enKeys, zhKeys);
-    assert.equal(zhKeys.length, 166);
+    assert.equal(zhKeys.length, 168);
     for (const k of enKeys) assert.ok(SKILL_BILL_CATALOG.en[k].length > 0, '英文缺译：' + k);
   });
 
@@ -107,17 +107,17 @@ describe('#1204 回执纸迁移：词条＋整句化', () => {
     };
   }
 
-  it('默认中文回执：结论标题与核对行沿用旧字面', () => {
+  it('默认中文回执：结论标题沿用旧字面，核对行换成两列', () => {
     const html = receiptPaper(receiptInput('expense', undefined));
     assert.ok(html.includes('记好了：支出 12.50'), '结论标题应为整句');
-    assert.ok(html.includes('编号 7 ／ 异常：无'), '核对行应为整句');
+    assert.ok(html.includes('<dt>编号</dt><dd>7</dd><dt>异常</dt><dd class="is-ok">无</dd>'), '核对行应为两列');
     assert.ok(html.includes('已经记好，不用再操作。'), '纸注应存在');
   });
 
-  it('en 回执：结论与核对走英文整句', () => {
+  it('en 回执：结论走英文整句，核对行走英文两列', () => {
     const html = receiptPaper(receiptInput('expense', 'en'));
     assert.ok(html.includes('Recorded: Expense 12.50'), '英文结论标题应为整句');
-    assert.ok(html.includes('No. 7 / exceptions: none'), '英文核对行应为整句');
+    assert.ok(html.includes('<dt>No.</dt><dd>7</dd><dt>Exceptions</dt><dd class="is-ok">none</dd>'), '英文核对行应为两列');
     assert.ok(!html.includes('记好了：支出'), '英文页不许留中文结论句');
   });
 

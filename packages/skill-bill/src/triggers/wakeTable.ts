@@ -96,7 +96,7 @@ function pickCtx(ctx: Record<string, unknown>, names: string[]): Record<string, 
 /** 给一条命令算它那些词里「用户只说命令名」的那一条（**代表唤醒词**）。
  *
  * 规则：同 `key` 下**第一条不带 `preset` 的词条**（＝通用词：`记一笔`／`改记录`／`查今天`／`查区间`／
- *  `搜备注`／`查账单详情`——六条迁移过的命令逐条复现今天的代表词）；该 `key` 每条词都带 `preset` 时
+ *  `搜备注`／`查某编号的账`——六条迁移过的命令逐条复现今天的代表词）；该 `key` 每条词都带 `preset` 时
  *  退回第一条词条；**一条词都没有即抛**（US 15：某条命令若一条词都算不出来，当场报「用户到不了它」，
  *  不是静默给一张空卡）。 */
 export function projectWakeWord(scope: WakeScope): string {

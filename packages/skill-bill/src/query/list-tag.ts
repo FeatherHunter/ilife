@@ -36,7 +36,7 @@ import { DOC_TITLE, DOC_VERSION } from '../shared/pageIdentity.js';
 import { commandLine, writeSection } from '../shared/writeParts.js';
 import { queryStyleTag } from './pageParts.js';
 import type { QueryListInput, QueryTableRow } from './list.js';
-import { checkListHtml, checkRowsOf } from './checkLine.js';
+import { checkListHtml, checkRowsOf } from '../shared/checkLine.js';
 
 /** 本页是不是查标签（`./list.ts` 分支判据，唯一定义地）。 */
 export function isTagList(input: { readonly key: string; readonly params: Record<string, unknown> }): boolean {

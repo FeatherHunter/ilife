@@ -43,7 +43,7 @@ export const QUERY_COMMANDS = [
     kind: 'read',
     key: 'bill.record.detail',
     shape: 'detail',
-    title: '查账单详情',
+    title: '查某编号的账',
     example: 'bill-cmd-read bill.record.detail --params \'{"id":1}\'',
     run: viewRecordDetail,
   },

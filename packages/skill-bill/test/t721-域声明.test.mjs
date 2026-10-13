@@ -120,7 +120,7 @@ describe('#721 · 路由（从包门读）', () => {
     assert.equal(projectWakeWord({ key: 'bill.record.today' }), '查今天');
     assert.equal(projectWakeWord({ key: 'bill.record.range' }), '查区间');
     assert.equal(projectWakeWord({ key: 'bill.record.search' }), '搜备注');
-    assert.equal(projectWakeWord({ key: 'bill.record.detail' }), '查账单详情');
+    assert.equal(projectWakeWord({ key: 'bill.record.detail' }), '查某编号的账');
   });
 
   it('派生 fail-closed：某条命令一条词都算不出来时当场报错（不是静默给一张空卡）', () => {

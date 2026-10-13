@@ -61,6 +61,14 @@ export interface SceneEditableField {
   readonly max?: string | number;
   readonly step?: string | number;
   readonly placeholder?: string;
+  /** 快捷取值（#1269 条目 3）：控件旁给一排可点的建议值（这个字段值域里最常用的几档）。
+   *  点一下＝把该字面量填进同一个字段（不引入第二份值、不改字段名）；值只写字面量本身，
+   *  相对量（今天／本周）不在这里表达——那是字段值域的另一种东西，要就单开一格。 */
+  readonly presets?: readonly (string | number)[];
+  /** 互斥组（#1269 条目 3）：**同组最多填一个**——填了任一个，同组其余字段清空并置灰；
+   *  清空后其余字段恢复可用。组名在同一场景内唯一（跨字段指同一个组）。用在「给了 A 就不该给 B」
+   *  的槽位对上（如 条数 ↔ 近几天）；不在任何组里的字段不受影响。 */
+  readonly exclusive_group?: string;
 }
 
 export interface Scene {
@@ -220,7 +228,7 @@ export const SCENE_DATA_SCHEMA = Object.freeze({
                             hint: { type: 'string' },
                             required: { type: 'boolean' },
                             kind: { enum: ['text', 'number', 'select', 'date', 'week', 'month', 'year', 'time', 'period'] },
-                            source: { enum: ['tags', 'categories', 'accounts', 'ledgers', 'config'] },
+                            source: { enum: ['tags', 'categories', 'accounts', 'ledgers', 'accountTypes', 'config'] },
                             empty_label: { type: 'string', minLength: 1 },
                             options: {
                               type: 'array',
@@ -240,6 +248,11 @@ export const SCENE_DATA_SCHEMA = Object.freeze({
                             max: { oneOf: [{ type: 'string' }, { type: 'number' }] },
                             step: { oneOf: [{ type: 'string' }, { type: 'number' }] },
                             placeholder: { type: 'string' },
+                            presets: {
+                              type: 'array',
+                              items: { oneOf: [{ type: 'string' }, { type: 'number' }] },
+                            },
+                            exclusive_group: { type: 'string', minLength: 1 },
                           },
                         },
                       },

@@ -53,7 +53,7 @@ import { fitTicketPage } from './pageFit.js';
 import { queryStyleTag } from './pageParts.js';
 import { assembleSheetPage, sheetHead, ticketActions, ticketRule, ticketSection, ticketSummary } from '../shared/docPage.js';
 import { commandLine, writeSection } from '../shared/writeParts.js';
-import { checkListHtml, checkRowsOf } from './checkLine.js';
+import { checkListHtml, checkRowsOf } from '../shared/checkLine.js';
 
 /** 本次数据来源（复制日志第 3 段，与 `./read.js` 的查询来源同字）。 */
 const SOURCE_QUERY = DB_FILENAME + '（查询结果：只读，不改库）';

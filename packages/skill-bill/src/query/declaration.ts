@@ -83,9 +83,9 @@ export const QUERY_DECLARATION: DomainDeclaration = {
           prompt_template: '请你加载技能 饼干记账,执行唤醒词「查最近」。\n\n我想看最近的记录。近几天与条数二选一。\n\n条数(选填):{{limit}}\n排序(选填):{{sort}}\n近几天(选填):{{recent_days}}',
           types: ['查看'],
           editable_fields: [
-            { name: 'limit', label: '条数(选填)', value: '', hint: '空＝10；纯数字', required: false, kind: 'number' },
-            { name: 'sort', label: '排序(选填)', value: '', hint: '如 金额从大到小', required: false, kind: 'text' },
-            { name: 'recent_days', label: '近几天(选填)', value: '', hint: '如 近7天、近30天；与条数二选一', required: false, kind: 'text' },
+            { name: 'limit', label: '条数(选填)', value: '', hint: '空＝10；点建议值或手填 1~200', required: false, kind: 'number', presets: [10, 20, 50], exclusive_group: 'count' },
+            { name: 'sort', label: '排序(选填)', value: '', hint: '空＝时间从近到远', required: false, kind: 'select', empty_label: '默认：时间从近到远', options: ['时间从近到远', '时间从远到近', '金额从大到小', '金额从小到大'] },
+            { name: 'recent_days', label: '近几天(选填)', value: '', hint: '与条数二选一；点建议值或手填 1~365', required: false, kind: 'number', presets: [7, 30, 90], exclusive_group: 'count' },
           ],
         },
       ],
@@ -102,7 +102,7 @@ export const QUERY_DECLARATION: DomainDeclaration = {
           prompt_template: '请你加载技能 饼干记账,执行唤醒词「查周」。\n\n我想查某一周的账。\n\n周:{{week}}',
           types: ['查看'],
           editable_fields: [
-            { name: 'week', label: '周', value: '', hint: '如 本周、上周、5月第2周；非 ISO 周，不用周选择器', required: true, kind: 'text' },
+            { name: 'week', label: '周', value: '', hint: '点框任意处开周选择器（ISO 周，周一为第一天）；如 本周、上周', required: true, kind: 'week' },
           ],
         },
       ],
@@ -119,7 +119,7 @@ export const QUERY_DECLARATION: DomainDeclaration = {
           prompt_template: '请你加载技能 饼干记账,执行唤醒词「查月」。\n\n我想查某个月的账。\n\n月:{{month}}',
           types: ['查看'],
           editable_fields: [
-            { name: 'month', label: '月', value: '', hint: '如 本月、上月、3月', required: true, kind: 'text' },
+            { name: 'month', label: '月', value: '', hint: '点框任意处开月度选择器；如 本月、上月', required: true, kind: 'month' },
           ],
         },
       ],
@@ -309,18 +309,18 @@ export const QUERY_DECLARATION: DomainDeclaration = {
       ],
     },
     {
-      phrase: '查账单详情',
+      phrase: '查某编号的账',
       key: 'bill.record.detail',
       needs: ['id'],
       scenes: [
         {
           id: 'query_bill_detail',
-          title: '查账单详情',
+          title: '查某编号的账',
           status: '',
-          prompt_template: '请你加载技能 饼干记账,执行唤醒词「查账单详情」。\n\n我想看一条账单的详情。\n\n记录 id:{{record_id}}',
+          prompt_template: '请你加载技能 饼干记账,执行唤醒词「查某编号的账」。\n\n我想看一条账单的详情。\n\n编号:{{record_id}}',
           types: ['查看'],
           editable_fields: [
-            { name: 'record_id', label: '记录 id', value: '', hint: '从查某天或查今天或查最近的列表里取', required: true, kind: 'text' },
+            { name: 'record_id', label: '编号', value: '', hint: '从查某天或查今天或查最近的列表里的『编号』列取', required: true, kind: 'text' },
           ],
         },
       ],

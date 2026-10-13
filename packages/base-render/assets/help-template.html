@@ -250,6 +250,15 @@
   @keyframes hmShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}50%{transform:translateX(3px)}75%{transform:translateX(-2px)}}
   @media (prefers-reduced-motion:reduce){.sheet .pfield .hm-missing{animation:none}.sheet .optfold[open] .pfield{animation:none}}
   .sheet .pfield:last-of-type{margin-bottom:0}
+  /* 快捷取值（#1269 条目 3）：控件下一排建议值，点一下＝把该字面量填进同一个字段 */
+  .sheet .pfield .ctl{flex:1;min-width:0;display:flex;flex-direction:column;gap:7px}
+  .sheet .preset-row{display:flex;flex-wrap:wrap;gap:6px}
+  .sheet .preset-btn{border:1px solid var(--line);background:#fff;color:var(--fg2);border-radius:999px;padding:5px 11px;font:600 12px/1 -apple-system,"Microsoft YaHei",sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent}
+  .sheet .preset-btn:active{background:#ececf1}
+  .sheet .preset-btn.on{border-color:var(--blue);color:var(--blue);background:rgba(0,122,255,.08)}
+  /* 互斥组（#1269 条目 3）：同组已填一个时，其余清空并置灰 */
+  .sheet .pfield.is-off label,.sheet .pfield.is-off .phline{color:#c2c2c9}
+  .sheet .pfield.is-off input,.sheet .pfield.is-off input:placeholder-shown,.sheet .pfield.is-off select{background:#f4f4f6;color:#b0b0b8;border-color:#ececf1}
   .sheet .pfield label{font-size:12px;color:var(--fg2);font-weight:600;flex-shrink:0;min-width:72px}
   .sheet .pfield label em{color:var(--fg3);font-weight:400;font-size:9px}
   .sheet .pfield input{flex:1;min-width:0;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:16px;background:#fff;outline:none;font-family:inherit;color:var(--fg)}
@@ -1833,7 +1842,7 @@ function normalizeScenes(scenes){
       params: (s.editable_fields || []).map(function(f){
         var k = (f.kind === 'number' || f.kind === 'select' || f.kind === 'date' || f.kind === 'week' || f.kind === 'month' || f.kind === 'year' || f.kind === 'time' || f.kind === 'period') ? f.kind : 'text';
         if (f.kind !== undefined && f.kind !== null && k === 'text' && f.kind !== 'text') { try{console.warn('help-template: 非法 kind 降级 text: ' + f.kind);}catch(e){} }
-        return { key: f.name, label: f.label, value: f.value || '', req: !!f.required, hint: f.hint || '', kind: k, options: f.options || [], emptyLabel: f.empty_label || '', min: f.min, max: f.max, step: f.step, placeholder: f.placeholder || f.hint || '' };
+        return { key: f.name, label: f.label, value: f.value || '', req: !!f.required, hint: f.hint || '', kind: k, options: f.options || [], emptyLabel: f.empty_label || '', min: f.min, max: f.max, step: f.step, placeholder: f.placeholder || f.hint || '', presets: Array.isArray(f.presets) ? f.presets : [], exclusive: f.exclusive_group || '' };
       })
     };
   });
@@ -2193,23 +2202,37 @@ function openSheet(s){
   if (hasParams) {
     /* 条目 8/23（用户 2026-10-12 定稿 · C 方案）：必填在前（红竖条＋红徽标），
        选填整段折进一行；提示一律走框右侧 ⓘ（点开 popover 看全文），不再有「看全文」那一行 */
+    /* 快捷取值（#1269 条目 3）：控件下一排建议值；点一下＝把该字面量写进同一个字段（值只此一份） */
+    var presetsHTML = function(p){
+      var ps = Array.isArray(p.presets) ? p.presets : [];
+      if (!ps.length) return '';
+      var h = '<span class="preset-row">';
+      ps.forEach(function(v){
+        h += '<button type="button" class="preset-btn" data-preset="' + esc(String(v)) + '">' + esc(String(v)) + '</button>';
+      });
+      return h + '</span>';
+    };
     var fieldHTML = function(p){
       var hint = p.hint ? String(p.hint) : '';
       var lab = String(p.label == null ? '' : p.label);
       /* 选填段的「(选填)」由组头交代，label 里不再重复（声明里 71 条自带该后缀）*/
       if (!p.req) lab = lab.replace(/[（(]\s*选填\s*[)）]\s*$/, '');
       var native = /^(select|date|week|month|time|period)$/.test(fieldKindOf(p));
-      var head = '<div class="pfield' + (p.req ? ' req' : '') + '"><label>' + esc(lab) +
+      var head = '<div class="pfield' + (p.req ? ' req' : '') + (p.exclusive ? ' excl' : '') + '"' +
+        (p.exclusive ? ' data-excl="' + esc(p.exclusive) + '"' : '') + '><label>' + esc(lab) +
         (p.req ? '<em class="req">必填</em>' : '') + '</label>';
-      if (!hint) return head + fieldControlHTML(p) + '</div>';
-      if (native) {
+      var body;
+      if (!hint) body = fieldControlHTML(p);
+      else if (native) {
         /* date／select 天生不渲染框内文字：提示挂右侧 ⓘ（与文本框同一形态，省掉框下那一行） */
-        return head + '<div class="inwrap native">' + fieldControlHTML(p) +
-          '<button class="ib" type="button" data-pop="' + esc(p.key) + '" aria-label="看提示全文">i</button></div></div>';
-      }
-      return head + '<div class="inwrap">' + fieldControlHTML(p) +
+        body = '<div class="inwrap native">' + fieldControlHTML(p) +
+          '<button class="ib" type="button" data-pop="' + esc(p.key) + '" aria-label="看提示全文">i</button></div>';
+      } else body = '<div class="inwrap">' + fieldControlHTML(p) +
         '<span class="phline">' + esc(hint) + '</span>' +
-        '<button class="ib" type="button" data-pop="' + esc(p.key) + '" aria-label="看提示全文">i</button></div></div>';
+        '<button class="ib" type="button" data-pop="' + esc(p.key) + '" aria-label="看提示全文">i</button></div>';
+      var presets = presetsHTML(p);
+      if (presets) body = '<div class="ctl">' + body + presets + '</div>';
+      return head + body + '</div>';
     };
     var reqs = s.params.filter(function(p){ return p.req; });
     var opts = s.params.filter(function(p){ return !p.req; });
@@ -2237,7 +2260,7 @@ function openSheet(s){
     (function(el){
       var pf = el.closest('.pfield');
       el.setAttribute('placeholder', ' ');
-      var sync = function(){ if (pf) pf.classList.toggle('filled', !!String(el.value || '').trim()); };
+      var sync = function(){ if (pf) { pf.classList.toggle('filled', !!String(el.value || '').trim()); paintPresets(pf); } };
       el.addEventListener('input', sync);
       el.addEventListener('change', sync);
       sync();
@@ -2336,7 +2359,7 @@ function periodCtlHTML(mode, v){
 /* 点框任意处＝点框右侧的选择器图标（用户 2026-10-13 定，全场景通用）。 */
 var HELP_LAST_PICK = { el: null, t: 0 };
 function openPicker(inp){
-  if (!inp || !HELP_PICKABLE.test(inp.type || '')) return;
+  if (!inp || inp.disabled || !HELP_PICKABLE.test(inp.type || '')) return;
   var now = Date.now();
   if (HELP_LAST_PICK.el === inp && now - HELP_LAST_PICK.t < 400) return; /* 同一次手势别开两枪 */
   HELP_LAST_PICK = { el: inp, t: now };
@@ -2352,7 +2375,7 @@ function openPicker(inp){
 document.addEventListener('click', function(ev){
   var t = ev.target;
   if (!t || !t.closest) return;
-  if (t.closest('.ib, .pop, .s-close, .period-btn, .filt, .filt-panel')) return;
+  if (t.closest('.ib, .pop, .s-close, .period-btn, .preset-btn, .filt, .filt-panel')) return;
   var inp = t.closest('input');
   if (inp) { openPicker(inp); return; }
   var pf = t.closest('.pfield'); /* 点字段空白处：该字段只有一个可开控件时才替它开 */
@@ -2573,10 +2596,83 @@ document.addEventListener('click', function(ev){
     if (r) r.click();
   }
 });
+/** 快捷取值（#1269 条目 3）：点建议值＝写进同一个字段（与手填同一条链路：input／change 照旧冒泡），
+    再点同一枚＝取消（回到空）。点亮状态由 `paintPresets` 按当前值刷。 */
+function paintPresets(pf){
+  var inp = pf.querySelector('[data-p]');
+  if (!inp) return;
+  var v = String(inp.value || '');
+  pf.querySelectorAll('.preset-btn').forEach(function(b){
+    b.classList.toggle('on', b.getAttribute('data-preset') === v);
+  });
+}
+function mountPresets(root){
+  root.addEventListener('click', function(e){
+    var b = e.target && e.target.closest ? e.target.closest('.preset-btn') : null;
+    if (!b) return;
+    var pf = b.closest('.pfield');
+    if (!pf) return;
+    var inp = pf.querySelector('[data-p]');
+    if (!inp || inp.disabled) return;
+    e.preventDefault();
+    var v = b.getAttribute('data-preset') || '';
+    inp.value = (String(inp.value || '') === v) ? '' : v;
+    inp.dispatchEvent(new Event('input', { bubbles: true }));
+    inp.dispatchEvent(new Event('change', { bubbles: true }));
+    paintPresets(pf);
+  });
+}
+/** 互斥组（#1269 条目 3）：同组最多填一个——填了任一个，其余清空并置灰（清空后恢复）。
+    监听挂在表单上，且本函数在预览刷新监听之前挂（`openSheet` 里 `mountFields` 先跑），
+    所以清空发生在预览读值之前：预览与复制拿不到并存的两个值。 */
+function mountExclusives(root){
+  var forms = root.querySelectorAll('.pform[data-pid]');
+  for (var fi = 0; fi < forms.length; fi++) {
+    (function(fm){
+      var busy = false;
+      var apply = function(){
+        if (busy) return;
+        busy = true;
+        var fields = fm.querySelectorAll('.pfield[data-excl]');
+        var groups = {};
+        for (var i = 0; i < fields.length; i++) {
+          var g = fields[i].getAttribute('data-excl');
+          (groups[g] = groups[g] || []).push(fields[i]);
+        }
+        Object.keys(groups).forEach(function(g){
+          var list = groups[g];
+          var filled = [];
+          list.forEach(function(pf){
+            var inp = pf.querySelector('[data-p]');
+            if (inp && String(inp.value || '').trim()) filled.push(pf);
+          });
+          /* 同组两个都非空（预填或脚本写入）：留第一个，其余清空——不猜「刚动过的是哪个」 */
+          for (var k = 1; k < filled.length; k++) {
+            var extra = filled[k].querySelector('[data-p]');
+            if (extra) extra.value = '';
+          }
+          var off = filled.length > 0;
+          list.forEach(function(pf){
+            var inp = pf.querySelector('[data-p]');
+            var isFilled = !!(inp && String(inp.value || '').trim());
+            pf.classList.toggle('is-off', off && !isFilled);
+            if (inp) inp.disabled = !!(off && !isFilled);
+          });
+        });
+        busy = false;
+      };
+      apply();
+      fm.addEventListener('input', apply);
+      fm.addEventListener('change', apply);
+    })(forms[fi]);
+  }
+}
 function mountFields(root){
   mountPeriods(root);
   mountFilterSelects(root);
   mountPickers(root);
+  mountPresets(root);
+  mountExclusives(root);
 }
 
 /* ===== #984 软键盘遮挡纠正 BEGIN =====

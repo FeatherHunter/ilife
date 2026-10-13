@@ -20,10 +20,10 @@ const CANON = [
   '查今天', '查昨天', '查某天', '查最近',
   '查周', '查月', '查区间', '查分类', '查账户', '查账本', '查多条件',
   '搜备注', '查标签', '查欠款', '查待报销', '查分期',
-  '查账单详情',
+  '查某编号的账',
 ];
 
-/** 词→key 期望（路由＝SKILL 行 key；难行点名：查账单详情→detail）。 */
+/** 词→key 期望（路由＝SKILL 行 key；难行点名：查某编号的账→detail）。 */
 const EXPECT_KEY = {
   '查今天': 'bill.record.today',
   '查昨天': 'bill.record.today',
@@ -41,10 +41,10 @@ const EXPECT_KEY = {
   '查欠款': 'bill.record.search',
   '查待报销': 'bill.record.search',
   '查分期': 'bill.record.search',
-  '查账单详情': 'bill.record.detail',
+  '查某编号的账': 'bill.record.detail',
 };
 
-/** 词→HELP 场景 id 期望（查询域 17 卡 1:1；难行点名：查账单详情→query_bill_detail）。 */
+/** 词→HELP 场景 id 期望（查询域 17 卡 1:1；难行点名：查某编号的账→query_bill_detail）。 */
 const EXPECT_SCENE = {
   '查今天': 'query_today',
   '查昨天': 'query_yesterday',
@@ -53,7 +53,7 @@ const EXPECT_SCENE = {
   '查周': 'query_week',
   '查月': 'query_month',
   '查区间': 'query_range',
-  '查账单详情': 'query_bill_detail',
+  '查某编号的账': 'query_bill_detail',
   '查分类': 'query_category',
   '搜备注': 'query_search',
   '查标签': 'query_tag',
@@ -241,9 +241,9 @@ describe('416 · 查询 17 词五段接线', () => {
     }
   });
 
-  it('最长匹配回归：查账单详情不被吞，查账单已删不留别名', () => {
-    assert.equal(routeWakeword('查账单详情', FULL_CTX).key, 'bill.record.detail');
-    assert.equal(routeWakeword('帮我查账单详情里的那笔', FULL_CTX).key, 'bill.record.detail');
+  it('最长匹配回归：查某编号的账不被吞，查账单已删不留别名', () => {
+    assert.equal(routeWakeword('查某编号的账', FULL_CTX).key, 'bill.record.detail');
+    assert.equal(routeWakeword('帮我查某编号的账里的那笔', FULL_CTX).key, 'bill.record.detail');
     assert.throws(() => routeWakeword('查账单', FULL_CTX), /无命中/, '查账单已删（#1275 用户 m00453 第 1 条：不保留，完全一致）');
     // 既有回归（机制同源，不因查询接线漂移）：看分类对比不落入看分类、报销到账不落入记报销。
     assert.equal(routeWakeword('看分类对比', FULL_CTX).key, 'bill.analysis.compare');

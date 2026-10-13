@@ -29,7 +29,7 @@ import { actionStamp, copyArea, copyLog } from '../shared/copyArea.js';
 import { ticketCopyOf } from './list-copy.js';
 import { calcKpi } from '../shared/kpi.js';
 import { DOC_TITLE, DOC_VERSION } from '../shared/pageIdentity.js';
-import { checkListHtml, checkRowsOf } from './checkLine.js';
+import { checkListHtml, checkRowsOf } from '../shared/checkLine.js';
 import { countNotes } from './countLabel.js';
 import { toBillItem } from './items.js';
 import { listEnvelope } from './list.js';

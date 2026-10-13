@@ -25,7 +25,7 @@ import { DB_FILENAME } from '../fetch/index.js';
 import { renderEmptyBlock, renderLedgerRows, renderSheetFrame, renderSummaryHead } from 'base-paint/blocks';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { actionStamp, copyArea, copyLog } from '../shared/copyArea.js';
-import { checkListHtml, checkRowsOf } from './checkLine.js';
+import { checkListHtml, checkRowsOf } from '../shared/checkLine.js';
 import { ticketCopyOf } from './list-copy.js';
 import { calcKpi } from '../shared/kpi.js';
 import { DOC_TITLE, DOC_VERSION } from '../shared/pageIdentity.js';

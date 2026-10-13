@@ -1,11 +1,11 @@
 /** 共用位·跨域参数槽位口径（#689 结构搬迁第三批新建）：从 `src/policy/record.ts` 里被**两个域**同时取用的那两件来——
  *   ① `RecordOp`——写命令 `op` 的取值集（`parseRecordOp` 认的就是它）；形状事实的取值面同时被
  *      `src/shared/writeParts.ts` 的 `BillReceipt.op` 与 `src/shared/commandSpec.ts` 的写出口取；
- *   ② `needId`——`id` 槽位的正整数守卫（改记录／撤销／恢复与查账单详情四处同一句校验）。
+ *   ② `needId`——`id` 槽位的正整数守卫（改记录／撤销／恢复与查某编号的账四处同一句校验）。
  *
  *  为什么新建这一件、而不是留在某一域里（#689 按「谁在用」判，逐条记在这里）：
  *   · `needId` 的消费者是**两个域**——写域 `src/write/record.ts`（`validateUpdateInput`）与
- *     查询域 `src/query/read.ts`（查账单详情）⇒ 归属律 2「说得出两个域在用 ⇒ 共用位」。
+ *     查询域 `src/query/read.ts`（查某编号的账）⇒ 归属律 2「说得出两个域在用 ⇒ 共用位」。
  *     塞进任一域都会让另一个域伸手进对方内部件（或经对方门反向依赖），故上浮共用位。
  *   · `RecordOp` 的消费者是写域 ＋ **两个共用件**（`writeParts.ts`／`commandSpec.ts`）。
  *     它若留在 `src/write/record.ts`，共用件就得 import 域目录 —— 撞守卫③a

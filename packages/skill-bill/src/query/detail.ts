@@ -1,10 +1,11 @@
-/** 查询域详情页装配件（w17 v2.1 百分百：`w17-查账单详情-v2.1.html`，取版本号最高者）：
+/** 查询域详情页装配件（w17 v2.1 百分百：`docs/skills/skill-bill/proto/query/w17-*-v2.1.html`——
+ *  该原型文件的名字里仍是旧唤醒词（历史件按「地址随实况、历史不改」不动），取版本号最高者）：
  *  店头三行（品牌／编号备注确认标题／单记录副题）→ 主数字（单笔药丸／金额／结论／时刻，
  *  印章只在已撤销时出）→ 落点 6 行（编号带#／账户／账本／币种／创建时间／状态纯文本；
  *  已撤销才加删除时间行）→ 单条 100% 占比条 → 明细 2 行（收付行加粗＋备注行）→
  *  对账卡（编号、写入、异常）→ 复制区 → 纸外脚注。口径无：1045 全删，原型即无此行。
  *
- * 谁在用（一个调用点，指名）：`src/query/read.ts` 的 `viewRecordDetail`（查账单详情）——
+ * 谁在用（一个调用点，指名）：`src/query/read.ts` 的 `viewRecordDetail`（查某编号的账）——
  *   today／range／search 三支仍走 `./list.js` 的 `queryListDoc`，本件不动它们。
  *
  * 一数一处：金额住头里（分类只进占比条，账本只进落点行）；编号的#形只住落点行内、
@@ -21,7 +22,7 @@ import { escapeHtml } from 'base-paint';
 import type { SerializableEnvelope } from 'base-paint';
 import { copyArea, copyLog } from '../shared/copyArea.js';
 import { DOC_TITLE, DOC_VERSION } from '../shared/pageIdentity.js';
-import { checkListHtml } from './checkLine.js';
+import { checkListHtml } from '../shared/checkLine.js';
 import { queryStyleTag } from './pageParts.js';
 import { commandLine, writeSection } from '../shared/writeParts.js';
 import { assembleSheetPage, sheetHead, ticketActions, ticketRule, ticketSection, ticketSummary } from '../shared/docPage.js';
@@ -35,7 +36,7 @@ export interface QueryDetailInput {
   readonly key: string;
   /** 本次参数（复制日志那行命令原文照它拼，可照抄重跑）。 */
   readonly params: Record<string, unknown>;
-  /** 复制数据那份纯文本的标题（本页恒为 `查账单详情`；纸头标题见下 `paperTitle`）。 */
+  /** 复制数据那份纯文本的标题（本页恒为 `查某编号的账`；纸头标题见下 `paperTitle`）。 */
   readonly wakeWord: string;
   /** 查到的那一条（含软删列，调用方已按 `includeDeleted` 取到）。 */
   readonly row: BillRow;

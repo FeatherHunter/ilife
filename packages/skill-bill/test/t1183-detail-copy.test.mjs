@@ -6,7 +6,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { buildDetailCopyText, buildDetailCopyJson, buildDetailCopyCsv } from '../dist/query/detail.js';
 
-const WAKE = '查账单详情';
+const WAKE = '查某编号的账';
 const ROW = {
   id: 7,
   category: '餐饮/咖啡奶茶/咖啡',
@@ -19,7 +19,7 @@ const ROW = {
   created_at: '2026-10-07 12:00:01',
   deleted_at: null,
 };
-const EXPECT_TEXT = ['饼干记账 查账单详情', '编号 #7', '时间 2026-10-07 12:00:00', '分类 餐饮/咖啡奶茶/咖啡', '金额 -11.90', '方向 支出', '账户 支付宝', '账本 生活', '币种 人民币', '创建时间 2026-10-07 12:00:01', '状态 有效', '备注 午饭'].join('\n');
+const EXPECT_TEXT = ['饼干记账 查某编号的账', '编号 #7', '时间 2026-10-07 12:00:00', '分类 餐饮/咖啡奶茶/咖啡', '金额 -11.90', '方向 支出', '账户 支付宝', '账本 生活', '币种 人民币', '创建时间 2026-10-07 12:00:01', '状态 有效', '备注 午饭'].join('\n');
 const EXPECT_CSV = ['field,value', '编号,#7', '时间,2026-10-07 12:00:00', '分类,餐饮/咖啡奶茶/咖啡', '金额,-11.90', '方向,支出', '账户,支付宝', '账本,生活', '币种,人民币', '创建时间,2026-10-07 12:00:01', '状态,有效', '备注,午饭'].join('\n');
 const EXPECT_JSON = ['{', '  "version": "1.0",', '  "skill": "bill",', '  "shape": "detail",', '  "key": "record.detail",', '  "data": {', '    "id": 7,', '    "time": "2026-10-07 12:00:00",', '    "category": "餐饮/咖啡奶茶/咖啡",', '    "amount": -11.9,', '    "direction": "支出",', '    "account": "支付宝",', '    "ledger": "生活",', '    "currency": "人民币",', '    "created_at": "2026-10-07 12:00:01",', '    "deleted_at": null,', '    "status": "有效",', '    "note": "午饭"', '  }', '}'].join('\n');
 

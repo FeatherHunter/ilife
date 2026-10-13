@@ -34,7 +34,7 @@ import { fitTicketPage } from './pageFit.js';
 import { queryStyleTag } from './pageParts.js';
 import { assembleSheetPage, sheetHead, ticketActions, ticketRule, ticketSection, ticketSummary } from '../shared/docPage.js';
 import { commandLine, writeSection } from '../shared/writeParts.js';
-import { checkListHtml, checkRowsOf } from './checkLine.js';
+import { checkListHtml, checkRowsOf } from '../shared/checkLine.js';
 
 /** 本次数据来源（复制日志第 3 段，与 `./read.js` 的查询来源同字）。 */
 const SOURCE_QUERY = DB_FILENAME + '（查询结果：只读，不改库）';
@@ -150,7 +150,8 @@ export interface RecentTicketInput {
   readonly records: readonly BillRow[];
   /** 明细与复制区画前几条（`fitTicketPage` 给；缺席＝全画）。结论／占比／落点／对账照**全量**算。 */
   readonly shown?: number;
-  readonly limit: number;
+  /** 这一页画的是「最近多少」：`10 笔` 或 `30 天`（#1269 条目 3：条数与近几天二选一，两种口径都要印得出来）。 */
+  readonly head: string;
 }
 
 /** 查最近票据纸：一整页（载荷与 `./list.js` 同形，呈现照 w04 v2.1 原型）。 */
@@ -163,11 +164,11 @@ export function queryRecentTicketDoc(input: RecentTicketInput): string {
   const envelope = listEnvelope(input.key, data);
   const listCopy = ticketCopyOf(input.wakeWord, input.window, shownRows);
   const paper = queryStyleTag()
-    + sheetHead(DOC_TITLE + ' · ' + input.wakeWord, escapeHtml('最近 ' + String(input.limit) + ' 笔，支出 ' + sumText(kpi.expense) + ' 元'))
+    + sheetHead(DOC_TITLE + ' · ' + input.wakeWord, escapeHtml('最近 ' + input.head + '，支出 ' + sumText(kpi.expense) + ' 元'))
     + '<p class="ilife-recent-shop-sub">' + escapeHtml(input.window) + '</p>'
     + ticketRule()
     + ticketSummary(renderSummaryHead({
-      eyebrow: '本页支出 · 最近 ' + String(input.limit) + ' 笔',
+      eyebrow: '本页支出 · 最近 ' + input.head,
       value: sumText(kpi.expense),
       unit: '元',
       layout: 'ticket',

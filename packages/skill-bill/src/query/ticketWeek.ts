@@ -32,7 +32,7 @@ import { actionStamp, copyArea, copyLog } from '../shared/copyArea.js';
 import { ticketCopyOf } from './list-copy.js';
 import { calcKpi } from '../shared/kpi.js';
 import { DOC_TITLE, DOC_VERSION } from '../shared/pageIdentity.js';
-import { checkListHtml, checkRowsOf } from './checkLine.js';
+import { checkListHtml, checkRowsOf } from '../shared/checkLine.js';
 import { countNotes } from './countLabel.js';
 import { toBillItem } from './items.js';
 import { listEnvelope } from './list.js';
@@ -181,6 +181,8 @@ export interface WeekTicketInput {
   readonly shown?: number;
   readonly start: string;
   readonly end: string;
+  /** H2 与主数字里那句「本周／上月／这个月」（./read.js 按槽位值判）：不写死，选到哪一周就印哪一周。 */
+  readonly label: string;
 }
 
 /** 查周票据纸：一整页（载荷与 `./list.js` 同形，呈现照 w06 v2.1 原型）。 */
@@ -194,11 +196,11 @@ export function queryWeekTicketDoc(input: WeekTicketInput): string {
   const envelope = listEnvelope(input.key, data);
   const listCopy = ticketCopyOf(input.wakeWord, input.window, shownRows);
   const paper = queryStyleTag()
-    + sheetHead(DOC_TITLE + ' · ' + input.wakeWord, escapeHtml('本周共 ' + notes.head + '，支出 ' + sumText(kpi.expense) + ' 元'))
+    + sheetHead(DOC_TITLE + ' · ' + input.wakeWord, escapeHtml(input.label + '共 ' + notes.head + '，支出 ' + sumText(kpi.expense) + ' 元'))
     + '<p class="ilife-week-shop-sub">' + escapeHtml(input.window) + '</p>'
     + ticketRule()
     + ticketSummary(renderSummaryHead({
-      eyebrow: '本周支出 · 共 ' + String(kpi.count) + ' 笔',
+      eyebrow: input.label + '支出 · 共 ' + String(kpi.count) + ' 笔',
       value: sumText(kpi.expense),
       unit: '元',
       layout: 'ticket',

@@ -2,7 +2,7 @@
  *  `bill.record.today`（查今天／查昨天／查某天／查最近／查账单）／
  *  `bill.record.range`（查周／查月／查区间／查分类／查账户／查账本）／
  *  `bill.record.search`（搜备注／查标签／查欠款／查待报销／查分期）／
- *  `bill.record.detail`（查账单详情）。一条命令一处，出口 `src/cli/cmd_read.ts` 只查注册表再调本域的门。
+ *  `bill.record.detail`（查某编号的账）。一条命令一处，出口 `src/cli/cmd_read.ts` 只查注册表再调本域的门。
  * **红线（本域既有语义，本次搬迁一字不改，逐条有测试钉着）**：
  *   - 空查询不返全量：`search` 既没 `q` 也没 `kind` → exit 2；`range` 既没 start/end 也没条件 → exit 2；
  *   - 坏输入阻断不冒充正常：区间查不到记录 → exit 4（不出一张空表冒充「查过了」）；`detail` 查无此号 → exit 4；
@@ -18,7 +18,7 @@ import {
 import type { BillDb, BillRow } from '../fetch/index.js';
 import { BillPolicyError } from '../fetch/errors.js';
 import { validateCategory } from '../shared/category.js';
-import { normalizeDate, resolveQueryDate, resolveRange, yesterdayStr } from '../shared/dateRange.js';
+import { monthRange, normalizeDate, normalizeMonth, resolveQueryDate, resolveRange, yesterdayStr } from '../shared/dateRange.js';
 import { needId } from '../shared/params.js';
 import { projectWakeWord } from '../triggers/wakeTable.js';
 import { calcKpi } from '../shared/kpi.js';
@@ -157,26 +157,129 @@ function todayEmpty(params: Record<string, unknown>): { readonly emptyText: stri
   return { emptyText: '今天还没有记录', emptyHint: '要记一笔就说「记支出」。' };
 }
 
+/** 查最近的排序档（与 `./declaration.js` 里 `sort` 的候选逐字同表）；空＝时间从近到远。
+ *  金额档按**绝对值**排：支出在库里记负数，用户说的「金额大」是面额大，不该把大额支出排到大额收入后面。 */
+const RECENT_SORTS = ['时间从近到远', '时间从远到近', '金额从大到小', '金额从小到大'] as const;
+type RecentSort = (typeof RECENT_SORTS)[number];
+
+function recentSortOf(raw: unknown): RecentSort {
+  if (raw === undefined || raw === null || raw === '') return RECENT_SORTS[0];
+  const v = typeof raw === 'string' ? raw.trim() : '';
+  if (!(RECENT_SORTS as readonly string[]).includes(v)) {
+    throw new BillPolicyError('POLICY_BAD_INPUT', '排序只认：' + RECENT_SORTS.join('、') + '；收到 ' + String(raw));
+  }
+  return v as RecentSort;
+}
+
+function orderRecent(rows: readonly BillRow[], sort: RecentSort): BillRow[] {
+  const timeDesc = (a: BillRow, b: BillRow): number => b.time.localeCompare(a.time) || b.id - a.id;
+  const out = rows.slice();
+  if (sort === '时间从近到远') return out.sort(timeDesc);
+  if (sort === '时间从远到近') return out.sort((a, b) => a.time.localeCompare(b.time) || a.id - b.id);
+  if (sort === '金额从大到小') return out.sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount) || timeDesc(a, b));
+  return out.sort((a, b) => Math.abs(a.amount) - Math.abs(b.amount) || timeDesc(a, b));
+}
+
+/** 锚点往前数 `days` 天（含锚点当天：近 7 天＝锚点－6 .. 锚点，与页面那句「最近 7 天（A ~ B）」同式）。 */
+function daysBefore(anchor: string, days: number): string {
+  const t = Date.parse(anchor + 'T12:00:00Z');
+  return new Date(t - (days - 1) * 86400000).toISOString().slice(0, 10);
+}
+
+/** 查周的槽位值 → 时间窗（`./declaration.js` 的 `week` 槽，HELP 侧是 ISO 周选择器）：
+ *  空／「本周」＝周一..锚点（未来不计，与改前同）；「上周」「上上周」＝整周往前退；
+ *  `YYYY-Www`（ISO 周，周选择器写的就是这个形状）＝那一周的周一..周日。 */
+function weekWindowOf(raw: unknown, anchor: string): { readonly start: string; readonly end: string; readonly label: string } {
+  const v = typeof raw === 'string' ? raw.trim() : '';
+  if (v === '' || v === '本周') return { ...weekWindowFrom(anchor), label: '本周' };
+  if (v === '上周') return { ...shiftWeek(anchor, -1), label: '上周' };
+  if (v === '上上周') return { ...shiftWeek(anchor, -2), label: '上上周' };
+  const m = /^(\d{4})-W(\d{2})$/.exec(v);
+  if (!m) throw new BillPolicyError('POLICY_BAD_TIME', '周只认 ISO 周（如 2026-W42）或 本周／上周／上上周：' + v);
+  const year = Number(m[1]);
+  const week = Number(m[2]);
+  if (week < 1 || week > 53) throw new BillPolicyError('POLICY_BAD_TIME', 'ISO 周号须在 1~53：' + v);
+  /* ISO 周 1 是含 1 月 4 日的那一周（周一为第一天）；不自己发明数法。 */
+  const jan4 = Date.UTC(year, 0, 4);
+  const back = (new Date(jan4).getUTCDay() + 6) % 7;
+  const mon = jan4 - back * 86400000 + (week - 1) * 7 * 86400000;
+  const start = new Date(mon).toISOString().slice(0, 10);
+  const end = new Date(mon + 6 * 86400000).toISOString().slice(0, 10);
+  const cur = weekWindowFrom(anchor);
+  /* 选到本周那一周：与「本周」同口径（周一..锚点，未来不计），免得窗口写到一个还没到的周日。 */
+  if (start === cur.start) return { ...cur, label: '本周' };
+  return { start, end, label: '这一周' };
+}
+
+/** 锚点所在周的周一往前退 `n` 周的整周（上周／上上周）。 */
+function shiftWeek(anchor: string, n: number): { readonly start: string; readonly end: string } {
+  const { start } = weekWindowFrom(anchor);
+  const t = Date.parse(start + 'T12:00:00Z') + n * 7 * 86400000;
+  return { start: new Date(t).toISOString().slice(0, 10), end: new Date(t + 6 * 86400000).toISOString().slice(0, 10) };
+}
+
+/** 查月的槽位值 → 时间窗（`./declaration.js` 的 `month` 槽，HELP 侧是月度选择器）：
+ *  空／「本月」＝月初..锚点（未来不计，与改前同）；「上月」＝上个整月；`YYYY-MM`＝那个整月。 */
+function monthWindowOf(raw: unknown, anchor: string): { readonly start: string; readonly end: string; readonly label: string } {
+  const v = typeof raw === 'string' ? raw.trim() : '';
+  if (v === '' || v === '本月') return { ...monthWindowFrom(anchor), label: '本月' };
+  if (v === '上月' || v === '上个月') {
+    const y = Number(anchor.slice(0, 4));
+    const m = Number(anchor.slice(5, 7));
+    const pm = m === 1 ? 12 : m - 1;
+    const py = m === 1 ? y - 1 : y;
+    const { start, end } = monthRange(String(py) + '-' + String(pm).padStart(2, '0'));
+    return { start, end, label: '上月' };
+  }
+  const key = normalizeMonth(v, 'month');
+  /* 选到本月：与「本月」同口径（月初..锚点，未来不计）。 */
+  if (key === anchor.slice(0, 7)) return { ...monthWindowFrom(anchor), label: '本月' };
+  const { start, end } = monthRange(key);
+  return { start, end, label: '这个月' };
+}
+
 /** `bill.record.today`：查今天／查昨天／查某天／查最近（`recent` ＋ `limit` 1~200）／查账单；当日无记录不是故障，照实出零行的页。 */
 export function viewRecordToday(params: Record<string, unknown>, db: BillDb): ViewOut {
   const key = 'bill.record.today';
   if (params.recent === true) {
-    const limit = params.limit === undefined ? 10 : params.limit;
-    if (!Number.isInteger(limit) || (limit as number) < 1 || (limit as number) > 200) {
-      throw new BillPolicyError('POLICY_BAD_INPUT', 'recent limit 须为 1~200 的整数：' + String(limit));
+    const sort = recentSortOf(params.sort);
+    const daysRaw = params.recent_days;
+    if (daysRaw !== undefined && params.limit !== undefined) {
+      throw new BillPolicyError('POLICY_BAD_INPUT', '条数与近几天二选一，不能同时给（HELP 里这两格同组互斥）');
     }
-    const records = fetchAll(db)
-      .sort((a, b) => b.time.localeCompare(a.time) || b.id - a.id)
-      .slice(0, limit as number);
+    const all = fetchAll(db);
+    let records: BillRow[];
+    let head: string;
+    let window: string;
+    if (daysRaw !== undefined) {
+      const days = typeof daysRaw === 'number' ? daysRaw : Number(daysRaw);
+      if (!Number.isInteger(days) || days < 1 || days > 365) {
+        throw new BillPolicyError('POLICY_BAD_INPUT', 'recent_days 须为 1~365 的整数：' + String(daysRaw));
+      }
+      const anchor = new Date().toISOString().slice(0, 10);
+      const from = daysBefore(anchor, days);
+      records = orderRecent(all.filter((r) => r.time.slice(0, 10) >= from && r.time.slice(0, 10) <= anchor), sort);
+      head = String(days) + ' 天';
+      window = '最近 ' + head + '（' + from + ' ~ ' + anchor + (sort === '时间从近到远' ? '' : '；' + sort) + '）';
+    } else {
+      const limit = params.limit === undefined ? 10 : params.limit;
+      if (!Number.isInteger(limit) || (limit as number) < 1 || (limit as number) > 200) {
+        throw new BillPolicyError('POLICY_BAD_INPUT', 'recent limit 须为 1~200 的整数：' + String(limit));
+      }
+      /* 先取「最近 N 笔」（按时间倒序切窗），再按用户选的档排展示序：排序说的是这一页怎么摆，不是改取哪几笔。 */
+      const newest = all.slice().sort((a, b) => b.time.localeCompare(a.time) || b.id - a.id).slice(0, limit as number);
+      records = orderRecent(newest, sort);
+      head = String(limit) + ' 笔';
+      window = '最近 ' + head + '（' + (sort === '时间从近到远' ? '按时间倒序' : sort) + '）';
+    }
     if (records.length > 0) {
       return recentTicketOut({
-        key, params, wakeWord: todayWakeWord(params),
-        window: '最近 ' + String(limit) + ' 笔（按时间倒序）', records, limit: limit as number,
+        key, params, wakeWord: todayWakeWord(params), window, records, head,
       });
     }
     // 零行不再回落老列表路：走票据纸空态（形状照 w00 判地，空态句一字不动）。
     return emptyTicketOut({
-      key, params, wakeWord: todayWakeWord(params), window: '最近 ' + String(limit) + ' 笔（按时间倒序）',
+      key, params, wakeWord: todayWakeWord(params), window,
       date: 'recent',
       emptyText: '库里还没有记录',
       emptyHint: '要记一笔就说「记支出」。',
@@ -314,15 +417,18 @@ export function viewRecordRange(params: Record<string, unknown>, db: BillDb): Vi
   }
   if ((params.range === 'week' || params.range === 'month') && ledger === undefined) {
     const anchor = rangeAnchor(params);
-    const { start, end } = params.range === 'week' ? weekWindowFrom(anchor) : monthWindowFrom(anchor); // w06 查周 v2.1 原型锚点：周一..锚点（本周）＋结论64%／占比64-36／载荷键不动（.scratch/1019-p-query/w06-查周-v2.1.html manifest seq5）
+    /* 槽位给了就用槽位（HELP 侧的周／月选择器写的 `2026-W42`／`2026-10`，或手打的「上周」「上月」），
+       没给才按锚点算「本周」「本月」——#1269 条目 5：查某周／查某月要真的能选到哪一周／哪一月。 */
+    const picked = params.range === 'week' ? weekWindowOf(params.week, anchor) : monthWindowOf(params.month, anchor);
+    const { start, end, label } = picked;
     const records = fetchAll(db, { fromTime: start + ' 00:00:00', toTime: end + ' 23:59:59', ...cond });
     if (!records.length) throw new BillFetchError('BILL_EMPTY_RANGE', `区间无记录：${start}~${end}（缺失阻断，不返空统计）`);
     const wakeWord = projectWakeWord({ key, preset: params });
-    const window = start + ' ~ ' + end + (params.range === 'week' ? '（本周）' : '（本月）');
+    const window = start + ' ~ ' + end + '（' + label + '）';
     if (params.range === 'month') {
-      return monthTicketOut({ key, params, wakeWord, window, records, start, end }); // w07 查月 v2.1 票据纸（.scratch/1019-p-query/w07-查月-v2.1.html manifest seq6）：结论64%／占比64-36／载荷键不动
+      return monthTicketOut({ key, params, wakeWord, window, records, start, end, label }); // w07 查月 v2.1 票据纸（.scratch/1019-p-query/w07-查月-v2.1.html manifest seq6）：结论64%／占比64-36／载荷键不动
     }
-    return weekTicketOut({ key, params, wakeWord, window, records, start, end }); // w06 查周 v2.1 票据纸（.scratch/1019-p-query/w06-查周-v2.1.html manifest seq5）：H2本周／主数字本周支出／结论64%／占比64-36／载荷键不动
+    return weekTicketOut({ key, params, wakeWord, window, records, start, end, label }); // w06 查周 v2.1 票据纸（.scratch/1019-p-query/w06-查周-v2.1.html manifest seq5）：H2本周／主数字本周支出／结论64%／占比64-36／载荷键不动
   }
   /* 带 `ledger` 条件时不走上面两支：账本要出「查账本」票据纸（w11），时间窗交给下面 `ledger`
      分支的 `resolveLedgerWindow` 解（它认 `start`／`end`／`range` 这一组通用时间位）。
@@ -464,7 +570,7 @@ export function viewRecordSearch(params: Record<string, unknown>, db: BillDb): V
   });
 }
 
-/** `bill.record.detail`：查账单详情（`id` 必给，#415 专属版式）。取数含软删行（`includeDeleted` 经取数
+/** `bill.record.detail`：查某编号的账（`id` 必给，#415 专属版式）。取数含软删行（`includeDeleted` 经取数
  *  公开接口）：真无此号才抛 `BILL_RECORD_NOT_FOUND`（exit 4），已撤销走整页＋已撤销徽，不冒充正常。
  *  载荷 `item` 照搬迁前形状（`toBillItem` 8 字段）原样保留，另加 `created_at／deleted_at` 两列
  *  （加法式，旧 8 字段一字不动）；页面字段表 10 列全交代，见 `./detail.js`。 */

@@ -171,10 +171,10 @@ describe('t412 ② 空态四句（空库上四态各一句）', () => {
 });
 
 describe('t412 ③ 回归锁定（详情不被吞／缺槽／越界／补时）', () => {
-  it('详情不被吞：查账单详情走 detail（最长匹配）', () => {
-    assert.equal(routeWakeword('查账单详情', { id: 1 }).key, 'bill.record.detail');
+  it('详情不被吞：查某编号的账走 detail（最长匹配）', () => {
+    assert.equal(routeWakeword('查某编号的账', { id: 1 }).key, 'bill.record.detail');
     assert.throws(() => routeWakeword('查账单'), /无命中/, '查账单已删：不留路由别名（#1275 用户 m00453 第 1 条）');
-    assert.equal(routeWakeword('帮我查账单详情看看', { id: 2 }).key, 'bill.record.detail', '长句含详情仍走 detail');
+    assert.equal(routeWakeword('帮我查某编号的账看看', { id: 2 }).key, 'bill.record.detail', '长句含编号词仍走 detail');
     const s = page('bill.record.search', { q: '午饭' }, 't412-detail-src');
     const id = JSON.parse(s.stdout).data.items[0].id;
     const d = page('bill.record.detail', { id }, 't412-detail');

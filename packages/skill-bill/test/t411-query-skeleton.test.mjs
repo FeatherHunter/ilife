@@ -129,7 +129,7 @@ describe('t411 ② 整页：查今天／查区间各出一张列表整页', () =
     const second = text.indexOf('2026-09-06 12:00:00');
     assert.ok(first > -1 && second > first, '倒序：19:00 那笔在 12:00 那笔之前');
   });
-  it('搜备注：命中两笔；查账单详情：单条也出一整页', () => {
+  it('搜备注：命中两笔；查某编号的账：单条也出一整页', () => {
     const s = page('bill.record.search', { q: '午饭' }, 'search');
     assert.equal(JSON.parse(s.stdout).data.total, 2);
     assert.ok(s.text.includes('备注里有「午饭」的记录'));

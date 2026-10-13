@@ -22,6 +22,7 @@ import { escapeHtml, type SerializableEnvelope } from 'base-paint';
 import { blockedBar, blockedItems, blockedMessage } from './blockedSlots.js';
 import type { BlockedItem } from './blockedSlots.js';
 import { collectMissingTags, collectSectionTitle } from './collectFrame.js';
+import { checkListHtml } from '../shared/checkLine.js';
 import { copyArea, copyLog, promptCopyArea, COPY_HINTS } from '../shared/copyArea.js';
 import { buildCollectCopyCsv, buildCollectCopyJson, buildCollectCopyText } from "./collectCopyText.js";
 import { diffTable } from './diffTable.js';
@@ -270,7 +271,7 @@ function collectPage(spec: UpdateSpec, input: CollectInput): string {
 
 /** 回执纸头标题、印章、落点账目、退出口真按钮见 `./receiptSheet.js`。 */
 
-/** 纸头标题（判地 `h1`）：三支都是**固定句**（x28「改好了」／x30「已撤销」／x32「已恢复」）；「已撤销记录 2」式混写不要，**记录编号归核对段**（判地核对段就印「编号 N ／ 异常：无」）。 */
+/** 纸头标题（判地 `h1`）：三支都是**固定句**（x28「改好了」／x30「已撤销」／x32「已恢复」）；「已撤销记录 2」式混写不要，**记录编号归核对段**（判地核对段就印「编号」那一行，两列）。 */
 const TITLE_OK: Readonly<Record<string, string>> = { none: '改好了', undo: '已撤销', restore: '已恢复' };   // 逐字取判地
 
 /** 店头副句（判地 `.shop-sub`）：三支各一句，**逐字取判地原型**（x28「已经改好，不用再操作。」／x30「已经撤销，不用再操作。」／x32「已经恢复，不用再操作。」）。 */
@@ -309,10 +310,13 @@ function landedRowsOf(spec: UpdateSpec, input: ReceiptInput) {
   return spec.receiptResult === 'none' ? rows : rows.filter((r) => r.label !== '分类');
 }
 
-/** 核对那一行（原型 `.check-mini`）：形状逐字照 `./receiptPaper.js` 的 `checkHtml`（本仓这一块各页型各持一份 markup，合并出口是后续票的事）。 */
+/** 核对那一行（原型 `.check-mini`）：编号 ＋ 异常走「标签→值」两列，形状照 `./receiptPaper.js` 的 `checkHtml`（本仓这一块各页型各持一份 markup，合并出口是后续票的事）。 */
 function checkHtml(recordId: number | null): string {
-  const text = '编号 ' + (recordId === null ? '还没有' : String(recordId)) + ' ／ 异常：无';
-  return '<div class="ilife-ticket-check"><span class="ilife-ticket-check-dot" aria-hidden="true"></span><span>' + escapeHtml(text) + '</span></div>';
+  return '<div class="ilife-ticket-check"><span class="ilife-ticket-check-dot" aria-hidden="true"></span>'
+    + checkListHtml([
+      { label: '编号', value: recordId === null ? '还没有' : String(recordId) },
+      { label: '异常', value: '无', ok: true },
+    ]) + '</div>';
 }
 
 /** 结果型回执页（一纸 #993 v5）：店头＋主数字＋落点账目＋结果表＋核对段＋退出口真按钮＋复制区＋纸外页脚（页内导航／明细表／对账折叠／徽章行按一数一处撤掉，编号住核对段一行；两块见件头「#1075 复跑补两块」）。 */

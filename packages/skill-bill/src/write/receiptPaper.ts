@@ -26,6 +26,7 @@
 import { resolve } from 'base-entries';
 import { escapeHtml } from 'base-paint';
 import { renderLedgerRows, renderSheetFrame, renderSummaryHead } from 'base-paint/blocks';
+import { checkListHtml } from '../shared/checkLine.js';
 import { copyArea, copyLog, COPY_HINTS } from '../shared/copyArea.js';
 import { DOC_TITLE, docTitleOf } from '../shared/pageIdentity.js';
 import {
@@ -168,13 +169,13 @@ function copyFactsOf(input: ReceiptPaperInput): ReceiptCopyFacts {
   };
 }
 
-/** 核对那一行（原型 `.check-mini`）：编号 ＋ 异常（本族恒「无」）。整句化两条（有／无编号各一条）。 */
+/** 核对那一行（原型 `.check-mini`）：编号 ＋ 异常（本族恒「无」）走「标签→值」两列（与查询域同一套 `<dl>`；两个标签是词条）。 */
 function checkHtml(recordId: number | null, t: PaperText): string {
-  const text = recordId === null
-    ? t('receipt-paper.check.without-id')
-    : t('receipt-paper.check.with-id', { id: recordId });
   return '<div class="ilife-ticket-check"><span class="ilife-ticket-check-dot" aria-hidden="true"></span>'
-    + '<span>' + escapeHtml(text) + '</span></div>';
+    + checkListHtml([
+      { label: t('receipt-paper.check.id'), value: recordId === null ? t('receipt-paper.check.id-none') : String(recordId) },
+      { label: t('receipt-paper.check.note'), value: t('receipt-paper.check.note-ok'), ok: true },
+    ]) + '</div>';
 }
 
 /** 一页回执纸（**本域 13 页的唯一装配处**）。块序见件头。 */

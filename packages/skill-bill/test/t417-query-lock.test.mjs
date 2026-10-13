@@ -143,7 +143,7 @@ describe('t417 程序锁：search 五词真出口', () => {
 });
 
 describe('t417 程序锁：detail 一词＋空态＋阻断', () => {
-  it('查账单详情', () => {
+  it('查某编号的账', () => {
     const s = page('bill.record.search', { q: '午饭' }, 'w17-id');
     const id = s.env.data.items[0].id;
     const { text, env } = page('bill.record.detail', { id }, 'w17-detail');
