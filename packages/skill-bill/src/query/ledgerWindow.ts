@@ -21,7 +21,13 @@ export interface LedgerWindow {
   readonly tag: string;
 }
 
-/** 入参（`viewRecordRange` 的原样透传；只读新四段＋旧 `period` 兼容位）。 */
+/** 入参（`viewRecordRange` 的原样透传；新四段＋旧 `period` 兼容位＋通用时间位）。
+ *
+ * 通用时间位（`start`／`end`／`range=week|month`）＝**新 HELP 提示词实际会传**的那一组：
+ * 时间槽位（`kind:'period'`）给 AI 的是人话值（如「2026 年 5 月（2026-05-01 至 2026-05-31）」），
+ * AI 落到命令上就是 `start`／`end`（区间）或 `range`（周／月）。不认这一组的话，
+ * `ledger`＋`start/end` 会被 `viewRecordRange` 的区间分支先接走、渲染成「查区间」票据纸
+ * （2026-10-13 实测：账本＝旅行＋5 月 → `饼干记账_查区间_*.html`，应为 `饼干记账_查账本_*.html`）。 */
 export interface LedgerWindowParams {
   readonly period_week?: unknown;
   readonly period_month?: unknown;
@@ -29,6 +35,9 @@ export interface LedgerWindowParams {
   readonly period_start?: unknown;
   readonly period_end?: unknown;
   readonly period?: unknown;
+  readonly start?: unknown;
+  readonly end?: unknown;
+  readonly range?: unknown;
 }
 
 function trimStr(v: unknown): string {
@@ -144,15 +153,19 @@ export function resolveLedgerWindow(
   const week = trimStr(p.period_week);
   const month = trimStr(p.period_month);
   const year = trimStr(p.period_year);
-  const startRaw = trimStr(p.period_start);
-  const endRaw = trimStr(p.period_end);
+  const range = trimStr(p.range);
+  const rangeKind = range === 'week' || range === 'month' ? range : '';
+  const startRaw = trimStr(p.period_start) || trimStr(p.start);
+  const endRaw = trimStr(p.period_end) || trimStr(p.end);
   const hasInterval = startRaw !== '' || endRaw !== '';
-  const count = (week !== '' ? 1 : 0) + (month !== '' ? 1 : 0) + (year !== '' ? 1 : 0) + (hasInterval ? 1 : 0);
+  const count = (week !== '' ? 1 : 0) + (month !== '' ? 1 : 0) + (year !== '' ? 1 : 0) + (hasInterval ? 1 : 0) + (rangeKind !== '' ? 1 : 0);
   if (count === 0) return null;
   if (count > 1) throw new BillPolicyError('POLICY_BAD_INPUT', '时间四选一：周／月／年／区间只给一段');
   if (week !== '') return parseWeek(week, anchor);
   if (month !== '') return parseMonth(month, anchor);
   if (year !== '') return parseYear(year, anchor);
+  if (rangeKind === 'week') return parseWeek('本周', anchor);
+  if (rangeKind === 'month') return parseMonth('本月', anchor);
   if (startRaw === '' || endRaw === '') throw new BillPolicyError('POLICY_MISSING_SLOT', '缺槽位 period_start/period_end（区间须同时给开始与结束）');
   return parseInterval(startRaw, endRaw);
 }

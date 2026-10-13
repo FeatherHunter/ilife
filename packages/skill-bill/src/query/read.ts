@@ -273,7 +273,7 @@ export function viewRecordRange(params: Record<string, unknown>, db: BillDb): Vi
   const account = condValue(params, 'account');
   const ledger = condValue(params, 'ledger');
   const cond = { category, account, ledger };
-  if (params.range === 'week' || params.range === 'month') {
+  if ((params.range === 'week' || params.range === 'month') && ledger === undefined) {
     const anchor = rangeAnchor(params);
     const { start, end } = params.range === 'week' ? weekWindowFrom(anchor) : monthWindowFrom(anchor); // w06 查周 v2.1 原型锚点：周一..锚点（本周）＋结论64%／占比64-36／载荷键不动（.scratch/1019-p-query/w06-查周-v2.1.html manifest seq5）
     const records = fetchAll(db, { fromTime: start + ' 00:00:00', toTime: end + ' 23:59:59', ...cond });
@@ -285,7 +285,10 @@ export function viewRecordRange(params: Record<string, unknown>, db: BillDb): Vi
     }
     return weekTicketOut({ key, params, wakeWord, window, records, start, end }); // w06 查周 v2.1 票据纸（.scratch/1019-p-query/w06-查周-v2.1.html manifest seq5）：H2本周／主数字本周支出／结论64%／占比64-36／载荷键不动
   }
-  if (params.start !== undefined || params.end !== undefined) {
+  /* 带 `ledger` 条件时不走上面两支：账本要出「查账本」票据纸（w11），时间窗交给下面 `ledger`
+     分支的 `resolveLedgerWindow` 解（它认 `start`／`end`／`range` 这一组通用时间位）。
+     否则「账本＝旅行 ＋ 5 月」会被区间分支先接走、渲染成「查区间」票据纸（2026-10-13 实测）。 */
+  if ((params.start !== undefined || params.end !== undefined) && ledger === undefined) {
     const { start, end } = resolveRange(params);
     const records = fetchAll(db, { fromTime: start + ' 00:00:00', toTime: end + ' 23:59:59', ...cond });
     if (!records.length) throw new BillFetchError('BILL_EMPTY_RANGE', `区间无记录：${start}~${end}（缺失阻断，不返空统计）`);
@@ -304,14 +307,19 @@ export function viewRecordRange(params: Record<string, unknown>, db: BillDb): Vi
       return accountTicketOut({ key, params, wakeWord, window, records, account }); // w10 查账户 v2.1 票据纸（原型 w10-查账户-v2.1.html：结论80%／占比80/10/7/3／载荷键不动）
     }
     if (ledger !== undefined && category === undefined && account === undefined) {
+      /* 走到这里必定是「账本」单条件查询：唤醒词按「只有账本这一条线索」投影——`projectWakeWord`
+         若吃全量 `params`，`{ledger,start,end}` 里的 `start`/`end` 会让「查区间」抢先（词条顺序在前），
+         交付文件名就会写成「饼干记账_查区间_*.html」而内容却是账本票据纸（2026-10-13 实测）。
+         不写字面量：唤醒词只准由域声明派生（t721「整串字面量命中即红」）。 */
+      const ledgerWord = projectWakeWord({ key, preset: { ledger } });
       const win = resolveLedgerWindow(params, typeof params.today === 'string' ? params.today : undefined);
       if (win === null) {
-        return ledgerTicketOut({ key, params, wakeWord, window, records, ledger }); // w11 查账本 v2.1 票据纸（原型 w11-查账本-v2.1.html：结论100%单条／载荷键不动）
+        return ledgerTicketOut({ key, params, wakeWord: ledgerWord, window, records, ledger }); // w11 查账本 v2.1 票据纸（原型 w11-查账本-v2.1.html：结论100%单条／载荷键不动）
       }
       const timed = fetchAll(db, { ...cond, fromTime: win.start + ' 00:00:00', toTime: win.end + ' 23:59:59' });
       if (!timed.length) throw new BillFetchError('BILL_EMPTY_RANGE', `区间无记录：${win.start}~${win.end}（缺失阻断，不返空统计）`);
       const timeLabel = win.start === win.end ? win.start + ' 这一天' : win.start + ' ~ ' + win.end + (win.tag !== '' ? '，' + win.tag : '');
-      return ledgerTicketOut({ key, params, wakeWord, window: '账本＝' + ledger + '（' + timeLabel + '）', records: timed, ledger }); // 1275 四段：周／月／年／区间（开始＝结束即某天）
+      return ledgerTicketOut({ key, params, wakeWord: ledgerWord, window: '账本＝' + ledger + '（' + timeLabel + '）', records: timed, ledger }); // 1275 四段：周／月／年／区间（开始＝结束即某天）
     }
     if (category !== undefined && account === undefined && ledger === undefined) {
       const mine = calcKpi([...records]).expense;
