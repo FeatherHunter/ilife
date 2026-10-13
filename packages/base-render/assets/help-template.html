@@ -259,19 +259,14 @@
   /* 互斥组（#1269 条目 3）：同组已填一个时，其余清空并置灰 */
   .sheet .pfield.is-off label,.sheet .pfield.is-off .phline{color:#c2c2c9}
   .sheet .pfield.is-off input,.sheet .pfield.is-off input:placeholder-shown,.sheet .pfield.is-off select{background:#f4f4f6;color:#b0b0b8;border-color:#ececf1}
-  /* 值级放开字段（#1269 · 用户 2026-10-13 定稿）：控件从「一行」变成「一叠」（卡片＋候选＋新建＋留空），
-     三处宿主排版跟着走：标签贴第一行（不再垂直居中）、ⓘ 提到卡片右上角躲开候选胶囊、
-     过滤框与新建框不继承输入框的 66px 右内边距（那是给框内图标留的）。 */
-  .sheet .pfield.is-smart{align-items:flex-start}
-  .sheet .pfield.is-smart>label{margin-top:14px}
-  .sheet .pfield.is-smart .inwrap{display:block}
-  .sheet .pfield.is-smart .ib{top:10px;right:8px;transform:none;z-index:2}
-  .sheet .pfield.is-smart .inwrap input{padding-right:12px}
-  /* 新值前缀（#1269 值级放开）：点一下＝把「前缀/」插进新建框；虚线胶囊与候选胶囊区分开 */
-  .sheet .pfx-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:10px 0 2px}
-  .sheet .pfx-cap{font-size:12px;color:var(--fg3);flex:none}
-  .sheet .pfx-btn{border:1px dashed var(--line);background:#fff;color:var(--fg2);border-radius:999px;padding:5px 11px;font:600 12px/1 -apple-system,"Microsoft YaHei",sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent}
-  .sheet .pfx-btn:active{background:#ececf1;border-style:solid;border-color:var(--blue);color:var(--blue)}
+  /* 值级放开字段（#1269 · 用户 2026-10-13 定稿；同日二改）：默认态＝**一行高的触发器**（占字段右侧那一格），
+     候选 chips／过滤框／输入新名称／＋新建／留空那一大坨全收进点开的弹层（.ss-sheet），故宿主排版回到
+     「一行」口径：标签与触发器同一行垂直居中；框内长提示改由 ⓘ 承担（触发器上的灰字就是占位）。
+     右留白不在这儿给——它长在触发器自己身上（.ss-trigger 的 padding-right），这样边框仍占满整格。 */
+  .ss-root{position:relative}
+  .sheet .pfield.is-smart .inwrap>.ss-root{display:flex;flex:1;min-width:0;margin-top:0}
+  .sheet .pfield.is-smart .phline{display:none}
+  .sheet .pfield.is-off .ss-trigger{background:#f4f4f6;color:#b0b0b8;border-color:#ececf1;cursor:not-allowed}
   /* 去那个场景创建（#1269 值级放开）：这一格不放开、值另有登记表时，给一条出口 */
   .sheet .cs-row{margin-top:7px}
   .sheet .cs-btn{border:0;background:transparent;color:var(--blue);padding:2px 0;font:600 12px/1.4 -apple-system,"Microsoft YaHei",sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent;text-decoration:underline;text-underline-offset:2px}
@@ -373,8 +368,37 @@
   .ss-row-nm{flex:1;min-width:0;word-break:break-word}
   .ss-row-hot{flex:none;font-size:11px;color:var(--fg3)}
   .ss-sheet-empty{padding:18px 10px;text-align:center;font-size:12.5px;color:var(--fg3)}
-  .ss-sheet-foot{flex:none;padding:9px 14px 10px;border-top:1px solid var(--line);font-size:11.5px;color:var(--fg3);text-align:center}
-  @media (prefers-reduced-motion:reduce){.ss-sheet,.ss-sheet.show,.ss-scrim{transition:none}}
+  /* 弹层底栏＝新建区（用户 2026-10-13 二改）：前缀胶囊（点一下＝把「前缀/」填进弹层输入框）
+     ＋ 找不到的提示 ＋ 留空(不填)（选填字段才有；必填不给留空）。 */
+  .ss-sheet-foot{flex:none;display:flex;flex-direction:column;gap:8px;padding:9px 14px 10px;border-top:1px solid var(--line);font-size:11.5px;color:var(--fg3);text-align:left}
+  .ss-foot-line{display:flex;align-items:center;gap:10px}
+  .ss-foot-tip{flex:1;min-width:0;color:var(--fg3)}
+  .ss-pfx-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .ss-pfx-cap{font-size:12px;color:var(--fg3);flex:none}
+  .ss-pfx-btn{border:1px dashed var(--line);background:#fff;color:var(--fg2);border-radius:999px;padding:5px 11px;font:600 12px/1 -apple-system,"Microsoft YaHei",sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent}
+  .ss-pfx-btn:hover{border-style:solid;border-color:var(--blue);color:var(--blue)}
+  .ss-pfx-btn:active{background:#ececf1}
+  .ss-sheet-foot .ss-empty{flex:none;width:auto;margin-top:0;padding:8px 14px;min-height:44px;border-style:dashed;border-color:var(--line);color:var(--fg2);background:#fff;font-size:13px}
+  .ss-sheet-foot .ss-empty:hover{border-color:var(--blue);color:var(--blue)}
+  .ss-row-new{color:var(--blue);font-weight:600}
+  /* ── smartSelect 默认态触发器（用户 2026-10-13 二改）──
+     默认态只剩这一枚：占字段右侧那一格、一行高（min-height 44＝#642 的命中下限），未选值＝灰字占位、
+     已选值＝正常字色（超长省略号截断）；右端一枚箭头，选填字段另有清空 ✕。
+     本体右留白＝给 ⓘ 与 ✕ 让位（边框仍占满整格，与同排输入框同一观感）：
+     无清空留 60px（ⓘ 34 ＋ 箭头 20 ＋ 6），有清空留 96px（再多一枚 ✕ 34 ＋ 间距）。 */
+  .ss-trigger{flex:1;min-width:0;display:flex;align-items:center;gap:6px;box-sizing:border-box;min-height:44px;padding:8px 60px 8px 10px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--fg);font:400 16px/1.2 -apple-system,"Microsoft YaHei",sans-serif;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+  .ss-trigger.has-clear{padding-right:96px}
+  .ss-trigger:hover{border-color:var(--blue)}
+  .ss-trigger:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
+  .ss-trigger:disabled{cursor:not-allowed;background:#f4f4f6;color:#b0b0b8;border-color:#ececf1}
+  .ss-trg-text{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ss-trg-text.is-ph{color:#8e8e93}
+  .ss-trg-caret{position:absolute;right:36px;top:50%;transform:translateY(-50%);display:flex;width:11px;height:11px;color:var(--fg3);pointer-events:none}
+  .ss-trg-caret svg{display:block;width:11px;height:11px}
+  .ss-trg-x{position:absolute;right:54px;top:50%;transform:translateY(-50%);width:34px;min-height:44px;padding:0;border:0;border-radius:50%;background:transparent;color:var(--fg3);font:400 13px/1 -apple-system,"Microsoft YaHei",sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent}
+  .ss-trg-x:hover{background:var(--line);color:var(--fg)}
+  .ss-trg-x:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
+  @media (prefers-reduced-motion:reduce){.ss-sheet,.ss-sheet.show,.ss-scrim{transition:none}.sheet .ss-trigger,.sheet .ss-trg-x{transition:none}}
   .ib-close::after,.s-clear::after,.sheet .s-close::after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:max(100%,44px);height:max(100%,44px)}
 </style>
 </head>
@@ -1064,29 +1088,34 @@ function errorReceipt(cfg){
   return html + '</div>';
 }
 
-/* ── smartSelect 选择器组件（v1.12 · #312 · 复用优先·新建其次）──
+/* ── smartSelect 选择器组件（v1.14 · #312/#1280 · 复用优先·新建其次）──
  * smartSelect(inputEl, config) → { getState, getValue }
  * 字段级组件: 一页 N 实例, 每字段一容器一 config 一隐藏 input, 互不干扰。
  * 定位: 与 copyText/actionBar 同级 Base 组件; 账户/分类/账本/运动类型等
  *   「复用优先·新建其次」字段通用; 零领域词, label/文案/选项/prompt 全由外部注入。
+ * v1.14（用户 2026-10-13 二改）: 默认态收成一枚**一行高的触发器**, 占字段右侧那一格 ——
+ *   未选值＝灰字（必填「请选择」／选填「不限」）, 已选值＝正常字色（超长省略号截断）,
+ *   选填字段右侧一枚小 ✕ 清空（必填不给清空）; 触发器只是那枚隐藏 input 的外观, 回填协议不变。
+ *   候选 chips／过滤框／输入新名称／＋新建／留空那一大坨不再出现在页面上, 全收进点开的弹层
+ *   （.ss-sheet · 面板票 c2d16e51 的同一块, 不另写第二套）: 固定搜索框 ＋ 按一级分类分组的
+ *   行式列表(小标题吸顶) ＋ 库里没有的串在首行出「＋ 新建 "<串>"」(点了＝新建并选中)
+ *   ＋ 底栏新建区（前缀胶囊＝把「前缀/」填进弹层输入框; 选填字段另有「留空(不填)」）。
+ *   四种关法(✕／背罩／Esc／下拉过阈值)、焦点陷阱、↑/↓＋Enter、reduced-motion 归零照旧。
  * config（snake_case, 与数据契约 form.selector.<fieldKey> 对齐）:
  *   options:         [{name, disabled}] 已有项(含停用态); 缺省 [] 且无推断/推荐/initial → 降级普通输入
  *   inferred:        string|null  AI 推断最可能的已有项
  *   recommended_new: string|null  AI 推荐新建项(不在 options 中)
  *   initial:         {name, source}|null  显式初始选中; source 白名单 = _SS_SOURCES
- *   maxChips:        number|null  候选区折叠阈值(v1.12 · 缺省 8; 非正整数=不折叠;
- *                   折叠态只显前 maxChips 个 + 「选择候选(N)」, 选中项保可见; 搜索时全量过滤)
- *   texts.sheetTitle:string|null  底部面板标题(缺省「选择候选」; 调用方按字段 label 传「选择 分类/名目」)
- *   texts:           {candTitle, search, newPlaceholder, newButton, emptyButton,
- *                     badgeInferred, badgeRecommendedNew, badgeExisting, badgeHistory, badgeCustom,
- *                     cardSrc:{inferred, recommended_new, existing, history, custom, empty}}
+ *   required:        boolean  必填＝不给清空 ✕、弹层里不给「留空」(缺省 false)
+ *   newPrefixes:     string[]  顶层闭集的前缀清单: 弹层底栏的胶囊, 点一下＝把「前缀/」填进弹层输入框
+ *   texts.placeholder:string|null  未选值时触发器上的灰字(缺省: required ? '请选择' : '不限')
+ *   texts.sheetTitle:string|null  弹层标题(缺省「选择候选」; 调用方按字段 label 传「选择 分类/名目」)
+ *   texts:           {placeholder, search, newRow, emptyButton, sheetClose, hotTag, groupOther,
+ *                     prefixCaption, sheetFoot, sheetEmpty, clear}
  *   theme:           {brand, brandSoft, onBrand, deep}  缺省账本藏蓝 #123A63
  * 初始选中推导（initial 缺省时）: AI 推断 > 历史预填(input.value) > AI 推荐新建 > 空
- * v1.13: 候选超限时那枚按钮从「展开全部(N)」改成「选择候选(N)」——点它开底部面板(抓手条下拉关闭
- *       ＋ 固定搜索框 ＋ 按一级分类分组的行式列表(小标题吸顶) ＋ 每行「常用」 ＋ 底部新建提示)，
- *       四种关法(✕／背罩／Esc／下拉过阈值)，开面板焦点进搜索框、关掉回触发按钮，Tab 在面板内循环。
- * 行为: 已选卡片(chips 顶部, SVG ✓+来源徽章) + 候选 chips(超限折叠) + 搜索过滤(全量) + 自定义新建
- *       (重名自动选中已有) + 相似提示 + 留空按钮; 停用划线置灰不可点; 绝不静默填错
+ * 行为: 触发器(值／灰字占位 ＋ 选填清空 ✕) ＋ 弹层(搜索过滤 ＋ 分组行式列表 ＋ 常用 ＋
+ *       停用划线置灰 ＋ 新建入口 ＋ 前缀 ＋ 留空); 重名走比较键自动选中已有那个拼写; 绝不静默填错
  * 回填协议: input.value + dataset.source + dataset.new('1'=新建) + change 事件(bubbles)
  * 安全: 所有动态文本经 esc; 类名全 ss- 命名空间（封装纪律, 防宿主同名类冲突）
  * 校验: 结构违规直接报错（对齐 Base v1.2「违规直接报错」）
@@ -1096,31 +1125,18 @@ var _SS_THEME = { brand:'#123a63', brandSoft:'#e9f0f7', onBrand:'#ffffff', deep:
 /** 底部面板实例序号：行 id 用它做前缀，保证一页多实例也不撞 id（aria-activedescendant 靠 id 指行）。 */
 var _SS_SHEET_SEQ = 0;
 var _SS_TEXTS = {
-  candTitle:'候选(点击更换 · 输入过滤)',
+  placeholder:'',
   search:'输入过滤候选',
-  newPlaceholder:'输入新名称',
-  newButton:'＋ 新建',
+  newRow:'＋ 新建',
   emptyButton:'留空(不填)',
-  badgeInferred:'AI 推断',
-  badgeRecommendedNew:'AI 推荐·新建',
-  badgeExisting:'已有',
-  badgeHistory:'历史',
-  badgeCustom:'自定义',
-  pickMore:'选择候选',
   sheetTitle:'选择候选',
   sheetClose:'关闭',
   hotTag:'常用',
   groupOther:'其他',
+  prefixCaption:'先选前缀',
   sheetFoot:'找不到？在上面输入新名称 → 新建',
   sheetEmpty:'没有匹配的候选',
-  cardSrc:{
-    inferred:'AI 推断 · 识别到相关信息',
-    recommended_new:'AI 推荐新建 · 提交时创建',
-    existing:'从已有项中选',
-    history:'沿用历史记录',
-    custom:'自定义新建 · 提交时创建',
-    empty:'不填该字段'
-  }
+  clear:'清空'
 };
 /** 重名判定用的比较键（#1269 值级放开 · 用户 2026-10-13 定稿）：NFKC（全角折半角、兼容字符归一）
  *  ＋ 空白折叠 ＋ 大小写折叠。只用来**判定是不是同一个值**；落库与显示的字面量仍是候选／用户那一份，
@@ -1167,18 +1183,25 @@ function smartSelect(inputEl, config){
   if(config.theme !== undefined && (typeof config.theme !== 'object' || Array.isArray(config.theme))){
     throw new Error('smartSelect 违规: theme 必须是对象');
   }
+  if(config.required !== undefined && typeof config.required !== 'boolean'){
+    throw new Error('smartSelect 违规: required 必须是布尔');
+  }
+  var newPrefixes = config.newPrefixes === undefined ? [] : config.newPrefixes;
+  if(!Array.isArray(newPrefixes)){
+    throw new Error('smartSelect 违规: newPrefixes 必须是数组');
+  }
+  newPrefixes.forEach(function(x, i){
+    if(typeof x !== 'string' || !x.trim()){
+      throw new Error('smartSelect 违规: newPrefixes['+i+'] 必须是非空字符串');
+    }
+  });
 
   var texts = Object.assign({}, _SS_TEXTS, config.texts || {});
-  texts.cardSrc = Object.assign({}, _SS_TEXTS.cardSrc, (config.texts && config.texts.cardSrc) || {});
   var theme = Object.assign({}, _SS_THEME, config.theme || {});
   var custom = [];
-  /* 候选区折叠(v1.12): maxChips 可配(缺省 8, 0/负数/非数字=不折叠) · 搜索时全量过滤 */
-  var maxChips = (config.maxChips === undefined || config.maxChips === null)
-    ? 8
-    : ((typeof config.maxChips === 'number' && config.maxChips > 0)
-       ? Math.floor(config.maxChips) : null);
-  var searchRaw = '';
-  var searchQ = '';
+  var required = !!config.required;
+  /* 未选值时触发器上的灰字：必填＝请选择／选填＝不限（调用方可按字段声明覆写，如「不写类型」） */
+  var placeholder = String(texts.placeholder || (required ? '请选择' : '不限'));
 
   /* ── 降级模式: 无选项/无推断/无推荐/无 initial → 普通输入 ── */
   var degraded = !options.length && !config.inferred && !config.recommended_new && !config.initial;
@@ -1222,17 +1245,8 @@ function smartSelect(inputEl, config){
   root.style.setProperty('--ss-deep', theme.deep);
   inputEl.parentNode.insertBefore(root, inputEl.nextSibling);
 
-  var CHECK_SVG = '<svg viewBox="0 0 20 20" fill="none"><path d="M4 10.5l4 4 8-9" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-  var CIRCLE_SVG = '<svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="#8b949e" stroke-width="2"/><path d="M7 10h6" stroke="#8b949e" stroke-width="2" stroke-linecap="round"/></svg>';
-
-  function badgeHtml(mode){
-    if(mode === 'inferred') return '<span class="ss-badge ss-badge-ai">'+esc(texts.badgeInferred)+'</span>';
-    if(mode === 'recommended_new') return '<span class="ss-badge ss-badge-new">'+esc(texts.badgeRecommendedNew)+'</span>';
-    if(mode === 'custom') return '<span class="ss-badge ss-badge-plain">'+esc(texts.badgeCustom)+'</span>';
-    if(mode === 'history') return '<span class="ss-badge ss-badge-plain">'+esc(texts.badgeHistory)+'</span>';
-    if(mode === 'existing') return '<span class="ss-badge ss-badge-plain">'+esc(texts.badgeExisting)+'</span>';
-    return '';
-  }
+  /** 触发器右端那枚箭头（与 .pfield .inwrap.native select 自绘箭头同一笔形，不自创风格）。 */
+  var CARET_SVG = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5L6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
   function writeBack(){
     inputEl.value = state.name || '';
@@ -1253,134 +1267,63 @@ function smartSelect(inputEl, config){
     return names.concat(custom);
   }
 
-  function similarHint(v){
-    if(!v) return '';
+  /** 库里有没有这个写法（比较键口径：全角/空白/大小写差异算同一个值）——没有才给「＋ 新建」入口。 */
+  function ssHasName(v){
     var key = ssNameKey(v);
-    var s = allNames().filter(function(n){
-      return ssNameKey(n) !== key && (n.indexOf(v) >= 0 || v.indexOf(n) >= 0);
-    });
-    return s.length ? '已有相似「'+s[0]+'」, 是否使用已有的?(点候选即选)' : '';
+    for(var i = 0; i < chipsMeta.length; i++){
+      if(ssNameKey(chipsMeta[i].name) === key) return true;
+    }
+    return false;
   }
 
-  /* 候选元信息 {name, mode, dis, sel}：render() 每次重建；底部面板的行式列表(分组/常用/停用)也读这一份。
-     声明在本作用域而不是 render() 里——面板那几个渲染函数住在 render 之外，读不到函数内声明。 */
+  /* 候选元信息 {name, mode, dis, sel}：render() 每次重建；弹层的行式列表(分组/常用/停用)读这一份。
+     声明在本作用域而不是 render() 里——弹层那几个渲染函数住在 render 之外，读不到函数内声明。 */
   var chipsMeta = [];
+  /** 默认态＝一枚触发器（用户 2026-10-13 二改）：值/灰字占位 ＋ 右端箭头；选填且有值时右侧一枚 ✕ 清空
+   *  （必填不给清空）。候选、新建、留空都不在这里——点它开弹层（.ss-sheet）。 */
   function render(){
-    function isSel(n, m){ return state.name === n && state.mode === m; }
-    var card = state.name
-      ? '<div class="ss-card"><div class="ss-ic">'+CHECK_SVG+'</div>'
-        + '<div class="ss-body"><div class="ss-nm">'+esc(state.name)+'</div>'
-        + '<div class="ss-src">'+esc(texts.cardSrc[state.mode] || '')+'</div></div>'
-        + badgeHtml(state.mode) + '</div>'
-      : '<div class="ss-card ss-card-empty"><div class="ss-ic">'+CIRCLE_SVG+'</div>'
-        + '<div class="ss-body"><div class="ss-nm">'+esc(texts.emptyButton)+'</div>'
-        + '<div class="ss-src">'+esc(texts.cardSrc.empty || '')+'</div></div></div>';
-    function chip(n, m, dis, badge){
-      var sel = !dis && isSel(n, m);
-      return '<button type="button" class="ss-chip'+(dis?' ss-chip-dis':'')+(sel?' ss-chip-sel':'')+'"'
-        + (dis ? ' disabled' : ' data-n="'+esc(n)+'" data-m="'+m+'"')
-        + '>'+(sel?'✓ ':'')+esc(n)+badge+(dis?' · 停用':'')+'</button>';
+    chipsMeta = [];
+    function pushMeta(n, m, dis){
+      chipsMeta.push({ name: n, mode: m, dis: !!dis, sel: !dis && state.name === n });
     }
-    var chips = [];       // chip HTML
-    chipsMeta = [];       // 对齐元信息 {name, sel}（折叠保可见/搜索过滤用）
-    function pushChip(n, m, dis, badge){
-      var sel = !dis && isSel(n, m);
-      /* 元信息喂两处：候选区折叠(保可见／过滤)与底部面板的行式列表(分组／常用／停用) */
-      chipsMeta.push({ name: n, mode: m, dis: !!dis, sel: sel });
-      chips.push(chip(n, m, dis, badge));
-    }
-    if(config.inferred){
-      pushChip(config.inferred, 'inferred', false, '<span class="ss-badge ss-badge-ai">'+esc(texts.badgeInferred)+'</span>');
-    }
-    if(config.recommended_new){
-      pushChip(config.recommended_new, 'recommended_new', false, '<span class="ss-badge ss-badge-new">'+esc(texts.badgeRecommendedNew)+'</span>');
-    }
+    if(config.inferred) pushMeta(config.inferred, 'inferred', false);
+    if(config.recommended_new) pushMeta(config.recommended_new, 'recommended_new', false);
     options.forEach(function(o){
       if(o.name === config.inferred || o.name === config.recommended_new) return;
-      pushChip(o.name, 'existing', !!o.disabled, '');
+      pushMeta(o.name, 'existing', !!o.disabled);
     });
-    custom.forEach(function(n){
-      pushChip(n, 'custom', false, '<span class="ss-badge ss-badge-plain">'+esc(texts.badgeCustom)+'</span>');
-    });
+    custom.forEach(function(n){ pushMeta(n, 'custom', false); });
 
-    /* 候选区折叠(v1.12): 折叠态只显前 maxChips 个, 选中项保可见; 搜索时全量过滤 */
-    var showAll = !maxChips || !!searchQ || chips.length <= maxChips;
-    var list = chips;
-    var listMeta = chipsMeta;
-    if(!showAll){
-      var selIdx = -1;
-      for(var i = 0; i < chipsMeta.length; i++){
-        if(chipsMeta[i].sel){ selIdx = i; break; }
-      }
-      list = chips.slice(0, maxChips);
-      listMeta = chipsMeta.slice(0, maxChips);
-      if(selIdx >= maxChips){
-        list[maxChips - 1] = chips[selIdx];
-        listMeta[maxChips - 1] = chipsMeta[selIdx];
-      }
-    }
-    var out = [];
-    for(var j = 0; j < list.length; j++){
-      if(searchQ && listMeta[j].name.toLowerCase().indexOf(searchQ) < 0) continue;
-      out.push(list[j]);
-    }
-    var moreBtn = '';
-    if(!showAll){
-      moreBtn = '<button type="button" class="ss-more" data-sheet="1">'+esc(texts.pickMore)+' ('+chips.length+')</button>';
-    }
-
+    var hasVal = !!state.name;
+    var isOpen = !!(sheetEl && sheetEl.classList.contains('show'));
     root.innerHTML =
-      card
-      + '<div class="ss-title">'+esc(texts.candTitle)+'</div>'
-      + '<input class="ss-search" placeholder="'+esc(texts.search)+'">'
-      + '<div class="ss-chips">'+out.join('')+moreBtn+'</div>'
-      + '<div class="ss-new"><input placeholder="'+esc(texts.newPlaceholder)+'"><button type="button">'+esc(texts.newButton)+'</button></div>'
-      + '<div class="ss-hint"></div>'
-      + '<button type="button" class="ss-empty">'+esc(texts.emptyButton)+'</button>';
-
-    /* 搜索框内容跨 render 保持(过滤状态不丢, 输入框不空) */
-    if(searchRaw) root.querySelector('.ss-search').value = searchRaw;
-    root.querySelector('.ss-search').addEventListener('input', function(e){
-      searchRaw = e.target.value;
-      searchQ = searchRaw.trim().toLowerCase();
-      render();
+      '<button type="button" class="ss-trigger'+(hasVal ? '' : ' is-empty')+(hasVal && !required ? ' has-clear' : '')+'"'
+      + ' data-open="1" aria-haspopup="dialog" aria-expanded="'+(isOpen ? 'true' : 'false')+'"'
+      + (inputEl.disabled ? ' disabled' : '') + '>'
+      + '<span class="ss-trg-text'+(hasVal ? '' : ' is-ph')+'">'+esc(hasVal ? state.name : placeholder)+'</span>'
+      + '</button>'
+      + '<span class="ss-trg-caret" aria-hidden="true">'+CARET_SVG+'</span>'
+      + ((hasVal && !required)
+          ? '<button type="button" class="ss-trg-x" data-clear="1" aria-label="'+esc(texts.clear)+'">✕</button>'
+          : '');
+    root.querySelector('.ss-trigger').addEventListener('click', function(e){
+      if(sheetEl && sheetEl.classList.contains('show')) ssSheetClose();
+      else ssSheetOpen(e.currentTarget);
     });
-    root.querySelectorAll('.ss-more').forEach(function(el){
-      el.addEventListener('click', function(){ ssSheetOpen(el); });
-    });
-    root.querySelectorAll('.ss-chip[data-n]').forEach(function(el){
-      el.addEventListener('click', function(){ setSel(el.getAttribute('data-n'), el.getAttribute('data-m')); });
-    });
-    var newIn = root.querySelector('.ss-new input');
-    var doNew = function(){
-      var v = newIn.value.trim();
-      if(!v) return;
-      /* 重名判定走比较键（全角/空白/大小写差异算同一个值）⇒ 命中已有就选已有那个拼写，不造第二份 */
-      var key = ssNameKey(v);
-      var names = allNames();
-      for(var ni = 0; ni < names.length; ni++){
-        if(ssNameKey(names[ni]) === key){ setSel(names[ni], 'existing'); return; }
-      }
-      custom.unshift(v);
-      setSel(v, 'custom');
-    };
-    root.querySelector('.ss-new button').addEventListener('click', doNew);
-    newIn.addEventListener('keydown', function(e){ if(e.key === 'Enter') doNew(); });
-    newIn.addEventListener('input', function(){
-      var h = root.querySelector('.ss-hint');
-      var s = similarHint(newIn.value.trim());
-      h.textContent = s;
-      h.style.display = s ? '' : 'none';
-    });
-    root.querySelector('.ss-empty').addEventListener('click', function(){ setSel(null, 'empty'); });
+    var clr = root.querySelector('.ss-trg-x');
+    if(clr){
+      clr.addEventListener('click', function(e){
+        e.stopPropagation();
+        setSel(null, 'empty');   /* 清空＝回到灰字占位（选填「不限」），与弹层里的「留空」同一条回填 */
+      });
+    }
   }
 
-  /* ── 底部候选面板（面板票 · 用户 2026-10-13 定稿）────────────────────────────
-     候选多于 maxChips 时那枚按钮不再就地铺开，而是开这块面板：抓手条下拉关闭 ＋ 固定搜索框
-     （与卡片同一套「小写包含」过滤判定）＋ 按「值里 `/` 前那一段」分组的行式列表（小标题吸顶）
-     ＋ 每行右侧「常用」＋ 底部新建提示。四种关法：✕／点背罩／Esc／抓手条下拉过阈值。
-     开面板焦点进搜索框，关掉焦点回触发按钮；Tab 在面板内首尾循环(focus trap)；↑/↓ 移高亮、
-     Enter 选中（行是 <button>，不是 div，带 :focus-visible 环）。
+  /* ── 底部候选面板（面板票 · 用户 2026-10-13 定稿；同日二改：它成了唯一的候选入口）─────
+     点触发器开这块面板：抓手条下拉关闭 ＋ 固定搜索框（小写包含过滤）＋ 按「值里 `/` 前那一段」
+     分组的行式列表（小标题吸顶）＋ 每行右侧「常用」＋ 首行新建入口 ＋ 底栏新建区（前缀／留空）。
+     四种关法：✕／点背罩／Esc／抓手条下拉过阈值。开面板焦点进搜索框，关掉焦点回触发器；
+     Tab 在面板内首尾循环(focus trap)；↑/↓ 移高亮、Enter 选中（行是 <button>，不是 div，带 :focus-visible 环）。
      面板挂 document.body：.sheet 自带 transform 与滚动容器，挂里面 position:fixed 会被裁。
      零依赖、纯 DOM＋CSS；合成层只动 transform／opacity。 */
   var sheetEl = null;                 /* .ss-sheet 节点（懒建，一实例一次） */
@@ -1388,10 +1331,11 @@ function smartSelect(inputEl, config){
   var sheetListEl = null;             /* 可滚动列表容器 */
   var sheetSearchEl = null;           /* 面板自己的搜索框 */
   var sheetInst = 0;                  /* 本实例行 id 前缀（一页多实例不撞 id） */
-  var sheetQ = '';                    /* 面板过滤词（小写；开面板时从卡片那枚过滤框带过来） */
+  var sheetRaw = '';                  /* 面板过滤词原字面量（新建入口要按用户敲的原样回填） */
+  var sheetQ = '';                    /* 面板过滤词（小写，供「小写包含」判定） */
   var sheetHl = -1;                   /* ↑/↓ 高亮行下标（-1=没有） */
-  var sheetRows = [];                 /* 当刻可见的行（文档序） */
-  var sheetTrigger = null;            /* 关掉后回焦点的触发按钮 */
+  var sheetRows = [];                 /* 当刻可见的可点行（文档序） */
+  var sheetTrigger = null;            /* 关掉后回焦点的触发器 */
   var SS_DRAG_CLOSE_PX = 96;          /* 下拉超过这个位移＝关（松手时判定） */
   var SS_DRAG_FLICK_PX = 24;          /* 轻扫最小位移 */
   var SS_DRAG_FLICK_V = 0.5;          /* 轻扫速度阈值(px/ms)；与位移二者满足其一即关 */
@@ -1414,30 +1358,34 @@ function smartSelect(inputEl, config){
     }
     return hot;
   }
+  /** 首行新建入口（用户 2026-10-13 二改）：搜索框里敲的串库里没有 ⇒ 出这一行，点了＝新建并选中。
+   *  行是 <button role="option">，进 sheetRows 一起走 ↑/↓＋Enter；data-new=1 标出「这一行是新建」。 */
+  function ssNewRowHtml(){
+    return '<button type="button" role="option" class="ss-row ss-row-new" id="ss-row-'+sheetInst+'-new"'
+      + ' data-n="'+esc(sheetRaw)+'" data-m="custom" data-new="1" aria-selected="false">'
+      + '<span class="ss-row-nm">'+esc(String(texts.newRow))+' "'+esc(sheetRaw)+'"</span></button>';
+  }
   function ssSheetRender(){
     var hot = ssHotNames();
-    var list = [];
+    var out = [];
+    if(sheetRaw && !ssHasName(sheetRaw)) out.push(ssNewRowHtml());
+    var group = null;
     for(var i = 0; i < chipsMeta.length; i++){
-      var c = chipsMeta[i];
-      if(sheetQ && c.name.toLowerCase().indexOf(sheetQ) < 0) continue;
-      list.push(c);
-    }
-    var html = '', group = null;
-    for(var j = 0; j < list.length; j++){
-      var it = list[j];
+      var it = chipsMeta[i];
+      if(sheetQ && it.name.toLowerCase().indexOf(sheetQ) < 0) continue;
       var g = ssGroupOf(it.name);
-      if(g !== group){ group = g; html += '<div class="ss-group-hd">'+esc(g)+'</div>'; }
+      if(g !== group){ group = g; out.push('<div class="ss-group-hd">'+esc(g)+'</div>'); }
       var sel = !it.dis && state.name === it.name;
-      html += '<button type="button" role="option" class="ss-row'+(it.dis?' is-off':'')+(sel?' is-sel':'')+'"'
-        + ' id="ss-row-'+sheetInst+'-'+j+'"'
+      out.push('<button type="button" role="option" class="ss-row'+(it.dis?' is-off':'')+(sel?' is-sel':'')+'"'
+        + ' id="ss-row-'+sheetInst+'-'+i+'"'
         + (it.dis ? ' disabled aria-disabled="true"' : ' data-n="'+esc(it.name)+'" data-m="'+it.mode+'"')
         + ' aria-selected="'+(sel?'true':'false')+'">'
         + '<span class="ss-row-nm">'+(sel?'✓ ':'')+esc(it.name)+(it.dis?' · 停用':'')+'</span>'
         + (hot[it.name] ? '<span class="ss-row-hot">'+esc(texts.hotTag)+'</span>' : '')
-        + '</button>';
+        + '</button>');
     }
-    if(!list.length) html = '<div class="ss-sheet-empty">'+esc(texts.sheetEmpty)+'</div>';
-    sheetListEl.innerHTML = html;
+    if(!out.length) out.push('<div class="ss-sheet-empty">'+esc(texts.sheetEmpty)+'</div>');
+    sheetListEl.innerHTML = out.join('');
     sheetRows = [];
     var els = sheetListEl.querySelectorAll('.ss-row[data-n]');
     for(var k = 0; k < els.length; k++) sheetRows.push(els[k]);
@@ -1463,13 +1411,16 @@ function smartSelect(inputEl, config){
     return out;
   }
   function ssSheetOpen(trigger){
+    if(inputEl.disabled) return;                          /* 互斥组置灰的格：不给开（与 input 同一条禁用口径） */
     if(!sheetEl) ssSheetBuild();
     sheetTrigger = trigger || null;
-    sheetQ = searchRaw.trim().toLowerCase();   /* 过滤词带过卡片那枚框当刻的值（同一套判定） */
-    sheetSearchEl.value = searchRaw;
+    sheetRaw = ''; sheetQ = '';                           /* 触发器上没有可带的过滤词：每次开都是全量候选 */
+    sheetSearchEl.value = '';
     ssSheetRender();
     scrimEl.classList.add('show');
     sheetEl.classList.add('show');
+    var trg = root.querySelector('.ss-trigger');
+    if(trg) trg.setAttribute('aria-expanded', 'true');
     try{ sheetSearchEl.focus(); }catch(e){}
   }
   function ssSheetClose(){
@@ -1478,16 +1429,45 @@ function smartSelect(inputEl, config){
     scrimEl.classList.remove('show');
     sheetEl.style.transition = '';
     sheetEl.style.transform = '';
-    /* 焦点回触发按钮：没重渲染时就是那一枚；选择后卡片重渲染过，按同类按钮找回来的新节点 */
-    var t = (sheetTrigger && sheetTrigger.isConnected) ? sheetTrigger : root.querySelector('.ss-more');
+    /* 焦点回触发器：没重渲染时就是那一枚；选择后触发器重渲染过，按同类按钮找回来的新节点 */
+    var t = (sheetTrigger && sheetTrigger.isConnected) ? sheetTrigger : root.querySelector('.ss-trigger');
     sheetTrigger = null;
+    var trg = root.querySelector('.ss-trigger');
+    if(trg) trg.setAttribute('aria-expanded', 'false');
     if(t){ try{ t.focus(); }catch(e){} }
   }
   function ssSheetChoose(el){
     var n = el.getAttribute('data-n');
     if(n === null) return;
-    setSel(n, el.getAttribute('data-m') || 'existing');   /* 与点胶囊同一套回填(input.value + dataset + change) */
-    ssSheetClose();                                       /* 卡片此时已重渲染，焦点按找回来的触发按钮走 */
+    if(el.getAttribute('data-new') === '1'){
+      /* 首行新建：库里没有同键写法才出现；再判一次键（并发改动兜底），命中已有就选已有那个拼写 */
+      var key = ssNameKey(n), names = allNames(), hit = null;
+      for(var i = 0; i < names.length; i++){
+        if(ssNameKey(names[i]) === key){ hit = names[i]; break; }
+      }
+      if(hit){ setSel(hit, 'existing'); }
+      else { custom.unshift(n); setSel(n, 'custom'); }
+    } else {
+      setSel(n, el.getAttribute('data-m') || 'existing');  /* 与点候选同一套回填(input.value + dataset + change) */
+    }
+    ssSheetClose();                                        /* 触发器此时已重渲染，焦点按找回来的那枚走 */
+  }
+  /** 弹层底栏的新建区（用户 2026-10-13 二改）：前缀胶囊（点一下＝把「前缀/」填进弹层输入框）
+   *  ＋ 找不到的提示 ＋ 留空(不填)（选填字段才有；必填不给「留空」）。 */
+  function ssSheetFootHtml(){
+    var pfx = '';
+    if(newPrefixes.length){
+      pfx = '<div class="ss-pfx-row"><span class="ss-pfx-cap">'+esc(texts.prefixCaption)+'</span>';
+      for(var i = 0; i < newPrefixes.length; i++){
+        pfx += '<button type="button" class="ss-pfx-btn" data-pfx="'+esc(newPrefixes[i])+'">'+esc(newPrefixes[i])+'</button>';
+      }
+      pfx += '</div>';
+    }
+    return pfx
+      + '<div class="ss-foot-line"><span class="ss-foot-tip">'+esc(texts.sheetFoot)+'</span>'
+      + (required ? ''
+          : '<button type="button" class="ss-empty" data-empty="1">'+esc(texts.emptyButton)+'</button>')
+      + '</div>';
   }
   function ssSheetBuild(){
     sheetInst = (_SS_SHEET_SEQ += 1);
@@ -1505,8 +1485,8 @@ function smartSelect(inputEl, config){
       + '<button type="button" class="ss-sheet-x" data-x="1" aria-label="'+esc(texts.sheetClose)+'">✕</button></div>'
       + '<input class="ss-search ss-sheet-search" type="search" placeholder="'+esc(texts.search)+'" aria-label="'+esc(texts.search)+'">'
       + '</div>'
-      + '<div class="ss-sheet-body" data-list="1" role="listbox" aria-label="'+esc(texts.candTitle)+'"></div>'
-      + '<div class="ss-sheet-foot">'+esc(texts.sheetFoot)+'</div>';
+      + '<div class="ss-sheet-body" data-list="1" role="listbox" aria-label="'+esc(ssSheetTitle())+'"></div>'
+      + '<div class="ss-sheet-foot">'+ssSheetFootHtml()+'</div>';
     document.body.appendChild(scrimEl);
     document.body.appendChild(sheetEl);
     /* 面板挂 body（在 .ss-root 之外）：把本实例的主题变量搬过来，否则面板里的 var(--ss-brand*)
@@ -1523,9 +1503,25 @@ function smartSelect(inputEl, config){
     scrimEl.addEventListener('click', ssSheetClose);
     sheetEl.querySelector('[data-x]').addEventListener('click', ssSheetClose);
     sheetSearchEl.addEventListener('input', function(){
-      sheetQ = String(sheetSearchEl.value || '').trim().toLowerCase();
+      sheetRaw = String(sheetSearchEl.value || '').trim();
+      sheetQ = sheetRaw.toLowerCase();
       ssSheetRender();
     });
+    /* 前缀胶囊：点一下＝把「前缀/」填进弹层输入框（不提交，用户接着敲名字；焦点留在框里） */
+    sheetEl.querySelectorAll('[data-pfx]').forEach(function(b){
+      b.addEventListener('click', function(){
+        sheetSearchEl.value = b.getAttribute('data-pfx') + '/';
+        sheetRaw = String(sheetSearchEl.value).trim();
+        sheetQ = sheetRaw.toLowerCase();
+        ssSheetRender();
+        try{ sheetSearchEl.focus(); }catch(e){}
+      });
+    });
+    /* 留空(不填)：选填字段才有；与选一行同一条回填链路，选完关面板 */
+    var emptyBtn = sheetEl.querySelector('[data-empty]');
+    if(emptyBtn){
+      emptyBtn.addEventListener('click', function(){ setSel(null, 'empty'); ssSheetClose(); });
+    }
     sheetListEl.addEventListener('click', function(e){
       var row = (e.target && e.target.closest) ? e.target.closest('.ss-row[data-n]') : null;
       if(row) ssSheetChoose(row);
@@ -2286,9 +2282,10 @@ function fieldControlHTML(p){
   var ph = String(p.placeholder || p.hint || '');
   if (kind === 'select') {
     if (p.allowNew) {
-      /* 值级放开（用户 2026-10-13 定稿）：候选之外还要能自己敲一个新值 —— 控件本体是可输入框，
-         由 mountSmartSelects 挂 smartSelect（候选 chips ＋ 输入过滤 ＋「＋ 新建」＋ 重名自动选中已有
-         ＋ 相似提示 ＋ 留空，见 v1.12）。新值随记录落库，下一轮生成候选时回流。 */
+      /* 值级放开（用户 2026-10-13 定稿；同日二改）：候选之外还要能自己敲一个新值 —— 控件本体是这枚
+         可输入框（回填协议不变），默认态由 mountSmartSelects 挂的 smartSelect 换成一行高的触发器
+         （v1.14：灰字「请选择」／「不限」＋选填字段的清空 ✕），候选／新建／前缀／留空全在点开的弹层里。
+         新值随记录落库，下一轮生成候选时回流。 */
       return '<input data-p="' + esc(p.key) + '" type="text" data-smart="1" value="' + esc(String(p.value || '')) + '" placeholder="' + esc(ph) + '">';
     }
     var opts = Array.isArray(p.options) ? p.options : [];
@@ -2973,10 +2970,11 @@ function mountExclusives(root){
     })(forms[fi]);
   }
 }
-/* 值级放开字段的挂载（用户 2026-10-13 定稿）：把带 data-smart 的框交给 smartSelect 组件本体
-   （v1.12 就住在模板里，此前零调用点）：候选 chips ＋ 输入过滤 ＋「＋ 新建」＋ 重名自动选中已有
-   ＋ 相似提示 ＋ 留空。候选来自声明（生成期注入），控件只认识「一串名字」，领域词一律不进这一层。
-   场景对象按 .pform 的 data-pid 取，字段声明按 data-p 取；对象候选写进提示词的是 value。 */
+/* 值级放开字段的挂载（用户 2026-10-13 定稿；同日二改）：把带 data-smart 的框交给 smartSelect 组件本体。
+   默认态只有一枚一行高的触发器（灰字「请选择」／「不限」＋选填字段的清空 ✕），点开才是弹层
+   （候选行式列表＋搜索＋新建入口＋前缀＋留空）：候选来自声明（生成期注入），控件只认识「一串名字」，
+   领域词一律不进这一层。场景对象按 .pform 的 data-pid 取，字段声明按 data-p 取；
+   对象候选写进提示词的是 value。 */
 function mountSmartSelects(root){
   var forms = root.querySelectorAll('.pform[data-pid]');
   for (var fi = 0; fi < forms.length; fi++) {
@@ -2998,46 +2996,20 @@ function mountSmartSelects(root){
           }).filter(function(o){ return o.name !== ''; });
           smartSelect(inp, {
             options: opts,
-            maxChips: 8,
+            required: !!p.req,
+            /* 前缀清单（用户 2026-10-13 定稿）：值有层级、顶层是闭集时，弹层底栏给一排前缀胶囊，
+               点一下＝把「前缀/」填进弹层输入框，名字用户自己接着敲；清单由技能侧生成期给，本层不认识领域词。 */
+            newPrefixes: p.newPrefixes,
             texts: {
+              /* 未选值的灰字：必填＝请选择／选填＝不限；留空不等于「不限」的格由声明里的 empty_label 写清 */
+              placeholder: p.emptyLabel || (p.req ? '请选择' : '不限'),
               emptyButton: p.emptyLabel || '留空(不填)',
-              /* 面板标题按字段 label 走（用户 2026-10-13 定稿：如「选择 分类/名目」） */
+              /* 弹层标题按字段 label 走（用户 2026-10-13 定稿：如「选择 分类/名目」） */
               sheetTitle: p.label ? ('选择 ' + p.label) : '选择候选'
             }
           });
           var pf = inp.closest('.pfield');
           if (pf) pf.classList.add('is-smart');
-          /* 前缀清单（用户 2026-10-13 定稿）：值有层级、顶层是闭集时，点前缀＝把「前缀/」插进新建框，
-             名字用户自己接着敲；顶层闭不闭由技能侧生成期给清单，本层不认识任何领域词。
-             前缀按钮自带 pointerdown 拦截：smartSelect 在 root 上有「点到别处就把已敲的提交掉」的监听，
-             不拦的话点前缀会先把半截名字提交了。 */
-          if (pf && p.newPrefixes.length) {
-            var newRow = pf.querySelector('.ss-new');
-            if (newRow) {
-              var row = document.createElement('div');
-              row.className = 'pfx-row';
-              var cap = document.createElement('span');
-              cap.className = 'pfx-cap';
-              cap.textContent = '先选前缀';
-              row.appendChild(cap);
-              p.newPrefixes.forEach(function(x){
-                var b = document.createElement('button');
-                b.type = 'button';
-                b.className = 'pfx-btn';
-                b.textContent = String(x);
-                b.addEventListener('pointerdown', function(e){ e.stopPropagation(); e.preventDefault(); });
-                b.addEventListener('click', function(){
-                  var box = newRow.querySelector('input');
-                  if (!box) return;
-                  box.value = String(x) + '/';
-                  try { box.focus(); } catch (e) {}
-                  box.dispatchEvent(new Event('input', { bubbles: true }));
-                });
-                row.appendChild(b);
-              });
-              newRow.parentNode.insertBefore(row, newRow);
-            }
-          }
         })(inps[ii]);
       }
     })(forms[fi]);
@@ -3366,3 +3338,4 @@ document.addEventListener('click', function(e){
 </script>
 </body>
 </html>
+
