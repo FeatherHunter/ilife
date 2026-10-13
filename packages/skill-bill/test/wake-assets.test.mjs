@@ -10,8 +10,9 @@ import {
 } from '../dist/triggers/wake-assets.js';
 import { WAKE_TABLE } from '../dist/triggers/wakeTable.js';
 
-/** 本票新增的条目（老实物无）。#1275 删掉 `query_bills`（查账单并入查某天）后只剩 2 条。 */
-const ADDED_IDS = new Set(['write_record', 'query_bill_detail']);
+/** 本票新增的条目（老实物无）。#1275 删掉 `query_bills`（查账单并入查某天）后只剩 2 条；
+ *  #1269 加 `query_multi`（多条件查账）后 3 条。 */
+const ADDED_IDS = new Set(['write_record', 'query_bill_detail', 'query_multi']);
 /** #977 前的老实物 71 条摘要（历史值，已退役；现内容不再与之逐字一致，见件头）。
  *  历史值：'93099ecd345b85c65d69231c348fea663af40617a72509968e3829d6e2e108a0'。 */
 /** 老实物的域顺序（照搬，不许重排）。 */
@@ -24,18 +25,18 @@ const added = WAKE_ASSETS.filter((s) => ADDED_IDS.has(s.id));
 const canonical = (rows) => JSON.stringify(rows.map((s) => [s.id, s.title, s.wake_word, s.status, s.prompt_template, s.types]));
 
 describe('#146 饼干记账 HELP 内容资产', () => {
-  it('三层结构：7 域 / 21 二级组 / 75 场景（老 73 ＋ 新增 2），域顺序照老实样', () => {
+  it('三层结构：7 域 / 21 二级组 / 76 场景（老 73 ＋ 新增 3），域顺序照老实样', () => {
     assert.deepEqual(WAKE_GROUPS.map((g) => g.id), GROUP_IDS);
     assert.equal(WAKE_GROUPS.length, 7);
     assert.equal(WAKE_GROUPS.reduce((n, g) => n + g.subgroups.length, 0), 21);
-    assert.equal(WAKE_ASSETS.length, 75);
-    assert.equal(WAKE_ASSET_TOTAL, 75);
+    assert.equal(WAKE_ASSETS.length, 76);
+    assert.equal(WAKE_ASSET_TOTAL, 76);
     assert.equal(legacy.length, 73);
-    assert.equal(added.length, 2);
+    assert.equal(added.length, 3);
   });
 
   it('场景字段齐、id 唯一、status 全空、types 用老词', () => {
-    assert.equal(new Set(WAKE_ASSETS.map((s) => s.id)).size, 75);
+    assert.equal(new Set(WAKE_ASSETS.map((s) => s.id)).size, 76);
     for (const s of WAKE_ASSETS) {
       for (const k of ['id', 'title', 'wake_word', 'prompt_template']) {
         assert.equal(typeof s[k], 'string', s.id + ' 字段类型 ' + k);
@@ -45,11 +46,11 @@ describe('#146 饼干记账 HELP 内容资产', () => {
       assert.ok(s.types.length > 0, s.id + ' types 非空');
       for (const t of s.types) assert.ok(TYPE_WORDS.has(t), s.id + ' types 越界：' + t);
     }
-    assert.equal(Object.keys(SCENE_BY_ID).length, 75);
+    assert.equal(Object.keys(SCENE_BY_ID).length, 76);
     assert.equal(SCENE_BY_ID.write_record.wake_word, '记一笔');
   });
 
-  it('#977 重写锁：____ 零命中，首行卡路里式，60 有参带 {{}}（老逐字锁退役）', () => {
+  it('#977 重写锁：____ 零命中，首行卡路里式，61 有参带 {{}}（老逐字锁退役）', () => {
     for (const s of WAKE_ASSETS) {
       assert.ok(!s.prompt_template.includes('____'), s.id + ' 还有 ____ 未洗');
       assert.ok(!/\d{4}-\d{2}-\d{2}/.test(s.prompt_template.split('\n').filter((l) => l.includes('{{')).join('\n')), s.id + ' 参数行含裸 ISO 日期');
@@ -58,26 +59,27 @@ describe('#146 饼干记账 HELP 内容资产', () => {
       assert.ok(s.prompt_template.startsWith('请你加载技能 饼干记账,执行唤醒词「' + s.wake_word + '」。'), s.id + ' 首行不是卡路里式');
     }
     const withParam = WAKE_ASSETS.filter((s) => s.prompt_template.includes('{{'));
-    assert.equal(withParam.length, 60);
+    assert.equal(withParam.length, 61);
     assert.equal(WAKE_ASSETS.filter((s) => !s.prompt_template.includes('{{')).length, 15);
   });
 
-  it('新增 2 条落在对应域/组（补进既有二级组末尾，不新开组）', () => {
+  it('新增 3 条落在对应域/组（补进既有二级组末尾，不新开组）', () => {
     const where = (id) => {
       for (const g of WAKE_GROUPS) for (const sub of g.subgroups) if (sub.scenes.some((s) => s.id === id)) return g.id + '/' + sub.id;
       return '?';
     };
     assert.equal(where('write_record'), 'write/write_1');
     assert.equal(where('query_bill_detail'), 'query/query_1');
+    assert.equal(where('query_multi'), 'query/query_2');
     for (const s of added) assert.ok(s.prompt_template.includes('执行唤醒词「' + s.wake_word + '」'), s.id + ' 新增条目照卡路里式带首行');
   });
 
-  it('与口径层 WAKE_TABLE 双向对账（78 = 4 HELP + 74，条条有落）', () => {
+  it('与口径层 WAKE_TABLE 双向对账（79 = 4 HELP + 75，条条有落）', () => {
     const help = WAKE_TABLE.filter((e) => e.key === 'bill.help.lookup').map((e) => e.phrase);
     const fn = WAKE_TABLE.filter((e) => e.key !== 'bill.help.lookup');
-    assert.equal(WAKE_TABLE.length, 78);
+    assert.equal(WAKE_TABLE.length, 79);
     assert.equal(help.length, 4);
-    assert.equal(fn.length, 74);
+    assert.equal(fn.length, 75);
 
     const sceneWords = new Set(WAKE_ASSETS.map((s) => s.wake_word));
     const fnWords = new Set(fn.map((e) => e.phrase));

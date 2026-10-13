@@ -50,13 +50,15 @@ const LEGACY_DIGEST = '93099ecd345b85c65d69231c348fea663af40617a72509968e3829d6e
  *  区分信息只留在 ⓘ 提示与提示词里。
  *  1275 重钉（2026-10-13 用户讨论定稿）：查账单词条整条删（查某天一个入口，日期选填、空＝今天），
  *  查账本时间槽位换成 `period`（粒度分段：不限／某天／周／月／年／区间），账本一句话进 hint
- *  （76→75 场景／79→78 词／61→60 有参／15 零参）。 */
-const PRODUCT_DIGEST = '495336a81b1d1de6d287adbb441205a49ff3b3f674658b753cf2ebed3e23f2be';
-/** 词 → 命令 表（78 条，按词排序）的 SHA-256——取自**改前**那份手写词表（#721 搬运前当刻）。
+ *  （76→75 场景／79→78 词／61→60 有参／15 零参）。
+ *  1269 重钉（2026-10-13 用户裁定「新增一个支持多个条件查询的场景」）：加 `query_multi`
+ *  「查多条件」（75→76 场景／78→79 词／60→61 有参／15 零参）。 */
+const PRODUCT_DIGEST = '6d84663c13ddb9739c28110b3368591c2ba1d4ba43c96301b107753ae9615475';
+/** 词 → 命令 表（79 条，按词排序）的 SHA-256——取自**改前**那份手写词表（#721 搬运前当刻）。
  *  它钉的是「一条词还路由到与今天相同的命令」，属搬运 0 差异的机器证据。1276 起 79 条（加查看／设置当前配置两词）；
- *  1275 起 78 条（查账单词条整条删，不留不印出来的路由别名）。 */
-const ROUTE_DIGEST = '95782b8169cfc54cee3a2203ffe4c1ac4de8f1843fb37c3128d84510b9e27776';
-const ADDED_IDS = new Set(['write_record', 'query_bill_detail', 'setup_config_read', 'setup_config_write']);
+ *  1275 起 78 条（查账单词条整条删，不留不印出来的路由别名）；1269 起又回 79 条（加「查多条件」）。 */
+const ROUTE_DIGEST = 'f0e4f1f90ee5be15b908c8abad061e932be6625d910c6fe9ebfdc46404e77fd1';
+const ADDED_IDS = new Set(['write_record', 'query_bill_detail', 'setup_config_read', 'setup_config_write', 'query_multi']);
 
 function walk(dir, out = []) {
   for (const e of readdirSync(dir, { withFileTypes: true })) {
@@ -144,9 +146,9 @@ describe('#721 · 结构性判据：一条唤醒词只准住它所属那份域�
 });
 
 describe('#721 · 内容摘要锁（冻结值台账一类，不是行为断言）', () => {
-  it('产物 payload 的 75 条场景逐字锁', () => {
+  it('产物 payload 的 76 条场景逐字锁', () => {
     const rows = productPayload().groups.flatMap((g) => g.subgroups.flatMap((s) => s.scenes));
-    assert.equal(rows.length, 75);
+    assert.equal(rows.length, 76);
     const digest = createHash('sha256').update(canonical(rows), 'utf8').digest('hex');
     assert.equal(digest, PRODUCT_DIGEST, '内容摘要变了：改的是域声明里的字就不是白改，摘要锁要跟着重钉（并在证据件里记一行）');
   });
@@ -158,13 +160,13 @@ describe('#721 · 内容摘要锁（冻结值台账一类，不是行为断言�
     assert.notEqual(createHash('sha256').update(canonical(rows), 'utf8').digest('hex'), LEGACY_DIGEST, '老锁应已变红（重写生效的证据）；若此断言失败说明重写被回滚');
   });
 
-  it('#977 字段锁：60 有参带 editable_fields（kind 闭集＋{{}}一一对应），15 零参缺席', async () => {
+  it('#977 字段锁：61 有参带 editable_fields（kind 闭集＋{{}}一一对应），15 零参缺席', async () => {
     const { WAKE_ASSETS } = await import('../dist/triggers/wake-assets.js');
     // 闭集与渲染侧同源：`packages/base-render/assets/help-template.html:1834`（规范化）与 `:1915`（分派）
     // 两处逐字相同 —— text（回落）／number／select／date／week／month／year／time／period。
     const KINDS = new Set(['text', 'number', 'select', 'date', 'week', 'month', 'year', 'time', 'period']);
     const withFields = WAKE_ASSETS.filter((s) => s.editable_fields !== undefined);
-    assert.equal(withFields.length, 60);
+    assert.equal(withFields.length, 61);
     assert.equal(WAKE_ASSETS.filter((s) => s.editable_fields === undefined).length, 15);
     for (const s of withFields) {
       assert.ok(s.editable_fields.length > 0, s.id + ' 空数组（零参须缺席，不发空数组）');
@@ -184,9 +186,9 @@ describe('#721 · 内容摘要锁（冻结值台账一类，不是行为断言�
     }
   });
 
-  it('词 → 命令 表逐条与改前相同（78 条，按词排序后摘要锁）', async () => {
+  it('词 → 命令 表逐条与改前相同（79 条，按词排序后摘要锁）', async () => {
     const { WAKE_TABLE } = await import('../dist/triggers/wakeTable.js');
-    assert.equal(WAKE_TABLE.length, 78);
+    assert.equal(WAKE_TABLE.length, 79);
     const pairs = WAKE_TABLE.map((e) => [e.phrase, e.key]).sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
     assert.equal(createHash('sha256').update(JSON.stringify(pairs), 'utf8').digest('hex'), ROUTE_DIGEST);
   });

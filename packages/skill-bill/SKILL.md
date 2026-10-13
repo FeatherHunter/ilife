@@ -1,6 +1,6 @@
 ---
 name: skill-bill
-description: "「饼干记账HELP」→bill.help.lookup 缺省落一份老技能同款 HELP 文件（7 域／75 场景，与卡路里同一套共享 help 模板）；唯一出口 bill-cmd-read。触发词：饼干记账 HELP、饼干记账帮助、查帮助、能做什么、记支出、记收入、拍账单、批量录入、记退款、记报销、报销到账、记借出、记借入、记收回、记偿还、记分期、记一笔、改记录、撤销、恢复、查今天、查昨天、查某天、查最近、查周、查月、查区间、查分类、查账户、查账本、搜备注、查标签、查欠款、查待报销、查分期、查账单详情、看月度、看年度、看总览、看周报、看分类、看账户、看账本、看结构、做统计、看对比、看双区间、看同比、看分类对比、看趋势、看分类趋势、看大额、看高频、看分布、看活跃、看洞察、看异常、看借贷、看报销、看分期、看退款、设定预算、设定目标、看预算、看目标、新增账户、改账户、账户转账、看账户汇总、买东西、吃饭、初始化、初始化状态、备份、恢复备份、导入"
+description: "「饼干记账HELP」→bill.help.lookup 缺省落一份老技能同款 HELP 文件（7 域／76 场景，与卡路里同一套共享 help 模板）；唯一出口 bill-cmd-read。触发词：饼干记账 HELP、饼干记账帮助、查帮助、能做什么、记支出、记收入、拍账单、批量录入、记退款、记报销、报销到账、记借出、记借入、记收回、记偿还、记分期、记一笔、改记录、撤销、恢复、查今天、查昨天、查某天、查最近、查周、查月、查区间、查分类、查账户、查账本、搜备注、查标签、查欠款、查待报销、查分期、查账单详情、看月度、看年度、看总览、看周报、看分类、看账户、看账本、看结构、做统计、看对比、看双区间、看同比、看分类对比、看趋势、看分类趋势、看大额、看高频、看分布、看活跃、看洞察、看异常、看借贷、看报销、看分期、看退款、设定预算、设定目标、看预算、看目标、新增账户、改账户、账户转账、看账户汇总、买东西、吃饭、初始化、初始化状态、备份、恢复备份、导入"
 ---
 
 # 饼干记账（bill）SKILL
@@ -73,6 +73,7 @@ bill-cmd-read bill.record.add --params '{"category":"餐饮/外卖/午餐","amou
 | 查分类 | bill.record.range | list | `bill-cmd-read bill.record.range --params '{"category":"餐饮"}'` |
 | 查账户 | bill.record.range | list | `bill-cmd-read bill.record.range --params '{"account":"支付宝"}'` |
 | 查账本 | bill.record.range | list | `bill-cmd-read bill.record.range --params '{"ledger":"生活"}'` |
+| 查多条件 | bill.record.range | list | `bill-cmd-read bill.record.range --params '{"cond":"many","category":"餐饮","account":"支付宝","ledger":"生活","start":"2026-09-01","end":"2026-09-01"}'` |
 | 搜备注 | bill.record.search | list | `bill-cmd-read bill.record.search --params '{"q":"午饭"}'` |
 | 查标签 | bill.record.search | list | `bill-cmd-read bill.record.search --params '{"kind":"tag","tag":"旅行"}'` |
 | 查欠款 | bill.record.search | list | `bill-cmd-read bill.record.search --params '{"kind":"debt"}'` |

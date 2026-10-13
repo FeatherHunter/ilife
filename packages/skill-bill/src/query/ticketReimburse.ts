@@ -28,21 +28,16 @@ import { DOC_TITLE, DOC_VERSION } from '../shared/pageIdentity.js';
 import { DB_FILENAME } from '../fetch/index.js';
 import { calcKpi } from '../shared/kpi.js';
 import { calcCategories } from '../analysis/index.js';
-import { BILL_HTML_MAX_BYTES, estimateBytes } from '../render/html.js';
 import { toBillItem } from './items.js';
-import { listEnvelope, queryListDoc } from './list.js';
-import type { QueryCategoryRow, QueryKpi, QueryListData, QueryTableRow } from './list.js';
+import { listEnvelope } from './list.js';
+import type { QueryCategoryRow, QueryKpi, QueryListData } from './list.js';
+import { fitTicketPage } from './pageFit.js';
 import { queryStyleTag } from './pageParts.js';
 import { assembleSheetPage, sheetHead, ticketActions, ticketRule, ticketSection, ticketSummary } from '../shared/docPage.js';
 import { commandLine, writeSection } from '../shared/writeParts.js';
 
 /** 本次数据来源（复制日志第 3 段，与 `./read.js` 的查询来源同字）。 */
 const SOURCE_QUERY = DB_FILENAME + '（查询结果：只读，不改库）';
-
-/** 一整页的体积预算（字节）＝交付硬门 `BILL_HTML_MAX_BYTES`（`../render/html.js`）。
- *  用户 2026-10-13 裁定「不允许有240KB限制，允许有2.4MB这么大」（票 #1279）：240 KB 这个自设天花板取消，
- *  预算与硬门同源——只有真到门限才回落老列表路，不静默丢页、也不因为装得下就提前换皮。 */
-const PAGE_BYTE_BUDGET = BILL_HTML_MAX_BYTES;
 
 /** 分类聚合卡的类数上限（与 `./list.js` 的 `CATEGORY_LIMIT` 同数，老页 `slice(0,8)` 同）。 */
 const CATEGORY_LIMIT = 8;
@@ -134,11 +129,16 @@ export interface ReimburseTicketInput {
   readonly wakeWord: string;
   readonly window: string;
   readonly records: readonly BillRow[];
+  /** 明细与复制区画前几条（`fitTicketPage` 给；缺席＝全画）。结论／占比／落点／对账照**全量**算。 */
+  readonly shown?: number;
 }
 
 /** 查待报销票据纸：一整页（载荷与 `./list.js` 同形，呈现照 w15 v2.1 原型）。 */
 export function queryReimburseTicketDoc(input: ReimburseTicketInput): string {
   const records = [...input.records];
+  // 明细与复制区只带前 `shown` 条（`fitTicketPage` 给；缺席＝全画）；结论／占比／落点／对账照全量算。
+  const shownRows = input.shown === undefined ? records : records.slice(0, input.shown);
+  const hidden = records.length - shownRows.length;
   const kpi: QueryKpi = calcKpi(records);
   const categories: readonly QueryCategoryRow[] = kpi.expense === 0 ? [] : calcCategories(records).map((c) => ({
     label: c.category,
@@ -153,7 +153,7 @@ export function queryReimburseTicketDoc(input: ReimburseTicketInput): string {
     kpi,
   };
   const envelope = listEnvelope(input.key, data);
-  const listCopy = ticketCopyOf(input.wakeWord, input.window, records);
+  const listCopy = ticketCopyOf(input.wakeWord, input.window, shownRows);
   const paper = queryStyleTag()
     + sheetHead(DOC_TITLE + ' · ' + input.wakeWord, escapeHtml('等报销 ' + String(records.length) + ' 笔，' + sumText(kpi.expense) + ' 元'))
     + '<p class="ilife-reimburse-shop-sub">' + escapeHtml(input.window) + '</p>'
@@ -169,7 +169,15 @@ export function queryReimburseTicketDoc(input: ReimburseTicketInput): string {
     + ticketRule()
     + ticketSection({ title: '分类占比', tag: 'SCALE', content: scaleHtml(categories) })
     + ticketRule()
-    + ticketSection({ title: '明细', tag: 'DETAIL', content: entriesHtml(records) })
+    + ticketSection({ title: '明细', tag: 'DETAIL', content: entriesHtml(shownRows) })
+    + (hidden > 0
+      ? ticketRule() + ticketSection({
+        title: '还有 ' + String(hidden) + ' 条没显示（这一页画了前 ' + String(shownRows.length) + ' 条）',
+        tag: 'MORE',
+        content: renderCaliberLine('结论、分类占比与落点都按本窗全部 ' + String(records.length) + ' 条算；'
+          + '本页的明细与复制区只带前面 ' + String(shownRows.length) + ' 条，要看其余的，把条件收窄一点再查一次'),
+      })
+      : '')
     + ticketRule()
     + ticketSection({ title: '对账', tag: 'CHECK', content: checkHtml(records) })
     + ticketRule()
@@ -201,63 +209,17 @@ export function queryReimburseTicketDoc(input: ReimburseTicketInput): string {
   });
 }
 
-/** reimburse 分支的出口：载荷与 `./list.js` 同形，页走本件票据纸；超体积回落老列表路（不静默丢页）。 */
+/** reimburse 分支的出口：载荷与 `./list.js` 同形，页走本件票据纸。
+ *  条数到上限只**少画几条＋页内明写**，不再换页型（票 #1279）；零行由调用方先收口到空态票据纸，不进本件。 */
 export function reimburseTicketOut(input: ReimburseTicketInput): ViewOut {
-  const html = queryReimburseTicketDoc(input);
-  if (estimateBytes(html) <= PAGE_BYTE_BUDGET) {
-    const records = [...input.records];
-    const kpi: QueryKpi = calcKpi(records);
-    const data: QueryListData = {
-      items: records.map(toBillItem),
-      total: records.length,
-      kind: 'reimburse',
-      kpi,
-    };
-    return { data, page: { wakeWord: input.wakeWord, kind: 'single' }, html };
-  }
-  const rows: readonly QueryTableRow[] = [...input.records].map((r) => ({
-    id: String(r.id),
-    time: r.time,
-    category: r.category,
-    amount: r.amount.toFixed(2),
-    account: r.account,
-    ledger: r.ledger,
-    note: r.note,
-  }));
-  const kpi: QueryKpi = calcKpi([...input.records]);
-  const cats: readonly QueryCategoryRow[] = kpi.expense === 0 ? [] : calcCategories([...input.records]).map((c) => ({
-    label: c.category,
-    amount: c.total,
-    count: c.count,
-    pct: (c.total / kpi.expense) * 100,
-  }));
+  const records = [...input.records];
+  const kpi: QueryKpi = calcKpi(records);
   const data: QueryListData = {
-    items: [...input.records].map(toBillItem),
-    total: input.records.length,
+    items: records.map(toBillItem),
+    total: records.length,
     kind: 'reimburse',
     kpi,
   };
-  return {
-    data,
-    page: { wakeWord: input.wakeWord, kind: 'single' },
-    html: queryListDoc({
-      key: input.key,
-      params: input.params,
-      shape: 'list',
-      wakeWord: input.wakeWord,
-      window: input.window,
-      chips: ['共 ' + String(input.records.length) + ' 笔'],
-      rows,
-      kpi,
-      categories: cats,
-      emptyText: '没有找到符合条件的记录',
-      emptyHint: '换个关键词试试，也可以看看「查最近」。',
-      envelope: listEnvelope(input.key, data),
-      source: SOURCE_QUERY,
-      sourceText: '记账库（只读）',
-      windowStart: '不限',
-      windowEnd: '不限',
-      actionAt: actionStamp(),
-    }),
-  };
+  const page = fitTicketPage(input.records.length, (shown) => queryReimburseTicketDoc({ ...input, shown }));
+  return { data, page: { wakeWord: input.wakeWord, kind: 'single' }, html: page.html };
 }

@@ -18,9 +18,9 @@ describe('饼干 SKILL 与 HELP', () => {
     assert.match(skillText, /L1 10/);
     assert.ok(skillText.includes(START) && skillText.includes(END));
   });
-  it('速查：78 短语全可路由且 key 对得上', () => {
+  it('速查：79 短语全可路由且 key 对得上', () => {
     const hits = buildHelpLookup();
-    assert.equal(hits.length, 78);
+    assert.equal(hits.length, 79);
     assert.equal(hits.length, WAKE_TABLE.length);
     for (const h of hits) {
       assert.ok(Object.keys(BILL_KEY_SHAPES).includes(h.key));

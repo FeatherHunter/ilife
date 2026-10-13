@@ -36,6 +36,7 @@ import { installmentTicketOut } from './ticketInstallment.js';
 import { reimburseTicketOut } from './ticketReimburse.js';
 import { intervalTicketOut } from './ticketInterval.js';
 import { monthTicketOut } from './ticketMonth.js';
+import { multiTicketOut } from './ticket-multi.js';
 import { recentTicketOut } from './ticketRecent.js';
 import { todayTicketOut } from './ticketToday.js';
 import { weekTicketOut } from './ticketWeek.js';
@@ -44,6 +45,7 @@ import type { ViewOut } from '../shared/commandSpec.js';
 import { actionStamp } from '../shared/copyArea.js';
 import { detailEnvelope, listEnvelope, queryListDoc } from './list.js';
 import { queryDetailDoc } from './detail.js';
+import { MULTI_COND } from './declaration.js';
 import type { QueryCategoryRow, QueryDetailData, QueryListData, QueryTableRow } from './list.js';
 
 /** 本次数据来源（复制日志第 3 段）：库文件名逐字取本包常量，共用件不取本包文件名。 */
@@ -218,15 +220,10 @@ export function viewRecordToday(params: Record<string, unknown>, db: BillDb): Vi
     });
     if (ticket !== null) return ticket;
   }
-  // 兜底只服务「超体积」（上面三条票据出口各自按体积回 null）：零行已在上面收口，不到这里。
-  return listOut({
-    key, params, wakeWord, window: date + ' 这一天', records,
-    extra: { date },
-    emptyText: empty.emptyText,
-    emptyHint: empty.emptyHint,
-    windowStart: date,
-    windowEnd: date,
-  });
+  /* 三条票据出口各按体积裁行（`./pageFit.js`），零行已在上面收口，回到这里没有任何可达输入：
+     唤醒词只可能是查今天／查昨天／查某天三条之一。留一条大声失败兜住将来新增单日词时忘配页面的改动，
+     不回落到中性列表页（票 #1269，用户 2026-10-13 定）。 */
+  throw new BillPolicyError('POLICY_BAD_INPUT', '单日支的唤醒词没有对应的票据页：' + wakeWord);
 }
 
 /** #413 · 区间查的「今天」锚点（与卡路里 #250 同序，种子日期不写死）：显式 `today` 参数 ＞ 机器时钟（UTC 日）。
@@ -263,6 +260,30 @@ function condValue(params: Record<string, unknown>, field: string): string | und
   return v.trim();
 }
 
+/** 多条件分支的时间窗：周／月锚点、起止日，或「全部时间」（不带时间时 start／end 两支写空串，
+ *  与区间那一族「单条件两支都写空串」同口径）。`timed`＝这一页是不是按时间窗取的数。 */
+function multiWindowOf(params: Record<string, unknown>): { readonly start: string; readonly end: string; readonly text: string; readonly timed: boolean } {
+  if (params.range === 'week' || params.range === 'month') {
+    const anchor = rangeAnchor(params);
+    const w = params.range === 'week' ? weekWindowFrom(anchor) : monthWindowFrom(anchor);
+    return { ...w, text: w.start + ' ~ ' + w.end + (params.range === 'week' ? '（本周）' : '（本月）'), timed: true };
+  }
+  if (params.start !== undefined || params.end !== undefined) {
+    const { start, end } = resolveRange(params);
+    return { start, end, text: start + ' ~ ' + end, timed: true };
+  }
+  return { start: '', end: '', text: '全部时间', timed: false };
+}
+
+/** 多条件页副题里的条件串（与单条件那几支的 `by + '＝' + value` 同字：`分类＝餐饮 · 账户＝招行`）。 */
+function conditionLineOf(input: { readonly category?: string; readonly account?: string; readonly ledger?: string }): string {
+  const parts: string[] = [];
+  if (input.category !== undefined) parts.push('分类＝' + input.category);
+  if (input.account !== undefined) parts.push('账户＝' + input.account);
+  if (input.ledger !== undefined) parts.push('账本＝' + input.ledger);
+  return parts.join(' · ');
+}
+
 /** `bill.record.range`：查周／查月（`range`＋锚点）／查区间（`start`＋`end` 同给，缺一即 exit 2）／
  *  查分类（三级，无 / 视为 L1）／查账户／查账本（只过滤：KPI 照窗内收支、转账除外，余额无关）。
  *  区间查不到记录 → 阻断（exit 4），不返一张空表冒充正常。 */
@@ -273,6 +294,24 @@ export function viewRecordRange(params: Record<string, unknown>, db: BillDb): Vi
   const account = condValue(params, 'account');
   const ledger = condValue(params, 'ledger');
   const cond = { category, account, ledger };
+  /* 多条件页（票 #1269，用户 2026-10-13 裁定「新增一个支持多个条件查询的场景」）：
+     ① 用户点的就是「查多条件」那条词——`params.cond` 是那条词条 `preset` 里的投影标记（`./declaration.js` 的
+        `MULTI_COND`，值只在那里写一次）；② 或者一次给了两个及以上条件（分类／账户／账本任二）。
+     单条件那几张票据纸的副题只说得清一个条件，两个条件同给时不落它们。一条条件都没有时不进这一支
+     （落回下面各支：只给时间＝查区间那一族，什么都没有＝末尾那条阻断）。 */
+  const condCount = [category, account, ledger].filter((v) => v !== undefined).length;
+  if (condCount >= 1 && (params.cond === MULTI_COND || condCount >= 2)) {
+    const time = multiWindowOf(params);
+    const records = time.timed
+      ? fetchAll(db, { ...cond, fromTime: time.start + ' 00:00:00', toTime: time.end + ' 23:59:59' })
+      : fetchAll(db, cond);
+    if (!records.length) throw new BillFetchError('BILL_EMPTY_RANGE', '条件无记录（缺失阻断，不返空统计）');
+    return multiTicketOut({
+      key, params, wakeWord: projectWakeWord({ key, preset: params }),
+      window: conditionLineOf({ category, account, ledger }) + '（' + time.text + '）',
+      records, start: time.start, end: time.end,
+    });
+  }
   if ((params.range === 'week' || params.range === 'month') && ledger === undefined) {
     const anchor = rangeAnchor(params);
     const { start, end } = params.range === 'week' ? weekWindowFrom(anchor) : monthWindowFrom(anchor); // w06 查周 v2.1 原型锚点：周一..锚点（本周）＋结论64%／占比64-36／载荷键不动（.scratch/1019-p-query/w06-查周-v2.1.html manifest seq5）
@@ -327,15 +366,10 @@ export function viewRecordRange(params: Record<string, unknown>, db: BillDb): Vi
       const sharePct = all === 0 ? 0 : Math.round((mine / all) * 100);
       return categoryTicketOut({ key, params, wakeWord, window, records, category: value, sharePct }); // w09 查分类 v2.1 票据纸（原型 w09-查分类-v2.1.html manifest seq8：结论83%／占比83-17／占全部26%并入占比区／载荷键不动）
     }
-    return listOut({
-      key, params, wakeWord, window, records,
-      extra: { start: '', end: '' },
-      extraChips: category === undefined ? [] : [shareChip(db, records)],
-      emptyText: '这个条件没有记录',
-      emptyHint: '换个条件，或说「查区间」并给出起止日期。',
-      windowStart: NO_WINDOW,
-      windowEnd: NO_WINDOW,
-    });
+    /* 走到这里没有任何可达输入：两个及以上条件在函数开头就进了多条件页（票 #1269，用户 2026-10-13 定的
+       「不再有中性列表页」），单条件在上面三支里各自收口（账户／账本／分类）。留一条大声失败兜住将来
+       新增条件时忘了配页面的改动，不回落到中性列表页。 */
+    throw new BillPolicyError('POLICY_BAD_INPUT', '条件组合没有对应的票据页（分类／账户／账本任一单条件或任二及以上）');
   }
   throw new BillPolicyError('POLICY_BAD_INPUT', '缺槽位 start/end（或 range=week/month，或 category/account/ledger 条件）');
 }

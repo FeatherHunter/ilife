@@ -14,6 +14,11 @@
  */
 import type { DomainDeclaration } from '../triggers/routeSpec.js';
 
+/** 多条件那条词条的**投影标记**（住在它的 `preset` 里）：`./read.js` 的多条件分支照它认
+ *  「这一页是哪条词」，值只在这里写一次。`routeWakeword` 从唤醒词「查多条件」把它带下来，
+ *  `projectWakeWord` 的规则①认它——两处都读域声明，谁都不另写字面量。 */
+export const MULTI_COND = 'many';
+
 export const QUERY_DECLARATION: DomainDeclaration = {
   id: 'query',
   label: '查询',
@@ -195,6 +200,30 @@ export const QUERY_DECLARATION: DomainDeclaration = {
       ],
     },
     {
+      phrase: '查多条件',
+      key: 'bill.record.range',
+      // 条件是**任选**：一条也不给时由命令侧阻断（`./read.js` 的 `viewRecordRange` 末尾那条），
+      // `needs` 空＝路由不拦。`carries` 列的是「给了就带下去」的条件槽（与 `needs` 一样进示例），
+      // 多条件页的副题照这一组把条件写全。`preset` 只放投影标记，不是查询条件。
+      preset: { cond: MULTI_COND },
+      carries: ['category', 'account', 'ledger', 'start', 'end'],
+      scenes: [
+        {
+          id: 'query_multi',
+          title: '查多个条件的账',
+          status: '',
+          prompt_template: '请你加载技能 饼干记账,执行唤醒词「查多条件」。\n\n我想按多个条件查账（条件给几个都行，至少要给一个）。\n\n分类(选填):{{category}}\n账户(选填):{{account}}\n账本(选填):{{ledger}}\n时间(选填):{{period}}',
+          types: ['查看'],
+          editable_fields: [
+            { name: 'category', label: '分类(选填)', value: '', hint: '如 餐饮、出行、奶茶', required: false, kind: 'text', source: 'categories' },
+            { name: 'account', label: '账户(选填)', value: '', hint: '如 支付宝、微信、招行', required: false, kind: 'text', source: 'accounts' },
+            { name: 'ledger', label: '账本(选填)', value: '', hint: '账本＝记录的分组（如 生活、旅行）；一笔记录只归一个账本', required: false, kind: 'text', source: 'ledgers' },
+            { name: 'period', label: '时间(选填)', value: '', hint: '', required: false, kind: 'period' },
+          ],
+        },
+      ],
+    },
+    {
       phrase: '搜备注',
       key: 'bill.record.search',
       needs: ['q'],
@@ -299,7 +328,7 @@ export const QUERY_DECLARATION: DomainDeclaration = {
   ],
   subgroups: [
     { id: 'query_1', label: '按时间', scenes: ['query_today', 'query_yesterday', 'query_date', 'query_recent', 'query_week', 'query_month', 'query_range', 'query_bill_detail'] },
-    { id: 'query_2', label: '按条件', scenes: ['query_category', 'query_search', 'query_tag', 'query_account', 'query_ledger'] },
+    { id: 'query_2', label: '按条件', scenes: ['query_category', 'query_search', 'query_tag', 'query_account', 'query_ledger', 'query_multi'] },
     { id: 'query_3', label: '按状态', scenes: ['query_debt', 'query_pending_reimburse', 'query_installment'] },
   ],
 };

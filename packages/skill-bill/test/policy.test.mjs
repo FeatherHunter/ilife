@@ -31,8 +31,8 @@ describe('饼干口径 policy', () => {
     const r = validateRecord({ category: '餐饮', amount: -20, time: '2026-09-06 12:00:00' });
     assert.equal(r.ledger, '生活');
   });
-  it('唤醒词 78 全量 + 最长匹配 + 缺槽位', () => {
-    assert.equal(WAKE_TABLE.length, 78);
+  it('唤醒词 79 全量 + 最长匹配 + 缺槽位', () => {
+    assert.equal(WAKE_TABLE.length, 79);
     assert.equal(routeWakeword('看分类对比一下').key, 'bill.analysis.compare');
     assert.equal(routeWakeword('看分类').key, 'bill.analysis.overview');
     assert.equal(routeWakeword('初始化状态看看').key, 'bill.setup.run');

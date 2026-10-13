@@ -1,4 +1,4 @@
-// 416 · 查询 16 词接线：说词→路由 key→SKILL 行→HELP 卡→可执行 CLI，五段对得上。
+// 416 · 查询 17 词接线：说词→路由 key→SKILL 行→HELP 卡→可执行 CLI，五段对得上。
 // 不做真出口断言：不 spawn／不验 exit 码，只静态验“示例带齐必需槽位”（见本件 executableReason）。
 // 判据口径：整段匹配禁裸子串（SKILL 行验反引号整段 CLI；HELP 卡验 wake_word 全等；HTML 不在本票）。
 import { describe, it } from 'node:test';
@@ -15,10 +15,10 @@ import { WAKE_GROUPS, WAKE_ASSETS } from '../dist/triggers/wake-assets.js';
 const here = dirname(fileURLToPath(import.meta.url));
 const skillText = readFileSync(join(here, '..', 'SKILL.md'), 'utf8').replace(/\r\n/g, '\n');
 
-/** 16 词正典（SKILL.md 表序＝WAKE_TABLE 表序：4 today＋6 range＋5 search＋1 detail；#1275 删查账单）。 */
+/** 17 词正典（SKILL.md 表序＝WAKE_TABLE 表序：4 today＋7 range＋5 search＋1 detail；#1275 删查账单，1269 加查多条件）。 */
 const CANON = [
   '查今天', '查昨天', '查某天', '查最近',
-  '查周', '查月', '查区间', '查分类', '查账户', '查账本',
+  '查周', '查月', '查区间', '查分类', '查账户', '查账本', '查多条件',
   '搜备注', '查标签', '查欠款', '查待报销', '查分期',
   '查账单详情',
 ];
@@ -35,6 +35,7 @@ const EXPECT_KEY = {
   '查分类': 'bill.record.range',
   '查账户': 'bill.record.range',
   '查账本': 'bill.record.range',
+  '查多条件': 'bill.record.range',
   '搜备注': 'bill.record.search',
   '查标签': 'bill.record.search',
   '查欠款': 'bill.record.search',
@@ -43,7 +44,7 @@ const EXPECT_KEY = {
   '查账单详情': 'bill.record.detail',
 };
 
-/** 词→HELP 场景 id 期望（查询域 16 卡 1:1；难行点名：查账单详情→query_bill_detail）。 */
+/** 词→HELP 场景 id 期望（查询域 17 卡 1:1；难行点名：查账单详情→query_bill_detail）。 */
 const EXPECT_SCENE = {
   '查今天': 'query_today',
   '查昨天': 'query_yesterday',
@@ -58,6 +59,7 @@ const EXPECT_SCENE = {
   '查标签': 'query_tag',
   '查账户': 'query_account',
   '查账本': 'query_ledger',
+  '查多条件': 'query_multi',
   '查欠款': 'query_debt',
   '查待报销': 'query_pending_reimburse',
   '查分期': 'query_installment',
@@ -179,21 +181,21 @@ function buildQueryRows() {
   });
 }
 
-describe('416 · 查询 16 词五段接线', () => {
-  it('16 词表：WAKE_TABLE 派生，顺序照 SKILL 联动块，4 today＋6 range＋5 search＋1 detail', () => {
+describe('416 · 查询 17 词五段接线', () => {
+  it('17 词表：WAKE_TABLE 派生，顺序照 SKILL 联动块，4 today＋7 range＋5 search＋1 detail', () => {
     const got = WAKE_TABLE.filter((e) => e.key === 'bill.record.today' || e.key === 'bill.record.range' || e.key === 'bill.record.search' || e.key === 'bill.record.detail').map((e) => e.phrase);
     assert.deepEqual(got, CANON);
-    assert.equal(got.length, 16);
+    assert.equal(got.length, 17);
     const keys = got.map((w) => WAKE_TABLE.find((e) => e.phrase === w).key);
     assert.equal(keys.filter((k) => k === 'bill.record.today').length, 4);
-    assert.equal(keys.filter((k) => k === 'bill.record.range').length, 6);
+    assert.equal(keys.filter((k) => k === 'bill.record.range').length, 7);
     assert.equal(keys.filter((k) => k === 'bill.record.search').length, 5);
     assert.equal(keys.filter((k) => k === 'bill.record.detail').length, 1);
   });
 
   it('五段对得上：逐词 reason 为空（词→key→SKILL 行→HELP 卡→CLI）', () => {
     const rows = buildQueryRows();
-    assert.equal(rows.length, 16);
+    assert.equal(rows.length, 17);
     for (const r of rows) {
       assert.equal(r.reason, '', r.phrase + ' 接线断了：' + r.reason);
       assert.ok(r.cli.includes('bill-cmd-read ' + r.key), r.phrase);
@@ -205,7 +207,7 @@ describe('416 · 查询 16 词五段接线', () => {
 
   it('HELP 卡：在查询域各恰一张卡（wake_word 全等 1:1，prompt 含唤醒词）', () => {
     const queryScenes = WAKE_GROUPS.find((g) => g.id === 'query').subgroups.flatMap((s) => s.scenes);
-    assert.equal(queryScenes.length, 16);
+    assert.equal(queryScenes.length, 17);
     for (const w of CANON) {
       assert.equal(queryScenes.filter((s) => s.wake_word === w).length, 1, w);
     }
@@ -218,7 +220,7 @@ describe('416 · 查询 16 词五段接线', () => {
     }
   });
 
-  it('SKILL.md 联动块含 16 行 CLI（构建期注入新鲜，反引号整段）', () => {
+  it('SKILL.md 联动块含 17 行 CLI（构建期注入新鲜，反引号整段）', () => {
     for (const r of buildQueryRows()) {
       assert.ok(skillText.includes('`' + r.cli + '`'), r.phrase + ' 的 CLI 不在 SKILL.md 联动块');
     }
@@ -228,7 +230,7 @@ describe('416 · 查询 16 词五段接线', () => {
     const queryScenes = WAKE_GROUPS.find((g) => g.id === 'query').subgroups.flatMap((s) => s.scenes);
     const rows = buildQueryRows();
     const byPhrase = new Map(rows.map((r) => [r.phrase, r]));
-    assert.equal(queryScenes.length, 16);
+    assert.equal(queryScenes.length, 17);
     for (const s of queryScenes) {
       assert.ok(byPhrase.has(s.wake_word), 'HELP 卡无对应词：' + s.id + '／' + s.wake_word);
       const r = byPhrase.get(s.wake_word);
