@@ -32,6 +32,7 @@ import { actionStamp, copyArea, copyLog } from '../shared/copyArea.js';
 import { ticketCopyOf } from './list-copy.js';
 import { calcKpi } from '../shared/kpi.js';
 import { DOC_TITLE, DOC_VERSION } from '../shared/pageIdentity.js';
+import { checkIdText } from './checkLine.js';
 import { countNotes } from './countLabel.js';
 import { toBillItem } from './items.js';
 import { listEnvelope } from './list.js';
@@ -165,7 +166,7 @@ function entriesHtml(records: readonly BillRow[]): string {
 
 /** 对账 CHECK（原型逐字：编号序列 ／ 共 N 笔 ／ 异常：无；全角斜线）。 */
 function checkHtml(records: readonly BillRow[], countText: string): string {
-  const ids = records.map((r) => String(r.id)).join('、');
+  const ids = checkIdText(records.map((r) => r.id));
   return '<div class="ilife-month-check"><span class="ilife-month-check-dot" aria-hidden="true"></span>'
     + '<span>编号 ' + escapeHtml(ids) + ' ／ 共 ' + countText + ' ／ 异常：无</span></div>';
 }

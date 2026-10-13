@@ -35,6 +35,7 @@ import { actionStamp, copyArea, copyLog } from '../shared/copyArea.js';
 import { ticketCopyOf } from './list-copy.js';
 import { calcKpi } from '../shared/kpi.js';
 import { DOC_TITLE, DOC_VERSION } from '../shared/pageIdentity.js';
+import { checkIdText } from './checkLine.js';
 import { countNotes } from './countLabel.js';
 import { toBillItem } from './items.js';
 import { listEnvelope } from './list.js';
@@ -172,7 +173,7 @@ function entriesHtml(records: readonly BillRow[]): string {
 
 /** 对账 CHECK（w01 原型字面：编号序列 ／ 共 N 笔 ／ 异常：无；分隔是半角斜线，见件头）。 */
 function checkHtml(records: readonly BillRow[], countText: string): string {
-  const ids = records.map((r) => String(r.id)).join('、');
+  const ids = checkIdText(records.map((r) => r.id));
   return '<div class="ilife-today-check"><span class="ilife-today-check-dot" aria-hidden="true"></span>'
     + '<span>编号 ' + escapeHtml(ids) + ' / 共 ' + countText + ' / 异常：无</span></div>';
 }

@@ -46,6 +46,7 @@ import { BILL_HTML_MAX_BYTES, estimateBytes } from '../render/html.js';
 import { pageBody, pageNav } from '../shared/pageSections.js';
 import type { PageBlock } from '../shared/pageSections.js';
 import { isTagList, queryTagDoc } from './list-tag.js';
+import { checkIdText } from './checkLine.js';
 
 /** 数据表的一行（值一律是已文本化的字符串：表格不吃对象，也不做二次格式化）。
  *  写成 `type` 别名而不是 `interface`：公共层的表格与复制载荷收 `Record<string, unknown>`，
@@ -327,7 +328,7 @@ function searchTicketDetail(input: QueryListInput, shown: readonly QueryTableRow
 function searchTicketCheck(input: QueryListInput): string {
   const text = input.rows.length === 0
     ? '笔数 0 ／ 查到 0 笔 ／ 异常：无'
-    : '编号 ' + input.rows.map((r) => r.id).join('、') + ' ／ 共 ' + String(input.rows.length) + ' 笔 ／ 异常：无';
+    : '编号 ' + checkIdText(input.rows.map((r) => r.id)) + ' ／ 共 ' + String(input.rows.length) + ' 笔 ／ 异常：无';
   return '<div class="ilife-ticket-card" style="border-color:color-mix(in srgb, var(--ilife-ok) 30%, var(--ilife-ok-soft));background:var(--ilife-ok-soft);">'
     + '<span style="display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.6;">'
     + '<span aria-hidden="true" style="flex:none;width:8px;height:8px;margin-top:6px;border-radius:999px;background:var(--ilife-ok);"></span>'

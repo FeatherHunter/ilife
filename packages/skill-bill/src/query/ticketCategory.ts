@@ -53,6 +53,7 @@ import { fitTicketPage } from './pageFit.js';
 import { queryStyleTag } from './pageParts.js';
 import { assembleSheetPage, sheetHead, ticketActions, ticketRule, ticketSection, ticketSummary } from '../shared/docPage.js';
 import { commandLine, writeSection } from '../shared/writeParts.js';
+import { checkIdText } from './checkLine.js';
 
 /** 本次数据来源（复制日志第 3 段，与 `./read.js` 的查询来源同字）。 */
 const SOURCE_QUERY = DB_FILENAME + '（查询结果：只读，不改库）';
@@ -179,7 +180,7 @@ function notesHtml(records: readonly BillRow[], start: number): string {
 
 /** 对账 CHECK（原型 `checkHTML` 同式：编号序列 ／ 共 N 笔 ／ 异常：无；全角斜线）。 */
 function checkHtml(records: readonly BillRow[], countText: string): string {
-  const ids = records.map((r) => String(r.id)).join('、');
+  const ids = checkIdText(records.map((r) => r.id));
   return '<div class="ilife-category-check"><span class="ilife-category-check-dot" aria-hidden="true"></span>'
     + '<span>编号 ' + escapeHtml(ids) + ' ／ 共 ' + countText + ' ／ 异常：无</span></div>';
 }

@@ -36,6 +36,7 @@ import { DOC_TITLE, DOC_VERSION } from '../shared/pageIdentity.js';
 import { commandLine, writeSection } from '../shared/writeParts.js';
 import { queryStyleTag } from './pageParts.js';
 import type { QueryListInput, QueryTableRow } from './list.js';
+import { checkIdText } from './checkLine.js';
 
 /** 本页是不是查标签（`./list.ts` 分支判据，唯一定义地）。 */
 export function isTagList(input: { readonly key: string; readonly params: Record<string, unknown> }): boolean {
@@ -142,7 +143,7 @@ function checkHtml(input: QueryListInput): string {
   const ids = input.rows.map((r) => r.id);
   const text = ids.length === 0
     ? '共 0 笔 ／ 异常：无'
-    : '编号 ' + ids.join('、') + ' ／ 共 ' + input.rows.length + ' 笔 ／ 异常：无';
+    : '编号 ' + checkIdText(ids) + ' ／ 共 ' + input.rows.length + ' 笔 ／ 异常：无';
   return '<div class="check-mini"><span class="dot"></span><span>' + escapeHtml(text) + '</span></div>';
 }
 
