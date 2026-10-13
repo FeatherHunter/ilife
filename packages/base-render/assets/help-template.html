@@ -217,21 +217,19 @@
   .filt-q{flex:1;min-width:0;box-sizing:border-box;border:1px solid var(--line);border-radius:8px;height:32px;padding:0 9px;font-size:13.5px;background:#fff;outline:none;font-family:inherit;color:var(--fg)}
   .filt-count{flex-shrink:0;white-space:nowrap}
   /* 新建行（声明 `allow_new` 的格才有）：夹在列表与筛选行**之间**——列表在上面长、筛选行贴着触发框，
-     新建行在中间，输入框里敲着串就地看得见。`new_prefixes` 有值时前缀胶囊占上面一行。
-     **面板一打开就在**（用户 2026-10-14：空输入时整行藏起来＝能力看不见）：
+     新建行在中间，输入框里敲着串就地看得见。**面板一打开就在**（用户 2026-10-14：空输入时整行藏起来＝能力看不见）：
      · 未激活态 `data-idle="1"`（输入为空、或敲的串在候选里已有同键写法）：弱色＋省略写法「＋ 新建 "…"」，
        点了只把焦点送进筛选框，不提交任何值；
-     · 激活态：实文「＋ 新建 "串"」，点了才追加 option ＋ 回填。 */
+     · 激活态：实文「＋ 新建 "串"」，点了才追加 option ＋ 回填。
+     说明句「在筛选框里敲名字即可新建」**并进同一行**（用户 2026-10-14 二改：不许独占一行、行高不许变高），
+     激活态收起。前缀胶囊那一行已删（同批裁定：改成列表按前缀自动扎堆，见 `mountFilterSelects` 的 `orderedReal`）。 */
   .filt-new{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:7px 9px;background:#fafafc;border-top:1px solid #f0f0f3}
-  .filt-new-btn{flex:1 1 100%;min-width:0;box-sizing:border-box;text-align:left;border:1px dashed var(--line);background:#fff;color:var(--fg2);border-radius:8px;padding:7px 10px;font:600 12.5px/1.35 -apple-system,"Microsoft YaHei",sans-serif;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .filt-new-btn{flex:1 1 100%;min-width:0;box-sizing:border-box;display:flex;align-items:center;gap:6px;text-align:left;border:1px dashed var(--line);background:#fff;color:var(--fg2);border-radius:8px;padding:7px 10px;font:600 12.5px/1.35 -apple-system,"Microsoft YaHei",sans-serif;cursor:pointer;overflow:hidden}
   .filt-new-btn:active{background:#ececf1}
   .filt-new-btn[data-idle="1"]{color:var(--fg3);font-weight:400;cursor:text}
-  .filt-new-tip{flex:1 1 100%;font-size:11px;line-height:1.3;color:var(--fg3)}
+  .filt-new-t{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .filt-new-tip{flex:none;font-size:11px;line-height:1.35;font-weight:400;color:var(--fg3);white-space:nowrap}
   .filt-new-tip[hidden]{display:none}
-  .filt-pfx-row{flex:1 1 100%;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
-  .filt-pfx-cap{flex:none;font-size:11.5px;color:var(--fg3)}
-  .filt-pfx{flex:none;border:1px dashed var(--line);background:#fff;color:var(--fg2);border-radius:999px;padding:4px 10px;font:600 11.5px/1 -apple-system,"Microsoft YaHei",sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent}
-  .filt-pfx:active{background:#ececf1}
   /* 唤起失败／浏览器不支持时的可见提示（不静默） */
   .help-note{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;z-index:99999;max-width:88vw;background:rgba(28,28,30,.92);color:#fff;font:400 12.5px/1.5 -apple-system,"Microsoft YaHei",sans-serif;padding:9px 12px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .18s ease}
   .help-note.show{opacity:1}
@@ -2843,8 +2841,10 @@ function mountPeriods(root){
 /** 候选下拉：一行框＋悬浮筛选面板（面板向上展开，不改字段高度）。
     #1280 二改（用户 2026-10-13 裁定）：**「候选选择」与「新建」合成这一处控件**——
     · 候选够多（≥ HELP_FILTER_MIN）的格走这套（照旧）；
-    · 声明了 `allow_new` 的格也走这套（候选多不多都走）：面板里多一行「＋ 新建 …」＋前缀胶囊；
+    · 声明了 `allow_new` 的格也走这套（候选多不多都走）：面板里多一行「＋ 新建 "…"」（未激活）／
+      「＋ 新建 "串"」（激活），同一行右侧挂一句弱色说明；
     · 声明了候选项附注 `notes` 的格也走这套：附注印在行右侧（原生 `<select>` 一行装不下两段字）。
+    候选顺序：#1280 三改（用户 2026-10-14）起按前缀扎堆排（`orderedReal`），**所有** `.filt` 格一视同仁。
     取值口始终是那枚隐藏的 `<select>`（回填协议不变：值进 value、冒泡 change）；字段管线不再挂
     smartSelect（见 mountFields，那套代码先留着）。 */
 function mountFilterSelects(root){
@@ -2855,8 +2855,9 @@ function mountFilterSelects(root){
       var all = [];
       for (var oi = 0; oi < sel.options.length; oi++) all.push({ v: sel.options[oi].value, t: sel.options[oi].textContent });
       var real = all.filter(function(o){ return o.v; });
-      /* 这一格的声明（`allow_new`／`new_prefixes`／`notes`）：场景按 `.pform[data-pid]` 取、字段按 `data-p` 取，
-         与 mountSmartSelects 同一条取法；取不到就当没有（手写页面也不炸）。 */
+      /* 这一格的声明（`allow_new`／`notes`）：场景按 `.pform[data-pid]` 取、字段按 `data-p` 取，
+         与 mountSmartSelects 同一条取法；取不到就当没有（手写页面也不炸）。
+         `new_prefixes` 本控件不消费（用户 2026-10-14 删掉前缀胶囊行后它在本管线里已无消费方）。 */
       var fm = sel.closest ? sel.closest('.pform[data-pid]') : null;
       var sc = fm ? SCENE[fm.getAttribute('data-pid')] : null;
       var p = null;
@@ -2867,30 +2868,20 @@ function mountFilterSelects(root){
       }
       var allowNew = !!(p && p.allowNew);
       var notes = (p && p.notes && typeof p.notes === 'object' && !Array.isArray(p.notes)) ? p.notes : {};
-      var prefixes = (p && Array.isArray(p.newPrefixes)) ? p.newPrefixes : [];
       if (real.length < HELP_FILTER_MIN && !allowNew && !Object.keys(notes).length) return; /* 候选少、不放开新建、无附注：原生下拉够用，不换 */
       var emptyText = (all.length && !all[0].v) ? all[0].t : '请选择'; /* 空项文案沿用声明给的那一个 */
       sel.setAttribute('data-filt', '1');
       sel.hidden = true; /* 原 select 留作取值口（readParams 连 hidden 一起读） */
       var wrap = document.createElement('div');
       wrap.className = 'filt';
-      /* 前缀胶囊（`new_prefixes`）：只在放开新建时给，点一下＝把「前缀/」填进筛选框（同原 smartSelect 的 `ss-pfx`）。 */
-      var pfxHTML = '';
-      if (allowNew && prefixes.length) {
-        pfxHTML = '<div class="filt-pfx-row"><span class="filt-pfx-cap">先选前缀</span>';
-        for (var xi = 0; xi < prefixes.length; xi++) {
-          pfxHTML += '<button type="button" class="filt-pfx" data-pfx="' + esc(String(prefixes[xi])) + '">' + esc(String(prefixes[xi])) + '</button>';
-        }
-        pfxHTML += '</div>';
-      }
       wrap.innerHTML =
         '<button type="button" class="filt-row" aria-haspopup="listbox" aria-expanded="false">' +
         '<span class="filt-val"></span>' +
         '<svg class="filt-caret" viewBox="0 0 16 10" aria-hidden="true"><path d="M3.5 7.5 8 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
         '</button>' +
         '<div class="filt-panel"><div class="filt-list" role="listbox"></div>' +
-        (allowNew ? '<div class="filt-new">' + pfxHTML + '<button type="button" class="filt-new-btn" data-new="1" data-idle="1" aria-disabled="true"></button>' +
-          '<div class="filt-new-tip">在筛选框里敲名字即可新建</div></div>' : '') +
+        (allowNew ? '<div class="filt-new"><button type="button" class="filt-new-btn" data-new="1" data-idle="1" aria-disabled="true">' +
+          '<span class="filt-new-t"></span><span class="filt-new-tip">在筛选框里敲名字即可新建</span></button></div>' : '') +
         '<div class="filt-foot"><input type="text" class="filt-q" placeholder="输入筛选" autocomplete="off">' +
         '<span class="filt-count"></span></div></div>';
       sel.parentNode.insertBefore(wrap, sel);
@@ -2902,12 +2893,53 @@ function mountFilterSelects(root){
       var count = wrap.querySelector('.filt-count');
       var newEl = wrap.querySelector('.filt-new');
       var newBtn = wrap.querySelector('.filt-new-btn');
+      var newT = wrap.querySelector('.filt-new-t');
       var tip = wrap.querySelector('.filt-new-tip');
       /* 库里有没有同键写法（比较键口径与 smartSelect 同一支 `ssNameKey`：NFKC＋空白折叠＋大小写折叠）。 */
       function findSame(raw){
         var key = ssNameKey(raw);
         for (var i = 0; i < real.length; i++) { if (ssNameKey(real[i].v) === key) return real[i].v; }
         return '';
+      }
+      /* 候选扎堆排序（用户 2026-10-14：前缀胶囊那一行删掉，改成列表按前缀自动扎堆，滑列表就能找到）：
+         · 桶键＝候选值里第一个 `/` **之前**那一段（没有 `/`、或 `/` 打头的，归空串桶）；
+         · 桶间：按桶总量降序（本格有 `notes` 就用 notes 计数求和，没有就用桶内候选条数），同量按桶名；
+         · 桶内：按用量降序（有 `notes` 用 notes，没有就保持候选原顺序），同量按名称序——全程确定性。
+         对**所有** `.filt` 格生效（pick-only 与原分类同样吃这个排序），与 `allow_new` 无关；
+         不加分组小标题（用户只要扎堆，不加高度）。`group_by` 键继续惰性、不接。 */
+      var hasNotes = Object.keys(notes).length > 0;
+      function noteNum(v){
+        var s = notes[v];
+        if (s == null) return -1;
+        var m = String(s).match(/\d+/);
+        return m ? parseInt(m[0], 10) : -1;
+      }
+      function orderedReal(){
+        var bk = {}, ks = [], i, o, k, b;
+        for (i = 0; i < real.length; i++) {
+          o = real[i];
+          var cut = o.v.indexOf('/');
+          k = cut > 0 ? o.v.slice(0, cut) : '';
+          b = bk[k];
+          if (!b) { b = bk[k] = { k: k, items: [], total: 0 }; ks.push(k); }
+          b.items.push(o);
+          var n = noteNum(o.v);
+          b.total += (hasNotes && n >= 0) ? n : 1;
+        }
+        var arr = [];
+        for (i = 0; i < ks.length; i++) arr.push(bk[ks[i]]);
+        arr.sort(function(x, y){ return (y.total - x.total) || (x.k < y.k ? -1 : (x.k > y.k ? 1 : 0)); });
+        var out = [];
+        for (i = 0; i < arr.length; i++) {
+          var its = arr[i].items;
+          if (hasNotes) its = its.slice().sort(function(x, y){
+            var nx = noteNum(x.v), ny = noteNum(y.v);
+            if (nx !== ny) return ny - nx;
+            return x.v < y.v ? -1 : (x.v > y.v ? 1 : 0);
+          });
+          out = out.concat(its);
+        }
+        return out;
       }
       /* 回填协议（与文件上方那行「回填协议」同一条）：值进 value ＋ change 冒泡；
          只有 `allow_new` 的格才写 dataset.source／dataset.new（新建＝'1'）——pick-only 的格一个属性都不动。 */
@@ -2921,19 +2953,20 @@ function mountFilterSelects(root){
       }
       /* 新建行（只有 `allow_new` 的格有这个节点）：面板一打开就在，两种态——
          未激活（输入为空、或敲的串在候选里已有同键写法）：弱色＋「＋ 新建 "…"」，点了只送焦点；
-         激活（敲了一个候选里没有的串）：实文「＋ 新建 "串"」，点了才追加 option ＋ 回填。 */
+         激活（敲了一个候选里没有的串）：实文「＋ 新建 "串"」，点了才追加 option ＋ 回填。
+         说明句是按钮里的第二个 span（同一行，不占额外高度），激活态收起。 */
       function syncNew(){
         if (!newEl) return;
         var raw = q.value.trim();
         var act = !!(raw && !findSame(raw));
         newBtn.setAttribute('data-idle', act ? '0' : '1');
         newBtn.setAttribute('aria-disabled', act ? 'false' : 'true');
-        newBtn.textContent = act ? ('＋ 新建 "' + raw + '"') : '＋ 新建 "…"';
-        if (tip) tip.hidden = act; /* 激活后那句提示是废话，收掉 */
+        newT.textContent = act ? ('＋ 新建 "' + raw + '"') : '＋ 新建 "…"';
+        if (tip) tip.hidden = act; /* 激活后那句说明是废话，收掉 */
       }
       function draw(){
         var kw = q.value.trim().toLowerCase();
-        var hit = real.filter(function(o){ return !kw || o.t.toLowerCase().indexOf(kw) >= 0 || o.v.toLowerCase().indexOf(kw) >= 0; });
+        var hit = orderedReal().filter(function(o){ return !kw || o.t.toLowerCase().indexOf(kw) >= 0 || o.v.toLowerCase().indexOf(kw) >= 0; });
         var html = kw ? '' : '<div class="filt-opt none' + (sel.value ? '' : ' on') + '" role="option" data-v="">' + esc(emptyText) + '</div>';
         hit.forEach(function(o){
           var note = notes[o.v];
@@ -3030,14 +3063,6 @@ function mountFilterSelects(root){
          两者都在面板内，点它们不会撞上「点别处收起」那条（那条对 `.filt-panel` 自己豁免）。 */
       if (newEl) newEl.addEventListener('click', function(e){
         var t = e.target;
-        var pb = (t && t.closest) ? t.closest('[data-pfx]') : null;
-        if (pb) {
-          /* 同原来 `ss-pfx` 的语义：把「前缀/」填进输入框，名字用户自己接着敲；光标落到末尾。 */
-          q.value = pb.getAttribute('data-pfx') + '/';
-          draw(); place();
-          try { q.focus(); var n = q.value.length; q.setSelectionRange(n, n); } catch (err) {}
-          return;
-        }
         if (!(t && t.closest && t.closest('[data-new]'))) return;
         var raw = q.value.trim();
         if (newBtn.getAttribute('data-idle') === '1' || !raw) {
