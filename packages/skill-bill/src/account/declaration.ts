@@ -50,7 +50,7 @@ export const ACCOUNT_DECLARATION: DomainDeclaration = {
           prompt_template: '请你加载技能 饼干记账,执行唤醒词「改账户」。\n\n我要修改一个账户（如改名或停用）。\n\n账户:{{account}}\n改成什么:{{change}}',
           types: ['选择'],
           editable_fields: [
-            { name: 'account', label: '账户', value: '', hint: '如 招行卡', required: true, kind: 'text' },
+            { name: 'account', label: '账户', value: '', hint: '从账户表里选；列表里没有就先去新增账户', required: true, kind: 'text', source: 'accounts', create_scene: 'account_add' },
             { name: 'change', label: '改成什么', value: '', hint: '如 改名招行工资卡、停用', required: true, kind: 'text' },
           ],
         },
@@ -70,8 +70,8 @@ export const ACCOUNT_DECLARATION: DomainDeclaration = {
           types: ['采集'],
           editable_fields: [
             { name: 'amount', label: '金额', value: '', hint: '纯数字，不带单位', required: true, kind: 'number' },
-            { name: 'from_account', label: '从账户', value: '', hint: '如 支付宝', required: true, kind: 'text' },
-            { name: 'to_account', label: '到账户', value: '', hint: '如 招行卡', required: true, kind: 'text' },
+            { name: 'from_account', label: '从账户', value: '', hint: '从账户表里选；列表里没有就先去新增账户', required: true, kind: 'text', source: 'accounts', create_scene: 'account_add' },
+            { name: 'to_account', label: '到账户', value: '', hint: '从账户表里选；列表里没有就先去新增账户', required: true, kind: 'text', source: 'accounts', create_scene: 'account_add' },
             { name: 'transfer_time', label: '时间(选填)', value: '', hint: '空＝现在；填了必须是 YYYY-MM-DD', required: false, kind: 'date' },
           ],
         },
