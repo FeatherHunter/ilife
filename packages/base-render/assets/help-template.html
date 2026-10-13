@@ -191,7 +191,7 @@
      字段本身永远只有一行，不改控件高度（用户 2026-10-13 定：筛选输入框与「共 N 项」在面板底端同一行）。 */
   .sheet .filt{flex:1;min-width:0;display:block}
   .sheet .filt-row{display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:9px;padding:8px 36px 8px 10px;background:#fff;font:400 16px/1.2 -apple-system,"Microsoft YaHei",sans-serif;color:var(--fg);cursor:pointer;text-align:left}
-  .sheet .filt.open .filt-row{border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,122,255,.12)}
+  .sheet .filt.open .filt-row{border-color:var(--blue);box-shadow:inset 0 0 0 2px rgba(0,122,255,.16)}
   .sheet .filt-val{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--fg3)}
   .sheet .filt-val.has{color:var(--fg)}
   .sheet .filt-caret{width:11px;height:7px;color:var(--fg3);flex-shrink:0;transition:transform .16s ease}
@@ -2497,8 +2497,8 @@ function mountFilterSelects(root){
            只能靠事件补量。右缘按「视口可用宽 − 框右缘」存成 px，视口与框右缘同向移动时该值
            自动仍然正确。 */
         var vw = document.documentElement.clientWidth || window.innerWidth;
-        panel.style.left = r.left + 'px';
-        panel.style.right = Math.max(0, vw - r.right) + 'px';
+        panel.style.left = Math.round(r.left) + 'px';
+        panel.style.right = Math.round(Math.max(0, vw - r.right)) + 'px';
         panel.style.width = '';
         listEl.style.maxHeight = LIST_MAX + 'px';
         var chromeH = panel.offsetHeight - listEl.offsetHeight; /* 筛选行＋边框 */
@@ -2534,6 +2534,11 @@ function mountFilterSelects(root){
       };
       window.addEventListener('scroll', reflow, true);
       window.addEventListener('resize', reflow);
+      /* 视觉视口（软键盘、双击/聚焦自动放大）变化时 resize 不一定响：补一条。 */
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', reflow);
+        window.visualViewport.addEventListener('scroll', reflow);
+      }
       /* 触发框自身尺寸一变就重摆（视口宽没变、但框变宽变窄的情形，resize 不响）：与上面的
          left/right 定宽互补——定宽管「视口变」，观察器管「框变」。 */
       if (typeof ResizeObserver === 'function') {
