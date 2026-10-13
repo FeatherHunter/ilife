@@ -134,8 +134,8 @@ function foldNote(): string {
 export function renderLookupPageHtml(): string {
   const index = buildLookupIndexInput();
   const hits = buildHelpItems(buildHelpLookup(), undefined);
-  // 复制区那份载荷＝索引的三列投影（唤醒词／命令／照抄即跑的命令行）：77 条 × 三格式的体积要留在
-  // 出口体积门（BILL_HTML_MAX_BYTES＝256KiB）以内——整条 hits 三条格式一起塞进来会顶到 98.8%。
+  // 复制区那份载荷＝索引的三列投影（唤醒词／命令／照抄即跑的命令行）：整条 hits 三条格式全塞会顶到旧门限
+  // （BILL_HTML_MAX_BYTES＝256 KiB）的 98.8%；2026-10-13 门限抬到 2.4 MB（票 #1279），本件照旧出三列投影（版面口径使然）。
   // **stdout 的 env.data.* 不在这里**：那是 cmd_read 的 buildBillEnvelope 原样出的，本件一字不动。
   const envelope: SerializableEnvelope = {
     version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: 'help.lookup',

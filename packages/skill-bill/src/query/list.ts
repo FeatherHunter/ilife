@@ -42,7 +42,7 @@ import { queryPageShell as pageShell, queryStyleTag } from './pageParts.js';
 import { sourceLine } from '../shared/sourceLine.js';
 import { commandLine, writeSection } from '../shared/writeParts.js';
 import { assembleSheetPage, sheetHead, ticketActions, ticketRule, ticketSection, ticketSummary } from '../shared/docPage.js';
-import { estimateBytes } from '../render/html.js';
+import { BILL_HTML_MAX_BYTES, estimateBytes } from '../render/html.js';
 import { pageBody, pageNav } from '../shared/pageSections.js';
 import type { PageBlock } from '../shared/pageSections.js';
 import { isTagList, queryTagDoc } from './list-tag.js';
@@ -148,16 +148,19 @@ export interface QueryListInput {
  *  真正的约束在 `PAGE_BYTE_BUDGET`：这个数是天花板，实际画多少由体积算出来（见 `queryListDoc`）。 */
 const DISPLAY_LIMIT = 200;
 
-/** 一整页的**体积预算**（字节）。交付路对写下去的那一串跑 `assertHtmlSize`
- *  （`../render/html.ts:46`，上限 `BILL_HTML_MAX_BYTES = 262,144`），超了 **exit 5、整页不出**。
+/** 一整页的**体积预算**（字节）＝交付硬门 `BILL_HTML_MAX_BYTES`（`../render/html.ts:46`）。
+ *  交付路对写下去的那一串跑 `assertHtmlSize`，超了 **exit 5、整页不出**。
  *
  *  **口径重拍**，理由是固定条数保不住这条门：① 本页体积由**复制载荷**主导——复制区按 #247 给三种格式，
  *  同一份数据落三处，实测每条约 1.6 KB；② 一行的体积**随内容长短变**——100 条普通备注 235 KB（过），
  *  100 条 200 字长备注 **497 KB（撞门）**。故改成按当刻产物的真实字节定条数：
  *  先按 `min(本窗条数, DISPLAY_LIMIT)` 试画，放不下就用**二分**找「放得下的最大条数」
  *  （回退按比例猜会多扔两成版面）。于是页大小与查询规模、与单条内容长短**双重解耦**。
- *  **出口载荷（stdout 那份 `data.items`）仍全量**，机器契约一字不动。 */
-const PAGE_BYTE_BUDGET = 240_000;
+ *  **出口载荷（stdout 那份 `data.items`）仍全量**，机器契约一字不动。
+ *
+ *  **2026-10-13 用户裁定**「不允许有240KB限制，允许有2.4MB这么大」（票 #1279）：240 KB 这个自设天花板取消，
+ *  预算与硬门同源——票据纸装得下就出票据纸，只有真到门限才回落本页。 */
+const PAGE_BYTE_BUDGET = BILL_HTML_MAX_BYTES;
 
 /** 分类聚合卡的类数上限（老侧 `categoryBar` 的 `slice(0,8)` 同数）。 */
 const CATEGORY_LIMIT = 8;

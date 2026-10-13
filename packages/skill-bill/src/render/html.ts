@@ -3,7 +3,9 @@ import type { Envelope } from 'base-link-core';
 import { escapeHtml } from 'base-paint';
 import { BillRenderError } from './errors.js';
 
-export const BILL_HTML_MAX_BYTES = 256 * 1024;
+// 交付体积硬门（字节）。用户 2026-10-13 裁定「不允许有240KB限制，允许有2.4MB这么大」（票 #1279）：
+// 由 256 KiB 抬到 2,400,000 字节；各页的自设预算（`PAGE_BYTE_BUDGET`）与它同源，不再因为装得下就换皮。
+export const BILL_HTML_MAX_BYTES = 2_400_000;
 
 function billItemHtml(n: Record<string, unknown>): string {
   const time = escapeHtml(String(n.time ?? ''));

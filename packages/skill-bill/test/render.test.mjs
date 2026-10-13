@@ -35,7 +35,9 @@ describe('饼干渲染 render', () => {
   it('HTML 按形状渲染 + 体积门 + 三标记', () => {
     const env = buildBillEnvelope('bill.record.today', { items: [{ id: 1, category: '餐饮', time: 't', amount: -35, note: 'n' }], total: 1 });
     assert.match(renderEnvelopeHtml(env), /<section/);
-    assert.throws(() => assertHtmlSize('x'.repeat(300 * 1024)), /超体积/);
+    // 体积门：2026-10-13 用户裁定由 256 KiB 抬到 2.4 MB（票 #1279）——300 KiB 必须过，250 万字节必须拦。
+    assert.doesNotThrow(() => assertHtmlSize('x'.repeat(300 * 1024)));
+    assert.throws(() => assertHtmlSize('x'.repeat(2_500_000)), /超体积/);
     const tpl = loadTemplate('record_today');
     assert.ok(fillTemplate(tpl, '<p>x</p>').includes('<p>x</p>'));
     assert.throws(() => fillTemplate('no marker', 'x'), /标记/);

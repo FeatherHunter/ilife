@@ -34,7 +34,7 @@ import { actionStamp, copyArea, copyLog } from '../shared/copyArea.js';
 import { ticketCopyOf } from './list-copy.js';
 import { calcKpi } from '../shared/kpi.js';
 import { DOC_TITLE, DOC_VERSION } from '../shared/pageIdentity.js';
-import { estimateBytes } from '../render/html.js';
+import { BILL_HTML_MAX_BYTES, estimateBytes } from '../render/html.js';
 import { countNotes } from './countLabel.js';
 import { toBillItem } from './items.js';
 import { listEnvelope, queryListDoc } from './list.js';
@@ -49,8 +49,10 @@ const SOURCE_QUERY = DB_FILENAME + '（查询结果：只读，不改库）';
 /** 来源脚注的人话来源（回落老列表路时用，与 `./read.js` 同字）。 */
 const SOURCE_TEXT_QUERY = '记账库（只读）';
 
-/** 一整页的体积预算（字节，与 `./list.js` 的 `PAGE_BYTE_BUDGET` 同值：超了回落老列表路，不静默丢页）。 */
-const PAGE_BYTE_BUDGET = 240_000;
+/** 一整页的体积预算（字节）＝交付硬门 `BILL_HTML_MAX_BYTES`（`../render/html.js`）。
+ *  用户 2026-10-13 裁定「不允许有240KB限制，允许有2.4MB这么大」（票 #1279）：240 KB 这个自设天花板取消，
+ *  预算与硬门同源——只有真到门限才回落老列表路，不静默丢页、也不因为装得下就提前换皮。 */
+const PAGE_BYTE_BUDGET = BILL_HTML_MAX_BYTES;
 
 /** 分类聚合卡的类数上限（与 `./list.js` 的 `CATEGORY_LIMIT` 同数，老页 `slice(0,8)` 同）。 */
 const CATEGORY_LIMIT = 8;
