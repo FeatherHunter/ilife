@@ -7,7 +7,7 @@
  * （`new DatabaseSync(file, { readOnly: true })`：不建库、不迁移、不开 WAL），不碰 `openBillDb`
  * （那个会建库件、建表、加列）。
  *
- * 四个清单的口径：
+ * 五个清单的口径：
  *   - `tags`：备注里的 `#词`（与 `fetch/db.js` 的 `tagMatch` 同一套分隔符，见 `tagsInNote`）。
  *     本机真库实测 2026-10-13：7366 条未删笔记切出 131 个词，其中 121 个是**全数字**（记录编号，
  *     如 `#0`／`#10385`）⇒ **全数字的词一律丢掉**（编号不是标签），真标签 10 个。
@@ -22,7 +22,7 @@
  */
 import { existsSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
-import { tagsInNote } from '../fetch/db.js';
+import { loadGoals, tagsInNote } from '../fetch/db.js';
 
 /** 标签候选上限：生成的 HELP 页是给人看的短表，取前 40 个足够；再多也点不过来。 */
 export const TAG_CANDIDATE_LIMIT = 40;
@@ -30,16 +30,27 @@ export const TAG_CANDIDATE_LIMIT = 40;
 /** 分类／账户／账本候选上限：它们是账目结构（选不到就等于缺功能），只留一个安全上限防意外。 */
 export const LIST_CANDIDATE_LIMIT = 200;
 
-/** 生成期读到的四张候选清单（`helpFile.js` 按字段声明的 `source` 各取一张）。 */
+/** 生成期读到的五张候选清单（`helpFile.js` 按字段声明的 `source` 各取一张）。 */
 export interface HelpCandidateLists {
   readonly tags: readonly string[];
   readonly categories: readonly string[];
   readonly accounts: readonly string[];
   readonly ledgers: readonly string[];
+  /** #1269 条目 19：账户类型（住 `goals.json` 账户表的 `type` 列，**不在 bills 表里**）。 */
+  readonly accountTypes: readonly string[];
 }
 
 /** 读不出任何候选时的空快照（`helpSources.js` 的 catch 支路用）。 */
 export const EMPTY_CANDIDATE_LISTS: HelpCandidateLists = {
+  tags: [],
+  categories: [],
+  accounts: [],
+  ledgers: [],
+  accountTypes: [],
+};
+
+/** 库侧那四张的空表（`readCandidateLists` 的早退／catch 支路用；`accountTypes` 不在库侧）。 */
+const EMPTY_DB_LISTS: Omit<HelpCandidateLists, 'accountTypes'> = {
   tags: [],
   categories: [],
   accounts: [],
@@ -83,12 +94,29 @@ export function rankTagCandidates(notes: readonly string[], limit: number = TAG_
   return rankByFrequency(words, limit);
 }
 
-/** 只读读一遍库，返回四张候选清单。库不在／读不出即全空（见模块头 fail-open）。 */
+/** #1269 条目 19：账户类型候选——`goals.json` 账户表每行的 `type`（用户可自造类型，故候选＝
+ *  **已有账户写过的类型**，不是预置闭集）。文件不在／读不出即空表（同 fail-open 口径）；
+ *  排序与上限同 `rankByFrequency`。读法走 `loadGoals`（纯读，不落默认件）。 */
+export function readAccountTypes(goalsFile: string, limit: number = LIST_CANDIDATE_LIMIT): readonly string[] {
+  if (typeof goalsFile !== 'string' || goalsFile === '' || !existsSync(goalsFile)) return [];
+  try {
+    const accounts = loadGoals(goalsFile).accounts;
+    return rankByFrequency(
+      accounts.map((row) => String((row as { readonly type?: unknown }).type ?? '')),
+      limit,
+    );
+  } catch {
+    return [];
+  }
+}
+
+/** 只读读一遍库，返回库侧那四张候选清单（`accountTypes` 不住库、由 `readAccountTypes` 另读）。
+ *  库不在／读不出即全空（见模块头 fail-open）。 */
 export function readCandidateLists(
   dbFile: string,
   limit: number = LIST_CANDIDATE_LIMIT,
-): HelpCandidateLists {
-  if (typeof dbFile !== 'string' || dbFile === '' || !existsSync(dbFile)) return EMPTY_CANDIDATE_LISTS;
+): Omit<HelpCandidateLists, 'accountTypes'> {
+  if (typeof dbFile !== 'string' || dbFile === '' || !existsSync(dbFile)) return EMPTY_DB_LISTS;
   let db: DatabaseSync | null = null;
   try {
     db = new DatabaseSync(dbFile, { readOnly: true });
@@ -109,7 +137,7 @@ export function readCandidateLists(
       ledgers: rankByFrequency(rows.map((row) => textOf(row, 'ledger')), limit),
     };
   } catch {
-    return EMPTY_CANDIDATE_LISTS;
+    return EMPTY_DB_LISTS;
   } finally {
     try { db?.close(); } catch { /* 关不上不影响已经算出的结果 */ }
   }

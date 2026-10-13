@@ -6,8 +6,9 @@
  *
  * #977 · 第一性重写（Q1–Q4定调）：首行统一卡路里式；意图句去冗余。
  * kind 设计：金额 `number`；账户名／改法／转出入账户 `text`（用户自建账户名，开放，不进 `select`）；
- * 类型 `text`（“银行卡／支付／信用”只是例子，用户可自造类型，`select` 会锁死）；
- * 时间 `date`（只吃 YYYY-MM-DD，“现在”由执行侧解，hint 写空＝现在）。
+ * 类型 `text` ＋ `source:'accountTypes'`（用户 2026-10-13 裁定，条目 19：候选＝**已有账户写过的类型**
+ * 从 `goals.json` 生成期读一次，不是预置闭集；#977 那条「`select` 会锁死」按最新裁定作废，
+ * 新类型在对话里直接说即可）；时间 `date`（只吃 YYYY-MM-DD，“现在”由执行侧解，hint 写空＝现在）。
  */
 import type { DomainDeclaration } from '../triggers/routeSpec.js';
 
@@ -31,7 +32,7 @@ export const ACCOUNT_DECLARATION: DomainDeclaration = {
           types: ['采集'],
           editable_fields: [
             { name: 'account_name', label: '账户名', value: '', hint: '如 招行卡、花呗', required: true, kind: 'text' },
-            { name: 'account_type', label: '类型(选填)', value: '', hint: '如 银行卡、支付、信用', required: false, kind: 'text' },
+            { name: 'account_type', label: '类型(选填)', value: '', hint: '从已有类型里选；要新类型直接说', required: false, kind: 'text', source: 'accountTypes', empty_label: '不写类型' },
           ],
         },
       ],

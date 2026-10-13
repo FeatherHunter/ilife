@@ -160,7 +160,9 @@ describe('#721 · 内容摘要锁（冻结值台账一类，不是行为断言�
 
   it('#977 字段锁：60 有参带 editable_fields（kind 闭集＋{{}}一一对应），15 零参缺席', async () => {
     const { WAKE_ASSETS } = await import('../dist/triggers/wake-assets.js');
-    const KINDS = new Set(['text', 'number', 'select', 'date', 'week', 'period']);
+    // 闭集与渲染侧同源：`packages/base-render/assets/help-template.html:1834`（规范化）与 `:1915`（分派）
+    // 两处逐字相同 —— text（回落）／number／select／date／week／month／year／time／period。
+    const KINDS = new Set(['text', 'number', 'select', 'date', 'week', 'month', 'year', 'time', 'period']);
     const withFields = WAKE_ASSETS.filter((s) => s.editable_fields !== undefined);
     assert.equal(withFields.length, 60);
     assert.equal(WAKE_ASSETS.filter((s) => s.editable_fields === undefined).length, 15);
@@ -173,7 +175,8 @@ describe('#721 · 内容摘要锁（冻结值台账一类，不是行为断言�
         names.add(f.name);
         assert.ok(KINDS.has(f.kind ?? 'text'), s.id + ' 非法 kind：' + f.kind);
         assert.ok(s.prompt_template.includes('{{' + f.name + '}}'), s.id + ' 字段无对应占位：' + f.name);
-        if (f.kind === 'select') assert.ok(Array.isArray(f.options) && f.options.length > 0, s.id + ' select 无 options');
+        // select 的候选有两个来源：#1270 起清单类槽位写 `source`（生成期从库里取），其余写死 `options`。
+        if (f.kind === 'select' && !f.source) assert.ok(Array.isArray(f.options) && f.options.length > 0, s.id + ' select 无 options 也无 source');
       }
       for (const m of s.prompt_template.matchAll(/\{\{(\w+)\}\}/g)) {
         assert.ok(names.has(m[1]), s.id + ' 占位无字段定义：' + m[1]);

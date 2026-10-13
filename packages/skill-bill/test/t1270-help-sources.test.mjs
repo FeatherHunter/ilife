@@ -17,13 +17,13 @@ const home = useHome(mkdtempSync(join(tmpdir(), 'bill-1270-home-')));
 requireIsolatedHome(home);
 
 const { readHelpSources } = await import('../dist/help/index.js');
-const { resolveDbPath } = await import('../dist/fetch/index.js');
+const { resolveDbPath, resolveGoalsPath } = await import('../dist/fetch/index.js');
 
 test('#1270 · 库不在 ⇒ 未初始化 ＋ 候选空表（页面照出、横幅照显）', () => {
   const sources = readHelpSources();
   assert.equal(sources.initialized, false, '库文件不在即未初始化');
-  assert.deepEqual(sources.candidates, { tags: [], categories: [], accounts: [], ledgers: [] },
-    '读不出候选即四张空表，不是故障');
+  assert.deepEqual(sources.candidates, { tags: [], categories: [], accounts: [], ledgers: [], accountTypes: [] },
+    '读不出候选即五张空表，不是故障');
 });
 
 test('#1270 · 库在 ⇒ 已初始化 ＋ 候选＝真标签与三列真值（全数字编号不算标签）', () => {
@@ -54,4 +54,18 @@ test('#1270 · 库件坏了 ⇒ 仍算已初始化，候选退回空表（不抛
   assert.equal(sources.initialized, true, '文件在就是已初始化——初始化判据是文件存在，不是能不能读');
   assert.deepEqual(sources.candidates.categories, [], '打不开即空表，槽位退回自由文本');
   assert.deepEqual(sources.candidates.tags, []);
+});
+
+// #1269 条目 19：账户类型候选走的是另一份件（`goals.json` 账户表），生成期同样只读一次。
+test('#1269 · 账户表在 ⇒ 类型候选＝已有账户写过的类型（不在库侧那四张里）', () => {
+  writeFileSync(resolveGoalsPath(), JSON.stringify({
+    accounts: [
+      { name: '招行', type: '银行卡' }, { name: '支付宝', type: '支付' },
+      { name: '理发卡', type: '储值卡' }, { name: '美团月付', type: '信用' },
+    ],
+  }), 'utf8');
+  const sources = readHelpSources();
+  assert.deepEqual(sources.candidates.accountTypes, ['银行卡', '支付', '储值卡', '信用'],
+    '四类各一次 ⇒ 首次出现序；类型由数据给，不是预置闭集');
+  assert.deepEqual(sources.candidates.categories, [], '库坏了不影响账户类型那条读法（两条各自 fail-open）');
 });

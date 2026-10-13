@@ -1,5 +1,6 @@
 // #1270 · 生成期候选（条目 10 标签 ＋ 条目 9／12／13 查询页的分类／账户／账本：从已有值里选一个）
-// 判据：① 四张清单口径（`#词` 切分＋全数字丢掉；三列去重按次数降序）②只读开库 fail-open
+// #1269 条目 19 追加第五张清单：账户类型（住 `goals.json` 账户表的 `type` 列，不在 bills 表里）。
+// 判据：① 五张清单口径（`#词` 切分＋全数字丢掉；三列去重按次数降序）②只读开库 fail-open
 // ③声明里写了清单类 `source` 的槽位在有候选时升级成下拉、没候选时保持自由文本、写死 options 的仍以写死为准。
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -10,7 +11,7 @@ import { DatabaseSync } from 'node:sqlite';
 
 import {
   buildHelpFileData, renderHelpFileHtml, LIST_CANDIDATE_LIMIT, TAG_CANDIDATE_LIMIT,
-  rankByFrequency, rankTagCandidates, readCandidateLists,
+  rankByFrequency, rankTagCandidates, readAccountTypes, readCandidateLists,
 } from '../dist/render/index.js';
 import { tagMatch, tagsInNote } from '../dist/fetch/db.js';
 
@@ -34,6 +35,7 @@ const LISTS = {
   categories: ['餐饮', '出行'],
   accounts: ['支付宝', '微信'],
   ledgers: ['生活', '旅行'],
+  accountTypes: ['银行卡', '支付'],
 };
 
 test('#1270 · 词形切分与 tagMatch 同源：切出来的词，match 必然为真', () => {
@@ -110,13 +112,45 @@ test('#1270 · 只读读库：真结构、老结构（无 deleted_at）、文件
   assert.deepEqual(readCandidateLists(junk).categories, []);
 });
 
+test('#1269 · 账户类型候选：读 `goals.json` 账户表的 type 列（去重、次数降序、空值丢掉、fail-open）', () => {
+  const dir = mkdtempSync(join(tmpdir(), 't1269-goals-'));
+  const goals = join(dir, 'goals.json');
+
+  // ① 真件：7 个账户 4 种类型，出现次数降序（本机真库同形：银行卡 ×4／钱包 ×3／支付 ×2／信用 ×1）
+  writeFileSync(goals, JSON.stringify({
+    accounts: [
+      { name: 'A', type: '银行卡' }, { name: 'B', type: '银行卡' }, { name: 'C', type: '银行卡' },
+      { name: 'D', type: '钱包' }, { name: 'E', type: '钱包' },
+      { name: 'F', type: '银行卡' }, { name: 'G', type: '信用' },
+      { name: 'H', type: '' }, { name: 'I', type: '  ' },
+    ],
+  }), 'utf8');
+  assert.deepEqual(readAccountTypes(goals), ['银行卡', '钱包', '信用'], '次数降序、空白值丢掉');
+
+  // ② 上限与档位照 `rankByFrequency`
+  assert.deepEqual(readAccountTypes(goals, 2), ['银行卡', '钱包']);
+
+  // ③ 文件不在／空路径／不是 JSON ⇒ 空表，不抛（候选缺席时槽位退回自由文本）
+  assert.deepEqual(readAccountTypes(join(dir, 'none.json')), []);
+  assert.deepEqual(readAccountTypes(''), []);
+  const junk = join(dir, 'junk.json');
+  writeFileSync(junk, '这不是 JSON', 'utf8');
+  assert.deepEqual(readAccountTypes(junk), []);
+
+  // ④ 没有 accounts 顶层键也算空表（老件／只写 budgets 的件）
+  const noAccounts = join(dir, 'no-accounts.json');
+  writeFileSync(noAccounts, JSON.stringify({ budgets: [] }), 'utf8');
+  assert.deepEqual(readAccountTypes(noAccounts), []);
+});
+
 test('#1270 · 清单类 source：有候选就升级成下拉，没候选就保持自由文本', () => {
   const plain = buildHelpFileData(NOW, {});
 
-  // 没候选：四格都还是自由文本，且不许出现空下拉
+  // 没候选：五格都还是自由文本，且不许出现空下拉
   for (const [sceneId, name] of [
     ['query_tag', 'tag'], ['query_category', 'category'],
     ['query_account', 'account'], ['query_ledger', 'ledger'],
+    ['account_add', 'account_type'],
   ]) {
     const f = fieldOf(plain, sceneId, name);
     assert.ok(f, sceneId + '.' + name + ' 必须在载荷里');
@@ -134,6 +168,7 @@ test('#1270 · 清单类 source：有候选就升级成下拉，没候选就保�
     ['query_account', 'account', 'accounts', LISTS.accounts, true],
     ['query_ledger', 'ledger', 'ledgers', LISTS.ledgers, true],
     ['query_installment', 'account', 'accounts', LISTS.accounts, false],
+    ['account_add', 'account_type', 'accountTypes', LISTS.accountTypes, false],
   ];
   for (const [sceneId, name, source, options, required] of cases) {
     const f = fieldOf(filled, sceneId, name);
@@ -163,7 +198,7 @@ test('#1270 · 清单类 source：有候选就升级成下拉，没候选就保�
   assert.equal(plain.groups[0], filled.groups[0]);
 
   // 只给一张清单时，别的清单类槽位保持自由文本（互不串）
-  const onlyTags = buildHelpFileData(NOW, { candidates: { tags: ['a'], categories: [], accounts: [], ledgers: [] } });
+  const onlyTags = buildHelpFileData(NOW, { candidates: { tags: ['a'], categories: [], accounts: [], ledgers: [], accountTypes: [] } });
   assert.equal(fieldOf(onlyTags, 'query_tag', 'tag').kind, 'select');
   assert.equal(fieldOf(onlyTags, 'query_category', 'category').kind, 'text');
 });

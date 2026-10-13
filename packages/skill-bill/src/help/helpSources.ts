@@ -14,9 +14,9 @@
  * `buildHelpFileData`。随 #1269／#1270 增源（分类／账户／账本）时在本件加键，出口件不再变长。
  */
 import { existsSync } from 'node:fs';
-import { resolveDbPath } from '../fetch/index.js';
+import { resolveDbPath, resolveGoalsPath } from '../fetch/index.js';
 import { configPrefillValues } from '../setup/configPrefill.js';
-import { EMPTY_CANDIDATE_LISTS, readCandidateLists, type HelpCandidateLists } from './candidateLists.js';
+import { EMPTY_CANDIDATE_LISTS, readAccountTypes, readCandidateLists, type HelpCandidateLists } from './candidateLists.js';
 
 /** 生成期来源快照：`buildHelpFileData` 的 `opts` 直接吃这一份（多出来的键它不认，故只放它认识的）。 */
 export interface HelpGenerationSources {
@@ -40,7 +40,7 @@ export function readHelpSources(): HelpGenerationSources {
     const dbFile = resolveDbPath();
     return {
       initialized: existsSync(dbFile),
-      candidates: readCandidateLists(dbFile),
+      candidates: { ...readCandidateLists(dbFile), accountTypes: readAccountTypes(resolveGoalsPath()) },
       configValues,
     };
   } catch {

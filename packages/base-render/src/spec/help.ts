@@ -38,8 +38,10 @@ export type SceneFieldKind = 'text' | 'number' | 'select' | 'date' | 'week' | 'm
  *  填 `options`，单值类（`config`）填 `value`；生成期读不到就退回自由文本（`kind` 保持 `text`，
  *  `config` 的 `value` 保持声明里的空串）。
  *  这一格回答「这份值的来源」，与 `options`（写死的候选）互斥：两者同时在场时以写死的 `options` 为准。
- *  名字是**来源种类**（标签／分类／账户／账本／配置），不是某个技能的概念：具体从哪儿读由各技能的生成期定。 */
-export type SceneFieldSource = 'tags' | 'categories' | 'accounts' | 'ledgers' | 'config';
+ *  名字是**来源种类**（标签／分类／账户／账本／账户类型／配置），不是某个技能的概念：具体从哪儿读由各技能的生成期定。
+ *  `accountTypes`（#1269 条目 19）：值域＝「已有值里出现过的种类」这一种来源，读法由各技能生成期定
+ *  （饼干记账读 `goals.json` 账户表的 `type` 列）。 */
+export type SceneFieldSource = 'tags' | 'categories' | 'accounts' | 'ledgers' | 'accountTypes' | 'config';
 
 export interface SceneEditableField {
   readonly name: string;

@@ -53,7 +53,7 @@ export const GOAL_DECLARATION: DomainDeclaration = {
           editable_fields: [
             { name: 'goal_name', label: '目标', value: '', hint: '如 换手机、旅行基金', required: true, kind: 'text' },
             { name: 'amount', label: '金额', value: '', hint: '纯数字，不带单位，如 10000', required: true, kind: 'number' },
-            { name: 'deadline', label: '截止日期(选填)', value: '', hint: '如 12月底', required: false, kind: 'text' },
+            { name: 'deadline', label: '截止日期(选填)', value: '', hint: '空＝不限；点框任意处开日历', required: false, kind: 'date' },
           ],
         },
       ],
@@ -70,7 +70,7 @@ export const GOAL_DECLARATION: DomainDeclaration = {
           prompt_template: '请你加载技能 饼干记账,执行唤醒词「看预算」。\n\n我想看预算执行情况。\n\n月份(选填):{{month}}',
           types: ['查看'],
           editable_fields: [
-            { name: 'month', label: '月份(选填)', value: '', hint: '空＝本月；如 本月、8月', required: false, kind: 'text' },
+            { name: 'month', label: '月份(选填)', value: '', hint: '空＝本月；点框任意处开月度选择器', required: false, kind: 'month' },
           ],
         },
       ],
