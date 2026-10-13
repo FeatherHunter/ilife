@@ -22,15 +22,15 @@ const sha = (s) => createHash('sha256').update(s, 'utf8').digest('hex');
 const FIXTURE = {"skill_name":"卡路里","title":"唤醒词速查台","subtitle":"1 分类 · 1 场景 · 更新于 2026-09-06 22:07","contact":{"items":[{"label":"作者","value":"ilife"}]},"groups":[{"id":"g","icon":"x","label":"L","subgroups":[{"id":"s","label":"S","scenes":[{"id":"a","title":"T","wake_word":"w","status":"","prompt_template":"p","types":["结果"]}]}]}]};
 
 test('#136 ① 模板值 verbatim：前后缀哈希与搬家基线一致', () => {
-  assert.equal(sha(HELP_SHELL_PREFIX), '0cc96f29ea95ab4370c026018863eba5ac6b5565ef2278901c807a422e47f29c');
-  assert.equal(sha(HELP_SHELL_SUFFIX), '3992253679c784eacd67a72557f91355ce4753d818944ea4c6dd32b085788516');
+  assert.equal(sha(HELP_SHELL_PREFIX), '02eaffe3e8ede490d9711c86f7b2f189f6340ba2b6a1e6f15c87ea0b3a0703e2');
+  assert.equal(sha(HELP_SHELL_SUFFIX), '587172f07384f4c51e55f9b72bf57703afc157a4b84d0fdf308366bb51a805d5');
   assert.equal(HELP_SHELL_DATA_OPEN, '<script id="help-data" type="application/json">');
   assert.ok(HELP_SHELL_PREFIX.endsWith(HELP_SHELL_DATA_OPEN), 'PREFIX 须止于 help-data 开标签尾');
   assert.ok(HELP_SHELL_SUFFIX.startsWith('</script>'), 'SUFFIX 须起于 help-data 配对闭标签');
 });
 
 test('#136 ② 固定夹具渲染逐字节一致＋空分组抛 missing-data', () => {
-  assert.equal(sha(renderHelpShellHtml(FIXTURE)), 'cc009beae2648d8df91b59b867b541a42a0422488e91630fd7a10931933d52d1');
+  assert.equal(sha(renderHelpShellHtml(FIXTURE)), '30a737a0bb8662b51068e1b1a05cec6406d005343901a41fbac67f6f44bbbf1b');
   assert.equal(renderHelpShell, renderHelpShellHtml, '标准出口须为同一实现');
   assert.throws(() => renderHelpShellHtml({ ...FIXTURE, groups: [] }),
     (e) => e instanceof HelpShellError && e.code === 'missing-data');
