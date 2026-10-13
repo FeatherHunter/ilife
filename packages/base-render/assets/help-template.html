@@ -210,26 +210,31 @@
   /* 候选项附注（生成期的 `notes`，如「3 笔」）：印在行右侧。
      带附注的行改 flex 两段（行文字自己省略号），**没附注的行 markup 与样式一个字不动**——
      候选那一批格（含合并分类的「原分类」）的既有观感照旧。 */
-  .filt-opt.has-note{display:flex;align-items:center;gap:8px}
-  .filt-opt.has-note .filt-opt-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+  .filt-opt.row{display:flex;align-items:center;gap:8px}
+  .filt-opt.row .filt-opt-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
   .filt-note{flex:none;font-size:11px;color:var(--fg3);white-space:nowrap}
   .filt-foot{display:flex;align-items:center;gap:8px;padding:7px 9px;font-size:11.5px;color:var(--fg3);background:#fafafc;border-top:1px solid #f0f0f3}
   .filt-q{flex:1;min-width:0;box-sizing:border-box;border:1px solid var(--line);border-radius:8px;height:32px;padding:0 9px;font-size:13.5px;background:#fff;outline:none;font-family:inherit;color:var(--fg)}
   .filt-count{flex-shrink:0;white-space:nowrap}
-  /* 新建行（声明 `allow_new` 的格才有）：夹在列表与筛选行**之间**——列表在上面长、筛选行贴着触发框，
-     新建行在中间，输入框里敲着串就地看得见。**面板一打开就在**（用户 2026-10-14：空输入时整行藏起来＝能力看不见）：
-     · 未激活态 `data-idle="1"`（输入为空、或敲的串在候选里已有同键写法）：弱色＋省略写法「＋ 新建 "…"」，
-       点了只把焦点送进筛选框，不提交任何值；
-     · 激活态：实文「＋ 新建 "串"」，点了才追加 option ＋ 回填。
-     说明句「在筛选框里敲名字即可新建」**并进同一行**（用户 2026-10-14 二改：不许独占一行、行高不许变高），
-     激活态收起。前缀胶囊那一行已删（同批裁定：改成列表按前缀自动扎堆，见 `mountFilterSelects` 的 `orderedReal`）。 */
-  .filt-new{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:7px 9px;background:#fafafc;border-top:1px solid #f0f0f3}
-  .filt-new-btn{flex:1 1 100%;min-width:0;box-sizing:border-box;display:flex;align-items:center;gap:6px;text-align:left;border:1px dashed var(--line);background:#fff;color:var(--fg2);border-radius:8px;padding:7px 10px;font:600 12.5px/1.35 -apple-system,"Microsoft YaHei",sans-serif;cursor:pointer;overflow:hidden}
-  .filt-new-btn:active{background:#ececf1}
-  .filt-new-btn[data-idle="1"]{color:var(--fg3);font-weight:400;cursor:text}
-  .filt-new-t{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .filt-new-tip{flex:none;font-size:11px;line-height:1.35;font-weight:400;color:var(--fg3);white-space:nowrap}
-  .filt-new-tip[hidden]{display:none}
+  /* 新建行（声明 `allow_new` 的格才有）：**列表里的第一行候选行**（用户 2026-10-14 三改：
+     虚线按钮那种「按钮感」太糙，改成与 `.filt-opt` 同行高、同内边距、同字号的一行）：
+     左侧＝敲进筛选框的那串值本身（常规墨色、中等字重、超长省略号），**不加引号**；
+     右侧＝小徽标「新建」（品牌色浅底＋品牌色字），与候选行的「N 笔」附注同列。
+     未激活态（输入为空、或敲的串在候选里已有同键写法）：左侧弱色提示「输入名字即可新建」＋徽标转弱灰，
+     点了只把焦点送进筛选框；激活态点了才追加 option ＋ 回填。
+     配色按 WCAG AA 挑（11px／14.5px 都是常规字，阈值 4.5:1；实测值见读数）：激活徽标 #0a63ce on #f5f8ff＝5.35:1，
+     未激活徽标 #636366 on #f2f2f7＝5.33:1，弱色提示 #6e6e73 on #fff＝5.07:1。
+     前缀胶囊那一行已删（同批裁定：改成列表按前缀自动扎堆，见 `mountFilterSelects` 的 `orderedReal`）。 */
+  .filt-panel[data-allownew] .filt-opt{padding:11px 11px} /* 触控规范：行高 ≥44px；只提到带新建行的面板，pick-only 格观感照旧 */
+  .filt-new-t{font-weight:600;color:var(--fg)}
+  .filt-new-opt[data-idle="1"] .filt-new-t{font-weight:400;color:var(--fg2)}
+  .filt-new-chip{flex:none;font:600 11px/1 -apple-system,"Microsoft YaHei",sans-serif;padding:3px 7px;border-radius:999px;background:var(--soft);color:var(--blue2);white-space:nowrap}
+  .filt-new-opt[data-idle="1"] .filt-new-chip{background:#f2f2f7;color:#636366}
+  /* 敲进去的串在候选里一条都不匹配时：**只有带新建行的格**把输入文字与脚注那个 `0` 转警示色
+     （pick-only 格没有「新建」这条出路，标红＝骂用户却无能为力 ⇒ 保持常态色，仍出「没有匹配的候选」行）。
+     红字用 #d70015 而不是 --red #ff3b30：白底上 #ff3b30 只有 3.50:1，AA 要 4.5:1，这个红是 5.38:1。 */
+  .filt-q.warn{color:#d70015}
+  .filt-warn{color:#d70015}
   /* 唤起失败／浏览器不支持时的可见提示（不静默） */
   .help-note{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;z-index:99999;max-width:88vw;background:rgba(28,28,30,.92);color:#fff;font:400 12.5px/1.5 -apple-system,"Microsoft YaHei",sans-serif;padding:9px 12px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .18s ease}
   .help-note.show{opacity:1}
@@ -2841,10 +2846,13 @@ function mountPeriods(root){
 /** 候选下拉：一行框＋悬浮筛选面板（面板向上展开，不改字段高度）。
     #1280 二改（用户 2026-10-13 裁定）：**「候选选择」与「新建」合成这一处控件**——
     · 候选够多（≥ HELP_FILTER_MIN）的格走这套（照旧）；
-    · 声明了 `allow_new` 的格也走这套（候选多不多都走）：面板里多一行「＋ 新建 "…"」（未激活）／
-      「＋ 新建 "串"」（激活），同一行右侧挂一句弱色说明；
+    · 声明了 `allow_new` 的格也走这套（候选多不多都走）：列表**第一行**就是新建行（与 `.filt-opt`
+      同规格，不再是虚线按钮）——未激活态＝弱色提示「输入名字即可新建」＋弱灰徽标「新建」，
+      激活态＝敲进去的那串值本身（不加引号）＋品牌色徽标「新建」，徽标与候选行的「N 笔」同列；
     · 声明了候选项附注 `notes` 的格也走这套：附注印在行右侧（原生 `<select>` 一行装不下两段字）。
-    候选顺序：#1280 三改（用户 2026-10-14）起按前缀扎堆排（`orderedReal`），**所有** `.filt` 格一视同仁。
+    候选顺序：#1280 三改（用户 2026-10-14）起按前缀扎堆排（`orderedReal`），**所有** `.filt` 格一视同仁；
+    一条都不匹配时：带新建行的格不再插「没有匹配的候选」（改由红字＋新建行表达），pick-only 格**保留**那一行
+    （没有新建出路，标红＝骂用户却无能为力，且不能只剩一片空白）——见 draw()。
     取值口始终是那枚隐藏的 `<select>`（回填协议不变：值进 value、冒泡 change）；字段管线不再挂
     smartSelect（见 mountFields，那套代码先留着）。 */
 function mountFilterSelects(root){
@@ -2879,9 +2887,7 @@ function mountFilterSelects(root){
         '<span class="filt-val"></span>' +
         '<svg class="filt-caret" viewBox="0 0 16 10" aria-hidden="true"><path d="M3.5 7.5 8 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
         '</button>' +
-        '<div class="filt-panel"><div class="filt-list" role="listbox"></div>' +
-        (allowNew ? '<div class="filt-new"><button type="button" class="filt-new-btn" data-new="1" data-idle="1" aria-disabled="true">' +
-          '<span class="filt-new-t"></span><span class="filt-new-tip">在筛选框里敲名字即可新建</span></button></div>' : '') +
+        '<div class="filt-panel"' + (allowNew ? ' data-allownew="1"' : '') + '><div class="filt-list" role="listbox"></div>' +
         '<div class="filt-foot"><input type="text" class="filt-q" placeholder="输入筛选" autocomplete="off">' +
         '<span class="filt-count"></span></div></div>';
       sel.parentNode.insertBefore(wrap, sel);
@@ -2891,10 +2897,6 @@ function mountFilterSelects(root){
       var q = wrap.querySelector('.filt-q');
       var listEl = wrap.querySelector('.filt-list');
       var count = wrap.querySelector('.filt-count');
-      var newEl = wrap.querySelector('.filt-new');
-      var newBtn = wrap.querySelector('.filt-new-btn');
-      var newT = wrap.querySelector('.filt-new-t');
-      var tip = wrap.querySelector('.filt-new-tip');
       /* 库里有没有同键写法（比较键口径与 smartSelect 同一支 `ssNameKey`：NFKC＋空白折叠＋大小写折叠）。 */
       function findSame(raw){
         var key = ssNameKey(raw);
@@ -2951,33 +2953,42 @@ function mountFilterSelects(root){
         }
         sel.dispatchEvent(new Event('change', { bubbles: true }));
       }
-      /* 新建行（只有 `allow_new` 的格有这个节点）：面板一打开就在，两种态——
-         未激活（输入为空、或敲的串在候选里已有同键写法）：弱色＋「＋ 新建 "…"」，点了只送焦点；
-         激活（敲了一个候选里没有的串）：实文「＋ 新建 "串"」，点了才追加 option ＋ 回填。
-         说明句是按钮里的第二个 span（同一行，不占额外高度），激活态收起。 */
+      /* 新建行（只有 `allow_new` 的格有）：**列表里的第一行候选行**，与 `.filt-opt` 同规格，两种态——
+         未激活（输入为空、或敲的串在候选里已有同键写法）：左侧弱色提示「输入名字即可新建」＋徽标转弱灰，
+         点了只送焦点；激活（敲了一个候选里没有的串）：左侧＝那串值本身（不加引号）＋品牌色徽标「新建」，
+         点了才追加 option ＋ 回填。这行由 draw() 每次重画（列表跟着输入实时重排），态存 `newIdle`。 */
+      var newIdle = true;
       function syncNew(){
-        if (!newEl) return;
         var raw = q.value.trim();
-        var act = !!(raw && !findSame(raw));
-        newBtn.setAttribute('data-idle', act ? '0' : '1');
-        newBtn.setAttribute('aria-disabled', act ? 'false' : 'true');
-        newT.textContent = act ? ('＋ 新建 "' + raw + '"') : '＋ 新建 "…"';
-        if (tip) tip.hidden = act; /* 激活后那句说明是废话，收掉 */
+        newIdle = !(raw && !findSame(raw));
+      }
+      function newRowHtml(){
+        var raw = q.value.trim();
+        return '<div class="filt-opt row filt-new-opt" role="option" data-new="1" data-idle="' + (newIdle ? '1' : '0') + '"' +
+          ' aria-disabled="' + (newIdle ? 'true' : 'false') + '">' +
+          '<span class="filt-opt-t filt-new-t">' + esc(newIdle ? '输入名字即可新建' : raw) + '</span>' +
+          '<span class="filt-new-chip">新建</span></div>';
       }
       function draw(){
         var kw = q.value.trim().toLowerCase();
         var hit = orderedReal().filter(function(o){ return !kw || o.t.toLowerCase().indexOf(kw) >= 0 || o.v.toLowerCase().indexOf(kw) >= 0; });
-        var html = kw ? '' : '<div class="filt-opt none' + (sel.value ? '' : ' on') + '" role="option" data-v="">' + esc(emptyText) + '</div>';
+        syncNew(); /* 先定新建行的态，再画 */
+        var html = allowNew ? newRowHtml() : ''; /* 新建行始终排第一 */
+        if (!kw) html += '<div class="filt-opt none' + (sel.value ? '' : ' on') + '" role="option" data-v="">' + esc(emptyText) + '</div>';
         hit.forEach(function(o){
           var note = notes[o.v];
-          html += '<div class="filt-opt' + (o.v === sel.value ? ' on' : '') + (note ? ' has-note' : '') + '" role="option" data-v="' + esc(o.v) + '">' +
+          html += '<div class="filt-opt' + (o.v === sel.value ? ' on' : '') + (note ? ' row' : '') + '" role="option" data-v="' + esc(o.v) + '">' +
             (note ? '<span class="filt-opt-t">' + esc(o.t) + '</span><span class="filt-note">' + esc(String(note)) + '</span>' : esc(o.t)) +
             '</div>';
         });
-        if (!hit.length) html += '<div class="filt-opt none">没有匹配的候选</div>';
+        /* 一条都不匹配：**只有带新建行的格**才把输入文字与脚注里那个 `0` 转警示色（其余字保持弱色）；
+           有匹配／空输入一律常态色。pick-only 格没有「新建」这条出路，标红＝骂用户却无能为力 ⇒
+           保持常态色，并且**保留**「没有匹配的候选」那行（它得说点什么，不能只剩一片空白）。 */
+        var warn = !!(allowNew && kw && !hit.length);
+        q.classList.toggle('warn', warn);
+        if (!hit.length && !allowNew) html += '<div class="filt-opt none">没有匹配的候选</div>';
         listEl.innerHTML = html;
-        syncNew();
-        count.textContent = kw ? ('匹配 ' + hit.length + ' 项／共 ' + real.length + ' 项')
+        count.innerHTML = kw ? ('匹配 ' + (warn ? '<span class="filt-warn">0</span>' : hit.length) + ' 项／共 ' + real.length + ' 项')
           : ('共 ' + real.length + ' 项，可输入筛选');
       }
       function syncRow(){
@@ -2988,7 +2999,7 @@ function mountFilterSelects(root){
          一律向上展开——面板底边贴着触发框上方，筛选行在面板最底端（离框最近），
          列表在它上面、需要多高就向上长；上面空间不够就压列表高度（最少 60px），列表自己滚。
          `LIST_MAX` 按「开面板就先看全一屏候选」定（用户 2026-10-13：默认最少 12 项）：
-         一行 41px ⇒ 560px ≈ 13 行；候选少于一屏时列表按内容收缩，不留空。 */
+         一行 41px（带新建行的面板按触控规范提到 45px）⇒ 560px 约 12–13 行；候选少于一屏时列表按内容收缩，不留空。 */
       var LIST_MAX = 560, LIST_MIN = 60, GAP = 6, EDGE = 8;
       /* 展开期间的面板宽度：开面板那一刻量一次就**锁死**（用户 2026-10-13：宽度不能变动）。 */
       var LOCK_W = 0;
@@ -3051,22 +3062,12 @@ function mountFilterSelects(root){
       row.addEventListener('click', function(){ setOpen(!wrap.classList.contains('open')); });
       q.addEventListener('input', function(){ draw(); place(); }); /* 筛完重摆：列表变短，面板跟着收 */
       q.addEventListener('keydown', function(e){ if (e.key === 'Escape') { setOpen(false); row.focus(); } });
-      listEl.addEventListener('click', function(e){
-        var o = e.target.closest('.filt-opt');
-        if (!o) return;
-        var v = o.getAttribute('data-v');
-        writeBack(v || '', v ? 'existing' : 'empty'); /* 空项＝清空这一维（'空项文案' 那一行） */
-        syncRow();
-        setOpen(false);
-      });
-      /* 新建行（只有 `allow_new` 的格有这个节点）：前缀胶囊 ＋「＋ 新建 "串"」。
-         两者都在面板内，点它们不会撞上「点别处收起」那条（那条对 `.filt-panel` 自己豁免）。 */
-      if (newEl) newEl.addEventListener('click', function(e){
-        var t = e.target;
-        if (!(t && t.closest && t.closest('[data-new]'))) return;
+      /* 新建（只有 `allow_new` 的格画得出这一行）：未激活态不提交任何值，只把焦点送进筛选框
+         （光标落到末尾，接着敲就是新名字）；激活态追加 option ＋ 回填。新建行在 `.filt-panel` 内，
+         点它不会撞上「点别处收起」那条（那条对 `.filt-panel` 自己豁免）。 */
+      function doNew(){
         var raw = q.value.trim();
-        if (newBtn.getAttribute('data-idle') === '1' || !raw) {
-          /* 未激活态：不提交任何值，只把焦点送进筛选框（光标落到末尾，接着敲就是新名字）。 */
+        if (newIdle || !raw) {
           try { q.focus(); var n0 = q.value.length; q.setSelectionRange(n0, n0); } catch (err) {}
           return;
         }
@@ -3081,6 +3082,15 @@ function mountFilterSelects(root){
           real.push({ v: raw, t: raw }); /* 追加进候选：再开面板能筛到它，「共 N 项」也跟着变 */
           writeBack(raw, 'custom');
         }
+        syncRow();
+        setOpen(false);
+      }
+      listEl.addEventListener('click', function(e){
+        var o = e.target.closest('.filt-opt');
+        if (!o) return;
+        if (o.getAttribute('data-new')) { doNew(); return; } /* 新建行（始终排第一） */
+        var v = o.getAttribute('data-v');
+        writeBack(v || '', v ? 'existing' : 'empty'); /* 空项＝清空这一维（'空项文案' 那一行） */
         syncRow();
         setOpen(false);
       });
