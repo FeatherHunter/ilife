@@ -230,6 +230,13 @@
   .filt-new-opt[data-idle="1"] .filt-new-t{font-weight:400;color:var(--fg2)}
   .filt-new-chip{flex:none;font:600 11px/1 -apple-system,"Microsoft YaHei",sans-serif;padding:3px 7px;border-radius:999px;background:var(--soft);color:var(--blue2);white-space:nowrap}
   .filt-new-opt[data-idle="1"] .filt-new-chip{background:#f2f2f7;color:#636366}
+  /* 「新建」徽标：**同一枚标记、两处呈现**（用户 2026-10-14 反馈：新建出来的值一旦被选中，就再也看不出它是新建的）——
+     ① 面板列表里那一行（值来自现场新建；**选中态也在**，不被 `.filt-opt.on` 的蓝底蓝字吃掉）；
+     ② 触发器 `.filt-row` 里当前值来源是现场新建时（排在值文本右侧、箭头左侧）。
+     白底＋浅蓝描边＋品牌色字：选中行底色是 `--soft`（#f5f8ff），白底徽标在它上面照样立得起来；
+     字色 #0a63ce on 白底＝5.63:1（AA 阈值 4.5:1，实测见读数）。纯视觉标记，值本身不进徽标。 */
+  .filt-badge{flex:none;font:600 11px/1 -apple-system,"Microsoft YaHei",sans-serif;padding:3px 7px;border-radius:999px;background:#fff;color:#0a63ce;border:1px solid #bcd6ff;white-space:nowrap}
+  .filt-badge[hidden]{display:none}
   /* 敲进去的串在候选里一条都不匹配时：**只有带新建行的格**把输入文字与脚注那个 `0` 转警示色
      （pick-only 格没有「新建」这条出路，标红＝骂用户却无能为力 ⇒ 保持常态色，仍出「没有匹配的候选」行）。
      红字用 #d70015 而不是 --red #ff3b30：白底上 #ff3b30 只有 3.50:1，AA 要 4.5:1，这个红是 5.38:1。 */
@@ -2854,7 +2861,9 @@ function mountPeriods(root){
     一条都不匹配时：带新建行的格不再插「没有匹配的候选」（改由红字＋新建行表达），pick-only 格**保留**那一行
     （没有新建出路，标红＝骂用户却无能为力，且不能只剩一片空白）——见 draw()。
     取值口始终是那枚隐藏的 `<select>`（回填协议不变：值进 value、冒泡 change）；字段管线不再挂
-    smartSelect（见 mountFields，那套代码先留着）。 */
+    smartSelect（见 mountFields，那套代码先留着）。
+    新建出来的值带「新建」徽标（`.filt-badge`，纯视觉、不污染值）：面板里那一行挂（选中态也在）＋触发器里挂，
+    判据见 `isCustom`（`madeVals` ＋ `dataset.new`）；从候选里选既有值、或清空 ⇒ 两处都消失。 */
 function mountFilterSelects(root){
   var sels = root.querySelectorAll('select[data-p]');
   for (var si = 0; si < sels.length; si++) {
@@ -2885,6 +2894,8 @@ function mountFilterSelects(root){
       wrap.innerHTML =
         '<button type="button" class="filt-row" aria-haspopup="listbox" aria-expanded="false">' +
         '<span class="filt-val"></span>' +
+        /* 「新建」徽标（只有 `allow_new` 的格才插这个节点——pick-only 格的 markup 逐字节照旧）： */
+        (allowNew ? '<span class="filt-badge filt-row-badge" hidden>新建</span>' : '') +
         '<svg class="filt-caret" viewBox="0 0 16 10" aria-hidden="true"><path d="M3.5 7.5 8 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
         '</button>' +
         '<div class="filt-panel"' + (allowNew ? ' data-allownew="1"' : '') + '><div class="filt-list" role="listbox"></div>' +
@@ -2893,6 +2904,7 @@ function mountFilterSelects(root){
       sel.parentNode.insertBefore(wrap, sel);
       var row = wrap.querySelector('.filt-row');
       var val = wrap.querySelector('.filt-val');
+      var rowBadge = wrap.querySelector('.filt-row-badge'); /* pick-only 格没有这个节点（null） */
       var panel = wrap.querySelector('.filt-panel');
       var q = wrap.querySelector('.filt-q');
       var listEl = wrap.querySelector('.filt-list');
@@ -2944,14 +2956,31 @@ function mountFilterSelects(root){
         return out;
       }
       /* 回填协议（与文件上方那行「回填协议」同一条）：值进 value ＋ change 冒泡；
-         只有 `allow_new` 的格才写 dataset.source／dataset.new（新建＝'1'）——pick-only 的格一个属性都不动。 */
+         只有 `allow_new` 的格才写 dataset.source／dataset.new（新建＝'1'）——pick-only 的格一个属性都不动。
+         `madeVals` 记「本页会话内现场新建过哪些值」：徽标要认得出这些值，哪怕它此刻没被选中。 */
+      var madeVals = {};
       function writeBack(v, mode){
         sel.value = v;
         if (allowNew) {
           sel.dataset.source = mode;
           sel.dataset.new = (mode === 'custom') ? '1' : '0';
+          if (mode === 'custom') madeVals[v] = 1;
         }
         sel.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      /* 这个值的来源是不是「现场新建」：建过的记在 `madeVals`（再选回来仍按新建对待）；
+         当前值再叠一层 `dataset.new`（用户裁定：dataset 是持久的，关掉面板再打开据此判断都还在）。
+         纯视觉判断，不改值、不改 select。 */
+      function isCustom(v){
+        if (!allowNew || !v) return false;
+        if (madeVals[v]) return true;
+        return v === sel.value && sel.dataset.new === '1';
+      }
+      /* 徽标挂不挂只看「当前值是不是现场新建的」（用户裁定：选了既有值／清空 ⇒ 两处都消失）；
+         值的来龙去脉另由 `isCustom` 记着，供再选回来时定 dataset。 */
+      function curCustom(){
+        if (!allowNew || !sel.value) return false;
+        return sel.dataset.new === '1';
       }
       /* 新建行（只有 `allow_new` 的格有）：**列表里的第一行候选行**，与 `.filt-opt` 同规格，两种态——
          未激活（输入为空、或敲的串在候选里已有同键写法）：左侧弱色提示「输入名字即可新建」＋徽标转弱灰，
@@ -2977,8 +3006,13 @@ function mountFilterSelects(root){
         if (!kw) html += '<div class="filt-opt none' + (sel.value ? '' : ' on') + '" role="option" data-v="">' + esc(emptyText) + '</div>';
         hit.forEach(function(o){
           var note = notes[o.v];
-          html += '<div class="filt-opt' + (o.v === sel.value ? ' on' : '') + (note ? ' row' : '') + '" role="option" data-v="' + esc(o.v) + '">' +
-            (note ? '<span class="filt-opt-t">' + esc(o.t) + '</span><span class="filt-note">' + esc(String(note)) + '</span>' : esc(o.t)) +
+          var badge = (o.v === sel.value) && curCustom(); /* 当前值来源是现场新建：行上挂「新建」徽标，选中态也挂（别被蓝底吃掉） */
+          html += '<div class="filt-opt' + (o.v === sel.value ? ' on' : '') + ((note || badge) ? ' row' : '') + '" role="option" data-v="' + esc(o.v) + '">' +
+            ((note || badge)
+              ? '<span class="filt-opt-t">' + esc(o.t) + '</span>' +
+                (badge ? '<span class="filt-badge">新建</span>' : '') +
+                (note ? '<span class="filt-note">' + esc(String(note)) + '</span>' : '')
+              : esc(o.t)) +
             '</div>';
         });
         /* 一条都不匹配：**只有带新建行的格**才把输入文字与脚注里那个 `0` 转警示色（其余字保持弱色）；
@@ -2994,6 +3028,7 @@ function mountFilterSelects(root){
       function syncRow(){
         val.textContent = sel.value || emptyText;
         val.classList.toggle('has', !!sel.value);
+        if (rowBadge) rowBadge.hidden = !curCustom(); /* 触发器上的「新建」徽标（pick-only 格没这个节点） */
       }
       /* 面板挂到 <body>（脱离弹层的滚动裁剪与 transform 包含块），按触发框的位置摆：
          一律向上展开——面板底边贴着触发框上方，筛选行在面板最底端（离框最近），
@@ -3090,7 +3125,9 @@ function mountFilterSelects(root){
         if (!o) return;
         if (o.getAttribute('data-new')) { doNew(); return; } /* 新建行（始终排第一） */
         var v = o.getAttribute('data-v');
-        writeBack(v || '', v ? 'existing' : 'empty'); /* 空项＝清空这一维（'空项文案' 那一行） */
+        /* 空项＝清空这一维；现场新建过的值再选回来，仍按新建对待（dataset.new 跟着回来，徽标也回来）。 */
+        if (!v) writeBack('', 'empty');
+        else writeBack(v, isCustom(v) ? 'custom' : 'existing');
         syncRow();
         setOpen(false);
       });
