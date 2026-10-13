@@ -2489,17 +2489,18 @@ function mountFilterSelects(root){
          `LIST_MAX` 按「开面板就先看全一屏候选」定（用户 2026-10-13：默认最少 12 项）：
          一行 41px ⇒ 560px ≈ 13 行；候选少于一屏时列表按内容收缩，不留空。 */
       var LIST_MAX = 560, LIST_MIN = 60, GAP = 6, EDGE = 8;
+      /* 展开期间的面板宽度：开面板那一刻量一次就**锁死**（用户 2026-10-13：宽度不能变动）。 */
+      var LOCK_W = 0;
       function place(){
-        var r = row.getBoundingClientRect();
-        /* 宽度用 left＋right 定，不写 px width：视口可用宽一变（页面滚动条出现/消失、软键盘
-           落定、宿主 iframe 尺寸变化），触发框与面板在**同一帧**一起变宽变窄，不必等下一次
-           reflow 补量——「打开时比输入框窄一点、约一秒后才对齐」的抖动就出在 px width
-           只能靠事件补量。右缘按「视口可用宽 − 框右缘」存成 px，视口与框右缘同向移动时该值
-           自动仍然正确。 */
-        var vw = document.documentElement.clientWidth || window.innerWidth;
+        /* 量外层 `.filt`（div），**不量** `.filt-row`（button）：模板里 `.sheet button:active{transform:scale(.97)}`
+           会让按钮在按压当刻缩小——实测按压中 rect 宽 297→290.7，而 click 就在这个当刻派发，于是面板
+           先按缩小值摆（窄一点点）、等下一次 place() 才回到真宽（约 300ms 后）＝用户看到的「先窄后宽」。
+           外层 div 不吃这条规则，`offsetWidth` 又是布局宽（transform 不影响），两个口子一起堵。 */
+        var r = wrap.getBoundingClientRect();
+        if (!LOCK_W) LOCK_W = wrap.offsetWidth || Math.round(r.width);
         panel.style.left = Math.round(r.left) + 'px';
-        panel.style.right = Math.round(Math.max(0, vw - r.right)) + 'px';
-        panel.style.width = '';
+        panel.style.right = '';
+        panel.style.width = LOCK_W + 'px';
         listEl.style.maxHeight = LIST_MAX + 'px';
         var chromeH = panel.offsetHeight - listEl.offsetHeight; /* 筛选行＋边框 */
         var above = r.top - EDGE - GAP;
@@ -2512,6 +2513,7 @@ function mountFilterSelects(root){
         if (on) {
           document.body.appendChild(panel);
           panel.classList.add('filt-float');
+          LOCK_W = 0; /* 每次展开重新量一次并锁死 */
           q.value = '';
           draw();
           place();
@@ -2524,6 +2526,7 @@ function mountFilterSelects(root){
         } else {
           panel.classList.remove('filt-float');
           wrap.appendChild(panel);
+          LOCK_W = 0;
         }
       }
       /* 只跟「触发框会不会动」有关：列表**自己滚**（事件源在面板内）不重摆——省掉每帧重写宽度，
