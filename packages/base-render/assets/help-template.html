@@ -267,6 +267,14 @@
   .sheet .pfield.is-smart .inwrap{display:block}
   .sheet .pfield.is-smart .ib{top:10px;right:8px;transform:none;z-index:2}
   .sheet .pfield.is-smart .inwrap input{padding-right:12px}
+  /* 新值前缀（#1269 值级放开）：点一下＝把「前缀/」插进新建框；虚线胶囊与候选胶囊区分开 */
+  .sheet .pfx-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:10px 0 2px}
+  .sheet .pfx-cap{font-size:12px;color:var(--fg3);flex:none}
+  .sheet .pfx-btn{border:1px dashed var(--line);background:#fff;color:var(--fg2);border-radius:999px;padding:5px 11px;font:600 12px/1 -apple-system,"Microsoft YaHei",sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent}
+  .sheet .pfx-btn:active{background:#ececf1;border-style:solid;border-color:var(--blue);color:var(--blue)}
+  /* 去那个场景创建（#1269 值级放开）：这一格不放开、值另有登记表时，给一条出口 */
+  .sheet .cs-row{margin-top:7px}
+  .sheet .cs-btn{border:0;background:transparent;color:var(--blue);padding:2px 0;font:600 12px/1.4 -apple-system,"Microsoft YaHei",sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent;text-decoration:underline;text-underline-offset:2px}
   .sheet .pfield label{font-size:12px;color:var(--fg2);font-weight:600;flex-shrink:0;min-width:72px}
   .sheet .pfield label em{color:var(--fg3);font-weight:400;font-size:9px}
   .sheet .pfield input{flex:1;min-width:0;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:16px;background:#fff;outline:none;font-family:inherit;color:var(--fg)}
@@ -1850,7 +1858,7 @@ function normalizeScenes(scenes){
       params: (s.editable_fields || []).map(function(f){
         var k = (f.kind === 'number' || f.kind === 'select' || f.kind === 'date' || f.kind === 'week' || f.kind === 'month' || f.kind === 'year' || f.kind === 'time' || f.kind === 'period') ? f.kind : 'text';
         if (f.kind !== undefined && f.kind !== null && k === 'text' && f.kind !== 'text') { try{console.warn('help-template: 非法 kind 降级 text: ' + f.kind);}catch(e){} }
-        return { key: f.name, label: f.label, value: f.value || '', req: !!f.required, hint: f.hint || '', kind: k, options: f.options || [], emptyLabel: f.empty_label || '', min: f.min, max: f.max, step: f.step, placeholder: f.placeholder || f.hint || '', presets: Array.isArray(f.presets) ? f.presets : [], exclusive: f.exclusive_group || '', allowNew: !!f.allow_new };
+        return { key: f.name, label: f.label, value: f.value || '', req: !!f.required, hint: f.hint || '', kind: k, options: f.options || [], emptyLabel: f.empty_label || '', min: f.min, max: f.max, step: f.step, placeholder: f.placeholder || f.hint || '', presets: Array.isArray(f.presets) ? f.presets : [], exclusive: f.exclusive_group || '', allowNew: !!f.allow_new, newPrefixes: Array.isArray(f.new_prefixes) ? f.new_prefixes.map(String) : [], createScene: f.create_scene || '' };
       })
     };
   });
@@ -2711,13 +2719,79 @@ function mountSmartSelects(root){
           });
           var pf = inp.closest('.pfield');
           if (pf) pf.classList.add('is-smart');
+          /* 前缀清单（用户 2026-10-13 定稿）：值有层级、顶层是闭集时，点前缀＝把「前缀/」插进新建框，
+             名字用户自己接着敲；顶层闭不闭由技能侧生成期给清单，本层不认识任何领域词。
+             前缀按钮自带 pointerdown 拦截：smartSelect 在 root 上有「点到别处就把已敲的提交掉」的监听，
+             不拦的话点前缀会先把半截名字提交了。 */
+          if (pf && p.newPrefixes.length) {
+            var newRow = pf.querySelector('.ss-new');
+            if (newRow) {
+              var row = document.createElement('div');
+              row.className = 'pfx-row';
+              var cap = document.createElement('span');
+              cap.className = 'pfx-cap';
+              cap.textContent = '先选前缀';
+              row.appendChild(cap);
+              p.newPrefixes.forEach(function(x){
+                var b = document.createElement('button');
+                b.type = 'button';
+                b.className = 'pfx-btn';
+                b.textContent = String(x);
+                b.addEventListener('pointerdown', function(e){ e.stopPropagation(); e.preventDefault(); });
+                b.addEventListener('click', function(){
+                  var box = newRow.querySelector('input');
+                  if (!box) return;
+                  box.value = String(x) + '/';
+                  try { box.focus(); } catch (e) {}
+                  box.dispatchEvent(new Event('input', { bubbles: true }));
+                });
+                row.appendChild(b);
+              });
+              newRow.parentNode.insertBefore(row, newRow);
+            }
+          }
         })(inps[ii]);
+      }
+    })(forms[fi]);
+  }
+}
+/* 「去那个场景创建」的出口（用户 2026-10-13 定稿）：这一格的值有独立登记表、本格不放开时，
+   给一枚按钮把用户送到目标场景——页面本身给不出「导航」，能给的是那段可复制的提示词，
+   所以买的是「打开目标场景，并把本格已填的值带进它的第一个字段」。目标场景名从场景表取。 */
+function mountCreateHints(root){
+  var forms = root.querySelectorAll('.pform[data-pid]');
+  for (var fi = 0; fi < forms.length; fi++) {
+    (function(fm){
+      var s = SCENE[fm.getAttribute('data-pid')];
+      if (!s || !s.params) return;
+      for (var pi = 0; pi < s.params.length; pi++) {
+        (function(p){
+          if (!p.createScene) return;
+          var t = SCENE[p.createScene];
+          var inp = fm.querySelector('[data-p="' + p.key + '"]');
+          var pf = inp ? inp.closest('.pfield') : null;
+          if (!t || !pf || pf.querySelector('.cs-btn')) return;
+          var box = document.createElement('div');
+          box.className = 'cs-row';
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'cs-btn';
+          b.textContent = '库里没有？去「' + (t.name || '创建') + '」';
+          b.addEventListener('click', function(){
+            var v = inp ? String(inp.value || '').trim() : '';
+            if (v && t.params && t.params.length) t.params[0].value = v;
+            openSheet(t);
+          });
+          box.appendChild(b);
+          pf.appendChild(box);
+        })(s.params[pi]);
       }
     })(forms[fi]);
   }
 }
 function mountFields(root){
   mountSmartSelects(root);
+  mountCreateHints(root);
   mountPeriods(root);
   mountFilterSelects(root);
   mountPickers(root);

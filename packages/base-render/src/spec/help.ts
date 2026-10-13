@@ -67,6 +67,15 @@ export interface SceneEditableField {
    *  只对带 `source` 或 `options` 的字段有意义；重名的权威裁决在写入侧，控件只做提示。
    *  与「去别的场景创建」相对：那类实体（如账户）不给放开，走 `create_scene`。 */
   readonly allow_new?: boolean;
+  /** 新值的前缀清单（用户 2026-10-13 定稿）：放开新建、但这个字段的值有**层级**、顶层是闭集时，
+   *  由技能侧生成期给出允许的顶层清单；控件在「输入新名称」上方出一排前缀按钮，
+   *  点一下＝把「前缀/」插进输入框（剩下的名字用户自己敲）。公共层只认「有清单就先给前缀」这条
+   *  通用规则，不推导、不认识「分类」这种领域词。 */
+  readonly new_prefixes?: readonly string[];
+  /** 去别的场景创建（用户 2026-10-13 定稿）：这个字段的值有独立登记表、不让在本格放开时，
+   *  给一个出口＝打开目标场景，并把本格已填的值带进目标场景的第一个字段。
+   *  值写目标场景的 id（如 `account_add`）。 */
+  readonly create_scene?: string;
   /** 快捷取值（#1269 条目 3）：控件旁给一排可点的建议值（这个字段值域里最常用的几档）。
    *  点一下＝把该字面量填进同一个字段（不引入第二份值、不改字段名）；值只写字面量本身，
    *  相对量（今天／本周）不在这里表达——那是字段值域的另一种东西，要就单开一格。 */
@@ -255,6 +264,8 @@ export const SCENE_DATA_SCHEMA = Object.freeze({
                             step: { oneOf: [{ type: 'string' }, { type: 'number' }] },
                             placeholder: { type: 'string' },
                             allow_new: { type: 'boolean' },
+                            new_prefixes: { type: 'array', items: { type: 'string', minLength: 1 } },
+                            create_scene: { type: 'string', minLength: 1 },
                             presets: {
                               type: 'array',
                               items: { oneOf: [{ type: 'string' }, { type: 'number' }] },
