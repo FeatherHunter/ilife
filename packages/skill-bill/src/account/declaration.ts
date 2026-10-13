@@ -32,7 +32,7 @@ export const ACCOUNT_DECLARATION: DomainDeclaration = {
           types: ['采集'],
           editable_fields: [
             { name: 'account_name', label: '账户名', value: '', hint: '如 招行卡、花呗', required: true, kind: 'text' },
-            { name: 'account_type', label: '类型(选填)', value: '', hint: '从已有类型里选；要新类型直接说', required: false, kind: 'text', source: 'accountTypes', empty_label: '不写类型' },
+            { name: 'account_type', label: '类型(选填)', value: '', hint: '点候选选用过的类型；要新的直接敲，再点「＋ 新建」', required: false, kind: 'text', source: 'accountTypes', empty_label: '不写类型', allow_new: true },
           ],
         },
       ],

@@ -259,6 +259,14 @@
   /* 互斥组（#1269 条目 3）：同组已填一个时，其余清空并置灰 */
   .sheet .pfield.is-off label,.sheet .pfield.is-off .phline{color:#c2c2c9}
   .sheet .pfield.is-off input,.sheet .pfield.is-off input:placeholder-shown,.sheet .pfield.is-off select{background:#f4f4f6;color:#b0b0b8;border-color:#ececf1}
+  /* 值级放开字段（#1269 · 用户 2026-10-13 定稿）：控件从「一行」变成「一叠」（卡片＋候选＋新建＋留空），
+     三处宿主排版跟着走：标签贴第一行（不再垂直居中）、ⓘ 提到卡片右上角躲开候选胶囊、
+     过滤框与新建框不继承输入框的 66px 右内边距（那是给框内图标留的）。 */
+  .sheet .pfield.is-smart{align-items:flex-start}
+  .sheet .pfield.is-smart>label{margin-top:14px}
+  .sheet .pfield.is-smart .inwrap{display:block}
+  .sheet .pfield.is-smart .ib{top:10px;right:8px;transform:none;z-index:2}
+  .sheet .pfield.is-smart .inwrap input{padding-right:12px}
   .sheet .pfield label{font-size:12px;color:var(--fg2);font-weight:600;flex-shrink:0;min-width:72px}
   .sheet .pfield label em{color:var(--fg3);font-weight:400;font-size:9px}
   .sheet .pfield input{flex:1;min-width:0;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:16px;background:#fff;outline:none;font-family:inherit;color:var(--fg)}
@@ -1842,7 +1850,7 @@ function normalizeScenes(scenes){
       params: (s.editable_fields || []).map(function(f){
         var k = (f.kind === 'number' || f.kind === 'select' || f.kind === 'date' || f.kind === 'week' || f.kind === 'month' || f.kind === 'year' || f.kind === 'time' || f.kind === 'period') ? f.kind : 'text';
         if (f.kind !== undefined && f.kind !== null && k === 'text' && f.kind !== 'text') { try{console.warn('help-template: 非法 kind 降级 text: ' + f.kind);}catch(e){} }
-        return { key: f.name, label: f.label, value: f.value || '', req: !!f.required, hint: f.hint || '', kind: k, options: f.options || [], emptyLabel: f.empty_label || '', min: f.min, max: f.max, step: f.step, placeholder: f.placeholder || f.hint || '', presets: Array.isArray(f.presets) ? f.presets : [], exclusive: f.exclusive_group || '' };
+        return { key: f.name, label: f.label, value: f.value || '', req: !!f.required, hint: f.hint || '', kind: k, options: f.options || [], emptyLabel: f.empty_label || '', min: f.min, max: f.max, step: f.step, placeholder: f.placeholder || f.hint || '', presets: Array.isArray(f.presets) ? f.presets : [], exclusive: f.exclusive_group || '', allowNew: !!f.allow_new };
       })
     };
   });
@@ -1985,6 +1993,12 @@ function fieldControlHTML(p){
   var kind = fieldKindOf(p);
   var ph = String(p.placeholder || p.hint || '');
   if (kind === 'select') {
+    if (p.allowNew) {
+      /* 值级放开（用户 2026-10-13 定稿）：候选之外还要能自己敲一个新值 —— 控件本体是可输入框，
+         由 mountSmartSelects 挂 smartSelect（候选 chips ＋ 输入过滤 ＋「＋ 新建」＋ 重名自动选中已有
+         ＋ 相似提示 ＋ 留空，见 v1.12）。新值随记录落库，下一轮生成候选时回流。 */
+      return '<input data-p="' + esc(p.key) + '" type="text" data-smart="1" value="' + esc(String(p.value || '')) + '" placeholder="' + esc(ph) + '">';
+    }
     var opts = Array.isArray(p.options) ? p.options : [];
     // 空项文案（用户 2026-10-13 定稿）：必填＝请选择；选填＝不限（留空即不筛这一维）。
     // 留空不等于「不限」的格由声明里的 empty_label 写清（如分类留空＝总预算、收支留空＝支出）。
@@ -2667,7 +2681,43 @@ function mountExclusives(root){
     })(forms[fi]);
   }
 }
+/* 值级放开字段的挂载（用户 2026-10-13 定稿）：把带 data-smart 的框交给 smartSelect 组件本体
+   （v1.12 就住在模板里，此前零调用点）：候选 chips ＋ 输入过滤 ＋「＋ 新建」＋ 重名自动选中已有
+   ＋ 相似提示 ＋ 留空。候选来自声明（生成期注入），控件只认识「一串名字」，领域词一律不进这一层。
+   场景对象按 .pform 的 data-pid 取，字段声明按 data-p 取；对象候选写进提示词的是 value。 */
+function mountSmartSelects(root){
+  var forms = root.querySelectorAll('.pform[data-pid]');
+  for (var fi = 0; fi < forms.length; fi++) {
+    (function(fm){
+      var s = SCENE[fm.getAttribute('data-pid')];
+      if (!s || !s.params) return;
+      var inps = fm.querySelectorAll('input[data-p][data-smart]');
+      for (var ii = 0; ii < inps.length; ii++) {
+        (function(inp){
+          if (inp.getAttribute('data-ss')) return;
+          inp.setAttribute('data-ss', '1');
+          var p = null;
+          for (var pi = 0; pi < s.params.length; pi++) {
+            if (s.params[pi].key === inp.getAttribute('data-p')) { p = s.params[pi]; break; }
+          }
+          if (!p) return;
+          var opts = (Array.isArray(p.options) ? p.options : []).map(function(o){
+            return { name: (o && typeof o === 'object') ? String(o.value != null ? o.value : o.label) : String(o) };
+          }).filter(function(o){ return o.name !== ''; });
+          smartSelect(inp, {
+            options: opts,
+            maxChips: 8,
+            texts: { emptyButton: p.emptyLabel || '留空(不填)' }
+          });
+          var pf = inp.closest('.pfield');
+          if (pf) pf.classList.add('is-smart');
+        })(inps[ii]);
+      }
+    })(forms[fi]);
+  }
+}
 function mountFields(root){
+  mountSmartSelects(root);
   mountPeriods(root);
   mountFilterSelects(root);
   mountPickers(root);
