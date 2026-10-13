@@ -15,18 +15,16 @@
  *
  *  #1280 · 值级放开（第 3 步）：写入域**四个分类格**（记支出／记收入／记报销／记一笔）与**三个账本格**
  *  （记支出／批量录入／记分期）从「自由文本」换成「候选 ＋ 可敲新值」——声明侧写 `source`（候选由生成期
- *  读库填进 `options`）＋ `allow_new`；分类那四格另给 `new_prefixes`（顶层是闭集，清单逐字从
- *  `../shared/category.js` 取，本域不写第二份）。`account` 那几格**不放开**：账户有独立登记表，
+ *  读库填进 `options`）＋ `allow_new`。`account` 那几格**不放开**：账户有独立登记表，
  *  要的是「去创建场景新增」那条出口，不是在本格敲一个新名字。
  *  用户敲的新值与库里已有值只差大小写／空白／全角半角时，落库改写成已有那个拼写——收口在
  *  `./record.js`（`canonicalizeExistingNames`，比较键 `../shared/nameKey.js`），不在声明侧。
  *
  *  #1280 · 值级放开（第 5 步）：配套的**治理出口**——重复／写错的分类并成一条，落成一条写命令
  *  `bill.category.merge`（`合并分类`，「修正」二级组）。两个必填槽位都是分类格：原分类只给候选
- *  （库里已有的写法，不放开）、新分类放开（`allow_new` ＋ `new_prefixes`，与上面四个分类格同一份清单）。
+ *  （库里已有的写法，不放开）、新分类放开（`allow_new`，与上面四个分类格同一份候选来源）。
  */
 import type { DomainDeclaration } from '../triggers/routeSpec.js';
-import { EXPENSE_L1, INCOME_L1 } from '../shared/category.js';
 
 export const WRITE_DECLARATION: DomainDeclaration = {
   id: 'write',
@@ -47,7 +45,7 @@ export const WRITE_DECLARATION: DomainDeclaration = {
           types: ['采集'],
           editable_fields: [
             { name: 'amount', label: '金额', value: '', hint: '纯数字，不带单位', required: true, kind: 'number' },
-            { name: 'category', label: '分类/名目', value: '', hint: '从候选里选；没有的先点前缀再敲名字', required: true, kind: 'text', source: 'categories', allow_new: true, new_prefixes: EXPENSE_L1 },
+            { name: 'category', label: '分类/名目', value: '', hint: '从候选里选；没有的先点前缀再敲名字', required: true, kind: 'text', source: 'categories', allow_new: true },
             { name: 'note', label: '备注(选填)', value: '', hint: '', required: false, kind: 'text' },
             { name: 'record_time', label: '时间(选填)', value: '', hint: '空＝现在；填了必须是 YYYY-MM-DD', required: false, kind: 'date' },
             { name: 'account', label: '账户(选填)', value: '', hint: '如 支付宝、微信', required: false, kind: 'text' },
@@ -70,7 +68,7 @@ export const WRITE_DECLARATION: DomainDeclaration = {
           types: ['采集'],
           editable_fields: [
             { name: 'amount', label: '金额', value: '', hint: '纯数字，不带单位', required: true, kind: 'number' },
-            { name: 'category', label: '分类/名目', value: '', hint: '从候选里选；没有的先点前缀再敲名字', required: true, kind: 'text', source: 'categories', allow_new: true, new_prefixes: INCOME_L1 },
+            { name: 'category', label: '分类/名目', value: '', hint: '从候选里选；没有的先点前缀再敲名字', required: true, kind: 'text', source: 'categories', allow_new: true },
             { name: 'note', label: '备注(选填)', value: '', hint: '', required: false, kind: 'text' },
             { name: 'record_time', label: '时间(选填)', value: '', hint: '空＝现在；填了必须是 YYYY-MM-DD', required: false, kind: 'date' },
             { name: 'account', label: '账户(选填)', value: '', hint: '如 银行卡、微信', required: false, kind: 'text' },
@@ -143,7 +141,7 @@ export const WRITE_DECLARATION: DomainDeclaration = {
           types: ['采集'],
           editable_fields: [
             { name: 'amount', label: '金额', value: '', hint: '纯数字，不带单位', required: true, kind: 'number' },
-            { name: 'category', label: '分类(选填)', value: '', hint: '从候选里选；没有的先点前缀再敲名字', required: false, kind: 'text', source: 'categories', allow_new: true, new_prefixes: [...EXPENSE_L1, ...INCOME_L1] },
+            { name: 'category', label: '分类(选填)', value: '', hint: '从候选里选；没有的先点前缀再敲名字', required: false, kind: 'text', source: 'categories', allow_new: true },
             { name: 'note', label: '备注(选填)', value: '', hint: '自动加 #待报销', required: false, kind: 'text' },
             { name: 'record_time', label: '时间(选填)', value: '', hint: '空＝现在；填了必须是 YYYY-MM-DD', required: false, kind: 'date' },
           ],
@@ -274,7 +272,7 @@ export const WRITE_DECLARATION: DomainDeclaration = {
           types: ['采集'],
           editable_fields: [
             { name: 'amount', label: '金额', value: '', hint: '纯数字，不带单位；支出填负数，收入填正数', required: true, kind: 'number' },
-            { name: 'category', label: '分类/名目', value: '', hint: '从候选里选；没有的先点前缀再敲名字', required: true, kind: 'text', source: 'categories', allow_new: true, new_prefixes: [...EXPENSE_L1, ...INCOME_L1] },
+            { name: 'category', label: '分类/名目', value: '', hint: '从候选里选；没有的先点前缀再敲名字', required: true, kind: 'text', source: 'categories', allow_new: true },
             { name: 'note', label: '备注(选填)', value: '', hint: '', required: false, kind: 'text' },
             { name: 'record_time', label: '时间(选填)', value: '', hint: '空＝现在；填了必须是 YYYY-MM-DD', required: false, kind: 'date' },
             { name: 'account', label: '账户(选填)', value: '', hint: '如 支付宝、微信', required: false, kind: 'text' },
@@ -349,7 +347,7 @@ export const WRITE_DECLARATION: DomainDeclaration = {
           types: ['采集'],
           editable_fields: [
             { name: 'from', label: '原分类', value: '', hint: '要改掉的那个写法，如 餐饮/夜宵', required: true, kind: 'text', source: 'categories' },
-            { name: 'to', label: '新分类', value: '', hint: '并进去的那个写法，如 餐饮；没有的先点前缀再敲名字', required: true, kind: 'text', source: 'categories', allow_new: true, new_prefixes: [...EXPENSE_L1, ...INCOME_L1] },
+            { name: 'to', label: '新分类', value: '', hint: '并进去的那个写法，如 餐饮；没有的先点前缀再敲名字', required: true, kind: 'text', source: 'categories', allow_new: true },
           ],
         },
       ],

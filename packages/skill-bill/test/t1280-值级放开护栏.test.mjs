@@ -4,8 +4,8 @@
  *   ① 查询域的声明里 `allow_new` **零命中**——查询页只让人「从已有值里挑」，不放开新建；
  *   ② 全 `src` 里凡是 `source: 'accounts'` 的字段一律**不许**带 `allow_new`——账户有独立登记表，
  *      要的是「去创建场景新增」那条出口（`create_scene`），放开就等于绕开账户表；
- *   ③ 记支出／记收入两组前缀**逐项**等于 `EXPENSE_L1`／`INCOME_L1`（值域只有一处书写位：
- *      `src/shared/category.ts`），记报销／记一笔＝两者合并；账本格有候选来源但没有前缀；
+ *   ③ 分类格／账本格放开新建、账户格不放开，且已退役的声明键（`new_prefixes`／`group_by`）在载荷里零出现
+ *      （#1280 收敛批：前缀胶囊行删除、`.filt` 面板不出分组标题 ⇒ 两键端到端删除）；
  *   ④ `src/shared/nameKey.ts` 的比较键：全角折半角（`／`→`/`）、大小写折平、空白折叠去首尾。
  *
  * 判据②带**自证**：合成一段文本，坏写法必须被抓、好写法不许误报（免得这条判据哪天退化成永远绿）。
@@ -17,7 +17,6 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildHelpFileData } from '../dist/index.js';
-import { EXPENSE_L1, INCOME_L1 } from '../dist/shared/category.js';
 import { nameKey } from '../dist/shared/nameKey.js';
 
 const PKG = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -74,6 +73,19 @@ function fieldsWithSource(text, sourceName) {
 
 const allowsNew = (literal) => /allow_new\s*:\s*true/.test(literal);
 
+/** 载荷里出现的已退役声明键（#1280 收敛批删掉的两个），递归扫键名。 */
+function retiredKeyHits(value, out = []) {
+  if (Array.isArray(value)) {
+    for (const v of value) retiredKeyHits(v, out);
+  } else if (value && typeof value === 'object') {
+    for (const [k, v] of Object.entries(value)) {
+      if (k === 'new_prefixes' || k === 'group_by') out.push(k);
+      retiredKeyHits(v, out);
+    }
+  }
+  return out;
+}
+
 const payload = () => buildHelpFileData(NOW, {});
 
 function fieldOf(p, sceneId, name) {
@@ -121,7 +133,7 @@ describe('#1280 · 值级放开护栏', () => {
     assert.equal(badFields[0], "{ name: 'account', hint: '{{x}}', source: 'accounts', allow_new: true }", '自证：取到的必须是字段本身，不是整份声明');
   });
 
-  it('③ 记支出／记收入的前缀逐项＝EXPENSE_L1／INCOME_L1；记报销／记一笔＝两者合并', () => {
+  it('③ 分类格／账本格放开新建、账户格不放开；`new_prefixes`／`group_by` 在载荷里零出现', () => {
     const p = payload();
     const expense = fieldOf(p, 'write_expense', 'category');
     const income = fieldOf(p, 'write_income', 'category');
@@ -132,17 +144,12 @@ describe('#1280 · 值级放开护栏', () => {
       assert.equal(f.source, 'categories', scene + '.category 的来源名');
       assert.equal(f.allow_new, true, scene + '.category 要放开新建');
     }
-    assert.deepEqual(expense.new_prefixes, [...EXPENSE_L1], '记支出的前缀＝支出顶层十项，逐项同序');
-    assert.deepEqual(income.new_prefixes, [...INCOME_L1], '记收入的前缀＝收入顶层六项，逐项同序');
-    assert.deepEqual(reimburse.new_prefixes, [...EXPENSE_L1, ...INCOME_L1], '记报销的前缀＝两者合并');
-    assert.deepEqual(record.new_prefixes, [...EXPENSE_L1, ...INCOME_L1], '记一笔的前缀＝两者合并');
-    // 账本格：有候选来源、放开新建，但**不给前缀**（账本没有顶层闭集）。
+    // 账本格：有候选来源、放开新建（账本没有顶层闭集）。
     for (const [scene, name] of [['write_expense', 'ledger'], ['write_batch', 'ledger'], ['write_installment', 'ledger']]) {
       const f = fieldOf(p, scene, name);
       assert.ok(f, scene + '.' + name + ' 必须在载荷里');
       assert.equal(f.source, 'ledgers', scene + '.' + name + ' 的来源名');
       assert.equal(f.allow_new, true, scene + '.' + name + ' 要放开新建');
-      assert.equal(f.new_prefixes, undefined, scene + '.' + name + ' 不许给前缀');
     }
     // 账户格：不放开（在写入域里就是这几格）。
     for (const [scene, name] of [['write_expense', 'account'], ['write_income', 'account'], ['write_installment', 'account'], ['write_record', 'account']]) {
@@ -150,6 +157,9 @@ describe('#1280 · 值级放开护栏', () => {
       assert.ok(f, scene + '.' + name + ' 必须在载荷里');
       assert.equal(f.allow_new, undefined, scene + '.' + name + ' 不许放开新建');
     }
+    // #1280 收敛批：前缀胶囊行已删（改按前缀扎堆排序）、`.filt` 面板不出分组标题 ⇒ 两个声明键端到端删除，
+    // 载荷里一个都不许再出现（旧锁锁的是前缀清单逐项相等，键没了它只能锁「不许复活」）。
+    assert.deepEqual(retiredKeyHits(p), [], '载荷里还有已退役的声明键（new_prefixes／group_by）');
   });
 
   it('④ nameKey：全角折半角、大小写折平、空白折叠去首尾；不做近义合并', () => {

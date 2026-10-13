@@ -1127,6 +1127,10 @@ function errorReceipt(cfg){
 /* ── smartSelect 选择器组件（v1.14 · #312/#1280 · 复用优先·新建其次）──
  * smartSelect(inputEl, config) → { getState, getValue }
  * 字段级组件: 一页 N 实例, 每字段一容器一 config 一隐藏 input, 互不干扰。
+ * **契约现状（#1280 收敛批 · 2026-10-14）**：字段管线已不再调用本函数（`mountFields` 里那一步删了，
+ *   候选控件改由 `.filt` 悬浮筛选面板承担）；本函数**不再从字段形状读 `new_prefixes`／`group_by`**
+ *   （两个声明键已端到端删除），弹层里的前缀胶囊与分组小标题只认本组件自己的入参
+ *   `config.newPrefixes`／`config.groupBy`（显式传才生效）。代码留着，删不删另票定。
  * 定位: 与 copyText/actionBar 同级 Base 组件; 账户/分类/账本/运动类型等
  *   「复用优先·新建其次」字段通用; 零领域词, label/文案/选项/prompt 全由外部注入。
  * v1.14（用户 2026-10-13 二改）: 默认态收成一枚**一行高的触发器**, 占字段右侧那一格 ——
@@ -1407,13 +1411,13 @@ function smartSelect(inputEl, config){
 
   function ssSheetTitle(){ return String(texts.sheetTitle || _SS_TEXTS.sheetTitle); }
   /* 一级分组＝值里 `/` 前那一段；没有 `/`（或起手就是 `/`）的归「其他」。
-     #1280：抽出具名函数 `ssValueGroup`，分组口径由声明键 `group_by` 选（缺省＝这一条）。 */
+     #1280：抽出具名函数 `ssValueGroup`，分组口径由本组件的 config.groupBy 选（缺省＝这一条）。 */
   function ssValueGroup(n){
     var i = n.indexOf('/');
     var head = i > 0 ? n.slice(0, i).trim() : '';
     return head || String(texts.groupOther);
   }
-  /* `group_by:'none'` ⇒ 返回空串：前景列表只出一层，不出分组小标题（调用处按空串跳过小标题）。 */
+  /* `config.groupBy:'none'` ⇒ 返回空串：前景列表只出一层，不出分组小标题（调用处按空串跳过小标题）。 */
   function ssGroupOf(n){
     return groupBy === 'none' ? '' : ssValueGroup(n);
   }
@@ -2227,7 +2231,7 @@ function normalizeScenes(scenes){
       params: (s.editable_fields || []).map(function(f){
         var k = (f.kind === 'number' || f.kind === 'select' || f.kind === 'date' || f.kind === 'week' || f.kind === 'month' || f.kind === 'year' || f.kind === 'time' || f.kind === 'period') ? f.kind : 'text';
         if (f.kind !== undefined && f.kind !== null && k === 'text' && f.kind !== 'text') { try{console.warn('help-template: 非法 kind 降级 text: ' + f.kind);}catch(e){} }
-        return { key: f.name, label: f.label, value: f.value || '', req: !!f.required, hint: f.hint || '', kind: k, options: f.options || [], emptyLabel: f.empty_label || '', min: f.min, max: f.max, step: f.step, placeholder: f.placeholder || f.hint || '', presets: Array.isArray(f.presets) ? f.presets : [], exclusive: f.exclusive_group || '', allowNew: !!f.allow_new, newPrefixes: Array.isArray(f.new_prefixes) ? f.new_prefixes.map(String) : [], createScene: f.create_scene || '', source: f.source || '', notes: (f.notes && typeof f.notes === 'object' && !Array.isArray(f.notes)) ? f.notes : {}, groupBy: f.group_by || '' };
+        return { key: f.name, label: f.label, value: f.value || '', req: !!f.required, hint: f.hint || '', kind: k, options: f.options || [], emptyLabel: f.empty_label || '', min: f.min, max: f.max, step: f.step, placeholder: f.placeholder || f.hint || '', presets: Array.isArray(f.presets) ? f.presets : [], exclusive: f.exclusive_group || '', allowNew: !!f.allow_new, createScene: f.create_scene || '', source: f.source || '', notes: (f.notes && typeof f.notes === 'object' && !Array.isArray(f.notes)) ? f.notes : {} };
       })
     };
   });
@@ -2873,8 +2877,7 @@ function mountFilterSelects(root){
       for (var oi = 0; oi < sel.options.length; oi++) all.push({ v: sel.options[oi].value, t: sel.options[oi].textContent });
       var real = all.filter(function(o){ return o.v; });
       /* 这一格的声明（`allow_new`／`notes`）：场景按 `.pform[data-pid]` 取、字段按 `data-p` 取，
-         与 mountSmartSelects 同一条取法；取不到就当没有（手写页面也不炸）。
-         `new_prefixes` 本控件不消费（用户 2026-10-14 删掉前缀胶囊行后它在本管线里已无消费方）。 */
+         与 mountSmartSelects 同一条取法；取不到就当没有（手写页面也不炸）。 */
       var fm = sel.closest ? sel.closest('.pform[data-pid]') : null;
       var sc = fm ? SCENE[fm.getAttribute('data-pid')] : null;
       var p = null;
@@ -2920,7 +2923,7 @@ function mountFilterSelects(root){
          · 桶间：按桶总量降序（本格有 `notes` 就用 notes 计数求和，没有就用桶内候选条数），同量按桶名；
          · 桶内：按用量降序（有 `notes` 用 notes，没有就保持候选原顺序），同量按名称序——全程确定性。
          对**所有** `.filt` 格生效（pick-only 与原分类同样吃这个排序），与 `allow_new` 无关；
-         不加分组小标题（用户只要扎堆，不加高度）。`group_by` 键继续惰性、不接。 */
+         不加分组小标题（用户只要扎堆，不加高度）。 */
       var hasNotes = Object.keys(notes).length > 0;
       function noteNum(v){
         var s = notes[v];
@@ -3252,11 +3255,6 @@ function mountSmartSelects(root){
             pickOnly: !p.allowNew,
             /* 候选项附注（#1280 初版）：值 → 行右侧小字；技能侧生成期给，本层不认识它的含义。 */
             notes: p.notes,
-            /* 分组口径（#1280，可选）：缺省／'slash'＝值里首个 `/` 前那段，'none'＝不分组。 */
-            groupBy: p.groupBy,
-            /* 前缀清单（用户 2026-10-13 定稿）：值有层级、顶层是闭集时，弹层底栏给一排前缀胶囊，
-               点一下＝把「前缀/」填进弹层输入框，名字用户自己接着敲；清单由技能侧生成期给，本层不认识领域词。 */
-            newPrefixes: p.newPrefixes,
             texts: {
               /* 未选值的灰字：必填＝请选择／选填＝不限；留空不等于「不限」的格由声明里的 empty_label 写清 */
               placeholder: p.emptyLabel || (p.req ? '请选择' : '不限'),
