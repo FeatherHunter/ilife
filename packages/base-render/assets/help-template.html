@@ -1065,6 +1065,12 @@ var _SS_TEXTS = {
     empty:'不填该字段'
   }
 };
+/** 重名判定用的比较键（#1269 值级放开 · 用户 2026-10-13 定稿）：NFKC（全角折半角、兼容字符归一）
+ *  ＋ 空白折叠 ＋ 大小写折叠。只用来**判定是不是同一个值**；落库与显示的字面量仍是候选／用户那一份，
+ *  本函数不改写任何值（改写是命令侧去重的活）。*/
+function ssNameKey(s){
+  return String(s == null ? '' : s).normalize('NFKC').replace(/\s+/g, ' ').trim().toLowerCase();
+}
 function smartSelect(inputEl, config){
   /* ── 结构校验（违规直接报错）── */
   if(!inputEl || inputEl.tagName !== 'INPUT'){
@@ -1193,8 +1199,9 @@ function smartSelect(inputEl, config){
 
   function similarHint(v){
     if(!v) return '';
+    var key = ssNameKey(v);
     var s = allNames().filter(function(n){
-      return n !== v && (n.indexOf(v) >= 0 || v.indexOf(n) >= 0);
+      return ssNameKey(n) !== key && (n.indexOf(v) >= 0 || v.indexOf(n) >= 0);
     });
     return s.length ? '已有相似「'+s[0]+'」, 是否使用已有的?(点候选即选)' : '';
   }
@@ -1293,7 +1300,12 @@ function smartSelect(inputEl, config){
     var doNew = function(){
       var v = newIn.value.trim();
       if(!v) return;
-      if(allNames().indexOf(v) >= 0){ setSel(v, 'existing'); return; }
+      /* 重名判定走比较键（全角/空白/大小写差异算同一个值）⇒ 命中已有就选已有那个拼写，不造第二份 */
+      var key = ssNameKey(v);
+      var names = allNames();
+      for(var ni = 0; ni < names.length; ni++){
+        if(ssNameKey(names[ni]) === key){ setSel(names[ni], 'existing'); return; }
+      }
       custom.unshift(v);
       setSel(v, 'custom');
     };
