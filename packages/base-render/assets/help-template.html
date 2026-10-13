@@ -240,6 +240,9 @@
   .sheet .optfold>summary.fold:active .chev{background:#dfe3ea;color:var(--fg)}
   .sheet .optfold[open] summary.fold .chev{transform:rotate(180deg)}
   .sheet .optfold .pfield:first-of-type{margin-top:8px}
+  /* 展开的选填区里，最后一行贴到折叠框下边线（只剩 1px 边框，用户 2026-10-13 指着图说"没有一点 padding 的空白区域"）：
+     补 8px 下留白，与上面首行的 8px 上留白对称。 */
+  .sheet .optfold[open] .pfield:last-of-type{margin-bottom:8px}
   .sheet .optfold[open] .pfield{animation:rise .22s ease-out both}
   @keyframes rise{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
   /* 条目 8：缺必填时抖红框（幅度 4px→3px，用户 2026-10-12 反馈"幅度太大"）*/
@@ -2488,8 +2491,15 @@ function mountFilterSelects(root){
       var LIST_MAX = 560, LIST_MIN = 60, GAP = 6, EDGE = 8;
       function place(){
         var r = row.getBoundingClientRect();
-        panel.style.left = Math.round(r.left) + 'px';
-        panel.style.width = Math.round(r.width) + 'px';
+        /* 宽度用 left＋right 定，不写 px width：视口可用宽一变（页面滚动条出现/消失、软键盘
+           落定、宿主 iframe 尺寸变化），触发框与面板在**同一帧**一起变宽变窄，不必等下一次
+           reflow 补量——「打开时比输入框窄一点、约一秒后才对齐」的抖动就出在 px width
+           只能靠事件补量。右缘按「视口可用宽 − 框右缘」存成 px，视口与框右缘同向移动时该值
+           自动仍然正确。 */
+        var vw = document.documentElement.clientWidth || window.innerWidth;
+        panel.style.left = r.left + 'px';
+        panel.style.right = Math.max(0, vw - r.right) + 'px';
+        panel.style.width = '';
         listEl.style.maxHeight = LIST_MAX + 'px';
         var chromeH = panel.offsetHeight - listEl.offsetHeight; /* 筛选行＋边框 */
         var above = r.top - EDGE - GAP;
@@ -2524,6 +2534,11 @@ function mountFilterSelects(root){
       };
       window.addEventListener('scroll', reflow, true);
       window.addEventListener('resize', reflow);
+      /* 触发框自身尺寸一变就重摆（视口宽没变、但框变宽变窄的情形，resize 不响）：与上面的
+         left/right 定宽互补——定宽管「视口变」，观察器管「框变」。 */
+      if (typeof ResizeObserver === 'function') {
+        try { new ResizeObserver(function(){ if (panel.classList.contains('filt-float')) place(); }).observe(row); } catch (e) {}
+      }
       row.addEventListener('click', function(){ setOpen(!wrap.classList.contains('open')); });
       q.addEventListener('input', function(){ draw(); place(); }); /* 筛完重摆：列表变短，面板跟着收 */
       q.addEventListener('keydown', function(e){ if (e.key === 'Escape') { setOpen(false); row.focus(); } });
