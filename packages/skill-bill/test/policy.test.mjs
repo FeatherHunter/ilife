@@ -31,8 +31,8 @@ describe('饼干口径 policy', () => {
     const r = validateRecord({ category: '餐饮', amount: -20, time: '2026-09-06 12:00:00' });
     assert.equal(r.ledger, '生活');
   });
-  it('唤醒词 79 全量 + 最长匹配 + 缺槽位', () => {
-    assert.equal(WAKE_TABLE.length, 79);
+  it('唤醒词 80 全量 + 最长匹配 + 缺槽位', () => {
+    assert.equal(WAKE_TABLE.length, 80);
     assert.equal(routeWakeword('看分类对比一下').key, 'bill.analysis.compare');
     assert.equal(routeWakeword('看分类').key, 'bill.analysis.overview');
     assert.equal(routeWakeword('初始化状态看看').key, 'bill.setup.run');
@@ -49,6 +49,10 @@ describe('饼干口径 policy', () => {
     assert.equal(routeWakeword('撤销').key, 'bill.record.update');
     assert.equal(routeWakeword('恢复').key, 'bill.record.update');
     assert.equal(routeWakeword('改记录', { id: 3 }).params.id, 3);
+    // #1280 第 5 步「合并分类」：两个必填槽位给全才落到本命令；缺任一个由路由层按声明拦住（不是静默派到别处）。
+    assert.equal(routeWakeword('合并分类', { from: '餐饮/夜宵', to: '餐饮' }).key, 'bill.category.merge');
+    assert.throws(() => routeWakeword('合并分类', {}), /from|槽位/);
+    assert.throws(() => routeWakeword('合并分类', { from: '餐饮/夜宵' }), /to|槽位/);
   });
   it('错误皆为 BillPolicyError', () => {
     try { routeWakeword(''); assert.fail('应抛'); }

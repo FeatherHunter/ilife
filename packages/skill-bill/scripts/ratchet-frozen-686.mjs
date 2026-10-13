@@ -14,7 +14,7 @@
  *      （行为口径：`case`／`===`／就地键集查询三类都数，双引号与 `if` 阶梯一视同仁；具名键集／默认值／注释不数）；
  *   ② **过渡表**：`src/render/envelope.ts` 的 `TRANSITIONAL_KEY_SHAPES` 键集（未搬迁的键仍住在那里）；
  *   ③ **键总数与注册表**：`dist/triggers/wakeTable.js` 的 `WAKE_TABLE` 键集（**域声明合并出来的派生面**，
- *      是 16 键的独立事实源；#689 搬迁前这一读数取自 `dist/policy/index.js`，那件已随 `policy/` 拆散删除）
+ *      是 17 键的独立事实源；#689 搬迁前这一读数取自 `dist/policy/index.js`，那件已随 `policy/` 拆散删除）
  *      与 `dist/cli/registry.js` 的 `REGISTRY_KEYS`（生成物）。
  *
  * 未搬迁的键**恰恰住两处**（过渡表有形状行、分派层有 case）：搬一条＝两处同窗消失 ＋ 冻结值同窗下调。
@@ -38,10 +38,12 @@ export const FROZEN = {
     'bill.link.submit',
   ],
   /** 已搬进能力目录、进生成物注册表的键数：搬一条 ⇒ +1，同窗上调这里。 */
-  registryKeyCount: 16,
-  /** 7 域 16 联动的键总数（搬迁不改这个数）：非程序面注册表 ∪ 未搬迁 ＝ 全集。
+  // #1280 第 5 步（2026-10-13）：加 `bill.category.merge`（合并分类）——声明住 `src/write/commands.ts`
+  // （写入域＝它的 HELP 一级分组；不往分派层加分支），故这条棘轮与下面的键总数**同窗上调 16→17**。
+  registryKeyCount: 17,
+  /** 7 域 17 联动的键总数（搬迁不改这个数）：非程序面注册表 ∪ 未搬迁 ＝ 全集。
    *  数据族两条是程序面（`surface: 'program'`），只给程序用、不进唤醒词表，故不计入本数。 */
-  totalKeyCount: 16,
+  totalKeyCount: 17,
   /** 程序面命令（只给程序用，不进唤醒词路由）：注册表里有、词表里无，守恒式须先剔除它们。 */
   programKeys: [
     'bill.data.query',
@@ -235,7 +237,7 @@ export function ratchetProblems(m, frozen = FROZEN) {
   });
   out.push(countCheck('registryKeyCount（生成物注册表键数）', m.registryKeys.length, frozen.registryKeyCount));
   out.push(countCheck('totalKeyCount（口径层 WAKE_TABLE 的键总数）', m.wakeKeys.length, frozen.totalKeyCount,
-    '16 联动 key 是票面冻结的契约（键字符串后续票落表时冻结）：要加新命令得同窗改本冻结值并在票面说明，不是在这里悄悄长出来'));
+    '17 联动 key 是票面冻结的契约（键字符串后续票落表时冻结）：要加新命令得同窗改本冻结值并在票面说明，不是在这里悄悄长出来'));
   // #960 · 程序面命令不进词表：守恒式先剔除它们（注册表非程序面 ∪ 未搬迁 ＝ 全量声明）。
   const program = new Set(frozen.programKeys ?? []);
   const registryUser = m.registryKeys.filter((k) => !program.has(k));

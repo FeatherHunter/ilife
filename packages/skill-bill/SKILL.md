@@ -63,6 +63,7 @@ bill-cmd-read bill.record.add --params '{"category":"餐饮/外卖/午餐","amou
 | 改记录 | bill.record.update | receipt | `bill-cmd-read bill.record.update --params '{"id":1}'` |
 | 撤销 | bill.record.update | receipt | `bill-cmd-read bill.record.update --params '{"op":"undo","id":1}'` |
 | 恢复 | bill.record.update | receipt | `bill-cmd-read bill.record.update --params '{"op":"restore","id":1}'` |
+| 合并分类 | bill.category.merge | receipt | `bill-cmd-read bill.category.merge --params '{"from":"餐饮/夜宵","to":"餐饮"}'` |
 | 查今天 | bill.record.today | list | `bill-cmd-read bill.record.today` |
 | 查昨天 | bill.record.today | list | `bill-cmd-read bill.record.today --params '{"date":"yesterday"}'` |
 | 查某天 | bill.record.today | list | `bill-cmd-read bill.record.today --params '{"date":"2026-09-06"}'` |
@@ -123,7 +124,7 @@ bill-cmd-read bill.record.add --params '{"category":"餐饮/外卖/午餐","amou
 | 查看当前配置 | bill.setup.run | receipt | `bill-cmd-read bill.setup.run --params '{"op":"config-read"}'` |
 | 设置当前配置 | bill.setup.run | receipt | `bill-cmd-read bill.setup.run --params '{"op":"config-write"}'` |
 
-相关场景：bill.account.query、bill.account.write、bill.analysis.compare、bill.analysis.overview、bill.analysis.trend、bill.goal.query、bill.goal.write、bill.help.lookup、bill.link.submit、bill.record.add、bill.record.detail、bill.record.range、bill.record.search、bill.record.today、bill.record.update、bill.setup.run（16 联动，key 字符串后续票落表时冻结）。
+相关场景：bill.account.query、bill.account.write、bill.analysis.compare、bill.analysis.overview、bill.analysis.trend、bill.category.merge、bill.goal.query、bill.goal.write、bill.help.lookup、bill.link.submit、bill.record.add、bill.record.detail、bill.record.range、bill.record.search、bill.record.today、bill.record.update、bill.setup.run（16 联动，key 字符串后续票落表时冻结）。
 <!-- HELP-AUTO-END -->
 
 ## HELP 交付（说「饼干记账help」或「查帮助」走这里）

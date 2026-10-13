@@ -36,7 +36,7 @@ before(() => {
   assert.equal(run(['bill.record.add', '--params', P({ category: '餐饮/外卖/午餐', amount: -42, time: '2026-08-06 12:00:00', note: '午饭' })]).status, 0);
 });
 
-describe('饼干记账唯一出口 cmd_read（16 键全票）', () => {
+describe('饼干记账唯一出口 cmd_read（17 键全票）', () => {
   it('record.today：exit 0 + 纯 JSON list', () => {
     const r = run(['bill.record.today', '--params', P({ date: '2026-09-06' })]);
     assert.equal(r.status, 0);
@@ -110,13 +110,13 @@ describe('饼干记账唯一出口 cmd_read（16 键全票）', () => {
     assert.equal(run(['bill.setup.run', '--params', P({ op: 'init-status' })]).status, 0);
     const h = run(['bill.help.lookup']);
     assert.equal(h.status, 0);
-    // #144：缺省＝老实物同款 HELP 文件（`data` 换成域级索引），全量 79 条改走显式 `mode`。
+    // #144：缺省＝老实物同款 HELP 文件（`data` 换成域级索引），全量 80 条改走显式 `mode`。
     const he = JSON.parse(h.stdout);
     assert.equal(he.data.mode, 'file');
     assert.equal(he.data.total, 7);
     assert.ok(he.delivery.path.endsWith('.html') && he.delivery.path.includes('biscuit_accountant_html'));
     const all = run(['bill.help.lookup', '--params', P({ mode: 'lookup' })]);
-    assert.equal(JSON.parse(all.stdout).data.total, 79);
+    assert.equal(JSON.parse(all.stdout).data.total, 80);
     const q = run(['bill.help.lookup', '--params', P({ q: '帮我查今天花了多少' })]);
     assert.ok(JSON.parse(q.stdout).data.items.some((x) => x.key === 'bill.record.today'));
   });

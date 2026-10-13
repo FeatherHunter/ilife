@@ -20,6 +20,10 @@
  *  要的是「去创建场景新增」那条出口，不是在本格敲一个新名字。
  *  用户敲的新值与库里已有值只差大小写／空白／全角半角时，落库改写成已有那个拼写——收口在
  *  `./record.js`（`canonicalizeExistingNames`，比较键 `../shared/nameKey.js`），不在声明侧。
+ *
+ *  #1280 · 值级放开（第 5 步）：配套的**治理出口**——重复／写错的分类并成一条，落成一条写命令
+ *  `bill.category.merge`（`合并分类`，「修正」二级组）。两个必填槽位都是分类格：原分类只给候选
+ *  （库里已有的写法，不放开）、新分类放开（`allow_new` ＋ `new_prefixes`，与上面四个分类格同一份清单）。
  */
 import type { DomainDeclaration } from '../triggers/routeSpec.js';
 import { EXPENSE_L1, INCOME_L1 } from '../shared/category.js';
@@ -332,10 +336,28 @@ export const WRITE_DECLARATION: DomainDeclaration = {
         },
       ],
     },
+    {
+      phrase: '合并分类',
+      key: 'bill.category.merge',
+      needs: ['from', 'to'],
+      scenes: [
+        {
+          id: 'write_merge',
+          title: '把两个分类并成一个',
+          status: '',
+          prompt_template: '请你加载技能 饼干记账,执行唤醒词「合并分类」。\n\n我要把两个分类并成一个（写重了、写错了都算），记在这两个分类下的账跟着改名。\n\n原分类:{{from}}\n新分类:{{to}}',
+          types: ['采集'],
+          editable_fields: [
+            { name: 'from', label: '原分类', value: '', hint: '要改掉的那个写法，如 餐饮/夜宵', required: true, kind: 'text', source: 'categories' },
+            { name: 'to', label: '新分类', value: '', hint: '并进去的那个写法，如 餐饮；没有的先点前缀再敲名字', required: true, kind: 'text', source: 'categories', allow_new: true, new_prefixes: [...EXPENSE_L1, ...INCOME_L1] },
+          ],
+        },
+      ],
+    },
   ],
   subgroups: [
     { id: 'write_1', label: '记账', scenes: ['write_expense', 'write_income', 'write_bill_photo', 'write_batch', 'write_record'] },
     { id: 'write_2', label: '特殊收支', scenes: ['write_refund', 'write_reimburse', 'write_reimburse_done', 'write_lend', 'write_borrow', 'write_collect', 'write_payback', 'write_installment'] },
-    { id: 'write_3', label: '修正', scenes: ['write_update', 'write_undo', 'write_restore'] },
+    { id: 'write_3', label: '修正', scenes: ['write_update', 'write_undo', 'write_restore', 'write_merge'] },
   ],
 };

@@ -140,6 +140,9 @@ export const en = {
   'command.record-add.example': "bill-cmd-read bill.record.add --params '{\"category\":\"餐饮\",\"amount\":-12.5,\"time\":\"2026-09-14 12:00:00\",\"account\":\"支付宝\",\"ledger\":\"生活\"}'",
   'command.record-update.title': 'Edit an entry',
   'command.record-update.example': "bill-cmd-read bill.record.update --params '{\"note\":\"改过\"}'",
+  /* #1280 第 5 步：合并分类（例句与 zh 同值——可运行的样例数据是中文写法，译了就跑不通，见 `write/commands.ts` 件头）。 */
+  'command.category-merge.title': 'Merge categories',
+  'command.category-merge.example': "bill-cmd-read bill.category.merge --params '{\"from\":\"餐饮/夜宵\",\"to\":\"餐饮\"}'",
   'receipt-parts.status.label': 'Status',
   'receipt-parts.status.unchanged': 'No changes',
   'receipt-parts.status.changed': 'Changed',

@@ -41,12 +41,12 @@ function helpWakeWords(p) {
 /** 一条词路由到哪条命令（判据只看命令名，不看内部结构）。 */
 
 describe('#721 · 内容目录（从产物上读）', () => {
-  it('域序照声明自带的 order：7 域／21 二级组／76 场景', () => {
+  it('域序照声明自带的 order：7 域／21 二级组／77 场景', () => {
     const p = payload();
     assert.deepEqual(p.groups.map((g) => g.id), GROUP_IDS, '域序与老权威不同');
     assert.equal(p.groups.length, 7);
     assert.equal(p.groups.reduce((n, g) => n + g.subgroups.length, 0), 21);
-    assert.equal(scenesOf(p).length, 76);
+    assert.equal(scenesOf(p).length, 77);
   });
 
   it('场景的 wake_word 是词条投影（词条拥有它，声明里不写第二遍）', () => {
@@ -69,11 +69,11 @@ describe('#721 · 内容目录（从产物上读）', () => {
     assert.deepEqual(help.filter((w) => sceneWords.has(w)), [], 'HELP 短语自指：进了场景目录');
   });
 
-  it('76 条场景归 75 个词条（「备份」一词两场景的形状没搬丢）', () => {
+  it('77 条场景归 76 个词条（「备份」一词两场景的形状没搬丢）', () => {
     const p = payload();
     const words = scenesOf(p).map((s) => s.wake_word);
-    assert.equal(words.length, 76);
-    assert.equal(new Set(words).size, 75);
+    assert.equal(words.length, 77);
+    assert.equal(new Set(words).size, 76);
     assert.equal(words.filter((w) => w === '备份').length, 2);
   });
 });
@@ -81,7 +81,7 @@ describe('#721 · 内容目录（从产物上读）', () => {
 describe('#721 · 路由（从包门读）', () => {
   it('老 70 个唯一唤醒词逐条还在表里、逐条有落点', () => {
     const p = payload();
-    const legacy = scenesOf(p).filter((s) => !['write_record', 'query_bill_detail', 'setup_config_read', 'setup_config_write', 'query_multi'].includes(s.id));
+    const legacy = scenesOf(p).filter((s) => !['write_record', 'query_bill_detail', 'setup_config_read', 'setup_config_write', 'query_multi', 'write_merge'].includes(s.id));
     assert.equal(legacy.length, 71);
     const uniq = [...new Set(legacy.map((s) => s.wake_word))];
     assert.equal(uniq.length, LEGACY_UNIQUE_WORDS);
@@ -129,13 +129,13 @@ describe('#721 · 路由（从包门读）', () => {
 });
 
 describe('#721 · 命令注册表（撤掉代表唤醒词之后仍自洽）', () => {
-  it('条数不缩水：注册表 16 键（已迁移的十四条＋数据族两条），18 键契约由词表整体守', () => {
-    assert.equal(REGISTRY_KEYS.length, 16, '注册表＝已迁移的十四条＋数据族两条（其余 2 条仍住过渡表：help／link，合起来是 18 键）');
+  it('条数不缩水：注册表 17 键（已迁移的十五条＋数据族两条），19 键契约由词表整体守', () => {
+    assert.equal(REGISTRY_KEYS.length, 17, '注册表＝已迁移的十五条＋数据族两条（其余 2 条仍住过渡表：help／link，合起来是 19 键）');
     for (const key of REGISTRY_KEYS) {
       assert.ok(String(BILL_KEY_SHAPES[key] || '').length > 0, key + ' 在形状表里没有形状');
     }
-    // 16 键契约不缩水：词表里出现的命令名恰好就是既有那 16 个（数据族两条是程序面，不进词表）。
-    assert.equal(new Set(WAKE_TABLE.map((e) => e.key)).size, 16);
+    // 17 键契约不缩水：词表里出现的命令名恰好就是既有那 17 个（数据族两条是程序面，不进词表）。
+    assert.equal(new Set(WAKE_TABLE.map((e) => e.key)).size, 17);
   });
 
   it('每条命令都算得出代表唤醒词，且它路由回同一条命令', () => {

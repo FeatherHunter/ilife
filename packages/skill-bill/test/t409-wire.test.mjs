@@ -45,10 +45,17 @@ describe('409 · 写入 16 词五段接线', () => {
   it('HELP 卡：在写域各恰一张卡（wake_word 1:1，无一对多）', () => {
     const writeScenes = WAKE_GROUPS.find((g) => g.id === 'write')
       .subgroups.flatMap((s) => s.scenes);
-    assert.equal(writeScenes.length, 16);
+    // 17 张写域卡 = 16 条接线词各一张 ＋ #1280 的「合并分类」一张（两个槽位都必填，
+    // 进不了上面那份静态示例列，单独在下面点名守）。
+    assert.equal(writeScenes.length, 17);
     for (const w of CANON) {
       assert.equal(writeScenes.filter((s) => s.wake_word === w).length, 1, w);
     }
+    const merge = writeScenes.filter((s) => s.wake_word === '合并分类');
+    assert.equal(merge.length, 1, '合并分类');
+    assert.equal(merge[0].id, 'write_merge');
+    assert.deepEqual(merge[0].editable_fields.map((f) => f.name), ['from', 'to'], '合并分类两个槽位');
+    assert.deepEqual(merge[0].editable_fields.map((f) => f.required), [true, true], '两个都必填');
     for (const r of buildWriteWire()) {
       assert.ok(writeScenes.some((s) => s.id === r.helpSceneId && s.wake_word === r.phrase), r.phrase);
     }

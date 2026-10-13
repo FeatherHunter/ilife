@@ -12,7 +12,7 @@
  *
  *   ② **内容摘要锁**：对**产物**（真渲染出来的 HELP 页）里那段 `help-data` payload 求摘要并锁值。
  *      它钉的是**内容**、不是渲染（锁渲染会让模板改动假红）；属**冻结值台账**一类。
- *      两行值：`PRODUCT_DIGEST`＝74 条场景逐字（今天的事实）；`LEGACY_DIGEST`＝老 71 条逐字
+ *      两行值：`PRODUCT_DIGEST`＝77 条场景逐字（今天的事实）；`LEGACY_DIGEST`＝老 71 条逐字
  *      （与老权威 0 差异的机器证据——搬运器的读数由它复核）。
  */
 import { describe, it } from 'node:test';
@@ -54,14 +54,18 @@ const LEGACY_DIGEST = '93099ecd345b85c65d69231c348fea663af40617a72509968e3829d6e
  *  1269 重钉（2026-10-13 用户裁定「新增一个支持多个条件查询的场景」）：加 `query_multi`
  *  「查多条件」（75→76 场景／78→79 词／60→61 有参／15 零参）。
  *  2026-10-13 改名重钉（条目7 用户裁定「连唤醒词一起改」）：详情场景标题＋唤醒词→「查某编号的账」，
- *  该场景字段标签「记录 id」→「编号」、hint 改指列表页的「编号」列；76 场景／79 词／61 有参计数不变。 */
-const PRODUCT_DIGEST = '21b785aecb3740e5ac877168dd703680ffac5c9c4afa95e916bc097e8563c062';
+ *  该场景字段标签「记录 id」→「编号」、hint 改指列表页的「编号」列；76 场景／79 词／61 有参计数不变。
+ *  1280 重钉（2026-10-13，#1280 第 5 步）：加写入域「合并分类」（`write_merge`，
+ *  标题「把两个分类并成一个」、唤醒词「合并分类」、types `['采集']`、两个必填分类格 from／to）
+ *  ——77 场景／80 词／62 有参／15 零参。 */
+const PRODUCT_DIGEST = '430ca614dd0762f7c1c1cfe750627fc414995696a9ade05ccf1e5e4b9cc6cb40';
 /** 词 → 命令 表（79 条，按词排序）的 SHA-256——取自**改前**那份手写词表（#721 搬运前当刻）。
  *  它钉的是「一条词还路由到与今天相同的命令」，属搬运 0 差异的机器证据。1276 起 79 条（加查看／设置当前配置两词）；
  *  1275 起 78 条（查账单词条整条删，不留不印出来的路由别名）；1269 起又回 79 条（加「查多条件」）。
- *  2026-10-13：详情那条词由旧名改「查某编号的账」（条目7 用户裁定），条数仍 79、命令仍 `bill.record.detail`。 */
-const ROUTE_DIGEST = '866b0beea1be8c0be0ee1851353312074eb79e1ae76b1090b59223695545ecea';
-const ADDED_IDS = new Set(['write_record', 'query_bill_detail', 'setup_config_read', 'setup_config_write', 'query_multi']);
+ *  2026-10-13：详情那条词由旧名改「查某编号的账」（条目7 用户裁定），条数仍 79、命令仍 `bill.record.detail`。
+ *  1280 起 80 条：加「合并分类」→ `bill.category.merge`（#1280 第 5 步）。 */
+const ROUTE_DIGEST = 'bc2e9a00a4030d45181e1e699733b345adf4e44ca11eccad9f67e1b0a4612503';
+const ADDED_IDS = new Set(['write_record', 'query_bill_detail', 'setup_config_read', 'setup_config_write', 'query_multi', 'write_merge']);
 
 function walk(dir, out = []) {
   for (const e of readdirSync(dir, { withFileTypes: true })) {
@@ -149,9 +153,9 @@ describe('#721 · 结构性判据：一条唤醒词只准住它所属那份域�
 });
 
 describe('#721 · 内容摘要锁（冻结值台账一类，不是行为断言）', () => {
-  it('产物 payload 的 76 条场景逐字锁', () => {
+  it('产物 payload 的 77 条场景逐字锁', () => {
     const rows = productPayload().groups.flatMap((g) => g.subgroups.flatMap((s) => s.scenes));
-    assert.equal(rows.length, 76);
+    assert.equal(rows.length, 77);
     const digest = createHash('sha256').update(canonical(rows), 'utf8').digest('hex');
     assert.equal(digest, PRODUCT_DIGEST, '内容摘要变了：改的是域声明里的字就不是白改，摘要锁要跟着重钉（并在证据件里记一行）');
   });
@@ -163,13 +167,13 @@ describe('#721 · 内容摘要锁（冻结值台账一类，不是行为断言�
     assert.notEqual(createHash('sha256').update(canonical(rows), 'utf8').digest('hex'), LEGACY_DIGEST, '老锁应已变红（重写生效的证据）；若此断言失败说明重写被回滚');
   });
 
-  it('#977 字段锁：61 有参带 editable_fields（kind 闭集＋{{}}一一对应），15 零参缺席', async () => {
+  it('#977 字段锁：62 有参带 editable_fields（kind 闭集＋{{}}一一对应），15 零参缺席', async () => {
     const { WAKE_ASSETS } = await import('../dist/triggers/wake-assets.js');
     // 闭集与渲染侧同源：`packages/base-render/assets/help-template.html:1834`（规范化）与 `:1915`（分派）
     // 两处逐字相同 —— text（回落）／number／select／date／week／month／year／time／period。
     const KINDS = new Set(['text', 'number', 'select', 'date', 'week', 'month', 'year', 'time', 'period']);
     const withFields = WAKE_ASSETS.filter((s) => s.editable_fields !== undefined);
-    assert.equal(withFields.length, 61);
+    assert.equal(withFields.length, 62);
     assert.equal(WAKE_ASSETS.filter((s) => s.editable_fields === undefined).length, 15);
     for (const s of withFields) {
       assert.ok(s.editable_fields.length > 0, s.id + ' 空数组（零参须缺席，不发空数组）');
@@ -189,9 +193,9 @@ describe('#721 · 内容摘要锁（冻结值台账一类，不是行为断言�
     }
   });
 
-  it('词 → 命令 表逐条与改前相同（79 条，按词排序后摘要锁）', async () => {
+  it('词 → 命令 表逐条与改前相同（80 条，按词排序后摘要锁）', async () => {
     const { WAKE_TABLE } = await import('../dist/triggers/wakeTable.js');
-    assert.equal(WAKE_TABLE.length, 79);
+    assert.equal(WAKE_TABLE.length, 80);
     const pairs = WAKE_TABLE.map((e) => [e.phrase, e.key]).sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
     assert.equal(createHash('sha256').update(JSON.stringify(pairs), 'utf8').digest('hex'), ROUTE_DIGEST);
   });

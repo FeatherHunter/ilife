@@ -18,11 +18,11 @@ import { SCENE as batchScene, sceneBatch } from '../dist/write/scene-batch.js';
 import { sceneFor } from '../dist/write/scene.js';
 
 describe('#1206 首切 7 件：词条＋语言链', () => {
-  it('词条 zh／en 同 key（168 条＝124 既有＋42 首切＋回执核对两列净增 2）且英文列无空串', () => {
+  it('词条 zh／en 同 key（170 条＝124 既有＋42 首切＋回执核对两列净增 2＋#1280 合并分类两列 2）且英文列无空串', () => {
     const zhKeys = Object.keys(SKILL_BILL_CATALOG.zh).sort();
     const enKeys = Object.keys(SKILL_BILL_CATALOG.en).sort();
     assert.deepEqual(enKeys, zhKeys);
-    assert.equal(zhKeys.length, 168);
+    assert.equal(zhKeys.length, 170);
     for (const k of enKeys) assert.ok(SKILL_BILL_CATALOG.en[k].length > 0, '英文缺译：' + k);
   });
 
@@ -58,6 +58,12 @@ describe('#1206 首切 7 件：词条＋语言链', () => {
     assert.equal(zh[1].title, '改记录');
     assert.equal(en[0].title, 'Record an entry');
     assert.equal(en[1].title, 'Edit an entry');
+    // #1280 第 5 步第三条写命令：标题按语言取值；例句 en 与 zh 同值（可运行的样例数据是中文写法，
+    // 译了就跑不通——见 `src/write/commands.ts` 件头）。
+    assert.equal(zh[2].key, 'bill.category.merge');
+    assert.equal(zh[2].title, '合并分类');
+    assert.equal(en[2].title, 'Merge categories');
+    assert.equal(en[2].example, zh[2].example);
     assert.equal(en[0].example, zh[0].example);
     assert.equal(en[1].example, zh[1].example);
     assert.deepEqual(RECORD_COMMANDS, recordCommands('zh'));

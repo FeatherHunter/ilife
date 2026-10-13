@@ -55,9 +55,10 @@ function sayCfgOf(text) {
 }
 
 describe('t406 · 记账写入域命令声明与注册表', () => {
-  it('恰好两条命令，五件事齐全，形状一律 receipt', () => {
-    assert.equal(RECORD_COMMANDS.length, 2);
-    assert.deepEqual(RECORD_COMMANDS.map((c) => c.key), ['bill.record.add', 'bill.record.update']);
+  it('恰好三条命令，五件事齐全，形状一律 receipt', () => {
+    // #1280 第 5 步加第三条写命令 `bill.category.merge`（合并分类）——写域第三条，形状同族（receipt）。
+    assert.equal(RECORD_COMMANDS.length, 3);
+    assert.deepEqual(RECORD_COMMANDS.map((c) => c.key), ['bill.record.add', 'bill.record.update', 'bill.category.merge']);
     for (const c of RECORD_COMMANDS) {
       assert.equal(c.kind, 'write', c.key);
       assert.equal(c.shape, 'receipt', c.key);
@@ -70,18 +71,27 @@ describe('t406 · 记账写入域命令声明与注册表', () => {
     }
     assert.equal(RECORD_COMMANDS[0].title, '记一笔');
     assert.equal(RECORD_COMMANDS[1].title, '改记录');
+    assert.equal(RECORD_COMMANDS[2].title, '合并分类');
   });
 
   it('代表唤醒词按 key 从域声明派生，且路由到本命令（#721 撤掉了声明里那一处）', () => {
     const phrases = new Set(WAKE_TABLE.map((e) => e.phrase));
+    // 三条命令声明的必需槽位一次给全：路由层按声明判缺槽位（缺即抛 POLICY_MISSING_SLOT），
+    // 那是路由自己的护栏，不是本判据要看的东西。「合并分类」的必需槽位是 from／to
+    // （`src/write/declaration.ts` 的 `needs`）。
+    const NEEDED = { id: 1, from: '餐饮/夜宵', to: '餐饮' };
     for (const c of RECORD_COMMANDS) {
       const word = projectWakeWord({ key: c.key });
       assert.ok(phrases.has(word), word + ' 不在 WAKE_TABLE');
-      assert.equal(routeWakeword(word, { id: 1 }).key, c.key, word + ' 路由对不上 ' + c.key);
+      assert.equal(routeWakeword(word, NEEDED).key, c.key, word + ' 路由对不上 ' + c.key);
     }
   });
 
-  it('两条示例照抄即能跑（本机真跑，空库）', () => {
+  it('三条示例照抄即能跑（本机真跑；先种出合并示例要用的那个分类）', () => {
+    // 「合并分类」的示例要库里真有 `from` 那一串（空库上它按阻断口径退出 2——那是它的口径，
+    // 见 `src/write/merge.ts`），故先照那条示例自己的 from 种一笔：这一步也是真跑，种不下去即红。
+    const seed = run(['bill.record.add', '--params', '{"category":"餐饮/夜宵","amount":-12.5,"time":"2026-09-14 12:00:00"}']);
+    assert.equal(seed.status, 0, '种底那笔须成功：' + seed.stderr);
     for (const c of RECORD_COMMANDS) {
       const m = /--params '(.+)'$/.exec(c.example);
       assert.ok(m, '示例须以 --params 结尾：' + c.example);
@@ -95,20 +105,21 @@ describe('t406 · 记账写入域命令声明与注册表', () => {
   it('注册表一能力一行；迁移过的命令的形状从它派生（形状事实不写在页面这一层）', () => {
     // #411 起注册表纳两域六条；#691 起再加账户域两条 ＝ 八条三域；
     // #729／#730／#731 三域同窗进表（分析三条／目标两条／开始使用一条）＝ 十四条六能力；
-    // #960 起再加数据族两条 ＝ 十六条七能力。
-    assert.equal(REGISTRY_KEYS.length, 16);
+    // #960 起再加数据族两条 ＝ 十六条七能力；#1280 第 5 步加第三条写命令 `bill.category.merge` ＝ 十七条七能力。
+    assert.equal(REGISTRY_KEYS.length, 17);
     assert.deepEqual(
       [...REGISTRY_KEYS].sort(),
       [
         'bill.account.query', 'bill.account.write',
         'bill.analysis.compare', 'bill.analysis.overview', 'bill.analysis.trend',
+        'bill.category.merge',
         'bill.data.query', 'bill.data.schema',
         'bill.goal.query', 'bill.goal.write',
         'bill.record.add', 'bill.record.detail', 'bill.record.range', 'bill.record.search', 'bill.record.today', 'bill.record.update',
         'bill.setup.run',
       ],
     );
-    assert.equal(Object.keys(BILL_KEY_SHAPES).length, 18, '18 条命令的形状表不缩水（14 迁移＋数据族 2＋过渡 2）');
+    assert.equal(Object.keys(BILL_KEY_SHAPES).length, 19, '19 条命令的形状表不缩水（15 迁移＋数据族 2＋过渡 2）');
     for (const key of REGISTRY_KEYS) {
       assert.equal(BILL_KEY_SHAPES[key], REGISTRY[key].shape, key + ' 的形状须由注册表派生');
     }

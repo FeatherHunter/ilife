@@ -13,6 +13,9 @@ function exampleParams(key: BillKey, e: { readonly needs?: readonly string[]; re
     if (p.amount === undefined) p.amount = -35;
     if (p.note === undefined) p.note = '午饭';
   }
+  // #1280 第 5 步：合并分类的 `from`／`to` 是**分类串**（不是账户名——同在下面的 `from`／`to` 兜底
+  // 给的是转账那一对账户），示例取值换成分类写法，否则速查表那一行照抄会被 `validateCategory` 拦下。
+  if (key === 'bill.category.merge') { p['from'] = '餐饮/夜宵'; p['to'] = '餐饮'; }
   // `carries` 与 `needs` 一样进示例：改记录／撤销／恢复的 `id` 不拦，但示例里要给出「这一格填哪」那一眼。
   for (const n of [...(e.needs || []), ...(e.carries || [])]) {
     if (p[n] === undefined) p[n] = n === 'id' ? 1 : n === 'date' ? '2026-09-06' : n === 'start' || n === 'end' ? '2026-09-01' : n === 'month' ? '2026-09' : n === 'amount' ? 35 : n === 'q' ? '午饭' : n === 'tag' ? '旅行' : n === 'category' ? '餐饮' : n === 'account' ? '支付宝' : n === 'ledger' ? '生活' : n === 'name' ? '招行卡' : n === 'from' ? '支付宝' : n === 'to' ? '招行卡' : n === 'file' ? 'bills.csv' : '<值>';
@@ -24,6 +27,7 @@ function exampleParams(key: BillKey, e: { readonly needs?: readonly string[]; re
 const DESCS: Record<string, string> = {
   'bill.record.add': '记一笔（须 category+amount，note 可选；含借贷/分期/退款/报销，拍账单图片识别以外置为准）',
   'bill.record.update': '改/撤销（软删）/恢复（须 id）',
+  'bill.category.merge': '把两个分类并成一个（须 from+to；含已撤销的笔，可原样并回）',
   'bill.record.today': '查今天/昨天/某天/最近',
   'bill.record.range': '查周/月/区间/分类/账户/账本',
   'bill.record.search': '搜备注/查标签/查欠款/查待报销/查分期',

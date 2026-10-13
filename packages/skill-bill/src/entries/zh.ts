@@ -151,6 +151,10 @@ export const zh = {
   'command.record-add.example': "bill-cmd-read bill.record.add --params '{\"category\":\"餐饮\",\"amount\":-12.5,\"time\":\"2026-09-14 12:00:00\",\"account\":\"支付宝\",\"ledger\":\"生活\"}'",
   'command.record-update.title': '改记录',
   'command.record-update.example': "bill-cmd-read bill.record.update --params '{\"note\":\"改过\"}'",
+  /* #1280 第 5 步：合并分类。示例逐字可跑——空库上也出回执（「库里没有这个分类」那一支除外，故示例用库里
+     真有的两级写法；拿不准就照抄念给助手，它会把两格填好再执行）。 */
+  'command.category-merge.title': '合并分类',
+  'command.category-merge.example': "bill-cmd-read bill.category.merge --params '{\"from\":\"餐饮/夜宵\",\"to\":\"餐饮\"}'",
   'receipt-parts.status.label': '状态',
   'receipt-parts.status.unchanged': '无改动',
   'receipt-parts.status.changed': '已改动',

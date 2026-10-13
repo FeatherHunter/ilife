@@ -22,9 +22,10 @@ import { join, resolve } from 'node:path';
 import { FROZEN, PKG_DIR } from '../scripts/ratchet-frozen-686.mjs';
 
 const GUARD = join(PKG_DIR, 'scripts', 'check-ratchet-tight.mjs');
-/** 夹具用的注册表键集（**当刻已迁移的十六条**：写入 2／查询 4／账户 2／开始使用 1／目标 2／分析 3／数据 2）。
- *  #960 数据族两条入注册表后夹具跟着涨到 16（与 `FROZEN.registryKeyCount` 同值；1066 起同步）。 */
-const REGISTRY_KEYS = ['bill.account.query', 'bill.account.write', 'bill.analysis.compare', 'bill.analysis.overview', 'bill.analysis.trend', 'bill.data.query', 'bill.data.schema', 'bill.goal.query', 'bill.goal.write', 'bill.record.add', 'bill.record.detail', 'bill.record.range', 'bill.record.search', 'bill.record.today', 'bill.record.update', 'bill.setup.run'];
+/** 夹具用的注册表键集（**当刻已迁移的十七条**：写入 3／查询 4／账户 2／开始使用 1／目标 2／分析 3／数据 2）。
+ *  #960 数据族两条入注册表后夹具跟着涨到 16；#1280 第 5 步加 `bill.category.merge` 后 17
+ *  （与 `FROZEN.registryKeyCount` 同值，两处一起动）。 */
+const REGISTRY_KEYS = ['bill.account.query', 'bill.account.write', 'bill.analysis.compare', 'bill.analysis.overview', 'bill.analysis.trend', 'bill.category.merge', 'bill.data.query', 'bill.data.schema', 'bill.goal.query', 'bill.goal.write', 'bill.record.add', 'bill.record.detail', 'bill.record.range', 'bill.record.search', 'bill.record.today', 'bill.record.update', 'bill.setup.run'];
 
 /** 把一段正文补到恰好 `target` 个 LF（补的是注释行，不影响任何判据）。 */
 function padTo(body, target) {

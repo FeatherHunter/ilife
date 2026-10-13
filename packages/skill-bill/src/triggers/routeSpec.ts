@@ -18,9 +18,12 @@
 
 import type { SceneEditableField } from 'base-paint';
 
-/** 记账的 16 个命令名（跨技能契约，冻结不动；`bill.record.*` 六条属写入域与查询域两域共用同一前缀）。 */
+/** 记账的 17 个命令名（跨技能契约；`bill.record.*` 六条属写入域与查询域两域共用同一前缀）。
+ *  #1280 第 5 步加 `bill.category.merge`（合并分类）——它属**写入域**（HELP 一级分组「写入」下的「修正」二级组），
+ *  故声明住 `src/write/commands.ts`，不在 `src/` 下另起一个能力目录（铁律四：目录名取自 HELP 的一级分组）。 */
 export type BillKey =
   | 'bill.record.add' | 'bill.record.update'
+  | 'bill.category.merge'
   | 'bill.record.today' | 'bill.record.range' | 'bill.record.search' | 'bill.record.detail'
   | 'bill.analysis.overview' | 'bill.analysis.compare' | 'bill.analysis.trend'
   | 'bill.goal.write' | 'bill.goal.query'
