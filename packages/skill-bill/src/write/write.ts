@@ -14,13 +14,15 @@
  *   `writeRecordUpdate`（改字段／撤销／恢复三支）不传方向，那三支只按「缺的必需槽位」阻断。
  *   阻断项清空照旧写库，出结果型回执整页（`./receipt.ts`）。
  *   必需槽位是哪些住 `./collect.ts` 的 `RECORD_SLOTS`（唯一定义地）；真值校验仍走 `./record.js`
- *   （`validateAddInput`／`validateUpdateInput`／`needId`／`parseRecordOp`），取数写库仍走 `src/fetch`
+ *   （`validateAddInput`／`validateUpdateInput`／`needId`／`parseRecordOp`／`canonicalizeExistingNames`），取数写库仍走 `src/fetch`
  *   （`addBill`／`updateBill`／`undoBill`／`restoreBill`），本文件只做编排与回执事实装配。
+ *   **#1280 落库前的去重收口**：`bill.record.add` 这一支在 `addBill` 之前多走一步
+ *   `./record.js` 的 `canonicalizeExistingNames`（分类／账本与库里已有值等价即换成已有那个拼写）。
  * 写入字段口径：记一笔写整列全集（含缺省值列）；改字段＝本次实际变更的列；撤销／恢复写的是 `deleted_at`。
  */
 import { addBill, updateBill, undoBill, restoreBill, getById, listRecent, DB_FILENAME } from '../fetch/index.js';
 import type { BillDb, BillRow } from '../fetch/index.js';
-import { needId, parseRecordOp, validateAddInput, validateUpdateInput } from './record.js';
+import { canonicalizeExistingNames, needId, parseRecordOp, validateAddInput, validateUpdateInput } from './record.js';
 import type { RecordOp } from './record.js';
 import { buildRecordReceipt } from './receiptOut.js';
 import type { WriteOut } from '../shared/commandSpec.js';
@@ -184,7 +186,7 @@ export function writeRecordAdd(params: Record<string, unknown>, db: BillDb, lang
   const blocked = blockedItems({ params, missing, kind });
   if (blocked.length > 0) return collectOut({ key, params, slots, missing, blocked, db, language });
   const before = totalChanges(db.db);
-  const input = validateAddInput(params);
+  const input = canonicalizeExistingNames(db, validateAddInput(params));
   const r = addBill(db, input);
   // 回执摘要里的型名改唤醒词（本轮整改）：`（expense）` 这种内建型名不上屏，
   // 换成「记支出」这类用户自己说过的词；`id=` 换「记录编号」；`prompt` 那个英文词删。

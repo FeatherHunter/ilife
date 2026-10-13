@@ -183,19 +183,27 @@ test('#1270 · 清单类 source：有候选就升级成下拉，没候选就保�
   assert.deepEqual(direction.options, ['支出', '收入', '全部']);
   assert.equal(direction.source, undefined);
 
-  // 写入页这次不动：记一笔的分类要能输新值（「已有＋新建」的控件归 #1269），仍是自由文本
+  // #1280：写入页分类改成「下拉＋允许新值」——候选里能选，候选外能敲（前缀与比较键见 t1280 护栏）；
+  // 没候选时退回自由文本，但 allow_new 仍在（放开与否不取决于当刻有没有候选）
   const writeCategory = fieldOf(filled, 'write_expense', 'category');
-  assert.equal(writeCategory.kind, 'text');
-  assert.equal(writeCategory.source, undefined);
+  assert.equal(writeCategory.kind, 'select');
+  assert.equal(writeCategory.source, 'categories');
+  assert.equal(writeCategory.allow_new, true);
+  assert.deepEqual(writeCategory.options, LISTS.categories);
+  const plainWriteCategory = fieldOf(plain, 'write_expense', 'category');
+  assert.equal(plainWriteCategory.kind, 'text');
+  assert.equal(plainWriteCategory.allow_new, true);
 
   // 载荷里真的带上了候选；整页 HTML 里也读得到
   const html = renderHelpFileHtml(filled);
   assert.match(html, /"options":\["待报销","分期","未还"\]/);
   assert.match(html, /"options":\["餐饮","出行"\]/);
 
-  // 别把资产改坏：没被改到的分组仍只读引用资产（引用相等＝没被 clone 走样）
+  // 别把资产改坏：没被改到的分组仍只读引用资产（引用相等＝没被 clone 走样）；
+  // #1280 起写入域也有清单类槽位 ⇒ 有候选时 write 组会被 clone（这正是「只 clone 真被改到的层」的期望）
   assert.equal(plain.groups.length, filled.groups.length);
-  assert.equal(plain.groups[0], filled.groups[0]);
+  assert.equal(plain.groups[5], filled.groups[5]);
+  assert.notEqual(plain.groups[0], filled.groups[0]);
 
   // 只给一张清单时，别的清单类槽位保持自由文本（互不串）
   const onlyTags = buildHelpFileData(NOW, { candidates: { tags: ['a'], categories: [], accounts: [], ledgers: [], accountTypes: [] } });

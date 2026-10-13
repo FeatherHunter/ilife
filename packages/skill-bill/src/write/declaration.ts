@@ -12,8 +12,17 @@
  * 分类／账户／账本／币种／对象／期限／定位（原支出／哪一笔／目标）／改字段／条目（多行）一律 `text`
  * （开放词：用户自建分类账户、记录定位走候选页联动、`select` 会锁死；多行由 hint“每行一笔”承载，不另立类型）；
  * 本域无 `select`／`week` 实例（`week` 规则先行，见 REPORT §3.2）。
+ *
+ *  #1280 · 值级放开（第 3 步）：写入域**四个分类格**（记支出／记收入／记报销／记一笔）与**三个账本格**
+ *  （记支出／批量录入／记分期）从「自由文本」换成「候选 ＋ 可敲新值」——声明侧写 `source`（候选由生成期
+ *  读库填进 `options`）＋ `allow_new`；分类那四格另给 `new_prefixes`（顶层是闭集，清单逐字从
+ *  `../shared/category.js` 取，本域不写第二份）。`account` 那几格**不放开**：账户有独立登记表，
+ *  要的是「去创建场景新增」那条出口，不是在本格敲一个新名字。
+ *  用户敲的新值与库里已有值只差大小写／空白／全角半角时，落库改写成已有那个拼写——收口在
+ *  `./record.js`（`canonicalizeExistingNames`，比较键 `../shared/nameKey.js`），不在声明侧。
  */
 import type { DomainDeclaration } from '../triggers/routeSpec.js';
+import { EXPENSE_L1, INCOME_L1 } from '../shared/category.js';
 
 export const WRITE_DECLARATION: DomainDeclaration = {
   id: 'write',
@@ -34,11 +43,11 @@ export const WRITE_DECLARATION: DomainDeclaration = {
           types: ['采集'],
           editable_fields: [
             { name: 'amount', label: '金额', value: '', hint: '纯数字，不带单位', required: true, kind: 'number' },
-            { name: 'category', label: '分类/名目', value: '', hint: '如 房租、午饭、打车', required: true, kind: 'text' },
+            { name: 'category', label: '分类/名目', value: '', hint: '从候选里选；没有的先点前缀再敲名字', required: true, kind: 'text', source: 'categories', allow_new: true, new_prefixes: EXPENSE_L1 },
             { name: 'note', label: '备注(选填)', value: '', hint: '', required: false, kind: 'text' },
             { name: 'record_time', label: '时间(选填)', value: '', hint: '空＝现在；填了必须是 YYYY-MM-DD', required: false, kind: 'date' },
             { name: 'account', label: '账户(选填)', value: '', hint: '如 支付宝、微信', required: false, kind: 'text' },
-            { name: 'ledger', label: '账本(选填)', value: '', hint: '如 旅行、生活', required: false, kind: 'text' },
+            { name: 'ledger', label: '账本(选填)', value: '', hint: '从候选里选；没有的直接敲新名字', required: false, kind: 'text', source: 'ledgers', allow_new: true },
             { name: 'currency', label: '币种(选填)', value: '', hint: '空＝人民币；外币如 USD', required: false, kind: 'text' },
           ],
         },
@@ -57,7 +66,7 @@ export const WRITE_DECLARATION: DomainDeclaration = {
           types: ['采集'],
           editable_fields: [
             { name: 'amount', label: '金额', value: '', hint: '纯数字，不带单位', required: true, kind: 'number' },
-            { name: 'category', label: '分类/名目', value: '', hint: '如 工资、退款、卖闲置', required: true, kind: 'text' },
+            { name: 'category', label: '分类/名目', value: '', hint: '从候选里选；没有的先点前缀再敲名字', required: true, kind: 'text', source: 'categories', allow_new: true, new_prefixes: INCOME_L1 },
             { name: 'note', label: '备注(选填)', value: '', hint: '', required: false, kind: 'text' },
             { name: 'record_time', label: '时间(选填)', value: '', hint: '空＝现在；填了必须是 YYYY-MM-DD', required: false, kind: 'date' },
             { name: 'account', label: '账户(选填)', value: '', hint: '如 银行卡、微信', required: false, kind: 'text' },
@@ -93,7 +102,7 @@ export const WRITE_DECLARATION: DomainDeclaration = {
           types: ['采集'],
           editable_fields: [
             { name: 'items', label: '条目', value: '', hint: '每行一笔，如 午饭35、奶茶25、打车20', required: true, kind: 'text' },
-            { name: 'ledger', label: '账本(选填)', value: '', hint: '如 旅行', required: false, kind: 'text' },
+            { name: 'ledger', label: '账本(选填)', value: '', hint: '从候选里选；没有的直接敲新名字', required: false, kind: 'text', source: 'ledgers', allow_new: true },
           ],
         },
       ],
@@ -130,7 +139,7 @@ export const WRITE_DECLARATION: DomainDeclaration = {
           types: ['采集'],
           editable_fields: [
             { name: 'amount', label: '金额', value: '', hint: '纯数字，不带单位', required: true, kind: 'number' },
-            { name: 'category', label: '分类(选填)', value: '', hint: '如 餐饮、差旅', required: false, kind: 'text' },
+            { name: 'category', label: '分类(选填)', value: '', hint: '从候选里选；没有的先点前缀再敲名字', required: false, kind: 'text', source: 'categories', allow_new: true, new_prefixes: [...EXPENSE_L1, ...INCOME_L1] },
             { name: 'note', label: '备注(选填)', value: '', hint: '自动加 #待报销', required: false, kind: 'text' },
             { name: 'record_time', label: '时间(选填)', value: '', hint: '空＝现在；填了必须是 YYYY-MM-DD', required: false, kind: 'date' },
           ],
@@ -244,7 +253,7 @@ export const WRITE_DECLARATION: DomainDeclaration = {
             { name: 'periods', label: '期数', value: '', hint: '纯数字，如 24', required: true, kind: 'number' },
             { name: 'first_date', label: '首期日(选填)', value: '', hint: '空＝今天，每月固定这一天；填了必须是 YYYY-MM-DD', required: false, kind: 'date' },
             { name: 'account', label: '账户(选填)', value: '', hint: '', required: false, kind: 'text' },
-            { name: 'ledger', label: '账本(选填)', value: '', hint: '', required: false, kind: 'text' },
+            { name: 'ledger', label: '账本(选填)', value: '', hint: '从候选里选；没有的直接敲新名字', required: false, kind: 'text', source: 'ledgers', allow_new: true },
           ],
         },
       ],
@@ -261,7 +270,7 @@ export const WRITE_DECLARATION: DomainDeclaration = {
           types: ['采集'],
           editable_fields: [
             { name: 'amount', label: '金额', value: '', hint: '纯数字，不带单位；支出填负数，收入填正数', required: true, kind: 'number' },
-            { name: 'category', label: '分类/名目', value: '', hint: '如 餐饮、工资、打车', required: true, kind: 'text' },
+            { name: 'category', label: '分类/名目', value: '', hint: '从候选里选；没有的先点前缀再敲名字', required: true, kind: 'text', source: 'categories', allow_new: true, new_prefixes: [...EXPENSE_L1, ...INCOME_L1] },
             { name: 'note', label: '备注(选填)', value: '', hint: '', required: false, kind: 'text' },
             { name: 'record_time', label: '时间(选填)', value: '', hint: '空＝现在；填了必须是 YYYY-MM-DD', required: false, kind: 'date' },
             { name: 'account', label: '账户(选填)', value: '', hint: '如 支付宝、微信', required: false, kind: 'text' },
