@@ -198,6 +198,8 @@ const SOURCE_LISTS: Readonly<Record<string, keyof HelpCandidateLists>> = {
   accounts: 'accounts',
   ledgers: 'ledgers',
   accountTypes: 'accountTypes',
+  debtParties: 'debtParties',
+  backups: 'backups',
 };
 
 /** #1270（条目 10／9／12／13）：把生成期读到的候选清单填进声明里写了清单类 `source` 的槽位——

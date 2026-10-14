@@ -22,8 +22,8 @@ export interface SceneTypeBadge {
 /** 场景可编辑字段输入类型闭集。 */
 export type SceneFieldKind = 'text' | 'number' | 'select' | 'date' | 'week' | 'month' | 'year' | 'time' | 'period';
 
-/** 候选／现值来源闭集。 */
-export type SceneFieldSource = 'tags' | 'categories' | 'accounts' | 'ledgers' | 'accountTypes' | 'config';
+/** 候选／现值来源闭集。`debtParties`＝借贷对手方（#1270 条目 13）、`backups`＝本机已有备份（#1270 条目 22）。 */
+export type SceneFieldSource = 'tags' | 'categories' | 'accounts' | 'ledgers' | 'accountTypes' | 'debtParties' | 'backups' | 'config';
 
 /** 可编辑字段：各键口径见 `docs/base/base-render/候选与新建-字段形状口径.md` §1–§8；本文件只写类型。 */
 export interface SceneEditableField {
@@ -204,7 +204,7 @@ export const SCENE_DATA_SCHEMA = Object.freeze({
                             hint: { type: 'string' },
                             required: { type: 'boolean' },
                             kind: { enum: ['text', 'number', 'select', 'date', 'week', 'month', 'year', 'time', 'period'] },
-                            source: { enum: ['tags', 'categories', 'accounts', 'ledgers', 'accountTypes', 'config'] },
+                            source: { enum: ['tags', 'categories', 'accounts', 'ledgers', 'accountTypes', 'debtParties', 'backups', 'config'] },
                             empty_label: { type: 'string', minLength: 1 },
                             options: {
                               type: 'array',

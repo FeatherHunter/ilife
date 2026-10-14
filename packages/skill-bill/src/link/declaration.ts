@@ -30,7 +30,7 @@ export const LINK_DECLARATION: DomainDeclaration = {
           editable_fields: [
             { name: 'amount', label: '金额', value: '', hint: '纯数字，不带单位，如 299', required: true, kind: 'number' },
             { name: 'item', label: '物品', value: '', hint: '如 空气炸锅', required: true, kind: 'text' },
-            { name: 'category', label: '分类(选填)', value: '', hint: '空＝居家/家电', required: false, kind: 'text' },
+            { name: 'category', label: '分类(选填)', value: '', hint: '从候选里选；空＝居家/家电', required: false, kind: 'text', source: 'categories', empty_label: '居家/家电（默认）' },
           ],
         },
       ],
@@ -49,7 +49,7 @@ export const LINK_DECLARATION: DomainDeclaration = {
           editable_fields: [
             { name: 'amount', label: '金额', value: '', hint: '纯数字，不带单位，如 35', required: true, kind: 'number' },
             { name: 'meal', label: '吃了', value: '', hint: '如 午饭鸡腿饭', required: true, kind: 'text' },
-            { name: 'category', label: '分类(选填)', value: '', hint: '空＝餐饮', required: false, kind: 'text' },
+            { name: 'category', label: '分类(选填)', value: '', hint: '从候选里选；空＝餐饮', required: false, kind: 'text', source: 'categories', empty_label: '餐饮（默认）' },
           ],
         },
       ],

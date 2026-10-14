@@ -77,7 +77,7 @@ export const SETUP_DECLARATION: DomainDeclaration = {
           prompt_template: '请你加载技能 饼干记账,执行唤醒词「恢复备份」。\n\n我要从备份恢复数据。恢复前请告诉我会覆盖什么，确认后再执行。\n\n备份(选填):{{backup}}',
           types: ['向导'],
           editable_fields: [
-            { name: 'backup', label: '备份(选填)', value: '', hint: '空＝最新备份', required: false, kind: 'text' },
+            { name: 'backup', label: '备份(选填)', value: '', hint: '从本机已有备份里选一个（行右侧是生成时间与大小）；空＝最新备份', required: false, kind: 'text', source: 'backups' },
           ],
         },
       ],

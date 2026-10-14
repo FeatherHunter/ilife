@@ -22,8 +22,9 @@ const { resolveDbPath, resolveGoalsPath } = await import('../dist/fetch/index.js
 test('#1270 · 库不在 ⇒ 未初始化 ＋ 候选空表（页面照出、横幅照显）', () => {
   const sources = readHelpSources();
   assert.equal(sources.initialized, false, '库文件不在即未初始化');
-  assert.deepEqual(sources.candidates, { tags: [], categories: [], accounts: [], ledgers: [], accountTypes: [] },
-    '读不出候选即五张空表，不是故障');
+  assert.deepEqual(sources.candidates,
+    { tags: [], categories: [], accounts: [], ledgers: [], accountTypes: [], debtParties: [], backups: [] },
+    '读不出候选即七张空表，不是故障');
 });
 
 test('#1270 · 库在 ⇒ 已初始化 ＋ 候选＝真标签与三列真值（全数字编号不算标签）', () => {

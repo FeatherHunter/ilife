@@ -12,6 +12,7 @@ import { DatabaseSync } from 'node:sqlite';
 import {
   buildHelpFileData, renderHelpFileHtml, LIST_CANDIDATE_LIMIT, TAG_CANDIDATE_LIMIT,
   rankByFrequency, rankTagCandidates, readAccountTypes, readCandidateLists,
+  readDebtParties, readBackupCandidates,
 } from '../dist/render/index.js';
 import { tagMatch, tagsInNote } from '../dist/fetch/db.js';
 
@@ -36,6 +37,8 @@ const LISTS = {
   accounts: ['支付宝', '微信'],
   ledgers: ['生活', '旅行'],
   accountTypes: ['银行卡', '支付'],
+  debtParties: ['小明', '小红'],
+  backups: ['biscuit_20261013_235959.db', 'biscuit_20261012_230000.db'],
 };
 
 test('#1270 · 词形切分与 tagMatch 同源：切出来的词，match 必然为真', () => {
@@ -151,6 +154,8 @@ test('#1270 · 清单类 source：有候选就升级成下拉，没候选就保�
     ['query_tag', 'tag'], ['query_category', 'category'],
     ['query_account', 'account'], ['query_ledger', 'ledger'],
     ['account_add', 'account_type'],
+    ['query_debt', 'person'], ['setup_restore', 'backup'],
+    ['link_purchase', 'category'], ['link_meal', 'category'],
   ]) {
     const f = fieldOf(plain, sceneId, name);
     assert.ok(f, sceneId + '.' + name + ' 必须在载荷里');
@@ -169,6 +174,10 @@ test('#1270 · 清单类 source：有候选就升级成下拉，没候选就保�
     ['query_ledger', 'ledger', 'ledgers', LISTS.ledgers, true],
     ['query_installment', 'account', 'accounts', LISTS.accounts, false],
     ['account_add', 'account_type', 'accountTypes', LISTS.accountTypes, false],
+    ['query_debt', 'person', 'debtParties', LISTS.debtParties, false],
+    ['setup_restore', 'backup', 'backups', LISTS.backups, false],
+    ['link_purchase', 'category', 'categories', LISTS.categories, false],
+    ['link_meal', 'category', 'categories', LISTS.categories, false],
   ];
   for (const [sceneId, name, source, options, required] of cases) {
     const f = fieldOf(filled, sceneId, name);
@@ -199,14 +208,67 @@ test('#1270 · 清单类 source：有候选就升级成下拉，没候选就保�
   assert.match(html, /"options":\["待报销","分期","未还"\]/);
   assert.match(html, /"options":\["餐饮","出行"\]/);
 
-  // 别把资产改坏：没被改到的分组仍只读引用资产（引用相等＝没被 clone 走样）；
-  // #1280 起写入域也有清单类槽位 ⇒ 有候选时 write 组会被 clone（这正是「只 clone 真被改到的层」的期望）
+  // 别把资产改坏：没被改到的分组仍只读引用资产（引用相等＝没被 clone 走样）。
+  // #1270 起七个分组都至少有一个清单类槽位（0 write／1 query／2 analysis／3 goal／4 account／5 link／6 setup）
+  // ⇒ 七张清单全给时整棵树都会被 clone，这正是「只 clone 真被改到的层」的期望；
+  // 「没改到就不 clone」由下面只给一张清单那一段核对。
   assert.equal(plain.groups.length, filled.groups.length);
-  assert.equal(plain.groups[5], filled.groups[5]);
-  assert.notEqual(plain.groups[0], filled.groups[0]);
+  assert.notEqual(plain.groups[0], filled.groups[0], 'write 组有 categories／ledgers 槽位 ⇒ 被 clone');
 
   // 只给一张清单时，别的清单类槽位保持自由文本（互不串）
-  const onlyTags = buildHelpFileData(NOW, { candidates: { tags: ['a'], categories: [], accounts: [], ledgers: [], accountTypes: [] } });
+  const onlyTags = buildHelpFileData(NOW, {
+    candidates: { tags: ['a'], categories: [], accounts: [], ledgers: [], accountTypes: [], debtParties: [], backups: [] },
+  });
   assert.equal(fieldOf(onlyTags, 'query_tag', 'tag').kind, 'select');
   assert.equal(fieldOf(onlyTags, 'query_category', 'category').kind, 'text');
+  // 只 clone 真被改到的层：只给 tags 时，只有 query 组（1）被换新，其余六组仍与资产引用相等。
+  assert.notEqual(onlyTags.groups[1], plain.groups[1], 'query 组被 clone');
+  for (const i of [0, 2, 3, 4, 5, 6]) {
+    assert.equal(onlyTags.groups[i], plain.groups[i], '第 ' + i + ' 组没被改到，必须仍引用资产');
+  }
+});
+
+// #1270 条目 13：`bills` 表没有「对手方」列，候选只能从备注里解析（口径与 `analysis/scene-debt` 同一套）。
+test('#1270 · 借贷对象候选：只列还有未还的人（已还清／已删记录不出现），附注＝未还笔数 · 总笔数', () => {
+  const dir = mkdtempSync(join(tmpdir(), 't1270-debt-'));
+  const dbFile = join(dir, 'debt.db');
+  const db = new DatabaseSync(dbFile);
+  db.exec(`CREATE TABLE bills (
+    id INTEGER PRIMARY KEY, category TEXT, account TEXT, ledger TEXT, note TEXT, deleted_at TEXT)`);
+  const insert = db.prepare('INSERT INTO bills (category, account, ledger, note, deleted_at) VALUES (?, ?, ?, ?, ?)');
+  insert.run('借贷', '现金', '借贷', '借给小明 #借给小明 #未还', null);
+  insert.run('借贷', '现金', '借贷', '又借一笔 #借给小明', null);
+  insert.run('借贷', '现金', '借贷', '向小红借 #向小红借 #未还', null);
+  insert.run('借贷', '现金', '借贷', '还清了 #借给小刚', null);
+  insert.run('借贷', '现金', '借贷', '删掉的那条 #借给小强 #未还', '2026-10-13 00:00:00');
+  db.close();
+
+  const got = readDebtParties(dbFile);
+  assert.deepEqual(got.names, ['小明', '小红'], '只列还有未还的人：小刚已还清、小强记录已删');
+  assert.equal(got.notes['小明'], '未还 1 笔 · 共 2 笔');
+  assert.equal(got.notes['小红'], '未还 1 笔 · 共 1 笔');
+
+  assert.deepEqual(readDebtParties(dbFile, 1).names, ['小明'], '上限照未还多的在前截断');
+  assert.deepEqual(readDebtParties(join(dir, 'none.db')), { names: [], notes: {} }, '库不在＝空表，不抛');
+  assert.deepEqual(readDebtParties(''), { names: [], notes: {} });
+  const junk = join(dir, 'junk.db');
+  writeFileSync(junk, 'not a sqlite file');
+  assert.deepEqual(readDebtParties(junk), { names: [], notes: {} }, '库件坏了也退回空表');
+});
+
+// #1270 条目 22：候选＝已有备份文件（名字供 `bill.setup.restore` 直接吃），附注＝生成时间 · 大小。
+test('#1270 · 备份候选：文件名 ＋ 生成时间与大小，目录不在即空表（不是错误）', () => {
+  const dir = mkdtempSync(join(tmpdir(), 't1270-backup-'));
+  writeFileSync(join(dir, 'biscuit_20261012_230000.db'), Buffer.alloc(2048));
+  writeFileSync(join(dir, 'biscuit_20261013_235959.db'), Buffer.alloc(1024 * 1024 * 3));
+  writeFileSync(join(dir, 'note.txt'), 'ignored');
+
+  const got = readBackupCandidates(dir);
+  assert.deepEqual(got.names, ['biscuit_20261013_235959.db', 'biscuit_20261012_230000.db'], '按时间新→旧；非 .db 不收');
+  assert.equal(got.notes['biscuit_20261013_235959.db'], '2026-10-13 23:59:59 · 3.0 MB');
+  assert.equal(got.notes['biscuit_20261012_230000.db'], '2026-10-12 23:00:00 · 2.0 KB');
+  assert.deepEqual(readBackupCandidates(dir, 1).names, ['biscuit_20261013_235959.db']);
+
+  assert.deepEqual(readBackupCandidates(join(dir, 'none')), { names: [], notes: {} }, '目录不在＝空表不是错误');
+  assert.deepEqual(readBackupCandidates(''), { names: [], notes: {} });
 });

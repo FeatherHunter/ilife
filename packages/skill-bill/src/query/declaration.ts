@@ -253,7 +253,7 @@ export const QUERY_DECLARATION: DomainDeclaration = {
           prompt_template: '请你加载技能 饼干记账,执行唤醒词「查标签」。\n\n我想按标签聚合查账。\n\n标签:{{tag}}',
           types: ['查看'],
           editable_fields: [
-            { name: 'tag', label: '标签', value: '', hint: '如 #旅行、#待报销', required: true, kind: 'text', source: 'tags' },
+            { name: 'tag', label: '标签', value: '', hint: '候选＝生成这份 HELP 时从库里读的标签；一天内复用同一份，重新生成才刷新', required: true, kind: 'text', source: 'tags' },
           ],
         },
       ],
@@ -270,7 +270,7 @@ export const QUERY_DECLARATION: DomainDeclaration = {
           prompt_template: '请你加载技能 饼干记账,执行唤醒词「查欠款」。\n\n我想查未还欠款。不填对象查全部。\n\n对象(选填):{{person}}',
           types: ['查看'],
           editable_fields: [
-            { name: 'person', label: '对象(选填)', value: '', hint: '空＝全部；如 小明', required: false, kind: 'text' },
+            { name: 'person', label: '对象(选填)', value: '', hint: '只列还有未还的人（行右侧是笔数）；一个都没有时可以直接敲名字', required: false, kind: 'text', source: 'debtParties' },
           ],
         },
       ],

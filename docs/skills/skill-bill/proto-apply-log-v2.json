@@ -1,0 +1,57 @@
+{
+ "base": "D:\\ilife\\docs\\skills\\skill-bill\\t1270-当前代码基线HELP.html",
+ "out": "D:\\ilife\\docs\\skills\\skill-bill\\t1270-原型-候选注入-v2.html",
+ "snapshot": "2026-10-14 18:05",
+ "backups": 3,
+ "applied": [
+  {
+   "条目": "10",
+   "场景": "query_tag",
+   "字段": "tag",
+   "改前": "{\"kind\":\"select\",\"options\":10}",
+   "改后": "{\"kind\":\"select\",\"options\":10}"
+  },
+  {
+   "条目": "13",
+   "场景": "query_debt",
+   "字段": "person",
+   "改前": "{\"kind\":\"text\",\"options\":0}",
+   "改后": "{\"kind\":\"select\",\"options\":2}"
+  },
+  {
+   "条目": "16",
+   "场景": "goal_set_budget",
+   "字段": "month",
+   "改前": "{\"kind\":\"text\",\"options\":0}",
+   "改后": "{\"kind\":\"month\",\"options\":0}"
+  },
+  {
+   "条目": "16",
+   "场景": "goal_set_budget",
+   "字段": "category",
+   "改前": "{\"kind\":\"select\",\"options\":141}",
+   "改后": "{\"kind\":\"select\",\"options\":141,\"allow_new\":true}"
+  },
+  {
+   "条目": "22",
+   "场景": "setup_restore",
+   "字段": "backup",
+   "改前": "{\"kind\":\"text\",\"options\":0}",
+   "改后": "{\"kind\":\"select\",\"options\":3}"
+  },
+  {
+   "条目": "25",
+   "场景": "link_purchase",
+   "字段": "category",
+   "改前": "{\"kind\":\"text\",\"options\":0}",
+   "改后": "{\"kind\":\"select\",\"options\":141}"
+  },
+  {
+   "条目": "26",
+   "场景": "link_meal",
+   "字段": "category",
+   "改前": "{\"kind\":\"text\",\"options\":0}",
+   "改后": "{\"kind\":\"select\",\"options\":141}"
+  }
+ ]
+}

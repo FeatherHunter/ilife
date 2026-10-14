@@ -16,12 +16,38 @@
  */
 import { existsSync } from 'node:fs';
 import { resolveDbPath, resolveGoalsPath } from '../fetch/index.js';
+import { resolveBackupDir } from '../fetch/paths.js';
 import { configPrefillValues } from '../setup/configPrefill.js';
-import { EMPTY_CANDIDATE_LISTS, readAccountTypes, readCandidateLists, readCategoryCounts, type HelpCandidateLists } from './candidateLists.js';
+import { EMPTY_CANDIDATE_LISTS, readAccountTypes, readBackupCandidates, readCandidateLists, readCategoryCounts, readDebtParties, type HelpCandidateLists } from './candidateLists.js';
 
-/** #1280 候选项附注挂在哪些格上：`<场景 id>.<字段名>`（值 → 行右侧小字）。
+/** 候选项附注挂在哪些格上：`<场景 id>.<字段名>`（值 → 行右侧小字）。
  *  住技能侧：公共层只认「值 → 右侧小字」这一格通用能力，不认识「笔」这个领域量词、也不认识哪个场景的哪一格。 */
 const CATEGORY_COUNT_FIELDS: readonly (readonly [string, string])[] = [['write_merge', 'from']];
+
+/** #1270 条目 13：欠款对象那格的附注（`未还 N 笔 · 共 M 笔`）。 */
+const DEBT_NOTE_FIELDS: readonly (readonly [string, string])[] = [['query_debt', 'person']];
+
+/** #1270 条目 22：备份那格的附注（`生成时间 · 大小`）。 */
+const BACKUP_NOTE_FIELDS: readonly (readonly [string, string])[] = [['setup_restore', 'backup']];
+
+/** #1270：把一份「值 → 小字」挂到若干个格上（一张附注表可能被多格共用，故按格循环；空表不挂）。 */
+function attachNotes(
+  target: Record<string, Readonly<Record<string, string>>>,
+  fields: readonly (readonly [string, string])[],
+  notes: Readonly<Record<string, string>>,
+): void {
+  if (Object.keys(notes).length === 0) return;
+  for (const [scene, field] of fields) target[scene + '.' + field] = notes;
+}
+
+/** #1270 条目 22：备份目录取不到不是故障——配置读不出／目录不在都按「没有这份数据」（与全件 fail-open 同条）。 */
+function backupDirSafe(): string {
+  try {
+    return resolveBackupDir();
+  } catch {
+    return '';
+  }
+}
 
 /** #1280：把「分类 → 笔数」折成声明键 `notes` 要的 `{值: 小字}`——只收真出现在候选清单里的值
  *  （候选位的行就是这些值，其余键印不出来，不进载荷）。一个字都没有 ⇒ 空对象（页面不印附注）。 */
@@ -59,13 +85,20 @@ export function readHelpSources(): HelpGenerationSources {
   try {
     const configValues = configPrefillValues();
     const dbFile = resolveDbPath();
-    const candidates = { ...readCandidateLists(dbFile), accountTypes: readAccountTypes(resolveGoalsPath()) };
-    /* #1280 候选项附注：本机库读得出就给（读不出＝空对象，页面照出、不报错）。 */
-    const notes = categoryCountNotes(candidates.categories, readCategoryCounts(dbFile));
+    /* #1270：对象与备份两项都是「候选 ＋ 行右侧附注」一起出（一次遍历出两样），故先取索引再摊平。 */
+    const debt = readDebtParties(dbFile);
+    const backups = readBackupCandidates(backupDirSafe());
+    const candidates: HelpCandidateLists = {
+      ...readCandidateLists(dbFile),
+      accountTypes: readAccountTypes(resolveGoalsPath()),
+      debtParties: debt.names,
+      backups: backups.names,
+    };
+    /* 候选项附注：本机读得出就给（读不出＝空对象，页面照出、不报错）。 */
     const fieldNotes: Record<string, Readonly<Record<string, string>>> = {};
-    if (Object.keys(notes).length > 0) {
-      for (const [scene, field] of CATEGORY_COUNT_FIELDS) fieldNotes[scene + '.' + field] = notes;
-    }
+    attachNotes(fieldNotes, CATEGORY_COUNT_FIELDS, categoryCountNotes(candidates.categories, readCategoryCounts(dbFile)));
+    attachNotes(fieldNotes, DEBT_NOTE_FIELDS, debt.notes);
+    attachNotes(fieldNotes, BACKUP_NOTE_FIELDS, backups.notes);
     return {
       initialized: existsSync(dbFile),
       candidates,

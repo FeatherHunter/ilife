@@ -1,0 +1,78 @@
+{
+ "base": "D:\\ilife\\.scratch\\t1270\\home\\.ilife\\data\\biscuit_accountant_html\\饼干记账_HELP_20261014_044306.html",
+ "out": "D:\\ilife\\docs\\skills\\skill-bill\\t1270-原型-候选注入-v1.html",
+ "snapshot": "2026-10-14 04:43",
+ "backups": 3,
+ "applied": [
+  {
+   "条目": "10",
+   "场景": "query_tag",
+   "字段": "tag",
+   "改前": "{\"kind\":\"select\",\"options\":10,\"hint\":\"如 #旅行、#待报销\"}",
+   "改后": "{\"kind\":\"select\",\"options\":10,\"hint\":\"快照于 2026-10-14 04:43：候选是生成这份 HELP 时从库里读的标签（共 10 个，按出现次数排）。一天内复用同一份快照，之后重新生成。\"}"
+  },
+  {
+   "条目": "13",
+   "场景": "query_debt",
+   "字段": "person",
+   "改前": "{\"kind\":\"text\",\"options\":0,\"hint\":\"空＝全部；如 小明\"}",
+   "改后": "{\"kind\":\"select\",\"options\":2,\"hint\":\"空＝全部；候选是库里借贷记录出现过的对象（借出看 #借给X、借入看 #向X借）\"}"
+  },
+  {
+   "条目": "16",
+   "场景": "goal_set_budget",
+   "字段": "month",
+   "改前": "{\"kind\":\"text\",\"options\":0,\"hint\":\"空＝本月起；如 本月、8月\"}",
+   "改后": "{\"kind\":\"month\",\"options\":0,\"hint\":\"空＝本月；点框任意处开月份选择器\"}"
+  },
+  {
+   "条目": "16",
+   "场景": "goal_set_budget",
+   "字段": "category",
+   "改前": "{\"kind\":\"select\",\"options\":141,\"hint\":\"空＝总预算；如 餐饮\",\"empty_label\":\"总预算\"}",
+   "改后": "{\"kind\":\"select\",\"options\":141,\"hint\":\"空＝总预算；如 餐饮\",\"empty_label\":\"总预算\",\"allow_new\":true}"
+  },
+  {
+   "条目": "20",
+   "场景": "account_update",
+   "字段": "account",
+   "改前": "{\"kind\":\"select\",\"options\":23,\"hint\":\"从账户表里选；列表里没有就先去新增账户\"}",
+   "改后": "{\"kind\":\"select\",\"options\":23,\"hint\":\"从库里已有账户里选；没有的当场敲名字新建\",\"allow_new\":true}"
+  },
+  {
+   "条目": "21",
+   "场景": "account_transfer",
+   "字段": "from_account",
+   "改前": "{\"kind\":\"select\",\"options\":23,\"hint\":\"从账户表里选；列表里没有就先去新增账户\"}",
+   "改后": "{\"kind\":\"select\",\"options\":23,\"hint\":\"从库里已有账户里选；没有的当场敲名字新建\",\"allow_new\":true}"
+  },
+  {
+   "条目": "21",
+   "场景": "account_transfer",
+   "字段": "to_account",
+   "改前": "{\"kind\":\"select\",\"options\":23,\"hint\":\"从账户表里选；列表里没有就先去新增账户\"}",
+   "改后": "{\"kind\":\"select\",\"options\":23,\"hint\":\"从库里已有账户里选；没有的当场敲名字新建\",\"allow_new\":true}"
+  },
+  {
+   "条目": "22",
+   "场景": "setup_restore",
+   "字段": "backup",
+   "改前": "{\"kind\":\"text\",\"options\":0,\"hint\":\"空＝最新备份\"}",
+   "改后": "{\"kind\":\"select\",\"options\":3,\"hint\":\"空＝最新一份；候选＝备份目录里的备份文件（时间 · 大小），只给文件名不给路径\"}"
+  },
+  {
+   "条目": "25",
+   "场景": "link_purchase",
+   "字段": "category",
+   "改前": "{\"kind\":\"text\",\"options\":0,\"hint\":\"空＝居家/家电\"}",
+   "改后": "{\"kind\":\"select\",\"options\":141,\"hint\":\"空＝居家/家电；候选是库里已有分类\",\"empty_label\":\"居家/家电（默认）\"}"
+  },
+  {
+   "条目": "26",
+   "场景": "link_meal",
+   "字段": "category",
+   "改前": "{\"kind\":\"text\",\"options\":0,\"hint\":\"空＝餐饮\"}",
+   "改后": "{\"kind\":\"select\",\"options\":141,\"hint\":\"空＝餐饮；候选是库里已有分类\",\"empty_label\":\"餐饮（默认）\"}"
+  }
+ ]
+}

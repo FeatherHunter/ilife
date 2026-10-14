@@ -198,6 +198,20 @@
   .sheet .filt.open .filt-caret{transform:rotate(180deg)}
   .filt-panel{display:none;border:1px solid var(--line);border-radius:11px;background:#fff;box-shadow:0 8px 26px rgba(0,0,0,.14);overflow:hidden}
   .filt-panel.filt-float{display:block;position:fixed;z-index:9500}
+  /* 年度选择器（#1270 条目 9／11）：`period` 的「年」段原本是**键入框**——HTML 没有原生 `year` 输入，
+     周／月那种「点框即开原生面板」在这里没有对应物，所以自画一块：一页 10 年（5 列 × 2 行）、
+     箭头翻页、点年即回填。盾与图标沿用 `.pick-*` 那两枚（点击一律由盾接管）。 */
+  .yr-panel{display:none;position:fixed;z-index:9500;padding:7px;border:1px solid var(--line);border-radius:11px;background:#fff;box-shadow:0 8px 26px rgba(0,0,0,.14)}
+  .yr-panel.yr-open{display:block}
+  .yr-head{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:0 2px 5px}
+  .yr-nav{flex:none;width:30px;height:30px;border:0;border-radius:8px;background:transparent;color:var(--fg2);font:400 15px/1 -apple-system,"Microsoft YaHei",sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .yr-nav:hover{background:var(--bg)}
+  .yr-nav[disabled]{color:var(--line);cursor:default;background:transparent}
+  .yr-range{font:600 12.5px/1 -apple-system,"Microsoft YaHei",sans-serif;color:var(--fg2);white-space:nowrap}
+  .yr-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:3px}
+  .yr-cell{border:0;border-radius:8px;background:transparent;color:var(--fg);font:400 14px/1 -apple-system,"Microsoft YaHei",sans-serif;padding:11px 0;cursor:pointer}
+  .yr-cell:hover{background:var(--bg)}
+  .yr-cell.yr-on{background:var(--blue);color:#fff;font-weight:700}
   /* 列表宽度必须**从头到尾一个值**（用户 2026-10-13：滚动一开始宽度会抖一下）：
      ① 不要 `-webkit-overflow-scrolling:touch`（旧属性会把列表提成独立滚动层，滚动时父级圆角裁剪会丢一帧，
         看着就是「变宽一点点」）② 横向绝不滚（`overflow-x:hidden`，行内文字自己省略号）
@@ -2743,20 +2757,110 @@ function periodCtlHTML(mode, v){
   if (mode === 'day') inner = '<input type="date" data-period-ctl="day" value="' + esc(v.day || '') + '">';
   else if (mode === 'week') inner = '<input type="week" data-period-ctl="week" value="' + esc(v.week || '') + '">';
   else if (mode === 'month') inner = '<input type="month" data-period-ctl="month" value="' + esc(v.month || '') + '">';
-  else if (mode === 'year') inner = '<span class="pick-hold"><input type="number" inputmode="numeric" min="2000" max="2100" step="1" placeholder="如 2026" data-period-ctl="year" value="' + esc(v.year || '') + '"><span class="pick-icon" aria-hidden="true">' + HELP_PICK_ICON + '</span></span>';
+  /* #1270（条目 9／11）：年段改成与周／月**同一种形态**——自带 `.pick-hold` ＋ `.pick-shield`（盖住整框，
+     点哪儿只开面板）＋ 自画图标；面板由 `openYearPanel` 现画（HTML 没有原生 year 输入）。 */
+  else if (mode === 'year') inner = '<span class="pick-hold"><input type="number" inputmode="numeric" min="2000" max="2100" step="1" placeholder="如 2026" data-period-ctl="year" data-year-pick="1" value="' + esc(v.year || '') + '"><span class="pick-shield" data-year-shield="1"></span><span class="pick-icon" aria-hidden="true">' + HELP_PICK_ICON + '</span></span>';
   else if (mode === 'range') inner = '<input type="date" data-period-ctl="start" value="' + esc(v.start || '') + '">' +
     '<span class="period-sep">至</span><input type="date" data-period-ctl="end" value="' + esc(v.end || '') + '">';
   else return ''; /* 不限：没有控件，就不带 ⓘ */
   return '<div class="inwrap native">' + inner +
     '<button class="ib" type="button" data-period-i="1" aria-label="看提示全文">i</button></div>';
 }
-/* 点框任意处＝点框右侧的选择器图标（用户 2026-10-13 定，全场景通用）。 */
+/* #1270（条目 9／11）年度选择器：HTML 没有原生 `year` 输入，周／月那种「点框开原生面板」在这里没有对应物，
+   所以自画一块。一页 10 年（5 列 × 2 行），箭头翻页，点年即回填。回填走 `mountPeriods` 已有的那条链：
+   写 `input.value` → 派发 `input`（冒泡到 `.period-ctl`）⇒ 分段状态、提示词预览、复制三条链路一行不改。 */
+var HELP_YEAR_MIN = 2000, HELP_YEAR_MAX = 2100, HELP_YEAR_PAGE = 10;
+var HELP_YEAR_PANEL = null, HELP_YEAR_FOR = null, HELP_YEAR_START = HELP_YEAR_MIN;
+function isYearCtl(inp){ return !!(inp && inp.getAttribute && inp.getAttribute('data-year-pick') === '1'); }
+function pageStartOf(y){ return Math.max(HELP_YEAR_MIN, Math.min(y - ((y - HELP_YEAR_MIN) % HELP_YEAR_PAGE), HELP_YEAR_MAX - HELP_YEAR_PAGE + 1)); }
+function yearPanelEl(){
+  if (HELP_YEAR_PANEL && HELP_YEAR_PANEL.parentNode) return HELP_YEAR_PANEL;
+  var el = document.createElement('div');
+  el.className = 'yr-panel';
+  el.innerHTML = '<div class="yr-head"><button class="yr-nav" type="button" data-yr-nav="-1" aria-label="上十年">‹</button>' +
+    '<span class="yr-range"></span>' +
+    '<button class="yr-nav" type="button" data-yr-nav="1" aria-label="下十年">›</button></div>' +
+    '<div class="yr-grid"></div>';
+  el.addEventListener('click', function(ev){
+    var t = ev.target; if (!t || !t.closest) return;
+    var nav = t.closest('[data-yr-nav]');
+    if (nav && !nav.disabled) { paintYearPanel(HELP_YEAR_START + (nav.getAttribute('data-yr-nav') === '1' ? HELP_YEAR_PAGE : -HELP_YEAR_PAGE)); return; }
+    var cell = t.closest('[data-yr]');
+    if (cell) pickYear(parseInt(cell.getAttribute('data-yr'), 10));
+  });
+  document.body.appendChild(el);
+  HELP_YEAR_PANEL = el;
+  return el;
+}
+function closeYearPanel(){
+  if (HELP_YEAR_PANEL) HELP_YEAR_PANEL.classList.remove('yr-open');
+  HELP_YEAR_FOR = null;
+}
+function placeYearPanel(){
+  var el = HELP_YEAR_PANEL, inp = HELP_YEAR_FOR;
+  if (!el || !inp) return;
+  var r = inp.getBoundingClientRect(), w = el.offsetWidth, h = el.offsetHeight;
+  var left = Math.max(8, Math.min(r.left, window.innerWidth - w - 8));
+  var top = r.bottom + 6;
+  if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 6);
+  el.style.left = left + 'px';
+  el.style.top = top + 'px';
+  el.style.width = Math.max(180, Math.min(r.width, 260)) + 'px';
+}
+function paintYearPanel(page){
+  var el = yearPanelEl();
+  var cur = parseInt((HELP_YEAR_FOR && HELP_YEAR_FOR.value) || '', 10);
+  var html = '';
+  for (var i = 0; i < HELP_YEAR_PAGE; i++) {
+    var y = page + i;
+    html += y > HELP_YEAR_MAX ? '<span></span>'
+      : '<button class="yr-cell' + (y === cur ? ' yr-on' : '') + '" type="button" data-yr="' + y + '">' + y + '</button>';
+  }
+  el.querySelector('.yr-grid').innerHTML = html;
+  el.querySelector('.yr-range').textContent = page + ' – ' + Math.min(page + HELP_YEAR_PAGE - 1, HELP_YEAR_MAX);
+  el.querySelector('[data-yr-nav="-1"]').disabled = page <= HELP_YEAR_MIN;
+  el.querySelector('[data-yr-nav="1"]').disabled = page + HELP_YEAR_PAGE > HELP_YEAR_MAX;
+  HELP_YEAR_START = page;
+}
+function openYearPanel(inp){
+  var el = yearPanelEl();
+  if (HELP_YEAR_FOR === inp && el.classList.contains('yr-open')) { closeYearPanel(); return; } /* 再点一次＝收起 */
+  HELP_YEAR_FOR = inp;
+  var cur = parseInt(inp.value || '', 10);
+  if (!(cur >= HELP_YEAR_MIN && cur <= HELP_YEAR_MAX)) cur = new Date().getFullYear();
+  el.classList.add('yr-open'); /* 先显形，量得到宽高 */
+  paintYearPanel(pageStartOf(cur));
+  placeYearPanel();
+}
+function pickYear(y){
+  var inp = HELP_YEAR_FOR;
+  if (!inp || !(y >= HELP_YEAR_MIN && y <= HELP_YEAR_MAX)) { closeYearPanel(); return; }
+  inp.value = String(y);
+  inp.dispatchEvent(new Event('input', { bubbles: true }));
+  inp.dispatchEvent(new Event('change', { bubbles: true }));
+  closeYearPanel();
+}
+/* 面板之外点一下／Esc 收起（年框自己那一片由盾与 openPicker 开合，这里豁免）。 */
+document.addEventListener('click', function(ev){
+  var t = ev.target; if (!t || !t.closest) return;
+  if (t.closest('.yr-panel, .period-btn, .filt, .filt-panel')) return;
+  var hold = HELP_YEAR_FOR && HELP_YEAR_FOR.parentNode;
+  if (hold && t.closest('.pick-hold') === hold) return;
+  closeYearPanel();
+});
+document.addEventListener('keydown', function(ev){ if (ev.key === 'Escape') closeYearPanel(); });
+window.addEventListener('scroll', function(){ if (HELP_YEAR_FOR) placeYearPanel(); }, true);
+window.addEventListener('resize', function(){ if (HELP_YEAR_FOR) placeYearPanel(); });
+/* 点框任意处＝点框右侧的选择器图标（用户 2026-10-13 定，全场景通用；#1270 起年段也走这一条）。 */
 var HELP_LAST_PICK = { el: null, t: 0 };
 function openPicker(inp){
-  if (!inp || inp.disabled || !HELP_PICKABLE.test(inp.type || '')) return;
+  if (!inp || inp.disabled) return;
+  var yearCtl = isYearCtl(inp);
+  if (!yearCtl && !HELP_PICKABLE.test(inp.type || '')) return;
   var now = Date.now();
   if (HELP_LAST_PICK.el === inp && now - HELP_LAST_PICK.t < 400) return; /* 同一次手势别开两枪 */
   HELP_LAST_PICK = { el: inp, t: now };
+  if (yearCtl) { openYearPanel(inp); return; } /* 年段没有原生面板，改弹自画的那块 */
   if (typeof inp.showPicker !== 'function') {
     helpNote('这个浏览器没有 showPicker()：点框唤起不了选择器，只能点框右侧的图标。');
     return;
@@ -2790,22 +2894,34 @@ function mountPickers(root){
   var ins = root.querySelectorAll('input');
   for (var i = 0; i < ins.length; i++) {
     (function(inp){
-      if (!HELP_PICKABLE.test(inp.type || '')) return;
+      var yearCtl = isYearCtl(inp);
+      if (!yearCtl && !HELP_PICKABLE.test(inp.type || '')) return;
       if (inp.getAttribute('data-pick')) return;
       inp.setAttribute('data-pick', '1');
-      var holder = document.createElement('span');
-      holder.className = 'pick-hold';
-      inp.parentNode.insertBefore(holder, inp);
-      holder.appendChild(inp);
-      var sh = document.createElement('span');
-      sh.className = 'pick-shield';
-      holder.appendChild(sh);
+      /* 年段在 `periodCtlHTML` 里已经带了 `.pick-hold`／盾／图标（HTML 没有原生 year 输入，形态自己画）；
+         其余控件在这里现包一层。 */
+      var holder = inp.parentNode;
+      if (!holder || !holder.classList || !holder.classList.contains('pick-hold')) {
+        holder = document.createElement('span');
+        holder.className = 'pick-hold';
+        inp.parentNode.insertBefore(holder, inp);
+        holder.appendChild(inp);
+      }
+      var sh = holder.querySelector('.pick-shield');
+      if (!sh) {
+        sh = document.createElement('span');
+        sh.className = 'pick-shield';
+        holder.appendChild(sh);
+      }
       /* 自画日历图标：原生指示器各浏览器不一（窄框还会被挤没），这里统一画一枚，位置由 CSS 钉住。 */
-      var ic = document.createElement('span');
-      ic.className = 'pick-icon';
-      ic.setAttribute('aria-hidden', 'true');
-      ic.innerHTML = HELP_PICK_ICON;
-      holder.appendChild(ic);
+      var ic = holder.querySelector('.pick-icon');
+      if (!ic) {
+        ic = document.createElement('span');
+        ic.className = 'pick-icon';
+        ic.setAttribute('aria-hidden', 'true');
+        ic.innerHTML = HELP_PICK_ICON;
+        holder.appendChild(ic);
+      }
       sh.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); openPicker(inp); });
       ['keydown', 'beforeinput', 'paste', 'drop'].forEach(function(t){ inp.addEventListener(t, helpBlockEdit); });
     })(ins[i]);
