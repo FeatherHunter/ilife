@@ -353,18 +353,31 @@ const DATA_KEY_MARK = '<!--base-paint:data-key=';
 /** 指纹串的合法形状：只收 `[A-Za-z0-9._-]`——它要进 HTML 注释，含 `--`／空白／尖括号都会破坏那一行。 */
 const DATA_KEY_RE = /^[A-Za-z0-9._-]{1,128}$/;
 
+/** 指纹串的唯一校验口：落盘写它、查找认它、调用方自算字节数也用它，三处不许各写一份判据。 */
+function assertDataKey(key: unknown, where: string): string {
+  if (typeof key !== 'string' || !DATA_KEY_RE.test(key)) {
+    throw err('EINVAL', '[base-paint] ' + where + ' 须为 [A-Za-z0-9._-] 组成的 1–128 位串'
+      + '（它要写进 HTML 注释），实得：' + JSON.stringify(key));
+  }
+  return key;
+}
+
+/** 数据指纹在产物里的**唯一落点**（#1277）：一行不可见 HTML 注释，`byDataKey` 落盘时写、查找时认这一行。
+ *  **转出去**是给调用方算字节数用的：调用方若自己报「产物字节」（如 envelope 的 `data.bytes`），
+ *  得照它一起算——`data.bytes＝delivery.bytes＝产物字节` 是写进文档的交付契约（`docs/research/
+ *  t-help-parity-review-a.md`），差这一行就是 61 字节的口径分裂。 */
+export function dataKeyLine(key: string): string {
+  return '\n' + DATA_KEY_MARK + assertDataKey(key, '数据指纹') + '-->\n';
+}
+
 /** `reuse:{byDataKey,byAge}` 判据（#1277）：**窗口内、且正文含这枚指纹**的那一份（取最新的一份）。
  *  窗口口径与 `reuseByAge` 逐条同源（严格小于／将来时刻跳过／最新一份超窗口即止）；区别只在「还要指纹对得上」。
  *  指纹串非法（进注释会破壳）与窗口非法都阻断，不静默当未命中。 */
 function reuseByDataKey(dirAbs: string, stem: string, key: string, now: Date, ms: number): string | null {
-  if (typeof key !== 'string' || !DATA_KEY_RE.test(key)) {
-    throw err('EINVAL', '[base-paint] saveHtmlFile `reuse.byDataKey` 须为 [A-Za-z0-9._-] 组成的 1–128 位串'
-      + '（它要写进 HTML 注释），实得：' + JSON.stringify(key));
-  }
+  const needle = dataKeyLine(key).trim(); // 顺带校验指纹串形状（非法即 EINVAL，不静默当未命中）
   if (!Number.isFinite(ms) || ms < 0) {
     throw err('EINVAL', '[base-paint] saveHtmlFile `reuse.byDataKey` 的 `byAge` 须为非负毫秒数，实得：' + String(ms));
   }
-  const needle = DATA_KEY_MARK + key + '-->';
   const hits = readNames(dirAbs).filter((n) => ownNameRe(stem).test(n)).sort();
   for (let i = hits.length - 1; i >= 0; i--) {
     const n = hits[i] as string;
@@ -397,8 +410,9 @@ export function saveHtmlFile(input: {
   const reuse: HtmlReuse | null = typeof onExists === 'object' ? onExists.reuse : null;
   /* 数据指纹（只有 `byDataKey` 那支给）：落盘时写进产物、查找时认它。其余三支恒 `null`。 */
   const dataKey = reuse !== null && typeof reuse === 'object' ? (reuse.byDataKey ?? null) : null;
-  /* 真正落盘的那一串：`byDataKey` 支多一行不可见注释（其余支逐字节＝调用方给的 `html`）。 */
-  const payload = dataKey === null ? input.html : input.html + '\n' + DATA_KEY_MARK + dataKey + '-->\n';
+  /* 真正落盘的那一串：`byDataKey` 支多一行不可见注释（其余支逐字节＝调用方给的 `html`）。
+     这一行由 `dataKeyLine` 唯一生成——调用方若自报字节数，也用同一个口子算，免得两边差这 61 字节。 */
+  const payload = dataKey === null ? input.html : input.html + dataKeyLine(dataKey);
   // `succession` 与三支 `reuse` 都按通式算名字（要时间戳）；`overwrite`／`fail` 是逐字落点。
   const stamped = onExists === 'succession' || reuse !== null;
   const now = new Date(); // 一次调用只算一次：`byAge` 的判据与落盘名同源，不跨秒错位

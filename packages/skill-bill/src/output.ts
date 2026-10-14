@@ -39,7 +39,11 @@ export type { HtmlLanding };
  *  - 两者都给时 `explicit` 优先（用户指定胜过默认落点）。**`explicit` 不吃复用**——逐字落点是「说哪落哪」。
  *  `stem` 与 `file` 是共用件上两个正交的口子：#237 之前本件把 `basename(abs)` 当 `stem` 传、
  *  靠 `overwrite` 态把主体解释成完整文件名，一个参数背两个语义；现改为 `file` 走确切文件名。
- *  `reuseMs` 的取值口径（含「几小时＝多少毫秒」）在共用件 `reuseWindowOfHours`，本件不自己算。 */
+ *  `reuseMs` 的取值口径（含「几小时＝多少毫秒」）在共用件 `reuseWindowOfHours`，本件不自己算。
+ *
+ *  #1277 字节口径：给了 `dataKey` 时产物末尾多一行不可见指纹注释 ⇒ **envelope 的 `data.bytes` 必须照
+ *  「真正落盘的那一串」算**（`html` ＋ `dataKeyLine(dataKey)`），否则与 `delivery.bytes` 差 61 字节，
+ *  而 `data.bytes＝delivery.bytes＝产物字节` 是写进文档的交付契约（`docs/research/t-help-parity-review-a.md`）。 */
 export function deliverHtml(input: {
   explicit?: string;
   target?: HtmlLanding;

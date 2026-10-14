@@ -68,7 +68,7 @@ function spawnSave(dir, body) {
   return { status: r.status, stdout: String(r.stdout), stderr: String(r.stderr), json };
 }
 
-test('#237 ① 子路径出口：base-paint/save-html 真解析；包根不开；运行时出口＝落盘 ＋ 窗口换算两支', () => {
+test('#237 ① 子路径出口：base-paint/save-html 真解析；包根不开；运行时出口＝落盘 ＋ 窗口换算 ＋ 指纹行', () => {
   const r = spawnSync(process.execPath, ['--input-type=module', '-e', [
     "import * as sub from 'base-paint/save-html';",
     "import * as root from 'base-paint';",
@@ -78,8 +78,9 @@ test('#237 ① 子路径出口：base-paint/save-html 真解析；包根不开�
   const j = JSON.parse(String(r.stdout));
   // #245 起这一支多两支（`reuseWindowOfHours` 换算 ＋ `helpReuseWindowOf` 把它接到各家的「参数错」档）
   // 与一个默认窗口常量——「几小时＝多少毫秒、坏参怎么判」的唯一定义地。
-  assert.deepEqual(j.sub, ['HELP_REUSE_DEFAULT_HOURS', 'helpReuseWindowOf', 'reuseWindowOfHours', 'saveHtmlFile'],
-    '子路径运行时出口＝落盘 ＋ 窗口换算 ＋ 窗口工厂 ＋ 默认窗口常量（类型不出现在运行时）');
+  // #1277 起多一支 `dataKeyLine`：指纹注释那一行的唯一生成口（调用方自报「产物字节」也得照它算）。
+  assert.deepEqual(j.sub, ['HELP_REUSE_DEFAULT_HOURS', 'dataKeyLine', 'helpReuseWindowOf', 'reuseWindowOfHours', 'saveHtmlFile'],
+    '子路径运行时出口＝落盘 ＋ 窗口换算 ＋ 窗口工厂 ＋ 默认窗口常量 ＋ 指纹行（类型不出现在运行时）');
   assert.equal(j.rootHas, false, '绝不从包根开（包根出口受 src/spec 契约面锁死）');
 });
 

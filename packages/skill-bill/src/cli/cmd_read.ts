@@ -31,7 +31,7 @@ import { LOOKUP_FILE_STEM } from '../help/helpPaths.js';
 import { resolveHtmlDir } from '../fetch/paths.js';
 import type { HtmlDelivery, HtmlLanding } from '../output.js';
 import { landHtml } from '../delivery/landing.js';
-import { helpReuseWindowOf } from 'base-paint/save-html';
+import { helpReuseWindowOf, dataKeyLine } from 'base-paint/save-html';
 import {
   buildHelpLookup, buildHelpItems, readHelpSources, renderLookupPageHtml,
 } from '../help/index.js';
@@ -127,7 +127,7 @@ function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
   const { html, dataKey } = buildHelpFile(now, readHelpSources());
   const stem = HELP_FILE_STEM;
   return {
-    data: { ...buildHelpIndex(), mode: 'file', bytes: Buffer.byteLength(html, 'utf8') },
+    data: { ...buildHelpIndex(), mode: 'file', bytes: Buffer.byteLength(html + dataKeyLine(dataKey), 'utf8') },
     deliver: {
       html,
       target: { dir: resolveHtmlDir(), stem },
