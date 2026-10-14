@@ -64,7 +64,7 @@ import { dirname, join, resolve } from 'node:path';
  *
  *  `reuse` 的四支都「有就不新建」：`byDay`（当天已有）／`byContent`（内容相同）／`{byAge: 毫秒}`（不超龄）／
  *  `{byDataKey, byAge}`（窗口内、且正文里含这枚数据指纹）。 */
-export type HtmlReuse =
+type HtmlReuse =
   | 'byDay'
   | 'byContent'
   | { readonly byAge: number; readonly byDataKey?: string };
