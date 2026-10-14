@@ -8,7 +8,7 @@
   "columns": {
     "zh": {
       "declared": true,
-      "note": "中文列原为「改造前基线（未声明的差异为零）」。#1270 声明了六处差异，都只落在 help 段（共享 HELP 壳）：①加年度选择器（条目 9／11），zh/help 由 213177B 变 220327B；②把「年段特判」收成选择器层（`HELP_PICKERS` 登记表 ＋ 通用浮层外壳 `placeFloatPanel`／`helpPickerClose`），220327B 变 222326B（＋1999B）；③选择器被浏览器拒开时自愈（`helpPickerGiveUp` 撤盾 ＋ `data-pick-off` 停手，提示句改准），222326B 变 223159B（＋833B）；④换时间分段时收掉旧面板（`.period-btn` 不再豁免于外壳的点外关），223159B 变 223376B（＋217B）；⑤条目 9 空项字色（非必填、或声明了 `empty_label` 的格，空项文案按「取值」上色，与原生下拉一致；只有必填格的「请选择」留灰占位），223376B 变 223619B（＋243B）；⑥候选来自生成期快照（声明给了 `source`）的 `.filt` 面板顶部加一条「快照于 X · 之后新增的还没进来」（用户 2026-10-15 裁定，会话 m01620），223619B 变 224288B（＋669B）。entry／page／receipt 三段一字未动；此处按 #1270 重录该列。",
+      "note": "中文列原为「改造前基线（未声明的差异为零）」。#1270 声明了七处差异，都只落在 help 段（共享 HELP 壳）：①加年度选择器（条目 9／11），zh/help 由 213177B 变 220327B；②把「年段特判」收成选择器层（`HELP_PICKERS` 登记表 ＋ 通用浮层外壳 `placeFloatPanel`／`helpPickerClose`），220327B 变 222326B（＋1999B）；③选择器被浏览器拒开时自愈（`helpPickerGiveUp` 撤盾 ＋ `data-pick-off` 停手，提示句改准），222326B 变 223159B（＋833B）；④换时间分段时收掉旧面板（`.period-btn` 不再豁免于外壳的点外关），223159B 变 223376B（＋217B）；⑤条目 9 空项字色（非必填、或声明了 `empty_label` 的格，空项文案按「取值」上色，与原生下拉一致；只有必填格的「请选择」留灰占位），223376B 变 223619B（＋243B）；⑥候选来自生成期快照（声明给了 `source`）的 `.filt` 面板顶部加一条「快照于 X · 之后新增的还没进来」（用户 2026-10-15 裁定，会话 m01620），223619B 变 224288B（＋669B）；⑦用户 2026-10-15 裁定（会话 m01819「感觉不够专业」）后把文案改专业：「之后新增的还没进来」→「此后新增未包含」，并给节点加 hover 说明，224288B 变 224390B（＋102B）。entry／page／receipt 三段一字未动；此处按 #1270 重录该列。",
       "artifacts": {
         "zh/entry": {
           "src": "packages/base-render/scripts/i18n-pilot-1202.mjs",
@@ -17,8 +17,8 @@
         },
         "zh/help": {
           "src": "packages/base-render/src/helpShell.ts",
-          "bytes": 224288,
-          "sha256": "c86019172234064dd8682da42ca92297"
+          "bytes": 224390,
+          "sha256": "6e862d2ac12f5a4d4451f2567830f24b"
         },
         "zh/page": {
           "src": "packages/base-render/src/components/progress-list",
@@ -43,8 +43,8 @@
         },
         "en/help": {
           "src": "packages/base-render/src/helpShell.ts",
-          "bytes": 224288,
-          "sha256": "c86019172234064dd8682da42ca92297"
+          "bytes": 224390,
+          "sha256": "6e862d2ac12f5a4d4451f2567830f24b"
         },
         "en/page": {
           "src": "packages/base-render/src/components/progress-list",

@@ -3047,7 +3047,7 @@ function mountFilterSelects(root){
       wrap.className = 'filt';
       /* 「快照于 X」条（用户 2026-10-15 裁定，会话 m01620）：候选来自生成期快照（声明给了 `source`）的格，
          在面板顶部印一行醒目文字——复用窗口里这份候选是哪个时刻的。写死 `options` 的格没有快照可言，不印。 */
-      var snapText = (p && p.source && GENERATED_AT) ? ('快照于 ' + GENERATED_AT + ' · 之后新增的还没进来') : '';
+      var snapText = (p && p.source && GENERATED_AT) ? ('快照于 ' + GENERATED_AT + ' · 此后新增未包含') : '';
       wrap.innerHTML =
         '<button type="button" class="filt-row" aria-haspopup="listbox" aria-expanded="false">' +
         '<span class="filt-val"></span>' +
@@ -3056,7 +3056,7 @@ function mountFilterSelects(root){
         '<svg class="filt-caret" viewBox="0 0 16 10" aria-hidden="true"><path d="M3.5 7.5 8 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
         '</button>' +
         '<div class="filt-panel"' + (allowNew ? ' data-allownew="1"' : '') + '>' +
-        (snapText ? '<div class="filt-snap">' + esc(snapText) + '</div>' : '') +
+        (snapText ? '<div class="filt-snap" title="候选在生成这份 HELP 时从库里读取；此后新增的条目要等下次生成才会出现">' + esc(snapText) + '</div>' : '') +
         '<div class="filt-list" role="listbox"></div>' +
         '<div class="filt-foot"><input type="text" class="filt-q" placeholder="输入筛选" autocomplete="off">' +
         '<span class="filt-count"></span></div></div>';
