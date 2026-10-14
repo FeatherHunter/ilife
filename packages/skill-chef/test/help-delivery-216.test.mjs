@@ -105,7 +105,11 @@ test('#216 ② 产物＝通用 help 模板：前后缀逐字、标题槽已填�
   const env = runOk(db, [KEY]);
   const html = readFileSync(env.delivery.path, 'utf8');
   assert.equal(html.startsWith(PREFIX_BEFORE_TITLE), true, '前缀须与 base-paint/help-shell 逐字一致');
-  assert.equal(html.endsWith(HELP_SHELL_SUFFIX), true, '后缀须与 base-paint/help-shell 逐字一致');
+  /* #1281：产物末尾允许追加**一行**数据指纹注释（复用窗口按它判「这批数据有没有变」）。这一行由交付层
+     追加、不进模板；把它摘掉后仍要求后缀逐字——壳本身不许有任何漂移（#1277 甲式）。 */
+  const body = html.replace(/\n<!--base-paint:data-key=[A-Za-z0-9._-]{1,128}-->\n$/, '');
+  assert.equal(body.length < html.length, true, '数据指纹注释须在场（#1281）');
+  assert.equal(body.endsWith(HELP_SHELL_SUFFIX), true, '后缀须与 base-paint/help-shell 逐字一致（摘掉指纹注释后）');
   assert.equal(html.includes(HELP_SHELL_TITLE_SLOT), false, '标题槽不许留占位');
   assert.equal(html.includes('<title>私家大厨 HELP · 能力速查</title>'), true, '标题＝老家产物原文');
   assert.equal(env.delivery.bytes, Buffer.byteLength(html, 'utf8'));

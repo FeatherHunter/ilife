@@ -15,6 +15,7 @@
  */
 import { join } from 'node:path';
 import { helpDataKeyOf } from 'base-paint/help-key';
+import { dataKeyLine } from 'base-paint/save-html';
 import { resolveDbDir } from '../paths.js';
 import { buildHelpSceneData } from './helpScene.js';
 import { HELP_FILE_STEM, buildHelpFileData, formatHelpMinute, renderHelpFileHtml } from './helpFile.js';
@@ -69,17 +70,20 @@ export function viewPhotoHelpCenter(params: Record<string, unknown>): ViewOut {
   // <中文command>（注册表 title）另有其物，不能拿来命名这份产物。
   const helpData = buildHelpFileData(now);
   const html = renderHelpFileHtml(helpData);
+  // #1281 · 复用窗口的第四支判据（#1277 甲式）：本家 HELP 数据 ＋ 共享壳的指纹。本家数据没有
+  // `generated_at` 字段，那个分钟串嵌在 `subtitle`（`'更新于 ' + formatHelpMinute(now)`）里，
+  // 故把 `formatHelpMinute(now)` 当 stamp 交给公共层——它出现在 JSON 里几处就一并中性化。
+  const dataKey = helpDataKeyOf(helpData, formatHelpMinute(now));
   const data: Record<string, unknown> = {
     ...helpSceneIndex(buildHelpSceneData()),
     mode: 'file' as const,
-    bytes: Buffer.byteLength(html, 'utf8'),
+    // #1277 字节口径：给了指纹就多一行不可见注释 ⇒ `data.bytes` 照**真正落盘的那一串**算，
+    // 否则与 `delivery.bytes` 差这一行（`data.bytes＝delivery.bytes＝产物字节` 是交付契约）。
+    bytes: Buffer.byteLength(html + dataKeyLine(dataKey), 'utf8'),
   };
   return {
     data, html,
     target: { dir: join(resolveDbDir(), HELP_HTML_DIR_NAME), stem: HELP_FILE_STEM },
-    // #1281 · 复用窗口的第四支判据（#1277 甲式）：本家 HELP 数据 ＋ 共享壳的指纹。本家数据没有
-    // `generated_at` 字段，那个分钟串嵌在 `subtitle`（`'更新于 ' + formatHelpMinute(now)`）里，
-    // 故把 `formatHelpMinute(now)` 当 stamp 交给公共层——它出现在 JSON 里几处就一并中性化。
-    dataKey: helpDataKeyOf(helpData, formatHelpMinute(now)),
+    dataKey,
   };
 }

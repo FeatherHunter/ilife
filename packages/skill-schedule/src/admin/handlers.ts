@@ -24,7 +24,7 @@ import { HELP_GROUPS } from '../help/scenes/help-assets.js';
 import { assertHtmlSize, buildHelpItems } from '../render/index.js';
 import type { ScheduleDb } from '../fetch/db.js';
 import type { ViewOut } from '../shared/commandSpec.js';
-import { helpReuseWindowOf } from 'base-paint/save-html';
+import { helpReuseWindowOf, dataKeyLine } from 'base-paint/save-html';
 import {
   renderFirstUsePage, renderInitReceiptPage,
   type AdminCounts, type AdminPaths, type FirstUseStep,
@@ -247,14 +247,18 @@ export function lookupHelp(params: Record<string, unknown>): ViewOut {
   const helpData = buildHelpFileData(now, { initialized: helpInitialized() });
   const html = renderHelpFileHtml(helpData);
   assertHtmlSize(html);
+  // #1281 · 复用窗口的第四支判据（#1277 甲式）：本家 HELP 数据 ＋ 共享壳的指纹。
+  // 本家数据没有 `generated_at`，分钟串嵌在 `subtitle` 里，故拿 `formatHelpMinute(now)` 当 stamp。
+  const dataKey = helpDataKeyOf(helpData, formatHelpMinute(now));
   return {
-    data: { ...buildHelpIndex(), mode: HELP_MODE_FILE, bytes: Buffer.byteLength(html, 'utf8') },
-    html,
-    landing: {
-      targetDir: resolveHelpDir(), stem: helpFileStem(), reuseMs,
-      // #1281 · 复用窗口的第四支判据（#1277 甲式）：本家 HELP 数据 ＋ 共享壳的指纹。
-      // 本家数据没有 `generated_at`，分钟串嵌在 `subtitle` 里，故拿 `formatHelpMinute(now)` 当 stamp。
-      dataKey: helpDataKeyOf(helpData, formatHelpMinute(now)),
+    data: {
+      ...buildHelpIndex(),
+      mode: HELP_MODE_FILE,
+      // #1277 字节口径：给了指纹就多一行不可见注释 ⇒ `data.bytes` 照**真正落盘的那一串**算，
+      // 否则与 `delivery.bytes` 差这一行（`data.bytes＝delivery.bytes＝产物字节` 是交付契约）。
+      bytes: Buffer.byteLength(html + dataKeyLine(dataKey), 'utf8'),
     },
+    html,
+    landing: { targetDir: resolveHelpDir(), stem: helpFileStem(), reuseMs, dataKey },
   };
 }

@@ -30,7 +30,7 @@ import {
 } from '../help/index.js';
 import type { ChefHtmlDelivery, HtmlLanding } from '../help/index.js';
 import { chefPageFor, pageStemFor } from '../delivery/naming.js';
-import { helpReuseWindowOf } from 'base-paint/save-html';
+import { helpReuseWindowOf, dataKeyLine } from 'base-paint/save-html';
 // #839 · 各域处理经能力门进入（入口走公开接口，不直引域内部件）。
 // #963 · 数据族两条程序面键同走本域能力门（`runDataSchema`／`runChefDataQuery`，只读、不产文件）。
 import { runRecipeView } from '../view/index.js';
@@ -110,7 +110,9 @@ function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
   }
   const { html, target, index, dataKey } = buildChefHelpDelivery(dbPath, new Date());
   return {
-    data: { ...index, mode: 'file', bytes: Buffer.byteLength(html, 'utf8') },
+    // #1277 字节口径：给了指纹就多一行不可见注释 ⇒ `data.bytes` 照**真正落盘的那一串**算，
+    // 否则与 `delivery.bytes` 差这一行（`data.bytes＝delivery.bytes＝产物字节` 是交付契约）。
+    data: { ...index, mode: 'file', bytes: Buffer.byteLength(html + dataKeyLine(dataKey), 'utf8') },
     deliver: { html, target, reuseMs, dataKey },
   };
 }

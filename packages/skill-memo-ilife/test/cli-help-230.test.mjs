@@ -125,7 +125,11 @@ test('#230 ② help 模板前后缀逐字：产物＝共享壳前缀（只填标
   const title = (html.match(/<title>([^<]*)<\/title>/) || [])[1];
   assert.equal(title, '备忘录 · 使用手册', '文档标题由共享层按 skill_name · title 拼成');
   assert.ok(html.startsWith(HELP_SHELL_PREFIX.split(HELP_SHELL_TITLE_SLOT).join(title)), '前缀逐字（仅替换标题槽）');
-  assert.ok(html.endsWith(HELP_SHELL_SUFFIX), '后缀逐字');
+  /* #1281：产物末尾允许追加**一行**数据指纹注释（复用窗口按它判「这批数据有没有变」）。这一行由交付层
+     追加、不进模板；把它摘掉后仍要求后缀逐字——壳本身不许有任何漂移（#1277 甲式）。 */
+  const body = html.replace(/\n<!--base-paint:data-key=[A-Za-z0-9._-]{1,128}-->\n$/, '');
+  assert.ok(body.length < html.length, '数据指纹注释须在场（#1281）');
+  assert.ok(body.endsWith(HELP_SHELL_SUFFIX), '后缀逐字（摘掉指纹注释后）');
   assert.equal(html.includes(HELP_SHELL_TITLE_SLOT), false, '标题槽不得留占位（留了就是原型水印）');
 
   const data = helpData(html);
