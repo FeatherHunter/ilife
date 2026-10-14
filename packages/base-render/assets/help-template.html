@@ -2759,19 +2759,46 @@ function periodCtlHTML(mode, v){
   else if (mode === 'month') inner = '<input type="month" data-period-ctl="month" value="' + esc(v.month || '') + '">';
   /* #1270（条目 9／11）：年段改成与周／月**同一种形态**——自带 `.pick-hold` ＋ `.pick-shield`（盖住整框，
      点哪儿只开面板）＋ 自画图标；面板由 `openYearPanel` 现画（HTML 没有原生 year 输入）。 */
-  else if (mode === 'year') inner = '<span class="pick-hold"><input type="number" inputmode="numeric" min="2000" max="2100" step="1" placeholder="如 2026" data-period-ctl="year" data-year-pick="1" value="' + esc(v.year || '') + '"><span class="pick-shield" data-year-shield="1"></span><span class="pick-icon" aria-hidden="true">' + HELP_PICK_ICON + '</span></span>';
+  else if (mode === 'year') inner = '<span class="pick-hold"><input type="number" inputmode="numeric" min="2000" max="2100" step="1" placeholder="如 2026" data-period-ctl="year" data-picker="year" value="' + esc(v.year || '') + '"><span class="pick-shield" data-year-shield="1"></span><span class="pick-icon" aria-hidden="true">' + HELP_PICK_ICON + '</span></span>';
   else if (mode === 'range') inner = '<input type="date" data-period-ctl="start" value="' + esc(v.start || '') + '">' +
     '<span class="period-sep">至</span><input type="date" data-period-ctl="end" value="' + esc(v.end || '') + '">';
   else return ''; /* 不限：没有控件，就不带 ⓘ */
   return '<div class="inwrap native">' + inner +
     '<button class="ib" type="button" data-period-i="1" aria-label="看提示全文">i</button></div>';
 }
+/* ===== 选择器层（HELP 通用）================================================
+   字段控件只在控件上写 `data-picker="<名字>"`；`openPicker()` 查 `HELP_PICKERS` 派发。
+   外壳统一负责「浮层定位（贴框下方，放不下翻到上方，左右夹在视口内）／点外关／Esc／滚动与改窗口跟随」，
+   面板自己只管「画什么、点中怎么回填」。新增一种自画选择器＝往表里加一条，别处一行不用改。
+   原生那几种（date／week／month／time／datetime-local）也登记在册，开的是浏览器自己的 `showPicker()`。 */
+var HELP_PICKERS = [];
+function helpPickerRegister(p){ HELP_PICKERS.push(p); }
+function helpPickerOf(inp){
+  for (var i = 0; i < HELP_PICKERS.length; i++) { if (HELP_PICKERS[i].match(inp)) return HELP_PICKERS[i]; }
+  return null;
+}
+/* 当前开着的那一个：面板不各存一份「我是给哪个框开的」，统一住这里。 */
+var HELP_PICK = { entry: null, inp: null };
+function helpPickerClose(){ var e = HELP_PICK.entry; HELP_PICK = { entry: null, inp: null }; if (e && e.close) e.close(); }
+/* 浮层通用定位：贴着框下方；下方放不下就翻到框上方；左右夹在视口内。 */
+function placeFloatPanel(el, anchor, minW, maxW){
+  if (!el || !anchor) return;
+  var r = anchor.getBoundingClientRect(), w = el.offsetWidth, h = el.offsetHeight, m = 8, gap = 6;
+  var left = Math.max(m, Math.min(r.left, window.innerWidth - w - m));
+  var top = r.bottom + gap;
+  if (top + h > window.innerHeight - m) top = Math.max(m, r.top - h - gap);
+  el.style.left = left + 'px';
+  el.style.top = top + 'px';
+  if (minW !== false) el.style.width = Math.max(minW || 180, Math.min(r.width, maxW || 260)) + 'px';
+}
+
 /* #1270（条目 9／11）年度选择器：HTML 没有原生 `year` 输入，周／月那种「点框开原生面板」在这里没有对应物，
-   所以自画一块。一页 10 年（5 列 × 2 行），箭头翻页，点年即回填。回填走 `mountPeriods` 已有的那条链：
-   写 `input.value` → 派发 `input`（冒泡到 `.period-ctl`）⇒ 分段状态、提示词预览、复制三条链路一行不改。 */
+   所以自画一块，作为本层的第一个在册实例。一页 10 年（5 列 × 2 行），箭头翻页，点年即回填。
+   回填走 `mountPeriods` 已有的那条链：写 `input.value` → 派发 `input`（冒泡到 `.period-ctl`）
+   ⇒ 分段状态、提示词预览、复制三条链路一行不改。 */
 var HELP_YEAR_MIN = 2000, HELP_YEAR_MAX = 2100, HELP_YEAR_PAGE = 10;
-var HELP_YEAR_PANEL = null, HELP_YEAR_FOR = null, HELP_YEAR_START = HELP_YEAR_MIN;
-function isYearCtl(inp){ return !!(inp && inp.getAttribute && inp.getAttribute('data-year-pick') === '1'); }
+var HELP_YEAR_PANEL = null, HELP_YEAR_START = HELP_YEAR_MIN;
+function isYearCtl(inp){ return !!(inp && inp.getAttribute && inp.getAttribute('data-picker') === 'year'); }
 function pageStartOf(y){ return Math.max(HELP_YEAR_MIN, Math.min(y - ((y - HELP_YEAR_MIN) % HELP_YEAR_PAGE), HELP_YEAR_MAX - HELP_YEAR_PAGE + 1)); }
 function yearPanelEl(){
   if (HELP_YEAR_PANEL && HELP_YEAR_PANEL.parentNode) return HELP_YEAR_PANEL;
@@ -2794,22 +2821,11 @@ function yearPanelEl(){
 }
 function closeYearPanel(){
   if (HELP_YEAR_PANEL) HELP_YEAR_PANEL.classList.remove('yr-open');
-  HELP_YEAR_FOR = null;
 }
-function placeYearPanel(){
-  var el = HELP_YEAR_PANEL, inp = HELP_YEAR_FOR;
-  if (!el || !inp) return;
-  var r = inp.getBoundingClientRect(), w = el.offsetWidth, h = el.offsetHeight;
-  var left = Math.max(8, Math.min(r.left, window.innerWidth - w - 8));
-  var top = r.bottom + 6;
-  if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 6);
-  el.style.left = left + 'px';
-  el.style.top = top + 'px';
-  el.style.width = Math.max(180, Math.min(r.width, 260)) + 'px';
-}
+function placeYearPanel(){ placeFloatPanel(HELP_YEAR_PANEL, HELP_PICK.inp); }
 function paintYearPanel(page){
   var el = yearPanelEl();
-  var cur = parseInt((HELP_YEAR_FOR && HELP_YEAR_FOR.value) || '', 10);
+  var cur = parseInt((HELP_PICK.inp && HELP_PICK.inp.value) || '', 10);
   var html = '';
   for (var i = 0; i < HELP_YEAR_PAGE; i++) {
     var y = page + i;
@@ -2824,8 +2840,6 @@ function paintYearPanel(page){
 }
 function openYearPanel(inp){
   var el = yearPanelEl();
-  if (HELP_YEAR_FOR === inp && el.classList.contains('yr-open')) { closeYearPanel(); return; } /* 再点一次＝收起 */
-  HELP_YEAR_FOR = inp;
   var cur = parseInt(inp.value || '', 10);
   if (!(cur >= HELP_YEAR_MIN && cur <= HELP_YEAR_MAX)) cur = new Date().getFullYear();
   el.classList.add('yr-open'); /* 先显形，量得到宽高 */
@@ -2833,42 +2847,50 @@ function openYearPanel(inp){
   placeYearPanel();
 }
 function pickYear(y){
-  var inp = HELP_YEAR_FOR;
-  if (!inp || !(y >= HELP_YEAR_MIN && y <= HELP_YEAR_MAX)) { closeYearPanel(); return; }
+  var inp = HELP_PICK.inp;
+  if (!inp || !(y >= HELP_YEAR_MIN && y <= HELP_YEAR_MAX)) { helpPickerClose(); return; }
   inp.value = String(y);
   inp.dispatchEvent(new Event('input', { bubbles: true }));
   inp.dispatchEvent(new Event('change', { bubbles: true }));
-  closeYearPanel();
+  helpPickerClose();
 }
-/* 面板之外点一下／Esc 收起（年框自己那一片由盾与 openPicker 开合，这里豁免）。 */
+helpPickerRegister({ name: 'year', match: isYearCtl, open: openYearPanel, close: closeYearPanel, place: placeYearPanel });
+/* 原生那几种：浏览器自己有面板，本层只替用户把点击转过去（年段没有原生面板，走上面那条）。 */
+helpPickerRegister({
+  name: 'native',
+  match: function(inp){ return HELP_PICKABLE.test((inp && inp.type) || ''); },
+  open: function(inp){
+    if (typeof inp.showPicker !== 'function') { helpNote('这个浏览器没有 showPicker()：点框唤起不了选择器，只能点框右侧的图标。'); return; }
+    try { inp.showPicker(); }
+    catch (e) { helpNote('唤起选择器被浏览器挡下（' + ((e && e.name) || e) + '）：只能点框右侧的图标。'); }
+  },
+});
+/* 外壳收口：面板之外点一下／Esc／滚动／改窗口。面板自己不挂这些。 */
 document.addEventListener('click', function(ev){
+  if (!HELP_PICK.entry) return;
   var t = ev.target; if (!t || !t.closest) return;
   if (t.closest('.yr-panel, .period-btn, .filt, .filt-panel')) return;
-  var hold = HELP_YEAR_FOR && HELP_YEAR_FOR.parentNode;
-  if (hold && t.closest('.pick-hold') === hold) return;
-  closeYearPanel();
+  var hold = HELP_PICK.inp && HELP_PICK.inp.parentNode;
+  if (hold && t.closest('.pick-hold') === hold) return; /* 框自己那一片由盾与 openPicker 开合 */
+  helpPickerClose();
 });
-document.addEventListener('keydown', function(ev){ if (ev.key === 'Escape') closeYearPanel(); });
-window.addEventListener('scroll', function(){ if (HELP_YEAR_FOR) placeYearPanel(); }, true);
-window.addEventListener('resize', function(){ if (HELP_YEAR_FOR) placeYearPanel(); });
-/* 点框任意处＝点框右侧的选择器图标（用户 2026-10-13 定，全场景通用；#1270 起年段也走这一条）。 */
+document.addEventListener('keydown', function(ev){ if (ev.key === 'Escape') helpPickerClose(); });
+window.addEventListener('scroll', function(){ if (HELP_PICK.entry && HELP_PICK.entry.place) HELP_PICK.entry.place(); }, true);
+window.addEventListener('resize', function(){ if (HELP_PICK.entry && HELP_PICK.entry.place) HELP_PICK.entry.place(); });
+/* 点框任意处＝点框右侧的选择器图标（用户 2026-10-13 定，全场景通用；#1270 起年段也走这一条）。
+   这里只做三件事：查表、去重、派发——具体开哪个面板归选择器层（见上方 `HELP_PICKERS`）。 */
 var HELP_LAST_PICK = { el: null, t: 0 };
 function openPicker(inp){
   if (!inp || inp.disabled) return;
-  var yearCtl = isYearCtl(inp);
-  if (!yearCtl && !HELP_PICKABLE.test(inp.type || '')) return;
+  var entry = helpPickerOf(inp);
+  if (!entry) return; /* 没登记＝这框不该点开面板（纯文本框之类） */
   var now = Date.now();
   if (HELP_LAST_PICK.el === inp && now - HELP_LAST_PICK.t < 400) return; /* 同一次手势别开两枪 */
   HELP_LAST_PICK = { el: inp, t: now };
-  if (yearCtl) { openYearPanel(inp); return; } /* 年段没有原生面板，改弹自画的那块 */
-  if (typeof inp.showPicker !== 'function') {
-    helpNote('这个浏览器没有 showPicker()：点框唤起不了选择器，只能点框右侧的图标。');
-    return;
-  }
-  try { inp.showPicker(); }
-  catch (e) {
-    helpNote('唤起选择器被浏览器挡下（' + ((e && e.name) || e) + '）：只能点框右侧的图标。');
-  }
+  if (HELP_PICK.entry === entry && HELP_PICK.inp === inp) { helpPickerClose(); return; } /* 再点一次＝收起 */
+  helpPickerClose(); /* 换了一个框：先收前一个 */
+  HELP_PICK = { entry: entry, inp: inp };
+  entry.open(inp);
 }
 document.addEventListener('click', function(ev){
   var t = ev.target;
@@ -2894,8 +2916,7 @@ function mountPickers(root){
   var ins = root.querySelectorAll('input');
   for (var i = 0; i < ins.length; i++) {
     (function(inp){
-      var yearCtl = isYearCtl(inp);
-      if (!yearCtl && !HELP_PICKABLE.test(inp.type || '')) return;
+      if (!helpPickerOf(inp)) return; /* 没登记＝这框不盖盾 */
       if (inp.getAttribute('data-pick')) return;
       inp.setAttribute('data-pick', '1');
       /* 年段在 `periodCtlHTML` 里已经带了 `.pick-hold`／盾／图标（HTML 没有原生 year 输入，形态自己画）；

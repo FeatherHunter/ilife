@@ -23,14 +23,14 @@ const FIXTURE = {"skill_name":"卡路里","title":"唤醒词速查台","subtitle
 
 test('#136 ① 模板值 verbatim：前后缀哈希与搬家基线一致', () => {
   assert.equal(sha(HELP_SHELL_PREFIX), '2a30e6b710cb762ac4655640f58ca0071e7055b5e1459a14ab0b5fcf597a870d');
-  assert.equal(sha(HELP_SHELL_SUFFIX), '8f9bf10b022d541f579f360021a4caf90c4b2cd32e9dc669e0fc8c8fc90a0ccd');
+  assert.equal(sha(HELP_SHELL_SUFFIX), 'c0f6cd41d1c03f106e8ca65573dca3772b9785a81ac19e601846385b47e66ee5');
   assert.equal(HELP_SHELL_DATA_OPEN, '<script id="help-data" type="application/json">');
   assert.ok(HELP_SHELL_PREFIX.endsWith(HELP_SHELL_DATA_OPEN), 'PREFIX 须止于 help-data 开标签尾');
   assert.ok(HELP_SHELL_SUFFIX.startsWith('</script>'), 'SUFFIX 须起于 help-data 配对闭标签');
 });
 
 test('#136 ② 固定夹具渲染逐字节一致＋空分组抛 missing-data', () => {
-  assert.equal(sha(renderHelpShellHtml(FIXTURE)), '7f5169a18a4c3dba6a726294613c2615b12204b8ef8c36942816604c45f24466');
+  assert.equal(sha(renderHelpShellHtml(FIXTURE)), '904093cdb75bd33edbbd826b99d34e41202d97d99719e4228c987abc7a8a0959');
   assert.equal(renderHelpShell, renderHelpShellHtml, '标准出口须为同一实现');
   assert.throws(() => renderHelpShellHtml({ ...FIXTURE, groups: [] }),
     (e) => e instanceof HelpShellError && e.code === 'missing-data');

@@ -8,7 +8,7 @@
   "columns": {
     "zh": {
       "declared": true,
-      "note": "中文列原为「改造前基线（未声明的差异为零）」。#1270 声明了一处差异：共享 HELP 壳加了年度选择器（条目 9／11），zh/help 由 213177B 变 220327B（＋7150B），逐字节 diff 只落在 help 段，entry／page／receipt 三段一字未动；此处按 #1270 重录该列。",
+      "note": "中文列原为「改造前基线（未声明的差异为零）」。#1270 声明了两处差异，都只落在 help 段（共享 HELP 壳）：①加年度选择器（条目 9／11），zh/help 由 213177B 变 220327B；②把「年段特判」收成选择器层（`HELP_PICKERS` 登记表 ＋ 通用浮层外壳 `placeFloatPanel`／`helpPickerClose`），220327B 变 222326B（＋1999B）。entry／page／receipt 三段一字未动；此处按 #1270 重录该列。",
       "artifacts": {
         "zh/entry": {
           "src": "packages/base-render/scripts/i18n-pilot-1202.mjs",
@@ -17,8 +17,8 @@
         },
         "zh/help": {
           "src": "packages/base-render/src/helpShell.ts",
-          "bytes": 220327,
-          "sha256": "92ff0343aa79d66b98c366bf69562360"
+          "bytes": 222326,
+          "sha256": "2c666f23388576a03c06d4d784b9bc4a"
         },
         "zh/page": {
           "src": "packages/base-render/src/components/progress-list",
@@ -43,8 +43,8 @@
         },
         "en/help": {
           "src": "packages/base-render/src/helpShell.ts",
-          "bytes": 220327,
-          "sha256": "92ff0343aa79d66b98c366bf69562360"
+          "bytes": 222326,
+          "sha256": "2c666f23388576a03c06d4d784b9bc4a"
         },
         "en/page": {
           "src": "packages/base-render/src/components/progress-list",
