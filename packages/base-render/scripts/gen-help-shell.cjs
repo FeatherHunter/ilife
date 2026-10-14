@@ -279,7 +279,10 @@ T.push("  assert.ok(HELP_SHELL_SUFFIX.includes('HELP.generated_at'), '壳须从 
 T.push("  assert.ok(HELP_SHELL_SUFFIX.includes('本页数据生成于'), '壳须印本页生成时刻');");
 T.push("  assert.ok(!HELP_SHELL_SUFFIX.includes('about_meta'), 'about_meta 命名空间已撤回（键住技能侧自己的载荷）');");
 T.push("  assert.ok(!HELP_SHELL_SUFFIX.includes('HELP 模板 v4'), '模板代际不上页（用户原话：这段字意义不明）');");
-T.push("  assert.ok(!HELP_SHELL_SUFFIX.includes('快照于'), '不再印快照行（复用窗口是调用方的策略参数）');");
+T.push("  /* 2026-10-15 用户裁定（会话 m01620）：候选面板顶部要印「快照于 X」，复用窗口里看得见候选是哪个时刻的。");
+T.push("     旧的「壳不许出现『快照于』」是 #1274 针对**关于页**那行下的；用户改口后，这条只盯候选面板那一条。 */");
+T.push("  assert.ok(HELP_SHELL_SUFFIX.includes('filt-snap'), '候选面板顶部须有快照条（用户 2026-10-15 裁定）');");
+T.push("  assert.ok(HELP_SHELL_SUFFIX.includes('快照于 '), '快照条文案须带生成时刻');");
 T.push('});');
 T.push('');
 const outTest = T.join('\n');

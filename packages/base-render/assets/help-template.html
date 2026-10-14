@@ -198,6 +198,7 @@
   .sheet .filt.open .filt-caret{transform:rotate(180deg)}
   .filt-panel{display:none;border:1px solid var(--line);border-radius:11px;background:#fff;box-shadow:0 8px 26px rgba(0,0,0,.14);overflow:hidden}
   .filt-panel.filt-float{display:block;position:fixed;z-index:9500}
+  .filt-snap{display:block;padding:8px 11px;font-size:12px;line-height:1.4;color:var(--blue2);background:var(--soft);border-bottom:1px solid #dbe8fb}
   /* 年度选择器（#1270 条目 9／11）：`period` 的「年」段原本是**键入框**——HTML 没有原生 `year` 输入，
      周／月那种「点框即开原生面板」在这里没有对应物，所以自画一块：一页 10 年（5 列 × 2 行）、
      箭头翻页、点年即回填。盾与图标沿用 `.pick-*` 那两枚（点击一律由盾接管）。 */
@@ -3044,6 +3045,9 @@ function mountFilterSelects(root){
       sel.hidden = true; /* 原 select 留作取值口（readParams 连 hidden 一起读） */
       var wrap = document.createElement('div');
       wrap.className = 'filt';
+      /* 「快照于 X」条（用户 2026-10-15 裁定，会话 m01620）：候选来自生成期快照（声明给了 `source`）的格，
+         在面板顶部印一行醒目文字——复用窗口里这份候选是哪个时刻的。写死 `options` 的格没有快照可言，不印。 */
+      var snapText = (p && p.source && GENERATED_AT) ? ('快照于 ' + GENERATED_AT + ' · 之后新增的还没进来') : '';
       wrap.innerHTML =
         '<button type="button" class="filt-row" aria-haspopup="listbox" aria-expanded="false">' +
         '<span class="filt-val"></span>' +
@@ -3051,7 +3055,9 @@ function mountFilterSelects(root){
         (allowNew ? '<span class="filt-badge filt-row-badge" hidden>新建</span>' : '') +
         '<svg class="filt-caret" viewBox="0 0 16 10" aria-hidden="true"><path d="M3.5 7.5 8 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
         '</button>' +
-        '<div class="filt-panel"' + (allowNew ? ' data-allownew="1"' : '') + '><div class="filt-list" role="listbox"></div>' +
+        '<div class="filt-panel"' + (allowNew ? ' data-allownew="1"' : '') + '>' +
+        (snapText ? '<div class="filt-snap">' + esc(snapText) + '</div>' : '') +
+        '<div class="filt-list" role="listbox"></div>' +
         '<div class="filt-foot"><input type="text" class="filt-q" placeholder="输入筛选" autocomplete="off">' +
         '<span class="filt-count"></span></div></div>';
       sel.parentNode.insertBefore(wrap, sel);

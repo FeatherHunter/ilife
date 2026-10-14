@@ -22,15 +22,15 @@ const sha = (s) => createHash('sha256').update(s, 'utf8').digest('hex');
 const FIXTURE = {"skill_name":"卡路里","title":"唤醒词速查台","subtitle":"1 分类 · 1 场景 · 更新于 2026-09-06 22:07","contact":{"items":[{"label":"作者","value":"ilife"}]},"groups":[{"id":"g","icon":"x","label":"L","subgroups":[{"id":"s","label":"S","scenes":[{"id":"a","title":"T","wake_word":"w","status":"","prompt_template":"p","types":["结果"]}]}]}]};
 
 test('#136 ① 模板值 verbatim：前后缀哈希与搬家基线一致', () => {
-  assert.equal(sha(HELP_SHELL_PREFIX), '2a30e6b710cb762ac4655640f58ca0071e7055b5e1459a14ab0b5fcf597a870d');
-  assert.equal(sha(HELP_SHELL_SUFFIX), 'cad75e2f60202e07ca6e070f5350228ea61a9b6105e66e9f47d24b3dc23d5a72');
+  assert.equal(sha(HELP_SHELL_PREFIX), 'a2c89f2b3bd2f666e240d33581a7f409516039fbadb2387cf2566ce63cc03d9d');
+  assert.equal(sha(HELP_SHELL_SUFFIX), '42b02e44c29ef897a0a91e19a468ac38fa122a2325db0efbdb5b2c4322d615b3');
   assert.equal(HELP_SHELL_DATA_OPEN, '<script id="help-data" type="application/json">');
   assert.ok(HELP_SHELL_PREFIX.endsWith(HELP_SHELL_DATA_OPEN), 'PREFIX 须止于 help-data 开标签尾');
   assert.ok(HELP_SHELL_SUFFIX.startsWith('</script>'), 'SUFFIX 须起于 help-data 配对闭标签');
 });
 
 test('#136 ② 固定夹具渲染逐字节一致＋空分组抛 missing-data', () => {
-  assert.equal(sha(renderHelpShellHtml(FIXTURE)), 'a12aec686dcf8709326b1b00f303679f3379d5560a8af4f87ed1904c796dd64f');
+  assert.equal(sha(renderHelpShellHtml(FIXTURE)), '8a83b6b8486aaf7cfa558a6e0c6584490d52fbdc64d62179e12aec4aca4df376');
   assert.equal(renderHelpShell, renderHelpShellHtml, '标准出口须为同一实现');
   assert.throws(() => renderHelpShellHtml({ ...FIXTURE, groups: [] }),
     (e) => e instanceof HelpShellError && e.code === 'missing-data');
@@ -70,5 +70,8 @@ test('#1274 关于页版本接线（条目 15）：主行＝数据世代＋技�
   assert.ok(HELP_SHELL_SUFFIX.includes('本页数据生成于'), '壳须印本页生成时刻');
   assert.ok(!HELP_SHELL_SUFFIX.includes('about_meta'), 'about_meta 命名空间已撤回（键住技能侧自己的载荷）');
   assert.ok(!HELP_SHELL_SUFFIX.includes('HELP 模板 v4'), '模板代际不上页（用户原话：这段字意义不明）');
-  assert.ok(!HELP_SHELL_SUFFIX.includes('快照于'), '不再印快照行（复用窗口是调用方的策略参数）');
+  /* 2026-10-15 用户裁定（会话 m01620）：候选面板顶部要印「快照于 X」，复用窗口里看得见候选是哪个时刻的。
+     旧的「壳不许出现『快照于』」是 #1274 针对**关于页**那行下的；用户改口后，这条只盯候选面板那一条。 */
+  assert.ok(HELP_SHELL_SUFFIX.includes('filt-snap'), '候选面板顶部须有快照条（用户 2026-10-15 裁定）');
+  assert.ok(HELP_SHELL_SUFFIX.includes('快照于 '), '快照条文案须带生成时刻');
 });
