@@ -2780,6 +2780,15 @@ function helpPickerOf(inp){
 /* 当前开着的那一个：面板不各存一份「我是给哪个框开的」，统一住这里。 */
 var HELP_PICK = { entry: null, inp: null };
 function helpPickerClose(){ var e = HELP_PICK.entry; HELP_PICK = { entry: null, inp: null }; if (e && e.close) e.close(); }
+/* 浏览器拒开选择器（拿不到用户激活／不认这个框）时的自愈：撤掉盾，把框还给浏览器原生形态。
+   此后本层不再插手这个框（`data-pick-off`），点击直接落到原生输入框上。 */
+function helpPickerGiveUp(inp){
+  if (!inp || !inp.setAttribute) return;
+  inp.setAttribute('data-pick-off', '1');
+  var holder = inp.parentNode;
+  var sh = holder && holder.querySelector ? holder.querySelector('.pick-shield') : null;
+  if (sh && sh.parentNode) sh.parentNode.removeChild(sh);
+}
 /* 浮层通用定位：贴着框下方；下方放不下就翻到框上方；左右夹在视口内。 */
 function placeFloatPanel(el, anchor, minW, maxW){
   if (!el || !anchor) return;
@@ -2860,9 +2869,9 @@ helpPickerRegister({
   name: 'native',
   match: function(inp){ return HELP_PICKABLE.test((inp && inp.type) || ''); },
   open: function(inp){
-    if (typeof inp.showPicker !== 'function') { helpNote('这个浏览器没有 showPicker()：点框唤起不了选择器，只能点框右侧的图标。'); return; }
+    if (typeof inp.showPicker !== 'function') { helpPickerGiveUp(inp); helpNote('这个浏览器没有 showPicker()：挡板已撤，直接点框用浏览器自己的选择器。'); return; }
     try { inp.showPicker(); }
-    catch (e) { helpNote('唤起选择器被浏览器挡下（' + ((e && e.name) || e) + '）：只能点框右侧的图标。'); }
+    catch (e) { helpPickerGiveUp(inp); helpNote('浏览器不让脚本替你开选择器（' + ((e && e.name) || e) + '）：挡板已撤，再点一下框就能用浏览器自己的选择器。'); }
   },
 });
 /* 外壳收口：面板之外点一下／Esc／滚动／改窗口。面板自己不挂这些。 */
@@ -2882,6 +2891,7 @@ window.addEventListener('resize', function(){ if (HELP_PICK.entry && HELP_PICK.e
 var HELP_LAST_PICK = { el: null, t: 0 };
 function openPicker(inp){
   if (!inp || inp.disabled) return;
+  if (inp.getAttribute && inp.getAttribute('data-pick-off')) return; /* 已被浏览器拒过：这框走原生 */
   var entry = helpPickerOf(inp);
   if (!entry) return; /* 没登记＝这框不该点开面板（纯文本框之类） */
   var now = Date.now();
@@ -2917,6 +2927,7 @@ function mountPickers(root){
   for (var i = 0; i < ins.length; i++) {
     (function(inp){
       if (!helpPickerOf(inp)) return; /* 没登记＝这框不盖盾 */
+      if (inp.getAttribute('data-pick-off')) return; /* 被浏览器拒过：别再盖盾 */
       if (inp.getAttribute('data-pick')) return;
       inp.setAttribute('data-pick', '1');
       /* 年段在 `periodCtlHTML` 里已经带了 `.pick-hold`／盾／图标（HTML 没有原生 year 输入，形态自己画）；
