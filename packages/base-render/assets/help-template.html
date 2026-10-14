@@ -3180,7 +3180,7 @@ function mountFilterSelects(root){
       }
       function syncRow(){
         val.textContent = sel.value || emptyText;
-        val.classList.toggle('has', !!sel.value);
+        val.classList.toggle('has', !!sel.value || !p.req || !!p.emptyLabel); /* 空项是取值（非必填／声明给了 empty_label）⇒ 按正常字色，与原生下拉一致；只有必填格的「请选择」留灰占位（用户 2026-10-15 裁定：同语义空项不该两色） */
         if (rowBadge) rowBadge.hidden = !curCustom(); /* 触发器上的「新建」徽标（pick-only 格没这个节点） */
       }
       /* 面板挂到 <body>（脱离弹层的滚动裁剪与 transform 包含块），按触发框的位置摆：
