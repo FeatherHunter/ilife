@@ -18,7 +18,8 @@ import {
 } from '../fetch/index.js';
 import { buildHelpLookup, HELP_ASSETS } from '../help/index.js';
 import { resolveHelpDir } from '../help/helpPaths.js';
-import { helpFileStem, buildHelpFileData, renderHelpFileHtml } from '../help/helpFile.js';
+import { helpFileStem, buildHelpFileData, formatHelpMinute, renderHelpFileHtml } from '../help/helpFile.js';
+import { helpDataKeyOf } from 'base-paint/help-key';
 import { HELP_GROUPS } from '../help/scenes/help-assets.js';
 import { assertHtmlSize, buildHelpItems } from '../render/index.js';
 import type { ScheduleDb } from '../fetch/db.js';
@@ -243,11 +244,17 @@ export function lookupHelp(params: Record<string, unknown>): ViewOut {
   }
   // #245：HELP 产物吃复用窗口（缺省一天内只留一份，`reuseHours` 可改）。
   const reuseMs = helpWindowOrFail(params);
-  const html = renderHelpFileHtml(buildHelpFileData(now, { initialized: helpInitialized() }));
+  const helpData = buildHelpFileData(now, { initialized: helpInitialized() });
+  const html = renderHelpFileHtml(helpData);
   assertHtmlSize(html);
   return {
     data: { ...buildHelpIndex(), mode: HELP_MODE_FILE, bytes: Buffer.byteLength(html, 'utf8') },
     html,
-    landing: { targetDir: resolveHelpDir(), stem: helpFileStem(), reuseMs },
+    landing: {
+      targetDir: resolveHelpDir(), stem: helpFileStem(), reuseMs,
+      // #1281 · 复用窗口的第四支判据（#1277 甲式）：本家 HELP 数据 ＋ 共享壳的指纹。
+      // 本家数据没有 `generated_at`，分钟串嵌在 `subtitle` 里，故拿 `formatHelpMinute(now)` 当 stamp。
+      dataKey: helpDataKeyOf(helpData, formatHelpMinute(now)),
+    },
   };
 }

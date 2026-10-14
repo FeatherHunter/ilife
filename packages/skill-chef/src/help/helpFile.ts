@@ -55,6 +55,7 @@
  */
 import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
+import { helpDataKeyOf } from 'base-paint/help-key';
 import { renderHelpShellHtml } from 'base-paint/help-shell';
 import type { HelpShellData } from 'base-paint/help-shell';
 import type { SceneGroup } from 'base-paint';
@@ -257,6 +258,8 @@ export function buildChefHelpDelivery(dbPath: string, now: Date): {
   readonly html: string;
   readonly target: { readonly dir: string; readonly stem: string };
   readonly index: ReturnType<typeof chefHelpIndex>;
+  /** #1281 · 复用窗口的第四支判据（#1277 甲式）：本家 HELP 数据 ＋ 共享壳的指纹。 */
+  readonly dataKey: string;
 } {
   const dir = chefHelpDir(dbPath);
   const data = buildChefHelpFileData(now, { initialized: chefHelpInitialized(dbPath) });
@@ -264,6 +267,8 @@ export function buildChefHelpDelivery(dbPath: string, now: Date): {
     html: renderChefHelpHtml(data),
     target: Object.freeze({ dir, stem: helpFileStem() }),
     index: chefHelpIndex(data.groups),
+    // 本家数据没有 `generated_at` 字段，分钟串嵌在 `subtitle`（`'更新于 ' + formatHelpMinute(now)`）里。
+    dataKey: helpDataKeyOf(data, formatHelpMinute(now)),
   });
 }
 

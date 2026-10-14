@@ -28,8 +28,10 @@ export interface ViewOut {
   html: string;
   /** stderr 提示行（不进 envelope）：逐条由出口 `note()` 打出，字节与旧分派一致。 */
   notes?: string[];
-  /** 缺省落点意图（仅 `schedule.help.lookup` 有）：出口凭它走统一落盘管线。 */
-  landing?: { targetDir: string; stem: string; reuseMs?: number };
+  /** 缺省落点意图（仅 `schedule.help.lookup` 有）：出口凭它走统一落盘管线。
+   *  #1281 · `dataKey`＝HELP 产物的数据指纹（#1277 甲式，公共层 `base-paint/help-key` 算）：给了就与
+   *  `reuseMs` 一起构成「按数据 ＋ 渲染器」的复用判据（数据没变就复用，变了才落新的）。 */
+  landing?: { targetDir: string; stem: string; reuseMs?: number; dataKey?: string };
   /** **不落盘**的显式表态（#843）：缺省行为是「**缺省即落盘**」（出口落一份 HTML 并回 `delivery.path`）；
    *  这一支是「这一趟按定义就没有产物」（今天只有 HELP 的 `q` 现找：只回命中条目，不落盘）。
    *  缺省值不写＝落盘，故只有不落盘的那一支表态。 */

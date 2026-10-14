@@ -25,6 +25,10 @@ export interface ViewOut {
    *  （`output.ts:deliverHtml`），仍走 `wx` 独占＋同秒递补（#237 起由共用件 `base-paint/save-html` 仲裁）；
    *  一个 key 出多种产物（HELP 文件／速查台／回执）时用它分开命名。 */
   target?: HtmlLanding;
+  /** #1281 · 该次产物的**数据指纹**（#1277 甲式，公共层 `base-paint/help-key` 算）：只在吃复用窗口
+   *  的 HELP 产物上给。判据由此从「按年龄」变成「按数据 ＋ 渲染器」——数据没变、壳没变就一直是同一份，
+   *  任一变了才落新的（#245 口径的精确化：不再是一天一份，而是「同一批数据一份」）。 */
+  dataKey?: string;
 }
 
 /** 写命令的产物：回执三件（`ok`／`message`／`receipt`），`affectedRows` 由写分派统一注入。 */

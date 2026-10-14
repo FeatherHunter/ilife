@@ -38,6 +38,7 @@
 <!-- warning-line-ledger:begin -->
 | 件 | 挂号值（首次挂号时的 LF，永不回改） | 当场实测 | 结论 |
 |---|---|---|---|
+| `src/cli/cmd_read.ts` | 367 | 354 | 超线在册（拆法见 #855 证据件；只许变短） |
 | `scripts/build-help.mjs` | 38 | 46 | 未越线，在册备查 |
 | `scripts/check-warning-line.mjs` | 112 | 133 | 未越线，在册备查 |
 | `scripts/gen-cli.mjs` | 380 | 299 | 已回线内（挂号值 380 留档，只许变短） |
@@ -54,7 +55,6 @@
 | `src/checkin/index.ts` | 7 | 7 | 未越线，在册备查 |
 | `src/checkin/receipt.ts` | 82 | 84 | 未越线，在册备查 |
 | `src/checkin/routes.ts` | 36 | 40 | 未越线，在册备查 |
-| `src/cli/cmd_read.ts` | 367 | 329 | 已回线内（挂号值 367 留档，只许变短） |
 | `src/cli/config.ts` | 113 | 127 | 未越线，在册备查 |
 | `src/cli/health.ts` | 37 | 38 | 未越线，在册备查 |
 | `src/cli/health/configRead.ts` | 208 | 208 | 未越线，在册备查 |

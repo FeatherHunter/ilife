@@ -193,7 +193,7 @@ async function main() {
         html: landing !== undefined ? r.html : pageHtml(),
         targetDir: landing !== undefined ? landing.targetDir : resolveHtmlDir(),
         stem: landing !== undefined ? landing.stem : pageStemFor(spec),
-        ...(landing === undefined ? {} : { reuseMs: landing.reuseMs }),
+        ...(landing === undefined ? {} : { reuseMs: landing.reuseMs, dataKey: landing.dataKey }),
       })
       : undefined;
     if (receipt !== undefined) {

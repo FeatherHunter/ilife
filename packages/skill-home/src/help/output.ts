@@ -43,6 +43,9 @@ export function deliverHomeHelp(input: {
   readonly stem?: string;
   readonly html: string;
   readonly reuseMs?: number;
+  /** #1281 · HELP 产物的**数据指纹**（#1277 甲式，公共层 `base-paint/help-key` 算）：给了就与 `reuseMs`
+   *  一起构成「按数据 ＋ 渲染器」的复用判据（数据没变就复用，变了才落新的）；不给＝照旧按年龄。 */
+  readonly dataKey?: string;
 }): HomeHtmlDelivery {
   if (typeof input.html !== 'string' || input.html.length === 0) {
     throw new HomeRenderError('HOME_BAD_PAYLOAD', '[skill-home] deliverHomeHelp 缺 HTML 正文（缺失阻断，不写空页）。');
@@ -62,11 +65,17 @@ export function deliverHomeHelp(input: {
       '[skill-home] deliverHomeHelp 缺落点（`explicit` 与「`targetDir` ＋ `stem`」至少给一组）');
   }
   try {
+    // #1281 · 指纹与窗口一起给 ⇒ 走共用件第四支判据（`byDataKey`）；只给窗口＝照旧按年龄（`byAge`）。
+    const reuse: { byAge: number; byDataKey?: string } | null = input.reuseMs === undefined
+      ? null
+      : (input.dataKey === undefined
+        ? { byAge: input.reuseMs }
+        : { byAge: input.reuseMs, byDataKey: input.dataKey });
     return saveHtmlFile({
       dir: input.targetDir,
       stem: input.stem,
       html: input.html,
-      ...(input.reuseMs === undefined ? {} : { onExists: { reuse: { byAge: input.reuseMs } } }),
+      ...(reuse === null ? {} : { onExists: { reuse } }),
     });
   } catch (e) {
     writeFailed(join(input.targetDir, input.stem), e);

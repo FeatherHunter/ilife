@@ -128,7 +128,10 @@ export function buildDeliveredEnvelope(input: {
     }));
   }
 
-  const d = deliverHtml({ key, params, explicit: input.explicit, target: out.target, html });
+  const d = deliverHtml({
+    key, params, explicit: input.explicit, target: out.target, html,
+    ...(out.dataKey === undefined ? {} : { dataKey: out.dataKey }),
+  });
   const data: Record<string, unknown> = d.mode === 'file'
     ? { ...out.data, output: d.path }
     : { ...out.data, html };

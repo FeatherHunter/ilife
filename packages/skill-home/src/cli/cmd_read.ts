@@ -24,6 +24,8 @@ import {
 } from '../render/index.js';
 import { buildHelpLookup, buildHomeHelpFileData, renderHomeHelpHtml, deliverHomeHelp } from '../help/index.js';
 import type { HomeHtmlDelivery } from '../help/index.js';
+import { formatHelpMinute } from '../help/helpFile.js';
+import { helpDataKeyOf } from 'base-paint/help-key';
 import { deliverHtml } from '../output.js';
 import { helpDirName, helpFileStem, lookupFileStem } from '../help/manifest.js';
 import { REGISTRY } from './registry.js';
@@ -64,6 +66,9 @@ interface DeliverIntent {
   readonly targetDir: string;
   readonly stem: string;
   readonly reuseMs?: number;
+  /** #1281 · HELP 产物的数据指纹（#1277 甲式）：只缺省 HELP 支有；`mode:"lookup"` 那支的产物是
+   *  分节页，不吃 `dataKey` 判据，照旧按年龄复用。 */
+  readonly dataKey?: string;
 }
 interface HelpDispatch { readonly data: unknown; readonly deliver?: DeliverIntent; }
 
@@ -91,10 +96,18 @@ function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
       deliver: { targetDir, stem: lookupFileStem(), reuseMs },
     };
   }
-  const html = renderHomeHelpHtml(buildHomeHelpFileData(now, { dbPath: join(dbDir, dbFilename()) }));
+  const helpData = buildHomeHelpFileData(now, { dbPath: join(dbDir, dbFilename()) });
   return {
     data: buildHelpItems(all, undefined),
-    deliver: { html, targetDir, stem: helpFileStem(), reuseMs },
+    deliver: {
+      html: renderHomeHelpHtml(helpData),
+      targetDir,
+      stem: helpFileStem(),
+      reuseMs,
+      // #1281 · 复用窗口的第四支判据（#1277 甲式）：本家 HELP 数据 ＋ 共享壳的指纹。
+      // 本家数据没有 `generated_at`，分钟串嵌在 `subtitle` 里，故拿 `formatHelpMinute(now)` 当 stamp。
+      dataKey: helpDataKeyOf(helpData, formatHelpMinute(now)),
+    },
   };
 }
 
@@ -296,6 +309,7 @@ async function main() {
         const html = help.deliver.html ?? sectionHtml();
         delivery = deliverHomeHelp({
           targetDir: help.deliver.targetDir, stem: help.deliver.stem, html, reuseMs: help.deliver.reuseMs,
+          ...(help.deliver.dataKey === undefined ? {} : { dataKey: help.deliver.dataKey }),
         });
         note('HTML 已写：' + delivery.path + '（' + delivery.bytes + ' 字节 utf8）');
       }

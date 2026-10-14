@@ -114,8 +114,9 @@ function fail(message: string): never {
   throw new HomeRenderError('HOME_BAD_PAYLOAD', message);
 }
 
-/** 老 `%Y-%m-%d %H:%M` 等价物（本地时区、零填充；非法 Date 即坏参，不返空串）。 */
-function formatHelpMinute(now: Date): string {
+/** 老 `%Y-%m-%d %H:%M` 等价物（本地时区、零填充；非法 Date 即坏参，不返空串）。
+ *  #1281 起**出口要用它当指纹的 stamp**（本家数据没有 `generated_at`，分钟串嵌在 `subtitle` 里）。 */
+export function formatHelpMinute(now: Date): string {
   if (!(now instanceof Date) || Number.isNaN(now.getTime())) {
     fail('HELP 更新时间须为有效 Date（缺失阻断，不返空串）。');
   }

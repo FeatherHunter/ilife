@@ -79,7 +79,14 @@ function parseWriteOpCompat(params: Record<string, unknown>): string {
  * 会 `mkdirSync`（`src/fetch/paths.ts:21`）。落点目录由落盘件按需递归建出（要落文件就必然建它），
  * 但要落的是 `<库目录>/cook_html/help/`，**不是** `chef_data.db`。
  */
-interface HelpDeliver { readonly html?: string; readonly target: HtmlLanding; readonly reuseMs?: number; }
+interface HelpDeliver {
+  readonly html?: string;
+  readonly target: HtmlLanding;
+  readonly reuseMs?: number;
+  /** #1281 · HELP 产物的数据指纹（#1277 甲式）：只缺省 HELP 支有；`mode:"lookup"` 那支没有（它的
+   *  产物是信封渲染的速查页，不吃 `dataKey` 判据，照旧按年龄复用）。 */
+  readonly dataKey?: string;
+}
 interface HelpDispatch { readonly data: unknown; readonly deliver?: HelpDeliver; }
 
 /** HELP 产物吃的复用窗口（毫秒）：缺省**一天**、`reuseHours` 可改（`0`＝每次都落新的）。
@@ -101,10 +108,10 @@ function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
       deliver: { target: buildChefLookupLanding(dbPath), reuseMs },
     };
   }
-  const { html, target, index } = buildChefHelpDelivery(dbPath, new Date());
+  const { html, target, index, dataKey } = buildChefHelpDelivery(dbPath, new Date());
   return {
     data: { ...index, mode: 'file', bytes: Buffer.byteLength(html, 'utf8') },
-    deliver: { html, target, reuseMs },
+    deliver: { html, target, reuseMs, dataKey },
   };
 }
 
@@ -240,6 +247,7 @@ async function main() {
         target: help.deliver.target,
         html,
         ...(help.deliver.reuseMs === undefined ? {} : { reuseMs: help.deliver.reuseMs }),
+        ...(help.deliver.dataKey === undefined ? {} : { dataKey: help.deliver.dataKey }),
       });
     } else if (o.key === 'chef.help.lookup') {
       // HELP 现找（q）：只回命中，不缺省落页（既有语义）；给了 --html 才逐字覆盖写 section，不回 delivery。

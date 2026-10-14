@@ -11,6 +11,7 @@
     "./docShell": "./dist/docShell.js",
     "./help-shell": "./dist/helpShell.js",
     "./save-html": "./dist/output/saveHtml.js",
+    "./help-key": "./dist/output/helpKey.js",
     "./package.json": "./package.json"
   },
   "files": [

@@ -19,11 +19,11 @@
  *    （`help-template.html` 的 `INIT_BANNER && !INIT_BANNER.hidden`），故新线**键常在、显隐走 `hidden`**：
  *    payload 形状不随状态变，下游用例能断言同一个键集。初始化状态由调用方传入（本模块零 IO）。
  */
-import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { HELP_SHELL_PREFIX, HELP_SHELL_SUFFIX, renderHelpShellHtml } from 'base-paint/help-shell';
+import { renderHelpShellHtml } from 'base-paint/help-shell';
+import { helpDataKeyOf } from 'base-paint/help-key';
 import { HELP_WAKE_WORDS, SCENE_BY_ID, WAKE_ASSETS, WAKE_GROUPS } from '../triggers/wake-assets.js';
 import { BillRenderError } from '../render/errors.js';
 import { EMPTY_CANDIDATE_LISTS, type HelpCandidateLists } from './candidateLists.js';
@@ -303,28 +303,11 @@ export function buildHelpFileData(now: Date = new Date(), opts: HelpFileOptions 
   };
 }
 
-/** 壳（渲染器）的身份：模板/共享壳改了，页正文就变了 ⇒ 指纹必须把渲染器也算进去。
- *  不这么办的后果（#1277 对抗式审查实测到的洞）：数据没变、模板改了，窗口内会把**旧页**当命中——
- *  「改一句文案 → 打开 HELP 看效果」这条迭代当场看不见改动，直到数据变或窗口过期。壳＝PREFIX ＋ SUFFIX 逐字。 */
-const HELP_SHELL_KEY = createHash('sha256')
-  .update(HELP_SHELL_PREFIX, 'utf8').update('\u0000', 'utf8').update(HELP_SHELL_SUFFIX, 'utf8')
-  .digest('hex').slice(0, 16);
-
-/** HELP 的**数据指纹**（#1277）：这份产物代表的那批**数据 ＋ 渲染器**的身份——只算真数据，**排除三个同源
- *  时刻字段**：做法是**对掉那个分钟串**——`generated_at` 与 `subtitle`／`meta_blocks[0]` 里嵌的是
- *  同一个 `formatHelpMinute(now)`（`buildHelpFileData` 用同一个 `now` 派生），把它在整份 JSON 里
- *  替换成占位符即可。**其余每一个字段都参与**，含 `meta_blocks[1]` 里真印在页面上的唤醒词
- *  （#1277 对抗式审查逮到的洞：早先按字段白名单枚举，漏了它 ⇒ 改那 4 条词页正文变而指纹不变）。
- *
- *  为什么要有它：复用窗口的判据若按**整页哈希**走，页里嵌着分钟级时刻 ⇒ 跨分钟必不相同 ⇒ 等于
- *  「一分钟一份」，复用整个失效。指纹只看「数据 ＋ 壳」：**两者都没变就一直是同一份，任一变了才落新的**。
- *  取 32 位十六进制（`[0-9a-f]`）——它要写进 HTML 注释，只许安全字符。 */
+/** HELP 的**数据指纹**（#1277）：算式唯一实现在公共层 `base-paint/help-key` 的 `helpDataKeyOf`
+ *  （#1281 抽出——六家技能共用一套共享壳，算式不该有第二份）；本件只把本家的**分钟串**喂进去：
+ *  `generated_at` 与 `subtitle`／`meta_blocks[0]` 里嵌的是同一个 `formatHelpMinute(now)`。 */
 export function helpDataKey(data: HelpFileData): string {
-  const stamp = data.generated_at;
-  const json = JSON.stringify(data);
-  const canonical = stamp.length === 0 ? json : json.split(stamp).join('\u0000');
-  return createHash('sha256').update(HELP_SHELL_KEY, 'utf8').update('\u0000', 'utf8')
-    .update(canonical, 'utf8').digest('hex').slice(0, 32);
+  return helpDataKeyOf(data, data.generated_at);
 }
 
 /** 一次取齐交付要的三件（#1277）：载荷、整页 HTML、数据指纹。

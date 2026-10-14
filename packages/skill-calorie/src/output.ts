@@ -234,6 +234,9 @@ export function deliverHtml(input: {
   explicit?: string;
   target?: HtmlLanding;
   html: string;
+  /** #1281 · HELP 产物的**数据指纹**（#1277 甲式，公共层算）：给了就与 `reuseMs` 一起构成
+   *  「按数据 ＋ 渲染器」的复用判据（数据没变就复用，变了才落新的）；不给＝照旧按年龄。 */
+  dataKey?: string;
 }): HtmlDelivery {
   try {
     if (input.explicit !== undefined) {
@@ -248,11 +251,15 @@ export function deliverHtml(input: {
     }
     if (input.target !== undefined) {
       const reuseMs = windowForHelpDelivery(input.key, input.target.stem, input.params);
+      // #1281 · 指纹与窗口一起给 ⇒ 走共用件第四支判据（`byDataKey`）；只给窗口＝照旧按年龄（`byAge`）。
+      const reuse: { byAge: number; byDataKey?: string } | null = reuseMs === undefined
+        ? null
+        : (input.dataKey === undefined ? { byAge: reuseMs } : { byAge: reuseMs, byDataKey: input.dataKey });
       return saveHtmlFile({
         dir: input.target.dir,
         stem: input.target.stem,
         html: input.html,
-        ...(reuseMs === undefined ? {} : { onExists: { reuse: { byAge: reuseMs } } }),
+        ...(reuse === null ? {} : { onExists: { reuse } }),
       });
     }
     const landing = defaultLanding(input.key, {

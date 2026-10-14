@@ -48,6 +48,9 @@ export function deliverChefHelp(input: {
   target?: HtmlLanding;
   html: string;
   reuseMs?: number;
+  /** #1281 · HELP 产物的**数据指纹**（#1277 甲式，公共层 `base-paint/help-key` 算）：给了就与 `reuseMs`
+   *  一起构成「按数据 ＋ 渲染器」的复用判据（数据没变就复用，变了才落新的）；不给＝照旧按年龄。 */
+  dataKey?: string;
 }): ChefHtmlDelivery {
   if (typeof input.html !== 'string' || input.html.length === 0) {
     throw new ChefRenderError('CHEF_BAD_PAYLOAD', '[skill-chef] deliverChefHelp 缺 HTML 正文（缺失阻断，不写空页）。');
@@ -59,7 +62,13 @@ export function deliverChefHelp(input: {
   if (input.target === undefined) {
     throw new ChefRenderError('CHEF_BAD_PAYLOAD', '[skill-chef] deliverChefHelp 缺落点（`explicit` 与 `target` 至少给一个）');
   }
-  const onExists = input.reuseMs === undefined ? undefined : { reuse: { byAge: input.reuseMs } };
+  // #1281 · 指纹与窗口一起给 ⇒ 走共用件第四支判据（`byDataKey`）；只给窗口＝照旧按年龄（`byAge`）。
+  const reuse: { byAge: number; byDataKey?: string } | null = input.reuseMs === undefined
+    ? null
+    : (input.dataKey === undefined
+      ? { byAge: input.reuseMs }
+      : { byAge: input.reuseMs, byDataKey: input.dataKey });
+  const onExists = reuse === null ? undefined : { reuse };
   return saveHtmlFile({
     dir: input.target.dir, stem: input.target.stem, html: input.html, onExists,
   });

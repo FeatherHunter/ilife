@@ -21,6 +21,7 @@ import { REGISTRY } from './registry.js';
 import { fail } from '../shared/exit.js';
 import { memoShapeFor, buildMemoEnvelope, renderEnvelopeHtml, assertHtmlSize, fillMemoPage, MemoRenderError } from '../render/index.js';
 import { buildMemoHelpFileData, renderMemoHelpHtml } from '../help/helpFile.js';
+import { helpDataKeyOf } from 'base-paint/help-key';
 import { buildHelpSceneIndex } from '../help/sceneData.js';
 import { buildHelpLookup } from '../help/index.js';
 import { helpHtmlDirName, helpFileStem, lookupFileStem } from '../help/manifest.js';
@@ -72,7 +73,13 @@ const HELP_MODE_FILE = 'file' as const;
 /** 交付意图：`html` 有值＝本键自带整页 HTML（缺省那支）；无值＝由 envelope 渲染（照 bill）。
  *  `landing` 是**落点意图**——共用件自己的形状 `{dir, stem}`，本包不另立定义。
  *  `window`（#245）＝复用窗口毫秒数：给了就「窗口内已有同一主体的一份 ⇒ 返回它、不新建」。 */
-interface MemoDeliverIntent { readonly html?: string; readonly landing: HtmlLanding; readonly window?: number; }
+interface MemoDeliverIntent {
+  readonly html?: string;
+  readonly landing: HtmlLanding;
+  readonly window?: number;
+  /** #1281 · HELP 产物的数据指纹（#1277 甲式）：只缺省 HELP 支有；`mode:"lookup"` 速查支不吃它。 */
+  readonly dataKey?: string;
+}
 interface MemoHelpDispatch { readonly data: unknown; readonly deliver?: MemoDeliverIntent; }
 
 /** HELP 支的复用窗口（毫秒）。#245：缺省**一天**（共用件 `HELP_REUSE_DEFAULT_HOURS`）——24 小时内反复读
@@ -104,6 +111,9 @@ function deliverMemoHtml(input: {
   landing?: HtmlLanding;
   html: string;
   window?: number;
+  /** #1281 · HELP 产物的数据指纹（#1277 甲式）：给了就与 `window` 一起构成「按数据 ＋ 渲染器」的
+   *  复用判据（数据没变就复用，变了才落新的）；不给＝照旧按年龄。 */
+  dataKey?: string;
 }): HtmlReceipt {
   if (input.explicit !== undefined && input.explicit.length > 0) {
     const abs = resolve(input.explicit);
@@ -112,11 +122,17 @@ function deliverMemoHtml(input: {
   if (input.landing === undefined) {
     throw new Error('[skill-memo-ilife] deliverMemoHtml 缺落点（`explicit` 与 `landing` 至少给一个）');
   }
+  // #1281 · 指纹与窗口一起给 ⇒ 走共用件第四支判据（`byDataKey`）；只给窗口＝照旧按年龄（`byAge`）。
+  const reuse: { byAge: number; byDataKey?: string } | null = input.window === undefined
+    ? null
+    : (input.dataKey === undefined
+      ? { byAge: input.window }
+      : { byAge: input.window, byDataKey: input.dataKey });
   return saveHtmlFile({
     dir: input.landing.dir,
     stem: input.landing.stem,
     html: input.html,
-    ...(input.window === undefined ? {} : { onExists: { reuse: { byAge: input.window } } }),
+    ...(reuse === null ? {} : { onExists: { reuse } }),
   });
 }
 
@@ -169,7 +185,13 @@ function dispatchHelp(params: Record<string, unknown>, dbPath: string): MemoHelp
   // 索引载荷（`list` 形）：一行一域，计数全派生；`memo.help.lookup`＝HELP 文件的交付索引。
   return {
     data: { ...buildHelpSceneIndex(), mode: HELP_MODE_FILE },
-    deliver: { html, landing: landingOf(dbPath, helpFileStem()), window },
+    deliver: {
+      html, landing: landingOf(dbPath, helpFileStem()), window,
+      // #1281 · 复用窗口的第四支判据（#1277 甲式）：本家 HELP 数据 ＋ 共享壳的指纹。
+      // 本家载荷**不含生成时刻**（`formatHelpMinute(now)` 在 `buildMemoHelpFileData` 里只用来校验 `now`，
+      // 结果不落载荷）⇒ stamp 传空串＝整份 JSON 原样参与，没有需要中性化的分钟串。
+      dataKey: helpDataKeyOf(data, ''),
+    },
   };
 }
 
@@ -294,7 +316,10 @@ async function main() {
       // 本键的产物：缺省＝HELP 全壳页（自带 html）；`mode:"lookup"`＝速查表分节页（由 envelope 渲染）。
       const html = help.deliver.html ?? sectionHtml();
       if (help.deliver.html !== undefined) assertHtmlSize(html);
-      delivery = deliverMemoHtml({ explicit: o.html, landing: help.deliver.landing, html, window: help.deliver.window });
+      delivery = deliverMemoHtml({
+        explicit: o.html, landing: help.deliver.landing, html, window: help.deliver.window,
+        ...(help.deliver.dataKey === undefined ? {} : { dataKey: help.deliver.dataKey }),
+      });
     } else if (out.deliver !== undefined) {
       // #665 整页交付：缺省落 `memo_html/<页名>.html`（独占递补），显式 `--html` 逐字覆盖写。
       delivery = deliverMemoHtml({ explicit: o.html, landing: landingOf(dbPath, out.deliver.stem), html: out.deliver.html });
