@@ -2878,7 +2878,9 @@ helpPickerRegister({
 document.addEventListener('click', function(ev){
   if (!HELP_PICK.entry) return;
   var t = ev.target; if (!t || !t.closest) return;
-  if (t.closest('.yr-panel, .period-btn, .filt, .filt-panel')) return;
+  if (t.closest('.yr-panel, .filt, .filt-panel')) return;
+  /* 时间分段的按钮（不限／某天／周／月／年／区间）不豁免：换段＝换控件，旧面板必须收掉
+     （用户 2026-10-14：点「年」弹出年份面板后再点「周」，面板还在）。 */
   var hold = HELP_PICK.inp && HELP_PICK.inp.parentNode;
   if (hold && t.closest('.pick-hold') === hold) return; /* 框自己那一片由盾与 openPicker 开合 */
   helpPickerClose();
