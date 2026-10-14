@@ -113,7 +113,11 @@ test('#148 ② 壳层锁：产物 = 共享 help 模板前后缀逐字 ＋ help-d
   const title = html.slice(html.indexOf('<title>') + 7, html.indexOf('</title>'));
   assert.equal(title, '饼干记账 · 使用手册(HELP)');
   assert.ok(html.startsWith(HELP_SHELL_PREFIX.split(HELP_SHELL_TITLE_SLOT).join(title)), '前缀逐字（仅填标题槽）');
-  assert.ok(html.endsWith(HELP_SHELL_SUFFIX), '后缀逐字');
+  /* #1277：产物末尾允许追加**一行**数据指纹注释（复用窗口按它判「这批数据有没有变」）。这一行由交付层
+     追加、不进模板；把它摘掉后仍要求后缀逐字——壳本身不许有任何漂移。 */
+  const body = html.replace(/\n<!--base-paint:data-key=[A-Za-z0-9._-]{1,128}-->\n$/, '');
+  assert.ok(html.length > body.length, '数据指纹注释须在场（#1277）');
+  assert.ok(body.endsWith(HELP_SHELL_SUFFIX), '后缀逐字（摘掉指纹注释后）');
   assert.equal(html.includes(HELP_SHELL_TITLE_SLOT), false, '标题槽不得留占位');
 
   // 载荷（老实物两代共同口径）

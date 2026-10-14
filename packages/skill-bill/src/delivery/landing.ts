@@ -24,8 +24,10 @@ import { pageStemFor } from './naming.js';
 export interface LandingInput {
   /** `--html <路径>`：用户逐字指定的落点（覆盖写；空串按没给算）。 */
   readonly explicit: string | undefined;
-  /** HELP 那支的交付意图（缺席＝本次不是 HELP 命令）。 */
-  readonly help: { readonly html?: string; readonly target: HtmlLanding; readonly reuseMs?: number } | undefined;
+  /** HELP 那支的交付意图（缺席＝本次不是 HELP 命令）。`dataKey`＝#1277 的数据指纹，窗口内复用还得认它。 */
+  readonly help:
+    | { readonly html?: string; readonly target: HtmlLanding; readonly reuseMs?: number; readonly dataKey?: string }
+    | undefined;
   /** 能力目录那支的产物（`REGISTRY[key].run` 的返回值；缺席／无页／空整页都按「不落」算）。 */
   readonly ability: WriteOut | ViewOut | null;
   readonly key: string;
@@ -45,6 +47,7 @@ export function landHtml(input: LandingInput): HtmlDelivery | undefined {
       target: input.help.target,
       html: gated(input.help.html ?? input.sectionHtml()),
       reuseMs: input.help.reuseMs,
+      dataKey: input.help.dataKey,
     });
   }
   const ability = input.ability;

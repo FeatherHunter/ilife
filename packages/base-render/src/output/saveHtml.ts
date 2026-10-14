@@ -31,7 +31,8 @@
  *  - `overwrite`：名字照 `stem`／`file` 给的落（**不带时间戳、不递补**），已存在就逐字覆写
  *    ——记账／卡路里 `--output`／`--html` 的既有口径（用户逐字指定的落点就是这个语义）；
  *  - `fail`：名字同 `overwrite`（不带时间戳、不递补），撞名即抛（`code:'EEXIST'`），不改写已有那份；
- *  - `{reuse:'byDay'}`／`{reuse:'byContent'}`／`{reuse:{byAge:ms}}`：返回**已有那份**，不新建、不改写。
+ *  - `{reuse:'byDay'}`／`{reuse:'byContent'}`／`{reuse:{byAge:ms}}`／`{reuse:{byDataKey:串,byAge:ms}}`：
+ *    返回**已有那份**，不新建、不改写。
  *    `byDay`＝当天已有同一主体的一份（取当天最新的）；`byContent`＝内容哈希相同；
  *    **`byAge`＝已有那份的落盘时刻距现在比 `byAge` 毫秒更近（取最新的那一份）——判据严格小于**：`{byAge: 86_400_000}`
  *    就是「一天内直接返回同一份」，`{byAge: 0}` 就是「永远不命中＝每次都落新的」（判据 `<=` 会让同秒重跑失效）。
@@ -39,6 +40,13 @@
  *    而是按本件自己产出的名字（`<主体>_<YYYYMMDD_HHMMSS>[_N].html`）扫目录；`byAge` 读名字里的时间戳。
  *    **未命中则与 `succession` 同路落一份新的**（带时间戳、绝不覆盖）——落不带戳的名字会让「自己落的
  *    自己下次查不中」，等于没做复用。这三支只认 `stem`（不认 `file`：逐字落点与「按通式扫目录」自相矛盾）。
+ *  - `{reuse:{byDataKey: 串, byAge: ms}}`（#1277）：**按调用方给的数据指纹判**——指纹是「这份产物代表的那批
+ *    数据」的身份串，调用方自己算，本件不认识它的内容（只要求 `[A-Za-z0-9._-]`，因为它要进 HTML 注释）。
+ *    落盘时把指纹作为一行 HTML 注释写进产物；查找时扫窗口内的候选，谁的正文含这行注释就返回谁。
+ *    **为什么不用 `byContent`**：HELP 页里嵌着分钟级的生成时刻（页头「更新于 …」／关于页「本页数据生成于 …」／
+ *    候选面板上的「快照于 …」），整页哈希跨分钟必不相同 ⇒ 那等于「一分钟一份」，把复用整个取消。指纹只看真数据，
+ *    数据没变就一直是同一份，数据变了才落新的。`byAge` 仍是窗口：窗口内才复用、超窗口照落新的
+ *    （`byAge:0` ＝ 每次都落新的，与 `byAge` 支同口径）。
  *  - 时间戳在**一次调用里只算一次**（`byAge` 的判据与落盘名同源，不跨秒错位）。
  *
  * ⇒ `stem`／`file` 与四态的组合：`succession` ＋ `stem` 是通式默认路；`overwrite`／`fail` ＋ `file` 是逐字落点路；
@@ -52,14 +60,20 @@ import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 
-/** 撞名策略（四态；只表态「撞名怎么办」，**不改** `stem`／`file` 怎么解释。三支 `reuse` 见件头）。
+/** 撞名策略（四态；只表态「撞名怎么办」，**不改** `stem`／`file` 怎么解释。四支 `reuse` 见件头）。
  *
- *  `reuse` 的三支都「有就不新建」：`byDay`（当天已有）／`byContent`（内容相同）／`{byAge: 毫秒}`（不超龄）。 */
+ *  `reuse` 的四支都「有就不新建」：`byDay`（当天已有）／`byContent`（内容相同）／`{byAge: 毫秒}`（不超龄）／
+ *  `{byDataKey, byAge}`（窗口内、且正文里含这枚数据指纹）。 */
+export type HtmlReuse =
+  | 'byDay'
+  | 'byContent'
+  | { readonly byAge: number; readonly byDataKey?: string };
+
 export type HtmlOnExists =
   | 'succession'
   | 'overwrite'
   | 'fail'
-  | { readonly reuse: 'byDay' | 'byContent' | { readonly byAge: number } };
+  | { readonly reuse: HtmlReuse };
 
 /** **HELP 产物的缺省复用窗口**：一天（小时数）——「24 小时内只产出 1 个」。
  *
@@ -333,6 +347,41 @@ function reuseByContent(dirAbs: string, stem: string, html: string): string | nu
   return null;
 }
 
+/** 数据指纹在产物里的落点：一行 HTML 注释（不可见、不破壳）。`byDataKey` 落盘时写、查找时认这一行。 */
+const DATA_KEY_MARK = '<!--base-paint:data-key=';
+
+/** 指纹串的合法形状：只收 `[A-Za-z0-9._-]`——它要进 HTML 注释，含 `--`／空白／尖括号都会破坏那一行。 */
+const DATA_KEY_RE = /^[A-Za-z0-9._-]{1,128}$/;
+
+/** `reuse:{byDataKey,byAge}` 判据（#1277）：**窗口内、且正文含这枚指纹**的那一份（取最新的一份）。
+ *  窗口口径与 `reuseByAge` 逐条同源（严格小于／将来时刻跳过／最新一份超窗口即止）；区别只在「还要指纹对得上」。
+ *  指纹串非法（进注释会破壳）与窗口非法都阻断，不静默当未命中。 */
+function reuseByDataKey(dirAbs: string, stem: string, key: string, now: Date, ms: number): string | null {
+  if (typeof key !== 'string' || !DATA_KEY_RE.test(key)) {
+    throw err('EINVAL', '[base-paint] saveHtmlFile `reuse.byDataKey` 须为 [A-Za-z0-9._-] 组成的 1–128 位串'
+      + '（它要写进 HTML 注释），实得：' + JSON.stringify(key));
+  }
+  if (!Number.isFinite(ms) || ms < 0) {
+    throw err('EINVAL', '[base-paint] saveHtmlFile `reuse.byDataKey` 的 `byAge` 须为非负毫秒数，实得：' + String(ms));
+  }
+  const needle = DATA_KEY_MARK + key + '-->';
+  const hits = readNames(dirAbs).filter((n) => ownNameRe(stem).test(n)).sort();
+  for (let i = hits.length - 1; i >= 0; i--) {
+    const n = hits[i] as string;
+    const at = ownStampOf(n, stem);
+    if (at === null) continue;
+    const age = now.getTime() - at.getTime();
+    if (age < 0) continue; // 将来时刻的名字：跳过，继续看更旧的候选
+    if (age >= ms) break; // 最新的一份都超窗口 ⇒ 更旧的必然也超
+    try {
+      if (readFileSync(join(dirAbs, n), 'utf8').includes(needle)) return join(dirAbs, n);
+    } catch {
+      /* 读不动就跳过这一份，继续找 */
+    }
+  }
+  return null;
+}
+
 /** 落一份 HTML 产物（**唯一落盘点**，对外唯一函数）。见件头：两个名字口子／四态／回执口径。
  *
  *  `stem`（主体）与 `file`（确切文件名）**只给一个**；`onExists` 只表态撞名怎么办。 */
@@ -345,7 +394,11 @@ export function saveHtmlFile(input: {
 }): HtmlReceipt {
   const dirAbs = resolve(input.dir);
   const onExists: HtmlOnExists = input.onExists ?? 'succession';
-  const reuse = typeof onExists === 'object' ? onExists.reuse : null;
+  const reuse: HtmlReuse | null = typeof onExists === 'object' ? onExists.reuse : null;
+  /* 数据指纹（只有 `byDataKey` 那支给）：落盘时写进产物、查找时认它。其余三支恒 `null`。 */
+  const dataKey = reuse !== null && typeof reuse === 'object' ? (reuse.byDataKey ?? null) : null;
+  /* 真正落盘的那一串：`byDataKey` 支多一行不可见注释（其余支逐字节＝调用方给的 `html`）。 */
+  const payload = dataKey === null ? input.html : input.html + '\n' + DATA_KEY_MARK + dataKey + '-->\n';
   // `succession` 与三支 `reuse` 都按通式算名字（要时间戳）；`overwrite`／`fail` 是逐字落点。
   const stamped = onExists === 'succession' || reuse !== null;
   const now = new Date(); // 一次调用只算一次：`byAge` 的判据与落盘名同源，不跨秒错位
@@ -355,27 +408,27 @@ export function saveHtmlFile(input: {
   mkdirSync(dirAbs, { recursive: true });
   if (onExists === 'overwrite') {
     const abs = join(dirAbs, name);
-    writeFileSync(abs, input.html, 'utf8');
-    return receiptOf(abs, input.html);
+    writeFileSync(abs, payload, 'utf8');
+    return receiptOf(abs, payload);
   }
   if (reuse !== null) {
-    const hit = reuse === 'byDay'
-      ? reuseByDay(dirAbs, stem, now)
-      : reuse === 'byContent'
-        ? reuseByContent(dirAbs, stem, input.html)
-        : reuseByAge(dirAbs, stem, now, reuse.byAge);
+    let hit: string | null;
+    if (reuse === 'byDay') hit = reuseByDay(dirAbs, stem, now);
+    else if (reuse === 'byContent') hit = reuseByContent(dirAbs, stem, input.html);
+    else if (reuse.byDataKey !== undefined) hit = reuseByDataKey(dirAbs, stem, reuse.byDataKey, now, reuse.byAge);
+    else hit = reuseByAge(dirAbs, stem, now, reuse.byAge);
     if (hit !== null) return receiptOf(hit); // 复用：不新建、不覆盖；`bytes` ＝已有那份的实际字节数
   }
   const initial = join(dirAbs, name);
   if (onExists === 'fail') {
-    if (!tryCreateExclusive(initial, input.html)) {
+    if (!tryCreateExclusive(initial, payload)) {
       throw err('EEXIST', '[base-paint] saveHtmlFile 落点已被占（`onExists:"fail"` 不递补）：' + initial);
     }
-    return receiptOf(initial, input.html);
+    return receiptOf(initial, payload);
   }
   let candidate = initial;
   for (let i = 0; i < SUCCESSION_LIMIT; i++) {
-    if (tryCreateExclusive(candidate, input.html)) return receiptOf(candidate, input.html);
+    if (tryCreateExclusive(candidate, payload)) return receiptOf(candidate, payload);
     candidate = nextCandidate(candidate);
   }
   throw err('EEXIST', '[base-paint] saveHtmlFile 独占创建递补超限（' + String(SUCCESSION_LIMIT) + ' 次）：' + initial);

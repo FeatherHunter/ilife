@@ -19,6 +19,7 @@
  *    （`help-template.html` 的 `INIT_BANNER && !INIT_BANNER.hidden`），故新线**键常在、显隐走 `hidden`**：
  *    payload 形状不随状态变，下游用例能断言同一个键集。初始化状态由调用方传入（本模块零 IO）。
  */
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -300,6 +301,34 @@ export function buildHelpFileData(now: Date = new Date(), opts: HelpFileOptions 
     skill_version: SKILL_PACKAGE_VERSION,
     generated_at: formatHelpMinute(now),
   };
+}
+
+/** HELP 的**数据指纹**（#1277）：这份产物代表的那批数据的身份——只算真数据，**排除三个同源时刻字段**
+ *  （`generated_at`／`subtitle`／`meta_blocks`，三者都由 `formatHelpMinute(now)` 派生）。
+ *
+ *  为什么要有它：复用窗口的判据若按**整页哈希**走，页里嵌着分钟级时刻 ⇒ 跨分钟必不相同 ⇒ 等于
+ *  「一分钟一份」，复用整个失效。指纹只看数据：**数据没变就一直是同一份，数据变了才落新的**。
+ *  取 32 位十六进制（`[0-9a-f]`）——它要写进 HTML 注释，只许安全字符。 */
+export function helpDataKey(data: HelpFileData): string {
+  return createHash('sha256').update(JSON.stringify({
+    skill_name: data.skill_name,
+    title: data.title,
+    contact: data.contact,
+    groups: data.groups,
+    version: data.version,
+    init_banner: data.init_banner,
+    skill_version: data.skill_version,
+  }), 'utf8').digest('hex').slice(0, 32);
+}
+
+/** 一次取齐交付要的三件（#1277）：载荷、整页 HTML、数据指纹。
+ *  出口件按它一行取齐——`src/cli/cmd_read.ts` 是**棘轮件**（#686 冻结行数，新分支别加在那儿）。 */
+export function buildHelpFile(
+  now: Date,
+  opts?: HelpFileOptions,
+): { readonly data: HelpFileData; readonly html: string; readonly dataKey: string } {
+  const data = buildHelpFileData(now, opts);
+  return { data, html: renderHelpFileHtml(data), dataKey: helpDataKey(data) };
 }
 
 /** 全量 HELP JSON → 全help模板 HTML（模板唯一实现＝共享层 verbatim 老实物；空分组抛 `missing-data`，调用方 exit 5）。 */

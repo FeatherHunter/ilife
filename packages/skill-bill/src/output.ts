@@ -21,7 +21,7 @@
  * 不静默降级成另一种交付形态（也就少一整套 inline 语义要维护）。
  */
 import { basename, dirname, resolve } from 'node:path';
-import { saveHtmlFile, type HtmlLanding, type HtmlReceipt } from 'base-paint/save-html';
+import { saveHtmlFile, type HtmlLanding, type HtmlOnExists, type HtmlReceipt } from 'base-paint/save-html';
 
 /** 交付结果（`file` 态唯一；`path` 必为绝对路径）。＝共用件回执的形状，别名指向它，不另立第二份定义。 */
 export type HtmlDelivery = HtmlReceipt;
@@ -33,7 +33,9 @@ export type { HtmlLanding };
 /** 交付一次 HTML 产物（**唯一交付入口**）：
  *  - `explicit`（`--html <路径>`，用户逐字指定）→ **覆盖写**（共用件 `onExists:'overwrite'` ＋ `file`：落点逐字）；
  *  - `target`（本次产物按通式算出的落点意图）→ **独占创建 ＋ 递补**（共用件缺省 `succession` ＋ `stem`：文件名主体）；
- *  - `target` ＋ `reuseMs`（>0）→ **窗口内复用**（共用件 `{reuse:{byAge}}`）：已有那份不超龄就返回它、不新建；
+ *  - `target` ＋ `reuseMs`（>0）→ **窗口内复用**：给了 `dataKey` 走 `{reuse:{byDataKey,byAge}}`（窗口内、且
+ *    正文含这枚**数据指纹**的那一份才复用——#1277：HELP 页嵌着分钟级时刻，按整页哈希判等于「一分钟一份」）；
+ *    没给 `dataKey` 走 `{reuse:{byAge}}`（老口径，只看窗口）。
  *  - 两者都给时 `explicit` 优先（用户指定胜过默认落点）。**`explicit` 不吃复用**——逐字落点是「说哪落哪」。
  *  `stem` 与 `file` 是共用件上两个正交的口子：#237 之前本件把 `basename(abs)` 当 `stem` 传、
  *  靠 `overwrite` 态把主体解释成完整文件名，一个参数背两个语义；现改为 `file` 走确切文件名。
@@ -43,6 +45,7 @@ export function deliverHtml(input: {
   target?: HtmlLanding;
   html: string;
   reuseMs?: number;
+  dataKey?: string;
 }): HtmlDelivery {
   if (input.explicit !== undefined && input.explicit.length > 0) {
     const abs = resolve(input.explicit);
@@ -51,10 +54,17 @@ export function deliverHtml(input: {
   if (input.target === undefined) {
     throw new Error('[skill-bill] deliverHtml 缺落点（`explicit` 与 `target` 至少给一个）');
   }
+  const onExists: HtmlOnExists | undefined = input.reuseMs === undefined
+    ? undefined
+    : {
+      reuse: input.dataKey === undefined
+        ? { byAge: input.reuseMs }
+        : { byAge: input.reuseMs, byDataKey: input.dataKey },
+    };
   return saveHtmlFile({
     dir: input.target.dir,
     stem: input.target.stem,
     html: input.html,
-    ...(input.reuseMs === undefined ? {} : { onExists: { reuse: { byAge: input.reuseMs } } }),
+    ...(onExists === undefined ? {} : { onExists }),
   });
 }

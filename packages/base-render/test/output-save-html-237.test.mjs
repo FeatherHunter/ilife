@@ -6,8 +6,8 @@
  *     `#245` 补的窗口换算函数与默认窗口常量（无多余额外出口）；
  *  ② 名字通式 `<stem>_<本地 YYYYMMDD_HHMMSS>.html` ＋ 绝对路径 ＋ `bytes`＝**写后回读**的真实字节数；
  *  ③ 同秒递补（本体／`_2`／`_3`，槽位连续）与「绝不静默覆盖」；
- *  ④ `onExists` 四态 ＋ `reuse` 三支（`byDay`／`byContent`／`{byAge}`）＋ **两个名字口子 `stem`／`file`
- *     的正交性**（互斥、`file` 配 `succession` 阻断、`file` 的扩展名与结尾点不被当主体处理）；
+ *  ④ `onExists` 四态 ＋ `reuse` 四支（`byDay`／`byContent`／`{byAge}`／`{byAge,byDataKey}`）＋ **两个名字口子
+ *     `stem`／`file` 的正交性**（互斥、`file` 配 `succession` 阻断、`file` 的扩展名与结尾点不被当主体处理）；
  *  ⑤ 失败**真抛**：落点建不动时进程非 0、占位文件不被改写，且不把 `mkdirSync` 的失败当「候选撞名」空转。
  *  ⑥ `#245` 复用窗口的**参数面**：`reuseHours`（小时）→毫秒的唯一换算地（缺省一天／`0`＝每次新的／坏值真抛）。
  *
@@ -383,6 +383,47 @@ test('#237 ④d reuse:"byContent"：内容哈希相同 → 复用；内容不同
   assert.equal(r.json.otherNew, true, '不同内容落新的（绝不覆盖）');
   assert.equal(r.json.otherBody, 'OTHER');
   assert.equal(r.json.count, 2);
+});
+
+/* ── #1277 · 数据指纹复用：窗口内还得「正文含同一枚指纹」────────────────────────────────
+ * 为什么不用 `byContent`：HELP 页嵌着分钟级时刻（`generated_at`／`subtitle`／`meta_blocks`），整页哈希
+ * 跨分钟必不相同 ⇒ 等于「一分钟一份」，复用整个失效。指纹由调用方算（公共层只认不透明串）。 */
+test('#1277 ④f reuse:{byAge,byDataKey}：窗口内认指纹——页变了（时刻不同）但数据没变 → 复用；数据变了 → 落新的', () => {
+  const dir = mkTmp('bydatakey');
+  const r = spawnSave(dir, [
+    "const W = { byAge: 86400000 };",
+    "const first = saveHtmlFile({ dir: DIR, stem: 'H_HELP', html: 'PAGE-01:00', onExists: { reuse: { ...W, byDataKey: 'k1' } } });",
+    "const again = saveHtmlFile({ dir: DIR, stem: 'H_HELP', html: 'PAGE-01:07', onExists: { reuse: { ...W, byDataKey: 'k1' } } });",
+    "const changed = saveHtmlFile({ dir: DIR, stem: 'H_HELP', html: 'PAGE-01:07', onExists: { reuse: { ...W, byDataKey: 'k2' } } });",
+    "send({ same: first.path === again.path, changedNew: changed.path !== first.path,",
+    "  body: readFileSync(first.path, 'utf8'),",
+    "  changedBody: readFileSync(changed.path, 'utf8'), count: readdirSync(DIR).length });",
+  ].join('\n'));
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.json.same, true, '同一批数据、下一次生成的页（分钟级时刻不同）⇒ 复用第一份，不新建');
+  assert.equal(r.json.changedNew, true, '数据变了（新指纹）⇒ 落新的，绝不覆盖');
+  assert.equal(r.json.body, 'PAGE-01:00\n<!--base-paint:data-key=k1-->\n', '指纹以不可见注释写进产物');
+  assert.equal(r.json.changedBody, 'PAGE-01:07\n<!--base-paint:data-key=k2-->\n');
+  assert.equal(r.json.count, 2);
+});
+
+test('#1277 ④f2 无标记的旧产物不算命中；指纹串非法／窗口非法真抛（不静默当未命中）', () => {
+  const dir = mkTmp('bydatakey-legacy');
+  const r = spawnSave(dir, [
+    "const W = { byAge: 86400000 };",
+    "const legacy = saveHtmlFile({ dir: DIR, stem: 'L_HELP', html: 'OLD' });",
+    "const fresh = saveHtmlFile({ dir: DIR, stem: 'L_HELP', html: 'NEW', onExists: { reuse: { ...W, byDataKey: 'k1' } } });",
+    "const e = (f) => { try { f(); return null; } catch (x) { return x; } };",
+    "const bad = e(() => saveHtmlFile({ dir: DIR, stem: 'L_HELP', html: 'X', onExists: { reuse: { ...W, byDataKey: 'a b' } } }));",
+    "const neg = e(() => saveHtmlFile({ dir: DIR, stem: 'L_HELP', html: 'X', onExists: { reuse: { byAge: -1, byDataKey: 'k1' } } }));",
+    "send({ legacyNew: fresh.path !== legacy.path, code: bad && bad.code, negCode: neg && neg.code,",
+    "  count: readdirSync(DIR).length });",
+  ].join('\n'));
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.json.legacyNew, true, '没有指纹标记的旧产物不算命中（上线首跑必落新的）');
+  assert.equal(r.json.code, 'EINVAL', '含空格的指纹会破 HTML 注释 ⇒ 真抛');
+  assert.equal(r.json.negCode, 'EINVAL', '负窗口真抛');
+  assert.equal(r.json.count, 2, '两次真抛都没落盘：目录里只有 legacy 与 fresh');
 });
 
 test('#237 ⑤ 文件名安全化：Windows 非法字符→_、去结尾点与空格、按码点截断', () => {

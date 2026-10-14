@@ -22,11 +22,11 @@ import { monthRange, resolveRange } from '../shared/dateRange.js';
 import {
   billShapeFor, buildBillEnvelope, renderEnvelopeHtml,
   templateFor, loadTemplate, fillTemplate,
-  buildHelpIndex, buildHelpFileData, renderHelpFileHtml,
+  buildHelpIndex,
   BillRenderError,
 } from '../render/index.js';
 // #726 产物目录名改读配置；#762 两个文件名主体回代码常量；#749 起算式整个住 `../fetch/paths.js`。
-import { HELP_FILE_STEM } from '../help/helpFile.js';
+import { HELP_FILE_STEM, buildHelpFile } from '../help/helpFile.js';
 import { LOOKUP_FILE_STEM } from '../help/helpPaths.js';
 import { resolveHtmlDir } from '../fetch/paths.js';
 import type { HtmlDelivery, HtmlLanding } from '../output.js';
@@ -79,7 +79,7 @@ function preflight(): void {
  * 全程**不开库**：初始化状态用「DB 文件是否存在」判定（见 render/helpFile.ts 头注释的取舍），
  * 免得「看帮助」把记账库 `new DatabaseSync` 出来并跑 DDL 自愈。
  */
-interface DeliverIntent { readonly html?: string; readonly target: HtmlLanding; readonly reuseMs?: number; }
+interface DeliverIntent { readonly html?: string; readonly target: HtmlLanding; readonly reuseMs?: number; readonly dataKey?: string; }
 interface HelpDispatch { readonly data: unknown; readonly deliver?: DeliverIntent; }
 
 /** 吃复用窗口的 HELP 产物名（本技能自己的两个主体）。#245：判据**按落点名**而不是按 key——
@@ -124,14 +124,14 @@ function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
       },
     };
   }
-  const html = renderHelpFileHtml(buildHelpFileData(now, readHelpSources()));
+  const { html, dataKey } = buildHelpFile(now, readHelpSources());
   const stem = HELP_FILE_STEM;
   return {
     data: { ...buildHelpIndex(), mode: 'file', bytes: Buffer.byteLength(html, 'utf8') },
     deliver: {
       html,
       target: { dir: resolveHtmlDir(), stem },
-      reuseMs: windowForHelpDelivery(stem, params),
+      reuseMs: windowForHelpDelivery(stem, params), dataKey,
     },
   };
 }

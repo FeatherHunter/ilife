@@ -56,9 +56,12 @@ describe('#1274 条目 15 版本注入（甲）：包版本运行时现读，模
     assert.deepEqual(payloadOf(renderHelpFileHtml(data)), { ...data });
   });
 
-  it('整页 HTML 里旧字样零残留（模板代际／快照行／无条件承诺／about_meta）', () => {
+  it('整页 HTML 里旧字样零残留（模板代际／无条件承诺／about_meta）', () => {
     const html = renderHelpFileHtml(buildHelpFileData(NOW));
-    for (const gone of ['HELP 模板 v4', 'about_meta', '快照于', '一天前的标签都在', 'reuse_hours', 'snapshot_note']) {
+    /* 「快照于」已从禁用名单移出（2026-10-15 用户裁定，会话 m01620）：#1277 起它是**候选面板顶部**那条
+       快照说明；#1274 当年禁的是**关于页**那行。页级老字样继续由 `reuse_hours`／`snapshot_note` 两个键盯，
+       候选面板那一条的在场与位置由 `packages/base-render/test/help-shell-136.test.mjs` 锁。 */
+    for (const gone of ['HELP 模板 v4', 'about_meta', '一天前的标签都在', 'reuse_hours', 'snapshot_note']) {
       assert.ok(!html.includes(gone), '页上不得再出现：' + gone);
     }
   });
