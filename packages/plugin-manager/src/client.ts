@@ -24,7 +24,7 @@ import type { ManualScene, ManualSheet } from './manual-plan.js';
 import { SCENES, manualContentCss, renderManualPage } from './manual-content.js';
 import type { ManagerTab } from './nav.js';
 import { CONFIG_TAB_SLOT } from './update-contract.js';
-import { managerCallAdapter, mountLifeBatchEntry } from './update-dialog.js';
+import { managerCallAdapter, mountLifeBatchEntry, mountLifeInstallButton } from './update-dialog.js';
 import { interactionCss, tabInteractionCss } from './config-panel-view.js';
 import { ManualEntryButton, ManualPopoverShell, manualEntryCss } from './manual-entry.js';
 import { LIQUID_BASE_MS, LIQUID_DIST_FACTOR, LIQUID_EASE, LIQUID_GHOST_MS, LIQUID_MAX_MS, LIQUID_MIN_MS, LIQUID_STRETCH_X, LIQUID_STRETCH_Y } from './config-panel-contract.js';
@@ -266,6 +266,11 @@ const S = {
     fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
     fontSize: 12,
     userSelect: 'all',
+  } as React.CSSProperties,
+  /** 缺席页签的安装按钮挂载位（#1282）：容器只占位，按钮本体由上游安装控件渲染；落在提示文案与手动命令之间。 */
+  installSlot: {
+    display: 'block',
+    marginTop: 8,
   } as React.CSSProperties,
   moreCard: {
     marginTop: 16,
@@ -882,6 +887,27 @@ function PanelActions(): React.ReactElement {
  *
  * 卡片在页签面板之后，六页签切换它都在（它不属于任何一个页签）。
  */
+/** 缺席页签的单包安装按钮（#1282）：挂载位＋挂载一体，连接不到或目标表无此包就不画。
+ *
+ *  与标题行批量入口同形（ref 占位＋effect 挂载＋卸载 unmount），区别只有两处：调的是单包安装
+ *  件（`prefix: ilife-<skill>` 的单包五电话），以及容器落在缺席提示与手动命令之间。 */
+function TabInstallSlot(props: { tab: ManagerTab; getCall: () => RpcCallFace | null }): React.ReactElement | null {
+  const slotRef = React.useRef<HTMLSpanElement | null>(null);
+  const callReady = props.getCall() !== null;
+  React.useEffect(() => {
+    const mount = slotRef.current;
+    if (mount === null || !callReady) return;
+    const button = mountLifeInstallButton(mount, managerCallAdapter(props.getCall()), props.tab);
+    if (button === null) return;
+    return () => {
+      button.unmount();
+    };
+    // getCall 本身是取用器（引用稳定），只跟连接就绪态与页签重跑。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [callReady, props.tab]);
+  return React.createElement('span', { ref: slotRef, style: S.installSlot, 'data-ilife-install': 'slot' });
+}
+
 function MorePluginsCard(): React.ReactElement {
   return React.createElement(
     'div',
@@ -1295,6 +1321,7 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
                 'div',
                 { style: S.reco },
                 reco.hint,
+                React.createElement(TabInstallSlot, { tab, getCall: props.getCall }),
                 React.createElement('span', { style: S.cmd }, reco.installCmd),
               );
             })(),

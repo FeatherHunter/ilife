@@ -37,13 +37,19 @@ describe('1170 批量宿主', () => {
     assert.equal(batch.phoneNames.status, 'life.batchStatus');
     assert.equal(batch.phoneNames.check, 'life.batchCheck');
   });
-  it('一次登记：批量电话（上游声明几支就几支）＋七目标各 4 单电话，无重复', async () => {
+  it('一次登记：批量电话（上游声明几支就几支）＋七目标各 N 单电话（N 跟上游走），无重复', async () => {
     resetBatchHostForTests();
     const batch = await getBatchHost({});
     const names = Object.keys(batch.handlers);
     // 批量那几支的数量**跟上游的声明走**（0.7.0 起是 7 支：多了 batchPrefs／batchPrefsSave）——
-    // 写死 5 会在上游发版当天变红，而这条用例真正要咬的是「每支只登记一次、七目标各 4 支」。
-    assert.equal(names.length, Object.keys(batch.phoneNames).length + 7 * 4);
+    // 单包那几支同样跟上游走（0.16.0 起多了 logAppend，4 变 5）：写死数字会在上游发版当天变红，
+    // 而这条用例真正要咬的是「每支只登记一次、七目标单电话支数一致」。
+    const perTarget = names.filter((name) => name.startsWith('ilife-bill.'));
+    assert.ok(perTarget.length >= 4, '单包电话至少 status/check/install/changelog 四支，少了就是上游砍电话');
+    for (const tail of ['updateStatus', 'updateCheck', 'updateInstall', 'updateChangelog']) {
+      assert.ok(names.includes('ilife-bill.' + tail), '缺单包电话 ilife-bill.' + tail);
+    }
+    assert.equal(names.length, Object.keys(batch.phoneNames).length + 7 * perTarget.length);
     assert.equal(new Set(names).size, names.length, '不许重复登记');
     assert.ok(names.includes('life.batchStatus'));
     assert.ok(names.includes('ilife-bill.updateStatus'));

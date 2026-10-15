@@ -6,10 +6,13 @@
  */
 import { mountUpdateBatchEntry } from 'dsh-plugin-update/entry-batch';
 import type { UpdateBatchEntryController, UpdateBatchEntryOptions } from 'dsh-plugin-update/entry-batch';
+import { mountInstallButton } from 'dsh-plugin-update/install-button';
+import type { InstallButtonContainer, InstallButtonController } from 'dsh-plugin-update/install-button';
 import type { BatchPanelContainer } from 'dsh-plugin-update/panel-batch';
 import { MANAGER_RPC } from './update-contract.js';
-import { BATCH_PREFIX } from './update-targets.js';
+import { BATCH_PREFIX, targetFor } from './update-targets.js';
 import type { RpcCallFace } from './dsh-ctx.js';
+import type { ManagerTab } from './nav.js';
 
 /** 面板调宿主： upstream 面板唯一的宿主接触面（电话名 + 参数）。 */
 export type LifePanelCall = (name: string, args: Record<string, unknown>) => Promise<unknown>;
@@ -61,5 +64,31 @@ export function mountLifeBatchEntry(
     theme: 'archive',
     autoCheck: overrides?.autoCheck ?? 'mount',
     label: overrides?.label,
+  });
+}
+
+/** 缺席页签挂单包安装按钮（上游 0.18.0 安装控件，#1282）：pluginId 与 prefix 取更新目标表
+ *  同源（与批量侧 `life-<key>`／`ilife-<skill>` 同一份推导），不手拼；文案样式零自家东西。
+ *  目标表里没有该包（不该发生）回 null，调用方不渲染挂载位。 */
+export function mountLifeInstallButton(
+  container: InstallButtonContainer,
+  call: LifePanelCall,
+  tab: ManagerTab,
+): InstallButtonController | null {
+  const target = targetFor(tab.plugin);
+  if (target === undefined) return null;
+  // 安装按钮要的回包是记录表（批量入口要的是 unknown）：非记录回包兜成失败，
+  // 形状取面板失败词汇里本来就有的 internal，不新造码。
+  const adaptedCall = async (name: string, args: Record<string, unknown>): Promise<Record<string, unknown>> => {
+    const reply = await call(name, args);
+    if (typeof reply === 'object' && reply !== null) return reply as Record<string, unknown>;
+    return { ok: false, error: 'internal', errorKind: 'internal' };
+  };
+  return mountInstallButton(container, {
+    pluginId: BATCH_PREFIX + '-' + tab.skill,
+    call: adaptedCall,
+    prefix: target.phonePrefix,
+    theme: 'archive',
+    autoCheck: 'mount',
   });
 }
