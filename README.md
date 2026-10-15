@@ -28,6 +28,13 @@ dsh plugin add dsh-life-pack dsh-chef             # 再装一家，照同样的�
 
 技能包（`packages/skill-*`）提供每个域的数据面与命令行；`dsh-*` 插件把它们接到 DSH 的设置页与页面上。公共层在 `packages/base-*`（联动取数、页面渲染、语义组合）。
 
+## 版本
+
+- 七个插件当前版本：`0.3.55`（2026-10-15，npm `latest`）
+- 更新系统：`dsh-plugin-update 0.17.0`（总管以 `latest` 依赖引入；传递带入 `dsh-log 0.3.4`）
+- 升级：插件市场里点升级，或把上面那条安装命令重跑一遍
+- 更新说明：[GitHub Releases](https://github.com/FeatherHunter/ilife/releases)
+
 ## 配置与数据
 
 - 配置：`~/.ilife/<技能>.yaml`，一个技能一份，在各自的设置页里改
@@ -48,3 +55,9 @@ pnpm test           # 全仓测试
 
 - 问题与建议：<https://github.com/FeatherHunter/ilife/issues>
 - 许可：MIT
+
+## 致谢
+
+| 贡献者 | 🌹 |
+| --- | --- |
+| [FeatherHunter](https://github.com/FeatherHunter) | 🌹×1283 |
