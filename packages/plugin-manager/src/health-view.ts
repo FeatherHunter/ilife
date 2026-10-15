@@ -286,15 +286,15 @@ const STATUS_DOT: Readonly<Record<HealthStatus, string>> = {
   green: STATUS_COLOR.green,
 };
 
-/** 页签圆点的颜色与语义（票 #732）：从「实心／空心＝装没装」改成「颜色＝体检档位」。 */
+/** 页签圆点的颜色与语义（票 #732；缺席标记见 #1282）：颜色＝体检档位，缺席不进档位。 */
 export const TAB_DOT = {
-  /** 没装（页签槽账本里没有这一家）。 */
-  absent: STATUS_DOT.green,
+  /** 没装（页签槽账本里没有这一家）：缺席标记色（下载箭头描边）；只做"是否缺席"的判别 token，不进圆点分级。 */
+  absent: STATUS_DOT.red,
   /** 装了、但还没跑过体检。 */
   unchecked: INK_DIM,
 } as const;
 
-/** 页签圆点该用什么色：装了按档位（红黄绿），没装/没跑过走缺席态。 */
+/** 页签圆点该用什么色：装了按档位（红黄绿）；没装走缺席标记（箭头，不进档位），没跑过走灰。 */
 export function tabDotColor(light: HealthLightRow): string {
   if (!light.hasChannel) return TAB_DOT.absent;
   return light.status === null ? TAB_DOT.unchecked : STATUS_DOT[light.status];
