@@ -69,7 +69,12 @@ export function mountLifeBatchEntry(
 
 /** 缺席页签挂单包安装按钮（上游 0.18.0 安装控件，#1282）：pluginId 与 prefix 取更新目标表
  *  同源（与批量侧 `life-<key>`／`ilife-<skill>` 同一份推导），不手拼；文案样式零自家东西。
- *  目标表里没有该包（不该发生）回 null，调用方不渲染挂载位。 */
+ *  目标表里没有该包（不该发生）回 null，调用方不渲染挂载位。
+ *
+ *  #1282 定案：悬停换色走**容器 CSS 覆盖**，不传 `themeTokens`——0.18.0 包内实测，
+ *  `install-button.js` 全文件零 `var(--dsh-update-*)` 引用、主按钮零内联样式，
+ *  `mount` 内 `themeTokensStyleFor()` 返回值直接丢弃（只校验合法性）；
+ *  tokens 只在批量面板生效，传给安装控件等于没传。将来上游修好再切官方口。 */
 export function mountLifeInstallButton(
   container: InstallButtonContainer,
   call: LifePanelCall,
