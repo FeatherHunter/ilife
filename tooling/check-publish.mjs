@@ -121,9 +121,9 @@ function gatePre() {
     assertSameVersionLine(plug, 'dsh-life-pack', dep['dsh-life-pack']);
     assertSameVersionLine(plug, skill, dep[skill]);
   }
-  // 更新系统包版本门（#988＋1166＋1175后）：声明恒为 `latest`（一直自动用最新，不再手跟 caret 下限），
-  // 新鲜度仍由锁保证：发版前跑一次 scoped 刷新（`pnpm up dsh-plugin-update`，specifier 保持 `latest` 不动），
-  // 门只认“声明恒定＋锁等于线上最新”两条，不再有移动靶。
+  // 更新系统包版本门（#1282后）：声明为 caret 下限 `^<线上最新>`（tag `latest` 在 pnpm 锁复用下冻住旧版，
+  // 实测 `pnpm up`／`install` 对 tag 不重解，只能 remove+add 强解；号段不相交则装机必另装共存）。
+  // 门认两条：“声明下限等于线上最新＋锁落版本等于线上最新”；上游发新版时改下限＋刷锁再发。
   if (inScope('dsh-life-pack')) {
     let latest = '';
     try {
@@ -133,9 +133,9 @@ function gatePre() {
     const range = (pkgJson('dsh-life-pack').dependencies || {})['dsh-plugin-update'];
     const locked = (lock.match(/  packages\/plugin-manager:\n(?:.*\n)*?      dsh-plugin-update:\n        specifier: (\S+)\n        version: ([^\s(]+)/) || [])[2] || '';
     if (!latest) console.log('WARN: 更新包线上最新查不到（离线？），跳过更新包门');
-    else if (range !== 'latest') fail('dsh-life-pack 的 dsh-plugin-update 必须声明 latest（一直自动用最新），现为「' + range + '」');
-    else if (locked !== latest) fail('pnpm-lock 的 dsh-plugin-update 落版本是「' + (locked || '解析失败') + '」，线上最新 ' + latest + '：跑 pnpm up dsh-plugin-update 刷新再打包（声明保持 latest 不动）');
-    else ok('更新包：声明 latest 且锁已解析 ' + locked + '（与线上最新一致）');
+    else if (range !== '^' + latest) fail('dsh-life-pack 的 dsh-plugin-update 必须声明 ^' + latest + '（#1282：latest tag 冻锁），现为「' + range + '」');
+    else if (locked !== latest) fail('pnpm-lock 的 dsh-plugin-update 落版本是「' + (locked || '解析失败') + '」，线上最新 ' + latest + '：改下限＋刷锁再打包');
+    else ok('更新包：声明 ^' + locked + ' 且锁已解析 ' + locked + '（与线上最新一致）');
   }
 }
 
@@ -355,11 +355,16 @@ function gatePost() {
     if (!shown) continue;
     if (JSON.stringify(shown).includes('workspace:')) fail(name + '@' + local.version + ' registry 仍含 workspace:');
     else ok(name + '@' + local.version + ' registry 无 workspace:');
-    // 线上复核（#988＋1166＋1175后）：发出去的总管必须声明 dsh-plugin-update 为 latest（一直自动用最新）。
+    // 线上复核（#1282后）：发出去的总管必须声明 dsh-plugin-update 为 ^<线上最新>。
     if (name === 'dsh-life-pack') {
       const dep = (shown || {})['dsh-plugin-update'];
-      if (dep === 'latest') ok(name + '@' + local.version + ' registry 带 dsh-plugin-update latest');
-      else fail(name + '@' + local.version + ' registry 的 dsh-plugin-update 必须为 latest，现为「' + dep + '」');
+      let want = '';
+      try {
+        want = '^' + execFileSync(NPM, ['view', 'dsh-plugin-update', 'version', '--registry=' + REGISTRY], { encoding: 'utf8', shell: NPSH }).trim();
+      } catch { want = ''; }
+      if (want && dep === want) ok(name + '@' + local.version + ' registry 带 dsh-plugin-update ' + want);
+      else if (!want) console.log('WARN: 更新包线上最新查不到（离线？），跳过更新包复核');
+      else fail(name + '@' + local.version + ' registry 的 dsh-plugin-update 必须为 ' + want + '，现为「' + dep + '」');
     }
   }
 }
