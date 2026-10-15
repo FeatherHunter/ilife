@@ -1,9 +1,9 @@
 // 渲染层·HTML（M4）：memo_render.py 对应。转义仅 &<>"'（代理对原样保留）；超体积/未知形状一律 throw 不返空页（#34 题面追认口径）。
-// 体积上限 P9 已冻（256k，见 docs/memo-migration-split.md），超限 throw 由调用方走 fallback 显式降级，不静默截断。
+// 体积上限 P9 已冻（256k，见 docs/memo-migration-split.md）——#1279 扩面经用户 2026-10-15 批准抬到 2.4MB（与饼干记账同门）。超限 throw 由调用方走 fallback 显式降级，不静默截断。
 import type { Envelope } from 'base-link-core';
 import { MemoRenderError } from './errors.js';
 
-export const MEMO_HTML_MAX_BYTES = 256 * 1024;
+export const MEMO_HTML_MAX_BYTES = 2_400_000;
 
 export function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');

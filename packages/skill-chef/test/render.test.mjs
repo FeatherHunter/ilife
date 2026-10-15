@@ -38,7 +38,9 @@ describe('私家大厨渲染 render', () => {
     assert.match(renderEnvelopeHtml(d), /<section/);
     const l = buildChefEnvelope('chef.recipe.search', { items: [{ id: '1', name: '宫保虾球' }], total: 1 });
     assert.match(renderEnvelopeHtml(l), /<section/);
-    assert.throws(() => assertHtmlSize('x'.repeat(300 * 1024)), /超体积/);
+    // 体积门：2026-10-15 用户批准 2.4MB 口径扩到私家大厨（#1279 扩面）——300 KiB 必须过，250 万字节必须拦。
+    assert.doesNotThrow(() => assertHtmlSize('x'.repeat(300 * 1024)));
+    assert.throws(() => assertHtmlSize('x'.repeat(2_500_000)), /超体积/);
   });
   it('模板 8 全可装载 + 三标记恰 1 次', () => {
     assert.equal(CHEF_TEMPLATES.length, 8);

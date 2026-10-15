@@ -3,7 +3,8 @@ import type { Envelope } from 'base-link-core';
 import { completionLabelOf } from '../policy/plan.js';
 import { ScheduleRenderError } from './errors.js';
 
-export const SCHEDULE_HTML_MAX_BYTES = 256 * 1024;
+// #1279 扩面（用户 2026-10-15 批准）：2.4MB 口径扩到作息 HELP／结果页，与饼干记账同门。
+export const SCHEDULE_HTML_MAX_BYTES = 2_400_000;
 
 export function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');

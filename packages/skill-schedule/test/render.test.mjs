@@ -93,7 +93,9 @@ describe('作息渲染 render（8 键全票＋2 程序面数据族键）', () =>
     assert.throws(() => fillTemplate('无标记', 'x'), ScheduleRenderError);
   });
   it('体积门 + 转义', () => {
-    assert.throws(() => assertHtmlSize('x'.repeat(300 * 1024)), ScheduleRenderError);
+    // 体积门：2026-10-15 用户批准 2.4MB 口径扩到作息（#1279 扩面）——300 KiB 必须过，250 万字节必须拦。
+    assert.doesNotThrow(() => assertHtmlSize('x'.repeat(300 * 1024)));
+    assert.throws(() => assertHtmlSize('x'.repeat(2_500_000)), ScheduleRenderError);
     assert.ok(estimateBytes('作息') === Buffer.byteLength('作息', 'utf8'));
     const env = buildScheduleEnvelope('schedule.record.write', { ok: true, message: '<b>&"' });
     assert.match(renderEnvelopeHtml(env), /&lt;b&gt;&amp;&quot;/);

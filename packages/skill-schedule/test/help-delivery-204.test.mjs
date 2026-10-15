@@ -44,7 +44,7 @@ const NAME_RE = /^作息管家_HELP_(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})(
 /** ② 模板前缀逐字（前六行＋标题行；标题由 5 键派生：`title` 已含技能名 ⇒ 不重复前缀）。
  *  共享模板 `packages/base-render/assets/help-template.html` 改源后重跑 `gen:help-shell`，此字面量须同步。 */
 const HEAD_LITERAL = '<!DOCTYPE html>\r\n<html lang="zh-CN">\r\n<head>\r\n<meta charset="UTF-8">\r\n'
-  + '<meta name="viewport" content="width=device-width, initial-scale=1.0">\r\n'
+  + '<meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">\r\n'
   + '<title>作息管家 · 使用手册(HELP)</title>\r\n<style>\r\n';
 /** ② 载荷容器锚点（含它前面那行注释，逐字）。 */
 const DATA_ANCHOR = '<!-- 公共组件注入管线 -->\r\n<script id="help-data" type="application/json">';
@@ -202,7 +202,12 @@ test('#204 ② 模板前后缀逐字：doctype/charset/title 起、</body></html
   const html = readFileSync(r.env.delivery.path, 'utf8');
 
   assert.equal(html.indexOf(HEAD_LITERAL), 0, '文档须以模板前缀逐字起（doctype＋charset＋viewport＋title）');
-  assert.ok(html.endsWith(TAIL_LITERAL), '文档须以模板后缀逐字止：' + JSON.stringify(html.slice(-20)));
+  /* #1281：产物末尾允许追加**一行**数据指纹注释（复用窗口按它判「这批数据有没有变」）。这一行由交付层
+     追加、不进模板；把它摘掉后仍要求后缀逐字——壳本身不许有任何漂移（#1277 甲式）。作息模板尾部自带一个
+     空行（CRLF 化后是 `</html>\r\n` 外加 `\r\n`），故后缀断言带上它。 */
+  const body = html.replace(/\n<!--base-paint:data-key=[A-Za-z0-9._-]{1,128}-->\n$/, '');
+  assert.ok(body.length < html.length, '数据指纹注释须在场（#1281）');
+  assert.ok(body.endsWith(TAIL_LITERAL + '\r\n'), '文档须以模板后缀逐字止（摘掉指纹注释后）：' + JSON.stringify(body.slice(-20)));
   assert.equal(html.includes(DATA_ANCHOR), true, '须带载荷锚点（注释行＋help-data 开标签逐字）');
   assert.equal(html.includes('<div class="stage">'), true, '须带共享模板的静态骨架件 .stage');
 
