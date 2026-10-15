@@ -60,4 +60,4 @@ pnpm test           # 全仓测试
 
 | 贡献者 | 🌹 |
 | --- | --- |
-| [FeatherHunter](https://github.com/FeatherHunter) | 🌹×1283 |
+| [FeatherHunter](https://github.com/FeatherHunter) | 🌹×1286 |

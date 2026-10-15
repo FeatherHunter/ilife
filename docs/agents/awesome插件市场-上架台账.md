@@ -70,6 +70,12 @@
 - 上游条目更新：[PR #7452](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/7452)，**只加一行 `tarball:`，介绍文本与分类逐字不动**；分支基线取上游 `main` 最新提交，Files changed 只有那一个 `.yml`。等两道检查＋维护者合并。
 - npm 侧：七个 `0.3.55` 均为 `latest`（token 向导 `PKG-OK × 7`，`--post` PASS）。
 
+## 七、v0.3.56（2026-10-15）：release 已立，条目无需改动
+
+- GitHub Release：`v0.3.56`（`更新系统跟到 dsh-plugin-update 0.17.1`），8 个资产——`dsh-life-pack.tgz`（别名已刷新，`latest/download` 即刻起给 0.3.56 包）＋ 七个 `*-0.3.56.tgz`。
+- 上游条目**零改动**：`tarball:` 走 `releases/latest/download` 长链接（不含版本号）；版本号由上游探针按条目 `url` 实时读 master 的 `package.json`（PR #1286 合并后即 0.3.56）；介绍文本与分类逐字不动。PR #7452（加 `tarball:` 那行）仍 OPEN 等维护者合并。
+- npm 侧：七个 `0.3.56` 均为 `latest`（token 发布 `PKG-OK × 7`，`--post` PASS），manifest 照旧带 `repository`，关联条件继续成立。
+
 ## 四、缺口与未决
 
 1. **README 已补**（原先整仓一份都没有，条目详情页正文会空）：`packages/plugin-manager/README.md` 讲这张卡（详情页优先取子目录那份），仓根 `README.md` 讲整套七个插件（子目录那份缺失时回落）。六个单品将来投稿时各自补一份子目录 README——否则它们的详情页会渲染仓根那份「整套」说明。
