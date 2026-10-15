@@ -27,7 +27,7 @@ import { CONFIG_TAB_SLOT } from './update-contract.js';
 import { managerCallAdapter, mountLifeBatchEntry, mountLifeInstallButton } from './update-dialog.js';
 import { interactionCss, tabInteractionCss } from './config-panel-view.js';
 import { ManualEntryButton, ManualPopoverShell, manualEntryCss } from './manual-entry.js';
-import { LIQUID_BASE_MS, LIQUID_DIST_FACTOR, LIQUID_EASE, LIQUID_GHOST_MS, LIQUID_MAX_MS, LIQUID_MIN_MS, LIQUID_STRETCH_X, LIQUID_STRETCH_Y } from './config-panel-contract.js';
+import { LIQUID_BASE_MS, LIQUID_DIST_FACTOR, LIQUID_EASE, LIQUID_GHOST_MS, LIQUID_MAX_MS, LIQUID_MIN_MS, LIQUID_STRETCH_X, LIQUID_STRETCH_Y, NOTICE_FADE_MS, NOTICE_RISE_PX } from './config-panel-contract.js';
 import { useHealthPanel } from './health-panel.js';
 import { HealthTable, STATUS_TEXT, TAB_DOT, TAB_NOTE_STYLE, lightsOf, tabDotColor, tabNote } from './health-view.js';
 import { HEALTH_ENDPOINT } from './health-contract.js';
@@ -913,22 +913,185 @@ function PanelActions(): React.ReactElement {
 /** 缺席页签的单包安装按钮（#1282）：挂载位＋挂载一体，连接不到或目标表无此包就不画。
  *
  *  与标题行批量入口同形（ref 占位＋effect 挂载＋卸载 unmount），区别只有两处：调的是单包安装
- *  件（`prefix: ilife-<skill>` 的单包五电话），以及容器落在缺席提示与手动命令之间。 */
-function TabInstallSlot(props: { tab: ManagerTab; getCall: () => RpcCallFace | null }): React.ReactElement | null {
+ *  件（`prefix: ilife-<skill>` 的单包五电话），以及容器落在缺席提示与手动命令之间。
+ *
+ *  上游首查回包里的 `manual`（精确手工命令）读出来交 `onManual`：带精确版本号与 registry，
+ *  调用方拿它画自己的命令行＋复制按钮（单一定位，不复述上游 details 里的同一条）。
+ *  只读、不重查：读两次（800／2600ms，覆盖默认 1000ms 轮询的首查落定），读不到就只剩双包命令。 */
+function TabInstallSlot(props: {
+  tab: ManagerTab;
+  getCall: () => RpcCallFace | null;
+  onManual?: (manual: string) => void;
+}): React.ReactElement | null {
   const slotRef = React.useRef<HTMLSpanElement | null>(null);
   const callReady = props.getCall() !== null;
+  const onManualRef = React.useRef(props.onManual);
+  onManualRef.current = props.onManual;
   React.useEffect(() => {
     const mount = slotRef.current;
     if (mount === null || !callReady) return;
     const button = mountLifeInstallButton(mount, managerCallAdapter(props.getCall()), props.tab);
     if (button === null) return;
+    let alive = true;
+    const timers: Array<ReturnType<typeof setTimeout>> = [];
+    for (const ms of [800, 2600]) {
+      if (typeof setTimeout !== 'function') break;
+      timers.push(setTimeout(() => {
+        if (!alive) return;
+        try {
+          const manual = button.state().manual;
+          if (typeof manual === 'string' && manual.length > 0) onManualRef.current?.(manual);
+        } catch { /* 读不到就只剩双包命令，不挡面板 */ }
+      }, ms));
+    }
     return () => {
+      alive = false;
+      for (const t of timers) clearTimeout(t);
       button.unmount();
     };
     // getCall 本身是取用器（引用稳定），只跟连接就绪态与页签重跑。
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [callReady, props.tab]);
   return React.createElement('span', { ref: slotRef, style: S.installSlot, 'data-ilife-install': 'slot' });
+}
+
+/** 缺席面板步骤化样式（#1282 v4 原型定稿）：序号圆点／命令行／复制按钮三态／Toast／上游主按钮覆盖。
+ *
+ *  全收敛在 `[data-ilife-absent]` 作用域下；容器 `S.reco` 与子顺序一字不动。
+ *  上游主按钮换色用容器覆盖（`button[data-primary="1"]` 特异度压上游缺省；上游自带 CSS 无 hover
+ *  规则，见 update-dialog.ts 注释——themeTokens 对安装控件无视觉效果，故悬停也收在这里）。
+ *  悬停取深橙＋白字＋投影（用户 verdict：8% 提亮看不见）；颜色原型定稿 hex，见 v4 原型。 */
+const ABSENT_TOAST_MS = 1500 as const;
+function absentStepsCss(): string {
+  return (
+    '[data-ilife-absent="panel"]>.ilife-step{display:block;position:relative;padding:10px 4px 10px 40px;border-bottom:1px solid rgba(255,255,255,.07)}' +
+    '[data-ilife-absent="panel"]>.ilife-step:last-child{border-bottom:0}' +
+    '[data-ilife-absent="panel"]>.ilife-step::before{content:attr(data-step);position:absolute;left:4px;top:10px;width:24px;height:24px;border-radius:50%;background:#2b2b2b;color:#9a9a9a;font-size:12px;display:flex;align-items:center;justify-content:center;font-weight:700}' +
+    '[data-ilife-absent="panel"]>.ilife-step[data-step="1"]::before{background:#e5534b;color:#fff}' +
+    '[data-ilife-absent="panel"]>.ilife-step[data-step="2"]::before{background:#f2a65a;color:#1a1206}' +
+    '[data-ilife-absent="panel"] .ilife-step-t{display:block;color:#fff;font-weight:700;font-size:14px;margin-bottom:2px}' +
+    '[data-ilife-absent="panel"] .ilife-tray{background:rgba(242,166,90,.08);border-radius:8px;padding:10px 12px}' +
+    '[data-ilife-absent="panel"] .dsh-upd-ib button[data-primary="1"]{transition:background .15s,color .15s,transform .06s,box-shadow .15s}' +
+    '[data-ilife-absent="panel"] .dsh-upd-ib button[data-primary="1"]:hover{background:#cf6f1f;color:#fff;transform:translateY(-1px);box-shadow:0 4px 14px rgba(207,111,31,.45)}' +
+    '[data-ilife-absent="panel"] .dsh-upd-ib button[data-primary="1"]:active{transform:translateY(1px);box-shadow:none;background:#a8561a;color:#fff}' +
+    '[data-ilife-absent="panel"] .dsh-upd-ib button[data-primary="1"]:disabled{opacity:.55;cursor:default;transform:none;box-shadow:none}' +
+    '[data-ilife-absent="panel"] .dsh-upd-ib button[data-primary="1"]:focus-visible{outline:2px solid #f2a65a;outline-offset:2px}' +
+    '[data-ilife-absent="panel"] .ilife-cmdrow{display:flex;gap:8px;align-items:stretch;margin-top:8px}' +
+    '[data-ilife-absent="panel"] .ilife-cmdrow>code{flex:1;padding:8px 10px;border-radius:8px;background:rgba(128,128,128,.12);color:#57b883;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;user-select:all;white-space:pre-wrap;overflow-wrap:anywhere}' +
+    '[data-ilife-absent="panel"] .ilife-cmdrow>code.plain{color:inherit}' +
+    '[data-ilife-absent="panel"] .ilife-copycmd{flex:0 0 auto;align-self:center;background:#2b2b2b;color:inherit;border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:6px 14px;font-size:12.5px;cursor:pointer;transition:background .15s,border-color .15s,color .15s,transform .06s,box-shadow .15s}' +
+    '[data-ilife-absent="panel"] .ilife-copycmd:hover{border-color:#f2a65a;color:#f2a65a;background:#353535;transform:translateY(-1px);box-shadow:0 2px 8px rgba(242,166,90,.25)}' +
+    '[data-ilife-absent="panel"] .ilife-copycmd:active{transform:translateY(1px);box-shadow:none;background:#242424}' +
+    '[data-ilife-absent="panel"] .ilife-copycmd:focus-visible{outline:2px solid #f2a65a;outline-offset:2px}' +
+    '[data-ilife-absent="toast"]{position:fixed;left:50%;bottom:48px;transform:translateX(-50%) translateY(' + String(NOTICE_RISE_PX) + 'px);background:#1f1f1f;color:#fff;border:1px solid rgba(87,184,131,.6);border-radius:999px;padding:6px 18px;font-size:13px;z-index:99;animation:absentToastIn ' + String(NOTICE_FADE_MS / 1000) + 's ease}' +
+    '@keyframes absentToastIn{from{opacity:0;transform:translateX(-50%) translateY(' + String(NOTICE_RISE_PX) + 'px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}'
+  );
+}
+
+/** 命令行文本进剪贴板：先走 Clipboard API，摸不到（老宿主／非安全上下文）就地降级为隐藏 textarea。
+ *  文案保持「复制」二字不动（用户口径）：成功只弹 Toast，不改按钮字。 */
+async function copyCmdText(text: string): Promise<void> {
+  try {
+    const clip = (globalThis as unknown as { navigator?: { clipboard?: { writeText?: (t: string) => Promise<void> } } }).navigator?.clipboard;
+    if (clip !== undefined && typeof clip.writeText === 'function') {
+      await clip.writeText(text);
+      return;
+    }
+  } catch { /* 掉进降级分支 */ }
+  if (typeof document === 'undefined' || typeof document.createElement !== 'function') return;
+  const area = document.createElement('textarea');
+  area.value = text;
+  area.setAttribute('readonly', '');
+  area.style.position = 'fixed';
+  area.style.opacity = '0';
+  document.body.appendChild(area);
+  try {
+    area.select();
+    document.execCommand('copy');
+  } catch { /* 复制失败不抛：Toast 照弹“已复制”会撒谎，故调用方只在成功路上弹 */ throw new Error('copy-unavailable');
+  } finally {
+    document.body.removeChild(area);
+  }
+}
+
+/** 命令行右端复制按钮（#1282）：文案恒为「复制」；点下走剪贴板，成了调 `onCopied` 弹 Toast。
+ *  复制失败（剪贴板摸不到）吞掉不弹——弹“已复制”会撒谎。 */
+function CopyCmdButton(props: { text: string; onCopied: () => void }): React.ReactElement {
+  return React.createElement(
+    'button',
+    {
+      type: 'button',
+      className: 'ilife-copycmd',
+      onClick: () => {
+        void copyCmdText(props.text).then(props.onCopied, () => undefined);
+      },
+    },
+    '复制',
+  );
+}
+
+/** 缺席页签整块面板（#1282 v4）：容器 `S.reco` 不动，子顺序 hint→槽→命令不动，只做三步呈现。
+ *
+ *  ①状态标题（包名＋未安装，不复述命令）；②一键安装（上游槽，版本与按钮归上游画）；
+ *  ③备选手动安装（上游首查落定的精确命令＋双包命令，各配复制按钮，默认即展开态）。
+ *  Toast 常驻条件挂载（`notice` 同形，进场即跑 `absentToastIn`），1.5s 自散。 */
+function AbsentTabPanel(props: {
+  tab: ManagerTab;
+  installCmd: string;
+  getCall: () => RpcCallFace | null;
+}): React.ReactElement {
+  const [manual, setManual] = React.useState<string | null>(null);
+  const [toastOn, setToast] = React.useState(false);
+  const toastTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  React.useEffect(() => () => {
+    if (toastTimer.current !== null) clearTimeout(toastTimer.current);
+  }, []);
+  const pokeToast = () => {
+    setToast(true);
+    if (typeof setTimeout !== 'function') return;
+    if (toastTimer.current !== null) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => { setToast(false); }, ABSENT_TOAST_MS);
+  };
+  const cmdRows: Array<{ key: string; text: string; plain: boolean }> = [];
+  if (manual !== null) cmdRows.push({ key: 'exact', text: manual, plain: false });
+  cmdRows.push({ key: 'dual', text: props.installCmd, plain: true });
+  return React.createElement(
+    'div',
+    { style: S.reco, 'data-ilife-absent': 'panel' },
+    React.createElement('style', { 'data-ilife-absent': 'steps-css' }, absentStepsCss()),
+    React.createElement(
+      'span',
+      { className: 'ilife-step', 'data-step': '1' },
+      React.createElement('span', { className: 'ilife-step-t' }, props.tab.plugin + ' 未安装'),
+      '请补装后使用。',
+    ),
+    React.createElement(
+      'span',
+      { className: 'ilife-step', 'data-step': '2' },
+      React.createElement('span', { className: 'ilife-step-t' }, '一键安装'),
+      React.createElement(
+        'span',
+        { className: 'ilife-tray' },
+        React.createElement(TabInstallSlot, {
+          tab: props.tab,
+          getCall: props.getCall,
+          onManual: (text: string) => { setManual(text); },
+        }),
+      ),
+    ),
+    React.createElement(
+      'span',
+      { className: 'ilife-step', 'data-step': '3' },
+      React.createElement('span', { className: 'ilife-step-t' }, '备选：手动安装'),
+      cmdRows.map((row) => React.createElement(
+        'span',
+        { key: row.key, className: 'ilife-cmdrow' },
+        React.createElement('code', { className: row.plain ? 'plain' : undefined }, row.text),
+        React.createElement(CopyCmdButton, { text: row.text, onCopied: pokeToast }),
+      )),
+    ),
+    toastOn ? React.createElement('div', { 'data-ilife-absent': 'toast', role: 'status' }, '✓ 已复制') : null,
+  );
 }
 
 function MorePluginsCard(): React.ReactElement {
@@ -1357,13 +1520,11 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
             )
           : (() => {
               const reco = recoFor(tab);
-              return React.createElement(
-                'div',
-                { style: S.reco },
-                reco.hint,
-                React.createElement(TabInstallSlot, { tab, getCall: props.getCall }),
-                React.createElement('span', { style: S.cmd }, reco.installCmd),
-              );
+              return React.createElement(AbsentTabPanel, {
+                tab,
+                installCmd: reco.installCmd,
+                getCall: props.getCall,
+              });
             })(),
       );
     }),
