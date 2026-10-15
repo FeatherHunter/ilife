@@ -8,7 +8,7 @@
 
 | npm 包 | 仓内目录 | 条目 `name` | 分类 | 状态 |
 | --- | --- | --- | --- | --- |
-| `dsh-life-pack` | `packages/plugin-manager` | `FeatherHunter/ilife#dsh-life-pack` | `ui` | **已投稿**：[PR #5514](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/5514)，两道检查已绿，等维护者合并 |
+| `dsh-life-pack` | `packages/plugin-manager` | `FeatherHunter/ilife#dsh-life-pack` | `ui` | **已收录**（PR #5514 已合并）；预构建包行已交 [PR #7452](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/7452)（只加 `tarball:`，等合并） |
 | `dsh-bill-ilife` | `packages/plugin-bill-ilife` | `FeatherHunter/ilife#dsh-bill-ilife` | 待定 | 未投稿 |
 | `dsh-calorie` | `packages/plugin-calorie` | `FeatherHunter/ilife#dsh-calorie` | 待定 | 未投稿 |
 | `dsh-chef` | `packages/plugin-chef` | `FeatherHunter/ilife#dsh-chef` | 待定 | 未投稿 |
@@ -39,11 +39,11 @@
 - 提交 `04822cef`，随 `dfebf476` 推上 `master`（2026-09-20 17:37）。
 - 按上游 `probe-screenshots.mjs` 的同一套判据复核过：`screenshots.json` 读回 HTTP 200，三张图 `Range: bytes=0-0` 全 206（LIVE）——市场下一次构建就会读到。
 
-## 三、下载量：字段已补齐，等下一版
+## 三、下载量：0.3.55 起关联成立，等上游探针采样
 
 关联判据在上游 `scripts/probe-npm.mjs`：按条目 `url` 那层读 `package.json` 拿包名 → 取 registry 上 `dist-tags.latest` 那一版 manifest 的 `repository` → 小写包含 `featherhunter/ilife` 才算关联。
 
-**云端读数（2026-09-20 晚）**：`dsh-life-pack@0.3.3` 与六家单品 `@0.3.4` 都已是各自的 `latest`，**两批 manifest 里都没有 `repository`**，所以现在一条都关联不上。npm 不允许重发同一版本号——**要出下载量就得再发一版**。
+**云端读数（2026-10-15）**：七个包 `0.3.55` 已是各自的 `latest`，且 manifest 均带 `repository`（`npm view dsh-life-pack repository --json` 打出 `git+https://github.com/FeatherHunter/ilife.git` ＋ `directory: packages/plugin-manager`）。⇒ 关联条件已满足，剩下的是等上游探针（每天跑）采到 `downloads.json` 里出现我方键。
 
 **字段已经补齐**（提交 `e32e8a72`）：七个包的 `package.json` 各加一段，指向 `git+https://github.com/FeatherHunter/ilife.git` 与各自的 `directory`。下一次发版无论版本号是多少都会带上它，关联与下载量随之成立。版本号不由本席定。
 
@@ -52,7 +52,7 @@
 | 七个包的 `repository` | ✅ 已加（`e32e8a72`）。本地复核：`check-publish --pre` PASS（七个包全 OK）＋ `test/plugin-p10-boundaries.test.mjs`／`plugin-p10-install.test.mjs` 22 pass / 0 fail |
 | 六家的 `dsh-life-pack` 范围 | ✅ 已是 `^0.3.3`（来自 #744 的定版提交 `7534adb4`，不是本席改的；`plugin-p10-boundaries.test.mjs:38` 与 `plugin-p10-install.test.mjs:46` 咬这条） |
 | `pnpm-lock.yaml` 的 specifier | ✅ 六处已跟到 `^0.3.3`（#744） |
-| 出下载量 | ⏳ 等下一次发版；本席没有升版本号，字段发出去之前一直休眠 |
+| 出下载量 | ⏳ 字段已随 0.3.55 发出，等上游探针采样（每天跑） |
 
 
 发布窗口的两条硬约束：
@@ -62,7 +62,13 @@
 3. **发版分两次看**：`wizard-publish.ps1` 按「云端已有该版本就跳过」工作，所以本地版本号不动就不会重发——字段补了但版本没升＝它一直休眠，这是预期的。
 4. **同窗口顺带看 `publish:fresh` 那道红**：`master` 上 CI 的 `install`／`build`／`publish:pre`／`publish:tarball` 都过，红在 `publish:fresh`——`skill-calorie` 安装态装载器导入失败（`dist/render/templates.js` 不在 registry 那一版产物里，日志自注「版本偏斜，非本票红」）。
 
-六个单品的 `repository` 已在 `e32e8a72` 一并补上，但**云端最新版（0.3.4）里没有**——它们各自投稿后要出下载量，同样要等它们下一次发版。
+六个单品的 `repository` 已在 `e32e8a72` 一并补上，**0.3.55 起七个包的云端 latest 全带字段**——它们各自投稿后要出下载量，只剩等上游探针采样。
+
+## 六、v0.3.55（2026-10-15）：release 已立＋预构建包条目已交
+
+- GitHub Release：`v0.3.55`（`更新系统跟到 dsh-plugin-update 0.17.0`），8 个资产——`dsh-life-pack.tgz`（无版本号，供条目 `tarball:` 走 `latest/download` 长链接）＋ 七个 `*-0.3.55.tgz`。稳定链接存活（`latest/download/dsh-life-pack.tgz` → 302）。
+- 上游条目更新：[PR #7452](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/7452)，**只加一行 `tarball:`，介绍文本与分类逐字不动**；分支基线取上游 `main` 最新提交，Files changed 只有那一个 `.yml`。等两道检查＋维护者合并。
+- npm 侧：七个 `0.3.55` 均为 `latest`（token 向导 `PKG-OK × 7`，`--post` PASS）。
 
 ## 四、缺口与未决
 
