@@ -377,6 +377,29 @@ function PanelLinkIcon(props: { readonly filled: boolean; readonly path: string 
   );
 }
 
+/** 缺席标记（#1282）：下载箭头＝"待安装"；描边取缺席标记色，与 PanelLinkIcon 同线形语言。
+ *  注意不用圆点：圆＝体检档位，缺席没有健康值，不进那套分级（形状即第二通道）。 */
+function AbsentDownloadIcon(props: { readonly color: string }): React.ReactElement {
+  return React.createElement(
+    'svg',
+    {
+      viewBox: '0 0 12 12',
+      width: 11,
+      height: 11,
+      fill: 'none',
+      stroke: props.color,
+      strokeWidth: 1.6,
+      strokeLinecap: 'round',
+      strokeLinejoin: 'round',
+      'aria-hidden': 'true',
+      focusable: 'false',
+    },
+    React.createElement('line', { x1: 6, y1: 1.5, x2: 6, y2: 7.5 }),
+    React.createElement('path', { d: 'M3.2 5.6 L6 8.4 L8.8 5.6' }),
+    React.createElement('line', { x1: 2, y1: 10.5, x2: 10, y2: 10.5 }),
+  );
+}
+
 /** 掀页动效的样式（逐条取自冻结原型 `.leaf` 一族；选择器加前缀，免得与宿主类名撞）。
  *
  * 三条不动：660ms cubic-bezier(.45,.05,.55,.95) 的 3D 掀页、`.face:after` 的明暗遮罩、
@@ -1205,6 +1228,11 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
         const dotColor = light === undefined
           ? (present.has(tab.plugin) ? TAB_DOT.unchecked : TAB_DOT.absent)
           : tabDotColor(light);
+        // 缺席判给分支不判颜色：TAB_DOT.absent 恰好等于 STATUS_DOT.red，
+        // 按颜色判会把"装了但体检飘红"也画成箭头——缺席当且仅当走出缺席分支。
+        const isAbsent = light === undefined
+          ? !present.has(tab.plugin)
+          : !light.hasChannel;
         const note = light === undefined ? null : tabNote(light);
         return React.createElement(
           'button',
@@ -1234,7 +1262,19 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
                 ? (light.status === null ? '还没体检' : '体检读数见本页签下方的表')
                 : '没有配置体检出口'),
           },
-          React.createElement('span', {
+          isAbsent
+            ? React.createElement('span', {
+              'data-ilife-health': 'tab-dot',
+              style: {
+                width: 11,
+                height: 11,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flex: '0 0 auto',
+              },
+            }, AbsentDownloadIcon({ color: dotColor }))
+            : React.createElement('span', {
             'data-ilife-health': 'tab-dot',
             style: {
               width: 6,
