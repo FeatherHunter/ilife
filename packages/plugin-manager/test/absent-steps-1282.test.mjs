@@ -27,8 +27,15 @@ describe('1282 缺席面板 v4（构建产物形状）', () => {
     const hits = client.split('✓ 已复制').length - 1;
     assert.equal(hits, 1, '「✓ 已复制」出现 ' + hits + ' 次（只许 Toast 一处，按钮不许改字）');
   });
-  it('上游主按钮覆盖 mounting（hover 换色＋按下＋禁用＋聚焦，容器级选择器）', () => {
+  it('上游主按钮覆盖 mounting（常态橙底＋hover 换色＋按下＋禁用＋聚焦，容器级选择器）', () => {
     assert.ok(client.includes('button[data-primary'), '主按钮覆盖选择器缺失');
+    assert.ok(client.includes('background:#f2a65a'), '主按钮常态橙底缺失（0.3.60 现场：常态掉回宿主灰）');
     assert.ok(client.includes('#cf6f1f'), '悬停深橙缺失（用户 verdict：8% 提亮看不见）');
+  });
+  it('上游自带手工行只在③取到精确命令后才藏（取不到时它是兜底，不许硬藏）', () => {
+    assert.ok(
+      client.includes('[data-manual=\\"ready\\"] .dsh-upd-ib-manual{display:none}'),
+      '条件隐藏规则缺失（必须带 ready 条件，不许无条件隐藏）',
+    );
   });
 });
