@@ -82,7 +82,15 @@
 - npm 侧：七个 `0.3.65` 均为 `latest`（token 直发 `PKG-OK × 7`，`--post` PASS，`--fresh-tmp` 由红转绿），manifest 照旧带 `repository`，关联条件继续成立。
 - GitHub Release：`v0.3.65` 已立，8 个资产——`dsh-life-pack.tgz`（别名已刷新，`latest/download` 即刻起给 0.3.65 包）＋ 七个 `*-0.3.65.tgz`。
 - 上游条目**零改动**：`tarball:` 走 `releases/latest/download` 长链接（不含版本号）；版本号由上游探针按条目 `url` 实时读 master 的 `package.json`；介绍文本与分类逐字不动。PR #7452（加 `tarball:` 那行）仍 OPEN 等维护者合并；`downloads.json` 仍无我方键（等探针采样）。
-- 本轮发布方式变更记录：`wizard-publish.ps1` 要求真 TTY（非 TTY 下 exit 2），本轮改走同语义 token 直发脚本 `.scratch/do-publish-0365.ps1`（云端有则跳过、总管先行、里程碑写 `.scratch/publish-log.txt` 同一套关键字），判据只认 registry 读回。
+- 本轮发布方式变更记录：`wizard-publish.ps1` 要求真 TTY（非 TTY 下 exit 2），0.3.65 起改走同语义 token 直发脚本 `.scratch/do-publish-0365.ps1`（云端有则跳过、总管先行、里程碑写 `.scratch/publish-log.txt` 同一套关键字），判据只认 registry 读回。
+
+## 九、v0.3.66（2026-10-17）：已发版 ✅
+
+- 内容：总管依赖 `dsh-plugin-update ^0.18.6`（合规版降级：年龄门拦住时给"满门限的最新版"选择＋两条新电话；`install-button` 两版逐字节一致，我方挂载与样式覆盖不受影响）。六单品 `dsh-life-pack` pin 同步到 `0.3.66`。
+- npm 侧：七个 `0.3.66` 均为 `latest`（直发 `PKG-OK × 7`，`--post` PASS，`--fresh-tmp` PASS），manifest 照旧带 `repository`，关联条件继续成立。
+- GitHub Release：`v0.3.66` 已立，8 个资产——`dsh-life-pack.tgz`（别名已刷新，`latest/download` 即刻起给 0.3.66 包）＋ 七个 `*-0.3.66.tgz`。
+- 上游条目**零改动**：介绍文本与分类逐字不动。PR #7452 仍 OPEN；`downloads.json` 仍无我方键（等探针采样）。
+- 致谢复核：PR 34＋issue 1258，全是 FeatherHunter，🌹×1292 继续有效。
 
 ## 四、缺口与未决
 
