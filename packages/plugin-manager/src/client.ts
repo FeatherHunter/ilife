@@ -917,7 +917,7 @@ function PanelActions(): React.ReactElement {
  *
  *  上游首查回包里的 `manual`（精确手工命令）读出来交 `onManual`：带精确版本号与 registry，
  *  调用方拿它画自己的命令行＋复制按钮（单一定位，不复述上游 details 里的同一条）。
- *  只读、不重查：读两次（800／2600ms，覆盖默认 1000ms 轮询的首查落定），读不到就只剩双包命令。 */
+ *  只读、不重查：每秒读一次、读到为止、最多 10 次（0.3.60 现场：固定两次读不到，首查落定比预期晚）。 */
 function TabInstallSlot(props: {
   tab: ManagerTab;
   getCall: () => RpcCallFace | null;
@@ -926,27 +926,37 @@ function TabInstallSlot(props: {
   const slotRef = React.useRef<HTMLSpanElement | null>(null);
   const callReady = props.getCall() !== null;
   const onManualRef = React.useRef(props.onManual);
-  onManualRef.current = props.onManual;
+  React.useEffect(() => {
+    onManualRef.current = props.onManual;
+  }, [props.onManual]);
   React.useEffect(() => {
     const mount = slotRef.current;
     if (mount === null || !callReady) return;
     const button = mountLifeInstallButton(mount, managerCallAdapter(props.getCall()), props.tab);
     if (button === null) return;
     let alive = true;
-    const timers: Array<ReturnType<typeof setTimeout>> = [];
-    for (const ms of [800, 2600]) {
-      if (typeof setTimeout !== 'function') break;
-      timers.push(setTimeout(() => {
-        if (!alive) return;
-        try {
-          const manual = button.state().manual;
-          if (typeof manual === 'string' && manual.length > 0) onManualRef.current?.(manual);
-        } catch { /* 读不到就只剩双包命令，不挡面板 */ }
-      }, ms));
+    let attempts = 0;
+    const readOnce = () => {
+      if (!alive) return;
+      attempts += 1;
+      try {
+        const manual = button.state().manual;
+        if (typeof manual === 'string' && manual.length > 0) {
+          onManualRef.current?.(manual);
+          return;
+        }
+      } catch { /* 读不到继续轮，不挡面板 */ }
+      if (attempts < 10 && typeof setTimeout === 'function') {
+        timer = setTimeout(readOnce, 1000);
+      }
+    };
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    if (typeof setTimeout === 'function') {
+      timer = setTimeout(readOnce, 800);
     }
     return () => {
       alive = false;
-      for (const t of timers) clearTimeout(t);
+      if (timer !== null) clearTimeout(timer);
       button.unmount();
     };
     // getCall 本身是取用器（引用稳定），只跟连接就绪态与页签重跑。
@@ -960,7 +970,10 @@ function TabInstallSlot(props: {
  *  全收敛在 `[data-ilife-absent]` 作用域下；容器 `S.reco` 与子顺序一字不动。
  *  上游主按钮换色用容器覆盖（`button[data-primary="1"]` 特异度压上游缺省；上游自带 CSS 无 hover
  *  规则，见 update-dialog.ts 注释——themeTokens 对安装控件无视觉效果，故悬停也收在这里）。
- *  悬停取深橙＋白字＋投影（用户 verdict：8% 提亮看不见）；颜色原型定稿 hex，见 v4 原型。 */
+ *  悬停取深橙＋白字＋投影（用户 verdict：8% 提亮看不见）；颜色原型定稿 hex，见 v4 原型。
+ *  常态橙底（0.3.61 补上：首版只写了 hover 没写常态，线上按钮常态掉回宿主灰——原型 L33 整条）。
+ *  上游自带折叠手工行（0.3.60 现场：②里贴着按钮又冒出一条“手工命令”）：默认不动，
+ *  只有当③的精确命令取到了（`data-manual="ready"`）才藏它——取不到时它仍是兜底。 */
 const ABSENT_TOAST_MS = 1500 as const;
 function absentStepsCss(): string {
   return (
@@ -970,16 +983,17 @@ function absentStepsCss(): string {
     '[data-ilife-absent="panel"]>.ilife-step[data-step="1"]::before{background:#e5534b;color:#fff}' +
     '[data-ilife-absent="panel"]>.ilife-step[data-step="2"]::before{background:#f2a65a;color:#1a1206}' +
     '[data-ilife-absent="panel"] .ilife-step-t{display:block;color:#fff;font-weight:700;font-size:14px;margin-bottom:2px}' +
-    '[data-ilife-absent="panel"] .ilife-tray{background:rgba(242,166,90,.08);border-radius:8px;padding:10px 12px}' +
-    '[data-ilife-absent="panel"] .dsh-upd-ib button[data-primary="1"]{transition:background .15s,color .15s,transform .06s,box-shadow .15s}' +
+    '[data-ilife-absent="panel"] .ilife-tray{background:rgba(242,166,90,.14);border-radius:8px;padding:10px 12px}' +
+    '[data-ilife-absent="panel"] .dsh-upd-ib button[data-primary="1"]{background:#f2a65a;color:#1a1206;border:0;border-radius:8px;padding:9px 24px;font-size:14px;font-weight:700;cursor:pointer;transition:background .15s,color .15s,transform .06s,box-shadow .15s}' +
+    '[data-ilife-absent="panel"][data-manual="ready"] .dsh-upd-ib-manual{display:none}' +
     '[data-ilife-absent="panel"] .dsh-upd-ib button[data-primary="1"]:hover{background:#cf6f1f;color:#fff;transform:translateY(-1px);box-shadow:0 4px 14px rgba(207,111,31,.45)}' +
     '[data-ilife-absent="panel"] .dsh-upd-ib button[data-primary="1"]:active{transform:translateY(1px);box-shadow:none;background:#a8561a;color:#fff}' +
     '[data-ilife-absent="panel"] .dsh-upd-ib button[data-primary="1"]:disabled{opacity:.55;cursor:default;transform:none;box-shadow:none}' +
     '[data-ilife-absent="panel"] .dsh-upd-ib button[data-primary="1"]:focus-visible{outline:2px solid #f2a65a;outline-offset:2px}' +
     '[data-ilife-absent="panel"] .ilife-cmdrow{display:flex;gap:8px;align-items:stretch;margin-top:8px}' +
     '[data-ilife-absent="panel"] .ilife-cmdrow>code{flex:1;padding:8px 10px;border-radius:8px;background:rgba(128,128,128,.12);color:#57b883;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;user-select:all;white-space:pre-wrap;overflow-wrap:anywhere}' +
-    '[data-ilife-absent="panel"] .ilife-cmdrow>code.plain{color:inherit}' +
-    '[data-ilife-absent="panel"] .ilife-copycmd{flex:0 0 auto;align-self:center;background:#2b2b2b;color:inherit;border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:6px 14px;font-size:12.5px;cursor:pointer;transition:background .15s,border-color .15s,color .15s,transform .06s,box-shadow .15s}' +
+    '[data-ilife-absent="panel"] .ilife-cmdrow>code.plain{color:#e8e8e8}' +
+    '[data-ilife-absent="panel"] .ilife-copycmd{flex:0 0 auto;align-self:center;background:#2b2b2b;color:#e8e8e8;border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:6px 14px;font-size:12.5px;cursor:pointer;transition:background .15s,border-color .15s,color .15s,transform .06s,box-shadow .15s}' +
     '[data-ilife-absent="panel"] .ilife-copycmd:hover{border-color:#f2a65a;color:#f2a65a;background:#353535;transform:translateY(-1px);box-shadow:0 2px 8px rgba(242,166,90,.25)}' +
     '[data-ilife-absent="panel"] .ilife-copycmd:active{transform:translateY(1px);box-shadow:none;background:#242424}' +
     '[data-ilife-absent="panel"] .ilife-copycmd:focus-visible{outline:2px solid #f2a65a;outline-offset:2px}' +
@@ -1057,7 +1071,7 @@ function AbsentTabPanel(props: {
   cmdRows.push({ key: 'dual', text: props.installCmd, plain: true });
   return React.createElement(
     'div',
-    { style: S.reco, 'data-ilife-absent': 'panel' },
+    { style: S.reco, 'data-ilife-absent': 'panel', 'data-manual': manual !== null ? 'ready' : 'pending' },
     React.createElement('style', { 'data-ilife-absent': 'steps-css' }, absentStepsCss()),
     React.createElement(
       'span',
