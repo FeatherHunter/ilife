@@ -76,6 +76,13 @@
 - 上游条目**零改动**：`tarball:` 走 `releases/latest/download` 长链接（不含版本号）；版本号由上游探针按条目 `url` 实时读 master 的 `package.json`（PR #1286 合并后即 0.3.56）；介绍文本与分类逐字不动。PR #7452（加 `tarball:` 那行）仍 OPEN 等维护者合并。
 - npm 侧：七个 `0.3.56` 均为 `latest`（token 发布 `PKG-OK × 7`，`--post` PASS），manifest 照旧带 `repository`，关联条件继续成立。
 
+## 八、v0.3.65（2026-10-16）：跟进 0.18.5，发版进行中
+
+- 内容：总管依赖 `dsh-plugin-update ^0.18.5`（0.18.4 失败原因行前置＋0.18.5 安装失败翻译官；三版 `install-button` 逐字节一致，我方样式覆盖不受影响）＋ 缺席面板去空行（#1282，步骤容器与挂载位改 div）＋ 六单品 `dsh-life-pack` pin 补到 `0.3.65`（0.3.64 那轮漏了交叉引用，已发出的六个 0.3.64 单品钉的还是 0.3.63）。
+- Release 资产已预打并验货（`.scratch/release-0365/`）：七个 `*-0.3.65.tgz`（版本号＋`dist/`＋memo 包内 pin `0.3.65` 均对）＋ 别名 `dsh-life-pack.tgz`（`dsh-life-pack-0.3.65.tgz` 的逐字拷贝）。notes 草稿同目录 `notes.md`，沿 v0.3.56 口径。
+- 上游复核读数（2026-10-16 21:2x）：条目文件仍在；PR #7452（加 `tarball:`）仍 OPEN 未合并；`downloads.json` 仍无我方键（等探针采样）。总管条目无版本钉，push＋发版＋立 release 后探针自动采到 0.3.65，无需交新 PR。
+- 待办：npm token 到后跑 `tooling/wizard-publish.ps1`（`--pre`／`--tarball` 已 PASS；`--fresh-tmp` 唯一的红是"云端无 0.3.65"，发完即绿）→ 立 `v0.3.65`（8 资产）→ README 版本行改 0.3.65／0.18.5。
+
 ## 四、缺口与未决
 
 1. **README 已补**（原先整仓一份都没有，条目详情页正文会空）：`packages/plugin-manager/README.md` 讲这张卡（详情页优先取子目录那份），仓根 `README.md` 讲整套七个插件（子目录那份缺失时回落）。六个单品将来投稿时各自补一份子目录 README——否则它们的详情页会渲染仓根那份「整套」说明。
