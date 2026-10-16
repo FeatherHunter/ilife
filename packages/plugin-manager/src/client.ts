@@ -923,7 +923,7 @@ function TabInstallSlot(props: {
   getCall: () => RpcCallFace | null;
   onManual?: (manual: string) => void;
 }): React.ReactElement | null {
-  const slotRef = React.useRef<HTMLSpanElement | null>(null);
+  const slotRef = React.useRef<HTMLDivElement | null>(null);
   const callReady = props.getCall() !== null;
   const onManualRef = React.useRef(props.onManual);
   React.useEffect(() => {
@@ -962,7 +962,7 @@ function TabInstallSlot(props: {
     // getCall 本身是取用器（引用稳定），只跟连接就绪态与页签重跑。
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [callReady, props.tab]);
-  return React.createElement('span', { ref: slotRef, style: S.installSlot, 'data-ilife-install': 'slot' });
+  return React.createElement('div', { ref: slotRef, style: S.installSlot, 'data-ilife-install': 'slot' });
 }
 
 /** 缺席面板步骤化样式（#1282 v4 原型定稿）：序号圆点／命令行／复制按钮三态／Toast／上游主按钮覆盖。
@@ -983,7 +983,9 @@ function absentStepsCss(): string {
     '[data-ilife-absent="panel"]>.ilife-step[data-step="1"]::before{background:#e5534b;color:#fff}' +
     '[data-ilife-absent="panel"]>.ilife-step[data-step="2"]::before{background:#f2a65a;color:#1a1206}' +
     '[data-ilife-absent="panel"] .ilife-step-t{display:block;color:#fff;font-weight:700;font-size:14px;margin-bottom:2px}' +
-    '[data-ilife-absent="panel"] .ilife-tray{background:rgba(242,166,90,.14);border-radius:8px;padding:10px 12px}' +
+    '[data-ilife-absent="panel"] .ilife-tray{display:block;background:rgba(242,166,90,.14);border-radius:8px;padding:10px 12px}' +
+    '[data-ilife-absent="panel"] .ilife-tray:empty,[data-ilife-absent="panel"] .ilife-tray:has([data-ilife-install="slot"]:empty){display:none}' +
+    '[data-ilife-absent="panel"] [data-ilife-install="slot"]:empty{display:none}' +
     '[data-ilife-absent="panel"] .dsh-upd-ib button[data-primary="1"]{background:#f2a65a;color:#1a1206;border:0;border-radius:8px;padding:9px 24px;font-size:14px;font-weight:700;cursor:pointer;transition:background .15s,color .15s,transform .06s,box-shadow .15s}' +
     '[data-ilife-absent="panel"][data-manual="ready"] .dsh-upd-ib-manual{display:none}' +
     '[data-ilife-absent="panel"] .dsh-upd-ib button[data-primary="1"]:hover{background:#cf6f1f;color:#fff;transform:translateY(-1px);box-shadow:0 4px 14px rgba(207,111,31,.45)}' +
@@ -1074,17 +1076,17 @@ function AbsentTabPanel(props: {
     { style: S.reco, 'data-ilife-absent': 'panel', 'data-manual': manual !== null ? 'ready' : 'pending' },
     React.createElement('style', { 'data-ilife-absent': 'steps-css' }, absentStepsCss()),
     React.createElement(
-      'span',
+      'div',
       { className: 'ilife-step', 'data-step': '1' },
       React.createElement('span', { className: 'ilife-step-t' }, props.tab.plugin + ' 未安装'),
       '请补装后使用。',
     ),
     React.createElement(
-      'span',
+      'div',
       { className: 'ilife-step', 'data-step': '2' },
       React.createElement('span', { className: 'ilife-step-t' }, '一键安装'),
       React.createElement(
-        'span',
+        'div',
         { className: 'ilife-tray' },
         React.createElement(TabInstallSlot, {
           tab: props.tab,
@@ -1094,7 +1096,7 @@ function AbsentTabPanel(props: {
       ),
     ),
     React.createElement(
-      'span',
+      'div',
       { className: 'ilife-step', 'data-step': '3' },
       React.createElement('span', { className: 'ilife-step-t' }, '备选：手动安装'),
       cmdRows.map((row) => React.createElement(
