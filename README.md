@@ -30,8 +30,8 @@ dsh plugin add dsh-life-pack dsh-chef             # 再装一家，照同样的�
 
 ## 版本
 
-- 七个插件当前版本：`0.3.67`（2026-10-17，npm `latest`）
-- 更新系统：`dsh-plugin-update 0.18.7`（总管以 `^0.18.7` 依赖引入；传递带入 `dsh-log 0.3.4`）
+- 七个插件当前版本：`0.3.68`（2026-10-18，npm `latest`）
+- 更新系统：`dsh-plugin-update 0.18.11`（总管以 `^0.18.11` 依赖引入；传递带入 `dsh-log 0.3.4`）
 - 升级：插件市场里点升级，或把上面那条安装命令重跑一遍
 - 更新说明：[GitHub Releases](https://github.com/FeatherHunter/ilife/releases)
 
@@ -60,6 +60,6 @@ pnpm test           # 全仓测试
 
 | 贡献者 | 🌹 |
 | --- | --- |
-| [FeatherHunter](https://github.com/FeatherHunter) | 🌹×1292 |
+| [FeatherHunter](https://github.com/FeatherHunter) | 🌹×1293 |
 | muse-spark | 🌹×1 |
 | ilife-agent | 🌹×1 |
