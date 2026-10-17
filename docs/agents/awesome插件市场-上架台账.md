@@ -92,6 +92,18 @@
 - 上游条目**零改动**：介绍文本与分类逐字不动。PR #7452 仍 OPEN；`downloads.json` 仍无我方键（等探针采样）。
 - 致谢复核：PR 34＋issue 1258，全是 FeatherHunter，🌹×1292 继续有效。
 
+## 十、v0.3.67（2026-10-17）：已发版 ✅
+
+- 内容：总管依赖 `dsh-plugin-update ^0.18.7`（批量面接上合规版降级：行级与批量级共用同一套兜底、确认后才装、永不静默降级；异步安装失败归因改走宿主新增的机读 `diag`；四个接线子路径类型契约不变或纯追加，本仓源码零改动）＋ 面板宽度不再跟着宿主滚动条变（最近可滚动祖先钉 `scrollbar-gutter: stable`，新增 206 行用例 `panel-width-stable.test.mjs`）。六单品 `dsh-life-pack` pin 同步到 `0.3.67`；`skill-*`／`base-*` pin 保持 `0.3.54`。
+- npm 侧：七个 `0.3.67` 均为 `latest`（token 直发 `PKG-OK × 7`，`--post` PASS；`--pre`／`--tarball` PASS）。
+- `--fresh-tmp` 那一红＝**既有版本偏斜**，非本版引入：本地工作区的 `skill-calorie`（0.3.54 号）已 import `base-paint/help-key`（提交 `301e30c4`，2026-10-15 #1281），而 registry 上 `base-paint@0.3.54` 的 `exports` 没有 `./help-key`；实测 registry 装的组合（skill-calorie 0.3.54 ＋ base-paint 0.3.54 都来自云端）跑 `calorie.help.center` **exit 0**，本地打包的组合才红 ⇒ 用户侧不受影响，等 base-paint 进位发版后该门自动转绿。
+- GitHub Release：`v0.3.67` 已立，8 个资产——`dsh-life-pack.tgz`（别名已刷新，`latest/download` 即刻起给 0.3.67 包）＋ 七个 `*-0.3.67.tgz`。
+- 上游条目**零改动、且已合并**：[PR #7452](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/7452) **MERGED**（2026-10-17T08:12:34Z，`check`＋`Submission gate` 双 SUCCESS，Files changed 只有那一个 yml）；条目介绍文本逐字未动。
+- 市场现值（`npm pack dsh-plugin-catalog` 2026.1017.6255 解包 `plugins.json`）：我方条目 `version 0.3.66`（版本号由上游探针读 master `package.json` 自动跟，不用提 PR）、`downloads 10937`、`stars 14`、`added 2026-09-20`、3 张截图已生效。
+- **台账更正**：上游仓库 `data/downloads.json` 只是**子集快照**（624 键；catalog 里有下载量的条目 2589 条）——不能拿「该文件无我方键」当「未被采样」判据；下载量已在 catalog 里出数。
+- 六个单品：catalog 内**全未收录**；门槛件齐（`dsh.bundle`＋`cordis.patch.yml`＋topic＋npm `repository`），缺口＝各自没有子目录 README 与 `screenshots.json`。投稿提案落 `.scratch/release0367/awesome/报告.md`（分 2 PR／3+3，分类主选 `ui`，先投 calorie／memo／schedule，缓 bill／chef／home）——**等用户点头，本轮未投**。
+- 致谢复核：FeatherHunter `PR 34＋issue 1258＝🌹×1292` 不变；按规则补 commit-only 身份两行（`muse-spark` 305 提交／`ilife-agent` 3 提交，各 🌹×1）。
+
 ## 四、缺口与未决
 
 1. **README 已补**（原先整仓一份都没有，条目详情页正文会空）：`packages/plugin-manager/README.md` 讲这张卡（详情页优先取子目录那份），仓根 `README.md` 讲整套七个插件（子目录那份缺失时回落）。六个单品将来投稿时各自补一份子目录 README——否则它们的详情页会渲染仓根那份「整套」说明。
