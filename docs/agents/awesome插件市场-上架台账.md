@@ -102,7 +102,7 @@
 - 市场现值（`npm pack dsh-plugin-catalog` 2026.1017.6255 解包 `plugins.json`）：我方条目 `version 0.3.66`（版本号由上游探针读 master `package.json` 自动跟，不用提 PR）、`downloads 10937`、`stars 14`、`added 2026-09-20`、3 张截图已生效。
 - **台账更正**：上游仓库 `data/downloads.json` 只是**子集快照**（624 键；catalog 里有下载量的条目 2589 条）——不能拿「该文件无我方键」当「未被采样」判据；下载量已在 catalog 里出数。
 - 六个单品：catalog 内**全未收录**；门槛件齐（`dsh.bundle`＋`cordis.patch.yml`＋topic＋npm `repository`），缺口＝各自没有子目录 README 与 `screenshots.json`。投稿提案落 `.scratch/release0367/awesome/报告.md`（分 2 PR／3+3，分类主选 `ui`，先投 calorie／memo／schedule，缓 bill／chef／home）——**等用户点头，本轮未投**。
-- 致谢复核：FeatherHunter `PR 34＋issue 1258＝🌹×1292` 不变；按规则补 commit-only 身份两行（`muse-spark` 305 提交／`ilife-agent` 3 提交，各 🌹×1）。
+- 致谢复核：FeatherHunter `PR 34＋issue 1258＝🌹×1292` 不变；按规则补 commit-only 身份两行（`muse-spark`／`ilife-agent`，各 🌹×1）。提交数只用于识别身份、随提交增长（发版当时读数 305／3，独立复核时 API 已读 307／3），**不是致谢判据**。
 
 ## 四、缺口与未决
 
