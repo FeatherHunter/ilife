@@ -113,7 +113,7 @@
 - GitHub Release：[v0.3.68](https://github.com/FeatherHunter/ilife/releases/tag/v0.3.68) 已立，8 个资产——`dsh-life-pack.tgz`（无版本别名，`latest/download` 即刻起给 0.3.68 包）＋ 七个 `*-0.3.68.tgz`。
 - 上游条目：**本轮无需任何 PR，零仓库改动**。条目 `data/plugins/FeatherHunter__ilife--packages-plugin-manager.yml` 只有 `url`／`name`／`category`／`description`／`tarball`（上游校验器 `scripts/lib/entries.mjs:145` 的 `ENTRY_KEYS` 无 `version`，塞进去会被 `PR check` 判非法键）；市场显示的版本由 `scripts/probe-npm.mjs:9–16` 读 registry `dist-tags.latest` 自动跟，目录包发 npm、不提交仓库（`build-site.yml:242–271` 注释明写 "no repository write"；三处上游文件行号按 **live 仓**读，本机 `.tmp-awesome` 是旧快照、别拿它的行号对）。上一轮 [PR #7452](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/7452) 已于 2026-10-17T08:12:34Z 合并，介绍文本逐字未动。
 - 六个单品：catalog 内**仍未收录**（`FeatherHunter` 名下 5 条目，只有总管那 1 条是我们的）；提案见 `.scratch/release0368/awesome/报告.md`（分 2 PR／3+3，分类主选 `ui`，先投 calorie／memo／schedule；前置＝先补六份子目录 README）——**用户 2026-10-18 裁决：不投稿**（逐字「不提交到awesome」），提案仅留档，本仓不再跟进。
-- 致谢复核：FeatherHunter `PR 34＋真 ISSUE 1259（`issues?state=all` 1293 条减去 34 条 PR）＝🌹×1293`（README 提交 `6a318688`）；`muse-spark`／`ilife-agent` 两行系误加，**2026-10-18 用户裁决后已从 README 删除**（见 §十二）；README 里无规则文本（`排名|贡献数|规则|PR|ISSUE` 零命中）。
+- 致谢复核：FeatherHunter `PR 34＋真 ISSUE 1259（`issues?state=all` 1293 条减去 34 条 PR）＝🌹×1293`（README 提交 `6a318688`）；`muse-spark`／`ilife-agent` 两行系误加，**2026-10-18 用户裁决后已从 README 删除**（见 §十二）；README 里无规则文本（`排名|贡献数|规则|PR|ISSUE` 大小写敏感零命中；不敏感会撞 L56 的 `<.../issues>` 链接）。
 
 ## 十二、提交身份读数与致谢口径更正（2026-10-18）
 
@@ -122,7 +122,7 @@
 | 身份 | 条数 | 时间跨度 | GitHub 侧 | git config 归属 |
 | --- | --- | --- | --- | --- |
 | `王辰浩 <975559549@qq.com>` | 3340 | 2026-09-06 14:05 → 2026-10-16 12:37 | `FeatherHunter`（User） | **全局** `user.name`／`user.email` |
-| `muse-spark <muse-spark@local>` | 316 | 2026-10-06 01:59 → 2026-10-18 00:40 | 匿名（Anonymous，邮箱未关联账号） | **本仓 repo-local** `user.name`／`user.email` 现值 |
+| `muse-spark <muse-spark@local>` | 316（本席取数时点）／317（复核时点，含 `26bb6c91`）——随提交增长 | 2026-10-06 01:59 → 2026-10-18 00:54 | 匿名（Anonymous，邮箱未关联账号） | **本仓 repo-local** `user.name`／`user.email` 现值 |
 | `ilife-agent <agent@local>` | 3 | 2026-09-06 16:11 → 17:23 | 匿名（Anonymous） | 早先的 repo-local 身份 |
 
 - 命令：`git log --format='%an|%ae' | Group-Object | Sort-Object Count -Descending`；`git config user.name`／`user.email`（repo-local 与 `--global` 对照）；`gh api 'repos/FeatherHunter/ilife/contributors?anon=1&per_page=100'`。无 `.mailmap`。
