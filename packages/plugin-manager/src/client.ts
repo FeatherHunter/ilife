@@ -1349,9 +1349,42 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
       // 无 Web Animations 也无妨：left/top/width 的 CSS 过渡仍把滑移送到位
     }
   }, [active]);
+  /** 面板宽度不许跟着宿主滚动条变：宿主承载本面板的滚动体一出现滚动条，
+   *  内容盒就窄 5px（主题里 `--dsh-scrollbar-width:5px`），标题行右对齐的按钮组便跟着左右挪；
+   *  而滚动条出不出，取决于**当前页签**的内容高——装了的那家有配置卡，必然要滚，缺席页签不必。
+   *
+   *  这里不动面板高度、也不改宿主样式表，只给**最近的可滚动祖先**钉一条内联
+   *  `scrollbar-gutter: stable`：槽位恒定预留，滚动条本身仍按需出现/消失，内容盒宽度因此恒定。
+   *  卸载时还原（宿主本来就有 stable 时压根不写），改动不留在宿主上。
+   *  替身渲染台（test/helpers/panel-render.mjs）里 ref 拿不到元素 ⇒ 这里天然空过，不碰 window。 */
+  const rootRef = React.useRef<HTMLDivElement | null>(null);
+  React.useEffect(() => {
+    const root = rootRef.current;
+    if (root === null || typeof window === 'undefined') return;
+    let node: HTMLElement | null = root.parentElement;
+    while (node !== null) {
+      const overflowY = window.getComputedStyle(node).overflowY;
+      if (overflowY === 'auto' || overflowY === 'scroll') break;
+      node = node.parentElement;
+    }
+    const scroller = node;
+    if (scroller === null) return;
+    if (window.getComputedStyle(scroller).getPropertyValue('scrollbar-gutter').trim() === 'stable') return;
+    const previous = scroller.style.getPropertyValue('scrollbar-gutter');
+    scroller.style.setProperty('scrollbar-gutter', 'stable');
+    return () => {
+      if (previous.length > 0) scroller.style.setProperty('scrollbar-gutter', previous);
+      else scroller.style.removeProperty('scrollbar-gutter');
+    };
+  }, []);
   return React.createElement(
     'div',
-    { style: { position: 'relative' } },
+    {
+      style: { position: 'relative' },
+      ref: (element: HTMLDivElement | null) => {
+        rootRef.current = element;
+      },
+    },
     // 使用手册入口住卡片末尾（右下角常驻，见文件尾 sticky 块）。
     React.createElement(
       'div',
