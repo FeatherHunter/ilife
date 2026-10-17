@@ -61,5 +61,3 @@ pnpm test           # 全仓测试
 | 贡献者 | 🌹 |
 | --- | --- |
 | [FeatherHunter](https://github.com/FeatherHunter) | 🌹×1293 |
-| muse-spark | 🌹×1 |
-| ilife-agent | 🌹×1 |

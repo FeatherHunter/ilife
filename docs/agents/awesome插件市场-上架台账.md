@@ -102,7 +102,7 @@
 - 市场现值（`npm pack dsh-plugin-catalog` 2026.1017.6255 解包 `plugins.json`）：我方条目 `version 0.3.66`（版本号由上游探针读 master `package.json` 自动跟，不用提 PR）、`downloads 10937`、`stars 14`、`added 2026-09-20`、3 张截图已生效。
 - **台账更正**：上游仓库 `data/downloads.json` 只是**子集快照**（624 键；catalog 里有下载量的条目 2589 条）——不能拿「该文件无我方键」当「未被采样」判据；下载量已在 catalog 里出数。
 - 六个单品：catalog 内**全未收录**；门槛件齐（`dsh.bundle`＋`cordis.patch.yml`＋topic＋npm `repository`），缺口＝各自没有子目录 README 与 `screenshots.json`。投稿提案落 `.scratch/release0367/awesome/报告.md`（分 2 PR／3+3，分类主选 `ui`，先投 calorie／memo／schedule，缓 bill／chef／home）——**等用户点头，本轮未投**。
-- 致谢复核：FeatherHunter `PR 34＋issue 1258＝🌹×1292` 不变；按规则补 commit-only 身份两行（`muse-spark`／`ilife-agent`，各 🌹×1）。提交数只用于识别身份、随提交增长（发版当时读数 305／3，独立复核时 API 已读 307／3），**不是致谢判据**。
+- 致谢复核：FeatherHunter `PR 34＋issue 1258＝🌹×1292` 不变；当时按规则补了 commit-only 身份两行（`muse-spark`／`ilife-agent`，各 🌹×1）。提交数只用于识别身份、随提交增长（发版当时读数 305／3，独立复核时 API 已读 307／3），**不是致谢判据**。**2026-10-18 更正**：这两个身份是用户本机的提交身份、不是独立贡献者，那两行已从 README 删除（读数与裁决见 §十二）。
 
 ## 十一、v0.3.68（2026-10-18）：已发版 ✅
 
@@ -112,13 +112,27 @@
 - **`--fresh-tmp` 的口径坑（本轮现场）**：第一次跑该门红在 `npm error code ETARGET / No matching version found for dsh-life-pack@0.3.68`——不是包没发，而是本机 ambient registry 是 `registry.npmmirror.com` 且镜像落后（当时镜像 `dsh-life-pack` latest 仍 `0.3.67`、`@0.3.68` 404），而 `tooling/check-publish.mjs:215` 的 fresh 安装步骤没带 `--registry`（其余 `npm view` 都带了）。用 `npm_config_registry=https://registry.npmjs.org/` 覆盖后同一命令 exit 0。**下一轮发版请照此覆盖**，或等镜像同步。0.3.67 那一轮该门红是另一回事（`base-paint` 版本偏斜），本轮 `base-paint@0.3.55` 已发版，偏斜消除。
 - GitHub Release：[v0.3.68](https://github.com/FeatherHunter/ilife/releases/tag/v0.3.68) 已立，8 个资产——`dsh-life-pack.tgz`（无版本别名，`latest/download` 即刻起给 0.3.68 包）＋ 七个 `*-0.3.68.tgz`。
 - 上游条目：**本轮无需任何 PR，零仓库改动**。条目 `data/plugins/FeatherHunter__ilife--packages-plugin-manager.yml` 只有 `url`／`name`／`category`／`description`／`tarball`（上游校验器 `scripts/lib/entries.mjs:145` 的 `ENTRY_KEYS` 无 `version`，塞进去会被 `PR check` 判非法键）；市场显示的版本由 `scripts/probe-npm.mjs:9–16` 读 registry `dist-tags.latest` 自动跟，目录包发 npm、不提交仓库（`build-site.yml:242–271` 注释明写 "no repository write"；三处上游文件行号按 **live 仓**读，本机 `.tmp-awesome` 是旧快照、别拿它的行号对）。上一轮 [PR #7452](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/7452) 已于 2026-10-17T08:12:34Z 合并，介绍文本逐字未动。
-- 六个单品：catalog 内**仍未收录**（`FeatherHunter` 名下 5 条目，只有总管那 1 条是我们的）；提案见 `.scratch/release0368/awesome/报告.md`（分 2 PR／3+3，分类主选 `ui`，先投 calorie／memo／schedule；前置＝先补六份子目录 README）——**等用户裁决，本轮未投**。
-- 致谢复核：FeatherHunter `PR 34＋真 ISSUE 1259（`issues?state=all` 1293 条减去 34 条 PR）＝🌹×1293`（README 提交 `6a318688`）；`muse-spark`（发版当时 API 读数 312，随提交增长，复核时已 315）／`ilife-agent`（3 commits）各 0 PR/ISSUE ⇒ 各 🌹×1，顺序不动；README 里无规则文本（`排名|贡献数|规则|PR|ISSUE` 零命中）。
+- 六个单品：catalog 内**仍未收录**（`FeatherHunter` 名下 5 条目，只有总管那 1 条是我们的）；提案见 `.scratch/release0368/awesome/报告.md`（分 2 PR／3+3，分类主选 `ui`，先投 calorie／memo／schedule；前置＝先补六份子目录 README）——**用户 2026-10-18 裁决：不投稿**（逐字「不提交到awesome」），提案仅留档，本仓不再跟进。
+- 致谢复核：FeatherHunter `PR 34＋真 ISSUE 1259（`issues?state=all` 1293 条减去 34 条 PR）＝🌹×1293`（README 提交 `6a318688`）；`muse-spark`／`ilife-agent` 两行系误加，**2026-10-18 用户裁决后已从 README 删除**（见 §十二）；README 里无规则文本（`排名|贡献数|规则|PR|ISSUE` 零命中）。
+
+## 十二、提交身份读数与致谢口径更正（2026-10-18）
+
+用户裁决（逐字）：「不提交到awesome 这两个身份都是我，你需要检查下当前项目的提交身份，应该都是我 不存在 muse-spark和ilife-agent」。独立读数（Lead 现场）：
+
+| 身份 | 条数 | 时间跨度 | GitHub 侧 | git config 归属 |
+| --- | --- | --- | --- | --- |
+| `王辰浩 <975559549@qq.com>` | 3340 | 2026-09-06 14:05 → 2026-10-16 12:37 | `FeatherHunter`（User） | **全局** `user.name`／`user.email` |
+| `muse-spark <muse-spark@local>` | 316 | 2026-10-06 01:59 → 2026-10-18 00:40 | 匿名（Anonymous，邮箱未关联账号） | **本仓 repo-local** `user.name`／`user.email` 现值 |
+| `ilife-agent <agent@local>` | 3 | 2026-09-06 16:11 → 17:23 | 匿名（Anonymous） | 早先的 repo-local 身份 |
+
+- 命令：`git log --format='%an|%ae' | Group-Object | Sort-Object Count -Descending`；`git config user.name`／`user.email`（repo-local 与 `--global` 对照）；`gh api 'repos/FeatherHunter/ilife/contributors?anon=1&per_page=100'`。无 `.mailmap`。
+- 结论：全仓提交只出自**一个人**（用户本人）与两个本机提交身份；GitHub 把后两者列成匿名 contributor 只是因为 `@local` 邮箱没关联账号。⇒ 致谢表只认 `FeatherHunter`（🌹×1293），`muse-spark`／`ilife-agent` 两行删除，今后不再把本机提交身份当贡献者。
+- 附注：本仓 repo-local `user.name=muse-spark` 是**当前**的工作副本身份（本会话所有提交都落在这个身份上）；全局身份是用户本人。是否把 repo-local 也改成用户身份，由用户决定。
 
 ## 四、缺口与未决
 
 1. **README 已补**（原先整仓一份都没有，条目详情页正文会空）：`packages/plugin-manager/README.md` 讲这张卡（详情页优先取子目录那份），仓根 `README.md` 讲整套七个插件（子目录那份缺失时回落）。六个单品将来投稿时各自补一份子目录 README——否则它们的详情页会渲染仓根那份「整套」说明。
-2. 六个单品分批投稿（每 PR ≤3 条）。
+2. ~~六个单品分批投稿（每 PR ≤3 条）~~ —— **2026-10-18 用户裁决不投稿，本条关闭**（提案留档于 `.scratch/release0368/awesome/报告.md`）。
 3. 本席提交与推送的锁留痕是 `ticket=unknown`（这活没有票号）；要补票号得先开票。
 4. 本机遗留的临时副本与自制脚本（`.gitignore` 忽略、随时可能被清掉）：`D:\ilife\.tmp-awesome\`（上游仓副本 ＋ `node_modules`）里有 `validate-entry.mjs`（校验条目）、`check-screenshots.mjs`（复核截图声明）、`verify-live.mjs`（复核线上存活）、`diagnose-lock.mjs`（对账 lockfile 与 package.json）；会话交接件写在系统临时目录的 `handoff-awesome-plugin-marketplace.md`。
 
