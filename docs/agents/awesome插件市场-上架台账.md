@@ -149,6 +149,17 @@
 - 致谢复核（readme-writer 独立重算）：`pulls?state=all` **34**（最新 #1292，2026-10-16T04:36:51Z）＋ 真 ISSUE **1259**（最新 #1293，2026-10-17T15:34:37Z）＋ discussions `totalCount=0` ⇒ FeatherHunter 仍 **🌹×1293**，**表格无需改动**；README 本轮只改版本行（L33 `0.3.69 → 0.3.70`），L34 更新系统行复核后未动。
 - 门禁读数：`--pre`／`--post`／`--tarball` 全 PASS；`--fresh-tmp` 在 `npm_config_registry=https://registry.npmjs.org/` 覆盖下 PASS（不带覆盖会因本机默认镜像 npmmirror 落后而 `ETARGET`）；`pnpm install --frozen-lockfile` exit 0；单测 `407／405／2`（两例 pixel seam 属既有基线红，与本次无关）。
 
+## 十五、v0.3.71（2026-10-18）：已发版 ✅（总管跟到 dsh-plugin-update 0.18.25）
+
+- 内容：总管 `dsh-life-pack` 的更新系统依赖 `dsh-plugin-update` `^0.18.24 → ^0.18.25`（`packages/plugin-manager/package.json:55`；刷锁 10 行 3 处 hunk 全属更新包，另六个单品的 pin 6 行）；七个插件 `0.3.70 → 0.3.71`；`base-*`／`skill-*` 不动，仍 `0.3.55`。上游 0.18.25 是**修复集中版**（`#92` 手工命令为空按原因说清、`#174` 最后手段判定与高亮、`#177` 命令可信度、`#204` 宿主内 profile 解析改用 `profileContext`／`desktopProfiles`／`env`），被消费 4 子路径的**导出声明零变化**（3 个值 ＋ 7 个类型逐个 SHA256 相同），实现体更新属预期。
+- 重建读数：`dist/client.js` 1,142,497 → **1,164,745 B**，内嵌 `@0.18.25` 命中 **17**（旧 `@0.18.24` 命中 0）、现版本号 `0.3.71` 注入 1 处、`0.3.70` 命中 0；内嵌模块 14 → **17** 件（新出现 `commands.js`／`last-resort.js`／`manual-absent.js`）。对照读数：`npm pack dsh-life-pack@0.3.70` 出厂件 1,142,497 B、`@0.18.24` 命中 14、14 件——「升版必须重建产物」这条在 0.18.25 上成立。
+- npm 侧：token 直发；`-Probe` → `PROBE-OK`（重发 `base-link-core@0.3.55` 得 E409＝写权限成立）、`TOKEN-OK whoami=feather_wch`；整表 **7 个 `PKG-OK`**，`base-*`／`skill-*` 全 `SKIP 云端已有`，末行 `DONE 已发 7 个`、exit 0。本轮 **可见性延迟明显长于往轮**：发布瞬间 7 个全 `STAGED-PENDING`，约 12 分钟后才逐个可见（`dsh-life-pack` 最后，registry `time.0.3.71` = 2026-10-18T11:34:47Z；期间 `npm view <包>@0.3.71` 一直 E404，属受理后待可见，**不是**发布失败）；复跑 `check-publish --post --only <七包>` → PASS（8 条 `OK:`，含 `OK: dsh-life-pack@0.3.71 registry 带 dsh-plugin-update ^0.18.25`）。
+- GitHub Release：[v0.3.71](https://github.com/FeatherHunter/ilife/releases/tag/v0.3.71) 已立，8 个资产（`dsh-life-pack.tgz` 无版本别名 ＋ 七个 `*-0.3.71.tgz`，资产从 registry 现取：`npm pack <包>@0.3.71`），总管 **1,739,950 B**（比 0.3.70 的 1,723,225 B 多 16,725 B），`isDraft=false`；`releases/latest/download/dsh-life-pack.tgz` → 302 `…/releases/download/v0.3.71/dsh-life-pack.tgz`。
+- 上游条目：**无需任何 PR**（同 §十一／§十三——条目 `ENTRY_KEYS` 无 `version` 字段，市场版本由 `scripts/probe-npm.mjs` 读 registry `dist-tags.latest` 自动跟）。本轮用户未要求 awesome 处理，未做任何仓外动作。
+- 致谢复核：**本轮未重算**（读表停在 §十四 的 `pulls 34 ＋ 真 ISSUE 1259 ⇒ 🌹×1293`），README 致谢数未动，表格无需改动；README 只改版本行（L33 `0.3.70 → 0.3.71`）与更新系统行（L34 `dsh-plugin-update 0.18.24 → 0.18.25`）。
+- 门禁读数：`--pre --only <16 个登记包>` exit 0 PASS ＋ `OK: 更新包：声明 ^0.18.25 且锁已解析 0.18.25（与线上最新一致）`；`--tarball` PASS（`OK: dsh-life-pack dist/client.js 含现版本号 0.3.71（注入新鲜）`）；`--post` PASS；`pnpm install --frozen-lockfile` exit 0；`node node_modules/typescript/bin/tsc -b packages/plugin-manager` exit 0；单测 `407／405／2`（两例 pixel seam 属既有基线红，与本次无关）。不带 `--only` 的全量 `--pre` 有一处**既有红**（`FAIL: 作用域含未知包：base-entries`，见调查 §13 末条），与本次无关。
+- 提交署名：发版提交 `4cbf7e0c`（10 文件 45 增 27 删）的作者／提交者是 `王辰浩 <975559549@qq.com>`——这是当日 19:28「显示名改 `FeatherHunter`」裁定之前落的一笔；按 `.mailmap` 归并显示、不改写历史 SHA（口径见 §十二 与 `docs/agents/提交身份.md`）。本节回填提交署名 `FeatherHunter <975559549@qq.com>`。
+
 ## 四、缺口与未决
 
 1. **README 已补**（原先整仓一份都没有，条目详情页正文会空）：`packages/plugin-manager/README.md` 讲这张卡（详情页优先取子目录那份），仓根 `README.md` 讲整套七个插件（子目录那份缺失时回落）。六个单品将来投稿时各自补一份子目录 README——否则它们的详情页会渲染仓根那份「整套」说明。
