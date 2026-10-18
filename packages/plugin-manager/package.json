@@ -52,7 +52,7 @@
     "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
-    "dsh-plugin-update": "^0.18.25"
+    "dsh-plugin-update": "^0.18.26"
   },
   "devDependencies": {
     "@types/react": "19.2.18",

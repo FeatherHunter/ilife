@@ -132,8 +132,8 @@ importers:
   packages/plugin-manager:
     dependencies:
       dsh-plugin-update:
-        specifier: ^0.18.25
-        version: 0.18.25
+        specifier: ^0.18.26
+        version: 0.18.26
     devDependencies:
       '@types/react':
         specifier: 19.2.18
@@ -670,8 +670,8 @@ packages:
     engines: {node: '>=22'}
     hasBin: true
 
-  dsh-plugin-update@0.18.25:
-    resolution: {integrity: sha512-6VsNRNpBMgkYo558zy2Gg7CLuh5Zmow1uuCy0fovNA7U0stAOAqVW7tMUu/VifWxI2tg9gTdCvZfSUilK9/YZQ==}
+  dsh-plugin-update@0.18.26:
+    resolution: {integrity: sha512-RcjgcdxkdeiQZDuRk1ej9WBSsFGbrICnkp9OMfKnMU3LDmy0tVIb3Atbu6nVyeQSC6hqqWse0JJ061benBrqJg==}
     engines: {node: '>=22'}
 
   dts-resolver@3.0.0:
@@ -1435,7 +1435,7 @@ snapshots:
 
   dsh-log@0.3.4: {}
 
-  dsh-plugin-update@0.18.25:
+  dsh-plugin-update@0.18.26:
     dependencies:
       dsh-log: 0.3.4
 
