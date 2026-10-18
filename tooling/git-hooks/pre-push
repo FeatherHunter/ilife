@@ -7,10 +7,17 @@
 # 实测：cherry-pick 与 am 都 exit 0 落地、作者仍是 muse-spark@local）；`git commit-tree`
 # ＋ `update-ref` 也绕开钩子。这些路子在**离开本机**这一步被这里拦下。
 #
-# 查哪一段：不按 remote 名字判断，只问「目的端现在已经有哪些提交」——把它已有、本机也有的
-# 提交全部排除（`--not`），剩下的才是**这次真会被带过去**的提交。于是推 origin（远端已有
-# 的那部分不查）、推别的远端、以 URL 直推，走的是同一条规则；目的端一个提交都没有（空库）
-# 时排除集为空，整条历史都会被查，并在报文里说明这不是误报。
+# 查哪一段：不按 remote 名字判断，只问「目的端现在已经有哪些提交」——把它已有的 ref tip
+# 全部排除，剩下的才是**这次真会被带过去**的提交。于是推 origin（远端已有的那部分不查）、
+# 推别的远端、以 URL 直推，走的是同一条规则；目的端一个提交都没有（空库）时排除集为空，
+# 整条历史都会被查，并在报文里说明这不是误报。
+#
+# 两条硬要求（2026-10-18 第三轮复核实测踩出来的，别改回去）：
+#   1) 排除集与候选集一律经 stdin／临时文件传递，**不拼进 argv**：目的端 ref 上千条时 argv
+#      会超 Windows 32767 字符上限，`git rev-list` 直接 exit 126（Argument list too long），
+#      旧版把 stderr 丢掉后候选集成了空、checked=0、静默放行了一条旧身份提交（真漏检口）。
+#   2) **读不出范围就拒绝推送**（fail-closed）：ls-remote／rev-list／sort／log 任何一步非 0
+#      都 exit 1。宁可拒绝，也不静默放行。
 #
 # 确需推旧身份提交（例如如实搬运历史）时用 `git push --no-verify`，并在 PR／提交信息里
 # 写明缘由——守卫不认识「例外」，只认身份。
@@ -18,62 +25,88 @@ expected_name='王辰浩'
 expected_email='975559549@qq.com'
 zero='0000000000000000000000000000000000000000'
 want="${expected_name}|${expected_email}|${expected_name}|${expected_email}"
-bad=''
-checked=0
-all_history=0
-list=''
+max_show=20
 remote="$1"
 url="$2"
+all_history=0
 
-# 目的端已有的提交 → 排除集。git 每次推送只调一次 pre-push，这里的 $url 对本次推送的每一行
-# refspec 都成立。远端引用里有本机没有的提交时（历史分叉）它排除不掉，宁可多查不漏查。
-# 注意：本机 git（2.49.0.windows.1）的 ls-remote 不认 `--format=`，只能按默认输出取第一列。
 [ -n "$url" ] || url="$remote"
-excl=''
-for sha in $(git ls-remote --quiet --refs "$url" 2>/dev/null | cut -f1); do
-  if git rev-parse --verify --quiet "${sha}^{commit}" >/dev/null 2>&1; then
-    # 用 `^sha` 排除。别写成重复的 `--not sha`：--not 会把后面所有 revision 的含义翻转，
-    # 直到下一个 --not 为止（git-rev-list 文档），于是隔一个 tip 就变回「包含」，
-    # 把远端其它分支的整条历史拉进检查范围（2026-10-18 实测踩过）。
-    excl="$excl ^$sha"
-  fi
-done
+
+tmpd=$(mktemp -d "${TMPDIR:-/tmp}/git-prepush.XXXXXX" 2>/dev/null) || tmpd="${TMPDIR:-/tmp}/git-prepush.$$"
+mkdir -p "$tmpd" || exit 1
+trap 'rm -rf "$tmpd"' EXIT HUP INT TERM
+cand="$tmpd/cand"; excl="$tmpd/excl"; range="$tmpd/range"; idents="$tmpd/idents"; badf="$tmpd/bad"
+: > "$cand"; : > "$excl"; : > "$badf"
+
+refuse() {
+  {
+    echo "提交身份守卫（tooling/git-hooks/pre-push）：$1"
+    echo "守卫读不出「这次要推哪些提交」，按不放行处理（宁可拒绝，也不静默放行）。"
+    echo "确认目的端可读、本机对象完整后重试；确需绕过：git push --no-verify，并在 PR／提交信息里写明缘由。"
+  } >&2
+  exit 1
+}
+
+# 目的端已有的 ref tip → 排除集（一行一条 `^sha`）。本机没有的 tip 交给 rev-list 的
+# --ignore-missing 忽略（历史分叉时排除不掉，宁可多查不漏查）。
+if ! git ls-remote --quiet --refs "$url" > "$tmpd/tips.raw" 2>"$tmpd/lsremote.err"; then
+  refuse "读不到目的端（${remote}）的 refs：$(head -c 160 "$tmpd/lsremote.err" 2>/dev/null)"
+fi
+cut -f1 "$tmpd/tips.raw" > "$tmpd/tips"
+while IFS= read -r sha; do
+  [ -n "$sha" ] || continue
+  printf '^%s\n' "$sha"
+done < "$tmpd/tips" > "$excl"
 
 while read -r local_ref local_sha remote_ref remote_sha; do
   [ -z "$local_sha" ] && continue
   case "$local_sha" in "$zero") continue ;; esac          # 删远端分支：没有新提交
   if [ "$remote_sha" != "$zero" ] && git cat-file -e "${remote_sha}^{commit}" 2>/dev/null; then
-    range="$remote_sha..$local_sha"                       # 目的端已有这条 sha：只查真正新增的
+    printf '%s\n' "${remote_sha}..${local_sha}" > "$range"   # 目的端已有这条 sha：只查真正新增的
   else
-    range="$local_sha $excl"                              # $excl 为空＝目的端空库：整条历史都查
-    [ -n "$excl" ] || all_history=1
+    cp "$excl" "$range"
+    printf '%s\n' "$local_sha" >> "$range"
+    [ -s "$excl" ] || all_history=1
   fi
-  for c in $(git rev-list $range 2>/dev/null); do
-    list="$list $c"
-  done
+  if ! git rev-list --ignore-missing --stdin < "$range" >> "$cand" 2>"$tmpd/revlist.err"; then
+    refuse "算不出要推的提交范围（git rev-list 失败：$(head -c 160 "$tmpd/revlist.err" 2>/dev/null)）"
+  fi
 done
 
-# 一次问完（逐个 `git log` 在本机约 0.33s／条，353 条要两分钟）
-idents=''
-if [ -n "$list" ]; then
-  idents=$(printf '%s\n' $list | git log --no-walk --stdin --format='%H|%an|%ae|%cn|%ce' 2>/dev/null)
+if ! sort -u "$cand" > "$cand.u" 2>"$tmpd/sort.err"; then
+  refuse "候选提交去重失败（sort 失败：$(head -c 160 "$tmpd/sort.err" 2>/dev/null)）"
 fi
-while IFS= read -r line; do
-  [ -z "$line" ] && continue
-  checked=$((checked + 1))
-  case "$line" in
-    *"$want") ;;
-    *) bad="${bad}  ${line}
-" ;;
-  esac
-done <<EOF
-$idents
-EOF
+if [ -s "$cand" ] && [ ! -s "$cand.u" ]; then
+  refuse "候选提交去重后成了空集（${cand} 非空）"
+fi
 
-if [ -n "$bad" ]; then
+checked=0
+badn=0
+if [ -s "$cand.u" ]; then
+  # 一次问完：逐个 `git log -1 <sha>` 在本机约 0.025s／条，353 条十几秒、上万条就卡住了。
+  if ! git log --no-walk --stdin --format='%H|%an|%ae|%cn|%ce' < "$cand.u" > "$idents" 2>"$tmpd/log.err"; then
+    refuse "读不出这些提交的身份（git log 失败：$(head -c 160 "$tmpd/log.err" 2>/dev/null)）"
+  fi
+  # 结果写临时文件、只累加整数：shell 字符串累加是 O(n²)，--mirror 那种上万条的推送会假卡死。
+  while IFS= read -r line; do
+    [ -z "$line" ] && continue
+    checked=$((checked + 1))
+    case "$line" in
+      *"$want") ;;
+      *) printf '  %s\n' "$line" >> "$badf"; badn=$((badn + 1)) ;;
+    esac
+  done < "$idents"
+fi
+
+if [ "$badn" -gt 0 ]; then
   {
-    echo "提交身份守卫（tooling/git-hooks/pre-push）：下面这些**要推出去**的提交，作者或提交者不是 ${expected_name} <${expected_email}>："
-    printf '%s' "$bad"
+    echo "提交身份守卫（tooling/git-hooks/pre-push）：这次要推出去的 ${badn} 个提交（共查 ${checked} 个）里，下面这些的作者或提交者不是 ${expected_name} <${expected_email}>："
+    if [ "$badn" -le "$max_show" ]; then
+      cat "$badf"
+    else
+      head -n "$max_show" "$badf"
+      echo "  ……（另有 $((badn - max_show)) 条，略）"
+    fi
     if [ "$all_history" = 1 ]; then
       echo "说明：这次的目的端（${remote}）里还没有这些提交，整条历史都会被一起推过去，所以历史里的旧身份提交也一并点名——这不是误报。"
     fi
