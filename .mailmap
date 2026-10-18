@@ -1,4 +1,6 @@
 # 提交身份归并：本仓历史里 muse-spark／ilife-agent 是本机的旧 repo-local 提交身份，同属用户本人。
-# 用途：git shortlog -sne、git blame、GitHub 贡献者归并（GitHub 按 .mailmap 归并作者）。
+# 用途：git shortlog -sne、git blame、git log --format='%aN <%aE>'；只改显示与统计，不动历史 SHA。
+# 注意：它在位时 git shortlog -sne 恒为一行，判不出漏网提交——查漏要按 %ae／%ce（原始字段）分组。
+# GitHub 贡献者页是否按 .mailmap 归并，本仓不承诺，以 gh api 读数为准（见 docs/agents/提交身份.md）。
 王辰浩 <975559549@qq.com> <muse-spark@local>
 王辰浩 <975559549@qq.com> <agent@local>
