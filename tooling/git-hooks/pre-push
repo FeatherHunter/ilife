@@ -7,39 +7,76 @@
 # 实测：cherry-pick 与 am 都 exit 0 落地、作者仍是 muse-spark@local）；`git commit-tree`
 # ＋ `update-ref` 也绕开钩子。这些路子在**离开本机**这一步被这里拦下。
 #
+# 查哪一段：不按 remote 名字判断，只问「目的端现在已经有哪些提交」——把它已有、本机也有的
+# 提交全部排除（`--not`），剩下的才是**这次真会被带过去**的提交。于是推 origin（远端已有
+# 的那部分不查）、推别的远端、以 URL 直推，走的是同一条规则；目的端一个提交都没有（空库）
+# 时排除集为空，整条历史都会被查，并在报文里说明这不是误报。
+#
 # 确需推旧身份提交（例如如实搬运历史）时用 `git push --no-verify`，并在 PR／提交信息里
 # 写明缘由——守卫不认识「例外」，只认身份。
 expected_name='王辰浩'
 expected_email='975559549@qq.com'
 zero='0000000000000000000000000000000000000000'
+want="${expected_name}|${expected_email}|${expected_name}|${expected_email}"
 bad=''
 checked=0
+all_history=0
+list=''
+remote="$1"
+url="$2"
+
+# 目的端已有的提交 → 排除集。git 每次推送只调一次 pre-push，这里的 $url 对本次推送的每一行
+# refspec 都成立。远端引用里有本机没有的提交时（历史分叉）它排除不掉，宁可多查不漏查。
+# 注意：本机 git（2.49.0.windows.1）的 ls-remote 不认 `--format=`，只能按默认输出取第一列。
+[ -n "$url" ] || url="$remote"
+excl=''
+for sha in $(git ls-remote --quiet --refs "$url" 2>/dev/null | cut -f1); do
+  if git rev-parse --verify --quiet "${sha}^{commit}" >/dev/null 2>&1; then
+    # 用 `^sha` 排除。别写成重复的 `--not sha`：--not 会把后面所有 revision 的含义翻转，
+    # 直到下一个 --not 为止（git-rev-list 文档），于是隔一个 tip 就变回「包含」，
+    # 把远端其它分支的整条历史拉进检查范围（2026-10-18 实测踩过）。
+    excl="$excl ^$sha"
+  fi
+done
 
 while read -r local_ref local_sha remote_ref remote_sha; do
   [ -z "$local_sha" ] && continue
   case "$local_sha" in "$zero") continue ;; esac          # 删远端分支：没有新提交
   if [ "$remote_sha" != "$zero" ] && git cat-file -e "${remote_sha}^{commit}" 2>/dev/null; then
-    range="$remote_sha..$local_sha"
-  elif git rev-parse --verify --quiet refs/remotes/origin >/dev/null 2>&1; then
-    range="$local_sha --not --remotes=origin"             # 远端还没有这条 sha：按「origin 上没有的」算
+    range="$remote_sha..$local_sha"                       # 目的端已有这条 sha：只查真正新增的
   else
-    range="$local_sha --not --remotes"
+    range="$local_sha $excl"                              # $excl 为空＝目的端空库：整条历史都查
+    [ -n "$excl" ] || all_history=1
   fi
   for c in $(git rev-list $range 2>/dev/null); do
-    ident=$(git log -1 --format='%an|%ae|%cn|%ce' "$c" 2>/dev/null)
-    checked=$((checked + 1))
-    case "$ident" in
-      "${expected_name}|${expected_email}|${expected_name}|${expected_email}") ;;
-      *) bad="${bad}  ${c}  ${ident}
-" ;;
-    esac
+    list="$list $c"
   done
 done
+
+# 一次问完（逐个 `git log` 在本机约 0.33s／条，353 条要两分钟）
+idents=''
+if [ -n "$list" ]; then
+  idents=$(printf '%s\n' $list | git log --no-walk --stdin --format='%H|%an|%ae|%cn|%ce' 2>/dev/null)
+fi
+while IFS= read -r line; do
+  [ -z "$line" ] && continue
+  checked=$((checked + 1))
+  case "$line" in
+    *"$want") ;;
+    *) bad="${bad}  ${line}
+" ;;
+  esac
+done <<EOF
+$idents
+EOF
 
 if [ -n "$bad" ]; then
   {
     echo "提交身份守卫（tooling/git-hooks/pre-push）：下面这些**要推出去**的提交，作者或提交者不是 ${expected_name} <${expected_email}>："
     printf '%s' "$bad"
+    if [ "$all_history" = 1 ]; then
+      echo "说明：这次的目的端（${remote}）里还没有这些提交，整条历史都会被一起推过去，所以历史里的旧身份提交也一并点名——这不是误报。"
+    fi
     echo "为什么会被漏到这一步：cherry-pick／rebase／am 保留原作者身份，且它们都不跑 commit-msg 守卫（本探针实测）。"
     echo "注意：这一层查的是「整条推送范围」，把末端的提交改成本人并不能洗掉下面历史里的旧身份提交。"
     echo "修法（两种都实测有效）："
