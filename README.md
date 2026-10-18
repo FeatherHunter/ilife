@@ -61,3 +61,9 @@ pnpm test           # 全仓测试
 | 贡献者 | 🌹 |
 | --- | --- |
 | [FeatherHunter](https://github.com/FeatherHunter) | 🌹×1293 |
+
+## 交流群
+
+DSH 插件交流群（飞书扫码加入）：
+
+![DSH插件交流群](assets/飞书-DSH插件交流群.png)
