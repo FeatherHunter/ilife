@@ -1,0 +1,4 @@
+# 提交身份归并：本仓历史里 muse-spark／ilife-agent 是本机的旧 repo-local 提交身份，同属用户本人。
+# 用途：git shortlog -sne、git blame、GitHub 贡献者归并（GitHub 按 .mailmap 归并作者）。
+王辰浩 <975559549@qq.com> <muse-spark@local>
+王辰浩 <975559549@qq.com> <agent@local>

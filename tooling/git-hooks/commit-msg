@@ -1,0 +1,31 @@
+#!/bin/sh
+# 提交身份守卫：本仓所有提交的作者与提交者只许是用户本人 王辰浩 <975559549@qq.com>。
+# 身份不对即拒绝提交（exit 1）；确需例外时用 git commit --no-verify，并在提交信息里写明缘由。
+expected_name='王辰浩'
+expected_email='975559549@qq.com'
+bad=0
+for who in AUTHOR COMMITTER; do
+  ident=$(git var "GIT_${who}_IDENT" 2>/dev/null)
+  if [ -z "$ident" ]; then
+    echo "提交身份守卫：读不到 ${who} 身份（git var GIT_${who}_IDENT 失败）" >&2
+    exit 1
+  fi
+  case "$ident" in
+    "${expected_name} <${expected_email}>"*) ;;
+    *)
+      bad=1
+      echo "提交身份守卫：${who} 身份 = ${ident}" >&2
+      ;;
+  esac
+done
+if [ "$bad" -ne 0 ]; then
+  cat >&2 <<'MSG'
+提交身份守卫（tooling/git-hooks/commit-msg）：本仓提交的作者与提交者只许是 王辰浩 <975559549@qq.com>。
+修法：git config --local user.name "$(git config --global user.name)"
+      git config --local user.email "$(git config --global user.email)"
+      （照抄全局值，别手敲中文——Windows 控制台会把参数转码成别的字节；同时确认环境里没有
+        GIT_AUTHOR_NAME／GIT_AUTHOR_EMAIL／GIT_COMMITTER_NAME／GIT_COMMITTER_EMAIL 覆盖，也没带 --author）
+MSG
+  exit 1
+fi
+exit 0

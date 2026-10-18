@@ -72,6 +72,10 @@ Default five canonical roles, label string equals role name. See `docs/agents/tr
 
 多席各在自己的 worktree 里开发（主目录常年 `master`，只收 PR），**禁止**切分支（`git switch`／`git checkout <分支>`）、`git reset`、`git stash`、`git clean`、`git restore .`、`--amend`／`rebase`／`push --force*`——它们会把别席已提交或在途的产出孤儿化（2026-09-15 实测发生过两次）。**只许** `git add <自己声明的路径>` ＋ `git commit -m "<中文信息>" -- <路径>`，且提交前用 `git diff --cached --name-only` 复核暂存区只含自己的件；同分支推送先拉后推。编译入口写死 `node node_modules/typescript/bin/tsc -b <包>`（本机 `node_modules\.bin` 不存在，`npx tsc` 是假出口、不编译却可能出假绿）。细则见 `docs/subagent-concurrency-protocol.md` §2–§3。
 
+### 提交身份
+
+本仓所有提交的**作者与提交者**都只许是用户本人 `王辰浩 <975559549@qq.com>`：不许在本仓留 repo-local `user.name`／`user.email` 覆盖，不许用 `--author` 或 `GIT_AUTHOR_*`／`GIT_COMMITTER_*` 改身份。守卫是随仓的 `tooling/git-hooks/commit-msg`（挂在本仓 `core.hooksPath`，对本仓全部 worktree 生效），身份不对即拒绝提交；唯一例外口子是 `git commit --no-verify`，用了要在提交信息里写明缘由。历史里的旧身份（`muse-spark@local`／`agent@local`）由 `.mailmap` 归并、不改写历史 SHA。读数、复查命令与「历史为什么不动」见 `docs/agents/提交身份.md`。
+
 ### CI
 
 为提高效率，本项目暂时屏蔽 CI：PR 合并与发版不等 CI 结果，待未来启动。合并前仍以本地门禁为准（构建、`publish:pre` 等）；`pnpm test` 全量结果只与主线基线比对，不单独拦路。
