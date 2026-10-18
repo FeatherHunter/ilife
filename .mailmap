@@ -1,6 +1,9 @@
-# 提交身份归并：本仓历史里 muse-spark／ilife-agent 是本机的旧 repo-local 提交身份，同属用户本人。
+# 提交身份归并：本仓历史里的提交身份同属用户本人，统一归并显示到 FeatherHunter <975559549@qq.com>。
 # 用途：git shortlog -sne、git blame、git log --format='%aN <%aE>'；只改显示与统计，不动历史 SHA。
+# 2026-10-18 用户裁定（逐字）：「不要写王辰浩 写 FeatherHunter」——此后本仓提交的显示名用 FeatherHunter；
+# 历史里同一邮箱下的旧显示名 王辰浩，以及两个本机旧身份 muse-spark@local／agent@local，都在此归并。
 # 注意：它在位时 git shortlog -sne 恒为一行，判不出漏网提交——查漏要按 %ae／%ce（原始字段）分组。
 # GitHub 贡献者页是否按 .mailmap 归并，本仓不承诺，以 gh api 读数为准（见 docs/agents/提交身份.md）。
-王辰浩 <975559549@qq.com> <muse-spark@local>
-王辰浩 <975559549@qq.com> <agent@local>
+FeatherHunter <975559549@qq.com> 王辰浩 <975559549@qq.com>
+FeatherHunter <975559549@qq.com> <muse-spark@local>
+FeatherHunter <975559549@qq.com> <agent@local>

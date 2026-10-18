@@ -74,7 +74,7 @@ Default five canonical roles, label string equals role name. See `docs/agents/tr
 
 ### 提交身份
 
-本仓所有提交的**作者与提交者**都只许是用户本人 `王辰浩 <975559549@qq.com>`：不许在本仓留 repo-local `user.name`／`user.email` 覆盖，不许用 `--author` 或 `GIT_AUTHOR_*`／`GIT_COMMITTER_*` 改身份。守卫分两层，都在 `tooling/git-hooks/` 随仓走（挂在本仓 `core.hooksPath`，对本仓全部 worktree 生效）：**提交时** `commit-msg` 身份不对就拒绝生成提交对象；**推送时** `pre-push` 再查一遍这次要推出去的全部新提交——`cherry-pick`／`rebase`／`am`（保留原作者身份、且不跑 `commit-msg`）与 `commit-tree` 直造对象都漏不过它。两层都能被 `--no-verify` 关掉（`git -c core.hooksPath= …` 亦然），用了要在提交信息里写明缘由。推送侧对「读不出范围」是 fail-closed：`ls-remote`／`rev-list`／`sort`／`log` 任何一步失败都拒绝推送（宁可拒绝，也不静默放行）。历史里的旧身份（`muse-spark@local`／`agent@local`）由 `.mailmap` 归并、不改写历史 SHA。读数、绕过矩阵、真开口清单与复查命令见 `docs/agents/提交身份.md`。
+本仓所有提交的**作者与提交者**都只许是用户本人 `FeatherHunter <975559549@qq.com>`：本仓 `user.name`／`user.email` 一律是这个署名（**不照抄 `--global`**——全局仍是 `王辰浩`），不许用 `--author` 或 `GIT_AUTHOR_*`／`GIT_COMMITTER_*` 改身份。守卫分两层，都在 `tooling/git-hooks/` 随仓走（挂在本仓 `core.hooksPath`，对本仓全部 worktree 生效）：**提交时** `commit-msg` 身份不对就拒绝生成提交对象；**推送时** `pre-push` 再查一遍这次要推出去的全部新提交——`cherry-pick`／`rebase`／`am`（保留原作者身份、且不跑 `commit-msg`）与 `commit-tree` 直造对象都漏不过它。两层都能被 `--no-verify` 关掉（`git -c core.hooksPath= …` 亦然），用了要在提交信息里写明缘由。推送侧对「读不出范围」是 fail-closed：`ls-remote`／`rev-list`／`sort`／`log` 任何一步失败都拒绝推送（宁可拒绝，也不静默放行）。历史里的旧署名（`王辰浩`，同一邮箱）与旧身份（`muse-spark@local`／`agent@local`）由 `.mailmap` 归并、不改写历史 SHA（严格口径下它们仍判不合规——推给还没有这些提交的远端时会被整条点名）。读数、绕过矩阵、真开口清单与复查命令见 `docs/agents/提交身份.md`。
 
 ### CI
 

@@ -1,6 +1,10 @@
 #!/bin/sh
 # 提交身份守卫（推送侧）：本仓推出去的每个新提交，作者与提交者都只许是用户本人
-# 王辰浩 <975559549@qq.com>。
+# FeatherHunter <975559549@qq.com>。
+#
+# 显示名 2026-10-18 由「王辰浩」（同一邮箱）改成 FeatherHunter——历史里那个旧显示名的提交
+# 按本钩子的严格口径（名+邮箱）判不合规，所以把旧历史推到「目的端还没有它们」的远端时会
+# 被整条点名；推到 origin 这类远端已有的部分不查，日常推送不受影响。
 #
 # 为什么还要这一层：commit-msg 只在 `git commit` 这条路上跑。`git cherry-pick`／
 # `git rebase`／`git am` 会**保留原提交的作者**，而且它们不跑 commit-msg（2026-10-18
@@ -21,7 +25,7 @@
 #
 # 确需推旧身份提交（例如如实搬运历史）时用 `git push --no-verify`，并在 PR／提交信息里
 # 写明缘由——守卫不认识「例外」，只认身份。
-expected_name='王辰浩'
+expected_name='FeatherHunter'
 expected_email='975559549@qq.com'
 zero='0000000000000000000000000000000000000000'
 want="${expected_name}|${expected_email}|${expected_name}|${expected_email}"
