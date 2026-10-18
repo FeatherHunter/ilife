@@ -127,7 +127,7 @@
 
 - 命令：`git log --format='%an|%ae' | Group-Object | Sort-Object Count -Descending`；`git config user.name`／`user.email`（repo-local 与 `--global` 对照）；`gh api 'repos/FeatherHunter/ilife/contributors?anon=1&per_page=100'`。无 `.mailmap`。
 - 结论：全仓提交只出自**一个人**（用户本人）与两个本机提交身份；GitHub 把后两者列成匿名 contributor 只是因为 `@local` 邮箱没关联账号。⇒ 致谢表只认 `FeatherHunter`（🌹×1293），`muse-spark`／`ilife-agent` 两行删除，今后不再把本机提交身份当贡献者。
-- 附注（2026-10-18 当天已办）：上表「现值」是当日快照。用户同日再裁定（逐字）：「本项目所有提交代码提交者都需要是我本人。」据此本仓 repo-local `user.name`／`user.email` 已由 `muse-spark`／`muse-spark@local` 改成用户本人（值逐字节照抄 `--global`），并加了随仓的身份守卫 `tooling/git-hooks/commit-msg`（挂在本仓 `core.hooksPath`，对本仓全部 worktree 生效）与 `.mailmap` 归并；**历史 SHA 一字未改**（全仓仍 367 条作者／391 条提交者非本人）。口径、读数与复查命令见 `docs/agents/提交身份.md`。
+- 附注（2026-10-18 当天已办）：上表「现值」是当日快照。用户同日再裁定（逐字）：「本项目所有提交代码提交者都需要是我本人。」据此本仓 repo-local `user.name`／`user.email` 已由 `muse-spark`／`muse-spark@local` 改成用户本人（值逐字节照抄 `--global`），并加了随仓的两道身份守卫 `tooling/git-hooks/commit-msg`（提交时）与 `tooling/git-hooks/pre-push`（推送时，按「目的端还没有的提交」逐个查），外加 `.mailmap` 归并；挂在本仓 `core.hooksPath`，对本仓全部 worktree 生效。**历史 SHA 一字未改**（全仓仍 367 条作者／391 条提交者非本人，`master` 上 328／352，as-of `fa6498cd`）。口径、读数、绕过矩阵与复查命令见 `docs/agents/提交身份.md`。
 
 ## 十三、v0.3.69（2026-10-18）：已发版 ✅
 
