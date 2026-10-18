@@ -129,6 +129,16 @@
 - 结论：全仓提交只出自**一个人**（用户本人）与两个本机提交身份；GitHub 把后两者列成匿名 contributor 只是因为 `@local` 邮箱没关联账号。⇒ 致谢表只认 `FeatherHunter`（🌹×1293），`muse-spark`／`ilife-agent` 两行删除，今后不再把本机提交身份当贡献者。
 - 附注：本仓 repo-local `user.name=muse-spark` 是**当前**的工作副本身份（本会话所有提交都落在这个身份上）；全局身份是用户本人。是否把 repo-local 也改成用户身份，由用户决定。
 
+## 十三、v0.3.69（2026-10-18）：已发版 ✅
+
+- 内容：**只动总管**——`packages/plugin-manager/package.json:55` 的 `dsh-plugin-update` 由 `^0.18.11` 抬到 `^0.18.24`（提交 `ba0856a5`，随锁 `pnpm-lock.yaml` 三处）；七个插件 `0.3.68 → 0.3.69`、六个单品 `dsh-life-pack` pin 同步 `0.3.69`（提交 `fa9062af`，8 文件 19 增 19 删）；`base-*`／`skill-*` 内容未变，仍 `0.3.55`。
+- 重建读数：`dist/client.js` 1,142,497 B，内嵌 `@0.18.24` 命中 14、`@0.18.11` 命中 0；从 `npm pack` 的出厂件解包复核同读数（`@0.18.24=14`／`@0.18.11=0`，deps `^0.18.24`）——`dist` 不入库但随包发布，升版必须重建。
+- npm 侧：token 直发；`-Probe` → `PROBE-OK 写权限成立`（重发 `base-link-core@0.3.55` 得 E409）、`TOKEN-OK whoami=feather_wch`；整表 **7 个 `PKG-OK`**（`dsh-life-pack@0.3.69` ＋ 六个单品），`base-*`／`skill-*` 全 `SKIP 云端已有`，发布瞬间 `STAGED-PENDING 7`（可见 0/7，复制延迟），末行 `DONE 已发 7 个`、exit 0；`check-publish --post` PASS（含 `OK: dsh-life-pack@0.3.69 registry 带 dsh-plugin-update ^0.18.24`）；`npm view <包> version`／`dist-tags.latest --registry=https://registry.npmjs.org/` 七条读回全中。
+- GitHub Release：[v0.3.69](https://github.com/FeatherHunter/ilife/releases/tag/v0.3.69) 已立，8 个资产（`dsh-life-pack.tgz` 无版本别名 ＋ 七个 `*-0.3.69.tgz`），`isDraft=false`。
+- 上游条目：**无需任何 PR**（同 §十一——条目 `ENTRY_KEYS` 无 `version` 字段，市场版本由 `scripts/probe-npm.mjs` 读 registry `dist-tags.latest` 自动跟）。本轮用户未要求 awesome 处理，未做任何仓外动作。
+- 致谢复核（readme-writer 独立重算）：`pulls?state=all` **34**（最新 #1292，2026-10-16T04:36:51Z）＋ `issues?state=all` **1293** 减 34 条 PR ＝ 真 ISSUE **1259**（最新 #1293，2026-10-17T15:34:37Z）＋ discussions `totalCount=0` ⇒ FeatherHunter 仍 **🌹×1293**，**表格无需改动**（README 本轮只改版本行与更新系统行两行）。
+- 门禁读数：`--pre`／`--post`／`--tarball` 全 PASS；`pnpm install --frozen-lockfile` exit 0；单测 `407／405／2`（两例 pixel seam 属既有基线红，与本次无关）。
+
 ## 四、缺口与未决
 
 1. **README 已补**（原先整仓一份都没有，条目详情页正文会空）：`packages/plugin-manager/README.md` 讲这张卡（详情页优先取子目录那份），仓根 `README.md` 讲整套七个插件（子目录那份缺失时回落）。六个单品将来投稿时各自补一份子目录 README——否则它们的详情页会渲染仓根那份「整套」说明。
