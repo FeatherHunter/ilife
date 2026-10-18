@@ -139,6 +139,16 @@
 - 致谢复核（readme-writer 独立重算）：`pulls?state=all` **34**（最新 #1292，2026-10-16T04:36:51Z）＋ `issues?state=all` **1293** 减 34 条 PR ＝ 真 ISSUE **1259**（最新 #1293，2026-10-17T15:34:37Z）＋ discussions `totalCount=0` ⇒ FeatherHunter 仍 **🌹×1293**，**表格无需改动**（README 本轮只改版本行与更新系统行两行）。
 - 门禁读数：`--pre`／`--post`／`--tarball` 全 PASS；`pnpm install --frozen-lockfile` exit 0；单测 `407／405／2`（两例 pixel seam 属既有基线红，与本次无关）。
 
+## 十四、v0.3.70（2026-10-18）：已发版 ✅（版本号进位，供升级测试）
+
+- 内容：**只进位版本号，代码与 v0.3.69 相同**——`0806a218`（0.3.69 发版提交）之后 `packages/` 零改动；七个插件 `0.3.69 → 0.3.70`、六个单品 `dsh-life-pack` pin 同步（提交 `2224ea8c`，8 文件 19 增 19 删）；`base-*`／`skill-*` 不动，仍 `0.3.55`；总管依赖仍 `dsh-plugin-update ^0.18.24`。用途：用户在插件市场做一次「旧版本 → 新版本」的升级测试。
+- 重建读数：`dist/client.js` 1,142,497 B，内嵌 `@0.18.24` 命中 14、`@0.18.11` 命中 0、现版本号 `0.3.70` 注入 1 处；从 `npm pack` 的出厂件解包复核同读数（deps `^0.18.24`）。
+- npm 侧：token 直发；`-Probe` → `PROBE-OK 写权限成立`（重发 `base-link-core@0.3.55` 得 E409）、`TOKEN-OK whoami=feather_wch`；整表 **7 个 `PKG-OK`**（`dsh-life-pack@0.3.70` ＋ 六个单品），`base-*`／`skill-*` 全 `SKIP 云端已有`，发布瞬间 `STAGED-PENDING 7`，末行 `DONE 已发 7 个`、exit 0；`check-publish --post` PASS（含 `OK: dsh-life-pack@0.3.70 registry 带 dsh-plugin-update ^0.18.24`）；`npm view <包> version`／`dist-tags.latest --registry=https://registry.npmjs.org/` 七条读回全中。
+- GitHub Release：[v0.3.70](https://github.com/FeatherHunter/ilife/releases/tag/v0.3.70) 已立，8 个资产（`dsh-life-pack.tgz` 无版本别名 ＋ 七个 `*-0.3.70.tgz`），`isDraft=false`；`releases/latest/download/dsh-life-pack.tgz` → 302 `…/releases/download/v0.3.70/dsh-life-pack.tgz`。
+- 上游条目：**无需任何 PR**（同 §十一／§十三——条目 `ENTRY_KEYS` 无 `version` 字段，市场版本由 `scripts/probe-npm.mjs` 读 registry `dist-tags.latest` 自动跟）。本轮用户未要求 awesome 处理，未做任何仓外动作。
+- 致谢复核（readme-writer 独立重算）：`pulls?state=all` **34**（最新 #1292，2026-10-16T04:36:51Z）＋ 真 ISSUE **1259**（最新 #1293，2026-10-17T15:34:37Z）＋ discussions `totalCount=0` ⇒ FeatherHunter 仍 **🌹×1293**，**表格无需改动**；README 本轮只改版本行（L33 `0.3.69 → 0.3.70`），L34 更新系统行复核后未动。
+- 门禁读数：`--pre`／`--post`／`--tarball` 全 PASS；`--fresh-tmp` 在 `npm_config_registry=https://registry.npmjs.org/` 覆盖下 PASS（不带覆盖会因本机默认镜像 npmmirror 落后而 `ETARGET`）；`pnpm install --frozen-lockfile` exit 0；单测 `407／405／2`（两例 pixel seam 属既有基线红，与本次无关）。
+
 ## 四、缺口与未决
 
 1. **README 已补**（原先整仓一份都没有，条目详情页正文会空）：`packages/plugin-manager/README.md` 讲这张卡（详情页优先取子目录那份），仓根 `README.md` 讲整套七个插件（子目录那份缺失时回落）。六个单品将来投稿时各自补一份子目录 README——否则它们的详情页会渲染仓根那份「整套」说明。
