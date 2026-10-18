@@ -64,6 +64,10 @@ pnpm test           # 全仓测试
 
 ## 交流群
 
+<div align="center">
+
 DSH 插件交流群（飞书扫码加入）：
 
-![DSH插件交流群](assets/飞书-DSH插件交流群.png)
+<img src="assets/飞书-DSH插件交流群.png" alt="DSH插件交流群" width="300" />
+
+</div>
