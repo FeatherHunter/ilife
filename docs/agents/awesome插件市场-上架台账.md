@@ -171,6 +171,17 @@
 - 门禁读数：`--pre --only <16 个登记包>` exit 0 PASS ＋ `OK: 更新包：声明 ^0.18.26 且锁已解析 0.18.26（与线上最新一致）`；`--tarball` PASS（`OK: dsh-life-pack dist/client.js 含现版本号 0.3.72（注入新鲜）`）；`--post` PASS；`pnpm install --frozen-lockfile` exit 0；`node node_modules/typescript/bin/tsc -b packages/plugin-manager` exit 0；单测 `407／102／405／2`（两例 pixel seam 属既有基线红，与本次无关）。独立复核（gate-verifier）`VERIFY_VERDICT=PASS`：把 life-pack 产物临时换成线上 0.3.71 出厂件后 `--tarball` 转红（`FAIL: dsh-life-pack dist/client.js 不含现版本号 0.3.72（构建产物过期：先跑 npm run build 再打包）`）、字节还原后回绿，报告 `.scratch/verify0372/复核.md`。
 - 提交署名：发版提交 `e1227f8f`（9 文件 21 增 21 删）作者／提交者是 `FeatherHunter <975559549@qq.com>`；本节回填另起一笔，署名同。
 
+## 十七、v0.3.73（2026-10-19）：已发版 ✅（总管跟到 dsh-plugin-update 0.18.27，带上 #216 批量面板三处显示修复）
+
+- 内容：总管 `dsh-life-pack` 的更新系统依赖 `dsh-plugin-update` `^0.18.26 → ^0.18.27`（`packages/plugin-manager/package.json`），七个插件 `0.3.72 → 0.3.73`；六个单品的 `dsh-life-pack` 精确 pin 同步 6 行；`base-*`／`skill-*` 不动，仍 `0.3.55`。上游 0.18.27 的 **#216** 对外变化：①批量检查把「已装好只差重启」判 `done{restartRequired}`，不再误报「已是最新」；②版本列不采信占位 `0.0.0`（缺席/占位回退磁盘版）；③档案卷主题补 `--dsh-update-button-bg`、透明底规则排除主按钮/在装按钮，在装按钮加 spinner＋脉冲＋`aria-busy`（reduced-motion 关动效）；④日志新增 `update.batch.run.start` 与 `update.install.retry`，`summary` 改活跃时长＋`sessionAgeMs`/`resumed`，`check.done` 加 `pendingRestart`/`jobState`，`degraded` 带被丢事件名；check-expired 首次提交失败保留（ADR-0004 §3 设计内），只补 retry 行。`@0.18.27` 出厂件命中 19、旧 `@0.18.26` 命中 0。
+- 重建读数：工作区 `dist/client.js` 1 182 856 → **1 194 642 B**，现版本号 `0.3.73` 注入 1 处；#216 标记齐（busy 按钮/动画/档案卷变量/占位过滤）。
+- npm 侧：token 直发（`tooling/wizard-publish-token.ps1 -Auto`）：`TOKEN env=NODE_AUTH_TOKEN`、7 个 `PKG-OK`、`base-*`／`skill-*` 全 `SKIP 云端已有`、末行 `DONE 已发 7 个`、**exit 0**；7 个全 `STAGED-PENDING`（STAGE 4 单次采样 0/7），约 1 分钟后 `check-publish --post --only <七包>` **PASS**（含 `OK: dsh-life-pack@0.3.73 registry 带 dsh-plugin-update ^0.18.27`）。
+- GitHub Release：[v0.3.73](https://github.com/FeatherHunter/ilife/releases/tag/v0.3.73) 已立，8 个资产（`dsh-life-pack.tgz` 无版本别名 ＋ 七个 `*-0.3.73.tgz`，资产从 registry 现取 `npm pack <包>@0.3.73`），总管 **1 763 167 B**（比 0.3.72 的 1 755 012 B 多 8 155 B），`isDraft=false`；`releases/latest/download/dsh-life-pack.tgz` → 302。
+- 门禁读数：`--pre --only <16 个登记包>` PASS（`OK: 更新包：声明 ^0.18.27 且锁已解析 0.18.27`）、`--tarball` PASS、`--post` PASS、`--fresh-tmp` PASS（发版前 1 红属单 pin 未上 registry 的顺序问题，发布后绿）；`pnpm install --frozen-lockfile` exit 0；`tsc -b packages/plugin-manager` exit 0；单测 `407／102／405／2`（两例 pixel seam 属既有基线红，与本次无关）；`plugin-p10-boundaries` 的「总管只导航」红为 #1239/#1240 手帐书壳 `renderPage` 引入的既有基线（本次发版 diff 零 `src/` 文件），如实记账。
+- 上游条目：**无需任何 PR**（同 §十六——条目 `ENTRY_KEYS` 无 `version` 字段，市场版本由 `scripts/probe-npm.mjs` 读 registry `dist-tags.latest` 自动跟）。本轮用户未要求 awesome 处理，未做任何仓外动作。
+- 致谢复核：**本轮未重算**（读表仍停在 §十四 的读数）；README 只改版本行 L33（`0.3.72 → 0.3.73`）与更新系统行 L34（`dsh-plugin-update 0.18.26 → 0.18.27`）。
+- 提交署名：发版提交 `fae1c6c2`（9 文件 27 增 27 删）作者／提交者是 `FeatherHunter <975559549@qq.com>`；本节回填另起一笔，署名同。
+
 ## 四、缺口与未决
 
 1. **README 已补**（原先整仓一份都没有，条目详情页正文会空）：`packages/plugin-manager/README.md` 讲这张卡（详情页优先取子目录那份），仓根 `README.md` 讲整套七个插件（子目录那份缺失时回落）。六个单品将来投稿时各自补一份子目录 README——否则它们的详情页会渲染仓根那份「整套」说明。
