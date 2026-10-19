@@ -56,7 +56,7 @@ export async function resolveProfileDir(): Promise<{ dir: string; name: string }
 
 let cached: Promise<MultiHostUpdate> | null = null;
 
-/** 建批量宿主能力（单例）：prefix life，selfKey 排最后，失败继续下一家。 */
+/** 建批量宿主能力（单例）：prefix life，本体排第一行（#219），失败继续下一家。 */
 export function getBatchHost(ctx: unknown): Promise<MultiHostUpdate> {
   if (cached !== null) return cached;
   cached = buildBatchHost(ctx);
@@ -80,6 +80,8 @@ async function buildBatchHost(ctx: unknown): Promise<MultiHostUpdate> {
       prefix: BATCH_PREFIX,
       targets,
       selfKey: MANAGER_TARGET_KEY,
+      // #219：爱生活本体作为批量面板第一行（上游 orderTargets 支持 selfOrder，默认仍排最后）。
+      selfOrder: 'first',
       stopOnFailure: false,
     },
   );

@@ -28,11 +28,11 @@ describe('1170 七目标表', () => {
 });
 
 describe('1170 批量宿主', () => {
-  it('targets 照抄七前缀，selfKey 排最后', async () => {
+  it('targets 照抄七前缀，本体排第一行（#219）', async () => {
     resetBatchHostForTests();
     const batch = await getBatchHost({});
     assert.equal(batch.targets.length, 7);
-    assert.equal(batch.targets[batch.targets.length - 1].key, 'life-pack');
+    assert.equal(batch.targets[0].key, 'life-pack', '本体占第一行（#219）');
     assert.deepEqual(buildBatchTargets().map((t) => t.prefix), UPDATE_TARGETS.map((t) => t.phonePrefix));
     assert.equal(batch.phoneNames.status, 'life.batchStatus');
     assert.equal(batch.phoneNames.check, 'life.batchCheck');

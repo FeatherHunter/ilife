@@ -30,8 +30,8 @@ dsh plugin add dsh-life-pack dsh-chef             # 再装一家，照同样的�
 
 ## 版本
 
-- 七个插件当前版本：`0.3.73`（2026-10-19，npm `latest`）
-- 更新系统：`dsh-plugin-update 0.18.27`（总管以 `^0.18.27` 依赖引入；传递带入 `dsh-log 0.3.4`）
+- 七个插件当前版本：`0.3.74`（2026-10-19，npm `latest`）
+- 更新系统：`dsh-plugin-update 0.18.30`（总管以 `^0.18.30` 依赖引入；传递带入 `dsh-log 0.3.4`）
 - 升级：插件市场里点升级，或把上面那条安装命令重跑一遍
 - 更新说明：[GitHub Releases](https://github.com/FeatherHunter/ilife/releases)
 
