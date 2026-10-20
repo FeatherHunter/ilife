@@ -44,7 +44,7 @@ importers:
   packages/plugin-bill-ilife:
     dependencies:
       dsh-life-pack:
-        specifier: 0.3.80
+        specifier: 0.3.81
         version: link:../plugin-manager
       skill-bill:
         specifier: 0.3.55
@@ -66,7 +66,7 @@ importers:
   packages/plugin-calorie:
     dependencies:
       dsh-life-pack:
-        specifier: 0.3.80
+        specifier: 0.3.81
         version: link:../plugin-manager
       skill-calorie:
         specifier: 0.3.55
@@ -88,7 +88,7 @@ importers:
   packages/plugin-chef:
     dependencies:
       dsh-life-pack:
-        specifier: 0.3.80
+        specifier: 0.3.81
         version: link:../plugin-manager
       skill-chef:
         specifier: 0.3.55
@@ -110,7 +110,7 @@ importers:
   packages/plugin-home-ilife:
     dependencies:
       dsh-life-pack:
-        specifier: 0.3.80
+        specifier: 0.3.81
         version: link:../plugin-manager
       skill-home:
         specifier: 0.3.55
@@ -132,8 +132,8 @@ importers:
   packages/plugin-manager:
     dependencies:
       dsh-plugin-update:
-        specifier: ^0.18.35
-        version: 0.18.35
+        specifier: ^0.18.36
+        version: 0.18.36
     devDependencies:
       '@types/react':
         specifier: 19.2.18
@@ -151,7 +151,7 @@ importers:
   packages/plugin-memo-ilife:
     dependencies:
       dsh-life-pack:
-        specifier: 0.3.80
+        specifier: 0.3.81
         version: link:../plugin-manager
       skill-memo-ilife:
         specifier: 0.3.55
@@ -173,7 +173,7 @@ importers:
   packages/plugin-schedule-ilife:
     dependencies:
       dsh-life-pack:
-        specifier: 0.3.80
+        specifier: 0.3.81
         version: link:../plugin-manager
       skill-schedule:
         specifier: 0.3.55
@@ -670,8 +670,8 @@ packages:
     engines: {node: '>=22'}
     hasBin: true
 
-  dsh-plugin-update@0.18.35:
-    resolution: {integrity: sha512-5wELOIU6G3FSjdfjVmsm2nigf1QwhHSe0MvULEeyJ5M+4U8lIjfDaYfdHc9chOFNNwswoYtX3tJ7pB+BA9EA1Q==}
+  dsh-plugin-update@0.18.36:
+    resolution: {integrity: sha512-0Ww2WrfQDC4UFlG0JLH54Lml4gMbpAuxs+Zb100nCaYJdOv0ayrankYcdVAvSRQ4O5O0/9FpuB6SkyRmYi1KuA==}
     engines: {node: '>=22'}
 
   dts-resolver@3.0.0:
@@ -1435,7 +1435,7 @@ snapshots:
 
   dsh-log@0.3.4: {}
 
-  dsh-plugin-update@0.18.35:
+  dsh-plugin-update@0.18.36:
     dependencies:
       dsh-log: 0.3.4
 
