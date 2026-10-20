@@ -54,7 +54,15 @@ Default five canonical roles, label string equals role name. See `docs/agents/tr
 
 ### 发版（npm 发布）
 
-要发公共层／技能／插件的新版本时走 `tooling/wizard-publish.ps1`：按「**云端已有该版本就跳过；版本不一样才发布**」逐个处理现场发现的包（公共层 ＋ 全部技能 ＋ 全部插件），顺序依赖先行。认证一律用预置 token 做非交互发布（正式版本只用 token 发；不走 web 登录、不弹浏览器 2FA——交互式 2FA 发布形式已废弃）；Agent 只轮询 `.scratch\publish-log.txt` ＋ registry 复查为准，不靠口述。失败或中断后**直接重跑即可**，已发布的会被跳过。回执关键字：`TODO`／`SKIP`／`NEED-HUMAN`／`PKG-BEGIN`／`PKG-OK`／`PKG-FAIL`／`DONE`。逐包驱动用 `-Package <包名>`，选几个用 `-Only a,b,c`。**Agent 不帮用户安装**：装机（装哪个版本、装进哪个 profile）由用户自己做。
+**爱生活七包整体换版发版**走 `tooling/release.ps1`（2026-10-20 起；把换版＋安装/构建断言＋四道门禁＋commit/tag/push＋token 发布＋post 校验＋pack/gh release 固化成 9 步）：默认**计划模式只读**，加 `-Yes` 才执行；`-Rehearse` 只在临时目录跑换版转换、不碰仓库。换版前先把各包要发布的内容写进各自的 CHANGELOG／代码：
+
+```powershell
+pwsh -NoProfile -File tooling\release.ps1 -Version 0.3.82           # 计划（只读）
+pwsh -NoProfile -File tooling\release.ps1 -Version 0.3.82 -Rehearse # 预演换版转换（不碰仓库）
+pwsh -NoProfile -File tooling\release.ps1 -Version 0.3.82 -Yes      # 全流程
+```
+
+其它公共层／技能／单个插件的新版本走 `tooling/wizard-publish-token.ps1`（token 无人值守）：按「**云端已有该版本就跳过；版本不一样才发布**」逐个处理，顺序依赖先行。认证一律用预置 token 做非交互发布（正式版本只用 token 发；不走 web 登录、不弹浏览器 2FA）；Agent 只轮询日志 ＋ registry 复查为准，不靠口述。失败或中断后**直接重跑即可**，已发布的会被跳过。回执关键字：`TODO`／`SKIP`／`NEED-HUMAN`／`PKG-BEGIN`／`PKG-OK`／`PKG-FAIL`／`DONE`。逐包驱动用 `-Package <包名>`，选几个用 `-Only a,b,c`。注意 `tooling/wizard-publish.ps1` 是**真 TTY 交互版**，Agent 后台直接跑会 exit 2。**Agent 不帮用户安装**：装机（装哪个版本、装进哪个 profile）由用户自己做。
 
 ### awesome 插件市场投稿
 
@@ -66,7 +74,7 @@ Default five canonical roles, label string equals role name. See `docs/agents/tr
 
 ### 编排纪律
 
-切票、派活、收活之前，或盯窗口、没有票的一人一活时，读 `docs/agents/编排纪律.md`；窗口内的机械做法见 `docs/subagent-concurrency-protocol.md`。
+切票、派活、收活之前，或盯窗口、没有票的一人一活时，读 `docs/agents/编排纪律.md`；窗口内的机械做法见 `docs/subagent-concurrency-protocol.md`。长任务（发版／发布轮询／真机验收）开工前先给人一句「预计多久、现在哪步」，等待窗口里并行做下一件不依赖它的事（如写 Release notes），不要串行空等；`tooling/release.ps1` 的 `STAGE n/9` 行就是进度播报源。
 
 ### 并发纪律（一席一 worktree，硬规矩）
 
