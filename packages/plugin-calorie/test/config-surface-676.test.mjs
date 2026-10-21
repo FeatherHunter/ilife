@@ -192,7 +192,7 @@ describe('#676 卡路里设置页 · 配置面', () => {
   });
 
   describe('A 测试隔离', () => {
-    it('基座把当刻进程的家目录接管到临时目录；缺隔离时公共层响亮失败', () => {
+    it('基座把当刻进程的家目录接管到临时目录；缺隔离时公共层响亮失败', async () => {
       assert.equal(requireConfigTestBase(), base.dir, '基座须已把当刻进程的家目录接管到临时目录');
       // 探针：跑在测试运行器里却回落到**真实**家目录 ⇒ 公共层当场抛（零写盘，故守卫哪天坏了也不会真写）。
       assert.equal(probeGuard(), 'THREW:CONFIG_TEST_ISOLATION_MISSING', '缺隔离须响亮失败，不许静默落真实 ~/.ilife');
@@ -204,12 +204,12 @@ describe('#676 卡路里设置页 · 配置面', () => {
   });
 
   describe('B 行表与技能侧配置表逐键对齐', () => {
-    it('配置文件主体名同值', () => {
+    it('配置文件主体名同值', async () => {
       assert.equal(CONFIG_STEM, CALORIE_CONFIG_STEM);
       assert.equal(CONFIG_STEM, 'calorie');
     });
 
-    it('页面每一行都有对应的技能键，且技能每一个键都有对应行（一处不少、一处不多；页外键除外）', () => {
+    it('页面每一行都有对应的技能键，且技能每一个键都有对应行（一处不少、一处不多；页外键除外）', async () => {
       /* 页外键（**显式例外，只此一处**）：配置表里可以有不上设置页的键——它们不是页面清单的一部分，
        * 而是部署参数。出处两条一起看：
        *   ① 用户裁决三批的清单＝11 项；t692 明判「训记 CLI 入口」属「包内固定、不上设置页」的三项之一，
@@ -223,7 +223,7 @@ describe('#676 卡路里设置页 · 配置面', () => {
       assert.deepEqual(pageKeys, skillKeys);
     });
 
-    it('每行的控件种类与技能默认值类型一致', () => {
+    it('每行的控件种类与技能默认值类型一致', async () => {
       for (const item of CONFIG_ITEMS) {
         const v = leafOf(CALORIE_CONFIG_DEFAULTS, item.key);
         assert.notEqual(v, undefined, `技能配置表里缺 ${item.key}`);
@@ -232,40 +232,40 @@ describe('#676 卡路里设置页 · 配置面', () => {
       }
     });
 
-    it('行表键不重复', () => {
+    it('行表键不重复', async () => {
       const keys = CONFIG_ITEMS.map((i) => i.key);
       assert.equal(new Set(keys).size, keys.length);
     });
   });
 
   describe('C 三个配置 key 与技能侧同值', () => {
-    it('read／write／reset 三个 key 逐字等于技能侧 CONFIG_KEYS', () => {
+    it('read／write／reset 三个 key 逐字等于技能侧 CONFIG_KEYS', async () => {
       assert.equal(CONFIG_READ_KEY, CONFIG_KEYS.read);
       assert.equal(CONFIG_WRITE_KEY, CONFIG_KEYS.write);
       assert.equal(CONFIG_RESET_KEY, CONFIG_KEYS.reset);
     });
 
-    it('key 命名空间是 calorie.config.*（不与唤醒词命令混）', () => {
+    it('key 命名空间是 calorie.config.*（不与唤醒词命令混）', async () => {
       for (const k of [CONFIG_READ_KEY, CONFIG_WRITE_KEY, CONFIG_RESET_KEY]) assert.match(k, /^calorie\.config\./);
     });
   });
 
   describe('D 分级呈现', () => {
-    it('常用项恰是行表的前若干行，其余全在高级组', () => {
+    it('常用项恰是行表的前若干行，其余全在高级组', async () => {
       assert.ok(COMMON_ITEM_COUNT > 0 && COMMON_ITEM_COUNT < CONFIG_ITEMS.length);
       for (const i of CONFIG_ITEMS.slice(0, COMMON_ITEM_COUNT)) assert.equal(i.tier, 'common', `${i.key} 应在常用组`);
       for (const i of CONFIG_ITEMS.slice(COMMON_ITEM_COUNT)) assert.equal(i.tier, 'advanced', `${i.key} 应在高级组`);
     });
 
-    it('最常动的四项（数据目录／库名／产物目录／照片目录）在页面上直接画出来', () => {
+    it('最常动的四项（数据目录／库名／产物目录／照片目录）在页面上直接画出来', async () => {
       const common = CONFIG_ITEMS.slice(0, COMMON_ITEM_COUNT).map((i) => i.key);
       for (const k of ['db.dir', 'db.name', 'html.dir', 'photos.dir']) assert.ok(common.includes(k), `${k} 应在常用组`);
     });
   });
 
   describe('E 端到端经真 CLI', () => {
-    it('读：拿得到配置文件路径、数据目录与当前值', () => {
-      const s = readConfigSurface();
+    it('读：拿得到配置文件路径、数据目录与当前值', async () => {
+      const s = await readConfigSurface();
       assert.equal(s.path, join(configDirOf(base.dir), CONFIG_STEM + '.yaml'), '配置文件落在 <家>/.ilife/<技能>.yaml');
       assert.ok(existsSync(s.path), '首次读应把配置文件落下来');
       assert.equal(s.dataDir, join(configDirOf(base.dir), 'data'));
@@ -273,22 +273,22 @@ describe('#676 卡路里设置页 · 配置面', () => {
       for (const item of CONFIG_ITEMS) assert.notEqual(readPath(s.values, item.key), undefined, `回执里缺 ${item.key}`);
     });
 
-    it('写：改一项后重新读，改过的还在、没改的没动', () => {
+    it('写：改一项后重新读，改过的还在、没改的没动', async () => {
       const next = {};
       writePath(next, 'db.name', 'probe_676.db');
-      writeConfigValues(next);
-      const s = readConfigSurface();
+      await writeConfigValues(next);
+      const s = await readConfigSurface();
       assert.equal(s.created, false);
       assert.equal(readPath(s.values, 'db.name'), 'probe_676.db');
       assert.equal(readPath(s.values, 'html.dir'), CALORIE_CONFIG_DEFAULTS.html.dir, '没改的项应保持默认');
       assert.equal(readPath(s.values, 'land.xunjiSeconds'), CALORIE_CONFIG_DEFAULTS.land.xunjiSeconds);
     });
 
-    it('写：只给一项时，同组其它子项保留现值（技能侧做组内合并）', () => {
+    it('写：只给一项时，同组其它子项保留现值（技能侧做组内合并）', async () => {
       const next = {};
       writePath(next, 'db.name', 'probe_again.db');
-      writeConfigValues(next);
-      const s = readConfigSurface();
+      await writeConfigValues(next);
+      const s = await readConfigSurface();
       assert.equal(readPath(s.values, 'db.name'), 'probe_again.db');
       // 没给的那一格保留现值：这里钉的是**产品事实**（生效数据目录不许被这次写改掉），不钉字符串口径——
       // 「空串＝按默认落点」还是「写盘落成绝对路径」归技能侧那条口径（见各技能 `writableDefaults()`）。
@@ -296,18 +296,18 @@ describe('#676 卡路里设置页 · 配置面', () => {
       assert.equal(dirValue === '' ? s.dataDir : dirValue, join(configDirOf(base.dir), 'data'), '这次写改掉了生效数据目录');
     });
 
-    it('重置：先落 .bak 再回默认', () => {
-      const r = resetConfigToDefaults();
+    it('重置：先落 .bak 再回默认', async () => {
+      const r = await resetConfigToDefaults();
       assert.ok(r.backupPath !== null && existsSync(r.backupPath), '重置前应留下一份 .bak');
-      const s = readConfigSurface();
+      const s = await readConfigSurface();
       assert.equal(readPath(s.values, 'db.name'), CALORIE_CONFIG_DEFAULTS.db.name);
     });
 
-    it('坏配置给人话、不返空：不认识的键被拦下且报文里点了名', () => {
+    it('坏配置给人话、不返空：不认识的键被拦下且报文里点了名', async () => {
       const bad = {};
       writePath(bad, 'db.name', 'x.db');
       bad['nosuchGroup'] = { k: 'v' };
-      assert.throws(() => writeConfigValues(bad), (e) => {
+      await assert.rejects(() => writeConfigValues(bad), (e) => {
         const msg = String(e && e.message ? e.message : e);
         assert.match(msg, /nosuchGroup|不认识|未知/);
         return true;
@@ -318,7 +318,7 @@ describe('#676 卡路里设置页 · 配置面', () => {
   describe('F 设置页只配置、不干活', () => {
     const clientSrc = readFileSync(join(HERE, '..', 'src', 'client.ts'), 'utf8');
 
-    it('设置页组件里没有干活入口（没有查数／记一餐之类的取数调用）', () => {
+    it('设置页组件里没有干活入口（没有查数／记一餐之类的取数调用）', async () => {
       const props = registeredConfig().props;
       // #909 起设置页本体就交给共用面板这几格——多一格就是多一条取数口；行表本身只有配置项。
       // #934：`extra`（面板插槽里那行版本行）已按维护者裁定撤掉 ⇒ 接入面少一格，这条跟着收窄。
@@ -329,7 +329,7 @@ describe('#676 卡路里设置页 · 配置面', () => {
 
     });
 
-    it('设置页只走三个配置端点', () => {
+    it('设置页只走三个配置端点', async () => {
       const { props, options } = registeredConfig();
       // 三通电话（`config.get`／`config.save`／`config.reset`）收进共用件，本家只连通道路由名。
       assert.equal(props.channel, RPC_CHANNEL);
@@ -340,18 +340,18 @@ describe('#676 卡路里设置页 · 配置面', () => {
     });
 
 
-    it('设置页仍注册进爱生活页签槽（改版没有把注册删掉）', () => {
+    it('设置页仍注册进爱生活页签槽（改版没有把注册删掉）', async () => {
       const { options } = registeredConfig();
       assert.equal(options.name, 'ilife.config-tab');
       assert.equal(options.id, SETTINGS_OWNER);
       assert.ok(clientSrc.includes("ctx.slots.inject('ilife.config-tab'"));
     });
 
-    it('设置页仍报 SETTINGS_OWNER（设置页住单品包）', () => {
+    it('设置页仍报 SETTINGS_OWNER（设置页住单品包）', async () => {
       assert.equal(SETTINGS_OWNER, 'dsh-calorie');
     });
 
-    it('插件 src 一行没 import 技能实现或 base 包（只经 CLI 取用）', () => {
+    it('插件 src 一行没 import 技能实现或 base 包（只经 CLI 取用）', async () => {
       const srcDir = join(HERE, '..', 'src');
       const files = ['bridge.ts', 'client.ts', 'contract.ts', 'dsh-ctx.ts', 'index.ts', 'settings.ts', 'slot.ts', 'skill-provider.ts'];
       for (const file of files) {
@@ -363,12 +363,12 @@ describe('#676 卡路里设置页 · 配置面', () => {
   });
 
   describe('H 目录行与系统文件夹选择器入口（#736；#743 按平台回执信封订正；#909 收进共用件）', () => {
-    it('目录档只发给目录类行：数据目录／照片目录／训记状态文件目录', () => {
+    it('目录档只发给目录类行：数据目录／照片目录／训记状态文件目录', async () => {
       const dirs = CONFIG_ITEMS.filter((i) => i.control === 'directory').map((i) => i.key).sort();
       assert.deepEqual(dirs, ["db.dir","photos.dir","xunji.stateDir"].sort(), '目录行集合＝{db.dir, photos.dir, xunji.stateDir}');
     });
 
-    it('命名空间拿不到 ⇒ 没有入口（软依赖；守卫拒绝也当没有）', () => {
+    it('命名空间拿不到 ⇒ 没有入口（软依赖；守卫拒绝也当没有）', async () => {
       // #909 起形状守卫收进共用件（`resolvePicker`）：本家那一格只做**原样透传**——
       // 「认不出就当没有」「守卫拒绝也不把设置页带下来」两条判断只有一处，住 `dsh-life-pack/config-panel`。
       const serviceWith = (get) => registeredConfig(get).props.getService;
@@ -394,7 +394,7 @@ describe('#676 卡路里设置页 · 配置面', () => {
       }
     });
 
-    it('按钮按档渲染：可改目录行恰一枚目录入口 ＋ 每行一枚复制；非目录行没有目录入口', () => {
+    it('按钮按档渲染：可改目录行恰一枚目录入口 ＋ 每行一枚复制；非目录行没有目录入口', async () => {
       const dirItem = CONFIG_ITEMS.find((i) => i.control === 'directory');
       const textItem = CONFIG_ITEMS.find((i) => i.control === 'text');
       const withBrowse = Row({ item: dirItem, value: '', disabled: false, onChange: () => {}, browser: { mode: 'browse', onOpen: () => {} } });
@@ -406,7 +406,7 @@ describe('#676 卡路里设置页 · 配置面', () => {
       assert.equal(nodesOfType(withBrowse, 'input').length, 1, '目录行仍是文本框 ＋ 按钮');
     });
 
-    it('点按钮 → 把那**一行**的键交给入口回填；取消一字不动', () => {
+    it('点按钮 → 把那**一行**的键交给入口回填；取消一字不动', async () => {
       // #909 起「先应用内浏览、被拒换系统对话框」那一条动作住在共用件里（面板的 `onOpenRow`／`openNative`）；
       // 本家不再自己接线，故这里咬两件仍看得见的事实：① 按钮把这一行的键交出去；② 回执按平台信封解。
       const seen = [];
@@ -426,7 +426,7 @@ describe('#676 卡路里设置页 · 配置面', () => {
         'value:null ＝用户取消 ⇒ 这一行的值一字不动');
     });
 
-    it('#743 回归：平台回 ok:false（**不抛**）也要出人话——被吞掉就成「点了没反应」', () => {
+    it('#743 回归：平台回 ok:false（**不抛**）也要出人话——被吞掉就成「点了没反应」', async () => {
       const r = readPickAnswer({ ok: false, error: { code: 'directory-picker/unavailable', message: 'the composition cannot serve pick' } });
       assert.equal(r.kind, 'unavailable', 'ok:false 是「供不了」，不是「取消」');
       assert.match(r.message, /系统文件夹对话框/);
@@ -434,7 +434,7 @@ describe('#676 卡路里设置页 · 配置面', () => {
       assert.match(r.message, /cannot serve/, '平台给的原话要带上，别吞');
     });
 
-    it('这条路供不了 ⇒ 屏上出那句人话（就地失败那一支），不写值', () => {
+    it('这条路供不了 ⇒ 屏上出那句人话（就地失败那一支），不写值', async () => {
       const phrase = readPickAnswer({ ok: false, error: { message: 'the composition cannot serve pick' } }).message;
       const tree = panelTree({ error: phrase });
       assert.match(textOf(tree), /系统文件夹对话框/, '供不了要出人话（被吞掉就成「点了没反应」）');
@@ -443,7 +443,7 @@ describe('#676 卡路里设置页 · 配置面', () => {
       for (const node of nodesOfType(tree, 'input')) assert.notEqual(node.props.value, phrase);
     });
 
-    it('回执按平台信封归一三态且永不抛', () => {
+    it('回执按平台信封归一三态且永不抛', async () => {
       assert.deepEqual(readPickAnswer({ ok: true, value: 'D:\\x' }), { kind: 'picked', path: 'D:\\x' });
       assert.deepEqual(readPickAnswer({ ok: true, value: null }), { kind: 'cancelled' });
       assert.deepEqual(readPickAnswer({ ok: true, value: '   ' }), { kind: 'cancelled' }, '空白串视同取消，不算选中');
@@ -453,7 +453,7 @@ describe('#676 卡路里设置页 · 配置面', () => {
       assert.equal(readPickAnswer({}).kind, 'unavailable');
     });
 
-    it('#743：目录行把解析好的绝对路径预填出来（用户不必自己拼）', () => {
+    it('#743：目录行把解析好的绝对路径预填出来（用户不必自己拼）', async () => {
       const dir = 'C:\\Users\\x\\.ilife\\data';
       const dirKey = CONFIG_ITEMS.find((i) => i.prefillFrom === 'dataDir').key;
       assert.equal(toDraft({}, { dataDir: dir })[dirKey], dir, '取值空着 ⇒ 直接显示回执里那条绝对路径');
@@ -463,7 +463,7 @@ describe('#676 卡路里设置页 · 配置面', () => {
         '预填出来的表单态与显式配置同读数 ⇒ 打开面板不会凭空变「未保存」');
     });
 
-    it('client 短名声明没被改动（不许写成硬依赖：写进去整包会被停靠）', () => {
+    it('client 短名声明没被改动（不许写成硬依赖：写进去整包会被停靠）', async () => {
       assert.deepEqual(CLIENT.exports.inject, ['slots', 'connection']);
     });
   });});

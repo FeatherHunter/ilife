@@ -1,17 +1,16 @@
 /** dsh-memo-ilife 取数桥（P10 脚手架：纯 CLI 单轨；#696 起兼设置页的配置读写口）。
  *
- * 面板与跨技能只经 host.call 触发本桥，本桥只经 spawn 调技能包唯一出口
- * packages/skill-memo-ilife/dist/cli/cmd_read.js（argv+JSON+exit，stdout 纯 envelope JSON 一行）。
+ * 本文件只剩「本家的规格 ＋ 契约收窄」：机械动作（定位已装技能包、异步 spawn、超时杀进程、
+ * 信封校验、错误码映射）收进总管共用件 `dsh-life-pack` 根入口的 skill-cli 共用件——六家只有那一份实现。
+ * 边界不变：面板与跨技能只经 host.call 触发本桥，本桥只经 spawn 调技能包唯一出口
+ * packages/skill-memo-ilife/dist/cli/cmd_read.js（argv+JSON+exit，stdout 纯 envelope JSON 一行）；
  * 本文件不 import 任何技能实现（只读消费其 dist/CLI）；缺失阻断不返空：
  * CLI 缺席/非 0/非 JSON/回执 key 不符一律抛错，绝不返回空数组冒充正常。
  * 技能包不动（只读）；combos.yaml 不动。
  */
-import { spawnSync } from 'node:child_process';
-import { accessSync, constants } from 'node:fs';
-import { createRequire } from 'node:module';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { installedVersionOf } from 'dsh-life-pack';
+import { createSkillCliBridge, resolveNodeBin, SPAWN_TIMEOUT_MS } from 'dsh-life-pack';
+import type { SkillCliErrorCode } from 'dsh-life-pack';
 import { VERSION_READ_KEY } from './contract.js';
 import type { ConfigSurfaceReply, InstalledVersions } from './contract.js';
 import { PLUGIN, SKILL_PACKAGE } from './slot.js';
@@ -26,67 +25,16 @@ export const MANAGER_MISSING_HINT =
   '总管缺席，请补装：dsh plugin add dsh-life-pack dsh-memo-ilife（不许单卸总管）';
 
 export class SkillBridgeError extends Error {
-  readonly code: 'missing-cli' | 'fetch-failed' | 'bad-json' | 'key-mismatch';
-  constructor(code: SkillBridgeError['code'], message: string) {
+  readonly code: SkillCliErrorCode;
+  constructor(code: SkillCliErrorCode, message: string) {
     super(message);
     this.name = 'SkillBridgeError';
     this.code = code;
   }
 }
 
-function repoRoot(): string {
-  return join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
-}
-
 /** 包内 CLI 相对路径（相对技能包根，与 SKILL_CLI 尾段一致）。 */
 export const SKILL_CLI_REL = 'dist/cli/cmd_read.js' as const;
-
-/** 按包名解析技能出口（#50 修法①之二，照抄 #48 卡路里样板）：createRequire 定位技能包（SKILL_PACKAGE）
- * 的 package.json，再拼包内 dist/cli/cmd_read.js。只读消费其 dist/CLI（spawn），
- * 绝不 import 技能实现。包名解析失败回退单仓相对路径；两者皆无由 assertCliPresent
- * 抛 missing-cli（缺失阻断不返空）。 */
-function resolveSkillCli(): string {
-  try {
-    const pkgJson = createRequire(import.meta.url).resolve(SKILL_PACKAGE + '/package.json');
-    return join(dirname(pkgJson), SKILL_CLI_REL);
-  } catch {
-    return join(repoRoot(), SKILL_CLI);
-  }
-}
-
-export function cliPath(): string {
-  return resolveSkillCli();
-}
-
-export function assertCliPresent(path?: string): void {
-  const p = path ?? cliPath();
-  try {
-    accessSync(p, constants.R_OK);
-  } catch {
-    throw new SkillBridgeError('missing-cli', '技能出口缺失（先构建对应包）：' + p);
-  }
-}
-
-/** host.call 侧处理函数：由 host 注册到 connection RPC，供面板调用。 */
-export function handleHostCall(key: string, params: Record<string, unknown> = {}): unknown {
-  return readViaCli(key, params);
-}
-
-/** 面板侧请求函数：只经 host.call，不直调技能实现。 */
-export function requestViaHost(host: { call(method: string, args: unknown): Promise<unknown> }, key: string, params: Record<string, unknown> = {}): Promise<unknown> {
-  return host.call(HOST_CALL_METHOD, { key, params });
-}
-
-/** spawn 超时毫秒：子进程超期未退即杀掉，转 fetch-failed，绝不无限挂起。
- * #48 真机根因：Desktop 宿主的 process.execPath 是 Electron 二进制，直 spawn 会起 GUI 子进程永不退出。 */
-export const SPAWN_TIMEOUT_MS = 20_000 as const;
-
-/** node 可执行体解析（纯函数，execPath 可注入单测）。
- * execPath 是 node 即直用；否则（Electron 宿主）沿用该二进制但加官方 ELECTRON_RUN_AS_NODE 语义当 node 用。 */
-export function resolveNodeBin(execPath: string = process.execPath): { readonly bin: string; readonly extraEnv: Record<string, string> } {
-  if (/(^|[\\/])node(\.exe)?$/i.test(execPath)) return { bin: execPath, extraEnv: {} };
-  return { bin: execPath, extraEnv: { ELECTRON_RUN_AS_NODE: '1' } };
-}
 
 /** 面板版本行的那两个号（#918）：插件自己那份 ＋ 已装技能包那份。
  *
@@ -97,35 +45,44 @@ export function readInstalledVersions(): InstalledVersions {
   return { plugin: installedVersionOf(PLUGIN, import.meta.url), skill: installedVersionOf(SKILL_PACKAGE, import.meta.url) };
 }
 
-/** 同步取数：spawn 技能 cmd_read，返回 envelope data（缺失阻断）。 */
-export function readViaCli(key: string, params: Record<string, unknown> = {}): unknown {
-  // #918 版本魔键：同一条 READ 端点上的这一个键不走技能 CLI spawn，直接回装机版本对
-  // （形状与卡路里 #130 那条同形）；面板照原样渲染，读不到侧显示 unknown。
-  if (key === VERSION_READ_KEY) return readInstalledVersions();
-  const bin = cliPath();
-  assertCliPresent(bin);
-  const { bin: node, extraEnv } = resolveNodeBin();
-  const r = spawnSync(node, [bin, key, '--params', JSON.stringify(params)], { encoding: 'utf8', timeout: SPAWN_TIMEOUT_MS, env: { ...process.env, ...extraEnv } });
-  if (r.error) {
-    if ((r.error as NodeJS.ErrnoException)?.code === 'ETIMEDOUT') {
-      throw new SkillBridgeError('fetch-failed', '出口超 ' + String(SPAWN_TIMEOUT_MS / 1000) + 's 未退，已杀掉（宿主非 node 时见 resolveNodeBin）');
-    }
-    throw new SkillBridgeError('fetch-failed', '出口 spawn 失败：' + (r.error as Error).message);
-  }
-  if (r.status !== 0) {
-    const tail = String(r.stderr ?? '').trim().split('\n').pop() ?? '';
-    throw new SkillBridgeError('fetch-failed', '出口非 0（' + String(r.status) + '）：' + tail);
-  }
-  let env: { key?: unknown; data?: unknown };
-  try {
-    env = JSON.parse(String(r.stdout)) as { key?: unknown; data?: unknown };
-  } catch {
-    throw new SkillBridgeError('bad-json', '出口非 JSON');
-  }
-  if (!env || env.key !== key) throw new SkillBridgeError('key-mismatch', '出口回执 key 不符');
-  if (env.data === null || env.data === undefined) throw new SkillBridgeError('fetch-failed', '缺失阻断取数，不返空：' + key);
-  return env.data;
+/** 本家的桥：规格只此一份（出口在哪、错误类是谁、版本魔键走同步读）。
+ *
+ * #918 版本魔键：同一条 READ 端点上的这一个键不走技能 CLI spawn，直接回装机版本对；
+ * 面板照原样渲染，读不到侧显示 unknown。 */
+const bridge = createSkillCliBridge({
+  skillPackage: SKILL_PACKAGE,
+  repoRelativeCli: SKILL_CLI,
+  packageRelativeCli: SKILL_CLI_REL,
+  moduleUrl: import.meta.url,
+  hostCallMethod: HOST_CALL_METHOD,
+  makeError: (code, message) => new SkillBridgeError(code, message),
+  specialReads: new Map([[VERSION_READ_KEY, () => readInstalledVersions()]]),
+});
+
+export function cliPath(): string {
+  return bridge.cliPath();
 }
+
+export function assertCliPresent(path?: string): void {
+  bridge.assertCliPresent(path);
+}
+
+/** host.call 侧处理函数：由 host 注册到 connection RPC，供面板调用。 */
+export function handleHostCall(key: string, params: Record<string, unknown> = {}): Promise<unknown> {
+  return bridge.handleHostCall(key, params);
+}
+
+/** 面板侧请求函数：只经 host.call，不直调技能实现。 */
+export function requestViaHost(host: { call(method: string, args: unknown): Promise<unknown> }, key: string, params: Record<string, unknown> = {}): Promise<unknown> {
+  return bridge.requestViaHost(host, key, params);
+}
+
+/** 异步取数：spawn 技能 cmd_read，返回 envelope data（缺失阻断）。 */
+export function readViaCli(key: string, params: Record<string, unknown> = {}): Promise<unknown> {
+  return bridge.readViaCli(key, params);
+}
+
+export { resolveNodeBin, SPAWN_TIMEOUT_MS };
 
 /** 设置页的三个配置 key。
  *
@@ -134,7 +91,7 @@ export function readViaCli(key: string, params: Record<string, unknown> = {}): u
  * 对齐由 `test/config-surface-696.test.mjs` 的源码文本锁死。
  *
  * 为什么走 CLI 而不在插件里读盘：单品插件的冻结边界是「只读消费技能 dist／CLI，纯 CLI 单轨」
- * （`test/plugin-p10-boundaries.test.mjs`：单品不 import `base-*`、不 import `skill-*`，
+ * （`test/plugin-p10-boundaries.test.mjs`：单品不 import `base-`、不 import `skill-`，
  * 必须经 host.call 与 spawn 到 cmd_read）。配置文件的读写实现住技能的 `src/config.ts`，
  * 插件只经这三个 key 取用——同一份实现不抄第二处。
  *
@@ -148,23 +105,23 @@ export const CONFIG_RESET_KEY = 'memo.config.reset' as const;
 export const CONFIG_CHECK_KEY = 'memo.config.check' as const;
 
 /** 设置页整面：文件在哪、数据在哪、当前值、是不是这次新建的（取自技能 `memo.config.read`）。 */
-export function readConfigSurface(): ConfigSurfaceReply {
-  return readViaCli(CONFIG_READ_KEY, {}) as ConfigSurfaceReply;
+export function readConfigSurface(): Promise<ConfigSurfaceReply> {
+  return bridge.readViaCli(CONFIG_READ_KEY) as Promise<ConfigSurfaceReply>;
 }
 
 /** 保存一份配置（技能侧按键覆盖，组里没给的子项保留现值；写出去的是完整一份）。 */
-export function writeConfigValues(values: Record<string, unknown>): { path: string; values: Record<string, unknown> } {
-  return readViaCli(CONFIG_WRITE_KEY, { values }) as { path: string; values: Record<string, unknown> };
+export function writeConfigValues(values: Record<string, unknown>): Promise<{ path: string; values: Record<string, unknown> }> {
+  return bridge.readViaCli(CONFIG_WRITE_KEY, { values }) as Promise<{ path: string; values: Record<string, unknown> }>;
 }
 
 /** 重置为默认（技能侧先另存 `<配置目录>/memo.yaml.bak`）。 */
-export function resetConfigToDefaults(): { path: string; backupPath: string | null } {
-  return readViaCli(CONFIG_RESET_KEY, {}) as { path: string; backupPath: string | null };
+export function resetConfigToDefaults(): Promise<{ path: string; backupPath: string | null }> {
+  return bridge.readViaCli(CONFIG_RESET_KEY) as Promise<{ path: string; backupPath: string | null }>;
 }
 
 /** 配置体检（#706）：只读一份报告，面板侧**不校验也不重写**——形状的唯一真相在技能侧
- *  `packages/skill-memo/src/health.ts`，认形状是面板的事
+ *  `packages/skill-memo-ilife/src/health.ts`，认形状是面板的事
  *  （`packages/plugin-manager/src/health-contract.ts`）。 */
-export function readConfigHealth(): unknown {
-  return readViaCli(CONFIG_CHECK_KEY, {});
+export function readConfigHealth(): Promise<unknown> {
+  return bridge.readViaCli(CONFIG_CHECK_KEY);
 }

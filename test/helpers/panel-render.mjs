@@ -136,11 +136,14 @@ function collectTabLabels(tree) {
  *
  * 版本胶囊**不再问宿主**（票 #986：构建期注入产物），故这里没有版本回包可替；
  * 桩传输口只答更新目标表。
- * @param {{ tabs?: ReadonlyArray<{id: string, order: number, label: string, channel: string}> }} [options]
- * @returns {Promise<{ tree: unknown, text: string, tabLabels: string[] }>}
+ *
+ * 页签槽的 `renderSlot` 默认返回 null（只数文本的老调用方不受影响）；票 #1294 要读「首开挂了几家」，
+ * 所以把每次调用记进 `slotCalls`，并允许调用方自己给替身子节点。
+ * @param {{ tabs?: ReadonlyArray<{id: string, order: number, label: string, channel: string}>, renderSlot?: (slot: string, slotProps: unknown, slotOptions?: {only?: string}) => unknown }} [options]
+ * @returns {Promise<{ tree: unknown, text: string, tabLabels: string[], slotCalls: Array<{slot: string, only: string | null}> }>}
  */
 export async function renderManagerPanel(options = {}) {
-  const { tabs = [] } = options;
+  const { tabs = [], renderSlot = () => null } = options;
   const react = makeReact();
   /** 桩传输口：票 1168 藏入口后面板不再取更新目标表，一律回 bad-request（体检走自家通道，不经此处）。 */
   const call = async () => {
@@ -162,9 +165,15 @@ export async function renderManagerPanel(options = {}) {
   });
   assert.equal(typeof Section, 'function', '没捕获到 settings.section 组件');
 
-  const props = { useTabs: (selector) => selector(tabs), renderSlot: () => null };
+  /** 每次页签槽取数都记一笔：`only` 就是被挂上去的那一家（#1294 的判据读数）。 */
+  const slotCalls = [];
+  const slotSpy = (slot, slotProps, slotOptions) => {
+    slotCalls.push({ slot, only: slotOptions?.only ?? null });
+    return renderSlot(slot, slotProps, slotOptions);
+  };
+  const props = { useTabs: (selector) => selector(tabs), renderSlot: slotSpy };
   const { tree, text } = await render(() => Section(props), react);
-  return { tree, text, tabLabels: collectTabLabels(tree) };
+  return { tree, text, tabLabels: collectTabLabels(tree), slotCalls };
 }
 
 /**

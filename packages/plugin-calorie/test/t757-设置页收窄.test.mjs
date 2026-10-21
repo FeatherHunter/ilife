@@ -101,7 +101,7 @@ describe('#757 卡路里设置页收窄', () => {
   });
 
   describe('① 行表形状：可改 3 ＋ 只读 8', () => {
-    it('可改项恰是数据目录／照片目录／训记 KEY 三行', () => {
+    it('可改项恰是数据目录／照片目录／训记 KEY 三行', async () => {
       assert.deepEqual(EDITABLE.map((i) => i.key).sort(), ['db.dir', 'photos.dir', 'xunji.key']);
       assert.equal(itemOf('db.dir').control, 'directory');
       assert.equal(itemOf('db.dir').prefillFrom, 'dataDir');
@@ -110,7 +110,7 @@ describe('#757 卡路里设置页收窄', () => {
       assert.equal(itemOf('xunji.key').control, 'text');
     });
 
-    it('只读 8 行齐，且 land 两键已删（13→11）', () => {
+    it('只读 8 行齐，且 land 两键已删（13→11）', async () => {
       assert.deepEqual(READONLY.map((i) => i.key).sort(),
         ['db.name', 'html.dir', 'land.landSeconds', 'land.xunjiSeconds', 'photos.gifs', 'xunji.backfillDays', 'xunji.catalog', 'xunji.stateDir']);
       assert.equal(READONLY.length, 8);
@@ -120,7 +120,7 @@ describe('#757 卡路里设置页收窄', () => {
       assert.equal(CONFIG_ITEMS.find((i) => i.key === 'land.memoCli'), undefined, '删键：备忘出口行已删');
     });
 
-    it('路径类只读行都指向回执里的一格；数字类三行走甲档（无 resolveFrom，显示生效数字）', () => {
+    it('路径类只读行都指向回执里的一格；数字类三行走甲档（无 resolveFrom，显示生效数字）', async () => {
       for (const key of ['db.name', 'html.dir', 'photos.gifs', 'xunji.stateDir', 'xunji.catalog']) {
         assert.notEqual(itemOf(key).resolveFrom, undefined, key + ' 应标 resolveFrom（显示值来自技能侧回执）');
       }
@@ -133,15 +133,15 @@ describe('#757 卡路里设置页收窄', () => {
       }
     });
 
-    it('目录档是三行：数据目录／照片目录／训记状态文件目录', () => {
+    it('目录档是三行：数据目录／照片目录／训记状态文件目录', async () => {
       assert.deepEqual(CONFIG_ITEMS.filter((i) => i.control === 'directory').map((i) => i.key).sort(),
         ['db.dir', 'photos.dir', 'xunji.stateDir']);
     });
   });
 
   describe('② 只读值只来自技能侧回执（面板不拼路径）', () => {
-    it('回执带 `resolved` 一组，七格与配置文件里的取值逐字一致', () => {
-      const s = readConfigSurface();
+    it('回执带 `resolved` 一组，七格与配置文件里的取值逐字一致', async () => {
+      const s = await readConfigSurface();
       assert.deepEqual(Object.keys(s.resolved ?? {}).sort(),
         ['catalog', 'dbDir', 'dbFile', 'gifsDir', 'htmlDir', 'photosDir', 'stateDir'], '回执缺 resolved 组或格子不齐');
       const yaml = join(configDirOf(base.dir), 'calorie.yaml');
@@ -156,8 +156,8 @@ describe('#757 卡路里设置页收窄', () => {
       assert.equal(s.resolved.stateDir, join(dbDir, 'xunji'));
     });
 
-    it('路径类只读行显示的正是那一格（逐行对账）；数字类显示生效数字', () => {
-      const s = readConfigSurface();
+    it('路径类只读行显示的正是那一格（逐行对账）；数字类显示生效数字', async () => {
+      const s = await readConfigSurface();
       const draft = toDraft(s.values, s);
       for (const key of ['db.name', 'html.dir', 'photos.gifs', 'xunji.stateDir', 'xunji.catalog']) {
         const item = itemOf(key);
@@ -168,14 +168,14 @@ describe('#757 卡路里设置页收窄', () => {
       }
     });
 
-    it('可改照片目录空着时预填生效绝对路径（resolved.photosDir）', () => {
+    it('可改照片目录空着时预填生效绝对路径（resolved.photosDir）', async () => {
       const draft = toDraft({ db: { dir: '' }, photos: { dir: '' } },
         { dataDir: 'C:\\探针\\.ilife\\data', resolved: { photosDir: 'C:\\探针\\.ilife\\data\\photos' } });
       assert.equal(draft['photos.dir'], 'C:\\探针\\.ilife\\data\\photos', '照片目录空着应显示生效值');
       assert.equal(draft['db.dir'], 'C:\\探针\\.ilife\\data', '数据目录照旧按 dataDir 预填（#743）');
     });
 
-    it('回执缺那一组（旧技能）⇒ 路径类只读行显示空串，绝不自己拼一条路径出来', () => {
+    it('回执缺那一组（旧技能）⇒ 路径类只读行显示空串，绝不自己拼一条路径出来', async () => {
       const draft = toDraft({ db: { dir: '' } }, { dataDir: 'C:\\探针\\.ilife\\data' });
       for (const key of ['db.name', 'html.dir', 'photos.gifs', 'xunji.stateDir', 'xunji.catalog']) {
         assert.equal(draft[key], '', key + ' 该空着（回执没给就不编）');
@@ -183,15 +183,15 @@ describe('#757 卡路里设置页收窄', () => {
       assert.equal(draft['db.dir'], 'C:\\探针\\.ilife\\data', '可改行照旧按 dataDir 预填（#743）');
     });
 
-    it('面板一行路径拼接都没有（边界 #677：不算默认值、不拼路径）', () => {
+    it('面板一行路径拼接都没有（边界 #677：不算默认值、不拼路径）', async () => {
       assert.doesNotMatch(CLIENT_SRC, /\bjoin\s*\(/, 'client.ts 不该自己拼路径');
       assert.doesNotMatch(CLIENT_SRC, /node:path|node:fs/, 'client.ts 不该带 node 内建');
     });
   });
 
   describe('③ 只读行不进保存', () => {
-    it('fromDraft 只收可改 3 行：整张草稿交上去，收货的只有 db／photos／xunji 三组的可改格', () => {
-      const s = readConfigSurface();
+    it('fromDraft 只收可改 3 行：整张草稿交上去，收货的只有 db／photos／xunji 三组的可改格', async () => {
+      const s = await readConfigSurface();
       const draft = toDraft(s.values, s);
       const submitted = fromDraft(draft);
       assert.deepEqual(Object.keys(submitted).sort(), ['db', 'photos', 'xunji']);
@@ -206,7 +206,7 @@ describe('#757 卡路里设置页收窄', () => {
   });
 
   describe('④ 只读渲染：零输入框、值原样上屏、只读目录行不画入口（v3 rowShell）', () => {
-    it('文本只读行：零输入框、值原样上屏、行尾恰一枚复制', () => {
+    it('文本只读行：零输入框、值原样上屏、行尾恰一枚复制', async () => {
       const item = itemOf('db.name');
       const node = Row({ item, value: 'C:\\x\\calorie_data.db', disabled: false, onChange: () => { throw new Error('只读行不该被改'); } });
       assert.deepEqual(nodesOfType(node, 'input'), [], '只读行不画输入框（v3：标签—值同行，改不动）');
@@ -216,7 +216,7 @@ describe('#757 卡路里设置页收窄', () => {
       assert.equal(textOf(buttons[0]), '复制');
     });
 
-    it('只读目录行：一枚浏览按钮都不画（定稿 v3 ①：不摆点了也没反应的死按钮）', () => {
+    it('只读目录行：一枚浏览按钮都不画（定稿 v3 ①：不摆点了也没反应的死按钮）', async () => {
       const node = Row({
         item: itemOf('xunji.stateDir'),
         value: 'C:\\x\\.ilife\\data\\xunji',
@@ -229,7 +229,7 @@ describe('#757 卡路里设置页收窄', () => {
       assert.equal(nodesOfType(node, 'button').length, 1, '行尾那一枚复制照旧');
     });
 
-    it('可改目录行（数据目录／照片目录）照旧：控件可写、按钮可点', () => {
+    it('可改目录行（数据目录／照片目录）照旧：控件可写、按钮可点', async () => {
       for (const key of ['db.dir', 'photos.dir']) {
         const node = Row({
           item: itemOf(key),
@@ -245,11 +245,11 @@ describe('#757 卡路里设置页收窄', () => {
   });
 
   describe('⑤ 控件文案零省略号', () => {
-    it('client.ts 里一个 `…` 都没有（#746 处置 9）', () => {
+    it('client.ts 里一个 `…` 都没有（#746 处置 9）', async () => {
       assert.doesNotMatch(CLIENT_SRC, /…/, '控件文案不得出现省略号');
     });
 
-    it('目录行的按钮字面两档合一的「浏览文件夹」（定稿 v3 ②，无省略号、无点点）', () => {
+    it('目录行的按钮字面两档合一的「浏览文件夹」（定稿 v3 ②，无省略号、无点点）', async () => {
       const withBrowse = (mode) => Row({
         item: itemOf('db.dir'),
         value: 'D:\\x',
@@ -272,7 +272,7 @@ describe('#757 卡路里设置页收窄', () => {
   });
 
   describe('⑥ 只读数字行的形态（补注二的甲档，本家真行）：与只读文本行同形，值＝生效数字（v3：零输入框）', () => {
-    it('回写默认天数行 ⇒ 与只读文本行同形，值就是生效数字', () => {
+    it('回写默认天数行 ⇒ 与只读文本行同形，值就是生效数字', async () => {
       const node = Row({ item: itemOf('xunji.backfillDays'), value: '1', disabled: false, onChange: () => { throw new Error('只读行不该被改'); } });
       assert.deepEqual(nodesOfType(node, 'input'), [], '甲档：与只读路径行同形，不引入第五种控件');
       assert.equal(textOf(node), '回写默认天数1复制', '值＝生效数字（标题—值同行＋行尾复制）');
@@ -282,7 +282,7 @@ describe('#757 卡路里设置页收窄', () => {
     });
 
     it('脏值只看可改行：只读行显示绝对路径不该让面板一打开就变「未保存」', async () => {
-      const s = readConfigSurface();
+      const s = await readConfigSurface();
       const { default: React } = await import('react');
       assert.ok(React !== undefined, '占位：脏值逻辑由 client 内部 editableItems 保证（见 ③ 那条）');
       assert.ok(s.resolved !== undefined && s.resolved.dbFile !== undefined, '回执带 resolved 组是脏值正确的前提');

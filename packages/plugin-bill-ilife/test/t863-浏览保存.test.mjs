@@ -32,8 +32,8 @@ describe('#863 浏览选目录后保存能落盘（记账样板）', () => {
     base.cleanup();
   });
 
-  it('模拟浏览改数据目录 → 保存 → 重读，值不变（重进面板看到的就是新值）', () => {
-    const s0 = readConfigSurface();
+  it('模拟浏览改数据目录 → 保存 → 重读，值不变（重进面板看到的就是新值）', async () => {
+    const s0 = await readConfigSurface();
     const draft0 = toDraft(s0.values, s0);
     const editable = CONFIG_ITEMS.filter((i) => i.readonly !== true);
     assert.deepEqual(editable.map((i) => i.key), ['db.dir']);
@@ -47,9 +47,9 @@ describe('#863 浏览选目录后保存能落盘（记账样板）', () => {
     // 保存只带可改行（只读的显示值不写回）。
     const submitted = fromDraft(draft1);
     assert.deepEqual(Object.keys(submitted), ['db']);
-    writeConfigValues(submitted);
+    await writeConfigValues(submitted);
     // 重读＝重进面板：看到的就是新选的目录。
-    const s1 = readConfigSurface();
+    const s1 = await readConfigSurface();
     assert.equal(s1.values.db.dir, picked);
     assert.equal(toDraft(s1.values, s1)['db.dir'], picked);
   });

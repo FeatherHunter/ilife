@@ -14,21 +14,21 @@ import { createRequire } from 'node:module';
 const requirePkg = createRequire(import.meta.url);
 
 describe('dsh-calorie 烟囱', () => {
-  it('槽位 id 与 order 与 P3 定案一致', () => {
+  it('槽位 id 与 order 与 P3 定案一致', async () => {
     assert.equal(SLOT_ID, 'ilife:calorie');
     assert.equal(SLOT_ORDER, 75);
     assert.equal(slotDescriptor().slotId, 'ilife:calorie');
   });
-  it('设置页住单品包', () => {
+  it('设置页住单品包', async () => {
     assert.equal(SETTINGS_OWNER, 'dsh-calorie');
   });
-  it('桥缺失阻断不返空（chef 缺席抛 missing-cli）', () => {
+  it('桥缺失阻断不返空（chef 缺席抛 missing-cli）', async () => {
     const cli = SKILL_CLI;
     assert.match(cli, /cmd_read\.js$/);
     assert.ok(typeof assertCliPresent === 'function');
     assert.throws(() => assertCliPresent('/nonexistent/skill-calorie-cmd_read.js'), (e) => e instanceof SkillBridgeError && e.code === 'missing-cli');
   });
-  it('#48 安装布局：单品声明 skill 精确 pin 依赖（正式版号，无 workspace；ticket63 exact，防旧 skill 残留）', () => {
+  it('#48 安装布局：单品声明 skill 精确 pin 依赖（正式版号，无 workspace；ticket63 exact，防旧 skill 残留）', async () => {
     const here = dirname(fileURLToPath(import.meta.url));
     const dep = JSON.parse(readFileSync(join(here, '..', 'package.json'), 'utf8')).dependencies || {};
     const skillVer = JSON.parse(readFileSync(join(here, '..', '..', 'skill-calorie', 'package.json'), 'utf8')).version;
@@ -38,7 +38,7 @@ describe('dsh-calorie 烟囱', () => {
     assert.equal(dep['skill-calorie'], skillVer);
     assert.ok(!JSON.stringify(dep).includes('workspace:'), '依赖不许外泄 workspace:');
   });
-  it('#48 安装布局：cliPath 落在技能包内（按包名解析，非单仓相对路径耦合）', () => {
+  it('#48 安装布局：cliPath 落在技能包内（按包名解析，非单仓相对路径耦合）', async () => {
     const p = cliPath();
     assert.equal(basename(dirname(dirname(dirname(p)))), SKILL_PACKAGE);
     assert.match(p, /cmd_read\.js$/);
@@ -57,7 +57,7 @@ describe('dsh-calorie 烟囱', () => {
     if (r.status === 0 && String(r.stdout).trim() === '') r = spawnCliOnce(args, home);
     return r;
   }
-  it('#48 envelope 契约：SKILL 直执行 calorie.help.center 回执 key/shape/data 全字段', () => {
+  it('#48 envelope 契约：SKILL 直执行 calorie.help.center 回执 key/shape/data 全字段', async () => {
     const r = spawnCli(['calorie.help.center']);
     assert.equal(r.status, 0);
     const env = JSON.parse(String(r.stdout));
@@ -66,21 +66,21 @@ describe('dsh-calorie 烟囱', () => {
     assert.equal(env.shape, 'list');
     assert.ok(env.data && env.data.total >= 1);
   });
-  it('#48 envelope 契约：面板路 readViaCli 同键打通不返空', () => {
+  it('#48 envelope 契约：面板路 readViaCli 同键打通不返空', async () => {
     // 面板路走当刻进程的环境：技能读配置只看**家目录**，故这里就地接管（空库落在它下面的 `.ilife/data`）。
     useHome(mkdtempSync(join(tmpdir(), 'calorie-smoke-')));
     let data;
     try {
-      data = readViaCli('calorie.help.center');
+      data = await readViaCli('calorie.help.center');
     } catch (e) {
       // 同上：仅 bad-json（空白 stdout 腐坏的下游签名）重跑一次；他错直抛。真回归必两次皆红。
-      if (e instanceof SkillBridgeError && e.code === 'bad-json') data = readViaCli('calorie.help.center');
+      if (e instanceof SkillBridgeError && e.code === 'bad-json') data = await readViaCli('calorie.help.center');
       else throw e;
     }
     assert.ok(data && data.total >= 1);
   });
   describe('#48 真机 hang 根因：Electron 宿主 execPath + spawn 超时', () => {
-    it('resolveNodeBin：node 直用，Electron 加 RUN_AS_NODE', () => {
+    it('resolveNodeBin：node 直用，Electron 加 RUN_AS_NODE', async () => {
       assert.deepEqual(resolveNodeBin('C:\\nodejs\\node.exe'), { bin: 'C:\\nodejs\\node.exe', extraEnv: {} });
       assert.deepEqual(resolveNodeBin('/usr/bin/node'), { bin: '/usr/bin/node', extraEnv: {} });
       const e = resolveNodeBin('D:\\0Tools\\DSH Desktop\\DSH Desktop.exe');
@@ -88,11 +88,11 @@ describe('dsh-calorie 烟囱', () => {
       assert.equal(e.extraEnv.ELECTRON_RUN_AS_NODE, '1');
       assert.ok(SPAWN_TIMEOUT_MS >= 1000, '超时须为正数毫秒');
     });
-    it('spawn timeout 语义：超期子进程被杀并报 ETIMEDOUT（readViaCli 依赖此语义）', () => {
+    it('spawn timeout 语义：超期子进程被杀并报 ETIMEDOUT（readViaCli 依赖此语义）', async () => {
       const r = spawnSync(process.execPath, ['-e', 'setTimeout(()=>{},30000)'], { encoding: 'utf8', timeout: 400 });
       assert.equal(r.error?.code, 'ETIMEDOUT');
     });
-    it('#130 版本行与双 package.json 一致（动态读通路：面板自报家门＝磁盘已装版本，防漂移）', () => {
+    it('#130 版本行与双 package.json 一致（动态读通路：面板自报家门＝磁盘已装版本，防漂移）', async () => {
       const here = dirname(fileURLToPath(import.meta.url));
       const pkg = JSON.parse(readFileSync(join(here, '..', 'package.json'), 'utf8'));
       assert.equal(PLUGIN, pkg.name);

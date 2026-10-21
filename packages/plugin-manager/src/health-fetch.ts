@@ -24,13 +24,14 @@ export function phoneOf(channel: string): string {
   return channel.startsWith('/') ? channel.slice(1) : channel;
 }
 
-/** 整批取数的时限（毫秒），**不是**一家一份：六家的活是在**同一个宿主线程**上排队干的。
+/** 一家一份的时限（毫秒）：每家的电话各自带这个上限（`AbortSignal.timeout`），互不牵连。
  *
- * 为什么不是「技能侧 spawn 上限 20 s ＋ 一点余量」（票 #740 对抗式审查第二轮逮到）：
- * 各家的宿主半用的是 `spawnSync`（各单品的 `src/bridge.ts` 里 `SPAWN_TIMEOUT_MS = 20_000`），
- * 它**阻塞**宿主的事件循环——六通电话同时打进来，真正干活的是一个接一个串起来的。
- * 于是「六家之和」才是这一批的真实上界：按一家 20 s 算最坏 120 s，常见情形（一家 1～3 s）约 10 s。
- * 60 s 取两者之间：给常见情形留足余量，又不至于让一次卡死把按钮按成两分钟不动。
+ * 口径（票 #740 定下，#1294 之后重读依据）：一家在技能侧最坏要等一次 spawn 超时
+ * （各单品 `src/bridge.ts` 的 `SPAWN_TIMEOUT_MS = 20_000`），再留两次排队余量，
+ * 取 3×20 s = 60 s。`test/plugin-p10-boundaries.test.mjs` 把这条关系写成门槛
+ * （`HEALTH_TIMEOUT_MS >= 3 * SPAWN_TIMEOUT_MS`），任何一边改小都会先红。
+ * #1294 起六家宿主半改成异步 spawn（不再阻塞宿主事件循环），六通电话真能并行；
+ * 单家卡死只坏它自己那一格，不会再把整屏拖住。
  * 单家的错照样逐家报（那家页签里的体检表会写「体检超时（60s）…」）。 */
 export const HEALTH_TIMEOUT_MS = 60_000 as const;
 
@@ -89,8 +90,8 @@ async function fetchOne(call: HealthCallFace, row: HealthTabRow): Promise<{ read
 /** 取六家的体检报告（缺席的包不在此列，由调用方按账本判断）。
  *
  * `onRow`（票 #741）：某一家一落定就回调一次——面板据此**按家增量**画，不再等齐全部。
- * 六家的电话是并发打出去的，但宿主里干活的只有一个线程（各单品宿主半 `spawnSync`），
- * 所以真实到达顺序就是它们被串行干完的顺序；先回来的那家先画出来，用户才看得见进度。 */
+ * 六家的电话并发打出去，各家的 spawn 也是异步的（#1294），真实到达顺序由各自取数快慢决定；
+ * 先回来的那家先画出来，用户才看得见进度。 */
 export async function loadHealthReports(
   call: HealthCallFace | null,
   tabs: readonly HealthTabRow[],

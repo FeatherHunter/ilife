@@ -1050,7 +1050,8 @@ function CopyCmdButton(props: { text: string; onCopied: () => void }): React.Rea
  *
  *  ①状态标题（包名＋未安装，不复述命令）；②一键安装（上游槽，版本与按钮归上游画）；
  *  ③备选手动安装（上游首查落定的精确命令＋双包命令，各配复制按钮，默认即展开态）。
- *  Toast 常驻条件挂载（`notice` 同形，进场即跑 `absentToastIn`），1.5s 自散。 */
+ *  Toast 常驻条件挂载（`notice` 同形，进场即跑 `absentToastIn`），1.5s 自散。
+ *  **一次性** UI 回执（p10 定时器门的例外依据）：只有清理与一次复位，没有次数可言。 */
 function AbsentTabPanel(props: {
   tab: ManagerTab;
   installCmd: string;
@@ -1248,29 +1249,13 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
       return new Set([...previous, active]);
     });
   }, [active]);
-  /** 预热：section 一挂载，就把其余几家**错峰**挂上（隐藏面板照常挂载、只切 `hidden`），
-   *  让各家那一次配置读提前跑掉——用户点哪个页签，多半值已经在了。
-   *  错峰（每 150ms 一家）是为了不让六家子进程同时抢开工：首帧那一口气优先留给框架。
-   *  只在页签账本非空时起一次（`rows` 要等各家 slot 注入后才齐）。
+  /** 懒挂载（#1294）：首开只挂当前页签，其余几家等用户点过去再挂（第一次挂载才发那一次配置读）。
    *
-   *  **一次性**（p10 定时器门的例外依据）：每个页签只挂一次（`warmed` 闸门 ＋ 一批固定数量的定时器），
-   *  不是轮询、也不是重试——它没有「次数」可言；卸载即 `clearTimeout` 清干净。
-   *  不做轮询是本意：这里只补一次提前量，取数与刷新仍旧由各家用例自己的通道走。 */
-  const warmed = React.useRef(false);
-  const tabCount = rows.length;
-  React.useEffect(() => {
-    if (warmed.current || tabCount === 0) return;
-    warmed.current = true;
-    const STAGGER_MS = 150;
-    const timers = MANAGER_TABS
-      .filter((tab) => rows.some((row) => row.id === tab.plugin))
-      .map((tab, index) => setTimeout(() => {
-        setVisitedIds((previous) => (previous.has(tab.plugin) ? previous : new Set([...previous, tab.plugin])));
-      }, STAGGER_MS * (index + 1)));
-    return () => {
-      for (const timer of timers) clearTimeout(timer);
-    };
-  }, [tabCount]);
+   *  旧版这里有一段「预热」：section 一挂载就错峰把六家全挂上（只切样式、不切挂载），
+   *  想让用户点页签时值已经在了。实测代价远大于收益——每次挂载都会触发一次技能 CLI 取数，
+   *  六家一起排队把宿主线程占满（旧实现还是同步 spawn），先画出来的反而是空骨架；
+   *  而用户通常只看其中一两家。改成懒挂载后，首开那次取数只有当前页签一家。
+   *  已访问过的页签保持挂载（visitedIds），切回来不重取、页内状态也不丢。 */
   function labelFor(tab: ManagerTab): string {
     const row = rows.find((r) => r.id === tab.plugin);
     return row && row.label.length > 0 ? row.label : tab.title;
@@ -1548,7 +1533,7 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
           role: 'tabpanel',
           'aria-labelledby': tabsId + '-tab-' + tab.plugin,
           // #933：这一格**不能**用 `hidden` 属性——UA 的 `[hidden]{display:none}` 会输给下面内联的
-          // `display:flex`，六个预热页签会全露出来。显式写 display 才是唯一口径（未选中的整格不画）。
+          // `display:flex`，未选中的页签会全露出来。显式写 display 才是唯一口径（未选中的整格不画）。
           style: selected ? undefined : { display: 'none' },
         },
         present.has(tab.plugin)

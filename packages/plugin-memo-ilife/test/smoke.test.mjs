@@ -16,21 +16,21 @@ import { configDirOf, homeEnvOf, useHome } from '../../../test/helpers/home-test
 const requirePkg = createRequire(import.meta.url);
 
 describe('dsh-memo-ilife 烟囱', () => {
-  it('槽位 id 与 order 与 P3 定案一致', () => {
+  it('槽位 id 与 order 与 P3 定案一致', async () => {
     assert.equal(SLOT_ID, 'ilife:memo');
     assert.equal(SLOT_ORDER, 80);
     assert.equal(slotDescriptor().slotId, 'ilife:memo');
   });
-  it('设置页住单品包', () => {
+  it('设置页住单品包', async () => {
     assert.equal(SETTINGS_OWNER, 'dsh-memo-ilife');
   });
-  it('桥缺失阻断不返空（memo 缺席抛 missing-cli）', () => {
+  it('桥缺失阻断不返空（memo 缺席抛 missing-cli）', async () => {
     const cli = SKILL_CLI;
     assert.match(cli, /cmd_read\.js$/);
     assert.ok(typeof assertCliPresent === 'function');
     assert.throws(() => assertCliPresent('/nonexistent/skill-memo-ilife-cmd_read.js'), (e) => e instanceof SkillBridgeError && e.code === 'missing-cli');
   });
-  it('#50 安装布局：单品声明 skill 精确 pin 依赖（正式版号，无 workspace；#129 防旧 skill 残留）', () => {
+  it('#50 安装布局：单品声明 skill 精确 pin 依赖（正式版号，无 workspace；#129 防旧 skill 残留）', async () => {
     const here = dirname(fileURLToPath(import.meta.url));
     const dep = JSON.parse(readFileSync(join(here, '..', 'package.json'), 'utf8')).dependencies || {};
     const skillVer = JSON.parse(readFileSync(join(here, '..', '..', 'skill-memo-ilife', 'package.json'), 'utf8')).version;
@@ -40,7 +40,7 @@ describe('dsh-memo-ilife 烟囱', () => {
     assert.equal(dep['skill-memo-ilife'], skillVer);
     assert.ok(!JSON.stringify(dep).includes('workspace:'), '依赖不许外泄 workspace:');
   });
-  it('#50 安装布局：cliPath 落在技能包内（按包名解析，非单仓相对路径耦合）', () => {
+  it('#50 安装布局：cliPath 落在技能包内（按包名解析，非单仓相对路径耦合）', async () => {
     const p = cliPath();
     assert.equal(basename(dirname(dirname(dirname(p)))), SKILL_PACKAGE);
     assert.match(p, /cmd_read\.js$/);
@@ -68,7 +68,7 @@ describe('dsh-memo-ilife 烟囱', () => {
     if (r.status === 0 && String(r.stdout).trim() === '') r = spawnCliOnce(args, cfg);
     return r;
   }
-  it('#50 envelope 契约：SKILL 直执行 memo.search 回执 key/skill/shape/data 全字段（空库安全）', () => {
+  it('#50 envelope 契约：SKILL 直执行 memo.search 回执 key/skill/shape/data 全字段（空库安全）', async () => {
     const r = spawnCli(['memo.search']);
     assert.equal(r.status, 0);
     const env = JSON.parse(String(r.stdout));
@@ -78,15 +78,15 @@ describe('dsh-memo-ilife 烟囱', () => {
     assert.deepEqual(env.data.items, []);
     assert.equal(env.data.total, 0);
   });
-  it('#50 envelope 契约：面板路 readViaCli 同键打通不返空', () => {
+  it('#50 envelope 契约：面板路 readViaCli 同键打通不返空', async () => {
     // 面板路走当刻进程的环境：技能读配置只看**家目录**，故这里就地接管（空库就建在它下面的 `.ilife/data`）。
     useHome(emptyMemoDb());
     let data;
     try {
-      data = readViaCli('memo.search');
+      data = await readViaCli('memo.search');
     } catch (e) {
       // 同上：仅 bad-json（空白 stdout 腐坏的下游签名）重跑一次；他错直抛。真回归必两次皆红。
-      if (e instanceof SkillBridgeError && e.code === 'bad-json') data = readViaCli('memo.search');
+      if (e instanceof SkillBridgeError && e.code === 'bad-json') data = await readViaCli('memo.search');
       else throw e;
     }
     assert.deepEqual(data.items, []);
@@ -101,7 +101,7 @@ describe('dsh-memo-ilife 烟囱', () => {
     // 客户端只渲染 —— 屏上那行与装机包由构造一致，发版不再有第二个同步点。
     assert.deepEqual(readInstalledVersions(), { plugin: pkg.version, skill: skillVer });
     // 面板那条真通路：同一条 READ 端点 ＋ 版本魔键（客户端 fetchVersions 打的就是这一格）。
-    assert.deepEqual(readViaCli(VERSION_READ_KEY, {}), { plugin: pkg.version, skill: skillVer });
+    assert.deepEqual(await readViaCli(VERSION_READ_KEY, {}), { plugin: pkg.version, skill: skillVer });
     // 手写常量彻底出局（连产物一起）：不许再冒出一个「第二真相源」。
     const slotMod = await import('../dist/slot.js');
     assert.equal('PLUGIN_VERSION' in slotMod, false, 'slot.ts 不得再手写版本常量');

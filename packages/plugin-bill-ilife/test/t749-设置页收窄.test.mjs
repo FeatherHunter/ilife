@@ -105,13 +105,13 @@ describe('#749 记账设置页收窄（样板）', () => {
   });
 
   describe('① 行表形状：可改 1 ＋ 只读 5', () => {
-    it('可改项恰是数据目录一行', () => {
+    it('可改项恰是数据目录一行', async () => {
       assert.deepEqual(EDITABLE.map((i) => i.key), ['db.dir'], '本家只有数据目录可改（#747 定稿）');
       assert.equal(itemOf('db.dir').control, 'directory');
       assert.equal(itemOf('db.dir').prefillFrom, 'dataDir');
     });
 
-    it('只读 5 行＝库文件名／预算账户文件名／HELP 产物目录名／备份目录／备份文件名前缀', () => {
+    it('只读 5 行＝库文件名／预算账户文件名／HELP 产物目录名／备份目录／备份文件名前缀', async () => {
       assert.deepEqual(READONLY.map((i) => i.key).sort(),
         ['backup.dir', 'backup.stem', 'db.goals', 'db.name', 'html.dir']);
       assert.equal(READONLY.length, 5);
@@ -119,7 +119,7 @@ describe('#749 记账设置页收窄（样板）', () => {
       assert.equal(COMMON_ITEM_COUNT, 4);
     });
 
-    it('「备份名主体」已改名「备份文件名前缀」，且每行都指向回执里的一格', () => {
+    it('「备份名主体」已改名「备份文件名前缀」，且每行都指向回执里的一格', async () => {
       assert.equal(itemOf('backup.stem').title, '备份文件名前缀');
       for (const item of READONLY) {
         assert.notEqual(item.resolveFrom, undefined, item.key + ' 应标 resolveFrom（显示值来自技能侧回执）');
@@ -128,15 +128,15 @@ describe('#749 记账设置页收窄（样板）', () => {
         ['backupDir', 'backupSample', 'dbFile', 'goalsFile', 'htmlDir']);
     });
 
-    it('目录档仍是两行（#736 的 H 组不破）：数据目录与备份目录', () => {
+    it('目录档仍是两行（#736 的 H 组不破）：数据目录与备份目录', async () => {
       assert.deepEqual(CONFIG_ITEMS.filter((i) => i.control === 'directory').map((i) => i.key).sort(),
         ['backup.dir', 'db.dir']);
     });
   });
 
   describe('② 只读值只来自技能侧回执（面板不拼路径）', () => {
-    it('回执带 `resolved` 一组，六格与配置文件里的取值逐字一致', () => {
-      const s = readConfigSurface();
+    it('回执带 `resolved` 一组，六格与配置文件里的取值逐字一致', async () => {
+      const s = await readConfigSurface();
       assert.deepEqual(Object.keys(s.resolved ?? {}).sort(),
         ['backupDir', 'backupSample', 'dbDir', 'dbFile', 'goalsFile', 'htmlDir'], '回执缺 resolved 组或格子不齐');
       const yaml = join(configDirOf(base.dir), 'bill.yaml');
@@ -148,29 +148,29 @@ describe('#749 记账设置页收窄（样板）', () => {
       assert.equal(s.resolved.htmlDir, join(dbDir, String(v.html.dir)));
     });
 
-    it('每张只读行显示的正是那一格（逐行对账）', () => {
-      const s = readConfigSurface();
+    it('每张只读行显示的正是那一格（逐行对账）', async () => {
+      const s = await readConfigSurface();
       const draft = toDraft(s.values, s);
       for (const item of READONLY) {
         assert.equal(draft[item.key], s.resolved[item.resolveFrom], item.key + ' 应显示 resolved.' + item.resolveFrom);
       }
     });
 
-    it('回执缺那一组（旧技能）⇒ 只读行显示空串，绝不自己拼一条路径出来', () => {
+    it('回执缺那一组（旧技能）⇒ 只读行显示空串，绝不自己拼一条路径出来', async () => {
       const draft = toDraft({ db: { dir: '' } }, { dataDir: 'C:\\探针\\.ilife\\data' });
       for (const item of READONLY) assert.equal(draft[item.key], '', item.key + ' 该空着（回执没给就不编）');
       assert.equal(draft['db.dir'], 'C:\\探针\\.ilife\\data', '可改行照旧按 dataDir 预填（#743）');
     });
 
-    it('面板一行路径拼接都没有（边界 #677：不算默认值、不拼路径）', () => {
+    it('面板一行路径拼接都没有（边界 #677：不算默认值、不拼路径）', async () => {
       assert.doesNotMatch(CLIENT_SRC, /\bjoin\s*\(/, 'client.ts 不该自己拼路径');
       assert.doesNotMatch(CLIENT_SRC, /node:path|node:fs/, 'client.ts 不该带 node 内建');
     });
   });
 
   describe('③ 只读行不进保存', () => {
-    it('fromDraft 只收可改行：整张草稿交上去，收货的只有 db.dir 一格', () => {
-      const s = readConfigSurface();
+    it('fromDraft 只收可改行：整张草稿交上去，收货的只有 db.dir 一格', async () => {
+      const s = await readConfigSurface();
       const draft = toDraft(s.values, s);
       const submitted = fromDraft(draft);
       assert.deepEqual(Object.keys(submitted), ['db']);
@@ -183,7 +183,7 @@ describe('#749 记账设置页收窄（样板）', () => {
   });
 
   describe('④ 只读渲染：零输入框、值原样上屏、只读目录行不画入口（v3 rowShell）', () => {
-    it('文本只读行：零输入框、值原样上屏、行尾恰一枚复制', () => {
+    it('文本只读行：零输入框、值原样上屏、行尾恰一枚复制', async () => {
       const item = itemOf('db.name');
       const node = Row({ item, value: 'C:\\x\\biscuit_accountant.db', disabled: false, onChange: () => { throw new Error('只读行不该被改'); } });
       assert.deepEqual(nodesOfType(node, 'input'), [], '只读行不画输入框（v3：标签—值同行，改不动）');
@@ -193,7 +193,7 @@ describe('#749 记账设置页收窄（样板）', () => {
       assert.equal(textOf(buttons[0]), '复制');
     });
 
-    it('只读目录行：一枚浏览按钮都不画（定稿 v3 ①：不摆点了也没反应的死按钮）', () => {
+    it('只读目录行：一枚浏览按钮都不画（定稿 v3 ①：不摆点了也没反应的死按钮）', async () => {
       const node = Row({
         item: itemOf('backup.dir'),
         value: 'C:\\x\\.ilife\\data\\backups',
@@ -206,7 +206,7 @@ describe('#749 记账设置页收窄（样板）', () => {
       assert.equal(nodesOfType(node, 'button').length, 1, '行尾那一枚复制照旧');
     });
 
-    it('可改目录行（数据目录）照旧：控件可写、目录入口可点', () => {
+    it('可改目录行（数据目录）照旧：控件可写、目录入口可点', async () => {
       const node = Row({
         item: itemOf('db.dir'),
         value: 'D:\\爱生活数据',
@@ -222,11 +222,11 @@ describe('#749 记账设置页收窄（样板）', () => {
   });
 
   describe('⑤ 控件文案零省略号', () => {
-    it('client.ts 里一个 `…` 都没有（#746 处置 9）', () => {
+    it('client.ts 里一个 `…` 都没有（#746 处置 9）', async () => {
       assert.doesNotMatch(CLIENT_SRC, /…/, '控件文案不得出现省略号');
     });
 
-    it('目录行的按钮字面两档合一的「浏览文件夹」（定稿 v3 ②，无省略号、无点点）', () => {
+    it('目录行的按钮字面两档合一的「浏览文件夹」（定稿 v3 ②，无省略号、无点点）', async () => {
       const withBrowse = (mode) => Row({
         item: itemOf('db.dir'),
         value: 'D:\\x',
@@ -261,7 +261,7 @@ describe('#749 记账设置页收窄（样板）', () => {
       hint: '探针行（合成项）：只读数字行的形态读数。',
     };
 
-    it('合成一条只读数字行 ⇒ 与只读文本行同形，值就是生效数字', () => {
+    it('合成一条只读数字行 ⇒ 与只读文本行同形，值就是生效数字', async () => {
       const node = Row({ item: synthetic, value: '30', disabled: false, onChange: () => { throw new Error('只读行不该被改'); } });
       assert.deepEqual(nodesOfType(node, 'input'), [], '甲档：与只读路径行同形，不引入第五种控件');
       assert.equal(textOf(node), '回写天数30复制', '值＝生效数字（标题—值同行＋行尾复制）');
@@ -270,7 +270,7 @@ describe('#749 记账设置页收窄（样板）', () => {
       assert.deepEqual(nodesOfType(node, 'button').filter(isBrowseButton), [], '数字行不是目录行，不画目录入口');
     });
 
-    it('同一条数字行去掉只读标记 ⇒ 照旧可写（「disabled 是因为只读，不是因为数字」）', () => {
+    it('同一条数字行去掉只读标记 ⇒ 照旧可写（「disabled 是因为只读，不是因为数字」）', async () => {
       const node = Row({ item: { ...synthetic, readonly: false }, value: '30', disabled: false, onChange: () => {} });
       const inputs = nodesOfType(node, 'input');
       assert.equal(inputs[0].props.type, 'number');

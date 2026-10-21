@@ -113,3 +113,10 @@ export { MANAGER_ACTIONS, MANAGER_RPC, reasonText } from './update-contract.js';
 export { clearRootsCache, listRoots, parseDriveRows, rootsReply } from './roots.js';
 export type { RootsDeps } from './roots.js';
 export { installedVersionOf } from './manager-version.js';
+// #1294：宿主侧技能 CLI 调用桥（异步 spawn／超时看门狗／信封校验／错误码映射）收在根入口——
+// 六家只经 `dsh-life-pack` 这一个能力门取用，不再新开对外子路径（#744 出口只许收窄）。
+// 对外只给六家真正取用的四样：桥工厂、node 二进制解析、时限常量、错误码类型。
+export { createSkillCliBridge } from './skill-cli/bridge-factory.js';
+export { resolveNodeBin } from './skill-cli/node-bin.js';
+export { SPAWN_TIMEOUT_MS } from './skill-cli/contract.js';
+export type { SkillCliErrorCode } from './skill-cli/contract.js';
