@@ -87,7 +87,7 @@ describe('#764 作息设置页收窄 · 插件侧', () => {
   });
 
   describe('A 行表形状', () => {
-    it('3 行：可改 1（数据目录）＋只读 2（库文件名／HELP 产物目录）；高级组空', () => {
+    it('3 行：可改 1（数据目录）＋只读 2（库文件名／HELP 产物目录）；高级组空', async () => {
       assert.equal(CONFIG_ITEMS.length, 3);
       assert.equal(COMMON_ITEM_COUNT, 3);
       const editable = CONFIG_ITEMS.filter((i) => i.readonly !== true).map((i) => i.key);
@@ -96,7 +96,7 @@ describe('#764 作息设置页收窄 · 插件侧', () => {
       assert.deepEqual(readonly, ['db.name', 'html.dir']);
     });
 
-    it('只读行标了显示来源；标题照定稿（HELP 产物目录）', () => {
+    it('只读行标了显示来源；标题照定稿（HELP 产物目录）', async () => {
       const byKey = Object.fromEntries(CONFIG_ITEMS.map((i) => [i.key, i]));
       assert.equal(byKey['db.dir'].control, 'directory');
       assert.equal(byKey['db.dir'].prefillFrom, 'dataDir');
@@ -105,7 +105,7 @@ describe('#764 作息设置页收窄 · 插件侧', () => {
       assert.equal(byKey['html.dir'].title, 'HELP 产物目录');
     });
 
-    it('#863 起只读 hint 不再写那句提示（只读由行表标记＋disabled 外观承担）', () => {
+    it('#863 起只读 hint 不再写那句提示（只读由行表标记＋disabled 外观承担）', async () => {
       for (const k of ['db.name', 'html.dir']) {
         const item = CONFIG_ITEMS.find((i) => i.key === k);
         assert.doesNotMatch(item.hint, /只读，要改请编辑配置文件/);
@@ -116,7 +116,7 @@ describe('#764 作息设置页收窄 · 插件侧', () => {
   });
 
   describe('B 只读值只来自回执', () => {
-    it('有 resolved ⇒ 显示技能算好的绝对路径；没有 ⇒ 空串（不编路径）', () => {
+    it('有 resolved ⇒ 显示技能算好的绝对路径；没有 ⇒ 空串（不编路径）', async () => {
       const values = { db: { dir: '', name: 'schedule_data.db' }, html: { dir: 'schedule_html/help' } };
       const prefill = { dataDir: 'D:\\home\\.ilife\\data', resolved: { dbDir: 'D:\\home\\.ilife\\data', dbFile: 'D:\\home\\.ilife\\data\\schedule_data.db', htmlDir: 'D:\\home\\.ilife\\data\\schedule_html\\help' } };
       const draft = toDraft(values, prefill);
@@ -130,7 +130,7 @@ describe('#764 作息设置页收窄 · 插件侧', () => {
   });
 
   describe('C 只读行不进保存', () => {
-    it('fromDraft 只收 db.dir；只读格改了也不脏（保存载荷不变）', () => {
+    it('fromDraft 只收 db.dir；只读格改了也不脏（保存载荷不变）', async () => {
       const draft = { 'db.dir': 'D:\\x', 'db.name': 'SHOWN', 'html.dir': 'SHOWN2' };
       assert.deepEqual(fromDraft(draft), { db: { dir: 'D:\\x' } });
       const values = { db: { dir: '', name: 'schedule_data.db' }, html: { dir: 'schedule_html/help' } };
@@ -142,7 +142,7 @@ describe('#764 作息设置页收窄 · 插件侧', () => {
   });
 
   describe('D 只读渲染（v3 rowShell：零输入框、值原样上屏、行尾一枚复制）', () => {
-    it('只读文本行：零输入框、值原样上屏、行尾恰一枚复制', () => {
+    it('只读文本行：零输入框、值原样上屏、行尾恰一枚复制', async () => {
       const item = CONFIG_ITEMS.find((i) => i.key === 'db.name');
       const node = Row({ item, value: 'D:\\x\\schedule_data.db', disabled: false, onChange: () => { throw new Error('只读行不该被改'); } });
       assert.deepEqual(nodesOfType(node, 'input'), [], '只读行不画输入框（v3：标签—值同行，改不动）');
@@ -152,7 +152,7 @@ describe('#764 作息设置页收窄 · 插件侧', () => {
       assert.equal(textOf(buttons[0]), '复制');
     });
 
-    it('只读目录行：一枚浏览按钮都不画（定稿 v3 ①：不摆点了也没反应的死按钮）', () => {
+    it('只读目录行：一枚浏览按钮都不画（定稿 v3 ①：不摆点了也没反应的死按钮）', async () => {
       const dirItem = CONFIG_ITEMS.find((i) => i.key === 'db.dir');
       const readonlyDir = { ...dirItem, readonly: true };
       const node = Row({ item: readonlyDir, value: 'D:\\x', disabled: false, onChange: () => {}, browser: { mode: 'native', onOpen: () => {} } });
@@ -166,7 +166,7 @@ describe('#764 作息设置页收窄 · 插件侧', () => {
   });
 
   describe('E 控件文案零省略号', () => {
-    it('源码里没有 …；目录入口字面两档合一的「浏览文件夹」', () => {
+    it('源码里没有 …；目录入口字面两档合一的「浏览文件夹」', async () => {
       const src = readFileSync(join(HERE, '..', 'src', 'client.ts'), 'utf8');
       assert.equal(src.includes('…'), false, '控件文案不得出现省略号');
       const dirItem = CONFIG_ITEMS.find((i) => i.key === 'db.dir');
@@ -182,7 +182,7 @@ describe('#764 作息设置页收窄 · 插件侧', () => {
   });
 
   describe('F 飞书状态行', () => {
-    it('larkItemOf：只认体检报告里 lark.cli 那一项，形状不对回 null', () => {
+    it('larkItemOf：只认体检报告里 lark.cli 那一项，形状不对回 null', async () => {
       const report = { items: [{ id: 'db.dir', status: 'green', message: 'x', action: '' }, { id: 'lark.cli', status: 'yellow', message: '找到了 C:/x，但还没登录／日历读不到。', action: 'a' }] };
       assert.deepEqual(larkItemOf(report), { id: 'lark.cli', status: 'yellow', message: '找到了 C:/x，但还没登录／日历读不到。', action: 'a' });
       for (const bad of [null, {}, { items: [] }, { items: [{ id: 'lark.cli' }] }, { items: [{ id: 'lark.cli', status: 'yellow' }] }]) {
@@ -190,7 +190,7 @@ describe('#764 作息设置页收窄 · 插件侧', () => {
       }
     });
 
-    it('官网行逐字＋可点击地址；prompt 含终态与官方指南', () => {
+    it('官网行逐字＋可点击地址；prompt 含终态与官方指南', async () => {
       assert.equal(LARK_OFFICIAL_LINE, '飞书CLI官网为：https://www.feishu.cn/feishu-cli');
       assert.equal(LARK_OFFICIAL_URL, 'https://www.feishu.cn/feishu-cli');
       assert.match(LARK_PROMPT_V5, /lark-cli auth login --no-wait --json --domain calendar,task/);
@@ -208,8 +208,8 @@ describe('#764 作息设置页收窄 · 插件侧', () => {
   });
 
   describe('G 端到端经真 CLI', () => {
-    it('读整面带 resolved 三格（与技能侧同形）', () => {
-      const s = readConfigSurface();
+    it('读整面带 resolved 三格（与技能侧同形）', async () => {
+      const s = await readConfigSurface();
       assert.equal(s.path, join(configDirOf(base.dir), 'schedule.yaml'));
       assert.ok(s.resolved, '回执须带 resolved 组');
       assert.deepEqual(Object.keys(s.resolved).sort(), ['dbDir', 'dbFile', 'htmlDir']);
@@ -217,8 +217,8 @@ describe('#764 作息设置页收窄 · 插件侧', () => {
       for (const item of CONFIG_ITEMS) assert.notEqual(readPath(s.values, item.key), undefined, `回执里缺 ${item.key}`);
     });
 
-    it('体检有 lark.cli 那一项（三档之一，话术非空）', () => {
-      const report = readConfigHealth();
+    it('体检有 lark.cli 那一项（三档之一，话术非空）', async () => {
+      const report = await readConfigHealth();
       const item = larkItemOf(report);
       assert.ok(item, '体检报告里须有 lark.cli');
       assert.ok(['red', 'yellow', 'green'].includes(item.status), '三档之一：' + item.status);

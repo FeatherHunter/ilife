@@ -36,15 +36,15 @@ interface HostLogger {
  * 读改自家配置，不 spawn 技能进程，也不直读磁盘（client 侧禁 node）。 */
 const handleHomeRpc: RpcHandler = async (endpoint, payload): Promise<RpcResult> => {
   try {
-    if (endpoint === RPC_ENDPOINT_CONFIG_GET) return ok(readConfigSurface());
+    if (endpoint === RPC_ENDPOINT_CONFIG_GET) return ok(await readConfigSurface());
     if (endpoint === RPC_ENDPOINT_CONFIG_SAVE) {
       const parsed = parseSavePayload(payload ?? {});
       if (!parsed) return fail('bad-request', '载荷须为 {values: object}');
-      return ok(writeConfigValues(parsed.values));
+      return ok(await writeConfigValues(parsed.values));
     }
-    if (endpoint === RPC_ENDPOINT_CONFIG_RESET) return ok(resetConfigToDefaults());
+    if (endpoint === RPC_ENDPOINT_CONFIG_RESET) return ok(await resetConfigToDefaults());
     // #706 配置体检：只读一次，把技能侧那份报告原样交回面板（本包不校验、不重写）。
-    if (endpoint === RPC_ENDPOINT_CONFIG_CHECK) return ok(readConfigHealth());
+    if (endpoint === RPC_ENDPOINT_CONFIG_CHECK) return ok(await readConfigHealth());
     return fail('bad-request', `未知端点：${String(endpoint)}`);
   } catch (e) {
     // 配置面的报错也走这条：技能侧 cli/config.ts 把 base-link-core 的

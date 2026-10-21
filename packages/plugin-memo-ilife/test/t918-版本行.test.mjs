@@ -44,7 +44,7 @@ function makeRpcCall() {
     seen,
     call: async (path, channel, message) => {
       seen.push({ path, channel, message });
-      return { ok: true, value: readViaCli(message.payload.key, message.payload.params ?? {}) };
+      return { ok: true, value: await readViaCli(message.payload.key, message.payload.params ?? {}) };
     },
   };
 }
@@ -76,9 +76,9 @@ describe('#918 面板版本行：宿主读装机包，客户端只渲染', () =>
     assert.deepEqual(CLIENT.exports.VersionLine({ pluginVersion: versions.plugin, skillVersion: versions.skill }).children, [text]);
   });
 
-  it('② 两条读法同值：readInstalledVersions ≡ readViaCli(版本魔键) ≡ 装机两份 package.json', () => {
+  it('② 两条读法同值：readInstalledVersions ≡ await readViaCli(版本魔键) ≡ 装机两份 package.json', async () => {
     assert.deepEqual(readInstalledVersions(), WANT);
-    assert.deepEqual(readViaCli(VERSION_READ_KEY, {}), WANT,
+    assert.deepEqual(await readViaCli(VERSION_READ_KEY, {}), WANT,
       '版本键回执须是 {plugin, skill}（不是 CLI envelope 的 key/data 形状），且不经技能 CLI spawn');
   });
 

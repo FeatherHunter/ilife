@@ -94,7 +94,7 @@ function makeRpcCall(host) {
   const call = async (path, channel, message) => {
     seen.push({ path, channel, message });
     const payload = message?.payload ?? {};
-    return { ok: true, value: host.readViaCli(payload.key, payload.params ?? {}) };
+    return { ok: true, value: await host.readViaCli(payload.key, payload.params ?? {}) };
   };
   return { call, seen };
 }
@@ -200,7 +200,7 @@ describe('#130 面板版本行动态读取已安装版本', () => {
   });
 
   describe('② 无手写版本常量回潮', () => {
-    it('源码与产物中不存在与 package.json 版本全等的字面量常量（防第二真相源复活）', () => {
+    it('源码与产物中不存在与 package.json 版本全等的字面量常量（防第二真相源复活）', async () => {
       const versions = [PLUGIN_PKG.version, SKILL_VERSION];
       const files = [...listFiles(join(PKG_DIR, 'src'), ['.ts']), ...listFiles(DIST, ['.js', '.d.ts', '.map'])];
       assert.ok(files.length >= 5, '扫描面异常，实际 ' + files.length + ' 个文件');
@@ -345,7 +345,7 @@ describe('#130 面板版本行动态读取已安装版本', () => {
     });
 
     it('host 侧：版本键走 package.json 读取路（不经技能 CLI spawn），双坏也返回未知骨架而不抛', async () => {
-      const direct = readViaCli(VERSION_READ_KEY, {});
+      const direct = await readViaCli(VERSION_READ_KEY, {});
       assert.deepEqual(direct, { plugin: PLUGIN_PKG.version, skill: SKILL_VERSION }, '版本键回执须是 {plugin, skill}（不是 CLI envelope 的 key/data 形状）');
       // 双 package.json 都被拿掉（读失败两侧皆中）⇒ 返回 unknown 骨架、不抛
       const install = makeFakeInstall(PLUGIN_PKG.version, SKILL_VERSION);
@@ -354,7 +354,7 @@ describe('#130 面板版本行动态读取已安装版本', () => {
         rmSync(install.pluginPkgPath);
         rmSync(install.skillPkgPath);
         let both;
-        assert.doesNotThrow(() => { both = host.readViaCli(VERSION_READ_KEY, {}); });
+        both = await host.readViaCli(VERSION_READ_KEY, {});
         assert.deepEqual(both, { plugin: 'unknown', skill: 'unknown' });
       } finally {
         dispose(install);
@@ -384,7 +384,7 @@ describe('#130 面板版本行动态读取已安装版本', () => {
         { plugin: '9.9.901', skill: 'unknown' });
     });
 
-    it('client 侧：unknown 时骨架完整、面板其余装配照常、渲染不抛', () => {
+    it('client 侧：unknown 时骨架完整、面板其余装配照常、渲染不抛', async () => {
       assert.equal(CLIENT.exports.formatVersionLine('unknown', 'unknown'), line('unknown', 'unknown'));
       assert.equal(CLIENT.exports.formatVersionLine('unknown', SKILL_VERSION), line('unknown', SKILL_VERSION));
       // VersionLine 就是面板那行：props 缺席（初值态）也不炸，骨架不断
@@ -408,7 +408,7 @@ describe('#130 面板版本行动态读取已安装版本', () => {
       assert.deepEqual(CLIENT.exports.inject, ['slots', 'connection'], 'client inject 短名照旧（真机 loader 守卫）');
     });
 
-    it('client 束纯度前提：产物无 node: 导入、无 ESM 语法（版本通路未把 host 依赖带进浏览器）', () => {
+    it('client 束纯度前提：产物无 node: 导入、无 ESM 语法（版本通路未把 host 依赖带进浏览器）', async () => {
       assert.ok(CLIENT.code.includes('__ModuleLoader__'), '产物缺 loader 注册头');
       assert.doesNotMatch(CLIENT.code, /from\s+['"]node:[^'"]+['"]/, '产物含 node: 导入');
       assert.doesNotMatch(CLIENT.code, /require\(\s*['"]node:[^'"]+\s*\)/, '产物含 node: require');

@@ -10,21 +10,21 @@ import { SLOT_ID, SLOT_ORDER, slotDescriptor, SETTINGS_OWNER, SKILL_CLI, SKILL_P
 import { homeEnvOf, useHome } from '../../../test/helpers/home-test-base.mjs';
 
 describe('dsh-schedule-ilife 烟囱', () => {
-  it('槽位 id 与 order 与 P3 定案一致', () => {
+  it('槽位 id 与 order 与 P3 定案一致', async () => {
     assert.equal(SLOT_ID, 'ilife:schedule');
     assert.equal(SLOT_ORDER, 85);
     assert.equal(slotDescriptor().slotId, 'ilife:schedule');
   });
-  it('设置页住单品包', () => {
+  it('设置页住单品包', async () => {
     assert.equal(SETTINGS_OWNER, 'dsh-schedule-ilife');
   });
-  it('桥缺失阻断不返空（schedule 缺席抛 missing-cli）', () => {
+  it('桥缺失阻断不返空（schedule 缺席抛 missing-cli）', async () => {
     const cli = SKILL_CLI;
     assert.match(cli, /cmd_read\.js$/);
     assert.ok(typeof assertCliPresent === 'function');
     assert.throws(() => assertCliPresent('/nonexistent/skill-schedule-cmd_read.js'), (e) => e instanceof SkillBridgeError && e.code === 'missing-cli');
   });
-  it('#50 安装布局：单品声明总管同版本线 ＋ 技能精确 pin（正式版号，无 workspace）', () => {
+  it('#50 安装布局：单品声明总管同版本线 ＋ 技能精确 pin（正式版号，无 workspace）', async () => {
     const here = dirname(fileURLToPath(import.meta.url));
     const dep = JSON.parse(readFileSync(join(here, '..', 'package.json'), 'utf8')).dependencies || {};
     // 2026-09-23 口径改：总管走工作区版本的**精确版**（原先 `^0.3.` 会把「装到哪一版总管」交给解析器与
@@ -37,7 +37,7 @@ describe('dsh-schedule-ilife 烟囱', () => {
     assert.equal(dep['skill-schedule'], skillVer);
     assert.ok(!JSON.stringify(dep).includes('workspace:'), '依赖不许外泄 workspace:');
   });
-  it('#50 安装布局：cliPath 落在技能包内（按包名解析，非单仓相对路径耦合）', () => {
+  it('#50 安装布局：cliPath 落在技能包内（按包名解析，非单仓相对路径耦合）', async () => {
     const p = cliPath();
     assert.equal(basename(dirname(dirname(dirname(p)))), SKILL_PACKAGE);
     assert.match(p, /cmd_read\.js$/);
@@ -56,7 +56,7 @@ describe('dsh-schedule-ilife 烟囱', () => {
     if (r.status === 0 && String(r.stdout).trim() === '') r = spawnCliOnce(args, cfg);
     return r;
   }
-  it('#50 envelope 契约：SKILL 直执行 schedule.help.lookup 回执 key/shape/data 全字段（空库安全）', () => {
+  it('#50 envelope 契约：SKILL 直执行 schedule.help.lookup 回执 key/shape/data 全字段（空库安全）', async () => {
     const r = spawnCli(['schedule.help.lookup']);
     assert.equal(r.status, 0);
     const env = JSON.parse(String(r.stdout));
@@ -65,16 +65,16 @@ describe('dsh-schedule-ilife 烟囱', () => {
     assert.equal(env.shape, 'list');
     assert.ok(env.data && env.data.total >= 1);
   });
-  it('#50 envelope 契约：面板路 readViaCli 同键打通不返空', () => {
+  it('#50 envelope 契约：面板路 readViaCli 同键打通不返空', async () => {
     const cfg = mkdtempSync(join(tmpdir(), 'schedule-smoke-'));
     // 面板路走当刻进程的环境：技能读配置只看**家目录**（`<家>/.ilife/schedule.yaml`），故这里就地接管。
     useHome(cfg);
     let data;
     try {
-      data = readViaCli('schedule.help.lookup');
+      data = await readViaCli('schedule.help.lookup');
     } catch (e) {
       // 同上：仅 bad-json（空白 stdout 腐坏的下游签名）重跑一次；他错直抛。真回归必两次皆红。
-      if (e instanceof SkillBridgeError && e.code === 'bad-json') data = readViaCli('schedule.help.lookup');
+      if (e instanceof SkillBridgeError && e.code === 'bad-json') data = await readViaCli('schedule.help.lookup');
       else throw e;
     }
     assert.ok(data && data.total >= 1);

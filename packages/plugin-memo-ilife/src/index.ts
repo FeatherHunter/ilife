@@ -38,17 +38,17 @@ const handleMemoRpc: RpcHandler = async (endpoint, payload): Promise<RpcResult> 
     if (endpoint === RPC_ENDPOINT_READ) {
       const parsed = parseReadPayload(payload ?? {});
       if (!parsed) return fail('bad-request', '载荷须为 {key: string, params: object}');
-      return ok(readViaCli(parsed.key, parsed.params));
+      return ok(await readViaCli(parsed.key, parsed.params));
     }
-    if (endpoint === RPC_ENDPOINT_CONFIG_GET) return ok(readConfigSurface());
+    if (endpoint === RPC_ENDPOINT_CONFIG_GET) return ok(await readConfigSurface());
     if (endpoint === RPC_ENDPOINT_CONFIG_SAVE) {
       const parsed = parseSavePayload(payload ?? {});
       if (!parsed) return fail('bad-request', '载荷须为 {values: object}');
-      return ok(writeConfigValues(parsed.values));
+      return ok(await writeConfigValues(parsed.values));
     }
-    if (endpoint === RPC_ENDPOINT_CONFIG_RESET) return ok(resetConfigToDefaults());
+    if (endpoint === RPC_ENDPOINT_CONFIG_RESET) return ok(await resetConfigToDefaults());
     // #706 配置体检：只读一次，把技能侧那份报告原样交回面板（本包不校验、不重写）。
-    if (endpoint === RPC_ENDPOINT_CONFIG_CHECK) return ok(readConfigHealth());
+    if (endpoint === RPC_ENDPOINT_CONFIG_CHECK) return ok(await readConfigHealth());
     return fail('bad-request', `未知端点：${String(endpoint)}`);
   } catch (e) {
     // 配置面的报错也走这条：技能侧 cli/config.ts 把 base-link-core 的
