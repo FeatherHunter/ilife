@@ -42,11 +42,22 @@ export function defaultSessionsRoot() {
   return path.join(os.homedir(), '.dsh', 'sessions');
 }
 
+/** zstd 解压 API 的下限：Node v22.15.0 起提供（v22.13 没有）；与 engines 的对齐见 #1301。 */
+export const ZSTD_MIN_NODE = '22.15';
+
 /**
  * 解 zstd 多帧容器。末帧允许断（正在写入），中间断帧计入 broken。
  * 返回 { text, frames, broken }；text 为空说明一帧都没解出来。
+ * 注入 decompress 只供测试模拟「当前 Node 没有 zstd API」；真缺 API 时显式报错，不静默解出空文本。
  */
-export function decodeSessionBuffer(buf) {
+export function decodeSessionBuffer(buf, options = {}) {
+  const decompress = 'decompress' in options ? options.decompress : zlib.zstdDecompressSync;
+  if (typeof decompress !== 'function') {
+    throw new Error(
+      '当前 Node ' + process.version + ' 缺少 zlib.zstdDecompressSync：会话转录解码需要 Node >='
+      + ZSTD_MIN_NODE + '（zstd API 自 v22.15.0 起提供；engines 对齐见 #1301）'
+    );
+  }
   const offsets = [];
   let at = 0;
   while ((at = buf.indexOf(ZSTD_MAGIC, at)) !== -1) {
@@ -58,7 +69,7 @@ export function decodeSessionBuffer(buf) {
   for (let i = 0; i < offsets.length; i++) {
     const end = i + 1 < offsets.length ? offsets[i + 1] : buf.length;
     try {
-      parts.push(zlib.zstdDecompressSync(buf.subarray(offsets[i], end)).toString('utf8'));
+      parts.push(decompress(buf.subarray(offsets[i], end)).toString('utf8'));
     } catch {
       if (i === offsets.length - 1) continue; // 末帧可能正写到一半
       broken += 1;

@@ -37,7 +37,10 @@ function zstdFrames(lines, { appendPartial = false } = {}) {
   return buf;
 }
 
-describe('session-pointers 解码', () => {
+const hasZstd = typeof zlib.zstdCompressSync === 'function' && typeof zlib.zstdDecompressSync === 'function';
+const zstdSkip = hasZstd ? false : '当前 Node ' + process.version + ' 没有 zstd API（需 >=22.15）';
+
+describe('session-pointers 解码', { skip: zstdSkip }, () => {
   it('多帧 zstd 逐帧解压后拼回 JSONL；末帧半截被容忍', () => {
     const ms = Date.parse('2026-10-21T22:27:48+08:00');
     const buf = zstdFrames([
@@ -70,6 +73,14 @@ describe('session-pointers 解码', () => {
     });
     const parsed = parseSessionText(line + '\n');
     assert.deepEqual(userMessages(parsed.records), [{ seq: 3, time: 1, text: '原话' }]);
+  });
+
+  it('当前 Node 没有 zstd 解压 API：显式报错，不静默返回空文本', () => {
+    const buf = Buffer.concat([MAGIC, Buffer.from('not-a-frame')]);
+    assert.throws(
+      () => decodeSessionBuffer(buf, { decompress: null }),
+      /缺少 zlib\.zstdDecompressSync[\s\S]*Node >=22\.15/,
+    );
   });
 });
 

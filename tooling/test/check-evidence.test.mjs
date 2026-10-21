@@ -65,6 +65,7 @@ function goodText() {
     '- HIT `drop-shadow(`',
     '',
     '## 资产',
+    '- ![改前·浅底](t1299-shot.png)',
     '- `docs/plugins/plugin-manager/t1299-shot.png`',
   ].join('\n');
 }
@@ -92,6 +93,15 @@ describe('check-evidence 全绿路径', () => {
     const { root, file } = makeRoot();
     const checks = await runChecks({ ...base, text: goodText(), filePath: file, root, noChangeset: true });
     assert.equal(byName(checks, 'changeset').verdict, 'WARN');
+  });
+
+  it('中文文件名资产写成同目录裸名：按同目录解析，不因 CJK 漏检', async () => {
+    const { root, dir, file } = makeRoot();
+    fs.writeFileSync(path.join(dir, 't1299-证据图.png'), 'png');
+    const text = goodText() + '\n- ![图示](t1299-证据图.png)\n';
+    const checks = await runChecks({ ...base, text, filePath: file, root });
+    assert.equal(byName(checks, 'assets').verdict, 'PASS');
+    assert.match(byName(checks, 'assets').detail, /3 件资产同目录同前缀/);
   });
 
   it('changeset 文件名带 t 前缀（先例 t1296-manual-entry-shadow.md）也认', async () => {
@@ -187,6 +197,35 @@ describe('check-evidence 红路径（先拿旧材料试）', () => {
     const checks = await runChecks({ ...base, text, filePath: path.join(dir, 't1299-证据.md'), root });
     assert.equal(byName(checks, 'assets').verdict, 'FAIL');
     assert.match(byName(checks, 'assets').detail, /不同目录/);
+  });
+
+  it('资产引用含中文目录名：能按路径解析，子目录判「不同目录」FAIL', async () => {
+    const { root, dir, file } = makeRoot();
+    const sub = path.join(dir, 't1299-证据');
+    fs.mkdirSync(sub);
+    fs.writeFileSync(path.join(sub, 't1299-shot.png'), 'png');
+    const text = goodText().replace('`docs/plugins/plugin-manager/t1299-shot.png`', '![图](t1299-证据/t1299-shot.png)');
+    const checks = await runChecks({ ...base, text, filePath: file, root });
+    assert.equal(byName(checks, 'assets').verdict, 'FAIL');
+    assert.match(byName(checks, 'assets').detail, /不同目录/);
+  });
+
+  it('非 t<票号>- 前缀的通用路径（package.json／测试脚本／别家截图）不当资产：WARN', async () => {
+    const { root, file } = makeRoot();
+    const text = goodText().replace(
+      '## 资产\n- ![改前·浅底](t1299-shot.png)\n- `docs/plugins/plugin-manager/t1299-shot.png`',
+      '## 资产\n- `package.json`\n- `test/manual-entry-1237.test.mjs`\n- `docs/plugins/plugin-manager/other-shot.png`',
+    );
+    const checks = await runChecks({ ...base, text, filePath: file, root });
+    assert.equal(byName(checks, 'assets').verdict, 'WARN');
+  });
+
+  it('t<票号>- 前缀资产不存在：FAIL 点名', async () => {
+    const { root, file } = makeRoot();
+    const text = goodText() + '\n- `t1299-missing.png`\n';
+    const checks = await runChecks({ ...base, text, filePath: file, root });
+    assert.equal(byName(checks, 'assets').verdict, 'FAIL');
+    assert.match(byName(checks, 'assets').detail, /不存在/);
   });
 
   it('④ 格写「无用户确认」：confirm FAIL（自查即关作废）', async () => {

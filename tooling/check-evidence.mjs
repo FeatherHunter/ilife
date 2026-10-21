@@ -12,7 +12,7 @@
  *   danger   有「危险代码」标记；引用的提交存在、作者＝提交者＝FeatherHunter、提交信息带本票票号
  *   readings 至少两类机器读数（退出码／测试计数／RESULT 行／HIT-MISS）
  *   changeset `.changeset/<票号>-*.md` 或 `.changeset/t<票号>-*.md` 在场（`--no-changeset` 可关）
- *   assets   引用的证据资产存在、与证据 md 同目录、且以 `t<票号>-` 前缀
+ *   assets   从正文按 `t<票号>-` 前缀收引用（覆盖同目录裸名／中文路径／任意目录写法），资产须存在、与证据 md 同目录
  *   confirm  ④ 格在场，且不含「无用户确认」这类自相矛盾字样
  *
  * 用法：
@@ -34,7 +34,35 @@ const SAFE_BOT_NAME = 'FeatherHunter';
 const SAFE_BOT_EMAIL = '975559549@qq.com';
 const POINTER_RE = /（会话\s*`?([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})`?\s*seq\s*(\d+)[^）\n]*?(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}:\d{2})/g;
 const SHA_RE = /\b[0-9a-f]{40}\b/g;
-const ASSET_RE = /docs\/[\w\-./]+?\.(?:png|mjs|py|log|json|txt)/g;
+// 资产引用：从正文收「以 t<票号>- 开头的文件名」，覆盖 markdown 图片目标（含同目录裸名）、
+// 中文目录／文件名与任意目录前缀；不按 docs/ 限定，也不把 tests/*.test.mjs、package.json 这类通用路径误当资产。
+const ASSET_REF_RE = /[A-Za-z0-9_.\\/\-\u4e00-\u9fff]+\.(?:png|mjs|py|log|json|txt)/g;
+
+/** 收集本票资产引用（按 t<票号>- 前缀过滤；去反斜杠、去重）。 */
+export function collectAssetRefs(text, ticketText) {
+  const refs = new Set();
+  for (const match of text.matchAll(ASSET_REF_RE)) {
+    const ref = match[0].replace(/\\/g, '/');
+    if (ticketText === '' || !path.basename(ref).startsWith('t' + ticketText + '-')) continue;
+    refs.add(ref);
+  }
+  return [...refs];
+}
+
+/** 解析资产引用：先按证据 md 同目录（真实写法：同目录裸名），再按 --root（仓库相对写法）。 */
+function resolveAssetRef(ref, root, evidenceDir) {
+  const candidates = [];
+  if (path.isAbsolute(ref)) {
+    candidates.push(path.resolve(ref));
+  } else {
+    if (evidenceDir !== '') candidates.push(path.resolve(evidenceDir, ref));
+    candidates.push(path.resolve(root, ref));
+  }
+  const existing = candidates.filter((abs) => fs.existsSync(abs));
+  if (existing.length === 0) return { abs: candidates[0] ?? path.resolve(root, ref), exists: false };
+  const sameDir = existing.find((abs) => evidenceDir !== '' && path.dirname(abs) === evidenceDir);
+  return { abs: sameDir ?? existing[0], exists: true };
+}
 
 const USAGE = [
   '证据自检（#1299）：关票前核对四步闸门与证据可解析性。',
@@ -204,24 +232,21 @@ export async function runChecks({
       files.length > 0 ? '.changeset/' + files[0] : '缺 .changeset/' + ticketText + '-*.md 或 t' + ticketText + '-*.md（每票一件）');
   }
 
-  // 6) 证据资产：存在、同目录、t<票号>- 前缀（doc-homes L24）
-  const assetRefs = [...new Set([...text.matchAll(ASSET_RE)].map((match) => match[0].replace(/\\/g, '/')))];
-  if (assetRefs.length === 0) {
-    add('assets', 'WARN', '证据里没有引用图片／脚本资产（本票可能只有文字读数）');
+  // 6) 证据资产：按 t<票号>- 前缀收引用，核存在与同目录（doc-homes L24）
+  const assetRefs = collectAssetRefs(text, ticketText);
+  if (ticketText === '') {
+    add('assets', 'WARN', '没给 --ticket，无法按 t<票号>- 前缀核资产');
+  } else if (assetRefs.length === 0) {
+    add('assets', 'WARN', '证据里没有引用 t' + ticketText + '- 前缀的图片／脚本资产（本票可能只有文字读数）');
   } else {
     const problems = [];
     for (const ref of assetRefs) {
-      const base = path.basename(ref);
-      if (ticketText !== '' && !base.startsWith('t' + ticketText + '-')) {
-        problems.push(ref + ' 不是 t' + ticketText + '- 前缀');
+      const resolved = resolveAssetRef(ref, root, evidenceDir);
+      if (!resolved.exists) {
+        problems.push(ref + ' 不存在（按证据同目录与 --root 两处都找不到）');
         continue;
       }
-      const abs = path.resolve(root, ref);
-      if (!fs.existsSync(abs)) {
-        problems.push(ref + ' 不存在');
-        continue;
-      }
-      if (evidenceDir !== '' && path.dirname(abs) !== evidenceDir) {
+      if (evidenceDir !== '' && path.dirname(resolved.abs) !== evidenceDir) {
         problems.push(ref + ' 与证据 md 不同目录（doc-homes：同目录同前缀）');
       }
     }
