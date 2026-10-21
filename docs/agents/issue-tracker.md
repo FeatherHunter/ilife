@@ -33,6 +33,29 @@ Create a GitHub issue.
 
 Run `gh issue view <number> --comments`.
 
+## 回退：GraphQL（REST 限流／命令缺失时）
+
+`gh` 的 REST 额度会耗尽（`gh api rate_limit` 看 core 剩余）；GraphQL 配额独立，`gh api graphql` 能完成同样的事。**一次超时即换通道**，不在同一条路上反复重试（#1299 实测：工具读超时后继续重试，白等数分钟没有产出）。
+
+```bash
+# 改票面正文（长正文写文件，避免引号转义）
+gh api graphql -f query='mutation($id:ID!,$body:String!){updateIssue(input:{id:$id,body:$body}){issue{number}}}' \
+  -f id='<issue node id>' -F body=@.scratch/issue-body.md
+
+# 评论（等价于 deck 的带评论）
+gh api graphql -f query='mutation($id:ID!,$body:String!){addComment(input:{subjectId:$id,body:$body}){comment{id}}}' \
+  -f id='<issue node id>' -F body=@.scratch/comment.md
+
+# 关票
+gh api graphql -f query='mutation($id:ID!){closeIssue(input:{issueId:$id}){issue{number state}}}' -f id='<issue node id>'
+
+# 建 PR（head 用集成分支名，base 用长期分支名）
+gh api graphql -f query='mutation($repo:ID!,$base:String!,$head:String!,$title:String!,$body:String!){createPullRequest(input:{repositoryId:$repo,baseRefName:$base,headRefName:$head,title:$title,body:$body}){pullRequest{number url}}}' \
+  -f repo='<repositoryId>' -f base='master' -f head='<分支名>' -f title='…' -F body=@.scratch/pr-body.md
+```
+
+规矩：① 关票要**评论与关闭两个 mutation 都成功**才认关闭——GraphQL 没有「一次带 comment+close」的调用，任一失败即重跑缺失的那一步；② node id 用 `gh issue view <n> --json id` 取，别手抄；③ 写操作照旧遵守「确认才 close」。
+
 ## Wayfinding operations
 
 Used by `/wayfinder`. The **map** is a single issue with **child** issues as tickets.
