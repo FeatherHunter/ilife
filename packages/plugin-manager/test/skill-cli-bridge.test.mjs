@@ -10,8 +10,9 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { MAX_STDOUT_BYTES, SPAWN_TIMEOUT_MS, createSkillCliBridge, resolveNodeBin } from '../dist/skill-cli/index.js';
-import { runSkillCli } from '../dist/skill-cli/node-bin.js';
+import { MAX_STDOUT_BYTES, SPAWN_TIMEOUT_MS } from '../dist/skill-cli/contract.js';
+import { resolveNodeBin, runSkillCli } from '../dist/skill-cli/node-bin.js';
+import { createSkillCliBridge } from '../dist/skill-cli/bridge-factory.js';
 
 /** 各家 index.ts 里那枚错误类的替身：工厂只负责 new，instanceof 判定留在调用方。 */
 class FakeBridgeError extends Error {
