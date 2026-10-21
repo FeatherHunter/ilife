@@ -52,6 +52,11 @@ describe('#1237 使用手册入口与弹出空壳', () => {
     assert.ok(css.includes('.stage{position:relative;width:57px;height:78px'), '入口舞台尺寸应为 57×78');
     assert.ok(css.includes('.eabook{display:block;position:relative;width:55px;height:74px'), '书体尺寸应为 55×74');
     assert.ok(css.includes('width:9px'), '书脊宽度应为 9px');
+    // 票 #1296 用户验收：入口书体周围那圈「淡淡的渐变黑背板」＝两处中性黑投影，整条删掉且不许长回来。
+    // ① 舞台容器的 drop-shadow：0 7px 9px 半透明黑，落成书外左下与下方一圈中性灰暗带；
+    assert.ok(!css.includes('filter:drop-shadow('), '舞台容器不许再有黑色投影 filter:drop-shadow(');
+    // ② 书体的 4px 5px 10px #0009：右下那块更深的中性灰，同样是黑底来源（腰封自身 0 2px 4px 那条金匾厚度阴影不在此列）。
+    assert.ok(!css.includes('box-shadow:4px 5px 10px #0009'), '书体不许再有 box-shadow:4px 5px 10px #0009 黑色投影');
   });
 
   it('弹出：关着返回空；开着是透明点外关闭层＋书那一格（关闭钮已挪到书壳上）', () => {
