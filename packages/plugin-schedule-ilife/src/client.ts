@@ -179,8 +179,10 @@ export interface PanelStyleSlots {
   readonly btn?: React.CSSProperties | undefined;
 }
 
-/** 飞书状态行的三档读数（`reading` ＝ 体检回执新交的 `lark` 格，带路径与短版本号；旧技能包为 null）。 */
+/** 飞书状态行的各档读数（`reading` ＝ 体检回执新交的 `lark` 格，带路径与短版本号；旧技能包为 null）。
+ *  #1302 起先是 `idle`（挂载后还没点过「重新检测」）：体检电话不再随面板挂载自动打。 */
 type LarkReading =
+  | { readonly kind: 'idle' }
   | { readonly kind: 'loading' }
   | { readonly kind: 'ready'; readonly item: HealthItemLite; readonly reading: LarkCell | null }
   | { readonly kind: 'failed'; readonly message: string };
@@ -194,9 +196,12 @@ type LarkCell = { readonly tier: string; readonly cliPath: string | null; readon
  *  两枚按钮照画 ⇒ 与就绪态同高（真源 `planRows()` 的口径：骨架期就定行高，填充时不跳）。
  *
  * 为什么单起一个组件：这通体检电话是本家自己的（共用面板不认识 `config.check` 的回执），
- * 组件自己持读数与「复制回执」两点状态，面板只管把它画进插槽。 */
+ * 组件自己持读数与「复制回执」两点状态，面板只管把它画进插槽。
+ *
+ * #1302：挂载只画闲态（「还没检测」），**不自动发那通体检电话**——首屏 wall time 不受体检影响；
+ * 点「重新检测」才发。`idle` 与骨架期的 `loading` 分开：前者没有骨架条，不假装正在测。 */
 function LarkLine(props: { readonly getCall: GetCall; readonly styles: PanelStyleSlots }): React.ReactElement {
-  const [lark, setLark] = React.useState<LarkReading>({ kind: 'loading' });
+  const [lark, setLark] = React.useState<LarkReading>({ kind: 'idle' });
   const [copied, setCopied] = React.useState<'idle' | 'done' | 'failed'>('idle');
 
   const loadHealth = React.useCallback(async (): Promise<void> => {
@@ -214,16 +219,28 @@ function LarkLine(props: { readonly getCall: GetCall; readonly styles: PanelStyl
     );
   }, [props.getCall]);
 
-  React.useEffect(() => {
-    void loadHealth();
-  }, [loadHealth]);
-
   /** 「复制 prompt」：剪贴板不在就报失败，不抛（按钮三档都在，见 #761 定稿）。 */
   const onCopyPrompt = async (): Promise<void> => {
     const ok = await copyText(LARK_PROMPT_V5, { clipboard: clipboardOf() ?? undefined });
     setCopied(ok ? 'done' : 'failed');
   };
 
+  if (lark.kind === 'idle') {
+    // #1302：挂载不再自动打体检电话——先画「还没检测」，点「重新检测」才发 config.check。
+    // 路径位给空串而不是 null：null 会画骨架条，等于假装正在检测；闲态不该有骨架。
+    return React.createElement(StatusBlock, {
+      name: '飞书 CLI',
+      tone: 'pending',
+      text: '还没检测，点「重新检测」跑一次体检',
+      path: '',
+      version: null,
+      actions: [
+        { text: '复制安装指引', onPress: () => void onCopyPrompt() },
+        { text: '重新检测', onPress: () => void loadHealth() },
+      ],
+      link: { text: LARK_OFFICIAL_LINE, href: LARK_OFFICIAL_URL },
+    });
+  }
   if (lark.kind === 'loading') {
     // 骨架期照真源：状态点默认灰 ＋「检测中」＋ 路径位骨架条 ＋ 版本胶囊不画；两枚按钮**照画**
     // ⇒ 与就绪态同高，填充时不跳（真源 `planRows()` 的口径）。

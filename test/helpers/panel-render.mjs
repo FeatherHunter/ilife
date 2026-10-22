@@ -180,32 +180,69 @@ export async function renderManagerPanel(options = {}) {
  * 跑一家单品 client 的 `apply`（真产物），回它交给「爱生活页签槽」的**页签名**与**设置页那一卡的屏上文本**。
  *
  * 页签名就是这一家的 `SLOT_TITLE`：页签 label、侧边栏页签名、设置页标题都从它出。
- * 设置页那一卡渲在「拿不到配置」的降级态（桩传输口一律 `bad-request`）——页头那行照样画出来
- * （`<名字> · 配置`），所以它是一份可信的屏上读数，不是渲染失败的空页。
+ * 缺省（不给 `call`）照旧：传输口一律 `bad-request`、`getCall` 给 null ⇒ 面板画「拿不到配置」的降级态
+ * （`tabs-738` 的老读数：页头那行照样画出来，是一份可信的屏上读数，不是渲染失败的空页）。
+ *
+ * 票 #1302 要读「挂载期发了哪些电话」「回执落地后附加块长什么样」，故多两个可选项：
+ *   · `call(base, channel, payload)`：桩传输口，每通电话按 `{base, channel, method}` 记进返回的 `calls`；
+ *     回执由调用方给。缺省不记录、照旧全 `bad-request`。
+ *   · `settleTicks`：初渲之后再多跑几轮「展开 → 跑 effect → 等一拍」，让异步回执落地、附加块挂载；
+ *     另返回 `settle(ticks)`，供测试在点按钮之后再收敛一次。
  *
  * @param {string} pkgDir 单品包根（含 `dist/client.js`）
- * @returns {Promise<{ label: string, text: string }>}
+ * @param {{ call?: ((base: string, channel: string, payload: any) => Promise<unknown>) | null, settleTicks?: number }} [options]
+ * @returns {Promise<{ label: string, text: string, tree: unknown, calls: Array<{ base: string, channel: string, method: string | null }>, settle: (ticks?: number) => Promise<{ tree: unknown, text: string }> }>}
  */
-export async function renderConfigTab(pkgDir) {
+export async function renderConfigTab(pkgDir, options = {}) {
+  const { call = null, settleTicks = 0 } = options;
   const react = makeReact();
   const exports = materialize(pkgDir, react);
   const registrations = [];
+  const calls = [];
+  const transport = call === null
+    ? null
+    : async (base, channel, payload) => {
+        calls.push({ base, channel, method: payload?.method ?? null });
+        return call(base, channel, payload);
+      };
+  const stubCall = transport ?? (async () => ({ ok: false, error: { code: 'bad-request', message: '渲染替身不发电话', details: {} } }));
   exports.apply({
     slots: {
       inject: (_key, callback) => callback(),
-      register: (options, component) => { registrations.push({ options, component }); return () => {}; },
+      register: (registerOptions, component) => { registrations.push({ options: registerOptions, component }); return () => {}; },
       entries: () => [],
       getVersion: () => 0,
       subscribe: () => () => {},
     },
     effect: (callback) => callback(),
     get: () => undefined,
-    connection: { rpc: { call: async () => ({ ok: false, error: { code: 'bad-request', message: '渲染替身不发电话', details: {} } }) } },
+    connection: { rpc: { call: stubCall } },
   });
   const row = registrations.find((entry) => entry.options.name === 'ilife.config-tab');
   assert.ok(row, pkgDir + ' 没往爱生活页签槽注册（页签名与设置页都无从谈起）');
   assert.equal(typeof row.component, 'function', pkgDir + ' 注册的不是一个组件');
   const label = typeof row.options.label === 'function' ? row.options.label() : String(row.options.label);
-  const { text } = await render(() => row.component({ getCall: () => null, getPicker: () => null }), react);
-  return { label, text };
+  const getCall = transport === null ? () => null : () => transport;
+  const root = () => row.component({ getCall, getPicker: () => null });
+
+  /** 多跑几轮 effect 收敛（异步回执落地、附加块挂载）；点按钮之后也能再调用。 */
+  const settle = async (ticks = 6) => {
+    let tree = null;
+    for (let pass = 0; pass < ticks; pass += 1) {
+      react.cursor = 0;
+      tree = expand(root());
+      const effects = react.queue.splice(0, react.queue.length);
+      for (const effect of effects) effect();
+      await new Promise((resolve) => { setTimeout(resolve, 0); });
+      react.cursor = 0;
+      tree = expand(root());
+    }
+    const buf = [];
+    collectText(tree, buf);
+    return { tree, text: buf.join(' ') };
+  };
+
+  const first = await render(root, react);
+  const after = settleTicks > 0 ? await settle(settleTicks) : first;
+  return { label, text: after.text, tree: after.tree, calls, settle };
 }
