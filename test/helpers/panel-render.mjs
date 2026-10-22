@@ -71,7 +71,7 @@ function materialize(pkgDir, react) {
 }
 
 /** 把元素树里的文本收集起来（替身 `createElement` 的形状：`{type, props:{...props, children}}`）。 */
-function collectText(node, buf) {
+export function collectText(node, buf) {
   if (node === null || node === undefined || node === false || node === true) return;
   if (typeof node === 'string' || typeof node === 'number') {
     buf.push(String(node));
@@ -85,6 +85,28 @@ function collectText(node, buf) {
   collectText(node.props?.children, buf);
 }
 
+/** 元素树里所有文本串起来（`collectText` 的常用包法）。 */
+export function textOf(node) {
+  const buf = [];
+  collectText(node, buf);
+  return buf.join(' ');
+}
+
+/** 找那枚字面恰好是 label 的动作按钮；找不到回 null（动作按钮用 StatusBlock 的 `button[data-ilife-press=status-action]`）。
+ *  read-after-click 的用例要靠它把 onClick 取出来手动按一下。 */
+export function findButton(node, label) {
+  if (node === null || node === undefined || typeof node !== 'object') return null;
+  if (Array.isArray(node)) {
+    for (const child of node) {
+      const hit = findButton(child, label);
+      if (hit) return hit;
+    }
+    return null;
+  }
+  if (node.type === 'button' && textOf(node.props?.children) === label) return node;
+  return findButton(node.props?.children, label);
+}
+
 /** 把函数组件展开成元素树（替身 `createElement` 只造节点、不调组件，这一步就是「渲染器」）。
  *  hooks 的调用顺序必须与组件的渲染顺序一致，所以展开与取 hooks 在**同一个 cursor 周期**里做。 */
 function expand(node) {
@@ -94,20 +116,28 @@ function expand(node) {
   return { type: node.type, props: { ...node.props, children: expand(node.props?.children) } };
 }
 
-/** 渲一棵树（含 effect 收敛的回环），回元素树与全部文本。 */
-async function render(root, react) {
+/** effect 收敛的回环：展开 → 跑队列里挂上的 effect → 等一拍 → 再展开。
+ *
+ * 缺省「队列空了就收」（初渲够用）；`alwaysTick` 则咬满 maxPasses 拍——按钮点过之后
+ * 要等异步回执落地、setState 触发重画，队列可能是空的，光看队列会提前收工。 */
+async function converge(root, react, maxPasses, { alwaysTick = false } = {}) {
   react.cursor = 0;
   let tree = expand(root());
-  for (let pass = 0; pass < 8 && react.queue.length > 0; pass += 1) {
+  for (let pass = 0; pass < maxPasses; pass += 1) {
     const effects = react.queue.splice(0, react.queue.length);
     for (const effect of effects) effect();
     await new Promise((resolve) => { setTimeout(resolve, 0); });
     react.cursor = 0;
     tree = expand(root());
+    if (!alwaysTick && react.queue.length === 0) break;
   }
-  const buf = [];
-  collectText(tree, buf);
-  return { tree, text: buf.join(' ') };
+  return tree;
+}
+
+/** 渲一棵树（含 effect 收敛的回环），回元素树与全部文本。 */
+async function render(root, react) {
+  const tree = await converge(root, react, 8);
+  return { tree, text: textOf(tree) };
 }
 
 /** 页签条上每个页签的字：`button[role=tab]` 的**字符串**子节点（圆点是元素、档位小字是元素或 null）。 */
@@ -227,19 +257,8 @@ export async function renderConfigTab(pkgDir, options = {}) {
 
   /** 多跑几轮 effect 收敛（异步回执落地、附加块挂载）；点按钮之后也能再调用。 */
   const settle = async (ticks = 6) => {
-    let tree = null;
-    for (let pass = 0; pass < ticks; pass += 1) {
-      react.cursor = 0;
-      tree = expand(root());
-      const effects = react.queue.splice(0, react.queue.length);
-      for (const effect of effects) effect();
-      await new Promise((resolve) => { setTimeout(resolve, 0); });
-      react.cursor = 0;
-      tree = expand(root());
-    }
-    const buf = [];
-    collectText(tree, buf);
-    return { tree, text: buf.join(' ') };
+    const tree = await converge(root, react, ticks, { alwaysTick: true });
+    return { tree, text: textOf(tree) };
   };
 
   const first = await render(root, react);

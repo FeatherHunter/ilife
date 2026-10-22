@@ -14,7 +14,7 @@ const PKG = join(HERE, '..');
 
 const { fetchConfigSurface } = await import('../dist/config-panel-value.js');
 const contract = await import('../dist/config-panel-contract.js');
-const { CONFIG_READ_BUDGET_MS, CONFIG_READ_RETRY_MS, READ_TIMEOUT_MS } = contract;
+const { CONFIG_READ_BUDGET_MS, CONFIG_READ_RETRY_MS, READ_TIMEOUT_MS, WRITE_TIMEOUT_MS } = contract;
 
 /** 宿主不回的传输口：永远 pending，只能被超时打断。 */
 const never = () => new Promise(() => {});
@@ -25,6 +25,11 @@ const refused = () => ({ ok: false, error: { code: 'transport-error', message: '
 describe('#1302 首开时限 · 常量带', () => {
   it('首次读超时落在 5–8s 带内（原 20s）', () => {
     assert.ok(READ_TIMEOUT_MS >= 5_000 && READ_TIMEOUT_MS <= 8_000, '首次读超时应落在 5–8s：' + READ_TIMEOUT_MS);
+  });
+
+  it('保存／重置的写路时限不动：仍是 20s，不跟读路一起收', () => {
+    assert.equal(WRITE_TIMEOUT_MS, 20_000, '写路不该被 #1302 的读路收口带上：' + WRITE_TIMEOUT_MS);
+    assert.ok(WRITE_TIMEOUT_MS > READ_TIMEOUT_MS, '写路时限必须比读路宽（慢 spawn 10.3s 实测）');
   });
 
   it('整轮预算 ≤15s，且不封顶的旧账确实会越过它', () => {

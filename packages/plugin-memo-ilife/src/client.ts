@@ -480,7 +480,7 @@ function MemoExtras(props: {
     return React.createElement(
       'div',
       null,
-      React.createElement(LarkStatus, { lark: fallback, onCopy, styles: props.styles }),
+      React.createElement(LarkStatus, { lark: fallback, onCopy, styles: props.styles, onCheck: () => void loadHealth() }),
       copyNote,
     );
   }
@@ -503,7 +503,7 @@ function MemoExtras(props: {
     return React.createElement(
       'div',
       null,
-      React.createElement(LarkStatus, { lark: fallback, onCopy, styles: props.styles }),
+      React.createElement(LarkStatus, { lark: fallback, onCopy, styles: props.styles, onCheck: () => void loadHealth() }),
       copyNote,
     );
   }

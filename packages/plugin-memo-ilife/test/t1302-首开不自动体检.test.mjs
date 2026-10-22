@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { renderConfigTab } from '../../../test/helpers/panel-render.mjs';
+import { findButton, renderConfigTab } from '../../../test/helpers/panel-render.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = join(HERE, '..');
@@ -33,26 +33,6 @@ const makeCall = (surface) => async (base, channel, payload) => {
   if (method === 'config.check') return { ok: true, value: HEALTH };
   return { ok: false, error: { code: 'bad-request', message: '没料到的端点：' + method, details: {} } };
 };
-
-/** 把展开后的元素树里的文本收成一串（与 panel-render 同一个形状：{type, props:{...props, children}}）。 */
-function collectText(node, out) {
-  if (node === null || node === undefined || node === false || node === true) return;
-  if (typeof node === 'string' || typeof node === 'number') { out.push(String(node)); return; }
-  if (Array.isArray(node)) { for (const child of node) collectText(child, out); return; }
-  if (typeof node !== 'object') return;
-  collectText(node.props?.children, out);
-}
-const textOf = (node) => { const out = []; collectText(node, out); return out.join(' '); };
-/** 找那枚字面恰好是 label 的动作按钮；找不到回 null（用例里 assert 它存在）。 */
-function findButton(node, label) {
-  if (node === null || node === undefined || typeof node !== 'object') return null;
-  if (Array.isArray(node)) {
-    for (const child of node) { const hit = findButton(child, label); if (hit) return hit; }
-    return null;
-  }
-  if (node.type === 'button' && textOf(node.props?.children) === label) return node;
-  return findButton(node.props?.children, label);
-}
 
 describe('#1302 ② 首开不自动体检 · 备忘录设置页', () => {
   it('新技能回执（无 lark 格）：挂载只发 config.get，屏上画「还没检测」', async () => {

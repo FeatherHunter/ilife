@@ -75,11 +75,22 @@ export const RPC_ENDPOINT_CONFIG_RESET = 'config.reset' as const;
  * 而"留空会怎样"这条口径本就逐行住在每条的 `hint` 里（见本件 `ConfigItem.hint` 的契约）。 */
 export const ADVANCED_GROUP_TITLE = '高级' as const;
 
-/** 请求超时毫秒：与宿主侧 SPAWN_TIMEOUT_MS 同级，界面永不无限转圈。
+/** 面板读整面（config.get）的请求超时毫秒：界面永不无限转圈。
+ *
+ * 只作用于**面板首帧读整面**这一条路；宿主侧 `skill-cli/contract.ts` 的 SPAWN_TIMEOUT_MS（20s）
+ * 是 CLI spawn 进程自身的上限，两者不是同一个数、也不再「同级」——别拿这条去推断宿主侧时限。
  *
  * #1302：20s → 6s。机器级抖动下单次 CLI spawn 实测会到 10.3s／10.4s，20s 让一次慢例先空等 20s
- * 才进重试；6s 落在验收带 5–8s 内（正常读回 <1s，不会误伤）。 */
+ * 才进重试；6s 落在验收带 5–8s 内（正常读回 <1s，不会误伤）。各插件包里另外那几条单次读时限
+ * （体检、版本、取数）是别的读路，按票面「本次不做」保持原值。 */
 export const READ_TIMEOUT_MS = 6_000 as const;
+
+/** 保存／重置（config.save／config.reset）的请求超时毫秒：#1302 只收**读整面**这一条路，写路保持 20s。
+ *
+ * 为什么不能跟着读一起收：写路不重试、不进预算（见上面 CONFIG_READ_RETRY_MS），而宿主侧 spawn 一个
+ * CLI 进程最多给 20s（`skill-cli/contract.ts` 的 SPAWN_TIMEOUT_MS）；慢例 spawn 实测到 10.3s，
+ * 若写路也 6s，界面会先判失败而宿主可能已经写成功——把一次成功的保存说成失败。 */
+export const WRITE_TIMEOUT_MS = 20_000 as const;
 
 /** 快路径首帧有界重试表（#1142，照 #982 更新目标表同值：瞬时未就绪不再整面失败）。
  *
