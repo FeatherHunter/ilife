@@ -71,7 +71,7 @@ function materialize(pkgDir, react) {
 }
 
 /** 把元素树里的文本收集起来（替身 `createElement` 的形状：`{type, props:{...props, children}}`）。 */
-function collectText(node, buf) {
+export function collectText(node, buf) {
   if (node === null || node === undefined || node === false || node === true) return;
   if (typeof node === 'string' || typeof node === 'number') {
     buf.push(String(node));
@@ -85,6 +85,28 @@ function collectText(node, buf) {
   collectText(node.props?.children, buf);
 }
 
+/** 元素树里所有文本串起来（`collectText` 的常用包法）。 */
+export function textOf(node) {
+  const buf = [];
+  collectText(node, buf);
+  return buf.join(' ');
+}
+
+/** 找那枚字面恰好是 label 的动作按钮；找不到回 null（动作按钮用 StatusBlock 的 `button[data-ilife-press=status-action]`）。
+ *  read-after-click 的用例要靠它把 onClick 取出来手动按一下。 */
+export function findButton(node, label) {
+  if (node === null || node === undefined || typeof node !== 'object') return null;
+  if (Array.isArray(node)) {
+    for (const child of node) {
+      const hit = findButton(child, label);
+      if (hit) return hit;
+    }
+    return null;
+  }
+  if (node.type === 'button' && textOf(node.props?.children) === label) return node;
+  return findButton(node.props?.children, label);
+}
+
 /** 把函数组件展开成元素树（替身 `createElement` 只造节点、不调组件，这一步就是「渲染器」）。
  *  hooks 的调用顺序必须与组件的渲染顺序一致，所以展开与取 hooks 在**同一个 cursor 周期**里做。 */
 function expand(node) {
@@ -94,20 +116,28 @@ function expand(node) {
   return { type: node.type, props: { ...node.props, children: expand(node.props?.children) } };
 }
 
-/** 渲一棵树（含 effect 收敛的回环），回元素树与全部文本。 */
-async function render(root, react) {
+/** effect 收敛的回环：展开 → 跑队列里挂上的 effect → 等一拍 → 再展开。
+ *
+ * 缺省「队列空了就收」（初渲够用）；`alwaysTick` 则咬满 maxPasses 拍——按钮点过之后
+ * 要等异步回执落地、setState 触发重画，队列可能是空的，光看队列会提前收工。 */
+async function converge(root, react, maxPasses, { alwaysTick = false } = {}) {
   react.cursor = 0;
   let tree = expand(root());
-  for (let pass = 0; pass < 8 && react.queue.length > 0; pass += 1) {
+  for (let pass = 0; pass < maxPasses; pass += 1) {
     const effects = react.queue.splice(0, react.queue.length);
     for (const effect of effects) effect();
     await new Promise((resolve) => { setTimeout(resolve, 0); });
     react.cursor = 0;
     tree = expand(root());
+    if (!alwaysTick && react.queue.length === 0) break;
   }
-  const buf = [];
-  collectText(tree, buf);
-  return { tree, text: buf.join(' ') };
+  return tree;
+}
+
+/** 渲一棵树（含 effect 收敛的回环），回元素树与全部文本。 */
+async function render(root, react) {
+  const tree = await converge(root, react, 8);
+  return { tree, text: textOf(tree) };
 }
 
 /** 页签条上每个页签的字：`button[role=tab]` 的**字符串**子节点（圆点是元素、档位小字是元素或 null）。 */
@@ -180,32 +210,58 @@ export async function renderManagerPanel(options = {}) {
  * 跑一家单品 client 的 `apply`（真产物），回它交给「爱生活页签槽」的**页签名**与**设置页那一卡的屏上文本**。
  *
  * 页签名就是这一家的 `SLOT_TITLE`：页签 label、侧边栏页签名、设置页标题都从它出。
- * 设置页那一卡渲在「拿不到配置」的降级态（桩传输口一律 `bad-request`）——页头那行照样画出来
- * （`<名字> · 配置`），所以它是一份可信的屏上读数，不是渲染失败的空页。
+ * 缺省（不给 `call`）照旧：传输口一律 `bad-request`、`getCall` 给 null ⇒ 面板画「拿不到配置」的降级态
+ * （`tabs-738` 的老读数：页头那行照样画出来，是一份可信的屏上读数，不是渲染失败的空页）。
+ *
+ * 票 #1302 要读「挂载期发了哪些电话」「回执落地后附加块长什么样」，故多两个可选项：
+ *   · `call(base, channel, payload)`：桩传输口，每通电话按 `{base, channel, method}` 记进返回的 `calls`；
+ *     回执由调用方给。缺省不记录、照旧全 `bad-request`。
+ *   · `settleTicks`：初渲之后再多跑几轮「展开 → 跑 effect → 等一拍」，让异步回执落地、附加块挂载；
+ *     另返回 `settle(ticks)`，供测试在点按钮之后再收敛一次。
  *
  * @param {string} pkgDir 单品包根（含 `dist/client.js`）
- * @returns {Promise<{ label: string, text: string }>}
+ * @param {{ call?: ((base: string, channel: string, payload: any) => Promise<unknown>) | null, settleTicks?: number }} [options]
+ * @returns {Promise<{ label: string, text: string, tree: unknown, calls: Array<{ base: string, channel: string, method: string | null }>, settle: (ticks?: number) => Promise<{ tree: unknown, text: string }> }>}
  */
-export async function renderConfigTab(pkgDir) {
+export async function renderConfigTab(pkgDir, options = {}) {
+  const { call = null, settleTicks = 0 } = options;
   const react = makeReact();
   const exports = materialize(pkgDir, react);
   const registrations = [];
+  const calls = [];
+  const transport = call === null
+    ? null
+    : async (base, channel, payload) => {
+        calls.push({ base, channel, method: payload?.method ?? null });
+        return call(base, channel, payload);
+      };
+  const stubCall = transport ?? (async () => ({ ok: false, error: { code: 'bad-request', message: '渲染替身不发电话', details: {} } }));
   exports.apply({
     slots: {
       inject: (_key, callback) => callback(),
-      register: (options, component) => { registrations.push({ options, component }); return () => {}; },
+      register: (registerOptions, component) => { registrations.push({ options: registerOptions, component }); return () => {}; },
       entries: () => [],
       getVersion: () => 0,
       subscribe: () => () => {},
     },
     effect: (callback) => callback(),
     get: () => undefined,
-    connection: { rpc: { call: async () => ({ ok: false, error: { code: 'bad-request', message: '渲染替身不发电话', details: {} } }) } },
+    connection: { rpc: { call: stubCall } },
   });
   const row = registrations.find((entry) => entry.options.name === 'ilife.config-tab');
   assert.ok(row, pkgDir + ' 没往爱生活页签槽注册（页签名与设置页都无从谈起）');
   assert.equal(typeof row.component, 'function', pkgDir + ' 注册的不是一个组件');
   const label = typeof row.options.label === 'function' ? row.options.label() : String(row.options.label);
-  const { text } = await render(() => row.component({ getCall: () => null, getPicker: () => null }), react);
-  return { label, text };
+  const getCall = transport === null ? () => null : () => transport;
+  const root = () => row.component({ getCall, getPicker: () => null });
+
+  /** 多跑几轮 effect 收敛（异步回执落地、附加块挂载）；点按钮之后也能再调用。 */
+  const settle = async (ticks = 6) => {
+    const tree = await converge(root, react, ticks, { alwaysTick: true });
+    return { tree, text: textOf(tree) };
+  };
+
+  const first = await render(root, react);
+  const after = settleTicks > 0 ? await settle(settleTicks) : first;
+  return { label, text: after.text, tree: after.tree, calls, settle };
 }

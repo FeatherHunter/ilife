@@ -343,6 +343,8 @@ export function LarkStatus(props: {
   readonly onCopy: (prompt: string) => void;
   /** 面板经插槽给的样式（不给＝不写内联样式，文案与交互照旧）。 */
   readonly styles?: PanelStyleSlots | undefined;
+  /** #1302：给了就多画一枚「重新检测」（闲态点它才发体检电话）；不给＝老形状，既有调用方零改动。 */
+  readonly onCheck?: (() => void) | undefined;
 }): React.ReactElement {
   const lark = props.lark;
   if (lark === undefined) {
@@ -365,7 +367,10 @@ export function LarkStatus(props: {
     // 路径从原先把状态写成一句长话里拆出来，单独一行（真源 `.ic-spath`）；找不到 CLI 时这一格留空。
     path: lark.cliPath ?? '',
     version: lark.version,
-    actions: [{ text: '复制安装指引', onPress: () => props.onCopy(lark.prompt) }],
+    actions: [
+      { text: '复制安装指引', onPress: () => props.onCopy(lark.prompt) },
+      ...(props.onCheck === undefined ? [] : [{ text: '重新检测', onPress: props.onCheck }]),
+    ],
     link: { text: lark.websiteLine, href: lark.websiteUrl },
   });
 }
@@ -392,7 +397,8 @@ function larkOf(reply: unknown): LarkState | undefined {
  * 状态行住这里的原因：飞书状态是本家自己的那通体检电话（共用面板不认识 `config.check` 的回执），
  * 组件自己持读数与复制回执两点状态，面板只管把它画进插槽（面板主体之后、动作条之前）。
  * 新技能的 `config.read` 不再带 `lark` 格（#1142），本块经 `config.check` 独立取数；旧技能的回执 `lark` 格仅作回退——
- * 体检没回来之前先画回退，体检到了以体检为准，体检失败则回落到回退，绝不把慢槽的失败变成整面失败。 */
+ * 体检没回来之前先画回退，体检到了以体检为准，体检失败则回落到回退，绝不把慢槽的失败变成整面失败。
+ * #1302 起挂载不再自动发这通电话：先画闲态（旧回执的回退格／一行「还没检测」），点「重新检测」才发。 */
 function MemoExtras(props: {
   /** 整面读到了没有：状态行照改版前的形状只在就绪态画，读取中／读取失败那两屏不占这一行。 */
   readonly hasReply: boolean;
@@ -402,7 +408,7 @@ function MemoExtras(props: {
   /** 取数口（`apply` 现取现给，connection 后到也照样取）。 */
   readonly getCall: GetCall;
 }): React.ReactElement {
-  const [health, setHealth] = React.useState<{ readonly kind: 'loading' } | { readonly kind: 'ready'; readonly item: HealthLarkItem; readonly report: unknown } | { readonly kind: 'failed'; readonly message: string }>({ kind: 'loading' });
+  const [health, setHealth] = React.useState<{ readonly kind: 'idle' } | { readonly kind: 'loading' } | { readonly kind: 'ready'; readonly item: HealthLarkItem; readonly report: unknown } | { readonly kind: 'failed'; readonly message: string }>({ kind: 'idle' });
   const [copied, setCopied] = React.useState<'idle' | 'done' | 'failed'>('idle');
   const loadHealth = React.useCallback(async (): Promise<void> => {
     setHealth({ kind: 'loading' });
@@ -414,9 +420,6 @@ function MemoExtras(props: {
     const item = larkItemOf(r.report);
     setHealth(item === null ? { kind: 'failed', message: '体检回执里没有飞书 CLI 那一项' } : { kind: 'ready', item, report: r.report });
   }, [props.getCall]);
-  React.useEffect(() => {
-    if (props.hasReply) void loadHealth();
-  }, [props.hasReply, loadHealth]);
   const onCopy = (prompt: string): void => {
     void copyPrompt(prompt).then((ok) => setCopied(ok ? 'done' : 'failed'));
   };
@@ -429,6 +432,31 @@ function MemoExtras(props: {
   const fallback = props.fallback;
   const copyAction = (prompt: string | undefined): Array<{ readonly text: string; readonly onPress: () => void }> =>
     prompt === undefined || prompt === '' ? [] : [{ text: '复制安装指引', onPress: () => onCopy(prompt) }];
+  if (health.kind === 'idle') {
+    // #1302：挂载不再自动打体检电话。旧技能回执带 `lark` 格 ⇒ 先照那格画（回执自带读数，不花额外电话），
+    // 旁边多给一枚「重新检测」；新技能没有该格 ⇒ 一行「还没检测」等人点。
+    if (fallback !== undefined) {
+      return React.createElement(
+        'div',
+        null,
+        React.createElement(LarkStatus, { lark: fallback, onCopy, styles: props.styles, onCheck: () => void loadHealth() }),
+        copyNote,
+      );
+    }
+    return React.createElement(
+      'div',
+      null,
+      React.createElement(StatusBlock, {
+        name: '飞书 CLI',
+        tone: 'pending',
+        text: '还没检测，点「重新检测」跑一次体检',
+        path: '',
+        version: null,
+        actions: [{ text: '重新检测', onPress: () => void loadHealth() }],
+      }),
+      copyNote,
+    );
+  }
   if (health.kind === 'ready') {
     const item = health.item;
     const prompt = reportPromptOf(health.report) ?? fallback?.prompt;
@@ -452,7 +480,7 @@ function MemoExtras(props: {
     return React.createElement(
       'div',
       null,
-      React.createElement(LarkStatus, { lark: fallback, onCopy, styles: props.styles }),
+      React.createElement(LarkStatus, { lark: fallback, onCopy, styles: props.styles, onCheck: () => void loadHealth() }),
       copyNote,
     );
   }
@@ -475,7 +503,7 @@ function MemoExtras(props: {
     return React.createElement(
       'div',
       null,
-      React.createElement(LarkStatus, { lark: fallback, onCopy, styles: props.styles }),
+      React.createElement(LarkStatus, { lark: fallback, onCopy, styles: props.styles, onCheck: () => void loadHealth() }),
       copyNote,
     );
   }

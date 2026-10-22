@@ -13,10 +13,12 @@
  */
 
 import {
+  CONFIG_READ_BUDGET_MS,
   RPC_ENDPOINT_CONFIG_GET,
   RPC_ENDPOINT_CONFIG_RESET,
   RPC_ENDPOINT_CONFIG_SAVE,
   READ_TIMEOUT_MS,
+  WRITE_TIMEOUT_MS,
   isRpcResult,
 } from './config-panel-contract.js';
 import type { ConfigItem, ConfigSurfaceReply } from './config-panel-contract.js';
@@ -199,11 +201,14 @@ function withDeadline<T>(promise: Promise<T>, ms: number): Promise<T> {
 }
 
 /** 读整面的重试口（#1142）：缺省单次（旧行为不变）；给 `delays` 即按退避重试，仅读整面用。
- * `sleep`／`isAlive` 可注入（测试与卸载清理用）。首次成功即返回，否则返回最后一次失败。 */
+ * `sleep`／`isAlive` 可注入（测试与卸载清理用）。首次成功即返回，否则返回最后一次失败。
+ * #1302 再加两道：整轮预算 `budgetMs`（挡掉「退避 ＋ 超时」无限叠加）与可注入时钟 `now`（测试用虚拟钟）。 */
 export interface ConfigReadRetry {
   readonly delays?: readonly number[];
   readonly sleep?: (ms: number) => Promise<void>;
   readonly isAlive?: () => boolean;
+  readonly budgetMs?: number;
+  readonly now?: () => number;
 }
 
 /** 有界等待的 sleep（settle 即清 timer；调用方负责卸载清理）。 */
@@ -216,18 +221,22 @@ function retrySleep(ms: number): Promise<void> {
   });
 }
 
-/** 一次配置电话（走调用方给的那条通道，靠端点名分发；永不抛，失败落字，文案自带通道与下一步）。 */
+/** 一次配置电话（走调用方给的那条通道，靠端点名分发；永不抛，失败落字，文案自带通道与下一步）。
+ *
+ * `timeoutMs` 由调用方按读路／写路给（#1302：读整面 6s 收口，保存／重置保持 20s）；
+ * 超时文案里的秒数也从它算，别在这里写死常量。 */
 async function configRpcOnce(
   call: unknown,
   channel: string,
   method: string,
   payload: Record<string, unknown>,
+  timeoutMs: number = READ_TIMEOUT_MS,
 ): Promise<ConfigOutcome> {
   if (typeof call !== 'function') return { ok: false, message: `宿主连接缺席：connection.rpc.call 不可用（通道 ${channel}），稍后重试` };
   try {
     const raw: unknown = await withDeadline(
-      (call as RootsCall)('/api', channel.replace(/^\//, ''), { method, payload }, AbortSignal.timeout(READ_TIMEOUT_MS)),
-      READ_TIMEOUT_MS,
+      (call as RootsCall)('/api', channel.replace(/^\//, ''), { method, payload }, AbortSignal.timeout(timeoutMs)),
+      timeoutMs,
     );
     if (!isRpcResult(raw)) return { ok: false, message: `回执信封异常（通道 ${channel}），点重试重新读取` };
     if (!raw.ok) {
@@ -236,7 +245,7 @@ async function configRpcOnce(
     return { ok: true, surface: raw.value as ConfigSurfaceReply };
   } catch (e) {
     if (e instanceof Error && (e.name === 'AbortError' || e.name === 'TimeoutError')) {
-      return { ok: false, message: `配置请求超时（${Math.round(READ_TIMEOUT_MS / 1000)}s，通道 ${channel}）：宿主未回，点重试重新读取` };
+      return { ok: false, message: `配置请求超时（${Math.round(timeoutMs / 1000)}s，通道 ${channel}）：宿主未回，点重试重新读取` };
     }
     return { ok: false, message: `配置失败（通道 ${channel}）：${e instanceof Error ? e.message : String(e)}，点重试重新读取` };
   }
@@ -251,10 +260,15 @@ export async function fetchConfigSurface(
   const delays = retry?.delays ?? [];
   const sleepFn = retry?.sleep ?? retrySleep;
   const alive = retry?.isAlive ?? (() => true);
+  const now = retry?.now ?? Date.now;
+  // #1302：预算从第一次电话前起算。每次重试前先算「这一轮退避＋超时跑完会不会超预算」，
+  // 会超就收口报终态——终态仍是那句带「宿主未回」的人话，不再把一次慢例放大成数十秒的空等。
+  const deadline = now() + (retry?.budgetMs ?? CONFIG_READ_BUDGET_MS);
   let last = await configRpcOnce(call, channel, RPC_ENDPOINT_CONFIG_GET, {});
   for (let i = 0; i < delays.length && !last.ok; i += 1) {
     if (!alive()) return last;
     const wait = delays[i] ?? 0;
+    if (now() + wait + READ_TIMEOUT_MS > deadline) break;
     if (wait > 0) await sleepFn(wait);
     if (!alive()) return last;
     last = await configRpcOnce(call, channel, RPC_ENDPOINT_CONFIG_GET, {});
@@ -268,10 +282,10 @@ export function saveConfigSurface(
   channel: string,
   values: Record<string, unknown>,
 ): Promise<ConfigOutcome> {
-  return configRpcOnce(call, channel, RPC_ENDPOINT_CONFIG_SAVE, { values });
+  return configRpcOnce(call, channel, RPC_ENDPOINT_CONFIG_SAVE, { values }, WRITE_TIMEOUT_MS);
 }
 
 /** 重置为默认（技能侧先落一份备份；回执同样不是整面，写完要重新读一份整面；永不自动重试）。 */
 export function resetConfigSurface(call: unknown, channel: string): Promise<ConfigOutcome> {
-  return configRpcOnce(call, channel, RPC_ENDPOINT_CONFIG_RESET, {});
+  return configRpcOnce(call, channel, RPC_ENDPOINT_CONFIG_RESET, {}, WRITE_TIMEOUT_MS);
 }

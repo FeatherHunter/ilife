@@ -504,7 +504,9 @@ describe('#908 配置面：人话报错四类 · 一次读不无限转圈', () =
     const src = readFileSync(join(PKG, 'dist', 'config-panel-value.js'), 'utf8');
     assert.match(src, /AbortSignal\.timeout/, '取数没有时限');
     assert.match(src, /Promise\.race/, '取数没有与时限赛跑');
-    assert.equal(contract.READ_TIMEOUT_MS, 20_000, '时限应是一个固定的数');
+    // #1302：从 20_000 收到 6_000，落在验收带 5–8s 内；仍是一个固定的数，不是算出来的。
+    assert.ok(contract.READ_TIMEOUT_MS >= 5_000 && contract.READ_TIMEOUT_MS <= 8_000, '时限应落在 5–8s：' + contract.READ_TIMEOUT_MS);
+    assert.ok(contract.CONFIG_READ_BUDGET_MS <= 15_000, '整轮读预算应 ≤15s：' + contract.CONFIG_READ_BUDGET_MS);
   });
 });
 
