@@ -7,10 +7,11 @@
  * 主面板内导航，绝不在此表另起 tab 行。
  * 60 deck:map 为 matt 探针已占位，本表不动它。
  *
- * 面板外壳的静态文案表也在本文件（票 #679）：右上角两个入口 PANEL_LINKS、使用手册入口
- * MANUAL_ENTRY。文案与网址集中在这里，组件只负责画——改文案不碰组件（map #671 的 Q11 决议）。
+ * 面板外壳的静态文案表也在本文件（票 #679）：使用手册入口 MANUAL_ENTRY。文案与网址
+ * 集中在这里，组件只负责画——改文案不碰组件（map #671 的 Q11 决议）。
  * #12 起底部作者推荐卡与联系入口改由 dsh-featherhunter-plugin-base 渲染（清单/二维码/离线兜底
- * 单一真源在 base 的 data/manifest.json），本仓不再维护第二份。
+ * 单一真源在 base 的 data/manifest.json）；页头三件套（联系／Star／Issue）同样改由 base 0.1.1
+ * 的 ActionGroup 提供，本仓不再维护入口表。
  */
 
 export interface ManagerTab {
@@ -96,30 +97,9 @@ export function openManagerTab(port: HasTabsPort, slotId: string, sessionId?: st
   port.openTab({ type: slotId, path: slotId }, sessionId ? { sessionId } : undefined);
 }
 
-/** 面板右上角一个入口：SVG 图标 ＋ 悬停说明 ＋ 目标网址。 */
-export interface PanelLinkRow {
-  readonly key: 'star' | 'feedback';
-  /** 图标（#1174 起为 SVG：星星实心星、气泡描边气泡，与行尾外链图标同线形语言；emoji 字形已退役）。 */
-  readonly icon: { readonly path: string; readonly filled: boolean };
-  /** 鼠标悬停给出的说明文字。 */
-  readonly tip: string;
-  readonly url: string;
-}
-
-/** 面板右上角两个入口：星（去本仓点 star）＋ 气泡（去本仓开 issue）。
- *
- * 两处都指本仓 FeatherHunter/ilife——这是 map #671 裁定过的（「星与气泡指向哪个仓」
- * 一问：反馈要落在本仓的需求池，「引流到作者其他技能」是底部那张卡的事）。
- * 三件并排里的第三件「检查更新」住隔壁票（#678），本表不管它。
- */
-export const PANEL_LINKS: readonly PanelLinkRow[] = [
-  { key: 'star', icon: { path: 'M12 2.6l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6-5.9-3.2-5.9 3.2 1.3-6.6L2.5 9.5l6.6-.8z', filled: true }, tip: '你的🌟是我夜空中最亮的星。', url: 'https://github.com/FeatherHunter/ilife' },
-  { key: 'feedback', icon: { path: 'M5 4h14a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-7.5L7 18v-4H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z', filled: false }, tip: '反馈问题', url: 'https://github.com/FeatherHunter/ilife/issues/new' },
-];
-
 /** 面板顶部使用手册入口（票 #1237）：甲腰封书（红封＋书脊＋米色腰封＋名牌），点开弹出书。
  *
- * 文案住表、组件只画（map #671 的 Q11 决议同 PANEL_LINKS）；书的样子逐字取定版甲，书体是 #1238 的活。 */
+ * 文案住表、组件只画（map #671 的 Q11 决议）；书的样子逐字取定版甲，书体是 #1238 的活。 */
 export interface ManualEntryRow {
   readonly key: 'manual';
   readonly title: string;

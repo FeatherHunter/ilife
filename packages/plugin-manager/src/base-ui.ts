@@ -5,15 +5,17 @@
  * 这里只做两件事——(1) 按 React 身份缓存一个 baseUI 单例；(2) 首次渲染时把 base 的
  * 全局样式（BASE_STYLE_ID）插进 document（幂等；无 document 的环境跳过）。
  *
- * 联系弹窗入口（ContactRow）与作者推荐卡（AuthorPlugins）都从这里出：文案、二维码卡、
- * 离线兜底（飞书＋QQ 内置）与插件清单全部来自 base 包（唯一真源 contact/ →
- * data/manifest.json），本仓不再维护第二份。
+ * 联系弹窗入口（ContactRow）、作者推荐卡（AuthorPlugins）与页头三件套（ActionGroup：
+ * 联系／Star／Issue）都从这里出：文案、二维码卡、离线兜底（飞书＋QQ 内置）、插件清单与
+ * 图标全部来自 base 包（唯一真源 contact/ → data/manifest.json），本仓不再维护第二份。
  */
 import * as React from 'react';
 import { createBaseUI, ensureBaseStyles } from 'dsh-featherhunter-plugin-base/client';
 
 const LANG = 'zh';
 const SELF_ID = 'ilife';
+/** 本仓地址：页头三件套里 Star 的目标、Issue 的派生基准（base 由 repoUrl 拼出 <repo>/issues）。 */
+const REPO_URL = 'https://github.com/FeatherHunter/ilife';
 
 type BaseUI = ReturnType<typeof createBaseUI>;
 
@@ -25,7 +27,7 @@ let stylesReady = false;
 function baseUI(): BaseUI | null {
   if (cachedUI !== null && cachedReact === React) return cachedUI;
   try {
-    cachedUI = createBaseUI(React, { lang: LANG, selfId: SELF_ID });
+    cachedUI = createBaseUI(React, { lang: LANG, selfId: SELF_ID, repoUrl: REPO_URL });
     cachedReact = React;
   } catch {
     cachedUI = null;
@@ -51,6 +53,17 @@ export function AuthorPlugins(props: { readonly title?: string } = {}): React.Re
   if (ui === null) return null;
   ensureStylesOnce();
   return React.createElement(ui.AuthorPlugins, { title: props.title });
+}
+
+/** 页头三件套（#12）：联系／Star／Issue 收进一枚胶囊（窄页头口径），图标、悬停文案、
+ * 联系弹窗与目标网址全部由 base 渲染；本仓只给 React 身份、尺寸与本仓 repoUrl。
+ *
+ * 尺寸缺省 16：base 的页头默认档，与面板标题行同一视觉重量（14 紧凑／18 宽松留给别的场景）。 */
+export function ActionGroup(props: { readonly size?: 14 | 16 | 18 } = {}): React.ReactElement | null {
+  const ui = baseUI();
+  if (ui === null) return null;
+  ensureStylesOnce();
+  return React.createElement(ui.ActionGroup, { size: props.size ?? 16, repoUrl: REPO_URL });
 }
 
 /** 联系入口（整行）：点开 base 的三群二维码弹窗（离线兜底飞书＋QQ，过期卡降级为链接）。 */

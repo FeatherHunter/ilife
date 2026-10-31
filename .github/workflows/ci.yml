@@ -215,7 +215,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: pnpm star:update
-      # README 四块由 base 包按标记改写；依赖已钉精确版本（0.0.2）。
+      # README 四块由 base 包按标记改写；依赖已钉精确版本（0.1.1）。
       - name: Sync managed README blocks
         run: pnpm readme:sync
       - name: Check managed README blocks

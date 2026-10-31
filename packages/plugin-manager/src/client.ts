@@ -20,8 +20,8 @@
  */
 
 import * as React from 'react';
-import { MANAGER_PLUGIN, MANAGER_TABS, PANEL_LINKS, recoFor } from './nav.js';
-import { AuthorPlugins, ContactRow } from './base-ui.js';
+import { MANAGER_PLUGIN, MANAGER_TABS, recoFor } from './nav.js';
+import { ActionGroup, AuthorPlugins, ContactRow } from './base-ui.js';
 import { clampSpread, planManual, spreadOfPage } from './manual-plan.js';
 import type { ManualScene, ManualSheet } from './manual-plan.js';
 import { SCENES, manualContentCss, renderManualPage } from './manual-content.js';
@@ -82,19 +82,6 @@ const S = {
     gap: 2,
     marginLeft: 'auto',
     flex: '0 0 auto',
-  } as React.CSSProperties,
-  iconLink: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 26,
-    height: 26,
-    borderRadius: 6,
-    border: '1px solid transparent',
-    color: 'var(--dsw-alias-label-primary, inherit)',
-    textDecoration: 'none',
-    fontSize: 14,
-    lineHeight: 1,
   } as React.CSSProperties,
   /** 书的舞台层：书壳与铜扣行都铺在这一层上（原型里是 `body` 上并列的 `.scroll` 与 `.deck`）。 */
   manualStageLayer: { position: 'relative' } as React.CSSProperties,
@@ -301,27 +288,7 @@ function resolveLabel(label: SlotLedgerEntry['options']['label']): string {
   return label ?? '';
 }
 
-/** 标题行入口图标（#1174：星星实心填色、气泡描边，与行尾外链图标同线形语言；语义仍在链接的 title／aria-label 上）。 */
-function PanelLinkIcon(props: { readonly filled: boolean; readonly path: string }): React.ReactElement {
-  return React.createElement(
-    'svg',
-    {
-      viewBox: '0 0 24 24',
-      width: 14,
-      height: 14,
-      fill: props.filled ? 'currentColor' : 'none',
-      stroke: props.filled ? 'none' : 'currentColor',
-      strokeWidth: 1.9,
-      strokeLinecap: 'round',
-      strokeLinejoin: 'round',
-      'aria-hidden': 'true',
-      focusable: 'false',
-    },
-    React.createElement('path', { d: props.path }),
-  );
-}
-
-/** 缺席标记（#1282）：下载箭头＝"待安装"；描边取缺席标记色，与 PanelLinkIcon 同线形语言。
+/** 缺席标记（#1282）：下载箭头＝"待安装"；描边取缺席标记色，与页头三件套的线形图标同语言。
  *  注意不用圆点：圆＝体检档位，缺席没有健康值，不进那套分级（形状即第二通道）。 */
 function AbsentDownloadIcon(props: { readonly color: string }): React.ReactElement {
   return React.createElement(
@@ -815,36 +782,6 @@ function ManualBookShell(props: {
   );
 }
 
-/** 标题行右上角两件：星（去本仓点 Star）＋ 气泡（去本仓开 issue），SVG 图标＋悬停说明＋按压反馈（#1174）。
- *
- * 三件并排里的第三件「检查更新」住隔壁票（#678）：本票只留位子——它就接在本组件之前，
- * 不画一个点了没反应的假按钮。窄窗口靠 headRow 的 flexWrap 折到标题下方，
- * 标题与两件都是 flex:'0 0 auto'，谁也不挤谁。
- */
-function PanelActions(): React.ReactElement {
-  return React.createElement(
-    'div',
-    { style: S.headActions },
-    PANEL_LINKS.map((link) =>
-      React.createElement(
-        'a',
-        {
-          key: link.key,
-          href: link.url,
-          target: '_blank',
-          rel: 'noreferrer',
-          title: link.tip,
-          'aria-label': link.tip,
-          style: S.iconLink,
-          // #1174：入口挂 press（悬停洗色＋按压收缩＋焦点双环；长按环不挂，链接只做反馈不做标记）。
-          'data-ilife-press': link.key,
-        },
-        React.createElement(PanelLinkIcon, { filled: link.icon.filled, path: link.icon.path }),
-      ),
-    ),
-  );
-}
-
 /** 缺席页签的单包安装按钮（#1282）：挂载位＋挂载一体，连接不到或目标表无此包就不画。
  *
  *  与标题行批量入口同形（ref 占位＋effect 挂载＋卸载 unmount），区别只有两处：调的是单包安装
@@ -1314,7 +1251,10 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
               entryRef.current = element;
             },
           }),
-          React.createElement(PanelActions, null),
+          // #12：页头三件套（联系／Star／Issue）收成一枚胶囊，图标、悬停文案、目标网址与联系
+          // 弹窗全部由 base 0.1.1 的 ActionGroup 渲染；尺寸 16 与页头同一视觉重量，窄窗口交给
+          // S.headRow 的 flexWrap 折行。
+          React.createElement(ActionGroup, { size: 16 }),
         ),
       ),
     React.createElement(

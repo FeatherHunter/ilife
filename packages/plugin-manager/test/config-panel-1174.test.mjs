@@ -17,8 +17,12 @@ const view = await import('../dist/config-panel-view.js');
 const nav = await import('../dist/nav.js');
 const { renderManagerPanel } = await import('../../../test/helpers/panel-render.mjs');
 
-const STAR_TIP = '你的🌟是我夜空中最亮的星。';
-const FEEDBACK_TIP = '反馈问题';
+/** base 0.1.1 页头三件套（#12：入口表改由 base 的 ActionGroup 提供）。 */
+const REPO_URL = 'https://github.com/FeatherHunter/ilife';
+const BASE_GROUP_LABEL = '联系、Star 与 Issue';
+const CONTACT_LABEL = '联系我们';
+const STAR_LABEL = 'Star 这个项目';
+const ISSUE_LABEL = '提交 Issue';
 
 function flat(node, out = []) {
   if (node === null || node === undefined || typeof node === 'boolean') return out;
@@ -68,24 +72,33 @@ describe('#1174 高级头洗色叠加（T1：同复制档，动画保留）', ()
   });
 });
 
-describe('#1174 星星气泡 SVG＋反馈（T3 线形风格）', () => {
-  it('入口表无 glyph，有 path，非空', () => {
-    assert.equal(nav.PANEL_LINKS.length, 2);
-    for (const link of nav.PANEL_LINKS) {
-      assert.ok(link.icon.path.length > 8, link.key + ' 缺图标路径');
-      assert.ok(!('glyph' in link), link.key + ' emoji 字形已退役');
-    }
+describe('#1174 页头三件套（#12：base 0.1.1 的 ActionGroup 接管）', () => {
+  it('本仓入口表随 base 接管退场（nav 不再导出 PANEL_LINKS）', () => {
+    assert.equal('PANEL_LINKS' in nav, false, '三件套改由 base 渲染后，本仓不再维护入口表');
   });
-  it('屏上两入口是 svg 且挂 press（悬停／按压／焦点都有着落）', async () => {
+  it('屏上三件套＝一枚胶囊组＋联系/Star/Issue 三枚 svg 控件（外链两项、联系是按钮）', async () => {
     const { tree } = await renderManagerPanel();
-    const anchors = flat(tree).filter((n) => n.type === 'a' && (n.props.title === STAR_TIP || n.props.title === FEEDBACK_TIP));
-    assert.equal(anchors.length, 2);
-    for (const a of anchors) {
-      assert.ok(a.props['data-ilife-press'] === 'star' || a.props['data-ilife-press'] === 'feedback');
-      const svgs = flat(a).filter((n) => n.type === 'svg');
-      assert.equal(svgs.length, 1, '入口图标须是 svg');
-      assert.ok(!textOf(a).includes('⭐') && !textOf(a).includes('💬'), '入口图标须无 emoji');
+    const groups = flat(tree).filter((n) => n.type === 'span' && typeof n.props.className === 'string' && n.props.className.includes('dsh-base-actions--group'));
+    assert.equal(groups.length, 1, '页头应恰好一枚胶囊组（ActionGroup）');
+    const group = groups[0];
+    assert.equal(group.props.role, 'group');
+    assert.equal(group.props['aria-label'], BASE_GROUP_LABEL);
+    const controls = flat(group).filter((n) => n.type === 'a' || n.type === 'button');
+    assert.equal(controls.length, 3, '组里须恰好三枚控件（联系/Star/Issue）');
+    assert.deepEqual(
+      controls.map((c) => c.props['aria-label']).sort(),
+      [CONTACT_LABEL, ISSUE_LABEL, STAR_LABEL].sort(),
+      '三枚控件的 aria 标签须来自 base 文案',
+    );
+    for (const control of controls) {
+      const svgs = flat(control).filter((n) => n.type === 'svg');
+      assert.equal(svgs.length, 1, control.props['aria-label'] + ' 的图标须是 svg');
+      assert.ok(!textOf(control).includes('⭐') && !textOf(control).includes('💬'), '入口图标须无 emoji');
     }
+    const anchors = controls.filter((n) => n.type === 'a');
+    assert.equal(anchors.length, 2, 'Star 与 Issue 是外链');
+    assert.deepEqual(anchors.map((a) => a.props.href).sort(), [REPO_URL, REPO_URL + '/issues'].sort(), '外链须指向本仓（Star）与派生的 issues');
+    assert.equal(controls.filter((n) => n.type === 'button').length, 1, '联系是按钮（点开 base 的二维码弹窗）');
   });
 });
 
