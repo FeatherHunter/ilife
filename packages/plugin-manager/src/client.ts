@@ -12,16 +12,16 @@
  *   按 `{only}` 投影（一次只挂载一个）+ visited 缓存；ledger 无某技能=缺席，
  *   显示推荐安装只读文本（不返空冒充）。
  * - 组件 React.createElement 手写（禁 JSX），无数据轮询、无 document/window/process。
- * - 面板外壳两处（票 #679；#12 起作者推荐卡与联系入口改由 base 包通用件渲染）：标题行
- *   右上角两个入口（星／气泡，悬停出说明文字，窄窗口折到标题下方）的文案与网址仍取自
- *   nav.ts；页签面板之后是作者推荐卡与联系入口，两者均由 dsh-featherhunter-plugin-base 绘制——
+ * - 面板外壳两处（票 #679；#12 起作者推荐卡改由 base 包通用件渲染，票 05 起页头三件套迁
+ *   ActionCluster）：标题行右上角的联系／Star／Issue 动作簇由 dsh-featherhunter-plugin-base
+ *   绘制（悬停出说明文字，窄窗口折到标题下方）；页签面板之后只剩作者推荐卡，同样由 base 绘制——
  *   插件清单、二维码卡、离线兜底全部单一真源在 base 的 data/manifest.json，本仓不再维护
- *   第二份（本文件只画不算）。
+ *   第二份（本文件只画不算）。底部整行联系入口自票 05 起退场，联系入口只留页头动作簇。
  */
 
 import * as React from 'react';
 import { MANAGER_PLUGIN, MANAGER_TABS, recoFor } from './nav.js';
-import { ActionGroup, AuthorPlugins, ContactRow } from './base-ui.js';
+import { ActionCluster, AuthorPlugins } from './base-ui.js';
 import { clampSpread, planManual, spreadOfPage } from './manual-plan.js';
 import type { ManualScene, ManualSheet } from './manual-plan.js';
 import { SCENES, manualContentCss, renderManualPage } from './manual-content.js';
@@ -1251,10 +1251,10 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
               entryRef.current = element;
             },
           }),
-          // #12：页头三件套（联系／Star／Issue）收成一枚胶囊，图标、悬停文案、目标网址与联系
-          // 弹窗全部由 base 0.1.1 的 ActionGroup 渲染；尺寸 16 与页头同一视觉重量，窄窗口交给
-          // S.headRow 的 flexWrap 折行。
-          React.createElement(ActionGroup, { size: 16 }),
+          // 票 05：页头三件套迁到 base 0.1.2 的 ActionCluster（v2 静默簇：无外框、彩色 16px
+          // 图标三枚），图标、悬停文案、目标网址与联系弹窗全部由 base 渲染；尺寸 16 与页头同一
+          // 视觉重量，窄窗口交给 S.headRow 的 flexWrap 折行。
+          React.createElement(ActionCluster, { size: 16 }),
         ),
       ),
     React.createElement(
@@ -1411,13 +1411,13 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
             })(),
       );
     }),
-    // #12：卡片与「联系我们」都改由 dsh-featherhunter-plugin-base 提供（六家的名字/描述随 base
-    // 的数据升级，不再在仓里手抄一份）：一张卡＋一颗联系按钮，外距由本容器给。
+    // #12：作者推荐卡改由 dsh-featherhunter-plugin-base 提供（六家的名字/描述随 base 的数据
+    // 升级，不再在仓里手抄一份）；票 05 起底部整行联系入口退场，联系入口只留页头动作簇，
+    // 外距由本容器给。
     React.createElement(
       'div',
       { style: { marginTop: 16, display: 'flex', flexDirection: 'column', gap: 8 } },
       React.createElement(AuthorPlugins, null),
-      React.createElement(ContactRow, null),
     ),
     // 用户口径（右下角常驻）：入口放大 30%，吸附在**面板**右下角——sticky 贴着滚动视口底沿，
     // 面板相对（视口多大都落在面板角上，不随列表滑走）；只能住末尾（置顶会被上面滑走）。

@@ -1,14 +1,17 @@
-// 票 #679 自证回路：页头三件套（#12 起由 base 的 ActionGroup 渲染）；底部「作者的其他插件」卡与联系入口
-// （#12 起改由 base 包渲染）。
+// 票 #679 自证回路：页头三件套（票 05 起由 base 0.1.2 的 ActionCluster 渲染）；底部「作者的其他插件」卡
+// （#12 起改由 base 包渲染；票 05 起底部整行联系入口退场）。
 //
 // 咬三条，都不咬写法：
-//   ① 页头三件套真的接上了 base 的 ActionGroup：胶囊组、联系/Star/Issue 三项的 aria 标签、banner 版本、
-//      目标网址（本仓 repoUrl 与派生的 <repo>/issues）与三句悬停文案都必须在产物 dist/client.js 里；
+//   ① 页头三件套真的接上了 base 的 ActionCluster：静默簇、联系/Star/Issue 三项的 aria 标签、banner 版本、
+//      目标网址（本仓 repoUrl 与派生的 <repo>/issues）、三句悬停文案与彩色渐变图标都必须在产物 dist/client.js 里；
 //      本仓旧入口表 PANEL_LINKS 必须已从 dist/nav.js 撤干净——「删了本地表但没接上 base」要变红；
-//   ② 底部卡与联系入口不再由本仓手抄：产物里必须带 base 包的横幅与通用件标记；
+//   ② 底部卡不再由本仓手抄：产物里必须带 base 包的横幅与通用件标记；
 //   ③ 本仓那套旧文案（包名/描述）必须已经从产物里消失——「删了本地表但没接上 base」也要变红。
 //      （所以本回路要先构建：node node_modules/typescript/bin/tsc -b packages/plugin-manager
 //        ＋ 包内 tsdown。只改源码不重出产物 → ①②③ 会红，这是有意的。）
+//
+// 说明（票 05）：旧 ActionGroup / ContactRow 组件仍留在 base 包里（兼容面），所以产物里还能搜到它们的
+// 定义；「页头没换、底部联系行没删」由渲染树那条测试（config-panel-1174）咬住。
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -23,16 +26,13 @@ const PKG = JSON.parse(readFileSync(join(HERE, '..', 'package.json'), 'utf8'));
 /** base 包版本：banner 里烙的那个版本号必须与声明的精确版本一致（漂了就是没重新内联）。 */
 const BASE_VERSION = PKG.devDependencies['dsh-featherhunter-plugin-base'];
 const BASE_BANNER = '/*! dsh-featherhunter-plugin-base v' + BASE_VERSION + ' */';
-/** 票 9：本仓内联的 base 版本必须正好是这次升级到的 0.1.1（升级没重建产物即变红）。 */
-const EXPECTED_BASE_VERSION = '0.1.1';
+/** 票 05：本仓内联的 base 版本必须正好是这次升级到的 0.1.2（升级没重建产物即变红）。 */
+const EXPECTED_BASE_VERSION = '0.1.2';
 
-/** base 0.1.1 页头三件套：胶囊组、三项 aria 标签、三句悬停文案与本仓地址（单一真源在 base 的 texts.ts）。 */
+/** base 0.1.2 页头动作簇（ActionCluster v2）：静默簇容器与按钮标记、三项 aria 标签、三句悬停文案与本仓地址。 */
 const REPO_URL = 'https://github.com/FeatherHunter/ilife';
-const BASE_ACTION_CLASSES = [
-  'dsh-base-actions dsh-base-actions--group',
-  'dsh-base-icon-action',
-  'dsh-base-contact-button',
-];
+const BASE_CLUSTER_CLASSES = ['dsh-base-cluster', 'dsh-base-cluster__btn'];
+const BASE_GROUP_LABEL = '快捷操作';
 const BASE_ACTION_LABELS = ['联系我们', 'Star 这个项目', '提交 Issue'];
 const BASE_ACTION_TIPS = [
   '扫码加入交流群，反馈、建议、idea 都欢迎',
@@ -57,15 +57,15 @@ const LOCAL_GONE = [
   '聊天机器人的伴侣插件：扫码或填凭据就把飞书、微信等聊天接进来',
 ];
 
-describe('票 #679 面板头部与底部（#12 后三件套与底部都交给 base 通用件）', () => {
-  it('页头三件套走 base 的 ActionGroup：胶囊组、三枚控件、三句文案与版本都在产物里', () => {
+describe('票 #679 面板头部与底部（#12/#票 05 后三件套与底部都交给 base 通用件）', () => {
+  it('页头三件套走 base 的 ActionCluster：静默簇、三枚彩色图标、三句文案与版本都在产物里', () => {
     assert.equal(BASE_VERSION, EXPECTED_BASE_VERSION, 'base 依赖须精确升到 ' + EXPECTED_BASE_VERSION);
     assert.ok(CLIENT.includes(BASE_BANNER), '产物里没有 base 横幅（没内联 / 版本漂了）：' + BASE_BANNER);
-    for (const cls of BASE_ACTION_CLASSES) {
-      assert.ok(CLIENT.includes(cls), '产物里没有 base 三件套的样式/结构标记：' + cls);
+    for (const cls of BASE_CLUSTER_CLASSES) {
+      assert.ok(CLIENT.includes(cls), '产物里没有动作簇的样式/结构标记：' + cls);
     }
-    // 组 aria-label：三件收进一枚胶囊（ActionGroup），不是三枚散装（ActionButtons）。
-    assert.ok(CLIENT.includes('联系、Star 与 Issue'), '产物里没有三件套的组 aria-label');
+    // 组 aria-label：三件收进一枚静默簇（ActionCluster），不再走旧胶囊（ActionGroup）。
+    assert.ok(CLIENT.includes(BASE_GROUP_LABEL), '产物里没有动作簇的组 aria-label：' + BASE_GROUP_LABEL);
     for (const label of BASE_ACTION_LABELS) {
       assert.ok(CLIENT.includes(label), '产物里没有三件套的 aria 标签：' + label);
     }
@@ -73,7 +73,8 @@ describe('票 #679 面板头部与底部（#12 后三件套与底部都交给 ba
       assert.ok(CLIENT.includes(tip), '产物里没有三件套的悬停文案：' + tip);
     }
     assert.ok(CLIENT.includes(REPO_URL), '产物里没有本仓 repoUrl：' + REPO_URL);
-    assert.ok(CLIENT.includes('"/issues"'), 'Issue 目标须由 repoUrl 派生（<repo>/issues）');
+    assert.ok(CLIENT.includes('"/issues"'), 'Issue 目标须由 repoUrl 派生（<repo>/issues 列表页）');
+    assert.ok(CLIENT.includes('linearGradient') && CLIENT.includes('radialGradient'), '彩色图标须带渐变（linearGradient/radialGradient）');
   });
 
   it('本仓旧入口表已撤干净：nav 不再导出 PANEL_LINKS，产物里没有两枚旧图标的 path', () => {
@@ -82,10 +83,9 @@ describe('票 #679 面板头部与底部（#12 后三件套与底部都交给 ba
     assert.ok(!CLIENT.includes('M5 4h14a1 1 0 0 1 1 1v8'), '产物里仍有旧气泡 SVG path（图标应由 base 出）');
   });
 
-  it('底部卡与联系入口改由 base 包渲染：产物里有横幅、通用件标记与 base 清单', () => {
+  it('底部卡改由 base 包渲染：产物里有横幅、通用件标记与 base 清单', () => {
     assert.ok(CLIENT.includes('作者的其他插件'), '产物里没有 base 卡标题「作者的其他插件」');
     assert.ok(CLIENT.includes('dsh-base-plugins'), '产物里没有 base 卡样式类标记 dsh-base-plugins');
-    assert.ok(CLIENT.includes('dsh-base-contact-row'), '产物里没有 base 联系入口标记 dsh-base-contact-row');
     for (const [name, desc] of BASE_PLUGINS) {
       assert.ok(CLIENT.includes(name), '产物里没有 base 清单里的包名：' + name);
       assert.ok(CLIENT.includes(desc), '产物里没有 base 清单里的描述：' + name);

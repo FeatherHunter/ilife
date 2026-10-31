@@ -5,9 +5,9 @@
  * 这里只做两件事——(1) 按 React 身份缓存一个 baseUI 单例；(2) 首次渲染时把 base 的
  * 全局样式（BASE_STYLE_ID）插进 document（幂等；无 document 的环境跳过）。
  *
- * 联系弹窗入口（ContactRow）、作者推荐卡（AuthorPlugins）与页头三件套（ActionGroup：
- * 联系／Star／Issue）都从这里出：文案、二维码卡、离线兜底（飞书＋QQ 内置）、插件清单与
- * 图标全部来自 base 包（唯一真源 contact/ → data/manifest.json），本仓不再维护第二份。
+ * 作者推荐卡（AuthorPlugins）与页头动作簇（ActionCluster：联系／Star／Issue）都从这里出：
+ * 文案、二维码卡、离线兜底（飞书＋QQ 内置）、插件清单与图标全部来自 base 包（唯一真源
+ * contact/ → data/manifest.json），本仓不再维护第二份。
  */
 import * as React from 'react';
 import { createBaseUI, ensureBaseStyles } from 'dsh-featherhunter-plugin-base/client';
@@ -55,21 +55,14 @@ export function AuthorPlugins(props: { readonly title?: string } = {}): React.Re
   return React.createElement(ui.AuthorPlugins, { title: props.title });
 }
 
-/** 页头三件套（#12）：联系／Star／Issue 收进一枚胶囊（窄页头口径），图标、悬停文案、
- * 联系弹窗与目标网址全部由 base 渲染；本仓只给 React 身份、尺寸与本仓 repoUrl。
+/** 页头动作簇 v2（票 05）：联系／Star／Issue 三枚彩色静默按钮（无外框、间距 4），图标、
+ * 悬停文案、联系弹窗与目标网址全部由 base 渲染；本仓只给 React 身份、尺寸与本仓 repoUrl
+ * （base 由它派生 Star 目标与 <repo>/issues 列表页）。
  *
  * 尺寸缺省 16：base 的页头默认档，与面板标题行同一视觉重量（14 紧凑／18 宽松留给别的场景）。 */
-export function ActionGroup(props: { readonly size?: 14 | 16 | 18 } = {}): React.ReactElement | null {
+export function ActionCluster(props: { readonly size?: 14 | 16 | 18 } = {}): React.ReactElement | null {
   const ui = baseUI();
   if (ui === null) return null;
   ensureStylesOnce();
-  return React.createElement(ui.ActionGroup, { size: props.size ?? 16, repoUrl: REPO_URL });
-}
-
-/** 联系入口（整行）：点开 base 的三群二维码弹窗（离线兜底飞书＋QQ，过期卡降级为链接）。 */
-export function ContactRow(props: { readonly label?: string; readonly hint?: string } = {}): React.ReactElement | null {
-  const ui = baseUI();
-  if (ui === null) return null;
-  ensureStylesOnce();
-  return React.createElement(ui.ContactRow, { label: props.label, hint: props.hint });
+  return React.createElement(ui.ActionCluster, { size: props.size ?? 16 });
 }

@@ -17,9 +17,9 @@ const view = await import('../dist/config-panel-view.js');
 const nav = await import('../dist/nav.js');
 const { renderManagerPanel } = await import('../../../test/helpers/panel-render.mjs');
 
-/** base 0.1.1 页头三件套（#12：入口表改由 base 的 ActionGroup 提供）。 */
+/** base 0.1.2 页头动作簇（票 05：入口表改由 base 的 ActionCluster v2 提供）。 */
 const REPO_URL = 'https://github.com/FeatherHunter/ilife';
-const BASE_GROUP_LABEL = '联系、Star 与 Issue';
+const BASE_GROUP_LABEL = '快捷操作';
 const CONTACT_LABEL = '联系我们';
 const STAR_LABEL = 'Star 这个项目';
 const ISSUE_LABEL = '提交 Issue';
@@ -72,18 +72,21 @@ describe('#1174 高级头洗色叠加（T1：同复制档，动画保留）', ()
   });
 });
 
-describe('#1174 页头三件套（#12：base 0.1.1 的 ActionGroup 接管）', () => {
+describe('#1174 页头三件套（票 05：base 0.1.2 的 ActionCluster v2 接管）', () => {
   it('本仓入口表随 base 接管退场（nav 不再导出 PANEL_LINKS）', () => {
     assert.equal('PANEL_LINKS' in nav, false, '三件套改由 base 渲染后，本仓不再维护入口表');
   });
-  it('屏上三件套＝一枚胶囊组＋联系/Star/Issue 三枚 svg 控件（外链两项、联系是按钮）', async () => {
+  it('屏上三件套＝一枚静默簇＋联系/Star/Issue 三枚彩色 svg 控件（外链两项、联系是按钮）；底部整行联系入口已删', async () => {
     const { tree } = await renderManagerPanel();
-    const groups = flat(tree).filter((n) => n.type === 'span' && typeof n.props.className === 'string' && n.props.className.includes('dsh-base-actions--group'));
-    assert.equal(groups.length, 1, '页头应恰好一枚胶囊组（ActionGroup）');
-    const group = groups[0];
-    assert.equal(group.props.role, 'group');
-    assert.equal(group.props['aria-label'], BASE_GROUP_LABEL);
-    const controls = flat(group).filter((n) => n.type === 'a' || n.type === 'button');
+    const all = flat(tree);
+    const oldGroup = all.filter((n) => typeof n.props.className === 'string' && n.props.className.includes('dsh-base-actions--group'));
+    assert.equal(oldGroup.length, 0, '旧 ActionGroup 胶囊组不许在场（票 05 已迁 ActionCluster）');
+    const clusters = all.filter((n) => typeof n.props.className === 'string' && n.props.className.split(/\s+/).includes('dsh-base-cluster'));
+    assert.equal(clusters.length, 1, '页头应恰好一枚动作簇（ActionCluster）');
+    const cluster = clusters[0];
+    assert.equal(cluster.props.role, 'group');
+    assert.equal(cluster.props['aria-label'], BASE_GROUP_LABEL);
+    const controls = flat(cluster).filter((n) => n.type === 'a' || n.type === 'button');
     assert.equal(controls.length, 3, '组里须恰好三枚控件（联系/Star/Issue）');
     assert.deepEqual(
       controls.map((c) => c.props['aria-label']).sort(),
@@ -91,14 +94,19 @@ describe('#1174 页头三件套（#12：base 0.1.1 的 ActionGroup 接管）', (
       '三枚控件的 aria 标签须来自 base 文案',
     );
     for (const control of controls) {
+      assert.ok(String(control.props.className).includes('dsh-base-cluster__btn'), control.props['aria-label'] + ' 须是动作簇按钮');
       const svgs = flat(control).filter((n) => n.type === 'svg');
       assert.equal(svgs.length, 1, control.props['aria-label'] + ' 的图标须是 svg');
+      const gradients = flat(svgs[0]).filter((n) => n.type === 'linearGradient' || n.type === 'radialGradient');
+      assert.ok(gradients.length >= 1, control.props['aria-label'] + ' 的彩色图标须带渐变（linearGradient/radialGradient）');
       assert.ok(!textOf(control).includes('⭐') && !textOf(control).includes('💬'), '入口图标须无 emoji');
     }
     const anchors = controls.filter((n) => n.type === 'a');
     assert.equal(anchors.length, 2, 'Star 与 Issue 是外链');
-    assert.deepEqual(anchors.map((a) => a.props.href).sort(), [REPO_URL, REPO_URL + '/issues'].sort(), '外链须指向本仓（Star）与派生的 issues');
+    assert.deepEqual(anchors.map((a) => a.props.href).sort(), [REPO_URL, REPO_URL + '/issues'].sort(), '外链须指向本仓（Star）与派生的 issues 列表页');
     assert.equal(controls.filter((n) => n.type === 'button').length, 1, '联系是按钮（点开 base 的二维码弹窗）');
+    const contactRows = all.filter((n) => typeof n.props.className === 'string' && n.props.className.includes('dsh-base-contact-row'));
+    assert.equal(contactRows.length, 0, '底部整行联系入口（ContactRow）已随票 05 删除');
   });
 });
 
