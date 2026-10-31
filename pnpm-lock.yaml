@@ -14,6 +14,9 @@ importers:
       '@types/node':
         specifier: ^26.4.1
         version: 26.4.1
+      dsh-featherhunter-plugin-base:
+        specifier: 0.0.2
+        version: 0.0.2(react@19.2.8)
       typescript:
         specifier: ^5.9.2
         version: 5.9.2
@@ -138,6 +141,9 @@ importers:
       '@types/react':
         specifier: 19.2.18
         version: 19.2.18
+      dsh-featherhunter-plugin-base:
+        specifier: 0.0.2
+        version: 0.0.2(react@19.2.8)
       react:
         specifier: 19.2.8
         version: 19.2.8
@@ -664,6 +670,13 @@ packages:
   dir-glob@3.0.1:
     resolution: {integrity: sha512-WkrWp9GR4KXfKGYzOLmTuGVi1UWFfws377n9cc55/tb6DuqyF6pcQ5AbiHEshaDpY9v6oaSr2XCDidGmMwdzIA==}
     engines: {node: '>=8'}
+
+  dsh-featherhunter-plugin-base@0.0.2:
+    resolution: {integrity: sha512-4iL/yaly5dlgvKOx8hXfJ8qtAD0/W8jFGjDoWtUcqMP9t3ooj2pBE6jcwwgdta2FcHIOFs+/5eJyHmWkkGOi6A==}
+    engines: {node: '>=18'}
+    hasBin: true
+    peerDependencies:
+      react: ^18 || ^19
 
   dsh-log@0.3.4:
     resolution: {integrity: sha512-uCG6sLTze5YjmZmLln2KAeCCepsKvzGhnpZmkym/3OKNOsMKH5sA2lunwrLoOfmLxxju3/ZkKQmLp76Fklpw2w==}
@@ -1432,6 +1445,10 @@ snapshots:
   dir-glob@3.0.1:
     dependencies:
       path-type: 4.0.0
+
+  dsh-featherhunter-plugin-base@0.0.2(react@19.2.8):
+    dependencies:
+      react: 19.2.8
 
   dsh-log@0.3.4: {}
 

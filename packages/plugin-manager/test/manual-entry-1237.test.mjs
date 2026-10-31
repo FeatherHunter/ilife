@@ -138,7 +138,7 @@ describe('#1237 使用手册入口与弹出空壳', () => {
     assert.ok(src.includes('~[data-ilife-manual="deck"]{visibility:hidden}'), '铜扣行开图须占位藏（书不动）');
     // 用户口径（右下角常驻）：入口 sticky 吸附在面板右下角、住卡片末尾，不随列表滑走
     assert.ok(/position: 'sticky', bottom: MANUAL_ENTRY_BOTTOM/.test(src), '入口须 sticky 吸附在右下角');
-    assert.ok(src.indexOf('MorePluginsCard') < src.indexOf("position: 'sticky'"), '入口块须住卡片末尾（置顶会被上面滑走）');
+    assert.ok(src.indexOf('AuthorPlugins') < src.indexOf("position: 'sticky'"), '入口块须住卡片末尾（置顶会被上面滑走）');
     assert.ok(src.includes("'data-ilife-manual': 'entry-dock'"), '吸附壳须带 entry-dock 标记位');
     assert.ok(!src.includes('MANUAL_ENTRY_RESERVE'), '旧的标题行右边距竖带须已撤掉');
   });

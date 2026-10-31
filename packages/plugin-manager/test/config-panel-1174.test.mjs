@@ -90,10 +90,13 @@ describe('#1174 星星气泡 SVG＋反馈（T3 线形风格）', () => {
 });
 
 describe('#1174 Q2 全量可点击审计（可点即有反馈）', () => {
-  it('引流行挂 press', async () => {
+  it('引流行随旧卡退场（#12：卡改由 base 渲染，本仓不再有 a[data-ilife-press=more]）', async () => {
     const { tree } = await renderManagerPanel();
     const mores = flat(tree).filter((n) => n.type === 'a' && n.props['data-ilife-press'] === 'more');
-    assert.equal(mores.length, 4);
+    assert.equal(mores.length, 0, '旧「作者其他插件」引流行的 press 标记应随卡一起删掉');
+    // 新卡是 base 的 ul/li/a（不带 data-ilife-press），有 4 行作者作品。
+    const baseRows = flat(tree).filter((n) => n.type === 'a' && n.props.className === 'dsh-base-plugins__row');
+    assert.equal(baseRows.length, 4, 'base 的作者作品卡应有 4 行（self=ilife 被排除）');
   });
   it('状态行官网链接挂 press＋focus（不收缩是另外的事，见注释）', () => {
     const block = view.StatusBlock({ tone: 'ok', text: 't', path: 'p', version: '1', actions: [], link: { text: 'home', href: 'https://example.com' } });

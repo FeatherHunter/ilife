@@ -13,6 +13,12 @@
     "gen:check": "node packages/skill-calorie/scripts/gen-cli.mjs --check && node packages/skill-bill/scripts/gen-cli.mjs --check && node packages/skill-chef/scripts/gen-cli.mjs --check && node packages/skill-schedule/scripts/gen-cli.mjs --check && node packages/skill-home/scripts/gen-cli.mjs --check && node packages/skill-memo-ilife/scripts/gen-cli.mjs --check && node tooling/skill-call-form.mjs --check && node tooling/check-data-absence.mjs --check",
     "test:types": "tsc -b",
     "test": "node tooling/check-real-home-untouched.mjs --run",
+    "thanks:check": "node tooling/check-thanks-table.mjs",
+    "readme:init": "node --preserve-symlinks-main node_modules/dsh-featherhunter-plugin-base/dist/node/cli.js readme:init --repo .",
+    "readme:sync": "node --preserve-symlinks-main node_modules/dsh-featherhunter-plugin-base/dist/node/cli.js readme:sync --repo .",
+    "readme:check": "node --preserve-symlinks-main node_modules/dsh-featherhunter-plugin-base/dist/node/cli.js readme:sync --check --repo .",
+    "star:update": "node tooling/update-star-history.mjs && node tooling/generate-star-history-svg.mjs",
+    "star:check": "node tooling/generate-star-history-svg.mjs --check",
     "doctor": "node tooling/skilllink.mjs doctor",
     "snapshot:html": "node tooling/skill-html-snapshot.mjs --write",
     "snapshot:html:check": "node tooling/skill-html-snapshot.mjs --check",
@@ -34,6 +40,7 @@
   "devDependencies": {
     "@changesets/cli": "^2.29.4",
     "@types/node": "^26.4.1",
+    "dsh-featherhunter-plugin-base": "0.0.2",
     "typescript": "^5.9.2",
     "yaml": "^2.9.1"
   }

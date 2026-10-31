@@ -11,9 +11,16 @@ name: ci
 on:
   push:
   pull_request:
+  # ilife 特例（docs/handover/03 §2 选项 1）：本仓没有别的定时 workflow，就把「每日刷新星图 +
+  # 同步 README 托管块」挂到 ci.yml 上；cron 取 03 文档给的 17 3 * * *，其它作业在 schedule
+  # 事件下跳过（各 job 自己的 if），不让全量矩阵跟着每天跑一遍。
+  schedule:
+    - cron: '17 3 * * *'
 
 jobs:
   build-test:
+    # 定时触发只跑文件尾的 readme-sync（每日星图 + README 托管块），全量矩阵不跟着跑。
+    if: github.event_name != 'schedule'
     strategy:
       fail-fast: false
       matrix:
@@ -113,6 +120,8 @@ jobs:
     #   与清理守卫自证」两步在 CI 里**一次都没跑过**。红仍然是红：这些步没有 `continue-on-error`，
     #   作业整体照旧 failure——这不是把红变绿，是让「哪几道门真跑了」在 CI 里看得见。
     #   判据由 `test/ci-gates-295.test.mjs` 机器盯着（#311 已把本作业五道门入册）。
+    # 定时触发只跑 readme-sync：发布门不跟着每天跑（见文件尾 readme-sync 作业）。
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -157,6 +166,8 @@ jobs:
 
   win-detail:
     # Win 人工细验位：中文路径/换行/CRLF/doctor 强提示
+    # 定时触发只跑 readme-sync，本作业不跟（见文件尾 readme-sync 作业）。
+    if: github.event_name != 'schedule'
     runs-on: windows-latest
     needs: build-test
     steps:
@@ -172,3 +183,51 @@ jobs:
       - run: pnpm build
       - run: pnpm doctor
       - run: pnpm test
+
+  readme-sync:
+    # ilife 特例（docs/handover/03 §2 选项 1）：ci.yml 原来没有 schedule，本作业就是那条「每日闭环」——
+    #   拉星标 → 重写 docs/star-history.json 与两张 SVG → 按标记同步 README 四块 → 有变化就提交推送。
+    # 判据：doctor 的 cron-mounts（ilife 要求在挂了 readme:sync 的 workflow 里还能看到 schedule:）。
+    # 只在 schedule 事件跑：push/PR 上写仓库是坏行为，因此别的作业也用同一个事件名把自己挡掉。
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: readme-sync
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # 提交后要 push，且与远端并发时要能 fetch/rebase
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.8.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # gh 在 ubuntu runner 上预装；GH_TOKEN 只用来读公开星标数据（限流额度）。
+      # 拉不到数据时脚本保留旧资产并 exit 0（不把日更变成随机红），星图画不上就明天再试。
+      - name: Update star history（拉星标 → docs/star-history.json 与两张 SVG）
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pnpm star:update
+      # README 四块由 base 包按标记改写；依赖已钉精确版本（0.0.2）。
+      - name: Sync managed README blocks
+        run: pnpm readme:sync
+      - name: Check managed README blocks
+        run: pnpm readme:check
+      - name: Commit and push if changed
+        run: |
+          if git diff --quiet README.md docs/star-history.json docs/star-history-dark.svg docs/star-history-light.svg; then
+            echo "No change"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md docs/star-history.json docs/star-history-dark.svg docs/star-history-light.svg
+          git commit -m "chore(star-history): 每日刷新星标数据与 README 托管块"
+          git push origin HEAD:master

@@ -52,8 +52,13 @@ function loadClient(pkg, dir) {
 /** 在 classic-script 语义下执行（复刻 loader 的 script  transport：非 module）。 */
 function executeClassic(code, path) {
   const registrations = [];
+  // 真机是浏览器页：TextEncoder/TextDecoder 是原生全局。vm 的干净上下文里没有，
+  // 而 #12 起 part 的产物内联了 base 通用件（清单校验器建在 `new TextEncoder()` 上），
+  // factory 物化期就会读到它——补这两个宿主全局，别让替换层比真机更严。
   const sandbox = {
     window: { __ModuleLoader__: { load: (reg) => { registrations.push(reg); } } },
+    TextEncoder,
+    TextDecoder,
   };
   vm.createContext(sandbox);
   const script = new vm.Script(code, { filename: path }); // ESM import/export 在此直接 SyntaxError

@@ -473,10 +473,11 @@ describe('#706 配置体检 · 面板侧', () => {
       // ① 物化真产物，捕获注册进 `settings.section` 的那颗组件（与 client-bundle-48 同一套 classic 执行）
       const registrations = [];
       // 沙箱里除了 loader 桩，还要给上**浏览器本来就有**的那几个宿主全局：取数口用 `AbortSignal.timeout`
-      // 兜超时，vm 的干净上下文里没有它（少了这一个，两家会当场都报「体检没跑起来」）。
+      // 兜超时，vm 的干净上下文里没有它（少了这一个，两家会当场都报「体检没跑起来」）；
+      // #12 起产物内联了 base 通用件，它建清单校验器时用 `new TextEncoder()`（浏览器原生）。
       const sandbox = {
         window: { __ModuleLoader__: { load: (reg) => { registrations.push(reg); } } },
-        AbortSignal, setTimeout, clearTimeout, console,
+        AbortSignal, setTimeout, clearTimeout, console, TextEncoder, TextDecoder,
       };
       // 调试图与出图台的取数口都挂在产物自己的 `globalThis` 上（沙箱全局）：沙箱外写、产物里读。
       sandbox.__T706_RUN__ = [];

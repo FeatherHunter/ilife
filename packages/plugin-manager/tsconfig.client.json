@@ -26,6 +26,7 @@
     "src/seal-stamp.ts",
     "src/seal-palette.ts",
     "src/seal-paper-schemes.ts",
-    "src/manual-entry.ts"
+    "src/manual-entry.ts",
+    "src/base-ui.ts"
   ]
 }

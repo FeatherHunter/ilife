@@ -12,13 +12,16 @@
  *   按 `{only}` 投影（一次只挂载一个）+ visited 缓存；ledger 无某技能=缺席，
  *   显示推荐安装只读文本（不返空冒充）。
  * - 组件 React.createElement 手写（禁 JSX），无数据轮询、无 document/window/process。
- * - 面板外壳两处（票 #679）：标题行右上角两个入口（星／气泡，悬停出说明文字，
- *   窄窗口折到标题下方）；页签面板之后是底部「作者其他插件」引流卡（四行，点开新窗口）。
- *   文案与网址都取自 nav.ts 的两张静态表，本文件只画不算。
+ * - 面板外壳两处（票 #679；#12 起作者推荐卡与联系入口改由 base 包通用件渲染）：标题行
+ *   右上角两个入口（星／气泡，悬停出说明文字，窄窗口折到标题下方）的文案与网址仍取自
+ *   nav.ts；页签面板之后是作者推荐卡与联系入口，两者均由 dsh-featherhunter-plugin-base 绘制——
+ *   插件清单、二维码卡、离线兜底全部单一真源在 base 的 data/manifest.json，本仓不再维护
+ *   第二份（本文件只画不算）。
  */
 
 import * as React from 'react';
-import { MANAGER_PLUGIN, MANAGER_TABS, MORE_PLUGINS, PANEL_LINKS, recoFor } from './nav.js';
+import { MANAGER_PLUGIN, MANAGER_TABS, PANEL_LINKS, recoFor } from './nav.js';
+import { AuthorPlugins, ContactRow } from './base-ui.js';
 import { clampSpread, planManual, spreadOfPage } from './manual-plan.js';
 import type { ManualScene, ManualSheet } from './manual-plan.js';
 import { SCENES, manualContentCss, renderManualPage } from './manual-content.js';
@@ -272,48 +275,6 @@ const S = {
     display: 'block',
     marginTop: 8,
   } as React.CSSProperties,
-  moreCard: {
-    marginTop: 16,
-    padding: '10px 12px',
-    borderRadius: 10,
-    border: '1px solid var(--dsw-alias-border-l1, rgba(128,128,128,.35))',
-  } as React.CSSProperties,
-  moreTitle: {
-    fontSize: 13,
-    fontWeight: 700,
-    marginBottom: 4,
-    color: 'var(--dsw-alias-label-primary, inherit)',
-  } as React.CSSProperties,
-  moreRow: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: '2px 8px',
-    padding: '7px 4px',
-    textDecoration: 'none',
-    color: 'inherit',
-  } as React.CSSProperties,
-  morePkg: {
-    flex: '0 1 auto',
-    minWidth: 0,
-    overflowWrap: 'anywhere',
-    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-    fontSize: 12,
-    fontWeight: 650,
-  } as React.CSSProperties,
-  moreDesc: {
-    flex: '1 1 180px',
-    minWidth: 0,
-    fontSize: 11.5,
-    lineHeight: 1.6,
-    color: 'var(--dsw-alias-label-secondary, #9a9a9a)',
-  } as React.CSSProperties,
-  moreIcon: {
-    flex: '0 0 auto',
-    marginLeft: 'auto',
-    display: 'inline-flex',
-    color: 'var(--dsw-alias-label-secondary, #9a9a9a)',
-  } as React.CSSProperties,
   /** 更新入口挂点：只占位，按钮本体由上游入口件渲染（票 1170）；批量弹窗壳亦由上游提供，本包零自家样式。 */
   updateEntrySlot: {
     display: 'inline-flex',
@@ -338,28 +299,6 @@ const S = {
 function resolveLabel(label: SlotLedgerEntry['options']['label']): string {
   if (typeof label === 'function') return label();
   return label ?? '';
-}
-
-/** 外链图标（行尾那个；纯装饰，语义在链接自己的 aria-label／文字上）。 */
-function ExternalIcon(): React.ReactElement {
-  return React.createElement(
-    'svg',
-    {
-      viewBox: '0 0 24 24',
-      width: 13,
-      height: 13,
-      fill: 'none',
-      stroke: 'currentColor',
-      strokeWidth: 1.9,
-      strokeLinecap: 'round',
-      strokeLinejoin: 'round',
-      'aria-hidden': 'true',
-      focusable: 'false',
-    },
-    React.createElement('path', { d: 'M13.5 4.5H19.5V10.5' }),
-    React.createElement('path', { d: 'M19.5 4.5L11 13' }),
-    React.createElement('path', { d: 'M18 14.5V18A2 2 0 0 1 16 20H6A2 2 0 0 1 4 18V8A2 2 0 0 1 6 6H9.5' }),
-  );
 }
 
 /** 标题行入口图标（#1174：星星实心填色、气泡描边，与行尾外链图标同线形语言；语义仍在链接的 title／aria-label 上）。 */
@@ -906,10 +845,6 @@ function PanelActions(): React.ReactElement {
   );
 }
 
-/** 底部「作者其他插件」引流卡：四行（包名 ＋ 一句说明 ＋ 行尾外链图标），点开新窗口。
- *
- * 卡片在页签面板之后，六页签切换它都在（它不属于任何一个页签）。
- */
 /** 缺席页签的单包安装按钮（#1282）：挂载位＋挂载一体，连接不到或目标表无此包就不画。
  *
  *  与标题行批量入口同形（ref 占位＋effect 挂载＋卸载 unmount），区别只有两处：调的是单包安装
@@ -1108,32 +1043,6 @@ function AbsentTabPanel(props: {
       )),
     ),
     toastOn ? React.createElement('div', { 'data-ilife-absent': 'toast', role: 'status' }, '✓ 已复制') : null,
-  );
-}
-
-function MorePluginsCard(): React.ReactElement {
-  return React.createElement(
-    'div',
-    { style: S.moreCard },
-    React.createElement('div', { style: S.moreTitle }, '作者其他插件'),
-    MORE_PLUGINS.map((row) =>
-      React.createElement(
-        'a',
-        {
-          key: row.pkg,
-          href: row.url,
-          target: '_blank',
-          rel: 'noreferrer',
-          title: row.pkg + ' 的 GitHub 仓库',
-          style: S.moreRow,
-          // #1174 Q2：引流行的悬停与按压反馈（整行可点就整行有反馈）。
-          'data-ilife-press': 'more',
-        },
-        React.createElement('span', { style: S.morePkg }, row.pkg),
-        React.createElement('span', { style: S.moreDesc }, row.desc),
-        React.createElement('span', { style: S.moreIcon }, React.createElement(ExternalIcon, null)),
-      ),
-    ),
   );
 }
 
@@ -1562,7 +1471,14 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
             })(),
       );
     }),
-    React.createElement(MorePluginsCard, null),
+    // #12：卡片与「联系我们」都改由 dsh-featherhunter-plugin-base 提供（六家的名字/描述随 base
+    // 的数据升级，不再在仓里手抄一份）：一张卡＋一颗联系按钮，外距由本容器给。
+    React.createElement(
+      'div',
+      { style: { marginTop: 16, display: 'flex', flexDirection: 'column', gap: 8 } },
+      React.createElement(AuthorPlugins, null),
+      React.createElement(ContactRow, null),
+    ),
     // 用户口径（右下角常驻）：入口放大 30%，吸附在**面板**右下角——sticky 贴着滚动视口底沿，
     // 面板相对（视口多大都落在面板角上，不随列表滑走）；只能住末尾（置顶会被上面滑走）。
     // 外层点透（整条只剩书可点），marginTop 撑开与上一张卡的距离；弹层仍走 dialog top layer 居中。

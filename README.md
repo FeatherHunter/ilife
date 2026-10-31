@@ -58,19 +58,55 @@ pnpm test           # 全仓测试
 
 ## 致谢
 
-| 贡献者 | 🌹 |
-| --- | --- |
-| [FeatherHunter](https://github.com/FeatherHunter) | 🌹×1293 |
+感谢每一位提交 Issue、PR 与参与讨论的朋友，是你们让这个插件一点点变好。
 
+<!-- THANKS-TABLE-ZH-START -->
+| 贡献者 | 致敬 | 贡献 |
+| --- | --- | --- |
+<!-- THANKS-TABLE-ZH-END -->
+
+也感谢在评论区与讨论区留下想法的每一位朋友。如果你也遇到了问题或有新想法，欢迎直接提 Issue 或发起讨论。
+
+<!-- 英文表预留：docs/README.en.md 建页后启用英文标记，与中文表同源渲染。 -->
+
+<!-- CONTACT-START -->
 ## 反馈与联系
 
 <div align="center">
 
 👏欢迎提交PR、ISSUE。星星之火可以燎原🔥有任何建议、意见、想法、吐槽、idea都可以进群交流。
 
-<table align="center"><tr><td align="center"><b>飞书群（主）</b></td><td align="center"><b>QQ群（新）</b></td><td align="center"><b>微信群（新）</b></td></tr><tr><td><img src="assets/contact-feishu-permanent.png" width="260" alt="DSH 插件交流群 飞书群二维码" /></td><td><img src="assets/contact-qq-permanent.jpg" width="260" alt="DSH 插件交流群 QQ 群二维码" /></td><td><img src="assets/contact-wechat-weekly.png" width="260" alt="DSH 插件交流群微信群二维码" /></td></tr></table>
+<table align="center"><tr><td align="center"><b>飞书群（主）</b></td><td align="center"><b>QQ群（新）</b></td><td align="center"><b>微信群（新）</b></td></tr><tr><td><img src="https://cdn.jsdelivr.net/npm/dsh-featherhunter-plugin-base@0.0.2/data/img/card-feishu.png" width="260" alt="DSH 插件交流群 飞书群二维码" /></td><td><img src="https://cdn.jsdelivr.net/npm/dsh-featherhunter-plugin-base@0.0.2/data/img/card-qq.png" width="260" alt="DSH 插件交流群 QQ 群二维码" /></td><td><img src="https://cdn.jsdelivr.net/npm/dsh-featherhunter-plugin-base@0.0.2/data/img/card-wechat-2026-10-23.png?v=20261023" width="260" alt="DSH 插件交流群微信群二维码" /></td></tr></table>
 
 </div>
+<!-- CONTACT-END -->
 
+<!-- STAR-HISTORY-START -->
+<div align="center">
 
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/FeatherHunter/ilife/master/docs/star-history-dark.svg?v=202610300000" />
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/FeatherHunter/ilife/master/docs/star-history-light.svg?v=202610300000" />
+  <img alt="Star History Chart" src="https://raw.githubusercontent.com/FeatherHunter/ilife/master/docs/star-history-light.svg?v=202610300000" />
+  </picture>
 
+</div>
+<!-- STAR-HISTORY-END -->
+
+<!-- MORE-START -->
+<h2 align="center"><sub>MORE</sub><br>作者的其他作品</h2>
+
+<div align="left">
+
+喜欢这个插件的话，这些可能你也用得上：
+
+**[dsh-mattpocock-skills-deck](https://github.com/FeatherHunter/dsh-mattpocock-skills-deck)** —— 近 30 万 star 的 mattpocock/skills 整套预置好（27 个技能），装好即用。
+
+**[dsh-prompt](https://github.com/FeatherHunter/dsh-prompt)** —— 经常反复重复的模板化提示词，存成自定义模板，选中后直接注入，不再需要耗费精力。
+
+**[dsh-opencode-palette](https://github.com/FeatherHunter/dsh-opencode-palette)** —— 38 款 opencode 经典配色 + 20+自定义主题 一键换装 DSH。
+
+**[dsh-im-companion](https://github.com/FeatherHunter/dsh-im-companion)** —— 给 dsh-im 加了「助理」和「家」的概念。
+
+</div>
+<!-- MORE-END -->
