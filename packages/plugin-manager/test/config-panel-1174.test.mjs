@@ -17,7 +17,7 @@ const view = await import('../dist/config-panel-view.js');
 const nav = await import('../dist/nav.js');
 const { renderManagerPanel } = await import('../../../test/helpers/panel-render.mjs');
 
-/** base 0.1.3 页头动作簇（票 05：入口表改由 base 的 ActionCluster v2 提供）。 */
+/** base 0.1.4 页头动作簇（票 05：入口表改由 base 的 ActionCluster v2 提供）。 */
 const REPO_URL = 'https://github.com/FeatherHunter/ilife';
 const BASE_GROUP_LABEL = '快捷操作';
 const CONTACT_LABEL = '联系我们';
@@ -72,7 +72,7 @@ describe('#1174 高级头洗色叠加（T1：同复制档，动画保留）', ()
   });
 });
 
-describe('#1174 页头三件套（票 05：base 0.1.3 的 ActionCluster v2 接管）', () => {
+describe('#1174 页头三件套（票 05：base 0.1.4 的 ActionCluster v2 接管）', () => {
   it('本仓入口表随 base 接管退场（nav 不再导出 PANEL_LINKS）', () => {
     assert.equal('PANEL_LINKS' in nav, false, '三件套改由 base 渲染后，本仓不再维护入口表');
   });

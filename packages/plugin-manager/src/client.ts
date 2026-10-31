@@ -1251,7 +1251,7 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
               entryRef.current = element;
             },
           }),
-          // 票 05：页头三件套迁到 base 0.1.3 的 ActionCluster（v2 静默簇：无外框、彩色 16px
+          // 票 05：页头三件套迁到 base 0.1.4 的 ActionCluster（v2 静默簇：无外框、彩色 16px
           // 图标三枚），图标、悬停文案、目标网址与联系弹窗全部由 base 渲染；尺寸 16 与页头同一
           // 视觉重量，窄窗口交给 S.headRow 的 flexWrap 折行。
           React.createElement(ActionCluster, { size: 16 }),
