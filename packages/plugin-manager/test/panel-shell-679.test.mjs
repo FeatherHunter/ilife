@@ -1,4 +1,4 @@
-// 票 #679 自证回路：页头三件套（票 05 起由 base 0.1.4 的 ActionCluster 渲染）；底部「作者的其他插件」卡
+// 票 #679 自证回路：页头三件套（票 05 起由 base 0.1.5 的 ActionCluster 渲染）；底部「作者的其他插件」卡
 // （#12 起改由 base 包渲染；票 05 起底部整行联系入口退场）。
 //
 // 咬三条，都不咬写法：
@@ -26,18 +26,18 @@ const PKG = JSON.parse(readFileSync(join(HERE, '..', 'package.json'), 'utf8'));
 /** base 包版本：banner 里烙的那个版本号必须与声明的精确版本一致（漂了就是没重新内联）。 */
 const BASE_VERSION = PKG.devDependencies['dsh-featherhunter-plugin-base'];
 const BASE_BANNER = '/*! dsh-featherhunter-plugin-base v' + BASE_VERSION + ' */';
-/** 票 05：本仓内联的 base 版本必须正好是这次升级到的 0.1.4（升级没重建产物即变红）。 */
-const EXPECTED_BASE_VERSION = '0.1.4';
+/** 票 05：本仓内联的 base 版本必须正好是这次升级到的 0.1.5（升级没重建产物即变红）。 */
+const EXPECTED_BASE_VERSION = '0.1.5';
 
-/** base 0.1.4 页头动作簇（ActionCluster v2）：静默簇容器与按钮标记、三项 aria 标签、三句悬停文案与本仓地址。 */
+/** base 0.1.5 页头动作簇（ActionCluster v2）：静默簇容器与按钮标记、三项 aria 标签、三句悬停文案与本仓地址。 */
 const REPO_URL = 'https://github.com/FeatherHunter/ilife';
 const BASE_CLUSTER_CLASSES = ['dsh-base-cluster', 'dsh-base-cluster__btn'];
 const BASE_GROUP_LABEL = '快捷操作';
 const BASE_ACTION_LABELS = ['联系我们', 'Star 这个项目', '提交 Issue'];
 const BASE_ACTION_TIPS = [
-  '扫码加入交流群，反馈、建议、idea 都欢迎',
+  '扫码加入交流群，反馈、建议、idea 都欢迎🎉',
   '您的🌟是我夜空中最亮的星🌹',
-  '任何功能需求、故障、建议、意见都可以提 ISSUE',
+  '任何功能需求、故障、建议、意见都可以提ISSUE问题单🙏',
 ];
 
 /** base 的 data/manifest.json 里四家的名字与描述（本仓不再维护第二份；self=ilife 被排除）。 */
