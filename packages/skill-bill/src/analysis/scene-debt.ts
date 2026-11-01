@@ -14,19 +14,21 @@
  *    ⑤ 载荷走 `./views.js` 的 `buildTrend('debt', …)`；
  *    ⑥ 老侧 `_calc_kpi` 把转账也计进收支，新侧走 `./agg.js` 的 `kpiOf`（转账不算收支，#691 口径）。
  */
+import { runWithLanguage } from 'base-entries';
 import type { BillRow } from '../fetch/db.js';
 import { allRecords, kpiOf, round2, tagRecords } from './agg.js';
 import { NO_WINDOW, money, textOrDash } from './pageParts.js';
 import type { AnalysisScene } from './scene.js';
 import { buildTrend } from './views.js';
+import { m } from '../entries/index.js';
 
 /** 借贷的两个方向（老侧 `_target` 的那对分支）。 */
-type DebtDirection = '借出' | '借入';
+type DebtDirection = 'lent' | 'borrowed';
 
 /** 备注里那两串标签的**对象名形态**（老侧 `:816-818` 同形）：借出看 `#借给X`、借入看 `#向X借`；
  *  解析不出＝空串，由调用方记「未知对象」。**标签本身的匹配不在这里**——那走 `./agg.js` 的 `tagRecords`。 */
 function targetOf(note: string, direction: DebtDirection): string {
-  const hit = direction === '借出' ? /#借给\s*([^\s#]+)/.exec(note) : /#向\s*([^\s#]+)借/.exec(note);
+  const hit = direction === 'lent' ? /#借给\s*([^\s#]+)/.exec(note) : /#向\s*([^\s#]+)借/.exec(note);
   return hit === null ? '' : hit[1];
 }
 
@@ -51,12 +53,12 @@ function objectsOf(unpaidLent: readonly BillRow[], unpaidBorrowed: readonly Bill
   const byObject = new Map<string, { lent: number; borrowed: number }>();
   const add = (target: string, side: DebtDirection, amount: number): void => {
     const it = byObject.get(target) ?? { lent: 0, borrowed: 0 };
-    if (side === '借出') it.lent += amount;
+    if (side === 'lent') it.lent += amount;
     else it.borrowed += amount;
     byObject.set(target, it);
   };
-  for (const r of unpaidLent) add(targetOf(r.note, '借出') || '未知对象', '借出', Math.abs(r.amount));
-  for (const r of unpaidBorrowed) add(targetOf(r.note, '借入') || '未知对象', '借入', Math.abs(r.amount));
+  for (const r of unpaidLent) add(targetOf(r.note, 'lent') || m('skill-bill.analysis-scene-debt.c002'), 'lent', Math.abs(r.amount));
+  for (const r of unpaidBorrowed) add(targetOf(r.note, 'borrowed') || m('skill-bill.analysis-scene-debt.c005'), 'borrowed', Math.abs(r.amount));
   return [...byObject.entries()]
     .map(([target, v]) => ({
       target,
@@ -67,11 +69,12 @@ function objectsOf(unpaidLent: readonly BillRow[], unpaidBorrowed: readonly Bill
     .sort((a, b) => b.total - a.total || a.target.localeCompare(b.target));
 }
 
-export const sceneDebt: AnalysisScene = {
+function buildScene(): AnalysisScene {
+  return {
   id: 'debt',
   key: 'bill.analysis.trend',
   kind: 'debt',
-  title: '看借贷',
+  title: m('skill-bill.analysis-scene-debt.title'),
   family: 'tables',
   values: ({ db }) => {
     const all = allRecords(db);
@@ -87,37 +90,41 @@ export const sceneDebt: AnalysisScene = {
     const lentUnpaidTotal = totalOf(unpaidLent);
     const borrowedUnpaidTotal = totalOf(unpaidBorrowed);
     return {
-      title: '看借贷',
-      label: '全部时间',
+      title: m('skill-bill.analysis-scene-debt.title'),
+      label: m('skill-bill.analysis-scene-debt.c015'),
       from: NO_WINDOW,
       to: NO_WINDOW,
       count: rows.length,
       conclusion: rows.length === 0
-        ? '全库还没有带 #借出／#借入 的记录。'
-        : '未还的有 ' + String(objects.length) + ' 个对象：借出 ' + money(lentUnpaidTotal) + ' 元（'
-          + String(unpaidLent.length) + ' 笔）、借入 ' + money(borrowedUnpaidTotal) + ' 元（'
-          + String(unpaidBorrowed.length) + ' 笔）；已还清的 借出 ' + String(paidLent.length) + ' 笔、借入 '
-          + String(paidBorrowed.length) + ' 笔。',
-      caliber: '借贷按备注里的 #借出／#借入 两个标签取记录，同一笔要同时带 #未还 或 #已还 才算进那一栏；'
-        + '对象名读备注里的 #借给X／#向X借，读不出来记作「未知对象」；转账不计入收支。',
+        ? m('skill-bill.analysis-scene-debt.c016')
+        : m('skill-bill.analysis-scene-debt.c017', {
+          p0: String(String(objects.length)),
+          p1: String(money(lentUnpaidTotal)),
+          p2: String(String(unpaidLent.length)),
+          p3: String(money(borrowedUnpaidTotal)),
+          p4: String(String(unpaidBorrowed.length)),
+          p5: String(String(paidLent.length)),
+          p6: String(String(paidBorrowed.length)),
+        }),
+      caliber: m('skill-bill.analysis-scene-debt.c018'),
       chips: [],
       payload: buildTrend('debt', [...rows]),
       kpi: kpiOf(rows),
       page: {
         kpis: [
-          { label: '借出未还', value: money(lentUnpaidTotal), unit: '元' },
-          { label: '借入未还', value: money(borrowedUnpaidTotal), unit: '元' },
-          { label: '已还(借出)', value: String(paidLent.length), unit: '笔' },
-          { label: '已还(借入)', value: String(paidBorrowed.length), unit: '笔' },
+          { label: m('skill-bill.analysis-scene-debt.c019'), value: money(lentUnpaidTotal), unit: m('skill-bill.analysis-scene-debt.c020') },
+          { label: m('skill-bill.analysis-scene-debt.c021'), value: money(borrowedUnpaidTotal), unit: m('skill-bill.analysis-scene-debt.c022') },
+          { label: m('skill-bill.analysis-scene-debt.c023'), value: String(paidLent.length), unit: m('skill-bill.analysis-scene-debt.c024') },
+          { label: m('skill-bill.analysis-scene-debt.c025'), value: String(paidBorrowed.length), unit: m('skill-bill.analysis-scene-debt.c026') },
         ],
         chips: [],
         tables: [{
-          title: '对象列表（' + String(objects.length) + ' 人）',
+          title: m('skill-bill.analysis-scene-debt.c027', { p0: String(String(objects.length)) }),
           columns: [
-            { key: 'target', label: '对象' },
-            { key: 'lent', label: '借出未还', align: 'right' },
-            { key: 'borrowed', label: '借入未还', align: 'right' },
-            { key: 'total', label: '合计', align: 'right' },
+            { key: 'target', label: m('skill-bill.analysis-scene-debt.c028') },
+            { key: 'lent', label: m('skill-bill.analysis-scene-debt.c029'), align: 'right' },
+            { key: 'borrowed', label: m('skill-bill.analysis-scene-debt.c030'), align: 'right' },
+            { key: 'total', label: m('skill-bill.analysis-scene-debt.c031'), align: 'right' },
           ],
           rows: objects.map((o) => ({
             target: textOrDash(o.target),
@@ -125,14 +132,22 @@ export const sceneDebt: AnalysisScene = {
             borrowed: money(o.borrowed),
             total: money(o.total),
           })),
-          emptyText: '暂无未还借贷',
+          emptyText: m('skill-bill.analysis-scene-debt.c032'),
         }],
         factCards: [],
         empty: {
-          text: '全库还没有借贷记录。',
-          hint: '先说「记借出」或「记借入」记一笔，回来看这里就有数了。',
+          text: m('skill-bill.analysis-scene-debt.c033'),
+          hint: m('skill-bill.analysis-scene-debt.c034'),
         },
       },
     };
   },
-};
+  };
+}
+
+export const sceneDebt: AnalysisScene = buildScene();
+
+/** 按语言重建本场景（#1197：文案经词条层，语言是运行期参数）。 */
+export function sceneDebtFor(language: string): AnalysisScene {
+  return runWithLanguage(language, buildScene);
+}

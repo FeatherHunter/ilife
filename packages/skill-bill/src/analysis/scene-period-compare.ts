@@ -11,6 +11,7 @@
  *      对比期支出为 0 时记 0）——数与 `./agg.js` 的 `compareTwo` 同源，本件不另算一套；
  *   ③ **载荷**照搬迁前那一支（`./views.js` 的 `buildCompare`），一字不改。
  */
+import { runWithLanguage } from 'base-entries';
 import { BillPolicyError } from '../fetch/errors.js';
 import { listRange } from '../fetch/index.js';
 import { monthRange, weekRange } from '../shared/dateRange.js';
@@ -20,6 +21,7 @@ import { money, pctText, signedMoney } from './pageParts.js';
 import { needMonth } from './params.js';
 import type { AnalysisScene } from './scene.js';
 import { buildCompare } from './views.js';
+import { m } from '../entries/index.js';
 
 /** 一段对比窗口：期间标签 ＋ 起止日（老侧 `period_a.label`／`_fetch(from, to)` 那两样）。 */
 interface Win {
@@ -66,8 +68,14 @@ function windowsOf(params: Record<string, unknown>): { readonly a: Win; readonly
     const lastStart = shiftDays(thisWeek.start, -7);
     const lastEnd = shiftDays(thisWeek.start, -1);
     return {
-      a: { label: mmdd(thisWeek.start) + '~' + mmdd(thisWeek.end) + ' 周', start: thisWeek.start, end: thisWeek.end },
-      b: { label: mmdd(lastStart) + '~' + mmdd(lastEnd) + ' 周', start: lastStart, end: lastEnd },
+      a: { label: m('skill-bill.analysis-scene-period-compare.c001', {
+        p0: String(mmdd(thisWeek.start)),
+        p1: String(mmdd(thisWeek.end)),
+      }), start: thisWeek.start, end: thisWeek.end },
+      b: { label: m('skill-bill.analysis-scene-period-compare.c002', {
+        p0: String(mmdd(lastStart)),
+        p1: String(mmdd(lastEnd)),
+      }), start: lastStart, end: lastEnd },
     };
   }
   if (period !== 'month') {
@@ -81,11 +89,12 @@ function windowsOf(params: Record<string, unknown>): { readonly a: Win; readonly
   };
 }
 
-export const scenePeriodCompare: AnalysisScene = {
+function buildScene(): AnalysisScene {
+  return {
   id: 'period_compare',
   key: 'bill.analysis.compare',
   kind: 'period',
-  title: '看对比',
+  title: m('skill-bill.analysis-scene-period-compare.title'),
   family: 'compare',
   values: ({ params, db }) => {
     const { a: winA, b: winB } = windowsOf(params);
@@ -95,23 +104,30 @@ export const scenePeriodCompare: AnalysisScene = {
     const diff = cmp.change.diff;
     const direction: 'up' | 'down' | 'flat' = diff > 0.01 ? 'up' : diff < -0.01 ? 'down' : 'flat';
     const arrow = direction === 'up' ? '↑' : direction === 'down' ? '↓' : '→';
-    const word = direction === 'up' ? '支出上涨' : direction === 'down' ? '支出下降' : '支出持平';
+    const word = direction === 'up' ? m('skill-bill.analysis-scene-period-compare.c004') : direction === 'down' ? m('skill-bill.analysis-scene-period-compare.c005') : m('skill-bill.analysis-scene-period-compare.c006');
     /* 百分比带上方向前缀（与箭头一致）：上涨 `+4.5%`／下降 `-4.5%`／持平 `0.0%`。 */
     const pct = direction === 'up'
       ? '+' + pctText(Math.abs(cmp.change.pct))
       : direction === 'down' ? '-' + pctText(Math.abs(cmp.change.pct)) : pctText(0);
     const total = ra.length + rb.length;
     return {
-      title: '看对比',
-      label: winA.label + ' 与 ' + winB.label,
+      title: m('skill-bill.analysis-scene-period-compare.title'),
+      label: m('skill-bill.analysis-scene-period-compare.c008', { p0: String(winA.label), p1: String(winB.label) }),
       from: winA.start < winB.start ? winA.start : winB.start,
       to: winA.end > winB.end ? winA.end : winB.end,
       count: total,
       conclusion: total === 0
-        ? winA.label + ' 与 ' + winB.label + ' 两段都还没有记录。'
-        : winA.label + ' 支出 ' + money(cmp.a.expense) + ' 元，' + winB.label + ' 支出 ' + money(cmp.b.expense)
-          + ' 元：' + word + ' ' + money(Math.abs(diff)) + ' 元（' + pct + '）。',
-      caliber: '两段各取自己那一段的整段记录，支出按绝对值累计；百分比以对比期为分母，对比期支出为 0 时记 0；转账不计入收支。',
+        ? m('skill-bill.analysis-scene-period-compare.c009', { p0: String(winA.label), p1: String(winB.label) })
+        : m('skill-bill.analysis-scene-period-compare.c010', {
+          p0: String(winA.label),
+          p1: String(money(cmp.a.expense)),
+          p2: String(winB.label),
+          p3: String(money(cmp.b.expense)),
+          p4: String(word),
+          p5: String(money(Math.abs(diff))),
+          p6: String(pct),
+        }),
+      caliber: m('skill-bill.analysis-scene-period-compare.c011'),
       chips: [winA.label, winB.label],
       payload: buildCompare({ labelA: winA.label, labelB: winB.label, a: [...ra], b: [...rb] }),
       kpi: kpiOf([...ra, ...rb]),
@@ -123,8 +139,16 @@ export const scenePeriodCompare: AnalysisScene = {
           { title: winB.label, kpis: sideKpisOf(winB.label, cmp.b, money) },
         ],
         change: {
-          text: '支出 ' + arrow + ' ' + money(Math.abs(diff)) + ' 元（' + pct + '）· ' + word,
-          detail: '本期支出 ' + money(cmp.a.expense) + ' 元，对比期支出 ' + money(cmp.b.expense) + ' 元；两段各取自己的窗口。',
+          text: m('skill-bill.analysis-scene-period-compare.c012', {
+            p0: String(arrow),
+            p1: String(money(Math.abs(diff))),
+            p2: String(pct),
+            p3: String(word),
+          }),
+          detail: m('skill-bill.analysis-scene-period-compare.c013', {
+            p0: String(money(cmp.a.expense)),
+            p1: String(money(cmp.b.expense)),
+          }),
           direction,
         },
         barGroups: [],
@@ -135,33 +159,48 @@ export const scenePeriodCompare: AnalysisScene = {
           {
             title: winA.label,
             rows: [
-              { k: '笔数', v: String(cmp.a.count) + ' 笔' },
-              { k: '支出', v: money(cmp.a.expense) + ' 元' },
-              { k: '收入', v: money(cmp.a.income) + ' 元' },
-              { k: '净额', v: money(cmp.a.net) + ' 元' },
+              { k: m('skill-bill.analysis-scene-period-compare.c014'), v: m('skill-bill.analysis-scene-period-compare.c015', { p0: String(String(cmp.a.count)) }) },
+              { k: m('skill-bill.analysis-scene-period-compare.c016'), v: m('skill-bill.analysis-scene-period-compare.c017', { p0: String(money(cmp.a.expense)) }) },
+              { k: m('skill-bill.analysis-scene-period-compare.c018'), v: m('skill-bill.analysis-scene-period-compare.c019', { p0: String(money(cmp.a.income)) }) },
+              { k: m('skill-bill.analysis-scene-period-compare.c020'), v: m('skill-bill.analysis-scene-period-compare.c021', { p0: String(money(cmp.a.net)) }) },
             ],
           },
           {
             title: winB.label,
             rows: [
-              { k: '笔数', v: String(cmp.b.count) + ' 笔' },
-              { k: '支出', v: money(cmp.b.expense) + ' 元' },
-              { k: '收入', v: money(cmp.b.income) + ' 元' },
-              { k: '净额', v: money(cmp.b.net) + ' 元' },
+              { k: m('skill-bill.analysis-scene-period-compare.c022'), v: m('skill-bill.analysis-scene-period-compare.c023', { p0: String(String(cmp.b.count)) }) },
+              { k: m('skill-bill.analysis-scene-period-compare.c024'), v: m('skill-bill.analysis-scene-period-compare.c025', { p0: String(money(cmp.b.expense)) }) },
+              { k: m('skill-bill.analysis-scene-period-compare.c026'), v: m('skill-bill.analysis-scene-period-compare.c027', { p0: String(money(cmp.b.income)) }) },
+              { k: m('skill-bill.analysis-scene-period-compare.c028'), v: m('skill-bill.analysis-scene-period-compare.c029', { p0: String(money(cmp.b.net)) }) },
             ],
           },
           {
-            title: '变化',
+            title: m('skill-bill.analysis-scene-period-compare.c030'),
             rows: [
-              { k: '支出变化', v: signedMoney(round2(cmp.b.expense - cmp.a.expense)) + ' 元（' + winA.label + '→' + winB.label + '）' },
+              { k: m('skill-bill.analysis-scene-period-compare.c031'), v: m('skill-bill.analysis-scene-period-compare.c032', {
+                p0: String(signedMoney(round2(cmp.b.expense - cmp.a.expense))),
+                p1: String(winA.label),
+                p2: String(winB.label),
+              }) },
             ],
           },
         ],
         empty: {
-          text: winA.label + ' 与 ' + winB.label + ' 两段都没有记录。',
-          hint: '先说「记支出」或「记收入」记一笔，回来看这里就有数了。',
+          text: m('skill-bill.analysis-scene-period-compare.c033', {
+            p0: String(winA.label),
+            p1: String(winB.label),
+          }),
+          hint: m('skill-bill.analysis-scene-period-compare.c034'),
         },
       },
     };
   },
-};
+  };
+}
+
+export const scenePeriodCompare: AnalysisScene = buildScene();
+
+/** 按语言重建本场景（#1197：文案经词条层，语言是运行期参数）。 */
+export function scenePeriodCompareFor(language: string): AnalysisScene {
+  return runWithLanguage(language, buildScene);
+}

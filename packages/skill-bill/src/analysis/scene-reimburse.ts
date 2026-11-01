@@ -16,11 +16,13 @@
  *    ⑥ 载荷走 `./views.js` 的 `buildTrend('reimburse', …)`；
  *    ⑦ 老侧 `_calc_kpi` 把转账也计进收支，新侧走 `./agg.js` 的 `kpiOf`（转账不算收支，#691 口径）。
  */
+import { runWithLanguage } from 'base-entries';
 import type { BillRow } from '../fetch/db.js';
 import { allRecords, dayOf, kpiOf, round2, tagRecords } from './agg.js';
 import { NO_WINDOW, money, textOrDash } from './pageParts.js';
 import type { AnalysisScene } from './scene.js';
 import { buildTrend } from './views.js';
+import { m } from '../entries/index.js';
 
 /** 一笔报销在历史表里的样子（记录 ＋ 它落的那一栏）。 */
 interface ReimburseRow {
@@ -41,11 +43,12 @@ function totalOf(rows: readonly BillRow[]): number {
   return round2(sum);
 }
 
-export const sceneReimburse: AnalysisScene = {
+function buildScene(): AnalysisScene {
+  return {
   id: 'reimburse',
   key: 'bill.analysis.trend',
   kind: 'reimburse',
-  title: '看报销',
+  title: m('skill-bill.analysis-scene-reimburse.title'),
   family: 'tables',
   values: ({ db }) => {
     const all = allRecords(db);
@@ -53,47 +56,54 @@ export const sceneReimburse: AnalysisScene = {
     const received = tagRecords(all, TAG_ARRIVED.slice(1));
     const rows = [...pending, ...received];
     const history: ReimburseRow[] = [
-      ...pending.map((row) => ({ row, status: '待报销' })),
-      ...received.map((row) => ({ row, status: '已到账' })),
+      ...pending.map((row) => ({ row, status: m('skill-bill.analysis-scene-reimburse.c002') })),
+      ...received.map((row) => ({ row, status: m('skill-bill.analysis-scene-reimburse.c003') })),
     ].sort((a, b) => b.row.time.localeCompare(a.row.time));
     const pendingTotal = totalOf(pending);
     const receivedTotal = totalOf(received);
     const newest = history.at(0);
+    const newestTail = newest === undefined
+      ? '。'
+      : m('skill-bill.analysis-scene-reimburse.c004', {
+        p0: String(dayOf(newest.row.time)),
+        p1: String(money(Math.abs(newest.row.amount))),
+        p2: String(newest.status),
+      });
     return {
-      title: '看报销',
-      label: '全部时间',
+      title: m('skill-bill.analysis-scene-reimburse.title'),
+      label: m('skill-bill.analysis-scene-reimburse.c006'),
       from: NO_WINDOW,
       to: NO_WINDOW,
       count: rows.length,
       conclusion: rows.length === 0
-        ? '全库还没有带 #待报销／#报销到账 的记录。'
-        : '待报销 ' + money(pendingTotal) + ' 元（' + String(pending.length) + ' 笔）、已到账 '
-          + money(receivedTotal) + ' 元（' + String(received.length) + ' 笔）'
-          + (newest === undefined
-            ? '。'
-            : '；最近一笔是 ' + dayOf(newest.row.time) + ' 的 ' + money(Math.abs(newest.row.amount))
-              + ' 元（' + newest.status + '）。'),
-      caliber: '报销按备注里的 #待报销／#报销到账 两个标签取记录，金额一律取绝对值，历史按时间从晚到早排；'
-        + '转账不计入收支。',
+        ? m('skill-bill.analysis-scene-reimburse.c007')
+        : m('skill-bill.analysis-scene-reimburse.c008', {
+          p0: String(money(pendingTotal)),
+          p1: String(String(pending.length)),
+          p2: String(money(receivedTotal)),
+          p3: String(String(received.length)),
+          p4: String(newestTail),
+        }),
+      caliber: m('skill-bill.analysis-scene-reimburse.c009'),
       chips: [],
       payload: buildTrend('reimburse', [...rows]),
       kpi: kpiOf(rows),
       page: {
         kpis: [
-          { label: '待报销总额', value: money(pendingTotal), unit: '元' },
-          { label: '待报销笔数', value: String(pending.length), unit: '笔' },
-          { label: '已到账总额', value: money(receivedTotal), unit: '元' },
-          { label: '已到账笔数', value: String(received.length), unit: '笔' },
+          { label: m('skill-bill.analysis-scene-reimburse.c010'), value: money(pendingTotal), unit: m('skill-bill.analysis-scene-reimburse.c011') },
+          { label: m('skill-bill.analysis-scene-reimburse.c012'), value: String(pending.length), unit: m('skill-bill.analysis-scene-reimburse.c013') },
+          { label: m('skill-bill.analysis-scene-reimburse.c014'), value: money(receivedTotal), unit: m('skill-bill.analysis-scene-reimburse.c015') },
+          { label: m('skill-bill.analysis-scene-reimburse.c016'), value: String(received.length), unit: m('skill-bill.analysis-scene-reimburse.c017') },
         ],
         chips: [],
         tables: [{
-          title: '历史报销（' + String(history.length) + ' 笔）',
+          title: m('skill-bill.analysis-scene-reimburse.c018', { p0: String(String(history.length)) }),
           columns: [
-            { key: 'time', label: '时间' },
-            { key: 'category', label: '分类' },
-            { key: 'amount', label: '金额', align: 'right' },
-            { key: 'status', label: '状态' },
-            { key: 'note', label: '备注' },
+            { key: 'time', label: m('skill-bill.analysis-scene-reimburse.c019') },
+            { key: 'category', label: m('skill-bill.analysis-scene-reimburse.c020') },
+            { key: 'amount', label: m('skill-bill.analysis-scene-reimburse.c021'), align: 'right' },
+            { key: 'status', label: m('skill-bill.analysis-scene-reimburse.c022') },
+            { key: 'note', label: m('skill-bill.analysis-scene-reimburse.c023') },
           ],
           rows: history.map((h) => ({
             time: textOrDash(h.row.time),
@@ -102,14 +112,22 @@ export const sceneReimburse: AnalysisScene = {
             status: textOrDash(h.status),
             note: textOrDash(h.row.note),
           })),
-          emptyText: '暂无报销记录',
+          emptyText: m('skill-bill.analysis-scene-reimburse.c024'),
         }],
         factCards: [],
         empty: {
-          text: '全库还没有报销记录。',
-          hint: '先说「记支出」记一笔并带上 #待报销，报销到账后再照实记一笔，回来看这里就有数了。',
+          text: m('skill-bill.analysis-scene-reimburse.c025'),
+          hint: m('skill-bill.analysis-scene-reimburse.c026'),
         },
       },
     };
   },
-};
+  };
+}
+
+export const sceneReimburse: AnalysisScene = buildScene();
+
+/** 按语言重建本场景（#1197：文案经词条层，语言是运行期参数）。 */
+export function sceneReimburseFor(language: string): AnalysisScene {
+  return runWithLanguage(language, buildScene);
+}

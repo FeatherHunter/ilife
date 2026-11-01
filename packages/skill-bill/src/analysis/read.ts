@@ -15,6 +15,7 @@
  *   - 载荷形状**照搬迁前逐字不动**：`bill.analysis.overview`＝`stat`（`metrics` 全 number）、
  *     另两条＝`analysis`（`summary` 非空串）——形状由 key 定死，页面那侧只加不改。
  */
+import { currentRenderLanguage } from 'base-entries';
 import type { BillDb } from '../fetch/index.js';
 import { BillFetchError } from '../fetch/errors.js';
 import { fetchAll } from '../fetch/index.js';
@@ -97,7 +98,7 @@ function viewOf(key: AnalysisKey, kind: string, params: Record<string, unknown>,
   if (fetchAll(db).length === 0) {
     throw new BillFetchError('BILL_EMPTY_RANGE', '记账库里还没有记录：先记一笔再来看分析（缺失阻断）');
   }
-  const scene = sceneFor(key, kind);
+  const scene = sceneFor(key, kind, currentRenderLanguage());
   const wakeWord = projectWakeWord({ key, kind });
   return pageOf(scene, { key, kind, params, db }, { params, wakeWord, actionAt: actionStamp() });
 }

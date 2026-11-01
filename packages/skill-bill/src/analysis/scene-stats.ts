@@ -15,11 +15,13 @@
  *      **另附 `buildOverview` 的 `metrics`**——本命令的形状是 `stat`（出口守卫要 `data.metrics` 且值全 number），
  *      只给 `summary` 会在 `buildBillEnvelope` 处报「stat 形缺 metrics 对象」而 exit 2。
  */
+import { runWithLanguage } from 'base-entries';
 import type { BillRow } from '../fetch/db.js';
 import { allRecords, dayOf, firstTimeOf, kpiOf, lastTimeOf, monthOf, monthSeries, round1, round2 } from './agg.js';
 import { NO_WINDOW, money, textOrDash } from './pageParts.js';
 import type { AnalysisScene } from './scene.js';
 import { buildOverview } from './views.js';
+import { m } from '../entries/index.js';
 
 /** 记录跨了几个月（首笔所在月到最近一笔所在月，含首尾）；没有记录＝0。 */
 function monthSpan(records: readonly BillRow[]): number {
@@ -33,11 +35,12 @@ function monthSpan(records: readonly BillRow[]): number {
   return span < 1 ? 1 : span;
 }
 
-export const sceneStats: AnalysisScene = {
+function buildScene(): AnalysisScene {
+  return {
   id: 'stats',
   key: 'bill.analysis.overview',
   kind: 'stats',
-  title: '做统计',
+  title: m('skill-bill.analysis-scene-stats.title'),
   family: 'bars',
   values: ({ db }) => {
     const rows = allRecords(db);
@@ -48,52 +51,64 @@ export const sceneStats: AnalysisScene = {
     const last = lastTimeOf(rows);
     const series = monthSeries(rows, monthSpan(rows)).filter((m) => m.count > 0);
     const peak = series.length === 0 ? 0 : Math.max(...series.map((m) => m.count));
-    const label = '全部时间';
+    const label = m('skill-bill.analysis-scene-stats.c002');
     return {
-      title: '做统计',
+      title: m('skill-bill.analysis-scene-stats.title'),
       label,
       from: first === '' ? NO_WINDOW : dayOf(first),
       to: last === '' ? NO_WINDOW : dayOf(last),
       count: rows.length,
       conclusion: rows.length === 0
-        ? '全库一条记录都没有。'
-        : '全库一共 ' + String(kpi.count) + ' 笔，落在 ' + String(days) + ' 个记账日，日均 ' + money(daily)
-          + ' 笔；第一笔在 ' + textOrDash(first) + '，最近一笔在 ' + textOrDash(last) + '。',
-      caliber: '笔数与月度分布走转账除外的口径（转账不入收支），没有记录的月不出行；'
-        + '记账天数＝库里有记录的不同日期数，时间范围取库内首末两条记录的时刻。',
+        ? m('skill-bill.analysis-scene-stats.c004')
+        : m('skill-bill.analysis-scene-stats.c005', {
+          p0: String(String(kpi.count)),
+          p1: String(String(days)),
+          p2: String(money(daily)),
+          p3: String(textOrDash(first)),
+          p4: String(textOrDash(last)),
+        }),
+      caliber: m('skill-bill.analysis-scene-stats.c006'),
       chips: [],
       payload: buildOverview(label, [...rows]),
       kpi,
       page: {
         kpis: [
-          { label: '总笔数', value: String(kpi.count), unit: '笔' },
-          { label: '记账天数', value: String(days), unit: '天' },
-          { label: '日均笔数', value: money(daily), unit: '笔/天' },
+          { label: m('skill-bill.analysis-scene-stats.c007'), value: String(kpi.count), unit: m('skill-bill.analysis-scene-stats.c008') },
+          { label: m('skill-bill.analysis-scene-stats.c009'), value: String(days), unit: m('skill-bill.analysis-scene-stats.c010') },
+          { label: m('skill-bill.analysis-scene-stats.c011'), value: money(daily), unit: m('skill-bill.analysis-scene-stats.c012') },
         ],
         chips: [],
         charts: [],
         barGroups: [{
-          title: '月度分布（' + String(series.length) + ' 个月）',
-          rows: series.map((m) => ({
-            label: m.month,
-            text: String(m.count) + ' 笔',
-            pct: peak === 0 ? 0 : round1((m.count / peak) * 100),
+          title: m('skill-bill.analysis-scene-stats.c013', { p0: String(String(series.length)) }),
+          rows: series.map((pt) => ({
+            label: pt.month,
+            text: m('skill-bill.analysis-scene-stats.c014', { p0: String(String(pt.count)) }),
+            pct: peak === 0 ? 0 : round1((pt.count / peak) * 100),
           })),
-          emptyText: '还没有记录，看不出月度分布',
+          emptyText: m('skill-bill.analysis-scene-stats.c015'),
         }],
         listCards: [],
         factCards: [{
-          title: '时间范围',
+          title: m('skill-bill.analysis-scene-stats.c016'),
           rows: [
-            { k: '首笔时间', v: textOrDash(first) },
-            { k: '最近记录', v: textOrDash(last) },
+            { k: m('skill-bill.analysis-scene-stats.c017'), v: textOrDash(first) },
+            { k: m('skill-bill.analysis-scene-stats.c018'), v: textOrDash(last) },
           ],
         }],
         empty: {
-          text: '全库还没有记录。',
-          hint: '先说「记支出」或「记收入」记一笔，回来看这里就有数了。',
+          text: m('skill-bill.analysis-scene-stats.c019'),
+          hint: m('skill-bill.analysis-scene-stats.c020'),
         },
       },
     };
   },
-};
+  };
+}
+
+export const sceneStats: AnalysisScene = buildScene();
+
+/** 按语言重建本场景（#1197：文案经词条层，语言是运行期参数）。 */
+export function sceneStatsFor(language: string): AnalysisScene {
+  return runWithLanguage(language, buildScene);
+}

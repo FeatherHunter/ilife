@@ -20,6 +20,7 @@
  * 谁在用（一个调用点，指名）：`src/analysis/read.ts` 的 `pageOf`——`family === 'charts'` 的 4 件场景
  *  由落点表 `./scene.js` 取到本件。
  */
+import { runWithLanguage } from 'base-entries';
 import type { BillRow } from '../fetch/db.js';
 import { BillPolicyError } from '../fetch/errors.js';
 import { monthRange } from '../shared/dateRange.js';
@@ -28,6 +29,7 @@ import type { MonthPoint } from './agg.js';
 import { MISSING, NO_WINDOW, money, pctText, windowLabel } from './pageParts.js';
 import type { AnalysisScene, ChartCard } from './scene.js';
 import { buildTrend } from './views.js';
+import { m } from '../entries/index.js';
 
 /** 环比一行的读数。 */
 interface MomRow {
@@ -111,7 +113,7 @@ function lineInputOf(series: readonly MonthPoint[], usable: number, emptyText: s
   return {
     items: expense,
     options: {
-      series: [{ name: '支出', items: expense }, { name: '收入', items: income }],
+      series: [{ name: m('skill-bill.analysis-scene-anomaly.c001'), items: expense }, { name: m('skill-bill.analysis-scene-anomaly.c002'), items: income }],
       yTicks: 4,
       /* 纵轴下界恒 0：金额没有负数，公共层派生的那 6% 下外扩会印出「-732.26 元」这种读不出意思的刻度。 */
       yMin: 0,
@@ -129,11 +131,12 @@ function deltaText(pct: number): string {
   return (pct > 0 ? '↑ ' : pct < 0 ? '↓ ' : '→ ') + pctText(Math.abs(pct));
 }
 
-export const sceneAnomaly: AnalysisScene = {
+function buildScene(): AnalysisScene {
+  return {
   id: 'anomaly',
   key: 'bill.analysis.trend',
   kind: 'anomaly',
-  title: '看异常',
+  title: m('skill-bill.analysis-scene-anomaly.title'),
   family: 'charts',
   values: ({ params, db }) => {
     /* ① 取数：窗口＝近 N 个月，序列终点＝库里最新一条记录所在的月（不取今天的月）。 */
@@ -159,67 +162,86 @@ export const sceneAnomaly: AnalysisScene = {
     const endMonth = series.length === 0 ? '' : series[series.length - 1].month;
 
     /* ④ 结论句与口径句：空月点名（裁定 3 第 4 条）＋ 可执行的下一步（#688 §二 C9）。 */
+    const surgeTail = topSurge === null
+      ? m('skill-bill.analysis-scene-anomaly.c004')
+      : m('skill-bill.analysis-scene-anomaly.c005', {
+        p0: String(topSurge.category),
+        p1: String(pctText(topSurge.pct)),
+      });
     const conclusion = kpi.count === 0
-      ? '近 ' + String(months) + ' 个月还没有记录。'
+      ? m('skill-bill.analysis-scene-anomaly.c006', { p0: String(String(months)) })
       : widest === null
-        ? '近 ' + String(series.length) + ' 个月里没有相邻两个月都有支出，算不出环比。'
-        : '近 ' + String(series.length) + ' 个月里支出环比变化最大的是 ' + widest.month
-          + '（' + money(widest.prev) + ' 元 → ' + money(widest.cur) + ' 元，' + deltaText(widest.pct) + '）；'
-          + (topSurge === null
-            ? '最近一个月没有分类出现支出暴涨。'
-            : '涨幅最高的是「' + topSurge.category + '」（+' + pctText(topSurge.pct) + '）。');
+        ? m('skill-bill.analysis-scene-anomaly.c007', { p0: String(String(series.length)) })
+        : m('skill-bill.analysis-scene-anomaly.c008', {
+          p0: String(String(series.length)),
+          p1: String(widest.month),
+          p2: String(money(widest.prev)),
+          p3: String(money(widest.cur)),
+          p4: String(deltaText(widest.pct)),
+          p5: String(surgeTail),
+        });
     const caliber = [
-      '环比只算相邻两个月都有支出的那些月（没有记录的月、以及支出为 0 的月都不参与对比）',
-      '窗口取近 ' + String(months) + ' 个月，终点是库里最新一条记录所在的月（不是今天）',
+      m('skill-bill.analysis-scene-anomaly.c009'),
+      m('skill-bill.analysis-scene-anomaly.c010', { p0: String(String(months)) }),
       gaps.length === 0
-        ? '这 ' + String(series.length) + ' 个月每个月都有记录'
-        : gaps.join('、') + ' 这 ' + String(gaps.length) + ' 个月没有记录，折线在那里断开、用同色虚线桥接',
-      recorded.length < 2 ? '有记录的月不到 2 个，不画半截线、图卡改出说明句' : '',
-      lastMonth === '' ? '库里的记录不足两个月，比不出分类暴涨' : '分类暴涨比的是 ' + prevMonth + ' 与 ' + lastMonth
-        + ' 这两个有记录的月，按一级分类算支出',
-      '建议核对: 是否存在一次性大额 / 记错分类 / 真实增长',
-      '转账不计入收支',
+        ? m('skill-bill.analysis-scene-anomaly.c011', { p0: String(String(series.length)) })
+        : m('skill-bill.analysis-scene-anomaly.c012', {
+          p0: String(gaps.join('、')),
+          p1: String(String(gaps.length)),
+        }),
+      recorded.length < 2 ? m('skill-bill.analysis-scene-anomaly.c013') : '',
+      lastMonth === '' ? m('skill-bill.analysis-scene-anomaly.c014') : m('skill-bill.analysis-scene-anomaly.c015', { p0: String(prevMonth), p1: String(lastMonth) }),
+      m('skill-bill.analysis-scene-anomaly.c016'),
+      m('skill-bill.analysis-scene-anomaly.c017'),
     ].filter((s) => s !== '').join('；') + '。';
 
     return {
-      title: '看异常',
+      title: m('skill-bill.analysis-scene-anomaly.title'),
       label: windowLabel(firstMonth, endMonth),
       from: firstMonth === '' ? NO_WINDOW : monthRange(firstMonth).start,
       to: endMonth === '' ? NO_WINDOW : monthRange(endMonth).end,
       count: rows.length,
       conclusion,
       caliber,
-      chips: ['近 ' + String(months) + ' 个月'],
+      chips: [m('skill-bill.analysis-scene-anomaly.c019', { p0: String(String(months)) })],
       payload: buildTrend('anomaly', [...all], { limit: 6 }),
       kpi,
       page: {
         kpis: [],
-        chips: ['近 ' + String(months) + ' 个月'],
+        chips: [m('skill-bill.analysis-scene-anomaly.c020', { p0: String(String(months)) })],
         charts: [{
-          title: '月度序列',
+          title: m('skill-bill.analysis-scene-anomaly.c021'),
           kind: 'line',
-          input: lineInputOf(series, recorded.length, '有记录的月不到 2 个，画不出月度序列；环比那条逐月列在下面。'),
+          input: lineInputOf(series, recorded.length, m('skill-bill.analysis-scene-anomaly.c022')),
         }],
         listCards: [{
-          title: '月度环比变化',
+          title: m('skill-bill.analysis-scene-anomaly.c023'),
           rows: mom.map((x) => ({
             left: x.month,
             main: money(x.prev) + ' → ' + money(x.cur),
             right: deltaText(x.pct),
           })),
-          emptyText: '窗口里没有相邻两个月都有支出，算不出环比',
+          emptyText: m('skill-bill.analysis-scene-anomaly.c024'),
         }],
         factCards: [{
-          title: '分类暴涨检测',
+          title: m('skill-bill.analysis-scene-anomaly.c025'),
           rows: surge.length === 0
-            ? [{ k: '最近一个月与上一个有记录的月比，没有分类出现支出暴涨', v: MISSING }]
+            ? [{ k: m('skill-bill.analysis-scene-anomaly.c026'), v: MISSING }]
             : surge.map((x) => ({ k: x.category + ' +' + pctText(x.pct), v: money(x.prev) + ' → ' + money(x.cur) })),
         }],
         empty: {
-          text: '近 ' + String(months) + ' 个月还没有记录。',
-          hint: '先说「记支出」或「记收入」记一笔，回来看这里就有数了。',
+          text: m('skill-bill.analysis-scene-anomaly.c027', { p0: String(String(months)) }),
+          hint: m('skill-bill.analysis-scene-anomaly.c028'),
         },
       },
     };
   },
-};
+  };
+}
+
+export const sceneAnomaly: AnalysisScene = buildScene();
+
+/** 按语言重建本场景（#1197：文案经词条层，语言是运行期参数）。 */
+export function sceneAnomalyFor(language: string): AnalysisScene {
+  return runWithLanguage(language, buildScene);
+}

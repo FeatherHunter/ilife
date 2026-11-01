@@ -45,11 +45,11 @@ function cli(db, args) {
 }
 
 describe('#1204 记分期首迁：词条＋语言链', () => {
-  it('词条 zh／en 同 key（1027 条＝170 既有＋#1205 迁入 293＋清红补录 14＋#1204 迁入 262＋#1206 迁入 288）且英文列无空串', () => {
+  it('词条 zh／en 同 key（1440 条＝170 既有＋#1205 迁入 293＋清红补录 14＋#1204 迁入 262＋#1206 迁入 288＋#1207 迁入 413）且英文列无空串', () => {
     const zhKeys = Object.keys(SKILL_BILL_CATALOG.zh).sort();
     const enKeys = Object.keys(SKILL_BILL_CATALOG.en).sort();
     assert.deepEqual(enKeys, zhKeys);
-    assert.equal(zhKeys.length, 1027);
+    assert.equal(zhKeys.length, 1440);
     for (const k of enKeys) assert.ok(SKILL_BILL_CATALOG.en[k].length > 0, '英文缺译：' + k);
   });
 

@@ -12,6 +12,7 @@
  *   ③ 老侧那页把每条差异摆成 `↑ 金额` 一行——新侧改摆**条卡**（#681 偏好 3：版式可全新设计），
  *      两段金额、金额差与两段笔数一件不少（条卡比老侧那行多了两段笔数）。
  */
+import { runWithLanguage } from 'base-entries';
 import { BillPolicyError } from '../fetch/errors.js';
 import { listRange } from '../fetch/index.js';
 import { normalizeDate } from '../shared/dateRange.js';
@@ -19,6 +20,7 @@ import { aggByL1, filterOf, kpiOf, round1, round2 } from './agg.js';
 import { money, signedMoney } from './pageParts.js';
 import type { AnalysisScene } from './scene.js';
 import { buildCompare } from './views.js';
+import { m } from '../entries/index.js';
 
 /** 一段对比窗口：期间标签 ＋ 起止日。 */
 interface Win {
@@ -57,11 +59,12 @@ function windowsOf(params: Record<string, unknown>): { readonly a: Win; readonly
   };
 }
 
-export const sceneCatCompare: AnalysisScene = {
+function buildScene(): AnalysisScene {
+  return {
   id: 'cat_compare',
   key: 'bill.analysis.compare',
   kind: 'category',
-  title: '看分类对比',
+  title: m('skill-bill.analysis-scene-cat-compare.title'),
   family: 'compare',
   values: ({ params, db }) => {
     const { a: winA, b: winB } = windowsOf(params);
@@ -97,41 +100,61 @@ export const sceneCatCompare: AnalysisScene = {
     const direction: 'up' | 'down' | 'flat' = diff > 0.01 ? 'up' : diff < -0.01 ? 'down' : 'flat';
     const head = rows[0];
     return {
-      title: '看分类对比',
-      label: winA.label + ' 与 ' + winB.label,
+      title: m('skill-bill.analysis-scene-cat-compare.title'),
+      label: m('skill-bill.analysis-scene-cat-compare.c003', { p0: String(winA.label), p1: String(winB.label) }),
       from: winA.start < winB.start ? winA.start : winB.start,
       to: winA.end > winB.end ? winA.end : winB.end,
       count: ra.length + rb.length,
       conclusion: head === undefined
-        ? winA.label + ' 与 ' + winB.label + ' 两段都没有支出记录。'
-        : winA.label + ' 与 ' + winB.label + ' 两段共 ' + String(all.length) + ' 类支出：金额差最大的是「'
-          + head.key + '」' + signedMoney(head.amount) + ' 元（' + money(head.a) + ' → ' + money(head.b)
-          + '）；两段支出合计差 ' + signedMoney(diff) + ' 元。',
-      caliber: '只算支出侧；分类按一级归堆（两级／三级分类并到一级），条长按最大金额差折算，金额差降序取前 10 类；转账不计入收支。',
-      chips: ['区间一 ' + winA.start + '~' + winA.end, '区间二 ' + winB.start + '~' + winB.end],
+        ? m('skill-bill.analysis-scene-cat-compare.c004', { p0: String(winA.label), p1: String(winB.label) })
+        : m('skill-bill.analysis-scene-cat-compare.c005', {
+          p0: String(winA.label),
+          p1: String(winB.label),
+          p2: String(String(all.length)),
+          p3: String(head.key),
+          p4: String(signedMoney(head.amount)),
+          p5: String(money(head.a)),
+          p6: String(money(head.b)),
+          p7: String(signedMoney(diff)),
+        }),
+      caliber: m('skill-bill.analysis-scene-cat-compare.c006'),
+      chips: [m('skill-bill.analysis-scene-cat-compare.c007', { p0: String(winA.start), p1: String(winA.end) }), m('skill-bill.analysis-scene-cat-compare.c008', { p0: String(winB.start), p1: String(winB.end) })],
       payload: buildCompare({ labelA: winA.label, labelB: winB.label, a: [...ra], b: [...rb] }),
       kpi: kpiOf([...ra, ...rb]),
       page: {
         kpis: [],
-        chips: ['区间一 ' + winA.start + '~' + winA.end, '区间二 ' + winB.start + '~' + winB.end],
+        chips: [m('skill-bill.analysis-scene-cat-compare.c009', { p0: String(winA.start), p1: String(winA.end) }), m('skill-bill.analysis-scene-cat-compare.c010', { p0: String(winB.start), p1: String(winB.end) })],
         sides: [],
         change: { text: '', detail: '', direction },
         barGroups: [{
-          title: '金额变化最大（' + String(rows.length) + ' 类）',
+          title: m('skill-bill.analysis-scene-cat-compare.c011', { p0: String(String(rows.length)) }),
           rows: rows.map((r) => ({
             label: r.key,
-            text: money(r.a) + ' → ' + money(r.b) + ' · ' + signedMoney(r.amount)
-              + '（' + String(r.aCount) + '笔→' + String(r.bCount) + '笔）',
+            text: m('skill-bill.analysis-scene-cat-compare.c012', {
+              p0: String(money(r.a)),
+              p1: String(money(r.b)),
+              p2: String(signedMoney(r.amount)),
+              p3: String(String(r.aCount)),
+              p4: String(String(r.bCount)),
+            }),
             pct: maxAbs === 0 ? 0 : round1((Math.abs(r.amount) / maxAbs) * 100),
           })),
-          emptyText: '两段都没有支出记录',
+          emptyText: m('skill-bill.analysis-scene-cat-compare.c013'),
         }],
         factCards: [],
         empty: {
-          text: '两段都没有支出记录。',
-          hint: '先说「记支出」记一笔，回来看这里就有数了。',
+          text: m('skill-bill.analysis-scene-cat-compare.c014'),
+          hint: m('skill-bill.analysis-scene-cat-compare.c015'),
         },
       },
     };
   },
-};
+  };
+}
+
+export const sceneCatCompare: AnalysisScene = buildScene();
+
+/** 按语言重建本场景（#1197：文案经词条层，语言是运行期参数）。 */
+export function sceneCatCompareFor(language: string): AnalysisScene {
+  return runWithLanguage(language, buildScene);
+}

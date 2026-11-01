@@ -11,6 +11,7 @@
  *   ③ 这一页**没有条卡**（`barGroups: []`）：老侧那页只有读数行 ＋「区间标注」那张事实卡两行；
  *   ④ 载荷照搬迁前那一支（`./views.js` 的 `buildOverview`），一字不改。
  */
+import { runWithLanguage } from 'base-entries';
 import { listRange } from '../fetch/index.js';
 import { monthRange } from '../shared/dateRange.js';
 import { daysBetween, kpiOf, round2, thisMonth } from './agg.js';
@@ -18,6 +19,7 @@ import { money, windowLabel } from './pageParts.js';
 import { needRange } from './params.js';
 import type { AnalysisScene } from './scene.js';
 import { buildOverview } from './views.js';
+import { m } from '../entries/index.js';
 
 /** 起止槽：两端同给就用它们（形态不对即抛）；缺则退回本月（老侧那条兼容路的同义写法）。 */
 function readSpan(params: Record<string, unknown>): { start: string; end: string; month: boolean } {
@@ -28,11 +30,12 @@ function readSpan(params: Record<string, unknown>): { start: string; end: string
   return { start, end, month: false };
 }
 
-export const sceneOverview: AnalysisScene = {
+function buildScene(): AnalysisScene {
+  return {
   id: 'overview',
   key: 'bill.analysis.overview',
   kind: 'overview',
-  title: '看总览',
+  title: m('skill-bill.analysis-scene-overview.title'),
   family: 'bars',
   values: ({ params, db }) => {
     const span = readSpan(params);
@@ -42,43 +45,60 @@ export const sceneOverview: AnalysisScene = {
     const label = windowLabel(span.start, span.end);
     const dailyAvg = days === 0 ? 0 : round2(kpi.expense / days);
     return {
-      title: '看总览',
+      title: m('skill-bill.analysis-scene-overview.title'),
       label,
       from: span.start,
       to: span.end,
       count: records.length,
       conclusion: kpi.count === 0
-        ? label + ' 这段时间一笔都没有记。'
-        : label + ' 一共记了 ' + String(kpi.count) + ' 笔：支出 ' + money(kpi.expense) + ' 元、收入 '
-          + money(kpi.income) + ' 元、净额 ' + money(kpi.net) + ' 元，' + String(days) + ' 天日均支出 '
-          + money(dailyAvg) + ' 元。',
-      caliber: '天数按起止两端含首尾算（跨月、跨年照算），日均支出＝支出 ÷ 天数；转账不计入收支。',
+        ? m('skill-bill.analysis-scene-overview.c003', { p0: String(label) })
+        : m('skill-bill.analysis-scene-overview.c004', {
+          p0: String(label),
+          p1: String(String(kpi.count)),
+          p2: String(money(kpi.expense)),
+          p3: String(money(kpi.income)),
+          p4: String(money(kpi.net)),
+          p5: String(String(days)),
+          p6: String(money(dailyAvg)),
+        }),
+      caliber: m('skill-bill.analysis-scene-overview.c005'),
       chips: [label],
       payload: buildOverview(label, [...records]),
       kpi,
       page: {
         kpis: [
-          { label: '笔数', value: String(kpi.count), unit: '笔' },
-          { label: '支出', value: money(kpi.expense), unit: '元' },
-          { label: '收入', value: money(kpi.income), unit: '元' },
-          { label: '净额', value: money(kpi.net), unit: '元', detail: kpi.net >= 0 ? '收大于支' : '支大于收' },
+          { label: m('skill-bill.analysis-scene-overview.c006'), value: String(kpi.count), unit: m('skill-bill.analysis-scene-overview.c007') },
+          { label: m('skill-bill.analysis-scene-overview.c008'), value: money(kpi.expense), unit: m('skill-bill.analysis-scene-overview.c009') },
+          { label: m('skill-bill.analysis-scene-overview.c010'), value: money(kpi.income), unit: m('skill-bill.analysis-scene-overview.c011') },
+          { label: m('skill-bill.analysis-scene-overview.c012'), value: money(kpi.net), unit: m('skill-bill.analysis-scene-overview.c013'), detail: kpi.net >= 0 ? m('skill-bill.analysis-scene-overview.c014') : m('skill-bill.analysis-scene-overview.c015') },
         ],
         chips: [],
         charts: [],
         barGroups: [],
         listCards: [],
         factCards: [{
-          title: '区间标注',
+          title: m('skill-bill.analysis-scene-overview.c016'),
           rows: [
-            { k: '期间', v: label },
-            { k: '日均支出', v: money(dailyAvg) + ' 元（' + String(days) + ' 天）' },
+            { k: m('skill-bill.analysis-scene-overview.c017'), v: label },
+            { k: m('skill-bill.analysis-scene-overview.c018'), v: m('skill-bill.analysis-scene-overview.c019', {
+              p0: String(money(dailyAvg)),
+              p1: String(String(days)),
+            }) },
           ],
         }],
         empty: {
-          text: label + ' 这段时间还没有记录。',
-          hint: '先说「记支出」或「记收入」记一笔，回来看这里就有数了。',
+          text: m('skill-bill.analysis-scene-overview.c020', { p0: String(label) }),
+          hint: m('skill-bill.analysis-scene-overview.c021'),
         },
       },
     };
   },
-};
+  };
+}
+
+export const sceneOverview: AnalysisScene = buildScene();
+
+/** 按语言重建本场景（#1197：文案经词条层，语言是运行期参数）。 */
+export function sceneOverviewFor(language: string): AnalysisScene {
+  return runWithLanguage(language, buildScene);
+}

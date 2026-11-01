@@ -379,7 +379,11 @@
     "config.reset",
     "dsh-calorie.version",
     "ilife-manager.roots",
-    "package.json"
+    "package.json",
+    "未还",
+    "已还",
+    "分期",
+    "退款"
   ],
   "files": [
     "packages/base-render/src/components/progress-list/model.ts",
@@ -775,6 +779,24 @@
     "packages/base-render/src/components/popover/runtime.ts",
     "packages/base-render/src/components/portion-gauge/model.ts",
     "packages/base-render/src/components/portion-gauge/render.ts",
-    "packages/base-render/src/components/portion-gauge/style.ts"
+    "packages/base-render/src/components/portion-gauge/style.ts",
+    "packages/skill-bill/src/analysis/scene-activity.ts",
+    "packages/skill-bill/src/analysis/scene-anomaly.ts",
+    "packages/skill-bill/src/analysis/scene-cat-compare.ts",
+    "packages/skill-bill/src/analysis/scene-cat-trend.ts",
+    "packages/skill-bill/src/analysis/scene-category.ts",
+    "packages/skill-bill/src/analysis/scene-debt.ts",
+    "packages/skill-bill/src/analysis/scene-distribution.ts",
+    "packages/skill-bill/src/analysis/scene-insight.ts",
+    "packages/skill-bill/src/analysis/scene-installment.ts",
+    "packages/skill-bill/src/analysis/scene-ledger.ts",
+    "packages/skill-bill/src/analysis/scene-monthly.ts",
+    "packages/skill-bill/src/analysis/scene-overview.ts",
+    "packages/skill-bill/src/analysis/scene-period-compare.ts",
+    "packages/skill-bill/src/analysis/scene-range-compare.ts",
+    "packages/skill-bill/src/analysis/scene-refund.ts",
+    "packages/skill-bill/src/analysis/scene-reimburse.ts",
+    "packages/skill-bill/src/analysis/scene-stats.ts",
+    "packages/skill-bill/src/analysis/scene-structure.ts"
   ]
 }
