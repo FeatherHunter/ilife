@@ -41,7 +41,9 @@ export interface WriteOut {
 /** 写命令的处理函数。第二参是饼干的库句柄 `BillDb`（库 ＋ 路径 ＋ 是否新建）——
  *  与卡路里同件收 `DatabaseSync` 不同：饼干的取数层 `addBill`／`updateBill`／`undoBill`／`restoreBill`
  *  收的就是 `BillDb`（`src/fetch/db.ts:155` 起），共用件不自造第二种句柄。 */
-/** 第三参＝本条命令的文本语言（BCP 47；不给＝`zh`）。#1204 起写入域两条命令消费它（记分期场景按语言取值）；查询域四条暂不消费（归各自迁移票），分派层照传。 */
+/** 第三参＝本条命令的文本语言（BCP 47）。**签名保持可选**：外壳按注册表调 `run` 时可能不传，
+ *  这一格是分派面的形状、不是域内契约。#1307 起域内一律**必给**——写入域两条命令在入口做一次边界转换
+ *  （缺省走 `DEFAULT_LANGUAGE`）后往下只传必给字符串；查询域四条暂不消费（归各自迁移票），分派层照传。 */
 export type WriteHandler = (params: Record<string, unknown>, db: BillDb, language?: string) => WriteOut;
 
 /** 写命令的声明：六件事 ＋ 处理函数。 */
@@ -73,7 +75,8 @@ export interface ViewOut {
   page?: BillPage;
 }
 
-/** 读命令的处理函数。第二参同 `WriteHandler` 收饼干的库句柄 `BillDb`（取数层只认这一种句柄）。 */
+/** 读命令的处理函数。第二参同 `WriteHandler` 收饼干的库句柄 `BillDb`（取数层只认这一种句柄）；
+ *  第三参口径同 `WriteHandler`（可选是分派面的形状，进了域内就必给）。 */
 export type ViewHandler = (params: Record<string, unknown>, db: BillDb, language?: string) => ViewOut;
 
 /** 读命令的声明：与写命令同五件事，只两处不同——`kind` 是 `read`、`shape` 是**表里的形状**。 */

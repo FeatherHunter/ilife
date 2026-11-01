@@ -71,7 +71,7 @@ describe('409 · 写入 16 词五段接线', () => {
     assert.equal(SCENES.length, 16);
     const ids = new Set();
     for (const r of buildWriteWire()) {
-      const s = sceneFor({ key: r.key, kind: r.params.kind, op: r.params.op });
+      const s = sceneFor({ key: r.key, kind: r.params.kind, op: r.params.op }, 'zh');
       // #721 起落点行不写唤醒词：按它认的 kind／op 从域声明算回那一条词，必须就是路由命中的那一条。
       const word = projectWakeWord({ key: s.key, kind: s.kind, op: s.op });
       assert.equal(word, r.phrase, r.phrase);

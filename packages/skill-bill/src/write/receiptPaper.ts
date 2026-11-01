@@ -181,8 +181,7 @@ function checkHtml(recordId: number | null, t: PaperText): string {
 /** 一页回执纸（**本域 13 页的唯一装配处**）。块序见件头。 */
 export function receiptPaper(input: ReceiptPaperInput): string {
   const { key, params, receipt, facts } = input;
-  const language = input.language ?? 'zh';
-  const t: PaperText = (id, p) => resolve(SKILL_BILL_CATALOG, language, id, p);
+  const t: PaperText = (id, p) => resolve(SKILL_BILL_CATALOG, input.language, id, p);
   const words = wordsOf(input.kind);
   const envelope = envelopeOf(key, true, receipt.summary);
   const exit = exitCopyOf('undo', receipt.recordId);

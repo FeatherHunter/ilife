@@ -236,9 +236,9 @@ function envelopeOf(key: string, ok: boolean, message: string): SerializableEnve
 
 /** 缺项阻断条整条收进折叠区：首屏只留缺项标签与一行副标题，口令原文不再常驻版面。
  *  内容与判定一字不动（仍是共用件 `blockedBar` 的产出），只换摆法；折叠与否那枚置灰按钮都点不动。 */
-function blockedFold(items: readonly BlockedItem[], command: string): string {
+function blockedFold(items: readonly BlockedItem[], command: string, language: string): string {
   if (items.length === 0) return '';
-  return renderDisclosure({ title: '还缺什么，以及补齐后照抄的那条', contentHtml: blockedBar({ items, command }) });
+  return renderDisclosure({ title: '还缺什么，以及补齐后照抄的那条', contentHtml: blockedBar({ items, command, language }) });
 }
 
 /** 流程三段式那三段：第 1 段的候选那一块两种摆法（单选／只列表），第 2 段的字段逐格过本件那一支。 */
@@ -314,7 +314,7 @@ function collectPage(spec: FlowSpec, input: CollectInput): string {
     spec.note === undefined ? '' : renderFeedbackBlock({ toast: spec.note(ctx), staticNotice: true }),
     collectMissingTags({ labels: blocked.map((i) => i.label) }),
     flowSteps({ steps: stepsOf(spec, ctx) }),
-    blockedFold(blocked, commandLine(key, filled)),
+    blockedFold(blocked, commandLine(key, filled), input.language),
     copyArea({
       hints: COPY_HINTS.sayAcct,
       prompt: { text: prompt.text, label: prompt.label },
@@ -327,7 +327,7 @@ function collectPage(spec: FlowSpec, input: CollectInput): string {
         actionAt: input.actionAt, version: DOC_VERSION,
       }) },
     }),
-    collectSourceNote(facts.time),
+    collectSourceNote(facts.time, input.language),
   ].join('');
   return pageShell({
     docTitle: docTitleOf(spec.word + ' 采集页'), title: spec.word, subtitle: '还差 ' + blocked.length + ' 项，缺的在下面标出来了',

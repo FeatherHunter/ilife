@@ -91,6 +91,9 @@ interface BlockedBarInput {
   readonly command: string;
   /** 补齐之后会发生什么（缺省一句）。 */
   readonly note?: string;
+  /** 本块的文本语言（BCP 47）。**必给**（#1307）：本件只把语言递给 `errorReceipt` 取它的
+   *  缺省重试句，自己不兜 `zh`——兜了就在共用位上又留一条「调用方忘传即静默中文」。 */
+  readonly language: string;
 }
 
 /** 遮断条那几块（**唯一定义地**）：错误回执 ＋ 还缺什么表 ＋ 补齐后照说那句话 ＋ 置灰的写库按钮。
@@ -118,6 +121,7 @@ export function blockedBar(input: BlockedBarInput): string {
     //   现在事由只说「还缺几项」，**缺的是哪几项由下面那行徽章出形状**（每项一枚胶囊，与整页标签同一形状）。
     message: '还缺 ' + n + ' 项，补齐再记',
     retryPrompt: '补齐了，说一遍试试',
+    language: input.language,
   }) + renderDataTable({
     // t728 逐页审计实测：改前这里是三列 `还缺哪一项／是什么／为什么写不进去`，而**前两列印的是同一个词**
     //   （`fieldLabelOf(i.name)` 与 `i.label` 在实测里逐行同值：`分类` / `分类`、`金额` / `金额`）——

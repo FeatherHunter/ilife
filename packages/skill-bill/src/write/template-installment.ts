@@ -148,11 +148,11 @@ function envelopeOf(key: string, ok: boolean, message: string): SerializableEnve
 
 /** 缺项阻断条整条收进折叠区：首屏只留缺项标签与一行副标题，口令原文不再常驻版面。
  *  内容与判定一字不动（仍是共用件 `blockedBar` 的产出），只换摆法；折叠与否那枚置灰按钮都点不动。 */
-function blockedFold(title: string, items: readonly BlockedItem[], command: string): string {
+function blockedFold(title: string, items: readonly BlockedItem[], command: string, language: string): string {
   if (items.length === 0) return '';
   return renderDisclosure({
     title,
-    contentHtml: blockedBar({ items, command }),
+    contentHtml: blockedBar({ items, command, language }),
   });
 }
 
@@ -270,7 +270,7 @@ function collectPage(spec: InstallmentSpec, input: CollectInput): string {
     preview.html === ''
       ? renderChips({ items: [{ text: spec.noSharesChip }] })
       : '',
-    blockedFold(spec.foldTitle, blocked, commandLine(key, filled)),
+    blockedFold(spec.foldTitle, blocked, commandLine(key, filled), input.language),
     copyArea({
       hints: COPY_HINTS.sayAcct,
       prompt: { text: prompt, label: blocked.length === 0 ? spec.promptLabel : spec.promptLabelBlocked },
@@ -289,7 +289,7 @@ function collectPage(spec: InstallmentSpec, input: CollectInput): string {
         }),
       },
     }),
-    collectSourceNote(facts.time),
+    collectSourceNote(facts.time, input.language),
   ].join('');
   return pageShell({
     docTitle: docTitleOf(spec.word + ' 采集页'), title: spec.word, subtitle,

@@ -19,7 +19,13 @@
  *   **#1280 落库前的去重收口**：`bill.record.add` 这一支在 `addBill` 之前多走一步
  *   `./record.js` 的 `canonicalizeExistingNames`（分类／账本与库里已有值等价即换成已有那个拼写）。
  * 写入字段口径：记一笔写整列全集（含缺省值列）；改字段＝本次实际变更的列；撤销／恢复写的是 `deleted_at`。
+ *
+ * **语言在这件里只转换一次**（#1307）：两个入口的第三参 `language?` 照 `WriteHandler` 的签名仍是可选
+ * （外壳按注册表调 `run` 时可能不传），但**一进函数体就落成确定值** `textLanguage`（缺省走
+ * `DEFAULT_LANGUAGE`），往下 `collectOut`／`finish`／槽位表一律收必给的 `string`。这样「调用方忘传」
+ * 只在这两行被兜一次，且兜的是**显式常量**而不是散落各处的「空值即中文」缺省——散着兜就没人能一眼数清还剩几个缺口。
  */
+import { DEFAULT_LANGUAGE } from 'base-link-core';
 import { addBill, updateBill, undoBill, restoreBill, getById, listRecent, DB_FILENAME } from '../fetch/index.js';
 import type { BillDb, BillRow } from '../fetch/index.js';
 import { canonicalizeExistingNames, needId, parseRecordOp, validateAddInput, validateUpdateInput } from './record.js';
@@ -37,6 +43,7 @@ import type { BillReceipt } from '../shared/writeParts.js';
 import { actionStamp } from '../shared/copyArea.js';
 import { RECORD_SLOTS, missingSlots, recordCollectDoc } from './collect.js';
 import type { RecordSlot } from './collect.js';
+import { recordSlots } from './slots.js';
 import { recordReceiptDoc } from './receipt.js';
 
 /** 记一笔写进库的列全集（**由槽位表派生，同一件事实一处定义**）：`add` 那一行的七个参数名就是它写进库的七个列
@@ -116,7 +123,8 @@ function collectOut(input: {
   readonly missing: readonly RecordSlot[];
   readonly blocked: readonly BlockedItem[];
   readonly db: BillDb;
-  readonly language?: string;
+  /** 已经过边界转换的语言（#1307）：本层收必给，别在页内再兜一个缺省值。 */
+  readonly language: string;
 }): WriteOut {
   const message = blockedMessage(input.missing, input.blocked);
   const today = todayOf();
@@ -151,7 +159,8 @@ function finish(input: {
   readonly noChange: boolean;
   readonly writtenDetail: string;
   readonly detail: readonly DetailRow[];
-  readonly language?: string;
+  /** 已经过边界转换的语言（#1307），口径同 `collectOut`。 */
+  readonly language: string;
 }): WriteOut {
   const receipt: BillReceipt = {
     op: input.op,
@@ -179,12 +188,15 @@ function finish(input: {
 /** `bill.record.add`（记一笔，**录入路径**）：有阻断项（缺分类或金额／金额符号与这一型不符）即出采集页，
  *  清空即写库出回执整页。方向判定只在这一支传 `kind`。 */
 export function writeRecordAdd(params: Record<string, unknown>, db: BillDb, language?: string): WriteOut {
+  // #1307 · 本部的**唯一边界转换**：这里以下全部收必给字符串。
+  const textLanguage = language ?? DEFAULT_LANGUAGE;
   const key = 'bill.record.add';
-  const slots = RECORD_SLOTS[key];
+  // 槽位表的提示句按语言取（#1206 起分语言），故走函数而不是 `RECORD_SLOTS` 那份 zh 静态快照。
+  const slots = recordSlots(textLanguage)[key];
   const missing = missingSlots(params, slots);
   const kind = typeof params.kind === 'string' ? params.kind : '';
   const blocked = blockedItems({ params, missing, kind });
-  if (blocked.length > 0) return collectOut({ key, params, slots, missing, blocked, db, language });
+  if (blocked.length > 0) return collectOut({ key, params, slots, missing, blocked, db, language: textLanguage });
   const before = totalChanges(db.db);
   const input = canonicalizeExistingNames(db, validateAddInput(params));
   const r = addBill(db, input);
@@ -194,7 +206,7 @@ export function writeRecordAdd(params: Record<string, unknown>, db: BillDb, lang
     ? '（三要素以外部识别为准）'
     : kind === 'batch' ? '（只落了其中一笔）' : kind ? '（' + wakeWordOf(kind) + '）' : '';
   return finish({
-    db, key, params, language, op: 'add', row: r, fields: ADD_FIELDS, before, noChange: false,
+    db, key, params, language: textLanguage, op: 'add', row: r, fields: ADD_FIELDS, before, noChange: false,
     summary: `已记录：${r.category} ${r.amount.toFixed(2)}${extra}（记录编号 ${r.id}，这一页可以复制）`,
     writtenDetail: '这一笔已记进账本',
     detail: rowDetail(r),
@@ -204,18 +216,20 @@ export function writeRecordAdd(params: Record<string, unknown>, db: BillDb, lang
 /** `bill.record.update`（改记录）：有阻断项（缺 `id`）即出采集页；op 决定改字段／撤销／恢复三支。
  *  **这一支不判金额方向**：撤销／恢复本来就不带 `kind`＋`amount`，带上也不该被方向判定拦下、改出采集页。 */
 export function writeRecordUpdate(params: Record<string, unknown>, db: BillDb, language?: string): WriteOut {
+  // #1307 · 本部的**唯一边界转换**，口径同 `writeRecordAdd`。
+  const textLanguage = language ?? DEFAULT_LANGUAGE;
   const key = 'bill.record.update';
-  const slots = RECORD_SLOTS[key];
+  const slots = recordSlots(textLanguage)[key];
   const missing = missingSlots(params, slots);
   const blocked = blockedItems({ params, missing, kind: '' });
-  if (blocked.length > 0) return collectOut({ key, params, slots, missing, blocked, db, language });
+  if (blocked.length > 0) return collectOut({ key, params, slots, missing, blocked, db, language: textLanguage });
   const op = parseRecordOp(params);
   const before = totalChanges(db.db);
   if (op === 'undo') {
     const id = needId(params);
     const r = undoBill(db, id);
     return finish({
-      db, key, params, language, op: 'undo', row: r, fields: ['deleted_at'], before, noChange: false,
+      db, key, params, language: textLanguage, op: 'undo', row: r, fields: ['deleted_at'], before, noChange: false,
       summary: `已撤销，记录还在，随时可恢复（记录编号 ${r.id}）`,
       writtenDetail: '已标记撤销（记录还在库里，只是不再算进查询与统计）',
       detail: [{ k: fieldLabelOf('op'), v: statusNoteOf('软删打标（deleted_at = now，不物理删）') }, { k: fieldLabelOf('id'), v: String(r.id) }],
@@ -225,7 +239,7 @@ export function writeRecordUpdate(params: Record<string, unknown>, db: BillDb, l
     const id = needId(params);
     const r = restoreBill(db, id);
     return finish({
-      db, key, params, language, op: 'restore', row: r, fields: ['deleted_at'], before, noChange: false,
+      db, key, params, language: textLanguage, op: 'restore', row: r, fields: ['deleted_at'], before, noChange: false,
       summary: `已恢复（记录编号 ${r.id}）`,
       writtenDetail: '已恢复（撤销标记清掉，这一笔回到查询与统计里）',
       detail: [{ k: fieldLabelOf('op'), v: statusNoteOf('置 NULL（deleted_at 清空）') }, { k: fieldLabelOf('id'), v: String(r.id) }],
@@ -237,7 +251,7 @@ export function writeRecordUpdate(params: Record<string, unknown>, db: BillDb, l
   const fields = Object.keys(patch);
   const noChange = fields.every((f) => preValue(pre, f) === patch[f]);
   return finish({
-    db, key, params, language, op: 'update', row: r, fields, before, noChange,
+    db, key, params, language: textLanguage, op: 'update', row: r, fields, before, noChange,
     summary: `已修改：${r.id}（改了 ${fields.map((f) => fieldLabelOf(f)).join('、')}）`,
     writtenDetail: '这一条已改好',
     detail: [

@@ -155,9 +155,9 @@ function blockedCommand(key: string, params: Record<string, unknown>, blocked: r
 }
 
 /** 缺项阻断条整条收进折叠区（判定与文案一字不动，仍是共用件 `blockedBar` 的产出，只换摆法）。 */
-function blockedFold(items: readonly BlockedItem[], command: string): string {
+function blockedFold(items: readonly BlockedItem[], command: string, language: string): string {
   if (items.length === 0) return '';
-  return renderDisclosure({ title: '还缺什么，以及补齐后照抄的那条', contentHtml: blockedBar({ items, command }) });
+  return renderDisclosure({ title: '还缺什么，以及补齐后照抄的那条', contentHtml: blockedBar({ items, command, language }) });
 }
 
 /** 页面内置 envelope（采集页 `ok:false`、回执页 `ok:true`；两页同一形状）。 */
@@ -238,7 +238,7 @@ function collectPage(spec: UpdateSpec, input: CollectInput): string {
     summaryRow(facts),
     spec.caliber === '' ? '' : renderCaliberLine(spec.caliber),
     collectSectionTitle({ no: 2, title: page.id === null ? '先挑一条记录' : '核对这一条' }),
-    blockedFold(page.blocked, blockedCommand(spec.key, input.params, page.blocked)),
+    blockedFold(page.blocked, blockedCommand(spec.key, input.params, page.blocked), input.language),
     middleBlock(spec.middle, page, row, input),
     promptCopyArea(spec.prompt(page), '挑好记录后照这句跟助手说一遍'),
     copyArea({
@@ -255,7 +255,7 @@ function collectPage(spec: UpdateSpec, input: CollectInput): string {
         }),
       },
     }),
-    collectSourceNote(facts.time),
+    collectSourceNote(facts.time, input.language),
   ].join('');
   return pageShell({
     docTitle: docTitleOf(spec.wake + ' 补齐槽位'),

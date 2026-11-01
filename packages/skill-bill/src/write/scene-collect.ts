@@ -6,7 +6,8 @@
  *
  *  #1204 第三件（多语言文本外置）：本件的用户可见文案不住这里，住 `../entries/zh.ts`（中文基准）
  *  与 `../entries/en.ts`（英文列）；`sceneCollect(language)` 按语言取值，`SCENE` 是 `zh`
- *  的那一份（不启用多语言时与改造前逐字节相同）。写入库的用户数据（分类与标签，
+ *  的那一份（落点表的静态快照，只有 `zh` 请求会拿到它）。**语言必给**（#1307）：本件不兜 `zh`。
+ *  写入库的用户数据（分类与标签，
  *  跟'餐饮'同类）不进词条表：`CATEGORY` 与 `TAG_*` 留在源码，展示侧保持源语言，
  *  插标签的整句以 `{tag}`／`{tagUnpaid}`… 为参（运行时值恒为中文标签）。
  *  参数名（`source_id`）与命令键冻结，不进词条表。`WORD`（`wakeWordOf` 运行时算）不动。
@@ -33,7 +34,7 @@ const TAG_PAID = '#已还';
 const TAG_COLLECT = '#收回';
 
 /** 按语言取本件的差异声明（key 拼错编译期红：`SkillBillMessageId` 从 zh 表派生）。 */
-export function sceneCollect(language: string = 'zh'): Scene {
+export function sceneCollect(language: string): Scene {
   const t = (id: SkillBillMessageId, params?: { readonly [key: string]: string | number }): string =>
     resolve(SKILL_BILL_CATALOG, language, id, params);
   return {

@@ -202,6 +202,7 @@ function collectPage(spec: BatchSpec, input: CollectInput): string {
       items: blocked,
       command: blockedCommand(key, params, blocked),
       note: spec.foldNote,
+      language: input.language,
     }),
     collectSectionTitle({ no: 2, title: spec.section2 }),
     rowEditorTable({
@@ -231,7 +232,7 @@ function collectPage(spec: BatchSpec, input: CollectInput): string {
         }),
       },
     }),
-    collectSourceNote(textOf(params['time'])),
+    collectSourceNote(textOf(params['time']), input.language),
   ].join('');
   return pageShell({
     docTitle: docTitleOf(spec.word + ' 采集页'),

@@ -18,8 +18,9 @@
  *  真值校验仍走 `./record.js` 的 `validateAddInput`／`validateUpdateInput`（阻断项清空后才走到那一步）。
  *
  *  #1206 首切件（多语言文本外置）：提示句不住这里，住 `../entries/zh.ts`（中文基准）
- *  与 `../entries/en.ts`（英文列）；`recordSlots(language)` 按语言取值（不给＝`zh`，
- *  与改造前逐字节相同）。中文名仍走 `fieldLabelOf` 映射件（同一概念只一处定义，不另起 key）。
+ *  与 `../entries/en.ts`（英文列）；`recordSlots(language)` 按语言取值。**语言由调用方必给**
+ *  （#1307）：出口解析一次、一路传下来。中文名仍走 `fieldLabelOf` 映射件（同一概念只一处定义，
+ *  不另起 key）——它不随语言变，故不进这一格。
  */
 import { resolve } from 'base-entries';
 import { SKILL_BILL_CATALOG, type SkillBillMessageId } from '../entries/index.js';
@@ -41,8 +42,9 @@ function slot(name: string, hintId: SkillBillMessageId, required: boolean, langu
 }
 
 /** 两条写命令的槽位表。提示句都是**用户说法**：`缺省＝…` 这类口径词不上屏（本轮整改）。
- *  `RECORD_SLOTS` 是 `zh` 那一份，保持既有形状（名目仍走映射件派生）。 */
-export function recordSlots(language: string = 'zh'): Record<string, readonly RecordSlot[]> {
+ *  `RECORD_SLOTS` 是 `zh` 那一份的**静态快照**（派生「记一笔写进库的列全集」用它的**名目**，
+ *  与语言无关）；按语言取表必须走本函数、调用方把语言给进来，别拿这份快照顶非中文页。 */
+export function recordSlots(language: string): Record<string, readonly RecordSlot[]> {
   return {
     'bill.record.add': [
       slot('category', 'slots.add.category.hint', true, language),

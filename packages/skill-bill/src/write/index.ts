@@ -1,6 +1,6 @@
 /** 记账写入域对外的门：命令声明 ＋ 一个写入口 ＋ 写出口的结果载荷。对外三件（铁律五「不多于五个」）：
  *   ① `RECORD_COMMANDS`——命令声明（权威源在 `commands.ts`，这里只是转出）；
- *   ② `runRecordWrite(key, params, db)`——写命令入口（**非本域命令即抛，不猜、不静默兜底**）；
+ *   ② `runRecordWrite(key, params, db, language?)`——写命令入口（**非本域命令即抛，不猜、不静默兜底**）；
  *   ③ `buildRecordReceipt`——写类命令的 envelope 载荷（件住 `receiptOut.ts`）。第三件是**过渡转出**：
  *      `src/cli/cmd_read.ts` 里 goal／account／link／setup 四族未迁移命令的分派也要这一格载荷
  *      （#689 结构搬迁第三批的现状）；那四族各自搬进自己的域后，这一行随之删掉。
@@ -19,7 +19,9 @@ export { buildRecordReceipt } from './receiptOut.js';
 
 const BY_KEY = new Map<string, CommandSpec>(RECORD_COMMANDS.map((c) => [c.key, c]));
 
-/** 写命令入口：命中即走它的处理函数；命令名不属记账写入域即抛——**不猜**。 */
+/** 写命令入口：命中即走它的处理函数；命令名不属记账写入域即抛——**不猜**。
+ *  第四参 `language?` 照 `WriteHandler` 的签名仍可选（#1307：可选只是分派面的形状），
+ *  两条处理体一进函数体就各做**一次**边界转换，往下不再收可选语言。 */
 export function runRecordWrite(key: string, params: Record<string, unknown>, db: BillDb, language?: string): WriteOut {
   const spec = BY_KEY.get(key);
   if (!spec || spec.kind !== 'write') throw new BillPolicyError('POLICY_BAD_INPUT', '不是记账写入域的命令：' + key);

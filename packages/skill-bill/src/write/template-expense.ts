@@ -214,7 +214,7 @@ function collectPage(spec: ExpenseSpec, input: CollectInput): string {
     spec.prefill === 'caliber'
       ? (marks.length === 0 ? '' : renderCaliberLine('预填标注：下面几格已经替你填上，来源写在格子里。'))
       : prefillNote(marks),
-    collectBlockedFold({ items: blocked, command: bp.command, note: spec.foldNote }),
+    collectBlockedFold({ items: blocked, command: bp.command, note: spec.foldNote, language: input.language }),
     empties.join(''),
     spec.section2 === '' ? '' : collectSectionTitle({ no: 2, title: spec.section2 }),
     fieldCardOf({
@@ -243,7 +243,7 @@ function collectPage(spec: ExpenseSpec, input: CollectInput): string {
         }),
       },
     }),
-    collectSourceNote(facts.time),
+    collectSourceNote(facts.time, input.language),
   ].join('');
   return pageShell({
     docTitle: docTitleOf(spec.word + ' 采集页'),
