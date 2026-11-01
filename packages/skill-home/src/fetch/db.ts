@@ -47,6 +47,26 @@ const TOPS: string[] = [
   '数码与电子', '健康与医药', '文体与娱乐', '资产与凭证',
 ];
 
+/** 库里存的中文取值（**数据，不译**）：默认值、位置状态、动作词、筛选词。
+ *  集中一处：SQL 与代码共用同一份，免得字面量散落各件（判据位也一律用这些常量，不用渲染出来的译文）。 */
+export const OWNER_DEFAULT = '使用者';
+export const STATUS_AT_HOME = '在家';
+export const STATUS_USED_UP = '已用完';
+export const STATUS_DISCARDED = '已废弃';
+export const STATUS_TRAVELING = '旅游中';
+export const STATUS_SHIPPING = '快递中';
+export const STATUS_SPARE = '备用';
+export const STATUS_DONE = '已完成';
+export const STATUS_ONGOING = '进行中';
+export const ACCOUNT_TYPE_OTHER = '其他';
+export const WARRANTY_KIND = '保修';
+export const WARRANTY_KINDS: string[] = ['保修', '保养'];
+export const BORROW_OUT = '借出';
+export const INVENTORY_SCOPE_ALL = '全屋';
+export const FILTER_ALL = '全部';
+/** 保修剩余天数的三档**判据码**（存中文原值，上屏时再取译文；筛选按码判，不按译文）。 */
+export const WARRANTY_STATE = { expired: '已过', soon: '即将到期', active: '在保' } as const;
+
 function exec(db: DatabaseSync, sql: string): void {
   db.exec(sql);
 }
@@ -70,14 +90,14 @@ export function openHomeDb(dbPath: string): HomeDb {
     exec(db, `CREATE TABLE IF NOT EXISTS items (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL, category TEXT, category_id INTEGER REFERENCES categories(id),
-      owner TEXT DEFAULT '使用者', purchase_price REAL, remark TEXT, photo TEXT,
+      owner TEXT DEFAULT '${OWNER_DEFAULT}', purchase_price REAL, remark TEXT, photo TEXT,
       access_count INTEGER NOT NULL DEFAULT 0, last_accessed_at TEXT,
       fixed_location TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP, updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )`);
     exec(db, `CREATE TABLE IF NOT EXISTS item_locations (
       id INTEGER PRIMARY KEY AUTOINCREMENT, item_id INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
       location TEXT NOT NULL, quantity INTEGER NOT NULL DEFAULT 1, reason TEXT,
-      location_status TEXT NOT NULL DEFAULT '在家', purchase_date TEXT, expiration_date TEXT,
+      location_status TEXT NOT NULL DEFAULT '${STATUS_AT_HOME}', purchase_date TEXT, expiration_date TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP, updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )`);
     exec(db, `CREATE TABLE IF NOT EXISTS item_tags (
@@ -92,7 +112,7 @@ export function openHomeDb(dbPath: string): HomeDb {
     exec(db, `CREATE TABLE IF NOT EXISTS accounts (
       id INTEGER PRIMARY KEY AUTOINCREMENT, platform TEXT UNIQUE NOT NULL,
       username TEXT NOT NULL DEFAULT '', encrypted_password TEXT NOT NULL DEFAULT '',
-      type TEXT NOT NULL DEFAULT '其他', created_at TEXT DEFAULT CURRENT_TIMESTAMP, updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+      type TEXT NOT NULL DEFAULT '${ACCOUNT_TYPE_OTHER}', created_at TEXT DEFAULT CURRENT_TIMESTAMP, updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )`);
     exec(db, `CREATE TABLE IF NOT EXISTS purchase_records (
       id INTEGER PRIMARY KEY AUTOINCREMENT, item_id INTEGER REFERENCES items(id) ON DELETE SET NULL,
@@ -101,7 +121,7 @@ export function openHomeDb(dbPath: string): HomeDb {
     )`);
     exec(db, `CREATE TABLE IF NOT EXISTS warranties (
       id INTEGER PRIMARY KEY AUTOINCREMENT, item_id INTEGER REFERENCES items(id) ON DELETE CASCADE,
-      kind TEXT NOT NULL DEFAULT '保修', start_date TEXT NOT NULL, duration_days INTEGER NOT NULL,
+      kind TEXT NOT NULL DEFAULT '${WARRANTY_KIND}', start_date TEXT NOT NULL, duration_days INTEGER NOT NULL,
       scene TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )`);
     exec(db, `CREATE TABLE IF NOT EXISTS service_events (
@@ -118,7 +138,7 @@ export function openHomeDb(dbPath: string): HomeDb {
     )`);
     exec(db, `CREATE TABLE IF NOT EXISTS borrow_records (
       id INTEGER PRIMARY KEY AUTOINCREMENT, item_id INTEGER REFERENCES items(id) ON DELETE SET NULL,
-      member TEXT NOT NULL, action TEXT NOT NULL DEFAULT '借出', date TEXT NOT NULL,
+      member TEXT NOT NULL, action TEXT NOT NULL DEFAULT '${BORROW_OUT}', date TEXT NOT NULL,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )`);
     exec(db, `CREATE TABLE IF NOT EXISTS shopping_items (
@@ -137,7 +157,7 @@ export function openHomeDb(dbPath: string): HomeDb {
       id INTEGER PRIMARY KEY AUTOINCREMENT, scope TEXT NOT NULL,
       occurred_at TIMESTAMP NOT NULL, missing_cnt INTEGER DEFAULT 0, extra_cnt INTEGER DEFAULT 0,
       diff_cnt INTEGER DEFAULT 0, pending_cnt INTEGER DEFAULT 0,
-      detail_json TEXT NOT NULL DEFAULT '[]', status TEXT DEFAULT '进行中',
+      detail_json TEXT NOT NULL DEFAULT '[]', status TEXT DEFAULT '${STATUS_ONGOING}',
       created_at TIMESTAMP NOT NULL
     )`);
     exec(db, `CREATE TABLE IF NOT EXISTS location_nodes (
@@ -183,11 +203,11 @@ export function addItem(handle: HomeDb, input: {
   try {
     const r = db.prepare(
       'INSERT INTO items (name, category, category_id, owner, purchase_price, remark, photo) VALUES (?,?,?,?,?,?,?) RETURNING id',
-    ).get(input.name, input.category, input.category_id, input.owner ?? '使用者', input.purchase_price ?? null, input.remark ?? null, input.photo ?? null) as { id: number };
+    ).get(input.name, input.category, input.category_id, input.owner ?? OWNER_DEFAULT, input.purchase_price ?? null, input.remark ?? null, input.photo ?? null) as { id: number };
     id = r.id;
     db.prepare(
       'INSERT INTO item_locations (item_id, location, quantity, reason, location_status, purchase_date, expiration_date) VALUES (?,?,?,?,?,?,?)',
-    ).run(id, input.location, input.quantity ?? 1, input.reason ?? null, input.location_status ?? '在家', input.purchase_date ?? null, input.expiration_date ?? null);
+    ).run(id, input.location, input.quantity ?? 1, input.reason ?? null, input.location_status ?? STATUS_AT_HOME, input.purchase_date ?? null, input.expiration_date ?? null);
     for (const t of input.tags ?? []) {
       const tag = t.trim();
       if (tag) db.prepare('INSERT OR IGNORE INTO item_tags (item_id, tag) VALUES (?,?)').run(id, tag);
@@ -316,7 +336,7 @@ export function adjustQuantity(handle: HomeDb, id: number, opts: { plus?: number
   try {
     if (next === 0) {
       handle.db.prepare('DELETE FROM item_locations WHERE id=?').run(target.id);
-      handle.db.prepare('UPDATE item_locations SET location_status=? WHERE item_id=? AND location_status=?').run('已用完', id, '已用完');
+      handle.db.prepare('UPDATE item_locations SET location_status=? WHERE item_id=? AND location_status=?').run(STATUS_USED_UP, id, STATUS_USED_UP);
     } else {
       handle.db.prepare('UPDATE item_locations SET quantity=?, updated_at=CURRENT_TIMESTAMP WHERE id=?').run(next, target.id);
     }
