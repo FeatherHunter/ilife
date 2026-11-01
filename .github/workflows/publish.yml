@@ -1,0 +1,114 @@
+name: publish
+
+# 发版入口（workflow_dispatch）。与 tooling/release.ps1 的发布链同口径，只是把「本机 npm CLI 发布」
+# 换成 Actions（维护者本机 registry.npmjs.org 被 TLS 拦截时的降级通道）：
+#   ① 门禁与 release.ps1 第 4 步一致；② 依赖先行按序 npm publish（dsh-life-pack 先、六个单品后）；
+#   ③ 幂等：registry 已有该版本则跳过 publish，Release 已存在则 edit + 覆盖上传；
+#   ④ 打包 8 个资产（7 包 + dsh-life-pack.tgz 别名）并建 v<版本> Release。
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'npm dist-tag（默认 latest）'
+        required: false
+        default: latest
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      SEVEN: dsh-life-pack,dsh-bill-ilife,dsh-calorie,dsh-chef,dsh-home-ilife,dsh-memo-ilife,dsh-schedule-ilife
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # changeset status 与 tag 需要完整历史
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.8.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+          registry-url: https://registry.npmjs.org
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: 门禁（与 tooling/release.ps1 第 4 步同口径）
+        run: |
+          set -e
+          pnpm test:types
+          pnpm gen:check
+          pnpm doctor
+          pnpm boundaries
+          pnpm base:floor
+          pnpm readme:check
+          git fetch origin master:master || git fetch origin master
+          pnpm changeset:status
+          node tooling/check-publish.mjs --tarball --only "$SEVEN"
+          node tooling/check-publish.mjs --pre --only "$SEVEN"
+      - name: 读取版本并校验七包一致
+        id: ver
+        run: |
+          V=$(node -p "require('./packages/plugin-manager/package.json').version")
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+          node -e "const fs=require('fs'),dirs=['plugin-manager','plugin-bill-ilife','plugin-calorie','plugin-chef','plugin-home-ilife','plugin-memo-ilife','plugin-schedule-ilife'];for(const d of dirs){const p=JSON.parse(fs.readFileSync('packages/'+d+'/package.json','utf8'));if(p.version!=='$V'){console.error('版本不一致：'+p.name+' '+p.version);process.exit(1)}}"
+      - name: npm publish（幂等，依赖先行）
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          DIST_TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          VERSION=${{ steps.ver.outputs.version }}
+          for name in dsh-life-pack dsh-bill-ilife dsh-calorie dsh-chef dsh-home-ilife dsh-memo-ilife dsh-schedule-ilife; do
+            case "$name" in
+              dsh-life-pack) dir=plugin-manager ;;
+              dsh-bill-ilife) dir=plugin-bill-ilife ;;
+              dsh-calorie) dir=plugin-calorie ;;
+              dsh-chef) dir=plugin-chef ;;
+              dsh-home-ilife) dir=plugin-home-ilife ;;
+              dsh-memo-ilife) dir=plugin-memo-ilife ;;
+              dsh-schedule-ilife) dir=plugin-schedule-ilife ;;
+              *) echo "未知包 $name"; exit 1 ;;
+            esac
+            if npm view "$name@$VERSION" version >/dev/null 2>&1; then
+              echo "SKIP $name@$VERSION（registry 已有，幂等重跑）"
+            else
+              echo "PUBLISH $name@$VERSION"
+              ( cd "packages/$dir" && npm publish --access public --tag "$DIST_TAG" )
+            fi
+          done
+      - name: 打包资产（7 包 + dsh-life-pack.tgz 别名）
+        run: |
+          set -euo pipefail
+          VERSION=${{ steps.ver.outputs.version }}
+          rm -rf dist-pkg
+          mkdir -p dist-pkg
+          for dir in plugin-manager plugin-bill-ilife plugin-calorie plugin-chef plugin-home-ilife plugin-memo-ilife plugin-schedule-ilife; do
+            npm pack "packages/$dir" --pack-destination dist-pkg
+          done
+          cp "dist-pkg/dsh-life-pack-$VERSION.tgz" dist-pkg/dsh-life-pack.tgz
+          ls -l dist-pkg
+      - name: 打 tag 并发布 GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          VERSION=${{ steps.ver.outputs.version }}
+          NOTES="docs/releases/v$VERSION.md"
+          if [ ! -f "$NOTES" ]; then echo "缺少发布说明 $NOTES"; exit 1; fi
+          if git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
+            echo "tag v$VERSION 已存在"
+          else
+            git tag -a "v$VERSION" -m "v$VERSION：七包整体换版（页头快捷操作簇，base 0.1.5）" "$GITHUB_SHA"
+            git push origin "refs/tags/v$VERSION"
+          fi
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            gh release edit "v$VERSION" --notes-file "$NOTES" --latest
+            gh release upload "v$VERSION" dist-pkg/*.tgz --clobber
+          else
+            gh release create "v$VERSION" --title "v$VERSION" --notes-file "$NOTES" --latest dist-pkg/*.tgz
+          fi
