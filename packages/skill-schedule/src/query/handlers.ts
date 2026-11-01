@@ -31,6 +31,7 @@ import {
 } from './queryDocs.js';
 import type { ScheduleDb } from '../fetch/db.js';
 import type { ViewHandler } from '../shared/commandSpec.js';
+import { m } from '../entries/index.js';
 
 function needInt(params: Record<string, unknown>, name: string): number {
   const v = params[name];
@@ -62,7 +63,7 @@ export const viewRecordToday: ViewHandler = (params, handle: ScheduleDb) => {
   const date = resolveDateParam(params);
   const records = listRecordsByDate(handle, date);
   const st = getStatus(handle);
-  if (st.records === 0) notes.push('库空：真实无记录（非故障）');
+  if (st.records === 0) notes.push(m('skill-schedule.query-handlers.c001'));
   const html = renderTodaySummaryPage(records, date, { status: statusOf(handle), nowMinutes: nowMinutesOf(date) });
   return { data: buildRecordToday(date, records), html, notes };
 };

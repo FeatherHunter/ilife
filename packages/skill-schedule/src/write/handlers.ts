@@ -15,19 +15,23 @@ import { buildRecordReceipt } from '../render/index.js';
 import { amendReceiptPage, batchReceiptPage, recordResultPage, summaryReceiptPage, type BatchRow } from './writeDocs.js';
 import type { ScheduleRecord, ScheduleDb } from '../fetch/db.js';
 import type { WriteHandler } from '../shared/commandSpec.js';
+import { m } from '../entries/index.js';
 
-/** 校验失败的原因 → 页上那句中文短因（库列名与命令参数名都不上屏；载荷里仍留原文给 AI）。 */
-const REASON_ZH: Readonly<Record<string, string>> = {
-  POLICY_BAD_CATEGORY: '分类不在白名单',
-  POLICY_BAD_TIME: '起止时间不对',
-  POLICY_BAD_DATE: '日期不对',
-  POLICY_MISSING_SLOT: '缺了必填字段',
-  POLICY_BAD_INPUT: '字段值不对',
-};
+/** 校验失败的原因 → 页上那句短因（库列名与命令参数名都不上屏；载荷里仍留原文给 AI）。
+ *  #1197：取词在渲染期，故写成函数（模块级常量只会在加载期取到 zh）。 */
+function reasonZh(): Readonly<Record<string, string>> {
+  return {
+    POLICY_BAD_CATEGORY: m('skill-schedule.write-handlers.c012'),
+    POLICY_BAD_TIME: m('skill-schedule.write-handlers.c013'),
+    POLICY_BAD_DATE: m('skill-schedule.write-handlers.c014'),
+    POLICY_MISSING_SLOT: m('skill-schedule.write-handlers.c015'),
+    POLICY_BAD_INPUT: m('skill-schedule.write-handlers.c016'),
+  };
+}
 
 function reasonOf(error: unknown): string {
   const code = (error as { code?: string } | undefined)?.code;
-  return (code !== undefined ? REASON_ZH[code] : undefined) ?? '没通过校验';
+  return (code !== undefined ? reasonZh()[code] : undefined) ?? m('skill-schedule.write-handlers.c001');
 }
 
 /** 一条批量项的中间态（页与载荷都从它出，两处不各算一遍）。 */
@@ -51,7 +55,7 @@ const cellText = (value: unknown): string => (typeof value === 'string' ? value 
 function runBatch(params: Record<string, unknown>, handle: ScheduleDb): { data: Record<string, unknown>; html: string; exitCode?: number } {
   const raw = Array.isArray(params.records) ? (params.records as unknown[]) : [];
   if (raw.length === 0) {
-    const message = '批量导入须给非空 records 数组（每条含 date／time_start／time_end／activity／category）';
+    const message = m('skill-schedule.write-handlers.c002');
     return { data: { ok: false, message, items: [], total: 0, success: 0, failed: 0 }, html: '' };
   }
   const items: BatchItem[] = [];
@@ -63,9 +67,12 @@ function runBatch(params: Record<string, unknown>, handle: ScheduleDb): { data: 
       const input = validateAddInput(record);
       const written = addRecord(handle, input);
       items.push({
-        seq, date: written.date, time: written.time_start + ' 至 ' + written.time_end,
+        seq, date: written.date, time: m('skill-schedule.write-handlers.c003', {
+          p0: String(written.time_start),
+          p1: String(written.time_end),
+        }),
         activity: written.activity, category: written.category,
-        ok: true, result: '已写入', message: '', id: written.id,
+        ok: true, result: m('skill-schedule.write-handlers.c004'), message: '', id: written.id,
       });
     } catch (e) {
       items.push({
@@ -73,7 +80,10 @@ function runBatch(params: Record<string, unknown>, handle: ScheduleDb): { data: 
         date: cellText(record.date),
         time: cellText(record.time_start) === '' || cellText(record.time_end) === ''
           ? '—'
-          : cellText(record.time_start) + ' 至 ' + cellText(record.time_end),
+          : m('skill-schedule.write-handlers.c005', {
+            p0: String(cellText(record.time_start)),
+            p1: String(cellText(record.time_end)),
+          }),
         activity: cellText(record.activity) === '' ? '—' : cellText(record.activity),
         category: cellText(record.category) === '' ? '—' : cellText(record.category),
         ok: false, result: reasonOf(e), message: (e as Error).message ?? String(e), id: null,
@@ -85,13 +95,13 @@ function runBatch(params: Record<string, unknown>, handle: ScheduleDb): { data: 
   const dates = [...new Set(items.map((it) => it.date).filter((d) => d !== ''))].sort();
   const dateText = dates.length === 0
     ? '—'
-    : (dates.length === 1 ? dates[0] : dates[0] + ' 至 ' + dates[dates.length - 1]);
+    : (dates.length === 1 ? dates[0] : m('skill-schedule.write-handlers.c006', { p0: String(dates[0]), p1: String(dates[dates.length - 1]) }));
   const rows: BatchRow[] = items.map((it) => ({
     seq: it.seq, time: it.time, activity: it.activity, category: it.category, result: it.result, ok: it.ok,
   }));
   const message = failed === 0
-    ? '已批量写入 ' + items.length + ' 条（全部成功）'
-    : '已批量写入 ' + done + ' 条，另有 ' + failed + ' 条没通过校验（见 items[] 的 message）';
+    ? m('skill-schedule.write-handlers.c007', { p0: String(items.length) })
+    : m('skill-schedule.write-handlers.c008', { p0: String(done), p1: String(failed) });
   return {
     data: {
       ok: failed === 0,
@@ -119,7 +129,13 @@ export const writeRecord: WriteHandler = (params, handle: ScheduleDb) => {
     const input = validateAddInput(params);
     const r = addRecord(handle, input);
     return {
-      data: buildRecordReceipt('已记一条：' + r.id + '（' + r.date + ' ' + r.time_start + '~' + r.time_end + ' ' + r.category + '）'),
+      data: buildRecordReceipt(m('skill-schedule.write-handlers.c009', {
+        p0: String(r.id),
+        p1: String(r.date),
+        p2: String(r.time_start),
+        p3: String(r.time_end),
+        p4: String(r.category),
+      })),
       html: recordResultPage(handle, r),
     };
   }
@@ -128,14 +144,18 @@ export const writeRecord: WriteHandler = (params, handle: ScheduleDb) => {
     const before: ScheduleRecord = getRecordById(handle, id);
     const r = amendRecord(handle, id, patch as Partial<ScheduleRecord>);
     return {
-      data: buildRecordReceipt('已修正：' + r.id + '（edit_count=' + r.edit_count + '）'),
+      data: buildRecordReceipt(m('skill-schedule.write-handlers.c010', { p0: String(r.id), p1: String(r.edit_count) })),
       html: amendReceiptPage(before, r, Object.keys(patch)),
     };
   }
   const s = validateSummaryInput(params);
   addSummary(handle, s.date, s.category, s.totalMinutes);
   return {
-    data: buildRecordReceipt('已写摘要：' + s.date + ' ' + s.category + '=' + s.totalMinutes + '分钟'),
+    data: buildRecordReceipt(m('skill-schedule.write-handlers.c011', {
+      p0: String(s.date),
+      p1: String(s.category),
+      p2: String(s.totalMinutes),
+    })),
     html: summaryReceiptPage(handle, s),
   };
 };

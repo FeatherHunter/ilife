@@ -15,8 +15,16 @@
 import type { CommandSpec } from '../shared/commandSpec.js';
 import { runDataSchema } from './schema.js';
 import { runDataQuery } from './query.js';
+import { m } from '../entries/index.js';
 
-export const DATA_COMMANDS = [
-  { kind: 'read', key: 'schedule.data.schema', shape: 'resultset', title: '数据目录', wakeWord: '数据目录', surface: 'program', run: runDataSchema, example: 'schedule-cmd-read schedule.data.schema' },
-  { kind: 'read', key: 'schedule.data.query', shape: 'resultset', title: '数据查询', wakeWord: '数据查询', surface: 'program', run: runDataQuery, example: 'schedule-cmd-read schedule.data.query --params \'{"queries":[{"from":"schedule_records","select":["date","activity"],"orderBy":[{"field":"date","dir":"asc"}]}]}\'' },
-] satisfies readonly CommandSpec[];
+/** 数据族命令表（按调用重建）。#1197：标题随语言取值，故整张表搬进函数体；
+ *  `DATA_COMMANDS` 仍是模块加载期那一份 zh 快照（生成的 `cli/registry.ts` 只拿它做分派索引）。
+ *  程序面键的 `wakeWord` 本就只是占位（`wakeWordGate` 豁免），保持原样不译。 */
+function dataCommands(): readonly CommandSpec[] {
+  return [
+    { kind: 'read', key: 'schedule.data.schema', shape: 'resultset', title: m('skill-schedule.data-commands.c001'), wakeWord: m('skill-schedule.data-commands.c002'), surface: 'program', run: runDataSchema, example: 'schedule-cmd-read schedule.data.schema' },
+    { kind: 'read', key: 'schedule.data.query', shape: 'resultset', title: m('skill-schedule.data-commands.c003'), wakeWord: m('skill-schedule.data-commands.c004'), surface: 'program', run: runDataQuery, example: 'schedule-cmd-read schedule.data.query --params \'{"queries":[{"from":"schedule_records","select":["date","activity"],"orderBy":[{"field":"date","dir":"asc"}]}]}\'' },
+  ];
+}
+
+export const DATA_COMMANDS = dataCommands();

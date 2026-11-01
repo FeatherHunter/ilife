@@ -31,6 +31,7 @@ import { scheduleCopyArea, type ScheduleCopyAreaInput } from '../render/copyArea
 import { assembleDocPage, type PageHead } from './docPage.js';
 import { pageSections } from './pageNav.js';
 import { categoryColor, renderHourBand, type HourCell } from './pageParts.js';
+import { m } from '../entries/index.js';
 
 /** 「今天总结」一页要的全部东西（10 个字段，口径都在调用方）。 */
 export interface DayPageData {
@@ -63,13 +64,13 @@ export function renderDayPage(data: DayPageData): string {
   const { toc, body } = pageSections([
     { html: renderConclusionBar(data.conclusion) },
     // 段名是「24 小时时间轴」（图表块自己那颗 `<h2>`）；目录项逐字用它。
-    { navText: '24 小时时间轴', html: renderHourBand(data.cells, { order: data.order, title: '24 小时时间轴', height: 140 }) },
+    { navText: m('skill-schedule.shared-dayPage.c001'), html: renderHourBand(data.cells, { order: data.order, title: m('skill-schedule.shared-dayPage.c002'), height: 140 }) },
     { html: renderFactStrip({ items: data.facts }) },
-    { html: renderListRows({ items: data.timeline, emptyText: '这一天还没有记录' }) },
+    { html: renderListRows({ items: data.timeline, emptyText: m('skill-schedule.shared-dayPage.c003') }) },
     { html: renderFactStrip({ items: data.sleep }) },
     {
       html: renderDisclosure({
-        title: '分类进度（一级分类分布）',
+        title: m('skill-schedule.shared-dayPage.c004'),
         // 分布行按名上色（与色带／矩阵同一算式）：不给色就一律落 `--blue`，七条一样看不出分别。
         contentHtml: renderDistributionRows({
           rows: data.distribution.map((row) => ({ ...row, color: categoryColor(row.label, data.order) })),
@@ -78,9 +79,9 @@ export function renderDayPage(data: DayPageData): string {
     },
     { navText: statusNavText(data.status), html: renderStatusBlock(data.status) },
     {
-      navText: '复制与留档',
+      navText: m('skill-schedule.shared-dayPage.c005'),
       html: scheduleCopyArea({
-        title: '复制与留档',
+        title: m('skill-schedule.shared-dayPage.c006'),
         dataActionId: 'ilife-sch-day-copy-data',
         logActionId: 'ilife-sch-day-copy-log',
         ...data.copy,

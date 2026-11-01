@@ -14,10 +14,11 @@
  *  断点只用仓内既有值 **820**（页内自造件那一档），不新造。
  */
 import { renderChangeRows, renderChips, type ChangeRowInput } from 'base-paint/blocks';
+import { m } from '../entries/index.js';
 
 /** 五字符转义（与公共层 `blocks.ts` 同口径；本件不引区块层内部件）。 */
 function esc(value: string): string {
-  return value.replace(/[&<>"']/g, (ch) => {
+  return value.replace(/[&<>\u0022\u0027]/g, (ch) => {
     if (ch === '&') return '&amp;';
     if (ch === '<') return '&lt;';
     if (ch === '>') return '&gt;';
@@ -75,10 +76,10 @@ export function renderPastHours(input: {
       '<span class="sch-wr-act">' + esc(card.activity) + '</span>',
       '<span class="sch-wr-tag">' + esc(card.category) + '</span>',
       '<span class="sch-wr-meta">' + esc(card.duration) + '</span>',
-      card.isNew ? '<span class="sch-wr-new">刚记录</span>' : '',
+      card.isNew ? '<span class="sch-wr-new">' + m('skill-schedule.write-writeParts.c002') + '</span>' : '',
       '</div>',
-      card.source === '' ? '' : '<p class="sch-wr-line">来源 ' + esc(card.source) + '</p>',
-      card.reasoning === '' ? '' : '<p class="sch-wr-line">推断 ' + esc(card.reasoning) + '</p>',
+      card.source === '' ? '' : '<p class="sch-wr-line">' + m('skill-schedule.write-writeParts.c003', { p0: esc(card.source) }) + '</p>',
+      card.reasoning === '' ? '' : '<p class="sch-wr-line">' + m('skill-schedule.write-writeParts.c004', { p0: esc(card.reasoning) }) + '</p>',
     ].filter((seg) => seg !== '').join('');
     return '<div class="sch-wr-card' + (card.isNew ? ' sch-wr-card-new' : '') + '">' + rows + '</div>';
   }).join('');
@@ -110,8 +111,8 @@ export function renderChipBand(items: readonly string[]): string {
 /** 这两处族级件的样式唯一产出者（只对用上它们的页面有作用）。
  *  颜色只取公共层冻结 token；长度只取上面那组常量——本串里不出现 `px` 字面量。 */
 export function writePartsCss(): string {
+  // #783: family-level parts of the write/sync domain; the breakpoint only reuses the repo value 820.
   return [
-    '/* #783 写入与同步域·族级件（断点只用仓内既有值 820） */',
     '.sch-wr-h2 { margin: 0 0 ' + px(CARD_GAP) + '; font-size: ' + px(FS_TITLE) + '; font-weight: 600; color: var(--fg); }',
     '.sch-wr-empty { margin: 0; color: var(--fg3); font-size: ' + px(FS_BODY) + '; }',
     '.sch-wr-past { display: flex; flex-direction: column; gap: ' + px(CARD_GAP) + '; }',

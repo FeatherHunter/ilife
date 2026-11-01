@@ -31,6 +31,7 @@ import { renderFactStrip, type FactItemInput } from 'base-paint';
 import { scheduleCopyArea, type ScheduleCopyAreaInput } from '../render/copyArea.js';
 import { assembleDocPage, type PageHead } from './docPage.js';
 import { pageSections } from './pageNav.js';
+import { m } from '../entries/index.js';
 
 /** 一条记录在页上的一段（段名 ＋ 字段 ＋ 推理链）。 */
 export interface RecordDetailItem {
@@ -66,10 +67,10 @@ export function renderDetailPage(data: DetailPageData): string {
     ...data.records.flatMap((rec) => [
       { navText: rec.navText, html: '<h2 class="heat-title">' + escText(rec.title) + '</h2>'
         + renderFactStrip({ items: rec.fields }) },
-      { navText: 'AI 推理链', html: '<h2 class="heat-title">AI 推理链</h2>' + renderProseBlock({ text: rec.reasoning }) },
+      { navText: m('skill-schedule.shared-detailPage.c001'), html: '<h2 class="heat-title">' + m('skill-schedule.shared-detailPage.c001') + '</h2>' + renderProseBlock({ text: rec.reasoning }) },
     ]),
-    { navText: '复制与留档', html: scheduleCopyArea({
-      title: '复制与留档',
+    { navText: m('skill-schedule.shared-detailPage.c002'), html: scheduleCopyArea({
+      title: m('skill-schedule.shared-detailPage.c003'),
       dataActionId: 'ilife-sch-detail-copy-data',
       logActionId: 'ilife-sch-detail-copy-log',
       ...data.copy,

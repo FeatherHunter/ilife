@@ -29,6 +29,7 @@ import {
   renderFirstUsePage, renderInitReceiptPage,
   type AdminCounts, type AdminPaths, type FirstUseStep,
 } from './adminDocs.js';
+import { m } from '../entries/index.js';
 
 const HELP_MODE_FILE = 'file' as const;
 
@@ -96,9 +97,9 @@ function viewInit(): ViewOut {
       mode: 'init',
       created: handle.initialized,
       items: [
-        { 表: '作息记录', 行数: counts.records },
-        { 表: '每日摘要', 行数: counts.summaries },
-        { 表: '日程计划', 行数: counts.plans },
+        { 表: m('skill-schedule.admin-handlers.c001'), 行数: counts.records },
+        { 表: m('skill-schedule.admin-handlers.c002'), 行数: counts.summaries },
+        { 表: m('skill-schedule.admin-handlers.c003'), 行数: counts.plans },
       ],
       total: 3,
     };
@@ -106,7 +107,7 @@ function viewInit(): ViewOut {
     assertHtmlSize(html);
     return {
       data, html,
-      ...(handle.initialized ? { notes: ['作息 DB 已初始化：' + dbPath] } : {}),
+      ...(handle.initialized ? { notes: [m('skill-schedule.admin-handlers.c004', { p0: String(dbPath) })] } : {}),
     };
   } finally {
     closeScheduleDb(handle);
@@ -145,59 +146,66 @@ function viewFirstUse(): ViewOut {
     const envBlocked = !runtime.ok || !writable;
     const steps: FirstUseStep[] = [
       {
-        name: '环境检测', status: envBlocked ? 'do' : feishuGates ? 'ok' : 'todo',
-        statusText: envBlocked ? '动手' : feishuGates ? '通过' : '待办',
-        desc: '运行环境版本 ' + runtime.version + '，数据目录可写，飞书三道门里过了 '
-          + String([cli !== null, version !== null, openId !== null, calendar].filter(Boolean).length) + ' 道',
+        name: m('skill-schedule.admin-handlers.c005'), status: envBlocked ? 'do' : feishuGates ? 'ok' : 'todo',
+        statusText: envBlocked ? m('skill-schedule.admin-handlers.c006') : feishuGates ? m('skill-schedule.admin-handlers.c007') : m('skill-schedule.admin-handlers.c008'),
+        desc: m('skill-schedule.admin-handlers.c009', {
+          p0: String(runtime.version),
+          p1: String(String([cli !== null, version !== null, openId !== null, calendar].filter(Boolean).length)),
+        }),
       },
       {
-        name: '路径确认', status: 'ok', statusText: '通过',
-        desc: '库目录与产物落点已按配置文件确认，下面四行就是生效值',
+        name: m('skill-schedule.admin-handlers.c010'), status: 'ok', statusText: m('skill-schedule.admin-handlers.c011'),
+        desc: m('skill-schedule.admin-handlers.c012'),
       },
       {
-        name: '建库', status: 'ok', statusText: '通过',
-        desc: handle.initialized ? '三张表本次新建' : '三张表沿用已有，数据一条未动',
+        name: m('skill-schedule.admin-handlers.c013'), status: 'ok', statusText: m('skill-schedule.admin-handlers.c014'),
+        desc: handle.initialized ? m('skill-schedule.admin-handlers.c015') : m('skill-schedule.admin-handlers.c016'),
       },
       {
-        name: '状态确认', status: 'ok', statusText: '通过',
-        desc: '作息记录 ' + String(counts.records ?? '—') + ' 条，覆盖 ' + String(counts.days ?? '—') + ' 天',
+        name: m('skill-schedule.admin-handlers.c017'), status: 'ok', statusText: m('skill-schedule.admin-handlers.c018'),
+        desc: m('skill-schedule.admin-handlers.c019', {
+          p0: String(String(counts.records ?? '—')),
+          p1: String(String(counts.days ?? '—')),
+        }),
       },
-      { name: '初始化报告', status: 'ok', statusText: '通过', desc: '' },
+      { name: m('skill-schedule.admin-handlers.c020'), status: 'ok', statusText: m('skill-schedule.admin-handlers.c021'), desc: '' },
       {
-        name: '完成', status: 'ok', statusText: '通过',
-        desc: '向导跑完，下一句说「作息管家 HELP」看全部功能',
+        name: m('skill-schedule.admin-handlers.c022'), status: 'ok', statusText: m('skill-schedule.admin-handlers.c023'),
+        desc: m('skill-schedule.admin-handlers.c024'),
       },
     ];
     const todos: { title: string; steps: readonly string[] }[] = [];
     if (!feishuGates) {
       todos.push({
-        title: '飞书联动待装',
+        title: m('skill-schedule.admin-handlers.c025'),
         steps: cli === null
-          ? ['装好飞书命令行', '说「飞书探测」看三档']
+          ? [m('skill-schedule.admin-handlers.c026'), m('skill-schedule.admin-handlers.c027')]
           : openId === null
-            ? ['在终端里跑一次授权登录', '说「飞书探测」看三档']
-            : ['补一次日历授权', '说「飞书探测」看三档'],
+            ? [m('skill-schedule.admin-handlers.c028'), m('skill-schedule.admin-handlers.c029')]
+            : [m('skill-schedule.admin-handlers.c030'), m('skill-schedule.admin-handlers.c031')],
       });
     }
     if ((counts.records ?? 0) === 0) {
-      todos.push({ title: '记下第一条作息', steps: ['说一句记作息', '带上时间与内容'] });
+      todos.push({ title: m('skill-schedule.admin-handlers.c032'), steps: [m('skill-schedule.admin-handlers.c033'), m('skill-schedule.admin-handlers.c034')] });
     }
     steps[4] = {
       ...steps[4],
       status: todos.length === 0 ? 'ok' : 'todo',
-      statusText: todos.length === 0 ? '通过' : '待办',
-      desc: todos.length === 0 ? '检测项全过，无待办' : '有 ' + String(todos.length) + ' 条待办（见下表）',
+      statusText: todos.length === 0 ? m('skill-schedule.admin-handlers.c035') : m('skill-schedule.admin-handlers.c036'),
+      desc: todos.length === 0 ? m('skill-schedule.admin-handlers.c037') : m('skill-schedule.admin-handlers.c038', { p0: String(String(todos.length)) }),
     };
-    const feishuNote = feishuGates
-      ? '三道门都过了，同步随时可跑。想看档位就说「飞书探测」。'
+    // #1223：条件链抽成中转变量——整句化只认「一段文案 ＋ 若干变量」的形状，
+    // 分支各自成句（CONDITIONAL 逐支建条），尾句再与分支拼成一条模板。
+    const feishuBase = feishuGates
+      ? m('skill-schedule.admin-handlers.c039')
       : (cli === null
-        ? '本机没找到飞书命令行，同步与探测都跑不了。装它需要你自己动手，本技能不代装。'
+        ? m('skill-schedule.admin-handlers.c040')
         : version === null
-          ? '飞书命令行在，但版本读不到，重装一次再探。'
+          ? m('skill-schedule.admin-handlers.c041')
           : openId === null
-            ? '飞书命令行装了但没登录，先在终端里跑一次授权登录。'
-            : '飞书命令行装了也登录了，但日历拉不动，补一次日历授权再探。')
-      + '装好之后说「飞书探测」看三档。';
+            ? m('skill-schedule.admin-handlers.c042')
+            : m('skill-schedule.admin-handlers.c043'));
+    const feishuNote = m('skill-schedule.admin-handlers.c044', { p0: String(feishuBase) });
     const scene = HELP_ASSETS.find((s) => s.id === 'first_use');
     if (scene === undefined || typeof scene.prompt_template !== 'string' || scene.prompt_template === '') {
       throw new Error('HELP 首次使用缺 prompt：内容资产无场景 first_use');
@@ -215,14 +223,14 @@ function viewFirstUse(): ViewOut {
       counts,
       steps,
       todos,
-      verify: ['作息管家 HELP 能打开一份帮助页', '初始化回执落在产物根目录', '第一条作息已记进库里'],
+      verify: [m('skill-schedule.admin-handlers.c045'), m('skill-schedule.admin-handlers.c046'), m('skill-schedule.admin-handlers.c047')],
       prompt: scene.prompt_template,
       feishu: { note: feishuNote, unavailable: !feishuGates },
     });
     assertHtmlSize(html);
     return {
       data, html,
-      ...(handle.initialized ? { notes: ['作息 DB 已初始化：' + dbPath] } : {}),
+      ...(handle.initialized ? { notes: [m('skill-schedule.admin-handlers.c048', { p0: String(dbPath) })] } : {}),
     };
   } finally {
     closeScheduleDb(handle);

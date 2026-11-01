@@ -6,7 +6,7 @@ import {
   normalizeDate, normalizeTime, resolveRangeParam, validateAddInput, validateCompareInput,
   validateUpsertInput, assertCoverage24h, VALID_COMPLETIONS,
   routeWakeword, WAKE_TABLE, SchedulePolicyError,
-  buildHelpItems, HELP_EMPTY_HINT,
+  buildHelpItems, helpEmptyHint,
 } from '../dist/index.js';
 
 const FRI = new Date(2026, 6, 24); // 周五
@@ -110,7 +110,7 @@ describe('作息口径 policy', () => {
     const empty = buildHelpItems([{ phrase: '查作息', key: 'schedule.record.today', shape: 'list', cli: 'x', desc: 'y' }], '不存在的词zzz');
     assert.equal(empty.total, 0);
     assert.ok(typeof empty.hint === 'string' && empty.hint.includes('定时') && empty.hint.includes('早睡') && empty.hint.includes('以外置为准'));
-    assert.equal(empty.hint, HELP_EMPTY_HINT);
+    assert.equal(empty.hint, helpEmptyHint());
     assert.ok(buildHelpItems([{ phrase: 'a', key: 'k', shape: 'list', cli: 'x', desc: 'y' }], '').total === 1);
     assert.throws(() => routeWakeword('定时提醒我早睡'), (e) => e instanceof SchedulePolicyError && /定时.*早睡|早睡.*定时/.test(e.message) && /以外置为准/.test(e.message));
   });

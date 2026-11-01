@@ -8,6 +8,7 @@ import { execFileSync } from 'node:child_process';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { ScheduleFetchError } from './errors.js';
+import { m } from '../entries/index.js';
 
 export const LARK_TIMEOUT_SHORT_MS = 15000;
 export const LARK_TIMEOUT_NORMAL_MS = 30000;
@@ -148,7 +149,8 @@ export interface LarkStatusReading {
 /** 工具名遮蔽（唯一定义地）：外部串（路径等）里的 `lark-cli` 字样换中文显示用名，原串不动。
  *  取用者：`src/health.ts` 目录显示（scoop 那档目录名本身就含工具名）。 */
 export function maskLarkCli(s: string): string {
-  return s.replace(/lark-cli/gi, '飞书命令行');
+  const display = m('skill-schedule.fetch-feishu.c006');
+  return s.replace(/lark-cli/gi, display);
 }
 
 // 身份真值源：auth status 输出 identities.user.openId；无 openId 即未登录 throw。
@@ -240,7 +242,7 @@ function mustJson(cli: string, args: string[], what: string): Record<string, unk
 
 /** 阶段 1 甲路：`+agenda`（带 description，但有索引延迟）。 */
 export function larkAgenda(cli: string, startISO: string, endISO: string): LarkEvent[] {
-  const j = mustJson(cli, ['calendar', '+agenda', '--calendar-id', LARK_CALENDAR_ID, '--start', startISO, '--end', endISO], '议程拉取');
+  const j = mustJson(cli, ['calendar', '+agenda', '--calendar-id', LARK_CALENDAR_ID, '--start', startISO, '--end', endISO], m('skill-schedule.fetch-feishu.c001'));
   const payload = j.data;
   if (!Array.isArray(payload)) return [];
   return payload.map((it) => eventOf(it as Record<string, unknown>)).filter((e) => e.eventId !== '');
@@ -248,7 +250,7 @@ export function larkAgenda(cli: string, startISO: string, endISO: string): LarkE
 
 /** 阶段 1 乙路：`+search-event` 单窗（索引最新，但无 description、单次有返回上限）。 */
 export function larkSearchEvents(cli: string, startISO: string, endISO: string): LarkEvent[] {
-  const j = mustJson(cli, ['calendar', '+search-event', '--calendar-id', LARK_CALENDAR_ID, '--start', startISO, '--end', endISO], '检索');
+  const j = mustJson(cli, ['calendar', '+search-event', '--calendar-id', LARK_CALENDAR_ID, '--start', startISO, '--end', endISO], m('skill-schedule.fetch-feishu.c002'));
   const data = j.data as Record<string, unknown> | undefined;
   const items = data && Array.isArray(data.items) ? data.items : [];
   return items.map((it) => searchItemOf(it as Record<string, unknown>)).filter((e) => e.eventId !== '');
@@ -258,7 +260,7 @@ export function larkSearchEvents(cli: string, startISO: string, endISO: string):
 export function larkGetEvent(cli: string, eventId: string): LarkEvent | null {
   let j: Record<string, unknown>;
   try {
-    j = mustJson(cli, ['calendar', 'events', 'get', '--calendar-id', LARK_CALENDAR_ID, '--event-id', eventId], '单条读取');
+    j = mustJson(cli, ['calendar', 'events', 'get', '--calendar-id', LARK_CALENDAR_ID, '--event-id', eventId], m('skill-schedule.fetch-feishu.c003'));
   } catch { return null; }
   const data = j.data as Record<string, unknown> | undefined;
   const ev = data?.event as Record<string, unknown> | undefined;
@@ -274,7 +276,7 @@ export function larkCreateEvent(cli: string, startISO: string, endISO: string, s
     '--start', startISO, '--end', endISO, '--summary', summary,
   ];
   if (description) args.push('--description', description);
-  const j = mustJson(cli, args, '创建');
+  const j = mustJson(cli, args, m('skill-schedule.fetch-feishu.c004'));
   const data = (j.data || {}) as Record<string, unknown>;
   const id = str(data.event_id);
   if (!id) {
@@ -299,7 +301,7 @@ export function larkUpdateEvent(
   if (patch.start !== undefined && patch.end !== undefined) args.push('--start', patch.start, '--end', patch.end);
   if (patch.summary !== undefined) args.push('--summary', patch.summary);
   if (patch.description !== undefined) args.push('--description', patch.description);
-  const j = mustJson(cli, args, '更新');
+  const j = mustJson(cli, args, m('skill-schedule.fetch-feishu.c005'));
   const data = (j.data || {}) as Record<string, unknown>;
   const desc = str(data.description) || patch.description || '';
   return {

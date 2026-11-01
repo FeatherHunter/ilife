@@ -22,6 +22,7 @@ import { scheduleCopyArea, type ScheduleCopyAreaInput } from '../render/copyArea
 import { assembleDocPage, type PageHead } from './docPage.js';
 import { pageSections } from './pageNav.js';
 import { categoryColor, renderHeatMatrix, type HeatRow } from './pageParts.js';
+import { m } from '../entries/index.js';
 
 /** 「周视图」一页要的全部东西（7 个字段）。 */
 export interface WeekPageData {
@@ -42,14 +43,14 @@ export function renderWeekPage(data: WeekPageData): string {
   const { toc, body } = pageSections([
     { html: renderKpiGrid(data.kpis) },
     // 段名是「7×24 全分类热力图」；目录项逐字用它。
-    { navText: '7×24 全分类热力图', html: renderHeatMatrix(data.rows, { order: data.order, id: 'week-heat', title: '7×24 全分类热力图', legend: true }) },
+    { navText: m('skill-schedule.shared-weekPage.c001'), html: renderHeatMatrix(data.rows, { order: data.order, id: 'week-heat', title: m('skill-schedule.shared-weekPage.c002'), legend: true }) },
     // 分类总览按名上色（与矩阵同一算式）：不给色就一律落 `--blue`，八行一样看不出分别。
     { html: renderDistributionRows({
       rows: data.distribution.map((row) => ({ ...row, color: categoryColor(row.label, data.order) })),
     }) },
-    { html: renderListRows({ items: data.daily, emptyText: '这一周没有记录' }) },
-    { navText: '复制给 AI', html: scheduleCopyArea({
-      title: '复制给 AI',
+    { html: renderListRows({ items: data.daily, emptyText: m('skill-schedule.shared-weekPage.c003') }) },
+    { navText: m('skill-schedule.shared-weekPage.c004'), html: scheduleCopyArea({
+      title: m('skill-schedule.shared-weekPage.c005'),
       dataActionId: 'ilife-sch-week-copy-data',
       logActionId: 'ilife-sch-week-copy-log',
       ...data.copy,

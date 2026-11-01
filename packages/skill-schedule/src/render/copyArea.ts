@@ -21,11 +21,12 @@ import type { CopyLogFields, SerializableEnvelope } from 'base-paint';
 import type { EnvelopeDataByShape, EnvelopeShape } from 'base-link-core';
 import { buildScheduleEnvelope } from './envelope.js';
 import { DEFAULT_DB_FILENAME } from '../fetch/index.js';
+import { m } from '../entries/index.js';
 
-/** 日志第 2 段（AI 思考链）：本仓页面一律由本地 CLI 渲染，不落占位。 */
-const LOG_THINKING = '本页由本地 CLI 渲染，无 AI 链';
-/** 日志第 6 段（异常）：正常产出即「无」。 */
-const LOG_EXCEPTION = '无';
+/** 日志第 2 段（AI 思考链）：本仓页面一律由本地 CLI 渲染，不落占位。#1197：取词在渲染期，故写成函数。 */
+function logThinking(): string { return m('skill-schedule.render-copyArea.c002'); }
+/** 日志第 6 段（异常）：正常产出即「无」。#1197：同上。 */
+function logException(): string { return m('skill-schedule.render-copyArea.c003'); }
 
 /** 三格式菜单三项的用途提示：本技能一律留空（顺序＝`COPY_FORMATS`），只留三个格式名。 */
 const MENU_HINTS: readonly string[] = ['', '', ''];
@@ -82,11 +83,11 @@ export function scheduleNowStamp(d = new Date()): string {
 /** 复制日志 2–6 段：本页由哪条命令渲染、数据从哪来、写了多少行、什么时候。 */
 export function scheduleCopyLog(input: ScheduleCopyLogInput): CopyLogFields {
   return {
-    thinking: LOG_THINKING,
+    thinking: logThinking(),
     dataStructure: DEFAULT_DB_FILENAME + (input.source === undefined || input.source === '' ? '' : ' ｜ ' + input.source),
     callChain: input.m5Line === undefined || input.m5Line === '' ? input.command : input.command + ' ｜ ' + input.m5Line,
-    timestamp: input.version === undefined || input.version === '' ? input.actionAt : input.actionAt + ' · 版本 ' + input.version,
-    exception: LOG_EXCEPTION,
+    timestamp: input.version === undefined || input.version === '' ? input.actionAt : m('skill-schedule.render-copyArea.c001', { p0: String(input.actionAt), p1: String(input.version) }),
+    exception: logException(),
   };
 }
 

@@ -46,10 +46,15 @@ export function toMinutes(hhmm: string): number {
   return h * 60 + m;
 }
 
+/** 相对日期缺省值：**日期关键词数据**（`RELATIVE_DATES` 的取值，喂 `relativeToDate()` 解析），不是上屏文案 ——
+ *  过 `m()` 会在英文语境变成 "Today"，`relativeToDate()` 解析不出来（CLI `--language en` 实测 exit 4）。
+ *  故留在源码、按数据不译（ADR-0004），allowlist 候选见 #1223 报告 §4。 */
+const TODAY_KEYWORD = '今天';
+
 // 单日期 param：绝对日期或相对表达（今天/昨天/…）；缺省今天。
 export function resolveDateParam(params: Record<string, unknown>, today?: Date): string {
   const v = params.date;
-  if (v === undefined || v === null || v === '') return relativeToDate('今天', today);
+  if (v === undefined || v === null || v === '') return relativeToDate(TODAY_KEYWORD, today);
   if (typeof v !== 'string') throw new SchedulePolicyError('POLICY_BAD_DATE', 'date 须为字符串');
   if (RELATIVE_DATES.includes(v.trim())) return relativeToDate(v, today);
   return normalizeDate(v);
@@ -190,7 +195,7 @@ export function validateCompareInput(params: Record<string, unknown>): CompareKi
     if (!Number.isInteger(w) || (w as number) < 2 || (w as number) > 90) {
       throw new SchedulePolicyError('POLICY_BAD_INPUT', 'windowDays 须为 2~90 的整数');
     }
-    const end = params.end === undefined ? relativeToDate('今天') : normalizeDate(params.end, 'end');
+    const end = params.end === undefined ? relativeToDate(TODAY_KEYWORD) : normalizeDate(params.end, 'end');
     return { kind, windowDays: w, end } as unknown as CompareKind & Record<string, unknown>;
   }
   throw new SchedulePolicyError('POLICY_BAD_INPUT', 'kind 非法（期望 months/ranges/category/anomaly）：' + JSON.stringify(kind));

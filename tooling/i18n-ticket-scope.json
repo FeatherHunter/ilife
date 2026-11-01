@@ -4846,7 +4846,8 @@
     "1223": {
       "title": "迁移 skill-schedule 其余域：45 件（1,470 条）",
       "state": "open（待开工；清单已回填 #1308）",
-      "files": [
+      "files": [],
+      "migrated": [
         {
           "path": "packages/skill-schedule/src/admin/adminDocs.ts",
           "literals": 110,
@@ -4869,13 +4870,6 @@
           "byClass": {
             "copy": 42,
             "concat": 12
-          }
-        },
-        {
-          "path": "packages/skill-schedule/src/admin/routes.ts",
-          "literals": 6,
-          "byClass": {
-            "copy": 6
           }
         },
         {
@@ -4902,22 +4896,6 @@
           }
         },
         {
-          "path": "packages/skill-schedule/src/analyze/handlers.ts",
-          "literals": 6,
-          "byClass": {
-            "copy": 1,
-            "concat": 4,
-            "ident": 1
-          }
-        },
-        {
-          "path": "packages/skill-schedule/src/analyze/routes.ts",
-          "literals": 5,
-          "byClass": {
-            "copy": 5
-          }
-        },
-        {
           "path": "packages/skill-schedule/src/cli/cmd_read.ts",
           "literals": 17,
           "byClass": {
@@ -4937,29 +4915,6 @@
           "literals": 4,
           "byClass": {
             "copy": 4
-          }
-        },
-        {
-          "path": "packages/skill-schedule/src/delivery/naming.ts",
-          "literals": 1,
-          "byClass": {
-            "copy": 1
-          }
-        },
-        {
-          "path": "packages/skill-schedule/src/delivery/output.ts",
-          "literals": 5,
-          "byClass": {
-            "copy": 1,
-            "concat": 4
-          }
-        },
-        {
-          "path": "packages/skill-schedule/src/fetch/db.ts",
-          "literals": 28,
-          "byClass": {
-            "copy": 9,
-            "concat": 19
           }
         },
         {
@@ -4989,40 +4944,6 @@
           }
         },
         {
-          "path": "packages/skill-schedule/src/policy/plan.ts",
-          "literals": 46,
-          "byClass": {
-            "copy": 27,
-            "concat": 15,
-            "ident": 4
-          }
-        },
-        {
-          "path": "packages/skill-schedule/src/policy/record.ts",
-          "literals": 29,
-          "byClass": {
-            "copy": 11,
-            "concat": 15,
-            "ident": 3
-          }
-        },
-        {
-          "path": "packages/skill-schedule/src/policy/routing.ts",
-          "literals": 35,
-          "byClass": {
-            "copy": 30,
-            "concat": 3,
-            "ident": 2
-          }
-        },
-        {
-          "path": "packages/skill-schedule/src/policy/wakewords.ts",
-          "literals": 5,
-          "byClass": {
-            "derived": 5
-          }
-        },
-        {
           "path": "packages/skill-schedule/src/query/commands.ts",
           "literals": 8,
           "byClass": {
@@ -5046,13 +4967,6 @@
           }
         },
         {
-          "path": "packages/skill-schedule/src/query/routes.ts",
-          "literals": 18,
-          "byClass": {
-            "copy": 18
-          }
-        },
-        {
           "path": "packages/skill-schedule/src/render/copyArea.ts",
           "literals": 5,
           "byClass": {
@@ -5061,25 +4975,11 @@
           }
         },
         {
-          "path": "packages/skill-schedule/src/render/envelope.ts",
-          "literals": 5,
-          "byClass": {
-            "concat": 5
-          }
-        },
-        {
           "path": "packages/skill-schedule/src/render/html.ts",
           "literals": 3,
           "byClass": {
             "concat": 2,
             "ident": 1
-          }
-        },
-        {
-          "path": "packages/skill-schedule/src/render/templates.ts",
-          "literals": 3,
-          "byClass": {
-            "concat": 3
           }
         },
         {
@@ -5139,24 +5039,10 @@
           }
         },
         {
-          "path": "packages/skill-schedule/src/shared/templateFill.ts",
-          "literals": 1,
-          "byClass": {
-            "concat": 1
-          }
-        },
-        {
           "path": "packages/skill-schedule/src/shared/weekPage.ts",
           "literals": 5,
           "byClass": {
             "copy": 5
-          }
-        },
-        {
-          "path": "packages/skill-schedule/src/triggers/routes.generated.ts",
-          "literals": 51,
-          "byClass": {
-            "derived": 51
           }
         },
         {
@@ -5172,13 +5058,6 @@
           "byClass": {
             "copy": 8,
             "concat": 16
-          }
-        },
-        {
-          "path": "packages/skill-schedule/src/write/routes.ts",
-          "literals": 7,
-          "byClass": {
-            "copy": 7
           }
         },
         {
@@ -5198,11 +5077,150 @@
           }
         }
       ],
-      "migrated": [],
       "totals": {
         "files": 45,
         "literals": 1470
-      }
+      },
+      "excluded": [
+        {
+          "path": "packages/skill-schedule/src/admin/routes.ts",
+          "literals": 6,
+          "byClass": {
+            "copy": 6
+          },
+          "reason": "唤醒词路由数据（＝policy/wakewords.ts 的唯一定义地，ADR-0004 唤醒词不译）"
+        },
+        {
+          "path": "packages/skill-schedule/src/analyze/handlers.ts",
+          "literals": 6,
+          "byClass": {
+            "copy": 1,
+            "concat": 4,
+            "ident": 1
+          },
+          "reason": "无用户可见文案：只有 ScheduleFetchError 开发者报文"
+        },
+        {
+          "path": "packages/skill-schedule/src/analyze/routes.ts",
+          "literals": 5,
+          "byClass": {
+            "copy": 5
+          },
+          "reason": "唤醒词路由数据（同上）"
+        },
+        {
+          "path": "packages/skill-schedule/src/delivery/naming.ts",
+          "literals": 1,
+          "byClass": {
+            "copy": 1
+          },
+          "reason": "无用户可见文案：产品名只作产物文件名主体（SCHEDULE_SKILL_NAME）"
+        },
+        {
+          "path": "packages/skill-schedule/src/delivery/output.ts",
+          "literals": 5,
+          "byClass": {
+            "copy": 1,
+            "concat": 4
+          },
+          "reason": "无用户可见文案：只有 ScheduleRenderError 开发者报文"
+        },
+        {
+          "path": "packages/skill-schedule/src/fetch/db.ts",
+          "literals": 28,
+          "byClass": {
+            "copy": 9,
+            "concat": 19
+          },
+          "reason": "无用户可见文案：只有 ScheduleFetchError 开发者报文与 SQL DDL"
+        },
+        {
+          "path": "packages/skill-schedule/src/policy/plan.ts",
+          "literals": 46,
+          "byClass": {
+            "copy": 27,
+            "concat": 15,
+            "ident": 4
+          },
+          "reason": "无用户可见文案：VALID_COMPLETIONS / COMPLETION_DISPLAY_LABELS 是 completion 字段的载荷值与同形上屏写法（用户数据不译），其余是开发者报文"
+        },
+        {
+          "path": "packages/skill-schedule/src/policy/record.ts",
+          "literals": 29,
+          "byClass": {
+            "copy": 11,
+            "concat": 15,
+            "ident": 3
+          },
+          "reason": "无用户可见文案：剩余中文是日期关键词数据（缺省「今天」，RELATIVE_DATES 取值，经 relativeToDate 解析）与 SchedulePolicyError 开发者报文；数据词过 m() 会在英文语境变成 \"Today\" 解析失败（CLI --language en 实测 exit 4）"
+        },
+        {
+          "path": "packages/skill-schedule/src/policy/routing.ts",
+          "literals": 35,
+          "byClass": {
+            "copy": 30,
+            "concat": 3,
+            "ident": 2
+          },
+          "reason": "相对日期关键词数据（今天/昨天/…）＋开发者报文，无用户可见文案"
+        },
+        {
+          "path": "packages/skill-schedule/src/policy/wakewords.ts",
+          "literals": 5,
+          "byClass": {
+            "derived": 5
+          },
+          "reason": "唤醒词唯一事实源（WAKE_TABLE）：唤醒词冻结不译（#1236 裁决、ADR-0004），译了就路由不到命令"
+        },
+        {
+          "path": "packages/skill-schedule/src/query/routes.ts",
+          "literals": 18,
+          "byClass": {
+            "copy": 18
+          },
+          "reason": "唤醒词路由数据（同上）"
+        },
+        {
+          "path": "packages/skill-schedule/src/render/envelope.ts",
+          "literals": 5,
+          "byClass": {
+            "concat": 5
+          },
+          "reason": "无用户可见文案：只有 ScheduleRenderError 开发者报文"
+        },
+        {
+          "path": "packages/skill-schedule/src/render/templates.ts",
+          "literals": 3,
+          "byClass": {
+            "concat": 3
+          },
+          "reason": "无用户可见文案：只有 ScheduleRenderError 开发者报文"
+        },
+        {
+          "path": "packages/skill-schedule/src/shared/templateFill.ts",
+          "literals": 1,
+          "byClass": {
+            "concat": 1
+          },
+          "reason": "无用户可见文案：只有 ScheduleRenderError 开发者报文"
+        },
+        {
+          "path": "packages/skill-schedule/src/triggers/routes.generated.ts",
+          "literals": 51,
+          "byClass": {
+            "derived": 51
+          },
+          "reason": "派生生成件（gen:routes 从 policy/wakewords.ts 机器生成，禁手改）；唤醒词路由表不译"
+        },
+        {
+          "path": "packages/skill-schedule/src/write/routes.ts",
+          "literals": 7,
+          "byClass": {
+            "copy": 7
+          },
+          "reason": "唤醒词路由数据（同上）"
+        }
+      ]
     },
     "1224": {
       "title": "迁移 skill-chef 全部域：70 件（1,899 条）",
@@ -10165,12 +10183,12 @@
   },
   "scopeSummary": {
     "ledgerFiles": 1226,
-    "migratedFiles": 478,
-    "pendingFiles": 526,
-    "pendingLiterals": 15148,
-    "excludedFiles": 222,
-    "excludedLiterals": 12781,
-    "migratedLiterals": 14819
+    "migratedFiles": 507,
+    "pendingFiles": 481,
+    "pendingLiterals": 13678,
+    "excludedFiles": 238,
+    "excludedLiterals": 13032,
+    "migratedLiterals": 16038
   },
   "workflow": [
     "开工：从本文件取本票 files，逐件登记进 tooling/i18n-scope.json 的 files（先跑两道门拿红读数＝范围已挂但还没迁）。",
