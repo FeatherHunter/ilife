@@ -54,10 +54,13 @@ export function audit(root = ROOT_DIR, langs = LANGUAGES) {
   const mismatch = [];
   const skew = [];
   const singles = [];
+  const emptyTables = [];
   const keys = new Set();
   let pairs = 0;
   let comparable = 0;
   for (const [pkg, byLang] of loaded.packages) {
+    // 空表（0 条、合法暂态）：不是读不出，但必须显式报数，免得把「还没迁」当成「比过没问题」。
+    for (const [lang, table] of byLang) if (table.entries.size === 0) emptyTables.push(pkg + '/' + lang);
     const present = [...byLang.keys()];
     // 只有一门语言的包没有「同 key 跨语言」可对，本门不比；但必须报数，免得当成「比过没问题」。
     if (present.length < 2) { singles.push(pkg + '(' + present.join('+') + ')'); continue; }
@@ -87,7 +90,7 @@ export function audit(root = ROOT_DIR, langs = LANGUAGES) {
       }
     }
   }
-  return { packages: comparable, singles, keys: keys.size, pairs, mismatch, skew, errors: loaded.errors };
+  return { packages: comparable, singles, keys: keys.size, pairs, mismatch, skew, errors: loaded.errors, emptyTables };
 }
 
 /** 门禁入口的读数（门禁与自证共用，免得两边报法分家）。 */
@@ -95,7 +98,11 @@ export function report(result) {
   const lines = [];
   lines.push('PACKAGES: 可比 ' + result.packages + ' 个包（单语言 ' + result.singles.length + ' 个：'
     + (result.singles.length === 0 ? '无' : result.singles.join(',')) + '） keys=' + result.keys + ' pairs=' + result.pairs
-    + ' mismatch=' + result.mismatch.length + ' skew=' + result.skew.length);
+    + ' mismatch=' + result.mismatch.length + ' skew=' + result.skew.length + ' 空表=' + result.emptyTables.length);
+  if (result.emptyTables.length > 0) {
+    lines.push('EMPTY-TABLES: ' + result.emptyTables.join('、')
+      + '（0 条空表＝迁移期暂态：这一包／这一门语言还没录，显式报数，不算「比过没问题」）');
+  }
   for (const e of result.errors) lines.push('RED 词条表读不出：' + e.path + ' → ' + e.why);
   for (const m of result.mismatch) {
     lines.push('RED 占位符不一致：packages/' + m.pkg + ' 的 key ' + m.key + '：' + m.refLang + ' "'
@@ -186,11 +193,19 @@ function selftest() {
       "export const extra = {\n  'demo.total': 'EN-HIDDEN',\n};\n", 'utf8');
     const dup = audit(tmp);
     want(dup.errors.some((e) => e.why.includes('重复')), '多份表里 key 重复必须报 errors（实得 ' + dup.errors.length + '）');
+
+    // ⑩ 空表（0 条、合法暂态）：不算读不出、不产生假不一致，但必须显式报数（#1197 迁移期每包先立空表）
+    write('vacant', 'zh', "export const zh = {} as const satisfies MessageTable;\n");
+    write('vacant', 'en', "export const en = {} as const satisfies MessageTable;\n");
+    const vacant = audit(tmp);
+    want(!vacant.errors.some((e) => String(e.path).includes('vacant')), '空表不许当「词条表读不出」（errors=' + vacant.errors.length + '）');
+    want(vacant.emptyTables.length === 2, '空表必须显式报数（实得 ' + vacant.emptyTables.length + '）');
+    console.log('SELFTEST 空表读数：emptyTables=' + vacant.emptyTables.join(','));
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
   if (bad.length) { for (const b of bad) console.error('SELFTEST FAIL ' + b); process.exit(1); }
-  console.log('SELFTEST: 空转显式报数／单语言包报数／占位符不一致必红／补齐必绿／多占位必红／顺序重复不判红／缺列只报数／读不出必红／多份表重复 key 必红 九条自证 OK');
+  console.log('SELFTEST: 空转显式报数／单语言包报数／占位符不一致必红／补齐必绿／多占位必红／顺序重复不判红／缺列只报数／读不出必红／多份表重复 key 必红／空表显式报数 十条自证 OK');
 }
 
 /** 入口守卫（照 check-i18n-entries.mjs 先例）：被别处 import 时不跑 CLI。 */

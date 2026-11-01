@@ -4,7 +4,7 @@
  *  本文件不自己实现回退链、不实现求值端口——机制住公共层包，词住本包（ADR-0004 §2／§3）。
  *  形状照 `packages/base-render/src/entries/index.ts`（#1202 试点形状，不另起形状）。
  */
-import { defineCatalog, type MessageId } from 'base-entries';
+import { currentRenderLanguage, defineCatalog, resolve, type MessageId, type MessageParams } from 'base-entries';
 import { zh } from './zh.js';
 import { en } from './en.js';
 
@@ -13,3 +13,8 @@ export const SKILL_BILL_CATALOG = defineCatalog({ zh, en });
 
 /** 本包词条 key 的窄类型。 */
 export type SkillBillMessageId = MessageId<typeof SKILL_BILL_CATALOG>;
+
+/** 取一条词条：语言来自渲染语言上下文；未进入上下文＝zh，故不启用多语言时逐字节不变。 */
+export function m(id: SkillBillMessageId, params?: MessageParams): string {
+  return resolve(SKILL_BILL_CATALOG, currentRenderLanguage(), id, params);
+}

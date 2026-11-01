@@ -51,6 +51,7 @@ import { REGISTRY } from './registry.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { isLanguageArg } from 'base-link-core';
 import type { EnvelopeShape } from 'base-link-core';
+import { runWithLanguage } from 'base-entries';
 
 /** #294 · 读命令产物的形状（含交付种类）唯一定义地已上移 `shared/commandSpec.ts`：
  *  能力目录与分派层共用一份，本文件只按原名转出，既有调用方导入面不变。 */
@@ -94,78 +95,79 @@ async function main(): Promise<void> {
   // 本轮只接线与校验：不设语言时行为与产物逐字节不变（渲染消费方随词条层 #1200 落地后接）。
   // 位置：**配置 key 拦下之后**——配置面那几条命令（含首次落配置文件）不该被语言解析拦在前头。
   const language = resolveLanguageOrFail(process.argv.slice(2));
-  void language;
-  // #706 · 配置体检（`calorie.config.check`）：同样是设置页专用的只读命令，同样在预检之前拦下——
-  // 它要报的正是「库在哪、通不通」，不能先要求库目录已配。只读：不建目录、不写文件、不落默认配置。
-  if (isHealthCheckKey(o.key as string)) {
-    process.stdout.write(runHealthCheckKey(o.key as string) + '\n');
-    return;
-  }
-  const dbPath = preflight();
-  let shape: EnvelopeShape;
-  try {
-    shape = calorieShapeFor(o.key as string);
-  } catch (e) {
-    fail(3, (e as Error).message);
-    throw new Error('unreachable');
-  }
-  void (CALORIE_COMBOS as Record<string, unknown>)[o.key as string];
-  const timer = setTimeout(() => {
-    toast('cmd_read 超时 terminate（' + String(o.timeout) + 'ms），已终止取数');
-    process.exit(4);
-  }, o.timeout as number);
-  (timer as unknown as { unref: () => void }).unref();
-  let env: Record<string, unknown> | null = null;
-  try {
-    // #676 · 库文件名也来自配置（`values.db.name`），不再写死路径常量。
-    const dbFile = join(dbPath as string, resolveDbFileName());
-    // #93 · 读键走只读打开（不建表、不迁移、写入被拒）；写键或库文件尚不存在时仍走 openDb。
-    const db = isCalorieWriteKey(o.key as string) || !existsSync(dbFile) ? openDb(dbFile) : openDbReadOnly(dbFile);
+  return runWithLanguage(language.text, async () => { // 语言上下文：整段执行体按同一个渲染语言取词（不设语言＝zh，产物逐字节不变）。
+    // #706 · 配置体检（`calorie.config.check`）：同样是设置页专用的只读命令，同样在预检之前拦下——
+    // 它要报的正是「库在哪、通不通」，不能先要求库目录已配。只读：不建目录、不写文件、不落默认配置。
+    if (isHealthCheckKey(o.key as string)) {
+      process.stdout.write(runHealthCheckKey(o.key as string) + '\n');
+      return;
+    }
+    const dbPath = preflight();
+    let shape: EnvelopeShape;
     try {
-      // #40 · 唯一出口：写键走 write.ts 分发（memo.create/update/remove 范式），读键走既有 dispatch。
-      const out = isCalorieWriteKey(o.key as string)
-        ? dispatchWrite(o.key as string, params, db)
-        : dispatch(o.key as string, params, db);
-      // #83 · 三态交付（M4 HTML-First）：① 文件态（默认）／② 内联态（只读·沙箱回退）／③ 文本态。
-      // 落点：--html（显式覆盖）> 默认 calorie_html/<中文command>_<TS>[_N].html（#87／#119）。
-      // ⚠️ 老技能的 `--output` 别名**已删**（#245 收口，与其余五家同形：只认 `--html`；给 `--output` 即 exit 2）。
-      // 只读类写失败 → 内联交付（产物随 envelope 回传，绝不因写不进去而文字答）；
-      // 结构错／渲染错 → 渲染失败回执（模板化回执，exit 5；严禁手写 HTML 兜底）。
+      shape = calorieShapeFor(o.key as string);
+    } catch (e) {
+      fail(3, (e as Error).message);
+      throw new Error('unreachable');
+    }
+    void (CALORIE_COMBOS as Record<string, unknown>)[o.key as string];
+    const timer = setTimeout(() => {
+      toast('cmd_read 超时 terminate（' + String(o.timeout) + 'ms），已终止取数');
+      process.exit(4);
+    }, o.timeout as number);
+    (timer as unknown as { unref: () => void }).unref();
+    let env: Record<string, unknown> | null = null;
+    try {
+      // #676 · 库文件名也来自配置（`values.db.name`），不再写死路径常量。
+      const dbFile = join(dbPath as string, resolveDbFileName());
+      // #93 · 读键走只读打开（不建表、不迁移、写入被拒）；写键或库文件尚不存在时仍走 openDb。
+      const db = isCalorieWriteKey(o.key as string) || !existsSync(dbFile) ? openDb(dbFile) : openDbReadOnly(dbFile);
       try {
-        env = buildDeliveredEnvelope({
-          key: o.key as string, shape: shape as EnvelopeShape, out, params, explicit: o.html,
-        });
-      } catch (e) {
-        if (e instanceof CalorieRenderError) throw e;
-        failWithReceipt('渲染失败：' + describeDeliveryTarget(o.html) + '：'
-          + ((e as Error).message || String(e)), o.key as string);
+        // #40 · 唯一出口：写键走 write.ts 分发（memo.create/update/remove 范式），读键走既有 dispatch。
+        const out = isCalorieWriteKey(o.key as string)
+          ? dispatchWrite(o.key as string, params, db)
+          : dispatch(o.key as string, params, db);
+        // #83 · 三态交付（M4 HTML-First）：① 文件态（默认）／② 内联态（只读·沙箱回退）／③ 文本态。
+        // 落点：--html（显式覆盖）> 默认 calorie_html/<中文command>_<TS>[_N].html（#87／#119）。
+        // ⚠️ 老技能的 `--output` 别名**已删**（#245 收口，与其余五家同形：只认 `--html`；给 `--output` 即 exit 2）。
+        // 只读类写失败 → 内联交付（产物随 envelope 回传，绝不因写不进去而文字答）；
+        // 结构错／渲染错 → 渲染失败回执（模板化回执，exit 5；严禁手写 HTML 兜底）。
+        try {
+          env = buildDeliveredEnvelope({
+            key: o.key as string, shape: shape as EnvelopeShape, out, params, explicit: o.html,
+          });
+        } catch (e) {
+          if (e instanceof CalorieRenderError) throw e;
+          failWithReceipt('渲染失败：' + describeDeliveryTarget(o.html) + '：'
+            + ((e as Error).message || String(e)), o.key as string);
+        }
+      } finally {
+        db.close();
       }
+    } catch (e) {
+      if (e instanceof CalorieRenderError) {
+        // #500 · 身体域缺数据／缺参数走失败回执整页（exit 保持 4／2，按 #365 实测）；
+        // 非身体键走原纯文本（其它域不动）。接线位是框架调用方（声明外最小 wiring，见证据）。
+        if (e.code === 'missing-data') {
+          if (bodySceneFor(o.key as string) !== null) failWithBodyReceipt('取数失败（缺失阻断）：' + e.message, o.key as string, 4);
+          fail(4, '取数失败（缺失阻断）：' + e.message);
+        }
+        if (e.code === 'bad-input') {
+          if (bodySceneFor(o.key as string) !== null) failWithBodyReceipt('参数失败：' + e.message, o.key as string, 2);
+          fail(2, '参数失败：' + e.message);
+        }
+        failWithReceipt('渲染失败：' + e.message, o.key as string);
+      }
+      if (e instanceof FetchError) {
+        if (bodySceneFor(o.key as string) !== null) failWithBodyReceipt('取数失败：' + (e as Error).message, o.key as string, 4);
+        fail(4, '取数失败：' + (e as Error).message);
+      }
+      fail(4, '未知失败：' + ((e as Error).message || String(e)));
     } finally {
-      db.close();
+      clearTimeout(timer);
     }
-  } catch (e) {
-    if (e instanceof CalorieRenderError) {
-      // #500 · 身体域缺数据／缺参数走失败回执整页（exit 保持 4／2，按 #365 实测）；
-      // 非身体键走原纯文本（其它域不动）。接线位是框架调用方（声明外最小 wiring，见证据）。
-      if (e.code === 'missing-data') {
-        if (bodySceneFor(o.key as string) !== null) failWithBodyReceipt('取数失败（缺失阻断）：' + e.message, o.key as string, 4);
-        fail(4, '取数失败（缺失阻断）：' + e.message);
-      }
-      if (e.code === 'bad-input') {
-        if (bodySceneFor(o.key as string) !== null) failWithBodyReceipt('参数失败：' + e.message, o.key as string, 2);
-        fail(2, '参数失败：' + e.message);
-      }
-      failWithReceipt('渲染失败：' + e.message, o.key as string);
-    }
-    if (e instanceof FetchError) {
-      if (bodySceneFor(o.key as string) !== null) failWithBodyReceipt('取数失败：' + (e as Error).message, o.key as string, 4);
-      fail(4, '取数失败：' + (e as Error).message);
-    }
-    fail(4, '未知失败：' + ((e as Error).message || String(e)));
-  } finally {
-    clearTimeout(timer);
-  }
-  process.stdout.write(JSON.stringify(env) + '\n');
+    process.stdout.write(JSON.stringify(env) + '\n');
+  });
 }
 
 const invokedAsCli = (process.argv[1] ?? '').replace(/\\/g, '/').endsWith('cmd_read.js');

@@ -45,7 +45,7 @@ import { isHealthCheckKey, runHealthCheckKey } from './health.js';
 import { buildRecordReceipt } from '../write/index.js';
 import type { ViewOut, WriteOut } from '../shared/commandSpec.js';
 import type { BillRow } from '../fetch/db.js';
-
+import { runWithLanguage } from 'base-entries';
 const DEFAULT_TIMEOUT_MS = 30000;
 
 function toast(msg: string): void { console.error('TOAST: ' + msg); }
@@ -192,8 +192,6 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
   }
 }
 
-
-
 async function main() {
   const o = parseArgs(process.argv.slice(2));
   if (!o.key) fail(2, '用法：bill-cmd-read <bill.key> [--params JSON对象] [--html 输出路径] [--timeout 毫秒] [--language zh|en]');
@@ -213,53 +211,55 @@ async function main() {
   // 本轮只接线与校验：不设语言时行为与产物逐字节不变（渲染消费方随词条层 #1200 落地后接）。
   // 位置：**配置 key 拦下之后**——配置面那几条命令（含首次落配置文件）不该被语言解析拦在前头。
   const language = resolveLanguageOrFail(process.argv.slice(2));
-  // #706 · 配置体检（`bill.config.check`）：同样是设置页专用的只读命令，同样在预检之前拦下——
-  // 它要报的正是「库在哪、通不通」，不能先要求库目录已配。只读：不建目录、不写文件、不落默认配置。
-  if (isHealthCheckKey(key)) {
-    process.stdout.write(runHealthCheckKey(key) + '\n');
-    return;
-  }
-  preflight();
-  let shape = null;
-  try { shape = billShapeFor(key); } catch (e) { fail(3, (e as Error).message); }
-  void shape;
-  const timer = setTimeout(() => { toast('cmd_read 超时 terminate（' + o.timeout + 'ms），已终止取数'); process.exit(4); }, o.timeout);
-  timer.unref();
-  let env = null;
-  let delivery: HtmlDelivery | undefined;
-  try {
-    // #144：HELP 在开库之前分派（只读页不建库）；迁移过的命令（写入域两条＋查询域四条）先查注册表走能力目录；
-    // 其余照旧走 dispatch。
-    const help = key === 'bill.help.lookup' ? dispatchHelp(params) : null;
-    const abilityOut: WriteOut | ViewOut | null = help === null && REGISTRY[key] !== undefined ? runRegistered(key, params, language.text) : null;
-    const built = buildBillEnvelope(key, abilityOut ? abilityOut.data : (help ? help.data : dispatch(key, params)));
-    env = built;
-    // B4 既有语义：`--html` 套模板输出完整收据页（section 片段经 CONTENT 注入模板，非片段直写）。
-    // 迁移过的命令另有整页（采集页／回执页住 `src/write/`、查询列表页住 `src/query/`），不再套老模板。
-    const sectionHtml = (): string => {
-      if (abilityOut) return abilityOut.html;
-      return fillTemplate(loadTemplate(templateFor(key)), renderEnvelopeHtml(built));
-    };
-    // B1 复核整改：体积门对准**实际交付的那串**（`delivery.bytes` 也照它算）。四条交付路的落点裁决
-    // （HELP 整页／速查表、能力目录整页、联动采单、`--html` 显式口）住 `../delivery/landing.js`。
-    delivery = landHtml({
-      explicit: o.html, help: help?.deliver, ability: abilityOut, key, params,
-      surface: REGISTRY[key]?.surface, sectionHtml,
-    });
-  } catch (e) {
-    if (e instanceof BillFetchError) fail(4, '取数失败：' + e.message);
-    if (e instanceof BillPolicyError) fail(2, '口径失败：' + e.message);
-    if (e instanceof BillRenderError) fail(5, '渲染失败：' + e.message);
-    if ((e as NodeJS.ErrnoException)?.code && /^E[A-Z]+$/.test(String((e as NodeJS.ErrnoException).code))) {
-      fail(5, '落盘失败：' + ((e as Error).message || String(e)));
+  return runWithLanguage(language.text, async () => { // 语言上下文：整段执行体按同一个渲染语言取词（不设语言＝zh，产物逐字节不变）。
+    // #706 · 配置体检（`bill.config.check`）：同样是设置页专用的只读命令，同样在预检之前拦下——
+    // 它要报的正是「库在哪、通不通」，不能先要求库目录已配。只读：不建目录、不写文件、不落默认配置。
+    if (isHealthCheckKey(key)) {
+      process.stdout.write(runHealthCheckKey(key) + '\n');
+      return;
     }
-    // #726：配置面报错（测试缺隔离基座、配置文件读不出来）走「预检」那一档，与老线缺库目录同一档；
-    // 按 `base-link-core` 的 `ConfigError.code`（`CONFIG_*`）认，不拿报文文本去猜。
-    if (String((e as { code?: unknown }).code ?? '').startsWith('CONFIG_')) fail(1, (e as Error).message);
-    fail(4, '未知失败：' + ((e as Error).message || String(e)));
-  } finally { clearTimeout(timer); }
-  // #83 口径的顶层追加：`delivery{mode,path,bytes}` 只追加，既有五字段一字不改、序不变。
-  process.stdout.write(JSON.stringify(delivery ? { ...env, delivery } : env) + '\n');
+    preflight();
+    let shape = null;
+    try { shape = billShapeFor(key); } catch (e) { fail(3, (e as Error).message); }
+    void shape;
+    const timer = setTimeout(() => { toast('cmd_read 超时 terminate（' + o.timeout + 'ms），已终止取数'); process.exit(4); }, o.timeout);
+    timer.unref();
+    let env = null;
+    let delivery: HtmlDelivery | undefined;
+    try {
+      // #144：HELP 在开库之前分派（只读页不建库）；迁移过的命令（写入域两条＋查询域四条）先查注册表走能力目录；
+      // 其余照旧走 dispatch。
+      const help = key === 'bill.help.lookup' ? dispatchHelp(params) : null;
+      const abilityOut: WriteOut | ViewOut | null = help === null && REGISTRY[key] !== undefined ? runRegistered(key, params, language.text) : null;
+      const built = buildBillEnvelope(key, abilityOut ? abilityOut.data : (help ? help.data : dispatch(key, params)));
+      env = built;
+      // B4 既有语义：`--html` 套模板输出完整收据页（section 片段经 CONTENT 注入模板，非片段直写）。
+      // 迁移过的命令另有整页（采集页／回执页住 `src/write/`、查询列表页住 `src/query/`），不再套老模板。
+      const sectionHtml = (): string => {
+        if (abilityOut) return abilityOut.html;
+        return fillTemplate(loadTemplate(templateFor(key)), renderEnvelopeHtml(built));
+      };
+      // B1 复核整改：体积门对准**实际交付的那串**（`delivery.bytes` 也照它算）。四条交付路的落点裁决
+      // （HELP 整页／速查表、能力目录整页、联动采单、`--html` 显式口）住 `../delivery/landing.js`。
+      delivery = landHtml({
+        explicit: o.html, help: help?.deliver, ability: abilityOut, key, params,
+        surface: REGISTRY[key]?.surface, sectionHtml,
+      });
+    } catch (e) {
+      if (e instanceof BillFetchError) fail(4, '取数失败：' + e.message);
+      if (e instanceof BillPolicyError) fail(2, '口径失败：' + e.message);
+      if (e instanceof BillRenderError) fail(5, '渲染失败：' + e.message);
+      if ((e as NodeJS.ErrnoException)?.code && /^E[A-Z]+$/.test(String((e as NodeJS.ErrnoException).code))) {
+        fail(5, '落盘失败：' + ((e as Error).message || String(e)));
+      }
+      // #726：配置面报错（测试缺隔离基座、配置文件读不出来）走「预检」那一档，与老线缺库目录同一档；
+      // 按 `base-link-core` 的 `ConfigError.code`（`CONFIG_*`）认，不拿报文文本去猜。
+      if (String((e as { code?: unknown }).code ?? '').startsWith('CONFIG_')) fail(1, (e as Error).message);
+      fail(4, '未知失败：' + ((e as Error).message || String(e)));
+    } finally { clearTimeout(timer); }
+    // #83 口径的顶层追加：`delivery{mode,path,bytes}` 只追加，既有五字段一字不改、序不变。
+    process.stdout.write(JSON.stringify(delivery ? { ...env, delivery } : env) + '\n');
+  });
 }
 
 await main();

@@ -35,7 +35,7 @@ import { resolveLanguageOrFail } from './language.js';
 import { isHealthCheckKey, runHealthCheckKey } from './health.js';
 import { MemoFetchError, MemoPolicyError } from '../shared/errors.js';
 import type { MemoDb } from '../db/readonly.js';
-
+import { runWithLanguage } from 'base-entries';
 const DEFAULT_TIMEOUT_MS = 30000;
 
 // #855：失败约定（`fail`）提到共用位 `src/shared/exit.ts`——出口与各域运行件同一档退出码。
@@ -45,7 +45,6 @@ function preflight(): void {
   const v = process.versions.node.split('.').map(Number);
   if (!(v[0] > 22 || (v[0] === 22 && v[1] >= 13))) fail(1, 'node 低于 22.13：' + process.versions.node);
 }
-
 function needStr(params: Record<string, unknown>, name: string): string {
   const v = params[name];
   if (typeof v !== 'string' || v.length === 0) fail(2, '缺参数 ' + name);
@@ -163,7 +162,6 @@ function dispatchHelp(params: Record<string, unknown>, dbPath: string): MemoHelp
   // #245：两种 HELP 产物（缺省 HELP 文件／`mode:"lookup"` 速查表）都吃复用窗口——缺省一天内只留一份。
   // `q`（现找）那支不落盘，自然不吃；`--html` 逐字落点那支由 `deliverMemoHtml` 另走覆盖写。
   const window = helpReuseWindow(params);
-
   if (q !== undefined) {
     const items = buildLookupItems().filter((it) => q.includes(String(it.id)));
     return { data: { items, total: items.length, mode: 'lookup', query: q } };
@@ -239,6 +237,7 @@ function parseArgs(a: string[]): { key: string | undefined; params: string | und
 async function main() {
   const o = parseArgs(process.argv.slice(2));
   if (!o.key) fail(2, '用法：memo-cmd-read <memo.key> [--params JSON对象] [--html 输出路径] [--timeout 毫秒] [--language zh|en]');
+  const key = o.key;
   let params = {};
   if (o.params !== undefined) {
     try { params = JSON.parse(o.params); } catch (e) { fail(2, '--params 须为 JSON'); }
@@ -254,101 +253,102 @@ async function main() {
   // 本轮只接线与校验：不设语言时行为与产物逐字节不变（渲染消费方随词条层 #1200 落地后接）。
   // 位置：**配置 key 拦下之后**——配置面那几条命令（含首次落配置文件）不该被语言解析拦在前头。
   const language = resolveLanguageOrFail(process.argv.slice(2));
-  void language;
-  // #706 · 配置体检（`memo.config.check`）：同样是设置页专用的只读命令，同样在预检之前拦下——
-  // 它要报的正是「库在哪、通不通」，不能先要求库目录已配。只读：不建目录、不写文件、不落默认配置。
-  if (isHealthCheckKey(o.key)) {
-    process.stdout.write(runHealthCheckKey(o.key) + '\n');
-    return;
-  }
-  preflight();
-  // 读配置算库目录：配置件的报错本身就是人话（带行号与文件名），归「预检」那一档原样交回
-  // （不能让它裸抛——那会吐一整段 node 崩溃栈，用户看不到「该在哪配」）。
-  let dbPath = '';
-  try { dbPath = resolveDbDir(); }
-  catch (e) { fail(1, e instanceof Error ? e.message : String(e)); }
-  let shape = null;
-  try { shape = memoShapeFor(o.key); } catch (e) { fail(3, (e as Error).message); }
-  void shape;
-  const timer = setTimeout(() => { toast('cmd_read 超时 terminate（' + o.timeout + 'ms），已终止取数'); process.exit(4); }, o.timeout);
-  timer.unref();
-  let env: Envelope | null = null;
-  let delivery: HtmlReceipt | undefined;
-  // #661：合成写「最终没达成」时回执照打、退出码在写完回执之后落实（分字段是回执的本分，不能因为非 0 就吞掉）。
-  let writeExit = 0;
-  try {
-    // #229：`memo.help.lookup` 在**开库之前**分派（只读页不建库）；其余键照旧走 dispatch。
-    // #665：开的是老库文件（直连，不建库）；用完即关，失败也关。
-    // #855：开库前分派统一走登记表——`pre-open` 类的命令（今天只有 `memo.init`，声明住 `src/init/commands.ts`）
-    // 在开库之前调，库不存在时也能跑；`memo.help.lookup` 的交付装配仍走框架位 `dispatchHelp`（HELP 面，不进域门）。
-    const help = o.key === 'memo.help.lookup' ? dispatchHelp(params, dbPath) : null;
-    const pre = o.key === 'memo.help.lookup' ? undefined : REGISTRY[o.key];
-    let db: MemoDb | null = null;
-    let out: DispatchOut;
+  return runWithLanguage(language.text, async () => { // 语言上下文：整段执行体按同一个渲染语言取词（不设语言＝zh，产物逐字节不变）。
+    // #706 · 配置体检（`memo.config.check`）：同样是设置页专用的只读命令，同样在预检之前拦下——
+    // 它要报的正是「库在哪、通不通」，不能先要求库目录已配。只读：不建目录、不写文件、不落默认配置。
+    if (isHealthCheckKey(key)) {
+      process.stdout.write(runHealthCheckKey(key) + '\n');
+      return;
+    }
+    preflight();
+    // 读配置算库目录：配置件的报错本身就是人话（带行号与文件名），归「预检」那一档原样交回
+    // （不能让它裸抛——那会吐一整段 node 崩溃栈，用户看不到「该在哪配」）。
+    let dbPath = '';
+    try { dbPath = resolveDbDir(); }
+    catch (e) { fail(1, e instanceof Error ? e.message : String(e)); }
+    let shape = null;
+    try { shape = memoShapeFor(key); } catch (e) { fail(3, (e as Error).message); }
+    void shape;
+    const timer = setTimeout(() => { toast('cmd_read 超时 terminate（' + o.timeout + 'ms），已终止取数'); process.exit(4); }, o.timeout);
+    timer.unref();
+    let env: Envelope | null = null;
+    let delivery: HtmlReceipt | undefined;
+    // #661：合成写「最终没达成」时回执照打、退出码在写完回执之后落实（分字段是回执的本分，不能因为非 0 就吞掉）。
+    let writeExit = 0;
     try {
-      if (help !== null) {
-        out = { data: help.data, exit: 0 };
-      } else if (pre !== undefined && pre.kind === 'pre-open') {
-        out = pre.run(params);
-      } else {
-        db = openMemoDb(dbPath);
-        out = dispatch(o.key, params, db);
-      }
-    } finally {
-      if (db) {
-        try {
-          closeMemoDb(db);
-        } catch {
-          // 关库失败不掩盖主流程结果。
+      // #229：`memo.help.lookup` 在**开库之前**分派（只读页不建库）；其余键照旧走 dispatch。
+      // #665：开的是老库文件（直连，不建库）；用完即关，失败也关。
+      // #855：开库前分派统一走登记表——`pre-open` 类的命令（今天只有 `memo.init`，声明住 `src/init/commands.ts`）
+      // 在开库之前调，库不存在时也能跑；`memo.help.lookup` 的交付装配仍走框架位 `dispatchHelp`（HELP 面，不进域门）。
+      const help = key === 'memo.help.lookup' ? dispatchHelp(params, dbPath) : null;
+      const pre = key === 'memo.help.lookup' ? undefined : REGISTRY[key];
+      let db: MemoDb | null = null;
+      let out: DispatchOut;
+      try {
+        if (help !== null) {
+          out = { data: help.data, exit: 0 };
+        } else if (pre !== undefined && pre.kind === 'pre-open') {
+          out = pre.run(params);
+        } else {
+          db = openMemoDb(dbPath);
+          out = dispatch(key, params, db);
+        }
+      } finally {
+        if (db) {
+          try {
+            closeMemoDb(db);
+          } catch {
+            // 关库失败不掩盖主流程结果。
+          }
         }
       }
+      writeExit = out.exit;
+      env = buildMemoEnvelope(key, out.data);
+      const built = env;
+      // B4 既有语义：`--html <路径>` 逐字写用户给的路径，内容仍是本包的 envelope 片段（`renderEnvelopeHtml`）。
+      const sectionHtml = (): string => {
+        const html = renderEnvelopeHtml(built);
+        assertHtmlSize(html);
+        return html;
+      };
+      if (help?.deliver !== undefined) {
+        // 本键的产物：缺省＝HELP 全壳页（自带 html）；`mode:"lookup"`＝速查表分节页（由 envelope 渲染）。
+        const html = help.deliver.html ?? sectionHtml();
+        if (help.deliver.html !== undefined) assertHtmlSize(html);
+        delivery = deliverMemoHtml({
+          explicit: o.html, landing: help.deliver.landing, html, window: help.deliver.window,
+          ...(help.deliver.dataKey === undefined ? {} : { dataKey: help.deliver.dataKey }),
+        });
+      } else if (out.deliver !== undefined) {
+        // #665 整页交付：缺省落 `memo_html/<页名>.html`（独占递补），显式 `--html` 逐字覆盖写。
+        delivery = deliverMemoHtml({ explicit: o.html, landing: landingOf(dbPath, out.deliver.stem), html: out.deliver.html });
+      } else if (o.html) {
+        delivery = deliverMemoHtml({ explicit: o.html, html: sectionHtml() });
+      }
+    } catch (e) {
+      // #760：飞书相关命令缺 CLI／未登录的失败回执带上安装指引（与面板「复制安装指引」按钮同一内容）。
+      if (e instanceof MemoFetchError && e.code.startsWith('LARK_')) {
+        fail(4, '取数失败：' + e.message + '。' + LARK_WEBSITE_LINE + '完整安装指引（含复制给 AI 的 prompt）见 memo.config.read 回执的 lark.prompt。');
+      }
+      if (e instanceof MemoFetchError) fail(4, '取数失败：' + e.message);
+      if (e instanceof MemoPolicyError) fail(2, '口径失败：' + e.message);
+      if (e instanceof MemoRenderError) fail(5, '渲染失败：' + e.message);
+      // 落盘错误：`EACCES`／`ENOTDIR`／`ENOSPC`… 一律 exit 5（不静默当成功、不换形态降级）。
+      if ((e as NodeJS.ErrnoException)?.code && /^E[A-Z]+$/.test(String((e as NodeJS.ErrnoException).code))) {
+        fail(5, '落盘失败：' + ((e as Error).message || String(e)));
+      }
+      // 配置件（`base-link-core`）的报错本身就是人话（带行号与文件名）：归「预检」那一档原样交回。
+      if (/(配置文件|配置项|测试缺隔离)/.test((e as Error).message ?? '')) fail(1, (e as Error).message);
+      fail(4, '未知失败：' + ((e as Error).message || String(e)));
+    } finally { clearTimeout(timer); }
+    // #83／#144 口径的顶层追加：`delivery{mode,path,bytes}` 只追加，envelope 既有五字段一字不改、序不变。
+    process.stdout.write(JSON.stringify(delivery ? { ...env, delivery } : env) + '\n');
+    // #661：本地那一侧成了、远端那一侧没成 ⇒ 回执已分字段写明，退出码仍要如实反映「这一趟没达成」（契约 A3／A6）。
+    if (writeExit !== 0) {
+      console.error('ERR ' + writeExit + ': 合成写没达成（本地侧已落，远端侧见回执 remote 那一格）');
+      process.exit(writeExit);
     }
-    writeExit = out.exit;
-    env = buildMemoEnvelope(o.key, out.data);
-    const built = env;
-    // B4 既有语义：`--html <路径>` 逐字写用户给的路径，内容仍是本包的 envelope 片段（`renderEnvelopeHtml`）。
-    const sectionHtml = (): string => {
-      const html = renderEnvelopeHtml(built);
-      assertHtmlSize(html);
-      return html;
-    };
-    if (help?.deliver !== undefined) {
-      // 本键的产物：缺省＝HELP 全壳页（自带 html）；`mode:"lookup"`＝速查表分节页（由 envelope 渲染）。
-      const html = help.deliver.html ?? sectionHtml();
-      if (help.deliver.html !== undefined) assertHtmlSize(html);
-      delivery = deliverMemoHtml({
-        explicit: o.html, landing: help.deliver.landing, html, window: help.deliver.window,
-        ...(help.deliver.dataKey === undefined ? {} : { dataKey: help.deliver.dataKey }),
-      });
-    } else if (out.deliver !== undefined) {
-      // #665 整页交付：缺省落 `memo_html/<页名>.html`（独占递补），显式 `--html` 逐字覆盖写。
-      delivery = deliverMemoHtml({ explicit: o.html, landing: landingOf(dbPath, out.deliver.stem), html: out.deliver.html });
-    } else if (o.html) {
-      delivery = deliverMemoHtml({ explicit: o.html, html: sectionHtml() });
-    }
-  } catch (e) {
-    // #760：飞书相关命令缺 CLI／未登录的失败回执带上安装指引（与面板「复制安装指引」按钮同一内容）。
-    if (e instanceof MemoFetchError && e.code.startsWith('LARK_')) {
-      fail(4, '取数失败：' + e.message + '。' + LARK_WEBSITE_LINE + '完整安装指引（含复制给 AI 的 prompt）见 memo.config.read 回执的 lark.prompt。');
-    }
-    if (e instanceof MemoFetchError) fail(4, '取数失败：' + e.message);
-    if (e instanceof MemoPolicyError) fail(2, '口径失败：' + e.message);
-    if (e instanceof MemoRenderError) fail(5, '渲染失败：' + e.message);
-    // 落盘错误：`EACCES`／`ENOTDIR`／`ENOSPC`… 一律 exit 5（不静默当成功、不换形态降级）。
-    if ((e as NodeJS.ErrnoException)?.code && /^E[A-Z]+$/.test(String((e as NodeJS.ErrnoException).code))) {
-      fail(5, '落盘失败：' + ((e as Error).message || String(e)));
-    }
-    // 配置件（`base-link-core`）的报错本身就是人话（带行号与文件名）：归「预检」那一档原样交回。
-    if (/(配置文件|配置项|测试缺隔离)/.test((e as Error).message ?? '')) fail(1, (e as Error).message);
-    fail(4, '未知失败：' + ((e as Error).message || String(e)));
-  } finally { clearTimeout(timer); }
-  // #83／#144 口径的顶层追加：`delivery{mode,path,bytes}` 只追加，envelope 既有五字段一字不改、序不变。
-  process.stdout.write(JSON.stringify(delivery ? { ...env, delivery } : env) + '\n');
-  // #661：本地那一侧成了、远端那一侧没成 ⇒ 回执已分字段写明，退出码仍要如实反映「这一趟没达成」（契约 A3／A6）。
-  if (writeExit !== 0) {
-    console.error('ERR ' + writeExit + ': 合成写没达成（本地侧已落，远端侧见回执 remote 那一格）');
-    process.exit(writeExit);
-  }
+  });
 }
 
 await main();

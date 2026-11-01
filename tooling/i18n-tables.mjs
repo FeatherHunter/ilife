@@ -11,6 +11,10 @@
  *   packages/<包>/src/entries/<分册>.<语言>.{ts,json}  分册形态（写模式产出：i18n_<区段>.zh.ts）
  * 两种都是「这门语言的表」，按包内同一语言并集读；加一门语言＝加一份文件，本件不改。
  *
+ * 空表是合法暂态（#1197 迁移期）：每包先立 zh／en 空表（`export const zh = {} as const satisfies MessageTable`），
+ *   迁移票再往里追加条目。**空表必须显式报数**（EMPTY-TABLES／空表名单），不许当成「查过没问题」——
+ *   0 条与「表形状变了读不出」是两件事：前者是还没迁，后者是门失明，后者仍判红。
+ *
  * 哪些值算「未录」（#1306 的口径，与 packages/base-entries/src/resolve.ts 的 templateOf 同口径）：
  *   · 缺 key＝未录；
  *   · 值是空串或纯空白＝未录——空串不是「显式空白」，是待译漏记；resolve 沿回退链取下一站，
@@ -89,6 +93,9 @@ function readQuoted(raw, at) {
   return null;
 }
 
+/** 空表声明形态：`export const zh = {} as const satisfies MessageTable`（#1197 迁移期每包先立的空表）。 */
+const EMPTY_TS_TABLE = /\{\s*\}\s*as\s+const\s+satisfies\s+MessageTable/;
+
 /**
  * `.ts` 表解析：按 `'key': '值'` 逐条读。
  * 值必须紧跟冒号且是字符串字面量——不是就报红，**不许猜**（猜出来的值会把「表形状变了」藏成一条假词条）。
@@ -109,7 +116,11 @@ function parseTsTable(raw, path) {
     entries.set(m[2], value.text);
     keyRe.lastIndex = value.end;
   }
-  if (entries.size === 0) return { ok: false, why: '词条表抽不出词条（表形状变了：期望 `key: 值`）：' + path };
+  if (entries.size === 0) {
+    // 空表＝合法暂态（0 条，还没迁）；不是空表形状才算「形状变了」——那一格是门失明，必须判红。
+    if (EMPTY_TS_TABLE.test(raw)) return { ok: true, entries, empty: true };
+    return { ok: false, why: '词条表抽不出词条（表形状变了：期望 `key: 值`）：' + path };
+  }
   return { ok: true, entries };
 }
 /**
@@ -154,9 +165,11 @@ export function loadEntryTable(root, lang) {
   const entries = new Map();
   const owners = new Map();
   const blanks = [];
+  const emptyFiles = [];
   for (const path of paths) {
     const parsed = parseEntryTableText(readFileSync(path, 'utf8'), path);
     if (!parsed.ok) return { ok: false, why: parsed.why };
+    if (parsed.empty) emptyFiles.push(path);
     for (const [key, value] of parsed.entries) {
       if (keys.has(key)) {
         return { ok: false, why: '同一语言的多份表里 key 重复：' + key + '（' + owners.get(key) + ' 与 ' + path + '）' };
@@ -167,7 +180,7 @@ export function loadEntryTable(root, lang) {
     }
     for (const blank of blanksOf(parsed.entries)) blanks.push({ ...blank, path });
   }
-  return { ok: true, paths, keys, entries, blanks };
+  return { ok: true, paths, keys, entries, blanks, emptyFiles };
 }
 
 /**
@@ -187,8 +200,9 @@ export function loadTablesByPackage(root, langs) {
       if (!parsed.ok) { errors.push({ path, why: parsed.why }); continue; }
       if (!packages.has(pkg)) packages.set(pkg, new Map());
       const byLang = packages.get(pkg);
-      const table = byLang.get(want) ?? { files: [], entries: new Map(), blanks: [] };
+      const table = byLang.get(want) ?? { files: [], entries: new Map(), blanks: [], emptyFiles: [] };
       table.files.push(path);
+      if (parsed.empty) table.emptyFiles.push(path);
       for (const [key, value] of parsed.entries) {
         const owner = pkg + '/' + want + '/' + key;
         if (owners.has(owner)) {

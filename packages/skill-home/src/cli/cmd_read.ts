@@ -35,6 +35,7 @@ import { resolveLanguageOrFail } from './language.js';
 // #706 · 配置体检：设置页专用的一条只读命令，同走「进分派层之前拦下」这条口（判据住 src/health.ts）。
 import { isHealthCheckKey, runHealthCheckKey } from './health.js';
 import { helpReuseWindowOf } from 'base-paint/save-html';
+import { runWithLanguage } from 'base-entries';
 
 const DEFAULT_TIMEOUT_MS = 30000;
 
@@ -230,6 +231,7 @@ function parseArgs(a: string[]): { key: string | undefined; params: string | und
 async function main() {
   const o = parseArgs(process.argv.slice(2));
   if (!o.key) fail(2, '用法：home-cmd-read <home.key> [--params JSON对象] [--html 输出路径] [--timeout 毫秒] [--language zh|en]');
+  const key = o.key;
   let params: Record<string, unknown> = {};
   if (o.params !== undefined) {
     try { params = JSON.parse(o.params); } catch (e) { fail(2, '--params 须为 JSON'); }
@@ -245,88 +247,88 @@ async function main() {
   // 本轮只接线与校验：不设语言时行为与产物逐字节不变（渲染消费方随词条层 #1200 落地后接）。
   // 位置：**配置 key 拦下之后**——配置面那几条命令（含首次落配置文件）不该被语言解析拦在前头。
   const language = resolveLanguageOrFail(process.argv.slice(2));
-  void language;
-  // #706 · 配置体检（`home.config.check`）：同样是设置页专用的只读命令，同样在预检之前拦下——
-  // 它要报的正是「库在哪、通不通」，不能先要求库目录已配。只读：不建目录、不写文件、不落默认配置。
-  if (isHealthCheckKey(o.key)) {
-    process.stdout.write(runHealthCheckKey(o.key) + '\n');
-    return;
-  }
-  preflight();
-  try { homeShapeFor(o.key as HomeKey); } catch (e) { fail(3, (e as Error).message); }
-  const key = o.key as string;
-  const timer = setTimeout(() => {
-    toast('cmd_read 超时 terminate（' + o.timeout + 'ms），已终止取数');
-    process.exit(4);
-  }, o.timeout);
-  if (typeof timer.unref === 'function') timer.unref();
-  let delivery: HomeHtmlDelivery | undefined;
-  try {
-    // #190：`home.help.lookup` 在**开库之前**分派（只读页不建库）；#707：备份四支同理（恢复要覆盖库文件）。
-    const help = key === 'home.help.lookup' ? dispatchHelp(params) : null;
-    const offline = help ? null : dispatchBackup(key, params);
-    // #962：数据键短路——只读＋不落盘（`html: ''` 文本态，不进下面那条 HTML 交付链）。
-    if (help === null && offline === null && isDataKey(key)) {
-      const env = buildHomeEnvelope(key, dispatchData(key, params));
-      process.stdout.write(JSON.stringify(env) + '\n');
-      clearTimeout(timer);
+  return runWithLanguage(language.text, async () => { // 语言上下文：整段执行体按同一个渲染语言取词（不设语言＝zh，产物逐字节不变）。
+    // #706 · 配置体检（`home.config.check`）：同样是设置页专用的只读命令，同样在预检之前拦下——
+    // 它要报的正是「库在哪、通不通」，不能先要求库目录已配。只读：不建目录、不写文件、不落默认配置。
+    if (isHealthCheckKey(key)) {
+      process.stdout.write(runHealthCheckKey(key) + '\n');
       return;
     }
-    const env = buildHomeEnvelope(key, help ? help.data : offline !== null ? offline : dispatch(key, params));
-    // 分节页（模板填充后）：**降级路径**用（#872 起族页优先），`--html` 支与速查支共用这一处，不抄第二份。
-    const sectionHtml = (): string => fillTemplate(loadTemplate(templateFor(key)), renderEnvelopeHtml(env));
-    // #872 · 页族装配（交付链缺的那一段）：数据与过程命令先按 `(命令，场景预设)` 解析页族，
-    // 装得上就用族页（`dist/<域>/pages/<族>.js` 的 `renderFamilyPage`）；族名未知／模块不在／
-    // 装配抛错 → 降级上面那份分节页，并在 stderr 记一条 note（不静默、退出码不变）。
-    // #928 收口：体积门撤除（用户裁定「不限制 html 文件大小」）——两条路都不再按字节数拦。
-    const familyHtml = help === null ? await renderFamilyHtml(key, params, env) : null;
-    if (help === null && familyHtml === null) note('未命中页族，落 21 模板分节页：' + key);
-    const pageHtml = (): string => familyHtml ?? sectionHtml();
-    // #801 · 数据与过程命令默认落 HTML（`help === null` 才走这里；HELP 键的三支冻结不动）。
-    // 落点意图＝ `{dir: <库目录>/home_manager_html/, stem: <命令中文名>_<场景 id>}`（stem 照票 2 契约），
-    // 时间戳与同秒递补由共用件钉死。给了 `--html` 则显式优先（只落一份、单回执，照账单／卡路里先例）。
-    if (help === null) {
-      const landing = { dir: resolveHtmlDir(), stem: resolveSceneStem(key, params) };
-      delivery = deliverHtml({
-        ...(o.html === undefined ? {} : { explicit: o.html }),
-        target: landing,
-        html: pageHtml(),
-      });
-      note('HTML 已写：' + delivery.path + '（' + delivery.bytes + ' 字节 utf8）');
-    } else {
-      // `--html <路径>` 既有语义**原样保留**（HELP 键的通用产物出口）：写本包 envelope 分节页。
-      if (o.html !== undefined) {
-        try {
-          writeFileSync(o.html, sectionHtml(), 'utf8');
-          note('HTML 已写：' + o.html + '（utf8）');
-        } catch (e) {
-          if (e instanceof HomeRenderError) fail(5, (e as Error).message);
-          fail(5, 'HTML 写盘失败：' + o.html + '（' + (e as Error).message + '）');
-        }
+    preflight();
+    try { homeShapeFor(key as HomeKey); } catch (e) { fail(3, (e as Error).message); }
+    const timer = setTimeout(() => {
+      toast('cmd_read 超时 terminate（' + o.timeout + 'ms），已终止取数');
+      process.exit(4);
+    }, o.timeout);
+    if (typeof timer.unref === 'function') timer.unref();
+    let delivery: HomeHtmlDelivery | undefined;
+    try {
+      // #190：`home.help.lookup` 在**开库之前**分派（只读页不建库）；#707：备份四支同理（恢复要覆盖库文件）。
+      const help = key === 'home.help.lookup' ? dispatchHelp(params) : null;
+      const offline = help ? null : dispatchBackup(key, params);
+      // #962：数据键短路——只读＋不落盘（`html: ''` 文本态，不进下面那条 HTML 交付链）。
+      if (help === null && offline === null && isDataKey(key)) {
+        const env = buildHomeEnvelope(key, dispatchData(key, params));
+        process.stdout.write(JSON.stringify(env) + '\n');
+        clearTimeout(timer);
+        return;
       }
-      // #190：本键的产物（缺省＝HELP 全壳页自带 html；`mode:"lookup"`＝速查表分节页）。
-      if (help?.deliver !== undefined) {
-        const html = help.deliver.html ?? sectionHtml();
-        delivery = deliverHomeHelp({
-          targetDir: help.deliver.targetDir, stem: help.deliver.stem, html, reuseMs: help.deliver.reuseMs,
-          ...(help.deliver.dataKey === undefined ? {} : { dataKey: help.deliver.dataKey }),
+      const env = buildHomeEnvelope(key, help ? help.data : offline !== null ? offline : dispatch(key, params));
+      // 分节页（模板填充后）：**降级路径**用（#872 起族页优先），`--html` 支与速查支共用这一处，不抄第二份。
+      const sectionHtml = (): string => fillTemplate(loadTemplate(templateFor(key)), renderEnvelopeHtml(env));
+      // #872 · 页族装配（交付链缺的那一段）：数据与过程命令先按 `(命令，场景预设)` 解析页族，
+      // 装得上就用族页（`dist/<域>/pages/<族>.js` 的 `renderFamilyPage`）；族名未知／模块不在／
+      // 装配抛错 → 降级上面那份分节页，并在 stderr 记一条 note（不静默、退出码不变）。
+      // #928 收口：体积门撤除（用户裁定「不限制 html 文件大小」）——两条路都不再按字节数拦。
+      const familyHtml = help === null ? await renderFamilyHtml(key, params, env) : null;
+      if (help === null && familyHtml === null) note('未命中页族，落 21 模板分节页：' + key);
+      const pageHtml = (): string => familyHtml ?? sectionHtml();
+      // #801 · 数据与过程命令默认落 HTML（`help === null` 才走这里；HELP 键的三支冻结不动）。
+      // 落点意图＝ `{dir: <库目录>/home_manager_html/, stem: <命令中文名>_<场景 id>}`（stem 照票 2 契约），
+      // 时间戳与同秒递补由共用件钉死。给了 `--html` 则显式优先（只落一份、单回执，照账单／卡路里先例）。
+      if (help === null) {
+        const landing = { dir: resolveHtmlDir(), stem: resolveSceneStem(key, params) };
+        delivery = deliverHtml({
+          ...(o.html === undefined ? {} : { explicit: o.html }),
+          target: landing,
+          html: pageHtml(),
         });
         note('HTML 已写：' + delivery.path + '（' + delivery.bytes + ' 字节 utf8）');
+      } else {
+        // `--html <路径>` 既有语义**原样保留**（HELP 键的通用产物出口）：写本包 envelope 分节页。
+        if (o.html !== undefined) {
+          try {
+            writeFileSync(o.html, sectionHtml(), 'utf8');
+            note('HTML 已写：' + o.html + '（utf8）');
+          } catch (e) {
+            if (e instanceof HomeRenderError) fail(5, (e as Error).message);
+            fail(5, 'HTML 写盘失败：' + o.html + '（' + (e as Error).message + '）');
+          }
+        }
+        // #190：本键的产物（缺省＝HELP 全壳页自带 html；`mode:"lookup"`＝速查表分节页）。
+        if (help?.deliver !== undefined) {
+          const html = help.deliver.html ?? sectionHtml();
+          delivery = deliverHomeHelp({
+            targetDir: help.deliver.targetDir, stem: help.deliver.stem, html, reuseMs: help.deliver.reuseMs,
+            ...(help.deliver.dataKey === undefined ? {} : { dataKey: help.deliver.dataKey }),
+          });
+          note('HTML 已写：' + delivery.path + '（' + delivery.bytes + ' 字节 utf8）');
+        }
       }
+      // #83 口径的顶层追加：`delivery{mode,path,bytes}` **只追加**，既有字段一字不改、序不变。
+      process.stdout.write(JSON.stringify(delivery ? { ...env, delivery } : env) + '\n');
+      clearTimeout(timer);
+    } catch (e) {
+      clearTimeout(timer);
+      if (e instanceof HomePolicyError) fail(2, (e as Error).message);
+      if (e instanceof HomeFetchError) fail(4, (e as Error).message);
+      if (e instanceof HomeRenderError) fail(5, (e as Error).message);
+      // 配置件（`base-link-core`）的报错本身就是人话（带行号与文件名）：归「预检」那一档原样交回。
+      // #695：这一档也接住「测试缺隔离」——跑在测试运行器里却要落到真实家目录时响亮失败。
+      if (/(配置文件|配置项|测试缺隔离)/.test((e as Error).message ?? '')) fail(1, (e as Error).message);
+      fail(4, '取数失败：' + (e as Error).message);
     }
-    // #83 口径的顶层追加：`delivery{mode,path,bytes}` **只追加**，既有字段一字不改、序不变。
-    process.stdout.write(JSON.stringify(delivery ? { ...env, delivery } : env) + '\n');
-    clearTimeout(timer);
-  } catch (e) {
-    clearTimeout(timer);
-    if (e instanceof HomePolicyError) fail(2, (e as Error).message);
-    if (e instanceof HomeFetchError) fail(4, (e as Error).message);
-    if (e instanceof HomeRenderError) fail(5, (e as Error).message);
-    // 配置件（`base-link-core`）的报错本身就是人话（带行号与文件名）：归「预检」那一档原样交回。
-    // #695：这一档也接住「测试缺隔离」——跑在测试运行器里却要落到真实家目录时响亮失败。
-    if (/(配置文件|配置项|测试缺隔离)/.test((e as Error).message ?? '')) fail(1, (e as Error).message);
-    fail(4, '取数失败：' + (e as Error).message);
-  }
+  });
 }
 
 void main();

@@ -128,7 +128,7 @@ test('#1306 真仓库读数：四道 i18n 门 exit 0 且报真读数', () => {
   const run = (gate) => spawnSync(NODE, [join(ROOT, 'tooling', gate)], { encoding: 'utf8', cwd: ROOT });
   const entries = run('check-i18n-entries.mjs');
   assert.equal(entries.status, 0, '缺词条门必须 exit 0：' + entries.stderr + entries.stdout);
-  assert.match(entries.stdout, /RESULT: files=[1-9]\d* keys=[1-9]\d* missing=0 blanks=0\b/,
+  assert.match(entries.stdout, /RESULT: files=[1-9]\d* keys=[1-9]\d* missing=0 blanks=0 empty=\d+\b/,
     '缺词条门必须读到真范围且零缺、零空白：' + entries.stdout);
   assert.match(entries.stdout, /PASS: [1-9]\d* 件已迁入文件/, '缺词条门末行必须说清查了几件');
 
@@ -147,7 +147,7 @@ test('#1306 真仓库读数：四道 i18n 门 exit 0 且报真读数', () => {
 });
 
 test('#1306 两道带自证的门：--selftest 自证都过（红绿样例随门走，不靠人手复现）', () => {
-  const expected = { 'check-i18n-entries.mjs': /七条自证 OK/, 'check-i18n-params.mjs': /九条自证 OK/ };
+  const expected = { 'check-i18n-entries.mjs': /七条自证 OK/, 'check-i18n-params.mjs': /十条自证 OK/ };
   for (const [gate, tag] of Object.entries(expected)) {
     const r = spawnSync(NODE, [join(ROOT, 'tooling', gate), '--selftest'], { encoding: 'utf8', cwd: ROOT });
     assert.equal(r.status, 0, gate + ' --selftest 必须 exit 0：' + r.stderr + r.stdout);

@@ -171,7 +171,7 @@ function main() {
   if (LIST) {
     for (const f of r.files) console.log('KEY ' + f.file + '  ' + f.keys.length + ' 个：' + f.keys.join(','));
     console.log('RESULT: files=' + r.files.length + ' keys=' + r.keys.length + ' missing=' + r.missing.length
-      + ' blanks=' + r.blanks.length);
+      + ' blanks=' + r.blanks.length + ' empty=' + countEmptyTables());
     return;
   }
   let bad = 0;
@@ -180,8 +180,13 @@ function main() {
   for (const m of r.missing) { console.error('RED 缺词条：' + m.file + ' 的 key ' + m.key + ' 在语言 ' + m.lang + ' 的词条表里没有'); bad += 1; }
   for (const b of r.blanks) { console.error('RED 空白词条：语言 ' + b.lang + ' 的表 ' + b.path + ' 里 key ' + b.key + ' 的值是空串／纯空白（不是「显式空白」，是待译漏记）'); bad += 1; }
   console.log('TABLES: ' + [...LANGUAGES].map((l) => { const t = auditTables(l); return l + '=' + t; }).join(' '));
+  const empties = [...LANGUAGES].map((l) => [l, emptyTablesOf(l)]).filter(([, files]) => files.length > 0);
+  if (empties.length > 0) {
+    console.log('EMPTY-TABLES: ' + empties.map(([l, files]) => l + '=' + files.length + '（' + files.join('、') + '）').join(' ')
+      + '——0 条空表是迁移期暂态（这一包还没迁 / 这一门语言还没录），显式报数，不算「查过没问题」');
+  }
   console.log('RESULT: files=' + r.files.length + ' keys=' + r.keys.length + ' missing=' + r.missing.length
-    + ' blanks=' + r.blanks.length);
+    + ' blanks=' + r.blanks.length + ' empty=' + countEmptyTables());
   if (bad > 0) {
     console.error('FAIL: 缺词条门未过（' + bad + ' 处；缺词条／空白词条＝迁移漏记，补词条表或补迁入，不许删清单行）');
     process.exit(1);
@@ -194,6 +199,18 @@ function main() {
 function auditTables(lang) {
   const t = loadEntryTable(ROOT_DIR, lang);
   return t.ok ? t.keys.size : 'MISSING';
+}
+
+/** 空表（0 条、合法暂态）的文件清单：相对仓库根、正斜杠，读数可复跑。 */
+function emptyTablesOf(lang) {
+  const t = loadEntryTable(ROOT_DIR, lang);
+  if (!t.ok) return [];
+  return (t.emptyFiles ?? []).map((p) => p.startsWith(ROOT_DIR) ? p.slice(ROOT_DIR.length).replace(/^[\\/]/, '').replace(/\\/g, '/') : p);
+}
+
+/** 空表总数（两门语言合计）：RESULT 里的显式读数。 */
+function countEmptyTables() {
+  return [...LANGUAGES].reduce((n, lang) => n + emptyTablesOf(lang).length, 0);
 }
 
 function selftest(scope) {
