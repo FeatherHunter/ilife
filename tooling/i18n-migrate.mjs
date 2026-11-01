@@ -145,6 +145,16 @@ function startIndexOf(root, files) {
   return starts;
 }
 
+/** 数据位 allowlist：与 check-i18n-entries／check-i18n-keys 读同一份 tooling/i18n-scope.json。
+ *  迁移器的「收口」读数要能到 migrated=0，就必须认同一份豁免，否则机械候选里那些数据值会永远挂在账上。
+ *  allowlist 缺失不算错（老夹具／临时仓根可能没有这份共享账本）。 */
+export function allowlistOf(root) {
+  const path = join(root, 'tooling', 'i18n-scope.json');
+  if (!existsSync(path)) return new Set();
+  let data;
+  try { data = JSON.parse(readFileSync(path, 'utf8')); } catch (e) { throw new Error('读不出 allowlist：' + path + ' → ' + e.message); }
+  return new Set(Array.isArray(data.allowlist) ? data.allowlist.filter((one) => typeof one === 'string') : []);
+}
 /** 跑一批文件：算计划 → 写盘（--dry 时不写）→ 返回报告。 */
 export function migrate(options) {
   const root = options.root === undefined ? ROOT : options.root;
@@ -152,7 +162,8 @@ export function migrate(options) {
   const files = options.files;
   const dry = options.dry === true;
   const starts = startIndexOf(root, files);
-  const plans = files.map((rel) => planFile(root, rel, { ticket, startIndex: starts.get(rel) }));
+  const allowlist = options.allowlist === undefined ? allowlistOf(root) : options.allowlist;
+  const plans = files.map((rel) => planFile(root, rel, { ticket, startIndex: starts.get(rel), allowlist }));
   const report = {
     tool: 'i18n-migrate',
     version: TOOL_VERSION,

@@ -64,6 +64,11 @@ function finish(state) {
 function readText(root, rel) {
   return readFileSync(join(root, rel), 'utf8');
 }
+
+function fsWrite(abs, text) {
+  mkdirSync(dirname(abs), { recursive: true });
+  writeFileSync(abs, text, 'utf8');
+}
 /** 12 条：口径（迁什么、怎么整句化、什么不迁、fail-closed、幂等、门禁可读）。
  *  migrate 由调用方注入（不从 CLI 反向 import：那会与 --selftest 的动态 import 成环）。
  */
@@ -255,6 +260,63 @@ export function runMigrateSelftest(api) {
     const root15 = mk({ [REL15]: ['export function pick(): string {', "  return '大小写要留着';", '}', ''].join('\n') });
     migrate({ root: root15, files: [REL15], ticket: 997, dry: false });
     check('件名大小写原样保留（ui-candidatePick，不折成 candidatepick）', readText(root15, 'packages/demo-pkg/src/entries/zh.ts').indexOf("'demo-pkg.ui-candidatePick.c001'") >= 0, readText(root15, 'packages/demo-pkg/src/entries/zh.ts'));
+    // ⑯ 数据位 allowlist：与 entries／keys 两道门共用同一份（迁移器收口要能到 migrated=0）
+    const REL16 = 'packages/demo-pkg/src/ui/status.ts';
+    const src16 = [
+      'export function statusOf(): string {',
+      "  return '未做';",
+      '}',
+      '',
+    ].join('\n');
+    const root16 = mk({ [REL16]: src16 });
+    const report16 = migrate({ root: root16, files: [REL16], ticket: 997, dry: false, allowlist: new Set(['未做']) });
+    check('allowlist 里的数据值不建词条（整件按口径不迁）', report16.files[0].status === 'skip' && report16.totals.entries === 0, report16.files[0].status + ' ' + JSON.stringify(report16.totals));
+    check('allowlist 跳过的字面量留在源码里，一个字节不动', readText(root16, REL16) === src16);
+    check('allowlist 跳过记进报告（SKIP_ALLOWLIST）', report16.files[0].skips.some((skip) => skip.reason === 'SKIP_ALLOWLIST' && skip.value.indexOf('未做') >= 0), JSON.stringify(report16.files[0].skips));
+    check('allowlist 不进词条表', readText(root16, 'packages/demo-pkg/src/entries/zh.ts') === EMPTY_ZH);
+
+    // ⑰ 同文件里非 allowlist 的真文案照迁（豁免只针对那一条，不整件放宽）
+    const REL17 = 'packages/demo-pkg/src/ui/mixed.ts';
+    const src17 = [
+      'export function mixed(): string {',
+      "  return '未做';",
+      '}',
+      'export function real(): string {',
+      "  return '还没做';",
+      '}',
+      '',
+    ].join('\n');
+    const root17 = mk({ [REL17]: src17 });
+    const report17 = migrate({ root: root17, files: [REL17], ticket: 997, dry: false, allowlist: new Set(['未做']) });
+    check('同文件的真文案照迁（1 条），数据值跳过', report17.totals.entries === 1 && report17.totals.migrated === 1, JSON.stringify(report17.totals));
+    const text17 = readText(root17, REL17);
+    check('数据值留在源码、真文案换成 m(...)', text17.indexOf("return '未做';") >= 0 && text17.indexOf("return m('demo-pkg.ui-mixed.c001');") >= 0, text17);
+
+    // ⑱ 缺省从仓根的 tooling/i18n-scope.json 读 allowlist（与门读同一份）
+    const REL18 = 'packages/demo-pkg/src/ui/fromscope.ts';
+    const src18 = ['export function fromScope(): string {', "  return '派生';", '}', ''].join('\n');
+    const root18 = mk({ [REL18]: src18 });
+    fsWrite(join(root18, 'tooling', 'i18n-scope.json'), JSON.stringify({ allowlist: ['派生'] }, null, 2) + '\n');
+    const report18 = migrate({ root: root18, files: [REL18], ticket: 997, dry: false });
+    check('缺省读 tooling/i18n-scope.json 的 allowlist', report18.files[0].status === 'skip' && readText(root18, REL18) === src18, report18.files[0].status + ' ' + readText(root18, REL18));
+
+    // ⑲ 含参拼串按片段判数据：所有含汉字的片段都登记过 ⇒ 整句跳过；混入真文案的照迁
+    const REL19 = 'packages/demo-pkg/src/data/backup.ts';
+    const src19 = [
+      'export function backupName(): string {',
+      "  return '演示备份_' + String(Date.now()) + '.json';",
+      '}',
+      'export function statusText(): string {',
+      "  return '演示备份_' + String(Date.now()) + '已完成';",
+      '}',
+      '',
+    ].join('\n');
+    const root19 = mk({ [REL19]: src19 });
+    const report19 = migrate({ root: root19, files: [REL19], ticket: 997, dry: false, allowlist: new Set(['演示备份_']) });
+    check('含参数据拼串按片段判数据（不建词条、记 SKIP_ALLOWLIST）', report19.files[0].skips.some((skip) => skip.reason === 'SKIP_ALLOWLIST' && skip.value.indexOf('演示备份_') >= 0), JSON.stringify(report19.files[0].skips));
+    check('同文件混入真文案的拼串照迁（1 条）', report19.totals.entries === 1 && report19.totals.migrated === 1, JSON.stringify(report19.totals));
+    const text19 = readText(root19, REL19);
+    check('数据拼串留源码、真文案换 m(...)', text19.indexOf("'演示备份_' + String(Date.now()) + '.json'") >= 0 && text19.indexOf("m('demo-pkg.data-backup.c001'") >= 0, text19);
   } finally {
     for (const root of roots) rmSync(root, { recursive: true, force: true });
   }

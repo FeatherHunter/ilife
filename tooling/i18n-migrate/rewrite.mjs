@@ -67,6 +67,24 @@ function indentOf(src, node) {
   return m === null ? '' : m[0];
 }
 
+/** 句子的文字片段：去掉 {p0} 这类占位符后剩下的部分。 */
+function textFragmentsOf(template) {
+  return template.split(/\{[A-Za-z_][A-Za-z0-9_]*\}/);
+}
+
+/**
+ * 数据位判据（ADR-0004 三条不译）：整句登记在 allowlist 里，或每个含汉字的片段都登记过。
+ * 后者覆盖「数据前缀＋参数」的拼串（如备份名 '私家大厨备份_' + stamp() + '.json'）：
+ * 片段都是数据值 ⇒ 这句本身没有要译的文案，迁移器收口才能到 migrated=0。
+ */
+function isDataSentence(template, allowlist) {
+  if (allowlist.has(template)) return true;
+  const fragments = textFragmentsOf(template)
+    .map((part) => part.trim())
+    .filter((part) => CANDIDATE_RE.test(part));
+  return fragments.length > 0 && fragments.every((part) => allowlist.has(part));
+}
+
 /** 这个字面量／模板里有没有候选（汉字或假名）。 */
 function hasCandidate(node) {
   if (ts.isTemplateExpression(node)) {
@@ -482,6 +500,13 @@ export function planFile(root, rel, opts) {
       plan.status = 'unsupported';
       plan.skips.push({ reason: 'UNSUPPORTED', detail: sentence.why, line, value });
       plan.why = sentence.why + '（第 ' + line + ' 行）';
+      continue;
+    }
+    // 数据位（ADR-0004 三条不译）：与 tooling/i18n-scope.json 的 allowlist 同值 ⇒ 不建词条。
+    // 三道具（缺词条／key 残留／迁移器收口）共用同一份 allowlist，避免「迁移器说还差 8 条、门说零残留」的口径分裂。
+    // 无参单元按整句比；含参单元按「所有含汉字的片段都登记过」判数据（详见 isDataSentence）。
+    if (opts.allowlist !== undefined && isDataSentence(sentence.template, opts.allowlist)) {
+      plan.skips.push({ reason: 'SKIP_ALLOWLIST', detail: '数据位：在 tooling/i18n-scope.json 的 allowlist 里（ADR-0004 数据不译）', line, value });
       continue;
     }
     // 整段 HTML／脚本串：整句化出来是一坨标签，译者改不了、也不该整段换；交真人拆成文案再迁
