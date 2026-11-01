@@ -31,6 +31,7 @@
 
 import { charts } from './charts.js';
 import { renderActionBar, renderEmptyState, renderErrorReceipt, renderStatusBadge, renderToast, TOAST_ICON_GLYPHS, TOAST_ICON_LABELS } from './controls.js';
+import { m } from './entries/index.js';
 import { BODY_FONT_STACK } from './font.js';
 import {
   ACTION_BAR_DEFAULTS,
@@ -931,11 +932,8 @@ export interface KpiCardInput {
   readonly pending?: boolean;
 }
 
-/** 未记录态的两个字面（值位占位与徽标词），与仓内「缺数一律写 —」同字。 */
+/** 未记录态的值位占位，与仓内「缺数一律写 —」同字（徽标词「未记录」是文案，渲染期取词条）。 */
 const KPI_PENDING_MARK = '\u2014';
-const KPI_PENDING_TEXT = '未记录';
-/** 「还差」徽章的前缀词（`gap` 位）。 */
-const KPI_GAP_PREFIX = '还差 ';
 
 /** #418 条位判档（只此一处）：>=90 高档／>=60 中档／其余低档。 */
 function kpiBarClass(pct: number): string {
@@ -1000,11 +998,15 @@ export function renderKpiCard(input: KpiCardInput): string {
     const gapValue = reqText((card.gap as { value: unknown }).value, 'renderKpiCard: input.gap.value');
     const gapUnit = optText((card.gap as { unit?: string }).unit);
     parts.push('<div class="' + blockPart('kpiCard', 'badge') + '">'
-      + '<span class="' + blockPart('kpiCard', 'gap') + '">' + KPI_GAP_PREFIX + esc(gapValue)
-      + (gapUnit === undefined ? '' : ' ' + esc(gapUnit)) + '</span></div>');
+      + '<span class="' + blockPart('kpiCard', 'gap') + '">'
+      + m('base-render.blocks.c009', {
+        p1: esc(gapValue),
+        p2: gapUnit === undefined ? '' : ' ' + esc(gapUnit),
+      })
+      + '</span></div>');
   } else if (pending) {
     parts.push('<div class="' + blockPart('kpiCard', 'badge') + '">'
-      + '<span class="' + blockPart('kpiCard', 'gap') + '">' + KPI_PENDING_TEXT + '</span></div>');
+      + '<span class="' + blockPart('kpiCard', 'gap') + '">' + m('base-render.blocks.c008') + '</span></div>');
   }
   parts.push('</div>');
   return parts.join('');
@@ -1155,7 +1157,7 @@ export function renderDataTable(input: DataTableInput): string {
     return { key, label, align: align as DataTableAlign, bar: bar === true };
   });
   if (table.rows.length === 0) {
-    const text = optText(table.emptyText) ?? '无数据';
+    const text = optText(table.emptyText) ?? m('base-render.blocks.c001');
     return '<div class="' + blockRoot('dataTable') + '">' + renderEmptyState({ text }) + '</div>';
   }
   const head = '<thead><tr>' + columns.map((column) =>
@@ -1349,7 +1351,7 @@ export function renderListRows(input: ListRowsInput): string {
   const variant = optClosed(list.variant, LIST_ROWS_VARIANTS, 'renderListRows: input.variant');
   const twoLine = variant === 'two-line';
   if (list.items.length === 0) {
-    const text = optText(list.emptyText) ?? '无数据';
+    const text = optText(list.emptyText) ?? m('base-render.blocks.c001');
     return '<div class="' + blockRoot('listRows') + '">' + renderEmptyState({ text }) + '</div>';
   }
   const rows = list.items.map((item, i) => {
@@ -1426,7 +1428,7 @@ export function renderPreBlock(input: PreBlockInput): string {
   if (block.actionId !== undefined) {
     const actionId = reqText(block.actionId, 'renderPreBlock: input.actionId');
     const text = typeof block.copyText === 'string' ? block.copyText : command;
-    const copyLabel = optText(block.copyLabel) ?? '复制指令';
+    const copyLabel = optText(block.copyLabel) ?? m('base-render.blocks.c002');
     parts.push('<button type="button" class="' + STYLE_PREFIX + 'copy-btn ' + STYLE_PREFIX + 'copy-btn-ghost" '
       + ACTION_ID_ATTR + '="' + esc(actionId) + '" ' + DEFAULT_DATA_ATTR + '="' + esc(text) + '">'
       + esc(copyLabel) + '</button>');
@@ -1452,7 +1454,7 @@ function typeBadgeHtml(badge: string | SceneTypeBadge): string {
   }
   assertPlainObject(badge, 'renderDetailSection: types[] 元素');
   const element = badge as SceneTypeBadge;
-  const text = reqText(element.text, 'renderDetailSection: types[] 元素的 text');
+  const text = reqText(element.text, m('base-render.blocks.c003'));
   const style: string[] = [];
   if (typeof element.bg === 'string' && element.bg !== '') style.push('background:' + element.bg);
   if (typeof element.fg === 'string' && element.fg !== '') style.push('color:' + element.fg);
@@ -1480,8 +1482,8 @@ export function renderDetailSection(input: DetailSectionInput): string {
   parts.push('<h2 class="' + blockPart('detailSection', 'title') + '">' + esc(title) + '</h2>');
   parts.push('<div class="' + blockPart('detailSection', 'meta') + '">'
     + '<span class="' + blockPart('detailSection', 'wake') + '">' + esc(wakeWord) + '</span>');
-  if (scene.status === '【待开发】') {
-    parts.push('<span class="' + blockPart('detailSection', 'dev') + '">待开发</span>');
+  if (scene.status === SCENE_STATUS[1]) {
+    parts.push('<span class="' + blockPart('detailSection', 'dev') + '">' + m('base-render.blocks.c011') + '</span>');
   }
   if (scene.types !== undefined) {
     if (!Array.isArray(scene.types)) badInput('renderDetailSection: input.scene.types 必须是数组');
@@ -1582,9 +1584,8 @@ export interface ParamFormInput {
   readonly variant?: ParamFormVariant;
 }
 
-/** 错误行的前缀词（#950 回灌·字段行）：与原型 `parts-08-表与输入.mjs:603` 同一句读法
- *  （`要改：2,180.00 超过单笔上限 2,000`），件出前缀、调用方只说错在哪。 */
-const PARAM_ERROR_PREFIX = '要改：';
+/** 错误行前缀词（#950 回灌·字段行）：与原型 `parts-08-表与输入.mjs:603` 同一句读法
+ *  （`要改：2,180.00 超过单笔上限 2,000`）——件出前缀词条 `base-render.blocks.c010`、调用方只说错在哪。 */
 /** 字段槽 id 的命名空间前缀（`ilife-param-form-<name>-help|error`）。 */
 const PARAM_FORM_ID_PREFIX = 'ilife-param-form-';
 
@@ -1660,7 +1661,7 @@ export function renderParamForm(input: ParamFormInput): string {
     const errorHtml = errorText === undefined
       ? ''
       : '<span class="' + blockPart('paramForm', 'error') + '" id="' + errorId + '">'
-        + PARAM_ERROR_PREFIX + esc(errorText) + '</span>';
+        + m('base-render.blocks.c010') + esc(errorText) + '</span>';
     /** 单位后缀：给了才包 `-control`（那一层就是后缀的落点），不给时控件原样落进 `label`。 */
     const wrapControl = (html: string): string => (unit === undefined ? html
       : '<span class="' + blockPart('paramForm', 'control') + '">' + html
@@ -2250,7 +2251,7 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  font-size: 12px;',
     '}',
     '.' + p + 'block-op-head-time::before {',
-    '  content: "写入时间 ";',
+    '  content: "' + m('base-render.blocks.c004') + '";',
     '}',
     // #421 页面融合四件的样式随本区落盘（同 #420 处置：四件都是页面级、不属 12 区块，
     // `BLOCK_STYLE_SECTIONS` 由 `test/blocks.test.mjs` 钉死 12 项，故不新增样式区、不新增 token）。
@@ -2368,7 +2369,7 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  color: var(--blue);',
     '  font-variant-numeric: tabular-nums;',
     '}',
-    '/* 判地字面 · 授权照抄：#f3ecdc（轨道底；与规格 §1 的 `--pill` 同一枚一次性字面） */',
+    m('base-render.blocks.c005'),
     '.' + p + 'block-dist-row.is-ticket .' + p + 'block-dist-row-track {',
     '  display: block;',
     '  box-sizing: border-box;',
@@ -2379,7 +2380,7 @@ const BLOCK_SECTION_BUILDERS: Record<BlockStyleSection, (prefix: string) => stri
     '  background: #f3ecdc;',
     '  overflow: hidden;',
     '}',
-    '/* 判地字面 · 授权照抄：#c96f3f（占比条渐变起点；出处＝判地 `.scale-fill`，规格 §1 未列，待并进皮肤） */',
+    m('base-render.blocks.c006'),
     '.' + p + 'block-dist-row.is-ticket .' + p + 'block-dist-row-fill {',
     '  background: linear-gradient(90deg, #c96f3f, var(--blue));',
     '}',
@@ -3604,7 +3605,7 @@ export function blocksCss(input?: BlocksCssInput): string {
   const prefix = input !== undefined && input !== null && typeof input.prefix === 'string' && input.prefix !== ''
     ? input.prefix
     : STYLE_PREFIX;
-  const parts: string[] = ['/* base-paint 区块样式资产 · #104 · 12 区 */'];
+  const parts: string[] = [m('base-render.blocks.c007')];
   for (const section of BLOCK_STYLE_SECTIONS) {
     parts.push('/* block-' + sectionSlug(section) + ' */');
     parts.push(BLOCK_SECTION_BUILDERS[section](prefix));

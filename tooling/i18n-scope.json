@@ -1,5 +1,5 @@
 {
-  "generatedBy": "#1199（门禁改造）",
+  "generatedBy": "#1199（范围由各迁移票登记；#1205／#1232 收票时补登）",
   "ticket": "#1199",
   "purpose": "**已迁入词条层的文件清单**（缺词条门与 key 残留门的状态账号本）：范围 0 件＝门显式报「范围 0 件」，不许空转当绿",
   "notation": {
@@ -7,7 +7,14 @@
     "allowlist": "**两道门共用**的逐串豁免清单（#1205）：key 残留门的残留豁免 ＋ 缺词条门把被误认成消息 key 的非文案串（协议字段值等）从判据里剔除。放行只许是「语义上本就不该进词条的位」（命令关键字冻结／用户数据不译／派生项），逐条登记；真残留不许靠它变绿。",
     "scopeIsEmpty": "files=[] 时两道门都过，但必须显式印 EMPTY-SCOPE 与「范围 0 件」读数（照 tooling/check-base-floor.mjs:139 先例）"
   },
-  "allowlist": ["#借出", "#未还", "#已还", "#收回", "借贷/收回", "record.add"],
+  "allowlist": [
+    "#借出",
+    "#未还",
+    "#已还",
+    "#收回",
+    "借贷/收回",
+    "record.add"
+  ],
   "files": [
     "packages/base-render/src/components/progress-list/model.ts",
     "packages/base-render/src/components/progress-list/attrs.ts",
@@ -39,6 +46,8 @@
     "packages/skill-bill/src/write/rowEditorTable.ts",
     "packages/skill-bill/src/write/saySheet.ts",
     "packages/skill-bill/src/write/scene-expense.ts",
-    "packages/skill-bill/src/write/scene-income.ts"
+    "packages/skill-bill/src/write/scene-income.ts",
+    "packages/base-render/src/blocks.ts",
+    "packages/base-render/src/contract.ts"
   ]
 }

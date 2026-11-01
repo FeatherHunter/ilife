@@ -4,6 +4,7 @@
  * link-core 只做 typeof 级消费（import type），运行时零依赖红线不断。
  */
 import type { Envelope } from 'base-link-core';
+import { m } from './entries/index.js';
 import type { PageDescriptor } from './ui.js';
 import { cx } from './style.js';
 import { ESCAPE_HTML_CHARS, ESCAPE_HTML_ENTITIES } from './spec/controls.js';
@@ -66,8 +67,9 @@ export function renderPage(page: PageDescriptor, env: Envelope): RenderOutput {
   return { contractVersion: RENDER_CONTRACT_VERSION, slotId: page.slotId, html: head(page) + '<div>' + body + '</div></section>' };
 }
 
-/** 推荐安装占位渲染：显式 data-missing 标记，非静默空。 */
+/** 推荐安装占位渲染：显式 data-missing 标记，非静默空（文案取词条 `base-render.contract.c001`）。 */
 export function renderReco(page: PageDescriptor): RenderOutput {
-  const html = head(page) + '<div data-missing="1">未安装[' + escapeHtml(page.skill) + ']，请补装后使用。</div></section>';
+  const html = head(page)
+    + '<div data-missing="1">' + m('base-render.contract.c001', { p1: escapeHtml(page.skill) }) + '</div></section>';
   return { contractVersion: RENDER_CONTRACT_VERSION, slotId: page.slotId, html };
 }

@@ -26,4 +26,18 @@ export const zh = {
   'status-badge.text.warn': '警告',
   'status-badge.text.danger': '失败',
   'status-badge.text.empty': '无数据',
+  /* ── blocks.ts（区块渲染；key 第一轮派生命名，#1232 迁入） ── */
+  'base-render.blocks.c001': '无数据',
+  'base-render.blocks.c002': '复制指令',
+  'base-render.blocks.c003': 'renderDetailSection: types[] 元素的 text',
+  'base-render.blocks.c004': '写入时间 ',
+  'base-render.blocks.c005': '/* 判地字面 · 授权照抄：#f3ecdc（轨道底；与规格 §1 的 `--pill` 同一枚一次性字面） */',
+  'base-render.blocks.c006': '/* 判地字面 · 授权照抄：#c96f3f（占比条渐变起点；出处＝判地 `.scale-fill`，规格 §1 未列，待并进皮肤） */',
+  'base-render.blocks.c007': '/* base-paint 区块样式资产 · #104 · 12 区 */',
+  'base-render.blocks.c008': '未记录',
+  'base-render.blocks.c009': '还差 {p1}{p2}',
+  'base-render.blocks.c010': '要改：',
+  'base-render.blocks.c011': '待开发',
+  /* ── contract.ts（渲染契约；#1232 迁入） ── */
+  'base-render.contract.c001': '未安装[{p1}]，请补装后使用。',
 };

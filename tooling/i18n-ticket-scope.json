@@ -5,8 +5,10 @@
   "notation": {
     "files": "仓库相对路径（正斜杠），与 tooling/i18n-scope.json 同形",
     "byClass": "与 tooling/i18n-codemod.ledger.json 同口径：copy=机械可写候选、payload=整体迁移不动、concat=先整句化再迁（不得拆片段）、derived=走生成器不动",
-    "totals": "本票待迁文件的件数与条数合计；各票合计＝ledger 全量 1,226 件／42,748 条 减去 tooling/i18n-scope.json 已迁行为，票间零重叠（tooling/check-i18n-ticket-scope.mjs 可复判）",
-    "migrated": "已迁入词条层、不计入本票待办的件（仅登记，便于对账）"
+    "totals": "本票**原始范围**（待迁＋已迁＋不迁三处合计）的件数与条数：收票后把 files 里的件移到 migrated／excluded 不改 totals，故 totals 恒等于三处按 ledger 复算的合计",
+    "migrated": "已迁入词条层、并在 tooling/i18n-scope.json 登记的件（收票时从 files 移到这里；三者互斥）",
+    "excluded": "判定不迁的件（生成件／冻结契约面／非用户可见报文等），必须写 reason；不迁是处置结论，不是漏件",
+    "partition": "每件在 files（待迁）／migrated（已迁）／excluded（不迁）三处中恰好出现一次，且与 tooling/i18n-scope.json 的已迁件严格对齐"
   },
   "sourceOfTruth": {
     "ledger": "tooling/i18n-codemod.ledger.json",
@@ -108,17 +110,18 @@
         }
       ],
       "totals": {
-        "files": 5,
-        "literals": 415,
-        "copy": 120,
-        "concat": 290,
-        "ident": 5
+        "files": 8,
+        "literals": 594,
+        "copy": 217,
+        "concat": 371,
+        "ident": 6
       }
     },
     "1205": {
       "title": "迁移 skill-bill write 批次 3：22 件（408 条）",
       "state": "open（待开工；清单已回填 #1308）",
-      "files": [
+      "files": [],
+      "migrated": [
         {
           "path": "packages/skill-bill/src/write/blockedSlots.ts",
           "literals": 22,
@@ -176,25 +179,11 @@
           }
         },
         {
-          "path": "packages/skill-bill/src/write/emptyNote.ts",
-          "literals": 1,
-          "byClass": {
-            "copy": 1
-          }
-        },
-        {
           "path": "packages/skill-bill/src/write/flowSteps.ts",
           "literals": 5,
           "byClass": {
             "copy": 2,
             "concat": 3
-          }
-        },
-        {
-          "path": "packages/skill-bill/src/write/index.ts",
-          "literals": 1,
-          "byClass": {
-            "concat": 1
           }
         },
         {
@@ -247,14 +236,6 @@
           }
         },
         {
-          "path": "packages/skill-bill/src/write/record.ts",
-          "literals": 3,
-          "byClass": {
-            "concat": 1,
-            "ident": 2
-          }
-        },
-        {
           "path": "packages/skill-bill/src/write/recordPicker.ts",
           "literals": 33,
           "byClass": {
@@ -295,14 +276,40 @@
           }
         }
       ],
-      "migrated": [],
       "totals": {
         "files": 22,
         "literals": 408,
         "copy": 205,
         "concat": 189,
         "ident": 14
-      }
+      },
+      "excluded": [
+        {
+          "path": "packages/skill-bill/src/write/emptyNote.ts",
+          "literals": 1,
+          "byClass": {
+            "copy": 1
+          },
+          "reason": "无可迁文案：清红后核出文件里只剩注释与 throw new *Error 开发期报文，词条层无管辖对象（#1205 收票时判定，应用迁移器复核 migrated=0）"
+        },
+        {
+          "path": "packages/skill-bill/src/write/index.ts",
+          "literals": 1,
+          "byClass": {
+            "concat": 1
+          },
+          "reason": "无可迁文案：清红后核出文件里只剩注释与 throw new *Error 开发期报文，词条层无管辖对象（#1205 收票时判定，应用迁移器复核 migrated=0）"
+        },
+        {
+          "path": "packages/skill-bill/src/write/record.ts",
+          "literals": 3,
+          "byClass": {
+            "concat": 1,
+            "ident": 2
+          },
+          "reason": "无可迁文案：清红后核出文件里只剩注释与 throw new *Error 开发期报文，词条层无管辖对象（#1205 收票时判定，应用迁移器复核 migrated=0）"
+        }
+      ]
     },
     "1206": {
       "title": "迁移 skill-bill write 批次 4：16 件（382 条）；另 7 件已迁",
@@ -468,9 +475,9 @@
         }
       ],
       "totals": {
-        "files": 16,
-        "literals": 382,
-        "copy": 214,
+        "files": 23,
+        "literals": 429,
+        "copy": 261,
         "concat": 166,
         "ident": 2
       }
@@ -8061,10 +8068,10 @@
         }
       ],
       "totals": {
-        "files": 168,
-        "literals": 2216,
-        "copy": 602,
-        "concat": 931,
+        "files": 170,
+        "literals": 2235,
+        "copy": 611,
+        "concat": 941,
         "ident": 683
       }
     },
@@ -9935,7 +9942,8 @@
     "1232": {
       "title": "迁移 base-render 页面壳与规范面：8 件（173 条）",
       "state": "open（待开工；清单已回填 #1308）",
-      "files": [
+      "files": [],
+      "migrated": [
         {
           "path": "packages/base-render/src/blocks.ts",
           "literals": 105,
@@ -9953,53 +9961,8 @@
             "concat": 4,
             "ident": 1
           }
-        },
-        {
-          "path": "packages/base-render/src/helpShell.ts",
-          "literals": 7,
-          "byClass": {
-            "derived": 7
-          }
-        },
-        {
-          "path": "packages/base-render/src/output/saveHtml.ts",
-          "literals": 21,
-          "byClass": {
-            "copy": 5,
-            "concat": 16
-          }
-        },
-        {
-          "path": "packages/base-render/src/spec/controls.ts",
-          "literals": 10,
-          "byClass": {
-            "copy": 10
-          }
-        },
-        {
-          "path": "packages/base-render/src/spec/help.ts",
-          "literals": 5,
-          "byClass": {
-            "copy": 5
-          }
-        },
-        {
-          "path": "packages/base-render/src/spec/index.ts",
-          "literals": 10,
-          "byClass": {
-            "copy": 9,
-            "ident": 1
-          }
-        },
-        {
-          "path": "packages/base-render/src/spec/text.ts",
-          "literals": 9,
-          "byClass": {
-            "copy": 9
-          }
         }
       ],
-      "migrated": [],
       "totals": {
         "files": 8,
         "literals": 173,
@@ -10007,20 +9970,77 @@
         "concat": 73,
         "ident": 7,
         "derived": 7
-      }
+      },
+      "excluded": [
+        {
+          "path": "packages/base-render/src/helpShell.ts",
+          "literals": 7,
+          "byClass": {
+            "derived": 7
+          },
+          "reason": "生成件：scripts/gen-help-shell.cjs 从 assets/help-template.html 机器生成、禁手改；本地化点归生成器与 HTML 模板（derived）"
+        },
+        {
+          "path": "packages/base-render/src/output/saveHtml.ts",
+          "literals": 21,
+          "byClass": {
+            "copy": 5,
+            "concat": 16
+          },
+          "reason": "非用户可见文案：24 条全是 throw err(...)／new RangeError(...) 开发期报文（keys 门既有豁免口径）"
+        },
+        {
+          "path": "packages/base-render/src/spec/controls.ts",
+          "literals": 10,
+          "byClass": {
+            "copy": 10
+          },
+          "reason": "#74–#78 冻结契约面（SPEC_FROZEN_SURFACE 逐字签名／STATUS_DEFAULT_TEXT／ACTION_BAR_DEFAULTS／TOAST_DEFAULTS）；改动须走契约变更流程；本地化点在消费组件，#1202 已把状态字消费件接词条"
+        },
+        {
+          "path": "packages/base-render/src/spec/help.ts",
+          "literals": 5,
+          "byClass": {
+            "copy": 5
+          },
+          "reason": "#74–#78 冻结契约面（HELP_COPY_ACTIONS 等）；改动须走契约变更流程，本地化点在消费组件"
+        },
+        {
+          "path": "packages/base-render/src/spec/index.ts",
+          "literals": 10,
+          "byClass": {
+            "copy": 9,
+            "ident": 1
+          },
+          "reason": "#74–#78 冻结契约面（SPEC_FROZEN_SURFACE 签名表／SCENE_STATUS 等）；改动须走契约变更流程，本地化点在消费组件"
+        },
+        {
+          "path": "packages/base-render/src/spec/text.ts",
+          "literals": 9,
+          "byClass": {
+            "copy": 9
+          },
+          "reason": "#74–#78 冻结契约面（LOG_SECTION_TITLES／LOG_UNKNOWN_PLACEHOLDER／TEXT_EMPTY_PLACEHOLDER）；改动须走契约变更流程，本地化点在消费组件"
+        }
+      ]
     }
   },
   "scopeSummary": {
     "ledgerFiles": 1226,
-    "migratedFiles": 12,
-    "pendingFiles": 1214,
-    "pendingLiterals": 42503
+    "migratedFiles": 33,
+    "pendingFiles": 1184,
+    "pendingLiterals": 41922,
+    "excludedFiles": 9,
+    "excludedLiterals": 67,
+    "migratedLiterals": 759
   },
   "workflow": [
     "开工：从本文件取本票 files，逐件登记进 tooling/i18n-scope.json 的 files（先跑两道门拿红读数＝范围已挂但还没迁）。",
     "迁移：按票面「交付物路径」与 docs/agents/多语言-接线样板.md 走；拼接串先整句化并在票面预先申报，由第二方逐处比对。",
     "收工：两道门绿（entries 的 missing/blanks=0、keys 的 residue=0 且 files 覆盖本票范围）、全仓 tsc -b 绿、中文列账本 --check 绿、CLI --language en／zz 端到端；把读数与提交 SHA 写回票面进度。",
-    "对账：本文件与票面清单、ledger、scope 三者不一致时，先改本文件与票面再开工——清单是开工前置，不是收工补记。"
+    "对账：本文件与票面清单、ledger、scope 三者不一致时，先改本文件与票面再开工——清单是开工前置，不是收工补记。",
+    "收票对账：本票 files 里迁完的件移到 migrated（同步登记 tooling/i18n-scope.json）、判定不迁的件移到 excluded 并写 reason；随后 node tooling/check-i18n-ticket-scope.mjs 必须 problems=0（三分区互斥、已迁件与 scope 对齐、totals 与三处合计一致）。"
   ],
-  "gates": "本文件是咨询清单，不进门禁读取口径；门禁唯一读取 tooling/i18n-scope.json。登记进本文件 ≠ 已迁入，登记进 scope.json 才算挂号。"
+  "gates": "本文件是咨询清单，不进门禁读取口径；门禁唯一读取 tooling/i18n-scope.json。登记进本文件 ≠ 已迁入，登记进 scope.json 才算挂号；excluded 的件不登记 scope，也不受门禁检查（理由必须落在票面与本文件）。",
+  "notatedAt": "2026-11-01（#1232 收票时引入三分区）"
 }
