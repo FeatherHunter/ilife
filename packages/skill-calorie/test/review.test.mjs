@@ -76,8 +76,8 @@ test('趋势快照：7dim + 精度字段 round(2)', () => {
     complianceRate: 0.86, compliantDays: 6,
   });
   assert.equal(data.series.length, 7);
-  assert.deepEqual(data.series[0], { date: '2026-08-31', weekday: '周一', type: '工作日', calorie: 1900 });
-  assert.deepEqual(data.series[6], { date: '2026-09-06', weekday: '周日', type: '周末', calorie: 1600 });
+  assert.deepEqual(data.series[0], { date: '2026-08-31', weekday: '周一', type: 'weekday', calorie: 1900 });
+  assert.deepEqual(data.series[6], { date: '2026-09-06', weekday: '周日', type: 'weekend', calorie: 1600 });
   assertNoLeak({ summary: data.summary, series: data.series });
   db.close();
 });

@@ -40,6 +40,9 @@ configTestBase();
 const here = dirname(fileURLToPath(import.meta.url));
 const skillDir = join(here, '..');
 const baseDir = resolve(skillDir, '..', 'base-render');
+// #1198 起 base-entries 新增 currentRenderLanguage 导出，registry 尚未发版；本门只消费工作区 tarball
+// （文件头 ①② 同一口径），故本地 base-entries 也必须一起打包装进隔离目录。
+const entriesDir = resolve(skillDir, '..', 'base-entries');
 const repoRoot = resolve(skillDir, '..', '..');
 const CONTRACT_KEY = 'calorie.help.center';
 const NPM = process.platform === 'win32' ? 'npm.cmd' : 'npm';
@@ -151,7 +154,7 @@ test('S1-② 发布包体干净安装：calorie.help.center exit 0', { timeout: 
   }
   try {
     const tgzs = [];
-    for (const dir of [skillDir, baseDir]) {
+    for (const dir of [skillDir, baseDir, entriesDir]) {
       const r = sh(NPM, ['pack', '--pack-destination', packDir], { cwd: dir });
       assert.equal(r.status, 0, `npm pack 失败（${dir}）：${(r.stderr || '').slice(-500)}`);
       const file = String(r.stdout || '').trim().split('\n').pop().trim();
