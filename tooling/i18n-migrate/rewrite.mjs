@@ -277,6 +277,12 @@ function renderCall(key, params, indent) {
  *  · copy＝迁。
  */
 export function classifyUnit(rootNode, src, hasImportedM) {
+  // 只有「本单元自己就是被展开的值」（`[...'abc']`、`f(...'abc')`）才算形状拿不准；
+  // `{ ...buildReceipt('…' + id) }` 里展开的是调用返回的对象，文案随参数进去，不拦。
+  const immediate = rootNode.parent;
+  if (immediate !== undefined && (ts.isSpreadElement(immediate) || ts.isSpreadAssignment(immediate)) && immediate.expression === rootNode) {
+    return { kind: 'unsupported', reason: '展开运算符' };
+  }
   let conditional = false;
   for (let cur = rootNode; cur.parent !== undefined; cur = cur.parent) {
     const parent = cur.parent;
@@ -321,7 +327,7 @@ export function classifyUnit(rootNode, src, hasImportedM) {
     if (ts.isJsxAttribute(parent) || ts.isJsxElement(parent) || ts.isJsxSelfClosingElement(parent) || ts.isJsxFragment(parent) || ts.isJsxExpression(parent) || ts.isJsxText(parent)) {
       return { kind: 'unsupported', reason: 'JSX' };
     }
-    if (ts.isSpreadElement(parent) || ts.isSpreadAssignment(parent)) return { kind: 'unsupported', reason: '展开运算符' };
+
     if (ts.isAsExpression(parent) && parent.type.getText() === 'const') {
       return { kind: 'skip', reason: 'SKIP_AS_CONST', detail: 'as const 断言里换成函数调用会破类型' };
     }

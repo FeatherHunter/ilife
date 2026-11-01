@@ -23,6 +23,8 @@ const COMMENT_START_RE = /^\s*\/\*/;
 const OPEN_RE = /^\s*export const [A-Za-z0-9_]+ = \{\s*$/;
 /** 表结束行：`};`。 */
 const CLOSE_RE = /^\s*\}\s*;?\s*$/;
+/** 迁移期空表（单行）：`export const zh = {} as const satisfies MessageTable;`——第一次迁入时展开成多行。 */
+const EMPTY_ONE_LINE_RE = /^(\s*)export const ([A-Za-z0-9_]+) = \{\} as const satisfies MessageTable;\s*$/;
 
 /** 解一个带引号的字符串字面量（raw 含首尾引号）。转义口径与 tooling/i18n-tables.mjs 的 decodeEscape 同。 */
 export function decodeLiteral(raw) {
@@ -85,6 +87,14 @@ export function quoteKey(key) {
 export function parseTableText(text, path) {
   if (!text.endsWith('\n')) return { ok: false, why: '表文件末行没有换行（形状与仓内其余表不一致）：' + path };
   const lines = text.split('\n');
+  const emptyAt = lines.findIndex((line) => EMPTY_ONE_LINE_RE.test(line));
+  if (emptyAt >= 0) {
+    // 迁移期空表：就地展开成标准形状（head＝打开行、tail＝带断言的收尾行），后续按常规路径追加
+    const m = EMPTY_ONE_LINE_RE.exec(lines[emptyAt]);
+    const openLine = m[1] + 'export const ' + m[2] + ' = {';
+    const closeLine = '} as const satisfies MessageTable;';
+    return { ok: true, path, head: lines.slice(0, emptyAt).concat([openLine]), items: [], tail: [closeLine] };
+  }
   const openAt = lines.findIndex((line) => OPEN_RE.test(line));
   if (openAt < 0) return { ok: false, why: '表里找不到 `export const <语言> = {` 行：' + path };
   let closeAt = -1;
