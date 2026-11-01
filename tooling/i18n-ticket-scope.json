@@ -21,13 +21,6 @@
       "state": "open（待开工；清单已回填 #1308）",
       "files": [
         {
-          "path": "packages/skill-bill/src/write/declaration.ts",
-          "literals": 156,
-          "byClass": {
-            "payload": 156
-          }
-        },
-        {
           "path": "packages/skill-bill/src/write/sayWords.ts",
           "literals": 482,
           "byClass": {
@@ -38,11 +31,8 @@
       ],
       "migrated": [],
       "totals": {
-        "files": 2,
-        "literals": 638,
-        "copy": 464,
-        "payload": 156,
-        "ident": 18
+        "files": 1,
+        "literals": 482
       }
     },
     "1204": {
@@ -275,10 +265,7 @@
       ],
       "totals": {
         "files": 22,
-        "literals": 408,
-        "copy": 205,
-        "concat": 189,
-        "ident": 14
+        "literals": 408
       },
       "excluded": [
         {
@@ -473,10 +460,7 @@
       ],
       "totals": {
         "files": 23,
-        "literals": 429,
-        "copy": 261,
-        "concat": 166,
-        "ident": 2
+        "literals": 429
       }
     },
     "1207": {
@@ -638,10 +622,7 @@
       "migrated": [],
       "totals": {
         "files": 18,
-        "literals": 656,
-        "copy": 288,
-        "concat": 360,
-        "ident": 8
+        "literals": 656
       }
     },
     "1208": {
@@ -805,10 +786,7 @@
       "migrated": [],
       "totals": {
         "files": 19,
-        "literals": 563,
-        "copy": 204,
-        "concat": 331,
-        "ident": 28
+        "literals": 563
       }
     },
     "1209": {
@@ -827,13 +805,6 @@
           "literals": 5,
           "byClass": {
             "concat": 5
-          }
-        },
-        {
-          "path": "packages/skill-bill/src/query/declaration.ts",
-          "literals": 118,
-          "byClass": {
-            "payload": 118
           }
         },
         {
@@ -897,12 +868,8 @@
       ],
       "migrated": [],
       "totals": {
-        "files": 10,
-        "literals": 379,
-        "copy": 108,
-        "concat": 145,
-        "payload": 118,
-        "ident": 8
+        "files": 9,
+        "literals": 261
       }
     },
     "1210": {
@@ -939,13 +906,6 @@
           }
         },
         {
-          "path": "packages/skill-bill/src/analysis/declaration.ts",
-          "literals": 173,
-          "byClass": {
-            "payload": 173
-          }
-        },
-        {
           "path": "packages/skill-bill/src/analysis/pageParts.ts",
           "literals": 5,
           "byClass": {
@@ -979,12 +939,8 @@
       ],
       "migrated": [],
       "totals": {
-        "files": 9,
-        "literals": 283,
-        "copy": 42,
-        "concat": 65,
-        "payload": 173,
-        "ident": 3
+        "files": 8,
+        "literals": 110
       }
     },
     "1211": {
@@ -1120,10 +1076,7 @@
       "migrated": [],
       "totals": {
         "files": 14,
-        "literals": 520,
-        "copy": 153,
-        "concat": 343,
-        "ident": 24
+        "literals": 520
       }
     },
     "1212": {
@@ -1150,13 +1103,6 @@
           "byClass": {
             "copy": 2,
             "concat": 16
-          }
-        },
-        {
-          "path": "packages/skill-bill/src/account/declaration.ts",
-          "literals": 34,
-          "byClass": {
-            "payload": 34
           }
         },
         {
@@ -1255,12 +1201,8 @@
       ],
       "migrated": [],
       "totals": {
-        "files": 15,
-        "literals": 518,
-        "copy": 243,
-        "concat": 228,
-        "payload": 34,
-        "ident": 13
+        "files": 14,
+        "literals": 484
       }
     },
     "1213": {
@@ -1280,13 +1222,6 @@
           "byClass": {
             "copy": 1,
             "concat": 42
-          }
-        },
-        {
-          "path": "packages/skill-bill/src/goal/declaration.ts",
-          "literals": 33,
-          "byClass": {
-            "payload": 33
           }
         },
         {
@@ -1387,12 +1322,8 @@
       ],
       "migrated": [],
       "totals": {
-        "files": 15,
-        "literals": 523,
-        "copy": 239,
-        "concat": 247,
-        "payload": 33,
-        "ident": 4
+        "files": 14,
+        "literals": 490
       }
     },
     "1214": {
@@ -1427,13 +1358,6 @@
           "byClass": {
             "copy": 1,
             "concat": 9
-          }
-        },
-        {
-          "path": "packages/skill-bill/src/setup/declaration.ts",
-          "literals": 33,
-          "byClass": {
-            "payload": 33
           }
         },
         {
@@ -1584,12 +1508,8 @@
       ],
       "migrated": [],
       "totals": {
-        "files": 23,
-        "literals": 469,
-        "copy": 222,
-        "concat": 211,
-        "payload": 33,
-        "ident": 3
+        "files": 22,
+        "literals": 436
       }
     },
     "1215": {
@@ -1705,13 +1625,6 @@
             "copy": 12,
             "concat": 13,
             "ident": 8
-          }
-        },
-        {
-          "path": "packages/skill-bill/src/link/declaration.ts",
-          "literals": 22,
-          "byClass": {
-            "payload": 22
           }
         },
         {
@@ -1845,13 +1758,6 @@
           }
         },
         {
-          "path": "packages/skill-bill/src/triggers/wake-assets.ts",
-          "literals": 3,
-          "byClass": {
-            "payload": 3
-          }
-        },
-        {
           "path": "packages/skill-bill/src/triggers/wakeTable.ts",
           "literals": 10,
           "byClass": {
@@ -1862,13 +1768,8 @@
       ],
       "migrated": [],
       "totals": {
-        "files": 34,
-        "literals": 393,
-        "copy": 168,
-        "concat": 154,
-        "payload": 25,
-        "ident": 45,
-        "derived": 1
+        "files": 32,
+        "literals": 368
       }
     },
     "1216": {
@@ -1984,24 +1885,12 @@
             "copy": 1311,
             "ident": 90
           }
-        },
-        {
-          "path": "packages/skill-calorie/src/triggers/wake-assets.ts",
-          "literals": 2468,
-          "byClass": {
-            "payload": 2468
-          }
         }
       ],
       "migrated": [],
       "totals": {
-        "files": 15,
-        "literals": 7060,
-        "copy": 3619,
-        "concat": 6,
-        "payload": 2468,
-        "ident": 265,
-        "derived": 702
+        "files": 14,
+        "literals": 4592
       }
     },
     "1217": {
@@ -2471,10 +2360,7 @@
       "migrated": [],
       "totals": {
         "files": 55,
-        "literals": 3392,
-        "copy": 1661,
-        "concat": 1525,
-        "ident": 206
+        "literals": 3392
       }
     },
     "1218": {
@@ -3101,10 +2987,7 @@
       "migrated": [],
       "totals": {
         "files": 78,
-        "literals": 3950,
-        "copy": 2322,
-        "concat": 1574,
-        "ident": 54
+        "literals": 3950
       }
     },
     "1219": {
@@ -4199,25 +4082,14 @@
       "migrated": [],
       "totals": {
         "files": 135,
-        "literals": 4541,
-        "copy": 2490,
-        "concat": 1762,
-        "ident": 143,
-        "data": 3,
-        "derived": 143
+        "literals": 4541
       }
     },
     "1220": {
       "title": "迁移 skill-home 物品与帮助域（items＋help）：32 件（1,815 条）",
       "state": "open（待开工；清单已回填 #1308）",
-      "files": [
-        {
-          "path": "packages/skill-home/src/help/helpAssets.ts",
-          "literals": 676,
-          "byClass": {
-            "derived": 676
-          }
-        },
+      "files": [],
+      "migrated": [
         {
           "path": "packages/skill-home/src/help/helpFile.ts",
           "literals": 29,
@@ -4235,34 +4107,11 @@
           }
         },
         {
-          "path": "packages/skill-home/src/help/manifest.ts",
-          "literals": 2,
-          "byClass": {
-            "ident": 2
-          }
-        },
-        {
-          "path": "packages/skill-home/src/help/output.ts",
-          "literals": 6,
-          "byClass": {
-            "copy": 2,
-            "concat": 4
-          }
-        },
-        {
           "path": "packages/skill-home/src/items/add.ts",
           "literals": 6,
           "byClass": {
             "copy": 1,
             "concat": 5
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/commands.ts",
-          "literals": 20,
-          "byClass": {
-            "copy": 18,
-            "ident": 2
           }
         },
         {
@@ -4280,170 +4129,6 @@
             "copy": 4,
             "concat": 5,
             "ident": 3
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/add_form.ts",
-          "literals": 66,
-          "byClass": {
-            "payload": 66
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/browse.ts",
-          "literals": 33,
-          "byClass": {
-            "payload": 33
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/category_manage.ts",
-          "literals": 43,
-          "byClass": {
-            "copy": 15,
-            "concat": 11,
-            "ident": 17
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/confirm.ts",
-          "literals": 34,
-          "byClass": {
-            "copy": 11,
-            "concat": 7,
-            "ident": 16
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/detail.ts",
-          "literals": 69,
-          "byClass": {
-            "payload": 69
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/duplicates.ts",
-          "literals": 30,
-          "byClass": {
-            "payload": 30
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/history.ts",
-          "literals": 66,
-          "byClass": {
-            "copy": 35,
-            "concat": 12,
-            "ident": 19
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/inventory_diff.ts",
-          "literals": 46,
-          "byClass": {
-            "copy": 25,
-            "concat": 10,
-            "ident": 11
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/inventory_records.ts",
-          "literals": 47,
-          "byClass": {
-            "copy": 25,
-            "concat": 4,
-            "ident": 18
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/inventory_round.ts",
-          "literals": 62,
-          "byClass": {
-            "copy": 30,
-            "concat": 4,
-            "ident": 28
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/locate.ts",
-          "literals": 34,
-          "byClass": {
-            "payload": 34
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/move_checklist.ts",
-          "literals": 42,
-          "byClass": {
-            "copy": 21,
-            "concat": 1,
-            "ident": 20
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/photo_wall.ts",
-          "literals": 44,
-          "byClass": {
-            "copy": 21,
-            "concat": 8,
-            "ident": 15
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/photos.ts",
-          "literals": 62,
-          "byClass": {
-            "payload": 62
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/receipt.ts",
-          "literals": 66,
-          "byClass": {
-            "copy": 27,
-            "concat": 10,
-            "ident": 29
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/relations.ts",
-          "literals": 37,
-          "byClass": {
-            "copy": 14,
-            "concat": 6,
-            "ident": 17
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/search_list.ts",
-          "literals": 39,
-          "byClass": {
-            "payload": 39
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/tag_manage.ts",
-          "literals": 78,
-          "byClass": {
-            "copy": 25,
-            "concat": 28,
-            "ident": 25
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/undo_select.ts",
-          "literals": 33,
-          "byClass": {
-            "copy": 21,
-            "concat": 1,
-            "ident": 11
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/routes.ts",
-          "literals": 54,
-          "byClass": {
-            "derived": 54
           }
         },
         {
@@ -4471,16 +4156,54 @@
           }
         }
       ],
-      "migrated": [],
       "totals": {
-        "files": 32,
-        "literals": 1815,
-        "copy": 338,
-        "concat": 161,
-        "payload": 333,
-        "ident": 253,
-        "derived": 730
-      }
+        "files": 13,
+        "literals": 884
+      },
+      "excluded": [
+        {
+          "path": "packages/skill-home/src/help/helpAssets.ts",
+          "literals": 676,
+          "byClass": {
+            "derived": 676
+          },
+          "reason": "生成件（scripts/gen-help-assets.mjs 从 src/help/scenarios.yaml 生成，头注禁手改＋sha 摘要锁）；须改生成器，归生成链专项，不在显示文案迁移票"
+        },
+        {
+          "path": "packages/skill-home/src/help/manifest.ts",
+          "literals": 2,
+          "byClass": {
+            "ident": 2
+          },
+          "reason": "生成件（帮助登记表由生成器产出，禁手改）"
+        },
+        {
+          "path": "packages/skill-home/src/help/output.ts",
+          "literals": 6,
+          "byClass": {
+            "copy": 2,
+            "concat": 4
+          },
+          "reason": "无用户可见文案：全部是 HomeRenderError 开发期报文（keys 门既有豁免）"
+        },
+        {
+          "path": "packages/skill-home/src/items/commands.ts",
+          "literals": 20,
+          "byClass": {
+            "copy": 18,
+            "ident": 2
+          },
+          "reason": "数据位：ITEM_COMMANDS 是命令声明（唤醒词／命令键／示例），按 ADR-0004 三条不译冻结"
+        },
+        {
+          "path": "packages/skill-home/src/items/routes.ts",
+          "literals": 54,
+          "byClass": {
+            "derived": 54
+          },
+          "reason": "生成件（唤醒词路由表由 scripts/gen-cli.mjs／生成链产出，唤醒词属不译；路由按语言分载归 #1236）"
+        }
+      ]
     },
     "1221": {
       "title": "迁移 skill-home 其余域：71 件（2,679 条）",
@@ -4527,34 +4250,6 @@
           "literals": 5,
           "byClass": {
             "copy": 5
-          }
-        },
-        {
-          "path": "packages/skill-home/src/express/pages/express.ts",
-          "literals": 48,
-          "byClass": {
-            "payload": 48
-          }
-        },
-        {
-          "path": "packages/skill-home/src/express/pages/list.ts",
-          "literals": 56,
-          "byClass": {
-            "payload": 56
-          }
-        },
-        {
-          "path": "packages/skill-home/src/express/pages/missing.ts",
-          "literals": 43,
-          "byClass": {
-            "payload": 43
-          }
-        },
-        {
-          "path": "packages/skill-home/src/express/pages/stock.ts",
-          "literals": 52,
-          "byClass": {
-            "payload": 52
           }
         },
         {
@@ -4678,41 +4373,6 @@
           }
         },
         {
-          "path": "packages/skill-home/src/outfit/pages/outfit_picker.ts",
-          "literals": 64,
-          "byClass": {
-            "payload": 64
-          }
-        },
-        {
-          "path": "packages/skill-home/src/outfit/pages/travel_trip.ts",
-          "literals": 56,
-          "byClass": {
-            "payload": 56
-          }
-        },
-        {
-          "path": "packages/skill-home/src/outfit/pages/trip_outfit_plan.ts",
-          "literals": 57,
-          "byClass": {
-            "payload": 57
-          }
-        },
-        {
-          "path": "packages/skill-home/src/outfit/pages/wardrobe_analyze.ts",
-          "literals": 50,
-          "byClass": {
-            "payload": 50
-          }
-        },
-        {
-          "path": "packages/skill-home/src/outfit/pages/wardrobe_season.ts",
-          "literals": 44,
-          "byClass": {
-            "payload": 44
-          }
-        },
-        {
           "path": "packages/skill-home/src/outfit/routes.ts",
           "literals": 6,
           "byClass": {
@@ -4788,34 +4448,6 @@
           }
         },
         {
-          "path": "packages/skill-home/src/receipt/pages/accounts.ts",
-          "literals": 57,
-          "byClass": {
-            "payload": 57
-          }
-        },
-        {
-          "path": "packages/skill-home/src/receipt/pages/certificates.ts",
-          "literals": 65,
-          "byClass": {
-            "payload": 65
-          }
-        },
-        {
-          "path": "packages/skill-home/src/receipt/pages/purchase_records.ts",
-          "literals": 63,
-          "byClass": {
-            "payload": 63
-          }
-        },
-        {
-          "path": "packages/skill-home/src/receipt/pages/warranty.ts",
-          "literals": 41,
-          "byClass": {
-            "payload": 41
-          }
-        },
-        {
           "path": "packages/skill-home/src/receipt/routes.ts",
           "literals": 18,
           "byClass": {
@@ -4856,13 +4488,6 @@
           }
         },
         {
-          "path": "packages/skill-home/src/render/sceneNaming.ts",
-          "literals": 105,
-          "byClass": {
-            "payload": 105
-          }
-        },
-        {
           "path": "packages/skill-home/src/render/templates.ts",
           "literals": 3,
           "byClass": {
@@ -4878,33 +4503,12 @@
           }
         },
         {
-          "path": "packages/skill-home/src/setup/pages/backup_receipt.ts",
-          "literals": 58,
-          "byClass": {
-            "payload": 58
-          }
-        },
-        {
           "path": "packages/skill-home/src/setup/pages/first_use_wizard.ts",
           "literals": 59,
           "byClass": {
             "copy": 23,
             "concat": 7,
             "ident": 29
-          }
-        },
-        {
-          "path": "packages/skill-home/src/setup/pages/health_report.ts",
-          "literals": 62,
-          "byClass": {
-            "payload": 62
-          }
-        },
-        {
-          "path": "packages/skill-home/src/setup/pages/import_restore.ts",
-          "literals": 63,
-          "byClass": {
-            "payload": 63
           }
         },
         {
@@ -4932,34 +4536,6 @@
           }
         },
         {
-          "path": "packages/skill-home/src/space/pages/fixed_spot.ts",
-          "literals": 45,
-          "byClass": {
-            "payload": 45
-          }
-        },
-        {
-          "path": "packages/skill-home/src/space/pages/location_manage.ts",
-          "literals": 55,
-          "byClass": {
-            "payload": 55
-          }
-        },
-        {
-          "path": "packages/skill-home/src/space/pages/space_view.ts",
-          "literals": 76,
-          "byClass": {
-            "payload": 76
-          }
-        },
-        {
-          "path": "packages/skill-home/src/space/pages/suggest_storage.ts",
-          "literals": 67,
-          "byClass": {
-            "payload": 67
-          }
-        },
-        {
           "path": "packages/skill-home/src/space/routes.ts",
           "literals": 16,
           "byClass": {
@@ -4971,34 +4547,6 @@
           "literals": 4,
           "byClass": {
             "copy": 4
-          }
-        },
-        {
-          "path": "packages/skill-home/src/stats/pages/expiring.ts",
-          "literals": 82,
-          "byClass": {
-            "payload": 82
-          }
-        },
-        {
-          "path": "packages/skill-home/src/stats/pages/idle.ts",
-          "literals": 72,
-          "byClass": {
-            "payload": 72
-          }
-        },
-        {
-          "path": "packages/skill-home/src/stats/pages/inventory_stat.ts",
-          "literals": 73,
-          "byClass": {
-            "payload": 73
-          }
-        },
-        {
-          "path": "packages/skill-home/src/stats/pages/overview.ts",
-          "literals": 101,
-          "byClass": {
-            "payload": 101
           }
         },
         {
@@ -5019,13 +4567,8 @@
       ],
       "migrated": [],
       "totals": {
-        "files": 71,
-        "literals": 2679,
-        "copy": 511,
-        "concat": 373,
-        "payload": 1555,
-        "ident": 106,
-        "derived": 134
+        "files": 46,
+        "literals": 1124
       }
     },
     "1222": {
@@ -5222,11 +4765,7 @@
       "migrated": [],
       "totals": {
         "files": 24,
-        "literals": 1649,
-        "copy": 489,
-        "concat": 575,
-        "ident": 19,
-        "derived": 566
+        "literals": 1649
       }
     },
     "1223": {
@@ -5587,11 +5126,7 @@
       "migrated": [],
       "totals": {
         "files": 45,
-        "literals": 1470,
-        "copy": 793,
-        "concat": 590,
-        "ident": 31,
-        "derived": 56
+        "literals": 1470
       }
     },
     "1224": {
@@ -5823,13 +5358,6 @@
             "copy": 42,
             "concat": 52,
             "ident": 1
-          }
-        },
-        {
-          "path": "packages/skill-chef/src/history/routes.ts",
-          "literals": 11,
-          "byClass": {
-            "payload": 11
           }
         },
         {
@@ -6138,14 +5666,8 @@
       ],
       "migrated": [],
       "totals": {
-        "files": 70,
-        "literals": 1899,
-        "copy": 668,
-        "concat": 475,
-        "payload": 11,
-        "ident": 71,
-        "data": 1,
-        "derived": 673
+        "files": 69,
+        "literals": 1888
       }
     },
     "1225": {
@@ -6730,11 +6252,7 @@
       "migrated": [],
       "totals": {
         "files": 75,
-        "literals": 1706,
-        "copy": 762,
-        "concat": 450,
-        "ident": 42,
-        "derived": 452
+        "literals": 1706
       }
     },
     "1226": {
@@ -8066,10 +7584,7 @@
       ],
       "totals": {
         "files": 170,
-        "literals": 2235,
-        "copy": 611,
-        "concat": 941,
-        "ident": 683
+        "literals": 2235
       }
     },
     "1227": {
@@ -9382,11 +8897,7 @@
       "migrated": [],
       "totals": {
         "files": 169,
-        "literals": 2937,
-        "copy": 1332,
-        "concat": 883,
-        "ident": 711,
-        "data": 11
+        "literals": 2937
       }
     },
     "1228": {
@@ -9478,10 +8989,7 @@
       "migrated": [],
       "totals": {
         "files": 10,
-        "literals": 294,
-        "copy": 63,
-        "concat": 228,
-        "ident": 3
+        "literals": 294
       }
     },
     "1229": {
@@ -9929,11 +9437,7 @@
       "migrated": [],
       "totals": {
         "files": 57,
-        "literals": 575,
-        "copy": 283,
-        "concat": 209,
-        "ident": 8,
-        "derived": 75
+        "literals": 575
       }
     },
     "1232": {
@@ -9962,11 +9466,7 @@
       ],
       "totals": {
         "files": 8,
-        "literals": 173,
-        "copy": 86,
-        "concat": 73,
-        "ident": 7,
-        "derived": 7
+        "literals": 173
       },
       "excluded": [
         {
@@ -10020,16 +9520,430 @@
           "reason": "#74–#78 冻结契约面（LOG_SECTION_TITLES／LOG_UNKNOWN_PLACEHOLDER／TEXT_EMPTY_PLACEHOLDER）；改动须走契约变更流程，本地化点在消费组件"
         }
       ]
+    },
+    "1309": {
+      "title": "迁移 payload 事实源层与契约事实源页：54 件（按语言懒构）",
+      "state": "open（待开工；清单由 #1220 与各迁移票分离而来）",
+      "files": [
+        {
+          "path": "packages/skill-bill/src/write/declaration.ts",
+          "literals": 156,
+          "byClass": {
+            "payload": 156
+          }
+        },
+        {
+          "path": "packages/skill-bill/src/query/declaration.ts",
+          "literals": 118,
+          "byClass": {
+            "payload": 118
+          }
+        },
+        {
+          "path": "packages/skill-bill/src/analysis/declaration.ts",
+          "literals": 173,
+          "byClass": {
+            "payload": 173
+          }
+        },
+        {
+          "path": "packages/skill-bill/src/account/declaration.ts",
+          "literals": 34,
+          "byClass": {
+            "payload": 34
+          }
+        },
+        {
+          "path": "packages/skill-bill/src/goal/declaration.ts",
+          "literals": 33,
+          "byClass": {
+            "payload": 33
+          }
+        },
+        {
+          "path": "packages/skill-bill/src/setup/declaration.ts",
+          "literals": 33,
+          "byClass": {
+            "payload": 33
+          }
+        },
+        {
+          "path": "packages/skill-bill/src/link/declaration.ts",
+          "literals": 22,
+          "byClass": {
+            "payload": 22
+          }
+        },
+        {
+          "path": "packages/skill-bill/src/triggers/wake-assets.ts",
+          "literals": 3,
+          "byClass": {
+            "payload": 3
+          }
+        },
+        {
+          "path": "packages/skill-calorie/src/triggers/wake-assets.ts",
+          "literals": 2468,
+          "byClass": {
+            "payload": 2468
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/add_form.ts",
+          "literals": 66,
+          "byClass": {
+            "payload": 66
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/browse.ts",
+          "literals": 33,
+          "byClass": {
+            "payload": 33
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/detail.ts",
+          "literals": 69,
+          "byClass": {
+            "payload": 69
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/duplicates.ts",
+          "literals": 30,
+          "byClass": {
+            "payload": 30
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/locate.ts",
+          "literals": 34,
+          "byClass": {
+            "payload": 34
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/photos.ts",
+          "literals": 62,
+          "byClass": {
+            "payload": 62
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/search_list.ts",
+          "literals": 39,
+          "byClass": {
+            "payload": 39
+          }
+        },
+        {
+          "path": "packages/skill-home/src/express/pages/express.ts",
+          "literals": 48,
+          "byClass": {
+            "payload": 48
+          }
+        },
+        {
+          "path": "packages/skill-home/src/express/pages/list.ts",
+          "literals": 56,
+          "byClass": {
+            "payload": 56
+          }
+        },
+        {
+          "path": "packages/skill-home/src/express/pages/missing.ts",
+          "literals": 43,
+          "byClass": {
+            "payload": 43
+          }
+        },
+        {
+          "path": "packages/skill-home/src/express/pages/stock.ts",
+          "literals": 52,
+          "byClass": {
+            "payload": 52
+          }
+        },
+        {
+          "path": "packages/skill-home/src/outfit/pages/outfit_picker.ts",
+          "literals": 64,
+          "byClass": {
+            "payload": 64
+          }
+        },
+        {
+          "path": "packages/skill-home/src/outfit/pages/travel_trip.ts",
+          "literals": 56,
+          "byClass": {
+            "payload": 56
+          }
+        },
+        {
+          "path": "packages/skill-home/src/outfit/pages/trip_outfit_plan.ts",
+          "literals": 57,
+          "byClass": {
+            "payload": 57
+          }
+        },
+        {
+          "path": "packages/skill-home/src/outfit/pages/wardrobe_analyze.ts",
+          "literals": 50,
+          "byClass": {
+            "payload": 50
+          }
+        },
+        {
+          "path": "packages/skill-home/src/outfit/pages/wardrobe_season.ts",
+          "literals": 44,
+          "byClass": {
+            "payload": 44
+          }
+        },
+        {
+          "path": "packages/skill-home/src/receipt/pages/accounts.ts",
+          "literals": 57,
+          "byClass": {
+            "payload": 57
+          }
+        },
+        {
+          "path": "packages/skill-home/src/receipt/pages/certificates.ts",
+          "literals": 65,
+          "byClass": {
+            "payload": 65
+          }
+        },
+        {
+          "path": "packages/skill-home/src/receipt/pages/purchase_records.ts",
+          "literals": 63,
+          "byClass": {
+            "payload": 63
+          }
+        },
+        {
+          "path": "packages/skill-home/src/receipt/pages/warranty.ts",
+          "literals": 41,
+          "byClass": {
+            "payload": 41
+          }
+        },
+        {
+          "path": "packages/skill-home/src/render/sceneNaming.ts",
+          "literals": 105,
+          "byClass": {
+            "payload": 105
+          }
+        },
+        {
+          "path": "packages/skill-home/src/setup/pages/backup_receipt.ts",
+          "literals": 58,
+          "byClass": {
+            "payload": 58
+          }
+        },
+        {
+          "path": "packages/skill-home/src/setup/pages/health_report.ts",
+          "literals": 62,
+          "byClass": {
+            "payload": 62
+          }
+        },
+        {
+          "path": "packages/skill-home/src/setup/pages/import_restore.ts",
+          "literals": 63,
+          "byClass": {
+            "payload": 63
+          }
+        },
+        {
+          "path": "packages/skill-home/src/space/pages/fixed_spot.ts",
+          "literals": 45,
+          "byClass": {
+            "payload": 45
+          }
+        },
+        {
+          "path": "packages/skill-home/src/space/pages/location_manage.ts",
+          "literals": 55,
+          "byClass": {
+            "payload": 55
+          }
+        },
+        {
+          "path": "packages/skill-home/src/space/pages/space_view.ts",
+          "literals": 76,
+          "byClass": {
+            "payload": 76
+          }
+        },
+        {
+          "path": "packages/skill-home/src/space/pages/suggest_storage.ts",
+          "literals": 67,
+          "byClass": {
+            "payload": 67
+          }
+        },
+        {
+          "path": "packages/skill-home/src/stats/pages/expiring.ts",
+          "literals": 82,
+          "byClass": {
+            "payload": 82
+          }
+        },
+        {
+          "path": "packages/skill-home/src/stats/pages/idle.ts",
+          "literals": 72,
+          "byClass": {
+            "payload": 72
+          }
+        },
+        {
+          "path": "packages/skill-home/src/stats/pages/inventory_stat.ts",
+          "literals": 73,
+          "byClass": {
+            "payload": 73
+          }
+        },
+        {
+          "path": "packages/skill-home/src/stats/pages/overview.ts",
+          "literals": 101,
+          "byClass": {
+            "payload": 101
+          }
+        },
+        {
+          "path": "packages/skill-chef/src/history/routes.ts",
+          "literals": 11,
+          "byClass": {
+            "payload": 11
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/category_manage.ts",
+          "literals": 43,
+          "byClass": {
+            "copy": 15,
+            "concat": 11,
+            "ident": 17
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/confirm.ts",
+          "literals": 34,
+          "byClass": {
+            "copy": 11,
+            "concat": 7,
+            "ident": 16
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/history.ts",
+          "literals": 66,
+          "byClass": {
+            "copy": 35,
+            "concat": 12,
+            "ident": 19
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/inventory_diff.ts",
+          "literals": 46,
+          "byClass": {
+            "copy": 25,
+            "concat": 10,
+            "ident": 11
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/inventory_records.ts",
+          "literals": 47,
+          "byClass": {
+            "copy": 25,
+            "concat": 4,
+            "ident": 18
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/inventory_round.ts",
+          "literals": 62,
+          "byClass": {
+            "copy": 30,
+            "concat": 4,
+            "ident": 28
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/move_checklist.ts",
+          "literals": 42,
+          "byClass": {
+            "copy": 21,
+            "concat": 1,
+            "ident": 20
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/photo_wall.ts",
+          "literals": 44,
+          "byClass": {
+            "copy": 21,
+            "concat": 8,
+            "ident": 15
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/receipt.ts",
+          "literals": 66,
+          "byClass": {
+            "copy": 27,
+            "concat": 10,
+            "ident": 29
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/relations.ts",
+          "literals": 37,
+          "byClass": {
+            "copy": 14,
+            "concat": 6,
+            "ident": 17
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/tag_manage.ts",
+          "literals": 78,
+          "byClass": {
+            "copy": 25,
+            "concat": 28,
+            "ident": 25
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/undo_select.ts",
+          "literals": 33,
+          "byClass": {
+            "copy": 21,
+            "concat": 1,
+            "ident": 11
+          }
+        }
+      ],
+      "migrated": [],
+      "excluded": [],
+      "totals": {
+        "files": 54,
+        "literals": 5537
+      }
     }
   },
   "scopeSummary": {
     "ledgerFiles": 1226,
-    "migratedFiles": 38,
-    "pendingFiles": 1179,
-    "pendingLiterals": 41507,
-    "excludedFiles": 9,
-    "excludedLiterals": 67,
-    "migratedLiterals": 1174
+    "migratedFiles": 46,
+    "pendingFiles": 1166,
+    "pendingLiterals": 40623,
+    "excludedFiles": 14,
+    "excludedLiterals": 825,
+    "migratedLiterals": 1300
   },
   "workflow": [
     "开工：从本文件取本票 files，逐件登记进 tooling/i18n-scope.json 的 files（先跑两道门拿红读数＝范围已挂但还没迁）。",

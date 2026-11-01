@@ -56,6 +56,11 @@ const FROZEN = [
   /^[\w./@-]+$/,                                // 路径／包名
 ];
 
+/** SQL 语句（#1220）：大写关键字开头、以参数占位符结尾的串是数据库代码，不是给读者看的话。
+ *  只在**非基准语言**列生效（中文列照旧严格判 CJK；SQL 里不会有中文可见文案）。
+ *  判据只看字面形状（大写 SQL 关键字），不按具体文案放行；--selftest 钉住「SQL 放行、普通句子照红」。 */
+const SQL_HEAD = /^(?:SELECT|INSERT|UPDATE|DELETE|CREATE|DROP|ALTER|PRAGMA|WITH|REPLACE)\b/;
+
 /** 把源码切成「非注释的字面量」：返回 [{line, text, kind}]。kind ∈ 'str'|'tpl'。
  *  注释整段跳过（豁免①的机器判据：不看注释里的字面量）。 */
 export function literalsOf(source) {
@@ -173,6 +178,8 @@ export function devMessageTexts(source) {
  *   ⑤ 内联脚本行（#1205）：非基准语言列里，**同时出现花括号与分号／等号**（或箭头函数）的串是随页内联的
  *      JS 代码，不是给读者看的句子——中文列照旧严格判 CJK（代码里的中文也得上屏，不能漏）；英文列放行，
  *      否则 var on = 0; 这种行会被功能词、逐词判据误报成散文。
+ *   ⑥ SQL 语句（#1220）：大写关键字开头（SELECT／INSERT／UPDATE／DELETE…）的串是数据库代码，英文列放行；
+ *      判据只看形状，普通英文句子（哪怕以 Update 开头）照旧判红。
  *   注：`/\s+/` 那一处曾误写成 `/s+/`（少一个反斜杠）⇒ 英文列一句都判不出来而门全绿；
  *   本件 `--selftest` 因此同时钉一句中文与一句英文的变异／还原两行。 */
 export function residueOf(text, lang, devTexts = new Set()) {
@@ -187,6 +194,8 @@ export function residueOf(text, lang, devTexts = new Set()) {
   }
   // ⑤ 内联脚本行（#1205）：花括号 ＋ 分号/等号，或箭头函数——代码，不是句子。中文列不走这条分支。
   if ((/[{}]/.test(t) && /[;=]/.test(t)) || /=>/.test(t)) return null;
+  // ⑥ SQL 语句（#1220）：大写关键字开头的是数据库代码，不是句子（中文列已在上面的分支判过）。
+  if (SQL_HEAD.test(t.trim())) return null;
   const words = t.trim().split(/\s+/).filter((w) => /[A-Za-z]/.test(w));
   if (words.length < 3) return null;
   const startsLower = /^[a-z]/.test(words[0]);
@@ -360,11 +369,27 @@ function selftest(scope) {
     want(codeZh.residue.some((x) => x.lang === 'zh'), '内联脚本行里的中文必须照旧判红（实得 ' + JSON.stringify(codeZh.residue.map((x) => x.lang)) + '）');
     want(!codeZh.residue.some((x) => x.lang === 'en'), '同一行英文列仍须放行（实得 ' + JSON.stringify(codeZh.residue.map((x) => x.lang)) + '）');
     console.log('SELFTEST 内联脚本行读数：无中文 residue=' + codeOnly.residue.length + '／含中文 residue=' + codeZh.residue.length);
+    // ⑥ SQL 语句（#1220）：大写关键字开头的数据库代码不是文案，英文列放行；普通英文句子（哪怕以 Update 开头）照旧红。
+    writeFileSync(fixture, [
+      "import { e } from 'base-entries';",
+      "export const a = e('demo.title');",
+      "export const sql = db.prepare('SELECT count(*) AS c FROM item_locations WHERE location LIKE ?');",
+    ].join(String.fromCharCode(10)), 'utf8');
+    const sqlOnly = audit({ files: ['demo.ts'], allowlist: [] }, tmp);
+    want(sqlOnly.residue.length === 0, 'SQL 语句必须放行（实得 ' + JSON.stringify(sqlOnly.residue.map((x) => x.lang + ':' + x.text)) + '）');
+    writeFileSync(fixture, [
+      "import { e } from 'base-entries';",
+      "export const a = e('demo.title');",
+      "export const leak2 = 'Update the record to continue.';",
+    ].join(String.fromCharCode(10)), 'utf8');
+    const notSql = audit({ files: ['demo.ts'], allowlist: [] }, tmp);
+    want(notSql.residue.some((x) => x.lang === 'en'), '以 Update 开头的普通英文句子仍须判红（实得 ' + JSON.stringify(notSql.residue.map((x) => x.lang)) + '）');
+    console.log('SELFTEST SQL 豁免读数：SQL residue=' + sqlOnly.residue.length + '／普通句子 residue=' + notSql.residue.length);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
   if (bad.length) { for (const b of bad) console.error('SELFTEST FAIL ' + b); process.exit(1); }
-  console.log('SELFTEST: 空范围显式报数／注释豁免／命令关键字豁免／中文残留必红／英文残留必红／开发者报文按调用点豁免／搬走必绿／没迁完报失明／内联脚本行豁免 —— 九条自证 OK');
+  console.log('SELFTEST: 空范围显式报数／注释豁免／命令关键字豁免／中文残留必红／英文残留必红／开发者报文按调用点豁免／搬走必绿／没迁完报失明／内联脚本行豁免／SQL 语句豁免 —— 十条自证 OK');
 }
 
 /** 入口守卫（照 tooling/i18n-langs.mjs／skill-html-snapshot.mjs 的先例）：本件被别处 import 时**不跑** CLI，

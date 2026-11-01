@@ -26,7 +26,14 @@
     "#已报销",
     "#报销到账",
     "借贷/偿还",
-    "#偿还"
+    "#偿还",
+    "配件",
+    "配套",
+    "替代",
+    "同捆",
+    "常用搭配",
+    "全屋",
+    "按位置"
   ],
   "files": [
     "packages/base-render/src/components/progress-list/model.ts",
@@ -66,6 +73,14 @@
     "packages/skill-bill/src/write/scene-lend.ts",
     "packages/skill-bill/src/write/scene-refund.ts",
     "packages/skill-bill/src/write/scene-reimburse-done.ts",
-    "packages/skill-bill/src/write/scene-repay.ts"
+    "packages/skill-bill/src/write/scene-repay.ts",
+    "packages/skill-home/src/help/helpFile.ts",
+    "packages/skill-home/src/help/lookup.ts",
+    "packages/skill-home/src/items/add.ts",
+    "packages/skill-home/src/items/detail.ts",
+    "packages/skill-home/src/items/inventory.ts",
+    "packages/skill-home/src/items/search.ts",
+    "packages/skill-home/src/items/tag.ts",
+    "packages/skill-home/src/items/update.ts"
   ]
 }

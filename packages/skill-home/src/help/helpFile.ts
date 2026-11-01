@@ -54,10 +54,16 @@ import { HELP_GROUPS } from './helpAssets.js';
 import type { HelpGroupAsset } from './helpAssets.js';
 import { WAKE_TABLE } from '../policy/index.js';
 import { HomeRenderError } from '../render/errors.js';
+import { m } from '../entries/index.js';
 
-/** 页面级取值（老件逐字）：技能名／文档标题——标题自带技能名 ⇒ `composeDocTitle` 走「原样」支。 */
-const HELP_FILE_SKILL_NAME = '居家管家' as const;
-const HELP_FILE_TITLE = '居家管家 · 使用手册(HELP)' as const;
+/** 页面级取值（老件逐字）：技能名／文档标题——标题自带技能名 ⇒ `composeDocTitle` 走「原样」支。
+ *  #1220 · 这两条是上屏文案：语言只在取词那一刻定，模块加载期取词会把语言固化，故改成函数。 */
+function helpFileSkillName(): string {
+  return m('skill-home.help-helpFile.c018');
+}
+function helpFileTitle(): string {
+  return m('skill-home.help-helpFile.c019');
+}
 /** 技能数据世代（照老 `scenarios.yaml` 的 `version: '2.0'`；**不是** npm 包 `skill-home@0.1.0`）。 */
 const HELP_FILE_VERSION = '2.0' as const;
 /** 首次使用横幅的 `prompt` 取自该场景的 `prompt_template`（单源，不抄第二份文案）。 */
@@ -70,14 +76,16 @@ interface HomeHelpContact {
   readonly items: readonly { readonly label: string; readonly value: string; readonly url?: true }[];
   readonly copy_all: true;
 }
-const HOME_HELP_CONTACT: HomeHelpContact = Object.freeze({
-  items: Object.freeze([
-    Object.freeze({ label: '邮箱', value: '975559549@qq.com' }),
-    Object.freeze({ label: 'GitHub', value: 'https://github.com/FeatherHunter/ilife', url: true as const }),
-    Object.freeze({ label: 'Issues', value: 'https://github.com/FeatherHunter/ilife/issues', url: true as const }),
-  ]),
-  copy_all: true as const,
-});
+function homeHelpContact(): HomeHelpContact {
+  return Object.freeze({
+    items: Object.freeze([
+      Object.freeze({ label: m('skill-home.help-helpFile.c020'), value: '975559549@qq.com' }),
+      Object.freeze({ label: 'GitHub', value: 'https://github.com/FeatherHunter/ilife', url: true as const }),
+      Object.freeze({ label: 'Issues', value: 'https://github.com/FeatherHunter/ilife/issues', url: true as const }),
+    ]),
+    copy_all: true as const,
+  });
+}
 
 /* ── 装配层内部形状（不对外开出口；导出面按铁律五收口）────────────────────────── */
 
@@ -118,7 +126,7 @@ function fail(message: string): never {
  *  #1281 起**出口要用它当指纹的 stamp**（本家数据没有 `generated_at`，分钟串嵌在 `subtitle` 里）。 */
 export function formatHelpMinute(now: Date): string {
   if (!(now instanceof Date) || Number.isNaN(now.getTime())) {
-    fail('HELP 更新时间须为有效 Date（缺失阻断，不返空串）。');
+    fail(m('skill-home.help-helpFile.c001'));
   }
   const p = (n: number): string => String(n).padStart(2, '0');
   return String(now.getFullYear()) + '-' + p(now.getMonth() + 1) + '-' + p(now.getDate())
@@ -128,10 +136,10 @@ export function formatHelpMinute(now: Date): string {
 /** 资产 → **要上页的分组**：只读引用、不 clone；`deprecated` 登记位一律剔除（票面定死的验收项）。 */
 function listedGroups(): readonly HelpGroupAsset[] {
   if (!Array.isArray(HELP_GROUPS) || HELP_GROUPS.length === 0) {
-    fail('HELP 内容资产为空（HELP_GROUPS 无域，不返空页）。');
+    fail(m('skill-home.help-helpFile.c002'));
   }
   const listed = HELP_GROUPS.filter((g) => g.deprecated !== true);
-  if (listed.length === 0) fail('HELP 过滤 deprecated 后无剩余分组（不返空页）。');
+  if (listed.length === 0) fail(m('skill-home.help-helpFile.c003'));
   return listed;
 }
 
@@ -139,15 +147,15 @@ function listedGroups(): readonly HelpGroupAsset[] {
 function assertGroupsUsable(groups: readonly HelpGroupAsset[]): void {
   for (const g of groups) {
     if (!Array.isArray(g.subgroups) || g.subgroups.length === 0) {
-      fail('HELP 分组无子功能（' + g.id + ' 的 subgroups 为空）。');
+      fail(m('skill-home.help-helpFile.c004', { p0: String(g.id) }));
     }
     for (const sg of g.subgroups) {
       if (!Array.isArray(sg.scenes) || sg.scenes.length === 0) {
-        fail('HELP 子功能无场景（' + sg.id + ' 的 scenes 为空，契约 scenes[] 非空）。');
+        fail(m('skill-home.help-helpFile.c005', { p0: String(sg.id) }));
       }
       for (const s of sg.scenes) {
         if (typeof s.prompt_template !== 'string' || s.prompt_template.length === 0) {
-          fail('HELP 场景缺 prompt（' + s.id + '）。');
+          fail(m('skill-home.help-helpFile.c006', { p0: String(s.id) }));
         }
       }
     }
@@ -171,20 +179,24 @@ function initPromptFrom(groups: readonly HelpGroupAsset[]): string {
       for (const s of sg.scenes) {
         if (s.id === HELP_INIT_SCENE_ID) {
           if (typeof s.prompt_template !== 'string' || s.prompt_template.length === 0) {
-            fail('HELP 首次使用横幅缺 prompt：场景 ' + HELP_INIT_SCENE_ID + ' 的 prompt_template 为空。');
+            fail(m('skill-home.help-helpFile.c007', { p0: String(HELP_INIT_SCENE_ID) }));
           }
           return s.prompt_template;
         }
       }
     }
   }
-  return fail('HELP 首次使用横幅缺 prompt：内容资产无场景 ' + HELP_INIT_SCENE_ID + '。');
+  return fail(m('skill-home.help-helpFile.c008', { p0: String(HELP_INIT_SCENE_ID) }));
 }
 
 /** 页头摘要行（老 `help_center.py:111` 同一通式）：计数**全部派生**（域数／场景数），版本取数据世代。 */
 function deriveSubtitleLine(now: Date, groups: readonly HelpGroupAsset[]): string {
-  return String(groups.length) + ' 功能域 · ' + String(countScenes(groups)) + ' 场景 · 版本 '
-    + HELP_FILE_VERSION + ' · 更新于 ' + formatHelpMinute(now);
+  return m('skill-home.help-helpFile.c009', {
+    p0: String(groups.length),
+    p1: String(countScenes(groups)),
+    p2: String(HELP_FILE_VERSION),
+    p3: String(formatHelpMinute(now)),
+  });
 }
 
 /** 计数口径那一行：只在「骨架比实际列出多」时出现（同数即无话可说，别往页面上写废话）。 */
@@ -192,24 +204,24 @@ function countNoteLine(groups: readonly HelpGroupAsset[]): string {
   const listed = countScenes(groups);
   const skeleton = skeletonSceneTotal();
   if (skeleton <= listed) return '';
-  return '骨架 ' + String(skeleton) + ' 条，联动 ' + String(skeleton - listed) + ' 条已停用不列';
+  return m('skill-home.help-helpFile.c010', { p0: String(skeleton), p1: String(skeleton - listed) });
 }
 
 /** 两块透传信息块：汇总（＝`subtitle` 那一份字符串，**一处算、两处用**）＋ HELP 唤醒词（口径层派生）。 */
 function buildMetaBlocks(subtitleLine: string, groups: readonly HelpGroupAsset[]): readonly HomeHelpMetaBlock[] {
-  if (subtitleLine.length === 0) fail('HELP 汇总块缺摘要行（subtitle 不许为空）。');
+  if (subtitleLine.length === 0) fail(m('skill-home.help-helpFile.c011'));
   const note = countNoteLine(groups);
   const wakeWords = WAKE_TABLE.filter((e) => e.key === HELP_WAKE_KEY).map((e) => e.phrase);
-  if (wakeWords.length === 0) fail('HELP 唤醒词块为空：口径层 WAKE_TABLE 无 ' + HELP_WAKE_KEY + ' 条目。');
+  if (wakeWords.length === 0) fail(m('skill-home.help-helpFile.c012', { p0: String(HELP_WAKE_KEY) }));
   return Object.freeze([
     Object.freeze({
       id: 'help_summary',
-      title: 'HELP 汇总',
+      title: m('skill-home.help-helpFile.c013'),
       html: '<p>' + subtitleLine + '</p>' + (note === '' ? '' : '<p>' + note + '</p>'),
     }),
     Object.freeze({
       id: 'help_wake_words',
-      title: 'HELP 唤醒词',
+      title: m('skill-home.help-helpFile.c014'),
       html: '<p>' + wakeWords.join(' / ') + '</p>',
     }),
   ]);
@@ -232,8 +244,8 @@ function initializedFrom(dbPath: string | undefined, fileExists: ((p: string) =>
  *  `init_banner` **键常在**、显隐只走 `hidden`；`recommendations` **不传**（老居家页面无此段）。
  *  返回类型**内联**、不另开导出（照 chef `:153-161`；本文件导出面按铁律五收到 2 个函数）。 */
 export function buildHomeHelpFileData(now: Date, opts: HomeHelpFileOptions = {}): {
-  readonly skill_name: typeof HELP_FILE_SKILL_NAME;
-  readonly title: typeof HELP_FILE_TITLE;
+  readonly skill_name: string;
+  readonly title: string;
   readonly subtitle: string;
   readonly contact: HomeHelpContact;
   readonly groups: readonly HelpGroupAsset[];
@@ -246,17 +258,17 @@ export function buildHomeHelpFileData(now: Date, opts: HomeHelpFileOptions = {})
   // `now` 非法在这里就炸，不把坏时间带进载荷。
   const subtitle = deriveSubtitleLine(now, groups);
   return Object.freeze({
-    skill_name: HELP_FILE_SKILL_NAME,
-    title: HELP_FILE_TITLE,
+    skill_name: helpFileSkillName(),
+    title: helpFileTitle(),
     subtitle,
-    contact: HOME_HELP_CONTACT,
+    contact: homeHelpContact(),
     groups,
     meta_blocks: buildMetaBlocks(subtitle, groups),
     version: HELP_FILE_VERSION,
     init_banner: Object.freeze({
-      title: '🚀 第一次用居家管家?',
-      subtitle: '从「首次使用」开始 — 检测环境、确认数据目录、建库、验证读写,全程零决策。完成初始化后,本区域将不再出现。',
-      button_text: '📋 复制初始化 prompt',
+      title: m('skill-home.help-helpFile.c015'),
+      subtitle: m('skill-home.help-helpFile.c016'),
+      button_text: m('skill-home.help-helpFile.c017'),
       prompt: initPromptFrom(groups),
       closable: true as const,
       hidden: initializedFrom(opts.dbPath, opts.fileExists),
