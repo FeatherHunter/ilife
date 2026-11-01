@@ -11,6 +11,7 @@ import type { ChefDb, HistoryRow } from '../fetch/db.js';
 import { getRecipeDetail, mustRecipe, now, qGet, qRun, toHistory } from '../fetch/db.js';
 import { needName, validateRating } from '../policy/index.js';
 import { validateCookDate, validateFeedback } from './validate.js';
+import { m } from '../entries/index.js';
 
 /** 记一次做菜（评分必填＋反馈必填禁占位：老库 rating NOT NULL，缺值直接拦）。原 `src/fetch/db.ts`，本域独占。
  *
@@ -77,5 +78,10 @@ export function runHistoryRecord(handle: ChefDb, params: Record<string, unknown>
   const dateRaw = params.date === undefined ? params.cook_date : params.date;
   const cookDate = validateCookDate(dateRaw);
   const h = recordHistory(handle, { recipe_id: detail.recipe.id, rating, feedback, cook_date: cookDate });
-  return buildHistoryRecord('已记录做菜：' + detail.recipe.name + '（' + h.cook_date + (rating !== null ? '，评分 ' + rating : '') + '）');
+  const ratingTail = rating !== null ? m('skill-chef.history-run-record.c002', { p0: String(rating) }) : '';
+  return buildHistoryRecord(m('skill-chef.history-run-record.c003', {
+    p0: String(detail.recipe.name),
+    p1: String(h.cook_date),
+    p2: String(ratingTail),
+  }));
 }

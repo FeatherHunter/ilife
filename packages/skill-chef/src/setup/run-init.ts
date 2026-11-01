@@ -9,13 +9,14 @@
 import type { ChefDb } from '../fetch/db.js';
 import { qGet } from '../fetch/db.js';
 import { buildRecipeReceipt } from '../render/index.js';
+import { m } from '../entries/index.js';
 
 /** 跑 `chef.setup.init`：幂等初始化（开库即建表），回执报已初始化或本次建齐。 */
 export function runSetupInit(handle: ChefDb): unknown {
   const row = qGet<{ c: number }>(handle, "SELECT COUNT(*) AS c FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'");
   const tables = Number(row?.c ?? 0);
   if (handle.initialized) {
-    return buildRecipeReceipt('首次使用已就绪：本次建齐 ' + tables + ' 张表，录第一道菜就能开工');
+    return buildRecipeReceipt(m('skill-chef.setup-run-init.c001', { p0: String(tables) }));
   }
-  return buildRecipeReceipt('菜谱库已就绪：' + tables + ' 张表齐全，不用再建（旧数据只提醒，不自动搬动）');
+  return buildRecipeReceipt(m('skill-chef.setup-run-init.c002', { p0: String(tables) }));
 }

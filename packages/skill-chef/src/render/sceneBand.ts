@@ -21,6 +21,7 @@
  */
 
 /** 换行（仓库口径：不写字面换行转义，与 `skin.ts`／`pageShapes.ts` 同）。 */
+import { m } from '../entries/index.js';
 const LF = String.fromCharCode(10);
 
 /** 页族闭集（三个值，与页面族配方同名；页壳一处一个）。 */
@@ -165,7 +166,7 @@ export function sceneBandCss(input?: { readonly prefix?: string }): string {
   const root = '.' + p + 'page-ui';
   const band = root + ' .ilife-scene-band';
   return [
-    '/* #873 第三轮 · 页族装饰带（内联 SVG，三族各一条变体；纯装饰、不可点、无可见文本） */',
+    m('skill-chef.render-sceneBand.c001'),
     band + ' {',
     '  display: block;',
     '  box-sizing: border-box;',

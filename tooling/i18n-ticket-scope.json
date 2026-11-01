@@ -5132,14 +5132,8 @@
     "1224": {
       "title": "迁移 skill-chef 全部域：70 件（1,899 条）",
       "state": "open（待开工；清单已回填 #1308）",
-      "files": [
-        {
-          "path": "packages/skill-chef/src/add/commands.ts",
-          "literals": 3,
-          "byClass": {
-            "copy": 3
-          }
-        },
+      "files": [],
+      "migrated": [
         {
           "path": "packages/skill-chef/src/add/pages.ts",
           "literals": 37,
@@ -5147,13 +5141,6 @@
             "copy": 11,
             "concat": 25,
             "ident": 1
-          }
-        },
-        {
-          "path": "packages/skill-chef/src/add/routes.ts",
-          "literals": 6,
-          "byClass": {
-            "copy": 6
           }
         },
         {
@@ -5183,20 +5170,6 @@
           }
         },
         {
-          "path": "packages/skill-chef/src/cli/keys.ts",
-          "literals": 13,
-          "byClass": {
-            "derived": 13
-          }
-        },
-        {
-          "path": "packages/skill-chef/src/cook/commands.ts",
-          "literals": 3,
-          "byClass": {
-            "copy": 3
-          }
-        },
-        {
           "path": "packages/skill-chef/src/cook/page-css.ts",
           "literals": 2,
           "byClass": {
@@ -5212,13 +5185,6 @@
           }
         },
         {
-          "path": "packages/skill-chef/src/cook/routes.ts",
-          "literals": 8,
-          "byClass": {
-            "copy": 8
-          }
-        },
-        {
           "path": "packages/skill-chef/src/cook/run.ts",
           "literals": 70,
           "byClass": {
@@ -5228,26 +5194,12 @@
           }
         },
         {
-          "path": "packages/skill-chef/src/data/commands.ts",
-          "literals": 5,
-          "byClass": {
-            "copy": 5
-          }
-        },
-        {
           "path": "packages/skill-chef/src/data/pages.ts",
           "literals": 60,
           "byClass": {
             "copy": 24,
             "concat": 35,
             "data": 1
-          }
-        },
-        {
-          "path": "packages/skill-chef/src/data/routes.ts",
-          "literals": 2,
-          "byClass": {
-            "copy": 2
           }
         },
         {
@@ -5265,29 +5217,6 @@
             "copy": 11,
             "concat": 11,
             "ident": 1
-          }
-        },
-        {
-          "path": "packages/skill-chef/src/delivery/naming.ts",
-          "literals": 35,
-          "byClass": {
-            "copy": 32,
-            "concat": 3
-          }
-        },
-        {
-          "path": "packages/skill-chef/src/fetch/db.ts",
-          "literals": 13,
-          "byClass": {
-            "copy": 6,
-            "concat": 7
-          }
-        },
-        {
-          "path": "packages/skill-chef/src/fetch/schema.ts",
-          "literals": 1,
-          "byClass": {
-            "copy": 1
           }
         },
         {
@@ -5316,34 +5245,6 @@
           }
         },
         {
-          "path": "packages/skill-chef/src/help/manifest.ts",
-          "literals": 2,
-          "byClass": {
-            "ident": 2
-          }
-        },
-        {
-          "path": "packages/skill-chef/src/help/output.ts",
-          "literals": 2,
-          "byClass": {
-            "copy": 2
-          }
-        },
-        {
-          "path": "packages/skill-chef/src/help/sceneData.ts",
-          "literals": 458,
-          "byClass": {
-            "derived": 458
-          }
-        },
-        {
-          "path": "packages/skill-chef/src/history/commands.ts",
-          "literals": 5,
-          "byClass": {
-            "copy": 5
-          }
-        },
-        {
           "path": "packages/skill-chef/src/history/page-css.ts",
           "literals": 3,
           "byClass": {
@@ -5361,13 +5262,6 @@
           }
         },
         {
-          "path": "packages/skill-chef/src/history/run-query.ts",
-          "literals": 1,
-          "byClass": {
-            "ident": 1
-          }
-        },
-        {
           "path": "packages/skill-chef/src/history/run-record.ts",
           "literals": 12,
           "byClass": {
@@ -5376,58 +5270,11 @@
           }
         },
         {
-          "path": "packages/skill-chef/src/history/validate.ts",
-          "literals": 17,
-          "byClass": {
-            "copy": 11,
-            "concat": 6
-          }
-        },
-        {
-          "path": "packages/skill-chef/src/policy/category.ts",
-          "literals": 34,
-          "byClass": {
-            "copy": 28,
-            "concat": 1,
-            "ident": 5
-          }
-        },
-        {
-          "path": "packages/skill-chef/src/policy/recipe.ts",
-          "literals": 8,
-          "byClass": {
-            "concat": 4,
-            "ident": 4
-          }
-        },
-        {
-          "path": "packages/skill-chef/src/policy/wakewords.ts",
-          "literals": 54,
-          "byClass": {
-            "copy": 51,
-            "concat": 3
-          }
-        },
-        {
-          "path": "packages/skill-chef/src/relation/commands.ts",
-          "literals": 6,
-          "byClass": {
-            "copy": 6
-          }
-        },
-        {
           "path": "packages/skill-chef/src/relation/pages.ts",
           "literals": 42,
           "byClass": {
             "copy": 23,
             "concat": 19
-          }
-        },
-        {
-          "path": "packages/skill-chef/src/relation/routes.ts",
-          "literals": 6,
-          "byClass": {
-            "copy": 6
           }
         },
         {
@@ -5463,13 +5310,6 @@
           }
         },
         {
-          "path": "packages/skill-chef/src/render/envelope.ts",
-          "literals": 5,
-          "byClass": {
-            "concat": 5
-          }
-        },
-        {
           "path": "packages/skill-chef/src/render/html.ts",
           "literals": 6,
           "byClass": {
@@ -5500,34 +5340,6 @@
           }
         },
         {
-          "path": "packages/skill-chef/src/render/templates.ts",
-          "literals": 3,
-          "byClass": {
-            "concat": 3
-          }
-        },
-        {
-          "path": "packages/skill-chef/src/render/views.ts",
-          "literals": 9,
-          "byClass": {
-            "copy": 9
-          }
-        },
-        {
-          "path": "packages/skill-chef/src/search/commands.ts",
-          "literals": 3,
-          "byClass": {
-            "copy": 3
-          }
-        },
-        {
-          "path": "packages/skill-chef/src/search/routes.ts",
-          "literals": 22,
-          "byClass": {
-            "copy": 22
-          }
-        },
-        {
           "path": "packages/skill-chef/src/search/run.ts",
           "literals": 11,
           "byClass": {
@@ -5537,26 +5349,12 @@
           }
         },
         {
-          "path": "packages/skill-chef/src/setup/commands.ts",
-          "literals": 2,
-          "byClass": {
-            "copy": 2
-          }
-        },
-        {
           "path": "packages/skill-chef/src/setup/pages.ts",
           "literals": 29,
           "byClass": {
             "copy": 17,
             "concat": 5,
             "ident": 7
-          }
-        },
-        {
-          "path": "packages/skill-chef/src/setup/routes.ts",
-          "literals": 1,
-          "byClass": {
-            "copy": 1
           }
         },
         {
@@ -5574,26 +5372,12 @@
           }
         },
         {
-          "path": "packages/skill-chef/src/shopping/commands.ts",
-          "literals": 3,
-          "byClass": {
-            "copy": 3
-          }
-        },
-        {
           "path": "packages/skill-chef/src/shopping/pages.ts",
           "literals": 35,
           "byClass": {
             "copy": 22,
             "concat": 5,
             "ident": 8
-          }
-        },
-        {
-          "path": "packages/skill-chef/src/shopping/routes.ts",
-          "literals": 8,
-          "byClass": {
-            "copy": 8
           }
         },
         {
@@ -5604,33 +5388,12 @@
           }
         },
         {
-          "path": "packages/skill-chef/src/triggers/chef-scenes.ts",
-          "literals": 202,
-          "byClass": {
-            "derived": 202
-          }
-        },
-        {
-          "path": "packages/skill-chef/src/update/routes.ts",
-          "literals": 8,
-          "byClass": {
-            "copy": 8
-          }
-        },
-        {
           "path": "packages/skill-chef/src/update/run-write.ts",
           "literals": 50,
           "byClass": {
             "copy": 9,
             "concat": 36,
             "ident": 5
-          }
-        },
-        {
-          "path": "packages/skill-chef/src/view/commands.ts",
-          "literals": 3,
-          "byClass": {
-            "copy": 3
           }
         },
         {
@@ -5650,13 +5413,6 @@
           }
         },
         {
-          "path": "packages/skill-chef/src/view/routes.ts",
-          "literals": 14,
-          "byClass": {
-            "copy": 14
-          }
-        },
-        {
           "path": "packages/skill-chef/src/view/run.ts",
           "literals": 2,
           "byClass": {
@@ -5664,11 +5420,291 @@
           }
         }
       ],
-      "migrated": [],
       "totals": {
         "files": 69,
         "literals": 1888
-      }
+      },
+      "excluded": [
+        {
+          "path": "packages/skill-chef/src/add/commands.ts",
+          "literals": 3,
+          "byClass": {
+            "copy": 3
+          },
+          "reason": "命令声明（唤醒词／命令键／CLI 样例冻结，不译；ADR-0004 三条不译）"
+        },
+        {
+          "path": "packages/skill-chef/src/add/routes.ts",
+          "literals": 6,
+          "byClass": {
+            "copy": 6
+          },
+          "reason": "命令声明（唤醒词／命令键／CLI 样例冻结，不译；ADR-0004 三条不译）"
+        },
+        {
+          "path": "packages/skill-chef/src/cli/keys.ts",
+          "literals": 13,
+          "byClass": {
+            "derived": 13
+          },
+          "reason": "生成件（文件头机器生成／禁手改），不迁"
+        },
+        {
+          "path": "packages/skill-chef/src/cook/commands.ts",
+          "literals": 3,
+          "byClass": {
+            "copy": 3
+          },
+          "reason": "命令声明（唤醒词／命令键／CLI 样例冻结，不译；ADR-0004 三条不译）"
+        },
+        {
+          "path": "packages/skill-chef/src/cook/routes.ts",
+          "literals": 8,
+          "byClass": {
+            "copy": 8
+          },
+          "reason": "命令声明（唤醒词／命令键／CLI 样例冻结，不译；ADR-0004 三条不译）"
+        },
+        {
+          "path": "packages/skill-chef/src/data/commands.ts",
+          "literals": 5,
+          "byClass": {
+            "copy": 5
+          },
+          "reason": "命令声明（唤醒词／命令键／CLI 样例冻结，不译；ADR-0004 三条不译）"
+        },
+        {
+          "path": "packages/skill-chef/src/data/routes.ts",
+          "literals": 2,
+          "byClass": {
+            "copy": 2
+          },
+          "reason": "命令声明（唤醒词／命令键／CLI 样例冻结，不译；ADR-0004 三条不译）"
+        },
+        {
+          "path": "packages/skill-chef/src/delivery/naming.ts",
+          "literals": 35,
+          "byClass": {
+            "copy": 32,
+            "concat": 3
+          },
+          "reason": "域中文名与页名词干（决定落点目录／文件名，数据），不译"
+        },
+        {
+          "path": "packages/skill-chef/src/fetch/db.ts",
+          "literals": 13,
+          "byClass": {
+            "copy": 6,
+            "concat": 7
+          },
+          "reason": "数据常量（SQL／枚举／模式表，写库或机器判据），ADR-0004 不译"
+        },
+        {
+          "path": "packages/skill-chef/src/fetch/schema.ts",
+          "literals": 1,
+          "byClass": {
+            "copy": 1
+          },
+          "reason": "数据常量（SQL／枚举／模式表，写库或机器判据），ADR-0004 不译"
+        },
+        {
+          "path": "packages/skill-chef/src/help/manifest.ts",
+          "literals": 2,
+          "byClass": {
+            "ident": 2
+          },
+          "reason": "生成件（帮助登记表由生成器产出、禁手改），不迁"
+        },
+        {
+          "path": "packages/skill-chef/src/help/output.ts",
+          "literals": 2,
+          "byClass": {
+            "copy": 2
+          },
+          "reason": "开发报文（throw new *Error 构造），非用户可见文案"
+        },
+        {
+          "path": "packages/skill-chef/src/help/sceneData.ts",
+          "literals": 458,
+          "byClass": {
+            "derived": 458
+          },
+          "reason": "生成件（文件头机器生成／禁手改），不迁"
+        },
+        {
+          "path": "packages/skill-chef/src/history/commands.ts",
+          "literals": 5,
+          "byClass": {
+            "copy": 5
+          },
+          "reason": "命令声明（唤醒词／命令键／CLI 样例冻结，不译；ADR-0004 三条不译）"
+        },
+        {
+          "path": "packages/skill-chef/src/history/run-query.ts",
+          "literals": 1,
+          "byClass": {
+            "ident": 1
+          },
+          "reason": "数据常量（SQL／枚举／模式表，写库或机器判据），ADR-0004 不译"
+        },
+        {
+          "path": "packages/skill-chef/src/history/validate.ts",
+          "literals": 17,
+          "byClass": {
+            "copy": 11,
+            "concat": 6
+          },
+          "reason": "开发报文（throw new *Error 构造），非用户可见文案"
+        },
+        {
+          "path": "packages/skill-chef/src/policy/category.ts",
+          "literals": 34,
+          "byClass": {
+            "copy": 28,
+            "concat": 1,
+            "ident": 5
+          },
+          "reason": "数据常量（SQL／枚举／模式表，写库或机器判据），ADR-0004 不译"
+        },
+        {
+          "path": "packages/skill-chef/src/policy/recipe.ts",
+          "literals": 8,
+          "byClass": {
+            "concat": 4,
+            "ident": 4
+          },
+          "reason": "开发报文（throw new *Error 构造），非用户可见文案"
+        },
+        {
+          "path": "packages/skill-chef/src/policy/wakewords.ts",
+          "literals": 54,
+          "byClass": {
+            "copy": 51,
+            "concat": 3
+          },
+          "reason": "数据常量（SQL／枚举／模式表，写库或机器判据），ADR-0004 不译"
+        },
+        {
+          "path": "packages/skill-chef/src/relation/commands.ts",
+          "literals": 6,
+          "byClass": {
+            "copy": 6
+          },
+          "reason": "命令声明（唤醒词／命令键／CLI 样例冻结，不译；ADR-0004 三条不译）"
+        },
+        {
+          "path": "packages/skill-chef/src/relation/routes.ts",
+          "literals": 6,
+          "byClass": {
+            "copy": 6
+          },
+          "reason": "命令声明（唤醒词／命令键／CLI 样例冻结，不译；ADR-0004 三条不译）"
+        },
+        {
+          "path": "packages/skill-chef/src/render/envelope.ts",
+          "literals": 5,
+          "byClass": {
+            "concat": 5
+          },
+          "reason": "数据常量（SQL／枚举／模式表，写库或机器判据），ADR-0004 不译"
+        },
+        {
+          "path": "packages/skill-chef/src/render/templates.ts",
+          "literals": 3,
+          "byClass": {
+            "concat": 3
+          },
+          "reason": "数据常量（SQL／枚举／模式表，写库或机器判据），ADR-0004 不译"
+        },
+        {
+          "path": "packages/skill-chef/src/render/views.ts",
+          "literals": 9,
+          "byClass": {
+            "copy": 9
+          },
+          "reason": "HELP 现找关键词别名表（输入匹配，非文案），不译"
+        },
+        {
+          "path": "packages/skill-chef/src/search/commands.ts",
+          "literals": 3,
+          "byClass": {
+            "copy": 3
+          },
+          "reason": "命令声明（唤醒词／命令键／CLI 样例冻结，不译；ADR-0004 三条不译）"
+        },
+        {
+          "path": "packages/skill-chef/src/search/routes.ts",
+          "literals": 22,
+          "byClass": {
+            "copy": 22
+          },
+          "reason": "命令声明（唤醒词／命令键／CLI 样例冻结，不译；ADR-0004 三条不译）"
+        },
+        {
+          "path": "packages/skill-chef/src/setup/commands.ts",
+          "literals": 2,
+          "byClass": {
+            "copy": 2
+          },
+          "reason": "命令声明（唤醒词／命令键／CLI 样例冻结，不译；ADR-0004 三条不译）"
+        },
+        {
+          "path": "packages/skill-chef/src/setup/routes.ts",
+          "literals": 1,
+          "byClass": {
+            "copy": 1
+          },
+          "reason": "命令声明（唤醒词／命令键／CLI 样例冻结，不译；ADR-0004 三条不译）"
+        },
+        {
+          "path": "packages/skill-chef/src/shopping/commands.ts",
+          "literals": 3,
+          "byClass": {
+            "copy": 3
+          },
+          "reason": "命令声明（唤醒词／命令键／CLI 样例冻结，不译；ADR-0004 三条不译）"
+        },
+        {
+          "path": "packages/skill-chef/src/shopping/routes.ts",
+          "literals": 8,
+          "byClass": {
+            "copy": 8
+          },
+          "reason": "命令声明（唤醒词／命令键／CLI 样例冻结，不译；ADR-0004 三条不译）"
+        },
+        {
+          "path": "packages/skill-chef/src/triggers/chef-scenes.ts",
+          "literals": 202,
+          "byClass": {
+            "derived": 202
+          },
+          "reason": "生成件（文件头机器生成／禁手改），不迁"
+        },
+        {
+          "path": "packages/skill-chef/src/update/routes.ts",
+          "literals": 8,
+          "byClass": {
+            "copy": 8
+          },
+          "reason": "命令声明（唤醒词／命令键／CLI 样例冻结，不译；ADR-0004 三条不译）"
+        },
+        {
+          "path": "packages/skill-chef/src/view/commands.ts",
+          "literals": 3,
+          "byClass": {
+            "copy": 3
+          },
+          "reason": "命令声明（唤醒词／命令键／CLI 样例冻结，不译；ADR-0004 三条不译）"
+        },
+        {
+          "path": "packages/skill-chef/src/view/routes.ts",
+          "literals": 14,
+          "byClass": {
+            "copy": 14
+          },
+          "reason": "命令声明（唤醒词／命令键／CLI 样例冻结，不译；ADR-0004 三条不译）"
+        }
+      ]
     },
     "1225": {
       "title": "迁移 skill-memo-ilife 全部域：75 件（1,706 条）",
@@ -9938,12 +9974,12 @@
   },
   "scopeSummary": {
     "ledgerFiles": 1226,
-    "migratedFiles": 46,
-    "pendingFiles": 1166,
-    "pendingLiterals": 40623,
-    "excludedFiles": 14,
-    "excludedLiterals": 825,
-    "migratedLiterals": 1300
+    "migratedFiles": 81,
+    "pendingFiles": 1097,
+    "pendingLiterals": 38735,
+    "excludedFiles": 48,
+    "excludedLiterals": 1790,
+    "migratedLiterals": 2223
   },
   "workflow": [
     "开工：从本文件取本票 files，逐件登记进 tooling/i18n-scope.json 的 files（先跑两道门拿红读数＝范围已挂但还没迁）。",

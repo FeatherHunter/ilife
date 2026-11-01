@@ -23,6 +23,7 @@ import {
 import { chefCopyArea } from '../render/copyArea.js';
 import { renderSceneShell } from '../render/sceneShell.js';
 import type { ShoppingItem } from '../fetch/db.js';
+import { m } from '../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义，与 `blocks.ts`／皮肤件同）。 */
 const LF = String.fromCharCode(10);
@@ -57,8 +58,8 @@ function shoppingPageCss(): string {
   const warm = rgbOf(CHART_PALETTE[2]);
   const root = '.ilife-page-ui ';
   return [
-    '/* #873 采购·生成清单 页内收口 · 每一条都挂在根类之下 */',
-    '/* 页头图标位：页名右侧一枚采购袋（48px，纯装饰）。 */',
+    m('skill-chef.shopping-pages.c001'),
+    m('skill-chef.shopping-pages.c002'),
     root + '.ilife-block-page-shell-title {',
     '  position: relative;',
     '  padding-right: 56px;',
@@ -74,26 +75,26 @@ function shoppingPageCss(): string {
     '  background-repeat: no-repeat;',
     '  background-size: 48px 48px;',
     '}',
-    '/* 读数卡：暖调描边＋暖色浅底（皮肤已给顶缘暖色条），四张等高由公共层 grid-auto-rows 保证。 */',
+    m('skill-chef.shopping-pages.c003'),
     root + '.ilife-block-kpi-card {',
     '  box-sizing: border-box;',
     '  border-color: rgba(' + warm + ', .34);',
     '  background-image: linear-gradient(170deg, rgba(' + yellow + ', .16), var(--card) 62%);',
     '}',
-    '/* 宽档：读数卡栅格是栅格项，**不写 margin:auto**（那会关掉栅格项的 stretch、整块 shrink-to-fit）。',
-    '   本轮实测两支都试过：收进版心（`max-width:880px ＋ justify-self:center`）判「桌面端空间略空」，',
-    '   两列版（×440px）判「右侧大片留白」——都不如公共层那条**满铺一行四张**，故宽档一格不写、交回公共层。 */',
-    '/* 分区题头：折叠条标题那一行带一条暖色渐隐（品牌温度落在「分区」这一层）。 */',
+    m('skill-chef.shopping-pages.c004'),
+    m('skill-chef.shopping-pages.c005'),
+    m('skill-chef.shopping-pages.c006'),
+    m('skill-chef.shopping-pages.c007'),
     root + '.ilife-block-page-shell-body > .ilife-block-disclosure > .ilife-block-disclosure-summary {',
     '  background-image: linear-gradient(90deg, rgba(' + yellow + ', .20), rgba(' + yellow + ', 0) 76%);',
     '  border-radius: 13px;',
     '}',
-    '/* 开合标记：换成暖色圆点。第三轮 A/B：换成折角／保留公共层蓝 ▸ 都更差（见上），故保留这一支。 */',
+    m('skill-chef.shopping-pages.c008'),
     root + '.ilife-block-page-shell-body > .ilife-block-disclosure > .ilife-block-disclosure-summary::before {',
     '  background-color: rgba(' + warm + ', .22);',
     '  color: transparent;',
     '}',
-    '/* 折叠体内的数据表：表卡顶缘一条暖色细线，与读数卡同一族。 */',
+    m('skill-chef.shopping-pages.c009'),
     root + '.ilife-block-page-shell-body .ilife-block-disclosure-body .ilife-block-data-table {',
     '  border-top: 2px solid rgba(' + warm + ', .35);',
     '}',
@@ -110,7 +111,7 @@ export function shoppingListPage(input: {
 }): string {
   const byCategory = new Map<string, ShoppingItem[]>();
   for (const it of input.items) {
-    const cat = it.category || '其他';
+    const cat = it.category || m('skill-chef.shopping-pages.c010');
     if (!byCategory.has(cat)) byCategory.set(cat, []);
     byCategory.get(cat)?.push(it);
   }
@@ -118,50 +119,50 @@ export function shoppingListPage(input: {
   const round = (n: number): number => Math.round(n * 100) / 100;
   // 库存口径只在真有「这次不一样」的时候出一行：默认那一句（去哪儿核库存）已由主按钮与复制区承担，
   // 再在正文里复述一遍就是同一件事说两遍（冻结尺原话点了这一处）。
-  const caveat = (input.excludeOptional ? '已排除可选食材。' : '')
-    + (input.stockSkipped ? '这次不核对家里的库存。' : '');
+  const caveat = (input.excludeOptional ? m('skill-chef.shopping-pages.c011') : '')
+    + (input.stockSkipped ? m('skill-chef.shopping-pages.c012') : '');
   const blocks = [
     // 第三轮文案审计：「已按〈份量〉算好。」的「份量」在下面的读数卡里已有，单论信息可删；
     // 但同会话 A/B 里删掉它的三支是 79／84／85，都在本轮前 88 之下 ⇒ 按「先保后改」**保留**，
     // 审计表与逐支读数记在证据件「第三轮」一节。
-    renderConclusionBar('已按' + input.servingsText + '算好。'),
+    renderConclusionBar(m('skill-chef.shopping-pages.c013', { p0: String(input.servingsText) })),
     renderKpiGrid([
-      { label: '菜数', value: String(input.recipes.length), unit: '道', detail: input.recipes.join('、') },
-      { label: '食材', value: String(input.items.length), unit: '味' },
-      { label: '分组', value: String(groups.length), unit: '组' },
-      { label: '份量', value: input.servingsText },
+      { label: m('skill-chef.shopping-pages.c014'), value: String(input.recipes.length), unit: m('skill-chef.shopping-pages.c015'), detail: input.recipes.join('、') },
+      { label: m('skill-chef.shopping-pages.c016'), value: String(input.items.length), unit: m('skill-chef.shopping-pages.c017') },
+      { label: m('skill-chef.shopping-pages.c018'), value: String(groups.length), unit: m('skill-chef.shopping-pages.c019') },
+      { label: m('skill-chef.shopping-pages.c020'), value: input.servingsText },
     ]),
     ...(caveat === '' ? [] : [renderCaliberLine(caveat)]),
     // 主操作提到分组之前：列表长起来会把它压到首屏之外，而「复制清单核对库存」是这一页的主入口。
     renderActionBar({
       buttons: [
-        { label: '复制清单核对库存', kind: 'primary', actionId: 'shopping-stock' },
-        { label: '再算一份清单', kind: 'ghost', actionId: 'shopping-again' },
+        { label: m('skill-chef.shopping-pages.c021'), kind: 'primary', actionId: 'shopping-stock' },
+        { label: m('skill-chef.shopping-pages.c022'), kind: 'ghost', actionId: 'shopping-again' },
       ],
     }),
     ...groups.map(([cat, rows], index) =>
       renderDisclosure({
         // 第一组默认展开：首屏要看得见「这一单到底买什么」，其余三组折叠。
         open: index === 0,
-        title: cat + '（' + rows.length + '味）',
+        title: m('skill-chef.shopping-pages.c023', { p0: String(cat), p1: String(rows.length) }),
         contentHtml: renderDataTable({
           // 不画表注：分组名已由折叠条标题承载，同一组名画两遍是复读。
           // 「来自哪道菜」只在真的多道菜合并时才成一列；一道菜时它每一行都是同一个值（读数卡
           // 「菜数 1 道」下面那行 detail 已经写了是哪道菜），留着只是把同一句话重复 N 行。
           columns: input.recipes.length > 1
             ? [
-                { key: 'name', label: '食材' },
-                { key: 'qty', label: '用量', align: 'right' },
-                { key: 'from', label: '来自哪道菜' },
+                { key: 'name', label: m('skill-chef.shopping-pages.c024') },
+                { key: 'qty', label: m('skill-chef.shopping-pages.c025'), align: 'right' },
+                { key: 'from', label: m('skill-chef.shopping-pages.c026') },
               ]
             : [
-                { key: 'name', label: '食材' },
-                { key: 'qty', label: '用量', align: 'right' },
+                { key: 'name', label: m('skill-chef.shopping-pages.c027') },
+                { key: 'qty', label: m('skill-chef.shopping-pages.c028'), align: 'right' },
               ],
           rows: rows.map((g) => ({
             name: g.name,
             qty: g.quantity === null || g.quantity === undefined
-              ? g.quantity_text || '适量'
+              ? g.quantity_text || m('skill-chef.shopping-pages.c029')
               : String(round(Number(g.quantity))) + ' ' + g.unit,
             from: g.recipes.join('、'),
           })),
@@ -176,7 +177,7 @@ export function shoppingListPage(input: {
         items: input.items.map((g) => ({
           食材: g.name,
           用量: g.quantity === null || g.quantity === undefined
-            ? g.quantity_text || '适量'
+            ? g.quantity_text || m('skill-chef.shopping-pages.c030')
             : String(round(Number(g.quantity))) + ' ' + g.unit,
           ...(input.recipes.length > 1 ? { 来自: g.recipes.join('、') } : {}),
         })),
@@ -186,8 +187,8 @@ export function shoppingListPage(input: {
   ];
   return renderSceneShell({
     family: 'result',
-    docTitle: '生成清单',
-    bodyHtml: renderPageShell({ eyebrow: '私家大厨 ｜ 采购', title: '生成清单', content: blocks.join('') }),
+    docTitle: m('skill-chef.shopping-pages.c031'),
+    bodyHtml: renderPageShell({ eyebrow: m('skill-chef.shopping-pages.c032'), title: m('skill-chef.shopping-pages.c033'), content: blocks.join('') }),
     extraCss: shoppingPageCss(),
   });
 }

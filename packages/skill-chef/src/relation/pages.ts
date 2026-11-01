@@ -19,6 +19,7 @@ import { chefCopyArea } from '../render/copyArea.js';
 import { renderSceneShell } from '../render/sceneShell.js';
 import { escapeHtml } from '../render/index.js';
 import { relationShapeCss } from './shapes.js';
+import { m } from '../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -136,7 +137,7 @@ function relationDeltaMark(): string {
  *  关系类型只在层头写一次，本行不再复现。 */
 function relationBranch(rows: readonly RelationRow[]): string {
   const items = rows.map((r) => {
-    const level = typeof r.level === 'number' && Number.isFinite(r.level) ? '第' + r.level + '代' : '';
+    const level = typeof r.level === 'number' && Number.isFinite(r.level) ? m('skill-chef.relation-pages.c001', { p0: String(r.level) }) : '';
     const note = typeof r.change_summary === 'string' && r.change_summary !== ''
       ? '<span class="ilife-relation-branch-note">'
         + relationDeltaMark()
@@ -175,17 +176,17 @@ function relationTreeTree(input: {
     : relationBranch(input.descendants);
   return '<div class="ilife-relation-tree">'
     + relationTier({
-      tone: 'up', title: '向上祖先', count: input.ancestors.length + ' 道',
+      tone: 'up', title: m('skill-chef.relation-pages.c002'), count: m('skill-chef.relation-pages.c003', { p0: String(input.ancestors.length) }),
       kinds: kindsOf(input.ancestors), empty: input.ancestors.length === 0, body: upBody,
     })
     + joint
     + relationTier({
-      tone: 'here', title: '当前', count: '这道菜', kinds: '', empty: false,
+      tone: 'here', title: m('skill-chef.relation-pages.c004'), count: m('skill-chef.relation-pages.c005'), kinds: '', empty: false,
       body: '<span class="ilife-relation-here">' + escapeHtml(input.root) + '</span>',
     })
     + joint
     + relationTier({
-      tone: 'down', title: '向下后代', count: input.descendants.length + ' 道',
+      tone: 'down', title: m('skill-chef.relation-pages.c006'), count: m('skill-chef.relation-pages.c007', { p0: String(input.descendants.length) }),
       kinds: kindsOf(input.descendants), empty: input.descendants.length === 0, body: downBody,
     })
     + '</div>';
@@ -194,22 +195,27 @@ function relationTreeTree(input: {
 /** 添加派生关系回执页（回执型）。 */
 export function relationAddPage(input: { parent: string; child: string; relationType: string; changeSummary: string }): string {
   const blocks = [
-    relationVerdict('已记下这组派生关系。', false),
-    relationPair('父菜', input.parent, input.relationType, '子菜', input.child),
+    relationVerdict(m('skill-chef.relation-pages.c008'), false),
+    relationPair(m('skill-chef.relation-pages.c009'), input.parent, input.relationType, m('skill-chef.relation-pages.c010'), input.child),
     relationNote(input.changeSummary),
     act([
-      { label: '看家族树', kind: 'primary', actionId: 'relation-tree' },
-      { label: '再记一组', kind: 'ghost', actionId: 'relation-again' },
+      { label: m('skill-chef.relation-pages.c011'), kind: 'primary', actionId: 'relation-tree' },
+      { label: m('skill-chef.relation-pages.c012'), kind: 'ghost', actionId: 'relation-again' },
     ]),
     chefCopyArea({
       dataActionId: 'relation-copy',
       data: {
         key: 'chef.relation.write', shape: 'receipt', ok: true,
-        message: input.parent + '到' + input.child + '（' + input.relationType + '）：' + input.changeSummary,
+        message: m('skill-chef.relation-pages.c013', {
+          p0: String(input.parent),
+          p1: String(input.child),
+          p2: String(input.relationType),
+          p3: String(input.changeSummary),
+        }),
       },
     }),
   ];
-  return shell('记派生关系回执', '私家大厨 ｜ 派生', blocks);
+  return shell(m('skill-chef.relation-pages.c014'), m('skill-chef.relation-pages.c015'), blocks);
 }
 
 /** 家族树页（结果型）。三层照样出：没数的那层只留层头（条数写着 0 道），不另写一句占位话。 */
@@ -221,11 +227,11 @@ export function relationTreePage(input: {
   const total = input.ancestors.length + input.descendants.length;
   const blocks = [
     relationVerdict(total === 0
-      ? '这道菜还没有和别的菜连上关系。'
-      : '这道菜共有' + total + '组上下游关系。', false),
+      ? m('skill-chef.relation-pages.c016')
+      : m('skill-chef.relation-pages.c017', { p0: String(total) }), false),
     relationTreeTree(input),
-    renderCaliberLine('废弃菜谱不入树，代数由近及远。'),
-    act([{ label: '记一组关系', kind: 'primary', actionId: 'relation-add' }]),
+    renderCaliberLine(m('skill-chef.relation-pages.c018')),
+    act([{ label: m('skill-chef.relation-pages.c019'), kind: 'primary', actionId: 'relation-add' }]),
     // 2026-09-22 用户口径「每张页都要有复制日志」：本页原**整块复制区都缺**
     // （53 件产物里只有 51 件有按钮，缺的两件之一就是本页）。
     chefCopyArea({
@@ -239,31 +245,38 @@ export function relationTreePage(input: {
       },
       log: {
         command: 'chef.relation.query',
-        source: '家族树（root＝' + input.root + '）',
-        m5Line: '上游 ' + String(input.ancestors.length) + ' 组／下游 ' + String(input.descendants.length) + ' 组',
+        source: m('skill-chef.relation-pages.c020', { p0: String(input.root) }),
+        m5Line: m('skill-chef.relation-pages.c021', {
+          p0: String(String(input.ancestors.length)),
+          p1: String(String(input.descendants.length)),
+        }),
       },
     }),
   ];
-  return shell('家族树', '私家大厨 ｜ 派生', blocks);
+  return shell(m('skill-chef.relation-pages.c022'), m('skill-chef.relation-pages.c023'), blocks);
 }
 
 /** 从已有派生新菜回执页（回执型，含母子差异）。 */
 export function relationDerivePage(input: { parent: string; child: string; differences: string }): string {
   const blocks = [
-    relationVerdict('已落库，父子关系一次写完。', true),
-    relationPair('母本', input.parent, '派生', '新菜', input.child),
+    relationVerdict(m('skill-chef.relation-pages.c024'), true),
+    relationPair(m('skill-chef.relation-pages.c025'), input.parent, m('skill-chef.relation-pages.c026'), m('skill-chef.relation-pages.c027'), input.child),
     relationNote(input.differences),
     act([
-      { label: '看做菜步骤', kind: 'primary', actionId: 'relation-view' },
-      { label: '看家族树', kind: 'ghost', actionId: 'relation-tree' },
+      { label: m('skill-chef.relation-pages.c028'), kind: 'primary', actionId: 'relation-view' },
+      { label: m('skill-chef.relation-pages.c029'), kind: 'ghost', actionId: 'relation-tree' },
     ]),
     chefCopyArea({
       dataActionId: 'derive-copy',
       data: {
         key: 'chef.relation.write', shape: 'receipt', ok: true,
-        message: '由' + input.parent + '派生' + input.child + '：' + input.differences,
+        message: m('skill-chef.relation-pages.c030', {
+          p0: String(input.parent),
+          p1: String(input.child),
+          p2: String(input.differences),
+        }),
       },
     }),
   ];
-  return shell('派生新菜回执', '私家大厨 ｜ 派生', blocks);
+  return shell(m('skill-chef.relation-pages.c031'), m('skill-chef.relation-pages.c032'), blocks);
 }

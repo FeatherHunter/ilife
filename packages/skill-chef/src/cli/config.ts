@@ -13,7 +13,8 @@ import { ENVELOPE_VERSION } from 'base-link-core';
 import type { ConfigRecord, EnvelopeShape } from 'base-link-core';
 import { loadChefConfig, resetChefConfig, saveChefConfig } from '../config.js';
 import { resolvedChefPaths } from '../fetch/paths.js';
-import { buildChefHealthReport } from '../health.js';
+import { buildChefHealthReport, chefDbDirFaultCode } from '../health.js';
+import { m } from '../entries/index.js';
 
 /** 三个 key 的唯一定义地（插件侧镜像同值，见 `packages/plugin-chef/src/bridge.ts`）。 */
 export const CONFIG_KEYS = {
@@ -83,12 +84,13 @@ function withHumanError<T>(run: () => T): T {
  *
  * 结论复用体检 `db.dir` 那一项（`src/health.ts` 的 `dirVerdict`：不在／在但写不进去／
  * 在且能写），红才给，`message` 原样取体检那句故障本身，不合成新句子；绿＝缺席（面板不亮）。
- * 故障码只按体检报文首字区分，供判据与回执用，面板只画 `message`。
+ * 故障码走体检那份读数的结构化档（`chefDbDirFaultCode()`，不拿上屏报文比字面——报文随渲染语言变），
+ * 供判据与回执用；面板只画 `message`。
  */
 function chefAlerts(): Record<string, { readonly code: string; readonly message: string }> | undefined {
   const item = buildChefHealthReport().items.find((entry) => entry.id === 'db.dir');
   if (item === undefined || item.status !== 'red') return undefined;
-  const code = item.message.startsWith('不在') || item.message.startsWith('同名') ? 'DIR_MISSING' : 'DIR_UNWRITABLE';
+  const code = chefDbDirFaultCode();
   return { 'db.dir': { code, message: item.message } };
 }
 
@@ -103,7 +105,7 @@ export function runConfigKey(key: string, params: Record<string, unknown>): stri
   }
   if (key === CONFIG_KEYS.write) {
     const raw = params['values'];
-    if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) fail(2, '缺参数 values（须为对象）');
+    if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) fail(2, m('skill-chef.cli-config.c001'));
     const current = withHumanError(() => loadChefConfig()).values as unknown as ConfigRecord;
     const merged = mergeValues(current, raw as ConfigRecord);
     const r = withHumanError(() => saveChefConfig(merged));

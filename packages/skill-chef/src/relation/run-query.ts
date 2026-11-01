@@ -9,6 +9,7 @@ import { ChefFetchError } from '../fetch/errors.js';
 import type { ChefDb } from '../fetch/db.js';
 import { mustRecipe, qAll } from '../fetch/db.js';
 import { buildHistoryQuery } from '../render/index.js';
+import { m } from '../entries/index.js';
 
 interface RelationEdge {
   parent_id: string;
@@ -103,8 +104,8 @@ export function runRelationQuery(handle: ChefDb, params: Record<string, unknown>
   const ancestors = walk(root.id, 'up');
   const descendants = walk(root.id, 'down');
   return buildHistoryQuery('relation-tree:' + root.name, [
-    { section: '当前', name: root.name, level: 0 },
-    ...ancestors.map((a) => ({ section: '祖先', ...(a as Record<string, unknown>) })),
-    ...descendants.map((d) => ({ section: '后代', ...(d as Record<string, unknown>) })),
+    { section: m('skill-chef.relation-run-query.c003'), name: root.name, level: 0 },
+    ...ancestors.map((a) => ({ section: m('skill-chef.relation-run-query.c004'), ...(a as Record<string, unknown>) })),
+    ...descendants.map((d) => ({ section: m('skill-chef.relation-run-query.c005'), ...(d as Record<string, unknown>) })),
   ]);
 }

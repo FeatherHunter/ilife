@@ -13,11 +13,12 @@ import { getRecipeDetail, historyStats, qAll, qGet, queryHistory } from '../fetc
 import type { RecipeDetail } from '../render/views.js';
 import { toRecipeItem } from '../render/views.js';
 import { resolveNameOrId } from '../shared/slots.js';
+import { m } from '../entries/index.js';
 
 // 营养行（`nutrition_info`，一菜一行）：有行即真数据，无行即显式未估算。
 function queryNutrition(recipeId: string, h: ChefDb): Record<string, unknown> {
   const row = qGet<Record<string, unknown>>(h, 'SELECT * FROM nutrition_info WHERE recipe_id = ?', [recipeId]);
-  if (!row) return { estimated: false, note: '营养估算一期占位（以实际食材称量为准）' };
+  if (!row) return { estimated: false, note: m('skill-chef.view-run.c001') };
   return {
     estimated: true,
     serving_size: row.serving_size, serving_unit: row.serving_unit,
@@ -68,7 +69,7 @@ export function recipeDetail(detail: RecipeDetail, handle?: ChefDb): { item: Rec
       cook_date: r.cook_date, cook_sequence: r.cook_sequence, rating: r.rating, feedback: r.feedback,
     }))
     : [];
-  const nutrition = handle ? queryNutrition(recipeId, handle) : { estimated: false, note: '营养估算一期占位（以实际食材称量为准）' };
+  const nutrition = handle ? queryNutrition(recipeId, handle) : { estimated: false, note: m('skill-chef.view-run.c002') };
   const background = handle ? queryBackground(recipeId, handle) : null;
   const badges = handle ? queryBadges(recipeId, handle) : {
     cuisine: [], region: [], country: [], flavors: [], seasons: [], meal_types: [], diet_tags: [], cooking_methods: [],

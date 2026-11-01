@@ -18,6 +18,7 @@
  * 与深色区选择器（公共层 `buildStyleSheet` 的三禁）。
  */
 /** 换行（仓库口径：`String.fromCharCode(10)`，不写字面换行转义）。 */
+import { m } from '../entries/index.js';
 const LF = String.fromCharCode(10);
 
 /** 步骤卡的状态类（`run.ts` 挂在卡外层：当前步／已做步／未开始）。 */
@@ -33,7 +34,7 @@ export const COOK_STEP_SIDE_CLASS = 'ilife-cook-step-side';
 export function cookPageCss(): string {
   const root = '.ilife-page-ui';
   return [
-    '/* #873 做菜域页内收口 · 每一条规则都挂在根类 ' + root + ' 之下 */',
+    m('skill-chef.cook-page-css.c001', { p0: String(root) }),
     /* ① 页头事实条：四格四等分。格数住在本域，故列数也住在本域。 */
     root + ' .ilife-block-page-shell-body > .ilife-block-fact-strip {',
     '  display: grid;',

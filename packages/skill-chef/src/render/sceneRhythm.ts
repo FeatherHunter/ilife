@@ -19,6 +19,7 @@
  */
 import { CHART_PALETTE } from 'base-paint';
 import type { SceneFamily } from './sceneBand.js';
+import { m } from '../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -42,7 +43,7 @@ function densityCss(root: string, p: string): string[] {
   const chip = root + ' .' + p + 'block-chip';
   const tile = root + ' .' + p + 'block-fact-strip-item';
   const lines: string[] = [
-    '/* ③ 色彩锚点密度：胶囊与瓦片吃同一个暖色基，再按位置轮一圈蓝／橙／青点缀色 */',
+    m('skill-chef.render-sceneRhythm.c001'),
     chip + ' {',
     '  border-color: rgba(' + ORANGE_RGB + ', .32);',
     '  background-color: rgba(' + ORANGE_RGB + ', .12);',
@@ -83,7 +84,7 @@ function densityCss(root: string, p: string): string[] {
 /** 首屏填满度（②）：回执族的节奏铺开。**只抬内距与外距，不动字号档、不编内容。** */
 function receiptFillCss(root: string, p: string): string[] {
   return [
-    '/* ② 首屏填满度（回执族）：块距与内距各抬一档，把既有内容铺到一屏（不编内容） */',
+    m('skill-chef.render-sceneRhythm.c002'),
     root + ' .' + p + 'block-page-shell-body > * + .' + p + 'block {',
     '  margin-top: 26px;',
     '}',

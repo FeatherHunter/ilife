@@ -9,8 +9,9 @@ import { parseRegistryKey, ENVELOPE_SHAPES } from '../../base-link-core/dist/ind
 const here = dirname(fileURLToPath(import.meta.url));
 
 describe('私家大厨渲染 render', () => {
-  it('12 key x shape 全合法（命名空间+形状）', () => {
-    assert.equal(Object.keys(CHEF_KEY_SHAPES).length, 12);
+  it('14 key x shape 全合法（命名空间+形状）', () => {
+    // #963 数据族加了两键（`chef.data.schema`／`chef.data.query`，resultset 形）：12 → 14。
+    assert.equal(Object.keys(CHEF_KEY_SHAPES).length, 14);
     for (const [k, s] of Object.entries(CHEF_KEY_SHAPES)) {
       assert.equal(parseRegistryKey(k).key, k);
       assert.ok(ENVELOPE_SHAPES.includes(s));

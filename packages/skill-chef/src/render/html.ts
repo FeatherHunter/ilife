@@ -1,6 +1,7 @@
 // 渲染层·HTML：envelope 按形状渲染为 section 页；转义仅 &<>"'；超体积大声失败。
 import type { Envelope } from 'base-link-core';
 import { ChefRenderError } from './errors.js';
+import { m } from '../entries/index.js';
 
 // #1279 扩面（用户 2026-10-15 批准）：2.4MB 口径扩到私家大厨 HELP／结果页，与饼干记账同门。
 export const CHEF_HTML_MAX_BYTES = 2_400_000;
@@ -15,7 +16,7 @@ function titleOf(n: Record<string, unknown>): string {
     if (typeof v === 'string' && v) return v;
   }
   const id = n.id;
-  return id !== undefined ? '条目 ' + String(id) : '条目';
+  return id !== undefined ? m('skill-chef.render-html.c001', { p0: String(String(id)) }) : m('skill-chef.render-html.c002');
 }
 
 function metaOf(n: Record<string, unknown>): string {
@@ -34,7 +35,7 @@ function chefItemHtml(n: Record<string, unknown>): string {
 }
 
 function listHtml(items: unknown[]): string {
-  if (!items.length) return '<div class="hm-empty">暂无记录</div>';
+  if (!items.length) return '<div class="hm-empty">' + m('skill-chef.render-html.c003') + '</div>';
   return items.map((x) => chefItemHtml(x as Record<string, unknown>)).join('');
 }
 

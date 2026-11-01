@@ -12,6 +12,7 @@ import type { ChefDb } from '../fetch/db.js';
 import { getRecipeDetail, mustRecipe, now, qAll, qGet, qRun } from '../fetch/db.js';
 import { addRecipe } from '../add/index.js';
 import { buildRecipeReceipt } from '../render/index.js';
+import { m } from '../entries/index.js';
 
 /** 关系类型白名单（老件 validators 同语义：派生／变体／改良）。 */
 const RELATION_TYPES = ['派生', '变体', '改良'] as const;
@@ -53,7 +54,11 @@ export function runRelationWrite(handle: ChefDb, params: Record<string, unknown>
       if (e instanceof ChefFetchError) throw e;
       throw new ChefFetchError('CHEF_DB_UNREADABLE', '派生关系写盘失败', { cause: e });
     }
-    return buildRecipeReceipt('已记派生关系：' + parent.name + '到' + child.name + '（' + relationType + '）');
+    return buildRecipeReceipt(m('skill-chef.relation-run-write.c001', {
+      p0: String(parent.name),
+      p1: String(child.name),
+      p2: String(relationType),
+    }));
   }
   if (op === 'derive') {
     const sourceName = needText(params, 'source');
@@ -73,7 +78,10 @@ export function runRelationWrite(handle: ChefDb, params: Record<string, unknown>
     }
     const created = addRecipe(handle, {
       name: targetName,
-      description: mother.recipe.description ? mother.recipe.description + '（派生差异：' + differences + '）' : '由' + mother.recipe.name + '派生：' + differences,
+      description: mother.recipe.description ? m('skill-chef.relation-run-write.c003', {
+        p0: String(mother.recipe.description),
+        p1: String(differences),
+      }) : m('skill-chef.relation-run-write.c004', { p0: String(mother.recipe.name), p1: String(differences) }),
       difficulty: mother.recipe.difficulty,
       servings: mother.recipe.servings,
       total_time_minutes: mother.recipe.total_time_minutes,
@@ -105,7 +113,11 @@ export function runRelationWrite(handle: ChefDb, params: Record<string, unknown>
     }
     void now();
     void qAll;
-    return buildRecipeReceipt('已从' + mother.recipe.name + '派生新菜：' + targetName + '（差异：' + differences + '）');
+    return buildRecipeReceipt(m('skill-chef.relation-run-write.c006', {
+      p0: String(mother.recipe.name),
+      p1: String(targetName),
+      p2: String(differences),
+    }));
   }
   throw new ChefPolicyError('POLICY_BAD_INPUT', 'relation.write 只接受 op=add/derive');
 }

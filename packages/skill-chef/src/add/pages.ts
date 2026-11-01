@@ -15,6 +15,7 @@ import {
 } from 'base-paint/blocks';
 import { chefCopyArea } from '../render/copyArea.js';
 import { renderSceneShell } from '../render/sceneShell.js';
+import { m } from '../entries/index.js';
 
 interface AddIngredientView {
   readonly name: string;
@@ -74,8 +75,9 @@ const LF = String.fromCharCode(10);
  *  **不放菜名**：菜名这一页已经印了三处（页头 `录入回执：<菜名>`、复制区的 `recipe` 位、
  *  复制日志的来源行），结论条再印一遍是判官两轮都点的那条「同一件事说三遍」。
  *  结论条这一句只承「这件事成了」——**删掉它用户不会少知道任何一件具体的事**，
- *  所以它保留、但不再复述菜名。 */
-const CONCLUSION_TEXT = '已写进菜谱，可以随时翻出来看。';
+ *  所以它保留、但不再复述菜名。
+ *  **按需构建**：`m()` 只能在函数体内调用，故不做模块级常量。 */
+function conclusionText(): string { return m('skill-chef.add-pages.c031'); }
 
 /** 暖色小砌块（顶部 5px 渐变条与分区标题的图标位）：色值取自 `CHART_PALETTE` 的那三档
  *  （黄 `#ffcc00`／橙 `#ff9500`／粉红 `#ff2d55`），不在本件另发明十六进制串。 */
@@ -115,7 +117,7 @@ function addPageCss(): string {
    *  （见证据件「样式没生效」那一行）。 */
   const tableCell = root + ' .' + p + 'block-data-table:has(td[data-label])';
   return [
-    '/* #873 录入域页内收口（追加在公共层皮肤之后） */',
+    m('skill-chef.add-pages.c001'),
     /* ① 备料表：两列。表注顶缘一条暖色横条（表头带之外的第二个色彩锚点）。 */
     root + ' .' + p + 'block-data-table-caption {',
     '  padding-top: 14px;',
@@ -304,10 +306,10 @@ function ingredientTable(ingredients: readonly AddIngredientView[]): string {
     if (g.quantity_text !== '' && g.quantity_text !== g.name) notes.set(g.name, g.quantity_text);
   }
   return renderDataTable({
-    caption: '备料',
+    caption: m('skill-chef.add-pages.c002'),
     columns: [
-      { key: 'name', label: '食材' },
-      { key: 'qty', label: '用量', align: 'right' },
+      { key: 'name', label: m('skill-chef.add-pages.c003') },
+      { key: 'qty', label: m('skill-chef.add-pages.c004'), align: 'right' },
     ],
     rows: ingredients.map((g) => ({
       name: g.name,
@@ -338,11 +340,14 @@ function escCell(text: string): string {
 function stepsBlock(steps: readonly AddStepView[]): string {
   if (steps.length === 0) return '';
   return renderListRows({
-    items: steps.map((s) => ({
-      left: '第 ' + s.sequence + ' 步',
-      main: s.action,
-      right: s.duration_minutes + ' 分钟 ' + (s.heat_level || '未写'),
-    })),
+    items: steps.map((s) => {
+      const heat = s.heat_level || m('skill-chef.add-pages.c005');
+      return {
+        left: m('skill-chef.add-pages.c006', { p0: String(s.sequence) }),
+        main: s.action,
+        right: m('skill-chef.add-pages.c007', { p0: String(s.duration_minutes), p1: String(heat) }),
+      };
+    }),
   });
 }
 
@@ -365,60 +370,64 @@ export function buildAddSuccessHtml(input: AddSuccessInput): string {
   const copy = chefCopyArea({
     data: {
       key: 'chef.recipe.write', shape: 'receipt', ok: true,
-      message: input.recipeName + '已写进菜谱：' + input.servings + '人份，备料'
-        + ingredients.length + '味，共' + steps.length + '步。',
+      message: m('skill-chef.add-pages.c008', {
+        p0: String(input.recipeName),
+        p1: String(input.servings),
+        p2: String(ingredients.length),
+        p3: String(steps.length),
+      }),
     },
     log: {
       command: 'chef.recipe.write',
       source: input.caliberNote,
-      m5Line: '菜谱 1 行 ＋ 食材 ' + ingredients.length + ' 行 ＋ 步骤 ' + steps.length + ' 行',
+      m5Line: m('skill-chef.add-pages.c009', { p0: String(ingredients.length), p1: String(steps.length) }),
     },
   });
   const content =
-    renderConclusionBar(CONCLUSION_TEXT) +
+    renderConclusionBar(conclusionText()) +
     renderFactStrip({
       items: [
-        { label: '用时', value: input.totalTime + ' 分钟' },
-        { label: '份量', value: input.servings + ' 人份' },
-        { label: '食材', value: ingredients.length + ' 味' },
-        { label: '步骤', value: steps.length + ' 步' },
+        { label: m('skill-chef.add-pages.c010'), value: m('skill-chef.add-pages.c011', { p0: String(input.totalTime) }) },
+        { label: m('skill-chef.add-pages.c012'), value: m('skill-chef.add-pages.c013', { p0: String(input.servings) }) },
+        { label: m('skill-chef.add-pages.c014'), value: m('skill-chef.add-pages.c015', { p0: String(ingredients.length) }) },
+        { label: m('skill-chef.add-pages.c016'), value: m('skill-chef.add-pages.c017', { p0: String(steps.length) }) },
       ],
     }) +
     table +
     stepsBlock(steps) +
     renderActionBar({
       buttons: [
-        { label: '看这道菜', kind: 'ghost', actionId: 't773-view-' + input.cardId },
-        { label: '再录一道', kind: 'primary', actionId: 't773-add-' + input.cardId },
+        { label: m('skill-chef.add-pages.c018'), kind: 'ghost', actionId: 't773-view-' + input.cardId },
+        { label: m('skill-chef.add-pages.c019'), kind: 'primary', actionId: 't773-add-' + input.cardId },
       ],
     }) +
     copy;
   const shell = renderPageShell({
-    eyebrow: '私家大厨 ｜ 录入',
-    title: '录入回执：' + input.recipeName,
+    eyebrow: m('skill-chef.add-pages.c020'),
+    title: m('skill-chef.add-pages.c021', { p0: String(input.recipeName) }),
     content,
   });
-  return shellDoc(input.recipeName + '录入回执', shell);
+  return shellDoc(m('skill-chef.add-pages.c022', { p0: String(input.recipeName) }), shell);
 }
 
 /** 录入失败页（老件四段＋修正重试：操作名／失败原因／关键数据／建议下一步）。 */
 export function buildAddFailureHtml(input: AddFailureInput): string {
   const content =
-    renderConclusionBar('这次没写进库。') +
+    renderConclusionBar(m('skill-chef.add-pages.c023')) +
     renderListRows({
       items: [
-        { left: '操作名', main: input.operation },
-        { left: '失败原因', main: input.reason },
-        { left: '关键数据', main: input.keyData },
-        { left: '建议下一步', main: input.nextStep },
+        { left: m('skill-chef.add-pages.c024'), main: input.operation },
+        { left: m('skill-chef.add-pages.c025'), main: input.reason },
+        { left: m('skill-chef.add-pages.c026'), main: input.keyData },
+        { left: m('skill-chef.add-pages.c027'), main: input.nextStep },
       ],
     }) +
     renderProseBlock({ text: input.missingSummary }) +
     renderErrorReceipt({ message: input.reason, dataText: input.payloadText, logText: input.logText });
   const shell = renderPageShell({
-    eyebrow: '私家大厨 ｜ 录入',
-    title: '导入失败：' + input.operation,
+    eyebrow: m('skill-chef.add-pages.c028'),
+    title: m('skill-chef.add-pages.c029', { p0: String(input.operation) }),
     content,
   });
-  return shellDoc(input.operation + '失败回执', shell);
+  return shellDoc(m('skill-chef.add-pages.c030', { p0: String(input.operation) }), shell);
 }

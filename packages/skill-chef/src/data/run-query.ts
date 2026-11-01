@@ -12,6 +12,7 @@ import type { ChefDb, HealthIssue } from '../fetch/db.js';
 import { listRecipes, qAll, qGet, queryHistory } from '../fetch/db.js';
 import { ChefFetchError, ChefPolicyError } from '../fetch/errors.js';
 import { buildHistoryQuery } from '../render/index.js';
+import { m } from '../entries/index.js';
 
 /** 库体检：无食材／无步骤／缺火候／从未做过四档问题（无异常即空数组，由调用方拼 ok 条）。
  * 原 `src/fetch/db.ts`，本域独占。 */
@@ -19,13 +20,13 @@ export function healthCheck(h: ChefDb): HealthIssue[] {
   const issues: HealthIssue[] = [];
   try {
     const noIng = qAll<Record<string, unknown>>(h, "SELECT r.name AS name FROM recipes r LEFT JOIN ingredients i ON i.recipe_id = r.id WHERE i.id IS NULL AND r.status != '已废弃'");
-    for (const r of noIng) issues.push({ level: 'warn', message: '无食材：' + String(r.name ?? '') });
+    for (const r of noIng) issues.push({ level: 'warn', message: m('skill-chef.data-run-query.c002', { p0: String(String(r.name ?? '')) }) });
     const noStep = qAll<Record<string, unknown>>(h, "SELECT r.name AS name FROM recipes r LEFT JOIN cooking_steps s ON s.recipe_id = r.id WHERE s.id IS NULL AND r.status != '已废弃'");
-    for (const r of noStep) issues.push({ level: 'warn', message: '无步骤：' + String(r.name ?? '') });
+    for (const r of noStep) issues.push({ level: 'warn', message: m('skill-chef.data-run-query.c004', { p0: String(String(r.name ?? '')) }) });
     const noHeat = qAll<Record<string, unknown>>(h, "SELECT r.name AS name, s.sequence AS seq FROM cooking_steps s JOIN recipes r ON r.id = s.recipe_id WHERE (s.heat_level IS NULL OR s.heat_level = '') AND r.status != '已废弃'");
-    for (const r of noHeat) issues.push({ level: 'warn', message: '步骤缺火候：' + String(r.name ?? '') + '第' + String(r.seq ?? '') + '步' });
+    for (const r of noHeat) issues.push({ level: 'warn', message: m('skill-chef.data-run-query.c006', { p0: String(String(r.name ?? '')), p1: String(String(r.seq ?? '')) }) });
     const never = qAll<Record<string, unknown>>(h, "SELECT r.name AS name FROM recipes r LEFT JOIN recipe_history hh ON hh.recipe_id = r.id WHERE hh.id IS NULL AND r.status != '已废弃'");
-    for (const r of never) issues.push({ level: 'info', message: '从未做过：' + String(r.name ?? '') });
+    for (const r of never) issues.push({ level: 'info', message: m('skill-chef.data-run-query.c008', { p0: String(String(r.name ?? '')) }) });
   } catch (e) {
     if (e instanceof ChefFetchError) throw e;
     throw new ChefFetchError('CHEF_DB_UNREADABLE', '体检查询失败', { cause: e });
@@ -81,11 +82,11 @@ export function runDataQuery(handle: ChefDb, params: Record<string, unknown>, ki
         background: !!bg,
       });
       const missing: string[] = [];
-      if (ings.length < 3) missing.push('食材不足三味（当前' + ings.length + '）');
-      if (steps.length < 3) missing.push('步骤不足三步（当前' + steps.length + '）');
-      if (tips.length < 1) missing.push('没有小贴士');
-      if (techs.length < 1) missing.push('没有技法');
-      if (!bg) missing.push('没有背景故事');
+      if (ings.length < 3) missing.push(m('skill-chef.data-run-query.c009', { p0: String(ings.length) }));
+      if (steps.length < 3) missing.push(m('skill-chef.data-run-query.c010', { p0: String(steps.length) }));
+      if (tips.length < 1) missing.push(m('skill-chef.data-run-query.c011'));
+      if (techs.length < 1) missing.push(m('skill-chef.data-run-query.c012'));
+      if (!bg) missing.push(m('skill-chef.data-run-query.c013'));
       return {
         name: r.name,
         score,

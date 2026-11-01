@@ -70,9 +70,11 @@ describe('#695 私家大厨配置面', () => {
     // #766 起加 `html.sceneDir`（域产物根，默认 `cook_html`，`html.dir` 不动），故本表现是 4 键；
     // 删掉的两键住退休清单（见 t796 ⑥）。
     assert.equal(CHEF_CONFIG_STEM, 'chef');
+    // #1198 起默认值表多一组 `language`（空串＝跟随调用方，见 base-link-core 的配置面）。
     assert.deepEqual(CHEF_CONFIG_DEFAULTS, {
       db: { dir: '', name: 'chef_data.db' },
       html: { dir: 'cook_html/help', sceneDir: 'cook_html' },
+      language: { text: '', format: '' },
     });
     assert.deepEqual([...CHEF_CONFIG_RETIRED].sort(), ['files.help', 'files.lookup']);
   });
@@ -88,6 +90,7 @@ describe('#695 私家大厨配置面', () => {
     assert.deepEqual(first.data.values, {
       db: { dir: join(configDirOf(cfg), 'data'), name: 'chef_data.db' },
       html: { dir: 'cook_html/help', sceneDir: 'cook_html' },
+      language: { text: '', format: '' },
     }, '首次读的值＝写盘那一份（可改落点已是绝对路径，见 t796 ①）');
     // #796 起写盘口径：可改落点那一格落成算出来的绝对路径（读仍认空串，见 t796 ②）。
     const onDisk = parseConfigYaml(readFileSync(join(configDirOf(cfg), 'chef.yaml'), 'utf8'), 'chef.yaml').values;
@@ -114,6 +117,7 @@ describe('#695 私家大厨配置面', () => {
     assert.deepEqual(runOk(cfg, ['chef.config.read']).data.values, {
       db: { dir: join(configDirOf(cfg), 'data'), name: 'chef_data.db' },
       html: { dir: 'cook_html/help', sceneDir: 'cook_html' },
+      language: { text: '', format: '' },
     }, '重置回默认（可改落点是绝对路径，见 t796 ③）');
   });
 

@@ -12,6 +12,7 @@ import { ChefFetchError, ChefPolicyError } from '../fetch/errors.js';
 import type { ChefDb } from '../fetch/db.js';
 import { getRecipeDetail, mustRecipe, qAll, qRun } from '../fetch/db.js';
 import { buildRecipeReceipt } from '../render/index.js';
+import { m } from '../entries/index.js';
 
 interface BatchDiff {
   action: string;
@@ -51,7 +52,7 @@ export function runDataBatch(handle: ChefDb, params: Record<string, unknown>): u
       if (typeof qn !== 'number' || !Number.isFinite(qn)) throw new ChefFetchError('CHEF_BAD_QUERY', '改用量须给数字 quantity');
       const before = cur[0].quantity;
       qRun(handle, 'UPDATE ingredients SET quantity = ? WHERE id = ?', [qn as number, String(cur[0].id)]);
-      diffs.push({ action: 'mod', field: '食材「' + n + '」用量', before: strOf(before), after: strOf(qn) });
+      diffs.push({ action: 'mod', field: m('skill-chef.data-run-batch.c001', { p0: String(n) }), before: strOf(before), after: strOf(qn) });
     }
     for (const s of doSteps) {
       const seqRaw = (s as Record<string, unknown>)?.sequence;
@@ -64,19 +65,19 @@ export function runDataBatch(handle: ChefDb, params: Record<string, unknown>): u
         const a = String((s as Record<string, unknown>).action ?? '').trim();
         if (!a) throw new ChefPolicyError('POLICY_BAD_INPUT', '步骤动作不可空');
         patch.action = a;
-        diffs.push({ action: 'mod', field: '第' + String(seq) + '步动作', before: strOf(cur[0].action), after: a });
+        diffs.push({ action: 'mod', field: m('skill-chef.data-run-batch.c002', { p0: String(String(seq)) }), before: strOf(cur[0].action), after: a });
       }
       if ((s as Record<string, unknown>).duration_minutes !== undefined) {
         const dRaw = (s as Record<string, unknown>).duration_minutes;
         const d = typeof dRaw === 'string' ? Number(dRaw.trim()) : dRaw;
         if (typeof d !== 'number' || !Number.isFinite(d)) throw new ChefFetchError('CHEF_BAD_QUERY', '步骤时长须给数字 duration_minutes');
         patch.duration_minutes = d;
-        diffs.push({ action: 'mod', field: '第' + String(seq) + '步时长', before: strOf(cur[0].duration_minutes), after: strOf(d) });
+        diffs.push({ action: 'mod', field: m('skill-chef.data-run-batch.c003', { p0: String(String(seq)) }), before: strOf(cur[0].duration_minutes), after: strOf(d) });
       }
       if ((s as Record<string, unknown>).heat_level !== undefined) {
         const heat = String((s as Record<string, unknown>).heat_level ?? '');
         patch.heat_level = heat;
-        diffs.push({ action: 'mod', field: '第' + String(seq) + '步火候', before: strOf(cur[0].heat_level), after: heat });
+        diffs.push({ action: 'mod', field: m('skill-chef.data-run-batch.c004', { p0: String(String(seq)) }), before: strOf(cur[0].heat_level), after: heat });
       }
       const keys = Object.keys(patch);
       if (keys.length > 0) {
@@ -90,7 +91,7 @@ export function runDataBatch(handle: ChefDb, params: Record<string, unknown>): u
       for (const tag of tags) {
         qRun(handle, 'INSERT INTO recipe_diet_tags (id, recipe_id, tag) VALUES (?, ?, ?)', [randomUUID(), recipe.id, tag]);
       }
-      diffs.push({ action: 'mod', field: '饮食标签', before: before.join('、') || '无', after: tags.join('、') || '无' });
+      diffs.push({ action: 'mod', field: m('skill-chef.data-run-batch.c005'), before: before.join('、') || m('skill-chef.data-run-batch.c006'), after: tags.join('、') || m('skill-chef.data-run-batch.c007') });
     }
     handle.db.exec('COMMIT');
   } catch (e) {
@@ -99,7 +100,7 @@ export function runDataBatch(handle: ChefDb, params: Record<string, unknown>): u
     throw new ChefFetchError('CHEF_DB_UNREADABLE', '批量改写盘失败', { cause: e });
   }
   if (!diffs.length) throw new ChefFetchError('CHEF_BAD_QUERY', '本次无有效改动');
-  return buildRecipeReceipt('已批量改' + recipe.name + '：' + diffs.length + '处（改前已对比）');
+  return buildRecipeReceipt(m('skill-chef.data-run-batch.c008', { p0: String(recipe.name), p1: String(diffs.length) }));
 }
 
 /** 批量改的差异明細（供页面装配，纯取数不写库）。 */
@@ -112,7 +113,7 @@ export function previewDataBatch(handle: ChefDb, params: Record<string, unknown>
     const n = typeof g?.name === 'string' ? g.name.trim() : '';
     const cur = detail.ingredients.find((x) => x.name === n);
     if (cur && g.quantity !== undefined) {
-      out.push({ action: 'mod', field: '食材「' + n + '」用量', before: strOf(cur.quantity), after: strOf(g.quantity) });
+      out.push({ action: 'mod', field: m('skill-chef.data-run-batch.c009', { p0: String(n) }), before: strOf(cur.quantity), after: strOf(g.quantity) });
     }
   }
   return out;

@@ -10,6 +10,7 @@ import type { ChefDb, ShoppingItem } from '../fetch/db.js';
 import { mustRecipe, qAll, toIngredient } from '../fetch/db.js';
 import { needNames } from '../policy/index.js';
 import { note } from '../shared/slots.js';
+import { m } from '../entries/index.js';
 
 /** 跨菜合并采购清单（按名＋单位合并行，自带 optional/category 标记）。原 `src/fetch/db.ts`，本域独占。
  *
@@ -97,7 +98,7 @@ export function runShoppingQuery(handle: ChefDb, params: Record<string, unknown>
   const stockRaw = params.stock_check;
   const skipStock = stockRaw === false || stockRaw === '不核对' || stockRaw === 0;
   if (!skipStock) {
-    note('库存核对请复制 prompt 走「居家管家」技能，不直调');
+    note(m('skill-chef.shopping-run.c001'));
   }
   return buildShopping({
     items,

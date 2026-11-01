@@ -12,6 +12,7 @@
 import { ChefFetchError, ChefPolicyError } from '../fetch/errors.js';
 import type { ChefDb } from '../fetch/db.js';
 import { getRecipeDetail } from '../fetch/db.js';
+import { m } from '../entries/index.js';
 
 /** 入口失败原语：stderr 一行＋按码退出（直退，不抛）。用户：入口参数解析／预检＋各域 run。 */
 export function fail(code: number, msg: string): never { console.error('ERR ' + code + ': ' + msg); process.exit(code); }
@@ -58,6 +59,6 @@ export function pickNum(params: Record<string, unknown>, key: string): number | 
 export function needServings(params: Record<string, unknown>): number | undefined {
   if (params.servings === undefined) return undefined;
   const n = typeof params.servings === 'string' ? Number((params.servings as string).trim()) : params.servings;
-  if (!Number.isInteger(n) || (n as number) <= 0) fail(2, 'servings 须为正整数');
+  if (!Number.isInteger(n) || (n as number) <= 0) fail(2, m('skill-chef.shared-slots.c001'));
   return n as number;
 }

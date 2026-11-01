@@ -44,6 +44,7 @@ import { runChefDataQuery, runDataBatch, runDataQuery, runDataSchema } from '../
 import { parseRelationOp, runRelationQuery, runRelationWrite } from '../relation/index.js';
 import { runSetupInit } from '../setup/index.js';
 import { runWithLanguage } from 'base-entries';
+import { m } from '../entries/index.js';
 
 const DEFAULT_TIMEOUT_MS = 30000;
 
@@ -51,7 +52,7 @@ function toast(msg: string): void { console.error('TOAST: ' + msg); }
 
 function preflight(): void {
   const v = process.versions.node.split('.').map(Number);
-  if (!(v[0] > 22 || (v[0] === 22 && v[1] >= 13))) fail(1, 'node 低于 22.13：' + process.versions.node);
+  if (!(v[0] > 22 || (v[0] === 22 && v[1] >= 13))) fail(1, m('skill-chef.cli-cmd-read.c001', { p0: String(process.versions.node) }));
 }
 
 // 槽位与参数原语（todayStr／needServings／resolveNameOrId／resolveRecipeId／pickStr／pickNum）
@@ -99,8 +100,8 @@ function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
   const dbPath = join(resolve(resolveDbDir()), dbFilename());
   const mode = params.mode === undefined ? undefined : String(params.mode);
   const q = params.q === undefined ? undefined : String(params.q);
-  if (mode !== undefined && q !== undefined) fail(2, '参数 q 与 mode 互斥：q＝现找，mode＝速查表产物');
-  if (mode !== undefined && mode !== 'lookup') fail(2, 'mode 非法（' + String(mode) + '）：本键只认 lookup');
+  if (mode !== undefined && q !== undefined) fail(2, m('skill-chef.cli-cmd-read.c002'));
+  if (mode !== undefined && mode !== 'lookup') fail(2, m('skill-chef.cli-cmd-read.c003', { p0: String(String(mode)) }));
   const reuseMs = helpWindowOrFail(params);
   if (q !== undefined) return { data: { ...buildHelpItems(buildHelpLookup(), q), mode: 'lookup', query: q } };
   if (mode === 'lookup') {
@@ -123,7 +124,7 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
   const dbPath = resolveDbPath();
   const handle: ChefDb = openChefDb(dbPath);
   try {
-    if (handle.initialized) note('大厨 DB 已初始化：' + dbPath);
+    if (handle.initialized) note(m('skill-chef.cli-cmd-read.c004', { p0: String(dbPath) }));
     switch (key) {
       case 'chef.recipe.view': {
         return runRecipeView(handle, params);
@@ -152,7 +153,7 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
         const kind = typeof rawKind === 'string' && rawKind ? rawKind : (params.name !== undefined ? 'timeline' : 'stats');
         if (kind === 'timeline' || kind === 'stats') return runHistoryQuery(handle, params, kind);
         if (kind === 'quality' || kind === 'backup') return runDataQuery(handle, params, kind);
-        fail(2, 'history.query 只接受 kind=timeline/stats/quality/backup');
+        fail(2, m('skill-chef.cli-cmd-read.c019'));
         return null;
       }
       case 'chef.relation.write': {
@@ -177,9 +178,9 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
       }
       case 'chef.help.lookup':
         // #215：本键由 `dispatchHelp` 在**开库之前**处理（只读页不建库）；走到这里说明 main 的路由被改坏了。
-        fail(1, '内部错误：chef.help.lookup 须走 dispatchHelp（开库之前）');
+        fail(1, m('skill-chef.cli-cmd-read.c020'));
         return null;
-      default: fail(3, '未知 chef key：' + key); return null;
+      default: fail(3, m('skill-chef.cli-cmd-read.c005', { p0: String(key) })); return null;
     }
   } finally {
     try { closeChefDb(handle); } catch { /* ignore */ }
@@ -197,21 +198,21 @@ function parseArgs(a: string[]): { key: string | undefined; params: string | und
     }
     else if (a[i] === '--timeout' && i + 1 < a.length) {
       o.timeout = Number(a[++i]);
-      if (!Number.isFinite(o.timeout) || o.timeout <= 0) fail(2, '--timeout 须为正数毫秒');
+      if (!Number.isFinite(o.timeout) || o.timeout <= 0) fail(2, m('skill-chef.cli-cmd-read.c006'));
     }
-    else fail(2, '未知参数：' + a[i]);
+    else fail(2, m('skill-chef.cli-cmd-read.c007', { p0: String(a[i]) }));
   }
   return o;
 }
 
 async function main() {
   const o = parseArgs(process.argv.slice(2));
-  if (!o.key) fail(2, '用法：chef-cmd-read <chef.key> [--params JSON对象] [--html 输出路径] [--timeout 毫秒] [--language zh|en]');
+  if (!o.key) fail(2, m('skill-chef.cli-cmd-read.c008'));
   const key = o.key;
   let params: Record<string, unknown> = {};
   if (o.params !== undefined) {
-    try { params = JSON.parse(o.params) as Record<string, unknown>; } catch (e) { fail(2, '--params 须为 JSON'); }
-    if (typeof params !== 'object' || params === null || Array.isArray(params)) fail(2, '--params 须为 JSON 对象');
+    try { params = JSON.parse(o.params) as Record<string, unknown>; } catch (e) { fail(2, m('skill-chef.cli-cmd-read.c009')); }
+    if (typeof params !== 'object' || params === null || Array.isArray(params)) fail(2, m('skill-chef.cli-cmd-read.c010'));
   }
   // #695：三个配置 key（`chef.config.read/write/reset`）在库目录预检与形状表之前拦下——
   // 读写配置不该要求库已配，它们也不进 `CHEF_KEY_SHAPES`（不是唤醒词命令，见 `src/cli/config.ts`）。
@@ -234,7 +235,7 @@ async function main() {
     let shape = null;
     try { shape = chefShapeFor(key); } catch (e) { fail(3, (e as Error).message); }
     void shape;
-    const timer = setTimeout(() => { toast('cmd_read 超时 terminate（' + o.timeout + 'ms），已终止取数'); process.exit(4); }, o.timeout);
+    const timer = setTimeout(() => { toast(m('skill-chef.cli-cmd-read.c011', { p0: String(o.timeout) })); process.exit(4); }, o.timeout);
     timer.unref();
     let env = null;
     let delivery: ChefHtmlDelivery | undefined;
@@ -259,7 +260,7 @@ async function main() {
           const html = renderEnvelopeHtml(env);
           assertHtmlSize(html);
           try { writeFileSync(o.html, html, 'utf8'); }
-          catch (e) { fail(5, 'HTML 写盘失败：' + o.html); }
+          catch (e) { fail(5, m('skill-chef.cli-cmd-read.c012', { p0: String(o.html) })); }
         }
       } else if ((env as { shape?: string }).shape === 'resultset') {
         // 程序面（`chef.data.schema`／`chef.data.query`，无唤醒词）：不缺省落页、不回 delivery（照饼干 #953）。
@@ -273,7 +274,7 @@ async function main() {
         try {
           html = fillTemplate(loadTemplate(templateFor(key)), section);
         } catch {
-          html = '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>私家大厨</title></head><body><div class="page"><p class="cmd">chef-cmd-read ' + key + '</p>' + section + '</div></body></html>';
+          html = '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>' + m('skill-chef.cli-cmd-read.c021') + '</title></head><body><div class="page"><p class="cmd">chef-cmd-read ' + key + '</p>' + section + '</div></body></html>';
         }
         assertHtmlSize(html);
         const page = chefPageFor(key, params);
@@ -284,17 +285,17 @@ async function main() {
         });
       }
     } catch (e) {
-      if (e instanceof ChefFetchError) fail(4, '取数失败：' + e.message);
-      if (e instanceof ChefPolicyError) fail(2, '口径失败：' + e.message);
-      if (e instanceof ChefRenderError) fail(5, '渲染失败：' + e.message);
+      if (e instanceof ChefFetchError) fail(4, m('skill-chef.cli-cmd-read.c013', { p0: String(e.message) }));
+      if (e instanceof ChefPolicyError) fail(2, m('skill-chef.cli-cmd-read.c014', { p0: String(e.message) }));
+      if (e instanceof ChefRenderError) fail(5, m('skill-chef.cli-cmd-read.c015', { p0: String(e.message) }));
       // 落盘失败：共用件 `saveHtmlFile` 的 code（`EEXIST`／`EINVAL`／`EIO`）原样穿过，落到 exit 5。
-      if (/^E[A-Z]+$/.test(String((e as NodeJS.ErrnoException)?.code))) fail(5, '落盘失败：' + ((e as Error).message || String(e)));
+      if (/^E[A-Z]+$/.test(String((e as NodeJS.ErrnoException)?.code))) fail(5, m('skill-chef.cli-cmd-read.c016', { p0: String((e as Error).message || String(e)) }));
       // 配置件（`base-link-core`）的报错本身就是人话（带行号与文件名）：归「预检」那一档原样交回。
       if (/(配置文件|配置项|测试缺隔离)/.test((e as Error).message ?? '')) fail(1, (e as Error).message);
       // #215：help 支一步取数都没有（只渲染 ＋ 落盘），未知错只可能出在渲染（共享模板抛的普通 Error
       // 没有 code）或落盘 ⇒ 归 exit 5，不落到「未知失败 4」。其余七键保持原样（取数面宽，无法这样归类）。
-      if (key === 'chef.help.lookup') fail(5, '渲染/落盘失败：' + ((e as Error).message || String(e)));
-      fail(4, '未知失败：' + ((e as Error).message || String(e)));
+      if (key === 'chef.help.lookup') fail(5, m('skill-chef.cli-cmd-read.c017', { p0: String((e as Error).message || String(e)) }));
+      fail(4, m('skill-chef.cli-cmd-read.c018', { p0: String((e as Error).message || String(e)) }));
     } finally { clearTimeout(timer); }
     // #83 口径的顶层追加：`delivery{mode,path,bytes}` 只追加，既有五字段一字不改、序不变。
     process.stdout.write(JSON.stringify(delivery ? { ...env, delivery } : env) + '\n');
