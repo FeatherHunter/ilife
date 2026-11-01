@@ -15,6 +15,7 @@ import { HomeFetchError, HomePolicyError } from './errors.js';
 import { dbFilename, resolveDbPath, resolveBackupDir } from './paths.js';
 export { resolveBackupDir };
 import { zipRead, zipWrite, type ZipEntry } from './archive.js';
+import { m } from '../entries/index.js';
 
 /** 备份目录名的默认值：具名引用（唯一定义地＝`src/fetch/paths.ts` 的同名常量，铁律二）。 */
 export { DEFAULT_BACKUP_DIR_NAME } from './paths.js';
@@ -128,7 +129,7 @@ function pruneBackups(dir: string, keepN: number): void {
   }
 }
 
-function esc1(s: string): string { return s.replace(/'/g, "''"); }
+function esc1(s: string): string { return s.split("'").join("''"); }
 
 /** 备份：库快照（含 WAL）＋ 清单打包成 zip，保留 N 份、删最旧；返回回执载荷。 */
 export function createBackup(opts: { keepN?: number } = {}): BackupResult {
@@ -230,10 +231,16 @@ export function restoreBackup(file: string, opts: { keepN?: number; dryRun?: boo
       } catch { /* 清单坏就报 null，不谎报件数 */ }
     }
     const cur = countItems(dbPath);
+    // #1221：整句按「备份里有没有件数」分两支各成一句（链内条件表达式抽成变量，句子里不再夹三元）。
+    let message: string;
+    if (inBackup === null) {
+      message = m('skill-home.fetch-backup.c001', { p0: String(cur) });
+    } else {
+      message = m('skill-home.fetch-backup.c002', { p0: String(inBackup), p1: String(cur) });
+    }
     return {
       status: 'ok', dry_run: true, restored_from: src, items_in_backup: inBackup, items_current: cur,
-      message: '预告通过：这份备份' + (inBackup === null ? '（件数未知）' : '含 ' + inBackup + ' 件') +
-        '，当前库 ' + cur + ' 件；恢复会**整库覆盖**（恢复前自动自备份）。确认请给 confirm:true',
+      message,
     };
   }
 
@@ -253,14 +260,15 @@ export function restoreBackup(file: string, opts: { keepN?: number; dryRun?: boo
   return {
     status: 'ok', restored_from: src, safety_backup: safety.file,
     before_items: safety.items, items_total: itemsTotal,
-    message: '已从备份恢复：' + basename(src) + '（恢复前已自备份）',
+    message: m('skill-home.fetch-backup.c003', { p0: String(basename(src)) }),
   };
 }
 
 function csvCell(v: unknown): string {
   if (v === null || v === undefined) return '';
   const s = String(v);
-  return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  const needsQuote = s.includes(',') || s.includes('\n') || s.includes('\r') || s.includes('"');
+  return needsQuote ? '"' + s.split('"').join('""') + '"' : s;
 }
 
 const CSV_COLS = [

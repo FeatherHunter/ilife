@@ -14,6 +14,7 @@ import type { ConfigRecord, EnvelopeShape } from 'base-link-core';
 import { loadHomeConfig, resetHomeConfig, saveHomeConfig } from '../config.js';
 import { resolvedHomePaths } from '../fetch/paths.js';
 import { homeDataDirAlert } from '../health.js';
+import { m } from '../entries/index.js';
 
 /** 三个 key 的唯一定义地（插件侧镜像同值，见 `packages/plugin-home-ilife/src/bridge.ts`）。 */
 export const CONFIG_KEYS = {
@@ -93,7 +94,7 @@ export function runConfigKey(key: string, params: Record<string, unknown>): stri
   }
   if (key === CONFIG_KEYS.write) {
     const raw = params['values'];
-    if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) fail(2, '缺参数 values（须为对象）');
+    if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) fail(2, m('skill-home.cli-config.c001'));
     const current = withHumanError(() => loadHomeConfig()).values as unknown as ConfigRecord;
     const merged = mergeValues(current, raw as ConfigRecord);
     const r = withHumanError(() => saveHomeConfig(merged));

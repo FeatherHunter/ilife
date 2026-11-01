@@ -13,6 +13,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { HomeFetchError } from './errors.js';
 import { resolveKeyFile } from './paths.js';
+import { m } from '../entries/index.js';
 
 /** 读主密钥文件，返回 trim 后的口令（BOM 一并去掉）。
  *
@@ -41,7 +42,7 @@ export function loadMasterKey(keyFile = resolveKeyFile()): string {
 /** 退场报文：调用参数里给了 `master_key`／`masterKey` 时用它响亮失败（exit 2：用法错），
  *  报文直接说"把它写进 <路径>"。口令不许再经调用参数传（会进对话记录与日志）。 */
 export function retiredParamMessage(keyFile = resolveKeyFile()): string {
-  return '主密钥改从文件读：调用参数不再收口令。把它写进 ' + keyFile + '（纯文本一行即可），再跑这条命令。';
+  return m('skill-home.fetch-masterKey.c001', { p0: String(keyFile) });
 }
 
 /** 调用参数里有没有已退场的口令键（分派层判用法错用）。 */

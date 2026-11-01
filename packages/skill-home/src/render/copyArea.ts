@@ -16,13 +16,21 @@ import type { CopyLogFields, SerializableEnvelope } from 'base-paint';
 import type { Envelope } from 'base-link-core';
 import { DEFAULT_DB_FILENAME } from '../fetch/index.js';
 import { escapeHtml } from './html.js';
+import { m } from '../entries/index.js';
 
-/** 日志第 2 段（AI 思考链）：本仓页面一律由本地 CLI 渲染，不落占位。 */
-const LOG_THINKING = '本页由本地 CLI 渲染，无 AI 链';
+/** 日志第 2 段（AI 思考链）：本仓页面一律由本地 CLI 渲染，不落占位。
+ *  渲染期取词：写成函数，模块加载时不取词（否则语言在加载时固化）。 */
+function logThinking(): string {
+  return m('skill-home.render-copyArea.c006');
+}
 /** 日志第 6 段（异常）：正常产出即「无」。 */
-const LOG_EXCEPTION = '无';
+function logException(): string {
+  return m('skill-home.render-copyArea.c007');
+}
 /** 复制区空态缺省句：三样全没给时出这一句、不出按钮。 */
-const COPY_EMPTY_TEXT = '本页没有可复制的数据';
+function copyEmptyText(): string {
+  return m('skill-home.render-copyArea.c008');
+}
 
 /** 三格式菜单三项的用途提示：本技能一律留空（顺序＝`COPY_FORMATS`），只留三个格式名。 */
 const MENU_HINTS: readonly string[] = ['', '', ''];
@@ -103,7 +111,7 @@ export function homeCopyArea(input: HomeCopyAreaInput): string {
   }
   return renderEmptyBlock({
     ...(title === undefined ? {} : { title }),
-    text: input.emptyText ?? COPY_EMPTY_TEXT,
+    text: input.emptyText ?? copyEmptyText(),
   });
 }
 
@@ -144,11 +152,19 @@ const HMCP_MENU_OPEN_ATTR = 'data-fmt-open';
 const HMCP_MENU_FMT_ATTR = 'data-fmt';
 const HMCP_ACTION_ID_ATTR = 'data-action-id';
 const HMCP_LOG_ACTION_ID = 'ilife-copy-log';
-const HMCP_FORMATS = [
-  { key: 'text', label: '纯文本' },
-  { key: 'json', label: 'JSON' },
-  { key: 'csv', label: 'CSV' },
-] as const;
+/** 复制按钮文案（渲染期取词：写成函数，模块加载时不取词）。 */
+function copyButtonLabel(): string {
+  return m('skill-home.render-copyArea.c010');
+}
+
+/** 三格式菜单项（渲染期取词：写成函数，模块加载时不取词）。 */
+function hmcpFormats(): readonly { readonly key: string; readonly label: string }[] {
+  return [
+    { key: 'text', label: m('skill-home.render-copyArea.c009') },
+    { key: 'json', label: 'JSON' },
+    { key: 'csv', label: 'CSV' },
+  ];
+}
 
 /** 载荷进 `<script>` 的唯一转义：`<`→`\u003c`（`</script` 与 `<!--` 即死；引号不过属性，原样）。 */
 function hmcpScriptJson(v: unknown): string {
@@ -156,12 +172,12 @@ function hmcpScriptJson(v: unknown): string {
 }
 
 function hmcpAttr(s: string): string {
-  return escapeHtml(s).replace(/"/g, '&quot;');
+  return escapeHtml(s).split('"').join('&quot;');
 }
 
 /** 项点击运行时（内联进页，无外部依赖）：捕获先行＋`stopPropagation`（见上），
  *  剪贴板 API 不可用回落 textarea＋`execCommand`（与共用运行时同fallback），浮签反馈。 */
-function hmcpBinderJs(): string {
+function hmcpBinderJs(copiedText: string): string {
   return '(function(){var s=document.getElementById(' + JSON.stringify(HMCP_PAYLOAD_ID)
     + ');if(!s)return;var d=null;try{d=JSON.parse(s.textContent||s.innerText||"{}")}catch(e){return}'
     + ';var sec=s.parentNode;if(!sec||!sec.addEventListener)return'
@@ -174,7 +190,7 @@ function hmcpBinderJs(): string {
     + ';function done(){if(wrap){var m=wrap.querySelector(".' + HMCP_CLASSES.menu + '");'
     + 'if(m)m.classList.remove("' + HMCP_CLASSES.menuOpen + '");'
     + 'var o=wrap.querySelector("[' + HMCP_MENU_OPEN_ATTR + '=\\"1\\"]");'
-    + 'if(o)o.setAttribute("aria-expanded","false")}tip("已复制"+(it.textContent||"").trim())}'
+    + 'if(o)o.setAttribute("aria-expanded","false")}tip(' + JSON.stringify(copiedText) + '+(it.textContent||"").trim())}'
     + ';function tip(msg){try{var n=document.createElement("div");n.textContent=msg;'
     + 'n.setAttribute("style","position:fixed;left:50%;bottom:24px;transform:translateX(-50%)'
     + ';background:#1d1d1f;color:#fff;padding:8px 14px;border-radius:999px;font-size:13px;z-index:9999");'
@@ -195,7 +211,7 @@ export function homeCompactCopyArea(input: HomeCopyAreaInput): string {
   if (data === undefined && log === undefined) {
     return renderEmptyBlock({
       ...(title === undefined ? {} : { title }),
-      text: input.emptyText ?? COPY_EMPTY_TEXT,
+      text: input.emptyText ?? copyEmptyText(),
     });
   }
   const ghostCount = (data === undefined ? 0 : 1) + (log === undefined ? 0 : 1);
@@ -206,7 +222,7 @@ export function homeCompactCopyArea(input: HomeCopyAreaInput): string {
   if (data !== undefined) {
     const f = formatsOf(data);
     const payload = hmcpScriptJson({ text: f.text, json: f.json, csv: f.csv });
-    const items = HMCP_FORMATS.map((m) =>
+    const items = hmcpFormats().map((m) =>
       '<button type="button" class="' + HMCP_CLASSES.menuItem + '" '
       + HMCP_MENU_FMT_ATTR + '="' + m.key + '">'
       + '<span class="' + HMCP_CLASSES.menuLabel + '">' + escapeHtml(m.label) + '</span></button>',
@@ -215,11 +231,11 @@ export function homeCompactCopyArea(input: HomeCopyAreaInput): string {
     ghostHtml += '<div class="' + HMCP_CLASSES.menuWrap + '">'
       + '<button type="button" class="' + HMCP_CLASSES.copyBtn + ' ' + HMCP_CLASSES.copyBtnGhost + '" '
       + HMCP_MENU_OPEN_ATTR + '="1" aria-haspopup="menu" aria-expanded="false" '
-      + 'aria-label="' + hmcpAttr(COPY_TITLE_DUP_OF_BUTTON + '（点开选格式）') + '">'
-      + escapeHtml(COPY_TITLE_DUP_OF_BUTTON) + '</button>'
+      + 'aria-label="' + hmcpAttr(m('skill-home.render-copyArea.c001', { p0: String(COPY_TITLE_DUP_OF_BUTTON) })) + '">'
+      + escapeHtml(copyButtonLabel()) + '</button>'
       + '<div class="' + HMCP_CLASSES.menu + '" role="menu">' + items + '</div></div>'
       + '<script type="application/json" id="' + HMCP_PAYLOAD_ID + '">' + payload + '</script>'
-      + '<script>' + hmcpBinderJs() + '</script>';
+      + '<script>' + hmcpBinderJs(m('skill-home.render-copyArea.c002')) + '</script>';
   }
   if (log !== undefined) {
     // 日志位量小（约 1KB），沿用标准单按钮形态（`data-t`＋共用运行时复制），不另起机制。
@@ -229,7 +245,7 @@ export function homeCompactCopyArea(input: HomeCopyAreaInput): string {
     });
     ghostHtml += '<button type="button" class="' + HMCP_CLASSES.copyBtn + ' ' + HMCP_CLASSES.copyBtnGhost + '" '
       + HMCP_ACTION_ID_ATTR + '="' + HMCP_LOG_ACTION_ID + '" data-t="' + hmcpAttr(logText) + '">'
-      + escapeHtml('复制日志') + '</button>';
+      + escapeHtml(m('skill-home.render-copyArea.c003')) + '</button>';
   }
   return '<section class="' + HMCP_CLASSES.section + '">' + titleHtml
     + '<div class="' + HMCP_CLASSES.bar + '"><div class="' + ghostRowClass + '">'
@@ -239,10 +255,10 @@ export function homeCompactCopyArea(input: HomeCopyAreaInput): string {
 /** 复制日志 2–6 段：本页由哪条命令渲染、数据从哪来、写了多少行、什么时候。 */
 export function homeCopyLog(input: HomeCopyLogInput): CopyLogFields {
   return {
-    thinking: LOG_THINKING,
+    thinking: logThinking(),
     dataStructure: DEFAULT_DB_FILENAME + (input.source === undefined || input.source === '' ? '' : ' ｜ ' + input.source),
     callChain: input.m5Line === undefined || input.m5Line === '' ? input.command : input.command + ' ｜ ' + input.m5Line,
-    timestamp: input.version === undefined || input.version === '' ? input.actionAt : input.actionAt + ' · 版本 ' + input.version,
-    exception: LOG_EXCEPTION,
+    timestamp: input.version === undefined || input.version === '' ? input.actionAt : m('skill-home.render-copyArea.c004', { p0: String(input.actionAt), p1: String(input.version) }),
+    exception: logException(),
   };
 }

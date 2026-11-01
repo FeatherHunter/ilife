@@ -14,6 +14,7 @@
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, renderEnvelopeHtml, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { m } from '../../entries/index.js';
 
 export const FAMILY = 'family_members' as const;
 
@@ -101,7 +102,7 @@ function str(v: unknown): string {
 
 // 只用行自带的字段，不编关系与归属数；归属件数只认 item_count（真值），没有就写「—」。
 function toMember(item: Record<string, unknown>): Member {
-  const name = str(item.name) || '未留称呼';
+  const name = str(item.name) || m('skill-home.family-pages-family-members.c001');
   const relation = str(item.relation);
   const note = str(item.note);
   const count = typeof item.item_count === 'number'
@@ -110,15 +111,61 @@ function toMember(item: Record<string, unknown>): Member {
   return { name, relation, note, itemCount: count };
 }
 
-function memberCard(m: Member): string {
-  const removePrompt = '【移除成员】请帮我在居家管家移除一位家人。\n成员称呼：' + m.name + '\n其归属物品将回到使用者';
-  const meta = [m.relation, m.note].filter((s) => s !== '').join('，');
-  return '<div class="bm-member"><span class="bm-avatar">' + escapeHtml(m.name.slice(0, 1)) + '</span>'
-    + '<div class="bm-who"><div class="bm-name">' + escapeHtml(m.name) + '</div>'
+/** 页内文案（渲染期取词：写成函数，模块加载时不取词）。 */
+function pageLabels() {
+  return {
+    countOf: (n: string) => m('skill-home.family-pages-family-members.c007', { p0: String(n) }),
+    btnRemove: m('skill-home.family-pages-family-members.c008'),
+    emptyBanner: m('skill-home.family-pages-family-members.c009'),
+    receiptTitle: m('skill-home.family-pages-family-members.c010'),
+    lead: m('skill-home.family-pages-family-members.c011'),
+    metricMembers: m('skill-home.family-pages-family-members.c012'),
+    metricItems: m('skill-home.family-pages-family-members.c013'),
+    sectionMembers: m('skill-home.family-pages-family-members.c014'),
+    membersEmpty: m('skill-home.family-pages-family-members.c015'),
+    sectionOwn: m('skill-home.family-pages-family-members.c016'),
+    ownEmpty: m('skill-home.family-pages-family-members.c017'),
+    ownMember: m('skill-home.family-pages-family-members.c018'),
+    pick: m('skill-home.family-pages-family-members.c019'),
+    btnAssign: m('skill-home.family-pages-family-members.c020'),
+    sectionAdd: m('skill-home.family-pages-family-members.c021'),
+    name: m('skill-home.family-pages-family-members.c022'),
+    namePh: m('skill-home.family-pages-family-members.c023'),
+    relation: m('skill-home.family-pages-family-members.c024'),
+    relationPh: m('skill-home.family-pages-family-members.c025'),
+    note: m('skill-home.family-pages-family-members.c026'),
+    notePh: m('skill-home.family-pages-family-members.c027'),
+    btnAdd: m('skill-home.family-pages-family-members.c028'),
+    legend: m('skill-home.family-pages-family-members.c029'),
+    sectionSnapshot: m('skill-home.family-pages-family-members.c030'),
+    noscript: m('skill-home.family-pages-family-members.c031'),
+  };
+}
+
+/** 「添加成员／标记归属」按钮复制出去的提示词片段（内联脚本只做拼接，文案在 TS 侧取词）。 */
+function promptLabels() {
+  return {
+    addHead: m('skill-home.family-pages-family-members.c032'),
+    addName: m('skill-home.family-pages-family-members.c033'),
+    addRelation: m('skill-home.family-pages-family-members.c034'),
+    addNote: m('skill-home.family-pages-family-members.c035'),
+    assignHead: m('skill-home.family-pages-family-members.c036'),
+    assignMember: m('skill-home.family-pages-family-members.c037'),
+    assignItems: m('skill-home.family-pages-family-members.c038'),
+    sep: '，',
+  };
+}
+
+function memberCard(mem: Member): string {
+  const L = pageLabels();
+  const removePrompt = m('skill-home.family-pages-family-members.c002', { p0: String(mem.name) });
+  const meta = [mem.relation, mem.note].filter((s) => s !== '').join('，');
+  return '<div class="bm-member"><span class="bm-avatar">' + escapeHtml(mem.name.slice(0, 1)) + '</span>'
+    + '<div class="bm-who"><div class="bm-name">' + escapeHtml(mem.name) + '</div>'
     + '<div class="bm-meta">' + escapeHtml(meta) + '</div></div>'
-    + '<span class="bm-count">归属' + escapeHtml(m.itemCount) + '件</span>'
+    + '<span class="bm-count">' + escapeHtml(L.countOf(mem.itemCount)) + '</span>'
     + '<button class="bm-btn danger" data-t="' + escapeHtml(removePrompt)
-    + '" onclick="copyText(this.dataset.t)">移除成员</button></div>';
+    + '" onclick="copyText(this.dataset.t)">' + escapeHtml(L.btnRemove) + '</button></div>';
 }
 
 function needList(group: 'fields' | 'operations' | 'empty' | 'status', title: string): string {
@@ -130,6 +177,7 @@ function needList(group: 'fields' | 'operations' | 'empty' | 'status', title: st
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
 // 复制区走共用件（卡路里同款三格式＋六段日志）；`ctx.command` 由交付链供给（含 params），直调缺省按本族主 key。
 export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
+  const L = pageLabels();
   const template = readFileSync(new URL('../../../templates/family/family_members.html', import.meta.url), 'utf8');
   const d = env.data as Record<string, unknown>;
   const isReceipt = env.shape === 'receipt';
@@ -139,56 +187,57 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const hasItemDetail = rows.some((it) => typeof it.id === 'number' || str(it.owner) !== '');
 
   const emptyBanner = members.length === 0
-    ? '<div class="bm-sec"><div class="bm-meta">还没有家人档案，先在下面添加第一位成员吧</div></div>'
+    ? '<div class="bm-sec"><div class="bm-meta">' + escapeHtml(L.emptyBanner) + '</div></div>'
     : '';
   const receiptBanner = receiptMsg !== ''
-    ? '<div class="bm-sec"><div class="bm-meta">写操作回执</div><div>' + escapeHtml(receiptMsg) + '</div></div>'
+    ? '<div class="bm-sec"><div class="bm-meta">' + escapeHtml(L.receiptTitle) + '</div><div>' + escapeHtml(receiptMsg) + '</div></div>'
     : '';
-  const memberOpts = members.map((m) => '<option value="' + escapeHtml(m.name) + '">' + escapeHtml(m.name) + '</option>').join('');
+  const memberOpts = members.map((mem) => '<option value="' + escapeHtml(mem.name) + '">' + escapeHtml(mem.name) + '</option>').join('');
 
   const content = '<style>' + CSS + '</style>'
-    + '<p class="bm-lead">成员增减与物品归属标记都在这一页</p>'
+    + '<p class="bm-lead">' + escapeHtml(L.lead) + '</p>'
     + '<div class="bm-metrics">'
-    + '<div class="bm-num"><b>成员数</b><span>' + members.length + '</span></div>'
-    + '<div class="bm-num"><b>物品总数</b><span>—</span></div>'
+    + '<div class="bm-num"><b>' + escapeHtml(L.metricMembers) + '</b><span>' + members.length + '</span></div>'
+    + '<div class="bm-num"><b>' + escapeHtml(L.metricItems) + '</b><span>—</span></div>'
     + '</div>'
     + receiptBanner + emptyBanner
-    + '<section class="bm-sec"><h2>成员列表</h2>'
-    + (members.length > 0 ? members.map(memberCard).join('') : '<p class="bm-hint">空，先添加成员后这里会显示</p>')
+    + '<section class="bm-sec"><h2>' + escapeHtml(L.sectionMembers) + '</h2>'
+    + (members.length > 0 ? members.map(memberCard).join('') : '<p class="bm-hint">' + escapeHtml(L.membersEmpty) + '</p>')
     + '</section>'
-    + '<section class="bm-sec"><h2>物品归属勾选</h2>'
+    + '<section class="bm-sec"><h2>' + escapeHtml(L.sectionOwn) + '</h2>'
     + (hasItemDetail
       ? '<div class="bm-check">' + rows.map((it) => '<label><input type="checkbox" value="'
         + escapeHtml(str(it.id)) + '">' + escapeHtml(str(it.name)) + '</label>').join('') + '</div>'
-      : '<p class="bm-hint">本页不含物品明细，物品列表在物品页看</p>')
-    + '<div class="bm-fgrid"><label>归属成员<select id="aMember"><option value="">请选择</option>' + memberOpts + '</select></label></div>'
-    + '<button class="bm-btn primary" id="btnAssign">确认标记归属</button></section>'
-    + '<section class="bm-sec"><h2>添加成员表单</h2><div class="bm-fgrid">'
-    + '<label>称呼<input id="mName" placeholder="如妈妈"></label>'
-    + '<label>关系<input id="mRelation" placeholder="如家人"></label>'
-    + '<label>备注<input id="mNote" placeholder="选填"></label>'
-    + '</div><button class="bm-btn primary" id="btnAddMember">确认添加</button>'
-    + '<p class="bm-legend">关系一栏不限定写法，未标记的物品一律记在使用者名下</p>'
+      : '<p class="bm-hint">' + escapeHtml(L.ownEmpty) + '</p>')
+    + '<div class="bm-fgrid"><label>' + escapeHtml(L.ownMember) + '<select id="aMember"><option value="">' + escapeHtml(L.pick) + '</option>' + memberOpts + '</select></label></div>'
+    + '<button class="bm-btn primary" id="btnAssign">' + escapeHtml(L.btnAssign) + '</button></section>'
+    + '<section class="bm-sec"><h2>' + escapeHtml(L.sectionAdd) + '</h2><div class="bm-fgrid">'
+    + '<label>' + escapeHtml(L.name) + '<input id="mName" placeholder="' + escapeHtml(L.namePh) + '"></label>'
+    + '<label>' + escapeHtml(L.relation) + '<input id="mRelation" placeholder="' + escapeHtml(L.relationPh) + '"></label>'
+    + '<label>' + escapeHtml(L.note) + '<input id="mNote" placeholder="' + escapeHtml(L.notePh) + '"></label>'
+    + '</div><button class="bm-btn primary" id="btnAddMember">' + escapeHtml(L.btnAdd) + '</button>'
+    + '<p class="bm-legend">' + escapeHtml(L.legend) + '</p>'
     + '</section>'
-    + '<section hidden class="bm-sec"><h2>数据快照</h2><div>' + renderEnvelopeHtml(env) + '</div>'
+    + '<section hidden class="bm-sec"><h2>' + escapeHtml(L.sectionSnapshot) + '</h2><div>' + renderEnvelopeHtml(env) + '</div>'
     + '<div class="bm-copy2">' + homeCopyArea({
         data: { envelope: env },
         log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
       }) + '</div></section>'
-    + needList('fields', '必需块对照（字段）')
-    + needList('operations', '必需块对照（操作）')
-    + needList('empty', '必需块对照（空态与异常）')
-    + needList('status', '必需块对照（状态词）')
-    + '<noscript><p class="bm-hint">当前为静态产物页，标记与复制按钮需要脚本支持</p></noscript>'
+    + needList('fields', m('skill-home.family-pages-family-members.c003'))
+    + needList('operations', m('skill-home.family-pages-family-members.c004'))
+    + needList('empty', m('skill-home.family-pages-family-members.c005'))
+    + needList('status', m('skill-home.family-pages-family-members.c006'))
+    + '<noscript><p class="bm-hint">' + escapeHtml(L.noscript) + '</p></noscript>'
     + '<script>function copyText(t){if(navigator.clipboard){navigator.clipboard.writeText(t)}}'
     + 'var a=document.getElementById("btnAddMember");if(a){a.onclick=function(){'
     + 'var n=document.getElementById("mName").value.trim()||"___";'
     + 'var r=document.getElementById("mRelation").value.trim()||"___";'
     + 'var o=document.getElementById("mNote").value.trim()||"___";'
-    + 'copyText("【添加成员】请帮我在居家管家添加一位家人。\\n称呼: "+n+"\\n关系: "+r+"\\n备注: "+o);};}'
+    + 'var T=' + JSON.stringify(promptLabels()) + ';'
+    + 'copyText(T.addHead+"\\n"+T.addName+n+"\\n"+T.addRelation+r+"\\n"+T.addNote+o);};}'
     + 'var g=document.getElementById("btnAssign");if(g){g.onclick=function(){'
     + 'var m=document.getElementById("aMember").value||"___";'
     + 'var ids=Array.from(document.querySelectorAll(".bm-check input:checked")).map(function(c){return c.value});'
-    + 'copyText("【标记归属】请帮我在居家管家标记物品归属。\\n归属成员: "+m+"\\n物品: "+(ids.length?ids.join("，"):"___"));};}</script>';
+    + 'copyText(T.assignHead+"\\n"+T.assignMember+m+"\\n"+T.assignItems+(ids.length?ids.join(T.sep):"___"));};}</script>';
   return fillTemplate(template, content);
 }

@@ -36,12 +36,13 @@ import { resolveLanguageOrFail } from './language.js';
 import { isHealthCheckKey, runHealthCheckKey } from './health.js';
 import { helpReuseWindowOf } from 'base-paint/save-html';
 import { runWithLanguage } from 'base-entries';
+import { m } from '../entries/index.js';
 
 const DEFAULT_TIMEOUT_MS = 30000;
 
 function preflight(): void {
   const v = process.versions.node.split('.').map(Number);
-  if (!(v[0] > 22 || (v[0] === 22 && v[1] >= 13))) fail(1, 'node 低于 22.13：' + process.versions.node);
+  if (!(v[0] > 22 || (v[0] === 22 && v[1] >= 13))) fail(1, m('skill-home.cli-cmd-read.c001', { p0: String(process.versions.node) }));
 }
 
 /* ── #190 · 「居家管家HELP」的交付装配（**在开库之前**走，照 skill-bill/src/cli/cmd_read.ts:69-111）────
@@ -81,11 +82,11 @@ function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
   const now = new Date();
   const mode = params.mode === undefined ? undefined : String(params.mode);
   if (params.q !== undefined && typeof params.q !== 'string') {
-    fail(2, '参数 q 须为字符串（收到 ' + (Array.isArray(params.q) ? 'array' : typeof params.q) + '）：q＝现找关键词');
+    fail(2, m('skill-home.cli-cmd-read.c002', { p0: String(Array.isArray(params.q) ? 'array' : typeof params.q) }));
   }
   const q = params.q as string | undefined;
-  if (mode !== undefined && q !== undefined) fail(2, '参数 q 与 mode 互斥：q＝现找，mode＝速查表产物');
-  if (mode !== undefined && mode !== 'lookup') fail(2, 'mode 非法（' + String(mode) + '）：本键只认 lookup');
+  if (mode !== undefined && q !== undefined) fail(2, m('skill-home.cli-cmd-read.c003'));
+  if (mode !== undefined && mode !== 'lookup') fail(2, m('skill-home.cli-cmd-read.c004', { p0: String(String(mode)) }));
   // 参数面校验单点（#190 D2）：三支分派**之前**一次过完，坏 `reuseHours` 无论走哪支都同一个 exit 2。
   const reuseMs = helpWindowOrFail(params);
   const all = buildHelpLookup().map((h) => ({ phrase: h.phrase, key: h.key, shape: h.shape, cli: h.cli, desc: h.desc }));
@@ -122,12 +123,12 @@ function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
 function keepNOf(params: Record<string, unknown>): number | undefined {
   const v = params.keep_n ?? params.keepN;
   if (v === undefined) return undefined;
-  if (!Number.isInteger(v) || (v as number) <= 0) fail(2, 'keep_n 须为正整数');
+  if (!Number.isInteger(v) || (v as number) <= 0) fail(2, m('skill-home.cli-cmd-read.c005'));
   return v as number;
 }
 
 function fmtBytes(n: number): number | string {
-  if (n < 1024) return n + ' 字节';
+  if (n < 1024) return m('skill-home.cli-cmd-read.c006', { p0: String(n) });
   if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KiB';
   return (n / 1024 / 1024).toFixed(1) + ' MiB';
 }
@@ -137,33 +138,51 @@ function dispatchBackup(key: string, params: Record<string, unknown>): unknown |
   if (key === 'home.care.query' && kind === 'backup-list') {
     const l = listBackups({ keepN: keepNOf(params) });
     const rows = l.history.map((h) => ({
-      name: h.file + '（' + fmtBytes(h.size) + '，' + h.days_ago + ' 天前）', count: h.size,
+      name: m('skill-home.cli-cmd-read.c007', {
+        p0: String(h.file),
+        p1: String(fmtBytes(h.size)),
+        p2: String(h.days_ago),
+      }), count: h.size,
     }));
-    return buildCareList(rows.length ? rows : [{ name: '无备份（目录：' + l.dir + '）', count: 0 }]);
+    return buildCareList(rows.length ? rows : [{ name: m('skill-home.cli-cmd-read.c008', { p0: String(l.dir) }), count: 0 }]);
   }
   if (key !== 'home.care.write') return null;
   if (kind === 'backup') {
     const r = createBackup({ keepN: keepNOf(params) });
-    return buildReceipt('已备份：' + r.items + ' 件 → ' + r.file + '（' + fmtBytes(r.size) + '，保留 ' + r.keep_n + ' 份）。'
-      + '本备份不含主密钥文件：换机恢复后要用账号密码，把它一起带过去。');
+    return buildReceipt(m('skill-home.cli-cmd-read.c009', {
+      p0: String(r.items),
+      p1: String(r.file),
+      p2: String(fmtBytes(r.size)),
+      p3: String(r.keep_n),
+    }));
   }
   if (kind === 'export') {
     const r = exportData({ format: params.format as string | undefined, output: params.output as string | undefined });
-    return buildReceipt('已导出：' + r.format.toUpperCase() + ' ' + r.rows + ' 行 → ' + r.file + '（' + fmtBytes(r.size) + '）');
+    return buildReceipt(m('skill-home.cli-cmd-read.c010', {
+      p0: String(r.format.toUpperCase()),
+      p1: String(r.rows),
+      p2: String(r.file),
+      p3: String(fmtBytes(r.size)),
+    }));
   }
   if (kind !== 'import-preview' && kind !== 'import') return null;
   const file = params.file;
-  if (typeof file !== 'string' || !file) fail(2, '导入恢复须给 file（备份文件名或绝对路径）');
+  if (typeof file !== 'string' || !file) fail(2, m('skill-home.cli-cmd-read.c011'));
   if (kind === 'import-preview') {
     const p = restoreBackup(file, { dryRun: true });
     return buildReceipt('dry_run' in p ? p.message : '');
   }
   if (params.confirm !== true) {
-    fail(2, '导入恢复会**整库覆盖**，须显式 confirm:true（先跑 kind=import-preview 看预告）');
+    fail(2, m('skill-home.cli-cmd-read.c012'));
   }
   const r: RestoreOutcome = restoreBackup(file, { keepN: keepNOf(params) });
-  if ('dry_run' in r) fail(1, '内部错误：确认支不该拿到预告结果');
-  return buildReceipt(r.message + '（' + r.before_items + ' → ' + r.items_total + ' 件；恢复前自备份 ' + r.safety_backup + '）');
+  if ('dry_run' in r) fail(1, m('skill-home.cli-cmd-read.c013'));
+  return buildReceipt(m('skill-home.cli-cmd-read.c014', {
+    p0: String(r.message),
+    p1: String(r.before_items),
+    p2: String(r.items_total),
+    p3: String(r.safety_backup),
+  }));
 }
 
 /* ── #800 · 通用分派口 ───────────────────────────────────────────────────────────
@@ -186,11 +205,11 @@ function isDataKey(key: string): boolean {
 
 function dispatchData(key: string, params: Record<string, unknown>): unknown {
   const dbPath = resolveDbPath();
-  if (!existsSync(dbPath)) fail(4, '居家 DB 不存在：' + dbPath + '（只读路径不建库）');
+  if (!existsSync(dbPath)) fail(4, m('skill-home.cli-cmd-read.c015', { p0: String(dbPath) }));
   const db = new DatabaseSync(dbPath, { readOnly: true });
   try {
     const spec = REGISTRY[key];
-    if (!spec) fail(3, '未知 home key：' + key);
+    if (!spec) fail(3, m('skill-home.cli-cmd-read.c016', { p0: String(key) }));
     return spec.run(params, { db } as unknown as Parameters<typeof spec.run>[1]);
   } finally {
     try { db.close(); } catch { /* 关闭失败不谎报 */ }
@@ -201,9 +220,9 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
   const dbPath = resolveDbPath();
   const handle = openHomeDb(dbPath);
   try {
-    if (handle.initialized) note('居家 DB 已初始化：' + dbPath);
+    if (handle.initialized) note(m('skill-home.cli-cmd-read.c017', { p0: String(dbPath) }));
     const spec = REGISTRY[key];
-    if (!spec) fail(3, '未知 home key：' + key);
+    if (!spec) fail(3, m('skill-home.cli-cmd-read.c018', { p0: String(key) }));
     return spec.run(params, handle);
   } finally {
     closeHomeDb(handle);
@@ -221,21 +240,21 @@ function parseArgs(a: string[]): { key: string | undefined; params: string | und
     }
     else if (a[i] === '--timeout' && i + 1 < a.length) {
       o.timeout = Number(a[++i]);
-      if (!Number.isFinite(o.timeout) || o.timeout <= 0) fail(2, '--timeout 须为正数毫秒');
+      if (!Number.isFinite(o.timeout) || o.timeout <= 0) fail(2, m('skill-home.cli-cmd-read.c019'));
     }
-    else fail(2, '未知参数：' + a[i]);
+    else fail(2, m('skill-home.cli-cmd-read.c020', { p0: String(a[i]) }));
   }
   return o;
 }
 
 async function main() {
   const o = parseArgs(process.argv.slice(2));
-  if (!o.key) fail(2, '用法：home-cmd-read <home.key> [--params JSON对象] [--html 输出路径] [--timeout 毫秒] [--language zh|en]');
+  if (!o.key) fail(2, m('skill-home.cli-cmd-read.c021'));
   const key = o.key;
   let params: Record<string, unknown> = {};
   if (o.params !== undefined) {
-    try { params = JSON.parse(o.params); } catch (e) { fail(2, '--params 须为 JSON'); }
-    if (typeof params !== 'object' || params === null || Array.isArray(params)) fail(2, '--params 须为 JSON 对象');
+    try { params = JSON.parse(o.params); } catch (e) { fail(2, m('skill-home.cli-cmd-read.c022')); }
+    if (typeof params !== 'object' || params === null || Array.isArray(params)) fail(2, m('skill-home.cli-cmd-read.c023'));
   }
   // #695：三个配置 key（`home.config.read/write/reset`）在库目录预检与形状表之前拦下——
   // 读写配置不该要求库已配，它们也不进 `HOME_KEY_SHAPES`（不是唤醒词命令，见 `src/cli/config.ts`）。
@@ -257,7 +276,7 @@ async function main() {
     preflight();
     try { homeShapeFor(key as HomeKey); } catch (e) { fail(3, (e as Error).message); }
     const timer = setTimeout(() => {
-      toast('cmd_read 超时 terminate（' + o.timeout + 'ms），已终止取数');
+      toast(m('skill-home.cli-cmd-read.c024', { p0: String(o.timeout) }));
       process.exit(4);
     }, o.timeout);
     if (typeof timer.unref === 'function') timer.unref();
@@ -281,7 +300,7 @@ async function main() {
       // 装配抛错 → 降级上面那份分节页，并在 stderr 记一条 note（不静默、退出码不变）。
       // #928 收口：体积门撤除（用户裁定「不限制 html 文件大小」）——两条路都不再按字节数拦。
       const familyHtml = help === null ? await renderFamilyHtml(key, params, env) : null;
-      if (help === null && familyHtml === null) note('未命中页族，落 21 模板分节页：' + key);
+      if (help === null && familyHtml === null) note(m('skill-home.cli-cmd-read.c025', { p0: String(key) }));
       const pageHtml = (): string => familyHtml ?? sectionHtml();
       // #801 · 数据与过程命令默认落 HTML（`help === null` 才走这里；HELP 键的三支冻结不动）。
       // 落点意图＝ `{dir: <库目录>/home_manager_html/, stem: <命令中文名>_<场景 id>}`（stem 照票 2 契约），
@@ -293,16 +312,16 @@ async function main() {
           target: landing,
           html: pageHtml(),
         });
-        note('HTML 已写：' + delivery.path + '（' + delivery.bytes + ' 字节 utf8）');
+        note(m('skill-home.cli-cmd-read.c026', { p0: String(delivery.path), p1: String(delivery.bytes) }));
       } else {
         // `--html <路径>` 既有语义**原样保留**（HELP 键的通用产物出口）：写本包 envelope 分节页。
         if (o.html !== undefined) {
           try {
             writeFileSync(o.html, sectionHtml(), 'utf8');
-            note('HTML 已写：' + o.html + '（utf8）');
+            note(m('skill-home.cli-cmd-read.c027', { p0: String(o.html) }));
           } catch (e) {
             if (e instanceof HomeRenderError) fail(5, (e as Error).message);
-            fail(5, 'HTML 写盘失败：' + o.html + '（' + (e as Error).message + '）');
+            fail(5, m('skill-home.cli-cmd-read.c028', { p0: String(o.html), p1: String((e as Error).message) }));
           }
         }
         // #190：本键的产物（缺省＝HELP 全壳页自带 html；`mode:"lookup"`＝速查表分节页）。
@@ -312,7 +331,7 @@ async function main() {
             targetDir: help.deliver.targetDir, stem: help.deliver.stem, html, reuseMs: help.deliver.reuseMs,
             ...(help.deliver.dataKey === undefined ? {} : { dataKey: help.deliver.dataKey }),
           });
-          note('HTML 已写：' + delivery.path + '（' + delivery.bytes + ' 字节 utf8）');
+          note(m('skill-home.cli-cmd-read.c029', { p0: String(delivery.path), p1: String(delivery.bytes) }));
         }
       }
       // #83 口径的顶层追加：`delivery{mode,path,bytes}` **只追加**，既有字段一字不改、序不变。
@@ -326,7 +345,7 @@ async function main() {
       // 配置件（`base-link-core`）的报错本身就是人话（带行号与文件名）：归「预检」那一档原样交回。
       // #695：这一档也接住「测试缺隔离」——跑在测试运行器里却要落到真实家目录时响亮失败。
       if (/(配置文件|配置项|测试缺隔离)/.test((e as Error).message ?? '')) fail(1, (e as Error).message);
-      fail(4, '取数失败：' + (e as Error).message);
+      fail(4, m('skill-home.cli-cmd-read.c030', { p0: String((e as Error).message) }));
     }
   });
 }

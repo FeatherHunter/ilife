@@ -3,6 +3,7 @@
 // #865 补（只增字段，键与形状不动）：summary 带分布逐项计数／价值与高频排行／近 30 天趋势；
 // idle／expiring 逐条带天数与来源、回执带本次 days 与 allowed 档位；inventory 带盘点明细与遗留差异总数。
 import type { HomeDb } from '../fetch/db.js';
+import { STATUS_DONE } from '../fetch/db.js';
 import {
   listInventoryRecords, statsOverview, highFreq, idleItems, expiringItems,
   frequentTopItems, valueTopItems, categoryDistribution, locationDistribution,
@@ -10,6 +11,7 @@ import {
 } from '../fetch/index.js';
 import { fail } from '../shared/fail.js';
 import { buildStatsOverview, buildStatsAlert } from '../render/index.js';
+import { m } from '../entries/index.js';
 
 /** 闲置阈值档位（老 `stats/idle.py` ALLOWED_THRESHOLDS）。 */
 const IDLE_GEARS = [90, 180, 365];
@@ -61,7 +63,8 @@ export function runStatsOverview(params: Record<string, unknown>, handle: HomeDb
     extra: Number(latest.extra_cnt ?? latest.extra ?? 0) || 0,
   } : null;
   // 完成率：状态列在库时才给（无 status 列 → null，页面照实标待补，不编数；#916 起新造库即老形状，恒有 status）。
-  const done = inv.rows.filter((r) => r.status === '已完成').length;
+  // 判据位只认**库内数据码**（STATUS_DONE），不拿译文当判据。
+  const done = inv.rows.filter((r) => r.status === STATUS_DONE).length;
   const completion = inv.rows.some((r) => r.status !== null)
     ? { done, total: inv.total, pct: inv.total ? Math.round((done * 100) / inv.total) : 0 }
     : null;
@@ -72,7 +75,7 @@ export function runStatsAlert(params: Record<string, unknown>, handle: HomeDb): 
   const kind = (params.kind as string | undefined) ?? 'idle';
   if (kind === 'expiring') {
     const days = params.days !== undefined ? Number(params.days) : 30;
-    if (!Number.isInteger(days) || days <= 0) fail(2, 'days 须为正整数');
+    if (!Number.isInteger(days) || days <= 0) fail(2, m('skill-home.stats-stats.c001'));
     const rows = expiringItems(handle, days, params.expired_only === true || params.expiredOnly === true);
     const items = rows.map((r) => ({
       id: r.item_id, name: r.item_name, location: r.expiration_date, place: r.location,
@@ -82,13 +85,13 @@ export function runStatsAlert(params: Record<string, unknown>, handle: HomeDb): 
     return { ...buildStatsAlert(items), days, allowed: EXPIRING_GEARS };
   }
   const days = params.days !== undefined ? Number(params.days) : 90;
-  if (!IDLE_GEARS.includes(days) && (!Number.isInteger(days) || days <= 0)) fail(2, 'days 须为正整数（90/180/365）');
+  if (!IDLE_GEARS.includes(days) && (!Number.isInteger(days) || days <= 0)) fail(2, m('skill-home.stats-stats.c002'));
   // #865：闲置天数按 `coalesce(last_accessed_at, created_at)` 算，未满阈值的（含今天刚录入、从没用过的）不算闲置；
   // 按闲置天数降序（老 idle.py 口径），不再是「谁从没被访问过谁就算闲置」。
   const rows = idleItems(handle, days).filter((r) => r.days_idle >= days).sort((a, b) => b.days_idle - a.days_idle);
   const items = rows.map((r) => ({
     id: r.id, name: r.name, location: r.location, quantity: r.quantity,
-    status: '闲置', category: r.category, tags: '', daysIdle: r.days_idle, source: r.source,
+    status: m('skill-home.stats-stats.c003'), category: r.category, tags: '', daysIdle: r.days_idle, source: r.source,
   }));
   return { ...buildStatsAlert(items), days, allowed: IDLE_GEARS };
 }

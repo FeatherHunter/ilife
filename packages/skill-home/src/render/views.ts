@@ -1,5 +1,6 @@
 // 渲染层·视图数据装配：DB 行 → 21 key 的 envelope data（全字段，不返空冒充由调用方缺失阻断）。
 import type { HomeItem, HomeLocation } from '../fetch/db.js';
+import { m } from '../entries/index.js';
 
 export interface ItemCard {
   id: number; name: string; location: string; quantity: number;
@@ -11,7 +12,7 @@ export function toItemCard(item: HomeItem, locations: HomeLocation[], tags: stri
   const qty = locations.reduce((a, l) => a + (l.quantity || 0), 0);
   return {
     id: item.id, name: item.name,
-    location: locations.map((l) => l.location + '×' + l.quantity + '[' + l.location_status + ']').join('；') || '(无位置)',
+    location: locations.map((l) => l.location + '×' + l.quantity + '[' + l.location_status + ']').join('；') || m('skill-home.render-views.c001'),
     quantity: qty, status: first?.location_status ?? '',
     category: item.category ?? '', tags: tags.join(','),
   };
@@ -53,13 +54,13 @@ export function buildReceipt(message: string, fields?: readonly { readonly k: st
 
 export function buildTagList(tags: { tag: string; count: number }[], categories?: { id: number; name: string }[], total?: number): { items: unknown[]; total: number } {
   const items: unknown[] = tags.map((t) => ({ name: t.tag, count: t.count }));
-  if (categories) for (const c of categories) items.push({ name: '分类:' + c.name, count: c.id });
+  if (categories) for (const c of categories) items.push({ name: m('skill-home.render-views.c002', { p0: String(c.name) }), count: c.id });
   // #928 分页：total 允许大于本页行数（全量总数），缺省仍为本页行数（旧调用方同形）。
   return { items, total: total ?? items.length };
 }
 
 export function buildInventoryRecords(rows: { id: number; scope: string; total: number }[]): { items: unknown[]; total: number } {
-  return { items: rows.map((r) => ({ name: '盘点#' + r.id + ' ' + r.scope, count: r.total })), total: rows.length };
+  return { items: rows.map((r) => ({ name: m('skill-home.render-views.c003', { p0: String(r.id), p1: String(r.scope) }), count: r.total })), total: rows.length };
 }
 
 export function buildLocationList(paths: string[]): { items: unknown[]; total: number } {
