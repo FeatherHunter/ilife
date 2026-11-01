@@ -1,4 +1,4 @@
-﻿/** 场景件：记一笔（`kind` 空＝没有 preset 的通用词）。**本票：两格都换成这一件自己的装配体**。
+/** 场景件：记一笔（`kind` 空＝没有 preset 的通用词）。**本票：两格都换成这一件自己的装配体**。
  *
  * 服务哪条唤醒词：记一笔（`src/policy/wakewords.ts` 的 `WAKE_TABLE` 里不带 `preset` 的那一条）。
  *  本件还是**认不得的 `kind` 的兜底**：`src/write/scene.ts` 的 `sceneFor` 第四条判定把「其余」判到本件，
@@ -117,7 +117,7 @@ function collectPlain(input: CollectInput): string {
     typeBadge({
       kind: KIND,
       status: 'danger',
-      state: blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待补槽位 · 未写库',
+      state: blocked.length > 0 ? 'pending-blocked' : 'pending',
       next: '',
     }),
     collectProgress({ wakeWord: WORD, missing: blocked.length }),
@@ -176,7 +176,7 @@ function receiptPlain(input: ReceiptInput): string {
     typeBadge({
       kind: KIND,
       status: 'ok',
-      state: '写库成功（方向按金额符号判）',
+      state: 'saved-sign',
       next: nextStepOf({ page: 'receipt', exit: true }),
     }),
     renderKpiGrid([

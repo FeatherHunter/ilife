@@ -45,6 +45,7 @@ import {
 } from './pageParts.js';
 import { receiptPaper } from './receiptPaper.js';
 import type { CollectInput, ReceiptInput, Scene } from './scene.js';
+import { m } from '../entries/index.js';
 
 /** 场景给模板的**差异声明**：值、文案与「哪个可选块出不出」，**不含任何块位拼装**。 */
 export interface ExpenseSpec {
@@ -124,14 +125,17 @@ export function bindExpensePages(spec: ExpenseSpec): Pick<Scene, 'collect' | 're
 
 /** 本族多数场景共用的复制 prompt 那段话（记支出／记收入／记一笔三件同句）：说清缺什么、先不写库、补齐后说哪句。 */
 export function plainPrompt(word: string, blocked: readonly BlockedItem[]): string {
-  return '这一笔还差 ' + blocked.length + ' 项：' + blocked.map((i) => i.label).join(String.fromCharCode(10))
-    + '。这一页先不写库。补齐后跟助手说一遍「' + word + '」。';
+  return m('skill-bill.write-template-expense.c001', {
+    p0: String(blocked.length),
+    p1: String(blocked.map((i) => i.label).join(String.fromCharCode(10))),
+    p2: String(word),
+  });
 }
 
 /** 本族多数场景共用的副标题：**只说出「缺的是哪几项在哪」**（明细就在紧下面那行缺项徽章里），
  *  项数与「补上就能记」归进度行 —— 两句各说一件，不互相复述（t728 去冗）。 */
 export function missingSubtitle(input: CollectInput, blocked: readonly BlockedItem[]): string {
-  return blocked.length === 0 ? '这一页只采集，不写库。' : '缺的就是下面这几项。';
+  return blocked.length === 0 ? m('skill-bill.write-template-expense.c002') : m('skill-bill.write-template-expense.c003');
 }
 
 /** 缺项那一处的共用说法（记报销那一页用它）：逐项给中文名与「为什么缺」。
@@ -142,9 +146,10 @@ export function missingSubtitle(input: CollectInput, blocked: readonly BlockedIt
  *  故整句删掉，只留「补齐之后跟助手说一遍」。
  *  `key` 保留在签名里：调用方按同一形状喂，删参数要连带改四处调用点，不属本票写集。 */
 export function sharedPrompt(key: string, blocked: readonly BlockedItem[]): string {
-  return '这一笔还差 ' + blocked.length + ' 项：'
-    + blocked.map((i) => i.label + '（' + i.why + '）').join(String.fromCharCode(10))
-    + '。\n这一页先不写库。补齐之后跟助手说一遍。';
+  return m('skill-bill.write-template-expense.c004', {
+    p0: String(blocked.length),
+    p1: String(blocked.map((i) => i.label + '（' + i.why + '）').join(String.fromCharCode(10))),
+  });
 }
 
 /** 过程型采集页：缺项时出这一页（只采集、不写库）。 */
@@ -170,7 +175,7 @@ function collectPage(spec: ExpenseSpec, input: CollectInput): string {
     params: params,
     data: { envelope },
     log: { envelope, copyLog: copyLog({
-      command: commandLine(input.key, params), source: input.source, detail: '没写库（采集页）',
+      command: commandLine(input.key, params), source: input.source, detail: m('skill-bill.write-template-expense.c005'),
       actionAt: input.actionAt, version: envelope.version,
     }) },
   });
@@ -179,7 +184,7 @@ function collectPage(spec: ExpenseSpec, input: CollectInput): string {
   const empties: string[] = [];
   if (spec.emptyAccount !== undefined && pick.account.length === 0) {
     empties.push(emptyNote({
-      title: '没有可选的历史账户',
+      title: m('skill-bill.write-template-expense.c006'),
       text: spec.emptyAccount.text,
       next: spec.emptyAccount.next,
     }));
@@ -190,9 +195,9 @@ function collectPage(spec: ExpenseSpec, input: CollectInput): string {
   const content = [
     typeBadge({
       kind: spec.kind,
-      pageKind: '采集页',
+      pageKind: m('skill-bill.write-template-expense.c007'),
       status: 'danger',
-      state: blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待补槽位 · 未写库',
+      state: blocked.length > 0 ? 'pending-blocked' : 'pending',
       next: '',
     }),
     spec.progress ? collectProgress({ wakeWord: spec.word, missing: blocked.length }) : '',
@@ -213,7 +218,7 @@ function collectPage(spec: ExpenseSpec, input: CollectInput): string {
       }),
     duplicateNote(findDuplicates(input.recent, probe), probe),
     spec.prefill === 'caliber'
-      ? (marks.length === 0 ? '' : renderCaliberLine('预填标注：下面几格已经替你填上，来源写在格子里。'))
+      ? (marks.length === 0 ? '' : renderCaliberLine(m('skill-bill.write-template-expense.c008')))
       : prefillNote(marks),
     collectBlockedFold({ items: blocked, command: bp.command, note: spec.foldNote, language: input.language }),
     empties.join(''),
@@ -247,7 +252,7 @@ function collectPage(spec: ExpenseSpec, input: CollectInput): string {
     collectSourceNote(facts.time, input.language),
   ].join('');
   return pageShell({
-    docTitle: docTitleOf(spec.word + ' 采集页'),
+    docTitle: docTitleOf(m('skill-bill.write-template-expense.c009', { p0: String(spec.word) })),
     title: spec.word,
     subtitle: spec.subtitle(input, blocked),
     slot: 'collect',

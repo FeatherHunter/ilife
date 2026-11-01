@@ -298,7 +298,36 @@
     "1206": {
       "title": "迁移 skill-bill write 批次 4：16 件（382 条）；另 7 件已迁",
       "state": "open（待开工；清单已回填 #1308）",
-      "files": [
+      "files": [],
+      "migrated": [
+        {
+          "path": "packages/skill-bill/src/write/blockedFold.ts",
+          "literals": 1
+        },
+        {
+          "path": "packages/skill-bill/src/write/commands.ts",
+          "literals": 4
+        },
+        {
+          "path": "packages/skill-bill/src/write/errorReceipt.ts",
+          "literals": 2
+        },
+        {
+          "path": "packages/skill-bill/src/write/receiptParts.ts",
+          "literals": 10
+        },
+        {
+          "path": "packages/skill-bill/src/write/scene-batch.ts",
+          "literals": 12
+        },
+        {
+          "path": "packages/skill-bill/src/write/slots.ts",
+          "literals": 16
+        },
+        {
+          "path": "packages/skill-bill/src/write/sourceNote.ts",
+          "literals": 2
+        },
         {
           "path": "packages/skill-bill/src/write/scene-photo.ts",
           "literals": 33,
@@ -428,40 +457,11 @@
           }
         }
       ],
-      "migrated": [
-        {
-          "path": "packages/skill-bill/src/write/blockedFold.ts",
-          "literals": 1
-        },
-        {
-          "path": "packages/skill-bill/src/write/commands.ts",
-          "literals": 4
-        },
-        {
-          "path": "packages/skill-bill/src/write/errorReceipt.ts",
-          "literals": 2
-        },
-        {
-          "path": "packages/skill-bill/src/write/receiptParts.ts",
-          "literals": 10
-        },
-        {
-          "path": "packages/skill-bill/src/write/scene-batch.ts",
-          "literals": 12
-        },
-        {
-          "path": "packages/skill-bill/src/write/slots.ts",
-          "literals": 16
-        },
-        {
-          "path": "packages/skill-bill/src/write/sourceNote.ts",
-          "literals": 2
-        }
-      ],
       "totals": {
         "files": 23,
         "literals": 429
-      }
+      },
+      "excluded": []
     },
     "1207": {
       "title": "迁移 skill-bill analysis 批次 2：18 件（656 条）",
@@ -1896,7 +1896,8 @@
     "1217": {
       "title": "迁移 skill-calorie 渲染与分析域（render＋analysis）：55 件（3,392 条）",
       "state": "open（待开工；清单已回填 #1308）",
-      "files": [
+      "files": [],
+      "migrated": [
         {
           "path": "packages/skill-calorie/src/analysis/anomaly/common.ts",
           "literals": 10,
@@ -1922,13 +1923,6 @@
             "copy": 25,
             "concat": 35,
             "ident": 8
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/analysis/anomaly/index.ts",
-          "literals": 4,
-          "byClass": {
-            "concat": 4
           }
         },
         {
@@ -2002,14 +1996,6 @@
           }
         },
         {
-          "path": "packages/skill-calorie/src/analysis/deficit.ts",
-          "literals": 17,
-          "byClass": {
-            "copy": 14,
-            "concat": 3
-          }
-        },
-        {
           "path": "packages/skill-calorie/src/analysis/exercise.ts",
           "literals": 28,
           "byClass": {
@@ -2027,27 +2013,11 @@
           }
         },
         {
-          "path": "packages/skill-calorie/src/analysis/healthPlate.ts",
-          "literals": 4,
-          "byClass": {
-            "copy": 1,
-            "concat": 3
-          }
-        },
-        {
           "path": "packages/skill-calorie/src/analysis/historyStore.ts",
           "literals": 3,
           "byClass": {
             "copy": 2,
             "concat": 1
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/analysis/multiTrend.ts",
-          "literals": 5,
-          "byClass": {
-            "copy": 1,
-            "concat": 4
           }
         },
         {
@@ -2057,13 +2027,6 @@
             "copy": 48,
             "concat": 49,
             "ident": 3
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/analysis/precision.ts",
-          "literals": 1,
-          "byClass": {
-            "concat": 1
           }
         },
         {
@@ -2132,22 +2095,6 @@
           }
         },
         {
-          "path": "packages/skill-calorie/src/analysis/routes.ts",
-          "literals": 195,
-          "byClass": {
-            "copy": 192,
-            "ident": 3
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/analysis/series.ts",
-          "literals": 38,
-          "byClass": {
-            "copy": 26,
-            "concat": 12
-          }
-        },
-        {
           "path": "packages/skill-calorie/src/analysis/simulate.ts",
           "literals": 25,
           "byClass": {
@@ -2166,33 +2113,10 @@
           }
         },
         {
-          "path": "packages/skill-calorie/src/analysis/trend.ts",
-          "literals": 8,
-          "byClass": {
-            "copy": 8
-          }
-        },
-        {
           "path": "packages/skill-calorie/src/analysis/utils.ts",
           "literals": 15,
           "byClass": {
             "copy": 15
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/render/analysisPlate.ts",
-          "literals": 15,
-          "byClass": {
-            "copy": 5,
-            "concat": 10
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/render/diet.ts",
-          "literals": 9,
-          "byClass": {
-            "copy": 2,
-            "concat": 7
           }
         },
         {
@@ -2201,13 +2125,6 @@
           "byClass": {
             "copy": 51,
             "concat": 68
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/render/envelope.ts",
-          "literals": 10,
-          "byClass": {
-            "concat": 10
           }
         },
         {
@@ -2249,14 +2166,6 @@
           "byClass": {
             "copy": 18,
             "concat": 6
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/render/planWizardCss.ts",
-          "literals": 19,
-          "byClass": {
-            "copy": 1,
-            "ident": 18
           }
         },
         {
@@ -2357,11 +2266,116 @@
           }
         }
       ],
-      "migrated": [],
       "totals": {
         "files": 55,
         "literals": 3392
-      }
+      },
+      "excluded": [
+        {
+          "path": "packages/skill-calorie/src/analysis/anomaly/index.ts",
+          "literals": 4,
+          "byClass": {
+            "concat": 4
+          },
+          "reason": "诊断分发器：只有 throw FetchError 开发报文，无上屏文案（ledger 4 条全为报错串）"
+        },
+        {
+          "path": "packages/skill-calorie/src/analysis/deficit.ts",
+          "literals": 17,
+          "byClass": {
+            "copy": 14,
+            "concat": 3
+          },
+          "reason": "取数口径层：WEEKDAY_NAMES／weekdayName 生成内部数据值（数据位，ADR-0004 数据不译）＋开发报错串，无上屏整句"
+        },
+        {
+          "path": "packages/skill-calorie/src/analysis/healthPlate.ts",
+          "literals": 4,
+          "byClass": {
+            "copy": 1,
+            "concat": 3
+          },
+          "reason": "取数与守卫层：只有 throw CalorieRenderError 开发报文（4 条），无上屏文案"
+        },
+        {
+          "path": "packages/skill-calorie/src/analysis/multiTrend.ts",
+          "literals": 5,
+          "byClass": {
+            "copy": 1,
+            "concat": 4
+          },
+          "reason": "取数与校验层：窗口名／命令键为数据＋开发报错串，无上屏整句"
+        },
+        {
+          "path": "packages/skill-calorie/src/analysis/precision.ts",
+          "literals": 1,
+          "byClass": {
+            "concat": 1
+          },
+          "reason": "精度守卫：只有一条开发报错串，无上屏文案"
+        },
+        {
+          "path": "packages/skill-calorie/src/analysis/routes.ts",
+          "literals": 195,
+          "byClass": {
+            "copy": 192,
+            "ident": 3
+          },
+          "reason": "唤醒词→命令路由表：192 条 wakeWord／cli 样例为数据（唤醒词冻结不译，译了就路由不到命令）"
+        },
+        {
+          "path": "packages/skill-calorie/src/analysis/series.ts",
+          "literals": 38,
+          "byClass": {
+            "copy": 26,
+            "concat": 12
+          },
+          "reason": "取数层：窗口别名（今日/昨日/本周…）为命令行输入别名、周名为内部数据值，报错串为开发报文；无上屏整句"
+        },
+        {
+          "path": "packages/skill-calorie/src/analysis/trend.ts",
+          "literals": 8,
+          "byClass": {
+            "copy": 8
+          },
+          "reason": "判据位控制标记化：TrendDay.type 由 '工作日'/'周末' 改为 'weekday'/'weekend'（中文不上屏，渲染侧标签另取词条）；无词条 key 贡献"
+        },
+        {
+          "path": "packages/skill-calorie/src/render/analysisPlate.ts",
+          "literals": 15,
+          "byClass": {
+            "copy": 5,
+            "concat": 10
+          },
+          "reason": "取数与校验层：只有 throw CalorieRenderError 开发报文，无上屏文案"
+        },
+        {
+          "path": "packages/skill-calorie/src/render/diet.ts",
+          "literals": 9,
+          "byClass": {
+            "copy": 2,
+            "concat": 7
+          },
+          "reason": "取数与守卫层：报错串为开发报文；'💧水' 为数据值（数据不译）"
+        },
+        {
+          "path": "packages/skill-calorie/src/render/envelope.ts",
+          "literals": 10,
+          "byClass": {
+            "concat": 10
+          },
+          "reason": "视图 key 表与校验层：'未知视图 key' 为开发报文，无上屏文案"
+        },
+        {
+          "path": "packages/skill-calorie/src/render/planWizardCss.ts",
+          "literals": 19,
+          "byClass": {
+            "copy": 1,
+            "ident": 18
+          },
+          "reason": "页内 CSS 文本（注释与样式规则），非用户可见文案"
+        }
+      ]
     },
     "1218": {
       "title": "迁移 skill-calorie 饮食与训练域（diet＋workout＋weight）：78 件（3,950 条）",
@@ -9978,12 +9992,12 @@
   },
   "scopeSummary": {
     "ledgerFiles": 1226,
-    "migratedFiles": 103,
-    "pendingFiles": 1073,
-    "pendingLiterals": 37086,
-    "excludedFiles": 50,
-    "excludedLiterals": 2371,
-    "migratedLiterals": 3291
+    "migratedFiles": 162,
+    "pendingFiles": 1002,
+    "pendingLiterals": 33312,
+    "excludedFiles": 62,
+    "excludedLiterals": 2696,
+    "migratedLiterals": 6740
   },
   "workflow": [
     "开工：从本文件取本票 files，逐件登记进 tooling/i18n-scope.json 的 files（先跑两道门拿红读数＝范围已挂但还没迁）。",

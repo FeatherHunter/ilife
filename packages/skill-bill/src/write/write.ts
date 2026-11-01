@@ -45,6 +45,7 @@ import { RECORD_SLOTS, missingSlots, recordCollectDoc } from './collect.js';
 import type { RecordSlot } from './collect.js';
 import { recordSlots } from './slots.js';
 import { recordReceiptDoc } from './receipt.js';
+import { m } from '../entries/index.js';
 
 /** 记一笔写进库的列全集（**由槽位表派生，同一件事实一处定义**）：`add` 那一行的七个参数名就是它写进库的七个列
  *  （缺省值列也算写入：时间／账户／账本／币种都带缺省）。名单只有 `./collect.ts` 的 `RECORD_SLOTS` 一处。 */
@@ -57,8 +58,15 @@ const RECENT_WINDOW_DAYS = 90;
  *  回执页那句说的是写库回执，采集页不写库，不许沿用回执页那句（改前两页共用一句，采集页照抄了「写库回执」）。
  *  本轮整改删掉两处内部话（照 `docs/skills/skill-bill/t407-文字审查.md` 第 57、58 条）：库内表名 `bills` 与
  *  `prompt` 那个英文词都不上屏；`本地时钟` 只留在复制日志的时间戳里（那里是过程证据，正文不印）。 */
-const SOURCE_RECEIPT = DB_FILENAME + '（写库回执）';
-const SOURCE_COLLECT = DB_FILENAME + '（只读：这一页先不写库，只采集）';
+/** 回执页那句数据来源。按调用现拼：库文件名是数据（不译），后缀那句话要跟着语言走。 */
+function sourceReceipt(): string {
+  return m('skill-bill.write-write.c011', { p0: String(DB_FILENAME) });
+}
+
+/** 采集页那句数据来源（这一页不写库，不许沿用回执页那句）。 */
+function sourceCollect(): string {
+  return m('skill-bill.write-write.c012', { p0: String(DB_FILENAME) });
+}
 
 /** 本地时钟时刻串（写入时间与复制日志时间戳）。**取时钟在这一步，不在共用位**——取值口径住
  *  `../shared/copyArea.js` 的 `actionStamp`（写域与查询域两种页共用同一份，本件只调它）。 */
@@ -137,7 +145,7 @@ function collectOut(input: {
       params: input.params,
       slots: input.slots,
       missing: input.missing,
-      source: SOURCE_COLLECT,
+      source: sourceCollect(),
       actionAt: nowStamp(),
       today,
       recent: listRecent(input.db, anchor, RECENT_WINDOW_DAYS),
@@ -169,7 +177,7 @@ function finish(input: {
     affectedRows: totalChanges(input.db.db) - input.before,
     writtenFields: input.fields,
     noChange: input.noChange,
-    source: SOURCE_RECEIPT,
+    source: sourceReceipt(),
     actionAt: nowStamp(),
   };
   return {
@@ -203,12 +211,17 @@ export function writeRecordAdd(params: Record<string, unknown>, db: BillDb, lang
   // 回执摘要里的型名改唤醒词（本轮整改）：`（expense）` 这种内建型名不上屏，
   // 换成「记支出」这类用户自己说过的词；`id=` 换「记录编号」；`prompt` 那个英文词删。
   const extra = kind === 'photo'
-    ? '（三要素以外部识别为准）'
-    : kind === 'batch' ? '（只落了其中一笔）' : kind ? '（' + wakeWordOf(kind) + '）' : '';
+    ? m('skill-bill.write-write.c001')
+    : kind === 'batch' ? m('skill-bill.write-write.c002') : kind ? '（' + wakeWordOf(kind) + '）' : '';
   return finish({
     db, key, params, language: textLanguage, op: 'add', row: r, fields: ADD_FIELDS, before, noChange: false,
-    summary: `已记录：${r.category} ${r.amount.toFixed(2)}${extra}（记录编号 ${r.id}，这一页可以复制）`,
-    writtenDetail: '这一笔已记进账本',
+    summary: m('skill-bill.write-write.c003', {
+      p0: String(r.category),
+      p1: String(r.amount.toFixed(2)),
+      p2: String(extra),
+      p3: String(r.id),
+    }),
+    writtenDetail: m('skill-bill.write-write.c004'),
     detail: rowDetail(r),
   });
 }
@@ -230,9 +243,9 @@ export function writeRecordUpdate(params: Record<string, unknown>, db: BillDb, l
     const r = undoBill(db, id);
     return finish({
       db, key, params, language: textLanguage, op: 'undo', row: r, fields: ['deleted_at'], before, noChange: false,
-      summary: `已撤销，记录还在，随时可恢复（记录编号 ${r.id}）`,
-      writtenDetail: '已标记撤销（记录还在库里，只是不再算进查询与统计）',
-      detail: [{ k: fieldLabelOf('op'), v: statusNoteOf('软删打标（deleted_at = now，不物理删）') }, { k: fieldLabelOf('id'), v: String(r.id) }],
+      summary: m('skill-bill.write-write.c005', { p0: String(r.id) }),
+      writtenDetail: m('skill-bill.write-write.c006'),
+      detail: [{ k: fieldLabelOf('op'), v: statusNoteOf('soft-deleted') }, { k: fieldLabelOf('id'), v: String(r.id) }],
     });
   }
   if (op === 'restore') {
@@ -240,9 +253,9 @@ export function writeRecordUpdate(params: Record<string, unknown>, db: BillDb, l
     const r = restoreBill(db, id);
     return finish({
       db, key, params, language: textLanguage, op: 'restore', row: r, fields: ['deleted_at'], before, noChange: false,
-      summary: `已恢复（记录编号 ${r.id}）`,
-      writtenDetail: '已恢复（撤销标记清掉，这一笔回到查询与统计里）',
-      detail: [{ k: fieldLabelOf('op'), v: statusNoteOf('置 NULL（deleted_at 清空）') }, { k: fieldLabelOf('id'), v: String(r.id) }],
+      summary: m('skill-bill.write-write.c007', { p0: String(r.id) }),
+      writtenDetail: m('skill-bill.write-write.c008'),
+      detail: [{ k: fieldLabelOf('op'), v: statusNoteOf('restored') }, { k: fieldLabelOf('id'), v: String(r.id) }],
     });
   }
   const { id, patch } = validateUpdateInput(params);
@@ -252,8 +265,11 @@ export function writeRecordUpdate(params: Record<string, unknown>, db: BillDb, l
   const noChange = fields.every((f) => preValue(pre, f) === patch[f]);
   return finish({
     db, key, params, language: textLanguage, op: 'update', row: r, fields, before, noChange,
-    summary: `已修改：${r.id}（改了 ${fields.map((f) => fieldLabelOf(f)).join('、')}）`,
-    writtenDetail: '这一条已改好',
+    summary: m('skill-bill.write-write.c009', {
+      p0: String(r.id),
+      p1: String(fields.map((f) => fieldLabelOf(f)).join('、')),
+    }),
+    writtenDetail: m('skill-bill.write-write.c010'),
     detail: [
       { k: fieldLabelOf('id'), v: String(r.id) },
       ...fields.map((f) => ({ k: fieldLabelOf(f), v: String(patch[f]) })),

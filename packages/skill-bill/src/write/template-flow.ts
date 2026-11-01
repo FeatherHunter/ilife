@@ -38,6 +38,7 @@ import { collectSourceNote } from './sourceNote.js';
 import { receiptPaper } from './receiptPaper.js';
 import type { CollectInput, ReceiptInput, Scene } from './scene.js';
 import type { RecordSlot } from './slots.js';
+import { m } from '../entries/index.js';
 
 /** 提示条那一块要的图标档（`renderFeedbackBlock` 的闭集）。 */
 export type NoticeIcon = 'danger' | 'ok' | 'warn' | 'copy' | 'info';
@@ -170,12 +171,12 @@ export function lackLines(blocked: readonly BlockedItem[]): string {
 
 /** 复制 prompt 那段的头一句（**唯一定义地**）：缺项时先说还差几项再逐项列，不缺就出本件那句话。 */
 export function promptHead(head: string, blocked: readonly BlockedItem[]): string {
-  return blocked.length === 0 ? head : '这一笔还差 ' + blocked.length + ' 项，逐项补齐：\n' + lackLines(blocked);
+  return blocked.length === 0 ? head : m('skill-bill.write-template-flow.c001', { p0: String(blocked.length), p1: String(lackLines(blocked)) });
 }
 
 /** 复制 prompt 那颗按钮写什么（**唯一定义地**）：可复制时用本件那句话，缺项时一律「补齐后照这句跟助手说一遍」。 */
 export function promptButton(blocked: readonly BlockedItem[], ok: string): string {
-  return blocked.length === 0 ? ok : '补齐后照这句跟助手说一遍';
+  return blocked.length === 0 ? ok : m('skill-bill.write-template-flow.c002');
 }
 
 /** 可列出的候选条数上限（列表是给人挑的，不是台账）。 */
@@ -238,7 +239,7 @@ function envelopeOf(key: string, ok: boolean, message: string): SerializableEnve
  *  内容与判定一字不动（仍是共用件 `blockedBar` 的产出），只换摆法；折叠与否那枚置灰按钮都点不动。 */
 function blockedFold(items: readonly BlockedItem[], command: string, language: string): string {
   if (items.length === 0) return '';
-  return renderDisclosure({ title: '还缺什么，以及补齐后照抄的那条', contentHtml: blockedBar({ items, command, language }) });
+  return renderDisclosure({ title: m('skill-bill.write-template-flow.c003'), contentHtml: blockedBar({ items, command, language }) });
 }
 
 /** 流程三段式那三段：第 1 段的候选那一块两种摆法（单选／只列表），第 2 段的字段逐格过本件那一支。 */
@@ -261,7 +262,7 @@ function stepsOf(spec: FlowSpec, ctx: FlowCtx): FlowStepInput[] {
     },
     {
       title: third.title, note: third.note(ctx), done: ctx.blocked.length === 0,
-      state: ctx.blocked.length === 0 ? '可复制' : '还差 ' + ctx.blocked.length + ' 项',
+      state: ctx.blocked.length === 0 ? m('skill-bill.write-template-flow.c004') : m('skill-bill.write-template-flow.c005', { p0: String(ctx.blocked.length) }),
     },
   ];
 }
@@ -282,7 +283,7 @@ function collectPage(spec: FlowSpec, input: CollectInput): string {
   if (spec.extraBlocked !== undefined) extra.push(...spec.extraBlocked(values));
   const blocked = [...base, ...extra];
   const message = blockedMessage(missing, base)
-    + (extra.length === 0 ? '' : '。本型另需 ' + extra.length + ' 项，见下面的缺项徽章');
+    + (extra.length === 0 ? '' : m('skill-bill.write-template-flow.c006', { p0: String(extra.length) }));
   const ctx: FlowCtx = { ...values, blocked, candidates: spec.candidates(values) };
   const envelope = envelopeOf(key, false, message);
   const sayOut = sayCollectOut({
@@ -293,7 +294,7 @@ function collectPage(spec: FlowSpec, input: CollectInput): string {
     params: params,
     data: { envelope },
     log: { envelope, copyLog: copyLog({
-      command: commandLine(key, params), source: input.source, detail: '没写库（采集页）',
+      command: commandLine(key, params), source: input.source, detail: m('skill-bill.write-template-flow.c007'),
       actionAt: input.actionAt, version: DOC_VERSION,
     }) },
   });
@@ -304,8 +305,8 @@ function collectPage(spec: FlowSpec, input: CollectInput): string {
     const collectFacts = { category: facts.category, amount: amount, time: facts.time, account: facts.account, ledger: facts.ledger, note: typeof params.note === "string" ? params.note : "", currency: typeof params.currency === "string" ? params.currency : "", missing: blocked.map(function (b) { return b.label; }) };
   const content = [
     typeBadge({
-      kind: spec.kind, status: blocked.length > 0 ? 'danger' : 'warn', next: '', pageKind: '采集页',
-      state: blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待核对 · 未写库',
+      kind: spec.kind, status: blocked.length > 0 ? 'danger' : 'warn', next: '', pageKind: m('skill-bill.write-template-flow.c008'),
+      state: blocked.length > 0 ? 'pending-blocked' : 'review-pending',
     }),
     renderKpiGrid(cards),
     spec.chips === undefined ? '' : renderChipRow({ items: spec.chips(ctx).map((text) => ({ text })) }),
@@ -323,14 +324,14 @@ function collectPage(spec: FlowSpec, input: CollectInput): string {
       dataJson: buildCollectCopyJson(spec.word, spec.kind, key, collectFacts),
       dataCsv: buildCollectCopyCsv(spec.word, spec.kind, collectFacts),
       log: { envelope, copyLog: copyLog({
-        command: commandLine(key, params), source: input.source, detail: '没写库（采集页）',
+        command: commandLine(key, params), source: input.source, detail: m('skill-bill.write-template-flow.c009'),
         actionAt: input.actionAt, version: DOC_VERSION,
       }) },
     }),
     collectSourceNote(facts.time, input.language),
   ].join('');
   return pageShell({
-    docTitle: docTitleOf(spec.word + ' 采集页'), title: spec.word, subtitle: '还差 ' + blocked.length + ' 项，缺的在下面标出来了',
+    docTitle: docTitleOf(m('skill-bill.write-template-flow.c010', { p0: String(spec.word) })), title: spec.word, subtitle: m('skill-bill.write-template-flow.c011', { p0: String(blocked.length) }),
     slot: 'collect', page: 'collect', shape: envelope.shape, key, content,
   });
 }

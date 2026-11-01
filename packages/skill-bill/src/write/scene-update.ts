@@ -4,51 +4,62 @@
  *  **原记录只读回显 ＋ 改前改后对照**（改哪几个字段取自槽位表，`id`／`op` 两格不算）；采集页不出摘要行后那一行口径，
  *  回执页出「改前改后对照落在写库前那一面」那句，也不出撤销／恢复那种结果表。
  */
+import { runWithLanguage } from 'base-entries';
 import { commandLine } from '../shared/writeParts.js';
 import { projectWakeWord } from '../triggers/wakeTable.js';
 import type { Scene } from './scene.js';
 import { bindUpdatePages } from './template-update.js';
+import { m } from '../entries/index.js';
 
 const WAKE: string = projectWakeWord({ key: 'bill.record.update' });
 const KEY = 'bill.record.update';
 
-export const SCENE: Scene = {
-  id: 'update',
-  key: KEY,
-  kind: '',
-  op: '',
-  family: '批量与修正族',
-  ...bindUpdatePages({
-    wake: WAKE,
+function buildScene(): Scene {
+  return {
+    id: 'update',
     key: KEY,
-    collectState: (page) => (page.id === null ? '三形态之一：缺记录编号 · 先挑一条' : '待核对 · 未写库'),
-    confirmTitle: '确认改动',
-    caliber: '',
-    middle: {
-      pick: { mode: 'update' },
-      markedCaption: () => '这一条记录　已撤销过，只读回显',
-      marked: {
-        kind: 'note',
-        title: '这一条已经撤销过',
-        text: (page) => '记录编号 ' + page.id + ' 在 ' + page.deletedAt + ' 撤销过，改记录这一支不动已撤销的记录。',
-        next: '要它回到库里就说「恢复」，恢复之后再改。要改别的记录就换一个编号。',
+    kind: '',
+    op: '',
+    family: m('skill-bill.write-scene-update.c001'),
+    ...bindUpdatePages({
+      wake: WAKE,
+      key: KEY,
+      collectState: (page) => (page.id === null ? 'pick-first' : 'review-pending'),
+      confirmTitle: m('skill-bill.write-scene-update.c002'),
+      caliber: '',
+      middle: {
+        pick: { mode: 'update' },
+        markedCaption: () => m('skill-bill.write-scene-update.c003'),
+        marked: {
+          kind: 'note',
+          title: m('skill-bill.write-scene-update.c004'),
+          text: (page) => m('skill-bill.write-scene-update.c005', { p0: String(page.id), p1: String(page.deletedAt) }),
+          next: m('skill-bill.write-scene-update.c006'),
+        },
+        noRowTitle: m('skill-bill.write-scene-update.c007'),
+        noRowText: (page) => m('skill-bill.write-scene-update.c008', { p0: String(page.id) }),
+        plainCaption: (page) => m('skill-bill.write-scene-update.c009', { p0: String(page.rowId) }),
+        plain: { kind: 'diff', caption: m('skill-bill.write-scene-update.c010') },
       },
-      noRowTitle: '这个编号没有记录',
-      noRowText: (page) => '记录编号 ' + page.id + ' 在库里一条都没读到。',
-      plainCaption: (page) => '原记录　只读回显　记录编号 ' + page.rowId,
-      plain: { kind: 'diff', caption: '改前改后对照（本次打算改的那几项）' },
-    },
-    prompt: (page) => {
-      if (page.id === null) return '这一页先不写库。挑一条记录，说清要改哪一项、改成什么，再跟助手说一遍「改记录」。';
-      if (page.deleted) return '记录编号 ' + page.id + ' 那一条已经撤销过，改记录这一支不动它。\n'
-        + '要它回到库里就说「恢复」：' + commandLine(KEY, { op: 'restore', id: page.id }) + '。';
-      if (page.rowId === null) return '记录编号 ' + page.id + ' 在库里读不到，可能已不在这个库。\n'
-        + '核一下编号，或先说清是哪一笔，再跟助手说一遍「改记录」。';
-      return '原记录与改动对照都在下面：核一眼「原值／新值」，没问题就照这条说。\n'
-        + commandLine(KEY, page.params);
-    },
-    receiptResult: 'none',
-    receiptExit: 'undo',
-    receiptBrand: '饼干记账 · ' + WAKE,
-  }),
-};
+      prompt: (page) => {
+        if (page.id === null) return m('skill-bill.write-scene-update.c011');
+        if (page.deleted) return m('skill-bill.write-scene-update.c012', {
+          p0: String(page.id),
+          p1: String(commandLine(KEY, { op: 'restore', id: page.id })),
+        });
+        if (page.rowId === null) return m('skill-bill.write-scene-update.c013', { p0: String(page.id) });
+        return m('skill-bill.write-scene-update.c014', { p0: String(commandLine(KEY, page.params)) });
+      },
+      receiptResult: 'none',
+      receiptExit: 'undo',
+      receiptBrand: m('skill-bill.write-scene-update.c015', { p0: String(WAKE) }),
+    }),
+  };
+}
+
+export const SCENE: Scene = buildScene();
+
+/** 按语言重建本场景（#1197：文案经词条层，语言是运行期参数）。 */
+export function sceneUpdate(language: string): Scene {
+  return runWithLanguage(language, buildScene);
+}

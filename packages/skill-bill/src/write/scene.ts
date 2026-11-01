@@ -30,15 +30,15 @@ import { SCENE as sceneExpense } from './scene-expense.js';
 import { SCENE as sceneIncome } from './scene-income.js';
 import { SCENE as sceneInstallment, sceneInstallment as buildInstallmentScene } from './scene-installment.js';
 import { SCENE as sceneLend, sceneLend as buildLendScene } from './scene-lend.js';
-import { SCENE as scenePhoto } from './scene-photo.js';
-import { SCENE as scenePlain } from './scene-plain.js';
+import { SCENE as scenePhoto, scenePhoto as buildPhotoScene } from './scene-photo.js';
+import { SCENE as scenePlain, scenePlain as buildPlainScene } from './scene-plain.js';
 import { SCENE as sceneRefund, sceneRefund as buildRefundScene } from './scene-refund.js';
-import { SCENE as sceneReimburse } from './scene-reimburse.js';
+import { SCENE as sceneReimburse, sceneReimburse as buildReimburseScene } from './scene-reimburse.js';
 import { SCENE as sceneReimburseDone, sceneReimburseDone as buildReimburseDoneScene } from './scene-reimburse-done.js';
 import { SCENE as sceneRepay, sceneRepay as buildRepayScene } from './scene-repay.js';
-import { SCENE as sceneRestore } from './scene-restore.js';
-import { SCENE as sceneUndo } from './scene-undo.js';
-import { SCENE as sceneUpdate } from './scene-update.js';
+import { SCENE as sceneRestore, sceneRestore as buildRestoreScene } from './scene-restore.js';
+import { SCENE as sceneUndo, sceneUndo as buildUndoScene } from './scene-undo.js';
+import { SCENE as sceneUpdate, sceneUpdate as buildUpdateScene } from './scene-update.js';
 
 /** 采集页入参：时刻与来源由调用方给（共用位不取时钟、不取库文件名）；`recent`＝近期记录（预填／重复检测／候选三处共用）。 */
 export interface CollectInput {
@@ -109,7 +109,8 @@ const BY_OP = new Map(SCENES.filter((s) => s.op !== '').map((s) => [s.op, s]));
 
 /** 取件（判定只有四条，见件头；认不得的 kind 落「记一笔」，不猜、不抛——命令本身已由注册表拦过）。
  *
- *  `language` 只决定**已迁入词条层**的件（记分期、记收回、批量录入、记借入、记借出、记退款、报销到账、记偿还八件，其余随各自迁移票加入）按哪门语言取值：`zh` 走落点表里
+ *  `language` 只决定**已迁入词条层**的件（记分期、记收回、批量录入、记借入、记借出、记退款、报销到账、记偿还、
+ *  拍账单、记报销、记一笔、改记录、撤销、恢复十四件，其余随各自迁移票加入）按哪门语言取值：`zh` 走落点表里
  *  那一行静态件（与改造前同一对象）；其余语言现算。未迁移的件任何语言都走静态件（＝中文页）。
  *  **语言必给**（#1307）：本件不再兜 `zh`——兜一次，调用方漏传就静默出中文页，正是这一票要消掉的缺口。 */
 export function sceneFor(input: { readonly key: string; readonly kind?: string; readonly op?: string }, language: string): Scene {
@@ -123,10 +124,16 @@ export function sceneFor(input: { readonly key: string; readonly kind?: string; 
   if (kind === 'refund' && language !== 'zh') return buildRefundScene(language);
   if (kind === 'reimburse-done' && language !== 'zh') return buildReimburseDoneScene(language);
   if (kind === 'repay' && language !== 'zh') return buildRepayScene(language);
+  if (kind === 'photo' && language !== 'zh') return buildPhotoScene(language);
+  if (kind === 'reimburse' && language !== 'zh') return buildReimburseScene(language);
+  if (op === 'undo' && language !== 'zh') return buildUndoScene(language);
+  if (op === 'restore' && language !== 'zh') return buildRestoreScene(language);
   const byKind = BY_KIND.get(kind);
   if (kind !== '' && byKind !== undefined) return byKind;
   const byOp = BY_OP.get(op);
   if (byOp !== undefined) return byOp;
-  if (input.key === 'bill.record.update') return sceneUpdate;
-  return scenePlain;
+  if (input.key === 'bill.record.update') {
+    return language === 'zh' ? sceneUpdate : buildUpdateScene(language);
+  }
+  return language === 'zh' ? scenePlain : buildPlainScene(language);
 }

@@ -24,6 +24,7 @@ import { DIRECTION_WORDS } from '../shared/direction.js';
 import { l1Of } from '../shared/category.js';
 import { DEFAULT_TIME_SUFFIX } from '../shared/dateRange.js';
 import { optionLabelOf } from './recentPicks.js';
+import { m } from '../entries/index.js';
 
 /** 一型的方向口径（**唯一定义地**，四处引用都走这里）：
  *  `sign`＝这一型要的金额符号（`Math.sign` 的值），`require`＝「这一型为什么得是这个符号」那一句，
@@ -34,20 +35,23 @@ export interface DirectionRule {
   readonly require: string;
 }
 
-const DIRECTION: Record<string, DirectionRule> = {
-  expense: { word: DIRECTION_WORDS.expense, sign: -1, require: '记支出要负数' },
-  income: { word: DIRECTION_WORDS.income, sign: 1, require: '记收入要正数' },
-};
+/** 那张表**按调用现建**（#1197：模块加载期不取词，否则语言会在模块加载时固化）。 */
+function directionTable(): Record<string, DirectionRule> {
+  return {
+    expense: { word: DIRECTION_WORDS.expense, sign: -1, require: m('skill-bill.write-summaryRow.c001') },
+    income: { word: DIRECTION_WORDS.income, sign: 1, require: m('skill-bill.write-summaryRow.c002') },
+  };
+}
 
 /** 一型的方向口径（没有这一型＝返回 `undefined`，调用方照实当「本型不管方向」）。 */
 export function directionOf(kind: string): DirectionRule | undefined {
-  return DIRECTION[kind];
+  return directionTable()[kind];
 }
 
 /** 金额一律两位小数（**唯一定义地**，比对与展示同一份口径）。`null`／非有限数／`0`＝未给；`+` 只给正数。
  *  上级裁定第 3 条：金额 `0.00` 配「零（本仓不记零）」自相矛盾，值栏一律写「未给」。 */
 export function money2(amount: number | null): string {
-  if (amount === null || !Number.isFinite(amount) || amount === 0) return '未给';
+  if (amount === null || !Number.isFinite(amount) || amount === 0) return m('skill-bill.write-summaryRow.c003');
   return (amount > 0 ? '+' : '') + amount.toFixed(2);
 }
 
@@ -55,10 +59,10 @@ export function money2(amount: number | null): string {
  *  用户说法照 `docs/skills/skill-bill/t407-文字审查.md` 第 43、44 条的判法：`未判（金额还没给）` 改「还没给」，
  *  `零（本仓不记零）` 改「还没给」（值栏摆 0.00 配「本仓不记零」自相矛盾，本级不再这么写）。 */
 export function moneyDirection(amount: number | null): string {
-  if (amount === null || !Number.isFinite(amount)) return '还没给';
-  if (amount < 0) return '支出（取负数）';
-  if (amount > 0) return '收入（取正数）';
-  return '还没给';
+  if (amount === null || !Number.isFinite(amount)) return m('skill-bill.write-summaryRow.c004');
+  if (amount < 0) return m('skill-bill.write-summaryRow.c005');
+  if (amount > 0) return m('skill-bill.write-summaryRow.c006');
+  return m('skill-bill.write-summaryRow.c007');
 }
 
 /** 摘要行的事实：六格取值。`amount` 用 `null` 表示「还没给」；数字 `0` 视同没给（本仓不记零，裁定第 3 条）。 */
@@ -76,20 +80,34 @@ export interface SummaryFacts {
  *  三处口径句改成用户说法（本轮整改，原文见 `docs/skills/skill-bill/t407-文字审查.md` 第 40、42、43、60 条）：
  *   `L1/L2/L3 三级` 改成「分类要选到最细那一级」（内部层级名不上屏）；`缺省＝…` 改成「不填就记到…」；
  *   采集页那一格给的是**真值**（这一笔打算记成什么），所以不再配「不填就记成…」——那是没给时才成立的话。 */
-export function summaryCards(facts: SummaryFacts): readonly KpiCardInput[] {
+export function summaryCards(
+  facts: SummaryFacts,
+  options?: { readonly defaultHints?: boolean },
+): readonly KpiCardInput[] {
   const l1 = facts.category.trim() === '' ? '' : l1Of(facts.category);
+  // 缺省说法（「不填就记到…」）只在**值没给**或调用方要它时才缀（#1197：判据走事实，不走本地化文本）。
+  const hints = options?.defaultHints !== false;
+  const account = facts.account.trim();
+  const ledger = facts.ledger.trim();
+  const time = facts.time.trim();
   return [
-    { label: '金额', value: money2(facts.amount), detail: moneyDirection(facts.amount) },
+    { label: m('skill-bill.write-summaryRow.c008'), value: money2(facts.amount), detail: moneyDirection(facts.amount) },
     {
-      label: '分类',
+      label: m('skill-bill.write-summaryRow.c009'),
       // t728：层级值（`借贷/借出`）在页面上改走**层级字形**显示，机器值一个字不改；
       //  一条口径只许一处实现 ⇒ 显示写法引 `recentPicks.ts` 的 `optionLabelOf`，本件不另写一份。
-      value: facts.category.trim() === '' ? '未给' : optionLabelOf(facts.category),
-      detail: facts.category.trim() === '' ? '分类要选到最细那一级' : '归在「' + l1 + '」下面',
+      value: facts.category.trim() === '' ? m('skill-bill.write-summaryRow.c010') : optionLabelOf(facts.category),
+      detail: facts.category.trim() === '' ? m('skill-bill.write-summaryRow.c011') : m('skill-bill.write-summaryRow.c012', { p0: String(l1) }),
     },
-    { label: '账户', value: facts.account.trim() === '' ? '未给' : facts.account, detail: '不填就记到默认账户' },
-    { label: '账本', value: facts.ledger.trim() === '' ? '未给' : facts.ledger, detail: '不填就记到默认账本' },
-    { label: '时间', value: facts.time.trim() === '' ? '未给' : facts.time, detail: '不填就记成今天 ' + DEFAULT_TIME_SUFFIX },
+    account === ''
+      ? { label: m('skill-bill.write-summaryRow.c013'), value: m('skill-bill.write-summaryRow.c014'), detail: m('skill-bill.write-summaryRow.c015') }
+      : { label: m('skill-bill.write-summaryRow.c016'), value: account, ...(hints ? { detail: m('skill-bill.write-summaryRow.c017') } : {}) },
+    ledger === ''
+      ? { label: m('skill-bill.write-summaryRow.c018'), value: m('skill-bill.write-summaryRow.c019'), detail: m('skill-bill.write-summaryRow.c020') }
+      : { label: m('skill-bill.write-summaryRow.c021'), value: ledger, ...(hints ? { detail: m('skill-bill.write-summaryRow.c022') } : {}) },
+    time === ''
+      ? { label: m('skill-bill.write-summaryRow.c023'), value: m('skill-bill.write-summaryRow.c024'), detail: m('skill-bill.write-summaryRow.c025', { p0: String(DEFAULT_TIME_SUFFIX) }) }
+      : { label: m('skill-bill.write-summaryRow.c026'), value: time, ...(hints ? { detail: m('skill-bill.write-summaryRow.c027', { p0: String(DEFAULT_TIME_SUFFIX) }) } : {}) },
   ];
 }
 
@@ -105,7 +123,7 @@ export function summaryCards(facts: SummaryFacts): readonly KpiCardInput[] {
  *  第 3 轮返工：记借入-采集页要把「必需项置顶、可选项折叠」重排进自己那张网格（首屏 8 张同形卡太挤），
  *  故允许只取后面两件（`cards: false`）——那两枚胶囊与那一行口径的字面量仍只此一份，调用方不另抄一遍。 */
 export function summaryRow(facts: SummaryFacts, options?: { readonly cards?: boolean }): string {
-  const notes = renderChips({ items: [{ text: '支出记负数' }, { text: '收入记正数' }] })
-    + renderCaliberLine('分类要选到最细那一级。');
+  const notes = renderChips({ items: [{ text: m('skill-bill.write-summaryRow.c028') }, { text: m('skill-bill.write-summaryRow.c029') }] })
+    + renderCaliberLine(m('skill-bill.write-summaryRow.c030'));
   return (options?.cards === false ? '' : renderKpiGrid(summaryCards(facts))) + notes;
 }
