@@ -9080,14 +9080,21 @@
     "1228": {
       "title": "迁移 base-link-core 与 base-combos：10 件（294 条）",
       "state": "open（待开工；清单已回填 #1308）",
-      "files": [
+      "files": [],
+      "migrated": [],
+      "totals": {
+        "files": 10,
+        "literals": 294
+      },
+      "excluded": [
         {
           "path": "packages/base-link-core/src/config/dirs.ts",
           "literals": 6,
           "byClass": {
             "concat": 5,
             "ident": 1
-          }
+          },
+          "reason": "开发期失败报文与环境隔离守卫（配置目录/文件名非法、缺测试隔离时抛错）：开发/测试可见，不上屏；零依赖红线，不迁"
         },
         {
           "path": "packages/base-link-core/src/config/language.ts",
@@ -9095,7 +9102,8 @@
           "byClass": {
             "copy": 3,
             "concat": 6
-          }
+          },
+          "reason": "命令行语言参数的错误报文（不认识的语言／参数缺值）：调用约定失败时给 CLI 调用方与技能作者看，按 ADR-0004「开发报文不迁」；#1198 判据按中文原文断言，翻译会破坏判据；零依赖红线"
         },
         {
           "path": "packages/base-link-core/src/config/store.ts",
@@ -9103,7 +9111,8 @@
           "byClass": {
             "copy": 10,
             "concat": 31
-          }
+          },
+          "reason": "开发期失败报文（配置项校验：不认识的配置项/类型不符/缺默认值）：只在调用约定被违反时抛给调用方/技能作者，不属上屏文案；ADR-0004「开发文案不迁」；且本包是零依赖公共层（票面红线），引入 base-entries 依赖或取词端口都会破红线"
         },
         {
           "path": "packages/base-link-core/src/config/yaml.ts",
@@ -9111,7 +9120,8 @@
           "byClass": {
             "copy": 8,
             "concat": 32
-          }
+          },
+          "reason": "开发期失败报文（YAML 子集解析与写出：类型不符/空组/键非法）：只在调用约定被违反时抛给调用方/技能作者，不属上屏文案；ADR-0004「开发文案不迁」；且本包是零依赖公共层（票面红线），引入 base-entries 依赖或取词端口都会破红线"
         },
         {
           "path": "packages/base-link-core/src/data-page.ts",
@@ -9119,7 +9129,8 @@
           "byClass": {
             "copy": 20,
             "concat": 10
-          }
+          },
+          "reason": "开发期失败报文（分页契约校验：page/size/next 形状与范围）：只在调用约定被违反时抛给调用方/技能作者，不属上屏文案；ADR-0004「开发文案不迁」；且本包是零依赖公共层（票面红线），引入 base-entries 依赖或取词端口都会破红线"
         },
         {
           "path": "packages/base-link-core/src/data-query.ts",
@@ -9127,7 +9138,8 @@
           "byClass": {
             "copy": 7,
             "concat": 123
-          }
+          },
+          "reason": "开发期失败报文（查询契约校验与 SQL 拼装：表名/列名/连接/截断）：只在调用约定被违反时抛给调用方/技能作者，不属上屏文案；ADR-0004「开发文案不迁」；且本包是零依赖公共层（票面红线），引入 base-entries 依赖或取词端口都会破红线"
         },
         {
           "path": "packages/base-link-core/src/data-schema.ts",
@@ -9135,7 +9147,8 @@
           "byClass": {
             "copy": 1,
             "concat": 5
-          }
+          },
+          "reason": "开发期失败报文（schema 探测校验：表不存在/列类型/序号非法）：只在调用约定被违反时抛给调用方/技能作者，不属上屏文案；ADR-0004「开发文案不迁」；且本包是零依赖公共层（票面红线），引入 base-entries 依赖或取词端口都会破红线"
         },
         {
           "path": "packages/base-link-core/src/envelope.ts",
@@ -9144,7 +9157,8 @@
             "copy": 10,
             "concat": 7,
             "ident": 2
-          }
+          },
+          "reason": "开发期失败报文（envelope 全字段契约校验：version/data/list/detail/stat 形状）：只在调用约定被违反时抛给调用方/技能作者，不属上屏文案；ADR-0004「开发文案不迁」；且本包是零依赖公共层（票面红线），引入 base-entries 依赖或取词端口都会破红线"
         },
         {
           "path": "packages/base-link-core/src/registry.ts",
@@ -9152,7 +9166,8 @@
           "byClass": {
             "copy": 2,
             "concat": 6
-          }
+          },
+          "reason": "开发期失败报文（registry key 形状校验：命名空间/未知 key）：只在调用约定被违反时抛给调用方/技能作者，不属上屏文案；ADR-0004「开发文案不迁」；且本包是零依赖公共层（票面红线），引入 base-entries 依赖或取词端口都会破红线"
         },
         {
           "path": "packages/base-link-core/src/runner.ts",
@@ -9160,14 +9175,10 @@
           "byClass": {
             "copy": 2,
             "concat": 3
-          }
+          },
+          "reason": "开发期失败报文（请求/取数/载荷校验：请求形状、key 解析、params、envelope 全字段）：只在调用约定被违反时抛给调用方/技能作者，不属上屏文案；ADR-0004「开发文案不迁」；且本包是零依赖公共层（票面红线），引入 base-entries 依赖或取词端口都会破红线"
         }
-      ],
-      "migrated": [],
-      "totals": {
-        "files": 10,
-        "literals": 294
-      }
+      ]
     },
     "1229": {
       "title": "迁移 7 个插件的文本：57 件（575 条）",
@@ -10141,10 +10152,10 @@
   "scopeSummary": {
     "ledgerFiles": 1226,
     "migratedFiles": 412,
-    "pendingFiles": 614,
-    "pendingLiterals": 19392,
-    "excludedFiles": 200,
-    "excludedLiterals": 12016,
+    "pendingFiles": 604,
+    "pendingLiterals": 19098,
+    "excludedFiles": 210,
+    "excludedLiterals": 12310,
     "migratedLiterals": 11340
   },
   "workflow": [
