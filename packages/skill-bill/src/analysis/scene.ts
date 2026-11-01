@@ -45,12 +45,12 @@ import { sceneRefund, sceneRefundFor } from './scene-refund.js';
 import { sceneReimburse, sceneReimburseFor } from './scene-reimburse.js';
 import { sceneStats, sceneStatsFor } from './scene-stats.js';
 import { sceneStructure, sceneStructureFor } from './scene-structure.js';
-import { sceneTop } from './scene-top.js';
-import { sceneTopFreq } from './scene-top-freq.js';
-import { sceneTrend } from './scene-trend.js';
-import { sceneWeek } from './scene-week.js';
-import { sceneYearly } from './scene-yearly.js';
-import { sceneYoy } from './scene-yoy.js';
+import { sceneTop, sceneTopFor } from './scene-top.js';
+import { sceneTopFreq, sceneTopFreqFor } from './scene-top-freq.js';
+import { sceneTrend, sceneTrendFor } from './scene-trend.js';
+import { sceneWeek, sceneWeekFor } from './scene-week.js';
+import { sceneYearly, sceneYearlyFor } from './scene-yearly.js';
+import { sceneYoy, sceneYoyFor } from './scene-yoy.js';
 
 /** 本域三条命令名（跨技能契约，冻结不动）。 */
 export type AnalysisKey = 'bill.analysis.overview' | 'bill.analysis.compare' | 'bill.analysis.trend';
@@ -259,7 +259,7 @@ export const ANALYSIS_SCENES: readonly AnalysisScene[] = [
  *  （`category` 这个 kind 三条命令各有一支：看分类／看分类对比／看分类趋势）。 */
 const BY_KEY_KIND = new Map<string, AnalysisScene>(ANALYSIS_SCENES.map((s) => [s.key + '|' + s.kind, s]));
 
-/** 已迁入词条层的 18 件（#1207）：按语言重建场景的工厂，键与落点表同一套 `命令名|kind`。
+/** 已迁入词条层的 24 件（#1207 十八件＋#1208 六件）：按语言重建场景的工厂，键与落点表同一套 `命令名|kind`。
  *  没登记在这里的件还没迁词条，任何语言都走落点表里那份静态对象（中文原文）。 */
 const LOCALIZED = new Map<string, (language: string) => AnalysisScene>([
   ['bill.analysis.trend|activity', sceneActivityFor],
@@ -280,6 +280,12 @@ const LOCALIZED = new Map<string, (language: string) => AnalysisScene>([
   ['bill.analysis.trend|reimburse', sceneReimburseFor],
   ['bill.analysis.overview|stats', sceneStatsFor],
   ['bill.analysis.overview|structure', sceneStructureFor],
+  ['bill.analysis.overview|week', sceneWeekFor],
+  ['bill.analysis.overview|yearly', sceneYearlyFor],
+  ['bill.analysis.compare|yoy', sceneYoyFor],
+  ['bill.analysis.trend|top', sceneTopFor],
+  ['bill.analysis.trend|frequent', sceneTopFreqFor],
+  ['bill.analysis.trend|trend', sceneTrendFor],
 ]);
 
 /** 取件：按 `命令名 + kind` 认。认不得即抛——**不猜、不兜底**（kind 已在 `./params.js` 拦过一道，

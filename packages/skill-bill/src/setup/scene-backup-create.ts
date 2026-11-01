@@ -9,20 +9,32 @@
  *   ③ 老侧 `content` 那句「数据库 + 目标(goals.json)」是**硬编码**（`cli.py:328`），影子件不在也不改口；
  *      新侧照实报「这一份里有什么」。
  */
+import { runWithLanguage } from 'base-entries';
 import { projectWakeWord } from '../triggers/wakeTable.js';
 import type { SetupScene } from './scene.js';
+import { m } from '../entries/index.js';
 
 const WORD: string = projectWakeWord({ key: 'bill.setup.run', op: 'backup-create' });
 const KEY = 'bill.setup.run' as const;
 
-export const SCENE: SetupScene = {
-  id: 'backup-create',
-  sceneId: 'setup_backup_create',
-  key: KEY,
-  op: 'backup-create',
-  page: 'receipt',
-  title: '一键备份',
-  caliber: '备份完成',
-  subtitle: '记账库 ＋ 目标（goals.json）已存好',
-  promptOf: () => '请加载「饼干记账」技能,帮我备份饼干记账的数据(唤醒词:' + WORD + '):\n',
-};
+/** 构建场景（`#1214`：文案经词条层，**渲染期**取词——模块级常量会把语言固化成 zh）。 */
+function buildScene(): SetupScene {
+  return {
+    id: 'backup-create',
+    sceneId: 'setup_backup_create',
+    key: KEY,
+    op: 'backup-create',
+    page: 'receipt',
+    title: m('skill-bill.setup-scene-backup-create.c001'),
+    caliber: m('skill-bill.setup-scene-backup-create.c002'),
+    subtitle: m('skill-bill.setup-scene-backup-create.c003'),
+    promptOf: () => m('skill-bill.setup-scene-backup-create.c004', { p0: String(WORD) }),
+  };
+}
+
+export const SCENE: SetupScene = buildScene();
+
+/** 按语言重建本场景（`#1214`：语言是运行期参数，不是模块加载期事实）。 */
+export function sceneBackupCreateFor(language: string): SetupScene {
+  return runWithLanguage(language, buildScene);
+}

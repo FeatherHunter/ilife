@@ -16,6 +16,7 @@
  */
 import { isGiven, numberOf, textOf } from '../shared/params.js';
 import { BillPolicyError } from '../fetch/errors.js';
+import { m } from '../entries/index.js';
 
 /** 八种 op（顺序＝域声明里那七条词的书写顺序，`备份` 一词两支；1276 起加查看／设置当前配置两支）。 */
 export type SetupOp = 'init' | 'init-status' | 'backup-create' | 'backup-list' | 'restore' | 'import' | 'config-read' | 'config-write';
@@ -67,27 +68,30 @@ function slot(name: string, label: string, hint: string, required: boolean): Set
 
 /** 八个 op 的槽位表（**唯一定义地**）：字段卡照它出，缺项探针照它算。
  *  五条 op（初始化／初始化状态／一键备份／查看备份／查看当前配置）是**零决策**的：都不收参数。
- *  设置当前配置四格全选填（空＝预览页，不落盘；给了＋`confirm:true` 才落盘）。 */
-export const SETUP_SLOTS: Readonly<Record<SetupOp, readonly SetupSlot[]>> = {
-  init: [],
-  'init-status': [],
-  'backup-create': [],
-  'backup-list': [],
-  restore: [
-    slot('name', '要恢复的那一份', '选填，不写就用最新的一份；写就写「查看备份」里那个文件名', false),
-  ],
-  import: [
-    slot('file', 'CSV 文件路径', '要导入的 CSV 文件，如 D:\\账单导出.csv', true),
-    slot('mapping', '列映射', '选填，不写就按表头自动认；要写就写「日期=第1列,金额=第3列」这样', false),
-  ],
-  'config-read': [],
-  'config-write': [
-    slot('db_dir', '数据目录', '选填；如 D:/记账库，空＝不改这一格', false),
-    slot('db_name', '库文件名', '选填；如 biscuit_accountant.db，空＝不改', false),
-    slot('backup_dir', '备份目录', '选填；空＝不改这一格', false),
-    slot('html_dir', '产物目录名', '选填；空＝不改这一格', false),
-  ],
-};
+ *  设置当前配置四格全选填（空＝预览页，不落盘；给了＋`confirm:true` 才落盘）。
+ *  `#1214`：改成**函数**按 op 现取——槽位里有上屏文案（字段名与提示），模块级常量表会把语言固化成 zh。 */
+export function setupSlotsOf(op: SetupOp): readonly SetupSlot[] {
+  if (op === 'restore') {
+    return [
+      slot('name', m('skill-bill.setup-params.c001'), m('skill-bill.setup-params.c002'), false),
+    ];
+  }
+  if (op === 'import') {
+    return [
+      slot('file', m('skill-bill.setup-params.c003'), m('skill-bill.setup-params.c004'), true),
+      slot('mapping', m('skill-bill.setup-params.c005'), m('skill-bill.setup-params.c006'), false),
+    ];
+  }
+  if (op === 'config-write') {
+    return [
+      slot('db_dir', m('skill-bill.setup-params.c007'), m('skill-bill.setup-params.c008'), false),
+      slot('db_name', m('skill-bill.setup-params.c009'), m('skill-bill.setup-params.c010'), false),
+      slot('backup_dir', m('skill-bill.setup-params.c011'), m('skill-bill.setup-params.c012'), false),
+      slot('html_dir', m('skill-bill.setup-params.c013'), m('skill-bill.setup-params.c014'), false),
+    ];
+  }
+  return [];
+}
 
 /** 两个开关的读法（**只认 `true`**：写 `"true"` 字符串不算给——参数是机器给的，不替它猜）。 */
 export function confirmOf(params: Record<string, unknown>): boolean {
@@ -116,10 +120,10 @@ export function importFileOf(params: Record<string, unknown>): string {
  *  五条零决策 op 恒空表（这五张页都不收参数，也就没有缺项可言）。 */
 export function setupBlocked(op: SetupOp, params: Record<string, unknown>): readonly SetupBlocked[] {
   const out: SetupBlocked[] = [];
-  for (const s of SETUP_SLOTS[op]) {
+  for (const s of setupSlotsOf(op)) {
     if (!s.required) continue;
     const given = s.name === 'file' ? importFileOf(params) !== '' : isGiven(params[s.name]);
-    if (!given) out.push({ name: s.name, label: s.label, why: '没给' });
+    if (!given) out.push({ name: s.name, label: s.label, why: m('skill-bill.setup-params.c015') });
   }
   return out;
 }

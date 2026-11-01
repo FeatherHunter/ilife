@@ -14,12 +14,14 @@
  *   ④ 逐月条卡与分类条卡的空态句各出一句（老侧两张卡各自的 `emptyState({text})`）；
  *   ⑤ 载荷照搬迁前那一支（`./views.js` 的 `buildOverview`），一字不改。
  */
+import { runWithLanguage } from 'base-entries';
 import { listRange } from '../fetch/index.js';
 import { BillPolicyError } from '../fetch/errors.js';
 import { aggByL1, kpiOf, monthSeries, round1, yearRange } from './agg.js';
 import { money, pctText } from './pageParts.js';
 import type { AnalysisScene } from './scene.js';
 import { buildOverview } from './views.js';
+import { m } from '../entries/index.js';
 
 /** 年份槽：缺＝今年；数字与数字串都认，认不得即如实抛。 */
 function readYear(params: Record<string, unknown>): number {
@@ -32,11 +34,12 @@ function readYear(params: Record<string, unknown>): number {
   return n;
 }
 
-export const sceneYearly: AnalysisScene = {
+function buildScene(): AnalysisScene {
+  return {
   id: 'yearly',
   key: 'bill.analysis.overview',
   kind: 'yearly',
-  title: '看年度',
+  title: m('skill-bill.analysis-scene-yearly.title'),
   family: 'bars',
   values: ({ params, db }) => {
     const year = readYear(params);
@@ -45,60 +48,79 @@ export const sceneYearly: AnalysisScene = {
     const kpi = kpiOf(records);
     const monthly = monthSeries(records, 12);
     const cats = aggByL1(records, { topN: 8 });
-    const maxMonth = monthly.length === 0 ? 0 : Math.max(...monthly.map((m) => m.expense));
+    const maxMonth = monthly.length === 0 ? 0 : Math.max(...monthly.map((p) => p.expense));
     const maxCat = cats.length === 0 ? 0 : Math.max(...cats.map((c) => c.value));
     const label = String(year);
     return {
-      title: '看年度',
+      title: m('skill-bill.analysis-scene-yearly.title'),
       label,
       from: start,
       to: end,
       count: records.length,
       conclusion: kpi.count === 0
-        ? label + ' 这一年一笔都没有记。'
-        : label + ' 年一共记了 ' + String(kpi.count) + ' 笔：支出 ' + money(kpi.expense) + ' 元、收入 '
-          + money(kpi.income) + ' 元、净额 ' + money(kpi.net) + ' 元。',
-      caliber: '逐月趋势的条长按全年支出最多的那个月折算，没有记录的月照实出 0 笔；大额分类只出前 8 名，'
-        + '按一级分类归堆、占比按全年支出合计算；转账不计入收支。',
-      chips: [label + ' 年'],
+        ? m('skill-bill.analysis-scene-yearly.c003', { p0: String(label) })
+        : m('skill-bill.analysis-scene-yearly.c004', {
+          p0: String(label),
+          p1: String(String(kpi.count)),
+          p2: String(money(kpi.expense)),
+          p3: String(money(kpi.income)),
+          p4: String(money(kpi.net)),
+        }),
+      caliber: m('skill-bill.analysis-scene-yearly.c005'),
+      chips: [m('skill-bill.analysis-scene-yearly.c006', { p0: String(label) })],
       payload: buildOverview(label, [...records]),
       kpi,
       page: {
         kpis: [
-          { label: '全年支出', value: money(kpi.expense), unit: '元' },
-          { label: '全年收入', value: money(kpi.income), unit: '元' },
-          { label: '净额', value: money(kpi.net), unit: '元', detail: kpi.net >= 0 ? '收大于支' : '支大于收' },
-          { label: '笔数', value: String(kpi.count), unit: '笔' },
+          { label: m('skill-bill.analysis-scene-yearly.c007'), value: money(kpi.expense), unit: m('skill-bill.analysis-scene-yearly.c008') },
+          { label: m('skill-bill.analysis-scene-yearly.c009'), value: money(kpi.income), unit: m('skill-bill.analysis-scene-yearly.c010') },
+          { label: m('skill-bill.analysis-scene-yearly.c011'), value: money(kpi.net), unit: m('skill-bill.analysis-scene-yearly.c012'), detail: kpi.net >= 0 ? m('skill-bill.analysis-scene-yearly.c013') : m('skill-bill.analysis-scene-yearly.c014') },
+          { label: m('skill-bill.analysis-scene-yearly.c015'), value: String(kpi.count), unit: m('skill-bill.analysis-scene-yearly.c016') },
         ],
         chips: [],
         charts: [],
         barGroups: [
           {
-            title: '逐月趋势（' + String(monthly.length) + ' 个月）',
-            rows: monthly.map((m) => ({
-              label: m.month,
-              text: money(m.expense) + ' 元 · ' + String(m.count) + ' 笔',
-              pct: maxMonth === 0 ? 0 : round1((m.expense / maxMonth) * 100),
+            title: m('skill-bill.analysis-scene-yearly.c017', { p0: String(String(monthly.length)) }),
+            rows: monthly.map((p) => ({
+              label: p.month,
+              text: m('skill-bill.analysis-scene-yearly.c018', {
+                p0: String(money(p.expense)),
+                p1: String(String(p.count)),
+              }),
+              pct: maxMonth === 0 ? 0 : round1((p.expense / maxMonth) * 100),
             })),
-            emptyText: '这一年还没有可对比的月度数据',
+            emptyText: m('skill-bill.analysis-scene-yearly.c019'),
           },
           {
-            title: '大额分类 TOP',
+            title: m('skill-bill.analysis-scene-yearly.c020'),
             rows: cats.map((c) => ({
               label: c.key,
-              text: money(c.value) + ' 元 · ' + pctText(c.pct) + ' · ' + String(c.count) + ' 笔',
+              text: m('skill-bill.analysis-scene-yearly.c021', {
+                p0: String(money(c.value)),
+                p1: String(pctText(c.pct)),
+                p2: String(String(c.count)),
+              }),
               pct: maxCat === 0 ? 0 : round1((c.value / maxCat) * 100),
             })),
-            emptyText: '这一年还没有支出记录',
+            emptyText: m('skill-bill.analysis-scene-yearly.c022'),
           },
         ],
         listCards: [],
         factCards: [],
         empty: {
-          text: label + ' 年这段时间还没有记录。',
-          hint: '先说「记支出」或「记收入」记一笔，回来看这里就有数了。',
+          text: m('skill-bill.analysis-scene-yearly.c023', { p0: String(label) }),
+          hint: m('skill-bill.analysis-scene-yearly.c024'),
         },
       },
     };
   },
-};
+  };
+}
+
+export const sceneYearly: AnalysisScene = buildScene();
+
+/** 按语言重建本场景（#1197：文案经词条层，语言是运行期参数）。 */
+export function sceneYearlyFor(language: string): AnalysisScene {
+  return runWithLanguage(language, buildScene);
+}

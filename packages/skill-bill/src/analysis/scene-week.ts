@@ -13,6 +13,7 @@
  *   ④ 大额支出只出本周前 5 笔（`expenseTop`），条长按本页最大一笔折算，标签带序号；
  *   ⑤ 载荷照搬迁前那一支（`./views.js` 的 `buildOverview`），一字不改。
  */
+import { runWithLanguage } from 'base-entries';
 import { listRange } from '../fetch/index.js';
 import { weekRange } from '../shared/dateRange.js';
 import { compareTwo, dayOf, expenseTop, kpiOf, round1, windowRecords } from './agg.js';
@@ -20,6 +21,7 @@ import { money, pctText, textOrDash, windowLabel } from './pageParts.js';
 import { BillPolicyError } from '../fetch/errors.js';
 import type { AnalysisScene } from './scene.js';
 import { buildOverview } from './views.js';
+import { m } from '../entries/index.js';
 
 /** 日期串左移／右移整周（`YYYY-MM-DD`，UTC 口径——周一是几号与本地时区无关）。 */
 function shiftDays(date: string, days: number): string {
@@ -32,7 +34,7 @@ function shiftDays(date: string, days: number): string {
 function mmdd(date: string): string { return date.slice(5).replace('-', '/'); }
 
 /** 一段周区间的标签：`MM/DD~MM/DD 周`（与老侧 `_compare_two` 那两个期间标签同形）。 */
-function weekKey(start: string, end: string): string { return mmdd(start) + '~' + mmdd(end) + ' 周'; }
+function weekKey(start: string, end: string): string { return m('skill-bill.analysis-scene-week.c001', { p0: String(mmdd(start)), p1: String(mmdd(end)) }); }
 
 /** 周区间起点：本周起点就是本周一的日期，最准确也最省事。 */
 function anchorStart(): string { return weekRange().start; }
@@ -48,11 +50,12 @@ function readOffset(params: Record<string, unknown>): number {
   return n;
 }
 
-export const sceneWeek: AnalysisScene = {
+function buildScene(): AnalysisScene {
+  return {
   id: 'week',
   key: 'bill.analysis.overview',
   kind: 'week',
-  title: '看周报',
+  title: m('skill-bill.analysis-scene-week.title'),
   family: 'bars',
   values: ({ params, db }) => {
     const offset = readOffset(params);
@@ -69,64 +72,91 @@ export const sceneWeek: AnalysisScene = {
     const diff = pair.change.diff;
     const pct = pair.change.pct;
     const arrow = diff > 0 ? '↑' : diff < 0 ? '↓' : '→';
-    const word = diff > 0 ? '上涨' : diff < 0 ? '下降' : '持平';
+    const word = diff > 0 ? m('skill-bill.analysis-scene-week.c003') : diff < 0 ? m('skill-bill.analysis-scene-week.c004') : m('skill-bill.analysis-scene-week.c005');
     const top = expenseTop(records, 5);
     const maxTop = top.length === 0 ? 0 : Math.max(...top.map((r) => Math.abs(r.amount)));
     const sameCount = kpi.count === lastRecords.length;
     const changeClause = sameCount && diff === 0
-      ? '支出与上周一样多。'
-      : '支出比上周 ' + arrow + ' ' + money(Math.abs(diff)) + ' 元（' + pctText(Math.abs(pct)) + '），' + word + '。';
+      ? m('skill-bill.analysis-scene-week.c006')
+      : m('skill-bill.analysis-scene-week.c007', {
+        p0: String(arrow),
+        p1: String(money(Math.abs(diff))),
+        p2: String(pctText(Math.abs(pct))),
+        p3: String(word),
+      });
     return {
-      title: '看周报',
+      title: m('skill-bill.analysis-scene-week.title'),
       label,
       from: start,
       to: end,
       count: records.length,
       conclusion: kpi.count === 0
-        ? label + ' 一笔都没有记；上一周 ' + lastLabel + ' 记了 ' + String(lastRecords.length) + ' 笔。'
-        : label + ' 一共记了 ' + String(kpi.count) + ' 笔：支出 ' + money(kpi.expense) + ' 元、收入 '
-          + money(kpi.income) + ' 元、净额 ' + money(kpi.net) + ' 元；' + changeClause,
-      caliber: '本周从周一起算七天；条长按本周最大一笔支出折算，只出前 5 笔；转账不计入收支。',
+        ? m('skill-bill.analysis-scene-week.c009', {
+          p0: String(label),
+          p1: String(lastLabel),
+          p2: String(String(lastRecords.length)),
+        })
+        : m('skill-bill.analysis-scene-week.c010', {
+          p0: String(label),
+          p1: String(String(kpi.count)),
+          p2: String(money(kpi.expense)),
+          p3: String(money(kpi.income)),
+          p4: String(money(kpi.net)),
+          p5: String(changeClause),
+        }),
+      caliber: m('skill-bill.analysis-scene-week.c011'),
       chips: [label],
       payload: buildOverview(label, [...records]),
       kpi,
       page: {
         kpis: [
-          { label: '本周支出', value: money(kpi.expense), unit: '元' },
-          { label: '本周收入', value: money(kpi.income), unit: '元' },
-          { label: '净额', value: money(kpi.net), unit: '元', detail: kpi.net >= 0 ? '收大于支' : '支大于收' },
-          { label: '笔数', value: String(kpi.count), unit: '笔' },
+          { label: m('skill-bill.analysis-scene-week.c012'), value: money(kpi.expense), unit: m('skill-bill.analysis-scene-week.c013') },
+          { label: m('skill-bill.analysis-scene-week.c014'), value: money(kpi.income), unit: m('skill-bill.analysis-scene-week.c015') },
+          { label: m('skill-bill.analysis-scene-week.c016'), value: money(kpi.net), unit: m('skill-bill.analysis-scene-week.c017'), detail: kpi.net >= 0 ? m('skill-bill.analysis-scene-week.c018') : m('skill-bill.analysis-scene-week.c019') },
+          { label: m('skill-bill.analysis-scene-week.c020'), value: String(kpi.count), unit: m('skill-bill.analysis-scene-week.c021') },
         ],
         chips: [],
         charts: [],
         barGroups: [{
-          title: '本周大额支出 TOP ' + String(top.length),
+          title: m('skill-bill.analysis-scene-week.c022', { p0: String(String(top.length)) }),
           rows: top.map((r, i) => ({
             label: String(i + 1) + '. ' + r.category,
-            text: money(Math.abs(r.amount)) + ' 元 · ' + dayOf(r.time) + ' · ' + textOrDash(r.note),
+            text: m('skill-bill.analysis-scene-week.c023', {
+              p0: String(money(Math.abs(r.amount))),
+              p1: String(dayOf(r.time)),
+              p2: String(textOrDash(r.note)),
+            }),
             pct: maxTop === 0 ? 0 : round1((Math.abs(r.amount) / maxTop) * 100),
           })),
-          emptyText: '本周还没有支出记录',
+          emptyText: m('skill-bill.analysis-scene-week.c024'),
         }],
         listCards: [],
         factCards: [{
-          title: '本周 vs 上周',
+          title: m('skill-bill.analysis-scene-week.c025'),
           rows: [
-            { k: '本周笔数', v: String(kpi.count) + ' 笔' },
-            { k: '本周支出', v: money(kpi.expense) + ' 元' },
-            { k: '本周收入', v: money(kpi.income) + ' 元' },
-            { k: '本周净额', v: money(kpi.net) + ' 元' },
-            { k: '上周笔数', v: String(lastRecords.length) + ' 笔' },
-            { k: '上周支出', v: money(pair.b.expense) + ' 元' },
-            { k: '上周收入', v: money(pair.b.income) + ' 元' },
-            { k: '上周净额', v: money(pair.b.net) + ' 元' },
+            { k: m('skill-bill.analysis-scene-week.c026'), v: m('skill-bill.analysis-scene-week.c027', { p0: String(String(kpi.count)) }) },
+            { k: m('skill-bill.analysis-scene-week.c028'), v: m('skill-bill.analysis-scene-week.c029', { p0: String(money(kpi.expense)) }) },
+            { k: m('skill-bill.analysis-scene-week.c030'), v: m('skill-bill.analysis-scene-week.c031', { p0: String(money(kpi.income)) }) },
+            { k: m('skill-bill.analysis-scene-week.c032'), v: m('skill-bill.analysis-scene-week.c033', { p0: String(money(kpi.net)) }) },
+            { k: m('skill-bill.analysis-scene-week.c034'), v: m('skill-bill.analysis-scene-week.c035', { p0: String(String(lastRecords.length)) }) },
+            { k: m('skill-bill.analysis-scene-week.c036'), v: m('skill-bill.analysis-scene-week.c037', { p0: String(money(pair.b.expense)) }) },
+            { k: m('skill-bill.analysis-scene-week.c038'), v: m('skill-bill.analysis-scene-week.c039', { p0: String(money(pair.b.income)) }) },
+            { k: m('skill-bill.analysis-scene-week.c040'), v: m('skill-bill.analysis-scene-week.c041', { p0: String(money(pair.b.net)) }) },
           ],
         }],
         empty: {
-          text: label + ' 这一周还没有记录。',
-          hint: '先说「记支出」或「记收入」记一笔，回来看这里就有数了。',
+          text: m('skill-bill.analysis-scene-week.c042', { p0: String(label) }),
+          hint: m('skill-bill.analysis-scene-week.c043'),
         },
       },
     };
   },
-};
+  };
+}
+
+export const sceneWeek: AnalysisScene = buildScene();
+
+/** 按语言重建本场景（#1197：文案经词条层，语言是运行期参数）。 */
+export function sceneWeekFor(language: string): AnalysisScene {
+  return runWithLanguage(language, buildScene);
+}

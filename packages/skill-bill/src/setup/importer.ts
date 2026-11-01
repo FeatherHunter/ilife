@@ -24,6 +24,7 @@ import { addBill, fetchAll } from '../fetch/index.js';
 import type { BillDb, BillRow } from '../fetch/index.js';
 import { validateAmount, validateCategory } from '../shared/category.js';
 import { validateTime } from '../shared/dateRange.js';
+import { m } from '../entries/index.js';
 
 /** 导入认的六个字段（老侧 `MAPPING_HINTS` 里除「收支方向」外的六项——方向由金额符号定，见下）。 */
 export type ImportField = 'time' | 'amount' | 'category' | 'account' | 'ledger' | 'note';
@@ -31,15 +32,16 @@ export type ImportField = 'time' | 'amount' | 'category' | 'account' | 'ledger' 
 /** 字段序号（列映射的取值面）。 */
 export const IMPORT_FIELDS: readonly ImportField[] = ['time', 'amount', 'category', 'account', 'ledger', 'note'];
 
-/** 字段的中文名（老侧字段标签同集；页面与报错共用一处）。 */
-export const FIELD_LABEL: Readonly<Record<ImportField, string>> = {
-  time: '日期/时间',
-  amount: '金额',
-  category: '分类',
-  account: '账户',
-  ledger: '账本',
-  note: '备注',
-};
+/** 字段的中文名（老侧字段标签同集；页面与报错共用一处）。
+ *  `#1214`：改成**函数**按语言取词（模块级常量会把语言固化成 zh）。 */
+export function fieldLabelOf(field: ImportField): string {
+  if (field === 'time') return m('skill-bill.setup-importer.c001');
+  if (field === 'amount') return m('skill-bill.setup-importer.c002');
+  if (field === 'category') return m('skill-bill.setup-importer.c003');
+  if (field === 'account') return m('skill-bill.setup-importer.c004');
+  if (field === 'ledger') return m('skill-bill.setup-importer.c005');
+  return m('skill-bill.setup-importer.c006');
+}
 
 /** 必填三列（老侧 `MAPPING_HINTS` 的 `必填` 标记：日期／金额／分类）。 */
 export const REQUIRED_FIELDS: readonly ImportField[] = ['time', 'amount', 'category'];
@@ -118,7 +120,7 @@ function decode(raw: Buffer): { text: string; encoding: string } {
   try {
     const gbk = new TextDecoder('gbk').decode(raw);
     return { text: gbk, encoding: 'GBK' };
-  } catch { return { text: utf8, encoding: 'UTF-8（有读不出的字符）' }; }
+  } catch { return { text: utf8, encoding: m('skill-bill.setup-importer.c007') }; }
 }
 
 /** 一行拆成格子：照老侧按逗号切（`cli.py:597-598`），引号不特殊处理——本仓不替用户猜 CSV 方言。 */
@@ -148,7 +150,7 @@ export function readCsv(file: string): CsvFile {
     name: basename(file),
     encoding,
     hasHeader,
-    header: hasHeader ? first : first.map((_c, i) => '列' + String(i + 1)),
+    header: hasHeader ? first : first.map((_c, i) => m('skill-bill.setup-importer.c008', { p0: String(String(i + 1)) })),
     rows: (hasHeader ? lines.slice(1) : lines).map((l) => cellsOf(l)),
   };
 }
@@ -183,11 +185,11 @@ export function parseMapping(text: string): ColumnMap {
     const col = Number(m[2]) - 1;
     if (!Number.isInteger(col) || col < 0) throw new BillPolicyError('POLICY_BAD_INPUT', '列号要从 1 起数：' + piece);
     const field = IMPORT_FIELDS.find((f) => f === label
-      || FIELD_LABEL[f] === (m[1] as string).trim()
+      || fieldLabelOf(f) === (m[1] as string).trim()
       || HEADER_WORDS[f].some((w) => w.toLowerCase() === label));
     if (field === undefined) {
       throw new BillPolicyError('POLICY_BAD_INPUT', '认不得这一列是哪个字段：' + (m[1] as string).trim()
-        + '（认这些：' + IMPORT_FIELDS.map((f) => FIELD_LABEL[f]).join('／') + '）');
+        + '（认这些：' + IMPORT_FIELDS.map((f) => fieldLabelOf(f)).join('／') + '）');
     }
     out[field] = col;
   }

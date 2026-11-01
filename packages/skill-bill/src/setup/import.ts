@@ -10,6 +10,7 @@
  *   （老侧把被跳过的空行算进 `total`）。
  */
 import { existsSync } from 'node:fs';
+import { currentRenderLanguage } from 'base-entries';
 import type { BillDb } from '../fetch/index.js';
 import { resolveBackupDir, resolveGoalsPath } from '../fetch/paths.js';
 import { actionStamp } from '../shared/copyArea.js';
@@ -18,7 +19,7 @@ import { projectWakeWord } from '../triggers/wakeTable.js';
 import type { BillKey } from '../triggers/routeSpec.js';
 import { backupStampOf, createBackup } from './backups.js';
 import {
-  FIELD_LABEL, applyImport, existingRows, guessMap, missingRequired, parseMapping, planImport, readCsv,
+  applyImport, existingRows, fieldLabelOf, guessMap, missingRequired, parseMapping, planImport, readCsv,
 } from './importer.js';
 import type { ColumnMap, CsvFile, ImportField, ImportPlan } from './importer.js';
 import { confirmOf, importFileOf, mappingOf } from './params.js';
@@ -28,21 +29,22 @@ import { setupSceneFor } from './scene.js';
 import { importSteps } from './steps.js';
 import { blockedWizardDoc } from './blocked.js';
 import { wizardDoc } from './template-wizard.js';
+import { m } from '../entries/index.js';
 
 /** 映射的人话（原型 s06 口令那一格逐字：`时间=交易时间,分类=交易分类,金额=金额(元),备注=商品说明,账户=付款方式`）。
  *  取的是 **CSV 表头原文**（不是列号）——用户要照这句重说一遍，列号对他没有意义。 */
 function mappingHeaderText(csv: CsvFile, map: ColumnMap): string {
   const order: readonly { readonly f: ImportField; readonly label: string }[] = [
-    { f: 'time', label: '时间' },
-    { f: 'category', label: '分类' },
-    { f: 'amount', label: '金额' },
-    { f: 'note', label: '备注' },
-    { f: 'account', label: '账户' },
-    { f: 'ledger', label: '账本' },
+    { f: 'time', label: m('skill-bill.setup-import.c001') },
+    { f: 'category', label: m('skill-bill.setup-import.c002') },
+    { f: 'amount', label: m('skill-bill.setup-import.c003') },
+    { f: 'note', label: m('skill-bill.setup-import.c004') },
+    { f: 'account', label: m('skill-bill.setup-import.c005') },
+    { f: 'ledger', label: m('skill-bill.setup-import.c006') },
   ];
   return order
     .filter((o) => map[o.f] !== undefined)
-    .map((o) => o.label + '=' + (csv.header[map[o.f] as number] ?? '第' + String((map[o.f] as number) + 1) + '列'))
+    .map((o) => o.label + '=' + (csv.header[map[o.f] as number] ?? m('skill-bill.setup-import.c007', { p0: String(String((map[o.f] as number) + 1)) })))
     .join(',');
 }
 
@@ -52,23 +54,26 @@ export function mappingTextOf(map: ColumnMap): string {
   for (const f of ['time', 'amount', 'category', 'account', 'ledger', 'note'] as const) {
     const col = map[f];
     if (col === undefined) continue;
-    parts.push(FIELD_LABEL[f] + '=第' + String(col + 1) + '列');
+    parts.push(m('skill-bill.setup-import.c008', { p0: String(fieldLabelOf(f)), p1: String(String(col + 1)) }));
   }
   return parts.join(',');
 }
 
 /** 导入 CSV（`op=import`）：不确认只出映射向导页；确认则「自动备份 → 整批一个事务写 → 结果卡」。 */
 export function runImport(db: BillDb, key: string, params: Record<string, unknown>): WriteOut {
-  const scene = setupSceneFor('import');
+  const scene = setupSceneFor('import', currentRenderLanguage());
   const word = projectWakeWord({ key: key as BillKey, op: 'import' });
   const page = { wakeWord: word, kind: 'single' } as const;
   const file = importFileOf(params);
   const blocked: SetupBlocked[] = [];
-  if (file === '') blocked.push({ name: 'file', label: 'CSV 文件路径', why: '没给' });
-  else if (!existsSync(file)) blocked.push({ name: 'file', label: 'CSV 文件路径', why: '这个文件不存在' });
+  if (file === '') blocked.push({ name: 'file', label: m('skill-bill.setup-import.c009'), why: m('skill-bill.setup-import.c010') });
+  else if (!existsSync(file)) blocked.push({ name: 'file', label: m('skill-bill.setup-import.c011'), why: m('skill-bill.setup-import.c012') });
   if (blocked.length > 0) {
     const html = blockedWizardDoc({ op: 'import', scene, key, params, blocked, actionAt: actionStamp() });
-    const message = '导入还差 ' + String(blocked.length) + ' 项：' + blocked.map((b) => b.label + '（' + b.why + '）').join('、');
+    const message = m('skill-bill.setup-import.c013', {
+      p0: String(String(blocked.length)),
+      p1: String(blocked.map((b) => b.label + '（' + b.why + '）').join('、')),
+    });
     return { data: { ok: false, message, receipt: { op: 'import', blocked } }, page, html };
   }
 
@@ -78,11 +83,11 @@ export function runImport(db: BillDb, key: string, params: Record<string, unknow
   const missing = missingRequired(map);
   if (missing.length > 0) {
     const blocked2: SetupBlocked[] = [{
-      name: 'mapping', label: '列映射',
-      why: '还缺 ' + missing.map((f) => FIELD_LABEL[f]).join('、') + ' 这几列（照「日期=第1列,金额=第3列」补上）',
+      name: 'mapping', label: m('skill-bill.setup-import.c014'),
+      why: m('skill-bill.setup-import.c015', { p0: String(missing.map((f) => fieldLabelOf(f)).join('、')) }),
     }];
     const html = blockedWizardDoc({ op: 'import', scene, key, params, blocked: blocked2, actionAt: actionStamp() });
-    const message = '导入还差 1 项：列映射（还是缺 ' + missing.map((f) => FIELD_LABEL[f]).join('、') + '）';
+    const message = m('skill-bill.setup-import.c016', { p0: String(missing.map((f) => fieldLabelOf(f)).join('、')) });
     return { data: { ok: false, message, receipt: { op: 'import', blocked: blocked2 } }, page, html };
   }
   const plan: ImportPlan = planImport(csv, map, existingRows(db));
@@ -94,8 +99,8 @@ export function runImport(db: BillDb, key: string, params: Record<string, unknow
   if (!confirmOf(params)) {
     const ok = plan.newRows > 0;
     const message = ok
-      ? '导入向导：' + csv.name + ' 将新增 ' + String(plan.newRows) + ' 行，不覆盖已有记录'
-      : '导入向导：' + csv.name + ' 没有可新增的行（都是库里已有的或读不出来的）';
+      ? m('skill-bill.setup-import.c017', { p0: String(csv.name), p1: String(String(plan.newRows)) })
+      : m('skill-bill.setup-import.c018', { p0: String(csv.name) });
     const receipt = { ...common, imported: 0, failed_count: 0, backup: '', confirmed: false };
     const envelope = receiptEnvelopeOf(key, { ok, message, ...receipt });
     const html = wizardDoc({
@@ -104,7 +109,7 @@ export function runImport(db: BillDb, key: string, params: Record<string, unknow
         fileName: csv.name, totalRows: csv.rows.length, mapped: true, newRows: plan.newRows,
         duplicateRows: plan.duplicates.length, badRows: plan.bad.length, confirmed: false, inserted: 0, failed: 0,
       }),
-      prompt: scene.promptOf(filled, { newRows: plan.newRows, mappingText: mappingHeaderText(csv, map) }), promptLabel: '复制给助手：照这句确认，导入前会自动备份一次',
+      prompt: scene.promptOf(filled, { newRows: plan.newRows, mappingText: mappingHeaderText(csv, map) }), promptLabel: m('skill-bill.setup-import.c019'),
       csv, map, plan, confirmed: false, backup: '', inserted: 0, failed: [],
     });
     return { data: { ok, message, receipt }, page, html };
@@ -115,9 +120,12 @@ export function runImport(db: BillDb, key: string, params: Record<string, unknow
   });
   const written = applyImport(db, plan);
   const ok = written.inserted > 0;
-  const message = '已导入：' + String(written.inserted) + ' 行'
-    + (written.failed.length > 0 ? '，失败 ' + String(written.failed.length) + ' 行' : '')
-    + '（导入前已备份：' + backup.file + '）';
+  const failedPart = written.failed.length > 0 ? m('skill-bill.setup-import.c020', { p0: String(String(written.failed.length)) }) : '';
+  const message = m('skill-bill.setup-import.c021', {
+    p0: String(String(written.inserted)),
+    p1: String(failedPart),
+    p2: String(backup.file),
+  });
   const receipt = {
     ...common, imported: written.inserted, failed_count: written.failed.length,
     backup: backup.file, confirmed: true,
@@ -130,7 +138,7 @@ export function runImport(db: BillDb, key: string, params: Record<string, unknow
       duplicateRows: plan.duplicates.length, badRows: plan.bad.length, confirmed: true,
       inserted: written.inserted, failed: written.failed.length,
     }),
-    prompt: scene.promptOf(filled, { newRows: plan.newRows, mappingText: mappingHeaderText(csv, map) }), promptLabel: '复制给助手：同一份文件再导一次会怎样',
+    prompt: scene.promptOf(filled, { newRows: plan.newRows, mappingText: mappingHeaderText(csv, map) }), promptLabel: m('skill-bill.setup-import.c022'),
     csv, map, plan, confirmed: true, backup: backup.file, inserted: written.inserted, failed: written.failed,
   });
   return { data: { ok, message, receipt }, page, html };

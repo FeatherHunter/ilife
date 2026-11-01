@@ -12,28 +12,44 @@
  *   ④ 「向导」这条形状老侧在本页其实没有（无步骤模型，`setup.yaml:82` 标了 `向导` 但页里没有步骤条）——
  *      新侧按片型补齐步骤条（`./steps.js` 的四步）。
  */
+import { runWithLanguage } from 'base-entries';
 import { projectWakeWord } from '../triggers/wakeTable.js';
 import type { SetupScene } from './scene.js';
+import { m } from '../entries/index.js';
 
 const WORD: string = projectWakeWord({ key: 'bill.setup.run', op: 'import' });
 const KEY = 'bill.setup.run' as const;
 
-export const SCENE: SetupScene = {
-  id: 'import',
-  sceneId: 'setup_import',
-  key: KEY,
-  op: 'import',
-  page: 'wizard',
-  title: '导入 CSV 账单',
-  caliber: '列映射向导',
-  subtitle: '列映射向导 · 前几行预览 · 映射可修改',
-  promptOf: (params, extra) => {
-    const file = typeof params['file'] === 'string' && params['file'].trim() !== '' ? params['file'].trim() : '____';
-    const mapping = typeof extra?.['mappingText'] === 'string' && extra['mappingText'] !== ''
-      ? String(extra['mappingText'])
-      : (typeof params['mapping'] === 'string' && params['mapping'].trim() !== '' ? params['mapping'].trim() : '____(自动识别)');
-    const rows = typeof extra?.['newRows'] === 'number' ? String(extra['newRows']) : '____';
-    return '请帮我导入 CSV 账单（唤醒词：' + WORD + '）：\n'
-      + '文件：' + file + '\n列映射：' + mapping + '\n确认导入这 ' + rows + ' 行';
-  },
-};
+/** 构建场景（`#1214`：文案经词条层，**渲染期**取词——模块级常量会把语言固化成 zh）。 */
+function buildScene(): SetupScene {
+  return {
+    id: 'import',
+    sceneId: 'setup_import',
+    key: KEY,
+    op: 'import',
+    page: 'wizard',
+    title: m('skill-bill.setup-scene-import.c001'),
+    caliber: m('skill-bill.setup-scene-import.c002'),
+    subtitle: m('skill-bill.setup-scene-import.c003'),
+    promptOf: (params, extra) => {
+      const file = typeof params['file'] === 'string' && params['file'].trim() !== '' ? params['file'].trim() : '____';
+      const mapping = typeof extra?.['mappingText'] === 'string' && extra['mappingText'] !== ''
+        ? String(extra['mappingText'])
+        : (typeof params['mapping'] === 'string' && params['mapping'].trim() !== '' ? params['mapping'].trim() : m('skill-bill.setup-scene-import.c004'));
+      const rows = typeof extra?.['newRows'] === 'number' ? String(extra['newRows']) : '____';
+      return m('skill-bill.setup-scene-import.c005', {
+        p0: String(WORD),
+        p1: String(file),
+        p2: String(mapping),
+        p3: String(rows),
+      });
+    },
+  };
+}
+
+export const SCENE: SetupScene = buildScene();
+
+/** 按语言重建本场景（`#1214`：语言是运行期参数，不是模块加载期事实）。 */
+export function sceneImportFor(language: string): SetupScene {
+  return runWithLanguage(language, buildScene);
+}

@@ -12,6 +12,7 @@
  *   ③ 变更句把方向说成 `同比上涨／下降／持平`（老侧 `renderYoy` 那句 `· 同比…`），
  *      差 > 0.01 记上涨、< −0.01 记下降、否则持平；百分比以去年同月为分母、为 0 时记 0。
  */
+import { runWithLanguage } from 'base-entries';
 import { BillPolicyError } from '../fetch/errors.js';
 import { listRange } from '../fetch/index.js';
 import { monthRange } from '../shared/dateRange.js';
@@ -21,6 +22,7 @@ import { money, pctText } from './pageParts.js';
 import { needMonth } from './params.js';
 import type { AnalysisScene } from './scene.js';
 import { buildCompare } from './views.js';
+import { m } from '../entries/index.js';
 
 /** 参数槽位的空写法（缺省、空串、非字符串一律当「没给」——老侧 `args.month or ...` 同义）。 */
 function slotText(v: unknown): string {
@@ -36,11 +38,12 @@ function lastYearMonth(month: string): string {
   return String(year - 1) + '-' + month.slice(5);
 }
 
-export const sceneYoy: AnalysisScene = {
+function buildScene(): AnalysisScene {
+  return {
   id: 'yoy',
   key: 'bill.analysis.compare',
   kind: 'yoy',
-  title: '看同比',
+  title: m('skill-bill.analysis-scene-yoy.title'),
   family: 'compare',
   values: ({ params, db }) => {
     const month = slotText(params.month) === '' ? thisMonth() : needMonth(params);
@@ -49,28 +52,35 @@ export const sceneYoy: AnalysisScene = {
     const lastRange = monthRange(last);
     const ra = listRange(db, thisRange.start, thisRange.end);
     const rb = listRange(db, lastRange.start, lastRange.end);
-    const labelA = month + ' 今年';
-    const labelB = last + ' 去年';
+    const labelA = m('skill-bill.analysis-scene-yoy.c002', { p0: String(month) });
+    const labelB = m('skill-bill.analysis-scene-yoy.c003', { p0: String(last) });
     const cmp = compareTwo(ra, rb, labelA, labelB);
     const diff = cmp.change.diff;
     const direction: 'up' | 'down' | 'flat' = diff > 0.01 ? 'up' : diff < -0.01 ? 'down' : 'flat';
     const arrow = direction === 'up' ? '↑' : direction === 'down' ? '↓' : '→';
-    const word = direction === 'up' ? '同比上涨' : direction === 'down' ? '同比下降' : '同比持平';
+    const word = direction === 'up' ? m('skill-bill.analysis-scene-yoy.c004') : direction === 'down' ? m('skill-bill.analysis-scene-yoy.c005') : m('skill-bill.analysis-scene-yoy.c006');
     const pct = direction === 'up'
       ? '+' + pctText(Math.abs(cmp.change.pct))
       : direction === 'down' ? '-' + pctText(Math.abs(cmp.change.pct)) : pctText(0);
     const total = ra.length + rb.length;
     return {
-      title: '看同比',
-      label: labelA + ' 与 ' + labelB,
+      title: m('skill-bill.analysis-scene-yoy.title'),
+      label: m('skill-bill.analysis-scene-yoy.c008', { p0: String(labelA), p1: String(labelB) }),
       from: lastRange.start,
       to: thisRange.end,
       count: total,
       conclusion: total === 0
-        ? month + ' 与去年同月 ' + last + ' 两段都还没有记录。'
-        : month + ' 支出 ' + money(cmp.a.expense) + ' 元，去年同月 ' + last + ' 支出 ' + money(cmp.b.expense)
-          + ' 元：' + word + ' ' + money(Math.abs(diff)) + ' 元（' + pct + '）。',
-      caliber: '两段各取自己那一整月，支出按绝对值累计；百分比以去年同月为分母，去年同月支出为 0 时记 0；转账不计入收支。',
+        ? m('skill-bill.analysis-scene-yoy.c009', { p0: String(month), p1: String(last) })
+        : m('skill-bill.analysis-scene-yoy.c010', {
+          p0: String(month),
+          p1: String(money(cmp.a.expense)),
+          p2: String(last),
+          p3: String(money(cmp.b.expense)),
+          p4: String(word),
+          p5: String(money(Math.abs(diff))),
+          p6: String(pct),
+        }),
+      caliber: m('skill-bill.analysis-scene-yoy.c011'),
       chips: [labelA, labelB],
       payload: buildCompare({ labelA, labelB, a: [...ra], b: [...rb] }),
       kpi: kpiOf([...ra, ...rb]),
@@ -82,17 +92,33 @@ export const sceneYoy: AnalysisScene = {
           { title: labelB, kpis: sideKpisOf(labelB, cmp.b, money) },
         ],
         change: {
-          text: '支出 ' + arrow + ' ' + money(Math.abs(diff)) + ' 元（' + pct + '）· ' + word,
-          detail: '今年这一侧支出 ' + money(cmp.a.expense) + ' 元，去年同月支出 ' + money(cmp.b.expense) + ' 元；两段各取自己那一整月。',
+          text: m('skill-bill.analysis-scene-yoy.c012', {
+            p0: String(arrow),
+            p1: String(money(Math.abs(diff))),
+            p2: String(pct),
+            p3: String(word),
+          }),
+          detail: m('skill-bill.analysis-scene-yoy.c013', {
+            p0: String(money(cmp.a.expense)),
+            p1: String(money(cmp.b.expense)),
+          }),
           direction,
         },
         barGroups: [],
         factCards: [],
         empty: {
-          text: month + ' 与去年同月 ' + last + ' 都没有记录。',
-          hint: '先说「记支出」或「记收入」记一笔，回来看这里就有数了。',
+          text: m('skill-bill.analysis-scene-yoy.c014', { p0: String(month), p1: String(last) }),
+          hint: m('skill-bill.analysis-scene-yoy.c015'),
         },
       },
     };
   },
-};
+  };
+}
+
+export const sceneYoy: AnalysisScene = buildScene();
+
+/** 按语言重建本场景（#1197：文案经词条层，语言是运行期参数）。 */
+export function sceneYoyFor(language: string): AnalysisScene {
+  return runWithLanguage(language, buildScene);
+}

@@ -26,10 +26,10 @@ import { BillPolicyError } from '../fetch/errors.js';
 import type { DataTableColumn, DataTableRow, KpiCardInput } from 'base-paint/blocks';
 import type { GoalBlocked, GoalWriteOp, GoalReadOp } from './params.js';
 import type { BudgetExecution, GoalBudgetRow, GoalSavingRow, SavingProgress } from './goalData.js';
-import { SCENE as sceneBudget } from './scene-budget.js';
-import { SCENE as sceneSaving } from './scene-saving.js';
-import { SCENE as sceneSetBudget } from './scene-set-budget.js';
-import { SCENE as sceneSetSaving } from './scene-set-saving.js';
+import { SCENE as sceneBudget, sceneBudget as localizedSceneBudget } from './scene-budget.js';
+import { SCENE as sceneSaving, sceneSaving as localizedSceneSaving } from './scene-saving.js';
+import { SCENE as sceneSetBudget, sceneSetBudget as localizedSceneSetBudget } from './scene-set-budget.js';
+import { SCENE as sceneSetSaving, sceneSetSaving as localizedSceneSetSaving } from './scene-set-saving.js';
 
 /** 采集页入参：这一页是谁 ＋ 缺什么 ＋ 目标表现状 ＋ 复制日志与脚注的取数。 */
 export interface GoalCollectInput {
@@ -142,16 +142,33 @@ export const GOAL_READ_SCENES: readonly GoalReadScene[] = [sceneBudget, sceneSav
 const WRITE_BY_OP = new Map<GoalWriteOp, GoalWriteScene>(GOAL_WRITE_SCENES.map((s) => [s.op, s]));
 const READ_BY_OP = new Map<GoalReadOp, GoalReadScene>(GOAL_READ_SCENES.map((s) => [s.op, s]));
 
+/** 已迁词条的写场景件：给了非基准语言就按语言重建一份（`runWithLanguage` 内取词），否则回中文静态件。 */
+const LOCALIZED_WRITE = new Map<GoalWriteOp, (language: string) => GoalWriteScene>([
+  ['set-budget', localizedSceneSetBudget],
+  ['set-saving', localizedSceneSetSaving],
+]);
+
+/** 已迁词条的读场景件：同上。 */
+const LOCALIZED_READ = new Map<GoalReadOp, (language: string) => GoalReadScene>([
+  ['budget', localizedSceneBudget],
+  ['saving', localizedSceneSaving],
+]);
+
 /** 取件：按 `op` 认（写命令两支各一件）。认不得的 op 即抛——**不猜、不兜底**
- *  （`op` 已在 `./params.js` 拦过一道，走到这里还认不得即是代码缺陷）。 */
-export function writeSceneFor(op: GoalWriteOp): GoalWriteScene {
+ *  （`op` 已在 `./params.js` 拦过一道，走到这里还认不得即是代码缺陷）。
+ *  `language` 由调用方给（处理体里读 `currentRenderLanguage()`）：非基准语言按语言重建，`zh` 走静态件。 */
+export function writeSceneFor(op: GoalWriteOp, language: string): GoalWriteScene {
+  const localized = LOCALIZED_WRITE.get(op);
+  if (language !== 'zh' && localized !== undefined) return localized(language);
   const hit = WRITE_BY_OP.get(op);
   if (hit === undefined) throw new BillPolicyError('POLICY_BAD_INPUT', '目标写命令没有这一支操作：' + String(op));
   return hit;
 }
 
-/** 取件：读命令两支各一件，认不得即抛（同上）。 */
-export function readSceneFor(op: GoalReadOp): GoalReadScene {
+/** 取件：读命令两支各一件，认不得即抛（同上；`language` 口径同写命令那一件）。 */
+export function readSceneFor(op: GoalReadOp, language: string): GoalReadScene {
+  const localized = LOCALIZED_READ.get(op);
+  if (language !== 'zh' && localized !== undefined) return localized(language);
   const hit = READ_BY_OP.get(op);
   if (hit === undefined) throw new BillPolicyError('POLICY_BAD_INPUT', '目标读命令没有这一支操作：' + String(op));
   return hit;

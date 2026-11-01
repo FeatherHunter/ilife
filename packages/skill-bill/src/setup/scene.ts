@@ -21,14 +21,14 @@
  */
 import { BillPolicyError } from '../fetch/errors.js';
 import type { SetupOp, SetupPage } from './params.js';
-import { SCENE as sceneBackupCreate } from './scene-backup-create.js';
-import { SCENE as sceneBackupList } from './scene-backup-list.js';
+import { SCENE as sceneBackupCreate, sceneBackupCreateFor } from './scene-backup-create.js';
+import { SCENE as sceneBackupList, sceneBackupListFor } from './scene-backup-list.js';
 import { SCENE as sceneConfigRead } from './scene-config-read.js';
 import { SCENE as sceneConfigWrite } from './scene-config-write.js';
-import { SCENE as sceneImport } from './scene-import.js';
-import { SCENE as sceneInitStatus } from './scene-init-status.js';
-import { SCENE as sceneInit } from './scene-init.js';
-import { SCENE as sceneRestore } from './scene-restore.js';
+import { SCENE as sceneImport, sceneImportFor } from './scene-import.js';
+import { SCENE as sceneInitStatus, sceneInitStatusFor } from './scene-init-status.js';
+import { SCENE as sceneInit, sceneInitFor } from './scene-init.js';
+import { SCENE as sceneRestore, sceneRestoreFor } from './scene-restore.js';
 
 /** 一件场景件：一条场景（＝一种 op）的落点与差异值。 */
 export interface SetupScene {
@@ -60,12 +60,27 @@ export const SETUP_SCENES: readonly SetupScene[] = [
 
 const BY_OP = new Map<SetupOp, SetupScene>(SETUP_SCENES.map((s) => [s.op, s]));
 
+/** op → 按语言重建的那一支（`#1214`：已迁入词条层的六件；`config-read`／`config-write` 两件未迁，
+ *  任何语言都走落点表里的静态件＝中文页）。 */
+const BUILDER_OF_OP: Partial<Record<SetupOp, (language: string) => SetupScene>> = {
+  init: sceneInitFor,
+  'init-status': sceneInitStatusFor,
+  'backup-create': sceneBackupCreateFor,
+  'backup-list': sceneBackupListFor,
+  restore: sceneRestoreFor,
+  import: sceneImportFor,
+};
+
 /** 取件：按 `op` 认（八种 op 各一件）。认不得的 op 即抛——**不猜、不兜底**
- *  （`op` 已在 `./params.js` 的 `parseSetupOp` 拦过一道，走到这里还认不得即是代码缺陷）。 */
-export function setupSceneFor(op: SetupOp): SetupScene {
+ *  （`op` 已在 `./params.js` 的 `parseSetupOp` 拦过一道，走到这里还认不得即是代码缺陷）。
+ *
+ *  `language` 只决定**已迁入词条层**的六件按哪门语言取值：`zh` 走落点表里那一行静态件（与改造前同一对象）；
+ *  其余语言现算。未迁移的两件任何语言都走静态件（＝中文页）。**语言必给**（照 `../write/scene.js` 的 #1307 口径）。 */
+export function setupSceneFor(op: SetupOp, language: string): SetupScene {
   const hit = BY_OP.get(op);
   if (hit === undefined) {
     throw new BillPolicyError('POLICY_BAD_INPUT', '开始使用域没有这一支操作：' + String(op));
   }
-  return hit;
+  const build = BUILDER_OF_OP[op];
+  return language === 'zh' || build === undefined ? hit : build(language);
 }

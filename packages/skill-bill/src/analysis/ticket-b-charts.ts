@@ -6,11 +6,12 @@
  * 谁在用（一个调用点，指名）：`./template-charts.ts`——本族 4 页全在 B。
  */
 import { escapeHtml } from 'base-paint';
-import { detailOf, h2ForB, kpiValue, parseCount, toTicketB } from './ticket-b.js';
+import { detailOf, h2ForB, kpiAt, parseCount, toTicketB } from './ticket-b.js';
 import { chartFor } from './chartOf.js';
 import { MISSING, NO_WINDOW, docTitleOf, money } from './pageParts.js';
 import { factCardHtml, listCardHtml } from './cards.js';
 import type { ChartsPage, DocInput } from './scene.js';
+import { m } from '../entries/index.js';
 
 /** B charts 4 页的落点行（PAGES 表 a14／a15／a18／a21）。 */
 export function ledgerRowsOfChartsB(
@@ -20,30 +21,37 @@ export function ledgerRowsOfChartsB(
   const r = input.result;
   const p = r.page;
   if (sceneId === 'trend') {
-    const peakMonth = kpiValue(p.kpis, '峰值月');
-    const peak = kpiValue(p.kpis, '峰值支出');
-    const avg = kpiValue(p.kpis, '月均支出');
+    // 判据位按位置取。发射方正序：scene-trend.ts:147-152 kpis 固定 4 格
+    // （0 峰值月／1 峰值支出／2 月均支出／3 窗口月数）。
+    const peakMonth = kpiAt(p.kpis, 0);
+    const peak = kpiAt(p.kpis, 1);
+    const avg = kpiAt(p.kpis, 2);
     return [
-      { k: '支出', v: money(r.kpi.expense) + ' 元' },
-      { k: '收入', v: money(r.kpi.income) + ' 元' },
-      { k: '月均支出', v: avg + ' 元' },
-      { k: '最高', v: peakMonth === MISSING ? MISSING : peakMonth + '（' + peak + ' 元）' },
+      { k: m('skill-bill.analysis-ticket-b-charts.c001'), v: m('skill-bill.analysis-ticket-b-charts.c002', { p0: String(money(r.kpi.expense)) }) },
+      { k: m('skill-bill.analysis-ticket-b-charts.c003'), v: m('skill-bill.analysis-ticket-b-charts.c004', { p0: String(money(r.kpi.income)) }) },
+      { k: m('skill-bill.analysis-ticket-b-charts.c005'), v: m('skill-bill.analysis-ticket-b-charts.c006', { p0: String(avg) }) },
+      { k: m('skill-bill.analysis-ticket-b-charts.c007'), v: peakMonth === MISSING ? MISSING : m('skill-bill.analysis-ticket-b-charts.c008', { p0: String(peakMonth), p1: String(peak) }) },
     ];
   }
   if (sceneId === 'cat_trend') {
     const category = r.label.split(' · ')[0] ?? '';
-    const peakMonth = kpiValue(p.kpis, '峰值月');
-    const peak = kpiValue(p.kpis, '峰值支出');
-    const avg = kpiValue(p.kpis, '月均');
+    // 判据位按位置取。发射方正序：scene-cat-trend.ts:141-144 kpis 固定 4 格
+    // （0 分类／1 峰值月／2 峰值支出／3 月均）。
+    const peakMonth = kpiAt(p.kpis, 1);
+    const peak = kpiAt(p.kpis, 2);
+    const avg = kpiAt(p.kpis, 3);
     return [
-      { k: category + '总额', v: money(r.kpi.expense) + ' 元 · ' + String(r.kpi.count) + ' 笔' },
-      { k: '最高', v: peakMonth === MISSING ? MISSING : peakMonth + '（' + peak + ' 元）' },
-      { k: '月均', v: avg + ' 元' },
+      { k: m('skill-bill.analysis-ticket-b-charts.c009', { p0: String(category) }), v: m('skill-bill.analysis-ticket-b-charts.c010', {
+        p0: String(money(r.kpi.expense)),
+        p1: String(String(r.kpi.count)),
+      }) },
+      { k: m('skill-bill.analysis-ticket-b-charts.c011'), v: peakMonth === MISSING ? MISSING : m('skill-bill.analysis-ticket-b-charts.c012', { p0: String(peakMonth), p1: String(peak) }) },
+      { k: m('skill-bill.analysis-ticket-b-charts.c013'), v: m('skill-bill.analysis-ticket-b-charts.c014', { p0: String(avg) }) },
     ];
   }
   if (sceneId === 'distribution') {
     const facts = p.factCards[0];
-    if (facts === undefined || facts.rows.length === 0) return [{ k: '说明', v: '这段时间还没有记录' }];
+    if (facts === undefined || facts.rows.length === 0) return [{ k: m('skill-bill.analysis-ticket-b-charts.c015'), v: m('skill-bill.analysis-ticket-b-charts.c016') }];
     let best = facts.rows[0];
     let bestN = -1;
     for (const row of facts.rows) {
@@ -53,7 +61,7 @@ export function ledgerRowsOfChartsB(
         best = row;
       }
     }
-    return [{ k: '最多', v: best.k + ' · ' + best.v }];
+    return [{ k: m('skill-bill.analysis-ticket-b-charts.c017'), v: best.k + ' · ' + best.v }];
   }
   if (sceneId === 'anomaly') {
     const lists = p.listCards[0];
@@ -61,16 +69,17 @@ export function ledgerRowsOfChartsB(
     let widest: { readonly left: string; readonly main: string; readonly right: string } | null = null;
     let widestAbs = -1;
     for (const row of rows) {
-      const m = /-?[\d.]+/.exec(row.right);
-      const pct = m === null ? NaN : Number(m[0]);
+      // 局部名不叫 m：会遮住注入的取词函数 m()（手册 §4.5m）。
+      const num = /-?[\d.]+/.exec(row.right);
+      const pct = num === null ? NaN : Number(num[0]);
       if (!Number.isFinite(pct)) continue;
       if (Math.abs(pct) > widestAbs) {
         widestAbs = Math.abs(pct);
         widest = row;
       }
     }
-    if (widest === null) return [{ k: '说明', v: p.empty.text }];
-    return [{ k: '最大变化', v: widest.left + '（' + widest.main + '，' + widest.right + '）' }];
+    if (widest === null) return [{ k: m('skill-bill.analysis-ticket-b-charts.c018'), v: p.empty.text }];
+    return [{ k: m('skill-bill.analysis-ticket-b-charts.c019'), v: widest.left + '（' + widest.main + '，' + widest.right + '）' }];
   }
   return [];
 }
@@ -79,18 +88,21 @@ export function ledgerRowsOfChartsB(
 export function ticketChartsBDoc(input: DocInput<ChartsPage>, sceneId: string): string {
   const r = input.result;
   const p = r.page;
-  const peak = kpiValue(p.kpis, '峰值支出');
+  // 判据位按场景 id 判，不拿显示文本比字面量（手册 §4.3）；峰值支出也是按位置取
+  // （trend 第 1 格，cat_trend 第 2 格，见上面两个分支的发射方正序）。
+  const hasPeak = sceneId === 'trend' || sceneId === 'cat_trend';
+  const peak = sceneId === 'cat_trend' ? kpiAt(p.kpis, 2) : kpiAt(p.kpis, 1);
   const summaryValue = sceneId === 'distribution'
     ? String(r.count)
-    : sceneId === 'trend' || sceneId === 'cat_trend'
+    : hasPeak
       ? peak
-      : '见明细';
-  const summaryUnit = summaryValue === '见明细' ? '' : sceneId === 'distribution' ? '笔' : '元';
+      : m('skill-bill.analysis-ticket-b-charts.c020');
+  const summaryUnit = !hasPeak && sceneId !== 'distribution' ? '' : sceneId === 'distribution' ? m('skill-bill.analysis-ticket-b-charts.c021') : m('skill-bill.analysis-ticket-b-charts.c022');
   const summaryNote = sceneId === 'distribution'
-    ? '总笔数 · 明细与复制区与基线一致'
+    ? m('skill-bill.analysis-ticket-b-charts.c023')
     : sceneId === 'trend' || sceneId === 'cat_trend'
-      ? '峰值支出 · 明细与复制区与基线一致'
-      : '结论 · 明细与复制区与基线一致';
+      ? m('skill-bill.analysis-ticket-b-charts.c024')
+      : m('skill-bill.analysis-ticket-b-charts.c025');
   const parts: string[] = [];
   // #1135（负责人 2026-10-05 改口径）：序号**每卡各自从 1 起**（a20「事实／习惯各自从1」、
   // a21「环比／暴涨各自从1」、a19「两套序号」），不再整段连续。图卡**不出 DETAIL**（#G：判地 DETAIL

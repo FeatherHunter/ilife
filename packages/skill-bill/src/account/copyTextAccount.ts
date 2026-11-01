@@ -18,6 +18,7 @@ import { DOC_TITLE } from '../shared/pageIdentity.js';
 import { MISSING, csvCell, oneLine } from '../shared/copyText.js';
 import { projectWakeWord } from '../triggers/wakeTable.js';
 import type { AccountCard, AccountSummary } from './accounts.js';
+import { m } from '../entries/index.js';
 
 /** 账户复制三份（单对象透传 `pageParts.copyZoneOf` 的 `copy` 位；缺省走薄信封零回归）。 */
 export interface AccountCopy {
@@ -28,8 +29,8 @@ export interface AccountCopy {
 
 
 
-/** 金额单位与币种（只一处定义；库默认人民币，账户卡无币种列故取统一币种）。 */
-const UNIT = '元';
+/** 币种（数据值，只一处定义；库默认人民币，账户卡无币种列故取统一币种）。
+ *  #1212：「元」是上屏文案的一部分，已随句进词条表；币种是数据值，不随语言变。 */
 const CURRENCY = '人民币';
 
 
@@ -48,12 +49,19 @@ function money2(n: number | null | undefined): string {
 
 /** 卡片行（**唯一定义地**）：户名/余额/币种一格一行、恒单行（不断）；显示 title 与复制同取此件。 */
 export function accountCardLineOf(card: AccountCard): string {
-  return '账户 ' + pickName(card.name) + ' ｜ 余额 ' + money2(card.balance) + ' ' + UNIT + ' ｜ ' + CURRENCY;
+  return m('skill-bill.account-copyTextAccount.c001', {
+    p0: String(pickName(card.name)),
+    p1: String(money2(card.balance)),
+    p2: String(CURRENCY),
+  });
 }
 
 /** 合计行（**唯一定义地**）：余额合计/流水笔数一格一行、恒单行；与卡片行不同式（合计开头）。 */
 export function accountTotalLineOf(summary: AccountSummary): string {
-  return '合计 ｜ 余额 ' + money2(summary.totals.balance) + ' ' + UNIT + ' ｜ 流水 ' + String(summary.flow_count) + ' 笔';
+  return m('skill-bill.account-copyTextAccount.c002', {
+    p0: String(money2(summary.totals.balance)),
+    p1: String(String(summary.flow_count)),
+  });
 }
 
 /** 页身份行（空格分隔）：饼干记账 + 唤醒词（与纸面 brand 同词不同分隔符；空走投影，不写第二处字面量）。 */
@@ -67,8 +75,8 @@ function conclusionLine(summary: AccountSummary): string {
   const n = summary.accounts.length;
   const bal = money2(summary.totals.balance);
   return bal === MISSING
-    ? '已查到 ' + String(n) + ' 个账户 余额合计 ' + MISSING
-    : '已查到 ' + String(n) + ' 个账户 余额合计 ' + bal + ' ' + UNIT;
+    ? m('skill-bill.account-copyTextAccount.c003', { p0: String(String(n)), p1: String(MISSING) })
+    : m('skill-bill.account-copyTextAccount.c004', { p0: String(String(n)), p1: String(bal) });
 }
 
 /** 纯文本（LF 连接，无尾换行）：页身份/结论/卡片每户一行/合计行（合计行恒在末行）。 */
@@ -108,11 +116,11 @@ export function buildAccountCopyJson(wakeWord: string, summary: AccountSummary):
 export function buildAccountCopyCsv(wakeWord: string, summary: AccountSummary): string {
   void wakeWord;
   const lines = ['field,value'];
-  lines.push(csvCell('结论') + ',' + csvCell(conclusionLine(summary)));
-  for (const c of summary.accounts) lines.push(csvCell('账户') + ',' + csvCell(accountCardLineOf(c)));
-  lines.push(csvCell('合计') + ',' + csvCell(accountTotalLineOf(summary)));
-  lines.push(csvCell('余额合计') + ',' + csvCell(money2(summary.totals.balance)));
-  lines.push(csvCell('流水笔数') + ',' + csvCell(String(summary.flow_count)));
+  lines.push(csvCell(m('skill-bill.account-copyTextAccount.c005')) + ',' + csvCell(conclusionLine(summary)));
+  for (const c of summary.accounts) lines.push(csvCell(m('skill-bill.account-copyTextAccount.c006')) + ',' + csvCell(accountCardLineOf(c)));
+  lines.push(csvCell(m('skill-bill.account-copyTextAccount.c007')) + ',' + csvCell(accountTotalLineOf(summary)));
+  lines.push(csvCell(m('skill-bill.account-copyTextAccount.c008')) + ',' + csvCell(money2(summary.totals.balance)));
+  lines.push(csvCell(m('skill-bill.account-copyTextAccount.c009')) + ',' + csvCell(String(summary.flow_count)));
   return lines.join('\n');
 }
 

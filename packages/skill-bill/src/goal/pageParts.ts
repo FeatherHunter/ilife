@@ -24,7 +24,7 @@
 import { renderStatusBadge } from 'base-paint';
 import type { SerializableEnvelope, StatusKind } from 'base-paint';
 import { renderCaliberLine, renderChips, renderDataTable, renderDisclosure, renderEmptyBlock, renderPreBlock, renderTypeBadge } from 'base-paint/blocks';
-import type { DataTableColumn, DataTableRow, KpiCardInput, ParamFieldInput } from 'base-paint/blocks';
+import type { DataTableRow, KpiCardInput, ParamFieldInput } from 'base-paint/blocks';
 import { copyArea, copyLog, COPY_HINTS } from '../shared/copyArea.js';
 import { DOC_SKILL, DOC_VERSION, sceneKeyOf } from '../shared/pageIdentity.js';
 import { pageShell } from '../shared/pageShell.js';
@@ -35,9 +35,12 @@ import type { GoalCopy } from './copyTextGoal.js';
 import type { GoalBudgetStatus, GoalSavingStatus } from './goalData.js';
 import { GOAL_DECLARATION } from './declaration.js';
 import { textOf } from './params.js';
+import { m } from '../entries/index.js';
 
-/** 目标域各页的眉标：**只在本域写一次**（共用位不持「域名→取值」表）。 */
-export const EYEBROW = '记账｜目标域';
+/** 目标域各页的眉标：**只在本域写一次**（共用位不持「域名→取值」表）。按需取词（模块顶层不取值）。 */
+function eyebrowOf(): string {
+  return m('skill-bill.goal-pageParts.c029');
+}
 
 
 /** 域声明里那条 `prompt_template` 的**原文**（含 `{{占位符}}`）——采集页运行时要拿它重算口令（#1118 task-31）。 */
@@ -46,7 +49,7 @@ export function goalHelpTemplate(sceneId: 'goal_set_budget' | 'goal_set_saving')
     const hit = entry.scenes.find((s) => s.id === sceneId);
     if (hit !== undefined) return hit.prompt_template;
   }
-  throw new Error('goalHelpTemplate 找不到场景 `' + sceneId + '`');
+  throw new Error('goalHelpTemplate 找不到场景 ' + sceneId);
 }
 
 /** 1064 HELP 单源：采集 prompt 逐字取域声明 `prompt_template`，不抄第二份。 */
@@ -59,7 +62,7 @@ export function goalHelpPrompt(
     const hit = entry.scenes.find((s) => s.id === sceneId);
     if (hit !== undefined) { template = hit.prompt_template; break; }
   }
-  if (template === '') throw new Error('goalHelpPrompt 找不到场景 `' + sceneId + '`');
+  if (template === '') throw new Error('goalHelpPrompt 找不到场景 ' + sceneId);
   const fill = (s: string): string => (s === '' ? '____' : s);
   const table: Record<string, string> = {};
   if (sceneId === 'goal_set_budget') {
@@ -76,7 +79,7 @@ export function goalHelpPrompt(
 
 /** 本域各页统一走它：补上眉标再转共用位的 `pageShell`；调用点写法 `pageShell({…})` 不变。 */
 export function goalPageShell(input: Omit<PageShellInput, 'eyebrow'>): string {
-  return pageShell({ ...input, eyebrow: EYEBROW });
+  return pageShell({ ...input, eyebrow: eyebrowOf() });
 }
 
 /** 写命令两页的页面内置 envelope（采集页 `ok:false`、回执页 `ok:true`；两页同一形状 `receipt`）。 */
@@ -121,9 +124,13 @@ export function monthEndHintOf(item: {
 }): string {
   if (item.month_end_proj === null || item.daily_avg === null) return '';
   const diff = item.month_end_proj - item.amount;
-  const hint = diff > 0.01 ? '预计超 ' + money(diff) + ' 元'
-    : diff < -0.01 ? '预计省 ' + money(Math.abs(diff)) + ' 元' : '预计持平';
-  return '日均 ' + money(item.daily_avg) + ' 元 · 按此节奏月底预计 ' + money(item.month_end_proj) + ' 元（' + hint + '）';
+  const hint = diff > 0.01 ? m('skill-bill.goal-pageParts.c001', { p0: String(money(diff)) })
+    : diff < -0.01 ? m('skill-bill.goal-pageParts.c002', { p0: String(money(Math.abs(diff))) }) : m('skill-bill.goal-pageParts.c003');
+  return m('skill-bill.goal-pageParts.c004', {
+    p0: String(money(item.daily_avg)),
+    p1: String(money(item.month_end_proj)),
+    p2: String(hint),
+  });
 }
 
 /** 一个值写成上屏文本：空白串与缺值一律 `—`（不写 `undefined`、不留空）。 */
@@ -132,20 +139,24 @@ export function textOrDash(v: unknown): string {
   return s === '' ? MISSING : s;
 }
 
-/** 预算状态的说法（老侧 `budget_view.html:101-105` 的 `STATUS_META` 逐字）。 */
-export const BUDGET_STATUS_META: Readonly<Record<GoalBudgetStatus, { readonly kind: StatusKind; readonly label: string }>> = {
-  ok: { kind: 'ok', label: '预算内' },
-  warn: { kind: 'warn', label: '接近上限' },
-  over: { kind: 'danger', label: '已超支' },
-};
+/** 预算状态的说法（老侧 `budget_view.html:101-105` 的 `STATUS_META` 逐字）。按需取词，故做成函数。 */
+export function budgetStatusMeta(): Readonly<Record<GoalBudgetStatus, { readonly kind: StatusKind; readonly label: string }>> {
+  return {
+    ok: { kind: 'ok', label: m('skill-bill.goal-pageParts.c030') },
+    warn: { kind: 'warn', label: m('skill-bill.goal-pageParts.c031') },
+    over: { kind: 'danger', label: m('skill-bill.goal-pageParts.c032') },
+  };
+}
 
-/** 目标状态的说法（老侧 `saving_view.html:99-104` 的 `STATUS_META` 逐字；档位照老侧 `:220` 的映射）。 */
-export const SAVING_STATUS_META: Readonly<Record<GoalSavingStatus, { readonly kind: StatusKind; readonly label: string }>> = {
-  done: { kind: 'ok', label: '已达成' },
-  on_track: { kind: 'ok', label: '进行中' },
-  behind: { kind: 'warn', label: '进度落后' },
-  na: { kind: 'empty', label: '暂无进度' },
-};
+/** 目标状态的说法（老侧 `saving_view.html:99-104` 的 `STATUS_META` 逐字；档位照老侧 `:220` 的映射）。同上按需取词。 */
+export function savingStatusMeta(): Readonly<Record<GoalSavingStatus, { readonly kind: StatusKind; readonly label: string }>> {
+  return {
+    done: { kind: 'ok', label: m('skill-bill.goal-pageParts.c033') },
+    on_track: { kind: 'ok', label: m('skill-bill.goal-pageParts.c034') },
+    behind: { kind: 'warn', label: m('skill-bill.goal-pageParts.c035') },
+    na: { kind: 'empty', label: m('skill-bill.goal-pageParts.c036') },
+  };
+}
 
 /** 类型徽章那一串（唤醒词 ＋ 口径 ＋ 状态徽章 ＋ 下一步动作）：四枚形状各自独立，不拼分隔符串。
  *  形状照写入域 `../write/typeBadge.js` 与账户域 `../account/pageParts.js` 的同一套，本件只喂目标自己的取值。 */
@@ -183,7 +194,7 @@ export interface GoalField {
 export function slotFieldsOf(params: Record<string, unknown>, fields: readonly GoalField[]): ParamFieldInput[] {
   return fields.map((f) => {
     const raw = params[f.name];
-    const value = raw === true ? '是' : raw === false || raw === undefined || raw === null ? '' : String(raw).trim();
+    const value = raw === true ? m('skill-bill.goal-pageParts.c005') : raw === false || raw === undefined || raw === null ? '' : String(raw).trim();
     return {
       name: f.name,
       label: f.label,
@@ -198,28 +209,28 @@ export function slotFieldsOf(params: Record<string, unknown>, fields: readonly G
 /** 缺项阻断条：**收进折叠区**（点开才看得见），里面是「还缺什么」表 ＋ 只读的口令原文 ＋ 一句口径。
  *  铁口径（照 #688 裁定 9）：缺项时**不出**可复制的写库指令——页面上那条口令只给看不给复制。 */
 export function blockedFoldOf(input: {
-  readonly blocked: readonly { readonly name: string; readonly label: string; readonly why: string }[];
+  readonly blocked: readonly { readonly name: string; readonly label: string; readonly why: string; readonly missing?: boolean }[];
   /** 补齐后照抄的那条命令原文（缺的值留成尖括号占位符；「确认覆盖」那一格写 `true`）。 */
   readonly command: string;
 }): string {
   if (input.blocked.length === 0) return '';
   return renderChips({ items: input.blocked.map((b) => ({ text: b.label })) })
     + renderDisclosure({
-      title: '还缺什么（点开看补齐后照抄的那条）',
+      title: m('skill-bill.goal-pageParts.c006'),
       contentHtml: renderDataTable({
         columns: [
-          { key: 'label', label: '缺失字段' },
-          { key: 'why', label: '为什么进不去' },
+          { key: 'label', label: m('skill-bill.goal-pageParts.c007') },
+          { key: 'why', label: m('skill-bill.goal-pageParts.c008') },
         ],
-        rows: input.blocked.map((b) => ({ label: b.label, why: b.why === '没给' ? '未提供' : b.why })),
-        caption: '缺一项就先不写进去',
-      }) + renderPreBlock({ command: input.command, label: '口令原文（只给看不给复制）' })
-        + renderCaliberLine('这一页先不写库；补齐之后照上面那句跟助手说一遍才会写。'),
+        rows: input.blocked.map((b) => ({ label: b.label, why: b.missing === true ? m('skill-bill.goal-pageParts.c009') : b.why })),
+        caption: m('skill-bill.goal-pageParts.c010'),
+      }) + renderPreBlock({ command: input.command, label: m('skill-bill.goal-pageParts.c011') })
+        + renderCaliberLine(m('skill-bill.goal-pageParts.c012')),
     });
 }
 
 /** 复制指令块（过程型页的「照这句跟助手说一遍」）：走公共层 `renderPreBlock` 的自带复制按钮。 */
-export function promptBlockOf(prompt: string, label = '复制给助手：这一句可以直接复制'): string {
+export function promptBlockOf(prompt: string, label = m('skill-bill.goal-pageParts.c013')): string {
   return renderPreBlock({
     label,
     command: prompt,
@@ -290,46 +301,43 @@ export function blockedCommandOf(
 
 /** 回执页的状态卡：新设／覆盖了旧的 ＋ 一句写入去向的说明。 */
 export function receiptStatusCard(overwritten: boolean): KpiCardInput {
-  return statusCard(overwritten ? '覆盖了旧的' : '新设的', overwritten ? '同月同类那一条已按新值改写' : '这一条是这次新加的');
+  return statusCard(overwritten ? m('skill-bill.goal-pageParts.c014') : m('skill-bill.goal-pageParts.c015'), overwritten ? m('skill-bill.goal-pageParts.c016') : m('skill-bill.goal-pageParts.c017'));
 }
 
 /** 一格的状态值：值 ＋ 一句说明。 */
 export function statusCard(value: string, detail: string): KpiCardInput {
-  return { label: '状态', value, detail };
+  return { label: m('skill-bill.goal-pageParts.c018'), value, detail };
 }
 
 /** 页尾「对账信息」折叠区：本次写入的**可核对信息**（改了几处／什么时候写的／怎么核对）。 */
 export function reconcileOf(input: { readonly actionAt: string; readonly changed: number; readonly note: string }): string {
   return renderDisclosure({
-    title: '对账信息',
+    title: m('skill-bill.goal-pageParts.c019'),
     contentHtml: renderDataTable({
-      columns: [{ key: 'k', label: '字段' }, { key: 'v', label: '值' }],
+      columns: [{ key: 'k', label: m('skill-bill.goal-pageParts.c020') }, { key: 'v', label: m('skill-bill.goal-pageParts.c021') }],
       rows: [
-        { k: '改了目标表里几处', v: String(input.changed) + ' 处' },
-        { k: '写入时间', v: input.actionAt },
-        { k: '怎么核对', v: input.note },
+        { k: m('skill-bill.goal-pageParts.c022'), v: m('skill-bill.goal-pageParts.c023', { p0: String(String(input.changed)) }) },
+        { k: m('skill-bill.goal-pageParts.c024'), v: input.actionAt },
+        { k: m('skill-bill.goal-pageParts.c025'), v: input.note },
       ],
     }),
   });
 }
-
-/** 采集页／回执页明细表的列（**这一族页型唯一定义地**：表头文本与每格 `data-label` 同源）。 */
-export const DETAIL_COLUMNS: readonly DataTableColumn[] = [
-  { key: 'k', label: '字段' },
-  { key: 'v', label: '值' },
-];
 
 /** 明细表的行：普通数据，按面量接口给（`renderDataTable` 收 `Record<string, unknown>`）。 */
 export function detailRows(rows: readonly { readonly k: string; readonly v: string }[]): readonly DataTableRow[] {
   return rows.map((r) => ({ ...r }));
 }
 
-/** 复制日志第 3 段的三句来源：给机器看的那句可带载体名，上屏（来源脚注）的那句只写人话
- *  （照 #688 裁定 1：库文件名、命令名与脚本路径一律不上屏）。 */
-export const SOURCE_COLLECT = '目标表（只读：这一页先不写库，只采集）';
-export const SOURCE_WRITE = '目标表（写库回执）';
-export const SOURCE_COLLECT_TEXT = '目标表（只读）';
-export const SOURCE_WRITE_TEXT = '目标表（写入）';
+/** 复制日志第 3 段的两句来源：给机器看的那句可带载体名，上屏（来源脚注）的那句只写人话
+ *  （照 #688 裁定 1：库文件名、命令名与脚本路径一律不上屏）。按需取词，故做成函数。 */
+export function sourceCollect(): string {
+  return m('skill-bill.goal-pageParts.c037');
+}
+
+export function sourceWrite(): string {
+  return m('skill-bill.goal-pageParts.c038');
+}
 
 /** 采集页／回执页复制口令那一段（「照这句跟助手说一遍」）：说清是哪条词、每一格填什么。
  *  空着的格写 `____`（必填）或 `____（选填）`，与老侧复制文本的占位写法同义（老侧写 `__如:3000__`）。 */
@@ -340,9 +348,9 @@ export function promptOf(
 ): string {
   const lines = slots.map((s) => {
     const raw = params[s.name];
-    const v = raw === true ? '是' : raw === false || raw === undefined || raw === null ? '' : String(raw).trim();
-    const blank = s.required ? '____' : '____（选填）';
+    const v = raw === true ? m('skill-bill.goal-pageParts.c026') : raw === false || raw === undefined || raw === null ? '' : String(raw).trim();
+    const blank = s.required ? '____' : m('skill-bill.goal-pageParts.c027');
     return '  ' + s.label + ': ' + (v === '' ? blank : v);
   });
-  return '请加载「饼干记账」技能，帮我' + word + '：\n\n' + lines.join('\n');
+  return m('skill-bill.goal-pageParts.c028', { p0: String(word), p1: String(lines.join('\n')) });
 }

@@ -9,6 +9,7 @@
  *   （`BillDb.repaired`），所以迁移块报的是「本次补了什么」这一件真事实，而不是一句无人看见的提示。
  */
 import type { BillDb } from '../fetch/index.js';
+import { m } from '../entries/index.js';
 
 /** 一条检查项（三重判定里的一重）。 */
 export interface StatusCheck {
@@ -71,25 +72,26 @@ export function readSetupStatus(db: BillDb): SetupStatus {
   const missing = BILLS_COLUMNS.filter((c) => !columns.includes(c));
   const version = !tableExists ? '—' : missing.length === 0 ? 'v2.0' : 'v1.0';
   const ready = tableExists && missing.length === 0;
+  const missingText = missing.length === 0 ? m('skill-bill.setup-status.c001') : '「' + missing.join('」「') + '」';
   const checks: readonly StatusCheck[] = [
     {
-      label: '数据存在',
+      label: m('skill-bill.setup-status.c002'),
       ok: true,
-      detail: '库文件在（' + db.path + '）；这个库里现有记录 ' + String(rows) + ' 条',
+      detail: m('skill-bill.setup-status.c003', { p0: String(db.path), p1: String(String(rows)) }),
     },
     {
-      label: '结构版本',
+      label: m('skill-bill.setup-status.c004'),
       ok: version === 'v2.0',
       detail: version === 'v2.0'
-        ? '就是当前版本（十列齐）'
-        : '还是老结构，缺' + (missing.length === 0 ? '版本标记' : '「' + missing.join('」「') + '」'),
+        ? m('skill-bill.setup-status.c005')
+        : m('skill-bill.setup-status.c006', { p0: String(missingText) }),
     },
     {
-      label: '就绪',
+      label: m('skill-bill.setup-status.c007'),
       ok: ready,
       detail: ready
-        ? '能打开、能读、结构是当前版本——可以开始记账'
-        : '还不能用：先把结构补成当前版本（跟助手说一遍「初始化」）',
+        ? m('skill-bill.setup-status.c008')
+        : m('skill-bill.setup-status.c009'),
     },
   ];
   return {

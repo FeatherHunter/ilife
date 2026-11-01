@@ -21,8 +21,9 @@ import { assembleSheetPage, sheetHead, ticketActions, ticketFurnitureStyleTag, t
 import { writeSection } from '../shared/writeParts.js';
 import type { BackupEntry } from './backups.js';
 import {
-  SOURCE_WRITE, copyZoneOf, humanBytes, setupCheck, } from './pageParts.js';
+  copyZoneOf, humanBytes, setupCheck, sourceWrite, } from './pageParts.js';
 import type { SetupScene } from './scene.js';
+import { m } from '../entries/index.js';
 
 /** 回执页的入参：这一页是谁 ＋ 造出来的那一份备份 ＋ 取数。 */
 export interface ReceiptDocInput {
@@ -51,8 +52,11 @@ function sizeParts(bytes: number): { readonly value: string; readonly unit: stri
 
 /** 目标那一份的两种写法（原型逐字：`约 0.5 KB，484 B`）。 */
 function goalsText(entry: BackupEntry): string {
-  if (!entry.hasGoals) return '这次没有目标那一份可存';
-  return '约 ' + (entry.goalsBytes / 1024).toFixed(1) + ' KB，' + humanBytes(entry.goalsBytes);
+  if (!entry.hasGoals) return m('skill-bill.setup-template-receipt.c001');
+  return m('skill-bill.setup-template-receipt.c002', {
+    p0: String((entry.goalsBytes / 1024).toFixed(1)),
+    p1: String(humanBytes(entry.goalsBytes)),
+  });
 }
 
 /** 结果回执页：一整页（票据纸）。 */
@@ -60,36 +64,39 @@ export function backupReceiptDoc(input: ReceiptDocInput): string {
   const e = input.entry;
   const size = sizeParts(e.bytes);
   const paper = ticketFurnitureStyleTag()
-    + sheetHead(DOC_TITLE + ' · ' + input.scene.title, '备份成功，已存好', input.scene.subtitle)
+    + sheetHead(DOC_TITLE + ' · ' + input.scene.title, m('skill-bill.setup-template-receipt.c003'), input.scene.subtitle)
     + ticketSummary(renderSummaryHead({
-      eyebrow: '备份完成 · BACKUP OK',
+      eyebrow: m('skill-bill.setup-template-receipt.c004'),
       value: size.value,
       unit: size.unit,
-      note: '库大小 ' + humanBytes(e.bytes) + '（目标那一份另计' + goalsText(e) + '；合计见查看备份）',
-      stamp: { text: '已存好', tone: 'ok' },
+      note: m('skill-bill.setup-template-receipt.c005', {
+        p0: String(humanBytes(e.bytes)),
+        p1: String(goalsText(e)),
+      }),
+      stamp: { text: m('skill-bill.setup-template-receipt.c006'), tone: 'ok' },
       layout: 'ticket',
     }), '<p class="ilife-ticket-summary-time">' + e.time + '</p>')
     + ticketRule()
     + ticketSection({
-      title: '备份详情',
+      title: m('skill-bill.setup-template-receipt.c007'),
       tag: '01',
       content: renderLedgerRows({
         rows: [
-          { label: '备份文件', value: e.file },
-          { label: '目标', value: e.hasGoals ? 'goals.json 已存好' : '这次没有' },
-          { label: '唤醒词', value: wakeOf(input.key, 'backup-create') },
+          { label: m('skill-bill.setup-template-receipt.c008'), value: e.file },
+          { label: m('skill-bill.setup-template-receipt.c009'), value: e.hasGoals ? m('skill-bill.setup-template-receipt.c010') : m('skill-bill.setup-template-receipt.c011') },
+          { label: m('skill-bill.setup-template-receipt.c012'), value: wakeOf(input.key, 'backup-create') },
         ],
         layout: 'ticket',
         extraClass: 'is-mono-first',
-      }) + setupCheck('想要回到今天这一步，拿这份备份说一遍「恢复备份」。文件名里的时间就是备份时间。'),
+      }) + setupCheck(m('skill-bill.setup-template-receipt.c013')),
     })
     + ticketActions(copyZoneOf({
       envelope: input.envelope, title: input.scene.title, key: input.key, params: input.params,
-      source: SOURCE_WRITE, detail: '备份 ' + e.file + '（' + String(e.bytes) + ' 字节）', actionAt: input.actionAt,
+      source: sourceWrite(), detail: m('skill-bill.setup-template-receipt.c014', { p0: String(e.file), p1: String(String(e.bytes)) }), actionAt: input.actionAt,
     }));
   const content = writeSection({
     slot: 'receipt', page: 'receipt', shape: 'receipt', key: input.key,
-    content: renderSheetFrame({ variant: 'ticket', cutLine: true, cutLineText: '✂ 裁切线', content: paper }),
+    content: renderSheetFrame({ variant: 'ticket', cutLine: true, cutLineText: m('skill-bill.setup-template-receipt.c015'), content: paper }),
   });
   return assembleSheetPage({ docTitle: DOC_TITLE + '·' + input.scene.title, bodyHtml: content, paper: 'receipt' });
 }

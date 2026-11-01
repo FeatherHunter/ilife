@@ -21,7 +21,8 @@ import { listSheetPage } from '../shared/票据纸页型.js';
 import type { TicketSheetRow } from '../shared/票据纸页型.js';
 import type { AccountSummary, AccountTotals } from './accounts.js';
 import { buildAccountCopy } from './copyTextAccount.js';
-import { SOURCE_READ, copyZoneOf, emptyOf, listEnvelopeOf, money } from './pageParts.js';
+import { copyZoneOf, emptyOf, listEnvelopeOf, money, sourceRead } from './pageParts.js';
+import { m } from '../entries/index.js';
 
 /** 出口载荷（＝envelope `data`）：`items` 是账户卡（`list` 形必填的那一格），其余是本域给页面与下游看的窗口事实。 */
 export type AccountSummaryData = {
@@ -52,22 +53,29 @@ export interface AccountSummaryInput {
 
 /** 结论句（判地主数字下面那一句）：说的不是读数卡那几个数，而是这批账户现在是什么局面。 */
 function conclusionOf(s: AccountSummary): string {
-  if (s.accounts.length === 0) return '账户表还是空的。';
+  if (s.accounts.length === 0) return m('skill-bill.account-template-summary.c001');
   const top = [...s.accounts].sort((a, b) => b.balance - a.balance)[0];
-  const head = '一共 ' + String(s.accounts.length) + ' 个账户，余额加起来 ' + money(s.totals.balance) + ' 元。';
+  const head = m('skill-bill.account-template-summary.c002', {
+    p0: String(String(s.accounts.length)),
+    p1: String(money(s.totals.balance)),
+  });
   if (top === undefined || s.totals.balance === 0) return head;
-  return head + '余额最多的是「' + top.name + '」（' + money(top.balance) + ' 元）。';
+  return m('skill-bill.account-template-summary.c003', {
+    p0: String(head),
+    p1: String(top.name),
+    p2: String(money(top.balance)),
+  });
 }
 
 /** 落点那几行（判地五行：分类／账户／账本／时间／编号）。 */
 function ledgerOf(s: AccountSummary): readonly TicketSheetRow[] {
   const last = s.flows.length === 0 ? '' : s.flows[0].time;
   return [
-    { label: '分类', value: '—（按账户归堆）' },
-    { label: '账户', value: '共 ' + String(s.accounts.length) + ' 个（详见明细）' },
-    { label: '账本', value: '账户和账本' },
-    { label: '时间', value: last === '' ? '不限' : '截至 ' + last },
-    { label: '编号', value: '最近 ' + String(s.flow_count) + ' 笔流水' },
+    { label: m('skill-bill.account-template-summary.c004'), value: m('skill-bill.account-template-summary.c005') },
+    { label: m('skill-bill.account-template-summary.c006'), value: m('skill-bill.account-template-summary.c007', { p0: String(String(s.accounts.length)) }) },
+    { label: m('skill-bill.account-template-summary.c008'), value: m('skill-bill.account-template-summary.c009') },
+    { label: m('skill-bill.account-template-summary.c010'), value: last === '' ? m('skill-bill.account-template-summary.c011') : m('skill-bill.account-template-summary.c012', { p0: String(last) }) },
+    { label: m('skill-bill.account-template-summary.c013'), value: m('skill-bill.account-template-summary.c014', { p0: String(String(s.flow_count)) }) },
   ];
 }
 
@@ -76,28 +84,34 @@ function detailRowsOf(s: AccountSummary): readonly EntryCardEntry[] {
   /** 占比条的分母＝本页余额绝对值最大那一户（判地 M4「相对最大户口径」；全 0 时不画实条）。 */
   const maxAbs = s.accounts.reduce((m, a) => Math.max(m, Math.abs(a.balance)), 0);
   const rows: EntryCardEntry[] = s.accounts.map((a) => {
-    const marks = [a.type.trim() === '' ? '—' : a.type, a.disabled ? '已停用' : a.registered ? '已注册' : '没登记'];
+    const marks = [a.type.trim() === '' ? '—' : a.type, a.disabled ? m('skill-bill.account-template-summary.c015') : a.registered ? m('skill-bill.account-template-summary.c016') : m('skill-bill.account-template-summary.c017')];
     return {
-      title: a.name + ' ｜ 余额 ' + money(a.balance),
-      sub: marks.join(' · ') + ' ｜ ' + String(a.count) + ' 笔 · 末笔见落点时间',
+      title: m('skill-bill.account-template-summary.c018', { p0: String(a.name), p1: String(money(a.balance)) }),
+      sub: m('skill-bill.account-template-summary.c019', {
+        p0: String(marks.join(' · ')),
+        p1: String(String(a.count)),
+      }),
       // 判地：每户一枚占比条；余额为负那一档走 neg（虚线空框、不画实条，M5）。
       bar: { pct: maxAbs <= 0 ? 0 : Math.round((Math.abs(a.balance) / maxAbs) * 1000) / 10, neg: a.balance < 0 },
     };
   });
   rows.push({
-    title: '总收入 ' + money(s.totals.income) + '（转账不算收入）',
-    sub: '当期累计',
+    title: m('skill-bill.account-template-summary.c020', { p0: String(money(s.totals.income)) }),
+    sub: m('skill-bill.account-template-summary.c021'),
   });
   rows.push({
-    title: '总支出 ' + money(s.totals.expense) + '（转账不算支出）',
-    sub: '当期累计',
+    title: m('skill-bill.account-template-summary.c022', { p0: String(money(s.totals.expense)) }),
+    sub: m('skill-bill.account-template-summary.c023'),
   });
   return rows;
 }
 
 /** 对账那一句（账户数 ＋ 参与汇总的流水笔数）。 */
 function checkOf(s: AccountSummary): string {
-  return String(s.accounts.length) + ' 账户 · 最近 ' + String(s.flow_count) + ' 笔参与汇总 ／ 没有异常';
+  return m('skill-bill.account-template-summary.c024', {
+    p0: String(String(s.accounts.length)),
+    p1: String(String(s.flow_count)),
+  });
 }
 
 /** 账户汇总页：一整页（判地那一套块位序列）。 */
@@ -108,26 +122,26 @@ export function accountSummaryDoc(input: AccountSummaryInput): string {
   const detailHtml = hasAccounts
     ? renderEntryCard({ entries: detailRowsOf(s) })
     : emptyOf({
-      title: '账户表还是空的',
+      title: m('skill-bill.account-template-summary.c025'),
       text: s.records === 0
-        ? '这个库里一条记录都还没有，所以还没有任何账户余额。'
-        : '账户表里一个账户都还没有，流水上的账户名也还没登记成账户。',
-      next: '先说「新增账户」登记一个，余额就有地方算了。',
+        ? m('skill-bill.account-template-summary.c026')
+        : m('skill-bill.account-template-summary.c027'),
+      next: m('skill-bill.account-template-summary.c028'),
     });
   return listSheetPage({
-    docTitle: DOC_TITLE + '·账户汇总',
-    brand: '饼干记账 · ' + input.wakeWord,
+    docTitle: m('skill-bill.account-template-summary.c029', { p0: String(DOC_TITLE) }),
+    brand: m('skill-bill.account-template-summary.c030', { p0: String(input.wakeWord) }),
     title: input.wakeWord,
     subtitle: input.window,
     summary: {
-      eyebrow: hasAccounts ? '查到了' : '账户表是空的',
+      eyebrow: hasAccounts ? m('skill-bill.account-template-summary.c031') : m('skill-bill.account-template-summary.c032'),
       value: hasAccounts ? money(s.totals.balance) : '0',
-      unit: '元',
+      unit: m('skill-bill.account-template-summary.c033'),
       note: conclusionOf(s),
     },
-    ledgerTitle: '账户落点',
+    ledgerTitle: m('skill-bill.account-template-summary.c034'),
     ledger: ledgerOf(s),
-    detailTitle: '各账户余额',
+    detailTitle: m('skill-bill.account-template-summary.c035'),
     detailTag: 'DETAIL',
     detailHtml,
     check: checkOf(s),
@@ -135,10 +149,10 @@ export function accountSummaryDoc(input: AccountSummaryInput): string {
     // （同是 buildDataText 的 text 格式），留两个是语义重复。负责人 2026-10-05 原话点名删除。
     actions: copyZoneOf({
       envelope, title: input.wakeWord, key: input.key, params: input.params,
-      source: SOURCE_READ, detail: '查到 ' + String(s.accounts.length) + ' 个账户', actionAt: input.actionAt,
+      source: sourceRead(), detail: m('skill-bill.account-template-summary.c036', { p0: String(String(s.accounts.length)) }), actionAt: input.actionAt,
       copy: buildAccountCopy(input.wakeWord, s),
     }),
-    foot: '饼干记账 · ' + input.wakeWord,
+    foot: m('skill-bill.account-template-summary.c037', { p0: String(input.wakeWord) }),
     styleHtml: '<style>' + ticketButtonCss() + entryCardCss() + '</style>',
     slot: 'list', page: 'list', shape: 'list', key: input.key, paper: 'detail',
   });

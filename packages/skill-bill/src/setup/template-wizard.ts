@@ -25,14 +25,15 @@ import { writeSection } from '../shared/writeParts.js';
 import type { BackupEntry } from './backups.js';
 import type { ColumnMap, CsvFile, ImportPlan } from './importer.js';
 import {
-  SOURCE_FILE, SOURCE_READ, SOURCE_WRITE, copyZoneOf, setupCheck, setupEntryCard, setupPromptBox, } from './pageParts.js';
+  copyZoneOf, setupCheck, setupEntryCard, setupPromptBox, sourceFile, sourceRead, sourceWrite, } from './pageParts.js';
 import { buildSetupCopy } from './copyTextSetup.js';
 import type { SetupCopy } from './copyTextSetup.js';
 import type { SetupRowInput } from './pageParts.js';
 import type { SetupScene } from './scene.js';
 import type { SetupBlocked } from './params.js';
-import { STEP_STATE_TEXT } from './steps.js';
+import { stepStateText } from './steps.js';
 import type { WizardStep } from './steps.js';
+import { m } from '../entries/index.js';
 
 /** 三片向导共用的入参。 */
 interface WizardCommon {
@@ -90,7 +91,7 @@ function stepRows(steps: readonly WizardStep[]): readonly SetupRowInput[] {
     const tone: SetupRowInput['tone'] = s.state === 'done' ? 'done' : s.state === 'current' ? 'now' : s.state === 'blocked' ? 'bad' : 'todo';
     return {
       no: String(s.no),
-      text: s.label + ' · ' + STEP_STATE_TEXT[s.state],
+      text: s.label + ' · ' + stepStateText(s.state),
       sub: s.detail,
       tone,
     };
@@ -100,59 +101,61 @@ function stepRows(steps: readonly WizardStep[]): readonly SetupRowInput[] {
 /** 四步段（三页同形，段号由调用方给；空steps出空态不断言假绿）。 */
 function stepsSection(steps: readonly WizardStep[], tag: string): string {
   if (steps.length === 0) {
-    return ticketSection({ title: '四步走到哪儿了', tag, content: setupCheck('这一页没有步骤可报，换一条唤醒词再说一遍。', 'warn') });
+    return ticketSection({ title: m('skill-bill.setup-template-wizard.c001'), tag, content: setupCheck(m('skill-bill.setup-template-wizard.c002'), 'warn') });
   }
-  return ticketSection({ title: '四步走到哪儿了', tag, content: setupEntryCard(stepRows(steps)) });
+  return ticketSection({ title: m('skill-bill.setup-template-wizard.c003'), tag, content: setupEntryCard(stepRows(steps)) });
 }
 
 /** 向导复制三份＋提示（人话门覆写，复制恒等于已显示行；hints与回执同组；经 `copy` 单对象透传）。 */
 function wizardCopyOf(op: 'init' | 'restore' | 'import', title: string, steps: readonly WizardStep[]): SetupCopy {
   const facts = { op, title, steps } as const;
   const triple = buildSetupCopy(facts);
-  return { ...triple, hints: WIZARD_COPY_HINTS };
+  return { ...triple, hints: wizardCopyHints() };
 }
 
 /** 向导复制提示（三份用途，与回执同字）。 */
-const WIZARD_COPY_HINTS: readonly string[] = ['纯文本 自己看或发给助手', 'JSON 存档用', 'CSV 表格用'];
+function wizardCopyHints(): readonly string[] {
+  return [m('skill-bill.setup-template-wizard.c004'), m('skill-bill.setup-template-wizard.c005'), m('skill-bill.setup-template-wizard.c006')];
+}
 
 /** 初始化页：四步 ＋ 落点（四步现状数只读 steps.detail，不另写一套）。 */
 function initBody(input: InitWizardInput): string {
   const ok = input.ready;
+  const createdText = input.created ? m('skill-bill.setup-template-wizard.c007') : m('skill-bill.setup-template-wizard.c008');
   const copy = wizardCopyOf('init', input.scene.title, input.steps);
   return ticketFurnitureStyleTag()
-    + sheetHead(DOC_TITLE + ' · 初始化', ok ? '初始化完成，可以记账了' : '初始化还没走完', input.scene.subtitle)
+    + sheetHead(m('skill-bill.setup-template-wizard.c009', { p0: String(DOC_TITLE) }), ok ? m('skill-bill.setup-template-wizard.c010') : m('skill-bill.setup-template-wizard.c011'), input.scene.subtitle)
     + ticketSummary(renderSummaryHead({
-      eyebrow: ok ? '已完成 · INIT OK' : '没走完 · INIT FAIL',
+      eyebrow: ok ? m('skill-bill.setup-template-wizard.c012') : m('skill-bill.setup-template-wizard.c013'),
       value: String(input.records),
-      unit: '条',
-      note: '库里现有记录，一条不少',
+      unit: m('skill-bill.setup-template-wizard.c014'),
+      note: m('skill-bill.setup-template-wizard.c015'),
       layout: 'ticket',
     }), '')
     + ticketRule()
     + stepsSection(input.steps, '01')
     + ticketRule()
     + ticketSection({
-      title: '落点',
+      title: m('skill-bill.setup-template-wizard.c016'),
       tag: '02',
       content: renderLedgerRows({
         rows: [
-          { label: '库', value: basename(input.dbPath) },
-          { label: '结构', value: String(input.envChecks.length) + ' 列齐' },
-          { label: '唤醒词', value: wakeOf(input.key, 'init') },
+          { label: m('skill-bill.setup-template-wizard.c017'), value: basename(input.dbPath) },
+          { label: m('skill-bill.setup-template-wizard.c018'), value: m('skill-bill.setup-template-wizard.c019', { p0: String(String(input.envChecks.length)) }) },
+          { label: m('skill-bill.setup-template-wizard.c020'), value: wakeOf(input.key, 'init') },
         ],
         layout: 'ticket',
         extraClass: 'is-mono-first',
       }) + setupCheck(ok
-        ? '不用选：全程自动检测，不用你动手选。'
-          + (input.created ? '这次新建了库，' : '这次没有新建，沿用已有库。') + '下一步说「记支出」，直接开始记第一笔。'
-        : '有一步没走通：照着上面那一行的说法再跟助手说一遍，把这一步补上。'),
+        ? m('skill-bill.setup-template-wizard.c021', { p0: String(createdText) })
+        : m('skill-bill.setup-template-wizard.c022')),
     })
     + ticketActions(
       ticketPrimaryButton({
-        label: '复制给助手：直接开始记第一笔', actionId: 'ilife-setup-next', text: input.prompt,
+        label: m('skill-bill.setup-template-wizard.c023'), actionId: 'ilife-setup-next', text: input.prompt,
       }) + copyZoneOf({
         envelope: input.envelope, title: input.scene.title, key: input.key, params: input.params,
-        source: SOURCE_WRITE, detail: '环境检测通过，库已就绪', actionAt: input.actionAt,
+        source: sourceWrite(), detail: m('skill-bill.setup-template-wizard.c024'), actionAt: input.actionAt,
         copy,
       }),
     );
@@ -161,45 +164,45 @@ function initBody(input: InitWizardInput): string {
 /** 恢复页：覆盖警告 ＋ 四步 ＋ 确认口令。 */
 function restoreBody(input: RestoreWizardInput): string {
   const sel = input.selected;
-  const name = sel === null ? '（备份目录里还没有备份）' : sel.file;
+  const name = sel === null ? m('skill-bill.setup-template-wizard.c025') : sel.file;
   const copy = wizardCopyOf('restore', input.scene.title, input.steps);
   return ticketFurnitureStyleTag()
-    + sheetHead(DOC_TITLE + ' · ' + input.scene.title, '要恢复的是这份，确认之后才覆盖', input.scene.subtitle)
+    + sheetHead(DOC_TITLE + ' · ' + input.scene.title, m('skill-bill.setup-template-wizard.c026'), input.scene.subtitle)
     + ticketSummary(renderSummaryHead({
-      eyebrow: '等你确认 · 待确认',
+      eyebrow: m('skill-bill.setup-template-wizard.c027'),
       value: String(input.entries.length),
-      unit: '份',
-      note: '待恢复的备份：' + name,
+      unit: m('skill-bill.setup-template-wizard.c028'),
+      note: m('skill-bill.setup-template-wizard.c029', { p0: String(name) }),
       layout: 'ticket',
       extraClass: 'is-warn-head',
     }), '')
     + ticketRule()
     + ticketSection({
-      title: '覆盖警告',
+      title: m('skill-bill.setup-template-wizard.c030'),
       tag: '01',
       tone: 'danger',
-      content: setupCheck('恢复会覆盖当前库。覆盖之前会自动备份现状，所以现状不会丢——但这一步仍要你亲口确认。', 'danger'),
+      content: setupCheck(m('skill-bill.setup-template-wizard.c031'), 'danger'),
     })
     + ticketRule()
     + stepsSection(input.steps, '02')
     + ticketRule()
     + ticketSection({
-      title: '确认口令',
+      title: m('skill-bill.setup-template-wizard.c032'),
       tag: '03',
       content: renderLedgerRows({
         rows: [
-          { label: '目标备份', value: '同纸头待恢复那一份' },
-          { label: '唤醒词', value: wakeOf(input.key, 'restore') },
+          { label: m('skill-bill.setup-template-wizard.c033'), value: m('skill-bill.setup-template-wizard.c034') },
+          { label: m('skill-bill.setup-template-wizard.c035'), value: wakeOf(input.key, 'restore') },
         ],
         layout: 'ticket',
-      }) + setupPromptBox('复制给助手，照这句确认，恢复前会自动备份现状：', input.prompt)
-        + setupCheck('本页只做预览：确认后才会真正覆盖。真要恢复，把口令说给助手，由助手完成。', 'warn'),
+      }) + setupPromptBox(m('skill-bill.setup-template-wizard.c036'), input.prompt)
+        + setupCheck(m('skill-bill.setup-template-wizard.c037'), 'warn'),
     })
     + ticketActions(
-      ticketPrimaryButton({ label: '复制确认口令给助手', actionId: 'ilife-setup-restore', text: input.prompt })
+      ticketPrimaryButton({ label: m('skill-bill.setup-template-wizard.c038'), actionId: 'ilife-setup-restore', text: input.prompt })
       + copyZoneOf({
         envelope: input.envelope, title: input.scene.title, key: input.key, params: input.params,
-        source: SOURCE_READ, detail: '预览，等确认', actionAt: input.actionAt,
+        source: sourceRead(), detail: m('skill-bill.setup-template-wizard.c039'), actionAt: input.actionAt,
         copy,
       }),
     );
@@ -217,44 +220,50 @@ function importBody(input: ImportWizardInput): string {
   const preview = (plan === null ? [] : [...plan.rows].slice(0, 3)).map((r, i) => ({
     no: String(i + 1),
     text: r.time.slice(5, 10) + ' ' + r.category + ' ' + r.amount.toFixed(2),
-    sub: '时间 ' + r.time.slice(5, 16) + ' · 分类 ' + r.category + ' · 金额 ' + r.amount.toFixed(2)
-      + ' · 账户 ' + r.account,
+    sub: m('skill-bill.setup-template-wizard.c040', {
+      p0: String(r.time.slice(5, 16)),
+      p1: String(r.category),
+      p2: String(r.amount.toFixed(2)),
+      p3: String(r.account),
+    }),
   }));
   return ticketFurnitureStyleTag()
-    + sheetHead(DOC_TITLE + ' · ' + input.scene.title, '先把文件的列认下来', input.scene.subtitle)
+    + sheetHead(DOC_TITLE + ' · ' + input.scene.title, m('skill-bill.setup-template-wizard.c041'), input.scene.subtitle)
     + ticketSummary(renderSummaryHead({
-      eyebrow: '已认列 · 等你确认',
+      eyebrow: m('skill-bill.setup-template-wizard.c042'),
       value: String(newRows),
-      unit: '行',
-      note: '本次将新增 ' + String(newRows) + ' 行，不覆盖已有记录',
+      unit: m('skill-bill.setup-template-wizard.c043'),
+      note: m('skill-bill.setup-template-wizard.c044', { p0: String(String(newRows)) }),
       layout: 'ticket',
     }), '')
     + ticketRule()
     + stepsSection(input.steps, '01')
     + ticketRule()
     + ticketSection({
-      title: '列映射与预览',
+      title: m('skill-bill.setup-template-wizard.c045'),
       tag: '02',
       content: renderLedgerRows({
         rows: [
-          { label: 'CSV 文件', value: csv === null ? '—' : csv.name },
-          { label: '认下的列', value: mapped ? '时间 · 分类 · 金额 · 备注 · 账户' : '还没认全' },
-          { label: '读出来的行', value: String(csv === null ? 0 : csv.rows.length) + ' 行' },
-          { label: '将新增', value: String(newRows) + ' 行' },
-          { label: '重号不写', value: String(dup) + ' 行' },
-          { label: '读不出的坏行', value: String(bad) + ' 行' },
+          { label: m('skill-bill.setup-template-wizard.c046'), value: csv === null ? '—' : csv.name },
+          { label: m('skill-bill.setup-template-wizard.c047'), value: mapped ? m('skill-bill.setup-template-wizard.c048') : m('skill-bill.setup-template-wizard.c049') },
+          { label: m('skill-bill.setup-template-wizard.c050'), value: m('skill-bill.setup-template-wizard.c051', {
+            p0: String(String(csv === null ? 0 : csv.rows.length)),
+          }) },
+          { label: m('skill-bill.setup-template-wizard.c052'), value: m('skill-bill.setup-template-wizard.c053', { p0: String(String(newRows)) }) },
+          { label: m('skill-bill.setup-template-wizard.c054'), value: m('skill-bill.setup-template-wizard.c055', { p0: String(String(dup)) }) },
+          { label: m('skill-bill.setup-template-wizard.c056'), value: m('skill-bill.setup-template-wizard.c057', { p0: String(String(bad)) }) },
         ],
         layout: 'ticket',
       }) + setupEntryCard(preview)
-        + setupPromptBox('确认这 ' + String(newRows) + ' 行，照这句说一遍：', input.prompt)
-        + setupCheck('先数后记：这 ' + String(newRows) + ' 行还没写库，你点头之后助手才动手。', 'warn')
-        + setupCheck('导入前会自动备份一次现状，备份件写在这一步的结果里。'),
+        + setupPromptBox(m('skill-bill.setup-template-wizard.c058', { p0: String(String(newRows)) }), input.prompt)
+        + setupCheck(m('skill-bill.setup-template-wizard.c059', { p0: String(String(newRows)) }), 'warn')
+        + setupCheck(m('skill-bill.setup-template-wizard.c060')),
     })
     + ticketActions(
-      ticketPrimaryButton({ label: '复制这句话去跟助手说', actionId: 'ilife-setup-import', text: input.prompt })
+      ticketPrimaryButton({ label: m('skill-bill.setup-template-wizard.c061'), actionId: 'ilife-setup-import', text: input.prompt })
       + copyZoneOf({
         envelope: input.envelope, title: input.scene.title, key: input.key, params: input.params,
-        source: SOURCE_FILE, detail: '预览导入计划 ' + String(newRows) + ' 行，等确认', actionAt: input.actionAt,
+        source: sourceFile(), detail: m('skill-bill.setup-template-wizard.c062', { p0: String(String(newRows)) }), actionAt: input.actionAt,
         copy,
       }),
     );
@@ -265,7 +274,7 @@ export function wizardDoc(input: WizardInput): string {
   const paper = input.op === 'init' ? initBody(input) : input.op === 'restore' ? restoreBody(input) : importBody(input);
   const content = writeSection({
     slot: 'receipt', page: 'receipt', shape: 'receipt', key: input.key,
-    content: renderSheetFrame({ variant: 'ticket', cutLine: true, cutLineText: '✂ 裁切线', content: paper }),
+    content: renderSheetFrame({ variant: 'ticket', cutLine: true, cutLineText: m('skill-bill.setup-template-wizard.c063'), content: paper }),
   });
   return assembleSheetPage({ docTitle: DOC_TITLE + '·' + input.scene.title, bodyHtml: content, paper: 'detail' });
 }

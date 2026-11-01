@@ -8,20 +8,32 @@
  *   ③ 老侧环境检测在**每一步**都会 `mkdir` 数据目录并短暂写一个探测文件（`cli.py:114-133`），
  *      新侧照旧做真探测（可写才报可写），但探测文件用完即删、不留痕。
  */
+import { runWithLanguage } from 'base-entries';
 import { projectWakeWord } from '../triggers/wakeTable.js';
 import type { SetupScene } from './scene.js';
+import { m } from '../entries/index.js';
 
 const WORD: string = projectWakeWord({ key: 'bill.setup.run', op: 'init' });
 const KEY = 'bill.setup.run' as const;
 
-export const SCENE: SetupScene = {
-  id: 'init',
-  sceneId: 'setup_init_wizard',
-  key: KEY,
-  op: 'init',
-  page: 'wizard',
-  title: '首次使用向导',
-  caliber: '4 步零决策',
-  subtitle: '首次使用向导 · 不用选 · 自动检测 · 一次成功',
-  promptOf: () => '请加载「饼干记账」技能,帮我开始使用饼干记账(唤醒词:' + WORD + '):\n',
-};
+/** 构建场景（`#1214`：文案经词条层，**渲染期**取词——模块级常量会把语言固化成 zh）。 */
+function buildScene(): SetupScene {
+  return {
+    id: 'init',
+    sceneId: 'setup_init_wizard',
+    key: KEY,
+    op: 'init',
+    page: 'wizard',
+    title: m('skill-bill.setup-scene-init.c001'),
+    caliber: m('skill-bill.setup-scene-init.c002'),
+    subtitle: m('skill-bill.setup-scene-init.c003'),
+    promptOf: () => m('skill-bill.setup-scene-init.c004', { p0: String(WORD) }),
+  };
+}
+
+export const SCENE: SetupScene = buildScene();
+
+/** 按语言重建本场景（`#1214`：语言是运行期参数，不是模块加载期事实）。 */
+export function sceneInitFor(language: string): SetupScene {
+  return runWithLanguage(language, buildScene);
+}

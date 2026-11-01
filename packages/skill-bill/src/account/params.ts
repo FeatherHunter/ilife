@@ -27,6 +27,7 @@
 import { BillPolicyError } from '../fetch/errors.js';
 // #731：三件值读法住共用位，本件既转出（对外面不变）又本地用（域内四处校验）。
 import { isGiven, numberOf, textOf } from '../shared/params.js';
+import { m } from '../entries/index.js';
 
 /** 一道写命令的三支操作（老侧 `account/cli.py` 的 add／update／transfer 三个子命令）。
  *  `summary` 不在这里：它是 `bill.account.query`（读命令），不在写命令的判别式里。 */
@@ -77,38 +78,48 @@ export interface AccountBlocked {
   readonly why: string;
 }
 
+/** 缺项判据位（**不上屏**）：`why` 等于它表示「这一格没给」，由页面换成「未提供」。
+ *  它是分支标记不是文案，不随语言变（#1212 判据位）。 */
+export const WHY_MISSING = '没给';
+
 function slot(name: string, label: string, hint: string, required: boolean, note: string): AccountSlot {
   return { name, label, hint, required, note };
 }
 
 /** 「改成什么」那一格：老侧改账户要求 `--new-name`／`--disable`／`--enable` 至少给一个
- *  （`cli.py:186-187` 的「没有可执行的变更」）。它不是一个参数名，故单立一格。 */
-export const CHANGE_SLOT: AccountSlot = slot('change', '改成什么', '如招行工资卡', true, '改后的名字，如招行工资卡');
+ *  （`cli.py:186-187` 的「没有可执行的变更」）。它不是一个参数名，故单立一格。
+ *  #1212：文案按需取词（模块加载期不固化语言），故由常量改成函数。 */
+export function changeSlot(): AccountSlot {
+  return slot('change', m('skill-bill.account-params.c001'), m('skill-bill.account-params.c002'), true, m('skill-bill.account-params.c003'));
+}
 
-/** 三支操作的槽位表（**唯一定义地**）：字段卡照它出，缺项探针照它算。 */
-export const ACCOUNT_SLOTS: Readonly<Record<AccountOp, readonly AccountSlot[]>> = {
+/** 三支操作的槽位表（**唯一定义地**）：字段卡照它出，缺项探针照它算。
+ *  #1212：文案按需取词，故由常量改成函数（每次调用按当前渲染语言取一遍）。 */
+export function accountSlots(): Readonly<Record<AccountOp, readonly AccountSlot[]>> {
+  return {
   add: [
     /* 标签／占位／提示逐字照判地 b01（`proto/acct-goal/b01-新增账户-采集-v2.2.html` 的 `.fill-label`／`placeholder`／`.entry-sub`）。 */
-    slot('name', '账户名', '如招行卡', true, '写清就行，如招行卡'),
-    slot('type', '类型（选填）', '如银行卡，留空也行', false, '如银行卡，留空也能记好'),
+    slot('name', m('skill-bill.account-params.c004'), m('skill-bill.account-params.c005'), true, m('skill-bill.account-params.c006')),
+    slot('type', m('skill-bill.account-params.c007'), m('skill-bill.account-params.c008'), false, m('skill-bill.account-params.c009')),
   ],
   update: [
     /* 判地 b03：只列「账户」「改成什么」两行（本表另两格是命令侧能力，页上不列）。 */
-    slot('name', '账户', '如招行卡', true, '要改哪一个，如招行卡'),
+    slot('name', m('skill-bill.account-params.c010'), m('skill-bill.account-params.c011'), true, m('skill-bill.account-params.c012')),
     /* 这一格的 `required` 保持 false：命令侧「改成什么」可由 停用／启用 顶上（`hasChange` 那条闸门），
        页面上那枚 `*` 由 template-update 按判地单独给（判地 b03 两行都带 `*`）。 */
-    slot('new-name', '改成什么', '如招行工资卡', false, '改后的名字，如招行工资卡'),
-    slot('disable', '停用', '停用后不再算进总余额，历史记录保留', false, '（判地页上不列这一行）'),
-    slot('enable', '启用', '把停用的账户恢复使用', false, '（判地页上不列这一行）'),
+    slot('new-name', m('skill-bill.account-params.c013'), m('skill-bill.account-params.c014'), false, m('skill-bill.account-params.c015')),
+    slot('disable', m('skill-bill.account-params.c016'), m('skill-bill.account-params.c017'), false, m('skill-bill.account-params.c018')),
+    slot('enable', m('skill-bill.account-params.c019'), m('skill-bill.account-params.c020'), false, m('skill-bill.account-params.c021')),
   ],
   transfer: [
     /* 判地 b05：金额／从账户／到账户／时间（选填）四行；时间那一格判地不带占位。 */
-    slot('amount', '金额', '如 500', true, '转多少，如 500'),
-    slot('from', '从账户', '如支付宝', true, '钱从哪出，如支付宝'),
-    slot('to', '到账户', '如招行工资卡', true, '钱到哪去，如招行工资卡'),
-    slot('time', '时间（选填）', '', false, '不填记现在'),
+    slot('amount', m('skill-bill.account-params.c022'), m('skill-bill.account-params.c023'), true, m('skill-bill.account-params.c024')),
+    slot('from', m('skill-bill.account-params.c025'), m('skill-bill.account-params.c026'), true, m('skill-bill.account-params.c027')),
+    slot('to', m('skill-bill.account-params.c028'), m('skill-bill.account-params.c029'), true, m('skill-bill.account-params.c030')),
+    slot('time', m('skill-bill.account-params.c031'), '', false, m('skill-bill.account-params.c032')),
   ],
-};
+  };
+}
 
 /** 三件值读法**改从共用位转出**（#731）：账户域是第一处用法、开始使用域是第二处，
  *  按「共用件是从第二个用法里长出来的」上浮到 `../shared/params.js`；本域调用点写法一字不改。 */
@@ -123,36 +134,39 @@ export function hasChange(params: Record<string, unknown>): boolean {
  *  账户表那一层的冲突（重名／找不到账户）住 `./write.js` 的 `tableBlockedOf`——本件只吃参数，不碰库与文件。 */
 export function accountBlocked(op: AccountOp, params: Record<string, unknown>): readonly AccountBlocked[] {
   const out: AccountBlocked[] = [];
-  for (const s of ACCOUNT_SLOTS[op]) {
-    if (s.required && !isGiven(params[s.name])) out.push({ name: s.name, label: s.label, why: '没给' });
+  for (const s of accountSlots()[op]) {
+    if (s.required && !isGiven(params[s.name])) out.push({ name: s.name, label: s.label, why: WHY_MISSING });
   }
-  if (op === 'update' && !hasChange(params)) out.push({ name: CHANGE_SLOT.name, label: CHANGE_SLOT.label, why: '没给' });
+  if (op === 'update' && !hasChange(params)) {
+    const change = changeSlot();
+    out.push({ name: change.name, label: change.label, why: WHY_MISSING });
+  }
   if (op === 'add' || op === 'update') {
     const name = textOf(params['name']);
     if (name.length > ACCOUNT_NAME_MAX) {
-      out.push({ name: 'name', label: '账户名', why: '太长（最多 ' + String(ACCOUNT_NAME_MAX) + ' 个字）' });
+      out.push({ name: 'name', label: m('skill-bill.account-params.c033'), why: m('skill-bill.account-params.c034', { p0: String(String(ACCOUNT_NAME_MAX)) }) });
     }
   }
   if (op === 'update' && isGiven(params['new-name'])) {
     const next = textOf(params['new-name']);
-    if (next === textOf(params['name'])) out.push({ name: 'new-name', label: '改成什么名字', why: '和现在的名字一样' });
+    if (next === textOf(params['name'])) out.push({ name: 'new-name', label: m('skill-bill.account-params.c035'), why: m('skill-bill.account-params.c036') });
     if (next.length > ACCOUNT_NAME_MAX) {
-      out.push({ name: 'new-name', label: '改成什么名字', why: '太长（最多 ' + String(ACCOUNT_NAME_MAX) + ' 个字）' });
+      out.push({ name: 'new-name', label: m('skill-bill.account-params.c037'), why: m('skill-bill.account-params.c038', { p0: String(String(ACCOUNT_NAME_MAX)) }) });
     }
   }
   if (op === 'transfer') {
     const amount = numberOf(params['amount']);
     if (isGiven(params['amount']) && amount !== null && amount <= 0) {
-      out.push({ name: 'amount', label: '金额', why: '要写正数（账户之间移动，不分收支方向）' });
+      out.push({ name: 'amount', label: m('skill-bill.account-params.c039'), why: m('skill-bill.account-params.c040') });
     }
     const from = textOf(params['from']);
     const to = textOf(params['to']);
     if (from !== '' && to !== '' && from === to) {
-      out.push({ name: 'to', label: '到账户', why: '要和转出账户不同（自己转给自己不算一笔）' });
+      out.push({ name: 'to', label: m('skill-bill.account-params.c041'), why: m('skill-bill.account-params.c042') });
     }
     const time = textOf(params['time']);
     if (time !== '' && !isFullTime(time)) {
-      out.push({ name: 'time', label: '时间', why: '要写成 2026-09-14 12:00:00 这样（含年月日与时分秒）' });
+      out.push({ name: 'time', label: m('skill-bill.account-params.c043'), why: m('skill-bill.account-params.c044') });
     }
   }
   return out;

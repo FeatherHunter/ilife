@@ -229,3 +229,41 @@ export function analysisDocOf(input: {
     content,
   });
 }
+
+/** 票面「基线」那一行写的**就是老页面原型文件名**（原型逐字，如 `a01-看月度-proto.html`）。
+ *
+ * 这是**数据位**不是文案：不迁词条表、不译（手册 §4.5 数据不译）。集中在本件一处，A／B 两组票据纸
+ * 只按场景 id 取（`./ticket.ts` 与 `./ticket-b.ts` 各有一处落点行用它）；键是场景 id，缺省空串
+ * （＝这一页没有对应原型，落点行留空，与改前逐字节一致）。 */
+const PROTO_BASELINE: Readonly<Record<string, string>> = {
+  monthly: 'a01-看月度-proto.html',
+  yearly: 'a02-看年度-proto.html',
+  overview: 'a03-看总览-proto.html',
+  week: 'a04-看周报-proto.html',
+  category: 'a05-看分类-proto.html',
+  account: 'a06-看账户-proto.html',
+  ledger: 'a07-看账本-proto.html',
+  structure: 'a08-看结构-proto.html',
+  stats: 'a09-做统计-proto.html',
+  period_compare: 'a10-看对比-proto.html',
+  range_compare: 'a11-看双区间-proto.html',
+  yoy: 'a12-看同比-proto.html',
+  cat_compare: 'a13-看分类对比-proto.html',
+  trend: 'a14-看趋势-proto.html',
+  cat_trend: 'a15-看分类趋势-proto.html',
+  top: 'a16-看大额-proto.html',
+  top_freq: 'a17-看高频-proto.html',
+  distribution: 'a18-看分布-proto.html',
+  activity: 'a19-看活跃-proto.html',
+  insight: 'a20-看洞察-proto.html',
+  anomaly: 'a21-看异常-proto.html',
+  debt: 'a22-看借贷-proto.html',
+  reimburse: 'a23-看报销-proto.html',
+  installment: 'a24-看分期-proto.html',
+  refund: 'a25-看退款-proto.html',
+};
+
+/** 场景 id → 原型基线文件名（没有对应原型＝空串；落点行按空串印空，与改前一致）。 */
+export function baselineFileOf(id: string): string {
+  return PROTO_BASELINE[id] ?? '';
+}

@@ -11,8 +11,9 @@ import { renderLedgerRows, renderSummaryHead } from 'base-paint/blocks';
 import { escapeHtml } from 'base-paint';
 import { ticketDoc } from './ticket.js';
 import type { AnalysisCopy } from './copyTextAnalysis.js';
-import { MISSING, NO_WINDOW, SOURCE_READ } from './pageParts.js';
+import { baselineFileOf, MISSING, NO_WINDOW, SOURCE_READ } from './pageParts.js';
 import type { BarsPage, DocInput } from './scene.js';
+import { m } from '../entries/index.js';
 
 /** B 组 12 个场景 id（唯一定义地；按 `params.kind` 认，不写唤醒词字面，沿 1057 第二刀）。 */
 export const B_TICKET_IDS = [
@@ -37,56 +38,38 @@ export function isBTicket(id: string): boolean {
 
 /** H2 一句聚合（原型 v2.1 PAGES 表 a14-a25；动态计数，`extra` 只给 cat_trend 传分类名）。 */
 export function h2ForB(id: string, count: number, extra = ''): string {
-  switch (id) {
-    case 'trend': return '趋势共记 ' + String(count) + ' 笔';
-    case 'cat_trend': return extra + '趋势共记 ' + String(count) + ' 笔';
-    case 'top': return '大额共记 ' + String(count) + ' 笔';
-    case 'top_freq': return '高频共记 ' + String(count) + ' 类';
-    case 'distribution': return '分布共记 ' + String(count) + ' 笔';
-    case 'activity': return '活跃共记 ' + String(count) + ' 笔';
-    case 'insight': return '洞察共记 ' + String(count) + ' 笔';
-    case 'anomaly': return '异常共记 ' + String(count) + ' 项';
-    case 'debt': return '借贷共记 ' + String(count) + ' 笔';
-    case 'reimburse': return '报销共记 ' + String(count) + ' 笔';
-    case 'installment': return '分期共记 ' + String(count) + ' 笔';
-    case 'refund': return '退款共记 ' + String(count) + ' 笔';
-    default: return '共记 ' + String(count) + ' 笔';
-  }
-}
-
-/** 基线文件名（落点 LEDGER 末行，原型逐字；a14-a25 在 1021）。 */
-function baselineOfB(id: string): string {
-  switch (id) {
-    case 'trend': return 'a14-看趋势-proto.html';
-    case 'cat_trend': return 'a15-看分类趋势-proto.html';
-    case 'top': return 'a16-看大额-proto.html';
-    case 'top_freq': return 'a17-看高频-proto.html';
-    case 'distribution': return 'a18-看分布-proto.html';
-    case 'activity': return 'a19-看活跃-proto.html';
-    case 'insight': return 'a20-看洞察-proto.html';
-    case 'anomaly': return 'a21-看异常-proto.html';
-    case 'debt': return 'a22-看借贷-proto.html';
-    case 'reimburse': return 'a23-看报销-proto.html';
-    case 'installment': return 'a24-看分期-proto.html';
-    case 'refund': return 'a25-看退款-proto.html';
-    default: return '';
-  }
+  // 写成 if 链而不是 switch：迁移器只认 copy／concat 位置，switch 的分支标签会被判跳过（#1208）。
+  if (id === 'trend') return m('skill-bill.analysis-ticket-b.c001', { p0: String(String(count)) });
+  if (id === 'cat_trend') return m('skill-bill.analysis-ticket-b.c002', { p0: String(extra), p1: String(String(count)) });
+  if (id === 'top') return m('skill-bill.analysis-ticket-b.c003', { p0: String(String(count)) });
+  if (id === 'top_freq') return m('skill-bill.analysis-ticket-b.c004', { p0: String(String(count)) });
+  if (id === 'distribution') return m('skill-bill.analysis-ticket-b.c005', { p0: String(String(count)) });
+  if (id === 'activity') return m('skill-bill.analysis-ticket-b.c006', { p0: String(String(count)) });
+  if (id === 'insight') return m('skill-bill.analysis-ticket-b.c007', { p0: String(String(count)) });
+  if (id === 'anomaly') return m('skill-bill.analysis-ticket-b.c008', { p0: String(String(count)) });
+  if (id === 'debt') return m('skill-bill.analysis-ticket-b.c009', { p0: String(String(count)) });
+  if (id === 'reimburse') return m('skill-bill.analysis-ticket-b.c010', { p0: String(String(count)) });
+  if (id === 'installment') return m('skill-bill.analysis-ticket-b.c011', { p0: String(String(count)) });
+  if (id === 'refund') return m('skill-bill.analysis-ticket-b.c012', { p0: String(String(count)) });
+  return m('skill-bill.analysis-ticket-b.c013', { p0: String(String(count)) });
 }
 
 /** B 落点账目（整行式：调用方拼好行，数字只搬家；来源／基线收口加，与 `./ticket.ts` 的 compare 支同形）。 */
 export function ledgerB(rows: readonly { k: string; v: string }[], id: string): string {
   const full = [
     ...rows.map((r) => ({ label: r.k, value: r.v })),
-    { label: '来源', value: '记账库' },
-    { label: '基线', value: baselineOfB(id) },
+    { label: m('skill-bill.analysis-ticket-b.c014'), value: m('skill-bill.analysis-ticket-b.c015') },
+    { label: m('skill-bill.analysis-ticket-b.c016'), value: baselineFileOf(id) },
   ];
   return renderLedgerRows({ rows: full, layout: 'ticket' });
 }
 
-/** 页内读数卡按标签取值（上屏文本原文搬家；找不到或无值＝缺值占位，不猜）。 */
-export function kpiValue(kpis: readonly { readonly label: string; readonly value?: string }[], label: string): string {
-  for (const k of kpis) if (k.label === label) return k.value ?? MISSING;
-  return MISSING;
+/** 页内读数卡按位置取值（上屏文本原文搬家；越界或无值＝缺值占位，不猜）。
+ *
+ * 判据位按位置取，不按显示标签挑读数（标签随语言变，位置不变）。
+ * 各场景的发射方正序写在**调用点**那一行上方（见 `./ticket-b-*.ts`）。 */
+export function kpiAt(kpis: readonly { readonly value?: string }[], index: number): string {
+  return kpis[index]?.value ?? MISSING;
 }
 
 /** “55.00 元”→55（落点行只搬家：从既有卡文本解析，不重查库；沿 1061 `parseAmount`）。 */
@@ -148,10 +131,10 @@ export function toTicketB(input: {
   readonly copy?: AnalysisCopy;
 }): string {
   const summary = renderSummaryHead({
-    eyebrow: '分析域 · 趋势',
+    eyebrow: m('skill-bill.analysis-ticket-b.c017'),
     value: input.summaryValue,
     unit: input.summaryUnit,
-    stamp: { text: '只读', tone: 'ok' as const },
+    stamp: { text: m('skill-bill.analysis-ticket-b.c018'), tone: 'ok' as const },
     layout: 'ticket',
     size: 'l',
   });
@@ -171,7 +154,7 @@ export function toTicketB(input: {
     params: input.params,
     envelope: input.envelope,
     source: SOURCE_READ,
-    detail: '取到 ' + String(input.count) + ' 条记录',
+    detail: m('skill-bill.analysis-ticket-b.c019', { p0: String(String(input.count)) }),
     actionAt: input.actionAt,
     ...(input.copy === undefined ? {} : { copy: input.copy }),
   });

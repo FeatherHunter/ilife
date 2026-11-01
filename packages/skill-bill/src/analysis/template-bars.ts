@@ -29,6 +29,7 @@ import { isBTicket } from './ticket-b.js';
 import { ticketBarsBDoc } from './ticket-b-bars.js';
 import type { BarsPage, DocInput } from './scene.js';
 import type { PageBlock } from '../shared/pageSections.js';
+import { m } from '../entries/index.js';
 
 /** A 组＋C 组＋B 组 bars kind 到场景 id（分支唯一定义地；按 params.kind，不写唤醒词字面）。 */
 function sceneIdOfBars(kind: unknown): string {
@@ -83,69 +84,101 @@ function donutItemsOf(card: { readonly kind: string; readonly input: unknown } |
 }
 
 
+/** 环形图圆心读数（只搬家：发射方在 options.centerValue 里填的是该方向的合计金额）。 */
+function donutCenterOf(card: { readonly input: unknown } | undefined): string {
+  if (card === undefined) return '';
+  const inp = card.input;
+  if (typeof inp !== 'object' || inp === null || !('options' in inp)) return '';
+  const opts = (inp as { readonly options: unknown }).options;
+  if (typeof opts !== 'object' || opts === null) return '';
+  const center = (opts as { readonly centerValue?: unknown }).centerValue;
+  return typeof center === 'string' ? center : '';
+}
+
 /** A 组余数行＋C 组整行式落点（数字取自本次结果，只搬家）：总览加日均，统计加记账日／日均／首笔／最近；C 组见分支。 */
 function extraLedgerOfBars(kind: unknown, input: DocInput<BarsPage>): readonly { k: string; v: string }[] {
   const p = input.result.page;
   const kpi = input.result.kpi;
   const k = typeof kind === 'string' ? kind : '';
   if (k === 'week') {
-    let last = 0;
-    for (const c of p.factCards) for (const row of c.rows) if (row.k === '上周支出') last = parseAmount(row.v);
+    // 判据位按位置取，不按显示标签挑行（ADR-0004：标签随语言变，位置不变）。
+    // 发射方正序：scene-week.ts:115-126 事实卡固定 8 行，第 5 行（0 起）是「上周支出」。
+    const lastRow = p.factCards[0]?.rows[5];
+    const last = lastRow === undefined ? 0 : parseAmount(lastRow.v);
     const diff = Math.round((kpi.expense - last) * 100) / 100;
     const pct = last === 0 ? 0 : Math.round((diff / last) * 1000) / 10;
-    const diffText = diff === 0 ? money(0) + ' 元（' + pctText(0) + '）'
-      : diff > 0 ? '+' + money(diff) + ' 元（' + pctText(Math.abs(pct)) + '）' : money(diff) + ' 元（' + pctText(Math.abs(pct)) + '）';
+    const diffText = diff === 0 ? m('skill-bill.analysis-template-bars.c001', { p0: String(money(0)), p1: String(pctText(0)) })
+      : diff > 0 ? m('skill-bill.analysis-template-bars.c002', {
+        p0: String(money(diff)),
+        p1: String(pctText(Math.abs(pct))),
+      }) : m('skill-bill.analysis-template-bars.c003', {
+        p0: String(money(diff)),
+        p1: String(pctText(Math.abs(pct))),
+      });
     return [
-      { k: '收入', v: money(kpi.income) + ' 元' },
-      { k: '净额', v: money(kpi.net) + ' 元' },
-      { k: '比上周', v: diffText },
+      { k: m('skill-bill.analysis-template-bars.c004'), v: m('skill-bill.analysis-template-bars.c005', { p0: String(money(kpi.income)) }) },
+      { k: m('skill-bill.analysis-template-bars.c006'), v: m('skill-bill.analysis-template-bars.c007', { p0: String(money(kpi.net)) }) },
+      { k: m('skill-bill.analysis-template-bars.c008'), v: diffText },
     ];
   }
   if (k === 'category') {
     const head = headBarOf(input);
     if (head === null) return [];
-    return [{ k: '支出最多', v: head.label + ' ' + head.amount + ' · 占 ' + head.pct }];
+    return [{ k: m('skill-bill.analysis-template-bars.c009'), v: m('skill-bill.analysis-template-bars.c010', {
+      p0: String(head.label),
+      p1: String(head.amount),
+      p2: String(head.pct),
+    }) }];
   }
   if (k === 'account' || k === 'ledger') {
     const head = headBarOf(input);
     const out = [
-      { k: '支出', v: money(kpi.expense) + ' 元' },
-      { k: '收入', v: money(kpi.income) + ' 元' },
+      { k: m('skill-bill.analysis-template-bars.c011'), v: m('skill-bill.analysis-template-bars.c012', { p0: String(money(kpi.expense)) }) },
+      { k: m('skill-bill.analysis-template-bars.c013'), v: m('skill-bill.analysis-template-bars.c014', { p0: String(money(kpi.income)) }) },
     ];
-    if (head !== null) out.push({ k: '支出最多', v: head.label + ' ' + head.amount });
+    if (head !== null) out.push({ k: m('skill-bill.analysis-template-bars.c015'), v: head.label + ' ' + head.amount });
     return out;
   }
   if (k === 'structure') {
-    const incItems = donutItemsOf(p.charts.find((c) => c.title === '收入来源结构'));
-    const expItems = donutItemsOf(p.charts.find((c) => c.title === '支出去向结构'));
+    // 判据位按结构取，不按图卡标题挑图（标题随语言变）。
+    // 发射方正序：scene-structure.ts:40-60 先 push 收入环形、再 push 支出环形；只出一个环形时，
+    // 用圆心读数（发射方填的就是该方向的合计，见 :47／:57）判它属于哪个方向。
+    const donuts = p.charts.filter((c) => c.kind === 'donut');
+    const incomeFirst = donuts.length !== 1 ? true : donutCenterOf(donuts[0]) === money(kpi.income);
+    const incItems = donutItemsOf(incomeFirst ? donuts[0] : donuts[1]);
+    const expItems = donutItemsOf(incomeFirst ? donuts[1] : donuts[0]);
     const out = [
-      { k: '收入', v: money(kpi.income) + ' 元（' + String(incItems.length) + ' 个一级分类）' },
-      { k: '支出', v: money(kpi.expense) + ' 元（' + String(expItems.length) + ' 个一级分类）' },
+      { k: m('skill-bill.analysis-template-bars.c016'), v: m('skill-bill.analysis-template-bars.c017', {
+        p0: String(money(kpi.income)),
+        p1: String(String(incItems.length)),
+      }) },
+      { k: m('skill-bill.analysis-template-bars.c018'), v: m('skill-bill.analysis-template-bars.c019', {
+        p0: String(money(kpi.expense)),
+        p1: String(String(expItems.length)),
+      }) },
     ];
     const top = expItems[0];
-    if (top !== undefined) out.push({ k: '去得最多', v: top.label + ' ' + money(top.value) + ' 元' });
+    if (top !== undefined) out.push({ k: m('skill-bill.analysis-template-bars.c020'), v: m('skill-bill.analysis-template-bars.c021', { p0: String(top.label), p1: String(money(top.value)) }) });
     return out;
   }
   if (k === 'overview') {
-    for (const c of p.factCards) {
-      for (const row of c.rows) {
-        if (row.k === '日均支出') return [{ k: '日均支出', v: row.v }];
-      }
-    }
-    return [];
+    // 判据位按位置取。发射方正序：scene-overview.ts:79-88 事实卡固定两行，第 1 行（0 起）是「日均支出」。
+    const row = p.factCards[0]?.rows[1];
+    return row === undefined ? [] : [{ k: m('skill-bill.analysis-template-bars.c022'), v: row.v }];
   }
   if (k === 'stats') {
+    // 判据位按位置取。发射方正序：scene-stats.ts:76-78 kpis 固定 3 格
+    // （0 总笔数／1 记账天数／2 日均笔数）；:92-98 事实卡固定两行（0 首笔时间／1 最近记录）。
     const out: { k: string; v: string }[] = [];
-    for (const kpi of p.kpis) {
-      if (kpi.label === '记账天数') out.push({ k: '记账日', v: kpi.value + ' ' + (kpi.unit ?? '天') });
-      if (kpi.label === '日均笔数') out.push({ k: '日均', v: kpi.value + ' 笔' });
-    }
-    for (const c of p.factCards) {
-      for (const row of c.rows) {
-        if (row.k === '首笔时间') out.push({ k: '首笔', v: row.v });
-        if (row.k === '最近记录') out.push({ k: '最近', v: row.v });
-      }
-    }
+    const days = p.kpis[1];
+    if (days !== undefined) out.push({ k: m('skill-bill.analysis-template-bars.c023'), v: days.value + ' ' + (days.unit ?? m('skill-bill.analysis-template-bars.c024')) });
+    const perDay = p.kpis[2];
+    if (perDay !== undefined) out.push({ k: '日均', v: m('skill-bill.analysis-template-bars.c025', { p0: String(perDay.value) }) });
+    const rows = p.factCards[0]?.rows;
+    const firstRow = rows?.[0];
+    const lastRow = rows?.[1];
+    if (firstRow !== undefined) out.push({ k: m('skill-bill.analysis-template-bars.c026'), v: firstRow.v });
+    if (lastRow !== undefined) out.push({ k: m('skill-bill.analysis-template-bars.c027'), v: lastRow.v });
     return out;
   }
   return [];
@@ -165,7 +198,7 @@ export function barsDoc(input: DocInput<BarsPage>): string {
   const nothing = p.kpis.length === 0 && p.charts.length === 0
     && p.barGroups.every((g) => g.rows.length === 0) && p.listCards.every((c) => c.rows.length === 0);
   const blocks: readonly PageBlock[] = [
-    ...(p.kpis.length === 0 ? [] : [cardBlock(kpiGridHtml(p.kpis), 'sec-kpi', '读数')]),
+    ...(p.kpis.length === 0 ? [] : [cardBlock(kpiGridHtml(p.kpis), 'sec-kpi', m('skill-bill.analysis-template-bars.c028'))]),
     ...(p.chips.length === 0 && r.chips.length === 0 ? [] : [{ html: mergedChips(p.chips, r.chips) }]),
     ...(p.listCards.length === 0 ? [] : p.listCards.map((c, i) => cardBlock(
       listCardHtml(c), 'sec-list-' + String(i + 1), c.title,
@@ -190,14 +223,14 @@ export function barsDoc(input: DocInput<BarsPage>): string {
     shape: input.envelope.shape,
     wordCaliber: '',
     status: nothing ? 'empty' : 'ok',
-    statusText: nothing ? '这一段没有记录' : '看完了',
+    statusText: nothing ? m('skill-bill.analysis-template-bars.c029') : m('skill-bill.analysis-template-bars.c030'),
     next: nothing ? p.empty.hint : '',
     conclusion: r.conclusion,
     caliber: r.caliber,
     blocks,
     envelope: input.envelope,
     source: SOURCE_READ,
-    detail: '取到 ' + String(r.count) + ' 条记录',
+    detail: m('skill-bill.analysis-template-bars.c031', { p0: String(String(r.count)) }),
     actionAt: input.actionAt,
     windowStart: r.from === '' ? NO_WINDOW : r.from,
     windowEnd: r.to === '' ? NO_WINDOW : r.to,

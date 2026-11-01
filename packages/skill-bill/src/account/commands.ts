@@ -12,25 +12,33 @@
  * 加一条命令＝只改这个文件＋它那个子功能文件；`src/cli/registry.ts` 由 `pnpm gen` 重生成，
  *  `src/cli/cmd_read.ts` 一行不动（本票把这两条命令的 `case` 从出口分派里搬进来，见 `./write.js` 与 `./read.js`）。
  */
+import { resolve } from 'base-entries';
+import { SKILL_BILL_CATALOG } from '../entries/index.js';
 import type { CommandSpec } from '../shared/commandSpec.js';
 import { viewAccountSummary } from './read.js';
 import { writeAccount } from './write.js';
 
-export const ACCOUNT_COMMANDS = [
-  {
-    kind: 'write',
-    key: 'bill.account.write',
-    shape: 'receipt',
-    title: '账户管理',
-    example: 'bill-cmd-read bill.account.write --params \'{"op":"add"}\'',
-    run: writeAccount,
-  },
-  {
-    kind: 'read',
-    key: 'bill.account.query',
-    shape: 'list',
-    title: '账户汇总',
-    example: 'bill-cmd-read bill.account.query',
-    run: viewAccountSummary,
-  },
-] satisfies readonly CommandSpec[];
+/** 两条账户命令的声明（按语言取值；`ACCOUNT_COMMANDS` 是 `zh` 那一份静态快照）。
+ *  #1212：标题外置到 `../entries/zh.ts`／`en.ts`，按语言取；示例不含中文，两句同值不建键。 */
+export function accountCommands(language: string) {
+  return [
+    {
+      kind: 'write' as const,
+      key: 'bill.account.write' as const,
+      shape: 'receipt' as const,
+      title: resolve(SKILL_BILL_CATALOG, language, 'command.account-write.title'),
+      example: 'bill-cmd-read bill.account.write --params \'{"op":"add"}\'',
+      run: writeAccount,
+    },
+    {
+      kind: 'read' as const,
+      key: 'bill.account.query' as const,
+      shape: 'list' as const,
+      title: resolve(SKILL_BILL_CATALOG, language, 'command.account-query.title'),
+      example: 'bill-cmd-read bill.account.query',
+      run: viewAccountSummary,
+    },
+  ] satisfies readonly CommandSpec[];
+}
+
+export const ACCOUNT_COMMANDS = accountCommands('zh');

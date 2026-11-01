@@ -24,6 +24,7 @@
  */
 import { BillPolicyError } from '../fetch/errors.js';
 import { MONTH_RE, normalizeDate, normalizeMonth } from '../shared/dateRange.js';
+import { m } from '../entries/index.js';
 
 /** 写命令的两支操作（老侧 `goal/cli.py` 的 set-budget／set-saving 两个子命令）。 */
 export type GoalWriteOp = 'set-budget' | 'set-saving';
@@ -83,6 +84,8 @@ export interface GoalBlocked {
   readonly name: string;
   readonly label: string;
   readonly why: string;
+  /** 这一条是「没给」（**判据位**：上屏时拿它换说法，不拿 `why` 的文案比）。 */
+  readonly missing?: boolean;
 }
 
 function slot(name: string, label: string, hint: string, required: boolean, note: string): GoalSlot {
@@ -90,25 +93,32 @@ function slot(name: string, label: string, hint: string, required: boolean, note
 }
 
 /** 「确认覆盖」那一格：老侧 `cli.py:143` 的 `--force`。它不是一个用户填的槽位，
- *  而是「同月同类预算已存在」这件事的出口，故单立一格（同账户域 `CHANGE_SLOT` 的处置）。 */
-export const FORCE_SLOT: GoalSlot = slot('force', '确认覆盖', '已经有同月同类的预算时，要覆盖它就把这一格给上', true, '（判地页上不列这一行）');
+ *  而是「同月同类预算已存在」这件事的出口，故单立一格（同账户域 `CHANGE_SLOT` 的处置）。
+ *  按需取词（模块顶层不许 `const X = m(...)`：那时语言还没进上下文）。 */
+export function forceSlot(): GoalSlot {
+  return slot('force', m('skill-bill.goal-params.c008'), m('skill-bill.goal-params.c009'), true, m('skill-bill.goal-params.c010'));
+}
 
 /** 写命令两支操作的槽位表（**唯一定义地**）：字段卡照它出，缺项探针照它算。
- *  中文名照老侧表单页的字段题头（`budget_form.html:58-68`／`saving_form.html:57-63`）。 */
-export const GOAL_WRITE_SLOTS: Readonly<Record<GoalWriteOp, readonly GoalSlot[]>> = {
-  'set-budget': [
-    /* 标签／占位／提示逐字照判地 g01（`proto/acct-goal/g01-设定预算-采集-v2.2.html` 的 `.fill-label`／`placeholder`／`.entry-sub`）。 */
-    slot('amount', '金额', '如 3000', true, '每月上限，如 3000'),
-    slot('month', '月份（选填）', '缺省当月，如 {{month}}', false, '缺省当月，如 {{month}}'),
-    slot('category', '分类（选填）', '留空即全月总预算', false, '填了就是该类的上限，子类计入'),
-  ],
-  'set-saving': [
+ *  中文名照老侧表单页的字段题头（`budget_form.html:58-68`／`saving_form.html:57-63`）。
+ *  `month`＝占位里那个「当次月份」（判地冻结在 2026-10，产品按当刻月算）；按需取词，故做成函数。 */
+export function goalWriteSlots(op: GoalWriteOp, month: string): readonly GoalSlot[] {
+  const monthHint = m('skill-bill.goal-params.c014', { p0: String(month) });
+  if (op === 'set-saving') {
     /* 判地 g03 三行。 */
-    slot('name', '目标', '如换手机', true, '如换手机'),
-    slot('amount', '金额', '如 10000', true, '存够这么多算达成'),
-    slot('deadline', '截止日期（选填）', '不限可留空', false, '不限可留空'),
-  ],
-};
+    return [
+      slot('name', m('skill-bill.goal-params.c018'), m('skill-bill.goal-params.c019'), true, m('skill-bill.goal-params.c019')),
+      slot('amount', m('skill-bill.goal-params.c002'), m('skill-bill.goal-params.c020'), true, m('skill-bill.goal-params.c021')),
+      slot('deadline', m('skill-bill.goal-params.c022'), m('skill-bill.goal-params.c023'), false, m('skill-bill.goal-params.c023')),
+    ];
+  }
+  /* 标签／占位／提示逐字照判地 g01（`proto/acct-goal/g01-设定预算-采集-v2.2.html` 的 `.fill-label`／`placeholder`／`.entry-sub`）。 */
+  return [
+    slot('amount', m('skill-bill.goal-params.c002'), m('skill-bill.goal-params.c011'), true, m('skill-bill.goal-params.c012')),
+    slot('month', m('skill-bill.goal-params.c013'), monthHint, false, monthHint),
+    slot('category', m('skill-bill.goal-params.c015'), m('skill-bill.goal-params.c016'), false, m('skill-bill.goal-params.c017')),
+  ];
+}
 
 /** 一个值算不算「给了」：`undefined`／`null`／`false`／空白串都不算。 */
 export function isGiven(v: unknown): boolean {
@@ -144,23 +154,23 @@ export function validateAmount(raw: unknown): number {
  *  同月同类预算撞车那一处住 `./write.js` 的 `budgetBlockedOf`——本件只吃参数，不碰库与文件。 */
 export function goalBlocked(op: GoalWriteOp, params: Record<string, unknown>): readonly GoalBlocked[] {
   const out: GoalBlocked[] = [];
-  for (const s of GOAL_WRITE_SLOTS[op]) {
-    if (s.required && !isGiven(params[s.name])) out.push({ name: s.name, label: s.label, why: '没给' });
+  for (const s of goalWriteSlots(op, localMonth())) {
+    if (s.required && !isGiven(params[s.name])) out.push({ name: s.name, label: s.label, why: m('skill-bill.goal-params.c001'), missing: true });
   }
   if (isGiven(params['amount'])) {
     const n = numberOf(params['amount']);
-    if (n === null || n <= 0) out.push({ name: 'amount', label: '金额', why: '要写正数（如 3000）' });
+    if (n === null || n <= 0) out.push({ name: 'amount', label: m('skill-bill.goal-params.c002'), why: m('skill-bill.goal-params.c003') });
   }
   if (op === 'set-budget') {
     const month = textOf(params['month']);
     if (month !== '' && !MONTH_RE.test(month)) {
-      out.push({ name: 'month', label: '月份', why: '要写成 2026-09 这样（年-月），不填就是本月' });
+      out.push({ name: 'month', label: m('skill-bill.goal-params.c004'), why: m('skill-bill.goal-params.c005') });
     }
     return out;
   }
   const deadline = textOf(params['deadline']);
   if (deadline !== '' && !isRealDate(deadline)) {
-    out.push({ name: 'deadline', label: '截止日期', why: '要写成 2026-12-31 这样（年-月-日）' });
+    out.push({ name: 'deadline', label: m('skill-bill.goal-params.c006'), why: m('skill-bill.goal-params.c007') });
   }
   return out;
 }

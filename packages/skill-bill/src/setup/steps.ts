@@ -15,6 +15,7 @@
  */
 
 /** 一步：编号／步骤名／状态／现状说明。 */
+import { m } from '../entries/index.js';
 export interface WizardStep {
   readonly no: number;
   readonly label: string;
@@ -22,13 +23,14 @@ export interface WizardStep {
   readonly detail: string;
 }
 
-/** 状态 → 徽章文本（**唯一定义地**：页面与测试都读它）。 */
-export const STEP_STATE_TEXT: Readonly<Record<WizardStep['state'], string>> = {
-  done: '已完成',
-  current: '正在这一步',
-  todo: '待执行',
-  blocked: '走不通',
-};
+/** 状态 → 徽章文本（**唯一定义地**：页面与测试都读它）。
+ *  `#1214`：改成**函数**按语言取词——模块级常量表会在模块加载期取词，语言一旦出口即被固化成 zh。 */
+export function stepStateText(state: WizardStep['state']): string {
+  if (state === 'done') return '已完成';
+  if (state === 'current') return m('skill-bill.setup-steps.c001');
+  if (state === 'todo') return m('skill-bill.setup-steps.c002');
+  return m('skill-bill.setup-steps.c003');
+}
 
 /** 编号：下标 → `no`（**唯一算式**：页面不许另算一遍，老侧那种写死就是从这里漏出去的）。 */
 function numbered(steps: readonly Omit<WizardStep, 'no'>[]): readonly WizardStep[] {
@@ -52,28 +54,28 @@ export interface InitStepFacts {
 export function initSteps(f: InitStepFacts): readonly WizardStep[] {
   const envState: WizardStep['state'] = f.envCount === 0 ? 'blocked' : f.envOk ? 'done' : 'blocked';
   const envDetail = f.envCount === 0
-    ? '一项也没检测到（这一页没有可报的环境事实）'
+    ? m('skill-bill.setup-steps.c004')
     : f.envSummary;
   return numbered([
-    { label: '环境检测', state: envState, detail: envDetail },
+    { label: m('skill-bill.setup-steps.c005'), state: envState, detail: envDetail },
     {
-      label: '数据目录确认',
+      label: m('skill-bill.setup-steps.c006'),
       state: f.dirWritable ? 'done' : 'blocked',
-      detail: f.dirPath + (f.dirWritable ? '（可写）' : '（不可写）'),
+      detail: f.dirPath + (f.dirWritable ? m('skill-bill.setup-steps.c007') : m('skill-bill.setup-steps.c008')),
     },
     {
-      label: '建库(幂等自愈)',
+      label: m('skill-bill.setup-steps.c009'),
       state: f.schemaOk ? 'done' : 'blocked',
       detail: f.schemaOk
-        ? '数据库已就绪（' + String(f.columns) + ' 列）· 现有记录 ' + String(f.records) + ' 条'
-        : '表结构还不齐，跟助手说一遍「初始化」让它补齐',
+        ? m('skill-bill.setup-steps.c010', { p0: String(String(f.columns)), p1: String(String(f.records)) })
+        : m('skill-bill.setup-steps.c011'),
     },
     {
-      label: '只读验证',
+      label: m('skill-bill.setup-steps.c012'),
       state: f.verifyOk ? 'done' : 'blocked',
       detail: f.verifyOk
-        ? '读得动：bills 表在、试查一条成功 · 现有记录 ' + String(f.records) + ' 条'
-        : '读不动：这个库还打不开或读不出内容',
+        ? m('skill-bill.setup-steps.c013', { p0: String(String(f.records)) })
+        : m('skill-bill.setup-steps.c014'),
     },
   ]);
 }
@@ -95,30 +97,30 @@ export function restoreSteps(f: RestoreStepFacts): readonly WizardStep[] {
   const picked = f.selected !== '';
   const steps: Omit<WizardStep, 'no'>[] = [
     {
-      label: '选一份备份',
+      label: m('skill-bill.setup-steps.c015'),
       state: picked ? 'done' : 'blocked',
       detail: picked
-        ? '选中：' + f.selected + '（备份目录里共 ' + String(f.count) + ' 份）'
-        : '备份目录里还没有备份，先跟助手说一遍「备份」',
+        ? m('skill-bill.setup-steps.c016', { p0: String(f.selected), p1: String(String(f.count)) })
+        : m('skill-bill.setup-steps.c017'),
     },
     {
-      label: '确认要覆盖',
+      label: m('skill-bill.setup-steps.c018'),
       state: f.confirmed ? 'done' : picked ? 'current' : 'todo',
       detail: f.confirmed
-        ? '这一次已经确认过，接着往下走'
-        : '确认之前不动数据；要往下走就加上确认，恢复前会自动备份现状',
+        ? m('skill-bill.setup-steps.c019')
+        : m('skill-bill.setup-steps.c020'),
     },
     {
-      label: '覆盖前先备份现状',
+      label: m('skill-bill.setup-steps.c021'),
       state: f.safety !== '' ? 'done' : f.confirmed ? 'current' : 'todo',
       detail: f.safety !== ''
-        ? '现状已备份：' + f.safety
-        : '恢复前无条件先给现状造一份备份（不依赖你记不记得）',
+        ? m('skill-bill.setup-steps.c022', { p0: String(f.safety) })
+        : m('skill-bill.setup-steps.c023'),
     },
     {
-      label: '恢复 + 验证',
+      label: m('skill-bill.setup-steps.c024'),
       state: f.verified ? 'done' : f.confirmed ? 'current' : 'todo',
-      detail: f.verified ? '恢复回来的库读得动，已经验过' : '把备份拷回数据目录，然后读一次验库',
+      detail: f.verified ? m('skill-bill.setup-steps.c025') : m('skill-bill.setup-steps.c026'),
     },
   ];
   return numbered(steps);
@@ -140,36 +142,40 @@ export interface ImportStepFacts {
 
 export function importSteps(f: ImportStepFacts): readonly WizardStep[] {
   const named = f.fileName !== '';
+  // 计划那一句与结果那一句里的可选片段先抽成变量（`#1214`：链里不再嵌条件表达式，外层只拼「字面量 + 变量」）。
+  const dupPart = f.duplicateRows > 0 ? m('skill-bill.setup-steps.c027', { p0: String(String(f.duplicateRows)) }) : '';
+  const badPart = f.badRows > 0 ? m('skill-bill.setup-steps.c028', { p0: String(String(f.badRows)) }) : '';
+  const planned = m('skill-bill.setup-steps.c029', {
+    p0: String(String(f.newRows)),
+    p1: String(dupPart),
+    p2: String(badPart),
+  });
+  const failedPart = f.failed > 0 ? m('skill-bill.setup-steps.c030', { p0: String(String(f.failed)) }) : '';
+  const written = m('skill-bill.setup-steps.c031', { p0: String(String(f.inserted)), p1: String(failedPart) });
   const steps: Omit<WizardStep, 'no'>[] = [
     {
-      label: '读文件',
+      label: m('skill-bill.setup-steps.c032'),
       state: named ? 'done' : 'blocked',
       detail: named
-        ? f.fileName + '（' + String(f.totalRows) + ' 行数据）'
-        : '还没给 CSV 文件路径',
+        ? m('skill-bill.setup-steps.c033', { p0: String(f.fileName), p1: String(String(f.totalRows)) })
+        : m('skill-bill.setup-steps.c034'),
     },
     {
-      label: '列映射',
+      label: m('skill-bill.setup-steps.c035'),
       state: f.mapped ? 'done' : named ? 'current' : 'todo',
       detail: f.mapped
-        ? '日期／金额／分类这几列都认到了；改映射就照下面那句重说一遍'
-        : '映射还缺必填的列（日期／金额／分类）',
+        ? m('skill-bill.setup-steps.c036')
+        : m('skill-bill.setup-steps.c037'),
     },
     {
-      label: '确认将新增几行',
+      label: m('skill-bill.setup-steps.c038'),
       state: f.confirmed ? 'done' : f.mapped ? 'current' : 'todo',
-      detail: f.mapped
-        ? '本次将新增 ' + String(f.newRows) + ' 行，不覆盖已有记录'
-          + (f.duplicateRows > 0 ? '；另有 ' + String(f.duplicateRows) + ' 行库里已经有了，跳过' : '')
-          + (f.badRows > 0 ? '；' + String(f.badRows) + ' 行读不出来，也会跳过' : '')
-        : '先认下列映射再确认',
+      detail: f.mapped ? planned : m('skill-bill.setup-steps.c039'),
     },
     {
-      label: '导入并出结果',
+      label: m('skill-bill.setup-steps.c040'),
       state: f.confirmed && f.failed === 0 ? 'done' : f.confirmed ? 'blocked' : 'todo',
-      detail: f.confirmed
-        ? '成功 ' + String(f.inserted) + ' 行' + (f.failed > 0 ? '，失败 ' + String(f.failed) + ' 行' : '')
-        : '确认之后才写库；写之前会自动备份一次',
+      detail: f.confirmed ? written : m('skill-bill.setup-steps.c041'),
     },
   ];
   return numbered(steps);

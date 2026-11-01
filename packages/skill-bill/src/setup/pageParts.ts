@@ -30,16 +30,20 @@ import { sourceLine } from '../shared/sourceLine.js';
 import { commandLine } from '../shared/writeParts.js';
 import { humanBytes } from './backups.js';
 import type { SetupCopy } from './copyTextSetup.js';
-import { STEP_STATE_TEXT } from './steps.js';
+import { stepStateText } from './steps.js';
 import type { WizardStep } from './steps.js';
 import type { SetupBlocked, SetupSlot } from './params.js';
+import { m } from '../entries/index.js';
 
-/** 开始使用域各页的眉标：**只在本域写一次**（共用位不持「域名→取值」表；老侧 `init_wizard.html:60` 同句）。 */
-export const EYEBROW = '记账｜开始使用';
+/** 开始使用域各页的眉标：**只在本域写一次**（共用位不持「域名→取值」表；老侧 `init_wizard.html:60` 同句）。
+ *  `#1214`：改成**函数**按语言取词——模块级常量会在加载期取词，语言一旦出口就被固化成 zh。 */
+export function setupEyebrow(): string {
+  return m('skill-bill.setup-pageParts.c001');
+}
 
 /** 本域各页统一走它：补上眉标再转共用位的 `pageShell`。 */
 export function setupPageShell(input: Omit<PageShellInput, 'eyebrow'>): string {
-  return pageShell({ ...input, eyebrow: EYEBROW });
+  return pageShell({ ...input, eyebrow: setupEyebrow() });
 }
 
 /** 六种 op 同走 `receipt` 形（本域只有一条命令、一个形状；`receipt` 形只校验 `ok`／`message` 两格，
@@ -84,8 +88,12 @@ export function badgeOf(input: {
 export function stepChipsOf(steps: readonly WizardStep[]): string {
   if (steps.length === 0) return '';
   return renderChips({
-    items: [{ text: '共 ' + String(steps.length) + ' 步' }].concat(
-      steps.map((s) => ({ text: '第 ' + String(s.no) + ' 步 · ' + s.label + ' · ' + STEP_STATE_TEXT[s.state] })),
+    items: [{ text: m('skill-bill.setup-pageParts.c002', { p0: String(String(steps.length)) }) }].concat(
+      steps.map((s) => ({ text: m('skill-bill.setup-pageParts.c003', {
+        p0: String(String(s.no)),
+        p1: String(s.label),
+        p2: String(stepStateText(s.state)),
+      }) })),
     ),
   });
 }
@@ -94,21 +102,21 @@ export function stepChipsOf(steps: readonly WizardStep[]): string {
  *  这一张表是「徽章列承载不了的不足处」的域内落点，见本件头注释那条口径。 */
 export function stepTableOf(steps: readonly WizardStep[]): string {
   if (steps.length === 0) {
-    return renderEmptyBlock({ text: '这一页没有步骤可报', hint: '换一条唤醒词再说一遍。' });
+    return renderEmptyBlock({ text: m('skill-bill.setup-pageParts.c004'), hint: m('skill-bill.setup-pageParts.c005') });
   }
   const columns: readonly DataTableColumn[] = [
-    { key: 'step', label: '第几步' },
-    { key: 'label', label: '步骤' },
-    { key: 'state', label: '现在怎么样' },
-    { key: 'detail', label: '什么情况' },
+    { key: 'step', label: m('skill-bill.setup-pageParts.c006') },
+    { key: 'label', label: m('skill-bill.setup-pageParts.c007') },
+    { key: 'state', label: m('skill-bill.setup-pageParts.c008') },
+    { key: 'detail', label: m('skill-bill.setup-pageParts.c009') },
   ];
   const rows: readonly DataTableRow[] = steps.map((s) => ({
-    step: '第 ' + String(s.no) + ' 步（共 ' + String(steps.length) + ' 步）',
+    step: m('skill-bill.setup-pageParts.c010', { p0: String(String(s.no)), p1: String(String(steps.length)) }),
     label: s.label,
-    state: STEP_STATE_TEXT[s.state],
+    state: stepStateText(s.state),
     detail: s.detail,
   }));
-  return renderDataTable({ columns, rows, caption: '这一步走到哪儿了' });
+  return renderDataTable({ columns, rows, caption: m('skill-bill.setup-pageParts.c011') });
 }
 
 /** 环境检测那一格：老侧 `init_wizard.html:155` 空 `env.checks` 时回落渲染绿色「✓ 全部通过」＝**假绿**
@@ -116,26 +124,26 @@ export function stepTableOf(steps: readonly WizardStep[]): string {
  *  本件对「一项都没检测到」和「检测项都过了」出**两句不同的话**，且前者不给绿灯。 */
 export function envChecksOf(checks: readonly { readonly label: string; readonly ok: boolean; readonly detail: string }[]): string {
   if (checks.length === 0) {
-    return renderCaliberLine('这一页一项环境事实都没取到（没测到就是没测到，不当成过）。');
+    return renderCaliberLine(m('skill-bill.setup-pageParts.c012'));
   }
   const columns: readonly DataTableColumn[] = [
-    { key: 'label', label: '检查项' },
-    { key: 'ok', label: '过没过' },
-    { key: 'detail', label: '读到的' },
+    { key: 'label', label: m('skill-bill.setup-pageParts.c013') },
+    { key: 'ok', label: m('skill-bill.setup-pageParts.c014') },
+    { key: 'detail', label: m('skill-bill.setup-pageParts.c015') },
   ];
   const rows: readonly DataTableRow[] = checks.map((c) => ({
     label: c.label,
-    ok: c.ok ? '过' : '没过',
+    ok: c.ok ? m('skill-bill.setup-pageParts.c016') : m('skill-bill.setup-pageParts.c017'),
     detail: c.detail,
   }));
-  return renderDataTable({ columns, rows, caption: '环境检测（一项一项真跑的）' });
+  return renderDataTable({ columns, rows, caption: m('skill-bill.setup-pageParts.c018') });
 }
 
 /** 字段卡的一格（普通数据：参数名／中文名／怎么给／是否必需）。 */
 export function slotFieldsOf(params: Record<string, unknown>, fields: readonly SetupSlot[]): ParamFieldInput[] {
   return fields.map((f) => {
     const raw = params[f.name];
-    const value = raw === true ? '是' : raw === false || raw === undefined || raw === null ? '' : String(raw).trim();
+    const value = raw === true ? m('skill-bill.setup-pageParts.c019') : raw === false || raw === undefined || raw === null ? '' : String(raw).trim();
     return {
       name: f.name,
       label: f.label,
@@ -155,16 +163,16 @@ export function blockedOf(input: {
   if (input.blocked.length === 0) return '';
   return renderChips({ items: input.blocked.map((b) => ({ text: b.label })) })
     + renderDataTable({
-      columns: [{ key: 'label', label: '缺失字段' }, { key: 'why', label: '原因' }],
+      columns: [{ key: 'label', label: m('skill-bill.setup-pageParts.c020') }, { key: 'why', label: m('skill-bill.setup-pageParts.c021') }],
       rows: input.blocked.map((b) => ({ label: b.label, why: b.why })),
-      caption: '缺一项就先不动数据',
+      caption: m('skill-bill.setup-pageParts.c022'),
     })
-    + renderPreBlock({ command: input.command, label: '口令原文（只给看不给复制）' })
-    + renderCaliberLine('这一页先不动数据；补齐之后照上面那句跟助手说一遍才会往下走。');
+    + renderPreBlock({ command: input.command, label: m('skill-bill.setup-pageParts.c023') })
+    + renderCaliberLine(m('skill-bill.setup-pageParts.c024'));
 }
 
 /** 复制指令块（过程型页的「照这句跟助手说一遍」）：走公共层 `renderPreBlock` 自带复制按钮。 */
-export function promptBlockOf(prompt: string, label = '复制给助手：这一句可以直接复制'): string {
+export function promptBlockOf(prompt: string, label = m('skill-bill.setup-pageParts.c025')): string {
   return renderPreBlock({
     label,
     command: prompt,
@@ -240,20 +248,21 @@ export function promptOf(
 ): string {
   const lines = slots.map((s) => {
     const raw = params[s.name];
-    const v = raw === true ? '是' : raw === false || raw === undefined || raw === null ? '' : String(raw).trim();
-    const blank = s.required ? '____' : '____（选填）';
+    const v = raw === true ? m('skill-bill.setup-pageParts.c026') : raw === false || raw === undefined || raw === null ? '' : String(raw).trim();
+    const blank = s.required ? '____' : m('skill-bill.setup-pageParts.c027');
     return '  ' + s.label + ': ' + (v === '' ? blank : v);
   });
-  return '请加载「饼干记账」技能，帮我' + word + '：\n\n' + lines.join('\n');
+  return m('skill-bill.setup-pageParts.c028', { p0: String(word), p1: String(lines.join('\n')) });
 }
 
-/** 复制日志第 3 段／来源脚注那两句来源（给机器看的可带载体名，上屏的只写人话——`#688` 裁定 1）。 */
-export const SOURCE_READ = '记账库与备份目录（只读）';
-export const SOURCE_READ_TEXT = '记账库与备份目录（只读）';
-export const SOURCE_WRITE = '记账库与备份目录（写库回执）';
-export const SOURCE_WRITE_TEXT = '记账库与备份目录（写入）';
-export const SOURCE_FILE = 'CSV 文件与记账库（读文件 · 写库回执）';
-export const SOURCE_FILE_TEXT = 'CSV 文件与记账库';
+/** 复制日志第 3 段／来源脚注那两句来源（给机器看的可带载体名，上屏的只写人话——`#688` 裁定 1）。
+ *  `#1214`：六个都改成**函数**按语言取词（模块级常量会把语言固化成 zh）。 */
+export function sourceRead(): string { return m('skill-bill.setup-pageParts.c029'); }
+export function sourceReadText(): string { return m('skill-bill.setup-pageParts.c030'); }
+export function sourceWrite(): string { return m('skill-bill.setup-pageParts.c031'); }
+export function sourceWriteText(): string { return m('skill-bill.setup-pageParts.c032'); }
+export function sourceFile(): string { return m('skill-bill.setup-pageParts.c033'); }
+export function sourceFileText(): string { return m('skill-bill.setup-pageParts.c034'); }
 
 /** 四步／明细行的一条（原型 `li > .idx + .entry-text + small`）。 */
 export interface SetupRowInput {

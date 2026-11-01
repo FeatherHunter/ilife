@@ -16,6 +16,7 @@
  *   ② 老侧转账备注写 `#转账 转出至X`／`#转账 转入自Y`，新侧逐字同形（搬迁前那份过渡实现写成
  *      `#转账（转出）`／`#转账（转入）`，随本票改回老侧原样）。
  */
+import { currentRenderLanguage } from 'base-entries';
 import { loadGoals, resolveGoalsPath, saveGoals } from '../fetch/index.js';
 import type { BillDb } from '../fetch/index.js';
 import type { WriteOut } from '../shared/commandSpec.js';
@@ -25,13 +26,14 @@ import { projectWakeWord } from '../triggers/wakeTable.js';
 import type { BillKey } from '../triggers/routeSpec.js';
 import { accountsOf, appendAccount, applyAccountUpdate, findAccount, writeTransfer } from './accounts.js';
 import type { AccountRow } from './accounts.js';
-import { SOURCE_COLLECT, SOURCE_WRITE, promptOf } from './pageParts.js';
+import { promptOf, sourceCollect, sourceWrite } from './pageParts.js';
 import {
-  ACCOUNT_SLOTS, accountBlocked, hasChange, needAccountName, parseAccountOp, textOf, validateTransfer,
+  accountBlocked, accountSlots, hasChange, needAccountName, parseAccountOp, textOf, validateTransfer,
 } from './params.js';
 import type { AccountBlocked, AccountOp } from './params.js';
 import { writeSceneFor } from './scene.js';
 import type { AccountReceipt, AccountWriteScene } from './scene.js';
+import { m } from '../entries/index.js';
 
 /** 本次执行时刻（本地时钟；页面与回执都读它）。 */
 function nowStamp(): string {
@@ -43,16 +45,22 @@ function tableBlockedOf(op: AccountOp, params: Record<string, unknown>, accounts
   const name = textOf(params['name']);
   if (name === '') return [];
   const hit = findAccount(accounts, name) !== null;
-  if (op === 'add' && hit) return [{ name: 'name', label: '账户名', why: '账户表里已经有这个名字了（要改它就说「改账户」）' }];
-  if (op === 'update' && !hit) return [{ name: 'name', label: '账户', why: '账户表里没有这个账户' }];
+  if (op === 'add' && hit) return [{ name: 'name', label: m('skill-bill.account-write.c001'), why: m('skill-bill.account-write.c002') }];
+  if (op === 'update' && !hit) return [{ name: 'name', label: m('skill-bill.account-write.c003'), why: m('skill-bill.account-write.c004') }];
   return [];
 }
 
 /** 有阻断项时的载荷说明（envelope 的 `message`；也是 stdout 上那句 `data.message`）。 */
 function blockedMessageOf(op: AccountOp, blocked: readonly AccountBlocked[]): string {
   const word = projectWakeWord({ key: 'bill.account.write', op });
-  return word + '还差 ' + String(blocked.length) + ' 项：' + blocked.map((b) => b.label).join('、')
-    + '（已出' + (op === 'update' ? '确认页' : '采集页') + '，补齐之后跟助手说一遍）';
+  // #1212 手工处置：链内条件抽局部变量（确认页／采集页），整句才交给迁移器。
+  const pageText = op === 'update' ? m('skill-bill.account-write.c005') : m('skill-bill.account-write.c006');
+  return m('skill-bill.account-write.c007', {
+    p0: String(word),
+    p1: String(String(blocked.length)),
+    p2: String(blocked.map((b) => b.label).join('、')),
+    p3: String(pageText),
+  });
 }
 
 /** 三支操作共用的收口：回执事实 ＋ 回执整页。 */
@@ -76,7 +84,7 @@ function finish(input: {
     summary: input.summary,
     affectedRows: affectedRowsOf(input.op, input.db, input.before, input.renamedRows),
     actionAt: nowStamp(),
-    source: SOURCE_WRITE,
+    source: sourceWrite(),
     noChange: input.noChange,
     accountCount: input.goalsAccounts.length,
     renamedRows: input.renamedRows,
@@ -107,9 +115,9 @@ function affectedRowsOf(op: AccountOp, db: BillDb, before: number, renamedRows: 
 /** 账户那一行写成明细表的行（新增与改账户共用；状态按改后的事实写）。 */
 function accountDetail(row: AccountRow): readonly { readonly k: string; readonly v: string }[] {
   return [
-    { k: '账户名', v: row.name },
-    { k: '类型', v: row.type.trim() === '' ? '—' : row.type },
-    { k: '状态', v: row.disabled ? '已停用' : '使用中' },
+    { k: m('skill-bill.account-write.c008'), v: row.name },
+    { k: m('skill-bill.account-write.c009'), v: row.type.trim() === '' ? '—' : row.type },
+    { k: m('skill-bill.account-write.c010'), v: row.disabled ? m('skill-bill.account-write.c011') : m('skill-bill.account-write.c012') },
   ];
 }
 
@@ -117,7 +125,7 @@ function accountDetail(row: AccountRow): readonly { readonly k: string; readonly
 export function writeAccount(params: Record<string, unknown>, db: BillDb): WriteOut {
   const key = 'bill.account.write';
   const op = parseAccountOp(params);
-  const scene = writeSceneFor(op);
+  const scene = writeSceneFor(op, currentRenderLanguage());
   const goalsPath = resolveGoalsPath();
   const goals = loadGoals(goalsPath);
   const accounts = accountsOf(goals);
@@ -127,7 +135,7 @@ export function writeAccount(params: Record<string, unknown>, db: BillDb): Write
       data: { ok: false, message: blockedMessageOf(op, blocked) },
       page: { wakeWord: projectWakeWord({ key: key as BillKey, op }), kind: 'collect' },
       html: scene.collect({
-        key, op, params, blocked, accounts, source: SOURCE_COLLECT, actionAt: nowStamp(),
+        key, op, params, blocked, accounts, source: sourceCollect(), actionAt: nowStamp(),
       }),
     };
   }
@@ -139,7 +147,7 @@ export function writeAccount(params: Record<string, unknown>, db: BillDb): Write
     saveGoals(goalsPath, goals);
     return finish({
       key, op, params, scene, db, before, goalsAccounts: accountsOf(goals),
-      summary: '已新增账户「' + row.name + '」（账户表现在 ' + String(goals.accounts.length) + ' 个）',
+      summary: m('skill-bill.account-write.c013', { p0: String(row.name), p1: String(String(goals.accounts.length)) }),
       detail: accountDetail(row), noChange: false, renamedRows: 0, beforeRow: null, afterRow: row,
     });
   }
@@ -152,20 +160,26 @@ export function writeAccount(params: Record<string, unknown>, db: BillDb): Write
     saveGoals(goalsPath, goals);
     const changes: string[] = [];
     if (applied.before.name !== applied.after.name) {
-      changes.push('改名「' + applied.before.name + '」→「' + applied.after.name + '」，连带改了 '
-        + String(applied.renamedRows) + ' 笔历史流水');
+      changes.push(m('skill-bill.account-write.c014', {
+        p0: String(applied.before.name),
+        p1: String(applied.after.name),
+        p2: String(String(applied.renamedRows)),
+      }));
     }
     if (applied.before.disabled !== applied.after.disabled) {
-      changes.push(applied.after.disabled ? '停用（历史记录保留，不再算进总余额）' : '启用（重新算进总余额）');
+      changes.push(applied.after.disabled ? m('skill-bill.account-write.c015') : m('skill-bill.account-write.c016'));
     }
-    if (changes.length === 0) changes.push('没有任何一处真的变了');
+    if (changes.length === 0) changes.push(m('skill-bill.account-write.c017'));
     return finish({
       key, op, params, scene, db, before, goalsAccounts: accountsOf(goals),
       /* #1131：判地店头那一行只写改名这一件（「已改名「旧」→「新」」）；
          连带笔数在核对段「编号」行、停用／启用的说法在明细与复制日志里，都不丢。 */
       summary: applied.before.name !== applied.after.name
-        ? '已改名「' + applied.before.name + '」→「' + applied.after.name + '」'
-        : '已修改账户「' + applied.after.name + '」：' + changes.join('；'),
+        ? m('skill-bill.account-write.c018', {
+          p0: String(applied.before.name),
+          p1: String(applied.after.name),
+        })
+        : m('skill-bill.account-write.c019', { p0: String(applied.after.name), p1: String(changes.join('；')) }),
       detail: accountDetail(applied.after),
       noChange: applied.before.name === applied.after.name && applied.before.type === applied.after.type
         && applied.before.disabled === applied.after.disabled,
@@ -177,10 +191,18 @@ export function writeAccount(params: Record<string, unknown>, db: BillDb): Write
   const ids = writeTransfer(db, { amount, from, to, time: at });
   return finish({
     key, op, params, scene, db, before, goalsAccounts: accounts,
-    summary: '已转账：' + from + ' → ' + to + ' ' + amount.toFixed(2) + ' 元（转出与转入各一笔，不算进收支）',
+    summary: m('skill-bill.account-write.c020', { p0: String(from), p1: String(to), p2: String(amount.toFixed(2)) }),
     detail: [
-      { k: '转出这一笔（' + from + '）', v: '编号 ' + String(ids.outId) + ' · 支出 ' + amount.toFixed(2) + ' 元 · 分类「转账/转出」· 账本「转账」· 时间 ' + at },
-      { k: '转入这一笔（' + to + '）', v: '编号 ' + String(ids.inId) + ' · 收入 ' + amount.toFixed(2) + ' 元 · 分类「转账/转入」· 账本「转账」· 时间 ' + at },
+      { k: m('skill-bill.account-write.c021', { p0: String(from) }), v: m('skill-bill.account-write.c022', {
+        p0: String(String(ids.outId)),
+        p1: String(amount.toFixed(2)),
+        p2: String(at),
+      }) },
+      { k: m('skill-bill.account-write.c023', { p0: String(to) }), v: m('skill-bill.account-write.c024', {
+        p0: String(String(ids.inId)),
+        p1: String(amount.toFixed(2)),
+        p2: String(at),
+      }) },
     ],
     noChange: false, renamedRows: 0, beforeRow: null, afterRow: null,
   });
@@ -195,4 +217,4 @@ export { promptOf as accountPromptOf } from './pageParts.js';
 export { hasChange as accountHasChange } from './params.js';
 
 /** 一条命令要哪些槽位（三支操作各一份；转出给测试与页面同取一处）。 */
-export { ACCOUNT_SLOTS as accountSlots };
+export { accountSlots };

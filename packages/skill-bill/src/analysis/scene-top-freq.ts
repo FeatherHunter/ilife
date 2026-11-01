@@ -17,6 +17,7 @@
  *   ⑤ 期间芯片＝`TOP N · 期间`（老侧 `TOP ${limit} · ${period}` 那枚 `.filter-chip`）；
  *   ⑥ 载荷＝`./views.js` 的 `buildTrend('freq', …)`（`limit` 照传）。
  */
+import { runWithLanguage } from 'base-entries';
 import type { BillDb, BillRow } from '../fetch/db.js';
 import { BillPolicyError } from '../fetch/errors.js';
 import { l1Of } from '../shared/category.js';
@@ -24,6 +25,7 @@ import { aggBy, dayOf, filterOf, kpiOf, round1, round2, windowWithRecords } from
 import { NO_WINDOW, money, textOrDash } from './pageParts.js';
 import type { AnalysisScene } from './scene.js';
 import { buildTrend } from './views.js';
+import { m } from '../entries/index.js';
 
 /** 取前几名的读数：缺省 10；给了就必须是 1~50 的整数，否则阻断（坏输入不冒充正常）。 */
 function limitOf(params: Record<string, unknown>): number {
@@ -49,11 +51,12 @@ function lastTimesOf(records: readonly BillRow[]): Map<string, string> {
   return out;
 }
 
-export const sceneTopFreq: AnalysisScene = {
+function buildScene(): AnalysisScene {
+  return {
   id: 'top_freq',
   key: 'bill.analysis.trend',
   kind: 'frequent',
-  title: '看高频',
+  title: m('skill-bill.analysis-scene-top-freq.title'),
   family: 'bars',
   values: ({ params, db }) => {
     const limit = limitOf(params);
@@ -68,21 +71,23 @@ export const sceneTopFreq: AnalysisScene = {
     const head = items[0];
     const second = items[1];
     const chip = 'TOP ' + String(limit) + ' · ' + win.label;
+    /* 第二名那一句先算成变量：让结论句成为一条只拼字面量与变量的链，迁移器才能整句取词。 */
+    const rest = second === undefined ? '' : m('skill-bill.analysis-scene-top-freq.c002', { p0: String(second.key), p1: String(String(second.count)) });
     return {
-      title: '看高频',
+      title: m('skill-bill.analysis-scene-top-freq.title'),
       label: win.label,
       from: win.from,
       to: win.to,
       count: items.length,
       conclusion: head === undefined
-        ? win.label + '：没有支出记录。'
-        : '按支出笔数排，最多的是「' + head.key + '」' + String(head.count) + ' 笔（合计 '
-          + money(head.value) + ' 元）'
-          + (second === undefined
-            ? '。'
-            : '；其次是「' + second.key + '」' + String(second.count) + ' 笔。'),
-      caliber: '按一级分类的支出笔数从多到少取前 ' + String(limit) + ' 名（不是按金额；笔数相同处金额大的先出）；'
-        + '金额、单均、最近一笔都按这一批支出记录算；转账与收入都不上这一页。',
+        ? m('skill-bill.analysis-scene-top-freq.c004', { p0: String(win.label) })
+        : m('skill-bill.analysis-scene-top-freq.c005', {
+          p0: String(head.key),
+          p1: String(String(head.count)),
+          p2: String(money(head.value)),
+          p3: String(rest),
+        }),
+      caliber: m('skill-bill.analysis-scene-top-freq.c006', { p0: String(String(limit)) }),
       chips: [chip],
       payload: buildTrend('freq', [...win.records], { limit }),
       kpi: kpiOf(win.records),
@@ -91,22 +96,34 @@ export const sceneTopFreq: AnalysisScene = {
         chips: [chip],
         charts: [],
         barGroups: [{
-          title: '高频消费排行（' + String(items.length) + ' 类）',
+          title: m('skill-bill.analysis-scene-top-freq.c007', { p0: String(String(items.length)) }),
           rows: items.map((x, i) => ({
             label: String(i + 1) + '. ' + x.key,
-            text: String(x.count) + ' 笔 · ' + money(x.value) + ' 元 · 单均 ' + money(round2(x.value / x.count))
-              + ' · 最近 ' + textOrDash(dayOf(lastAt.get(x.key) ?? '')),
+            text: m('skill-bill.analysis-scene-top-freq.c008', {
+              p0: String(String(x.count)),
+              p1: String(money(x.value)),
+              p2: String(money(round2(x.value / x.count))),
+              p3: String(textOrDash(dayOf(lastAt.get(x.key) ?? ''))),
+            }),
             pct: peak === 0 ? 0 : round1((x.count / peak) * 100),
           })),
-          emptyText: '这段时间还没有支出记录',
+          emptyText: m('skill-bill.analysis-scene-top-freq.c009'),
         }],
         listCards: [],
         factCards: [],
         empty: {
-          text: win.label + ' 还没有支出记录。',
-          hint: '先说「记支出」记一笔，回来看这里就有数了。',
+          text: m('skill-bill.analysis-scene-top-freq.c010', { p0: String(win.label) }),
+          hint: m('skill-bill.analysis-scene-top-freq.c011'),
         },
       },
     };
   },
-};
+  };
+}
+
+export const sceneTopFreq: AnalysisScene = buildScene();
+
+/** 按语言重建本场景（#1197：文案经词条层，语言是运行期参数）。 */
+export function sceneTopFreqFor(language: string): AnalysisScene {
+  return runWithLanguage(language, buildScene);
+}

@@ -30,6 +30,7 @@ import { fetchAll, listRange } from '../fetch/index.js';
 import type { BillDb, BillGoals, BillRow } from '../fetch/index.js';
 import { monthRange } from '../shared/dateRange.js';
 import { localDay, round2 } from './params.js';
+import { m } from '../entries/index.js';
 
 /** 预算表的一行（`goals.json.budgets[]` 的元素）。 */
 export interface GoalBudgetRow {
@@ -243,7 +244,7 @@ export function budgetExecution(
     const actual = round2(mine.reduce((s, r) => s + Math.abs(r.amount), 0));
     const projection = monthProjection(month, actual, now);
     return {
-      id: b.id, month, category: b.category, category_cn: b.category === '' ? '总预算' : b.category,
+      id: b.id, month, category: b.category, category_cn: b.category === '' ? m('skill-bill.goal-goalData.c001') : b.category,
       amount: b.amount, actual, count: mine.length,
       remaining: round2(b.amount - actual),
       pct: b.amount > 0 ? Math.round(actual / b.amount * 1000) / 10 : 0,
@@ -297,7 +298,7 @@ function savingItemOf(db: BillDb, row: GoalSavingRow, now: Date): { readonly ite
   const status = savingStatusOf(amount, saved, monthlyAvg, eta, deadlineDay);
   return {
     item: {
-      id: row.id, name: row.name === '' ? '未命名目标' : row.name, amount, deadline: row.deadline,
+      id: row.id, name: row.name === '' ? m('skill-bill.goal-goalData.c002') : row.name, amount, deadline: row.deadline,
       created_at: row.created_at, start_month: startMonth, saved, remaining,
       pct: amount > 0 ? Math.round(Math.max(saved, 0) / amount * 1000) / 10 : 0,
       monthly_avg: monthlyAvg, eta, status, needed_monthly: needed,

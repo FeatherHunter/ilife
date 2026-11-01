@@ -6,11 +6,12 @@
  * 谁在用（一个调用点，指名）：`./template-bars.ts`——B 的 4 页分支。
  */
 import { escapeHtml } from 'base-paint';
-import { detailOf, h2ForB, kpiValue, parseAmount, peakBarRow, toTicketB } from './ticket-b.js';
+import { detailOf, h2ForB, kpiAt, parseAmount, peakBarRow, toTicketB } from './ticket-b.js';
 import { chartFor } from './chartOf.js';
 import { NO_WINDOW, docTitleOf, money } from './pageParts.js';
 import { barGroupHtml, factCardHtml, listCardHtml } from './cards.js';
 import type { BarsPage, DocInput } from './scene.js';
+import { m } from '../entries/index.js';
 
 /** B bars 4 页的落点行（PAGES 表 a16／a17／a19／a25；空页走说明行）。 */
 export function ledgerRowsOfBarsB(
@@ -21,30 +22,39 @@ export function ledgerRowsOfBarsB(
   const g0 = p.barGroups[0];
   const rows = g0 === undefined ? [] : g0.rows;
   if (sceneId === 'top') {
-    if (rows.length === 0) return [{ k: '说明', v: '这段时间还没有支出记录' }];
+    if (rows.length === 0) return [{ k: m('skill-bill.analysis-ticket-b-bars.c001'), v: m('skill-bill.analysis-ticket-b-bars.c002') }];
     let sum = 0;
     for (const r of rows) sum += parseAmount(r.text);
     const head = rows[0];
     const segs = head.text.split(' · ');
     const cat = head.label.replace(/^\d+\.\s*/, '');
     return [
-      { k: 'TOP' + String(rows.length) + ' 合计', v: money(Math.round(sum * 100) / 100) + ' 元' },
-      { k: '最贵一笔', v: (segs[1] ?? '') + ' ' + cat + ' ' + (segs[0] ?? '').replace(' 元', '') + ' 元' },
+      { k: m('skill-bill.analysis-ticket-b-bars.c003', { p0: String(String(rows.length)) }), v: m('skill-bill.analysis-ticket-b-bars.c004', { p0: String(money(Math.round(sum * 100) / 100)) }) },
+      // 金额段只搬家：条卡文本首段是「金额 元」，解析出数字再照原格式回写（不切显示串）。
+      { k: m('skill-bill.analysis-ticket-b-bars.c005'), v: m('skill-bill.analysis-ticket-b-bars.c006', {
+        p0: String(segs[1] ?? ''),
+        p1: String(cat),
+        p2: String(money(parseAmount(segs[0] ?? ''))),
+      }) },
     ];
   }
   if (sceneId === 'top_freq') {
-    if (rows.length === 0) return [{ k: '说明', v: '这段时间还没有支出记录' }];
+    if (rows.length === 0) return [{ k: m('skill-bill.analysis-ticket-b-bars.c007'), v: m('skill-bill.analysis-ticket-b-bars.c008') }];
     const head = rows[0];
     const second = rows[1];
     const cat = head.label.replace(/^\d+\.\s*/, '');
     const segs = head.text.split(' · ');
     const out = [{
-      k: '最多',
-      v: cat + ' ' + (segs[0] ?? '') + '（' + (segs[1] ?? '').replace(' 元', '') + ' 元）',
+      k: m('skill-bill.analysis-ticket-b-bars.c009'),
+      v: m('skill-bill.analysis-ticket-b-bars.c010', {
+        p0: String(cat),
+        p1: String(segs[0] ?? ''),
+        p2: String(money(parseAmount(segs[1] ?? ''))),
+      }),
     }];
     if (second !== undefined) {
       const cat2 = second.label.replace(/^\d+\.\s*/, '');
-      out.push({ k: '其次', v: cat2 + ' ' + (second.text.split(' · ')[0] ?? '') });
+      out.push({ k: m('skill-bill.analysis-ticket-b-bars.c011'), v: cat2 + ' ' + (second.text.split(' · ')[0] ?? '') });
     }
     return out;
   }
@@ -53,17 +63,18 @@ export function ledgerRowsOfBarsB(
     const hours = p.barGroups[1];
     const hour = hours === undefined ? null : peakBarRow([hours]);
     const out: { k: string; v: string }[] = [];
-    if (day !== null) out.push({ k: '最多周', v: day.label + ' ' + day.text });
-    if (hour !== null) out.push({ k: '最多时段', v: hour.label + ' ' + hour.text });
-    return out.length === 0 ? [{ k: '说明', v: '全库还没有记录，看不出活跃规律' }] : out;
+    if (day !== null) out.push({ k: m('skill-bill.analysis-ticket-b-bars.c012'), v: day.label + ' ' + day.text });
+    if (hour !== null) out.push({ k: m('skill-bill.analysis-ticket-b-bars.c013'), v: hour.label + ' ' + hour.text });
+    return out.length === 0 ? [{ k: m('skill-bill.analysis-ticket-b-bars.c014'), v: m('skill-bill.analysis-ticket-b-bars.c015') }] : out;
   }
   if (sceneId === 'refund') {
-    if (input.result.count === 0) return [{ k: '说明', v: '还没有一笔备注里带退款标签的记录' }];
-    const total = kpiValue(p.kpis, '退款总额');
-    const times = kpiValue(p.kpis, '退款次数');
+    if (input.result.count === 0) return [{ k: m('skill-bill.analysis-ticket-b-bars.c016'), v: m('skill-bill.analysis-ticket-b-bars.c017') }];
+    // 判据位按位置取。发射方正序：scene-refund.ts:70-73 kpis 固定 2 格（0 退款总额／1 退款次数）。
+    const total = kpiAt(p.kpis, 0);
+    const times = kpiAt(p.kpis, 1);
     const first = p.listCards[0]?.rows[0];
-    const out = [{ k: '退款总额', v: total + ' 元（' + times + '）' }];
-    if (first !== undefined) out.push({ k: '最近一次', v: first.left });
+    const out = [{ k: m('skill-bill.analysis-ticket-b-bars.c018'), v: m('skill-bill.analysis-ticket-b-bars.c019', { p0: String(total), p1: String(times) }) }];
+    if (first !== undefined) out.push({ k: m('skill-bill.analysis-ticket-b-bars.c020'), v: first.left });
     return out;
   }
   return [];
@@ -92,9 +103,9 @@ export function ticketBarsBDoc(input: DocInput<BarsPage>, sceneId: string): stri
     wakeWord: input.wakeWord,
     h2: h2ForB(sceneId, r.count),
     windowLabel: r.label,
-    summaryValue: '见明细',
+    summaryValue: m('skill-bill.analysis-ticket-b-bars.c021'),
     summaryUnit: '',
-    summaryNote: '结论 · 明细与复制区与基线一致',
+    summaryNote: m('skill-bill.analysis-ticket-b-bars.c022'),
     ledgerRows: ledgerRowsOfBarsB(sceneId, input),
     sceneId,
     detailHtml: detailOf(parts, p.empty.text),

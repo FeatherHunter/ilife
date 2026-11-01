@@ -9,19 +9,29 @@
  *   - 可执行示例**照抄即能跑**（本机临时库上真跑过，退出码 0）：取「初始化状态」这一支，
  *     它在空库上不需要先有备份或 CSV 就能跑通。
  *
+ * #1214：`title`（用户看到的名字）迁进词条层，`setupCommands(language)` 按语言取；
  * 加一条命令＝只改这个文件＋它那个子功能文件；`src/cli/registry.ts` 由 `pnpm gen` 重生成，
  *  `src/cli/cmd_read.ts` 一行不动（本票把这条命令的 `case` 从出口分派里搬进来，见 `./run.js`）。
  */
+import { resolve } from 'base-entries';
 import type { CommandSpec } from '../shared/commandSpec.js';
+import { SKILL_BILL_CATALOG } from '../entries/index.js';
 import { setupRun } from './run.js';
 
-export const SETUP_COMMANDS = [
-  {
-    kind: 'write',
-    key: 'bill.setup.run',
-    shape: 'receipt',
-    title: '开始使用',
-    example: 'bill-cmd-read bill.setup.run --params \'{"op":"init-status"}\'',
-    run: setupRun,
-  },
-] satisfies readonly CommandSpec[];
+/** 一条写命令的声明（按语言取值；`SETUP_COMMANDS` 是 `zh` 那一份，保持既有形状）。
+ *  #1214：标题住 `../entries/{zh,en}.ts`（`command.setup-run.title`），本件按 `language` 取；
+ *  可执行示例是 ASCII 参数样例（`op=init-status`），译了就跑不通，故逐字不动。 */
+export function setupCommands(language: string): readonly CommandSpec[] {
+  return [
+    {
+      kind: 'write' as const,
+      key: 'bill.setup.run' as const,
+      shape: 'receipt' as const,
+      title: resolve(SKILL_BILL_CATALOG, language, 'command.setup-run.title'),
+      example: 'bill-cmd-read bill.setup.run --params \'{"op":"init-status"}\'',
+      run: setupRun,
+    },
+  ];
+}
+
+export const SETUP_COMMANDS = setupCommands('zh');

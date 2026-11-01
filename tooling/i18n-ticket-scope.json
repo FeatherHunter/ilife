@@ -629,7 +629,8 @@
     "1208": {
       "title": "迁移 skill-bill analysis 批次 3：19 件（563 条）",
       "state": "open（待开工；清单已回填 #1308）",
-      "files": [
+      "files": [],
+      "migrated": [
         {
           "path": "packages/skill-bill/src/analysis/scene-top-freq.ts",
           "literals": 20,
@@ -676,13 +677,6 @@
           "byClass": {
             "copy": 7,
             "concat": 20
-          }
-        },
-        {
-          "path": "packages/skill-bill/src/analysis/scene.ts",
-          "literals": 1,
-          "byClass": {
-            "concat": 1
           }
         },
         {
@@ -784,11 +778,20 @@
           }
         }
       ],
-      "migrated": [],
       "totals": {
         "files": 19,
         "literals": 563
-      }
+      },
+      "excluded": [
+        {
+          "path": "packages/skill-bill/src/analysis/scene.ts",
+          "literals": 1,
+          "byClass": {
+            "concat": 1
+          },
+          "reason": "判盲：全文唯一中文字面量是 BillPolicyError 开发报文（errorReceipt 类），无用户可见文案可迁；迁移器 dry 判 0 unit"
+        }
+      ]
     },
     "1209": {
       "title": "迁移 skill-bill query 批次 1：10 件（379 条）",
@@ -1083,14 +1086,8 @@
     "1212": {
       "title": "迁移 skill-bill account 域：15 件（518 条）",
       "state": "open（待开工；清单已回填 #1308）",
-      "files": [
-        {
-          "path": "packages/skill-bill/src/account/accounts.ts",
-          "literals": 17,
-          "byClass": {
-            "concat": 17
-          }
-        },
+      "files": [],
+      "migrated": [
         {
           "path": "packages/skill-bill/src/account/commands.ts",
           "literals": 2,
@@ -1157,13 +1154,6 @@
           }
         },
         {
-          "path": "packages/skill-bill/src/account/scene.ts",
-          "literals": 1,
-          "byClass": {
-            "concat": 1
-          }
-        },
-        {
           "path": "packages/skill-bill/src/account/template-form.ts",
           "literals": 88,
           "byClass": {
@@ -1200,16 +1190,34 @@
           }
         }
       ],
-      "migrated": [],
       "totals": {
         "files": 14,
         "literals": 484
-      }
+      },
+      "excluded": [
+        {
+          "path": "packages/skill-bill/src/account/accounts.ts",
+          "literals": 17,
+          "byClass": {
+            "concat": 17
+          },
+          "reason": "判盲：4 条候选全是数据值（分类/账本名/币种），其余 7 条为 BillPolicyError 开发报文，无用户可见文案可迁"
+        },
+        {
+          "path": "packages/skill-bill/src/account/scene.ts",
+          "literals": 1,
+          "byClass": {
+            "concat": 1
+          },
+          "reason": "判盲：仅 BillPolicyError 开发报文；本票只改 writeSceneFor 接线签名，不登记为已迁件"
+        }
+      ]
     },
     "1213": {
       "title": "迁移 skill-bill goal 域：15 件（523 条）",
       "state": "open（待开工；清单已回填 #1308）",
-      "files": [
+      "files": [],
+      "migrated": [
         {
           "path": "packages/skill-bill/src/goal/commands.ts",
           "literals": 2,
@@ -1288,13 +1296,6 @@
           }
         },
         {
-          "path": "packages/skill-bill/src/goal/scene.ts",
-          "literals": 2,
-          "byClass": {
-            "concat": 2
-          }
-        },
-        {
           "path": "packages/skill-bill/src/goal/template-form.ts",
           "literals": 80,
           "byClass": {
@@ -1321,23 +1322,26 @@
           }
         }
       ],
-      "migrated": [],
       "totals": {
         "files": 14,
         "literals": 490
-      }
+      },
+      "excluded": [
+        {
+          "path": "packages/skill-bill/src/goal/scene.ts",
+          "literals": 2,
+          "byClass": {
+            "concat": 2
+          },
+          "reason": "判盲：CJK 全在注释/docstring，两处 BillPolicyError 为开发报文（ADR-0004 不译），无用户可见文案可迁"
+        }
+      ]
     },
     "1214": {
       "title": "迁移 skill-bill setup 域：23 件（469 条）",
       "state": "open（待开工；清单已回填 #1308）",
-      "files": [
-        {
-          "path": "packages/skill-bill/src/setup/backups.ts",
-          "literals": 2,
-          "byClass": {
-            "concat": 2
-          }
-        },
+      "files": [],
+      "migrated": [
         {
           "path": "packages/skill-bill/src/setup/blocked.ts",
           "literals": 4,
@@ -1460,13 +1464,6 @@
           }
         },
         {
-          "path": "packages/skill-bill/src/setup/scene.ts",
-          "literals": 1,
-          "byClass": {
-            "concat": 1
-          }
-        },
-        {
           "path": "packages/skill-bill/src/setup/status.ts",
           "literals": 11,
           "byClass": {
@@ -1507,11 +1504,28 @@
           }
         }
       ],
-      "migrated": [],
       "totals": {
         "files": 22,
         "literals": 436
-      }
+      },
+      "excluded": [
+        {
+          "path": "packages/skill-bill/src/setup/backups.ts",
+          "literals": 2,
+          "byClass": {
+            "concat": 2
+          },
+          "reason": "判盲：只有 2 条 BillFetchError 开发报文＋字节单位，无用户可见文案可迁"
+        },
+        {
+          "path": "packages/skill-bill/src/setup/scene.ts",
+          "literals": 1,
+          "byClass": {
+            "concat": 1
+          },
+          "reason": "判盲：只有 1 条 BillPolicyError 开发报文；本票只改 setupSceneFor 接线，不登记为已迁件"
+        }
+      ]
     },
     "1215": {
       "title": "迁移 skill-bill 小域合并与 src 顶层件：34 件（393 条）",
@@ -10183,12 +10197,12 @@
   },
   "scopeSummary": {
     "ledgerFiles": 1226,
-    "migratedFiles": 507,
-    "pendingFiles": 481,
-    "pendingLiterals": 13678,
-    "excludedFiles": 238,
-    "excludedLiterals": 13032,
-    "migratedLiterals": 16038
+    "migratedFiles": 570,
+    "pendingFiles": 412,
+    "pendingLiterals": 11705,
+    "excludedFiles": 244,
+    "excludedLiterals": 13056,
+    "migratedLiterals": 17987
   },
   "workflow": [
     "开工：从本文件取本票 files，逐件登记进 tooling/i18n-scope.json 的 files（先跑两道门拿红读数＝范围已挂但还没迁）。",

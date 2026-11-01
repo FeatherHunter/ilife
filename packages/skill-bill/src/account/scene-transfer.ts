@@ -8,11 +8,13 @@
  *      「提交前把会写什么讲全」（`expense_form.html:150-154` 那一类）的直接兑现；
  *   ③ **正数与不同账户**：老侧页上零校验（负数、同账户都复制得出去，只在 CLI 才报错），新侧进缺项阻断表。
  */
+import { runWithLanguage } from 'base-entries';
 import { projectWakeWord } from '../triggers/wakeTable.js';
 import { numberOf } from './params.js';
 import { accountHelpPrompt, textOrDash } from './pageParts.js';
 import type { AccountCollectInput, AccountWriteScene, AccountReceiptInput } from './scene.js';
 import { bindAccountFormPages } from './template-form.js';
+import { m } from '../entries/index.js';
 
 const WORD: string = projectWakeWord({ key: 'bill.account.write', op: 'transfer' });
 const KEY = 'bill.account.write' as const;
@@ -27,55 +29,67 @@ function shownAmount(params: Record<string, unknown>): string {
 function transferRows(params: Record<string, unknown>): readonly { readonly k: string; readonly v: string }[] {
   const amount = shownAmount(params);
   return [
-    { k: '转出这一笔（' + textOrDash(params['from']) + '）', v: '记成支出 ' + amount + ' 元，分类「转账/转出」，账本「转账」' },
-    { k: '转入这一笔（' + textOrDash(params['to']) + '）', v: '记成收入 ' + amount + ' 元，分类「转账/转入」，账本「转账」' },
-    { k: '收入与支出', v: '这两笔都不算进去；两个账户的余额一增一减，合起来不变' },
+    { k: m('skill-bill.account-scene-transfer.c001', { p0: String(textOrDash(params['from'])) }), v: m('skill-bill.account-scene-transfer.c002', { p0: String(amount) }) },
+    { k: m('skill-bill.account-scene-transfer.c003', { p0: String(textOrDash(params['to'])) }), v: m('skill-bill.account-scene-transfer.c004', { p0: String(amount) }) },
+    { k: m('skill-bill.account-scene-transfer.c005'), v: m('skill-bill.account-scene-transfer.c006') },
   ];
 }
 
 /** 采集页副标题：缺什么就说清缺几项。 */
 const subtitleOf = (input: AccountCollectInput): string => (
-  input.blocked.length === 0 ? '金额与两个账户填好就可以写进去了。' : '缺 ' + String(input.blocked.length) + ' 项，详见下表。'
+  input.blocked.length === 0 ? m('skill-bill.account-scene-transfer.c007') : m('skill-bill.account-scene-transfer.c008', { p0: String(String(input.blocked.length)) })
 );
 
-export const SCENE: AccountWriteScene = {
+/** #1212：场景件按语言重建（模块加载期不固化文案），常量 SCENE 仍留 zh 静态快照。 */
+function buildScene(): AccountWriteScene {
+  return {
   id: 'transfer',
   key: KEY,
   op: 'transfer',
-  family: '账户管理',
+  family: m('skill-bill.account-scene-transfer.c009'),
   ...bindAccountFormPages({
     word: WORD,
-    caliber: '钱在两个账户之间移动',
-    note: '转账 = 钱从一个账户移到另一个账户：账本里落转出与转入两笔，两个账户的余额一增一减，都不算进收入与支出。',
-    fieldDescription: '金额写正数；从账户与到账户要不一样（下拉里是账户表里现有的账户，也可以直接手打）。',
+    caliber: m('skill-bill.account-scene-transfer.c010'),
+    note: m('skill-bill.account-scene-transfer.c011'),
+    fieldDescription: m('skill-bill.account-scene-transfer.c012'),
     preview: (input) => transferRows(input.params),
-    previewCaption: '按下就落这两笔',
+    previewCaption: m('skill-bill.account-scene-transfer.c013'),
     prompt: (input) => accountHelpPrompt('account_transfer', input.params),
     subtitle: subtitleOf,
-    registerCaption: '账户表里现在有这些',
+    registerCaption: m('skill-bill.account-scene-transfer.c014'),
     emptyAccounts: {
-      text: '账户表里还没有账户，两个账户都可以直接手打。',
-      next: '先说「新增账户」登记一个，以后就能从下拉里挑了。',
+      text: m('skill-bill.account-scene-transfer.c015'),
+      next: m('skill-bill.account-scene-transfer.c016'),
     },
     receiptCards: (input: AccountReceiptInput) => [
-      { label: '转账金额', value: shownAmount(input.params), unit: '元', detail: '两个账户之间移动' },
+      { label: m('skill-bill.account-scene-transfer.c017'), value: shownAmount(input.params), unit: m('skill-bill.account-scene-transfer.c018'), detail: m('skill-bill.account-scene-transfer.c019') },
       {
-        label: '从哪转到哪',
+        label: m('skill-bill.account-scene-transfer.c020'),
         value: textOrDash(input.params['from']) + ' → ' + textOrDash(input.params['to']),
-        detail: '转出记负数、转入记正数',
+        detail: m('skill-bill.account-scene-transfer.c021'),
       },
-      { label: '落了几笔', value: String(input.receipt.affectedRows) + ' 笔', detail: '转出一笔、转入一笔，都不算进收支' },
+      { label: m('skill-bill.account-scene-transfer.c022'), value: m('skill-bill.account-scene-transfer.c023', { p0: String(String(input.receipt.affectedRows)) }), detail: m('skill-bill.account-scene-transfer.c024') },
     ],
     result: (input: AccountReceiptInput) => ({
-      navText: '两笔分录',
-      caption: '这次落的两笔',
+      navText: m('skill-bill.account-scene-transfer.c025'),
+      caption: m('skill-bill.account-scene-transfer.c026'),
       rows: transferRows(input.params),
-      note: '要核对就去账本里看这两笔：分类「转账/转出」与「转账/转入」，备注里带着对方账户名。',
+      note: m('skill-bill.account-scene-transfer.c027'),
     }),
     /* #1131：判地主数字下那一行是固定句（转账口径）——逐字 `转出与转入各记一笔 · 转账不计入收支`。 */
-    receiptNote: () => '转出与转入各记一笔 · 转账不计入收支',
-    detailCaption: '写进去的项',
-    logDetail: (input) => '转账 ' + textOrDash(input.params['from']) + ' → ' + textOrDash(input.params['to'])
-      + '，落了两笔（转出负数 ＋ 转入正数），账本记成「转账」',
+    receiptNote: () => m('skill-bill.account-scene-transfer.c028'),
+    detailCaption: m('skill-bill.account-scene-transfer.c029'),
+    logDetail: (input) => m('skill-bill.account-scene-transfer.c030', {
+      p0: String(textOrDash(input.params['from'])),
+      p1: String(textOrDash(input.params['to'])),
+    }),
   }),
-};
+  };
+}
+
+export const SCENE: AccountWriteScene = buildScene();
+
+/** 按语言重建「账户转账」这一支场景（#1212 接线点：`./scene.js` 的 `writeSceneFor(op, language)` 调它）。 */
+export function sceneTransfer(language: string): AccountWriteScene {
+  return runWithLanguage(language, buildScene);
+}
