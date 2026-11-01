@@ -23,6 +23,7 @@ import { nowStamp } from '../render/receipt.js';
 import { commandLine } from '../shared/writeParts.js';
 import type { LabelPrecheckView } from './precheckPort.js';
 import { DOC_VERSION, PRECHECK_BADGE, PRECHECK_CSS, anchored, stat, writeTargetBlock } from './precheckParts.js';
+import { m } from '../entries/index.js';
 
 function fieldValue(v: LabelPrecheckView, key: string): string {
   return v.fields.find((f) => f.key === key)?.value ?? '—';
@@ -43,17 +44,17 @@ function fieldNumber(v: LabelPrecheckView, key: string): number | undefined {
  *  （#567）交给**现成徽章件** `renderStatusBadge` 产出；档位照老实物 `nutrition_label_wizard.html:214`
  *  的 `.diff-tag` 那一对灰／橙（`.ai` 中性灰＝识别得来、裸 `.diff-tag` 橙＝识别不确定）：
  *  中性灰走 `empty`、橙走 `warn`（`empty` 当中性档有同包先例：`photo/viewerDoc.ts:152` 的「没核对」）。 */
-const TAG_AI = '识别得到';
-const TAG_CHECK = '要你核对';
+const TAG_AI = (): string => m('skill-calorie.diet-precheckLabel.c046');
+const TAG_CHECK = (): string => m('skill-calorie.diet-precheckLabel.c047');
 
 /** 那一列的纯文本值：一格一句读者话；不确定的格子是两句话并排（不会落地成字面标签，
  *  结构与配色由 `tagCellHtml()` 承担）。 */
 function tagWords(uncertain: boolean): string {
-  return uncertain ? TAG_AI + '，' + TAG_CHECK : TAG_AI;
+  return uncertain ? TAG_AI() + '，' + TAG_CHECK() : TAG_AI();
 }
 
 function tagBadges(word: string): string {
-  return renderStatusBadge({ status: word === TAG_CHECK ? 'warn' : 'empty', text: word });
+  return renderStatusBadge({ status: word === TAG_CHECK() ? 'warn' : 'empty', text: word });
 }
 
 /** #617 · `renderDataTable` 的 `cellHtml` 受信位：只认「这一格怎么来的」那一列，把纯文本值按读者话
@@ -71,41 +72,41 @@ export function buildLabelPrecheckDoc(v: LabelPrecheckView, backfill: boolean, c
   const cards = [
     {
       id: 'sec-read',
-      label: '识别读数',
+      label: m('skill-calorie.diet-precheckLabel.c001'),
       html: renderKpiGrid([
-        { label: '热量', value: String(v.totalCalorie), unit: '卡' },
-        { label: '蛋白质', value: fieldValue(v, 'protein'), unit: '克' },
+        { label: m('skill-calorie.diet-precheckLabel.c002'), value: String(v.totalCalorie), unit: m('skill-calorie.diet-precheckLabel.c003') },
+        { label: m('skill-calorie.diet-precheckLabel.c004'), value: fieldValue(v, 'protein'), unit: '克' },
         { label: '碳水', value: fieldValue(v, 'carbohydrates'), unit: '克' },
         { label: '脂肪', value: fieldValue(v, 'fat'), unit: '克' },
       ]),
     },
     {
       id: 'sec-photo',
-      label: '照片与日期',
+      label: m('skill-calorie.diet-precheckLabel.c005'),
       html: renderListRows({
         items: [
           {
-            left: '营养表照片',
-            main: v.photo === '' ? '这一页没有带上照片路径' : v.photo,
-            right: v.photo === '' ? '想看图就说一句照片在哪' : '看的就是这一张',
+            left: m('skill-calorie.diet-precheckLabel.c006'),
+            main: v.photo === '' ? m('skill-calorie.diet-precheckLabel.c007') : v.photo,
+            right: v.photo === '' ? m('skill-calorie.diet-precheckLabel.c008') : m('skill-calorie.diet-precheckLabel.c009'),
           },
           {
-            left: '补录日期',
-            main: backfill ? dateText : '今天',
-            right: backfill ? '确认后按这一天记' : '确认后记到今天',
+            left: m('skill-calorie.diet-precheckLabel.c010'),
+            main: backfill ? dateText : m('skill-calorie.diet-precheckLabel.c011'),
+            right: backfill ? m('skill-calorie.diet-precheckLabel.c012') : m('skill-calorie.diet-precheckLabel.c013'),
           },
         ],
       }),
     },
     {
       id: 'sec-fields',
-      label: '识别出的字段',
+      label: m('skill-calorie.diet-precheckLabel.c014'),
       html: renderDataTable({
         columns: [
-          { key: 'label', label: '营养成分' },
-          { key: 'value', label: '识别读数' },
-          { key: 'unit', label: '单位' },
-          { key: 'tag', label: '这一格怎么来的' },
+          { key: 'label', label: m('skill-calorie.diet-precheckLabel.c015') },
+          { key: 'value', label: m('skill-calorie.diet-precheckLabel.c016') },
+          { key: 'unit', label: m('skill-calorie.diet-precheckLabel.c017') },
+          { key: 'tag', label: m('skill-calorie.diet-precheckLabel.c018') },
         ],
         rows: v.fields.map((f) => ({
           label: f.label,
@@ -114,22 +115,22 @@ export function buildLabelPrecheckDoc(v: LabelPrecheckView, backfill: boolean, c
           tag: tagWords(f.uncertain),
         })),
         cellHtml: tagCellHtml,
-        caption: '识别结果（照老实物那八个字段，缺的写 —）',
-        emptyText: '这次一个营养字段都没识别出来',
+        caption: m('skill-calorie.diet-precheckLabel.c019'),
+        emptyText: m('skill-calorie.diet-precheckLabel.c020'),
       }),
     },
   ];
   if (v.uncertainCount > 0) {
     cards.push({
       id: 'sec-check',
-      label: '要你核对的格子',
+      label: m('skill-calorie.diet-precheckLabel.c021'),
       html: renderDisclosure({
-        title: '有 ' + v.uncertainCount + ' 格识别不确定，要先核对',
+        title: m('skill-calorie.diet-precheckLabel.c022', { p0: String(v.uncertainCount) }),
         contentHtml: renderListRows({
           items: v.fields.filter((f) => f.uncertain).map((f) => ({
             left: f.label,
-            main: '现在识别成 ' + f.value + ' ' + f.unit,
-            right: '不对就照包装上的数字直接说一个',
+            main: m('skill-calorie.diet-precheckLabel.c023', { p0: String(f.value), p1: String(f.unit) }),
+            right: m('skill-calorie.diet-precheckLabel.c024'),
           })),
         }),
       }),
@@ -137,17 +138,17 @@ export function buildLabelPrecheckDoc(v: LabelPrecheckView, backfill: boolean, c
   }
   cards.push({
     id: 'sec-write',
-    label: '确认后操作',
+    label: m('skill-calorie.diet-precheckLabel.c025'),
     html: writeTargetBlock(
-      '确认后操作（这一步不写库）',
-      '这一餐会写进饮食记录的字段与取值',
+      m('skill-calorie.diet-precheckLabel.c026'),
+      m('skill-calorie.diet-precheckLabel.c027'),
       [
         { field: 'foodName', value: v.productName },
         { field: 'calories', value: String(v.totalCalorie) },
         { field: 'protein', value: fieldValue(v, 'protein') },
         { field: 'carbs', value: fieldValue(v, 'carbohydrates') },
         { field: 'fat', value: fieldValue(v, 'fat') },
-        { field: 'date', value: backfill ? dateText : '今天' },
+        { field: 'date', value: backfill ? dateText : m('skill-calorie.diet-precheckLabel.c028') },
         { field: 'time', value: v.time === '' ? '—' : v.time },
         { field: 'note', value: v.note === '' ? '—' : v.note },
       ],
@@ -160,42 +161,50 @@ export function buildLabelPrecheckDoc(v: LabelPrecheckView, backfill: boolean, c
     fat: fieldNumber(v, 'fat'),
     uncertain: v.uncertainCount,
   }));
+  const reviewHint = v.uncertainCount === 0 ? m('skill-calorie.diet-precheckLabel.c029') : m('skill-calorie.diet-precheckLabel.c030');
+  const backfillPhrase = backfill ? m('skill-calorie.diet-precheckLabel.c031', { p0: String(dateText) }) : m('skill-calorie.diet-precheckLabel.c032');
   const body = [
     PRECHECK_CSS,
     renderTocBlock({ items: cards.map((c) => ({ id: c.id, text: c.label })) }),
     cards.map(anchored).join(''),
-    renderCaliberLine('这一页只做确认，不写库。')
-    + renderCaliberLine('上面每一格都是照你给的那张营养表照片得来的。'
-      + (v.uncertainCount === 0 ? '没有要你核对的格子。' : '标着「要你核对」的那几格最可能要改。')),
+    renderCaliberLine(m('skill-calorie.diet-precheckLabel.c033'))
+    + renderCaliberLine(m('skill-calorie.diet-precheckLabel.c034', { p0: String(reviewHint) })),
     copyArea({
       data: { envelope },
       log: {
         envelope,
         copyLog: copyLog({
           command,
-          source: DB_FILENAME + ' ｜ 营养表照片' + (v.photo === '' ? '' : '（' + v.photo + '）'),
-          m5Line: '确认后执行 ' + writeCommand,
+          source: m('skill-calorie.diet-precheckLabel.c035', {
+            p0: String(DB_FILENAME),
+            p1: String(v.photo === '' ? '' : '（' + v.photo + '）'),
+          }),
+          m5Line: m('skill-calorie.diet-precheckLabel.c036', { p0: String(writeCommand) }),
           actionAt: nowStamp(),
           version: DOC_VERSION,
         }),
       },
     }),
-    renderCaliberLine('📊 数据来源：你给的那张营养表照片 · 「' + v.productName + '」'
-      + (backfill ? '按 ' + dateText + ' 补记' : '记到今天')),
+    renderCaliberLine(m('skill-calorie.diet-precheckLabel.c037', { p0: String(v.productName), p1: String(backfillPhrase) })),
   ].join('');
+  const confirmPhrase = backfill ? m('skill-calorie.diet-precheckLabel.c038', { p0: String(dateText) }) : m('skill-calorie.diet-precheckLabel.c039');
+  const uncertainPhrase = v.uncertainCount === 0 ? '' : m('skill-calorie.diet-precheckLabel.c040', { p0: String(v.uncertainCount) });
   return assembleDocPage({
     /* #581 · 页题与眉标去间隔号：共用件 `precheckParts.ts` 的 `DOC_TITLE` 本票不碰（非写集），
        本页调用点改传无间隔号题名；眉标只留唤醒词。 */
-    docTitle: '卡路里饮食',
-    title: '📷 营养表识别确认',
+    docTitle: m('skill-calorie.diet-precheckLabel.c041'),
+    title: m('skill-calorie.diet-precheckLabel.c042'),
     pageUi: true,
     eyebrow: '',
     subtitle: null,
-    metaLeft: backfill ? '拍营养表补记一餐' : '拍营养表记一餐',
-    badge: PRECHECK_BADGE,
-    summary: '识别出「' + v.productName + '」' + v.totalCalorie + ' 卡：'
-      + (backfill ? '确认后按 ' + dateText + ' 补记这一餐。' : '确认后记进今天的饮食。')
-      + (v.uncertainCount === 0 ? '' : '有 ' + v.uncertainCount + ' 格标着「要你核对」。'),
+    metaLeft: backfill ? m('skill-calorie.diet-precheckLabel.c043') : m('skill-calorie.diet-precheckLabel.c044'),
+    badge: PRECHECK_BADGE(),
+    summary: m('skill-calorie.diet-precheckLabel.c045', {
+      p0: String(v.productName),
+      p1: String(v.totalCalorie),
+      p2: String(confirmPhrase),
+      p3: String(uncertainPhrase),
+    }),
     content: body,
   });
 }

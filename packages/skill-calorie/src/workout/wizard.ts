@@ -14,11 +14,12 @@ import type { ViewOut } from '../shared/commandSpec.js';
 import { fail, nums } from '../shared/params.js';
 import { commandLine } from '../shared/writeParts.js';
 import { WIZARD_WAKE_WORD, workoutPrompt } from './precheckPrompt.js';
+import { m } from '../entries/index.js';
 
 /** `calorie.view.plan-wizard` · 构建向导（把一份计划候选跑一遍校验：错误／警告／场次数）。 */
 export function viewPlanWizard(params: Record<string, unknown>, _db: DatabaseSync): ViewOut {
   const plan = params['plan'];
-  if (typeof plan !== 'object' || plan === null || Array.isArray(plan)) fail(2, '缺参数 plan（PlanInput 对象）');
+  if (typeof plan !== 'object' || plan === null || Array.isArray(plan)) fail(2, m('skill-calorie.workout-wizard.c001'));
   const catalog = params['catalog'];
   const v = buildPlanWizardView(plan, (catalog as string[] | undefined) ?? undefined);
   const metrics = nums({ errorCount: v.errorCount, warningCount: v.warningCount, checkedSessions: v.checkedSessions });

@@ -22,6 +22,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CALORIE_CONFIG_DEFAULTS, loadCalorieConfig } from '../config.js';
 import { fail } from '../shared/params.js';
+import { m } from '../entries/index.js';
 
 /** 子进程限时**默认值**毫秒（xunji 侧单次 30 秒超时＋2 次退避；一天多段串行时仍应收敛，超了即 exit 4）。
  *  真值见 `xunjiSpawnTimeoutMs()`（配置 `land.xunjiSeconds`）。 */
@@ -51,13 +52,13 @@ export function xunjiCliPath(): string {
   const configured = loadCalorieConfig().values.xunji.cli;
   if (configured !== '') {
     if (!existsSync(configured)) {
-      fail(4, '训记入口不在（' + configured + '）：配置项 xunji.cli 指向的文件不存在');
+      fail(4, m('skill-calorie.workout-xunjiRunner.c001', { p0: String(configured) }));
     }
     return configured as string;
   }
   const here = dirname(fileURLToPath(import.meta.url));
   const cli = join(here, '..', 'xunji', 'cli.js');
-  if (!existsSync(cli)) fail(4, '训记入口不在（' + cli + '）：先跑 pnpm build 再调本命令');
+  if (!existsSync(cli)) fail(4, m('skill-calorie.workout-xunjiRunner.c002', { p0: String(cli) }));
   return cli as string;
 }
 
@@ -80,7 +81,11 @@ export function invokeXunji(argv: readonly string[], step: string): XunjiCall {
   const err = (r as { error?: unknown }).error;
   if (err !== undefined && err !== null) {
     const msg = err instanceof Error ? err.message : String(err);
-    fail(4, step + '调起失败（含超时 ' + Math.round(timeoutMs / 1000) + ' 秒）：' + msg);
+    fail(4, m('skill-calorie.workout-xunjiRunner.c003', {
+      p0: String(step),
+      p1: String(Math.round(timeoutMs / 1000)),
+      p2: String(msg),
+    }));
   }
   const code = typeof r.status === 'number' ? r.status : 1;
   const tail = stderrTail(r);
@@ -93,11 +98,14 @@ export function invokeXunji(argv: readonly string[], step: string): XunjiCall {
       data = JSON.parse(text);
     } catch (e) {
       if (code === 0) {
-        fail(4, step + '回执解析失败（子进程退 0 但 stdout 不是 JSON）：' + (e instanceof Error ? e.message : String(e)));
+        fail(4, m('skill-calorie.workout-xunjiRunner.c004', {
+          p0: String(step),
+          p1: String(e instanceof Error ? e.message : String(e)),
+        }));
       }
     }
   } else if (code === 0) {
-    fail(4, step + '回执解析失败（子进程退 0 但 stdout 为空）');
+    fail(4, m('skill-calorie.workout-xunjiRunner.c005', { p0: String(step) }));
   }
   return { code, data, stderr: tail, stubbed: false };
 }

@@ -2396,14 +2396,8 @@
     "1218": {
       "title": "迁移 skill-calorie 饮食与训练域（diet＋workout＋weight）：78 件（3,950 条）",
       "state": "open（待开工；清单已回填 #1308）",
-      "files": [
-        {
-          "path": "packages/skill-calorie/src/diet/commands.ts",
-          "literals": 65,
-          "byClass": {
-            "copy": 65
-          }
-        },
+      "files": [],
+      "migrated": [
         {
           "path": "packages/skill-calorie/src/diet/dietEngine.ts",
           "literals": 33,
@@ -2411,13 +2405,6 @@
             "copy": 11,
             "concat": 21,
             "ident": 1
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/diet/dietUi.ts",
-          "literals": 3,
-          "byClass": {
-            "ident": 3
           }
         },
         {
@@ -2449,13 +2436,6 @@
             "copy": 50,
             "concat": 44,
             "ident": 2
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/diet/libraryPlate.ts",
-          "literals": 6,
-          "byClass": {
-            "copy": 6
           }
         },
         {
@@ -2599,13 +2579,6 @@
           }
         },
         {
-          "path": "packages/skill-calorie/src/diet/routes.ts",
-          "literals": 130,
-          "byClass": {
-            "copy": 130
-          }
-        },
-        {
           "path": "packages/skill-calorie/src/diet/sourceStatsDocs.ts",
           "literals": 31,
           "byClass": {
@@ -2627,13 +2600,6 @@
           "byClass": {
             "copy": 56,
             "concat": 28
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/weight/commands.ts",
-          "literals": 31,
-          "byClass": {
-            "copy": 31
           }
         },
         {
@@ -2735,13 +2701,6 @@
           }
         },
         {
-          "path": "packages/skill-calorie/src/weight/routes.ts",
-          "literals": 89,
-          "byClass": {
-            "copy": 89
-          }
-        },
-        {
           "path": "packages/skill-calorie/src/weight/volatility.ts",
           "literals": 35,
           "byClass": {
@@ -2788,13 +2747,6 @@
           "literals": 1,
           "byClass": {
             "concat": 1
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/workout/commands.ts",
-          "literals": 57,
-          "byClass": {
-            "copy": 57
           }
         },
         {
@@ -2875,13 +2827,6 @@
           }
         },
         {
-          "path": "packages/skill-calorie/src/workout/planEditorCss.ts",
-          "literals": 1,
-          "byClass": {
-            "ident": 1
-          }
-        },
-        {
           "path": "packages/skill-calorie/src/workout/planEditorDocs.ts",
           "literals": 11,
           "byClass": {
@@ -2896,13 +2841,6 @@
           "byClass": {
             "copy": 12,
             "concat": 6
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/workout/planEditorRuntime.ts",
-          "literals": 1,
-          "byClass": {
-            "ident": 1
           }
         },
         {
@@ -2930,13 +2868,6 @@
           }
         },
         {
-          "path": "packages/skill-calorie/src/workout/precheckPrompt.ts",
-          "literals": 1,
-          "byClass": {
-            "copy": 1
-          }
-        },
-        {
           "path": "packages/skill-calorie/src/workout/receipt.ts",
           "literals": 30,
           "byClass": {
@@ -2951,20 +2882,6 @@
             "copy": 28,
             "concat": 20,
             "ident": 4
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/workout/reviewDocsCss.ts",
-          "literals": 17,
-          "byClass": {
-            "ident": 17
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/workout/routes.ts",
-          "literals": 70,
-          "byClass": {
-            "copy": 70
           }
         },
         {
@@ -3014,11 +2931,108 @@
           }
         }
       ],
-      "migrated": [],
       "totals": {
         "files": 78,
         "literals": 3950
-      }
+      },
+      "excluded": [
+        {
+          "path": "packages/skill-calorie/src/diet/commands.ts",
+          "literals": 65,
+          "byClass": {
+            "copy": 65
+          },
+          "reason": "命令声明表（title／wakeWord／example）——命令关键字冻结（ADR-0004 三条不译）；处理函数体不在本票范围"
+        },
+        {
+          "path": "packages/skill-calorie/src/diet/dietUi.ts",
+          "literals": 3,
+          "byClass": {
+            "ident": 3
+          },
+          "reason": "payload／CSS 运行时（归 #1309 payload 层）"
+        },
+        {
+          "path": "packages/skill-calorie/src/diet/libraryPlate.ts",
+          "literals": 6,
+          "byClass": {
+            "copy": 6
+          },
+          "reason": "6 条全为 CalorieRenderError 实参（开发期报文，ADR-0004 不译）"
+        },
+        {
+          "path": "packages/skill-calorie/src/diet/routes.ts",
+          "literals": 130,
+          "byClass": {
+            "copy": 130
+          },
+          "reason": "唤醒词→命令路由表（键与值一字不动，改名断路由）"
+        },
+        {
+          "path": "packages/skill-calorie/src/weight/commands.ts",
+          "literals": 31,
+          "byClass": {
+            "copy": 31
+          },
+          "reason": "命令声明表（title／wakeWord／example）——命令关键字冻结"
+        },
+        {
+          "path": "packages/skill-calorie/src/weight/routes.ts",
+          "literals": 89,
+          "byClass": {
+            "copy": 89
+          },
+          "reason": "唤醒词→命令路由表（键与值一字不动，改名断路由）"
+        },
+        {
+          "path": "packages/skill-calorie/src/workout/commands.ts",
+          "literals": 57,
+          "byClass": {
+            "copy": 57
+          },
+          "reason": "命令声明表（title／wakeWord／example）——命令关键字冻结"
+        },
+        {
+          "path": "packages/skill-calorie/src/workout/planEditorCss.ts",
+          "literals": 1,
+          "byClass": {
+            "ident": 1
+          },
+          "reason": "payload／CSS 运行时（归 #1309 payload 层）"
+        },
+        {
+          "path": "packages/skill-calorie/src/workout/planEditorRuntime.ts",
+          "literals": 1,
+          "byClass": {
+            "ident": 1
+          },
+          "reason": "payload／CSS 运行时（归 #1309 payload 层）"
+        },
+        {
+          "path": "packages/skill-calorie/src/workout/precheckPrompt.ts",
+          "literals": 1,
+          "byClass": {
+            "copy": 1
+          },
+          "reason": "WIZARD_WAKE_WORD = '定训练计划' 唤醒词（冻结）"
+        },
+        {
+          "path": "packages/skill-calorie/src/workout/reviewDocsCss.ts",
+          "literals": 17,
+          "byClass": {
+            "ident": 17
+          },
+          "reason": "payload／CSS 运行时（归 #1309 payload 层）"
+        },
+        {
+          "path": "packages/skill-calorie/src/workout/routes.ts",
+          "literals": 70,
+          "byClass": {
+            "copy": 70
+          },
+          "reason": "唤醒词→命令路由表（键与值一字不动，改名断路由）"
+        }
+      ]
     },
     "1219": {
       "title": "迁移 skill-calorie 其余域：135 件（4,541 条）",
@@ -10151,12 +10165,12 @@
   },
   "scopeSummary": {
     "ledgerFiles": 1226,
-    "migratedFiles": 412,
-    "pendingFiles": 604,
-    "pendingLiterals": 19098,
-    "excludedFiles": 210,
-    "excludedLiterals": 12310,
-    "migratedLiterals": 11340
+    "migratedFiles": 478,
+    "pendingFiles": 526,
+    "pendingLiterals": 15148,
+    "excludedFiles": 222,
+    "excludedLiterals": 12781,
+    "migratedLiterals": 14819
   },
   "workflow": [
     "开工：从本文件取本票 files，逐件登记进 tooling/i18n-scope.json 的 files（先跑两道门拿红读数＝范围已挂但还没迁）。",

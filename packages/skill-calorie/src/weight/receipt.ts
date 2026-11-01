@@ -27,6 +27,7 @@ import {
 } from './plateDocs.js';
 import { buildBatchReceiptDoc, buildLogReceiptDoc } from './logReceipt.js';
 import { factStrip, verdict } from './weightUi.js';
+import { m } from '../entries/index.js';
 
 /** 体重 4 条会改数据库的命令（数据位，具名键集；分派层只调本文件，不再写命令名字面量比较）。 */
 const WEIGHT_RECEIPT_KEYS: ReadonlySet<string> = new Set([
@@ -49,39 +50,42 @@ function buildUpdateReceiptDoc(receipt: CrudReceipt, command: string): string {
   /* #505 形状化：原句把「改了几条」与「有几条只改了备注」用 `；` 串成一句 ⇒ 拆两件：一句判语 ＋ 一条事实
    * （`verdict()`／`factStrip()`）。后半句「改错了怎么还原」已住在状态卡副说明里（`writtenDetailOf`），
    * 这里不再复述（同一屏同一件事只留信息量最大的一处）。 */
-  const outcome = '本次改动 ' + receipt.items.length + ' 条记录。';
-  const facts = changed < rows.length ? [{ k: '只改备注的', v: (rows.length - changed) + ' 条（体重没动，下表写 —）' }] : [];
+  const outcome = m('skill-calorie.weight-receipt.c001', { p0: String(receipt.items.length) });
+  const facts = changed < rows.length ? [{ k: m('skill-calorie.weight-receipt.c002'), v: m('skill-calorie.weight-receipt.c003', { p0: String(rows.length - changed) }) }] : [];
   const payload = [outcome, ...facts.map((f) => f.k + ' ' + f.v),
     ...rows.map((r) => r.record
-      + (r.change === '—' ? '' : ' 改前 → 改后 ' + r.change)
-      + (r.note === '—' ? '' : ' 备注 ' + r.note))];
+      + (r.change === '—' ? '' : m('skill-calorie.weight-receipt.c004', { p0: String(r.change) }))
+      + (r.note === '—' ? '' : m('skill-calorie.weight-receipt.c005', { p0: String(r.note) })))];
   const content = [
     renderKpiGrid([
       stateCard(receipt, {
-        label: '本次改动', word: '已改动', count: receipt.affectedRows,
+        label: m('skill-calorie.weight-receipt.c006'), word: m('skill-calorie.weight-receipt.c007'), count: receipt.affectedRows,
         detail: writtenDetailOf('calorie.weight.update'),
       }),
       ...(receipt.writtenFields.length === 0 ? [] : [{
-        label: '改动字段', value: receipt.writtenFields.length + ' 项',
+        label: m('skill-calorie.weight-receipt.c008'), value: m('skill-calorie.weight-receipt.c009', { p0: String(receipt.writtenFields.length) }),
         detail: fieldLabelList(receipt.writtenFields),
       }]),
     ]),
     // 老实物 crud_receipt.html:302-327 的 update 模式：只画实际变的字段，无变更不出空卡。
     renderDataTable({
       columns: [
-        { key: 'record', label: '记录' },
-        { key: 'change', label: '改前 → 改后' },
-        { key: 'note', label: '备注' },
+        { key: 'record', label: m('skill-calorie.weight-receipt.c010') },
+        { key: 'change', label: m('skill-calorie.weight-receipt.c011') },
+        { key: 'note', label: m('skill-calorie.weight-receipt.c012') },
       ],
       rows,
-      caption: '改前 → 改后对照（— 表示这一次没动它）',
-      emptyText: '这次没有逐条对照（本次写入字段：' + fieldLabelList(receipt.writtenFields) + '）',
+      caption: m('skill-calorie.weight-receipt.c013'),
+      emptyText: m('skill-calorie.weight-receipt.c014', { p0: String(fieldLabelList(receipt.writtenFields)) }),
     }),
     shapedConclusionBlock(verdict(outcome) + factStrip(facts)),
     reconcileBlock(receipt),
     deliveryBlocks(
       envelopeOf(receipt, payload.join(' ｜ ')), receipt, command,
-      '本次改动 ' + receipt.items.length + ' 条 ｜ 字段 ' + fieldLabelList(receipt.writtenFields),
+      m('skill-calorie.weight-receipt.c015', {
+        p0: String(receipt.items.length),
+        p1: String(fieldLabelList(receipt.writtenFields)),
+      }),
     ),
   ].join('');
   return receiptPageOf(receipt, content);
@@ -112,8 +116,9 @@ function buildRemoveReceiptDoc(db: DatabaseSync, receipt: CrudReceipt, command: 
   const fw = kgOf(snap[0]);
   const lw = kgOf(snap[snap.length - 1]);
   const span = snap.length >= 2 && fw !== null && lw !== null ? round1(lw - fw) : null;
-  const dir = span === null ? '' : span > 0 ? '上升' : span < 0 ? '下降' : '持平';
+  const dir = span === null ? '' : span > 0 ? m('skill-calorie.weight-receipt.c016') : span < 0 ? m('skill-calorie.weight-receipt.c017') : m('skill-calorie.weight-receipt.c018');
   const latest = latestWeightAfter(db);
+  const latestPhrase = latest === null ? m('skill-calorie.weight-receipt.c019') : m('skill-calorie.weight-receipt.c020', { p0: String(latest.kg), p1: String(latest.date) });
   /* #505 形状化：原句用 `；` 把「删了几条 ＋ 区间首末」与「删后库里还剩什么」串成一句 ⇒ 拆两件：
    * ① `outcome`＝一句判语；② `facts`＝一枚事实条（删后最新体重）。
    *  «硬删除，不可恢复，要还原请照下表原值重新记一次» 是这一句里最要紧的一笔（写进判语，仍是一句话）。
@@ -123,15 +128,15 @@ function buildRemoveReceiptDoc(db: DatabaseSync, receipt: CrudReceipt, command: 
    * 不带数、不带方向词**的判语（要还原怎么做 ＋ 不可恢复），四件事实各有各的住所，一件不丢。 */
   // #542 回填（删副标题不丢事实）：「硬删除，不可恢复」原来只活在可见副标题那一句里，
   // 副标题撤掉后改住判语——仍是一句话，不发数、不给方向词（#510 口径不变），用户定的口径词逐字保留。
-  const outcome = '本次删掉的记录已经不在库里了，硬删除，不可恢复，要还原请照下表原值重新记一次。';
-  const facts = [{ k: '删后最新体重', v: latest === null ? '库里已无体重记录' : latest.kg + ' kg' }];
+  const outcome = m('skill-calorie.weight-receipt.c021');
+  const facts = [{ k: m('skill-calorie.weight-receipt.c022'), v: latest === null ? m('skill-calorie.weight-receipt.c023') : latest.kg + ' kg' }];
   const payload = [outcome, ...facts.map((f) => f.k + ' ' + f.v),
     ...snap.map((it) => (it.id === undefined || it.id === null ? '' : '#' + it.id + ' ')
       + (it.date ?? '') + ' ' + (kgOf(it) === null ? '—' : kgOf(it) + ' kg') + ' ' + it.status)];
   const content = [
     renderKpiGrid([
       stateCard(receipt, {
-        label: '本次删除', word: '已删除', count: receipt.affectedRows,
+        label: m('skill-calorie.weight-receipt.c024'), word: m('skill-calorie.weight-receipt.c025'), count: receipt.affectedRows,
         detail: writtenDetailOf('calorie.weight.remove'),
       }),
       {
@@ -141,23 +146,23 @@ function buildRemoveReceiptDoc(db: DatabaseSync, receipt: CrudReceipt, command: 
          * 那个 `1 条` 与值槽、表题同说一件事（一屏三处）⇒ 副说明改说「只有一行」，条数留值槽与表题。
          * `span !== null` 那一路的首末对是从判语搬来的（判语收敛时按「每条事实都要有去处」挪到这里，
          * 与它讲的是同一件事：区间从哪变到哪）。 */
-        label: '区间变化',
+        label: m('skill-calorie.weight-receipt.c026'),
         value: span === null ? '—' : signed(span),
         detail: span === null
-          ? (snap.length > 0 ? '只有一份原值行，看不出区间变化' : '这次没有可对照的行')
-          : '删除前最早 ' + fw + ' → 最晚 ' + lw + ' kg',
+          ? (snap.length > 0 ? m('skill-calorie.weight-receipt.c027') : m('skill-calorie.weight-receipt.c028'))
+          : m('skill-calorie.weight-receipt.c029', { p0: String(fw), p1: String(lw) }),
         status: span === null ? 'empty' : 'warn',
-        statusText: span === null ? '没法比' : dir,
+        statusText: span === null ? m('skill-calorie.weight-receipt.c030') : dir,
       },
       {
-        label: '删除后最新体重', value: latest === null ? '—' : String(latest.kg), unit: 'kg',
+        label: m('skill-calorie.weight-receipt.c031'), value: latest === null ? '—' : String(latest.kg), unit: 'kg',
         /* 缺陷 8：这一格原本写「2026-09-08 · 删除后重新读到的值」＋徽章「库里还有记录」——
          * 同一个数（值槽／副说明／结论句／页脚）一页说四遍。副说明压成日期加一个括号注解，
          * 徽章撤掉（值槽与结论句已经把这件事说清了；空库那态仍留徽章）。
          * #505：那个 `·` 是同一条缺陷的另一半——日期与「重新读到的值」是两件事，分成「日期 ＋ 括注」，
          * 一个分隔符也不留。 */
-        detail: latest === null ? '删除后库里已无体重记录' : latest.date + '（重新读到的值）',
-        ...(latest === null ? { status: 'empty' as const, statusText: '库里已空' } : {}),
+        detail: latest === null ? m('skill-calorie.weight-receipt.c032') : m('skill-calorie.weight-receipt.c033', { p0: String(latest.date) }),
+        ...(latest === null ? { status: 'empty' as const, statusText: m('skill-calorie.weight-receipt.c034') } : {}),
       },
     ]),
     // 老实物 crud_receipt.html:328-350 的 delete 模式（删除前快照）：那边无行时整卡隐藏，本页改一句空态。
@@ -166,31 +171,30 @@ function buildRemoveReceiptDoc(db: DatabaseSync, receipt: CrudReceipt, command: 
     // 值照现状写数字（副标题那句是机器面摘要，`#1` 留在那里）。
     renderDataTable({
       columns: [
-        { key: 'id', label: '记录编号' },
-        { key: 'date', label: '日期' },
-        { key: 'kg', label: '体重', align: 'right' },
-        { key: 'status', label: '状态' },
+        { key: 'id', label: m('skill-calorie.weight-receipt.c035') },
+        { key: 'date', label: m('skill-calorie.weight-receipt.c036') },
+        { key: 'kg', label: m('skill-calorie.weight-receipt.c037'), align: 'right' },
+        { key: 'status', label: m('skill-calorie.weight-receipt.c038') },
       ],
       rows: snap.map((it) => ({
         id: it.id === undefined || it.id === null ? '—' : String(it.id),
         date: it.date ?? '—',
         kg: kgOf(it) === null ? '—' : kgOf(it) + ' kg',
-        status: '已删除',
+        status: m('skill-calorie.weight-receipt.c039'),
       })),
       /* 表题（#510 收敛）：原来带 `（共 N 条）`——「删了几条」这一件事在可见副标题（它照抄回执摘要：
        * 按 id 那页是 `已删除体重 #1…`、按日／按范围那两页是 `已删除 … 体重 1 条…`）与状态卡值槽
        * 已经各有一处；三处同说一个数就是冗余。故按「副标题已含 N 条」的两页（24／31）把表题的条数
        * 撤掉，17 那页副标题不含条数（只有编号与前值），表题保留条数（值槽 ＋ 表题＝允许的上限 2）。
        * 撤掉不等于丢：条数住在值槽，表里的行数把同一个数再算一遍（且「逐条」二字表明表是全量）。 */
-      caption: receipt.summary.includes(' 条') ? '删除前的原值（逐条）' : '删除前的原值（共 ' + snap.length + ' 条）',
-      emptyText: '这次没有删除前的原值行',
+      caption: receipt.summary.includes(' 条') ? m('skill-calorie.weight-receipt.c040') : m('skill-calorie.weight-receipt.c041', { p0: String(snap.length) }),
+      emptyText: m('skill-calorie.weight-receipt.c042'),
     }),
     shapedConclusionBlock(verdict(outcome) + factStrip(facts)),
     reconcileBlock(receipt),
     deliveryBlocks(
       envelopeOf(receipt, payload.join(' ｜ ')), receipt, command,
-      '本次删除 ' + snap.length + ' 条 ｜ '
-        + (latest === null ? '删除后库里已无记录' : '删除后最新 ' + latest.kg + ' kg（' + latest.date + '）'),
+      m('skill-calorie.weight-receipt.c043', { p0: String(snap.length), p1: String(latestPhrase) }),
     ),
   ].join('');
   // #542（#340 打回批）：可见副标题整行撤（传空串，整段省略，不回退到机器面摘要）。

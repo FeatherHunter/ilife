@@ -16,8 +16,9 @@ import { promptCopyArea } from '../shared/copyArea.js';
 import { copyBlock } from '../shared/copyBlock.js';
 import type { PlanSessionRow } from './planStore.js';
 import { xunjiKeyRow } from './xunjiKey.js';
+import { m } from '../entries/index.js';
 
-const DOC_TITLE = '卡路里·健身计划回执';
+const DOC_TITLE = (): string => m('skill-calorie.workout-landPages.c085');
 
 /** 四步里一步的结局（编排层给，页层只摆不算）。 */
 export interface LandStepRead {
@@ -41,12 +42,12 @@ export function landSpanOf(s: PlanSessionRow, index = 0): { ts: string; te: stri
 /** 日历标题与心愿正文（同题同文，老 `sync_plan.py:163` 与 `:210` 同形，连接符照老短横）。 */
 export function landTitleOf(s: PlanSessionRow, index = 0): string {
   const { ts, te } = landSpanOf(s, index);
-  return '健身 ' + s.session_label + ' ' + ts + '-' + te;
+  return m('skill-calorie.workout-landPages.c001', { p0: String(s.session_label), p1: String(ts), p2: String(te) });
 }
 
 /** 前 3 个动作用 `、` 连接（老 `; ` 改形状：`;` 不上屏）。 */
 export function landNotesOf(s: PlanSessionRow): string {
-  return (s.movements ?? []).slice(0, 3).map((m) => (m.name ?? '') + '多组').join('、');
+  return (s.movements ?? []).slice(0, 3).map((mv) => m('skill-calorie.workout-landPages.c002', { p0: String(mv.name ?? '') })).join('、');
 }
 
 /** 实跑命令原文（过程页首位可复制 prompt：照抄即跑同一天，单引号包 JSON 照本仓一贯口径）。 */
@@ -61,58 +62,58 @@ export function buildLandProcessPage(input: {
 }): string {
   const { key, params, date, sessions, receipt, startDate } = input;
   const moves = sessions.reduce((n, s) => n + (Array.isArray(s.movements) ? s.movements.length : 0), 0);
-  const emptyWhy = '这天没排练（休息日或超出计划周：本计划开始于'
-    + (startDate ?? '未知') + '，先用 看完整计划 核对），四步即过零段';
+  const startText = startDate ?? m('skill-calorie.workout-landPages.c003');
+  const emptyWhy = m('skill-calorie.workout-landPages.c004', { p0: String(startText) });
   const content = [
-    promptCopyArea(landRealCommand(date), '复制实跑指令'),
+    promptCopyArea(landRealCommand(date), m('skill-calorie.workout-landPages.c005')),
     renderKpiGrid([
-      { label: '日期', value: date, detail: '落地哪一天的计划' },
+      { label: m('skill-calorie.workout-landPages.c006'), value: date, detail: m('skill-calorie.workout-landPages.c007') },
       {
-        label: '待落地段', value: sessions.length + ' 段',
-        detail: sessions.map((s) => s.session_label).join('、') || '当天没排练',
+        label: m('skill-calorie.workout-landPages.c008'), value: m('skill-calorie.workout-landPages.c009', { p0: String(sessions.length) }),
+        detail: sessions.map((s) => s.session_label).join('、') || m('skill-calorie.workout-landPages.c010'),
       },
-      { label: '动作', value: moves + ' 个', detail: '四步共用同一份段表' },
+      { label: m('skill-calorie.workout-landPages.c011'), value: m('skill-calorie.workout-landPages.c012', { p0: String(moves) }), detail: m('skill-calorie.workout-landPages.c013') },
     ]),
     renderDataTable({
-      columns: [{ key: 'label', label: '训练段' }, { key: 'time', label: '时间' }, { key: 'moves', label: '动作' }],
+      columns: [{ key: 'label', label: m('skill-calorie.workout-landPages.c014') }, { key: 'time', label: m('skill-calorie.workout-landPages.c015') }, { key: 'moves', label: m('skill-calorie.workout-landPages.c016') }],
       rows: sessions.length === 0
-        ? [{ label: '空天', time: '无', moves: emptyWhy }]
+        ? [{ label: m('skill-calorie.workout-landPages.c017'), time: m('skill-calorie.workout-landPages.c018'), moves: emptyWhy }]
         : sessions.map((s, i) => {
           const { ts, te } = landSpanOf(s, i);
           return {
             label: s.session_label,
-            time: ts + ' 至 ' + te,
-            moves: s.movements.map((m) => m.name ?? '未命名动作').join('、') || '段内无动作',
+            time: m('skill-calorie.workout-landPages.c019', { p0: String(ts), p1: String(te) }),
+            moves: s.movements.map((mv) => mv.name ?? m('skill-calorie.workout-landPages.c020')).join('、') || m('skill-calorie.workout-landPages.c021'),
           };
         }),
-      caption: '待写日历段',
+      caption: m('skill-calorie.workout-landPages.c022'),
     }),
     renderDataTable({
-      columns: [{ key: 'content', label: '心愿正文' }, { key: 'due', label: '排期日期' }],
+      columns: [{ key: 'content', label: m('skill-calorie.workout-landPages.c023') }, { key: 'due', label: m('skill-calorie.workout-landPages.c024') }],
       rows: sessions.length === 0
-        ? [{ content: '空天', due: '无' }]
+        ? [{ content: m('skill-calorie.workout-landPages.c025'), due: m('skill-calorie.workout-landPages.c026') }]
         : sessions.map((s, i) => ({ content: landTitleOf(s, i), due: date })),
-      caption: '待记心愿',
+      caption: m('skill-calorie.workout-landPages.c027'),
     }),
     renderDataTable({
-      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+      columns: [{ key: 'k', label: m('skill-calorie.workout-landPages.c028') }, { key: 'v', label: m('skill-calorie.workout-landPages.c029') }],
       rows: [
-        { k: '待推送', v: sessions.length + ' 段原样推送' },
-        { k: '待回写', v: date + ' 往前 1 天' },
-        { k: '本地', v: '计划已读 ' + sessions.length + ' 段' },
-        { k: '远端', v: '未调用' },
+        { k: m('skill-calorie.workout-landPages.c030'), v: m('skill-calorie.workout-landPages.c031', { p0: String(sessions.length) }) },
+        { k: m('skill-calorie.workout-landPages.c032'), v: m('skill-calorie.workout-landPages.c033', { p0: String(date) }) },
+        { k: m('skill-calorie.workout-landPages.c034'), v: m('skill-calorie.workout-landPages.c035', { p0: String(sessions.length) }) },
+        { k: m('skill-calorie.workout-landPages.c036'), v: m('skill-calorie.workout-landPages.c037') },
         xunjiKeyRow(),
-        { k: '预演说明', v: '本页只看不写，不代表落地成功：实跑以结果页为准' },
+        { k: m('skill-calorie.workout-landPages.c038'), v: m('skill-calorie.workout-landPages.c039') },
       ],
-      caption: '本地成远端没成分得清',
+      caption: m('skill-calorie.workout-landPages.c040'),
     }),
-    copyBlock(key, params, receipt, '训练计划（workout_plans）＋ 四步预演'),
+    copyBlock(key, params, receipt, m('skill-calorie.workout-landPages.c041')),
   ].join('');
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '落地训练',
-    eyebrow: '健身计划',
-    subtitle: '过程页（预演：四步只看不写）',
+    docTitle: DOC_TITLE(),
+    title: m('skill-calorie.workout-landPages.c042'),
+    eyebrow: m('skill-calorie.workout-landPages.c043'),
+    subtitle: m('skill-calorie.workout-landPages.c044'),
     content,
     pageUi: true,
   });
@@ -126,36 +127,36 @@ export function buildLandResultPage(input: {
 }): string {
   const { key, params, date, steps, receipt, stubbed } = input;
   const find = (name: string): LandStepRead | null => steps.find((s) => s.step === name) ?? null;
-  const plan = find('补计划');
-  const wish = find('记心愿');
+  const plan = find(m('skill-calorie.workout-landPages.c045'));
+  const wish = find(m('skill-calorie.workout-landPages.c046'));
   const content = [
     renderKpiGrid([
-      { label: '日期', value: date, detail: '落地哪一天的计划' },
-      { label: '补计划', value: plan === null ? '未跑' : plan.local, detail: plan === null ? '' : plan.remote },
-      { label: '记心愿', value: wish === null ? '未跑' : wish.local, detail: wish === null ? '' : wish.remote },
+      { label: m('skill-calorie.workout-landPages.c047'), value: date, detail: m('skill-calorie.workout-landPages.c048') },
+      { label: m('skill-calorie.workout-landPages.c049'), value: plan === null ? m('skill-calorie.workout-landPages.c050') : plan.local, detail: plan === null ? '' : plan.remote },
+      { label: m('skill-calorie.workout-landPages.c051'), value: wish === null ? m('skill-calorie.workout-landPages.c052') : wish.local, detail: wish === null ? '' : wish.remote },
     ]),
     renderDataTable({
-      columns: [{ key: 'step', label: '步骤' }, { key: 'local', label: '本地' }, { key: 'remote', label: '远端' }],
+      columns: [{ key: 'step', label: m('skill-calorie.workout-landPages.c053') }, { key: 'local', label: m('skill-calorie.workout-landPages.c054') }, { key: 'remote', label: m('skill-calorie.workout-landPages.c055') }],
       rows: steps.map((s) => ({ step: s.step, local: s.local, remote: s.remote })),
-      caption: '四步结局',
+      caption: m('skill-calorie.workout-landPages.c056'),
     }),
     renderDataTable({
-      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+      columns: [{ key: 'k', label: m('skill-calorie.workout-landPages.c057') }, { key: 'v', label: m('skill-calorie.workout-landPages.c058') }],
       rows: [
-        { k: '重复补计划', v: '按日期加时段加标题认同一条，重复跑不翻倍' },
-        { k: '重复记心愿', v: '同文同排期日认同一条，重复跑不翻倍' },
-        { k: '重复回写', v: '按单号加类型加序号三列认同一行，重复拉只更新不翻倍' },
-        ...(stubbed ? [{ k: '数据来源', v: '本地挡板（未调远端）' }] : []),
+        { k: m('skill-calorie.workout-landPages.c059'), v: m('skill-calorie.workout-landPages.c060') },
+        { k: m('skill-calorie.workout-landPages.c061'), v: m('skill-calorie.workout-landPages.c062') },
+        { k: m('skill-calorie.workout-landPages.c063'), v: m('skill-calorie.workout-landPages.c064') },
+        ...(stubbed ? [{ k: m('skill-calorie.workout-landPages.c065'), v: m('skill-calorie.workout-landPages.c066') }] : []),
       ],
-      caption: '重复跑口径',
+      caption: m('skill-calorie.workout-landPages.c067'),
     }),
-    copyBlock(key, params, receipt, '训练计划（workout_plans）＋ 四步读数'),
+    copyBlock(key, params, receipt, m('skill-calorie.workout-landPages.c068')),
   ].join('');
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '落地训练',
-    eyebrow: '健身计划',
-    subtitle: '结果页',
+    docTitle: DOC_TITLE(),
+    title: m('skill-calorie.workout-landPages.c069'),
+    eyebrow: m('skill-calorie.workout-landPages.c070'),
+    subtitle: m('skill-calorie.workout-landPages.c071'),
     content,
     pageUi: true,
   });
@@ -176,25 +177,25 @@ export function buildLandNothingPage(input: {
   const { key, params, wake, scope, why, receipt, unitLabel, stepLabel, whyLabel } = input;
   const content = [
     renderKpiGrid([
-      { label: '范围', value: scope, detail: '这次要看的那一天／那一回' },
-      { label: unitLabel, value: '0 段', detail: '这天没有安排' },
-      { label: stepLabel, value: '没跑', detail: '没写任何东西，也没调外部' },
+      { label: m('skill-calorie.workout-landPages.c072'), value: scope, detail: m('skill-calorie.workout-landPages.c073') },
+      { label: unitLabel, value: m('skill-calorie.workout-landPages.c074'), detail: m('skill-calorie.workout-landPages.c075') },
+      { label: stepLabel, value: m('skill-calorie.workout-landPages.c076'), detail: m('skill-calorie.workout-landPages.c077') },
     ]),
     renderDataTable({
-      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+      columns: [{ key: 'k', label: m('skill-calorie.workout-landPages.c078') }, { key: 'v', label: m('skill-calorie.workout-landPages.c079') }],
       rows: [
         { k: whyLabel, v: why },
-        { k: '本页口径', v: '无事可做：既不是成功、也不是失败——要跑的那一步没跑，外部一个没调' },
+        { k: m('skill-calorie.workout-landPages.c080'), v: m('skill-calorie.workout-landPages.c081') },
       ],
       caption: whyLabel,
     }),
-    copyBlock(key, params, receipt, '训练计划（workout_plans）＋ 没有安排'),
+    copyBlock(key, params, receipt, m('skill-calorie.workout-landPages.c082')),
   ].join('');
   return assembleDocPage({
-    docTitle: DOC_TITLE,
+    docTitle: DOC_TITLE(),
     title: wake,
-    eyebrow: '健身计划',
-    subtitle: '这天没有安排（无事可做）',
+    eyebrow: m('skill-calorie.workout-landPages.c083'),
+    subtitle: m('skill-calorie.workout-landPages.c084'),
     content,
     pageUi: true,
   });

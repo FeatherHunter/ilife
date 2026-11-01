@@ -76,6 +76,7 @@ import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { copyArea, copyLog, notice } from '../shared/copyArea.js';
 import { DB_FILENAME } from '../paths.js';
 import { DOC_SKILL, DOC_TITLE, DOC_VERSION } from './plateDocs.js';
+import { m } from '../entries/index.js';
 
 /** 本页命令键（信封、标题眉标、复制日志一处定义，别处引用）。 */
 const CMD_KEY = 'calorie.view.weight-history';
@@ -131,13 +132,13 @@ function signedKg(n: number, unit = ' kg'): string {
 function perDayHuman(delta: number, spanDays: number): string | null {
   if (spanDays <= 0) return null;
   const g = Math.round((delta / spanDays) * 1000);
-  return '每天 ' + (g > 0 ? '+' : '') + g + ' 克';
+  return m('skill-calorie.weight-history.c001', { p0: String(g > 0 ? '+' : ''), p1: String(g) });
 }
 
 /** 「首日 → 末日」两端的写法（#480 口径 3.2 的「首日与末日对比」，替换内部的「首末对照」说法）。
  *  #502 起两端各成一枚加粗值（`pairStrip()` 的那个形状），故拆成两半取用：`end` 说取哪一端。 */
 function firstLastHuman(c: NonNullable<WeightHistory['change']>, end: 'first' | 'last'): string {
-  return end === 'first' ? '首日 ' + c.first + ' kg' : '末日 ' + c.last + ' kg';
+  return end === 'first' ? m('skill-calorie.weight-history.c002', { p0: String(c.first) }) : m('skill-calorie.weight-history.c003', { p0: String(c.last) });
 }
 
 /** 区间串 → 天数（`2026-09-01`／`2026-09-01 ~ 2026-09-07` 两种；「最近30天」那类由视图模型给成区间串）。 */
@@ -157,7 +158,7 @@ function windowFactStrip(h: WeightHistoryView): string {
   const parts = h.range.split(' ~ ');
   if (parts.length !== 2 || parts[0] === '' || parts[1] === '') return '';
   const days = rangeDaysHuman(h.range);
-  return windowStrip(parts[0], parts[1], days === null ? '' : days + ' 天');
+  return windowStrip(parts[0], parts[1], days === null ? '' : m('skill-calorie.weight-history.c004', { p0: String(days) }));
 }
 
 /** 进度事实条（#502）：变化卡副说明里的「30 天 · 每天 +10 克」原来是拿 `·` 把两件事串成一句话；
@@ -185,18 +186,20 @@ function progressStrips(h: WeightHistoryView, avg: number | null): string {
 function anomalyNoteOf(extra: HistoryDocExtra): string {
   const n = extra.anomalyNote;
   if (n === undefined || n === '') return '';
-  const m = /平均线 ([\d.]+) kg，注意线 ±([\d.]+) kg，警戒线 ±([\d.]+) kg/.exec(n);
-  if (m === null) return wnote(n);
-  return wnote('比平均线 ' + m[1] + ' kg 是基线：差 ' + m[2] + ' kg 到注意线，差 ' + m[3] + ' kg 到警戒线。');
+  const hit = /平均线 ([\d.]+) kg，注意线 ±([\d.]+) kg，警戒线 ±([\d.]+) kg/.exec(n);
+  if (hit === null) return wnote(n);
+  return wnote(m('skill-calorie.weight-history.c005', { p0: String(hit[1]), p1: String(hit[2]), p2: String(hit[3]) }));
 }
 
 /** 异常点偏离说人话（#480）：原写「偏 0.13」没说相对谁、也没带单位；这里点名相对平均线并分高低。
  *  精度两位（#480 缺陷 6）：一位小数会把 0.13 说成 0.1；只有一位有效位（次位为 0）时写「略高／略低」，不假装更精确。 */
 function deviationHuman(kg: number, deviationKg: number): string {
   const d = round2(Math.abs(deviationKg));
-  if (d === 0) return kg + ' kg（和平均线一样）';
-  if (d < 1 && Math.round(d * 10) === d * 10) return kg + ' kg（比平均线' + (deviationKg > 0 ? '略高' : '略低') + '）';
-  return kg + ' kg（比平均线' + (deviationKg > 0 ? '高' : '低') + ' ' + d + ' kg）';
+  const sideSoft = deviationKg > 0 ? m('skill-calorie.weight-history.c006') : m('skill-calorie.weight-history.c007');
+  const sidePlain = deviationKg > 0 ? m('skill-calorie.weight-history.c008') : m('skill-calorie.weight-history.c009');
+  if (d === 0) return m('skill-calorie.weight-history.c010', { p0: String(kg) });
+  if (d < 1 && Math.round(d * 10) === d * 10) return m('skill-calorie.weight-history.c011', { p0: String(kg), p1: String(sideSoft) });
+  return m('skill-calorie.weight-history.c012', { p0: String(kg), p1: String(sidePlain), p2: String(d) });
 }
 
 /** 异常点卡的副说明（#480 缺陷 5）：按当刻数据取头三天——连号时说「某日连续 3 天偏高」，
@@ -208,8 +211,8 @@ function anomalyHeadHuman(list: readonly { date: string }[]): string {
   const day = (s: string) => Date.parse(s + 'T00:00:00Z');
   const consecutive = head.length === 3
     && head.every((a, i) => i === 0 || day(a.date) - day(head[i - 1].date) === 86400000);
-  if (consecutive) return head[0].date + ' 连续 3 天偏高';
-  return list[0].date + ' 偏高';
+  if (consecutive) return m('skill-calorie.weight-history.c013', { p0: String(head[0].date) });
+  return m('skill-calorie.weight-history.c014', { p0: String(list[0].date) });
 }
 
 function avgOf(rows: WeightHistory['rows']): number | null {
@@ -248,7 +251,7 @@ function rangeLabelOf(opts: { days?: number; startDate?: string; endDate?: strin
   const { days = 30, startDate, endDate } = opts;
   if (startDate && endDate) return startDate === endDate ? startDate : startDate + ' ~ ' + endDate;
   if (startDate) return startDate;
-  return '最近' + days + '天';
+  return m('skill-calorie.weight-history.c015', { p0: String(days) });
 }
 
 /** 复制日志第 3 段：渲染本页的命令原文（参数逐字用本次实际收到的那一份，照抄能重跑）。 */
@@ -298,9 +301,12 @@ export function viewWeightHistory(params: Record<string, unknown>, db: DatabaseS
       try {
         const r = scenarioE3(db, delta);
         // 数字与单位留一个空格（#480 口径 3.3）；同一份标签在对比族由 `weightCompare2.ts:154` 生成，口径另报。
-        hits.push({ label: '减重 ' + delta + ' kg 那天', date: r.segA.range, kg: r.segA.avg as number });
+        hits.push({ label: m('skill-calorie.weight-history.c016', { p0: String(delta) }), date: r.segA.range, kg: r.segA.avg as number });
       } catch (e) {
-        miss.push('减重 ' + delta + ' kg 未达成' + (e instanceof FetchError ? '（' + e.message + '）' : ''));
+        miss.push(m('skill-calorie.weight-history.c017', {
+          p0: String(delta),
+          p1: String(e instanceof FetchError ? '（' + e.message + '）' : ''),
+        }));
       }
     }
     extra.milestones = hits;
@@ -340,8 +346,11 @@ function anomaliesOf(db: DatabaseSync, h: WeightHistoryView): {
     return {
       list: res.data.recentAnomalies.map((p) => ({ date: p.date, kg: p.kg, deviationKg: p.deviationKg, level: p.level })),
       // #480 口径 3.2：术语表把「基线／黄线／红线」换成人话「平均线／注意线／警戒线」，数字与单位留空格。
-      note: '平均线 ' + res.data.baselineValue + ' kg，注意线 ±' + res.data.thresholds.yellow + ' kg，警戒线 ±'
-        + res.data.thresholds.red + ' kg',
+      note: m('skill-calorie.weight-history.c018', {
+        p0: String(res.data.baselineValue),
+        p1: String(res.data.thresholds.yellow),
+        p2: String(res.data.thresholds.red),
+      }),
     };
   } catch {
     return { list: [], note: null };
@@ -434,11 +443,11 @@ function curvePlanOf(h: WeightHistoryView, extra: HistoryDocExtra): CurvePlan | 
   const last = (asc[asc.length - 1] as (typeof asc)[number]).weight_kg;
   const kind = extra.overlay;
   const markLine: MarkLinePlan | undefined = kind === 'target' && goal !== null && targetInRange
-    ? { value: goal, label: '目标 ' + goal + ' kg' }
+    ? { value: goal, label: m('skill-calorie.weight-history.c019', { p0: String(goal) }) }
     : kind === 'milestone' && milestoneInWindow !== undefined
       ? { xValue: milestoneInWindow.date.slice(5), label: milestoneInWindow.label + ' ' + milestoneInWindow.kg + ' kg' }
       /* 单点：单点标记之外再给一条均值线（该点自身的均值），曲线不再是一个孤点无名。 */
-      : asc.length === 1 ? { value: last, label: '均值 ' + last + ' kg' } : undefined;
+      : asc.length === 1 ? { value: last, label: m('skill-calorie.weight-history.c020', { p0: String(last) }) } : undefined;
   return {
     asc, yMin, yMax, yTicks, markLine, targetInRange, milestoneInWindow,
     anomalyDates: new Set((extra.anomalies ?? []).map((a) => a.date)),
@@ -456,21 +465,21 @@ function fourthKpi(h: WeightHistoryView, extra: HistoryDocExtra): KpiCard {
     if (goal === null || goal === undefined) {
       // 值槽只放数：空态不把「未设目标」四个字当大数字，判断词进 `detail` 与徽章；
       // #502：副说明原用 `·` 串「未设目标 · 说「定体重目标」后可叠目标线」⇒ 改说人话一句（不再靠标点分层）。
-      return { label: '目标', value: '—', detail: '还没定体重目标，说「定体重目标」就能在这张图上叠一条目标线', status: 'empty', statusText: '未设目标' };
+      return { label: m('skill-calorie.weight-history.c021'), value: '—', detail: m('skill-calorie.weight-history.c022'), status: 'empty', statusText: m('skill-calorie.weight-history.c023') };
     }
     const d = goal.diffKg;
     if (d === null) {
       // 本窗没有记录 ⇒ 没有「距目标」可算：给空态句，不打印 `null kg`；
       // #502：目标数已住在图例那一行，卡片不再复述（删的是重复，不是事实）。
-      return { label: '目标', value: '—', detail: '本窗没有记录，没法比', status: 'empty', statusText: '本窗无记录' };
+      return { label: m('skill-calorie.weight-history.c024'), value: '—', detail: m('skill-calorie.weight-history.c025'), status: 'empty', statusText: m('skill-calorie.weight-history.c026') };
     }
     return {
       // #480 缺陷 7：值槽原写 `+2.4 kg`（正号会被读成「涨了」）⇒ 说人话，差多少／低多少／已到。
       // #502：副说明原写「目标 68 kg」（与图例逐字重复）⇒ 撤走；值槽 ＋ 徽章一个说差数、一个说成没成。
-      label: '距目标',
-      value: d > 0 ? '还差 ' + d + ' kg' : d < 0 ? '已低于目标 ' + Math.abs(d) + ' kg' : '已达目标',
+      label: m('skill-calorie.weight-history.c027'),
+      value: d > 0 ? m('skill-calorie.weight-history.c028', { p0: String(d) }) : d < 0 ? m('skill-calorie.weight-history.c029', { p0: String(Math.abs(d)) }) : m('skill-calorie.weight-history.c030'),
       // #480：徽章不复述值槽的差数（值槽 ＋ 徽章两处说同一件事时删一处）。
-      status: d > 0 ? 'warn' : 'ok', statusText: d > 0 ? '未达目标' : '已达目标',
+      status: d > 0 ? 'warn' : 'ok', statusText: d > 0 ? m('skill-calorie.weight-history.c031') : m('skill-calorie.weight-history.c032'),
     };
   }
   if (extra.overlay === 'milestone') {
@@ -481,11 +490,11 @@ function fourthKpi(h: WeightHistoryView, extra: HistoryDocExtra): KpiCard {
     // 原因逐条住在图例的「里程碑未达成」那一行里（`milestoneMiss` 仍原样进那一行，事实不丢）。
     // #510（审查席 S3：顿号漏网）：两档里程碑原来用 `、` 串在卡副说明这一槽里（`减重 5 kg、10 kg
     // 两个里程碑…`）——副说明吃纯文本、形状落不进去，故照审查单的第二种改法**改写成一句话**（用「与」）。
-    const two = MILESTONE_KG.join(' kg 与 ') + ' kg';
+    const two = MILESTONE_KG.join(m('skill-calorie.weight-history.c033')) + ' kg';
     const detail = n > 0
-      ? '减重 ' + two + ' 两个里程碑都达到了'
-      : '减重 ' + two + ' 两个里程碑还没达到';
-    return { label: '里程碑', value: String(n), unit: '个', detail, status: n > 0 ? 'ok' : 'empty', statusText: n > 0 ? '已达成' : '未达成' };
+      ? m('skill-calorie.weight-history.c034', { p0: String(two) })
+      : m('skill-calorie.weight-history.c035', { p0: String(two) });
+    return { label: m('skill-calorie.weight-history.c036'), value: String(n), unit: m('skill-calorie.weight-history.c037'), detail, status: n > 0 ? 'ok' : 'empty', statusText: n > 0 ? m('skill-calorie.weight-history.c038') : m('skill-calorie.weight-history.c039') };
   }
   if (extra.overlay === 'anomaly') {
     const n = extra.anomalies?.length ?? 0;
@@ -495,8 +504,8 @@ function fourthKpi(h: WeightHistoryView, extra: HistoryDocExtra): KpiCard {
     // 口径统一住脚注（`anomalyNoteOf`），一处说一次。
     const detail = n > 0
       ? anomalyHeadHuman(extra.anomalies as Array<{ date: string; kg: number }>)
-      : '本窗没有异常点，波动都在正常范围里';
-    return { label: '异常点', value: String(n) + ' 个', detail, status: n > 0 ? 'warn' : 'ok', statusText: n > 0 ? '偏高' : '无异常' };
+      : m('skill-calorie.weight-history.c040');
+    return { label: m('skill-calorie.weight-history.c041'), value: m('skill-calorie.weight-history.c042', { p0: String(String(n)) }), detail, status: n > 0 ? 'warn' : 'ok', statusText: n > 0 ? m('skill-calorie.weight-history.c043') : m('skill-calorie.weight-history.c044') };
   }
   const tags = tagDist(h.rows);
   const n = Object.keys(tags).length;
@@ -504,15 +513,15 @@ function fourthKpi(h: WeightHistoryView, extra: HistoryDocExtra): KpiCard {
     // #480：徽章不复述筛选态，改印标签类数。#542：页头副标题撤掉后，「只取有备注的」住页脚来源行。
     // #480 缺陷 2：副说明原与徽章逐字同为「标签 N 类」⇒ 删副说明，只留徽章。
     return {
-      label: '有备注', value: h.rows.length + ' 条',
-      status: 'ok', statusText: n > 0 ? '标签 ' + n + ' 类' : '有备注',
+      label: m('skill-calorie.weight-history.c045'), value: m('skill-calorie.weight-history.c046', { p0: String(h.rows.length) }),
+      status: 'ok', statusText: n > 0 ? m('skill-calorie.weight-history.c047', { p0: String(n) }) : m('skill-calorie.weight-history.c048'),
     };
   }
   const noted = h.rows.filter((r) => r.note && String(r.note).trim() !== '').length;
   // #480 缺陷 2：同上——备注卡的副说明与徽章逐字重复，删副说明。
   return {
-    label: '备注', value: noted + ' 条',
-    status: noted > 0 ? 'ok' : 'empty', statusText: noted > 0 ? '标签 ' + n + ' 类' : '无备注',
+    label: m('skill-calorie.weight-history.c049'), value: m('skill-calorie.weight-history.c050', { p0: String(noted) }),
+    status: noted > 0 ? 'ok' : 'empty', statusText: noted > 0 ? m('skill-calorie.weight-history.c051', { p0: String(n) }) : m('skill-calorie.weight-history.c052'),
   };
 }
 
@@ -526,16 +535,16 @@ function kpiCards(h: WeightHistoryView, extra: HistoryDocExtra, avg: number | nu
      * #502：副说明只留区间串本身（原写「本窗 …」——「本窗」是范围词、与本卡标签同义），
      * 天数与「区间 → 区间」的形状另住 `windowFactStrip()` 那条事实条。 */
     {
-      label: '体重历史', value: String(h.rows.length), unit: '条',
+      label: m('skill-calorie.weight-history.c053'), value: String(h.rows.length), unit: m('skill-calorie.weight-history.c054'),
       /* #510 同屏事实收敛（审查席 S2 第一类：窗口串一屏三处）：区间串原来同时住在页题（`体重历史
        * 2026-08-09 ~ 2026-09-07`）、本卡副说明与页顶窗口条三处 ⇒ **页题与页脚来源行留着，本槽撤掉**
        * （窗口条已经把这一段做成了形状：两枚日期块 ＋ 天数胶囊）。卡内只留条数这一个数。
        * 徽章原来印「共 N 条」——与值槽的「N 条」是同一个数，同卡两槽说一件事 ⇒ 换状态词。 */
       status: h.rows.length >= 2 ? 'ok' : 'empty',
-      statusText: h.rows.length >= 2 ? '记录足够' : h.rows.length === 1 ? '只有一条' : '本窗无记录',
+      statusText: h.rows.length >= 2 ? m('skill-calorie.weight-history.c055') : h.rows.length === 1 ? m('skill-calorie.weight-history.c056') : m('skill-calorie.weight-history.c057'),
     },
     {
-      label: '变化',
+      label: m('skill-calorie.weight-history.c058'),
       value: c ? signedKg(c.delta) : '—',
       // #480 口径 3.2：日均速率改说人话「每天 +10 克」；持平与单点不编速率句。
       // #480 缺陷 3：单点页的副说明原与徽章逐字同为「单点无变化」⇒ 副说明改说人话那句。
@@ -543,20 +552,20 @@ function kpiCards(h: WeightHistoryView, extra: HistoryDocExtra, avg: number | nu
       // #510：速率与页顶那条事实条的「节奏」是同一条 ⇒ 只在**形状那一处**说（卡副说明留给
       // 「算不出」与「没有变化」这两档——那是卡片自己的状态，形状条不报），卡内不再印第二遍。
       detail: c === null
-        ? '只有 1 天记录，没法算变化'
+        ? m('skill-calorie.weight-history.c059')
         : c.delta === 0
-          ? c.spanDays + ' 天里没有变化'
+          ? m('skill-calorie.weight-history.c060', { p0: String(c.spanDays) })
           : undefined,
       status: c === null ? 'empty' : c.delta < 0 ? 'ok' : c.delta > 0 ? 'warn' : 'empty',
-      statusText: c === null ? '看不出变化' : c.delta < 0 ? '下降' : c.delta > 0 ? '上升' : '持平',
+      statusText: c === null ? m('skill-calorie.weight-history.c061') : c.delta < 0 ? m('skill-calorie.weight-history.c062') : c.delta > 0 ? m('skill-calorie.weight-history.c063') : m('skill-calorie.weight-history.c064'),
     },
     {
-      label: '均值', value: avg === null ? '—' : String(avg) + ' kg',
+      label: m('skill-calorie.weight-history.c065'), value: avg === null ? '—' : String(avg) + ' kg',
       // #480 缺陷 3：单点页的副说明原写「单点无均值对照」，与徽章同说一件事 ⇒ 单点时不给副说明。
       // #502：首日与末日的对照从本卡副说明撤走，改住 `pairStrip()` 那条形状（中间一个箭头，
       // 两端各是一枚加粗值），卡片只留均值这一个数。
       status: h.rows.length >= 2 ? 'ok' : 'empty',
-      statusText: h.rows.length >= 2 ? '首日 → 末日' : '无对照',
+      statusText: h.rows.length >= 2 ? m('skill-calorie.weight-history.c066') : m('skill-calorie.weight-history.c067'),
     },
     fourthKpi(h, extra),
   ];
@@ -584,14 +593,14 @@ function tagDist(rows: WeightHistory['rows']): Record<string, number> {
  *  现在判语块只说**这一段怎么样**（挪动算不算大，0.5kg／1.5kg 两档口径）：不给数、不给方向词、
  *  也不再复述窗口串（窗口条已经把它做成形状）。 */
 function conclusionOf(h: WeightHistoryView): string {
-  if (h.rows.length === 0) return '本窗没有体重记录，先记一条再看。';
-  if (h.change === null) return '这一段的记录还太少，看不出变化。再记一条就能比较。';
+  if (h.rows.length === 0) return m('skill-calorie.weight-history.c068');
+  if (h.change === null) return m('skill-calorie.weight-history.c069');
   const c = h.change;
-  if (c.delta === 0) return '这一段的读数首尾一样，是平的。';
+  if (c.delta === 0) return m('skill-calorie.weight-history.c070');
   const abs = Math.abs(c.delta);
-  if (abs < 0.5) return '这一段的读数基本在一个水平上来回，日常波动就能解释。';
-  if (abs < 1.5) return '这一段的挪动比日常波动大一些，再记一两周更看得清。';
-  return '这一段挪动的幅度不小，值得留意。';
+  if (abs < 0.5) return m('skill-calorie.weight-history.c071');
+  if (abs < 1.5) return m('skill-calorie.weight-history.c072');
+  return m('skill-calorie.weight-history.c073');
 }
 
 /** 复制载荷的逐条行（日期／时间／体重／BMI／备注）：`text` 每行一条、`json` 结构、`csv` 可导入。
@@ -603,8 +612,13 @@ function copyRowsOf(rows: WeightHistory['rows']): Array<Record<string, string | 
 /** 复制日志第 3 段的那句话（裁定 F）：日志是**机器面**，照旧写库文件名与表名（§5.5：哪张库／哪张表／
  *  哪个窗口／多少条），照抄能重跑；页脚是**人面**，同一件事只说人话（见 `sourceLine`，两句**分开**住）。 */
 function sourceTextOf(h: WeightHistoryView, extra: HistoryDocExtra): string {
-  return '体重记录（' + DB_FILENAME + ' · weight_log） ｜ 窗口 ' + h.range + ' ｜ 共 ' + h.rows.length + ' 条'
-    + (extra.noteOnly ? '（只取有备注的）' : '');
+  const noteOnlyPhrase = extra.noteOnly ? m('skill-calorie.weight-history.c074') : '';
+  return m('skill-calorie.weight-history.c075', {
+    p0: String(DB_FILENAME),
+    p1: String(h.range),
+    p2: String(h.rows.length),
+    p3: String(noteOnlyPhrase),
+  });
 }
 
 /** 页脚数据来源行（§5.5：哪个窗口／多少条；窗内有缺口时同一行补一句口径）。
@@ -614,19 +628,23 @@ function sourceTextOf(h: WeightHistoryView, extra: HistoryDocExtra): string {
  *  **库表名退出可见面**（`calorie_data.db`／`weight_log` 在页脚不再出现，只在复制日志第 3 段留着）。 */
 function sourceLine(h: WeightHistoryView, extra: HistoryDocExtra): string {
   const gap = gapNoteOf(h, extra);
-  return renderCaliberLine('📊 数据来源：体重记录 ｜ 窗口 ' + h.range
-    + ' ｜ 共 ' + h.rows.length + ' 条'
-    + (extra.noteOnly ? '（只取有备注的）' : '')
-    + (gap === null ? '' : ' ｜ ' + gap));
+  const noteOnlyPhrase = extra.noteOnly ? m('skill-calorie.weight-history.c076') : '';
+  const gapPhrase = gap === null ? '' : ' ｜ ' + gap;
+  return renderCaliberLine(m('skill-calorie.weight-history.c077', {
+    p0: String(h.range),
+    p1: String(h.rows.length),
+    p2: String(noteOnlyPhrase),
+    p3: String(gapPhrase),
+  }));
 }
 
 /** 窗内缺口（§3 第 15 条：缺多少天要写清；缺值按断点画、不补 0）。给了区间串才数得出来。 */
 function gapNoteOf(h: WeightHistoryView, extra: HistoryDocExtra): string | null {
-  if (h.rows.length === 0) return '本窗没有记录，不补默认值，也不拿别的窗口顶';
+  if (h.rows.length === 0) return m('skill-calorie.weight-history.c078');
   if (extra.noteOnly) return null; // 筛选后的条数与窗口天数不可比
   const span = windowDaysOf(h.range);
   if (span === null || h.rows.length >= span) return null;
-  return '缺 ' + (span - h.rows.length) + ' 天没记（缺的那几天不补 0）';
+  return m('skill-calorie.weight-history.c079', { p0: String(span - h.rows.length) });
 }
 
 /** 区间串 → 天数：`2026-09-01`／`2026-09-01 ~ 2026-09-07`／`最近30天` 三种形态。 */
@@ -654,18 +672,18 @@ export function buildWeightHistoryDoc(h: WeightHistoryView, extra: HistoryDocExt
       icon: 'warn',
       // #510：首行不再印「本窗只有 N 条」那个数——它住在下面「体重历史」卡的值槽与表题里，
       // 同一屏三处（审查席 ★ 条数项）。提示块说「够不够」，条数说在卡片那一处。
-      msg: '本窗记录太少（比较变化要 2 条以上）',
+      msg: m('skill-calorie.weight-history.c080'),
       // #502：原句「…；再记一条就能比首日和末日。」是拿 `；` 把「为什么仍可看」与「下一手」两件事
       // 串成一句 ⇒ 改成两句人话，「几天、几条」也不在这句里再说一遍（提示的第一行与下面两张卡各有一处）；
       // 并列的两条前提另起一条 `bulletList()`（原来也串在同一句里）。
-      detail: '看不出变化，页照常出，表里的数值照读。',
+      detail: m('skill-calorie.weight-history.c081'),
     }));
     /* #510（审查席 S2 第三类：关键数字一屏三处）：逐条那两行原来各自再报一遍「本窗只有 1 条」——
      * 那个数住在提示块第一行与「体重历史」卡的值槽里，同一屏已经两处 ⇒ 逐条只说**为什么看不出**
      * （门槛几条、要看什么），不再复述本窗条数。 */
     parts.push(bulletList([
-      '比较变化至少要 2 条记录，本窗看不出涨还是降',
-      '再记一条就能比出首日和末日的差',
+      m('skill-calorie.weight-history.c082'),
+      m('skill-calorie.weight-history.c083'),
     ]));
   }
   parts.push(renderKpiGrid(kpiCards(h, extra, avg)));
@@ -676,14 +694,14 @@ export function buildWeightHistoryDoc(h: WeightHistoryView, extra: HistoryDocExt
   if (plan === null) {
     // 0 条：空态句留位（不许像老技能那样 `display:none` 静默隐藏图表区；本页照常落盘成完整一页）。
     parts.push(renderEmptyBlock({
-      title: '体重曲线',
-      text: '本窗无体重记录（' + h.range + '）',
-      hint: '说「记体重」记一条，曲线就有第一个点。本页不编默认值，也不拿别的窗口顶。',
+      title: m('skill-calorie.weight-history.c084'),
+      text: m('skill-calorie.weight-history.c085', { p0: String(h.range) }),
+      hint: m('skill-calorie.weight-history.c086'),
     }));
   } else {
     parts.push(renderChartBlock({
       kind: 'line',
-      title: '体重曲线',
+      title: m('skill-calorie.weight-history.c087'),
       input: {
         items: plan.asc.map((r) => ({
           label: r.date.slice(5), value: r.weight_kg,
@@ -705,7 +723,7 @@ export function buildWeightHistoryDoc(h: WeightHistoryView, extra: HistoryDocExt
       },
     }));
     charts = true;
-    parts.push(renderListRows({ items: legendRows(h, extra, plan), emptyText: '无图例' }));
+    parts.push(renderListRows({ items: legendRows(h, extra, plan), emptyText: m('skill-calorie.weight-history.c088') }));
     // 异常点那页的判据脚注（裸名：`note()` 与上下文里的「备注」重名，本页 import 时已改名 `wnote`）。
     if (extra.overlay === 'anomaly') parts.push(anomalyNoteOf(extra));
   }
@@ -716,14 +734,14 @@ export function buildWeightHistoryDoc(h: WeightHistoryView, extra: HistoryDocExt
   // **不给 `left`**：组件会给这一行加 `-no-left` 修饰类、那一列不占位（#154 加的形态）。
   const tags = tagDist(h.rows);
   parts.push(renderListRows({
-    items: Object.entries(tags).map(([k, v]) => ({ main: k, right: String(v) + ' 条' })),
-    emptyText: '无备注标签',
+    items: Object.entries(tags).map(([k, v]) => ({ main: k, right: m('skill-calorie.weight-history.c089', { p0: String(String(v)) }) })),
+    emptyText: m('skill-calorie.weight-history.c090'),
   }));
   // #502：结论块正文走 `verdict()`（一句话判语，形状与全族的判语块一致）。
   // 原与目标卡／图例逐字重复的目标小标签、以及复述卡片的里程碑／异常点小标签随本轮删——
   // 删的是重复（那几件事实各在距目标卡／图例／异常点卡上），不是删事实。
   parts.push(renderDisclosure({
-    title: '结论',
+    title: m('skill-calorie.weight-history.c091'),
     contentHtml: verdict(conclusionOf(h)),
     open: true,
   }));
@@ -745,10 +763,10 @@ export function buildWeightHistoryDoc(h: WeightHistoryView, extra: HistoryDocExt
     },
   }));
   return assembleDocPage({
-    docTitle: DOC_TITLE,
+    docTitle: DOC_TITLE(),
     /* #510：页题原来写「体重历史 ＋ 区间串」，与页顶窗口条、KPI 卡副说明同说一件事（审查席实测
      * 一屏三处）⇒ 页题只留名字，**窗口串归页顶那条窗口条**（形状件，两枚日期块 ＋ 天数胶囊）。 */
-    title: '体重历史',
+    title: m('skill-calorie.weight-history.c092'),
     eyebrow: '',
     // #542（#340 打回批）：副标题整行撤——「模式：明细／曲线」是实现变体的名字，读者要的是图和表本身；
     // 四个变体的信息各有去处：目标线／里程碑／异常点住图例行，「只取有备注的」住页脚来源行。
@@ -767,43 +785,44 @@ function legendRows(h: WeightHistoryView, extra: HistoryDocExtra, plan: CurvePla
     // #480 缺陷 12：颜色词不上说明行——异常点那一页首行改说「异常点是什么」（比平均线高的那几天），
     // 不再写「偏红的点＝异常点」（颜色是表现，读者要的是口径）。
     extra.overlay === 'anomaly'
-      ? { left: '- -', main: '异常点', right: '比平均线高的那几天' }
-      : { left: '—', main: '体重曲线' },
+      ? { left: '- -', main: m('skill-calorie.weight-history.c093'), right: m('skill-calorie.weight-history.c094') }
+      : { left: '—', main: m('skill-calorie.weight-history.c095') },
   ];
   const asc = plan.asc;
   const top = asc.reduce((a, b) => (b.weight_kg > a.weight_kg ? b : a));
   const low = asc.reduce((a, b) => (b.weight_kg < a.weight_kg ? b : a));
   if (top.weight_kg !== low.weight_kg) {
-    rows.push({ left: '▲', main: '最高 ' + top.weight_kg + ' kg', right: top.date });
-    rows.push({ left: '▼', main: '最低 ' + low.weight_kg + ' kg', right: low.date });
+    rows.push({ left: '▲', main: m('skill-calorie.weight-history.c096', { p0: String(top.weight_kg) }), right: top.date });
+    rows.push({ left: '▼', main: m('skill-calorie.weight-history.c097', { p0: String(low.weight_kg) }), right: low.date });
   }
   if (asc.length >= 2) {
     // 图上叠的那条**灰色斜虚线**就是它（引擎 `avgLine` 追加的均线序列 `charts.ts:816`）：
     // 图例点名「灰色虚线」，免得跟目标线／里程碑竖线混起来（§2 第 1 条：不许有画了但读不到的线）。
     const win = Math.max(3, Math.min(asc.length, 7));
-    rows.push({ left: '– –', main: win >= 7 ? '均线（最近 7 天）' : '均线（最近 ' + win + ' 天）', right: '图上那条灰色虚线' });
+    rows.push({ left: '– –', main: win >= 7 ? m('skill-calorie.weight-history.c098') : m('skill-calorie.weight-history.c099', { p0: String(win) }), right: m('skill-calorie.weight-history.c100') });
   }
   // #502：`main` 那列窄（44px 左列 ＋ 右列都占位时），原句「本窗只有 1 条记录，图上只有这一个点」
   // 在手机端被 `ellipsis` 截成「这一…」——把重复的半句去掉（「只有 1 条记录」卡片徽章已说）。
-  if (asc.length === 1) rows.push({ left: '·', main: '这一个点', right: '本窗唯一的一点' });
+  if (asc.length === 1) rows.push({ left: '·', main: m('skill-calorie.weight-history.c101'), right: m('skill-calorie.weight-history.c102') });
   if (extra.overlay === 'target' && extra.goal !== null && extra.goal !== undefined) {
     const goal = extra.goal;
     // #480 缺陷 11：图上没画（在量程外）时，把「还差多少」写进图例——图上读不到，图例就得说清；
     // 画得下的那一支不重复（「还差」在值槽与结论标签里各有一处）。「超过图的取值范围」换成读者话「画不下」。
     const diff = goal.diffKg;
+    const gapPhrase = diff === null || diff <= 0 ? '' : m('skill-calorie.weight-history.c103', { p0: String(diff) });
+    const outOfRangePhrase = plan.targetInRange ? '' : m('skill-calorie.weight-history.c104', { p0: String(gapPhrase) });
     rows.push({
-      left: '- -', main: '目标线',
-      right: '目标 ' + goal.kg + ' kg'
-        + (plan.targetInRange ? '' : (diff === null || diff <= 0 ? '' : '，还差 ' + diff + ' kg') + '（图上画不下，没画）'),
+      left: '- -', main: m('skill-calorie.weight-history.c105'),
+      right: m('skill-calorie.weight-history.c106', { p0: String(goal.kg), p1: String(outOfRangePhrase) }),
     });
   }
   if (extra.overlay === 'milestone') {
-    for (const m of extra.milestones ?? []) {
-      const inWindow = plan.milestoneInWindow !== undefined && plan.milestoneInWindow.date === m.date;
+    for (const ms of extra.milestones ?? []) {
+      const inWindow = plan.milestoneInWindow !== undefined && plan.milestoneInWindow.date === ms.date;
       // #480 缺陷 10：日期与体重之间用顿号（原空格并列读成「日期 体重」），窗外的说「不在这段时间里」。
-      rows.push({ left: '◆', main: m.label, right: m.date + '，' + m.kg + ' kg' + (inWindow ? '' : '（不在这段时间里）') });
+      rows.push({ left: '◆', main: ms.label, right: ms.date + '，' + ms.kg + ' kg' + (inWindow ? '' : m('skill-calorie.weight-history.c107')) });
     }
-    if ((extra.milestones ?? []).length === 0) rows.push({ left: '◇', main: '里程碑未达成', right: (extra.milestoneMiss ?? []).join('，') || '继续记录' });
+    if ((extra.milestones ?? []).length === 0) rows.push({ left: '◇', main: m('skill-calorie.weight-history.c108'), right: (extra.milestoneMiss ?? []).join('，') || m('skill-calorie.weight-history.c109') });
   }
   if (extra.overlay === 'anomaly') {
     const list = extra.anomalies ?? [];
@@ -811,11 +830,11 @@ function legendRows(h: WeightHistoryView, extra: HistoryDocExtra, plan: CurvePla
       // 值最多 5 行：再长的清单交给下方的逐日明细表（图上那几个点本来也看得到）。
       const cap = 5;
       for (const a of list.slice(0, cap)) {
-        rows.push({ left: '▲', main: '异常点 ' + a.date, right: deviationHuman(a.kg, a.deviationKg) });
+        rows.push({ left: '▲', main: m('skill-calorie.weight-history.c110', { p0: String(a.date) }), right: deviationHuman(a.kg, a.deviationKg) });
       }
-      if (list.length > cap) rows.push({ left: '…', main: '还有 ' + (list.length - cap) + ' 个异常点', right: '见下方明细表' });
+      if (list.length > cap) rows.push({ left: '…', main: m('skill-calorie.weight-history.c111', { p0: String(list.length - cap) }), right: m('skill-calorie.weight-history.c112') });
     } else {
-      rows.push({ left: '△', main: '本窗无异常点', right: extra.anomalyNote ?? '波动在正常范围里' });
+      rows.push({ left: '△', main: m('skill-calorie.weight-history.c113'), right: extra.anomalyNote ?? m('skill-calorie.weight-history.c114') });
     }
   }
   return rows;
@@ -832,11 +851,11 @@ function detailTable(title: string, tableHtml: string): string {
 
 function segmentTables(h: WeightHistoryView, extra: HistoryDocExtra): string[] {
   const cols: DataTableColumn[] = [
-    { key: 'date', label: '日期' },
-    { key: 'time', label: '时间' },
-    { key: 'kg', label: '体重', align: 'right' },
+    { key: 'date', label: m('skill-calorie.weight-history.c115') },
+    { key: 'time', label: m('skill-calorie.weight-history.c116') },
+    { key: 'kg', label: m('skill-calorie.weight-history.c117'), align: 'right' },
     { key: 'bmi', label: 'BMI', align: 'right' },
-    { key: 'note', label: '备注' },
+    { key: 'note', label: m('skill-calorie.weight-history.c118') },
   ];
   // 可见文本的空值一律 `—`（`t395-融合基准.md` 裁定 2）；复制载荷那边保留原始空值。
   const toRow = (r: (typeof h.rows)[number]) => ({
@@ -852,31 +871,31 @@ function segmentTables(h: WeightHistoryView, extra: HistoryDocExtra): string[] {
     return [
       detailTable(
         // #480 缺陷 8：说清这张表是**截过**的（「最近 30 条」会被读成「一共就是这些」）。
-        '体重明细（只列最近 30 条）',
+        m('skill-calorie.weight-history.c119'),
         renderDataTable({
           columns: cols,
           rows: head.map(toRow),
-          emptyText: '本窗无体重记录',
+          emptyText: m('skill-calorie.weight-history.c120'),
         }),
       ),
       detailTable(
         // #480 缺陷 9：「其余」是对着上表算出来的说法，改成读者话「更早的」。
-        '体重明细（更早的 ' + tail.length + ' 条）',
+        m('skill-calorie.weight-history.c121', { p0: String(tail.length) }),
         renderDataTable({
           columns: cols,
           rows: tail.map(toRow),
-          emptyText: '无更多记录',
+          emptyText: m('skill-calorie.weight-history.c122'),
         }),
       ),
     ];
   }
   return [detailTable(
     // #480 缺陷 13：页题已有「体重历史」，表标题不再把同一句话再说一遍 ⇒ 说「明细记录」。
-    '明细记录（共 ' + h.rows.length + ' 条）',
+    m('skill-calorie.weight-history.c123', { p0: String(h.rows.length) }),
     renderDataTable({
       columns: cols,
       rows: h.rows.map(toRow),
-      emptyText: '本窗无体重记录',
+      emptyText: m('skill-calorie.weight-history.c124'),
     }),
   )];
 }

@@ -12,14 +12,16 @@
  * 不登记的键：定位／选择器类（`start`／`end`／`items`）不进 `writtenFields`，也没有上屏处，
  * 没有中文名就不编（缺项回退原键名那一口径）。
  */
-import { registerFieldLabels } from '../shared/fieldLabel.js';
-
 /** 本域的域名字符串（查表用；域表一个定义地，别处不许再写字面量）。 */
+import { m } from '../entries/index.js';
 export const WEIGHT_DOMAIN = 'weight';
 
 /** 体重域字段 → 中文标签（#483 最小键集：写入字段上屏的四个参数名 ＋ 记录编号）。 */
-export const WEIGHT_FIELD_LABELS: Readonly<Record<string, string>> = Object.freeze({
-  kg: '体重', date: '日期', time: '时间', note: '备注', id: '记录编号',
+export const weightFieldLabels = (): Readonly<Record<string, string>> => Object.freeze({
+  kg: m('skill-calorie.weight-fieldLabels.c001'), date: m('skill-calorie.weight-fieldLabels.c002'), time: m('skill-calorie.weight-fieldLabels.c003'), note: m('skill-calorie.weight-fieldLabels.c004'), id: m('skill-calorie.weight-fieldLabels.c005'),
 });
 
-registerFieldLabels(WEIGHT_DOMAIN, WEIGHT_FIELD_LABELS);
+/** 查体重域字段标签：命中给标签，缺项回退原键名（与 shared/fieldLabel.ts 同一口径）。 */
+export function weightFieldLabel(key: string): string {
+  return weightFieldLabels()[key] ?? key;
+}

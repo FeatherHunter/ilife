@@ -25,6 +25,7 @@ import { addProduct, deprecateProduct, updateProduct } from './productStore.js';
 import { ENTRY_PRECHECK } from './precheckPort.js';
 import { buildImportPrecheckDoc } from './precheck.js';
 import { buildImportPrecheckView } from './precheckPort.js';
+import { m } from '../entries/index.js';
 
 type DuplicatePolicy = 'skip' | 'overwrite' | 'deprecate';
 
@@ -57,7 +58,7 @@ export function normalizeImportRecord(o: Record<string, unknown>): Record<string
     sugar: numOf(o, 'sugar'),
     dietary_fiber: numOf(o, 'dietaryFiber', 'dietary_fiber'),
     sodium: numOf(o, 'sodium'),
-    source: strOf(o, 'source') ?? '批量导入',
+    source: strOf(o, 'source') ?? m('skill-calorie.diet-productImport.c001'),
     note: strOf(o, 'note') ?? '',
   };
   const dep = strOf(o, 'isDeprecated', 'is_deprecated');
@@ -82,15 +83,15 @@ export function writeProductImport(params: Record<string, unknown>, db: Database
   if (optStr(params, 'entry') === ENTRY_PRECHECK) {
     const v = buildImportPrecheckView(db, params['items']);
     const page = buildImportPrecheckDoc(v, ENTRY_PRECHECK, commandLine('calorie.product.import', params), false);
-    return { data: out(R('批量导入食品', 'create', '这一页只做预览、不写库；确认后再跑同一条命令去掉入口标记即写入', '批量导入食品', 'nutrition_products (写前确认页)', {
+    return { data: out(R(m('skill-calorie.diet-productImport.c002'), 'create', m('skill-calorie.diet-productImport.c003'), m('skill-calorie.diet-productImport.c004'), m('skill-calorie.diet-productImport.c005'), {
       recordId: null, noChange: true, ids: [], idSource: 'none', writtenFields: [],
     })).data, html: page };
   }
   const items = needArr(params, 'items');
-  if (items.length > 200) fail(2, 'items 至多 200 条');
+  if (items.length > 200) fail(2, m('skill-calorie.diet-productImport.c006'));
   const policyRaw = optStr(params, 'onDuplicate') ?? 'skip';
   if (policyRaw !== 'skip' && policyRaw !== 'overwrite' && policyRaw !== 'deprecate') {
-    fail(2, 'onDuplicate 须为 skip/overwrite/deprecate');
+    fail(2, m('skill-calorie.diet-productImport.c007'));
   }
   const policy = policyRaw as DuplicatePolicy;
   let inserted = 0;
@@ -151,15 +152,21 @@ export function writeProductImport(params: Record<string, unknown>, db: Database
       deprecated += 1;
     } catch (e) {
       failures.push({
-        status: '失败',
+        status: m('skill-calorie.diet-productImport.c008'),
         reason: e instanceof Error ? e.message : String(e),
-        detail: '第' + (idx + 1) + '条',
+        detail: m('skill-calorie.diet-productImport.c009', { p0: String(idx + 1) }),
       });
     }
   });
   const failed = failures.length;
   const written = inserted + updated + deprecated;
-  return out(R('批量导入食品', 'create', '批量导入食品：新增 ' + inserted + '，更新 ' + updated + '，跳过 ' + skipped + '，下架 ' + deprecated + '，失败 ' + failed, '批量导入食品', 'nutrition_products (写库回执)', {
+  return out(R(m('skill-calorie.diet-productImport.c010'), 'create', m('skill-calorie.diet-productImport.c011', {
+    p0: String(inserted),
+    p1: String(updated),
+    p2: String(skipped),
+    p3: String(deprecated),
+    p4: String(failed),
+  }), m('skill-calorie.diet-productImport.c012'), m('skill-calorie.diet-productImport.c013'), {
     recordId: ids.length > 0 ? ids[0] : null,
     noChange: written === 0,
     ids,

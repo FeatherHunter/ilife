@@ -15,6 +15,7 @@ import { buildSourceStatsView } from './nutritionPort.js';
 import { buildSourceStatsDoc } from './sourceStatsDocs.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { fail, needStr, nums, optNum, optStr } from '../shared/params.js';
+import { m } from '../entries/index.js';
 
 /** 本次真出口的命令原文（含本次参数），写进「复制日志」第 4 段「调用链」（`t425` 裁定 7）。
  *  字面与共用位 `shared/writeParts.ts` 的 `commandLine()` 同形；本件读侧只此一处，不引写侧共用件。 */
@@ -27,7 +28,7 @@ function commandLine(key: string, params: Record<string, unknown>): string {
 export function viewLibrary(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
   const category = optStr(params, 'category') ?? null;
   const limit = optNum(params, 'limit') ?? 50;
-  if (!Number.isInteger(limit) || (limit as number) < 1 || (limit as number) > 100) fail(2, 'limit 须为 1..100 整数');
+  if (!Number.isInteger(limit) || (limit as number) < 1 || (limit as number) > 100) fail(2, m('skill-calorie.diet-library.c001'));
   const lib = buildProductLibrary(db, category, limit as number);
   const stats = buildProductStats(db);
   const metrics = nums({ total: lib.total, statsTotal: stats.total });
@@ -41,7 +42,7 @@ export function viewLibrary(params: Record<string, unknown>, db: DatabaseSync): 
 export function viewSearch(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
   const keyword = needStr(params, 'keyword');
   const limit = optNum(params, 'limit') ?? 20;
-  if (!Number.isInteger(limit) || (limit as number) < 1 || (limit as number) > 100) fail(2, 'limit 须为 1..100 整数');
+  if (!Number.isInteger(limit) || (limit as number) < 1 || (limit as number) > 100) fail(2, m('skill-calorie.diet-library.c002'));
   const s = buildProductSearch(db, keyword, limit as number);
   const metrics = nums({ total: s.total, limit: limit as number });
   return { data: { metrics }, html: buildSearchDoc(s, commandLine('calorie.view.search', params)) };

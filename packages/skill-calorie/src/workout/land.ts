@@ -43,6 +43,7 @@ import { invokeLandBackfill, invokeLandPush, invokeMemo, invokeSchedule } from '
 import { buildLandNothingPage, buildLandProcessPage, buildLandResultPage, landNotesOf, landSpanOf, landTitleOf } from './landPages.js';
 import type { LandStepRead } from './landPages.js';
 import { xunjiKeyNext } from './xunjiKey.js';
+import { m } from '../entries/index.js';
 
 export const LAND_KEY = 'calorie.workout.land';
 const LAND_WAKE = '落地训练';
@@ -73,12 +74,12 @@ function openPlanDb(dbFile: string | undefined): { db: DatabaseSync | null; reas
     return { db: null, reason: e instanceof Error ? e.message : String(e) };
   }
   if (!existsSync(file)) {
-    return { db: null, reason: '卡路里库文件不在（' + file + '）：先确认配置项 db.dir 指对（空＝数据目录），再看库在不在' };
+    return { db: null, reason: m('skill-calorie.workout-land.c001', { p0: String(file) }) };
   }
   try {
     return { db: openDbReadOnly(file) as unknown as DatabaseSync, reason: null };
   } catch (e) {
-    return { db: null, reason: '读训练计划失败：' + (e instanceof Error ? e.message : String(e)) };
+    return { db: null, reason: m('skill-calorie.workout-land.c002', { p0: String(e instanceof Error ? e.message : String(e)) }) };
   }
 }
 
@@ -93,17 +94,17 @@ function closeQuietly(db: { close: () => void } | null): void {
 
 /** R3 作息桥真实现（缺省：读计划 → 按天拼合成写条目 → 作息批量；返回结局，不 `fail`，调用方按码点名）。 */
 async function defaultLandPlan(dates: readonly string[], dbFile?: string): Promise<LandBridgeResult> {
-  if (dates.length === 0) return { ok: true, note: '无日期' };
+  if (dates.length === 0) return { ok: true, note: m('skill-calorie.workout-land.c003') };
   const opened = openPlanDb(dbFile);
-  if (opened.db === null) return { ok: false, code: 1, error: opened.reason ?? '打不开库' };
+  if (opened.db === null) return { ok: false, code: 1, error: opened.reason ?? m('skill-calorie.workout-land.c004') };
   const db = opened.db;
   try {
     const plan = getPlan(db);
     if (!plan.config && plan.sessions.length === 0) {
-      return { ok: false, code: 1, error: '无训练计划（先定训练计划）' };
+      return { ok: false, code: 1, error: m('skill-calorie.workout-land.c005') };
     }
     const start = plan.config?.start_date ?? null;
-    if (!start) return { ok: false, code: 1, error: '计划缺开始日期，无法定位周次' };
+    if (!start) return { ok: false, code: 1, error: m('skill-calorie.workout-land.c006') };
     const items: { date: string; time_start: string; time_end: string; title: string; notes: string }[] = [];
     for (const date of dates) {
       const { week, dow } = weekOfDate(start, date);
@@ -114,15 +115,21 @@ async function defaultLandPlan(dates: readonly string[], dbFile?: string): Promi
           items.push({ date, time_start: ts, time_end: te, title: landTitleOf(s, i), notes: landNotesOf(s) });
         });
     }
-    if (items.length === 0) return { ok: true, note: '空天无段可写（' + dates.length + ' 天）' };
-    const call = invokeSchedule(items, '补计划');
+    if (items.length === 0) return { ok: true, note: m('skill-calorie.workout-land.c007', { p0: String(dates.length) }) };
+    const call = invokeSchedule(items, m('skill-calorie.workout-land.c008'));
     if (call.code !== 0) {
       const d = call.data as { errors?: unknown } | null;
       const errs = typeof d === 'object' && d !== null && Array.isArray(d.errors)
         ? (d.errors as string[]).join('、') : '';
-      return { ok: false, code: call.code === 2 ? 1 : 3, error: '补计划：' + (errs !== '' ? errs : '作息合成写没达成') };
+      const errPhrase = errs !== '' ? errs : m('skill-calorie.workout-land.c009');
+      return { ok: false, code: call.code === 2 ? 1 : 3, error: m('skill-calorie.workout-land.c010', { p0: String(errPhrase) }) };
     }
-    return { ok: true, note: '已写 ' + items.length + ' 段（' + dates.length + ' 天）' + (call.stubbed ? '（挡板）' : '') };
+    const stubPhrase = call.stubbed ? m('skill-calorie.workout-land.c011') : '';
+    return { ok: true, note: m('skill-calorie.workout-land.c012', {
+      p0: String(items.length),
+      p1: String(dates.length),
+      p2: String(stubPhrase),
+    }) };
   } finally {
     closeQuietly(db);
   }
@@ -130,17 +137,17 @@ async function defaultLandPlan(dates: readonly string[], dbFile?: string): Promi
 
 /** R3 备忘桥真实现（缺省：读计划 → 逐段记心愿；第几天第几段点名，返回结局，不 `fail`）。 */
 async function defaultLandWish(dates: readonly string[], dbFile?: string): Promise<LandBridgeResult> {
-  if (dates.length === 0) return { ok: true, note: '无日期' };
+  if (dates.length === 0) return { ok: true, note: m('skill-calorie.workout-land.c013') };
   const opened = openPlanDb(dbFile);
-  if (opened.db === null) return { ok: false, code: 1, error: opened.reason ?? '打不开库' };
+  if (opened.db === null) return { ok: false, code: 1, error: opened.reason ?? m('skill-calorie.workout-land.c014') };
   const db = opened.db;
   try {
     const plan = getPlan(db);
     if (!plan.config && plan.sessions.length === 0) {
-      return { ok: false, code: 1, error: '无训练计划（先定训练计划）' };
+      return { ok: false, code: 1, error: m('skill-calorie.workout-land.c015') };
     }
     const start = plan.config?.start_date ?? null;
-    if (!start) return { ok: false, code: 1, error: '计划缺开始日期，无法定位周次' };
+    if (!start) return { ok: false, code: 1, error: m('skill-calorie.workout-land.c016') };
     let wrote = 0;
     let stubbed = false;
     for (const date of dates) {
@@ -149,19 +156,24 @@ async function defaultLandWish(dates: readonly string[], dbFile?: string): Promi
       for (let i = 0; i < sessions.length; i++) {
         const s = sessions[i] as PlanSessionRow;
         const content = landTitleOf(s, i);
-        const call = invokeMemo({ title: content, body: content, category: '心愿', due: date }, '记心愿');
+        const call = invokeMemo({ title: content, body: content, category: m('skill-calorie.workout-land.c017'), due: date }, m('skill-calorie.workout-land.c018'));
         if (call.code !== 0) {
           const d = call.data as { message?: unknown } | null;
           const why = typeof d === 'object' && d !== null && typeof d.message === 'string'
-            ? d.message : '备忘合成写没达成';
-          return { ok: false, code: call.code === 2 ? 1 : 3, error: '记心愿第 ' + (wrote + 1) + ' 段 ' + why };
+            ? d.message : m('skill-calorie.workout-land.c019');
+          return { ok: false, code: call.code === 2 ? 1 : 3, error: m('skill-calorie.workout-land.c020', { p0: String(wrote + 1), p1: String(why) }) };
         }
         wrote += 1;
         stubbed = stubbed || call.stubbed;
       }
     }
-    if (wrote === 0) return { ok: true, note: '空天无段可记（' + dates.length + ' 天）' };
-    return { ok: true, note: '已记 ' + wrote + ' 条（' + dates.length + ' 天）' + (stubbed ? '（挡板）' : '') };
+    if (wrote === 0) return { ok: true, note: m('skill-calorie.workout-land.c021', { p0: String(dates.length) }) };
+    const stubPhrase = stubbed ? m('skill-calorie.workout-land.c022') : '';
+    return { ok: true, note: m('skill-calorie.workout-land.c023', {
+      p0: String(wrote),
+      p1: String(dates.length),
+      p2: String(stubPhrase),
+    }) };
   } finally {
     closeQuietly(db);
   }
@@ -183,7 +195,7 @@ export async function landWishStep(dates: readonly string[], deps: LandBridgeDep
 function readDryRun(params: Record<string, unknown>): boolean {
   const v = params['dryRun'];
   if (v === undefined || v === null) return false;
-  if (typeof v !== 'boolean') fail(2, '参数 dryRun 须为布尔值');
+  if (typeof v !== 'boolean') fail(2, m('skill-calorie.workout-land.c024'));
   return v as boolean;
 }
 
@@ -204,8 +216,8 @@ export function landSessionsOf(plan: LandPlan, date: string): PlanSessionRow[] {
 /** 计划的**结构性**门（单日链与批量宿主共用）：库／计划行不在、或计划缺开始日期即 `fail(4)`——
  *  这两种是「你的计划本身有问题」，得先修计划；它们跟「这天／这段没有安排」不是一回事（后者回说明页，见下）。 */
 export function landPlanGate(plan: LandPlan): void {
-  if (!plan.config && plan.sessions.length === 0) fail(4, '无训练计划（先定训练计划）');
-  if (!plan.config?.start_date) fail(4, '计划缺开始日期，无法定位周次');
+  if (!plan.config && plan.sessions.length === 0) fail(4, m('skill-calorie.workout-land.c025'));
+  if (!plan.config?.start_date) fail(4, m('skill-calorie.workout-land.c026'));
 }
 
 /** 这一天**没有安排**的原因（有段回 `null`）。三种各给一句「为什么 ＋ 下一步」：
@@ -219,18 +231,18 @@ export function landNoSegmentWhy(plan: LandPlan, date: string): string | null {
   if (landSessionsOf(plan, date).length > 0) return null;
   const start = plan.config?.start_date;
   if (!start) return null; // 结构性缺失由 `landPlanGate` 拦；走到这里说明计划行与开始日期都在
-  if (plan.sessions.length === 0) return '这份计划里还没有排训练段（先定训练计划，或先给它加训练动作）';
+  if (plan.sessions.length === 0) return m('skill-calorie.workout-land.c027');
   const { week } = weekOfDate(start, date);
   const total = plan.config?.total_weeks ?? null;
-  if (week < 1) return '这天在计划开始日（' + start + '）之前（先换日期，或改计划开始日）';
+  if (week < 1) return m('skill-calorie.workout-land.c028', { p0: String(start) });
   if (total !== null && week > total) {
-    return '这天在计划之外：本计划 ' + start + ' 起共 ' + total + ' 周（先换日期，或先把计划加长）';
+    return m('skill-calorie.workout-land.c029', { p0: String(start), p1: String(total) });
   }
-  return '这天是休息日：计划里这一周这一天没有训练段（换一个有安排的日子，或先给它加训练动作）';
+  return m('skill-calorie.workout-land.c030');
 }
 
 /** 回执里「没有安排」那一格的状态串（单日链与批量宿主共用一个词，别处不许再写第二个说法）。 */
-export const LAND_NOTHING_STATUS = '没有安排';
+export const LAND_NOTHING_STATUS = (): string => m('skill-calorie.workout-land.c084');
 
 /** 「没有安排」那一态（#943 第三选项）：命令没出错、也没做事——回说明页 ＋ 回执，`exit 0`。
  *  **不调任何外部**：推送／回写与四步一样一步不跑（旧口径在 0 段时照样调推送与回写）。 */
@@ -238,10 +250,10 @@ export function landNothing(
   wake: string, params: Record<string, unknown>, why: string, scopeLine: string,
   buildPage: (receipt: CrudReceipt, why: string) => string,
 ): WriteOut {
-  const message = '没有可落地的训练段：' + why;
-  const receipt = R(wake, 'create', message, wake, '训练计划（workout_plans）＋ 没有安排', {
+  const message = m('skill-calorie.workout-land.c031', { p0: String(why) });
+  const receipt = R(wake, 'create', message, wake, m('skill-calorie.workout-land.c032'), {
     recordId: null, noChange: true, ids: [], idSource: 'none', writtenFields: [],
-    items: [{ status: LAND_NOTHING_STATUS, reason: why, detail: scopeLine }],
+    items: [{ status: LAND_NOTHING_STATUS(), reason: why, detail: scopeLine }],
   });
   return { data: { ok: true, message, receipt }, html: buildPage(receipt, why) };
 }
@@ -261,7 +273,11 @@ function pushLocalNoKey(data: unknown): boolean {
 }
 
 function failStep(step: string, code: number, why: string, tail: string): never {
-  fail(code, '落地训练失败在' + step + '：' + why + (tail === '' ? '' : '（' + tail + '）'));
+  fail(code, m('skill-calorie.workout-land.c033', {
+    p0: String(step),
+    p1: String(why),
+    p2: String(tail === '' ? '' : '（' + tail + '）'),
+  }));
 }
 
 /** `calorie.workout.land` · 落地训练（读计划 → 补计划 → 记心愿 → 推送 → 回写，同一命令）。 */
@@ -269,7 +285,7 @@ export function writeLand(params: Record<string, unknown>, db: DatabaseSync): Wr
   const date = dayField(params, 'date') ?? todayISO();
   // 形状对、日历上没这一天的那种日期（2026-13-40）会算出 NaN 周次，被下面误判成「这天是休息日」——
   // 先在用法层拦掉（exit 2），别把它回成一张「无事可做」页。
-  if (!isRealISODate(date)) fail(2, 'date 不是真实日历日（实际：' + date + '）');
+  if (!isRealISODate(date)) fail(2, m('skill-calorie.workout-land.c034', { p0: String(date) }));
   const dryRun = readDryRun(params);
   const plan = getPlan(db);
   landPlanGate(plan); // 结构性缺失（库／计划行不在、缺开始日期）才阻断，exit 4
@@ -279,15 +295,15 @@ export function writeLand(params: Record<string, unknown>, db: DatabaseSync): Wr
     return landNothing(LAND_WAKE, params, why, date, (receipt) =>
       buildLandNothingPage({
         key: LAND_KEY, params, wake: LAND_WAKE, scope: date, why, receipt,
-        unitLabel: '可落地段', stepLabel: '四步', whyLabel: '为什么没得落地',
+        unitLabel: m('skill-calorie.workout-land.c035'), stepLabel: m('skill-calorie.workout-land.c036'), whyLabel: m('skill-calorie.workout-land.c037'),
       }));
   }
   const sessions = landSessionsOf(plan, date);
   if (dryRun) {
-    const message = '预演：' + date + ' ' + sessions.length + ' 段待落地（远端未调用）';
-    const receipt = R('落地训练', 'create', message, LAND_WAKE, '训练计划（workout_plans）＋ 四步预演', {
+    const message = m('skill-calorie.workout-land.c038', { p0: String(date), p1: String(sessions.length) });
+    const receipt = R(m('skill-calorie.workout-land.c039'), 'create', message, LAND_WAKE, m('skill-calorie.workout-land.c040'), {
       recordId: null, ids: [], idSource: 'condition', writtenFields: provided(params, ['date', 'dryRun']),
-      items: [{ status: '成功', reason: '', detail: message }],
+      items: [{ status: m('skill-calorie.workout-land.c041'), reason: '', detail: message }],
     });
     return {
       data: { ok: true, message, receipt },
@@ -307,71 +323,83 @@ export function writeLand(params: Record<string, unknown>, db: DatabaseSync): Wr
     };
   });
   if (schedItems.length > 0) {
-    const call = invokeSchedule(schedItems, '补计划');
+    const call = invokeSchedule(schedItems, m('skill-calorie.workout-land.c042'));
     const d = call.data as { achieved?: unknown; errors?: unknown } | null;
     if (call.code !== 0) {
       const errs = typeof d === 'object' && d !== null && Array.isArray((d as { errors?: unknown }).errors)
         ? ((d as { errors: string[] }).errors.join('、')) : '';
-      failStep('补计划', call.code === 2 ? 2 : 4, errs !== '' ? errs : '作息合成写没达成', call.stderr);
+      failStep(m('skill-calorie.workout-land.c043'), call.code === 2 ? 2 : 4, errs !== '' ? errs : m('skill-calorie.workout-land.c044'), call.stderr);
     }
     void d;
-    steps.push({ step: '补计划', code: 0, local: '已写 ' + schedItems.length + ' 段', remote: call.stubbed ? '挡板未调远端' : '两侧已对齐', detail: '' });
+    steps.push({ step: m('skill-calorie.workout-land.c045'), code: 0, local: m('skill-calorie.workout-land.c046', { p0: String(schedItems.length) }), remote: call.stubbed ? m('skill-calorie.workout-land.c047') : m('skill-calorie.workout-land.c048'), detail: '' });
   } else {
-    steps.push({ step: '补计划', code: 0, local: '空天无段可写', remote: '未调用', detail: '' });
+    steps.push({ step: m('skill-calorie.workout-land.c049'), code: 0, local: m('skill-calorie.workout-land.c050'), remote: m('skill-calorie.workout-land.c051'), detail: '' });
   }
   let wishOk = 0;
   let wishStubbed = false;
   for (let i = 0; i < sessions.length; i++) {
     const s = sessions[i] as PlanSessionRow;
     const content = landTitleOf(s, i);
-    const call = invokeMemo({ title: content, body: content, category: '心愿', due: date }, '记心愿');
+    const call = invokeMemo({ title: content, body: content, category: m('skill-calorie.workout-land.c052'), due: date }, m('skill-calorie.workout-land.c053'));
     if (call.code !== 0) {
       const d = call.data as { message?: unknown } | null;
-      const why = typeof d === 'object' && d !== null && typeof d.message === 'string' ? d.message : '备忘合成写没达成';
-      failStep('记心愿', call.code === 2 ? 2 : 4, '第 ' + (wishOk + 1) + ' 段 ' + why, call.stderr);
+      const why = typeof d === 'object' && d !== null && typeof d.message === 'string' ? d.message : m('skill-calorie.workout-land.c054');
+      failStep(m('skill-calorie.workout-land.c055'), call.code === 2 ? 2 : 4, m('skill-calorie.workout-land.c056', { p0: String(wishOk + 1), p1: String(why) }), call.stderr);
     }
     wishOk += 1;
     wishStubbed = wishStubbed || call.stubbed;
   }
   steps.push({
-    step: '记心愿', code: 0,
-    local: sessions.length === 0 ? '空天无段可记' : '已记 ' + wishOk + ' 条',
-    remote: sessions.length === 0 ? '未调用' : (wishStubbed ? '挡板未调远端' : '两侧已对齐'), detail: '',
+    step: m('skill-calorie.workout-land.c057'), code: 0,
+    local: sessions.length === 0 ? m('skill-calorie.workout-land.c058') : m('skill-calorie.workout-land.c059', { p0: String(wishOk) }),
+    remote: sessions.length === 0 ? m('skill-calorie.workout-land.c060') : (wishStubbed ? m('skill-calorie.workout-land.c061') : m('skill-calorie.workout-land.c062')), detail: '',
   });
-  const push = invokeLandPush(date, '推送');
+  const push = invokeLandPush(date, m('skill-calorie.workout-land.c063'));
   if (push.code !== 0) {
     if (push.code === 2 || pushLocalNoKey(push.data)) {
-      failStep('推送', 3, '本地缺 KEY（没调远端）：' + xunjiKeyNext(), push.stderr);
+      failStep(m('skill-calorie.workout-land.c064'), 3, m('skill-calorie.workout-land.c065', { p0: String(xunjiKeyNext()) }), push.stderr);
     }
     const o = push.data as { ok_count?: unknown; fail_count?: unknown; session_count?: unknown } | null;
     const counts = typeof o === 'object' && o !== null
       && typeof o.ok_count === 'number' && typeof o.fail_count === 'number' && typeof o.session_count === 'number'
-      ? '成功 ' + o.ok_count + ' 段 失败 ' + o.fail_count + ' 段 共 ' + o.session_count + ' 段' : '远端推送失败';
-    failStep('推送', 4, counts, push.stderr);
+      ? m('skill-calorie.workout-land.c066', {
+        p0: String(o.ok_count),
+        p1: String(o.fail_count),
+        p2: String(o.session_count),
+      }) : m('skill-calorie.workout-land.c067');
+    failStep(m('skill-calorie.workout-land.c068'), 4, counts, push.stderr);
   }
   const ps = push.data as { ok_count?: unknown } | null;
   steps.push({
-    step: '推送', code: 0,
-    local: '计划 ' + sessions.length + ' 段全部参与推送',
-    remote: '训记落笔 ' + (typeof ps === 'object' && ps !== null && typeof ps.ok_count === 'number' ? ps.ok_count : sessions.length) + ' 段',
+    step: m('skill-calorie.workout-land.c069'), code: 0,
+    local: m('skill-calorie.workout-land.c070', { p0: String(sessions.length) }),
+    remote: m('skill-calorie.workout-land.c071', {
+      p0: String(typeof ps === 'object' && ps !== null && typeof ps.ok_count === 'number' ? ps.ok_count : sessions.length),
+    }),
     detail: '',
   });
-  const back = invokeLandBackfill(date, '回写');
+  const back = invokeLandBackfill(date, m('skill-calorie.workout-land.c072'));
   if (back.code !== 0) {
-    if (back.code === 2) failStep('回写', 3, '本地缺 KEY（没调远端）：' + xunjiKeyNext(), back.stderr);
-    failStep('回写', 4, '训记回写失败：稍后重试', back.stderr);
+    if (back.code === 2) failStep(m('skill-calorie.workout-land.c073'), 3, m('skill-calorie.workout-land.c074', { p0: String(xunjiKeyNext()) }), back.stderr);
+    failStep(m('skill-calorie.workout-land.c075'), 4, m('skill-calorie.workout-land.c076'), back.stderr);
   }
   const bs = back.data as { total_inserted?: unknown; total_updated?: unknown } | null;
   steps.push({
-    step: '回写', code: 0,
-    local: '运动记录新增 ' + (typeof bs === 'object' && bs !== null && typeof bs.total_inserted === 'number' ? bs.total_inserted : 0)
-      + ' 行 更新 ' + (typeof bs === 'object' && bs !== null && typeof bs.total_updated === 'number' ? bs.total_updated : 0) + ' 行',
-    remote: '训记 1 天全部拉到', detail: '',
+    step: m('skill-calorie.workout-land.c077'), code: 0,
+    local: m('skill-calorie.workout-land.c078', {
+      p0: String(typeof bs === 'object' && bs !== null && typeof bs.total_inserted === 'number' ? bs.total_inserted : 0),
+      p1: String(typeof bs === 'object' && bs !== null && typeof bs.total_updated === 'number' ? bs.total_updated : 0),
+    }),
+    remote: m('skill-calorie.workout-land.c079'), detail: '',
   });
-  const message = '已落地 ' + date + '：补计划 ' + schedItems.length + ' 段 记心愿 ' + wishOk + ' 条 推送回写各 1 天';
-  const receipt = R('落地训练', 'create', message, LAND_WAKE, '训练计划（workout_plans）＋ 四步读数', {
+  const message = m('skill-calorie.workout-land.c080', {
+    p0: String(date),
+    p1: String(schedItems.length),
+    p2: String(wishOk),
+  });
+  const receipt = R(m('skill-calorie.workout-land.c081'), 'create', message, LAND_WAKE, m('skill-calorie.workout-land.c082'), {
     recordId: null, ids: [], idSource: 'condition', writtenFields: provided(params, ['date', 'dryRun']),
-    items: [{ status: '成功', reason: '', detail: message }],
+    items: [{ status: m('skill-calorie.workout-land.c083'), reason: '', detail: message }],
   });
   return {
     data: { ok: true, message, receipt },

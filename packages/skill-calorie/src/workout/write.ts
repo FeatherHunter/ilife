@@ -30,21 +30,21 @@ import {
 import type { PlanInput, PlanMovement } from './planStore.js';
 
 function needWeek(v: number | undefined, field: string): number {
-  if (v === undefined || !Number.isInteger(v) || (v as number) < 1) fail(2, '缺参数 ' + field + '（正整数周次）');
+  if (v === undefined || !Number.isInteger(v) || (v as number) < 1) fail(2, m('skill-calorie.workout-write.c001', { p0: String(field) }));
   return v as number;
 }
 
 function needDow(v: number | undefined, field: string): number {
   if (v === undefined || !Number.isInteger(v) || (v as number) < 1 || (v as number) > 7) {
-    fail(2, '缺参数 ' + field + '（1＝周一..7＝周日）');
+    fail(2, m('skill-calorie.workout-write.c002', { p0: String(field) }));
   }
   return v as number;
 }
 
-function asMovement(m: unknown): PlanMovement {
-  if (typeof m !== 'object' || m === null || Array.isArray(m)) fail(2, '动作须为对象（含 name）');
-  const o = m as Record<string, unknown>;
-  if (typeof o.name !== 'string' || o.name === '') fail(2, '动作缺 name');
+function asMovement(raw: unknown): PlanMovement {
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) fail(2, m('skill-calorie.workout-write.c003'));
+  const o = raw as Record<string, unknown>;
+  if (typeof o.name !== 'string' || o.name === '') fail(2, m('skill-calorie.workout-write.c004'));
   const out: PlanMovement = { name: o.name };
   if (typeof o.part === 'string') out.part = o.part;
   if (typeof o.type === 'string') out.type = o.type;
@@ -55,13 +55,16 @@ function asMovement(m: unknown): PlanMovement {
 /** `calorie.workout.plan-set` · 定训练计划（整份替换：先全量校验，有硬止即 exit 2 不写库）。 */
 export function writePlanSet(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
   const plan = params['plan'];
-  if (typeof plan !== 'object' || plan === null || Array.isArray(plan)) fail(2, '缺参数 plan（PlanInput 对象）');
+  if (typeof plan !== 'object' || plan === null || Array.isArray(plan)) fail(2, m('skill-calorie.workout-write.c005'));
   const r = writePlan(db, plan as PlanInput);
-  if (r.status === 'failed' || r.errors.length > 0) fail(2, '计划校验未通过：' + r.errors.slice(0, 5).join('；'));
-  const summary = '已定训练计划：' + String(r.totalWeeks ?? 0) + ' 周 ' + String(r.insertedCount) + ' 场';
-  return out(R('定训练计划', 'create', summary, '定训练计划', 'workout_plan_config＋workout_plans（整份替换）', {
+  if (r.status === 'failed' || r.errors.length > 0) fail(2, m('skill-calorie.workout-write.c006', { p0: String(r.errors.slice(0, 5).join('；')) }));
+  const summary = m('skill-calorie.workout-write.c007', {
+    p0: String(String(r.totalWeeks ?? 0)),
+    p1: String(String(r.insertedCount)),
+  });
+  return out(R(m('skill-calorie.workout-write.c008'), 'create', summary, m('skill-calorie.workout-write.c009'), m('skill-calorie.workout-write.c010'), {
     recordId: null, ids: [], idSource: 'condition', writtenFields: ['plan'],
-    items: [{ status: '成功', reason: '', detail: summary }],
+    items: [{ status: m('skill-calorie.workout-write.c011'), reason: '', detail: summary }],
   }));
 }
 
@@ -74,22 +77,22 @@ export function writePlanCopy(params: Record<string, unknown>, db: DatabaseSync)
     const from = needWeek(week, 'week');
     const plan = getPlan(db);
     const maxWn = plan.sessions.reduce((n, s) => Math.max(n, s.week_number), 0);
-    if (maxWn === 0) fail(4, '无训练计划可复制（先定训练计划）');
-    if (!plan.sessions.some((s) => s.week_number === from)) fail(4, '第' + from + '周没有训练场次可复制');
+    if (maxWn === 0) fail(4, m('skill-calorie.workout-write.c012'));
+    if (!plan.sessions.some((s) => s.week_number === from)) fail(4, m('skill-calorie.workout-write.c013', { p0: String(from) }));
     const to = toWeek === undefined ? maxWn + 1 : needWeek(toWeek, 'toWeek');
     const r = copyWeek(db, from, to);
-    const summary = '已复制第' + from + '周 → 第' + to + '周（' + r.copiedRows + ' 场）';
-    return out(R('复制训练计划', 'create', summary, '复制训练计划', 'workout_plans（单周复制）', {
+    const summary = m('skill-calorie.workout-write.c014', { p0: String(from), p1: String(to), p2: String(r.copiedRows) });
+    return out(R(m('skill-calorie.workout-write.c015'), 'create', summary, m('skill-calorie.workout-write.c016'), m('skill-calorie.workout-write.c017'), {
       recordId: null, ids: [], idSource: 'condition', writtenFields: provided(params, ['week', 'toWeek']),
-      items: [{ status: '成功', reason: '', detail: summary }],
+      items: [{ status: m('skill-calorie.workout-write.c018'), reason: '', detail: summary }],
     }));
   }
   const r = copyPlan(db, newTitle ?? undefined);
-  if (r.totalWeeks === 0) fail(4, '无训练计划可复制（先定训练计划）');
-  const summary = '已复制整份计划为「' + String(r.newTitle) + '」（' + r.copiedRows + ' 场）';
-  return out(R('复制训练计划', 'create', summary, '复制训练计划', 'workout_plan_config＋workout_plans（整份复制）', {
+  if (r.totalWeeks === 0) fail(4, m('skill-calorie.workout-write.c019'));
+  const summary = m('skill-calorie.workout-write.c020', { p0: String(String(r.newTitle)), p1: String(r.copiedRows) });
+  return out(R(m('skill-calorie.workout-write.c021'), 'create', summary, m('skill-calorie.workout-write.c022'), m('skill-calorie.workout-write.c023'), {
     recordId: null, ids: [], idSource: 'condition', writtenFields: provided(params, ['newTitle']),
-    items: [{ status: '成功', reason: '', detail: summary }],
+    items: [{ status: m('skill-calorie.workout-write.c024'), reason: '', detail: summary }],
   }));
 }
 
@@ -104,15 +107,15 @@ export interface SetWeekDay {
 export function writePlanSetWeek(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
   const week = needWeek(optInt(params, 'week'), 'week');
   const daysRaw = params['days'];
-  if (!Array.isArray(daysRaw) || daysRaw.length === 0) fail(2, '缺参数 days（非空数组）');
+  if (!Array.isArray(daysRaw) || daysRaw.length === 0) fail(2, m('skill-calorie.workout-write.c025'));
   const days: SetWeekDay[] = (daysRaw as unknown[]).map((d) => {
-    if (typeof d !== 'object' || d === null || Array.isArray(d)) fail(2, 'days 元素须为对象');
+    if (typeof d !== 'object' || d === null || Array.isArray(d)) fail(2, m('skill-calorie.workout-write.c026'));
     const o = d as Record<string, unknown>;
     const day: SetWeekDay = { dayOfWeek: needDow(o.dayOfWeek as number | undefined, 'days[].dayOfWeek') };
     if (typeof o.sessionLabel === 'string') day.sessionLabel = o.sessionLabel;
     if (typeof o.rest === 'boolean') day.rest = o.rest;
     if (o.movements !== undefined) {
-      if (!Array.isArray(o.movements)) fail(2, 'days[].movements 须为数组');
+      if (!Array.isArray(o.movements)) fail(2, m('skill-calorie.workout-write.c027'));
       day.movements = (o.movements as unknown[]).map(asMovement);
     }
     return day;
@@ -123,16 +126,16 @@ export function writePlanSetWeek(params: Record<string, unknown>, db: DatabaseSy
     let n = 0;
     for (const d of days) {
       addSession(db, {
-        weekNumber: week, dayOfWeek: d.dayOfWeek, sessionLabel: d.sessionLabel ?? (d.rest ? '休息' : '训练'),
+        weekNumber: week, dayOfWeek: d.dayOfWeek, sessionLabel: d.sessionLabel ?? (d.rest ? '休息' : m('skill-calorie.workout-write.c028')),
         isRestDay: d.rest ?? false, movements: d.movements ?? [],
       });
       n += 1;
     }
     db.exec('COMMIT');
-    const summary = '已定第' + week + '周计划（' + n + ' 天）';
-    return out(R('定一周计划', 'create', summary, '定一周计划', 'workout_plans（该周先清后写）', {
+    const summary = m('skill-calorie.workout-write.c029', { p0: String(week), p1: String(n) });
+    return out(R(m('skill-calorie.workout-write.c030'), 'create', summary, m('skill-calorie.workout-write.c031'), m('skill-calorie.workout-write.c032'), {
       recordId: null, ids: [], idSource: 'condition', writtenFields: provided(params, ['week', 'days']),
-      items: [{ status: '成功', reason: '', detail: summary }],
+      items: [{ status: m('skill-calorie.workout-write.c033'), reason: '', detail: summary }],
     }));
   } catch (err) {
     db.exec('ROLLBACK');
@@ -150,27 +153,37 @@ export function writePlanAddMovement(params: Record<string, unknown>, db: Databa
   const daySessions = plan.sessions.filter((s) => s.week_number === week && s.day_of_week === dow);
   if (label !== undefined) {
     const hit = daySessions.filter((s) => s.session_label === label);
-    if (hit.length === 0) fail(4, dayPhrase(week, dow) + '没有时段「' + label + '」');
+    if (hit.length === 0) fail(4, m('skill-calorie.workout-write.c034', { p0: String(dayPhrase(week, dow)), p1: String(label) }));
     const s = hit[0] as (typeof daySessions)[number];
     updateSession(db, week, dow, s.session_index, { movements: [...(s.movements ?? []), movement] });
-    const summary = '已在' + dayPhrase(week, dow) + '「' + label + '」加动作「' + String(movement.name) + '」';
-    return out(R('加训练动作', 'update', summary, '加训练动作', 'workout_plans（时段追加动作）', {
+    const summary = m('skill-calorie.workout-write.c035', {
+      p0: String(dayPhrase(week, dow)),
+      p1: String(label),
+      p2: String(String(movement.name)),
+    });
+    return out(R(m('skill-calorie.workout-write.c036'), 'update', summary, m('skill-calorie.workout-write.c037'), m('skill-calorie.workout-write.c038'), {
       recordId: null, ids: [], idSource: 'condition', writtenFields: provided(params, ['week', 'dayOfWeek', 'sessionLabel', 'movement']),
-      items: [{ status: '成功', reason: '', detail: summary }],
+      items: [{ status: m('skill-calorie.workout-write.c039'), reason: '', detail: summary }],
     }));
   }
   if (daySessions.length === 0) {
-    addSession(db, { weekNumber: week, dayOfWeek: dow, sessionLabel: '训练', movements: [movement] });
+    addSession(db, { weekNumber: week, dayOfWeek: dow, sessionLabel: m('skill-calorie.workout-write.c040'), movements: [movement] });
   } else if (daySessions.length === 1) {
     const s = daySessions[0] as (typeof daySessions)[number];
     updateSession(db, week, dow, s.session_index, { movements: [...(s.movements ?? []), movement] });
   } else {
-    fail(2, dayPhrase(week, dow) + '有 ' + daySessions.length + ' 个时段，给 sessionLabel 指定加到哪段');
+    fail(2, m('skill-calorie.workout-write.c041', {
+      p0: String(dayPhrase(week, dow)),
+      p1: String(daySessions.length),
+    }));
   }
-  const summary = '已在' + dayPhrase(week, dow) + '加动作「' + String(movement.name) + '」';
-  return out(R('加训练动作', daySessions.length === 0 ? 'create' : 'update', summary, '加训练动作', 'workout_plans（加动作）', {
+  const summary = m('skill-calorie.workout-write.c042', {
+    p0: String(dayPhrase(week, dow)),
+    p1: String(String(movement.name)),
+  });
+  return out(R(m('skill-calorie.workout-write.c043'), daySessions.length === 0 ? 'create' : 'update', summary, m('skill-calorie.workout-write.c044'), m('skill-calorie.workout-write.c045'), {
     recordId: null, ids: [], idSource: 'condition', writtenFields: provided(params, ['week', 'dayOfWeek', 'movement']),
-    items: [{ status: '成功', reason: '', detail: summary }],
+    items: [{ status: m('skill-calorie.workout-write.c046'), reason: '', detail: summary }],
   }));
 }
 
@@ -181,6 +194,7 @@ export function writePlanAddMovement(params: Record<string, unknown>, db: Databa
  *  本件按原样转出，既有调用方与判据不受影响。 */
 export { dayPhrase } from './dayPhrase.js';
 import { dayPhrase } from './dayPhrase.js';
+import { m } from '../entries/index.js';
 
 /** 写前预览里的**一行**：字段就是表里的列，不再把四件事挤成一个字符串。
  *  原来那一行是 `第1周周1·上肢（2动作）`／`第1周周2·休息日（0动作·休）`——拿 `·` 与括号顶替表格设计
@@ -206,7 +220,7 @@ export interface WritePreview {
 
 /** 场次行（改前／改后两栏共用）。 */
 function sessLine(wn: number, dow: number, label: string, moveCount: number | null, rest: boolean): PreviewLine {
-  return { week: wn, dow, label: label === '' ? (rest ? '休息日' : '训练') : label, moves: moveCount, rest, change: '' };
+  return { week: wn, dow, label: label === '' ? (rest ? '休息日' : m('skill-calorie.workout-write.c047')) : label, moves: moveCount, rest, change: '' };
 }
 
 /** 概述行／提示行：没有周次与星期，整句写进 `label`（其余列在页上印「—」）。 */
@@ -221,15 +235,15 @@ function withChange(line: PreviewLine, change: string): PreviewLine {
 
 /** 改某一场时各字段的界面写法。原来是把参数名与 JSON 直接印在页上（`rest → true`／`newLabel → "上肢"`），
  *  那既是英文裸词也是一串机器话。 */
-const CHANGE_LABEL: Record<string, string> = {
-  newLabel: '时段名', timeStart: '开始时间', timeEnd: '结束时间', rest: '作息', movements: '动作清单',
-};
+const CHANGE_LABEL = (): Record<string, string> => ({
+  newLabel: m('skill-calorie.workout-write.c188'), timeStart: m('skill-calorie.workout-write.c189'), timeEnd: m('skill-calorie.workout-write.c190'), rest: m('skill-calorie.workout-write.c191'), movements: m('skill-calorie.workout-write.c192'),
+});
 
 function changeText(key: string, value: unknown): string {
-  const name = CHANGE_LABEL[key] ?? key;
-  if (typeof value === 'boolean') return name + (value ? '设为休息' : '取消休息');
-  if (Array.isArray(value)) return name + '整段替换（' + value.length + ' 条）';
-  return name + '改成「' + String(value) + '」';
+  const name = CHANGE_LABEL()[key] ?? key;
+  if (typeof value === 'boolean') return name + (value ? m('skill-calorie.workout-write.c048') : m('skill-calorie.workout-write.c049'));
+  if (Array.isArray(value)) return m('skill-calorie.workout-write.c050', { p0: String(name), p1: String(value.length) });
+  return m('skill-calorie.workout-write.c051', { p0: String(name), p1: String(String(value)) });
 }
 
 export function previewCopy(params: Record<string, unknown>, db: DatabaseSync): WritePreview {
@@ -238,24 +252,26 @@ export function previewCopy(params: Record<string, unknown>, db: DatabaseSync): 
   if (week !== undefined) {
     const from = needWeek(week, 'week');
     const src = plan.sessions.filter((s) => s.week_number === from);
-    if (src.length === 0) fail(4, '第' + from + '周没有训练场次可复制');
+    if (src.length === 0) fail(4, m('skill-calorie.workout-write.c052', { p0: String(from) }));
     const maxWn = plan.sessions.reduce((n, s) => Math.max(n, s.week_number), 0);
     const to = optInt(params, 'toWeek') === undefined ? maxWn + 1 : needWeek(optInt(params, 'toWeek'), 'toWeek');
     const before = src.map((s) => sessLine(s.week_number, s.day_of_week, s.session_label, (s.movements ?? []).length, s.is_rest_day === 1));
     return {
-      op: 'copy', title: '复制第' + from + '周 → 第' + to + '周', before,
-      after: before.map((b) => ({ ...b, week: to, change: '第 ' + to + ' 周' })),
-      note: '确认后复制 ' + src.length + ' 场；目标周已有内容将被覆盖',
+      op: 'copy', title: m('skill-calorie.workout-write.c053', { p0: String(from), p1: String(to) }), before,
+      after: before.map((b) => ({ ...b, week: to, change: m('skill-calorie.workout-write.c054', { p0: String(to) }) })),
+      note: m('skill-calorie.workout-write.c055', { p0: String(src.length) }),
     };
   }
-  const title = optStr(params, 'newTitle') ?? ((plan.config?.title ?? '健身计划') + ' 副本');
+  const baseTitle = plan.config?.title ?? m('skill-calorie.workout-write.c056');
+  const title = optStr(params, 'newTitle') ?? m('skill-calorie.workout-write.c057', { p0: String(baseTitle) });
   const n = plan.sessions.length;
-  if (n === 0) fail(4, '无训练计划可复制（先定训练计划）');
+  const srcTitle = String(plan.config?.title ?? m('skill-calorie.workout-write.c058'));
+  if (n === 0) fail(4, m('skill-calorie.workout-write.c059'));
   return {
-    op: 'copy', title: '复制整份计划为「' + title + '」',
-    before: [noteLine('「' + String(plan.config?.title ?? '未命名') + '」共 ' + n + ' 场')],
-    after: [noteLine('「' + title + '」共 ' + n + ' 场（整份替换当前计划）')],
-    note: '确认后整份替换，旧计划不再保留',
+    op: 'copy', title: m('skill-calorie.workout-write.c060', { p0: String(title) }),
+    before: [noteLine(m('skill-calorie.workout-write.c061', { p0: String(srcTitle), p1: String(n) }))],
+    after: [noteLine(m('skill-calorie.workout-write.c062', { p0: String(title), p1: String(n) }))],
+    note: m('skill-calorie.workout-write.c063'),
   };
 }
 
@@ -263,16 +279,16 @@ export function previewSetWeek(params: Record<string, unknown>, db: DatabaseSync
   const week = needWeek(optInt(params, 'week'), 'week');
   const plan = getPlan(db);
   const cur = plan.sessions.filter((s) => s.week_number === week);
-  const before = cur.length === 0 ? [noteLine('第 ' + week + ' 周目前是空的')] :
+  const before = cur.length === 0 ? [noteLine(m('skill-calorie.workout-write.c064', { p0: String(week) }))] :
     cur.map((s) => sessLine(s.week_number, s.day_of_week, s.session_label, (s.movements ?? []).length, s.is_rest_day === 1));
   const daysRaw = params['days'];
   const after = Array.isArray(daysRaw) ? (daysRaw as unknown[]).map((d) => {
     const o = (typeof d === 'object' && d !== null && !Array.isArray(d) ? d : {}) as Record<string, unknown>;
     const dn = typeof o.dayOfWeek === 'number' ? o.dayOfWeek : null;
     const rest = o.rest === true;
-    return sessLine(week, dn ?? 0, String(o.sessionLabel ?? (rest ? '休息' : '训练')), null, rest);
-  }) : [noteLine('这一页还没填要定哪几天，补上后再确认')];
-  return { op: 'set-week', title: '定第 ' + week + ' 周的计划', before, after, note: '确认后该周先清后写' };
+    return sessLine(week, dn ?? 0, String(o.sessionLabel ?? (rest ? '休息' : m('skill-calorie.workout-write.c065'))), null, rest);
+  }) : [noteLine(m('skill-calorie.workout-write.c066'))];
+  return { op: 'set-week', title: m('skill-calorie.workout-write.c067', { p0: String(week) }), before, after, note: m('skill-calorie.workout-write.c068') };
 }
 
 export function previewAddMovement(params: Record<string, unknown>, db: DatabaseSync): WritePreview {
@@ -282,19 +298,25 @@ export function previewAddMovement(params: Record<string, unknown>, db: Database
   const label = optStr(params, 'sessionLabel');
   const plan = getPlan(db);
   const daySessions = plan.sessions.filter((s) => s.week_number === week && s.day_of_week === dow);
-  const before = daySessions.length === 0 ? [noteLine(dayPhrase(week, dow) + ' 目前是空的')] :
+  const before = daySessions.length === 0 ? [noteLine(m('skill-calorie.workout-write.c069', { p0: String(dayPhrase(week, dow)) }))] :
     daySessions.map((s) => sessLine(s.week_number, s.day_of_week, s.session_label, (s.movements ?? []).length, s.is_rest_day === 1));
   if (label !== undefined && !daySessions.some((s) => s.session_label === label)) {
-    fail(4, dayPhrase(week, dow) + '没有时段「' + label + '」');
+    fail(4, m('skill-calorie.workout-write.c070', { p0: String(dayPhrase(week, dow)), p1: String(label) }));
   }
   if (label === undefined && daySessions.length > 1) {
-    fail(2, dayPhrase(week, dow) + '有 ' + daySessions.length + ' 个时段，给 sessionLabel 指定加到哪段');
+    fail(2, m('skill-calorie.workout-write.c071', {
+      p0: String(dayPhrase(week, dow)),
+      p1: String(daySessions.length),
+    }));
   }
-  const target = label !== undefined ? '「' + label + '」' : (daySessions.length === 0 ? '新时段' : '该时段');
+  const target = label !== undefined ? '「' + label + '」' : (daySessions.length === 0 ? m('skill-calorie.workout-write.c072') : m('skill-calorie.workout-write.c073'));
   return {
-    op: 'add-movement', title: dayPhrase(week, dow) + target + '加动作「' + String(movement.name) + '」',
+    op: 'add-movement', title: m('skill-calorie.workout-write.c074', {
+      p0: String(dayPhrase(week, dow) + target),
+      p1: String(String(movement.name)),
+    }),
     before, after: [...before, sessLine(week, dow, String(movement.name), 1, false)],
-    note: '确认后写入计划库',
+    note: m('skill-calorie.workout-write.c075'),
   };
 }
 
@@ -304,26 +326,28 @@ export function previewSetRest(params: Record<string, unknown>, db: DatabaseSync
   let dow = optInt(params, 'dayOfWeek');
   if (optStr(params, 'date') !== undefined) {
     const date = dayField(params, 'date');
-    if (!date) fail(2, 'date 非法');
+    if (!date) fail(2, m('skill-calorie.workout-write.c076'));
     const plan0 = getPlan(db);
     const start = plan0.config?.start_date ?? null;
-    if (!start) fail(2, '计划缺开始日期，无法定位周次');
+    if (!start) fail(2, m('skill-calorie.workout-write.c077'));
     assertISO(date as string, 'date');
     const w = weekOfDate(start, date as string);
     week = w.week;
     dow = w.dow;
   }
-  const wn = needWeek(week, 'week（或 date）');
-  const dn = needDow(dow, 'dayOfWeek（或 date）');
+  const wn = needWeek(week, m('skill-calorie.workout-write.c078'));
+  const dn = needDow(dow, m('skill-calorie.workout-write.c079'));
   const plan = getPlan(db);
   const daySessions = plan.sessions.filter((s) => s.week_number === wn && s.day_of_week === dn);
-  const before = daySessions.length === 0 ? [noteLine(dayPhrase(wn, dn) + ' 目前是空的')] :
+  const before = daySessions.length === 0 ? [noteLine(m('skill-calorie.workout-write.c080', { p0: String(dayPhrase(wn, dn)) }))] :
     daySessions.map((s) => sessLine(s.week_number, s.day_of_week, s.session_label, (s.movements ?? []).length, s.is_rest_day === 1));
-  const after = daySessions.length === 0 ? [noteLine('新增休息标记（' + (rest ? '休' : '训') + '）')] :
-    daySessions.map((s) => withChange(sessLine(s.week_number, s.day_of_week, s.session_label, (s.movements ?? []).length, rest), rest ? '设为休息日' : '取消休息日'));
+  const restWord = rest ? m('skill-calorie.workout-write.c081') : m('skill-calorie.workout-write.c082');
+  const after = daySessions.length === 0 ? [noteLine(m('skill-calorie.workout-write.c083', { p0: String(restWord) }))] :
+    daySessions.map((s) => withChange(sessLine(s.week_number, s.day_of_week, s.session_label, (s.movements ?? []).length, rest), rest ? m('skill-calorie.workout-write.c084') : m('skill-calorie.workout-write.c085')));
+  const restVerb = rest ? m('skill-calorie.workout-write.c086') : m('skill-calorie.workout-write.c087');
   return {
-    op: 'set-rest', title: (rest ? '定' : '取消') + dayPhrase(wn, dn) + '休息标记',
-    before, after, note: '确认后写入计划库',
+    op: 'set-rest', title: m('skill-calorie.workout-write.c088', { p0: String(restVerb + dayPhrase(wn, dn)) }),
+    before, after, note: m('skill-calorie.workout-write.c089'),
   };
 }
 
@@ -343,41 +367,41 @@ const PREVIEW_BY_OP: Record<string, (params: Record<string, unknown>, db: Databa
 export function previewWrite(params: Record<string, unknown>, db: DatabaseSync): WritePreview {
   const op = optStr(params, 'op');
   const fn = (op !== undefined ? PREVIEW_BY_OP[op] : undefined);
-  if (!fn) fail(2, '缺参数 op（copy／set-week／add-movement／set-rest／update／update-day／delete-day／update-movement／delete 九选一）');
+  if (!fn) fail(2, m('skill-calorie.workout-write.c090'));
   return (fn as (params: Record<string, unknown>, db: DatabaseSync) => WritePreview)(params, db);
 }
 
 export function previewUpdate(params: Record<string, unknown>, db: DatabaseSync): WritePreview {
   const plan = getPlan(db);
-  if (!plan.config) fail(4, '无训练计划可改（先定训练计划）');
-  const keys = Object.keys(CONFIG_LABEL).filter((k) => optStr(params, k) !== undefined);
-  if (keys.length === 0) fail(2, '缺参数（title／version／description／start_date 至少给一个）');
+  if (!plan.config) fail(4, m('skill-calorie.workout-write.c091'));
+  const keys = Object.keys(CONFIG_LABEL()).filter((k) => optStr(params, k) !== undefined);
+  if (keys.length === 0) fail(2, m('skill-calorie.workout-write.c092'));
   const cur: Record<string, unknown> = {
     title: plan.config.title, version: plan.config.version,
     description: plan.config.description, start_date: plan.config.start_date,
   };
-  const before = keys.map((k) => noteLine(String(CONFIG_LABEL[k]) + '：' + String(cur[k] ?? '（空）')));
-  const after = keys.map((k) => noteLine(String(CONFIG_LABEL[k]) + '：' + String(optStr(params, k))));
+  const before = keys.map((k) => noteLine(String(CONFIG_LABEL()[k]) + '：' + String(cur[k] ?? m('skill-calorie.workout-write.c093'))));
+  const after = keys.map((k) => noteLine(String(CONFIG_LABEL()[k]) + '：' + String(optStr(params, k))));
   // 「影响」按**本次真改的字段**派生（`keys` 与上面改前／改后两栏同源、同顺序）：多字段同改就一条一句并排，
   // 没改 `start_date` 时不出现周次计算那一句。页面装配件只管把这句话印出来，一个字都不用改。
-  const impact = keys.map((k) => CONFIG_IMPACT[k] ?? '').filter((s) => s !== '').join('；');
-  return { op: 'update', title: '改训练计划配置', before, after, note: impact };
+  const impact = keys.map((k) => CONFIG_IMPACT()[k] ?? '').filter((s) => s !== '').join('；');
+  return { op: 'update', title: m('skill-calorie.workout-write.c094'), before, after, note: impact };
 }
 
 export function previewUpdateDay(params: Record<string, unknown>, db: DatabaseSync): WritePreview {
   const { wn, dn } = resolveDayTarget(params, db);
   const plan = getPlan(db);
   const daySessions = plan.sessions.filter((s) => s.week_number === wn && s.day_of_week === dn);
-  if (daySessions.length === 0) fail(4, dayPhrase(wn, dn) + '没有训练可改');
+  if (daySessions.length === 0) fail(4, m('skill-calorie.workout-write.c095', { p0: String(dayPhrase(wn, dn)) }));
   const before = daySessions.map((s) => sessLine(s.week_number, s.day_of_week, s.session_label, (s.movements ?? []).length, s.is_rest_day === 1));
   const changes: string[] = [];
   for (const k of ['newLabel', 'timeStart', 'timeEnd', 'rest', 'movements']) {
     if (params[k] !== undefined) changes.push(changeText(k, params[k]));
   }
   const after = changes.length === 0
-    ? [noteLine('这一页还没填要改什么，补上后再确认')]
+    ? [noteLine(m('skill-calorie.workout-write.c096'))]
     : before.map((b) => withChange(b, changes.join('；')));
-  return { op: 'update-day', title: '改' + dayPhrase(wn, dn) + '训练', before, after, note: '确认后写入计划库' };
+  return { op: 'update-day', title: m('skill-calorie.workout-write.c097', { p0: String(dayPhrase(wn, dn)) }), before, after, note: m('skill-calorie.workout-write.c098') };
 }
 
 export function previewDeleteDay(params: Record<string, unknown>, db: DatabaseSync): WritePreview {
@@ -385,43 +409,48 @@ export function previewDeleteDay(params: Record<string, unknown>, db: DatabaseSy
   const si = optInt(params, 'sessionIndex');
   const plan = getPlan(db);
   const daySessions = plan.sessions.filter((s) => s.week_number === wn && s.day_of_week === dn);
-  if (daySessions.length === 0) fail(4, dayPhrase(wn, dn) + '没有训练可删');
+  if (daySessions.length === 0) fail(4, m('skill-calorie.workout-write.c099', { p0: String(dayPhrase(wn, dn)) }));
   const before = daySessions.map((s) => sessLine(s.week_number, s.day_of_week, s.session_label, (s.movements ?? []).length, s.is_rest_day === 1));
-  const after = si === undefined ? [noteLine(dayPhrase(wn, dn) + ' 整天删除（硬删除，不可恢复）')] :
-    [noteLine(dayPhrase(wn, dn) + ' 第' + si + ' 段删除（硬删除，不可恢复），其余保留')];
-  return { op: 'delete-day', title: '删' + dayPhrase(wn, dn) + '训练', before, after, note: '确认后删除，不可恢复' };
+  const after = si === undefined ? [noteLine(m('skill-calorie.workout-write.c100', { p0: String(dayPhrase(wn, dn)) }))] :
+    [noteLine(m('skill-calorie.workout-write.c101', { p0: String(dayPhrase(wn, dn)), p1: String(si) }))];
+  return { op: 'delete-day', title: m('skill-calorie.workout-write.c102', { p0: String(dayPhrase(wn, dn)) }), before, after, note: m('skill-calorie.workout-write.c103') };
 }
 
 export function previewUpdateMovement(params: Record<string, unknown>, db: DatabaseSync): WritePreview {
   const oldName = optStr(params, 'oldMovement');
-  if (!oldName) fail(2, '缺参数 oldMovement（原动作名）');
+  if (!oldName) fail(2, m('skill-calorie.workout-write.c104'));
   const newName = typeof params['newMovement'] === 'object' && params['newMovement'] !== null
     ? String(((params['newMovement'] as Record<string, unknown>)['name'] ?? '')) : '';
   // T351-v12：原来名字缺了就换个「（新动作未具名）」的占位符照常出预览——**预览能出、写下去就是一条
   // 没有名字的动作**（真按下去等于把计划里的动作改成无名）。缺参数一律 exit 2 挡在写前，
   // 与上一行「缺参数 oldMovement」同口径。
-  if (newName === '') fail(2, '缺参数 newMovement.name（换成哪个动作）');
+  if (newName === '') fail(2, m('skill-calorie.workout-write.c105'));
   const week = optInt(params, 'week');
   const plan = getPlan(db);
   const hits = plan.sessions.filter((s) => (week === undefined || s.week_number === week) &&
     (s.movements ?? []).some((m) => m.name === oldName));
-  if (hits.length === 0) fail(4, '没有找到动作「' + String(oldName) + '」');
+  if (hits.length === 0) fail(4, m('skill-calorie.workout-write.c106', { p0: String(String(oldName)) }));
   const before = hits.map((s) => sessLine(s.week_number, s.day_of_week, s.session_label, (s.movements ?? []).length, s.is_rest_day === 1));
   return {
-    op: 'update-movement', title: '把「' + String(oldName) + '」换成「' + newName + '」（' + hits.length + ' 段）',
-    before, after: before.map((b) => withChange(b, '换成「' + newName + '」')), note: '确认后写入计划库',
+    op: 'update-movement', title: m('skill-calorie.workout-write.c107', {
+      p0: String(String(oldName)),
+      p1: String(newName),
+      p2: String(hits.length),
+    }),
+    before, after: before.map((b) => withChange(b, m('skill-calorie.workout-write.c108', { p0: String(newName) }))), note: m('skill-calorie.workout-write.c109'),
   };
 }
 
 export function previewDelete(params: Record<string, unknown>, db: DatabaseSync): WritePreview {
   void params;
   const plan = getPlan(db);
-  if (!plan.config && plan.sessions.length === 0) fail(4, '无训练计划可撤销');
+  if (!plan.config && plan.sessions.length === 0) fail(4, m('skill-calorie.workout-write.c110'));
+  const planTitle = String(plan.config?.title ?? m('skill-calorie.workout-write.c111'));
   return {
-    op: 'delete', title: '撤销整份训练计划',
-    before: [noteLine('「' + String(plan.config?.title ?? '未命名') + '」共 ' + plan.sessions.length + ' 场')],
-    after: [noteLine('配置与全部训练场次删除（硬删除，不可恢复）')],
-    note: '确认后删除，删完需要重定计划',
+    op: 'delete', title: m('skill-calorie.workout-write.c112'),
+    before: [noteLine(m('skill-calorie.workout-write.c113', { p0: String(planTitle), p1: String(plan.sessions.length) }))],
+    after: [noteLine(m('skill-calorie.workout-write.c114'))],
+    note: m('skill-calorie.workout-write.c115'),
   };
 }
 /** `calorie.workout.plan-set-rest` · 定休息日（date 与 week＋dayOfWeek 二选一；缺省标休息）。 */
@@ -432,17 +461,17 @@ export function writePlanSetRest(params: Record<string, unknown>, db: DatabaseSy
   const dateRaw = optStr(params, 'date');
   if (dateRaw !== undefined) {
     const date = dayField(params, 'date');
-    if (!date) fail(2, 'date 非法');
+    if (!date) fail(2, m('skill-calorie.workout-write.c116'));
     const plan = getPlan(db);
     const start = plan.config?.start_date ?? null;
-    if (!start) fail(2, '计划缺开始日期，无法定位周次');
+    if (!start) fail(2, m('skill-calorie.workout-write.c117'));
     assertISO(date as string, 'date');
     const w = weekOfDate(start, date as string);
     week = w.week;
     dow = w.dow;
   }
-  const wn = needWeek(week, 'week（或 date）');
-  const dn = needDow(dow, 'dayOfWeek（或 date）');
+  const wn = needWeek(week, m('skill-calorie.workout-write.c118'));
+  const dn = needDow(dow, m('skill-calorie.workout-write.c119'));
   const plan = getPlan(db);
   const daySessions = plan.sessions.filter((s) => s.week_number === wn && s.day_of_week === dn);
   if (daySessions.length === 0) {
@@ -451,17 +480,17 @@ export function writePlanSetRest(params: Record<string, unknown>, db: DatabaseSy
     for (const s of daySessions) updateSession(db, wn, dn, s.session_index, { isRestDay: rest });
   }
   const summary = rest
-    ? '已定' + dayPhrase(wn, dn) + '为休息日（' + daySessions.length + ' 段）'
-    : '已取消' + dayPhrase(wn, dn) + '的休息标记（' + daySessions.length + ' 段）';
-  return out(R('定休息日', daySessions.length === 0 ? 'create' : 'update', summary, '定休息日', 'workout_plans（休息标记）', {
+    ? m('skill-calorie.workout-write.c120', { p0: String(dayPhrase(wn, dn)), p1: String(daySessions.length) })
+    : m('skill-calorie.workout-write.c121', { p0: String(dayPhrase(wn, dn)), p1: String(daySessions.length) });
+  return out(R(m('skill-calorie.workout-write.c122'), daySessions.length === 0 ? 'create' : 'update', summary, m('skill-calorie.workout-write.c123'), m('skill-calorie.workout-write.c124'), {
     recordId: null, ids: [], idSource: 'condition', writtenFields: provided(params, ['date', 'week', 'dayOfWeek', 'rest']),
-    items: [{ status: '成功', reason: '', detail: summary }],
+    items: [{ status: m('skill-calorie.workout-write.c125'), reason: '', detail: summary }],
   }));
 }
 
 /* ------------------------------------------------ 变更类（#349） */
 
-const CONFIG_LABEL: Record<string, string> = { title: '标题', version: '版本', description: '描述', start_date: '开始日期' };
+const CONFIG_LABEL = (): Record<string, string> => ({ title: m('skill-calorie.workout-write.c193'), version: m('skill-calorie.workout-write.c194'), description: m('skill-calorie.workout-write.c195'), start_date: m('skill-calorie.workout-write.c196') });
 
 /** `start_date` 的日期体检（写路径这一侧，与同件三处日期位 `date` 同源）：
  *  ① **形状**走共用位 `shared/params.ts` 的 `assertISO`（唯一定义地，报 `start_date 非法（须 YYYY-MM-DD）`）；
@@ -471,7 +500,7 @@ const CONFIG_LABEL: Record<string, string> = { title: '标题', version: '版本
  *  两条都不过就 exit 2；既有那条「不得为空」在上面、一个字没动（本票只加严）。 */
 function assertStartDate(v: string): void {
   assertISO(v, 'start_date');
-  if (startDateInvalid(v)) fail(2, 'start_date 非法（须 YYYY-MM-DD）：' + v);
+  if (startDateInvalid(v)) fail(2, m('skill-calorie.workout-write.c126', { p0: String(v) }));
 }
 
 /** 四个配置字段各自**改下去的影响**（写前预览页「确认说明」块里「影响」那一格的正文）。
@@ -479,23 +508,23 @@ function assertStartDate(v: string): void {
  *  话术取自报障单 #944（故障 7）里报障人的话——改计划配置向来只印一句与字段无关的
  *  「确认后写入计划库」，而「改训练计划」这条唤醒词要的正是「改完并提示影响（如改开始日期
  *  会影响周次计算）」（`src/triggers/scene-05-workout.ts` 的 `prompt_template` 原文）。 */
-const CONFIG_IMPACT: Record<string, string> = {
-  title: '只改标题，不影响周次与训练内容',
-  version: '只改版本号，不影响周次与训练内容',
-  description: '只改描述，不影响周次与训练内容',
-  start_date: '改开始日期会影响周次计算：按周次推出的日期整体平移，已经记过的运动记录不动',
-};
+const CONFIG_IMPACT = (): Record<string, string> => ({
+  title: m('skill-calorie.workout-write.c197'),
+  version: m('skill-calorie.workout-write.c198'),
+  description: m('skill-calorie.workout-write.c199'),
+  start_date: m('skill-calorie.workout-write.c200'),
+});
 
 /** `calorie.workout.plan-update` · 改训练计划（配置字段；总周数由行数决定，不直接改）。 */
 export function writePlanUpdate(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
   if (params['totalWeeks'] !== undefined || params['total_weeks'] !== undefined) {
-    fail(2, '总周数由训练场次决定，不直接改（增删周用定一周计划／删某天训练）');
+    fail(2, m('skill-calorie.workout-write.c127'));
   }
   const fields: Partial<Record<'title' | 'version' | 'description' | 'start_date', string>> = {};
-  for (const k of Object.keys(CONFIG_LABEL)) {
+  for (const k of Object.keys(CONFIG_LABEL())) {
     const v = optStr(params, k);
     if (v !== undefined) {
-      if (v === '') fail(2, k + ' 不得为空');
+      if (v === '') fail(2, m('skill-calorie.workout-write.c128', { p0: String(k) }));
       // 四个字段里只有 `start_date` 是个日期位：它原来只挡空串，任何字符串都进 `updateConfig` 落库。
       // 坏锚点会让 `weekOfDate` 算出 NaN ⇒ 按日期过滤恒空 ⇒ 页上落成「这一周没有训练安排」那句空态——
       // 一个静默的坏锚点会伪装成「计划没有内容」。体检口径见 `assertStartDate`（同件三处日期位同源）。
@@ -503,22 +532,22 @@ export function writePlanUpdate(params: Record<string, unknown>, db: DatabaseSyn
       (fields as Record<string, string>)[k] = v;
     }
   }
-  if (Object.keys(fields).length === 0) fail(2, '缺参数（title／version／description／start_date 至少给一个）');
+  if (Object.keys(fields).length === 0) fail(2, m('skill-calorie.workout-write.c129'));
   const plan = getPlan(db);
-  if (!plan.config) fail(4, '无训练计划可改（先定训练计划）');
+  if (!plan.config) fail(4, m('skill-calorie.workout-write.c130'));
   const before = (Object.keys(fields) as Array<keyof typeof fields>)
-    .map((k) => String(CONFIG_LABEL[k]) + '：' + String(plan.config?.[k] ?? '（空）')).join('、');
+    .map((k) => String(CONFIG_LABEL()[k]) + '：' + String(plan.config?.[k] ?? m('skill-calorie.workout-write.c131'))).join('、');
   const ok = updateConfig(db, fields);
-  if (!ok) fail(4, '改训练计划未命中行');
+  if (!ok) fail(4, m('skill-calorie.workout-write.c132'));
   const after = (Object.keys(fields) as Array<keyof typeof fields>)
-    .map((k) => String(CONFIG_LABEL[k]) + '：' + String(fields[k])).join('、');
-  const summary = '已改训练计划（' + after + '）';
+    .map((k) => String(CONFIG_LABEL()[k]) + '：' + String(fields[k])).join('、');
+  const summary = m('skill-calorie.workout-write.c133', { p0: String(after) });
   // `#944` 边角一次收口：回执带上与预检页同源的影响话术（`CONFIG_IMPACT`，同一处定义），免得对账回头翻预检页。
-  const impact = (Object.keys(fields) as Array<keyof typeof CONFIG_IMPACT>)
-    .map((k) => CONFIG_IMPACT[k] ?? '').filter((s) => s !== '').join('；');
-  return out(R('改训练计划', 'update', summary, '改训练计划', 'workout_plan_config（配置字段）', {
+  const impact = (Object.keys(fields) as Array<keyof ReturnType<typeof CONFIG_IMPACT>>)
+    .map((k) => CONFIG_IMPACT()[k] ?? '').filter((s) => s !== '').join('；');
+  return out(R(m('skill-calorie.workout-write.c134'), 'update', summary, m('skill-calorie.workout-write.c135'), m('skill-calorie.workout-write.c136'), {
     recordId: null, ids: [], idSource: 'condition', writtenFields: provided(params, ['title', 'version', 'description', 'start_date']),
-    items: [{ status: '成功', reason: impact, detail: '改前 ' + before + ' → 改后 ' + after }],
+    items: [{ status: m('skill-calorie.workout-write.c137'), reason: impact, detail: m('skill-calorie.workout-write.c138', { p0: String(before), p1: String(after) }) }],
   }));
 }
 
@@ -527,16 +556,16 @@ function resolveDayTarget(params: Record<string, unknown>, db: DatabaseSync): { 
   let dow = optInt(params, 'dayOfWeek');
   if (optStr(params, 'date') !== undefined) {
     const date = dayField(params, 'date');
-    if (!date) fail(2, 'date 非法');
+    if (!date) fail(2, m('skill-calorie.workout-write.c139'));
     const plan = getPlan(db);
     const start = plan.config?.start_date ?? null;
-    if (!start) fail(2, '计划缺开始日期，无法定位周次');
+    if (!start) fail(2, m('skill-calorie.workout-write.c140'));
     assertISO(date as string, 'date');
     const w = weekOfDate(start, date as string);
     week = w.week;
     dow = w.dow;
   }
-  return { wn: needWeek(week, 'week（或 date）'), dn: needDow(dow, 'dayOfWeek（或 date）') };
+  return { wn: needWeek(week, m('skill-calorie.workout-write.c141')), dn: needDow(dow, m('skill-calorie.workout-write.c142')) };
 }
 
 /** `calorie.workout.plan-update-day` · 改某天训练（时段定位：sessionIndex／单段直改／多段必须点名）。 */
@@ -544,24 +573,27 @@ export function writePlanUpdateDay(params: Record<string, unknown>, db: Database
   const { wn, dn } = resolveDayTarget(params, db);
   const plan = getPlan(db);
   const daySessions = plan.sessions.filter((s) => s.week_number === wn && s.day_of_week === dn);
-  if (daySessions.length === 0) fail(4, dayPhrase(wn, dn) + '没有训练可改');
+  if (daySessions.length === 0) fail(4, m('skill-calorie.workout-write.c143', { p0: String(dayPhrase(wn, dn)) }));
   const si = optInt(params, 'sessionIndex');
   let target = daySessions;
   if (si !== undefined) {
     target = daySessions.filter((s) => s.session_index === si);
-    if (target.length === 0) fail(4, dayPhrase(wn, dn) + '没有第' + si + '段');
+    if (target.length === 0) fail(4, m('skill-calorie.workout-write.c144', { p0: String(dayPhrase(wn, dn)), p1: String(si) }));
   } else if (daySessions.length > 1 && optStr(params, 'sessionLabel') === undefined) {
-    fail(2, dayPhrase(wn, dn) + '有 ' + daySessions.length + ' 段，给 sessionIndex 或 sessionLabel 指定改哪段');
+    fail(2, m('skill-calorie.workout-write.c145', { p0: String(dayPhrase(wn, dn)), p1: String(daySessions.length) }));
   } else if (optStr(params, 'sessionLabel') !== undefined) {
     target = daySessions.filter((s) => s.session_label === optStr(params, 'sessionLabel'));
-    if (target.length === 0) fail(4, dayPhrase(wn, dn) + '没有时段「' + String(optStr(params, 'sessionLabel')) + '」');
+    if (target.length === 0) fail(4, m('skill-calorie.workout-write.c146', {
+      p0: String(dayPhrase(wn, dn)),
+      p1: String(String(optStr(params, 'sessionLabel'))),
+    }));
   }
   const patch: { sessionLabel?: string; timeStart?: string | null; timeEnd?: string | null; isRestDay?: boolean; movements?: PlanMovement[] } = {};
   const label = optStr(params, 'sessionLabel');
   // sessionLabel 既做定位又做改名：定位命中后若同时给 newLabel 则改名，否则只定位
   const newLabel = optStr(params, 'newLabel');
   if (newLabel !== undefined) {
-    if (newLabel === '') fail(2, 'newLabel 不得为空');
+    if (newLabel === '') fail(2, m('skill-calorie.workout-write.c147'));
     patch.sessionLabel = newLabel;
   } else if (label !== undefined && si === undefined && daySessions.length === 1) {
     patch.sessionLabel = label;
@@ -570,19 +602,19 @@ export function writePlanUpdateDay(params: Record<string, unknown>, db: Database
   if (optStr(params, 'timeEnd') !== undefined) patch.timeEnd = optStr(params, 'timeEnd') ?? null;
   if (typeof params['rest'] === 'boolean') patch.isRestDay = params['rest'] as boolean;
   if (params['movements'] !== undefined) {
-    if (!Array.isArray(params['movements'])) fail(2, 'movements 须为数组（整段替换）');
+    if (!Array.isArray(params['movements'])) fail(2, m('skill-calorie.workout-write.c148'));
     patch.movements = (params['movements'] as unknown[]).map(asMovement);
   }
-  if (Object.keys(patch).length === 0) fail(2, '缺参数（newLabel／timeStart／timeEnd／rest／movements 至少给一个）');
+  if (Object.keys(patch).length === 0) fail(2, m('skill-calorie.workout-write.c149'));
   let n = 0;
   for (const s of target) {
     if (updateSession(db, wn, dn, s.session_index, patch)) n += 1;
   }
-  if (n === 0) fail(4, '改某天训练未命中行');
-  const summary = '已改' + dayPhrase(wn, dn) + '训练（' + n + ' 段）';
-  return out(R('改某天训练', 'update', summary, '改某天训练', 'workout_plans（某天时段）', {
+  if (n === 0) fail(4, m('skill-calorie.workout-write.c150'));
+  const summary = m('skill-calorie.workout-write.c151', { p0: String(dayPhrase(wn, dn)), p1: String(n) });
+  return out(R(m('skill-calorie.workout-write.c152'), 'update', summary, m('skill-calorie.workout-write.c153'), m('skill-calorie.workout-write.c154'), {
     recordId: null, ids: [], idSource: 'condition', writtenFields: provided(params, ['date', 'week', 'dayOfWeek', 'sessionIndex', 'sessionLabel', 'newLabel', 'timeStart', 'timeEnd', 'rest', 'movements']),
-    items: [{ status: '成功', reason: '', detail: summary }],
+    items: [{ status: m('skill-calorie.workout-write.c155'), reason: '', detail: summary }],
   }));
 }
 
@@ -592,33 +624,33 @@ export function writePlanDeleteDay(params: Record<string, unknown>, db: Database
   const si = optInt(params, 'sessionIndex');
   const plan = getPlan(db);
   const daySessions = plan.sessions.filter((s) => s.week_number === wn && s.day_of_week === dn);
-  if (daySessions.length === 0) fail(4, dayPhrase(wn, dn) + '没有训练可删');
-  const snapshot = daySessions.map((s) => s.session_label || '训练').join('、');
+  if (daySessions.length === 0) fail(4, m('skill-calorie.workout-write.c156', { p0: String(dayPhrase(wn, dn)) }));
+  const snapshot = daySessions.map((s) => s.session_label || m('skill-calorie.workout-write.c157')).join('、');
   if (si !== undefined) {
     const hit = daySessions.filter((s) => s.session_index === si);
-    if (hit.length === 0) fail(4, dayPhrase(wn, dn) + '没有第' + si + '段');
+    if (hit.length === 0) fail(4, m('skill-calorie.workout-write.c158', { p0: String(dayPhrase(wn, dn)), p1: String(si) }));
     deleteSession(db, wn, dn, si);
-    const summary = '已删' + dayPhrase(wn, dn) + '第' + si + '段（硬删除，不可恢复）';
-    return out(R('删某天训练', 'delete', summary, '删某天训练', 'workout_plans（删时段）', {
+    const summary = m('skill-calorie.workout-write.c159', { p0: String(dayPhrase(wn, dn)), p1: String(si) });
+    return out(R(m('skill-calorie.workout-write.c160'), 'delete', summary, m('skill-calorie.workout-write.c161'), m('skill-calorie.workout-write.c162'), {
       recordId: null, ids: [], idSource: 'condition', writtenFields: provided(params, ['date', 'week', 'dayOfWeek', 'sessionIndex']),
-      items: [{ status: '已删除（硬，不可恢复）', reason: '', detail: '快照：' + snapshot + ' → ' + summary }],
+      items: [{ status: m('skill-calorie.workout-write.c163'), reason: '', detail: m('skill-calorie.workout-write.c164', { p0: String(snapshot), p1: String(summary) }) }],
     }));
   }
   const r = deleteDay(db, wn, dn);
-  const summary = '已删' + dayPhrase(wn, dn) + '训练（' + r.deletedSessions + ' 段，硬删除，不可恢复）';
-  return out(R('删某天训练', 'delete', summary, '删某天训练', 'workout_plans（删整天）', {
+  const summary = m('skill-calorie.workout-write.c165', { p0: String(dayPhrase(wn, dn)), p1: String(r.deletedSessions) });
+  return out(R(m('skill-calorie.workout-write.c166'), 'delete', summary, m('skill-calorie.workout-write.c167'), m('skill-calorie.workout-write.c168'), {
     recordId: null, ids: [], idSource: 'condition', writtenFields: provided(params, ['date', 'week', 'dayOfWeek']),
-    items: [{ status: '已删除（硬，不可恢复）', reason: '', detail: '快照：' + snapshot + ' → ' + summary }],
+    items: [{ status: m('skill-calorie.workout-write.c169'), reason: '', detail: m('skill-calorie.workout-write.c170', { p0: String(snapshot), p1: String(summary) }) }],
   }));
 }
 
 /** `calorie.workout.plan-update-movement` · 改动作（按名替换；week 缺省＝所有周）。 */
 export function writePlanUpdateMovement(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
   const oldName = optStr(params, 'oldMovement');
-  if (!oldName) fail(2, '缺参数 oldMovement（原动作名）');
+  if (!oldName) fail(2, m('skill-calorie.workout-write.c171'));
   const newMove = asMovement(params['newMovement']);
   // 同上：没名字的替换一律挡在写前（写下去就是一条无名动作）。
-  if (typeof newMove.name !== 'string' || newMove.name === '') fail(2, '缺参数 newMovement.name（换成哪个动作）');
+  if (typeof newMove.name !== 'string' || newMove.name === '') fail(2, m('skill-calorie.workout-write.c172'));
   const week = optInt(params, 'week');
   if (week !== undefined) needWeek(week, 'week');
   const plan = getPlan(db);
@@ -634,24 +666,32 @@ export function writePlanUpdateMovement(params: Record<string, unknown>, db: Dat
       where.push(dayPhrase(s.week_number, s.day_of_week));
     }
   }
-  if (n === 0) fail(4, '没有找到动作「' + String(oldName) + '」' + (week === undefined ? '' : '（第' + week + '周）'));
-  const summary = '已把「' + String(oldName) + '」换成「' + String(newMove.name) + '」（' + n + ' 段：' + where.slice(0, 4).join('、') + (where.length > 4 ? '…' : '') + '）';
-  return out(R('改动作', 'update', summary, '改动作', 'workout_plans（动作替换）', {
+  const weekPhrase = week === undefined ? '' : m('skill-calorie.workout-write.c173', { p0: String(week) });
+  if (n === 0) fail(4, m('skill-calorie.workout-write.c174', { p0: String(String(oldName)), p1: String(weekPhrase) }));
+  const summary = m('skill-calorie.workout-write.c175', {
+    p0: String(String(oldName)),
+    p1: String(String(newMove.name)),
+    p2: String(n),
+    p3: String(where.slice(0, 4).join('、')),
+    p4: String(where.length > 4 ? '…' : ''),
+  });
+  return out(R(m('skill-calorie.workout-write.c176'), 'update', summary, m('skill-calorie.workout-write.c177'), m('skill-calorie.workout-write.c178'), {
     recordId: null, ids: [], idSource: 'condition', writtenFields: provided(params, ['week', 'oldMovement', 'newMovement']),
-    items: [{ status: '成功', reason: '', detail: summary }],
+    items: [{ status: m('skill-calorie.workout-write.c179'), reason: '', detail: summary }],
   }));
 }
 
 /** `calorie.workout.plan-delete` · 撤销训练计划（整份硬删除，不可恢复；须带 confirm:true，
  * 该确认只能来自写前预览页——裸调一律 exit 2，防一次误调清空整份计划）。 */
 export function writePlanDelete(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
-  if (params['confirm'] !== true) fail(2, '撤销整份计划须确认：先走写前预览（op=delete），确认后带 confirm:true 再调');
+  if (params['confirm'] !== true) fail(2, m('skill-calorie.workout-write.c180'));
   const plan = getPlan(db);
-  if (!plan.config && plan.sessions.length === 0) fail(4, '无训练计划可撤销');
+  if (!plan.config && plan.sessions.length === 0) fail(4, m('skill-calorie.workout-write.c181'));
   const r = deletePlan(db);
-  const summary = '已撤销训练计划「' + String(r.planSummary.title ?? '未命名') + '」（配置＋' + r.deletedRows + ' 场，硬删除，不可恢复）';
-  return out(R('撤销训练计划', 'delete', summary, '撤销训练计划', 'workout_plan_config＋workout_plans（整份删除）', {
+  const deletedTitle = String(r.planSummary.title ?? m('skill-calorie.workout-write.c182'));
+  const summary = m('skill-calorie.workout-write.c183', { p0: String(deletedTitle), p1: String(r.deletedRows) });
+  return out(R(m('skill-calorie.workout-write.c184'), 'delete', summary, m('skill-calorie.workout-write.c185'), m('skill-calorie.workout-write.c186'), {
     recordId: null, ids: [], idSource: 'condition', writtenFields: ['confirm'],
-    items: [{ status: '已删除（硬，不可恢复）', reason: '', detail: summary }],
+    items: [{ status: m('skill-calorie.workout-write.c187'), reason: '', detail: summary }],
   }));
 }

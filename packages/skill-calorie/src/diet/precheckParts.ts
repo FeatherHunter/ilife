@@ -6,6 +6,7 @@
  */
 import { renderDataTable, renderDisclosure } from 'base-paint/blocks';
 import type { DataTextInput } from 'base-paint';
+import { m } from '../entries/index.js';
 
 /** 读命令的入口标记（`src/diet/routes.ts` 的那几条记录带进来）。
  *
@@ -25,10 +26,10 @@ export const DOC_VERSION = '0.1.0';
 export const DOC_SKILL = 'calorie';
 
 /** head 标题（与 `diet/` 其余件的域口径一致）。 */
-export const DOC_TITLE = '卡路里·饮食';
+export const DOC_TITLE = (): string => m('skill-calorie.diet-precheckParts.c004');
 
 /** 类型徽章（`t425` §五 第 1 行右槽）：本类三页同属预检确认。 */
-export const PRECHECK_BADGE = '预检确认';
+export const PRECHECK_BADGE = (): string => m('skill-calorie.diet-precheckParts.c005');
 
 /** 页内样式：只服务本类几处形状（挂 `content` 第一项，照 `diet/rankingDocs.ts` 的 `RANK_CSS` 先例）。
  *
@@ -51,13 +52,13 @@ export const anchored = (c: Card): string => '<section id="' + c.id + '">' + c.h
 /** 写入字段的中文名单（`shared/writeParts.ts` 的 `F.diet`／`F.product` 逐项过 `diet/fieldLabels.ts`
  *  的域表）。写库回执早就这么做了（#496），预检页照办——`product_name`／`foodName` 这类源码名
  *  不许上屏（`t425` 裁定 1）。 */
-const FIELD_CN: Readonly<Record<string, string>> = Object.freeze({
-  foodName: '食物名', productName: '食品名', brand: '品牌', calories: '热量', protein: '蛋白质',
-  carbs: '碳水', carbohydrates: '碳水', fat: '脂肪', saturatedFat: '饱和脂肪', sugar: '糖',
-  dietaryFiber: '膳食纤维', sodium: '钠', grams: '克数', note: '备注', date: '日期', time: '时间',
+const FIELD_CN = (): Readonly<Record<string, string>> => Object.freeze({
+  foodName: m('skill-calorie.diet-precheckParts.c006'), productName: m('skill-calorie.diet-precheckParts.c007'), brand: m('skill-calorie.diet-precheckParts.c008'), calories: m('skill-calorie.diet-precheckParts.c009'), protein: m('skill-calorie.diet-precheckParts.c010'),
+  carbs: '碳水', carbohydrates: '碳水', fat: '脂肪', saturatedFat: m('skill-calorie.diet-precheckParts.c011'), sugar: m('skill-calorie.diet-precheckParts.c012'),
+  dietaryFiber: m('skill-calorie.diet-precheckParts.c013'), sodium: m('skill-calorie.diet-precheckParts.c014'), grams: m('skill-calorie.diet-precheckParts.c015'), note: m('skill-calorie.diet-precheckParts.c016'), date: m('skill-calorie.diet-precheckParts.c017'), time: m('skill-calorie.diet-precheckParts.c018'),
 });
 
-const cnOf = (key: string): string => FIELD_CN[key] ?? key;
+const cnOf = (key: string): string => FIELD_CN()[key] ?? key;
 
 /** 「确认后操作」块：把**它将写入的字段与值**如实摆出来。
  *
@@ -70,10 +71,10 @@ export function writeTargetBlock(
   return renderDisclosure({
     title,
     contentHtml: renderDataTable({
-      columns: [{ key: 'field', label: '会写进去的字段' }, { key: 'value', label: '这一条写什么' }],
+      columns: [{ key: 'field', label: m('skill-calorie.diet-precheckParts.c001') }, { key: 'value', label: m('skill-calorie.diet-precheckParts.c002') }],
       rows: rows.map((r) => ({ field: cnOf(r.field), value: r.value })),
       caption,
-      emptyText: '这次没有要写的字段',
+      emptyText: m('skill-calorie.diet-precheckParts.c003'),
     }) + '<p class="precheck-note">确认无误之后，要跑的那条命令在下方「复制日志」的第 4 段里，照抄即可重跑。</p>',
   });
 }

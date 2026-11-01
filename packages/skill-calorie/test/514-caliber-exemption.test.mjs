@@ -69,14 +69,19 @@ function parallelRun(text) {
 
 test('#514 对齐① log.ts 两处口径行按豁免保留｜（不抢 #505 窗口）', () => {
   const src = readFileSync(LOG_PATH, 'utf8');
-  // 有窗页 `:265-266` 与空窗页 `:342` 两处定义都在（逐字钉住，不转述）。
-  assert.ok(src.includes("const sourceText = '体重记录 ｜ 窗口 ' + rangeText"), '有窗页口径行定义丢失');
-  assert.ok(src.includes("const sourceText = '体重记录 ｜ 窗口 ' + rangeText + ' ｜ 共 0 条'"), '空窗页口径行定义丢失');
+  // #1218 起口径行文案外置到 entries（同一模板、两处调用点都在）；逐字钉住调用形，防悄悄改一半。
+  assert.ok(src.includes("m('skill-calorie.weight-log.c034', { p0: String(rangeText), p1: String(t.recordCount) })"),
+    '有窗页口径行定义丢失');
+  assert.ok(src.includes("m('skill-calorie.weight-log.c049', { p0: String(rangeText) })"),
+    '空窗页口径行定义丢失');
+  const zh = readFileSync(join(import.meta.dirname, '..', 'src', 'entries', 'zh.ts'), 'utf8');
+  assert.ok(zh.includes('体重记录 ｜ 窗口 {p0} ｜ 共 {p1} 条'), '有窗页口径模板丢失');
+  assert.ok(zh.includes('体重记录 ｜ 窗口 {p0} ｜ 共 0 条'), '空窗页口径模板丢失');
   // 豁免标记仍在（改一半的反证）。
   assert.ok(src.includes('属允许项 §二'), 'log.ts:269 豁免标记丢失');
-  const seps = (src.match(/｜/g) ?? []).length;
-  console.log('T514-SRC log.ts ｜字符数=' + seps + ' 口径行定义=2处 豁免标记=在');
-  assert.ok(seps >= 4, 'log.ts 里的 ｜ 少于两处口径行的 4 个（被悄悄改了一半？）：' + seps);
+  const inline = (src.match(/体重记录 ｜ 窗口/g) ?? []).length;
+  console.log('T514-SRC 内联口径行残留=' + inline + ' 口径行定义=2处 豁免标记=在');
+  assert.equal(inline, 0, '口径行文案仍在源码内联（改了一半？）：' + inline);
 });
 
 test('#514 对齐② 豁免条款仍在（weightUi.ts）', () => {

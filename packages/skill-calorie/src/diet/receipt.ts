@@ -37,15 +37,15 @@ import type { MealRow } from '../fetch/diet.js';
 import { todayISO } from '../analysis/utils.js';
 import { assembleDocPage } from '../shared/docPage.js';
 import { copyArea, copyLog } from '../shared/copyArea.js';
-import { fieldLabel } from '../shared/fieldLabel.js';
-import { DIET_DOMAIN } from './fieldLabels.js';
+import { dietFieldLabel } from './fieldLabels.js';
 import { reconcileDisclosure } from '../shared/receiptParts.js';
 import { commandLine } from '../shared/writeParts.js';
 import { ENTRY_PRECHECK as PRECHECK_ENTRY } from './precheckPort.js';
+import { m } from '../entries/index.js';
 
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
-const DOC_TITLE = '卡路里饮食回执';
+const DOC_TITLE = (): string => m('skill-calorie.diet-receipt.c085');
 
 /** 15＋1 条会改数据库的命令（数据位，具名命令集；分派层只认这一个集合，不再写命令名字面量比较）。
  *
@@ -69,14 +69,14 @@ const PRODUCT_KEYS: ReadonlySet<string> = new Set([
 
 /** 字段名 → 中文标签（走 `./fieldLabels.ts` 那张域表；缺项回退原名，不编词）。 */
 function fieldLabelOf(key: string): string {
-  return fieldLabel(DIET_DOMAIN, key);
+  return dietFieldLabel(key);
 }
 
 /* ───────────────────────── ① ✅ 操作回执（老实物 :135-153、:211-222） ───────────────────────── */
 
 /** 本次操作的中文名（老实物 `:192` 的 `opLabels`）＋状态徽章档位（`:193` 的 `opColors`）。 */
 function opWordOf(op: CrudReceipt['op']): string {
-  return op === 'update' ? '修改' : op === 'delete' ? '删除' : '新增';
+  return op === 'update' ? m('skill-calorie.diet-receipt.c001') : op === 'delete' ? m('skill-calorie.diet-receipt.c002') : m('skill-calorie.diet-receipt.c003');
 }
 function statusKindOf(op: CrudReceipt['op']): StatusKind {
   return op === 'update' ? 'warn' : op === 'delete' ? 'danger' : 'ok';
@@ -91,15 +91,14 @@ function cellOf(v: string | number | null | undefined): string {
  *  四串开头逐字＝`test/t496-文案统一.test.mjs` 第 ② 条钉住的读数（删类说删了、改类说改了、
  *  新增说写了），删类另说「本页没有撤销按钮」——全仓 0 个恢复入口，不许承诺可恢复。 */
 function writtenDetailOf(key: string, op: CrudReceipt['op']): string {
-  if (key === 'calorie.product.deprecate') return '已从食品库下架。要重新上架，说「批量导入食品」可再存一次。';
-  if (PRODUCT_KEYS.has(key)) return '已写入食品库。说「查食品」可复查这一条。';
+  if (key === 'calorie.product.deprecate') return m('skill-calorie.diet-receipt.c004');
+  if (PRODUCT_KEYS.has(key)) return m('skill-calorie.diet-receipt.c005');
   if (key === 'calorie.water.log') {
-    return op === 'delete' ? '已从饮水记录中删除。' : '已写入饮水记录。说「看今日喝水」可复查。';
+    return op === 'delete' ? m('skill-calorie.diet-receipt.c006') : m('skill-calorie.diet-receipt.c007');
   }
-  if (op === 'delete') return '已从饮食记录中删除。本页没有撤销按钮。';
-  if (op === 'update') return '已更新饮食记录。要改回去，照「📋 字段变更」里「改前」那一列改。'
-    + '那一列没有读数时，本页给不出写前原值。';
-  return '已写入饮食记录。说「看今日饮食」可复查。';
+  if (op === 'delete') return m('skill-calorie.diet-receipt.c008');
+  if (op === 'update') return m('skill-calorie.diet-receipt.c009');
+  return m('skill-calorie.diet-receipt.c010');
 }
 
 /** 状态读数卡（老实物 `id-card`＋备注行＋`kpi-grid` 三块的等价物）。删类没有写入字段，故不出
@@ -107,16 +106,16 @@ function writtenDetailOf(key: string, op: CrudReceipt['op']): string {
 function statusCards(key: string, receipt: CrudReceipt): KpiCardInput[] {
   const cards: KpiCardInput[] = [
     {
-      label: '状态', value: opWordOf(receipt.op) + '成功',
-      detail: receipt.noChange ? '值与改前一致' : writtenDetailOf(key, receipt.op),
-      status: statusKindOf(receipt.op), statusText: receipt.noChange ? '无改动' : '已改动',
+      label: m('skill-calorie.diet-receipt.c011'), value: m('skill-calorie.diet-receipt.c012', { p0: String(opWordOf(receipt.op)) }),
+      detail: receipt.noChange ? m('skill-calorie.diet-receipt.c013') : writtenDetailOf(key, receipt.op),
+      status: statusKindOf(receipt.op), statusText: receipt.noChange ? m('skill-calorie.diet-receipt.c014') : m('skill-calorie.diet-receipt.c015'),
     },
-    { label: '影响行数', value: receipt.affectedRows + ' 行', detail: '本次写入的行数' },
+    { label: m('skill-calorie.diet-receipt.c016'), value: m('skill-calorie.diet-receipt.c017', { p0: String(receipt.affectedRows) }), detail: m('skill-calorie.diet-receipt.c018') },
   ];
   if (receipt.writtenFields.length > 0) {
     cards.push({
-      label: '写入字段', value: receipt.writtenFields.length + ' 项',
-      detail: '明细见下方各字段徽章',
+      label: m('skill-calorie.diet-receipt.c019'), value: m('skill-calorie.diet-receipt.c020', { p0: String(receipt.writtenFields.length) }),
+      detail: m('skill-calorie.diet-receipt.c021'),
     });
   }
   return cards;
@@ -136,15 +135,15 @@ function writtenChips(receipt: CrudReceipt): string {
 const BATCH_COUNT_RE = /批量记饮食：新增 (\d+)，跳过 (\d+)，失败 (\d+)/;
 
 function batchCountsCard(receipt: CrudReceipt): string {
-  const m = BATCH_COUNT_RE.exec(receipt.summary);
-  if (m === null) return '';
+  const hit = BATCH_COUNT_RE.exec(receipt.summary);
+  if (hit === null) return '';
   return renderKpiGrid([
-    { label: '新增', value: m[1], unit: '条', detail: '这次记进库的' },
-    { label: '已在库跳过', value: m[2], unit: '条', detail: '同名同餐的记录不会重复添加' },
+    { label: m('skill-calorie.diet-receipt.c022'), value: hit[1], unit: m('skill-calorie.diet-receipt.c023'), detail: m('skill-calorie.diet-receipt.c024') },
+    { label: m('skill-calorie.diet-receipt.c025'), value: hit[2], unit: m('skill-calorie.diet-receipt.c026'), detail: m('skill-calorie.diet-receipt.c027') },
     {
-      label: '分类失败', value: m[3], unit: '条',
-      detail: '没读出是哪一餐。这些条留在下方明细里，可手动补一次',
-      status: m[3] === '0' ? 'empty' : 'warn',
+      label: m('skill-calorie.diet-receipt.c028'), value: hit[3], unit: m('skill-calorie.diet-receipt.c029'),
+      detail: m('skill-calorie.diet-receipt.c030'),
+      status: hit[3] === '0' ? 'empty' : 'warn',
     },
   ]);
 }
@@ -202,8 +201,8 @@ function flatParams(params: Record<string, unknown>): Record<string, unknown> {
 function beforeOf(col: string, items: CrudReceipt['items']): string | number | null {
   const label = fieldLabelOf(col);
   for (const it of items) {
-    const m = /^(.+?)\s*→\s*(.+)$/.exec(it.reason ?? '');
-    if (m !== null && m[1].includes(label)) return m[1].trim();
+    const hit = /^(.+?)\s*→\s*(.+)$/.exec(it.reason ?? '');
+    if (hit !== null && hit[1].includes(label)) return hit[1].trim();
   }
   return null;
 }
@@ -230,27 +229,27 @@ function snapshotTable(receipt: CrudReceipt): string {
     status: cellOf(it.status),
   }));
   return renderDataTable({
-    columns: [{ key: 'id', label: '记录编号' }, { key: 'date', label: '日期' },
-      { key: 'keep', label: '删除前的原值' }, { key: 'status', label: '状态' }],
+    columns: [{ key: 'id', label: m('skill-calorie.diet-receipt.c031') }, { key: 'date', label: m('skill-calorie.diet-receipt.c032') },
+      { key: 'keep', label: m('skill-calorie.diet-receipt.c033') }, { key: 'status', label: m('skill-calorie.diet-receipt.c034') }],
     rows,
-    caption: '删除前的原值（逐条）',
-    emptyText: '本次回执未带删除前的逐条原值——按条件删的那几条，写口只回报删掉了几条。',
+    caption: m('skill-calorie.diet-receipt.c035'),
+    emptyText: m('skill-calorie.diet-receipt.c036'),
   });
 }
 
 /** 📋 字段变更 区块：改类出「改前 → 改后」；删类出被删快照；新增类逐字段印本次真值。 */
 function changeSection(receipt: CrudReceipt, params: Record<string, unknown>, db: DatabaseSync): Section {
-  const title = '📋 字段变更';
+  const title = m('skill-calorie.diet-receipt.c037');
   if (receipt.op === 'delete') return { id: 'sec-change', title, html: snapshotTable(receipt) };
   if (receipt.op === 'update') {
     const html = renderDataTable({
-      columns: [{ key: 'k', label: '字段' }, { key: 'before', label: '改前' }, { key: 'after', label: '改后' }],
-      rows: changeRowsOf(receipt, params), caption: '改前 → 改后对照',
-      emptyText: '本次回执未带逐字段对照（写入字段：未设置）',
+      columns: [{ key: 'k', label: m('skill-calorie.diet-receipt.c038') }, { key: 'before', label: m('skill-calorie.diet-receipt.c039') }, { key: 'after', label: m('skill-calorie.diet-receipt.c040') }],
+      rows: changeRowsOf(receipt, params), caption: m('skill-calorie.diet-receipt.c041'),
+      emptyText: m('skill-calorie.diet-receipt.c042'),
     }) + (beforeMissing(receipt)
-      ? renderCaliberLine('「改前」那一列的原值由写执行那一层回报。')
-        + renderCaliberLine('当前饮食写口只回报变更字段名，故这一列写 —，不拿新值顶替。')
-      : renderCaliberLine('「改前」是本次写前那一列的原值。'));
+      ? renderCaliberLine(m('skill-calorie.diet-receipt.c043'))
+        + renderCaliberLine(m('skill-calorie.diet-receipt.c044'))
+      : renderCaliberLine(m('skill-calorie.diet-receipt.c045')));
     return { id: 'sec-change', title, html };
   }
   /* 新增类（含批量导入）：**不硬套「改前 → 改后」**（票面专属约束①）——它是新长出来的一条，
@@ -260,13 +259,13 @@ function changeSection(receipt: CrudReceipt, params: Record<string, unknown>, db
   const eff = flatParams(params);
   const written = writtenRowOf(receipt, db);
   const html = renderDataTable({
-    columns: [{ key: 'k', label: '字段' }, { key: 'v', label: '本次结果' }],
+    columns: [{ key: 'k', label: m('skill-calorie.diet-receipt.c046') }, { key: 'v', label: m('skill-calorie.diet-receipt.c047') }],
     rows: receipt.writtenFields.map((col) => ({
       k: fieldLabelOf(col),
       v: cellOf(createdValueOf(col, written, eff)),
     })),
-    caption: '新增内容（本次写入的字段）',
-    emptyText: '本次没有写入字段——逐条结果（含跳过与失败）见「📋 复制明细」。',
+    caption: m('skill-calorie.diet-receipt.c048'),
+    emptyText: m('skill-calorie.diet-receipt.c049'),
   });
   return { id: 'sec-change', title, html };
 }
@@ -285,9 +284,9 @@ function receiptDate(params: Record<string, unknown>): string {
 
 /** 相对目标还剩多少（老实物 `:378` 的 `pct` 槽 `/ 目标 (N%)` 那半句的等价物）。 */
 function leftText(used: number, goal: number | null | undefined): string {
-  if (goal === null || goal === undefined) return '未设目标';
+  if (goal === null || goal === undefined) return m('skill-calorie.diet-receipt.c050');
   const rest = goal - used;
-  return rest >= 0 ? '还剩 ' + rest : '已超 ' + Math.abs(rest);
+  return rest >= 0 ? m('skill-calorie.diet-receipt.c051', { p0: String(rest) }) : m('skill-calorie.diet-receipt.c052', { p0: String(Math.abs(rest)) });
 }
 
 /** 📊 今日累计 区块（老实物 `ctx-card`）：写后现值，不自算口径（`getDailySummary` 正本）。
@@ -296,23 +295,35 @@ function dailySection(db: DatabaseSync, date: string): Section {
   const s = getDailySummary(db, date);
   const g = s.goal;
   const html = renderDataTable({
-    columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+    columns: [{ key: 'k', label: m('skill-calorie.diet-receipt.c053') }, { key: 'v', label: m('skill-calorie.diet-receipt.c054') }],
     rows: [
-      { k: '日期', v: s.date },
-      { k: '热量累计', v: s.totals.cal + ' 卡（' + leftText(s.totals.cal, g?.calorie_goal) + '）' },
-      { k: '蛋白累计', v: s.totals.pro + ' 克（' + leftText(s.totals.pro, g?.protein_goal) + '）' },
-      { k: '碳水累计', v: s.totals.carbs + ' 克（' + leftText(s.totals.carbs, g?.carbs_goal) + '）' },
-      { k: '脂肪累计', v: s.totals.fat + ' 克（' + leftText(s.totals.fat, g?.fat_goal) + '）' },
-      { k: '饮食条数', v: s.entryCount + ' 条' },
-      { k: '饮水累计', v: s.waterMl + ' ml' },
+      { k: m('skill-calorie.diet-receipt.c055'), v: s.date },
+      { k: m('skill-calorie.diet-receipt.c056'), v: m('skill-calorie.diet-receipt.c057', {
+        p0: String(s.totals.cal),
+        p1: String(leftText(s.totals.cal, g?.calorie_goal)),
+      }) },
+      { k: m('skill-calorie.diet-receipt.c058'), v: m('skill-calorie.diet-receipt.c059', {
+        p0: String(s.totals.pro),
+        p1: String(leftText(s.totals.pro, g?.protein_goal)),
+      }) },
+      { k: m('skill-calorie.diet-receipt.c060'), v: m('skill-calorie.diet-receipt.c061', {
+        p0: String(s.totals.carbs),
+        p1: String(leftText(s.totals.carbs, g?.carbs_goal)),
+      }) },
+      { k: m('skill-calorie.diet-receipt.c062'), v: m('skill-calorie.diet-receipt.c063', {
+        p0: String(s.totals.fat),
+        p1: String(leftText(s.totals.fat, g?.fat_goal)),
+      }) },
+      { k: m('skill-calorie.diet-receipt.c064'), v: m('skill-calorie.diet-receipt.c065', { p0: String(s.entryCount) }) },
+      { k: m('skill-calorie.diet-receipt.c066'), v: s.waterMl + ' ml' },
     ],
-    caption: '今日累计',
+    caption: m('skill-calorie.diet-receipt.c067'),
   }) + (g === null
-    ? renderCaliberLine('还没有设过每天的目标，故这里只报累计值。')
-      + renderCaliberLine('说「定营养目标」之后还会报还剩多少。')
-    : renderCaliberLine('括号里是相对今天的目标还剩多少。')
-      + renderCaliberLine('超出目标写「已超」。'));
-  return { id: 'sec-sum', title: '📊 今日累计', html };
+    ? renderCaliberLine(m('skill-calorie.diet-receipt.c068'))
+      + renderCaliberLine(m('skill-calorie.diet-receipt.c069'))
+    : renderCaliberLine(m('skill-calorie.diet-receipt.c070'))
+      + renderCaliberLine(m('skill-calorie.diet-receipt.c071')));
+  return { id: 'sec-sum', title: m('skill-calorie.diet-receipt.c072'), html };
 }
 
 /* ──────────────── ④ 📋 复制明细（老实物 :165-168 的 items-card ＋ :389-410） ──────────────── */
@@ -324,17 +335,17 @@ function itemsSection(receipt: CrudReceipt): Section | null {
   if (receipt.op === 'delete') return null;
   const detailed = receipt.items.filter((it) => it.status !== '' && it.detail !== undefined && it.detail !== '');
   const skipped = receipt.items.filter((it) => it.status.includes('跳过')).length;
+  const skippedPhrase = skipped > 0 ? m('skill-calorie.diet-receipt.c073', { p0: String(skipped) }) : '';
   const html = renderDataTable({
-    columns: [{ key: 'time', label: '时间' }, { key: 'food', label: '内容' }, { key: 'status', label: '状态' }],
+    columns: [{ key: 'time', label: m('skill-calorie.diet-receipt.c074') }, { key: 'food', label: m('skill-calorie.diet-receipt.c075') }, { key: 'status', label: m('skill-calorie.diet-receipt.c076') }],
     rows: detailed.map((it) => ({
       time: cellOf(it.reason), food: cellOf(it.detail),
-      status: cellOf(it.status) + (it.id === undefined || it.id === null ? '' : '（编号 ' + it.id + '）'),
+      status: cellOf(it.status) + (it.id === undefined || it.id === null ? '' : m('skill-calorie.diet-receipt.c077', { p0: String(it.id) })),
     })),
-    caption: '本次逐条明细（共 ' + detailed.length + ' 条'
-      + (skipped > 0 ? '，其中跳过 ' + skipped + ' 条' : '') + '）',
-    emptyText: '本次回执没有逐条读数——上方的读数卡与「📊 今日累计」就是这次的全部结果。',
+    caption: m('skill-calorie.diet-receipt.c078', { p0: String(detailed.length), p1: String(skippedPhrase) }),
+    emptyText: m('skill-calorie.diet-receipt.c079'),
   });
-  return { id: 'sec-items', title: '📋 复制明细', html };
+  return { id: 'sec-items', title: m('skill-calorie.diet-receipt.c080'), html };
 }
 
 /* ─────────────────────── 页面骨架（`t425` §五 那 15 行的本类子集） ─────────────────────── */
@@ -358,7 +369,7 @@ function buildDietReceiptDoc(
   };
   const sections: Section[] = [
     {
-      id: 'sec-op', title: '✅ 操作回执',
+      id: 'sec-op', title: m('skill-calorie.diet-receipt.c081'),
       html: renderKpiGrid(statusCards(key, receipt)) + writtenChips(receipt) + batchCountsCard(receipt),
     },
     changeSection(receipt, params, db),
@@ -380,12 +391,13 @@ function buildDietReceiptDoc(
         }),
       },
     }),
-    renderCaliberLine('📊 数据来源：本机饮食库 ｜ 本次影响 ' + receipt.affectedRows + ' 行'
-      /* #587 裁定3：屏上取到分（slice 0,16＝YYYY-MM-DD HH:MM）；复制载荷机器时间保持秒级精确（copyLog 仍传完整 actionAt）。 */
-      + ' ｜ 时间 ' + receipt.meta.actionAt.slice(0, 16)),
+    renderCaliberLine(m('skill-calorie.diet-receipt.c082', {
+      p0: String(receipt.affectedRows),
+      p1: String(receipt.meta.actionAt.slice(0, 16)),
+    })),
   ].join('');
   return assembleDocPage({
-    docTitle: DOC_TITLE, title: receipt.scene + '回执', eyebrow: '',
+    docTitle: DOC_TITLE(), title: m('skill-calorie.diet-receipt.c083', { p0: String(receipt.scene) }), eyebrow: '',
     pageUi: true,
     subtitle: subtitleOf(receipt), content,
   });
@@ -399,14 +411,19 @@ function buildDietReceiptDoc(
  *  批量补记那句是四个数字串成的公式，三个计数的含义由三张读数卡逐格说，副题只留一句结论。 */
 function subtitleOf(receipt: CrudReceipt): string {
   const batch = BATCH_COUNT_RE.exec(receipt.summary);
-  if (batch !== null) return '本次批量补记：' + batch[1] + ' 条已记下';
+  if (batch !== null) return m('skill-calorie.diet-receipt.c084', { p0: String(batch[1]) });
+  const gonePhrase = m('skill-calorie.diet-receipt.c086');
+  const deletedPhrase = m('skill-calorie.diet-receipt.c087');
+  const singleDayPhrase = m('skill-calorie.diet-receipt.c088');
+  const toWord = m('skill-calorie.diet-receipt.c089');
+  const sameDayPhrase = m('skill-calorie.diet-receipt.c090');
   return receipt.summary
-    .replace(/ · 硬删除，不可恢复/, '。删了就找不回来')
-    .replace(/（硬删除，不可恢复）/g, '。删了就找不回来')
-    .replace(/^已删除饮食 #\d+/, '已删除这条饮食记录')
+    .replace(/ · 硬删除，不可恢复/, gonePhrase)
+    .replace(/（硬删除，不可恢复）/g, gonePhrase)
+    .replace(/^已删除饮食 #\d+/, deletedPhrase)
     .replace(/#\d+/, '')
-    .replace(/(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})/g, (all, a, b) => (a === b ? a + '（单日）' : a + '至' + b))
-    .replace(/(\d{4}-\d{2}-\d{2})→(\d{4}-\d{2}-\d{2})/g, (all, a, b) => (a === b ? '同一天（' + a + '）' : all))
+    .replace(/(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})/g, (all, a, b) => (a === b ? a + singleDayPhrase : a + toWord + b))
+    .replace(/(\d{4}-\d{2}-\d{2})→(\d{4}-\d{2}-\d{2})/g, (all, a, b) => (a === b ? sameDayPhrase + a + '）' : all))
     /* #581 · 副题是分隔符门禁的管辖面（`audit-separators.mjs`）：数据面原样不动，上屏在这里归一——
        全角分号改句号、间隔号改逗号、日期区间波浪线改「至」。 */
     .replace(/；/g, '。')

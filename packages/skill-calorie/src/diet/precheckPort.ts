@@ -22,6 +22,7 @@ import { optStr } from '../shared/params.js';
 import { brandOfImportRecord, normalizeImportRecord } from './productImport.js';
 /* #717 批③·谓词归一：软删存活谓词正本住共用位 `shared/alive.ts`（本件原先内联同一句话）。 */
 import { BODY_ALIVE } from '../shared/alive.js';
+import { m } from '../entries/index.js';
 
 /** 读命令的入口标记：定义住叶子件 `./precheckParts.ts`（免得 `precheck.ts` 与本件互相 import 成环），
  *  本件只转出给处理体（`log.ts`／`productImport.ts`／`receipt.ts`／`nutrition.ts`）用。 */
@@ -92,11 +93,11 @@ export function buildImportPrecheckView(db: DatabaseSync, items: unknown): Impor
     const base = { no: i + 1, productName: name, calories, matched: libCal !== null, libCalories: libCal };
     const v = validateRecord(rec);
     if (!v.ok) {
-      rows.push({ ...base, status: 'failed', reason: humanReason(v.error ?? '记录不合法') });
+      rows.push({ ...base, status: 'failed', reason: humanReason(v.error ?? m('skill-calorie.diet-precheckPort.c001')) });
       return;
     }
     if (checkDuplicate(db, name, brandOfImportRecord(rec))) {
-      rows.push({ ...base, status: 'skipped', reason: '食品库里已有同名，按现状跳过这一条' });
+      rows.push({ ...base, status: 'skipped', reason: m('skill-calorie.diet-precheckPort.c002') });
       return;
     }
     rows.push({ ...base, status: 'added', reason: '' });
@@ -152,15 +153,15 @@ export interface LabelPrecheckView {
  *  `param`＝`calorie.diet.add` 那边接得住的参数名（`t276-营养表映射.md` 那张表）；
  *  接不住的三项（糖／膳食纤维／钠）`param` 留空——**页上照旧显示识别读数**（那是标签上印着的事实），
  *  但不进写命令参数（`food_log` 没有承接列，硬塞就是编字段）。 */
-const LABEL_FIELDS: readonly { key: string; label: string; unit: string; param: string }[] = [
-  { key: 'calories', label: '热量 (kcal)', unit: 'kcal', param: 'calories' },
-  { key: 'protein', label: '蛋白质 (g)', unit: 'g', param: 'protein' },
-  { key: 'fat', label: '脂肪 (g)', unit: 'g', param: 'fat' },
-  { key: 'saturated_fat', label: '饱和脂肪 (g)', unit: 'g', param: '' },
-  { key: 'carbohydrates', label: '碳水 (g)', unit: 'g', param: 'carbs' },
-  { key: 'sugar', label: '糖 (g)', unit: 'g', param: '' },
-  { key: 'fiber', label: '膳食纤维 (g)', unit: 'g', param: '' },
-  { key: 'sodium', label: '钠 (mg)', unit: 'mg', param: '' },
+const LABEL_FIELDS = (): readonly { key: string; label: string; unit: string; param: string }[] => [
+  { key: 'calories', label: m('skill-calorie.diet-precheckPort.c004'), unit: 'kcal', param: 'calories' },
+  { key: 'protein', label: m('skill-calorie.diet-precheckPort.c005'), unit: 'g', param: 'protein' },
+  { key: 'fat', label: m('skill-calorie.diet-precheckPort.c006'), unit: 'g', param: 'fat' },
+  { key: 'saturated_fat', label: m('skill-calorie.diet-precheckPort.c007'), unit: 'g', param: '' },
+  { key: 'carbohydrates', label: m('skill-calorie.diet-precheckPort.c008'), unit: 'g', param: 'carbs' },
+  { key: 'sugar', label: m('skill-calorie.diet-precheckPort.c009'), unit: 'g', param: '' },
+  { key: 'fiber', label: m('skill-calorie.diet-precheckPort.c010'), unit: 'g', param: '' },
+  { key: 'sodium', label: m('skill-calorie.diet-precheckPort.c011'), unit: 'mg', param: '' },
 ];
 
 /** 失败原因里的库列名 → 页上中文标签（#591 裁定5）。
@@ -168,21 +169,21 @@ const LABEL_FIELDS: readonly { key: string; label: string; unit: string; param: 
  *  原因文本由 `fetch/validate.ts` 出，印的是库列名（`缺少必填字段: fat`）；页上要的是读者看得懂的
  *  中文——`LABEL_FIELDS` 那八个标签直接取（「脂肪 (g)」这类），校验器还会用到而标签表里没有的三个
  *  （`dietary_fiber`／`product_name`／`source`）按同一口径补齐。 */
-const REASON_LABELS: Readonly<Record<string, string>> = {
-  ...Object.fromEntries(LABEL_FIELDS.map((f) => [f.key, f.label])),
-  dietary_fiber: '膳食纤维 (g)',
-  product_name: '食品名',
-  source: '数据来源',
-};
+const REASON_LABELS = (): Readonly<Record<string, string>> => ({
+  ...Object.fromEntries(LABEL_FIELDS().map((f) => [f.key, f.label])),
+  dietary_fiber: m('skill-calorie.diet-precheckPort.c012'),
+  product_name: m('skill-calorie.diet-precheckPort.c013'),
+  source: m('skill-calorie.diet-precheckPort.c014'),
+});
 
 /** 逐行失败原因：只把**字段名那一处**换成中文标签，消息本体的措辞一字不动
  *  （那几句不住本件，故只按已知的两种形状替换那一个 token；别的写法原样透传）。 */
 function humanReason(error: string): string {
   const missing = /^缺少必填字段: ([a-z_]+)$/.exec(error);
-  if (missing !== null) return '缺少必填字段: ' + (REASON_LABELS[missing[1]] ?? missing[1]);
+  if (missing !== null) return m('skill-calorie.diet-precheckPort.c003', { p0: String(REASON_LABELS()[missing[1]] ?? missing[1]) });
   const head = /^([a-z_]+) (必须)/.exec(error);
   if (head === null) return error;
-  const label = REASON_LABELS[head[1]];
+  const label = REASON_LABELS()[head[1]];
   return label === undefined ? error : label + error.slice(head[1].length);
 }
 
@@ -211,7 +212,7 @@ export function buildLabelPrecheckView(params: Record<string, unknown>): LabelPr
   const calories = numOf(params, 'calories');
   if (calories === null) throw new CalorieRenderError('bad-input', '缺参数 calories');
   const uncertain = uncertainKeysOf(params);
-  const fields: LabelField[] = LABEL_FIELDS.map((f) => {
+  const fields: LabelField[] = LABEL_FIELDS().map((f) => {
     const v = numOf(params, f.param, f.key);
     return {
       key: f.key,
@@ -228,7 +229,7 @@ export function buildLabelPrecheckView(params: Record<string, unknown>): LabelPr
   /* 写命令参数只收 `t276-营养表映射.md` 那张表接得住的字段（`param` 为空的三个标签字段不进）：
      接不住的硬塞就是编字段。食物名用 `calorie.diet.add` 的入参名 `foodName`。 */
   const writeParams: Record<string, unknown> = { foodName: productName };
-  for (const f of LABEL_FIELDS) {
+  for (const f of LABEL_FIELDS()) {
     if (f.param === '') continue;
     const v = numOf(params, f.param, f.key);
     if (v !== null) writeParams[f.key] = v;

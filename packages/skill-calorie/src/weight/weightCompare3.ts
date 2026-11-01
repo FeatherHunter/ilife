@@ -9,6 +9,7 @@ import { EX_ALIVE, todayISO } from '../analysis/utils.js';
 import { sameDayCompare, scenarioA1, scenarioA2, scenarioA3, scenarioA4, scenarioA5, scenarioB1 } from './weightCompare.js';
 import type { ScenarioOpts, ScenarioResult } from './weightCompare.js';
 import { scenarioB8, scenarioE1, scenarioE2, scenarioE3, scenarioE5, scenarioE6 } from './weightCompare2.js';
+import { m } from '../entries/index.js';
 
 const round = (n: number): number => Math.round(n);
 const round2 = (n: number): number => Math.round(n * 100) / 100;
@@ -53,7 +54,7 @@ function monthTotal(db: DatabaseSync, mStart: string, mEnd: string, table: strin
  *  否则短段被摊薄、长段被抬高，两段又不可比了。 */
 function perDayCal(v: number, start: string, end: string): string {
   const days = Math.max(1, dayDiff(start, end) + 1);
-  return round(v / days) + ' 卡';
+  return m('skill-calorie.weight-weightCompare3.c001', { p0: String(round(v / days)) });
 }
 
 function sleepHours(scheduleDbPath: string | null | undefined, mStart: string, mEnd: string): number | null {
@@ -106,8 +107,8 @@ export function scenarioC5(db: DatabaseSync, scheduleDbPath?: string | null): Sc
    * #481 整改曾把半角括号换成 ` · `；本轮连 `·` 一起去掉——月与「运动最多／最少」本来就是
    * **两个不同槽**（月份是刻度、多少是判语），页上由 `pairStrip()`／`factStrip()` 分槽呈现，
    * 故数据层只给「月 ＋ 空格 ＋ 判语」这一种可读形态，不再自带分隔符。 */
-  const a = segOf(lowS, lowE, lowM + ' 运动最少');
-  const b = segOf(highS, highE, highM + ' 运动最多');
+  const a = segOf(lowS, lowE, m('skill-calorie.weight-weightCompare3.c003', { p0: String(lowM) }));
+  const b = segOf(highS, highE, m('skill-calorie.weight-weightCompare3.c004', { p0: String(highM) }));
   if (!a || !b) throw new FetchError('运动最多／最少的那两个月里没有体重记录');
   const calLow = monthTotal(db, lowS, lowE, 'food_log', 'calories');
   const calHigh = monthTotal(db, highS, highE, 'food_log', 'calories');
@@ -118,19 +119,19 @@ export function scenarioC5(db: DatabaseSync, scheduleDbPath?: string | null): Sc
    * 一段 31 天、一段 8 天（种子到 09-08 为止），总量不可比（读者会以为九月动了更多）。
    * 换「平均每天 N 卡」，两段同口径；分母按各段自己的首末日期。 */
   const extra: Array<{ label: string; value: string }> = [
-    { label: lowM + ' 运动平均每天', value: perDayCal(lowT, a.range.split(' ~ ')[0] as string, a.range.split(' ~ ')[1] as string) },
-    { label: highM + ' 运动平均每天', value: perDayCal(highT, b.range.split(' ~ ')[0] as string, b.range.split(' ~ ')[1] as string) },
-    calLow !== null ? { label: lowM + ' 摄入', value: calLow.value + ' 卡' } : { label: lowM + ' 摄入', value: '没有记录' },
-    calHigh !== null ? { label: highM + ' 摄入', value: calHigh.value + ' 卡' } : { label: highM + ' 摄入', value: '没有记录' },
+    { label: m('skill-calorie.weight-weightCompare3.c005', { p0: String(lowM) }), value: perDayCal(lowT, a.range.split(' ~ ')[0] as string, a.range.split(' ~ ')[1] as string) },
+    { label: m('skill-calorie.weight-weightCompare3.c006', { p0: String(highM) }), value: perDayCal(highT, b.range.split(' ~ ')[0] as string, b.range.split(' ~ ')[1] as string) },
+    calLow !== null ? { label: m('skill-calorie.weight-weightCompare3.c007', { p0: String(lowM) }), value: m('skill-calorie.weight-weightCompare3.c008', { p0: String(calLow.value) }) } : { label: m('skill-calorie.weight-weightCompare3.c009', { p0: String(lowM) }), value: m('skill-calorie.weight-weightCompare3.c010') },
+    calHigh !== null ? { label: m('skill-calorie.weight-weightCompare3.c011', { p0: String(highM) }), value: m('skill-calorie.weight-weightCompare3.c012', { p0: String(calHigh.value) }) } : { label: m('skill-calorie.weight-weightCompare3.c013', { p0: String(highM) }), value: m('skill-calorie.weight-weightCompare3.c014') },
   ];
   if (sleepLow !== null && sleepHigh !== null) {
-    extra.push({ label: lowM + ' 睡眠', value: sleepLow + ' 小时' });
-    extra.push({ label: highM + ' 睡眠', value: sleepHigh + ' 小时' });
-  } else extra.push({ label: '睡眠', value: '没有记录' });
+    extra.push({ label: m('skill-calorie.weight-weightCompare3.c015', { p0: String(lowM) }), value: m('skill-calorie.weight-weightCompare3.c016', { p0: String(sleepLow) }) });
+    extra.push({ label: m('skill-calorie.weight-weightCompare3.c017', { p0: String(highM) }), value: m('skill-calorie.weight-weightCompare3.c018', { p0: String(sleepHigh) }) });
+  } else extra.push({ label: m('skill-calorie.weight-weightCompare3.c019'), value: m('skill-calorie.weight-weightCompare3.c020') });
   return {
     segA: a,
     segB: b,
-    compare: { deltaKg: delta, direction: delta < -0.05 ? '下降' : delta > 0.05 ? '上升' : '持平', rateDiffG: null, speed: '—' },
+    compare: { deltaKg: delta, direction: delta < -0.05 ? m('skill-calorie.weight-weightCompare3.c021') : delta > 0.05 ? m('skill-calorie.weight-weightCompare3.c022') : m('skill-calorie.weight-weightCompare3.c023'), rateDiffG: null, speed: '—' },
     extraRows: extra,
   };
 }
@@ -156,14 +157,14 @@ export function scenarioD4(db: DatabaseSync, today: string = todayISO()): Scenar
   const first = (rr: Row[]): Row => rr[0] as Row;
   const last = (rr: Row[]): Row => rr[rr.length - 1] as Row;
   return {
-    segA: { label: '工作日', range: first(wd)[0] + ' ~ ' + last(wd)[0], count: wd.length, avg: wdAvg, startKg: first(wd)[1], endKg: last(wd)[1], netChange: round2(last(wd)[1] - first(wd)[1]), volatility: wdVol },
-    segB: { label: '周末', range: first(we)[0] + ' ~ ' + last(we)[0], count: we.length, avg: weAvg, startKg: first(we)[1], endKg: last(we)[1], netChange: round2(last(we)[1] - first(we)[1]), volatility: weVol },
-    compare: { deltaKg: delta, direction: delta > 0.05 ? '周末更高' : delta < -0.05 ? '周末更低' : '持平', rateDiffG: null, speed: '—' },
+    segA: { label: m('skill-calorie.weight-weightCompare3.c024'), range: first(wd)[0] + ' ~ ' + last(wd)[0], count: wd.length, avg: wdAvg, startKg: first(wd)[1], endKg: last(wd)[1], netChange: round2(last(wd)[1] - first(wd)[1]), volatility: wdVol },
+    segB: { label: m('skill-calorie.weight-weightCompare3.c025'), range: first(we)[0] + ' ~ ' + last(we)[0], count: we.length, avg: weAvg, startKg: first(we)[1], endKg: last(we)[1], netChange: round2(last(we)[1] - first(we)[1]), volatility: weVol },
+    compare: { deltaKg: delta, direction: delta > 0.05 ? m('skill-calorie.weight-weightCompare3.c026') : delta < -0.05 ? m('skill-calorie.weight-weightCompare3.c027') : m('skill-calorie.weight-weightCompare3.c028'), rateDiffG: null, speed: '—' },
     extraRows: [
-      { label: '工作日波动', value: '±' + wdVol + ' kg' },
-      { label: '周末波动', value: '±' + weVol + ' kg' },
+      { label: m('skill-calorie.weight-weightCompare3.c029'), value: '±' + wdVol + ' kg' },
+      { label: m('skill-calorie.weight-weightCompare3.c030'), value: '±' + weVol + ' kg' },
       /* 「一致率」= 两段平均差越小越一致，是**本页自造的数**，读者看不懂也没法验算 ⇒ 换成人话标签。 */
-      { label: '两段平均接近程度', value: agreement + '%' },
+      { label: m('skill-calorie.weight-weightCompare3.c031'), value: agreement + '%' },
     ],
   };
 }

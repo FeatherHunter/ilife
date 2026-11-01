@@ -11,37 +11,39 @@
  *
  * 不登记的键：`confirm`（确认开关，不是被写的字段）；`from`／`to`／`items` 这类选择器不进 `writtenFields`。
  */
-import { registerFieldLabels } from '../shared/fieldLabel.js';
-
 /** 本域的域名字符串（查表用；域表一个定义地，别处不许再写字面量）。 */
+import { m } from '../entries/index.js';
 export const WORKOUT_DOMAIN = 'workout';
 
 /** 训练计划域字段 → 中文标签（`write.ts` 里 `writtenFields` 的全部键）。 */
-export const WORKOUT_FIELD_LABELS: Readonly<Record<string, string>> = Object.freeze({
-  plan: '整份计划',
-  newTitle: '新计划名',
-  week: '第几周',
-  toWeek: '复制到第几周',
-  days: '这一周每天的安排',
-  dayOfWeek: '星期几',
-  date: '日期',
-  sessionIndex: '第几段',
-  sessionLabel: '时段名',
-  newLabel: '改后的时段名',
-  timeStart: '开始时间',
-  timeEnd: '结束时间',
-  rest: '休息标记',
-  movements: '动作清单',
-  movement: '要加的动作',
-  oldMovement: '原动作名',
-  newMovement: '换成哪个动作',
-  title: '计划名',
-  version: '版本',
-  description: '说明',
-  start_date: '起始日',
+export const workoutFieldLabels = (): Readonly<Record<string, string>> => Object.freeze({
+  plan: m('skill-calorie.workout-fieldLabels.c001'),
+  newTitle: m('skill-calorie.workout-fieldLabels.c002'),
+  week: m('skill-calorie.workout-fieldLabels.c003'),
+  toWeek: m('skill-calorie.workout-fieldLabels.c004'),
+  days: m('skill-calorie.workout-fieldLabels.c005'),
+  dayOfWeek: m('skill-calorie.workout-fieldLabels.c006'),
+  date: m('skill-calorie.workout-fieldLabels.c007'),
+  sessionIndex: m('skill-calorie.workout-fieldLabels.c008'),
+  sessionLabel: m('skill-calorie.workout-fieldLabels.c009'),
+  newLabel: m('skill-calorie.workout-fieldLabels.c010'),
+  timeStart: m('skill-calorie.workout-fieldLabels.c011'),
+  timeEnd: m('skill-calorie.workout-fieldLabels.c012'),
+  rest: m('skill-calorie.workout-fieldLabels.c013'),
+  movements: m('skill-calorie.workout-fieldLabels.c014'),
+  movement: m('skill-calorie.workout-fieldLabels.c015'),
+  oldMovement: m('skill-calorie.workout-fieldLabels.c016'),
+  newMovement: m('skill-calorie.workout-fieldLabels.c017'),
+  title: m('skill-calorie.workout-fieldLabels.c018'),
+  version: m('skill-calorie.workout-fieldLabels.c019'),
+  description: m('skill-calorie.workout-fieldLabels.c020'),
+  start_date: m('skill-calorie.workout-fieldLabels.c021'),
   // 撤销那条命令的 `writtenFields` 只报一个确认开关（它没有别的可写字段）；页上原来印成 `confirm`，
   // 是英文裸词。给它一个人话说法——「写入字段 1 项：确认执行」读得通，也不假装写了别的东西。
-  confirm: '确认执行',
+  confirm: m('skill-calorie.workout-fieldLabels.c022'),
 });
 
-registerFieldLabels(WORKOUT_DOMAIN, WORKOUT_FIELD_LABELS);
+/** 查训练计划域字段标签：命中给标签，缺项回退原键名（与 shared/fieldLabel.ts 同一口径）。 */
+export function workoutFieldLabel(key: string): string {
+  return workoutFieldLabels()[key] ?? key;
+}

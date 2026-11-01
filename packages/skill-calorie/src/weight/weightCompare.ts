@@ -7,6 +7,7 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { FetchError } from '../fetch/errors.js';
 import { shiftISODate, todayISO } from '../analysis/utils.js';
+import { m } from '../entries/index.js';
 
 const round = (n: number): number => Math.round(n);
 const round2 = (n: number): number => Math.round(n * 100) / 100;
@@ -67,11 +68,11 @@ function segRate(s: Seg): number {
 
 function comparePair(a: Seg, b: Seg): Compare {
   const delta = round2((b.avg as number) - (a.avg as number));
-  const direction = delta < -0.05 ? '下降' : delta > 0.05 ? '上升' : '持平';
+  const direction = delta < -0.05 ? m('skill-calorie.weight-weightCompare.c001') : delta > 0.05 ? m('skill-calorie.weight-weightCompare.c002') : m('skill-calorie.weight-weightCompare.c003');
   const speedA = -segRate(a);
   const speedB = -segRate(b);
   const diff = speedB - speedA;
-  return { deltaKg: delta, direction, rateDiffG: round(diff * 1000), speed: Math.abs(diff) <= 0.005 ? '持平' : diff < 0 ? '慢了' : '快了' };
+  return { deltaKg: delta, direction, rateDiffG: round(diff * 1000), speed: Math.abs(diff) <= 0.005 ? m('skill-calorie.weight-weightCompare.c004') : diff < 0 ? m('skill-calorie.weight-weightCompare.c005') : m('skill-calorie.weight-weightCompare.c006') };
 }
 
 function weekdayOf(iso: string): number {
@@ -115,23 +116,23 @@ export function ratePerDayText(kgPerDay: number): string {
   const g = kgPerDay * 1000;
   const abs = Math.abs(g);
   const shown = abs >= 100 ? Math.round(abs * 10) / 10 : Math.round(abs);
-  return (g > 0 ? '平均每天 +' : g < 0 ? '平均每天 -' : '平均每天 ') + shown + ' 克';
+  return (g > 0 ? m('skill-calorie.weight-weightCompare.c007') : g < 0 ? m('skill-calorie.weight-weightCompare.c008') : m('skill-calorie.weight-weightCompare.c009')) + shown + ' 克';
 }
 
 export function scenarioA1(db: DatabaseSync, today: string): ScenarioResult {
   const seg2 = shiftISODate(today, -29);
   const seg1End = shiftISODate(seg2, -1);
   const seg1Start = shiftISODate(seg1End, -29);
-  const a = seg(fetchRows(db, seg1Start, seg1End), '之前 30 天');
-  const b = seg(fetchRows(db, seg2, today), '最近 30 天');
+  const a = seg(fetchRows(db, seg1Start, seg1End), m('skill-calorie.weight-weightCompare.c010'));
+  const b = seg(fetchRows(db, seg2, today), m('skill-calorie.weight-weightCompare.c011'));
   if (!a || !b) throw new FetchError('数据不足(需两段各有记录)');
   return { segA: a, segB: b, compare: comparePair(a, b) };
 }
 
 export function scenarioA2(db: DatabaseSync, o: ScenarioOpts): ScenarioResult {
   if (!o.startA || !o.endA || !o.startB || !o.endB) throw new FetchError('自定义两段时间需要四个月日期（起／止 × 两段）');
-  const a = seg(fetchRows(db, o.startA, o.endA), '第一段');
-  const b = seg(fetchRows(db, o.startB, o.endB), '第二段');
+  const a = seg(fetchRows(db, o.startA, o.endA), m('skill-calorie.weight-weightCompare.c012'));
+  const b = seg(fetchRows(db, o.startB, o.endB), m('skill-calorie.weight-weightCompare.c013'));
   if (!a || !b) throw new FetchError('数据不足(某段无记录)');
   return { segA: a, segB: b, compare: comparePair(a, b) };
 }
@@ -139,18 +140,18 @@ export function scenarioA2(db: DatabaseSync, o: ScenarioOpts): ScenarioResult {
 export function scenarioA3(db: DatabaseSync, today: string): ScenarioResult {
   const thisMon = shiftISODate(today, -weekdayOf(today));
   const lastMon = shiftISODate(thisMon, -7);
-  const a = seg(fetchRows(db, lastMon, shiftISODate(lastMon, 6)), '上周');
-  const b = seg(fetchRows(db, thisMon, today), '本周');
+  const a = seg(fetchRows(db, lastMon, shiftISODate(lastMon, 6)), m('skill-calorie.weight-weightCompare.c014'));
+  const b = seg(fetchRows(db, thisMon, today), m('skill-calorie.weight-weightCompare.c015'));
   if (!a || !b) throw new FetchError('数据不足(本周/上周无记录)');
-  if (a.count < 3 || b.count < 3) return { segA: a, segB: b, compare: flatCompare(null, '—'), sampleWarning: '记录太少，每段要 3 条以上才能对比' };
+  if (a.count < 3 || b.count < 3) return { segA: a, segB: b, compare: flatCompare(null, '—'), sampleWarning: m('skill-calorie.weight-weightCompare.c016') };
   return { segA: a, segB: b, compare: comparePair(a, b) };
 }
 
 export function scenarioA4(db: DatabaseSync, today: string): ScenarioResult {
   const [as, ae] = monthRange(today, -1);
   const [bs, be] = monthRange(today, 0);
-  const a = seg(fetchRows(db, as, ae), '上月');
-  const b = seg(fetchRows(db, bs, be), '本月');
+  const a = seg(fetchRows(db, as, ae), m('skill-calorie.weight-weightCompare.c017'));
+  const b = seg(fetchRows(db, bs, be), m('skill-calorie.weight-weightCompare.c018'));
   if (!a || !b) throw new FetchError('数据不足(本月/上月无记录)');
   return { segA: a, segB: b, compare: comparePair(a, b) };
 }
@@ -160,8 +161,8 @@ export function scenarioA5(db: DatabaseSync, today: string, n: number): Scenario
   const bStart = shiftISODate(today, -(n - 1));
   const aEnd = shiftISODate(bStart, -1);
   const aStart = shiftISODate(aEnd, -(n - 1));
-  const a = seg(fetchRows(db, aStart, aEnd), '上一个 ' + n + ' 天');
-  const b = seg(fetchRows(db, bStart, today), '最近 ' + n + ' 天');
+  const a = seg(fetchRows(db, aStart, aEnd), m('skill-calorie.weight-weightCompare.c019', { p0: String(n) }));
+  const b = seg(fetchRows(db, bStart, today), m('skill-calorie.weight-weightCompare.c020', { p0: String(n) }));
   if (!a || !b) throw new FetchError('数据不足(两段需各有记录)');
   return { segA: a, segB: b, compare: comparePair(a, b) };
 }
@@ -174,26 +175,26 @@ export function sameDayCompare(db: DatabaseSync, today: string, monthsBack: numb
   const { hit, offset } = nearest(rows, target);
   if (!hit) {
     return {
-      segA: { ...emptySeg(label), range: '前后 3 天都没有记录' },
-      segB: singleSeg('今天', today, current),
+      segA: { ...emptySeg(label), range: m('skill-calorie.weight-weightCompare.c021') },
+      segB: singleSeg(m('skill-calorie.weight-weightCompare.c022'), today, current),
       compare: { deltaKg: null, direction: '—', rateDiffG: null, speed: '—' },
-      tolerance: { hit: false, target, note: target + ' 前后 3 天都没有记录' },
+      tolerance: { hit: false, target, note: m('skill-calorie.weight-weightCompare.c023', { p0: String(target) }) },
       extraRows: [],
     };
   }
   const delta = round2(current - hit[1]);
-  const direction = delta < -0.05 ? '下降' : delta > 0.05 ? '上升' : '持平';
+  const direction = delta < -0.05 ? m('skill-calorie.weight-weightCompare.c024') : delta > 0.05 ? m('skill-calorie.weight-weightCompare.c025') : m('skill-calorie.weight-weightCompare.c026');
   const windowDays = label === '一年前' ? 365 : label === '半年前' ? 182 : 91;
   const wRows = fetchRows(db, shiftISODate(today, -windowDays), today);
   const wAvg = wRows.length > 0 ? round2(mean(wRows.map((r) => r[1]))) : null;
   return {
     segA: singleSeg(label, hit[0], hit[1]),
-    segB: singleSeg('今天', today, current),
+    segB: singleSeg(m('skill-calorie.weight-weightCompare.c027'), today, current),
     compare: flatCompare(delta, direction),
     tolerance: { hit: true, target, hitDate: hit[0], offsetDays: offset as number },
     extraRows: [
-      { label: label + '那天', value: hit[0] + (offset ? '（前后 ' + offset + ' 天内的最近一条）' : '（精确命中）') },
-      { label: '最近 ' + windowDays + ' 天平均', value: wAvg !== null ? wAvg + ' kg' : '—' },
+      { label: m('skill-calorie.weight-weightCompare.c028', { p0: String(label) }), value: hit[0] + (offset ? m('skill-calorie.weight-weightCompare.c029', { p0: String(offset) }) : m('skill-calorie.weight-weightCompare.c030')) },
+      { label: m('skill-calorie.weight-weightCompare.c031', { p0: String(windowDays) }), value: wAvg !== null ? wAvg + ' kg' : '—' },
     ],
   };
 }
@@ -209,7 +210,7 @@ export function scenarioB1(db: DatabaseSync, today: string): ScenarioResult {
   const maxKg = Math.max(...rows.map((r) => r[1]));
   const heightM = h?.height_cm ? h.height_cm / 100 : null;
   const delta = round2(current - goal);
-  const direction = delta <= 0 ? '已达标' : '还差 ' + delta.toFixed(1) + ' kg';
+  const direction = delta <= 0 ? m('skill-calorie.weight-weightCompare.c032') : m('skill-calorie.weight-weightCompare.c033', { p0: String(delta.toFixed(1)) });
   const pctDone = maxKg > goal ? round1(((maxKg - current) / (maxKg - goal)) * 100) : null;
   const recent = fetchRows(db, shiftISODate(today, -29), today);
   let eta: string | null = null;
@@ -221,15 +222,15 @@ export function scenarioB1(db: DatabaseSync, today: string): ScenarioResult {
   const curBmi = bmi(current);
   const goalBmi = bmi(goal);
   return {
-    segA: { ...singleSeg('目标体重', '目标 ' + goal + ' kg', goal) },
-    segB: singleSeg('当前', (rows[rows.length - 1] as Row)[0], current),
+    segA: { ...singleSeg(m('skill-calorie.weight-weightCompare.c034'), m('skill-calorie.weight-weightCompare.c035', { p0: String(goal) }), goal) },
+    segB: singleSeg(m('skill-calorie.weight-weightCompare.c036'), (rows[rows.length - 1] as Row)[0], current),
     compare: { deltaKg: delta, direction, rateDiffG: null, speed: '—' },
     extraRows: [
       { label: '已完成', value: pctDone !== null ? pctDone + '%' : '—' },
-      { label: '预计达成', value: eta ?? '—' },
-      { label: '当前 BMI', value: curBmi !== null ? String(curBmi) : '—' },
-      { label: '目标 BMI', value: goalBmi !== null ? String(goalBmi) : '—' },
-      { label: '是否达标', value: delta <= 0 ? '✅ 已达标' : '未达标' },
+      { label: m('skill-calorie.weight-weightCompare.c037'), value: eta ?? '—' },
+      { label: m('skill-calorie.weight-weightCompare.c038'), value: curBmi !== null ? String(curBmi) : '—' },
+      { label: m('skill-calorie.weight-weightCompare.c039'), value: goalBmi !== null ? String(goalBmi) : '—' },
+      { label: m('skill-calorie.weight-weightCompare.c040'), value: delta <= 0 ? m('skill-calorie.weight-weightCompare.c041') : m('skill-calorie.weight-weightCompare.c042') },
     ],
   };
 

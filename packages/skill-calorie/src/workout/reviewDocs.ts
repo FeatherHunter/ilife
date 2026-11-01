@@ -33,13 +33,16 @@ import { sceneEnvelope } from '../shared/sceneEnvelope.js';
 import type { PlannedSession, ReviewView } from '../render/exercisePort.js';
 import { nowStamp } from '../render/receipt.js';
 import { reviewViewCss } from './reviewDocsCss.js';
+import { m } from '../entries/index.js';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；测试钉死一致）。 */
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
 
 /** head 的 `<title>`（整页模板住 `src/shared/docPage.ts`）。 */
-const DOC_TITLE = '卡路里·计划复盘';
+const DOC_TITLE = (): string => m('skill-calorie.workout-reviewDocs.c026');
+/** 复制日志第 3 段后半（哪两张表）。 */
+const REVIEW_SOURCE = (): string => m('skill-calorie.workout-reviewDocs.c027');
 
 /** 空值写法：缺值一律「—」（不空着、也不编 0）。 */
 const DASH = '—';
@@ -75,8 +78,8 @@ function toneOf(pct: number | null): string {
 /** 日期小字（老页 `.day-cell .date` 是 `M/D 周X`）：`M/D` 与 `周X` 各一枚 span，
  *  窄屏只留 `M/D`——手机上一格只有约 46px，两段挤一起读不动（见 `./reviewDocsCss.ts` 的 820 段）。 */
 function dateCell(iso: string): string {
-  const [, m, d] = iso.split('-');
-  return '<span class="ilr-cell-date">' + Number(m) + '/' + Number(d)
+  const [, mo, dd] = iso.split('-');
+  return '<span class="ilr-cell-date">' + Number(mo) + '/' + Number(dd)
     + '<span class="ilr-cell-dow"> 周' + DOW_CN[dowOf(iso)] + '</span></span>';
 }
 
@@ -108,11 +111,11 @@ function metricCard(label: string, pct: number | null, sub: string): string {
  *  原来「计划场次／已完成／完成率／动作完成率」四张卡说的是两件事，现在合成两张、各带一条进度条。 */
 function metrics(v: ReviewView): string {
   const movementSub = v.plannedMovements === 0
-    ? '这份计划没有登记动作'
-    : '计划 ' + v.plannedMovements + ' 个动作，实做对上 ' + v.hitMovements + ' 个';
+    ? m('skill-calorie.workout-reviewDocs.c001')
+    : m('skill-calorie.workout-reviewDocs.c002', { p0: String(v.plannedMovements), p1: String(v.hitMovements) });
   return '<div class="ilr-metrics">'
-    + metricCard('训练完成', v.completionPct, '计划 ' + v.plannedSessions + ' 场，练了 ' + v.hitSessions + ' 场')
-    + metricCard('动作命中', v.movementPct, movementSub)
+    + metricCard(m('skill-calorie.workout-reviewDocs.c003'), v.completionPct, m('skill-calorie.workout-reviewDocs.c004', { p0: String(v.plannedSessions), p1: String(v.hitSessions) }))
+    + metricCard(m('skill-calorie.workout-reviewDocs.c005'), v.movementPct, movementSub)
     + '</div>';
 }
 
@@ -130,6 +133,10 @@ function legendItem(dot: string, text: string): string {
 
 /** 每日完成情况：（老 `.heatmap`）一周一行、周一列打头。
  *  图例下面那句是「完成」的定义——原来住在口径段里，现在贴着图例走。 */
+function heatNote(shownDays: number, allDays: number): string {
+  return m('skill-calorie.workout-reviewDocs.c028', { p0: String(shownDays), p1: String(allDays) });
+}
+
 function heatmapSection(v: ReviewView, all: readonly string[]): string {
   const shown = all.slice(0, HEAT_CAP);
   const byDate = new Map(v.sessions.map((s) => [s.date, s]));
@@ -139,16 +146,16 @@ function heatmapSection(v: ReviewView, all: readonly string[]): string {
     const s = byDate.get(d);
     // 无安排＝「未排训练」：窗内没排到（含计划的休息日与计划外的日子）。不写「休息日」——
     // 库里的休息日是计划主动排的，与「这天压根没排」不是一回事，页面不替它们编同一句话。
-    if (s === undefined) return heatCell(d, 'ilr-rest', '未排训练');
-    return s.hit ? heatCell(d, 'ilr-done', '完成') : heatCell(d, 'ilr-miss', '未完成');
+    if (s === undefined) return heatCell(d, 'ilr-rest', m('skill-calorie.workout-reviewDocs.c006'));
+    return s.hit ? heatCell(d, 'ilr-done', m('skill-calorie.workout-reviewDocs.c007')) : heatCell(d, 'ilr-miss', '未完成');
   }).join('');
   const note = all.length > shown.length
-    ? '<p class="ilr-note">热力图只画前 ' + shown.length + ' 天（本窗共 ' + all.length + ' 天），其余见下表。</p>'
+    ? '<p class="ilr-note">' + heatNote(shown.length, all.length) + '</p>'
     : '';
   return '<section class="ilr-sec"><h2 class="ilr-sec-title">每日完成情况</h2>'
     + '<div class="ilr-hm">' + pads + cells + '</div>'
-    + '<div class="ilr-legend">' + legendItem('ilr-dot-done', '完成')
-    + legendItem('ilr-dot-miss', '未完成') + legendItem('ilr-dot-rest', '未排训练') + '</div>'
+    + '<div class="ilr-legend">' + legendItem('ilr-dot-done', m('skill-calorie.workout-reviewDocs.c008'))
+    + legendItem('ilr-dot-miss', '未完成') + legendItem('ilr-dot-rest', m('skill-calorie.workout-reviewDocs.c009')) + '</div>'
     + '<p class="ilr-legend-note">当天有运动记录就算完成，没排到训练的日子单独标出来</p>'
     + note + '</section>';
 }
@@ -157,11 +164,11 @@ function heatmapSection(v: ReviewView, all: readonly string[]): string {
 function detailRow(s: PlannedSession): Record<string, string> {
   return {
     date: s.date,
-    week: '第 ' + s.week + ' 周',
-    label: s.label === '' ? '训练' : s.label,
+    week: m('skill-calorie.workout-reviewDocs.c010', { p0: String(s.week) }),
+    label: s.label === '' ? m('skill-calorie.workout-reviewDocs.c011') : s.label,
     moves: s.movements.length === 0 ? DASH : s.movements.join('、'),
     actual: s.actualTypes.length === 0 ? DASH : s.actualTypes.join('、'),
-    hit: s.hit ? '完成' : '未完成',
+    hit: s.hit ? m('skill-calorie.workout-reviewDocs.c012') : '未完成',
   };
 }
 
@@ -180,7 +187,7 @@ function copyBlock(v: ReviewView): string {
         }),
       },
     },
-    title: '【calorie 计划复盘】',
+    title: m('skill-calorie.workout-reviewDocs.c013'),
     format: 'text',
   };
   return renderCopyBlock({
@@ -189,7 +196,7 @@ function copyBlock(v: ReviewView): string {
       envelope: sceneEnvelope(data.envelope),
       copyLog: copyLog({
         command: 'calorie-cmd-read calorie.view.exercise-review',
-        source: 'workout_plans ＋ exercise_log（只读）',
+        source: REVIEW_SOURCE(),
         actionAt: nowStamp(), version: DOC_VERSION,
       }),
     }),
@@ -206,25 +213,25 @@ export function buildReviewDoc(v: ReviewView): string {
     heatmapSection(v, all),
     renderDataTable({
       columns: [
-        { key: 'date', label: '日期' },
-        { key: 'week', label: '周次' },
-        { key: 'label', label: '训练' },
-        { key: 'moves', label: '计划动作' },
-        { key: 'actual', label: '实做' },
-        { key: 'hit', label: '完成' },
+        { key: 'date', label: m('skill-calorie.workout-reviewDocs.c014') },
+        { key: 'week', label: m('skill-calorie.workout-reviewDocs.c015') },
+        { key: 'label', label: m('skill-calorie.workout-reviewDocs.c016') },
+        { key: 'moves', label: m('skill-calorie.workout-reviewDocs.c017') },
+        { key: 'actual', label: m('skill-calorie.workout-reviewDocs.c018') },
+        { key: 'hit', label: m('skill-calorie.workout-reviewDocs.c019') },
       ],
       rows: v.sessions.map(detailRow),
-      caption: '每日明细',
-      emptyText: '这段时间没有安排训练',
+      caption: m('skill-calorie.workout-reviewDocs.c020'),
+      emptyText: m('skill-calorie.workout-reviewDocs.c021'),
     }),
   ];
   if (v.unhit.length > 0) {
     parts.push(renderDisclosure({
-      title: '未完成训练（' + v.unhit.length + ' 场）',
+      title: m('skill-calorie.workout-reviewDocs.c022', { p0: String(v.unhit.length) }),
       contentHtml: renderListRows({
         items: v.unhit.map((s) => ({
           left: s.date,
-          main: (s.label === '' ? '训练' : s.label) + (s.movements.length > 0 ? '：' + s.movements.join('、') : ''),
+          main: (s.label === '' ? m('skill-calorie.workout-reviewDocs.c023') : s.label) + (s.movements.length > 0 ? '：' + s.movements.join('、') : ''),
           right: '未完成',
         })),
       }),
@@ -232,9 +239,9 @@ export function buildReviewDoc(v: ReviewView): string {
   }
   parts.push(copyBlock(v));
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '计划复盘',
-    eyebrow: '健身计划',
+    docTitle: DOC_TITLE(),
+    title: m('skill-calorie.workout-reviewDocs.c024'),
+    eyebrow: m('skill-calorie.workout-reviewDocs.c025'),
     subtitle: v.planTitle === '' ? null : v.planTitle,
     content: parts.join(''),
     pageUi: true,

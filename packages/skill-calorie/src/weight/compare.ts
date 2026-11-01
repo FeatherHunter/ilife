@@ -38,10 +38,11 @@ import { bulletList, compareBlock, factStrip, verdict, weightUiCss } from './wei
 import type { CompareLinkInput } from './weightUi.js';
 import { runScenario, SCENARIO_LABELS } from './weightCompare3.js';
 import type { ExtraRow, ScenarioResult } from './weightCompare.js';
+import { m } from '../entries/index.js';
 
 const CMD_KEY = 'calorie.view.weight-compare';
 /** 复制日志第 3 段后半（老实物 `.footer .src` 的口径同源）。 */
-const COPY_SOURCE = 'weight_log（两段体重对比）';
+const COPY_SOURCE = (): string => m('skill-calorie.weight-compare.c056');
 
 /** 渲染本页的命令原文（复制日志第 3 段）：照抄可重跑。 */
 const commandOf = (params: Record<string, unknown>): string =>
@@ -133,7 +134,7 @@ const fmtDelta = (v: number | null | undefined): string => {
 };
 /** 方向词只看差值符号；差值为 0 才写持平——不借别的字段旁证方向。
  *  #510：原来另有一个箭头帮手（`↑`／`↓`）挂在差值卡的副行上，那是方向词的第二处 ⇒ 随副行一并删。 */
-const directionWord = (n: number): string => (n < 0 ? '下降' : n > 0 ? '上升' : '持平');
+const directionWord = (n: number): string => (n < 0 ? m('skill-calorie.weight-compare.c001') : n > 0 ? m('skill-calorie.weight-compare.c002') : m('skill-calorie.weight-compare.c003'));
 
 /** 一段的全部页上读数（两面共用同一形状；窗口面与情景面的字段名在这里对齐，别处不再各译一遍）。 */
 interface CompareSegment {
@@ -177,11 +178,11 @@ function rateOf(s: CompareSegment): number | null {
  *  「克」是全族统一单位（口径 §3.2：不出现 `g/天`、不 kg 与 g 两种单位并存）。 */
 const perDayG = (r: number): string => {
   const g = Math.round(r * 1000);
-  return g === 0 ? '每天 0 克' : '每天 ' + (g > 0 ? '+' : '-') + Math.abs(g) + ' 克';
+  return g === 0 ? m('skill-calorie.weight-compare.c004') : m('skill-calorie.weight-compare.c005', { p0: String(g > 0 ? '+' : '-'), p1: String(Math.abs(g)) });
 };
 
 /** 条数的中文短写（n=2 → 「两天」）；超出一只手就回阿拉伯数字＋单位。 */
-const cnDays = (n: number): string => (n === 1 ? '一天' : n === 2 ? '两天' : n + ' 天');
+const cnDays = (n: number): string => (n === 1 ? m('skill-calorie.weight-compare.c006') : n === 2 ? m('skill-calorie.weight-compare.c007') : m('skill-calorie.weight-compare.c008', { p0: String(n) }));
 
 /** **日期词**段名（窗口面的 `本期／对比期` ＋ 同日比那几页的 `今天`）：只有这种段名才谈得上
  *  「两段都只有一天」；锚点段（`历史最低`／`减重 5 kg 那天`）本来就不是可比区间，得逐段说名字。 */
@@ -189,8 +190,8 @@ const GENERIC_LABELS = ['本期', '对比期', '今天'];
 
 /** 段在**本页这一组对比**里的短名（结论句与每天变化量两处共用一处定义）：
  *  有口径名（`最近 30 天`／`今天`／`运动最少`）就用口径名，没有（中间那个 `本期`）就按平均数是哪一段说。 */
-const labelOfB = (b: CompareSegment, mid: string): string => (b.label === mid ? '最近这段' : b.label);
-const labelOfA = (a: CompareSegment, mid: string): string => (a.label === mid ? '对比那段' : a.label);
+const labelOfB = (b: CompareSegment, mid: string): string => (b.label === mid ? m('skill-calorie.weight-compare.c009') : b.label);
+const labelOfA = (a: CompareSegment, mid: string): string => (a.label === mid ? m('skill-calorie.weight-compare.c010') : a.label);
 
 /** 节奏判语：**两段日均速率的幅度差**（不是净变化之差——两段不等长时净变化之差不是速率）。
  *
@@ -208,7 +209,7 @@ interface Rhythm { readonly word: string; readonly comparable: boolean }
  *  「今天 算不出   减重 5 kg 那天 算不出」（一句不通的话）⇒ 走 `vertical`：
  *  一枚「标签 ＋ 值」占一行、标签在左值贴右，两段各自成行（`.wui-strip-v` 的读法）。 */
 function rhythmStrip(b: CompareSegment, a: CompareSegment, mid: string): string {
-  const val = (r: number | null): string => (r === null ? '算不出' : '平均' + perDayG(r));
+  const val = (r: number | null): string => (r === null ? m('skill-calorie.weight-compare.c011') : m('skill-calorie.weight-compare.c012', { p0: String(perDayG(r)) }));
   return factStrip([
     { k: labelOfB(b, mid), v: val(rateOf(b)) },
     { k: labelOfA(a, mid), v: val(rateOf(a)) },
@@ -220,10 +221,10 @@ function rhythmOf(a: CompareSegment, b: CompareSegment): Rhythm {
   if (ra === null || rb === null) {
     /* 原因只写「记录不足」这一个事实：单日段的原因（没有跨天跨度）已由页顶说明说清，
      * 若在这里再写一遍「只有一天，读不出快慢」，「快慢」一词会在同一句里出现三次（口径 §2 第一条）。 */
-    return { word: '看不出快慢', comparable: false };
+    return { word: m('skill-calorie.weight-compare.c013'), comparable: false };
   }
   const gap = Math.abs(rb) - Math.abs(ra);
-  const word = gap > RATE_EPS ? '幅度更大' : gap < -RATE_EPS ? '幅度更小' : '幅度相当';
+  const word = gap > RATE_EPS ? m('skill-calorie.weight-compare.c014') : gap < -RATE_EPS ? m('skill-calorie.weight-compare.c015') : m('skill-calorie.weight-compare.c016');
   return { word, comparable: true };
 }
 
@@ -238,10 +239,10 @@ function rhythmOf(a: CompareSegment, b: CompareSegment): Rhythm {
 const segmentCard = (s: CompareSegment): KpiCardInput => {
   const single = isSingleDay(s);
   const thin = !single && s.count < SAMPLE_MIN;
-  const badgeText = s.count === 0 ? '没有记录'
-    : single ? '只有一天'
-      : thin ? '记录太少（' + s.count + ' 条）'
-        : s.count === SAMPLE_MIN ? '记录齐全' : '记录齐全（' + s.count + ' 条）';
+  const badgeText = s.count === 0 ? m('skill-calorie.weight-compare.c017')
+    : single ? m('skill-calorie.weight-compare.c018')
+      : thin ? m('skill-calorie.weight-compare.c019', { p0: String(s.count) })
+        : s.count === SAMPLE_MIN ? m('skill-calorie.weight-compare.c020') : m('skill-calorie.weight-compare.c021', { p0: String(s.count) });
   return {
     label: s.label, value: fmtKg(s.avg), unit: 'kg', detail: rangeText(s),
     status: s.count === 0 ? 'empty' : single ? 'empty' : thin ? 'warn' : 'ok',
@@ -256,9 +257,9 @@ const segmentCard = (s: CompareSegment): KpiCardInput => {
  *  **方向只此一处**（#510 那条「方向只留一处」不变，只是那一处从差值卡搬到了连接件）。
  *  差值 = 近段均值 − 参照段均值（`deltaOf()` 是全页唯一出处），与块内左减右的读序一致。 */
 const compareLink = (delta: number | null): CompareLinkInput => {
-  if (delta === null) return { label: '对比', direction: '差值算不出', tone: 'plain' };
+  if (delta === null) return { label: m('skill-calorie.weight-compare.c022'), direction: m('skill-calorie.weight-compare.c023'), tone: 'plain' };
   return {
-    label: '对比', delta: fmtDelta(delta), direction: directionWord(delta),
+    label: m('skill-calorie.weight-compare.c024'), delta: fmtDelta(delta), direction: directionWord(delta),
     tone: delta > 0 ? 'warn' : delta === 0 ? 'plain' : '',
   };
 };
@@ -284,11 +285,11 @@ const rhythmCard = (r: Rhythm, a: CompareSegment, b: CompareSegment): KpiCardInp
   const thin = a.count < SAMPLE_MIN || b.count < SAMPLE_MIN;
   const rb = rateOf(b);
   return {
-    label: '每天变化',
-    value: rb === null ? MISSING : '平均' + perDayG(rb),
+    label: m('skill-calorie.weight-compare.c025'),
+    value: rb === null ? MISSING : m('skill-calorie.weight-compare.c026', { p0: String(perDayG(rb)) }),
     detail: r.word,
     status: !r.comparable ? 'empty' : thin ? 'warn' : 'ok',
-    statusText: r.comparable && !thin ? '两段可比' : '记录太少',
+    statusText: r.comparable && !thin ? m('skill-calorie.weight-compare.c027') : m('skill-calorie.weight-compare.c028'),
   };
 };
 
@@ -305,14 +306,15 @@ function premiseNotice(a: CompareSegment, b: CompareSegment, mid: string, anchor
   const singles = [b, a].filter((s) => isSingleDay(s));
   const msg: string[] = [];
   if (thin.length > 0) {
-    msg.push(thin.map((s) => s.label + ' ' + s.count + ' 条').join('／') + '，低于 ' + SAMPLE_MIN + ' 条');
+    const thinPhrase = thin.map((s) => m('skill-calorie.weight-compare.c029', { p0: String(s.label), p1: String(s.count) })).join('／');
+    msg.push(m('skill-calorie.weight-compare.c030', { p0: String(thinPhrase), p1: String(SAMPLE_MIN) }));
   }
-  if (anchorMiss) msg.push('参照日前后 3 天都没有体重记录');
+  if (anchorMiss) msg.push(m('skill-calorie.weight-compare.c031'));
   if (msg.length === 0) return null;
   const items: string[] = [];
   if (thin.length > 0) {
-    items.push('两段各要 ' + SAMPLE_MIN + ' 条以上，平均体重差才有参考价值。');
-    items.push('记录不够也照常出页，差值与每天变化量只当参考值看。');
+    items.push(m('skill-calorie.weight-compare.c032', { p0: String(SAMPLE_MIN) }));
+    items.push(m('skill-calorie.weight-compare.c033'));
   }
   const singleParts = singles.filter((s) => !thin.includes(s)).map((s) => s.label);
   /* 「两段都只有一天」只在**两段的段名都是日期词**时才说（`今天 vs 一年前今天`／`本周 vs 上周` 那种）。
@@ -321,14 +323,14 @@ function premiseNotice(a: CompareSegment, b: CompareSegment, mid: string, anchor
   const genericLabel = (s: CompareSegment): boolean => GENERIC_LABELS.indexOf(s.label) >= 0;
   if (singles.length === 2 && singles.every(genericLabel)) {
     /* `thin` 那一支已经把两个段名连同条数说了，这里不重复它们（本函数只出它自己那几分信息）。 */
-    if (singleParts.length === 0) items.push('两段都只有一天：平均数就是那天的读数，看不出快慢，也不代表趋势。');
+    if (singleParts.length === 0) items.push(m('skill-calorie.weight-compare.c034'));
   } else {
     for (const s of singles) {
       if (thin.includes(s)) continue;
-      items.push(s.label + '只有' + cnDays(s.count) + '：平均数就是那天的读数，看不出快慢，也不代表趋势。');
+      items.push(m('skill-calorie.weight-compare.c035', { p0: String(s.label), p1: String(cnDays(s.count)) }));
     }
   }
-  if (anchorMiss) items.push('差值暂时算不出来，其余读数照常给。');
+  if (anchorMiss) items.push(m('skill-calorie.weight-compare.c036'));
   return items.length === 0 ? null : { msg: msg.join('；') + '。', items };
 }
 
@@ -347,20 +349,20 @@ function sourceText(a: CompareSegment, b: CompareSegment): string {
   const last = dates.length > 0 ? dates.reduce((m, d) => (d > m ? d : m)) : rangeText(b);
   const window = first === last ? first : first + ' ~ ' + last;
   const count = rows.reduce((n, s) => n + s.count, 0);
-  return '📊 数据来源：体重记录 ｜ 窗口 ' + window + ' ｜ 共 ' + count + ' 条';
+  return m('skill-calorie.weight-compare.c037', { p0: String(window), p1: String(count) });
 }
 
 /* ── 两段表／结论／复制载荷（两面共用） ── */
 
 /* 表头人话（#481 整改缺陷 11）：`时段／均值／期初／期末` 是行话，换成读者一看就懂的词。
  * 键名（`period`／`avg`／`first`／`last`）是机器面，一字不改。 */
-const COMPARE_COLUMNS: DataTableColumn[] = [
-  { key: 'period', label: '哪一段' },
-  { key: 'range', label: '区间' },
-  { key: 'avg', label: '平均', align: 'right' },
-  { key: 'first', label: '开始时', align: 'right' },
-  { key: 'last', label: '结束时', align: 'right' },
-  { key: 'change', label: '变化', align: 'right' },
+const COMPARE_COLUMNS = (): DataTableColumn[] => [
+  { key: 'period', label: m('skill-calorie.weight-compare.c057') },
+  { key: 'range', label: m('skill-calorie.weight-compare.c058') },
+  { key: 'avg', label: m('skill-calorie.weight-compare.c059'), align: 'right' },
+  { key: 'first', label: m('skill-calorie.weight-compare.c060'), align: 'right' },
+  { key: 'last', label: m('skill-calorie.weight-compare.c061'), align: 'right' },
+  { key: 'change', label: m('skill-calorie.weight-compare.c062'), align: 'right' },
 ];
 
 /** 两段表：本期在上、对比期在下（与标题／结论的读序一致）；单日段的三列写「—」（表头与列数**不缩**，
@@ -375,10 +377,10 @@ function renderSegmentsTable(a: CompareSegment, b: CompareSegment, caption: stri
     change: isSingleDay(s) ? MISSING : fmtDelta(s.changeKg),
   });
   return renderDataTable({
-    columns: [...COMPARE_COLUMNS],
+    columns: [...COMPARE_COLUMNS()],
     rows: [rowOf(b), rowOf(a)],
     caption,
-    emptyText: '对比期没有记录（两段都有记录才能对比）',
+    emptyText: m('skill-calorie.weight-compare.c038'),
   });
 }
 
@@ -396,11 +398,11 @@ interface Conclusion { readonly sentence: string; readonly strip: string }
  *  `RATE_EPS` 同为显示口径）：不给数、不给方向词、不复述段名与均值；算不出来时只交代原因。 */
 function compareConclusion(a: CompareSegment, b: CompareSegment, delta: number | null, r: Rhythm, missReason: string, mid: string): Conclusion {
   const strip = rhythmStrip(b, a, mid);
-  if (delta === null) return { sentence: missReason + '，这一次的差值先给不出。', strip };
+  if (delta === null) return { sentence: m('skill-calorie.weight-compare.c039', { p0: String(missReason) }), strip };
   const abs = Math.abs(delta);
-  const sentence = abs < 0.5 ? '两段之间的差别很小，日常波动就能解释。'
-    : abs < 2 ? '两段之间的差别看得出来，但还不到要调整的程度。'
-      : '两段之间的差别不小，值得留意。';
+  const sentence = abs < 0.5 ? m('skill-calorie.weight-compare.c040')
+    : abs < 2 ? m('skill-calorie.weight-compare.c041')
+      : m('skill-calorie.weight-compare.c042');
   return { sentence, strip };
 }
 
@@ -440,7 +442,7 @@ function compareCopyArea(a: CompareSegment, b: CompareSegment, delta: number | n
   } as unknown as SerializableEnvelope;
   return copyArea({
     data: { envelope },
-    log: { envelope, copyLog: copyLog({ command, source: COPY_SOURCE, actionAt: nowStamp(), version: DOC_VERSION }) },
+    log: { envelope, copyLog: copyLog({ command, source: COPY_SOURCE(), actionAt: nowStamp(), version: DOC_VERSION }) },
   });
 }
 
@@ -492,7 +494,7 @@ function renderCurveBlock(curve: CompareCurve): string {
         yMax: curve.yMax,
         format: (v: number) => v.toFixed(1) + ' kg',
         showDots: true,
-        emptyText: '本段无体重记录',
+        emptyText: m('skill-calorie.weight-compare.c043'),
       },
     },
   });
@@ -530,7 +532,7 @@ function renderComparePage(core: CompareCore): string {
   // 页顶软横幅先于读数（老实物 `weight_compare.html:79` 的软横幅就在读数之上）：它讲的是「这些读数该怎么看」
   // 的前提，故排在对照块之前。首行是记录条数读数（共用提示块），**逐条前提**紧随其后成列表（一前提一行）。
   if (band) {
-    parts.push(notice({ title: '记录与说明', msg: band.msg, icon: 'warn' }));
+    parts.push(notice({ title: m('skill-calorie.weight-compare.c044'), msg: band.msg, icon: 'warn' }));
     parts.push(bulletList(band.items));
   }
   /* 两段对照块（本轮）：这一块就是原来页题副标题那句 `本期 X ~ Y vs 对比期 Z ~ W` 的形状版——
@@ -546,7 +548,7 @@ function renderComparePage(core: CompareCore): string {
     // `-no-left` 修饰类、那一列不占位。
     parts.push(renderListRows({
       items: core.extraRows.map((e) => ({ main: e.label, right: e.value })),
-      emptyText: '无补充对照',
+      emptyText: m('skill-calorie.weight-compare.c045'),
     }));
   }
   if (core.curve) parts.push(renderCurveBlock(core.curve));
@@ -554,7 +556,7 @@ function renderComparePage(core: CompareCore): string {
   parts.push(renderCaliberLine(sourceText(a, b)));
   parts.push(compareCopyArea(a, b, delta, rhythm, conclusion.sentence, core.command));
   return assembleDocPage({
-    docTitle: DOC_TITLE,
+    docTitle: DOC_TITLE(),
     title: core.title,
     eyebrow: '',
     subtitle: core.subtitle,
@@ -573,19 +575,19 @@ const sideToSegment = (label: string, s: CompareSide): CompareSegment => ({
 });
 
 export function buildWeightCompareDoc(v: WeightCompareView, command = ''): string {
-  const b = sideToSegment('本期', v.compare.currentPeriod);
-  const a = sideToSegment('对比期', v.compare.comparePeriod);
+  const b = sideToSegment(m('skill-calorie.weight-compare.c046'), v.compare.currentPeriod);
+  const a = sideToSegment(m('skill-calorie.weight-compare.c047'), v.compare.comparePeriod);
   return renderComparePage({
-    title: '体重对比',
+    title: m('skill-calorie.weight-compare.c048'),
     eyebrow: '',
     /* 页题副标题**空**（本轮）：原来这一行印的是 `本期 2026-09-01 ~ 2026-09-07 vs 对比期 2026-08-25 ~
      * 2026-08-31`——两段的段名与区间现在各住对照块里那枚卡（同一事实仍只有一处，见 `segmentCard`）。 */
     subtitle: '',
     /* #510：表题不再复述差值（审查席 S2 第三类：同一个数在值槽／表题／判语块印三处）——
      * 那一个数住对照块连接件的值槽与表内「变化」列，表题只说这张表是什么。 */
-    caption: () => '两期对比（本期在上）',
-    a, b, mid: '本期', extraRows: [], curve: null, anchorMiss: false,
-    missReason: '两段都要有记录才能对比', command,
+    caption: () => m('skill-calorie.weight-compare.c049'),
+    a, b, mid: m('skill-calorie.weight-compare.c050'), extraRows: [], curve: null, anchorMiss: false,
+    missReason: m('skill-calorie.weight-compare.c051'), command,
   });
 }
 
@@ -624,8 +626,10 @@ function onScreenLabel(scenario: string, rawLabel: string, deltaKg: number): str
 /** 表题那一份情景名（本轮）：`SCENARIO_LABELS` 的键与值一字不动（那是冻结表原文），
  *  上屏这一份去掉与 H1 逐字重复的 `对比体重：` 前缀，并把字面 ` vs ` 落成「与」——
  *  负责人第三轮第 3 条：正文（含表题）不许再出现 ` vs `；两段谁跟谁比由上面那块两段对照块出形状。 */
-const captionLabelOf = (scenarioLabel: string): string =>
-  scenarioLabel.replace('对比体重：', '').replace(' vs ', '与');
+const captionLabelOf = (scenarioLabel: string): string => {
+  const vsWord = m('skill-calorie.weight-compare.c063');
+  return scenarioLabel.replace('对比体重：', '').replace(' vs ', vsWord);
+};
 
 /** 情景入口：同一个命令＋一个锚点参数，锚点日期由算式派生。 */
 export function viewWeightCompareScenario(
@@ -681,7 +685,7 @@ export function buildScenarioCompareDoc(v: ScenarioCompareView, command = ''): s
   const delta = numOrNull(r.compare.deltaKg);
   const anchorMiss = Boolean(r.tolerance && !r.tolerance.hit);
   return renderComparePage({
-    title: '对比体重',
+    title: m('skill-calorie.weight-compare.c052'),
     /* 眉标整行删（本轮裁定）：原来印的是 `calorie.view.weight-compare · 情景 b8` 这类**内部代号**，
      * 与页题副标题逐字重复 ⇒ 权重域全族一律不出这一行（`assembleDocPage` 收空串即不出）。 */
     eyebrow: '',
@@ -692,11 +696,11 @@ export function buildScenarioCompareDoc(v: ScenarioCompareView, command = ''): s
     caption: () => captionLabelOf(v.scenarioLabel),
     /* 情景卡整张删（本轮裁定）：它印的参照段标签与页题副标题逐字重复，徽章「已找到这一天」是
      * 正常态（页能出，正说明那一天找到了）；真没找到时页顶软横幅已用「参照日前后 3 天都没有体重记录」据实说明。 */
-    a, b, mid: '当前',
+    a, b, mid: m('skill-calorie.weight-compare.c053'),
     extraRows: r.extraRows ?? [],
     curve: v.curve,
     anchorMiss,
-    missReason: anchorMiss ? '对比锚点 ±3 天内无记录' : (r.sampleWarning ?? '样本不足'),
+    missReason: anchorMiss ? m('skill-calorie.weight-compare.c054') : (r.sampleWarning ?? m('skill-calorie.weight-compare.c055')),
     command,
   });
 }

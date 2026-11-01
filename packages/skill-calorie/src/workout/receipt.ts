@@ -19,12 +19,12 @@ import { planCopyBlock } from './planCopyBlock.js';
 import { copyLog } from '../shared/copyArea.js';
 import { reconcileDisclosure, statusCard } from '../shared/receiptParts.js';
 import { commandLine } from '../shared/writeParts.js';
-import { fieldLabel } from '../shared/fieldLabel.js';
-import { WORKOUT_DOMAIN } from './fieldLabels.js';
+import { workoutFieldLabel } from './fieldLabels.js';
+import { m } from '../entries/index.js';
 
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
-const DOC_TITLE = '卡路里·健身计划回执';
+const DOC_TITLE = (): string => m('skill-calorie.workout-receipt.c027');
 
 /** 训练计划 10 条会改数据库的命令（具名键集；分派层只调本文件，不再写命令名字面量比较）。 */
 const WORKOUT_RECEIPT_KEYS: ReadonlySet<string> = new Set([
@@ -44,14 +44,14 @@ const WORKOUT_RECEIPT_KEYS: ReadonlySet<string> = new Set([
  *  唯独撤销整份计划（`plan-delete`）落库后这份计划已经不在库里——同一页别处写着「已撤销训练计划「…」／
  *  已删除（硬，不可恢复）」，兜底再说「已写入」就是同一页对同一动作自相矛盾（#435 第 1 条）。
  *  故按命令键派生：撤销类给一条自己的写法，其余 9 条取值一个字不动。 */
-const WRITTEN_DETAIL_FALLBACK = '已写入训练计划';
-const WRITTEN_DETAIL_BY_KEY: ReadonlyMap<string, string> = new Map([
-  ['calorie.workout.plan-delete', '已删除训练计划'],
+const WRITTEN_DETAIL_FALLBACK = (): string => m('skill-calorie.workout-receipt.c028');
+const WRITTEN_DETAIL_BY_KEY = (): ReadonlyMap<string, string> => new Map([
+  ['calorie.workout.plan-delete', m('skill-calorie.workout-receipt.c029')],
 ]);
 
 /** 本命令「状态」卡副行的取值：具名键用表里的，其余一律走兜底。 */
 function writtenDetailOf(key: string): string {
-  return WRITTEN_DETAIL_BY_KEY.get(key) ?? WRITTEN_DETAIL_FALLBACK;
+  return WRITTEN_DETAIL_BY_KEY().get(key) ?? WRITTEN_DETAIL_FALLBACK();
 }
 
 /** 写后计划现值（`getPlan` 正本；撤销后为空即明示已撤销，不编数）。 */
@@ -59,20 +59,20 @@ function currentPlanTable(db: DatabaseSync): string {
   const plan = getPlan(db);
   if (!plan.config && plan.sessions.length === 0) {
     return renderDataTable({
-      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
-      rows: [{ k: '当前计划', v: '计划已撤销（配置与训练安排均为空）' }],
-      caption: '写后现值',
+      columns: [{ key: 'k', label: m('skill-calorie.workout-receipt.c001') }, { key: 'v', label: m('skill-calorie.workout-receipt.c002') }],
+      rows: [{ k: m('skill-calorie.workout-receipt.c003'), v: m('skill-calorie.workout-receipt.c004') }],
+      caption: m('skill-calorie.workout-receipt.c005'),
     });
   }
   return renderDataTable({
-    columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+    columns: [{ key: 'k', label: m('skill-calorie.workout-receipt.c006') }, { key: 'v', label: m('skill-calorie.workout-receipt.c007') }],
     rows: [
-      { k: '计划', v: String(plan.config?.title ?? '未命名计划') },
-      { k: '训练场次', v: plan.sessions.length + ' 场' },
+      { k: m('skill-calorie.workout-receipt.c008'), v: String(plan.config?.title ?? m('skill-calorie.workout-receipt.c009')) },
+      { k: m('skill-calorie.workout-receipt.c010'), v: m('skill-calorie.workout-receipt.c011', { p0: String(plan.sessions.length) }) },
     ],
     // T351-v11：原来这条表标题写作「写后现值（`getPlan` 现值）」——反引号与内部函数名一起印在页上
     // （负责人 2026-09-15 第 ④ 条：文字不能出现不合理）。现值就是现值，页上不必交代它读的是哪个函数。
-    caption: '写后现值',
+    caption: m('skill-calorie.workout-receipt.c012'),
   });
 }
 
@@ -89,16 +89,16 @@ function itemsTable(receipt: CrudReceipt): string {
     }));
   const hasReason = rows.some((r) => r.reason !== '');
   const columns = [
-    { key: 'field', label: '事项' },
-    ...(hasReason ? [{ key: 'reason', label: '原因' }] : []),
-    { key: 'change', label: '结果' },
+    { key: 'field', label: m('skill-calorie.workout-receipt.c013') },
+    ...(hasReason ? [{ key: 'reason', label: m('skill-calorie.workout-receipt.c014') }] : []),
+    { key: 'change', label: m('skill-calorie.workout-receipt.c015') },
   ];
+  const fieldsText = receipt.writtenFields.join('、') || m('skill-calorie.workout-receipt.c016');
   return renderDataTable({
     columns,
     rows: hasReason ? rows : rows.map((r) => ({ ...r, reason: '—' })),
-    caption: '改动对照',
-    emptyText: '本次回执未带逐项明细（写入字段：'
-      + (receipt.writtenFields.join('、') || '未设置') + '）',
+    caption: m('skill-calorie.workout-receipt.c017'),
+    emptyText: m('skill-calorie.workout-receipt.c018', { p0: String(fieldsText) }),
   });
 }
 
@@ -112,12 +112,12 @@ function buildWorkoutReceiptDoc(
   const content = [
     renderKpiGrid([
       statusCard(receipt, writtenDetailOf(key)),
-      { label: '影响行数', value: receipt.affectedRows + ' 行', detail: '本次写入的行数' },
+      { label: m('skill-calorie.workout-receipt.c019'), value: m('skill-calorie.workout-receipt.c020', { p0: String(receipt.affectedRows) }), detail: m('skill-calorie.workout-receipt.c021') },
       {
-        label: '写入字段',
-        value: receipt.writtenFields.length + ' 项',
+        label: m('skill-calorie.workout-receipt.c022'),
+        value: m('skill-calorie.workout-receipt.c023', { p0: String(receipt.writtenFields.length) }),
         // 原键名走域标签表（`./fieldLabels.ts`，本域表唯一定义地）：页上不出 `plan` 这类英文裸词。
-        detail: receipt.writtenFields.map((f) => fieldLabel(WORKOUT_DOMAIN, f)).join('、') || '未设置',
+        detail: receipt.writtenFields.map((f) => workoutFieldLabel(f)).join('、') || m('skill-calorie.workout-receipt.c024'),
       },
     ]),
     currentPlanTable(db),
@@ -132,9 +132,9 @@ function buildWorkoutReceiptDoc(
     }),
   ].join('');
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '回执',
-    eyebrow: '健身计划',
+    docTitle: DOC_TITLE(),
+    title: m('skill-calorie.workout-receipt.c025'),
+    eyebrow: m('skill-calorie.workout-receipt.c026'),
     // 副标题只留一件事：这一页是哪一条写命令的回执（「定训练计划」）。**这次写成了什么**由下面那张
     // 状态卡说（`receipt.summary`，例如「已定训练计划：1 周 1 场」）——原来两处都印同一句，读两遍。
     subtitle: receipt.scene,

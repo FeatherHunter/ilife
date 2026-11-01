@@ -80,7 +80,7 @@ function splitNote(note: string | undefined): { detail: string; tempo: string } 
  *  处置：先把裸词按同一张表中文化，再删掉那个与第二段**同字**的词；其余逐字保留、不吞。
  *  例：`背 iso 主` → `背 主`（副行读作「背 主 · 孤立」）；`背 iso 补充` → `背 补充`；`胸整体` 一字不动。 */
 function detailWord(raw: string, typeZh: string): string {
-  const words = raw.split(/\s+/).filter((w) => w !== '').map((w) => TYPE_ZH[w] ?? w);
+  const words = raw.split(/\s+/).filter((w) => w !== '').map((w) => TYPE_ZH()[w] ?? w);
   if (typeZh !== '') {
     const dup = words.indexOf(typeZh);
     if (dup >= 0) words.splice(dup, 1);
@@ -95,7 +95,7 @@ function detailWord(raw: string, typeZh: string): string {
  *  `./workoutPlanCss.ts` 的 `.ilw-sub`，字号与共享口径行同值 12px／`--fg2`）。 */
 function subLine(move: PlanMovement): string {
   const type = cell(move.type);
-  const zh = type === DASH ? '' : TYPE_ZH[type] ?? type;
+  const zh = type === DASH ? '' : TYPE_ZH()[type] ?? type;
   const detail = detailWord(splitNote(move.note).detail, zh);
   const bits = [
     detail === '' ? '' : '<span class="ilw-sub-detail">' + escapeHtml(detail) + '</span>',

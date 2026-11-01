@@ -51,6 +51,7 @@ import { DB_FILENAME } from '../paths.js';
 import { DOC_SKILL, DOC_TITLE, DOC_VERSION, conclusionBlock, shapedConclusionBlock, signed } from './plateDocs.js';
 import { chip, factStrip, verdict, weightUiCss, windowStrip } from './weightUi.js';
 import { batchLogWeight, logWeight } from './records.js';
+import { m } from '../entries/index.js';
 
 const VIEW_KEY = 'calorie.view.weight';
 
@@ -114,7 +115,7 @@ function rangeTextOf(start: string, end: string): string {
 
 /** 日均变化的人话写法（口径：全族统一用「克」，不出现 `g/天`，零变化说「基本没变」）。 */
 function dailyGram(g: number): string {
-  return g === 0 ? '基本没变' : '平均每天约 ' + (g > 0 ? '+' : '') + g + ' 克';
+  return g === 0 ? m('skill-calorie.weight-log.c001') : m('skill-calorie.weight-log.c002', { p0: String(g > 0 ? '+' : ''), p1: String(g) });
 }
 
 /** 最新一条卡与较上次卡（老实物 `weight_dashboard.html` 的 todayKg／todayDate／todayDelta）。
@@ -125,24 +126,24 @@ function todayCards(t: WeightTrend, w: WeightDashboard): KpiCardInput[] {
   const delta = prevW === null || last === undefined ? null : Math.round((last.weightKg - prevW) * 10) / 10;
   return [
     {
-      label: w.start === w.end ? '今日体重' : '最新体重',
+      label: w.start === w.end ? m('skill-calorie.weight-log.c003') : m('skill-calorie.weight-log.c004'),
       value: last === undefined ? '—' : String(last.weightKg), unit: 'kg',
-      detail: last === undefined ? '这段时间没有记录' : last.date,
+      detail: last === undefined ? m('skill-calorie.weight-log.c005') : last.date,
       status: last === undefined ? 'empty' : 'ok',
-      statusText: last === undefined ? '没有记录' : '已记录',
+      statusText: last === undefined ? m('skill-calorie.weight-log.c006') : m('skill-calorie.weight-log.c007'),
     },
     {
-      label: '较上次', value: delta === null ? '—' : delta === 0 ? '0 kg' : signed(delta),
+      label: m('skill-calorie.weight-log.c008'), value: delta === null ? '—' : delta === 0 ? '0 kg' : signed(delta),
       /* 「持平」与值槽 `0 kg` 说的是同一件事 ⇒ 零变化不出徽章，只在副说明写「与上次一样」；
          升降才出徽章（那是状态），副说明改用「上次 X kg」把参照值说清。 */
       ...(prevW === null
         ? {}
-        : { detail: delta === 0 ? '与上次一样' : '上次 ' + prevW + ' kg' }),
+        : { detail: delta === 0 ? m('skill-calorie.weight-log.c009') : m('skill-calorie.weight-log.c010', { p0: String(prevW) }) }),
       ...(delta === null
-        ? { status: 'empty' as const, statusText: '无可比' }
+        ? { status: 'empty' as const, statusText: m('skill-calorie.weight-log.c011') }
         : delta === 0
           ? {}
-          : { status: (delta > 0 ? 'warn' : 'ok') as 'warn' | 'ok', statusText: delta > 0 ? '上升' : '下降' }),
+          : { status: (delta > 0 ? 'warn' : 'ok') as 'warn' | 'ok', statusText: delta > 0 ? m('skill-calorie.weight-log.c012') : m('skill-calorie.weight-log.c013') }),
     },
   ];
 }
@@ -169,41 +170,41 @@ function plateCards(w: WeightDashboard): { cards: KpiCardInput[]; facts: { k: st
   //   ① 「趋势上升／平均每天 …」原来整条进事实条：方向词与胶囊、徽章同说一件事，速率与「变化」卡
   //      说的是同一段 ⇒ 速率改住「变化」卡副说明（普通量值、纯文本进得去），这条事实删；
   //   ② 「目标 68 kg，还差 2.4 kg」里的差值正是「距目标」卡的值槽 ⇒ 事实条只留目标值（卡上没有的那半）；
-  if (w.weightGoal !== null) facts.push({ k: '目标', v: w.weightGoal + ' kg' });
-  if (w.weightGoal !== null && w.deadline !== null) facts.push({ k: '截止', v: w.deadline });
+  if (w.weightGoal !== null) facts.push({ k: m('skill-calorie.weight-log.c014'), v: w.weightGoal + ' kg' });
+  if (w.weightGoal !== null && w.deadline !== null) facts.push({ k: m('skill-calorie.weight-log.c015'), v: w.deadline });
   /* 「标签 ＋ 一句说明」那一型（#510 的 S2 整改）：原来与量值同住一条 `wui-strip`，两半同字号同色，
    * 读者把这句读成「图上没画目标线 目标值超出刻度」一整句。这一型单出一列，调用处走
    * `factStrip(…, asNote=true)`（说明那半退到 12px `--fg2` 不加粗）。 */
   const notes: { k: string; v: string }[] = [];
   if (w.weightGoal !== null && !w.curve.targetInRange) {
-    notes.push({ k: '图上没画目标线', v: '目标值超出刻度' });
+    notes.push({ k: m('skill-calorie.weight-log.c016'), v: m('skill-calorie.weight-log.c017') });
   }
   return { facts, notes,
     cards: [
     {
-      label: '窗口', value: String(windowDays(w)), unit: '天',
-      detail: single ? t.firstDate : '首 ' + t.firstWeight + ' → 末 ' + t.lastWeight + ' kg',
+      label: m('skill-calorie.weight-log.c018'), value: String(windowDays(w)), unit: m('skill-calorie.weight-log.c019'),
+      detail: single ? t.firstDate : m('skill-calorie.weight-log.c020', { p0: String(t.firstWeight), p1: String(t.lastWeight) }),
     },
     {
-      label: '均值', value: t.avgWeight + ' kg',
+      label: m('skill-calorie.weight-log.c021'), value: t.avgWeight + ' kg',
       /* 单点页：均值就是当天那一个读数（卡 1 已写），不再报一遍 ⇒ 只留一句「只有一天」。
          多天页：原副说明写「这段都在 X ~ Y kg 之间」，那两个数就是「窗口」卡副说明里的首末对
          （#510 实测：同一屏同一个 70.4 印了 4 遍）⇒ 那一句撤掉，均值卡只留均值这一个数。 */
-      ...(single ? { status: 'empty' as const, statusText: '只有一天' } : {}),
+      ...(single ? { status: 'empty' as const, statusText: m('skill-calorie.weight-log.c022') } : {}),
     },
     {
-      label: '变化', value: t.changeKg === 0 ? '0 kg' : signed(t.changeKg),
+      label: m('skill-calorie.weight-log.c023'), value: t.changeKg === 0 ? '0 kg' : signed(t.changeKg),
       // 速率住这里（#510：原来住结论块的事实条，与卡说的是同一段）；方向只看徽章一处。
       ...(single ? {} : { detail: dailyGram(t.dailyChangeG) }),
       status: single ? 'empty' : t.changeKg < 0 ? 'ok' : t.changeKg > 0 ? 'warn' : 'empty',
-      statusText: single ? '看不出变化' : t.trendCn,
+      statusText: single ? m('skill-calorie.weight-log.c024') : t.trendCn,
     },
     {
-      label: '距目标', value: w.gapKg === null ? '—' : w.gapKg === 0 ? '0 kg' : signed(w.gapKg),
+      label: m('skill-calorie.weight-log.c025'), value: w.gapKg === null ? '—' : w.gapKg === 0 ? '0 kg' : signed(w.gapKg),
       // 未设目标那一句走结论块的事实条；设置了的，目标值与截止日也走那里（卡上没有这两件）。
-      detail: w.weightGoal === null ? '还没有体重目标' : undefined,
+      detail: w.weightGoal === null ? m('skill-calorie.weight-log.c026') : undefined,
       status: w.gapKg === null ? 'empty' : w.gapKg <= 0 ? 'ok' : 'warn',
-      statusText: w.gapKg === null ? '未设目标' : w.gapKg <= 0 ? '已达目标' : '未达成',
+      statusText: w.gapKg === null ? m('skill-calorie.weight-log.c027') : w.gapKg <= 0 ? m('skill-calorie.weight-log.c028') : m('skill-calorie.weight-log.c029'),
     },
     ] };
 }
@@ -217,13 +218,13 @@ function plateCards(w: WeightDashboard): { cards: KpiCardInput[]; facts: { k: st
 function weightConclusion(w: WeightDashboard): { sentence: string; facts: { k: string; v: string }[] } {
   const t = w.trend;
   // 单点页：只有一句可说的（「看不出变化」），卡上也已各写一遍 ⇒ 这里不再复述日期／读数／目标差值。
-  if (w.curve.single) return { sentence: '只有这一天，看不出变化。再记一条就能比较。', facts: [] };
+  if (w.curve.single) return { sentence: m('skill-calorie.weight-log.c030'), facts: [] };
   const abs = Math.abs(t.changeKg);
   const sentence = abs < 0.5
-    ? '这一段的读数基本在一个水平上来回，日常波动就能解释。'
+    ? m('skill-calorie.weight-log.c031')
     : abs < 1.5
-      ? '这一段的挪动比日常波动大一些，再记一两周更看得清。'
-      : '这一段挪动的幅度不小，值得留意。';
+      ? m('skill-calorie.weight-log.c032')
+      : m('skill-calorie.weight-log.c033');
   const facts: { k: string; v: string }[] = [];
   // 均值／目标／截止三件各有各的住所（卡片值槽），本句不再另起一条复述（#510 去冗余）。
   return { sentence, facts };
@@ -262,22 +263,21 @@ export function buildWeightDoc(w: WeightDashboard, command: string): string {
   const t = w.trend;
   const spanDays = windowDays(w);
   const rangeText = rangeTextOf(w.start, w.end);
-  const sourceText = '体重记录 ｜ 窗口 ' + rangeText
-    + ' ｜ 共 ' + t.recordCount + ' 条';
+  const sourceText = m('skill-calorie.weight-log.c034', { p0: String(rangeText), p1: String(t.recordCount) });
   /* #505：原来的页头副标题是一句 `·` 串（`2026-08-09 ~ 2026-09-07 · 共 30 条 · 趋势上升`），
    * 拆成两处成形的东西：① 窗口条（`windowStrip()`＝两枚日期块 ＋ 一枚条数胶囊）＋ 方向胶囊（`chip()`）
    * 合成正文首件；② 副标题只留一句人话。条数两处同值（页脚口径行另有窗口与条数，属允许项 §二）。
    * #510：胶囊只装 2～4 字的状态词——单点那档原来把一句 13 字的句子（「只有一条记录，还看不出趋势」）
    * 塞进胶囊，改回状态词（那件事由结论块的判语说全）；方向词全屏只留胶囊与徽章两处。 */
   const trendChip = w.curve.single
-    ? chip('记录太少', 'plain')
-    : chip('趋势' + t.trendCn, t.trendCn === '上升' ? 'warn' : 'plain');
+    ? chip(m('skill-calorie.weight-log.c035'), 'plain')
+    : chip(m('skill-calorie.weight-log.c036', { p0: String(t.trendCn) }), t.trendCn === '上升' ? 'warn' : 'plain');
   const plate = plateCards(w);
   const parts: string[] = [
     // `weightUiCss()`＝本族形状词汇的样式，按口径放 `parts` 第一项（`assembleDocPage` 没有页内 CSS 入口）。
     weightUiCss(),
     // 窗口条 ＋ 趋势胶囊合成一件（形状与外边距全在 `weightUi.ts`：这里只给类名，正文零内联样式）。
-    '<div class="wui-window-block">' + windowStrip(w.start, w.end, '共 ' + t.recordCount + ' 条') + trendChip + '</div>',
+    '<div class="wui-window-block">' + windowStrip(w.start, w.end, m('skill-calorie.weight-log.c037', { p0: String(t.recordCount) })) + trendChip + '</div>',
     /* #510（审查席 S2）：今日盘原来渲染**两个 grid**（最新体重两卡 ＋ 体重盘四卡）——桌面 1200 下
      * 第一行两枚各 ~497px、第二行四枚各 ~245px，同一张网格里两行卡宽不同（手机两列看不出来）。
      * 六张卡合成一个网格：三列两行，行行同宽。 */
@@ -285,7 +285,7 @@ export function buildWeightDoc(w: WeightDashboard, command: string): string {
     // 老实物 weight_dashboard.html 的 h2 最近 7 天趋势：7 天内即近 7 天小图，否则全窗曲线。
     renderChartBlock({
       kind: 'line',
-      title: spanDays === 1 ? '今日体重曲线' : spanDays <= 7 ? '近 7 天体重曲线' : '体重曲线',
+      title: spanDays === 1 ? m('skill-calorie.weight-log.c038') : spanDays <= 7 ? m('skill-calorie.weight-log.c039') : m('skill-calorie.weight-log.c040'),
       input: {
         items: t.logs.map((l) => ({ label: l.date.slice(5), value: l.weightKg })),
         options: {
@@ -299,7 +299,7 @@ export function buildWeightDoc(w: WeightDashboard, command: string): string {
           highlightLast: true,
           ...(w.curve.single ? { markPoint: true as const } : {}),
           ...(w.curve.markLine === undefined ? {} : { markLine: w.curve.markLine }),
-          emptyText: '本窗无体重记录（' + w.start + ' ~ ' + w.end + '）',
+          emptyText: m('skill-calorie.weight-log.c041', { p0: String(w.start), p1: String(w.end) }),
         },
       },
     }),
@@ -315,18 +315,18 @@ export function buildWeightDoc(w: WeightDashboard, command: string): string {
     + factStrip(plate.notes, false, true, true)));
   parts.push(renderDataTable({
     columns: [
-      { key: 'date', label: '日期' },
-      { key: 'kg', label: '体重', align: 'right' },
-      { key: 'note', label: '备注' },
+      { key: 'date', label: m('skill-calorie.weight-log.c042') },
+      { key: 'kg', label: m('skill-calorie.weight-log.c043'), align: 'right' },
+      { key: 'note', label: m('skill-calorie.weight-log.c044') },
     ],
     rows: t.logs.map((l) => ({ date: l.date, kg: l.weightKg, note: l.note })),
-    caption: '体重记录',
-    emptyText: '这段时间还没有体重记录',
+    caption: m('skill-calorie.weight-log.c045'),
+    emptyText: m('skill-calorie.weight-log.c046'),
   }));
   parts.push(deliveryBlocks(weightEnvelope(w), command, sourceText));
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: spanDays === 1 ? '今日体重' : '体重总览',
+    docTitle: DOC_TITLE(),
+    title: spanDays === 1 ? m('skill-calorie.weight-log.c047') : m('skill-calorie.weight-log.c048'),
     eyebrow: '',
     // #542（#340 打回批）：副标题整行撤——窗口与条数已是正文首件 `windowStrip()`（两枚日期块 ＋
     // 条数胶囊）与页脚来源行，副标题再写一遍是百分百冗余。传空串即整段省略。
@@ -341,31 +341,31 @@ export function buildWeightDoc(w: WeightDashboard, command: string): string {
 function buildWeightEmptyDoc(start: string, end: string, command: string): string {
   const rangeText = rangeTextOf(start, end);
   const spanDays = Math.round((Date.parse(end) - Date.parse(start)) / 86400000) + 1;
-  const sourceText = '体重记录 ｜ 窗口 ' + rangeText + ' ｜ 共 0 条';
+  const sourceText = m('skill-calorie.weight-log.c049', { p0: String(rangeText) });
   const envelope: SerializableEnvelope = {
     version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: VIEW_KEY,
     data: { metrics: metricsOf({ recordCount: 0 }) },
   };
   const parts: string[] = [
     renderKpiGrid([
-      { label: '今日体重', value: '—', unit: 'kg', detail: '这段时间没有记录', status: 'empty', statusText: '没有记录' },
-      { label: '较上次', value: '—', detail: '没有记录，也没有上一次可比', status: 'empty', statusText: '无可比' },
+      { label: m('skill-calorie.weight-log.c050'), value: '—', unit: 'kg', detail: m('skill-calorie.weight-log.c051'), status: 'empty', statusText: m('skill-calorie.weight-log.c052') },
+      { label: m('skill-calorie.weight-log.c053'), value: '—', detail: m('skill-calorie.weight-log.c054'), status: 'empty', statusText: m('skill-calorie.weight-log.c055') },
     ]),
     // `weightUiCss()` 同放空窗页（同族同一套形状；空窗页没有形状件也要有同一份页内样式）。
     weightUiCss(),
     renderEmptyBlock({
-      title: '体重曲线',
-      text: '这段时间还没有体重记录',
-      hint: '说「记体重」记一条，曲线就有第一个点',
+      title: m('skill-calorie.weight-log.c056'),
+      text: m('skill-calorie.weight-log.c057'),
+      hint: m('skill-calorie.weight-log.c058'),
     }),
-    conclusionBlock('这段时间还没有体重记录，先记一条再看。'),
+    conclusionBlock(m('skill-calorie.weight-log.c059')),
     deliveryBlocks(envelope, command, sourceText),
   ];
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: spanDays === 1 ? '今日体重' : '体重总览',
+    docTitle: DOC_TITLE(),
+    title: spanDays === 1 ? m('skill-calorie.weight-log.c060') : m('skill-calorie.weight-log.c061'),
     eyebrow: '',
-    subtitle: '这段时间还没有体重记录',
+    subtitle: m('skill-calorie.weight-log.c062'),
     content: parts.join(''),
     pageUi: true,
   });
@@ -374,26 +374,31 @@ function buildWeightEmptyDoc(start: string, end: string, command: string): strin
 /** `calorie.weight.log` · 记体重（身高缺档只留 BMI null，不阻断录入）。 */
 export function writeWeightLog(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
   const kg = needNum(params, 'kg');
-  if (!(kg > 0) || kg > 500) fail(2, 'kg 须为 0..500');
+  if (!(kg > 0) || kg > 500) fail(2, m('skill-calorie.weight-log.c063'));
   const date = wday(params, 'date');
   if (date) assertISO(date, 'date');
   const r = logWeight(db, kg, optStr(params, 'note') ?? '', date, optStr(params, 'time'));
-  const bmiText = r.bmi === null ? 'BMI 待补身高（补档案：calorie-cmd-read calorie.profile.set)' : 'BMI ' + r.bmi;
-  return out(R('记体重', 'create', '已记体重 ' + r.kg + ' kg（' + bmiText + ' · ' + r.date + ' ' + r.time + '）', '记体重', 'weight_log (写库回执)', {
+  const bmiText = r.bmi === null ? m('skill-calorie.weight-log.c064') : 'BMI ' + r.bmi;
+  return out(R(m('skill-calorie.weight-log.c065'), 'create', m('skill-calorie.weight-log.c066', {
+    p0: String(r.kg),
+    p1: String(bmiText),
+    p2: String(r.date),
+    p3: String(r.time),
+  }), m('skill-calorie.weight-log.c067'), m('skill-calorie.weight-log.c068'), {
     recordId: r.id, ids: [r.id], writtenFields: [...F.weight],
-    items: [{ id: r.id, date: r.date, status: '成功', reason: '', detail: String(r.kg) }],
+    items: [{ id: r.id, date: r.date, status: m('skill-calorie.weight-log.c069'), reason: '', detail: String(r.kg) }],
   }));
 }
 
 /** `calorie.weight.batch` · 批量补录体重（同日已有记录即跳过，不覆盖）。 */
 export function writeWeightBatch(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
   const items = needArr(params, 'items');
-  if (items.length > 365) fail(2, 'items 至多 365 条');
+  if (items.length > 365) fail(2, m('skill-calorie.weight-log.c070'));
   const r = batchLogWeight(db, items.map((e) => {
     const o = (e ?? {}) as Record<string, unknown>;
     return { date: o['date'] === undefined ? undefined : String(o['date']), kg: o['kg'] as number | undefined };
   }));
-  return out(R('批量补录体重', 'create', '批量记体重：写入 ' + r.wrote + '，跳过 ' + r.skipped + '，失败 ' + r.failed, '批量补录体重', 'weight_log (写库回执)', {
+  return out(R(m('skill-calorie.weight-log.c071'), 'create', m('skill-calorie.weight-log.c072', { p0: String(r.wrote), p1: String(r.skipped), p2: String(r.failed) }), m('skill-calorie.weight-log.c073'), m('skill-calorie.weight-log.c074'), {
     noChange: r.wrote === 0, ids: [], idSource: 'condition',
     writtenFields: r.wrote > 0 ? [...F.weightBatch] : [],
     // 整页回执的明细表吃全量逐条（写入／跳过／失败三态，失败原因照旧；摘要与计数口径一字不动）。

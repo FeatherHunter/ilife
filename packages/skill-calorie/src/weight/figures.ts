@@ -12,6 +12,7 @@ import { ok, rejection } from '../analysis/result.js';
 import type { AnalysisResult } from '../analysis/result.js';
 /* #717 批④：1 公斤的热量当量正本住共用位（本处原写裸字面 7700）。 */
 import { KCAL_PER_KG } from '../shared/kcalPerKg.js';
+import { m } from '../entries/index.js';
 
 const round = (n: number): number => Math.round(n);
 const round1 = (n: number): number => Math.round(n * 10) / 10;
@@ -57,7 +58,7 @@ export function weightTrend(db: DatabaseSync, startDate: string, endDate?: strin
     'SELECT date AS d, weight_kg AS w, note AS n FROM weight_log WHERE date >= ? AND date <= ? ORDER BY date ASC',
   ).all(start, end) as unknown as Array<{ d: string; w: number; n: string | null }>;
   const rows: Array<[string, number, string | null]> = rowsRaw.map((r) => [r.d, r.w, r.n]);
-  if (rows.length === 0) return rejection('无体重记录（' + start + ' ~ ' + end + '）');
+  if (rows.length === 0) return rejection(m('skill-calorie.weight-figures.c001', { p0: String(start), p1: String(end) }));
   const ws = rows.map((r) => r[1]);
   const avg = ws.reduce((a, b) => a + b, 0) / ws.length;
   const first = rows[0] as [string, number, string | null];
@@ -66,7 +67,7 @@ export function weightTrend(db: DatabaseSync, startDate: string, endDate?: strin
   const span = daysBetween(first[0], last[0]) + 1;
   const dailyRate = (change / span) * 1000;
   const trend = Math.abs(dailyRate) < 10 ? 'stable' : change > 0 ? 'up' : 'down';
-  const trendCn = trend === 'stable' ? '平稳' : trend === 'up' ? '上升' : '下降';
+  const trendCn = trend === 'stable' ? m('skill-calorie.weight-figures.c002') : trend === 'up' ? m('skill-calorie.weight-figures.c003') : m('skill-calorie.weight-figures.c004');
   return ok({
     recordCount: rows.length,
     avgWeight: round1(avg),
@@ -81,7 +82,7 @@ export function weightTrend(db: DatabaseSync, startDate: string, endDate?: strin
     trend,
     trendCn,
     logs: rows.map((r) => ({ date: r[0], weightKg: r[1], note: r[2] ?? '' })),
-  }, '体重趋势 ' + rows.length + ' 条记录，趋势 ' + trendCn);
+  }, m('skill-calorie.weight-figures.c005', { p0: String(rows.length), p1: String(trendCn) }));
 }
 
 export interface CompareSide { start: string; end: string; avgWeight: number; firstWeight: number | null; firstDate: string | null; lastWeight: number | null; changeKg: number; count?: number }
@@ -108,12 +109,12 @@ export function weightCompare(db: DatabaseSync, startDate: string, endDate: stri
   const avg2 = periodAvg(db, s2, e2);
   const fl1 = periodFirstLast(db, s1, e1);
   const fl2 = periodFirstLast(db, s2, e2);
-  if (avg1 === null || avg1 === undefined || avg2 === null || avg2 === undefined) return rejection('对比时间段内无体重记录，无法对比');
+  if (avg1 === null || avg1 === undefined || avg2 === null || avg2 === undefined) return rejection(m('skill-calorie.weight-figures.c006'));
   const avgDiff = avg1 - avg2;
   const change1 = fl1.first && fl1.lastW !== null && fl1.lastW !== undefined ? fl1.lastW - fl1.first.w : 0;
   const change2 = fl2.first && fl2.lastW !== null && fl2.lastW !== undefined ? fl2.lastW - fl2.first.w : 0;
   const changeDiff = change1 - change2;
-  const speedLabel = changeDiff > 0 ? (change1 < 0 ? '较上期加速下降' : '较上期加速上升') : changeDiff < 0 ? (change1 < 0 ? '较上期减速下降' : '较上期减速上升') : '节奏与上期相同';
+  const speedLabel = changeDiff > 0 ? (change1 < 0 ? m('skill-calorie.weight-figures.c007') : m('skill-calorie.weight-figures.c008')) : changeDiff < 0 ? (change1 < 0 ? m('skill-calorie.weight-figures.c009') : m('skill-calorie.weight-figures.c010')) : m('skill-calorie.weight-figures.c011');
   const side = (s: string, e: string, avg: number, fl: { first: { w: number; d: string } | null; lastW: number | null }, ch: number): CompareSide => ({
     start: s,
     end: e,
@@ -129,7 +130,7 @@ export function weightCompare(db: DatabaseSync, startDate: string, endDate: stri
     speedLabel,
     currentPeriod: side(s1, e1, avg1, fl1, change1),
     comparePeriod: side(s2, e2, avg2, fl2, change2),
-  }, '本期 vs 对比期: ' + (avgDiff >= 0 ? '+' : '') + round1(avgDiff) + 'kg');
+  }, m('skill-calorie.weight-figures.c012', { p0: String(avgDiff >= 0 ? '+' : ''), p1: String(round1(avgDiff)) }));
 }
 
 export interface WeightGoalInfo { weightGoal: number; deadline: string | null; daysLeft: number | null; calorieAdjustment: number | null }
@@ -163,11 +164,11 @@ export interface WeightMilestone { currentWeight: number; currentDate: string; w
 
 export function weightMilestone(db: DatabaseSync, today: string = todayISO()): AnalysisResult<WeightMilestone> {
   const info = getWeightGoalInfo(db, today);
-  if (!info) return rejection('未设定体重目标，请说「设定体重目标 XXkg」');
+  if (!info) return rejection(m('skill-calorie.weight-figures.c013'));
   const cur = db.prepare('SELECT weight_kg, date FROM weight_log ORDER BY date DESC LIMIT 1').get() as
     | { weight_kg: number; date: string }
     | undefined;
-  if (!cur) return rejection('未记录体重');
+  if (!cur) return rejection(m('skill-calorie.weight-figures.c014'));
   const gap = cur.weight_kg - info.weightGoal;
   const cutoff = shiftISODate(today, -30);
   const raw30 = db.prepare('SELECT weight_kg AS w, date AS d FROM weight_log WHERE date >= ? ORDER BY date ASC').all(cutoff) as unknown as Array<{ w: number; d: string }>;
@@ -186,12 +187,12 @@ export function weightMilestone(db: DatabaseSync, today: string = todayISO()): A
   if (estDays && estDays > 0) {
     try { estDate = shiftISODate(cur.date, Math.round(estDays)); } catch { estDate = null; }
   }
-  let status = '无法评估';
+  let status = m('skill-calorie.weight-figures.c015');
   if (info.daysLeft !== null && info.daysLeft !== undefined && actualDaily) {
     const required = info.daysLeft > 0 ? gap / info.daysLeft : 0;
     const actualPace = gap > 0 ? -actualDaily : actualDaily;
     const diff = actualPace - required;
-    status = Math.abs(diff) < 0.02 ? '进度正常' : diff > 0 ? '进度超前' : '进度偏慢';
+    status = Math.abs(diff) < 0.02 ? m('skill-calorie.weight-figures.c016') : diff > 0 ? m('skill-calorie.weight-figures.c017') : m('skill-calorie.weight-figures.c018');
   }
   return ok({
     currentWeight: round1(cur.weight_kg),
@@ -204,7 +205,7 @@ export function weightMilestone(db: DatabaseSync, today: string = todayISO()): A
     estDays: estDays ? round(estDays) : null,
     status,
     calorieAdjustment: info.calorieAdjustment,
-  }, '目标进度: ' + status);
+  }, m('skill-calorie.weight-figures.c019', { p0: String(status) }));
 }
 
 export interface WeightVolatility { recordCount: number; dailyStdKg: number; weeklyStdKg: number; label: string; status: 'ok' | 'warn' | 'error'; anomalies: Array<{ date: string; diffKg: number; note: string }> }
@@ -215,7 +216,7 @@ export function weightVolatility(db: DatabaseSync, startDate: string, endDate?: 
     'SELECT date AS d, weight_kg AS w, note AS n FROM weight_log WHERE date >= ? AND date <= ? ORDER BY date ASC',
   ).all(start, end) as unknown as Array<{ d: string; w: number; n: string | null }>;
   const rows: Array<[string, number, string | null]> = rowsRaw.map((r) => [r.d, r.w, r.n]);
-  if (rows.length < 3) return rejection('记录不足（' + start + ' ~ ' + end + '），需要至少3条记录');
+  if (rows.length < 3) return rejection(m('skill-calorie.weight-figures.c020', { p0: String(start), p1: String(end) }));
   const ws = rows.map((r) => r[1]);
   const stdDev = stdev(ws);
   const byWeek = new Map<string, number[]>();
@@ -233,9 +234,9 @@ export function weightVolatility(db: DatabaseSync, startDate: string, endDate?: 
     const diff = cur[1] - prev[1];
     if (Math.abs(diff) > 0.5) anomalies.push({ date: cur[0], diffKg: round1(diff), note: cur[2] ?? '' });
   }
-  const label = stdDev < 0.3 ? '波动正常' : stdDev < 0.6 ? '波动中等' : '波动较大';
+  const label = stdDev < 0.3 ? m('skill-calorie.weight-figures.c021') : stdDev < 0.6 ? m('skill-calorie.weight-figures.c022') : m('skill-calorie.weight-figures.c023');
   const status = stdDev < 0.3 ? 'ok' : stdDev < 0.6 ? 'warn' : 'error';
-  return ok({ recordCount: rows.length, dailyStdKg: round2(stdDev), weeklyStdKg: round2(weekStd), label, status, anomalies }, '波动: ' + label);
+  return ok({ recordCount: rows.length, dailyStdKg: round2(stdDev), weeklyStdKg: round2(weekStd), label, status, anomalies }, m('skill-calorie.weight-figures.c024', { p0: String(label) }));
 }
 
 /** 折线 `labels:'select'` 相邻退化口径（本族日期轴六处共用，一处定义）。

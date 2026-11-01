@@ -30,6 +30,7 @@ import { CALORIE_CONFIG_DEFAULTS, loadCalorieConfig } from '../config.js';
 import { fail } from '../shared/params.js';
 import { invokeXunji, xunjiExitToCmd } from './xunjiRunner.js';
 import type { XunjiCall } from './xunjiRunner.js';
+import { m } from '../entries/index.js';
 
 export { xunjiExitToCmd };
 export type { XunjiCall };
@@ -59,8 +60,7 @@ export interface LandCall {
 function crossSkillCliPath(relative: readonly string[], label: string): string {
   const cli = join(dirname(fileURLToPath(import.meta.url)), ...relative);
   if (!existsSync(cli)) {
-    fail(4, label + '出口不在（' + cli + '）：先跑对应包的构建再调本命令；'
-      + '出口按包布局推断（设置页已不再提供这一项，见 #748 定稿）。');
+    fail(4, m('skill-calorie.workout-landRunner.c001', { p0: String(label), p1: String(cli) }));
   }
   return cli;
 }
@@ -69,7 +69,7 @@ function crossSkillCliPath(relative: readonly string[], label: string): string {
 export function scheduleCliPath(): string {
   return crossSkillCliPath(
     ['..', '..', '..', 'skill-schedule', 'dist', 'cli', 'cmd_read.js'],
-    '作息',
+    m('skill-calorie.workout-landRunner.c002'),
   );
 }
 
@@ -77,7 +77,7 @@ export function scheduleCliPath(): string {
 export function memoCliPath(): string {
   return crossSkillCliPath(
     ['..', '..', '..', 'skill-memo-ilife', 'dist', 'cli', 'cmd_read.js'],
-    '备忘',
+    m('skill-calorie.workout-landRunner.c003'),
   );
 }
 
@@ -94,11 +94,15 @@ function envelopeData(text: string, step: string, key: string): unknown {
   try {
     parsed = JSON.parse(text);
   } catch (e) {
-    fail(4, step + '回执解析失败（' + key + ' 的 stdout 不是 JSON）：' + (e instanceof Error ? e.message : String(e)));
+    fail(4, m('skill-calorie.workout-landRunner.c004', {
+      p0: String(step),
+      p1: String(key),
+      p2: String(e instanceof Error ? e.message : String(e)),
+    }));
   }
   const o = parsed as { data?: unknown } | null;
   if (typeof o !== 'object' || o === null || typeof (o as { data?: unknown }).data !== 'object') {
-    fail(4, step + '回执解析失败（' + key + ' 的 stdout 缺 data 位）');
+    fail(4, m('skill-calorie.workout-landRunner.c005', { p0: String(step), p1: String(key) }));
   }
   return (o as { data: unknown }).data;
 }
@@ -114,13 +118,17 @@ function invokeOther(cli: string, key: string, params: Record<string, unknown>, 
   const err = (r as { error?: unknown }).error;
   if (err !== undefined && err !== null) {
     const msg = err instanceof Error ? err.message : String(err);
-    fail(4, step + '调起失败（含超时 ' + Math.round(timeoutMs / 1000) + ' 秒）：' + msg);
+    fail(4, m('skill-calorie.workout-landRunner.c006', {
+      p0: String(step),
+      p1: String(Math.round(timeoutMs / 1000)),
+      p2: String(msg),
+    }));
   }
   const code = typeof r.status === 'number' ? r.status : 1;
   const tail = stderrTail(r);
   const text = String(r.stdout ?? '').trim();
   if (text === '') {
-    if (code === 0) fail(4, step + '回执解析失败（' + key + ' 退 0 但 stdout 为空）');
+    if (code === 0) fail(4, m('skill-calorie.workout-landRunner.c007', { p0: String(step), p1: String(key) }));
     return { code, data: null, stderr: tail, stubbed: false };
   }
   let data: unknown = null;

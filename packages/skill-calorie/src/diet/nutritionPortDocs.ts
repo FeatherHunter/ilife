@@ -71,6 +71,7 @@ import type {
   NutritionRatioView,
   TodayWaterView,
 } from './nutritionPort.js';
+import { m } from '../entries/index.js';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；测试钉死一致）。 */
 const DOC_VERSION = '0.1.0';
@@ -78,13 +79,13 @@ const DOC_SKILL = 'calorie';
 
 /** 本文件各页共用的 head 标题（整页模板住 `../shared/docPage.ts`，标题走参数）。
  *  域口径与 `todayDocs`／`reviewDocs`／`libraryDocs`／`rankingDocs`／`render/dietDocs` 一致。 */
-const DOC_TITLE = '卡路里 饮食';
+const DOC_TITLE = (): string => m('skill-calorie.diet-nutritionPortDocs.c137');
 
 /** 眉标里的族名（§五 第 1 行左槽；**不出命令键**——裁定 1）。 */
-const EYEBROW = '卡路里 · 饮食';
+const EYEBROW = (): string => m('skill-calorie.diet-nutritionPortDocs.c138');
 
 /** 类型徽章（§五 第 1 行右槽）：⑥ 类四页同属营养／饮水／总览。 */
-const BADGE = '营养饮水总览';
+const BADGE = (): string => m('skill-calorie.diet-nutritionPortDocs.c139');
 
 function fmt(n: number | null | undefined): string {
   if (n === null || n === undefined) return '—';
@@ -184,13 +185,13 @@ export function buildEmptyWindowDoc(input: EmptyWindowDocInput): string {
     docCopy(envelope, input.command, DB_FILENAME + ' ｜ ' + input.blockTitle),
   ].join('');
   return assembleDocPage({
-    docTitle: DOC_TITLE,
+    docTitle: DOC_TITLE(),
     title: input.title,
     pageUi: true,
-    eyebrow: EYEBROW,
+    eyebrow: EYEBROW(),
     subtitle: input.emptyText,
     metaLeft: input.metaLeft,
-    badge: BADGE,
+    badge: BADGE(),
     /* 结论小字行（B 线第 3 行）**这一页不出**（用户 2026-09-25 图报同一句话说了两遍）：
        它此前拿的就是 `emptyText`，与纸里那张空态块的 `text` 逐字同一句 ⇒ 一页之内同一件事说两次，
        而且那句带窗口区间与「（不编数）」，压在标题下又是一整行。空态的信息全在纸里那一次给足
@@ -223,11 +224,11 @@ export const ENTRY_OVERVIEW = 'overview';
 
 /** 3 维配比的均衡档（老实物 `nutrition_ratio.html` 的 statusBadge 三档文案逐字）。
  *  档位判定只做一处（裁定 6 的同源口径）：取数层给的 `balance` 一个取值，本件只查表取文案。 */
-const BALANCE = {
-  good: { text: '均衡', badge: '✓ 均衡', status: 'ok' },
-  warn: { text: '失衡', badge: '⚠ 失衡', status: 'warn' },
-  bad: { text: '严重失衡', badge: '✗ 严重失衡', status: 'danger' },
-} as const;
+const BALANCE = (): Record<string, { text: string; badge: string; status: 'ok' | 'warn' | 'danger' }> => ({
+  good: { text: m('skill-calorie.diet-nutritionPortDocs.c140'), badge: m('skill-calorie.diet-nutritionPortDocs.c141'), status: 'ok' },
+  warn: { text: m('skill-calorie.diet-nutritionPortDocs.c142'), badge: m('skill-calorie.diet-nutritionPortDocs.c143'), status: 'warn' },
+  bad: { text: m('skill-calorie.diet-nutritionPortDocs.c144'), badge: m('skill-calorie.diet-nutritionPortDocs.c145'), status: 'danger' },
+});
 
 /** 三大营养素在一页里的公共口径（下标、名称、显示色、每克千卡）——**一处定义**，
  *  卡／环图／图例条／对比表四处都从它派生，不再各写一份三元组。
@@ -262,7 +263,8 @@ function macroReadings(v: NutritionRatioView): {
  *  #496 · 原文是「30% · 目标 —g」——`—` 是空值占位，紧贴着 `g` 会被读成「30 就是 30 克」
  *  （审查件第 76 条）。没设目标时明说没设；有目标时把单位写成「克」，不再让 `g` 单挂在一个数后面。 */
 function goalDetail(pct: number, targetG: number | null): string {
-  return '占 ' + pct + '%，' + (targetG === null ? '未设定每天目标' : '每天目标 ' + fmt(targetG) + ' 克');
+  const targetPhrase = targetG === null ? m('skill-calorie.diet-nutritionPortDocs.c001') : m('skill-calorie.diet-nutritionPortDocs.c002', { p0: String(fmt(targetG)) });
+  return m('skill-calorie.diet-nutritionPortDocs.c003', { p0: String(pct), p1: String(targetPhrase) });
 }
 
 /** 热量来源占比那张环图的共用口径句：说清环上的数是**按营养素折算**出来的、与另一处的
@@ -273,10 +275,12 @@ function goalDetail(pct: number, targetG: number | null): string {
  *  跟 1,916 不是同一个数，两处并排互相矛盾（审查件第 77、83 条）。改法：中心改标**折算合计**
  *  （环图自己的分母），图下把这句口径说出来，读者不用自己算。 */
 function kcalNote(totalCalorie: number | null): string {
-  const half = '占比按营养素折算：蛋白和碳水都是每克 4 千卡，脂肪是每克 9 千卡，环上的数就是这三个数折算出来的热量。';
+  const half = m('skill-calorie.diet-nutritionPortDocs.c004');
   if (totalCalorie === null) return half;
-  return half + '它与按每条记录的热量合计出来的总摄入（' + totalCalorie.toLocaleString()
-    + ' 千卡）不是同一个数——记录里的热量是各条自己报的值。';
+  return m('skill-calorie.diet-nutritionPortDocs.c005', {
+    p0: String(half),
+    p1: String(totalCalorie.toLocaleString()),
+  });
 }
 
 /** 配比页结论句（§五 第 3 行，句内含本页读数）：本窗总摄入 ＋ 天数 ＋ 均衡档位。
@@ -284,7 +288,11 @@ function kcalNote(totalCalorie: number | null): string {
  *  #587 裁定4：7507（按每条记录热量合计）与 6832（按营养素折算合计）两数都保留；
  *  副题注明“热量合计”（本句括号）、环中心保持“折算合计”，消除“打架”观感。不断言口径（不判哪个对）。 */
 function ratioSummary(v: NutritionRatioView, balance: { text: string }): string {
-  return '这 ' + v.days + ' 天共摄入 ' + v.totalCalorie.toLocaleString() + ' 千卡（热量合计），三大营养素配比' + balance.text + '。';
+  return m('skill-calorie.diet-nutritionPortDocs.c006', {
+    p0: String(v.days),
+    p1: String(v.totalCalorie.toLocaleString()),
+    p2: String(balance.text),
+  });
 }
 
 /** 营养配比区块的开关（`buildNutritionRatioBlock` 的第二参；`#275` 微修按编排者 2026-09-15 指令加）。
@@ -325,7 +333,7 @@ interface NutritionRatioBlockOptions {
  *  末尾那一节复制区（数据 ＋ 日志）的开关见 `NutritionRatioBlockOptions`：**缺省带**（老调用点逐字节不变），
  *  宿主页自己出复制区时传 `{ copy: false }` 把它关掉——一张页上只该有一个复制区。 */
 export function buildNutritionRatioBlock(v: NutritionRatioView, opts?: NutritionRatioBlockOptions): string {
-  const balance = BALANCE[v.balance];
+  const balance = BALANCE()[v.balance];
   /* 一张营养素一张卡：值／占比／每日目标都从上面那份 `macroReadings` 取（卡片槽吃纯文本，
      环图与对比表吃同一份读数，三处不可能各自算一遍）。 */
   const macros = macroReadings(v);
@@ -334,13 +342,13 @@ export function buildNutritionRatioBlock(v: NutritionRatioView, opts?: Nutrition
     /* #511 · 三张配比卡的值单位原写 `g`（审查件第 78 条那一处的同族写法），改「克」与下面那张
        推荐范围对比表统一；说明行早已是「每天目标 N 克」（#496 的 `goalDetail`）。 */
     anchored('sec-kpi', renderKpiGrid([
-      ...macros.map((m, i) => ({
-        label: m.name, value: String(m.g), unit: '克', detail: goalDetail(m.pct, targets[i] as number | null),
+      ...macros.map((macro, i) => ({
+        label: macro.name, value: String(macro.g), unit: '克', detail: goalDetail(macro.pct, targets[i] as number | null),
       })),
       {
-        label: '总摄入', value: String(v.totalCalorie), unit: '卡',
+        label: m('skill-calorie.diet-nutritionPortDocs.c007'), value: String(v.totalCalorie), unit: m('skill-calorie.diet-nutritionPortDocs.c008'),
         /* #587 门禁收口：`·` 并列改逗号（R1），形状仍走 KPI 卡现成件。 */
-        detail: '共 ' + v.days + ' 天，' + balance.text,
+        detail: m('skill-calorie.diet-nutritionPortDocs.c009', { p0: String(v.days), p1: String(balance.text) }),
         status: balance.status,
         statusText: balance.badge,
       },
@@ -352,15 +360,15 @@ export function buildNutritionRatioBlock(v: NutritionRatioView, opts?: Nutrition
     // 热量来源占比（老实物的饼图＋自定义图例 → 冻结 donut：中心给折算合计，占比由 showPercent 给）。
     parts.push(anchored('sec-chart', renderChartBlock({
       kind: 'donut',
-      title: '热量来源占比（按营养素折算）',
+      title: m('skill-calorie.diet-nutritionPortDocs.c010'),
       input: {
         items: [
-          { label: '蛋白（千卡）', value: v.proteinG * 4 },
-          { label: '碳水（千卡）', value: v.carbG * 4 },
-          { label: '脂肪（千卡）', value: v.fatG * 9 },
+          { label: m('skill-calorie.diet-nutritionPortDocs.c011'), value: v.proteinG * 4 },
+          { label: m('skill-calorie.diet-nutritionPortDocs.c012'), value: v.carbG * 4 },
+          { label: m('skill-calorie.diet-nutritionPortDocs.c013'), value: v.fatG * 9 },
         ],
         options: {
-          showPercent: true, centerLabel: '折算合计（千卡）', centerValue: String(Math.round(folded)),
+          showPercent: true, centerLabel: m('skill-calorie.diet-nutritionPortDocs.c014'), centerValue: String(Math.round(folded)),
         },
       },
     })));
@@ -368,62 +376,65 @@ export function buildNutritionRatioBlock(v: NutritionRatioView, opts?: Nutrition
        移植项 31 要的「推荐范围刻度叠在实际值条上」由下面那张表承担（条上只表达实际值比例，
        刻度按占位是文字 —— 公共层的条只收一个 `pct`，硬塞两个刻度会变成假读数，故不塞）。 */
     parts.push(renderDistributionRows({
-      rows: macros.map((m) => ({
+      rows: macros.map((macro) => ({
         /* #647 · 名称栏形状（见 `NutritionRatioBlockOptions.shortNames`）：短名化那一位打开时只出短名，
            范围交给紧跟着的那张对比表；老写法原样保留，供未开这一位的宿主页逐字节不变。 */
         label: opts?.shortNames === true
-          ? m.name
-          : m.name + '（推荐 ' + m.range.min + '–' + m.range.max + '%）',
-        value: m.pct + '%',
-        pct: m.pct,
-        color: m.color,
+          ? macro.name
+          : m('skill-calorie.diet-nutritionPortDocs.c015', {
+            p0: String(macro.name),
+            p1: String(macro.range.min),
+            p2: String(macro.range.max),
+          }),
+        value: macro.pct + '%',
+        pct: macro.pct,
+        color: macro.color,
       })),
     }));
     parts.push(renderCaliberLine(kcalNote(v.totalCalorie)));
   } else {
-    parts.push(renderEmptyBlock({ title: '热量来源占比', text: '本窗总热量为 0，占比画不出来（不编数）' }));
+    parts.push(renderEmptyBlock({ title: m('skill-calorie.diet-nutritionPortDocs.c016'), text: m('skill-calorie.diet-nutritionPortDocs.c017') }));
   }
   // 推荐范围对比（下限/上限按总热量占比换算：蛋白/碳水 4kcal/g · 脂肪 9kcal/g；沿老模板）。
   // #631 · 距范围列与状态列同口径（t605 D3）：三态判定一律按占比 pct（与状态列同一谓词），
   // 不按克数比（克数经 round 取整，边界上会与 pct 判定分家）；符号统一为 ↓/✓/↑，与状态列同符号系，
   // 差值取到侧界的绝对克数（下限侧 minG-g／上限侧 g-maxG），数字本身不动（minG/maxG/g/pct 算式不变）。
-  const rows = macros.map((m) => {
-    const minG = Math.round((v.totalCalorie * m.range.min) / 100 / m.perG);
-    const maxG = Math.round((v.totalCalorie * m.range.max) / 100 / m.perG);
-    const below = m.pct < m.range.min;
-    const above = m.pct > m.range.max;
+  const rows = macros.map((macro) => {
+    const minG = Math.round((v.totalCalorie * macro.range.min) / 100 / macro.perG);
+    const maxG = Math.round((v.totalCalorie * macro.range.max) / 100 / macro.perG);
+    const below = macro.pct < macro.range.min;
+    const above = macro.pct > macro.range.max;
     const inRange = !below && !above;
-    const gap = above ? '↑ ' + (m.g - maxG) + ' 克' : (below ? '↓ ' + (minG - m.g) + ' 克' : '✓');
+    const gap = above ? '↑ ' + (macro.g - maxG) + ' 克' : (below ? '↓ ' + (minG - macro.g) + ' 克' : '✓');
     /* #511 · 下限／上限两列原写 `10%（48g）`——`g` 是英文缩写，且括号里的克数是**整窗合计**、
        读者会当成一天的量（审查件第 78 条）。单位改「克」，并把「这一列是几天合计」写进格子；
        表题再补一句同口径，免得逐格都读一遍才知道分母。 */
-    const span = ' 克 / ' + v.days + ' 天';
+    const span = m('skill-calorie.diet-nutritionPortDocs.c018', { p0: String(v.days) });
     return {
-      name: m.name,
-      actual: m.g + ' 克（' + m.pct + '%）',
-      lower: m.range.min + '%（' + minG + span + '）',
-      upper: m.range.max + '%（' + maxG + span + '）',
+      name: macro.name,
+      actual: m('skill-calorie.diet-nutritionPortDocs.c019', { p0: String(macro.g), p1: String(macro.pct) }),
+      lower: macro.range.min + '%（' + minG + span + '）',
+      upper: macro.range.max + '%（' + maxG + span + '）',
       gap,
-      status: inRange ? '✓ 在范围内' : (below ? '↓ 偏低' : '↑ 偏高'),
+      status: inRange ? m('skill-calorie.diet-nutritionPortDocs.c020') : (below ? m('skill-calorie.diet-nutritionPortDocs.c021') : m('skill-calorie.diet-nutritionPortDocs.c022')),
     };
   });
   parts.push(anchored('sec-table', renderDataTable({
     columns: [
-      { key: 'name', label: '营养素' },
-      { key: 'actual', label: '实际', align: 'right' },
-      { key: 'lower', label: '下限', align: 'right' },
-      { key: 'upper', label: '上限', align: 'right' },
-      { key: 'gap', label: '距范围', align: 'right' },
-      { key: 'status', label: '状态' },
+      { key: 'name', label: m('skill-calorie.diet-nutritionPortDocs.c023') },
+      { key: 'actual', label: m('skill-calorie.diet-nutritionPortDocs.c024'), align: 'right' },
+      { key: 'lower', label: m('skill-calorie.diet-nutritionPortDocs.c025'), align: 'right' },
+      { key: 'upper', label: m('skill-calorie.diet-nutritionPortDocs.c026'), align: 'right' },
+      { key: 'gap', label: m('skill-calorie.diet-nutritionPortDocs.c027'), align: 'right' },
+      { key: 'status', label: m('skill-calorie.diet-nutritionPortDocs.c028') },
     ],
     rows,
     /* #511 · 表题补一句「克数都是这 N 天合计」（审查件第 78 条：括号里的 48 克是 7 天合计，
        读者会当成一天）。 */
-    caption: '推荐范围对比（克数均为这 ' + v.days + ' 天合计）',
-    emptyText: '本窗无配比数据',
+    caption: m('skill-calorie.diet-nutritionPortDocs.c029', { p0: String(v.days) }),
+    emptyText: m('skill-calorie.diet-nutritionPortDocs.c030'),
   })));
-  parts.push(sourceFootnote('📊 数据来源 · 饮食记录 · ' + v.start + ' → ' + v.end
-    + '（按营养素折算）'));
+  parts.push(sourceFootnote(m('skill-calorie.diet-nutritionPortDocs.c031', { p0: String(v.start), p1: String(v.end) })));
   /* 末尾那一节复制区（开关见 `NutritionRatioBlockOptions`）：
      缺省带（老调用点＝#273 的 `buildNutritionRatioBlock(ratio)` 逐字节不变）；
      宿主页自己出复制区时传 `{ copy: false }` ⇒ 这一节整节不出（不给命令原文时同样整节不出）。 */
@@ -432,21 +443,21 @@ export function buildNutritionRatioBlock(v: NutritionRatioView, opts?: Nutrition
       totalCalorie: v.totalCalorie, proteinG: v.proteinG, proteinPct: v.proteinPct,
       carbG: v.carbG, carbPct: v.carbPct, fatG: v.fatG, fatPct: v.fatPct,
       targetProteinG: v.targetProteinG, targetCarbG: v.targetCarbG, targetFatG: v.targetFatG,
-    })), opts.command, DB_FILENAME + ' ｜ 饮食记录（按营养素折算）'));
+    })), opts.command, m('skill-calorie.diet-nutritionPortDocs.c032', { p0: String(DB_FILENAME) })));
   }
   return parts.join('');
 }
 
 /** 营养配比**整页**（`calorie.view.nutrition-ratio`）。`command`＝本次命令原文（复制日志第 4 段）。 */
 export function buildNutritionRatioDoc(v: NutritionRatioView, command?: string): string {
-  const balance = BALANCE[v.balance];
+  const balance = BALANCE()[v.balance];
   const body = [
     dietUiCss(),
-    windowStrip(v.start, v.end, v.days + ' 天'),
+    windowStrip(v.start, v.end, m('skill-calorie.diet-nutritionPortDocs.c033', { p0: String(v.days) })),
     renderTocBlock({ items: [
-      { id: 'sec-kpi', text: '配比读数' },
-      { id: 'sec-chart', text: '热量来源占比' },
-      { id: 'sec-table', text: '推荐范围对比' },
+      { id: 'sec-kpi', text: m('skill-calorie.diet-nutritionPortDocs.c034') },
+      { id: 'sec-chart', text: m('skill-calorie.diet-nutritionPortDocs.c035') },
+      { id: 'sec-table', text: m('skill-calorie.diet-nutritionPortDocs.c036') },
     ] }),
     /* 末尾那一节复制区由**区块**出（把本次命令原文交给它）——页脚不再另出一节 ⇒ 一张页只有一个复制区。
        命令原文只在这一处给，页头与区块不可能各编一条。
@@ -457,15 +468,15 @@ export function buildNutritionRatioDoc(v: NutritionRatioView, command?: string):
       : { command, shortNames: true }),
   ].join('');
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '🥗 营养配比',
+    docTitle: DOC_TITLE(),
+    title: m('skill-calorie.diet-nutritionPortDocs.c037'),
     pageUi: true,
     /* #496 · 原副题「3 维宏量营养素 ⚠ 失衡」把引擎里的叫法（3 维／宏量营养素）带给读者
        （审查件第 75 条）；#275 起这一槽改承载**结论句**（§五 第 3 行：句内含本页读数）。 */
-    eyebrow: EYEBROW,
+    eyebrow: EYEBROW(),
     subtitle: ratioSummary(v, balance),
-    metaLeft: '查营养配比（饮食）',
-    badge: BADGE,
+    metaLeft: m('skill-calorie.diet-nutritionPortDocs.c038'),
+    badge: BADGE(),
     summary: ratioSummary(v, balance),
     content: body,
     charts: v.totalCalorie > 0,
@@ -482,10 +493,8 @@ export function buildNutritionRatioDoc(v: NutritionRatioView, command?: string):
 function detailCaliber(detail: boolean): string {
   /* #587 门禁收口：`、`／`；`并列改逗号句号（R5／R2），形状仍走口径行现成件；两支仍各写一句（t511 ② 正文差异不断言口径）。 */
   return detail
-    ? renderCaliberLine('这张表把每项营养素的摄入量，每天平均，每天推荐量，完成度和状态并排列出。'
-      + '完成度是每天平均摄入除以每天推荐量。食品库里查不到营养值的食物不进合计。')
-    : renderCaliberLine('看的是微量营养素摄入水平：膳食纤维越高越好，钠和糖越低越好。'
-      + '「每天平均」是整窗累计除以天数，不是某一天的值。');
+    ? renderCaliberLine(m('skill-calorie.diet-nutritionPortDocs.c039'))
+    : renderCaliberLine(m('skill-calorie.diet-nutritionPortDocs.c040'));
 }
 
 /** 营养素深度结论句（§五 第 3 行）：匹配餐数 ＋ 三项日均 ＋ 缺数据食物数。
@@ -495,12 +504,21 @@ function detailSummary(v: NutritionDetailView, detail: boolean): string {
   const fiber = v.items[0];
   const sodium = v.items[1];
   const sugar = v.items[2];
-  return '「' + (detail ? '看营养素明细' : '看营养素深度') + '」本窗匹配到 ' + v.matchedMeals + ' 餐。膳食纤维日均 '
-    + fmt(fiber?.avg) + ' ' + (fiber?.unit ?? '') + '，钠日均 ' + fmt(sodium?.avg) + ' ' + (sodium?.unit ?? '')
-    + '，糖日均 ' + fmt(sugar?.avg) + ' ' + (sugar?.unit ?? '')
-    + (v.missingFoods.length > 0
-      ? '。另有 ' + v.missingFoods.length + ' 种食物在食品库查不到营养值，未计入。'
-      : '。');
+  const entryName = detail ? m('skill-calorie.diet-nutritionPortDocs.c041') : m('skill-calorie.diet-nutritionPortDocs.c042');
+  const missingPhrase = v.missingFoods.length > 0
+    ? m('skill-calorie.diet-nutritionPortDocs.c043', { p0: String(v.missingFoods.length) })
+    : '。';
+  return m('skill-calorie.diet-nutritionPortDocs.c044', {
+    p0: String(entryName),
+    p1: String(v.matchedMeals),
+    p2: String(fmt(fiber?.avg)),
+    p3: String(fiber?.unit ?? ''),
+    p4: String(fmt(sodium?.avg)),
+    p5: String(sodium?.unit ?? ''),
+    p6: String(fmt(sugar?.avg)),
+    p7: String(sugar?.unit ?? ''),
+    p8: String(missingPhrase),
+  });
 }
 
 /** 营养素深度区块（3 项固定推荐量逐项一行：名称＋推荐＋累计＋日均＋占比）。
@@ -510,41 +528,43 @@ function detailSummary(v: NutritionDetailView, detail: boolean): string {
 export function buildNutritionDetailBlock(v: NutritionDetailView): string {
   const parts: string[] = [
     anchored('sec-kpi', renderKpiGrid([
-      { label: '匹配餐数', value: String(v.matchedMeals), unit: '餐', detail: v.start + ' 至 ' + v.end },
-      { label: '缺数据食物', value: String(v.missingFoods.length), unit: '种', detail: '未计入合计' },
-      { label: '覆盖营养素', value: String(v.items.length), unit: '项', detail: '膳食纤维 钠 糖（每天推荐量固定，不随饮食变化）' },
+      { label: m('skill-calorie.diet-nutritionPortDocs.c045'), value: String(v.matchedMeals), unit: m('skill-calorie.diet-nutritionPortDocs.c046'), detail: m('skill-calorie.diet-nutritionPortDocs.c047', { p0: String(v.start), p1: String(v.end) }) },
+      { label: m('skill-calorie.diet-nutritionPortDocs.c048'), value: String(v.missingFoods.length), unit: m('skill-calorie.diet-nutritionPortDocs.c049'), detail: m('skill-calorie.diet-nutritionPortDocs.c050') },
+      { label: m('skill-calorie.diet-nutritionPortDocs.c051'), value: String(v.items.length), unit: m('skill-calorie.diet-nutritionPortDocs.c052'), detail: m('skill-calorie.diet-nutritionPortDocs.c053') },
     ])),
     anchored('sec-table', renderDataTable({
       columns: [
-        { key: 'label', label: '营养素' },
-        { key: 'value', label: '累计（' + v.days + ' 天）', align: 'right' },
-        { key: 'avg', label: '每天平均', align: 'right' },
-        { key: 'good', label: '每天推荐', align: 'right' },
-        { key: 'pct', label: '完成度', align: 'right' },
-        { key: 'status', label: '状态' },
+        { key: 'label', label: m('skill-calorie.diet-nutritionPortDocs.c054') },
+        { key: 'value', label: m('skill-calorie.diet-nutritionPortDocs.c055', { p0: String(v.days) }), align: 'right' },
+        { key: 'avg', label: m('skill-calorie.diet-nutritionPortDocs.c056'), align: 'right' },
+        { key: 'good', label: m('skill-calorie.diet-nutritionPortDocs.c057'), align: 'right' },
+        { key: 'pct', label: m('skill-calorie.diet-nutritionPortDocs.c058'), align: 'right' },
+        { key: 'status', label: m('skill-calorie.diet-nutritionPortDocs.c059') },
       ],
       rows: v.items.map((it) => ({
         label: it.label,
         value: it.value + it.unit,
-        avg: it.avg + it.unit + '/天',
+        avg: m('skill-calorie.diet-nutritionPortDocs.c060', { p0: String(it.avg + it.unit) }),
         good: it.good,
         pct: it.pct + '%',
-        status: it.status === 'ok' ? '✓ 够了' : '↑ 超标',
+        status: it.status === 'ok' ? m('skill-calorie.diet-nutritionPortDocs.c061') : m('skill-calorie.diet-nutritionPortDocs.c062'),
       })),
-      caption: '完成度＝每天平均摄入 ÷ 每天推荐量',
-      emptyText: '本窗无营养素数据',
+      caption: m('skill-calorie.diet-nutritionPortDocs.c063'),
+      emptyText: m('skill-calorie.diet-nutritionPortDocs.c064'),
     })),
   ];
   if (v.missingFoods.length > 0) {
     // 老实物的 `.warn-box` 一句话（名单逐字列出，不另开名单表）。
     parts.push(warnBox(
-      '缺数据食物（共 ' + v.missingFoods.length + ' 种，未计入）',
-      '⚠ 缺数据食物 ' + v.missingFoods.length + ' 种，未在食品库找到营养数据，未计入：' + v.missingFoods.join('，'),
-      '建议用「存食品」补录',
+      m('skill-calorie.diet-nutritionPortDocs.c065', { p0: String(v.missingFoods.length) }),
+      m('skill-calorie.diet-nutritionPortDocs.c066', {
+        p0: String(v.missingFoods.length),
+        p1: String(v.missingFoods.join('，')),
+      }),
+      m('skill-calorie.diet-nutritionPortDocs.c067'),
     ));
   }
-  parts.push(sourceFootnote('📊 数据来源 · 饮食记录 × 食品库 · ' + v.start + ' → ' + v.end
-    + '（按食物名折算）'));
+  parts.push(sourceFootnote(m('skill-calorie.diet-nutritionPortDocs.c068', { p0: String(v.start), p1: String(v.end) })));
   /* 块层不给复制区（集成归宿主页）——整页那一支由 `buildNutritionDetailDoc` 出。 */
   return parts.join('');
 }
@@ -566,6 +586,7 @@ export function buildNutritionDetailDoc(v: NutritionDetailView, entry?: string, 
   /* #511 · 页头按进来的那条唤醒词出：`看营养素明细` 那一支出「营养素明细」，`看营养素深度`
      那一支（不给标记）出「营养素深度」——两条入口都留，不再出两张一样的页（审查件第 80 条）。 */
   const detail = entry === ENTRY_DETAIL;
+  const entryName = detail ? m('skill-calorie.diet-nutritionPortDocs.c069') : m('skill-calorie.diet-nutritionPortDocs.c070');
   const envelope = statEnvelope('calorie.view.nutrition-detail', metricsOf({
     days: v.days,
     matchedMeals: v.matchedMeals,
@@ -579,25 +600,25 @@ export function buildNutritionDetailDoc(v: NutritionDetailView, entry?: string, 
   }));
   const body = [
     dietUiCss(),
-    windowStrip(v.start, v.end, v.days + ' 天'),
+    windowStrip(v.start, v.end, m('skill-calorie.diet-nutritionPortDocs.c071', { p0: String(v.days) })),
     renderTocBlock({ items: [
-      { id: 'sec-kpi', text: '读数' },
-      { id: 'sec-table', text: '逐项明细' },
+      { id: 'sec-kpi', text: m('skill-calorie.diet-nutritionPortDocs.c072') },
+      { id: 'sec-table', text: m('skill-calorie.diet-nutritionPortDocs.c073') },
     ] }),
     buildNutritionDetailBlock(v),
     detailCaliber(detail),
-    docCopy(envelope, command, DB_FILENAME + ' ｜ 饮食记录 × 食品库（按食物名折算）'),
+    docCopy(envelope, command, m('skill-calorie.diet-nutritionPortDocs.c074', { p0: String(DB_FILENAME) })),
   ].join('');
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: detail ? '🧪 营养素明细' : '🧪 营养素深度',
+    docTitle: DOC_TITLE(),
+    title: detail ? m('skill-calorie.diet-nutritionPortDocs.c075') : m('skill-calorie.diet-nutritionPortDocs.c076'),
     pageUi: true,
     /* #496 · 眉标原写「看营养素深度 · 区间 · N 天」——把唤醒词与窗口区间印了一遍（审查件第 80 条）。
        #275 起眉标只留「唤醒词 · 饮食」（§五 第 1 行），§五 第 3 行的结论句改由副标题槽承载。 */
-    eyebrow: EYEBROW,
+    eyebrow: EYEBROW(),
     subtitle: detailSummary(v, detail),
-    metaLeft: (detail ? '看营养素明细' : '看营养素深度') + '（饮食）',
-    badge: BADGE,
+    metaLeft: m('skill-calorie.diet-nutritionPortDocs.c077', { p0: String(entryName) }),
+    badge: BADGE(),
     summary: detailSummary(v, detail),
     content: body,
   });
@@ -612,10 +633,15 @@ export function buildNutritionDetailDoc(v: NutritionDetailView, entry?: string, 
 /** 饮水页结论句（§五 第 3 行）：今日累计 ＋ 进度 ＋ 差额（含「已完成」「超出」两支）。 */
 function waterSummary(v: TodayWaterView, name: string): string {
   const tail = v.remainMl > 0
-    ? '还差 ' + v.remainMl + ' ml 到目标。'
-    : (v.remainMl === 0 ? '正好完成目标。' : '已超出目标 ' + (-v.remainMl) + ' ml。');
-  return '今天' + (name === '今日喝水' ? '喝了' : '饮水') + ' ' + v.todayMl.toLocaleString()
-    + ' ml（目标的 ' + v.pct + '%），' + tail;
+    ? m('skill-calorie.diet-nutritionPortDocs.c078', { p0: String(v.remainMl) })
+    : (v.remainMl === 0 ? m('skill-calorie.diet-nutritionPortDocs.c079') : m('skill-calorie.diet-nutritionPortDocs.c080', { p0: String(-v.remainMl) }));
+  const verb = name === '今日喝水' ? m('skill-calorie.diet-nutritionPortDocs.c081') : m('skill-calorie.diet-nutritionPortDocs.c082');
+  return m('skill-calorie.diet-nutritionPortDocs.c083', {
+    p0: String(verb),
+    p1: String(v.todayMl.toLocaleString()),
+    p2: String(v.pct),
+    p3: String(tail),
+  });
 }
 
 /** 今日饮水区块（进度环／7 天柱图／每杯明细三块，标题逐字取老实物的三个 h2）。
@@ -628,12 +654,12 @@ export function buildTodayWaterBlock(v: TodayWaterView, name: string): string {
         eyebrow: name,
         value: String(v.todayMl),
         unit: 'ml',
-        denominator: '/ 目标 ' + v.targetMl + ' ml',
+        denominator: m('skill-calorie.diet-nutritionPortDocs.c084', { p0: String(v.targetMl) }),
         stamp: v.remainMl > 0
-          ? { text: '还差 ' + v.remainMl + ' ml', tone: 'warn' as const }
+          ? { text: m('skill-calorie.diet-nutritionPortDocs.c085', { p0: String(v.remainMl) }), tone: 'warn' as const }
           : (v.remainMl === 0
-            ? { text: '已完成目标', tone: 'ok' as const }
-            : { text: '超出目标 ' + (-v.remainMl) + ' ml', tone: 'danger' as const }),
+            ? { text: m('skill-calorie.diet-nutritionPortDocs.c086'), tone: 'ok' as const }
+            : { text: m('skill-calorie.diet-nutritionPortDocs.c087', { p0: String(-v.remainMl) }), tone: 'danger' as const }),
         size: 'm' as const,
       }),
       renderScaleBar({
@@ -641,15 +667,15 @@ export function buildTodayWaterBlock(v: TodayWaterView, name: string): string {
         goal: v.targetMl,
         variant: 'cells',
         leftLabel: v.pct + '% ｜ ' + v.todayMl + ' / ' + v.targetMl + ' ml',
-        rightLabel: '共 ' + v.cups.length + ' 杯',
+        rightLabel: m('skill-calorie.diet-nutritionPortDocs.c088', { p0: String(v.cups.length) }),
       }),
       renderLedgerRows({
-        heading: '账目',
+        heading: m('skill-calorie.diet-nutritionPortDocs.c089'),
         rows: [
-          { label: '目标', value: String(v.targetMl), unit: 'ml' },
-          { label: '进度', value: String(v.pct), unit: '%' },
-          { label: '杯数', value: String(v.cups.length), unit: '杯' },
-          { label: '今天喝的水', value: String(v.todayMl), unit: 'ml', kind: 'total' as const },
+          { label: m('skill-calorie.diet-nutritionPortDocs.c090'), value: String(v.targetMl), unit: 'ml' },
+          { label: m('skill-calorie.diet-nutritionPortDocs.c091'), value: String(v.pct), unit: '%' },
+          { label: m('skill-calorie.diet-nutritionPortDocs.c092'), value: String(v.cups.length), unit: m('skill-calorie.diet-nutritionPortDocs.c093') },
+          { label: m('skill-calorie.diet-nutritionPortDocs.c094'), value: String(v.todayMl), unit: 'ml', kind: 'total' as const },
         ],
       }),
     ].join('')),
@@ -657,11 +683,11 @@ export function buildTodayWaterBlock(v: TodayWaterView, name: string): string {
        （两段轨 ＋ 端点读数），同一份数据换一个更省高度、也读得出两段的形状；目标为 0 时不画（分母不成立）。 */
     ...(v.targetMl > 0 ? [anchored('sec-ring', renderEquationBar({
       segments: [
-        { label: '已喝', value: Math.min(v.todayMl, v.targetMl) },
-        { label: '还没喝', value: Math.max(v.targetMl - v.todayMl, 0) },
+        { label: m('skill-calorie.diet-nutritionPortDocs.c095'), value: Math.min(v.todayMl, v.targetMl) },
+        { label: m('skill-calorie.diet-nutritionPortDocs.c096'), value: Math.max(v.targetMl - v.todayMl, 0) },
       ],
       total: v.targetMl,
-      heading: { label: '今日进度', value: String(v.pct) + '%' },
+      heading: { label: m('skill-calorie.diet-nutritionPortDocs.c097'), value: String(v.pct) + '%' },
       endLabels: true,
     }))] : []),
   ];
@@ -669,31 +695,31 @@ export function buildTodayWaterBlock(v: TodayWaterView, name: string): string {
     /* 本周 7 天（老实物的 7 根柱 → 账目行 → 2026-09-24 **打孔格带**，用户裁定「今日两页也补」）：
        一格一天、有数填深色、值写格内，红圈套今天那一格；单位随格带走一条口径行。 */
     parts.push(anchored('sec-week', renderPunchStrip({
-      heading: '本周 7 天',
+      heading: m('skill-calorie.diet-nutritionPortDocs.c098'),
       days: v.weekMl.map((ml, i) => ({
         label: (v.weekDates[i] ?? '').slice(5),
         value: ml > 0 ? String(ml) : null,
         selected: (v.weekDates[i] ?? '') === v.date,
       })),
-    }) + renderCaliberLine('格内数字是毫升（ml）。')));
+    }) + renderCaliberLine(m('skill-calorie.diet-nutritionPortDocs.c099'))));
   } else {
     parts.push(anchored('sec-week', renderEmptyBlock({
-      title: '本周 7 天',
-      text: '7 天窗内没有饮水记录。',
+      title: m('skill-calorie.diet-nutritionPortDocs.c100'),
+      text: m('skill-calorie.diet-nutritionPortDocs.c101'),
     })));
   }
   /* 今日每杯（两列表 → 明细行）：一条一杯，时间在左、水量在右；一杯都没有时出缺记那一句。 */
   parts.push(anchored('sec-cups', renderEntryRows({
-    heading: '今日每杯（共 ' + v.cups.length + ' 杯）',
+    heading: m('skill-calorie.diet-nutritionPortDocs.c102', { p0: String(v.cups.length) }),
     rows: v.cups.map((c) => ({
       time: c.time === '' ? '—' : c.time,
-      name: '饮水',
+      name: m('skill-calorie.diet-nutritionPortDocs.c103'),
       value: String(c.ml),
       unit: 'ml',
     })),
-    ...(v.cups.length === 0 ? { absentLine: '今天还没有喝水记录' } : {}),
+    ...(v.cups.length === 0 ? { absentLine: m('skill-calorie.diet-nutritionPortDocs.c104') } : {}),
   })));
-  parts.push(sourceFootnote('📊 数据来源 · 饮水记录 · ' + v.date));
+  parts.push(sourceFootnote(m('skill-calorie.diet-nutritionPortDocs.c105', { p0: String(v.date) })));
   /* 块层不给复制区（集成归宿主页）——整页那一支由 `buildTodayWaterDoc` 出。 */
   return parts.join('');
 }
@@ -703,37 +729,37 @@ export function buildTodayWaterDoc(v: TodayWaterView, entry?: string, command?: 
      `看今日饮水` 那一支（不给标记）出「今日饮水」——两条入口都留，不再出两张一样的页
      （审查件第 81 条）。#496 当年把两页统一叫「今日饮水」，这一处按作者裁定一改回来。 */
   const drink = entry === ENTRY_DRINK;
-  const name = drink ? '今日喝水' : '今日饮水';
+  const name = drink ? m('skill-calorie.diet-nutritionPortDocs.c106') : m('skill-calorie.diet-nutritionPortDocs.c107');
   const envelope = statEnvelope('calorie.view.today-water', metricsOf({
     todayMl: v.todayMl, targetMl: v.targetMl, pct: v.pct, remainMl: v.remainMl, cups: v.cups.length,
   }));
   const body = [
     dietUiCss({ sheet: true }),
-    windowStrip(v.date, v.date, v.cups.length + ' 杯'),
+    windowStrip(v.date, v.date, m('skill-calorie.diet-nutritionPortDocs.c108', { p0: String(v.cups.length) })),
     renderTocBlock({ items: [
-      { id: 'sec-kpi', text: '今日读数' },
-      { id: 'sec-ring', text: '今日进度' },
-      { id: 'sec-week', text: '本周 7 天' },
-      { id: 'sec-cups', text: '今日每杯' },
+      { id: 'sec-kpi', text: m('skill-calorie.diet-nutritionPortDocs.c109') },
+      { id: 'sec-ring', text: m('skill-calorie.diet-nutritionPortDocs.c110') },
+      { id: 'sec-week', text: m('skill-calorie.diet-nutritionPortDocs.c111') },
+      { id: 'sec-cups', text: m('skill-calorie.diet-nutritionPortDocs.c112') },
     ] }),
     /* 小票版：正文进纸，复制区也在纸里（2026-09-24 用户裁定「纸内，但要有小票的巧思」）——
        它成小票下缘那一联「存根」，与今日页／窗口页同一处标记（`receiptStub`）。 */
     renderSheetFrame({
       variant: 'receipt', notch: true, cutLine: true,
       content: buildTodayWaterBlock(v, name)
-        + receiptStub(docCopy(envelope, command, DB_FILENAME + ' ｜ 饮水记录')),
+        + receiptStub(docCopy(envelope, command, m('skill-calorie.diet-nutritionPortDocs.c113', { p0: String(DB_FILENAME) }))),
     }),
   ].join('');
   return assembleDocPage({
-    docTitle: DOC_TITLE,
+    docTitle: DOC_TITLE(),
     title: '💧 ' + name,
     pageUi: true,
     /* #496 · 眉标原写「<日期> · 饮水 #1」——把日期又抄一遍、`#1` 是内部形态号。
        #275 起眉标只留「唤醒词 · 饮食」（§五 第 1 行），结论句改由副标题槽承载（第 3 行）。 */
-    eyebrow: EYEBROW,
+    eyebrow: EYEBROW(),
     subtitle: waterSummary(v, name),
-    metaLeft: name + '（饮食）',
-    badge: BADGE,
+    metaLeft: m('skill-calorie.diet-nutritionPortDocs.c114', { p0: String(name) }),
+    badge: BADGE(),
     summary: waterSummary(v, name),
     content: body,
     charts: false,
@@ -750,23 +776,23 @@ export function buildTodayWaterDoc(v: TodayWaterView, entry?: string, command?: 
  *  `id`＝宿主页页内导航的锚点。 */
 function overviewPeriodBlock(id: string, name: string, p: DietOverviewPeriod): string {
   if (p.days === 0) {
-    return anchored(id, renderEmptyBlock({ title: name, text: '窗口还没有自然日（今天正是窗口首日），累计从明天起算' }));
+    return anchored(id, renderEmptyBlock({ title: name, text: m('skill-calorie.diet-nutritionPortDocs.c115') }));
   }
   const cards = renderKpiGrid([
-    { label: '总热量', value: String(p.totalCalorie), unit: '卡', detail: p.start + ' 至 ' + p.end },
-    { label: '日均热量', value: String(p.avgCalorie), unit: '卡/天', detail: '分母＝窗口 ' + p.days + ' 天' },
-    { label: '总蛋白', value: String(p.totalProtein), unit: '克' },
-    { label: '有记录天数', value: String(p.loggedDays), unit: '天', detail: '共 ' + p.days + ' 天' },
+    { label: m('skill-calorie.diet-nutritionPortDocs.c116'), value: String(p.totalCalorie), unit: m('skill-calorie.diet-nutritionPortDocs.c117'), detail: m('skill-calorie.diet-nutritionPortDocs.c118', { p0: String(p.start), p1: String(p.end) }) },
+    { label: m('skill-calorie.diet-nutritionPortDocs.c119'), value: String(p.avgCalorie), unit: m('skill-calorie.diet-nutritionPortDocs.c120'), detail: m('skill-calorie.diet-nutritionPortDocs.c121', { p0: String(p.days) }) },
+    { label: m('skill-calorie.diet-nutritionPortDocs.c122'), value: String(p.totalProtein), unit: '克' },
+    { label: m('skill-calorie.diet-nutritionPortDocs.c123'), value: String(p.loggedDays), unit: m('skill-calorie.diet-nutritionPortDocs.c124'), detail: m('skill-calorie.diet-nutritionPortDocs.c125', { p0: String(p.days) }) },
   ]);
   const chart = p.daily.some((d) => d.calorie > 0)
     ? renderChartBlock({
       kind: 'bar',
-      title: '每日热量(卡)（每根柱是一天，无记录天为 0）',
+      title: m('skill-calorie.diet-nutritionPortDocs.c126'),
       input: { items: p.daily.map((d) => ({ label: d.date.slice(5), value: d.calorie })) },
     })
-    : renderEmptyBlock({ title: '每日热量(卡)', text: name + '窗内没有饮食记录（不编数）' });
+    : renderEmptyBlock({ title: m('skill-calorie.diet-nutritionPortDocs.c127'), text: m('skill-calorie.diet-nutritionPortDocs.c128', { p0: String(name) }) });
   return anchored(id, renderDisclosure({
-    title: name + '（共 ' + p.days + ' 天）',
+    title: m('skill-calorie.diet-nutritionPortDocs.c129', { p0: String(name), p1: String(p.days) }),
     contentHtml: cards + chart,
     open: true,
   }));
@@ -774,9 +800,13 @@ function overviewPeriodBlock(id: string, name: string, p: DietOverviewPeriod): s
 
 /** 看饮食总览**结论句**（§五 第 3 行，句内含本页读数）：本周日均 ＋ 本月累计。 */
 function overviewSummary(v: DietOverviewView): string {
-  return '统计到 ' + v.today + ' 的前一天：本周日均 ' + String(v.week.avgCalorie) + ' 卡（'
-    + v.week.loggedDays + '/' + v.week.days + ' 天有记录），本月累计 '
-    + v.month.totalCalorie.toLocaleString() + ' 卡。';
+  return m('skill-calorie.diet-nutritionPortDocs.c130', {
+    p0: String(v.today),
+    p1: String(String(v.week.avgCalorie)),
+    p2: String(v.week.loggedDays),
+    p3: String(v.week.days),
+    p4: String(v.month.totalCalorie.toLocaleString()),
+  });
 }
 
 /** 看饮食总览区块（**服务 `calorie.view.diet`**，作者＝#271：取数调 `buildDietOverviewView(db, date)`，
@@ -787,12 +817,16 @@ function overviewSummary(v: DietOverviewView): string {
 export function buildDietOverviewBlock(v: DietOverviewView, command?: string): string {
   return [
     /* #581 · 总览口径行一条一事（本票唯一许写口）：统计口径与今日承接分两条口径行。 */
-    renderCaliberLine('本周和本月都统计到昨日为止，不含今日（今天是 ' + v.today + '）。')
-    + renderCaliberLine('今日的饮食由「看今日饮食概览」承接。'),
-    overviewPeriodBlock('sec-week', '本周累计', v.week),
-    overviewPeriodBlock('sec-month', '本月累计', v.month),
-    sourceFootnote('📊 数据来源 · 饮食记录 · 本周 ' + v.week.start + ' → ' + v.week.end
-      + '／本月 ' + v.month.start + ' → ' + v.month.end + '（都统计到昨日）'),
+    renderCaliberLine(m('skill-calorie.diet-nutritionPortDocs.c131', { p0: String(v.today) }))
+    + renderCaliberLine(m('skill-calorie.diet-nutritionPortDocs.c132')),
+    overviewPeriodBlock('sec-week', m('skill-calorie.diet-nutritionPortDocs.c133'), v.week),
+    overviewPeriodBlock('sec-month', m('skill-calorie.diet-nutritionPortDocs.c134'), v.month),
+    sourceFootnote(m('skill-calorie.diet-nutritionPortDocs.c135', {
+      p0: String(v.week.start),
+      p1: String(v.week.end),
+      p2: String(v.month.start),
+      p3: String(v.month.end),
+    })),
     command === undefined
       ? ''
       : docCopy(statEnvelope('calorie.view.diet', metricsOf({
@@ -800,6 +834,6 @@ export function buildDietOverviewBlock(v: DietOverviewView, command?: string): s
         weekTotalProtein: v.week.totalProtein, weekLoggedDays: v.week.loggedDays,
         monthTotalCalorie: v.month.totalCalorie, monthAvgCalorie: v.month.avgCalorie,
         monthTotalProtein: v.month.totalProtein, monthLoggedDays: v.month.loggedDays,
-      })), command, DB_FILENAME + ' ｜ 饮食记录（统计到昨日）'),
+      })), command, m('skill-calorie.diet-nutritionPortDocs.c136', { p0: String(DB_FILENAME) })),
   ].join('');
 }

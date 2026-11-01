@@ -21,6 +21,7 @@
  * 中文里不写「写键」（`docs/agents/wording.md`），代码标识符与命令名照原样。
  */
 import { commandLine } from '../shared/writeParts.js';
+import { m } from '../entries/index.js';
 
 /** op → 该 op 的确认命令（九条）。顺序＝`../render/workoutPlanDocs.ts` 的 `OP_ZH` 与
  *  `../render/workoutPlanCss.ts` 同一族的既有排法（copy 起头、delete 收尾）。 */
@@ -37,7 +38,7 @@ export const PLAN_WRITE_COMMAND_BY_OP: Readonly<Record<string, string>> = Object
 });
 
 /** 修改指令的句头（报障人原话逐字；`#944` 故障 8「要做成的样子」第 2 条）。 */
-const MODIFY_LEAD = '我现在需要把什么修改为什么，确定录入，可以进行修改了';
+const modifyLead = (): string => m('skill-calorie.workout-planPreviewPayloads.c001');
 
 /** 该 op 的确认命令名；op 不在表里即空串（页面照缺项不出那一枚，不编一个命令名出来）。 */
 function commandOf(op: string): string {
@@ -71,5 +72,5 @@ export function planConfirmCommand(op: string, params: Record<string, unknown>):
 /** 修改指令：句头 ＋ 同一条确认命令名（op 不在表里即空串）。 */
 export function planModifyPayload(op: string): string {
   const key = commandOf(op);
-  return key === '' ? '' : MODIFY_LEAD + ' ' + key;
+  return key === '' ? '' : modifyLead() + ' ' + key;
 }
