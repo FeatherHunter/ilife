@@ -7,6 +7,7 @@
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, escapeHtml, homeCompactCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { m } from '../../entries/index.js';
 
 export const FAMILY = 'tag_manage' as const;
 
@@ -66,12 +67,12 @@ function detailOf(env: Envelope): Record<string, unknown> {
 // 回执原文里的命令写法转成中文再上屏（原文完整保留在复制载荷里）。
 function visibleMsg(msg: string): string {
   return msg
-    .replace(/home\.tag\.query kind=categories/g, '查标签（分类表）')
-    .replace(/home\.tag\.query/g, '查标签')
-    .replace(/home\.tag\.write/g, '管标签')
-    .replace(/home\.item\.detail/g, '看物品')
-    .replace(/home\.item\.update/g, '改物品')
-    .replace(/home\.item\.add/g, '录物品');
+    .replace(/home\.tag\.query kind=categories/g, m('skill-home.items-pages-tag-manage.c016'))
+    .replace(/home\.tag\.query/g, m('skill-home.items-pages-tag-manage.c017'))
+    .replace(/home\.tag\.write/g, m('skill-home.items-pages-tag-manage.c018'))
+    .replace(/home\.item\.detail/g, m('skill-home.items-pages-tag-manage.c019'))
+    .replace(/home\.item\.update/g, m('skill-home.items-pages-tag-manage.c020'))
+    .replace(/home\.item\.add/g, m('skill-home.items-pages-tag-manage.c021'));
 }
 
 function needs(): string {
@@ -110,6 +111,13 @@ const PAGE_CSS = '<style>'
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
+/** 「合并」按钮的两种复制载荷（整理态＝全部相近标签对；总览态＝源与目标留空）。
+ *  两支各自是整句：条件放在 `if` 里，不在拼接链里（手册 §4.7：链内条件表达式先抽出来）。 */
+function mergeOnePrompt(tidy: boolean): string {
+  if (tidy) return m('skill-home.items-pages-tag-manage.c001');
+  return m('skill-home.items-pages-tag-manage.c002');
+}
+
 export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
   const template = readFileSync(new URL('../../../templates/items/tag_manage.html', import.meta.url), 'utf8');
   const msg = msgOf(env);
@@ -150,10 +158,10 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   // #817（⑤文案不冗余）：导语只说本页总数（没有明细才回退回执原文），「详情走 查标签」那类内部词退场；
   // 与同族的 category_manage 同款。
   // #928 收口：不给 limit 即全量（不截断）；只有调用方显式给 limit 时才会 total > 行数，那时写明。
-  let leadText = tidy ? '发现 ' + pairs.length + ' 对相近标签'
-    : (hasTagDetail ? '共 ' + tagRows.length + ' 个标签' : visibleMsg(msg));
+  let leadText = tidy ? m('skill-home.items-pages-tag-manage.c003', { p0: String(pairs.length) })
+    : (hasTagDetail ? m('skill-home.items-pages-tag-manage.c004', { p0: String(tagRows.length) }) : visibleMsg(msg));
   if (isListQuery && listTotal > tagRows.length) {
-    leadText = '共' + listTotal + '个标签，按 limit 只印前' + tagRows.length + '个（按件数排序）';
+    leadText = m('skill-home.items-pages-tag-manage.c005', { p0: String(listTotal), p1: String(tagRows.length) });
   }
   const pairSims: (number | null)[] = pairs.map((_, i) => {
     const pd = Array.isArray(det.pairs) ? (det.pairs as unknown[])[i] : null;
@@ -166,87 +174,86 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   let mainSec = '';
   if (!tidy) {
     const overviewRows = !hasTagDetail
-      ? '<div class="fp-row"><div class="fp-k">标签名</div><div class="fp-v">—</div></div>'
-        + '<div class="fp-row"><div class="fp-k">件数</div><div class="fp-v">—</div></div>'
-        + '<div class="fp-row"><div class="fp-k">使用次数</div><div class="fp-v">—</div></div>'
+      ? '<div class="fp-row"><div class="fp-k">' + m('skill-home.items-pages-tag-manage.c022') + '</div><div class="fp-v">—</div></div>'
+        + '<div class="fp-row"><div class="fp-k">' + m('skill-home.items-pages-tag-manage.c023') + '</div><div class="fp-v">—</div></div>'
+        + '<div class="fp-row"><div class="fp-k">' + m('skill-home.items-pages-tag-manage.c024') + '</div><div class="fp-v">—</div></div>'
       : (tagRows.length
         // #817（⑤文案不冗余）：名字与计数并成一行（名字不再在左列重复一遍），与 category_manage 同款。
         // #928 收口：不截行、不翻页，库有多少标签印多少行。
-        ? tagRows.map((t) => '<p class="fp-v">' + esc(t.name === '' ? '—' : t.name) + '，共 ' + esc(t.items) + ' 件，用过 ' + esc(t.uses) + ' 次</p>').join('')
-        : '<p class="fp-empty">暂无标签，先去录物品时贴上第一个标签</p>');
+        ? tagRows.map((t) => '<p class="fp-v">' + m('skill-home.items-pages-tag-manage.c025', { p0: esc(t.name === '' ? '—' : t.name), p1: esc(t.items), p2: esc(t.uses) }) + '</p>').join('')
+        : '<p class="fp-empty">' + m('skill-home.items-pages-tag-manage.c026') + '</p>');
     const unusedBlock = !hasUnusedDetail
-      ? '<p class="fp-empty">暂时没有统计到未使用的标签，有的话这里会列出来并给出一键清理</p>'
-        + (isListQuery ? '<p class="fp-note">用过次数与闲置统计走管标签总览看全量。</p>' : '')
+      ? '<p class="fp-empty">' + m('skill-home.items-pages-tag-manage.c027') + '</p>'
+        + (isListQuery ? '<p class="fp-note">' + m('skill-home.items-pages-tag-manage.c028') + '</p>' : '')
       : (unusedNames.length
         // #817（⑤文案不冗余）：闲置标签折成一行名单，不再逐行重复「闲置」这个左列词。
-        ? '<p class="fp-v">闲置：' + unusedNames.map((n) => esc(n)).join('、') + '</p>'
-        : '<p class="fp-empty">暂时没有统计到未使用的标签，有的话这里会列出来并给出一键清理</p>');
+        ? '<p class="fp-v">' + m('skill-home.items-pages-tag-manage.c029', { p0: unusedNames.map((n) => esc(n)).join(m('skill-home.items-pages-tag-manage.c044')) }) + '</p>'
+        : '<p class="fp-empty">' + m('skill-home.items-pages-tag-manage.c027') + '</p>');
     // #928 收口：只有显式 limit 才截，那时写明还有多少、怎么拿全（默认不给 limit 即全量）。
     const pagingNote = isListQuery && listTotal > tagRows.length
-      ? '<p class="fp-note">还有' + (listTotal - tagRows.length) + '个没显示：去掉 limit 即全量，或加 q 筛关键词。</p>'
+      ? '<p class="fp-note">' + m('skill-home.items-pages-tag-manage.c030', { p0: String(listTotal - tagRows.length) }) + '</p>'
       : '';
-    mainSec = '<section class="fp-sec"><h2 class="fp-sec-t">标签总览</h2>'
+    mainSec = '<section class="fp-sec"><h2 class="fp-sec-t">' + m('skill-home.items-pages-tag-manage.c031') + '</h2>'
       + overviewRows + pagingNote + '</section>'
-      + '<section class="fp-sec"><h2 class="fp-sec-t">未使用标签</h2>'
+      + '<section class="fp-sec"><h2 class="fp-sec-t">' + m('skill-home.items-pages-tag-manage.c032') + '</h2>'
       + unusedBlock + '</section>';
   } else if (msg === '无相近标签') {
-    mainSec = '<section class="fp-sec"><h2 class="fp-sec-t">相似标签对（相似度%）</h2>'
-      + '<p class="fp-empty">没有发现相近标签，标签体系很干净</p></section>';
+    mainSec = '<section class="fp-sec"><h2 class="fp-sec-t">' + m('skill-home.items-pages-tag-manage.c033') + '</h2>'
+      + '<p class="fp-empty">' + m('skill-home.items-pages-tag-manage.c034') + '</p></section>';
   } else {
     // #864 加厚：相似度有 detail 写真数值，无则回退破折号。
     // 判据件口径（票 #866「值位不算文案冗余」的对偶）：标签名与单位只出现一次——放段落标题（与
     // 必需块登记的「相似标签对（相似度%）」逐字一致），每对的胶囊只写值（90%／—），不逐行重复「相似度」。
-    mainSec = '<section class="fp-sec"><h2 class="fp-sec-t">相似标签对（相似度%）</h2>'
+    mainSec = '<section class="fp-sec"><h2 class="fp-sec-t">' + m('skill-home.items-pages-tag-manage.c033') + '</h2>'
       + pairs.map((p, i) => {
         const ab = p.split('~');
         const a = (ab[0] ?? '').trim();
         const b = (ab[1] ?? '').trim();
         const sim = pairSims[i];
-        return '<div class="fp-pair"><div class="fp-pair-info">第 ' + (i + 1) + ' 对：<b>' + esc(a) + '</b> 与 <b>' + esc(b)
+        return '<div class="fp-pair"><div class="fp-pair-info">' + m('skill-home.items-pages-tag-manage.c035', { p0: String(i + 1), p1: '<b>' + esc(a) + '</b>', p2: '<b>' + esc(b) })
           + '</b> <span class="fp-pill">' + (sim === null ? '—' : esc(String(sim)) + '%') + '</span></div>'
           + '<div class="fp-actions">'
-          + '<button type="button" class="fp-btn fp-btn-ghost" onclick="copyItem(\'fp-tag-merge-' + i + '\')">合并</button>'
-          + '<button type="button" class="fp-btn" onclick="copyItem(\'fp-tag-ignore-' + i + '\')">忽略</button>'
+          + '<button type="button" class="fp-btn fp-btn-ghost" onclick="copyItem(\'fp-tag-merge-' + i + '\')">' + m('skill-home.items-pages-tag-manage.c011') + '</button>'
+          + '<button type="button" class="fp-btn" onclick="copyItem(\'fp-tag-ignore-' + i + '\')">' + m('skill-home.items-pages-tag-manage.c036') + '</button>'
           + '</div>'
-          + '<pre id="fp-tag-merge-' + i + '" hidden>' + esc('请加载「居家管家」技能，帮我管理标签（唤醒词：管标签）：\n\n  操作：合并\n  源标签：' + a + '\n  目标标签：' + b) + '</pre>'
-          + '<pre id="fp-tag-ignore-' + i + '" hidden>' + esc('忽略本条整理建议：' + a + ' 与 ' + b) + '</pre>'
+          + '<pre id="fp-tag-merge-' + i + '" hidden>' + esc(m('skill-home.items-pages-tag-manage.c006', { p0: String(a), p1: String(b) })) + '</pre>'
+          + '<pre id="fp-tag-ignore-' + i + '" hidden>' + esc(m('skill-home.items-pages-tag-manage.c007', { p0: String(a), p1: String(b) })) + '</pre>'
           + '</div>';
       }).join('')
-      + '<p class="fp-note">合并会动到贴着源标签的物品，源标签随后消失，请逐对确认</p></section>';
+      + '<p class="fp-note">' + m('skill-home.items-pages-tag-manage.c037') + '</p></section>';
   }
 
   const content = PAGE_CSS
     + '<div class="fp-page" data-family="' + FAMILY + '" data-key="' + esc(key) + '" data-mode="' + esc(tidy ? 'tidy' : 'overview') + '">'
-    + '<div class="fp-hero"><div class="fp-eyebrow">物品管理 · 标签</div>'
-    + '<div class="fp-title">' + esc(tidy ? '逐对合并或忽略' : '改名、合并与新建标签') + '</div>'
+    + '<div class="fp-hero"><div class="fp-eyebrow">' + m('skill-home.items-pages-tag-manage.c038') + '</div>'
+    + '<div class="fp-title">' + esc(tidy ? m('skill-home.items-pages-tag-manage.c008') : m('skill-home.items-pages-tag-manage.c009')) + '</div>'
     + '<p class="fp-lead">' + esc(leadText) + '</p>'
     // #817（⑤文案不冗余）：整理态不挂徽章——徽章若写「整理建议」就与 h1（交付链回填的场景名）同词；
     // 总览态照旧标模式（4-1 的 check 要「模式」在位）。
-    + (tidy ? '' : '<span class="fp-stage">当前：总览</span>') + '</div>'
+    + (tidy ? '' : '<span class="fp-stage">' + m('skill-home.items-pages-tag-manage.c039') + '</span>') + '</div>'
     + mainSec
     + '<div class="fp-actions">'
-    + '<button type="button" class="fp-btn fp-btn-ghost" onclick="copyItem(\'fp-tag-rename\')">改名</button>'
+    + '<button type="button" class="fp-btn fp-btn-ghost" onclick="copyItem(\'fp-tag-rename\')">' + m('skill-home.items-pages-tag-manage.c040') + '</button>'
     // #817（⑤文案不冗余）：整理态逐对已有「合并」，底部这颗又是另一档作用，故按本页模式改名（总览态照旧「合并」）。
-    + '<button type="button" class="fp-btn fp-btn-ghost" onclick="copyItem(\'fp-tag-mergeone\')">' + (tidy ? '全部合并' : '合并') + '</button>'
+    + '<button type="button" class="fp-btn fp-btn-ghost" onclick="copyItem(\'fp-tag-mergeone\')">' + (tidy ? m('skill-home.items-pages-tag-manage.c010') : m('skill-home.items-pages-tag-manage.c011')) + '</button>'
     // #817 第二波（②层级清，核口径后补入口）：口径是 empty 块那句「无可清理标签时不出「一键清理」」
     // ——反面即「有未使用标签就出」。总览这回执带 7 条闲置标签（本页「未使用标签」一段就是它们），
     // 旧注释「总览回执不带未使用标签」与当刻回执不符，故按闲置标签在不在场决定这颗按钮在不在位：
     // 管理标签（4-1）的 check 要「七个操作按钮齐」，可见按钮＝改名／合并／一键清理／整理建议／新建标签 ＋ 复制数据／复制日志。
     // 「忽略」只对相似标签对成立，本模式没有对可忽略，故只留在整理建议（4-3）的逐对行里。
-    + (tidy || unusedNames.length > 0 ? '<button type="button" class="fp-btn fp-btn-danger" onclick="copyItem(\'fp-tag-clean\')">一键清理</button>' : '')
-    + (tidy ? '' : '<button type="button" class="fp-btn fp-btn-primary" onclick="copyItem(\'fp-tag-tidy\')">整理建议</button>') // 本页即整理建议结果页：指向本页自身只是重发同条命令，本页不出
-    + '<button type="button" class="fp-btn" onclick="copyItem(\'fp-tag-new\')">新建标签</button>'
+    + (tidy || unusedNames.length > 0 ? '<button type="button" class="fp-btn fp-btn-danger" onclick="copyItem(\'fp-tag-clean\')">' + m('skill-home.items-pages-tag-manage.c041') + '</button>' : '')
+    + (tidy ? '' : '<button type="button" class="fp-btn fp-btn-primary" onclick="copyItem(\'fp-tag-tidy\')">' + m('skill-home.items-pages-tag-manage.c042') + '</button>') // 本页即整理建议结果页：指向本页自身只是重发同条命令，本页不出
+    + '<button type="button" class="fp-btn" onclick="copyItem(\'fp-tag-new\')">' + m('skill-home.items-pages-tag-manage.c043') + '</button>'
     + '</div>'
     + homeCompactCopyArea({
         data: { envelope: env },
         log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
       })
-    + '<pre id="fp-tag-rename" hidden>' + esc('请加载「居家管家」技能，帮我管理标签（唤醒词：管标签）：\n\n  操作：重命名\n  标签：___\n  新名称：___') + '</pre>'
-    + '<pre id="fp-tag-mergeone" hidden>' + esc('请加载「居家管家」技能，帮我管理标签（唤醒词：管标签）：\n\n  操作：合并\n'
-      + (tidy ? '  范围：全部相近标签对' : '  源标签：___\n  目标标签：___')) + '</pre>'
-    + (tidy || unusedNames.length > 0 ? '<pre id="fp-tag-clean" hidden>' + esc('请加载「居家管家」技能，帮我管理标签（唤醒词：管标签）：\n\n  操作：清理未使用标签') + '</pre>' : '')
-    + (tidy ? '' : '<pre id="fp-tag-tidy" hidden>' + esc('请加载「居家管家」技能，帮我整理标签（唤醒词：整理建议）：\n\n  检测：相近标签和分类') + '</pre>')
-    + '<pre id="fp-tag-new" hidden>' + esc('请加载「居家管家」技能，帮我管理标签（唤醒词：管标签）：\n\n  操作：新建标签\n  标签：___') + '</pre>'
+    + '<pre id="fp-tag-rename" hidden>' + esc(m('skill-home.items-pages-tag-manage.c012')) + '</pre>'
+    + '<pre id="fp-tag-mergeone" hidden>' + esc(mergeOnePrompt(tidy)) + '</pre>'
+    + (tidy || unusedNames.length > 0 ? '<pre id="fp-tag-clean" hidden>' + esc(m('skill-home.items-pages-tag-manage.c013')) + '</pre>' : '')
+    + (tidy ? '' : '<pre id="fp-tag-tidy" hidden>' + esc(m('skill-home.items-pages-tag-manage.c014')) + '</pre>')
+    + '<pre id="fp-tag-new" hidden>' + esc(m('skill-home.items-pages-tag-manage.c015')) + '</pre>'
     + needs()
     + '</div>';
   return fillTemplate(template, content);

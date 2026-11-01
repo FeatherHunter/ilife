@@ -11,6 +11,7 @@
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { m } from '../../entries/index.js';
 
 export const FAMILY = 'add_form' as const;
 
@@ -138,44 +139,44 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   // 本页只拿得到命令键与回执文字（拿不到 op 与场景预设），故按这两样分派：改物品走另一条命令键；批量在回执里带「批量录入」；单条／拍照／补录同一条回执文案，合在一条导语里。
   const isUpdate = env.key === 'home.item.update';
   const isBatch = /已批量录入/.test(msg);
-  const modeText = isUpdate ? '本次改动' : '本次录入';
+  const modeText = isUpdate ? m('skill-home.items-pages-add-form.c001') : m('skill-home.items-pages-add-form.c002');
   // #817：回执与标题已经写着「批量」，导语不再重复这个词（同一页同一词三处）。
-  const greet = isUpdate ? '改物品只列本次要改的项，其余字段留空即保持原值。'
-    : isBatch ? '一次提交多件，逐件确认后一起写入。' : '单条录入一次填完，必填标星、空值会被拦下。';
+  const greet = isUpdate ? m('skill-home.items-pages-add-form.c003')
+    : isBatch ? m('skill-home.items-pages-add-form.c004') : m('skill-home.items-pages-add-form.c005');
   const content = PAGE_CSS
     + '<p class="greet">' + greet + '</p><div class="receipt">' + escapeHtml(msg) + '</div>'
-    + '<section class="sec" data-block="fields" data-need="' + needs('fields') + '"><h2>' + modeText + '明细</h2><div class="wrap-x"><table class="kv">'
-    + row(isUpdate ? '名称' : '名称*', escapeHtml(name))
-    + row(isUpdate ? '分类' : '分类*', '—')
-    + row('数量', isUpdate ? '—' : escapeHtml(count))
-    + row('位置（选填）', '—')
-    + row('状态', isUpdate ? '—' : '在家')
-    + row('价格（选填）', '—')
-    + row('购买日期', '—')
-    + row('过期日期', '—')
+    + '<section class="sec" data-block="fields" data-need="' + needs('fields') + '"><h2>' + m('skill-home.items-pages-add-form.c026', { p0: modeText }) + '</h2><div class="wrap-x"><table class="kv">'
+    + row(isUpdate ? m('skill-home.items-pages-add-form.c006') : m('skill-home.items-pages-add-form.c007'), escapeHtml(name))
+    + row(isUpdate ? m('skill-home.items-pages-add-form.c008') : m('skill-home.items-pages-add-form.c009'), '—')
+    + row(m('skill-home.items-pages-add-form.c010'), isUpdate ? '—' : escapeHtml(count))
+    + row(m('skill-home.items-pages-add-form.c011'), '—')
+    + row(m('skill-home.items-pages-add-form.c012'), isUpdate ? '—' : '在家')
+    + row(m('skill-home.items-pages-add-form.c013'), '—')
+    + row(m('skill-home.items-pages-add-form.c014'), '—')
+    + row(m('skill-home.items-pages-add-form.c015'), '—')
     // #817：补录日期只留表格这一行（原先「三处分流」段里还有一个同样的输入框，同一字段两处入口）。
-    + row('录入日期（补录）', '<input class="find" placeholder="YYYY-MM-DD，例如 2026-08-21">')
-    + row('标签（逗号分隔）', '—')
-    + row('备注', '—')
+    + row(m('skill-home.items-pages-add-form.c016'), '<input class="find" placeholder="' + m('skill-home.items-pages-add-form.c027') + '">')
+    + row(m('skill-home.items-pages-add-form.c017'), '—')
+    + row(m('skill-home.items-pages-add-form.c018'), '—')
     // #817 seq 2：拍物品那一页的明细原先没有照片这一行（照片只写在别处那句导语里）。照片是明细的一件，
     // 就在明细表里占一行；原句里「照片随本次一起存」这半句一字不动地搬过来（交付用例按这半句点验，
     // 故不再另造一句同义话，也不在别处重复）。
-    + (isUpdate ? '' : '<tr><td colspan="2" class="note">照片随本次一起存。</td></tr>')
+    + (isUpdate ? '' : '<tr><td colspan="2" class="note">' + m('skill-home.items-pages-add-form.c028') + '</td></tr>')
     + '</table></div></section>'
     // #817（②层级清／① 空壳）：非批量的「三处分流」段是施工话标题＋判据句，整段收起（块位与
     // data-need 原文留住，判据件照读）；批量那一档原先是无控件空壳，改成真清单框（敲进去的行
     // 随「全部确认」一起进复制载荷）。
     + '<section class="sec" data-block="empty" data-need="' + needs('empty') + '"' + (isBatch ? '' : ' hidden') + '>'
-    + (isBatch ? '<h2>批量清单</h2><textarea class="find list" id="batchList" placeholder="每行一件，例如：口罩 2 包 客厅/抽屉"></textarea>' : '')
+    + (isBatch ? '<h2>' + m('skill-home.items-pages-add-form.c029') + '</h2><textarea class="find list" id="batchList" placeholder="' + m('skill-home.items-pages-add-form.c030') + '"></textarea>' : '')
     + '</section>'
-    + '<section class="sec" data-block="status" data-need="' + needs('status') + '"><h2>状态候选</h2><div>'
+    + '<section class="sec" data-block="status" data-need="' + needs('status') + '"><h2>' + m('skill-home.items-pages-add-form.c031') + '</h2><div>'
     + REQUIRED_BLOCKS.status.map((s, i) => '<button type="button" class="pill" data-action-id="x-status-' + (i + 1) + '"'
-      + ' data-t="' + escapeHtml('请加载居家管家技能，帮我把物品状态设为「' + s + '」') + '">' + escapeHtml(s) + '</button>').join('')
+      + ' data-t="' + escapeHtml(m('skill-home.items-pages-add-form.c019', { p0: String(s) })) + '">' + escapeHtml(s) + '</button>').join('')
     + '</div></section>'
-    + '<section class="sec" data-block="operations" data-need="' + needs('operations') + '"><h2>下一步</h2><div>'
-    + (isUpdate ? op('确认变更', '请加载居家管家技能，帮我确认变更' + modeText, false)
-      : op('确认写入', '请加载居家管家技能，帮我确认写入' + modeText, false))
-    + (isBatch ? op('全部确认', '请加载居家管家技能，帮我全部确认本次 ' + count + ' 件', true, 'batchSend') : '')
+    + '<section class="sec" data-block="operations" data-need="' + needs('operations') + '"><h2>' + m('skill-home.items-pages-add-form.c032') + '</h2><div>'
+    + (isUpdate ? op(m('skill-home.items-pages-add-form.c020'), m('skill-home.items-pages-add-form.c021', { p0: String(modeText) }), false)
+      : op(m('skill-home.items-pages-add-form.c022'), m('skill-home.items-pages-add-form.c023', { p0: String(modeText) }), false))
+    + (isBatch ? op(m('skill-home.items-pages-add-form.c024'), m('skill-home.items-pages-add-form.c025', { p0: String(count) }), true, 'batchSend') : '')
     + '</div>'
     + homeCopyArea({
         data: { envelope: env },
@@ -183,8 +184,8 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
       })
     + '</section>'
     // 清单框是真控件：边敲边把内容接在「全部确认」的复制载荷后面（按钮本身仍走通用的 data-t 复制）。
-    + (isBatch ? '<script>(function(){var t=document.getElementById("batchList");var b=document.getElementById("batchSend");'
+    + (isBatch ? '<script>var SL=' + JSON.stringify(m('skill-home.items-pages-add-form.c033')) + ';(function(){var t=document.getElementById("batchList");var b=document.getElementById("batchSend");'
       + 'if(!t||!b)return;var base=b.getAttribute("data-t");'
-      + 't.addEventListener("input",function(){b.setAttribute("data-t",base+"\\n清单：\\n"+t.value);});})();</script>' : '');
+      + 't.addEventListener("input",function(){b.setAttribute("data-t",base+"\\n"+SL+"\\n"+t.value);});})();</script>' : '');
   return fillTemplate(template, content);
 }

@@ -11,6 +11,7 @@
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, escapeHtml, locationPath, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { m } from '../../entries/index.js';
 
 export const FAMILY = 'locate' as const;
 
@@ -95,14 +96,14 @@ function cardsOf(env: Envelope): Card[] {
 }
 
 function topRows(c: Card): string {
-  return row('照片', '—')
-    + row('名称', escapeHtml(String(c.name ?? '')))
-    + row('编号', escapeHtml(String(c.id ?? '')))
+  return row(m('skill-home.items-pages-locate.c001'), '—')
+    + row(m('skill-home.items-pages-locate.c002'), escapeHtml(String(c.name ?? '')))
+    + row(m('skill-home.items-pages-locate.c003'), escapeHtml(String(c.id ?? '')))
     // #890 seq 7（⑥分隔符不懒政）：原先位置格直接印 `toItemCard` 的复合串（`客厅/阳台柜×1[在家]`），
     // 与紧邻的「数量」「状态」两格说两遍同一件事，且一个值位挤了三套符号。位置格只留路径。
-    + row('位置', escapeHtml(locationPath(String(c.location ?? ''))))
-    + row('数量', escapeHtml(String(c.quantity ?? '')))
-    + row('状态', escapeHtml(String(c.status ?? '')));
+    + row(m('skill-home.items-pages-locate.c004'), escapeHtml(locationPath(String(c.location ?? ''))))
+    + row(m('skill-home.items-pages-locate.c005'), escapeHtml(String(c.quantity ?? '')))
+    + row(m('skill-home.items-pages-locate.c006'), escapeHtml(String(c.status ?? '')));
 }
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
@@ -113,11 +114,11 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const first = cards[0];
   const top = first
     ? '<div class="wrap-x"><table class="kv top">'
-      + row('查询词', '—')
+      + row(m('skill-home.items-pages-locate.c007'), '—')
       + topRows(first)
-      + '</table></div><p class="note">照片请进详情查看。</p>'
-    : '<div class="hm-empty">没找到。试试扩大寻找，或考虑是不是该录入。</div>'
-      + '<div>' + op('扩大寻找', '请加载居家管家技能，帮我扩大寻找这件物品', false) + '</div>';
+      + '</table></div><p class="note">' + m('skill-home.items-pages-locate.c016') + '</p>'
+    : '<div class="hm-empty">' + m('skill-home.items-pages-locate.c017') + '</div>'
+      + '<div>' + op(m('skill-home.items-pages-locate.c008'), m('skill-home.items-pages-locate.c009'), false) + '</div>';
   const rest = cards.slice(1).map((c) => '<tr><td>' + escapeHtml(String(c.name ?? ''))
     + '</td><td>' + escapeHtml(String(c.id ?? ''))
     // 位置列同样只留路径（同上，复合串的件数与状态另有独立列）。
@@ -125,19 +126,19 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '</td><td>' + escapeHtml(String(c.status ?? '')) + '</td></tr>').join('');
   const content = PAGE_CSS
     // 抬头说人话（此前那句是取数规则说明书：#817 seq 7 的 ②）。
-    + '<p class="greet">东西急用？先看置顶这一件，找到了就点「我找到了」。</p>'
-    + '<section class="sec" data-block="fields" data-need="' + needs('fields') + '"><h2>置顶</h2>' + top + '</section>'
-    + '<section class="sec" data-block="empty" data-need="' + needs('empty') + '"><h2>其余候选</h2>'
+    + '<p class="greet">' + m('skill-home.items-pages-locate.c018') + '</p>'
+    + '<section class="sec" data-block="fields" data-need="' + needs('fields') + '"><h2>' + m('skill-home.items-pages-locate.c019') + '</h2>' + top + '</section>'
+    + '<section class="sec" data-block="empty" data-need="' + needs('empty') + '"><h2>' + m('skill-home.items-pages-locate.c020') + '</h2>'
     + (rest === ''
-      ? '<p>没有其余候选。</p>'
-      : '<div class="wrap-x"><table class="kv rest"><tr><th>名称</th><th>编号</th><th>位置</th><th>状态</th></tr>' + rest + '</table></div>')
+      ? '<p>' + m('skill-home.items-pages-locate.c021') + '</p>'
+      : '<div class="wrap-x"><table class="kv rest"><tr><th>' + m('skill-home.items-pages-locate.c022') + '</th><th>' + m('skill-home.items-pages-locate.c023') + '</th><th>' + m('skill-home.items-pages-locate.c024') + '</th><th>' + m('skill-home.items-pages-locate.c025') + '</th></tr>' + rest + '</table></div>')
     + '</section>'
     // 状态块：置顶卡片里已经有「状态」格（真值随信封来），再渲染一遍就是复述，整块隐藏；标记与原文留住。
     + '<section class="sec" data-block="status" data-need="' + needs('status') + '" hidden></section>'
-    + '<section class="sec" data-block="operations" data-need="' + needs('operations') + '"><h2>下一步</h2><div>'
-    + op('我找到了', '请加载居家管家技能，我找到了这件物品', false)
-    + op('分享位置', '请加载居家管家技能，帮我分享这件物品的位置', true)
-    + op('扩大寻找', '请加载居家管家技能，帮我扩大寻找这件物品', true)
+    + '<section class="sec" data-block="operations" data-need="' + needs('operations') + '"><h2>' + m('skill-home.items-pages-locate.c026') + '</h2><div>'
+    + op(m('skill-home.items-pages-locate.c010'), m('skill-home.items-pages-locate.c011'), false)
+    + op(m('skill-home.items-pages-locate.c012'), m('skill-home.items-pages-locate.c013'), true)
+    + op(m('skill-home.items-pages-locate.c014'), m('skill-home.items-pages-locate.c015'), true)
     + '</div>'
     + homeCopyArea({
         data: { envelope: env },

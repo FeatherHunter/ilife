@@ -6,6 +6,7 @@
 // 必需块原文＝契约附录：核对清单（ID/位置/数量/状态）含拉丁字符，只进 data-need 属性。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
+import { m } from '../../entries/index.js';
 import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
 
 export const FAMILY = 'inventory_round' as const;
@@ -94,14 +95,25 @@ const CSS = '.hero{background:linear-gradient(180deg,#fff,#f6fbf7);border-radius
 + 'pre{white-space:pre-wrap;word-break:break-all;background:#f8f9fb;border-radius:10px;padding:10px;font-size:12px}'
 + '@media(max-width:820px){.hero{padding:18px 14px}.sec{padding:14px}.btnrow{grid-template-columns:1fr}}';
 
-const JS = 'function copyText(t){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t);}else{var ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");}catch(e){}document.body.removeChild(ta);}}'
-+ 'function setTri(btn){var box=btn.parentNode;box.querySelectorAll(".tri").forEach(function(x){x.classList.remove("on");});btn.classList.add("on");}'
-+ 'function roundCmd(kind){var rec=document.getElementById("recid").textContent;var scope=document.getElementById("scope").textContent;'
-+ 'if(kind==="extra")copyText("请加载「居家管家」技能,帮我盘点(唤醒词:盘点):\\n\\n  清单外物品: ______");'
-+ 'else if(kind==="save")copyText("请加载「居家管家」技能,帮我继续盘点(唤醒词:盘点):\\n\\n  记  录: "+rec+"\\n  范  围: "+scope);'
-+ 'else if(kind==="commit")copyText("请加载「居家管家」技能,帮我完成盘点(唤醒词:盘点):\\n\\n  记  录: "+rec+"\\n  在: ______\\n  不在: ______\\n  不确定: ______");'
-+ 'else if(kind==="records")copyText("请加载「居家管家」技能,帮我查看盘点记录(唤醒词:盘点记录):");}'
-+ 'function roundLog(){var d=new Date();function p(n){return (n<10?"0":"")+n;}var g=function(i){return document.getElementById(i).textContent;};copyText("盘点｜"+d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes())+":"+p(d.getSeconds())+"｜记录"+g("recid")+"｜范围"+g("scope")+"｜清单"+g("total"));}';
+function pageScript(): string {
+  // 内联脚本文案在渲染期取词（手册 §4.8：模块级常量不得早期取词）。
+  const L = {
+    extra: m('skill-home.items-pages-inventory-round.c026'),
+    save: m('skill-home.items-pages-inventory-round.c027', { p0: "{p0}", p1: "{p1}" }),
+    commit: m('skill-home.items-pages-inventory-round.c028', { p0: "{p0}" }),
+    records: m('skill-home.items-pages-inventory-round.c029'),
+    log: m('skill-home.items-pages-inventory-round.c030', { p0: "{p0}", p1: "{p1}", p2: "{p2}", p3: "{p3}" }),
+  };
+  return 'var L=' + JSON.stringify(L) + ';'
+    + 'function copyText(t){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t);}else{var ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");}catch(e){}document.body.removeChild(ta);}}'
+    + 'function setTri(btn){var box=btn.parentNode;box.querySelectorAll(".tri").forEach(function(x){x.classList.remove("on");});btn.classList.add("on");}'
+    + 'function roundCmd(kind){var rec=document.getElementById("recid").textContent;var scope=document.getElementById("scope").textContent;'
+    + 'if(kind==="extra")copyText(L.extra);'
+    + 'else if(kind==="save")copyText(L.save.replace("{p0}",rec).replace("{p1}",scope));'
+    + 'else if(kind==="commit")copyText(L.commit.replace("{p0}",rec));'
+    + 'else if(kind==="records")copyText(L.records);}'
+    + 'function roundLog(){var d=new Date();function p(n){return (n<10?"0":"")+n;}var g=function(i){return document.getElementById(i).textContent;};copyText(L.log.replace("{p0}",d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes())+":"+p(d.getSeconds())).replace("{p1}",g("recid")).replace("{p2}",g("scope")).replace("{p3}",g("total")));}'
+}
 
 function str(v: unknown): string {
   return typeof v === 'string' ? v : '';
@@ -110,11 +122,11 @@ function str(v: unknown): string {
 // 回执形如“已盘点：#4 全屋 共 62 条位置记录”：解析记录号、范围与规模。
 // 范围词中文化（all→全屋，location→按位置；机审英文裸词行零容忍，原文只进数据原文）。
 function parseRound(message: string): { id: string; scope: string; total: string } {
-  const m = message.match(/盘点：#(\d+)\s*(\S+)?\s*共\s*(\d+)\s*条/);
-  if (!m) return { id: '—', scope: '全屋', total: '—' };
-  const raw = m[2] ?? '';
+  const hit = message.match(/盘点：#(\d+)\s*(\S+)?\s*共\s*(\d+)\s*条/);
+  if (!hit) return { id: '—', scope: '全屋', total: '—' };
+  const raw = hit[2] ?? '';
   const scope = raw === '' || raw === 'all' ? '全屋' : raw === 'location' ? '按位置' : raw;
-  return { id: m[1], scope, total: m[3] };
+  return { id: hit[1], scope, total: hit[3] };
 }
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 盘点任务单真页面。
@@ -125,25 +137,25 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const round = parseRound(str(data.message));
   const empty = round.total === '0';
 
-  const content = '<div class="hero"><p class="eyebrow">填写后确认完成</p>'
+  const content = '<div class="hero"><p class="eyebrow">' + m('skill-home.items-pages-inventory-round.c001') + '</p>'
     // 三态词之间给足分隔（此前连写成「在不在不确定」，读起来有歧义：#817 seq 25 的 ⑥）。
-    + '<p class="lead">逐件确认：在／不在／不确定；数量不同即为异</p></div>'
-    + '<section class="sec" data-block="fields" data-need="' + NEED.fields + '"><h2>范围</h2>'
-    + '<dl class="kv"><dt>盘点范围</dt><dd id="scope">' + escapeHtml(round.scope) + '</dd>'
-    + '<dt>所属记录</dt><dd>记录<span id="recid">' + escapeHtml(round.id) + '</span></dd>'
-    + '<dt>清单规模</dt><dd id="total">共' + escapeHtml(round.total) + '条位置记录</dd></dl></section>'
-    + '<section class="sec"><h2>上次待复查置顶</h2><div class="empty">—</div>'
-    + '<div class="btnrow"><button class="btn ghost" onclick="roundCmd(\'records\')">查看盘点记录</button></div></section>'
-    + '<section class="sec"><h2>核对清单</h2>' + (empty ? '<div class="empty">范围内没有物品</div>' : '<div class="empty">—</div>')
-    + '<h3>三态判定</h3><div class="trio"><button class="tri" data-v="在" onclick="setTri(this)">在</button>'
-    + '<button class="tri" data-v="不在" onclick="setTri(this)">不在</button>'
-    + '<button class="tri" data-v="不确定" onclick="setTri(this)">不确定</button></div>'
-    + '<div class="frow">状态修正:<select><option>状态不变</option><option>在家</option><option>备用</option><option>借用中</option><option>维修中</option><option>找不到</option><option>已废弃</option></select></div>'
-    + '<div class="frow">数量修正:<input type="number" placeholder="数量修正选填"></div>'
-    + '<div class="frow">新位置:<input placeholder="新位置选填"></div>'
-    + '<div class="btnrow"><button class="btn ghost" onclick="roundCmd(\'extra\')">发现清单外物品</button>'
-    + '<button class="btn ghost" onclick="roundCmd(\'save\')">保存进度</button>'
-    + '<button class="btn green" onclick="roundCmd(\'commit\')">确认提交含差异</button>'
+    + '<p class="lead">' + m('skill-home.items-pages-inventory-round.c002') + '</p></div>'
+    + '<section class="sec" data-block="fields" data-need="' + NEED.fields + '"><h2>' + m('skill-home.items-pages-inventory-round.c003') + '</h2>'
+    + '<dl class="kv"><dt>' + m('skill-home.items-pages-inventory-round.c004') + '</dt><dd id="scope">' + escapeHtml(round.scope) + '</dd>'
+    + '<dt>' + m('skill-home.items-pages-inventory-round.c005') + '</dt><dd>' + m('skill-home.items-pages-inventory-round.c006') + '<span id="recid">' + escapeHtml(round.id) + '</span></dd>'
+    + '<dt>' + m('skill-home.items-pages-inventory-round.c007') + '</dt><dd id="total">' + m('skill-home.items-pages-inventory-round.c008', { p0: "{p0}" }) + '</dd></dl></section>'
+    + '<section class="sec"><h2>' + m('skill-home.items-pages-inventory-round.c009') + '</h2><div class="empty">—</div>'
+    + '<div class="btnrow"><button class="btn ghost" onclick="roundCmd(\'records\')">' + m('skill-home.items-pages-inventory-round.c010') + '</button></div></section>'
+    + '<section class="sec"><h2>' + m('skill-home.items-pages-inventory-round.c011') + '</h2>' + (empty ? '<div class="empty">' + m('skill-home.items-pages-inventory-round.c012') + '</div>' : '<div class="empty">—</div>')
+    + '<h3>' + m('skill-home.items-pages-inventory-round.c013') + '</h3><div class="trio"><button class="tri" data-v="在" onclick="setTri(this)">' + m('skill-home.items-pages-inventory-round.c014') + '</button>'
+    + '<button class="tri" data-v="不在" onclick="setTri(this)">' + m('skill-home.items-pages-inventory-round.c015') + '</button>'
+    + '<button class="tri" data-v="不确定" onclick="setTri(this)">' + m('skill-home.items-pages-inventory-round.c016') + '</button></div>'
+    + '<div class="frow">' + m('skill-home.items-pages-inventory-round.c017') + '<select><option>状态不变</option><option>在家</option><option>备用</option><option>借用中</option><option>维修中</option><option>找不到</option><option>已废弃</option></select></div>'
+    + '<div class="frow">' + m('skill-home.items-pages-inventory-round.c018') + '<input type="number" placeholder="' + m('skill-home.items-pages-inventory-round.c019') + '"></div>'
+    + '<div class="frow">' + m('skill-home.items-pages-inventory-round.c020') + '<input placeholder="' + m('skill-home.items-pages-inventory-round.c021') + '"></div>'
+    + '<div class="btnrow"><button class="btn ghost" onclick="roundCmd(\'extra\')">' + m('skill-home.items-pages-inventory-round.c022') + '</button>'
+    + '<button class="btn ghost" onclick="roundCmd(\'save\')">' + m('skill-home.items-pages-inventory-round.c023') + '</button>'
+    + '<button class="btn green" onclick="roundCmd(\'commit\')">' + m('skill-home.items-pages-inventory-round.c024') + '</button>'
     + '</div>'
     + homeCopyArea({
         data: { envelope: env },
@@ -153,7 +165,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '<section class="sec" data-block="operations" data-need="' + NEED.operations + '" hidden></section>'
     + '<section class="sec" data-block="status" data-need="' + NEED.status + '" hidden></section>'
     + '<section class="sec" data-block="empty" data-need="' + NEED.empty + '" hidden></section>'
-    + '<details><summary>数据原文</summary><pre class="pre-block-code" id="raw">' + escapeHtml(JSON.stringify(env.data ?? {})) + '</pre></details>'
-    + '<style>' + CSS + '</style><script>' + JS + '</script>';
+    + '<details><summary>' + m('skill-home.items-pages-inventory-round.c025') + '</summary><pre class="pre-block-code" id="raw">' + escapeHtml(JSON.stringify(env.data ?? {})) + '</pre></details>'
+    + '<style>' + CSS + '</style><script>' + pageScript() + '</script>';
   return fillTemplate(template, content);
 }

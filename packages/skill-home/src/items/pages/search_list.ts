@@ -11,6 +11,7 @@
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { m } from '../../entries/index.js';
 
 export const FAMILY = 'search_list' as const;
 
@@ -116,29 +117,29 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '</td><td>' + cell(c.status)
     + '</td><td>' + cell(c.tags) + '</td></tr>').join('');
   const result = cards.length
-    ? '<div class="wrap-x"><table class="kv" id="rows"><tr><th>名称</th><th>编号</th><th>分类</th><th>位置</th><th>数量</th><th>状态</th><th>标签</th></tr>'
-      + rows + '</table></div><p class="note">照片：随本次一起存进备注。</p>'
-    : '<div class="hm-empty">没有命中。换个词再搜一次，还是没有就录入一件新的吧。</div>'
-      + '<div>' + op('录入新物品', '请加载居家管家技能，帮我录入一件新物品', false) + '</div>';
+    ? '<div class="wrap-x"><table class="kv" id="rows"><tr><th>' + m('skill-home.items-pages-search-list.c013') + '</th><th>' + m('skill-home.items-pages-search-list.c014') + '</th><th>' + m('skill-home.items-pages-search-list.c015') + '</th><th>' + m('skill-home.items-pages-search-list.c016') + '</th><th>' + m('skill-home.items-pages-search-list.c017') + '</th><th>' + m('skill-home.items-pages-search-list.c018') + '</th><th>' + m('skill-home.items-pages-search-list.c019') + '</th></tr>'
+      + rows + '</table></div><p class="note">' + m('skill-home.items-pages-search-list.c020') + '</p>'
+    : '<div class="hm-empty">' + m('skill-home.items-pages-search-list.c021') + '</div>'
+      + '<div>' + op(m('skill-home.items-pages-search-list.c001'), m('skill-home.items-pages-search-list.c002'), false) + '</div>';
   const content = PAGE_CSS
     + '<script>function filterLocal(kw){var t=document.getElementById("rows");if(!t)return;kw=String(kw||"").toLowerCase();var rs=t.getElementsByTagName("tr");for(var i=1;i<rs.length;i++){rs[i].style.display=rs[i].textContent.toLowerCase().indexOf(kw)>=0?"":"none";}}</script>'
     // #817 第二波（② 层级清）：导语原写「查物品与拍照找物品共用下面这张表」，那是页面的实现说明；
     // 改说这页拿什么线索找人（两个场景共用本页，线索口径对两边都成立）。
-    + '<p class="greet">名字、颜色、大概放哪儿，记得哪条说哪条，都能拿来找。</p>'
-    + '<section class="sec" data-block="fields" data-need="' + needs('fields') + '"><h2>摘要</h2><div class="wrap-x"><table class="kv">'
-    + '<tr><th>查询词</th><td>—</td></tr>'
-    + '<tr><th>命中件数</th><td>共 ' + cards.length + ' 件</td></tr>'
+    + '<p class="greet">' + m('skill-home.items-pages-search-list.c022') + '</p>'
+    + '<section class="sec" data-block="fields" data-need="' + needs('fields') + '"><h2>' + m('skill-home.items-pages-search-list.c023') + '</h2><div class="wrap-x"><table class="kv">'
+    + '<tr><th>' + m('skill-home.items-pages-search-list.c024') + '</th><td>—</td></tr>'
+    + '<tr><th>' + m('skill-home.items-pages-search-list.c025') + '</th><td>' + m('skill-home.items-pages-search-list.c026', { p0: String(cards.length) }) + '</td></tr>'
     + '</table></div>'
-    + '<p><input class="find" placeholder="敲字过滤本页" oninput="filterLocal(this.value)"></p></section>'
-    + '<section class="sec" data-block="empty" data-need="' + needs('empty') + '"><h2>结果</h2>' + result + '</section>'
+    + '<p><input class="find" placeholder="' + m('skill-home.items-pages-search-list.c027') + '" oninput="filterLocal(this.value)"></p></section>'
+    + '<section class="sec" data-block="empty" data-need="' + needs('empty') + '"><h2>' + m('skill-home.items-pages-search-list.c028') + '</h2>' + result + '</section>'
     // 状态块：结果表里已经有「状态」列（真值随信封来），再渲染一遍就是复述，整块隐藏；标记与原文留住。
     + '<section class="sec" data-block="status" data-need="' + needs('status') + '" hidden></section>'
-    + '<section class="sec" data-block="operations" data-need="' + needs('operations') + '"><h2>下一步</h2><div>'
-    + op('搜索', '请加载居家管家技能，帮我搜索一件物品', false)
-    + op('本地筛选', '请加载居家管家技能，帮我在刚才的结果里接着筛', true)
-    + op('细化筛选', '请加载居家管家技能，帮我按分类位置标签细化筛选', true)
-    + op('拍照找物品', '请加载居家管家技能，我要拍照找一件物品', true)
-    + op('录入新物品', '请加载居家管家技能，帮我录入一件新物品', true)
+    + '<section class="sec" data-block="operations" data-need="' + needs('operations') + '"><h2>' + m('skill-home.items-pages-search-list.c029') + '</h2><div>'
+    + op(m('skill-home.items-pages-search-list.c003'), m('skill-home.items-pages-search-list.c004'), false)
+    + op(m('skill-home.items-pages-search-list.c005'), m('skill-home.items-pages-search-list.c006'), true)
+    + op(m('skill-home.items-pages-search-list.c007'), m('skill-home.items-pages-search-list.c008'), true)
+    + op(m('skill-home.items-pages-search-list.c009'), m('skill-home.items-pages-search-list.c010'), true)
+    + op(m('skill-home.items-pages-search-list.c011'), m('skill-home.items-pages-search-list.c012'), true)
     + '</div>'
     + homeCopyArea({
         data: { envelope: env },

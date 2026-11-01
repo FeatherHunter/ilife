@@ -8,6 +8,7 @@
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, escapeHtml, locationPath, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { m } from '../../entries/index.js';
 
 export const FAMILY = 'photos' as const;
 
@@ -81,16 +82,12 @@ const CSS = '.hero{background:linear-gradient(180deg,#fff,#f8fbff);border-radius
 + 'pre{white-space:pre-wrap;word-break:break-all;background:#f8f9fb;border-radius:10px;padding:10px;font-size:12px}'
 + '@media(max-width:820px){.hero{padding:18px 14px}.sec{padding:14px}.btnrow{grid-template-columns:1fr}}';
 
-const JS = 'function copyText(t){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t);}else{var ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");}catch(e){}document.body.removeChild(ta);}}'
-+ 'function photoAct(btn,kind){var nm=btn.dataset.nm||"物品";var id=btn.dataset.id||"";'
-+ 'var L=["请加载「居家管家」技能,帮我管照片(唤醒词:管照片):","","  物  品: "+nm+"(编号"+id+")"];'
-+ 'if(kind==="order")L.push("  动  作: 换主图,新顺序: ______");'
-+ 'else if(kind==="add")L.push("  动  作: 加图");'
-+ 'else if(kind==="shoot")L.push("  动  作: 补拍","","【照片即将发送:】");'
-+ 'else if(kind==="del")L.push("  动  作: 删除第 ______ 张");'
-+ 'else if(kind==="dl")L.push("  动  作: 下载照片");'
-+ 'copyText(L.join("\\n"));}'
-+ 'function chipType(btn){document.querySelectorAll(".chip").forEach(function(x){x.classList.remove("on");});btn.classList.add("on");}';
+function photoScript(PL: string): string {
+  return 'function copyText(t){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t);}else{var ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");}catch(e){}document.body.removeChild(ta);}}'
++ 'var PL=' + PL + ';'
++ 'function photoAct(btn,kind){var nm=btn.dataset.nm||PL.defaultName;var id=btn.dataset.id||"";'
++ 'copyText(PL.actions[kind].replace("{p0}",nm).replace("{p1}",id));}'
++ 'function chipType(btn){document.querySelectorAll(".chip").forEach(function(x){x.classList.remove("on");});btn.classList.add("on");}'; }
 
 function str(v: unknown): string { return typeof v === 'string' ? v : ''; }
 
@@ -132,7 +129,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const template = readFileSync(new URL('../../../templates/items/photos.html', import.meta.url), 'utf8');
   const data = (env.data ?? {}) as Record<string, unknown>;
   const manage = env.key === 'home.item.update';
-  const modeText = manage ? '管理' : '查看';
+  const modeText = manage ? m('skill-home.items-pages-photos.c001') : m('skill-home.items-pages-photos.c002');
   const item = (data.item ?? {}) as Record<string, unknown>;
   const id = num(item.id);
   const name = str(item.name);
@@ -147,54 +144,54 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
 
   const kvRows: [string, string][] = [];
   if (snap !== null) {
-    kvRows.push(['名称', snap.name || '—'], ['编号', idText]);
+    kvRows.push([m('skill-home.items-pages-photos.c003'), snap.name || '—'], [m('skill-home.items-pages-photos.c004'), idText]);
     for (const l of snap.locations) {
-      kvRows.push(['位置', l.location || '—'], ['数量', String(l.quantity)], ['状态', l.status || '—']);
+      kvRows.push([m('skill-home.items-pages-photos.c005'), l.location || '—'], [m('skill-home.items-pages-photos.c006'), String(l.quantity)], [m('skill-home.items-pages-photos.c007'), l.status || '—']);
     }
-    kvRows.push(['分类', snap.category || '—'], ['标签', snap.tags.length > 0 ? snap.tags.join('、') : '—']);
+    kvRows.push([m('skill-home.items-pages-photos.c008'), snap.category || '—'], [m('skill-home.items-pages-photos.c009'), snap.tags.length > 0 ? snap.tags.join(m('skill-home.items-pages-photos.c034')) : '—']);
   } else {
     // 详情态回执的 `item.location` 是 `toItemCard` 的复合串（`客厅/阳台柜×1[在家]`）。
     // #890 seq 22（⑥分隔符不懒政）：不再把整串印在一个值位里——串尾的件数与状态已由卡上的
     // `quantity`／`status` 两件单独带出，位置这一格只留路径（`locationPath` 剥复合尾巴）。
     // 形状与上面的管理态一致（位置／数量／状态三格），两态同一把尺。
-    kvRows.push(['名称', name || '—'], ['编号', idText],
-      ['位置', locationPath(str(item.location)) || '—'],
-      ['数量', num(item.quantity) === null ? '—' : String(item.quantity)],
-      ['状态', str(item.status) || '—'],
-      ['分类', str(item.category) || '—'], ['标签', str(item.tags) || '—']);
+    kvRows.push([m('skill-home.items-pages-photos.c010'), name || '—'], [m('skill-home.items-pages-photos.c011'), idText],
+      [m('skill-home.items-pages-photos.c012'), locationPath(str(item.location)) || '—'],
+      [m('skill-home.items-pages-photos.c013'), num(item.quantity) === null ? '—' : String(item.quantity)],
+      [m('skill-home.items-pages-photos.c014'), str(item.status) || '—'],
+      [m('skill-home.items-pages-photos.c015'), str(item.category) || '—'], [m('skill-home.items-pages-photos.c016'), str(item.tags) || '—']);
   }
 
   const kvHtml = kvRows
     .map(([k, v]) => '<dt>' + escapeHtml(k) + '</dt><dd>' + escapeHtml(v) + '</dd>').join('');
 
   const photoBox = photo !== ''
-    ? '<div class="main">主图共一张</div>'
+    ? '<div class="main">' + m('skill-home.items-pages-photos.c021') + '</div>'
     : manage && message !== ''
       ? '<div class="main">—</div>'
-      : '<div class="empty">暂无照片。点下方「补拍」给这件物品留影。</div>';
+      : '<div class="empty">' + m('skill-home.items-pages-photos.c022') + '</div>';
 
   const receipt = manage && message !== ''
-    ? '<div class="sec"><h2>管理回执</h2><p>' + escapeHtml(message) + '</p></div>'
+    ? '<div class="sec"><h2>' + m('skill-home.items-pages-photos.c023') + '</h2><p>' + escapeHtml(message) + '</p></div>'
     : '';
 
   // 头卡只说一次当前模式（此前 eyebrow 的「查看／排序确认」与这句重复一个词，见 #817 seq 22 的 ⑤）。
   const content = '<div class="hero">'
-    + '<p class="lead">首张为主图，共四种类型，当前模式：' + escapeHtml(modeText) + '</p></div>'
-    + '<section class="sec" data-block="fields" data-need="' + NEED.fields + '"><h2>物品</h2>'
+    + '<p class="lead">' + escapeHtml(m('skill-home.items-pages-photos.c024', { p0: modeText })) + '</p></div>'
+    + '<section class="sec" data-block="fields" data-need="' + NEED.fields + '"><h2>' + m('skill-home.items-pages-photos.c025') + '</h2>'
     + '<dl class="kv">' + kvHtml + '</dl></section>'
-    + '<section class="sec" data-block="status" data-need="' + NEED.status + '"><h2>照片列表</h2>'
+    + '<section class="sec" data-block="status" data-need="' + NEED.status + '"><h2>' + m('skill-home.items-pages-photos.c026') + '</h2>'
     + photoBox
-    + '<div class="chips"><button class="chip on" onclick="chipType(this)">全部</button>'
-    + ['普通', '说明书-使用', '说明书-安装', '说明书-保养'].map((t) => '<button class="chip" onclick="chipType(this)">' + escapeHtml(t) + '</button>').join('')
+    + '<div class="chips"><button class="chip on" onclick="chipType(this)">' + m('skill-home.items-pages-photos.c027') + '</button>'
+    + [m('skill-home.items-pages-photos.c017'), m('skill-home.items-pages-photos.c018'), m('skill-home.items-pages-photos.c019'), m('skill-home.items-pages-photos.c020')].map((t) => '<button class="chip" onclick="chipType(this)">' + escapeHtml(t) + '</button>').join('')
     + '</div></section>'
     + receipt
-    + '<section class="sec" data-block="operations" data-need="' + NEED.operations + '"><h2>动作</h2>'
+    + '<section class="sec" data-block="operations" data-need="' + NEED.operations + '"><h2>' + m('skill-home.items-pages-photos.c028') + '</h2>'
     + '<div class="btnrow">'
-    + '<button class="btn ghost" data-act="order" data-nm="' + escapeHtml(name) + '" data-id="' + escapeHtml(idText) + '" onclick="photoAct(this,\'order\')">确认顺序变更</button>'
-    + '<button class="btn ghost" data-act="add" data-nm="' + escapeHtml(name) + '" data-id="' + escapeHtml(idText) + '" onclick="photoAct(this,\'add\')">加图</button>'
-    + '<button class="btn ghost" data-act="shoot" data-nm="' + escapeHtml(name) + '" data-id="' + escapeHtml(idText) + '" onclick="photoAct(this,\'shoot\')">补拍</button>'
-    + '<button class="btn red" data-act="del" data-nm="' + escapeHtml(name) + '" data-id="' + escapeHtml(idText) + '" onclick="photoAct(this,\'del\')">删除选中</button>'
-    + '<button class="btn ghost wide" data-act="dl" data-nm="' + escapeHtml(name) + '" data-id="' + escapeHtml(idText) + '" onclick="photoAct(this,\'dl\')">下载照片</button>'
+    + '<button class="btn ghost" data-act="order" data-nm="' + escapeHtml(name) + '" data-id="' + escapeHtml(idText) + '" onclick="photoAct(this,\'order\')">' + m('skill-home.items-pages-photos.c029') + '</button>'
+    + '<button class="btn ghost" data-act="add" data-nm="' + escapeHtml(name) + '" data-id="' + escapeHtml(idText) + '" onclick="photoAct(this,\'add\')">' + m('skill-home.items-pages-photos.c030') + '</button>'
+    + '<button class="btn ghost" data-act="shoot" data-nm="' + escapeHtml(name) + '" data-id="' + escapeHtml(idText) + '" onclick="photoAct(this,\'shoot\')">' + m('skill-home.items-pages-photos.c031') + '</button>'
+    + '<button class="btn red" data-act="del" data-nm="' + escapeHtml(name) + '" data-id="' + escapeHtml(idText) + '" onclick="photoAct(this,\'del\')">' + m('skill-home.items-pages-photos.c032') + '</button>'
+    + '<button class="btn ghost wide" data-act="dl" data-nm="' + escapeHtml(name) + '" data-id="' + escapeHtml(idText) + '" onclick="photoAct(this,\'dl\')">' + m('skill-home.items-pages-photos.c033') + '</button>'
     + '</div>'
     + homeCopyArea({
         data: { envelope: env },
@@ -202,7 +199,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
       })
     + '</section>'
     + '<section class="sec" data-block="empty" data-need="' + NEED.empty + '" hidden></section>'
-    + '<details><summary>数据原文</summary><pre class="pre-block-code" id="raw">' + escapeHtml(JSON.stringify(env.data ?? {})) + '</pre></details>'
-    + '<style>' + CSS + '</style><script>' + JS + '</script>';
+    + '<details><summary>' + m('skill-home.items-pages-photos.c041') + '</summary><pre class="pre-block-code" id="raw">' + escapeHtml(JSON.stringify(env.data ?? {})) + '</pre></details>'
+    + '<style>' + CSS + '</style><script>' + photoScript(JSON.stringify({ defaultName: m('skill-home.items-pages-photos.c035'), actions: { order: m('skill-home.items-pages-photos.c036', { p0: "{p0}", p1: "{p1}" }), add: m('skill-home.items-pages-photos.c037', { p0: "{p0}", p1: "{p1}" }), shoot: m('skill-home.items-pages-photos.c038', { p0: "{p0}", p1: "{p1}" }), del: m('skill-home.items-pages-photos.c039', { p0: "{p0}", p1: "{p1}" }), dl: m('skill-home.items-pages-photos.c040', { p0: "{p0}", p1: "{p1}" }) } })) + '</script>';
   return fillTemplate(template, content);
 }

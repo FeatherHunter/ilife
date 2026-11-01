@@ -9774,55 +9774,6 @@
       "state": "open（待开工；清单由 #1220 与各迁移票分离而来）",
       "files": [
         {
-          "path": "packages/skill-home/src/items/pages/add_form.ts",
-          "literals": 66,
-          "byClass": {
-            "payload": 66
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/browse.ts",
-          "literals": 33,
-          "byClass": {
-            "payload": 33
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/detail.ts",
-          "literals": 69,
-          "byClass": {
-            "payload": 69
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/duplicates.ts",
-          "literals": 30,
-          "byClass": {
-            "payload": 30
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/locate.ts",
-          "literals": 34,
-          "byClass": {
-            "payload": 34
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/photos.ts",
-          "literals": 62,
-          "byClass": {
-            "payload": 62
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/search_list.ts",
-          "literals": 39,
-          "byClass": {
-            "payload": 39
-          }
-        },
-        {
           "path": "packages/skill-home/src/express/pages/express.ts",
           "literals": 48,
           "byClass": {
@@ -9914,13 +9865,6 @@
           }
         },
         {
-          "path": "packages/skill-home/src/render/sceneNaming.ts",
-          "literals": 105,
-          "byClass": {
-            "payload": 105
-          }
-        },
-        {
           "path": "packages/skill-home/src/setup/pages/backup_receipt.ts",
           "literals": 58,
           "byClass": {
@@ -9995,6 +9939,57 @@
           "literals": 101,
           "byClass": {
             "payload": 101
+          }
+        }
+      ],
+      "migrated": [
+        {
+          "path": "packages/skill-home/src/items/pages/add_form.ts",
+          "literals": 66,
+          "byClass": {
+            "payload": 66
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/browse.ts",
+          "literals": 33,
+          "byClass": {
+            "payload": 33
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/detail.ts",
+          "literals": 69,
+          "byClass": {
+            "payload": 69
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/duplicates.ts",
+          "literals": 30,
+          "byClass": {
+            "payload": 30
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/locate.ts",
+          "literals": 34,
+          "byClass": {
+            "payload": 34
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/photos.ts",
+          "literals": 62,
+          "byClass": {
+            "payload": 62
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/search_list.ts",
+          "literals": 39,
+          "byClass": {
+            "payload": 39
           }
         },
         {
@@ -10106,7 +10101,6 @@
           }
         }
       ],
-      "migrated": [],
       "excluded": [
         {
           "path": "packages/skill-calorie/src/triggers/wake-assets.ts",
@@ -10187,6 +10181,14 @@
             "payload": 3
           },
           "reason": "生成件：由实物 JSON 机器生成的唤醒词/场景资产，唤醒词语料按 #1236 冻结不译"
+        },
+        {
+          "path": "packages/skill-home/src/render/sceneNaming.ts",
+          "literals": 105,
+          "byClass": {
+            "payload": 105
+          },
+          "reason": "文件名主体冻结：commandCn 是产物文件名主体，与 docs/skills/skill-home/scene-pages-contract.appendix.json 逐行对账（test/html-delivery-801.test.mjs），按 #1235 文件名裁决不译（移至 #1309 excluded；0 词条）"
         }
       ],
       "totals": {
@@ -10197,12 +10199,12 @@
   },
   "scopeSummary": {
     "ledgerFiles": 1226,
-    "migratedFiles": 570,
-    "pendingFiles": 412,
-    "pendingLiterals": 11705,
-    "excludedFiles": 244,
-    "excludedLiterals": 13056,
-    "migratedLiterals": 17987
+    "migratedFiles": 589,
+    "pendingFiles": 392,
+    "pendingLiterals": 10669,
+    "excludedFiles": 245,
+    "excludedLiterals": 13161,
+    "migratedLiterals": 18918
   },
   "workflow": [
     "开工：从本文件取本票 files，逐件登记进 tooling/i18n-scope.json 的 files（先跑两道门拿红读数＝范围已挂但还没迁）。",

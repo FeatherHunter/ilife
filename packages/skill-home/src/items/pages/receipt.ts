@@ -11,6 +11,7 @@
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { m } from '../../entries/index.js';
 
 export const FAMILY = 'receipt' as const;
 
@@ -110,18 +111,19 @@ function modeOf(msg: string): ReceiptMode {
   return 'generic';
 }
 
-const MODE_TITLE: Record<ReceiptMode, string> = {
-  move: '移物品',
-  qty: '数量变更',
-  status: '状态变更',
-  tags: '标物品',
-  generic: '物品变更',
-};
+// 标题按语言在渲染期取词（手册 §4.8：模块级常量不得早期取词）。
+function modeTitle(mode: ReceiptMode): string {
+  if (mode === 'move') return m('skill-home.items-pages-receipt.c042');
+  if (mode === 'qty') return m('skill-home.items-pages-receipt.c043');
+  if (mode === 'status') return m('skill-home.items-pages-receipt.c044');
+  if (mode === 'tags') return m('skill-home.items-pages-receipt.c045');
+  return m('skill-home.items-pages-receipt.c046');
+}
 
 // 位置用分段展示（› 连接），正文里不出现多段斜杠拼接。
 function locSegs(loc: string): string {
   const segs = String(loc).split('/').map((s) => s.trim()).filter(Boolean);
-  if (!segs.length) return '<span class="fp-loc-empty">尚未设置位置</span>';
+  if (!segs.length) return '<span class="fp-loc-empty">' + m('skill-home.items-pages-receipt.c010') + '</span>';
   return segs.map((s) => '<span class="fp-loc-seg">' + esc(s) + '</span>').join('<span class="fp-loc-sep">›</span>');
 }
 
@@ -176,7 +178,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const template = readFileSync(new URL('../../../templates/items/receipt.html', import.meta.url), 'utf8');
   const msg = msgOf(env);
   const mode = modeOf(msg);
-  const title = MODE_TITLE[mode];
+  const title = modeTitle(mode);
   const key = String((env as { key?: unknown }).key ?? PAGE_META.key);
 
   // 当前状态：有 detail 写真实快照，无则回退破折号（旧信封兼容）。
@@ -189,79 +191,79 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
 
   let changeRows = '';
   if (mode === 'move') {
-    const m = msg.match(/^已移动：(.+)→(.+)$/);
+    const movePair = msg.match(/^已移动：(.+)→(.+)$/);
     const beforeLoc = chg.before_location !== undefined ? strOf(chg.before_location) : '';
-    const afterLoc = chg.after_location !== undefined ? strOf(chg.after_location) : (m?.[2] ?? '');
-    changeRows = '<div class="fp-row"><div class="fp-k">物品编号</div><div class="fp-v">' + esc(snap?.id ?? m?.[1] ?? '') + '</div></div>'
-      + '<div class="fp-row"><div class="fp-k">变更前</div><div class="fp-v"><span class="fp-diff-b">原位置</span>' + (beforeLoc !== '' ? locSegs(beforeLoc) : '<span>—</span>') + '</div></div>'
-      + '<div class="fp-row"><div class="fp-k">变更后</div><div class="fp-v"><span class="fp-diff-a">新位置</span> ' + (afterLoc !== '' ? locSegs(afterLoc) : '<span>—</span>') + '</div></div>';
+    const afterLoc = chg.after_location !== undefined ? strOf(chg.after_location) : (movePair?.[2] ?? '');
+    changeRows = '<div class="fp-row"><div class="fp-k">' + m('skill-home.items-pages-receipt.c018') + '</div><div class="fp-v">' + esc(snap?.id ?? movePair?.[1] ?? '') + '</div></div>'
+      + '<div class="fp-row"><div class="fp-k">' + m('skill-home.items-pages-receipt.c019') + '</div><div class="fp-v"><span class="fp-diff-b">' + m('skill-home.items-pages-receipt.c021') + '</span>' + (beforeLoc !== '' ? locSegs(beforeLoc) : '<span>—</span>') + '</div></div>'
+      + '<div class="fp-row"><div class="fp-k">' + m('skill-home.items-pages-receipt.c020') + '</div><div class="fp-v"><span class="fp-diff-a">' + m('skill-home.items-pages-receipt.c022') + '</span> ' + (afterLoc !== '' ? locSegs(afterLoc) : '<span>—</span>') + '</div></div>';
   } else if (mode === 'qty') {
-    const m = msg.match(/^已变更数量：(.+)$/);
+    const qtyPair = msg.match(/^已变更数量：(.+)$/);
     const beforeQ = chg.before_quantity !== undefined ? String(chg.before_quantity) : '—';
     const afterQ = chg.after_quantity !== undefined ? String(chg.after_quantity) : '—';
-    changeRows = '<div class="fp-row"><div class="fp-k">物品编号</div><div class="fp-v">' + esc(snap?.id ?? m?.[1] ?? '') + '</div></div>'
-      + '<div class="fp-row"><div class="fp-k">变更前</div><div class="fp-v"><span class="fp-diff-b">原数量</span><span>' + esc(beforeQ) + '</span></div></div>'
-      + '<div class="fp-row"><div class="fp-k">变更后</div><div class="fp-v"><span class="fp-diff-a">现数量</span><span>' + esc(afterQ) + '</span></div></div>';
+    changeRows = '<div class="fp-row"><div class="fp-k">' + m('skill-home.items-pages-receipt.c018') + '</div><div class="fp-v">' + esc(snap?.id ?? qtyPair?.[1] ?? '') + '</div></div>'
+      + '<div class="fp-row"><div class="fp-k">' + m('skill-home.items-pages-receipt.c019') + '</div><div class="fp-v"><span class="fp-diff-b">' + m('skill-home.items-pages-receipt.c023') + '</span><span>' + esc(beforeQ) + '</span></div></div>'
+      + '<div class="fp-row"><div class="fp-k">' + m('skill-home.items-pages-receipt.c020') + '</div><div class="fp-v"><span class="fp-diff-a">' + m('skill-home.items-pages-receipt.c024') + '</span><span>' + esc(afterQ) + '</span></div></div>';
   } else if (mode === 'status') {
-    const m = msg.match(/^已变更状态：(.+)→(.+)$/);
+    const statusPair = msg.match(/^已变更状态：(.+)→(.+)$/);
     const beforeSt = chg.before_status !== undefined && strOf(chg.before_status) !== '' ? strOf(chg.before_status) : '—';
-    const afterSt = chg.after_status !== undefined && strOf(chg.after_status) !== '' ? strOf(chg.after_status) : (m?.[2] ?? '—');
-    changeRows = '<div class="fp-row"><div class="fp-k">物品编号</div><div class="fp-v">' + esc(snap?.id ?? m?.[1] ?? '') + '</div></div>'
-      + '<div class="fp-row"><div class="fp-k">变更前</div><div class="fp-v"><span class="fp-diff-b">原状态</span><span>' + esc(beforeSt) + '</span></div></div>'
-      + '<div class="fp-row"><div class="fp-k">变更后</div><div class="fp-v"><span class="fp-diff-a">现状态</span> <span class="fp-pill">' + esc(afterSt) + '</span></div></div>';
+    const afterSt = chg.after_status !== undefined && strOf(chg.after_status) !== '' ? strOf(chg.after_status) : (statusPair?.[2] ?? '—');
+    changeRows = '<div class="fp-row"><div class="fp-k">' + m('skill-home.items-pages-receipt.c018') + '</div><div class="fp-v">' + esc(snap?.id ?? statusPair?.[1] ?? '') + '</div></div>'
+      + '<div class="fp-row"><div class="fp-k">' + m('skill-home.items-pages-receipt.c019') + '</div><div class="fp-v"><span class="fp-diff-b">' + m('skill-home.items-pages-receipt.c025') + '</span><span>' + esc(beforeSt) + '</span></div></div>'
+      + '<div class="fp-row"><div class="fp-k">' + m('skill-home.items-pages-receipt.c020') + '</div><div class="fp-v"><span class="fp-diff-a">' + m('skill-home.items-pages-receipt.c026') + '</span> <span class="fp-pill">' + esc(afterSt) + '</span></div></div>';
   } else if (mode === 'tags') {
     // 「标签变更」只在变更结果里写这一处：去除／新增两行并入本段，不再另起一段复述。
-    const m = msg.match(/^已更新标签：(.+)$/);
+    const tagsPair = msg.match(/^已更新标签：(.+)$/);
     const removed = Array.isArray(chg.removed) ? (chg.removed as unknown[]).map((t) => String(t)) : null;
     const added = Array.isArray(chg.added) ? (chg.added as unknown[]).map((t) => String(t)) : null;
-    changeRows = '<div class="fp-row"><div class="fp-k">物品编号</div><div class="fp-v">' + esc(snap?.id ?? m?.[1] ?? '') + '</div></div>'
-      + '<div class="fp-row"><div class="fp-k">去除</div><div class="fp-v">' + (removed === null ? '—' : (removed.length ? removed.map((t) => '<span class="fp-tag">' + esc(t) + '</span>').join('') : '无')) + '</div></div>'
-      + '<div class="fp-row"><div class="fp-k">新增</div><div class="fp-v">' + (added === null ? '—' : (added.length ? added.map((t) => '<span class="fp-tag">' + esc(t) + '</span>').join('') : '无')) + '</div></div>';
+    changeRows = '<div class="fp-row"><div class="fp-k">' + m('skill-home.items-pages-receipt.c018') + '</div><div class="fp-v">' + esc(snap?.id ?? tagsPair?.[1] ?? '') + '</div></div>'
+      + '<div class="fp-row"><div class="fp-k">' + m('skill-home.items-pages-receipt.c027') + '</div><div class="fp-v">' + (removed === null ? '—' : (removed.length ? removed.map((t) => '<span class="fp-tag">' + esc(t) + '</span>').join('') : m('skill-home.items-pages-receipt.c001'))) + '</div></div>'
+      + '<div class="fp-row"><div class="fp-k">' + m('skill-home.items-pages-receipt.c028') + '</div><div class="fp-v">' + (added === null ? '—' : (added.length ? added.map((t) => '<span class="fp-tag">' + esc(t) + '</span>').join('') : m('skill-home.items-pages-receipt.c002'))) + '</div></div>';
   } else {
-    changeRows = '<div class="fp-row"><div class="fp-k">回执</div><div class="fp-v">' + esc(msg) + '</div></div>';
+    changeRows = '<div class="fp-row"><div class="fp-k">' + m('skill-home.items-pages-receipt.c029') + '</div><div class="fp-v">' + esc(msg) + '</div></div>';
   }
 
   const tail: Record<ReceiptMode, string> = {
-    move: '位置已记入台账，找东西时直接查物品即可',
-    qty: '数量已经同步，是否缺货可以去缺货检测看',
-    status: '这次改动已生效，废弃的物品还可以恢复',
-    tags: '标签已经同步，还可以去整理建议合并相近标签',
-    generic: '变更已经记入台账，可以继续下一步操作',
+    move: m('skill-home.items-pages-receipt.c003'),
+    qty: m('skill-home.items-pages-receipt.c004'),
+    status: m('skill-home.items-pages-receipt.c005'),
+    tags: m('skill-home.items-pages-receipt.c006'),
+    generic: m('skill-home.items-pages-receipt.c007'),
   };
 
-  const undoPrompt = '请加载「居家管家」技能，帮我撤销最近操作（唤醒词：撤销操作）：\n\n  撤销：刚才的' + title;
-  const detailPrompt = '请加载「居家管家」技能，帮我查看物品详情（唤醒词：看物品）：\n\n  物品：' + msg;
+  const undoPrompt = m('skill-home.items-pages-receipt.c008', { p0: String(title) });
+  const detailPrompt = m('skill-home.items-pages-receipt.c009', { p0: String(msg) });
 
   const locQtyHtml = !hasDetail ? '—' : (snap !== null && snap.locations.length
-    ? snap.locations.map((l) => locSegs(l.location) + '<span>×' + esc(String(l.quantity)) + '</span>').join('<span>；</span>')
-    : '尚未设置位置');
+    ? snap.locations.map((l) => locSegs(l.location) + '<span>×' + esc(String(l.quantity)) + '</span>').join('<span>' + m('skill-home.items-pages-receipt.c030') + '</span>')
+    : m('skill-home.items-pages-receipt.c010'));
   const statusHtml = !hasDetail ? '—' : (snap !== null && snap.locations.length ? esc(snap.locations[0].status || '—') : '—');
   const tagsHtml = !hasDetail ? '—' : (snap !== null && snap.tags.length
     ? snap.tags.map((t) => '<span class="fp-tag">' + esc(t) + '</span>').join('')
-    : '无');
+    : m('skill-home.items-pages-receipt.c011'));
 
   const content = PAGE_CSS
     + '<div class="fp-page" data-family="' + FAMILY + '" data-key="' + esc(key) + '" data-mode="' + mode + '">'
-    + '<div class="fp-hero"><div class="fp-eyebrow">物品管理 · 更新</div>'
+    + '<div class="fp-hero"><div class="fp-eyebrow">' + m('skill-home.items-pages-receipt.c031') + '</div>'
     // #817 ⑤：头卡标题不再复述场景名——交付链把 h1 回填成命令中文名（移物品／数量变更／状态变更／
     // 标物品），原「<场景名>完成」与 h1 相距 40px 同词；改用本次物品名，拿不到快照时回退原样。
-    + '<div class="fp-title">' + (snap !== null && snap.name !== '' ? esc(snap.name) : esc(title) + '完成') + '</div>'
+    + '<div class="fp-title">' + (snap !== null && snap.name !== '' ? esc(snap.name) : m('skill-home.items-pages-receipt.c012', { p0: String(esc(title)) })) + '</div>'
     + '<p class="fp-lead">' + esc(msg) + '</p></div>'
-    + '<section class="fp-sec"><h2 class="fp-sec-t">变更结果</h2>' + changeRows + '</section>'
-    + '<section class="fp-sec"><h2 class="fp-sec-t">当前状态</h2>'
-    + '<div class="fp-row"><div class="fp-k">名称</div><div class="fp-v">' + (hasDetail ? esc(snap !== null && snap.name !== '' ? snap.name : '无') : '—') + '</div></div>'
-    + '<div class="fp-row"><div class="fp-k">编号</div><div class="fp-v">' + esc(snap?.id ?? idOf(msg)) + '</div></div>'
-    + '<div class="fp-row"><div class="fp-k">分类</div><div class="fp-v">' + (hasDetail ? esc(snap !== null && snap.category !== '' ? snap.category : '无') : '—') + '</div></div>'
-    + '<div class="fp-row"><div class="fp-k">位置与数量</div><div class="fp-v">' + locQtyHtml + '</div></div>'
-    + '<div class="fp-row"><div class="fp-k">状态</div><div class="fp-v">' + statusHtml + '</div></div>'
-    + '<div class="fp-row"><div class="fp-k">标签</div><div class="fp-v">' + tagsHtml + '</div></div>'
-    + '<div class="fp-row"><div class="fp-k">备注</div><div class="fp-v">' + (hasDetail ? esc(snap !== null && snap.remark !== '' ? snap.remark : '无') : '—') + '</div></div>'
+    + '<section class="fp-sec"><h2 class="fp-sec-t">' + m('skill-home.items-pages-receipt.c032') + '</h2>' + changeRows + '</section>'
+    + '<section class="fp-sec"><h2 class="fp-sec-t">' + m('skill-home.items-pages-receipt.c033') + '</h2>'
+    + '<div class="fp-row"><div class="fp-k">' + m('skill-home.items-pages-receipt.c034') + '</div><div class="fp-v">' + (hasDetail ? esc(snap !== null && snap.name !== '' ? snap.name : m('skill-home.items-pages-receipt.c013')) : '—') + '</div></div>'
+    + '<div class="fp-row"><div class="fp-k">' + m('skill-home.items-pages-receipt.c035') + '</div><div class="fp-v">' + esc(snap?.id ?? idOf(msg)) + '</div></div>'
+    + '<div class="fp-row"><div class="fp-k">' + m('skill-home.items-pages-receipt.c036') + '</div><div class="fp-v">' + (hasDetail ? esc(snap !== null && snap.category !== '' ? snap.category : m('skill-home.items-pages-receipt.c014')) : '—') + '</div></div>'
+    + '<div class="fp-row"><div class="fp-k">' + m('skill-home.items-pages-receipt.c037') + '</div><div class="fp-v">' + locQtyHtml + '</div></div>'
+    + '<div class="fp-row"><div class="fp-k">' + m('skill-home.items-pages-receipt.c038') + '</div><div class="fp-v">' + statusHtml + '</div></div>'
+    + '<div class="fp-row"><div class="fp-k">' + m('skill-home.items-pages-receipt.c039') + '</div><div class="fp-v">' + tagsHtml + '</div></div>'
+    + '<div class="fp-row"><div class="fp-k">' + m('skill-home.items-pages-receipt.c040') + '</div><div class="fp-v">' + (hasDetail ? esc(snap !== null && snap.remark !== '' ? snap.remark : m('skill-home.items-pages-receipt.c015')) : '—') + '</div></div>'
     + '</section>'
-    + '<section class="fp-sec"><h2 class="fp-sec-t">后续可做</h2>'
+    + '<section class="fp-sec"><h2 class="fp-sec-t">' + m('skill-home.items-pages-receipt.c041') + '</h2>'
     + '<p class="fp-note">' + esc(tail[mode]) + '</p></section>'
     + '<div class="fp-actions">'
-    + copyBtn('撤销', 'fp-receipt-undo', 'fp-btn-danger')
-    + copyBtn('查看详情', 'fp-receipt-detail', 'fp-btn-ghost')
+    + copyBtn(m('skill-home.items-pages-receipt.c016'), 'fp-receipt-undo', 'fp-btn-danger')
+    + copyBtn(m('skill-home.items-pages-receipt.c017'), 'fp-receipt-detail', 'fp-btn-ghost')
     + '</div>'
     + homeCopyArea({
         data: { envelope: env },

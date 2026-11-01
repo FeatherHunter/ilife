@@ -175,7 +175,10 @@ describe('#805 脚手架：46 族逐族真链装配', () => {
       //     整族 18 页渲染了按钮却没写 <script>——三种都是「页看着在、点了没反应」，
       //     而三个判据件与七席评分席都查不出来，故把这条钉死在这里。）
       //    整段脚本是一行拼出来的，没有换行，ASI 不会补分号：`}` 后面直接跟 `var` 就会整段不解析。
-      const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)].map((m) => m[1]);
+      // 数据脚本（紧凑复制区的 `<script type="application/json">` 载荷）不是 JS：跳过解析，只编译可执行脚本。
+      const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)]
+        .filter((m) => !/\btype\s*=\s*["']application\/json["']/i.test(m[1]))
+        .map((m) => m[2]);
       scripts.forEach((s, i) => {
         assert.doesNotThrow(() => new Function(s), fam.family + ' 内联脚本#' + (i + 1) + ' 解析失败（整段脚本不解析＝页上按钮与勾选全死）');
       });

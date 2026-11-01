@@ -11,6 +11,7 @@
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { m } from '../../entries/index.js';
 
 export const FAMILY = 'duplicates' as const;
 
@@ -121,32 +122,32 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     const n = groupCount(String(head?.name ?? ''));
     return '<h3>' + escapeHtml(g) + '</h3>'
       + '<div class="wrap-x"><table class="kv">'
-      + row('组内件数', cell(n))
-      + row('首件状态', cell(head?.status))
+      + row(m('skill-home.items-pages-duplicates.c001'), cell(n))
+      + row(m('skill-home.items-pages-duplicates.c002'), cell(head?.status))
       // #817（⑤文案不冗余）：件数只在「组内件数」行写一次，值位不再复述「共 N 件」。
       // #817 第二波（⑥ 分隔符不懒政）：行名原写「位置/数量」把一个斜杠当两个字段名，
       // 拆成两行，值位各接回执里自己的字段（`location`／`quantity`）。
-      + row('位置', cell(head?.location))
-      + row('数量', cell(head?.quantity))
-      + row('分类', cell(head?.category))
-      + row('价格', '—')
+      + row(m('skill-home.items-pages-duplicates.c003'), cell(head?.location))
+      + row(m('skill-home.items-pages-duplicates.c004'), cell(head?.quantity))
+      + row(m('skill-home.items-pages-duplicates.c005'), cell(head?.category))
+      + row(m('skill-home.items-pages-duplicates.c006'), '—')
       + '</table></div>';
   }).join('');
   const body = names.length
-    ? '<p>共 ' + names.length + ' 组疑似重复。</p>' + tables
-    : '<div class="hm-empty">没有发现重复物品，各自都是独立录入的。</div>';
+    ? '<p>' + m('skill-home.items-pages-duplicates.c011', { p0: String(names.length) }) + '</p>' + tables
+    : '<div class="hm-empty">' + m('skill-home.items-pages-duplicates.c012') + '</div>';
   const content = PAGE_CSS
     // #817（⑤文案不冗余）：副标题不再逐字复述字段清单（那是判据件术语），改说这页要人做什么。
-    + '<p class="greet">同名的物品归到一组，逐组核对清楚再决定要不要合并。</p>'
-    + '<section class="sec" data-block="fields" data-need="' + needs('fields') + '"><h2>重复分组</h2>' + body + '</section>'
+    + '<p class="greet">' + m('skill-home.items-pages-duplicates.c013') + '</p>'
+    + '<section class="sec" data-block="fields" data-need="' + needs('fields') + '"><h2>' + m('skill-home.items-pages-duplicates.c014') + '</h2>' + body + '</section>'
     // #817 第二波（① 空态与正文同屏自相矛盾）：有分组时这一段整段收起来（「没有重复」的空态
     // 只在真没有重复时露头）；块位与 `data-need` 原文照留，结构块判据件照旧读得到。
-    + '<section class="sec" data-block="empty" data-need="' + needs('empty') + '"' + (names.length ? ' hidden' : '') + '><h2>没有重复时</h2><p>没有重复就各自独立录入，不必合并。</p></section>'
+    + '<section class="sec" data-block="empty" data-need="' + needs('empty') + '"' + (names.length ? ' hidden' : '') + '><h2>' + m('skill-home.items-pages-duplicates.c015') + '</h2><p>' + m('skill-home.items-pages-duplicates.c016') + '</p></section>'
     // 状态块：分组卡片里已经有「首件状态」行（真值随信封来），再渲染一遍就是复述，整块隐藏；标记与原文留住。
     + '<section class="sec" data-block="status" data-need="' + needs('status') + '" hidden></section>'
-    + '<section class="sec" data-block="operations" data-need="' + needs('operations') + '"><h2>下一步</h2><div>'
-    + op('独立录入', '请加载居家管家技能，帮我独立录入一件物品', false)
-    + op('复制合并建议', '请加载居家管家技能，帮我复制合并建议', true)
+    + '<section class="sec" data-block="operations" data-need="' + needs('operations') + '"><h2>' + m('skill-home.items-pages-duplicates.c017') + '</h2><div>'
+    + op(m('skill-home.items-pages-duplicates.c007'), m('skill-home.items-pages-duplicates.c008'), false)
+    + op(m('skill-home.items-pages-duplicates.c009'), m('skill-home.items-pages-duplicates.c010'), true)
     + '</div>'
     + homeCopyArea({
         data: { envelope: env },
