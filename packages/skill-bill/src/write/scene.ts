@@ -23,19 +23,19 @@ import type { BillRow } from '../fetch/db.js';
 import type { SummaryFacts } from './summaryRow.js';
 import type { BillReceipt } from '../shared/writeParts.js';
 import type { RecordSlot } from './slots.js';
-import { SCENE as sceneBorrow } from './scene-borrow.js';
+import { SCENE as sceneBorrow, sceneBorrow as buildBorrowScene } from './scene-borrow.js';
 import { SCENE as sceneBatch, sceneBatch as buildBatchScene } from './scene-batch.js';
 import { SCENE as sceneCollect, sceneCollect as buildCollectScene } from './scene-collect.js';
 import { SCENE as sceneExpense } from './scene-expense.js';
 import { SCENE as sceneIncome } from './scene-income.js';
 import { SCENE as sceneInstallment, sceneInstallment as buildInstallmentScene } from './scene-installment.js';
-import { SCENE as sceneLend } from './scene-lend.js';
+import { SCENE as sceneLend, sceneLend as buildLendScene } from './scene-lend.js';
 import { SCENE as scenePhoto } from './scene-photo.js';
 import { SCENE as scenePlain } from './scene-plain.js';
-import { SCENE as sceneRefund } from './scene-refund.js';
+import { SCENE as sceneRefund, sceneRefund as buildRefundScene } from './scene-refund.js';
 import { SCENE as sceneReimburse } from './scene-reimburse.js';
-import { SCENE as sceneReimburseDone } from './scene-reimburse-done.js';
-import { SCENE as sceneRepay } from './scene-repay.js';
+import { SCENE as sceneReimburseDone, sceneReimburseDone as buildReimburseDoneScene } from './scene-reimburse-done.js';
+import { SCENE as sceneRepay, sceneRepay as buildRepayScene } from './scene-repay.js';
 import { SCENE as sceneRestore } from './scene-restore.js';
 import { SCENE as sceneUndo } from './scene-undo.js';
 import { SCENE as sceneUpdate } from './scene-update.js';
@@ -109,7 +109,7 @@ const BY_OP = new Map(SCENES.filter((s) => s.op !== '').map((s) => [s.op, s]));
 
 /** 取件（判定只有四条，见件头；认不得的 kind 落「记一笔」，不猜、不抛——命令本身已由注册表拦过）。
  *
- *  `language` 只决定**已迁入词条层**的件（记分期、记收回、批量录入三件，其余随各自迁移票加入）按哪门语言取值：`zh` 走落点表里
+ *  `language` 只决定**已迁入词条层**的件（记分期、记收回、批量录入、记借入、记借出、记退款、报销到账、记偿还八件，其余随各自迁移票加入）按哪门语言取值：`zh` 走落点表里
  *  那一行静态件（与改造前同一对象）；其余语言现算。未迁移的件任何语言都走静态件（＝中文页）。
  *  **语言必给**（#1307）：本件不再兜 `zh`——兜一次，调用方漏传就静默出中文页，正是这一票要消掉的缺口。 */
 export function sceneFor(input: { readonly key: string; readonly kind?: string; readonly op?: string }, language: string): Scene {
@@ -118,6 +118,11 @@ export function sceneFor(input: { readonly key: string; readonly kind?: string; 
   if (kind === 'installment' && language !== 'zh') return buildInstallmentScene(language);
   if (kind === 'collect' && language !== 'zh') return buildCollectScene(language);
   if (kind === 'batch' && language !== 'zh') return buildBatchScene(language);
+  if (kind === 'borrow' && language !== 'zh') return buildBorrowScene(language);
+  if (kind === 'lend' && language !== 'zh') return buildLendScene(language);
+  if (kind === 'refund' && language !== 'zh') return buildRefundScene(language);
+  if (kind === 'reimburse-done' && language !== 'zh') return buildReimburseDoneScene(language);
+  if (kind === 'repay' && language !== 'zh') return buildRepayScene(language);
   const byKind = BY_KIND.get(kind);
   if (kind !== '' && byKind !== undefined) return byKind;
   const byOp = BY_OP.get(op);

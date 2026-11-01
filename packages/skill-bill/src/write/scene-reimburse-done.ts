@@ -4,10 +4,12 @@
  *   到账这一笔落「其他收入/报销回款」＋ `#报销到账`，原记录把 `#待报销` 换成 `#已报销`（金额不动）。
  *   候选一条都没有就直接反问用户，不拿最近一笔顶替（施工图第二节「缺项阻断」那一格）。
  */
+import { runWithLanguage } from 'base-entries';
 import { money2 } from './summaryRow.js';
 import { wakeWordOf } from './typeBadge.js';
 import type { Scene } from './scene.js';
 import { bindFlowPages, candidatesFrom, crumbOf, idOf, promptButton, promptHead, textOf } from './template-flow.js';
+import { m } from '../entries/index.js';
 
 const KIND = 'reimburse-done';
 const KEY = 'bill.record.add';
@@ -16,26 +18,29 @@ const WORD: string = wakeWordOf(KIND);
 const CATEGORY = '其他收入/报销回款';
 /** 这一格：哪一笔报销到账了。 */
 const SOURCE_NAME = 'source_id';
-const SOURCE_LABEL = '待报销记录编号';
+
+/** 显示文案按语言取词（#1197：模块加载期不取词，构建场景时才取）。 */
+const sourceLabel = () => m('skill-bill.write-scene-reimburse-done.c001');
 /** 待报销的标记（候选只认它）与到账后换上的标记。 */
 const TAG_WAIT = '#待报销';
 const TAG_DONE = '#已报销';
 const TAG_ARRIVE = '#报销到账';
 
-export const SCENE: Scene = {
+function buildScene(): Scene {
+  return {
   id: 'reimburse-done',
   key: KEY,
   kind: KIND,
   op: '',
-  family: '特殊收支族',
+  family: m('skill-bill.write-scene-reimburse-done.c002'),
   ...bindFlowPages({
     word: WORD,
     kind: KIND,
     category: CATEGORY,
     sourceSlot: {
       name: SOURCE_NAME,
-      label: SOURCE_LABEL,
-      why: '没给：到账要指名消哪一笔的 ' + TAG_WAIT + '，不许按金额猜',
+      label: sourceLabel(),
+      why: m('skill-bill.write-scene-reimburse-done.c003', { p0: String(TAG_WAIT) }),
     },
     candidates: (values) => {
       const amount = values.amount;
@@ -44,61 +49,61 @@ export const SCENE: Scene = {
         keep: (r) => r.note.includes(TAG_WAIT),
         same: (r) => amount !== null && Math.abs(Math.abs(r.amount) - amount) <= 0.005,
         why: (_r, same) => (same
-          ? '打了 ' + TAG_WAIT + '，金额与到账额一致'
-          : '打了 ' + TAG_WAIT + '，金额与到账额不符'),
+          ? m('skill-bill.write-scene-reimburse-done.c004', { p0: String(TAG_WAIT) })
+          : m('skill-bill.write-scene-reimburse-done.c005', { p0: String(TAG_WAIT) })),
       });
     },
-    chips: () => ['到账记正数', '分类 ' + crumbOf(CATEGORY)],
+    chips: () => [m('skill-bill.write-scene-reimburse-done.c006'), m('skill-bill.write-scene-reimburse-done.c007', { p0: String(crumbOf(CATEGORY)) })],
     cards: (ctx) => {
       const { id: source, row: original } = ctx.source;
       const diff = ctx.amount === null || original === null
         ? null
         : Math.round((ctx.amount + original.amount) * 100) / 100;
       return [
-        { label: '到账额', value: money2(ctx.amount), detail: '收入记正数，归在「' + crumbOf(CATEGORY) + '」下面' },
+        { label: m('skill-bill.write-scene-reimburse-done.c008'), value: money2(ctx.amount), detail: m('skill-bill.write-scene-reimburse-done.c009', { p0: String(crumbOf(CATEGORY)) }) },
         {
-          label: '待报销原记录',
-          value: original === null ? '未认准' : money2(original.amount),
+          label: m('skill-bill.write-scene-reimburse-done.c010'),
+          value: original === null ? m('skill-bill.write-scene-reimburse-done.c011') : money2(original.amount),
           detail: original === null
-            ? (source === null ? '还没认准是哪一笔，候选里点一行' : '#' + source + '近期记录里没读到原记录')
+            ? (source === null ? m('skill-bill.write-scene-reimburse-done.c012') : m('skill-bill.write-scene-reimburse-done.c013', { p0: String(source) }))
             : '#' + source + '　' + original.category + '　' + original.time,
         },
         {
-          label: '净差',
-          value: diff === null ? '未算' : money2(diff),
+          label: m('skill-bill.write-scene-reimburse-done.c014'),
+          value: diff === null ? m('skill-bill.write-scene-reimburse-done.c015') : money2(diff),
           detail: diff === null
-            ? '认准原记录后这里出净差'
+            ? m('skill-bill.write-scene-reimburse-done.c016')
             : (diff === 0
-              ? '全额到账，未产生差额'
-              : (diff > 0 ? '到账额高于原支出，多退部分照记、不阻断' : '到账额低于原支出，自付部分照记、不阻断')),
+              ? m('skill-bill.write-scene-reimburse-done.c017')
+              : (diff > 0 ? m('skill-bill.write-scene-reimburse-done.c018') : m('skill-bill.write-scene-reimburse-done.c019'))),
         },
       ];
     },
     note: () => ({
-      msg: '到账记正数，原记录 ' + TAG_WAIT + ' 换 ' + TAG_DONE,
-      detail: '「查待报销」按 ' + TAG_WAIT + ' 数，这一笔写完之后它就少一笔。',
+      msg: m('skill-bill.write-scene-reimburse-done.c020', { p0: String(TAG_WAIT), p1: String(TAG_DONE) }),
+      detail: m('skill-bill.write-scene-reimburse-done.c021', { p0: String(TAG_WAIT) }),
       icon: 'info',
     }),
     flow: {
       first: {
-        title: '待报销记录',
-        note: '候选只列备注里带 ' + TAG_WAIT + ' 的记录。',
+        title: m('skill-bill.write-scene-reimburse-done.c022'),
+        note: m('skill-bill.write-scene-reimburse-done.c023', { p0: String(TAG_WAIT) }),
         done: (ctx) => ctx.source.id !== null,
-        state: (ctx) => (ctx.source.id === null ? '未认准' : '已认准 #' + ctx.source.id),
+        state: (ctx) => (ctx.source.id === null ? m('skill-bill.write-scene-reimburse-done.c024') : m('skill-bill.write-scene-reimburse-done.c025', { p0: String(ctx.source.id) })),
         pick: {
           name: SOURCE_NAME,
-          label: SOURCE_LABEL,
+          label: sourceLabel(),
           selectedId: (ctx) => ctx.source.id,
-          hint: '要的是打了 ' + TAG_WAIT + '、钱还没回来的那一笔，未认准不代选。',
+          hint: m('skill-bill.write-scene-reimburse-done.c026', { p0: String(TAG_WAIT) }),
         },
       },
       second: {
-        title: '到账这一步',
-        note: '到账额写正数。分类固定为「' + crumbOf(CATEGORY) + '」。',
+        title: m('skill-bill.write-scene-reimburse-done.c027'),
+        note: m('skill-bill.write-scene-reimburse-done.c028', { p0: String(crumbOf(CATEGORY)) }),
         field: (slot, ctx) => ({
           name: slot.name,
-          label: slot.name === 'amount' ? '到账额' : slot.name === 'category' ? '分类' : slot.label,
-          hint: slot.name === 'category' ? '固定为 ' + crumbOf(CATEGORY) : slot.hint,
+          label: slot.name === 'amount' ? m('skill-bill.write-scene-reimburse-done.c029') : slot.name === 'category' ? m('skill-bill.write-scene-reimburse-done.c030') : slot.label,
+          hint: slot.name === 'category' ? m('skill-bill.write-scene-reimburse-done.c031', { p0: String(crumbOf(CATEGORY)) }) : slot.hint,
           ...(slot.required ? { required: true } : {}),
           value: slot.name === 'category' && textOf(ctx.params['category']) === ''
             ? CATEGORY
@@ -106,49 +111,78 @@ export const SCENE: Scene = {
         }),
       },
       third: {
-        title: '结果',
+        title: m('skill-bill.write-scene-reimburse-done.c032'),
         note: (ctx) => (ctx.source.id === null
-          ? '认准原记录后：把它的 ' + TAG_WAIT + ' 换成 ' + TAG_DONE + '，金额不动。这一笔补 ' + TAG_ARRIVE + '。'
-          : '原记录 #' + ctx.source.id + ' 的 ' + TAG_WAIT + ' 换成 ' + TAG_DONE
-            + '，金额不动。这一笔补 ' + TAG_ARRIVE + '。'),
+          ? m('skill-bill.write-scene-reimburse-done.c033', {
+            p0: String(TAG_WAIT),
+            p1: String(TAG_DONE),
+            p2: String(TAG_ARRIVE),
+          })
+          : m('skill-bill.write-scene-reimburse-done.c034', {
+            p0: String(ctx.source.id),
+            p1: String(TAG_WAIT),
+            p2: String(TAG_DONE),
+            p3: String(TAG_ARRIVE),
+          })),
       },
     },
-    prompt: (ctx) => ({
-      text: promptHead('照下面这个口径写到账这一笔，并把原记录的标签换过来。', ctx.blocked)
-        + '\n请加载「饼干记账」技能，帮我记一笔报销到账。\n唤醒词：报销到账\n'
-        + '待报销记录：' + (ctx.source.id === null
-          ? '<待报销记录编号>'
-          : '#' + ctx.source.id + '　' + (ctx.source.row === null
-            ? '近期记录里没读到'
-            : ctx.source.row.category + '　' + money2(ctx.source.row.amount) + '　' + ctx.source.row.time)) + '\n'
-        + '到账额：' + money2(ctx.amount) + '　收入记正数\n'
-        + '分类：' + CATEGORY + '\n'
-        + '到账账户：' + (ctx.facts.account || '<到账账户>') + '\n'
-        + '账本：' + (ctx.facts.ledger || '<账本>') + '\n'
-        + '请办两件：\n'
-        + '① 记一笔收入，分类「' + CATEGORY + '」，备注写「' + TAG_ARRIVE + ' 原记录 #'
-        + (ctx.source.id ?? '<待报销记录编号>') + '」\n'
-        + '② 原记录 #' + (ctx.source.id ?? '<待报销记录编号>') + ' 的备注把 ' + TAG_WAIT + ' 换成 ' + TAG_DONE
-        + '，金额不动',
-      label: promptButton(ctx.blocked, '照这个口径写两笔，点这颗复制'),
-    }),
+    prompt: (ctx) => {
+      const rowShown = ctx.source.row === null
+        ? m('skill-bill.write-scene-reimburse-done.c035')
+        : ctx.source.row.category + '　' + money2(ctx.source.row.amount) + '　' + ctx.source.row.time;
+      const sourceShown = ctx.source.id === null
+        ? m('skill-bill.write-scene-reimburse-done.c036')
+        : '#' + ctx.source.id + '　' + rowShown;
+      const idShown = ctx.source.id ?? m('skill-bill.write-scene-reimburse-done.c037');
+      const head = promptHead(m('skill-bill.write-scene-reimburse-done.c038'), ctx.blocked);
+      const accountShown = ctx.facts.account || m('skill-bill.write-scene-reimburse-done.c039');
+      const ledgerShown = ctx.facts.ledger || m('skill-bill.write-scene-reimburse-done.c040');
+      return {
+        text: m('skill-bill.write-scene-reimburse-done.c041', {
+          p0: String(head),
+          p1: String(WORD),
+          p2: String(sourceShown),
+          p3: String(money2(ctx.amount)),
+          p4: String(CATEGORY),
+          p5: String(accountShown),
+          p6: String(ledgerShown),
+          p7: String(CATEGORY),
+          p8: String(TAG_ARRIVE),
+          p9: String(idShown),
+          p10: String(idShown),
+          p11: String(TAG_WAIT),
+          p12: String(TAG_DONE),
+        }),
+        label: promptButton(ctx.blocked, m('skill-bill.write-scene-reimburse-done.c042')),
+      };
+    },
     receiptTail: (input) => [
-      { label: '这次记了几笔', value: input.receipt.affectedRows + ' 笔', detail: '按库里的改动算' },
+      { label: m('skill-bill.write-scene-reimburse-done.c043'), value: m('skill-bill.write-scene-reimburse-done.c044', { p0: String(input.receipt.affectedRows) }), detail: m('skill-bill.write-scene-reimburse-done.c045') },
       {
-        label: '配对标签',
+        label: m('skill-bill.write-scene-reimburse-done.c046'),
         value: idOf(input.params[SOURCE_NAME]) === null ? TAG_ARRIVE : TAG_WAIT + ' → ' + TAG_DONE,
-        detail: '原记录只动标签，金额不动',
+        detail: m('skill-bill.write-scene-reimburse-done.c047'),
       },
     ],
     receiptNote: (input) => {
       const source = idOf(input.params[SOURCE_NAME]);
+      const sourceTail = source === null
+        ? m('skill-bill.write-scene-reimburse-done.c048')
+        : m('skill-bill.write-scene-reimburse-done.c049', { p0: String(source), p1: String(TAG_DONE) });
       return {
-        msg: '这一笔打 ' + TAG_ARRIVE
-          + (source === null ? '，原记录这次没给到' : '，原记录 #' + source + ' 换成 ' + TAG_DONE),
-        detail: '「查待报销」按 ' + TAG_WAIT + ' 数，写完少一笔。撤销见下方按钮。',
+        msg: m('skill-bill.write-scene-reimburse-done.c050', { p0: String(TAG_ARRIVE), p1: String(sourceTail) }),
+        detail: m('skill-bill.write-scene-reimburse-done.c051', { p0: String(TAG_WAIT) }),
         icon: 'ok',
       };
     },
     receiptEyebrow: WORD,
   }),
-};
+  };
+}
+
+export const SCENE: Scene = buildScene();
+
+/** 按语言重建本场景（#1197：文案经词条层，语言是运行期参数）。 */
+export function sceneReimburseDone(language: string): Scene {
+  return runWithLanguage(language, buildScene);
+}

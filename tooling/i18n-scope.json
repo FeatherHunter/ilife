@@ -13,7 +13,20 @@
     "#已还",
     "#收回",
     "借贷/收回",
-    "record.add"
+    "record.add",
+    "借贷/借入",
+    "借贷",
+    "#借入",
+    "借贷/借出",
+    "退款/冲销",
+    "#退款",
+    "#已退款",
+    "其他收入/报销回款",
+    "#待报销",
+    "#已报销",
+    "#报销到账",
+    "借贷/偿还",
+    "#偿还"
   ],
   "files": [
     "packages/base-render/src/components/progress-list/model.ts",
@@ -48,6 +61,11 @@
     "packages/skill-bill/src/write/scene-expense.ts",
     "packages/skill-bill/src/write/scene-income.ts",
     "packages/base-render/src/blocks.ts",
-    "packages/base-render/src/contract.ts"
+    "packages/base-render/src/contract.ts",
+    "packages/skill-bill/src/write/scene-borrow.ts",
+    "packages/skill-bill/src/write/scene-lend.ts",
+    "packages/skill-bill/src/write/scene-refund.ts",
+    "packages/skill-bill/src/write/scene-reimburse-done.ts",
+    "packages/skill-bill/src/write/scene-repay.ts"
   ]
 }

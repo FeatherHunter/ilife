@@ -48,7 +48,20 @@
     "1204": {
       "title": "迁移 skill-bill write 批次 2：5 件（415 条）；另 3 件已迁",
       "state": "open（待开工；清单已回填 #1308）",
-      "files": [
+      "files": [],
+      "migrated": [
+        {
+          "path": "packages/skill-bill/src/write/receiptPaper.ts",
+          "literals": 60
+        },
+        {
+          "path": "packages/skill-bill/src/write/scene-collect.ts",
+          "literals": 88
+        },
+        {
+          "path": "packages/skill-bill/src/write/scene-installment.ts",
+          "literals": 31
+        },
         {
           "path": "packages/skill-bill/src/write/scene-borrow.ts",
           "literals": 88,
@@ -95,27 +108,11 @@
           }
         }
       ],
-      "migrated": [
-        {
-          "path": "packages/skill-bill/src/write/receiptPaper.ts",
-          "literals": 60
-        },
-        {
-          "path": "packages/skill-bill/src/write/scene-collect.ts",
-          "literals": 88
-        },
-        {
-          "path": "packages/skill-bill/src/write/scene-installment.ts",
-          "literals": 31
-        }
-      ],
       "totals": {
         "files": 8,
-        "literals": 594,
-        "copy": 217,
-        "concat": 371,
-        "ident": 6
-      }
+        "literals": 594
+      },
+      "excluded": []
     },
     "1205": {
       "title": "迁移 skill-bill write 批次 3：22 件（408 条）",
@@ -10027,12 +10024,12 @@
   },
   "scopeSummary": {
     "ledgerFiles": 1226,
-    "migratedFiles": 33,
-    "pendingFiles": 1184,
-    "pendingLiterals": 41922,
+    "migratedFiles": 38,
+    "pendingFiles": 1179,
+    "pendingLiterals": 41507,
     "excludedFiles": 9,
     "excludedLiterals": 67,
-    "migratedLiterals": 759
+    "migratedLiterals": 1174
   },
   "workflow": [
     "开工：从本文件取本票 files，逐件登记进 tooling/i18n-scope.json 的 files（先跑两道门拿红读数＝范围已挂但还没迁）。",
