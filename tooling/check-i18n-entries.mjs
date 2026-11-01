@@ -20,6 +20,10 @@
  *      与 packages/base-entries/src/resolve.ts 同口径：空白值视同未录，回退链取下一站；门禁则两头都不放行。
  *   ⑦ 范围清单 allowlist 里的串**不进「该进词条」的判据**（#1205）：豁免只给「语义上本就不该进词条的位」——
  *      命令关键字冻结、协议字段值、派生件。按串全等屏蔽，抽取阶段就剔除，不是判红后再放过。
+ *   ⑧ **按包判归属**（#1199 S10）：key 在「这件文件 import 的那份词条表」里有没有，不是全仓并集有没有。
+ *      命名空间＝包名（ADR-0004 §3）：跨包同名 key 不是同一条词条，拿别包的表判「本包有没有」会把缺失藏掉。
+ *      归属怎么判：相对 import 进 `…/entries/(index|<语言>).js` 的按解析后的包判；否则按文件自身所属包判。
+ *      判不出归属（仓库根夹具件只 import base-entries）→ 回退跨包并集，夹具口径，真范围不出现。
  *
  * 用法：
  *   node tooling/check-i18n-entries.mjs             # 门禁口径（范围为空＝EMPTY-SCOPE 显式报 + exit 0）
@@ -35,7 +39,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { LANGUAGES, DEFAULT_LANGUAGE, EMPTY_SCOPE_VERDICT } from './i18n-langs.mjs';
-import { entryTableFiles, loadEntryTable } from './i18n-tables.mjs';
+import { entryTableFiles, loadEntryTable, loadTablesByPackage } from './i18n-tables.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..');
@@ -109,11 +113,62 @@ export function importsEntries(source) {
     || /from\s*['"][^'"]*\/entries\/(?:index|[a-z-]+)\.js['"]/.test(source);
 }
 
+/** 源文件相对路径 → 所属包名（`packages/<包>/…`）；不在 packages 下 → undefined（夹具件）。 */
+export function packageOfSource(rel) {
+  const norm = rel.replace(/\\/g, '/').replace(/^\.\/+/, '');
+  const m = /^packages\/([^/]+)\//.exec(norm);
+  return m ? m[1] : undefined;
+}
+
+/** 把 `./` `../` 相对路径按 posix 语义归一到仓库根相对路径（不碰盘：门只读源码）。 */
+function resolvePosix(baseDir, spec) {
+  const out = baseDir.split('/').filter(Boolean);
+  for (const part of spec.split('/')) {
+    if (part === '' || part === '.') continue;
+    if (part === '..') out.pop(); else out.push(part);
+  }
+  return out.join('/');
+}
+
+/**
+ * 一件源文件的词条表归属包（#1199 S10：命名空间＝包名，key 得在**这件文件 import 的那份表**里）。
+ *
+ *   ① 相对 import 进 `…/entries/(index|<语言>).js`：按解析后的路径判归属（`packages/<包>/src/entries/…`）——
+ *      查询的是被 import 的那份表，归属跟着 import 走，不跟文件所在包走（组件跨包复用表时也不问错表）；
+ *   ② 没有相对词条表 import：用文件自身所属包（同包表就近 import 的另一种写法）；
+ *   ③ 都判不出（仓库根夹具件只 import base-entries）：返回 null，调用方回退跨包并集——夹具口径，真范围不出现。
+ *   ④ import 了非相对路径的词条表：判不出归属，返回 `{ foreign }` 让调用方报盲（不静默猜）。
+ */
+export function catalogsOfSource(rel, source) {
+  const norm = rel.replace(/\\/g, '/');
+  const dir = norm.includes('/') ? norm.slice(0, norm.lastIndexOf('/')) : '';
+  const pkgs = new Set();
+  let foreign = null;
+  const specRe = /from\s*['"]([^'"]+)['"]/g;
+  let m;
+  while ((m = specRe.exec(source)) !== null) {
+    const spec = m[1];
+    if (!/\/entries\/(?:index|[a-z-]+)\.js$/.test(spec)) continue;
+    if (spec.startsWith('.')) {
+      const target = resolvePosix(dir, spec);
+      const hit = /^packages\/([^/]+)\/src\/entries\//.exec(target);
+      if (hit) pkgs.add(hit[1]);
+      continue;
+    }
+    // 非相对路径（包名子路径）词条表：门不做 node 解析，判不出归属就显式报盲。
+    foreign = spec;
+  }
+  if (pkgs.size > 0) return { packages: [...pkgs].sort(), foreign: null };
+  const own = packageOfSource(norm);
+  if (own !== undefined) return { packages: [own], foreign: null };
+  return { packages: null, foreign };
+}
+
 /** 词条表在哪儿／长什么样／哪些值算「未录」：唯一实现搬到 tooling/i18n-tables.mjs（占位符门同用一份）。
  *  这里转出旧名 entryTableCandidates，供既有引用与自证测试沿用（改名不是本票的目的）。 */
 export { entryTableFiles as entryTableCandidates, loadEntryTable };
 
-/** 主判据：返回 {files, keys, missing:[{file,key,lang}], blind:[{file,why}], tableErrors:[{lang,why}]}。 */
+/** 主判据：返回 {files, keys, missing:[{file,key,lang}], blind:[{file,why}], stray, tableErrors, blanks, tableSizes, emptyTables}。 */
 export function audit(scope, root = ROOT_DIR, langs = LANGUAGES) {
   const allow = new Set(scope.allowlist || []);
   const files = [];
@@ -121,20 +176,39 @@ export function audit(scope, root = ROOT_DIR, langs = LANGUAGES) {
   const blind = [];
   const stray = [];
   const keys = new Set();
-  const tables = new Map();
+  const tableErrors = [];
   const blanks = [];
+  const emptyTables = [];
+  // 逐包逐语言读表（#1199 S10）：缺词条按「这件文件 import 的那份表」判，不是全仓并集。
+  const byPkg = loadTablesByPackage(root, langs);
+  for (const e of byPkg.errors) tableErrors.push({ lang: '', why: '词条表读不出：' + e.path + ' → ' + e.why });
+  for (const [pkg, byLang] of byPkg.packages) {
+    for (const [lang, table] of byLang) {
+      for (const blank of table.blanks) blanks.push({ lang, key: blank.key, path: blank.path });
+      for (const path of table.emptyFiles) emptyTables.push({ lang, path });
+    }
+  }
+  // 跨包并集只留给两处：判不出归属的夹具件；表里多出来的 key（stray）读数。
+  const unions = new Map();
   for (const lang of langs) {
-    const table = loadEntryTable(root, lang);
-    tables.set(lang, table);
-    // 空白值逐文件收集（不因跨包并集被别包的同一 key 藏掉）：哪门语言的哪一份表的哪个 key 留了空
-    if (table.ok) for (const blank of table.blanks) blanks.push({ lang, key: blank.key, path: blank.path });
+    const union = new Map();
+    for (const [, byLang] of byPkg.packages) {
+      const table = byLang.get(lang);
+      if (!table) continue;
+      for (const [key, value] of table.entries) if (!union.has(key)) union.set(key, value);
+    }
+    unions.set(lang, union);
   }
   // 词条表只在**范围非空**时是硬前提：范围 0 件时没有要判的 key，缺表是「词条层还没建」，
   // 报出声但不拦（起步必须绿）；范围一旦非空，缺表就是硬红（没有表就无从判定缺词条）。
-  const tableErrors = scope.files.length === 0
-    ? []
-    : [...tables].filter(([, t]) => !t.ok).map(([lang, t]) => ({ lang, why: t.why }));
-
+  if (scope.files.length > 0) {
+    for (const lang of langs) {
+      if (entryTableFiles(root, lang).length === 0) {
+        tableErrors.push({ lang, why: '这门语言的词条表一份都没有（找过 packages/*/src/entries/<语言>.{ts,json} 与 <分册>.<语言>.{ts,json}）' });
+      }
+    }
+  }
+  const missingTablesOfPkg = new Set();
   for (const rel of scope.files) {
     const p = join(root, rel);
     if (!existsSync(p)) { blind.push({ file: rel, why: '清单里的件在盘上不存在（删了/改名了：显式更新清单）' }); continue; }
@@ -146,20 +220,44 @@ export function audit(scope, root = ROOT_DIR, langs = LANGUAGES) {
     const ks = extracted.filter((k) => !allow.has(k));
     files.push({ file: rel, keys: ks });
     for (const k of ks) keys.add(k);
+    const cat = catalogsOfSource(rel, src);
+    if (cat.packages === null && cat.foreign !== null) {
+      blind.push({ file: rel, why: 'import 了非相对路径的词条表（' + cat.foreign + '），门判不出归属：词条表须按包就近相对 import' });
+      continue;
+    }
     for (const k of ks) {
-      for (const [lang, t] of tables) {
-        if (!t.ok) continue;
-        if (!t.keys.has(k)) missing.push({ file: rel, key: k, lang });
+      for (const lang of langs) {
+        // 判不出归属（仓库根夹具件只 import base-entries）：回退跨包并集——夹具口径，真范围不出现。
+        if (cat.packages === null) {
+          if (!unions.get(lang).has(k)) missing.push({ file: rel, key: k, lang });
+          continue;
+        }
+        let known = false;
+        let found = false;
+        let tableAbsent = false;
+        for (const pkg of cat.packages) {
+          const table = byPkg.packages.get(pkg)?.get(lang);
+          if (!table) { tableAbsent = true; continue; }
+          known = true;
+          if (table.entries.has(k)) { found = true; break; }
+        }
+        if (tableAbsent) {
+          const tag = cat.packages.join('+') + '@' + lang;
+          if (!missingTablesOfPkg.has(tag)) {
+            missingTablesOfPkg.add(tag);
+            tableErrors.push({ lang, why: '包 ' + cat.packages.join('、') + ' 没建 ' + lang + ' 词条表（没有表就判不了缺词条）' });
+          }
+          continue;
+        }
+        if (known && !found) missing.push({ file: rel, key: k, lang, pkg: cat.packages.join('+') });
       }
     }
   }
   // 词条表里多出来的 key（没人在用）：只报数不判红——那是翻译批次的产物，不是这次迁入的漏记。
   const used = keys;
-  for (const [lang, t] of tables) {
-    if (!t.ok) continue;
-    for (const k of t.keys) if (!used.has(k)) stray.push({ lang, key: k });
-  }
-  return { files, keys: [...keys].sort(), missing, blind, stray, tableErrors, blanks };
+  for (const lang of langs) for (const k of unions.get(lang).keys()) if (!used.has(k)) stray.push({ lang, key: k });
+  const tableSizes = new Map(langs.map((lang) => [lang, unions.get(lang).size]));
+  return { files, keys: [...keys].sort(), missing, blind, stray, tableErrors, blanks, tableSizes, emptyTables };
 }
 
 function main() {
@@ -176,22 +274,31 @@ function main() {
   if (LIST) {
     for (const f of r.files) console.log('KEY ' + f.file + '  ' + f.keys.length + ' 个：' + f.keys.join(','));
     console.log('RESULT: files=' + r.files.length + ' keys=' + r.keys.length + ' missing=' + r.missing.length
-      + ' blanks=' + r.blanks.length + ' empty=' + countEmptyTables());
+      + ' blanks=' + r.blanks.length + ' empty=' + r.emptyTables.length);
     return;
   }
   let bad = 0;
   for (const t of r.tableErrors) { console.error('RED 词条表不可用：' + t.lang + ' → ' + t.why); bad += 1; }
   for (const b of r.blind) { console.error('RED 抽不出/没迁完：' + b.file + ' → ' + b.why); bad += 1; }
-  for (const m of r.missing) { console.error('RED 缺词条：' + m.file + ' 的 key ' + m.key + ' 在语言 ' + m.lang + ' 的词条表里没有'); bad += 1; }
+  for (const m of r.missing) {
+    const where = m.pkg ? '（判据表：包 ' + m.pkg + '）' : '';
+    console.error('RED 缺词条：' + m.file + ' 的 key ' + m.key + ' 在语言 ' + m.lang + ' 的词条表里没有' + where);
+    bad += 1;
+  }
   for (const b of r.blanks) { console.error('RED 空白词条：语言 ' + b.lang + ' 的表 ' + b.path + ' 里 key ' + b.key + ' 的值是空串／纯空白（不是「显式空白」，是待译漏记）'); bad += 1; }
-  console.log('TABLES: ' + [...LANGUAGES].map((l) => { const t = auditTables(l); return l + '=' + t; }).join(' '));
-  const empties = [...LANGUAGES].map((l) => [l, emptyTablesOf(l)]).filter(([, files]) => files.length > 0);
-  if (empties.length > 0) {
-    console.log('EMPTY-TABLES: ' + empties.map(([l, files]) => l + '=' + files.length + '（' + files.join('、') + '）').join(' ')
+  console.log('TABLES: ' + [...LANGUAGES].map((l) => l + '=' + (r.tableSizes.get(l) ?? 'MISSING')).join(' '));
+  const emptyGroups = new Map();
+  for (const { lang, path } of r.emptyTables) {
+    const rel = path.startsWith(ROOT_DIR) ? path.slice(ROOT_DIR.length).replace(/^[\\/]/, '').replace(/\\/g, '/') : path;
+    if (!emptyGroups.has(lang)) emptyGroups.set(lang, []);
+    emptyGroups.get(lang).push(rel);
+  }
+  if (emptyGroups.size > 0) {
+    console.log('EMPTY-TABLES: ' + [...emptyGroups].map(([l, files]) => l + '=' + files.length + '（' + files.join('、') + '）').join(' ')
       + '——0 条空表是迁移期暂态（这一包还没迁 / 这一门语言还没录），显式报数，不算「查过没问题」');
   }
   console.log('RESULT: files=' + r.files.length + ' keys=' + r.keys.length + ' missing=' + r.missing.length
-    + ' blanks=' + r.blanks.length + ' empty=' + countEmptyTables());
+    + ' blanks=' + r.blanks.length + ' empty=' + r.emptyTables.length);
   if (bad > 0) {
     console.error('FAIL: 缺词条门未过（' + bad + ' 处；缺词条／空白词条＝迁移漏记，补词条表或补迁入，不许删清单行）');
     process.exit(1);
@@ -199,23 +306,6 @@ function main() {
   console.log(empty
     ? 'PASS: 范围 0 件（显式报数：这一轮什么都没查，不是「查过没问题」）'
     : 'PASS: ' + r.files.length + ' 件已迁入文件 × ' + LANGUAGES.length + ' 门语言，词条齐全');
-}
-
-function auditTables(lang) {
-  const t = loadEntryTable(ROOT_DIR, lang);
-  return t.ok ? t.keys.size : 'MISSING';
-}
-
-/** 空表（0 条、合法暂态）的文件清单：相对仓库根、正斜杠，读数可复跑。 */
-function emptyTablesOf(lang) {
-  const t = loadEntryTable(ROOT_DIR, lang);
-  if (!t.ok) return [];
-  return (t.emptyFiles ?? []).map((p) => p.startsWith(ROOT_DIR) ? p.slice(ROOT_DIR.length).replace(/^[\\/]/, '').replace(/\\/g, '/') : p);
-}
-
-/** 空表总数（两门语言合计）：RESULT 里的显式读数。 */
-function countEmptyTables() {
-  return [...LANGUAGES].reduce((n, lang) => n + emptyTablesOf(lang).length, 0);
 }
 
 function selftest(scope) {
@@ -277,11 +367,35 @@ function selftest(scope) {
     want(withAllow.missing.length === 0, '登记 allowlist 后必须零缺词条（实得 ' + withAllow.missing.length + '）');
     want(withAllow.keys.length === 1, 'allowlist 串不许进 keys 读数（实得 ' + withAllow.keys.length + '）');
     console.log('SELFTEST allowlist 读数：未登记 missing=' + noAllow.missing.length + '／登记后 missing=' + withAllow.missing.length);
+    // ⑨ 按包判归属（#1199 S10）：alpha 包表里有 demo.title，beta 包表里没有——
+    //     beta 包的文件用这个 key 必须判缺 2 处（两门语言），跨包并集不许把它藏掉。
+    const alphaDir = join(tmp, 'packages', 'alpha', 'src', 'entries');
+    const betaDir = join(tmp, 'packages', 'beta', 'src', 'entries');
+    mkdirSync(alphaDir, { recursive: true });
+    mkdirSync(betaDir, { recursive: true });
+    writeFileSync(join(alphaDir, 'zh.json'), JSON.stringify({ 'demo.title': '标题' }), 'utf8');
+    writeFileSync(join(alphaDir, 'en.json'), JSON.stringify({ 'demo.title': 'Title' }), 'utf8');
+    writeFileSync(join(betaDir, 'zh.json'), JSON.stringify({ 'demo.other': '别的' }), 'utf8');
+    writeFileSync(join(betaDir, 'en.json'), JSON.stringify({ 'demo.other': 'Other' }), 'utf8');
+    const betaSrc = join(tmp, 'packages', 'beta', 'src', 'use.ts');
+    writeFileSync(betaSrc, [
+      "import { resolve } from 'base-entries';",
+      "import { BETA_CATALOG } from '../entries/index.js';",
+      "export const a = resolve(BETA_CATALOG, 'zh', 'demo.title');",
+    ].join(nl), 'utf8');
+    const betaBad = audit({ files: ['packages/beta/src/use.ts'] }, tmp);
+    want(betaBad.missing.length === 2, '跨包并集不许藏缺失：beta 包表里没有 demo.title 必须在 2 门语言里判缺（实得 ' + betaBad.missing.length + '）');
+    want(betaBad.missing.every((m) => m.pkg === 'beta'), '缺词条必须点名判据包（实得 ' + JSON.stringify(betaBad.missing.map((m) => m.pkg)) + '）');
+    writeFileSync(join(betaDir, 'zh.json'), JSON.stringify({ 'demo.other': '别的', 'demo.title': '标题' }), 'utf8');
+    writeFileSync(join(betaDir, 'en.json'), JSON.stringify({ 'demo.other': 'Other', 'demo.title': 'Title' }), 'utf8');
+    const betaGood = audit({ files: ['packages/beta/src/use.ts'] }, tmp);
+    want(betaGood.missing.length === 0, '本包表补上后必须零缺（实得 ' + betaGood.missing.length + '）');
+    console.log('SELFTEST 按包归属读数：跨包藏缺 missing=' + betaBad.missing.length + '／本包补上后 missing=' + betaGood.missing.length);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
   if (bad.length) { for (const b of bad) console.error('SELFTEST FAIL ' + b); process.exit(1); }
-  console.log('SELFTEST: 空范围显式报数／缺词条必红／补上必绿／没迁完必红／缺表必红／失明必红／空白词条必红／allowlist 剔除 八条自证 OK');
+  console.log('SELFTEST: 空范围显式报数／缺词条必红／补上必绿／没迁完必红／缺表必红／失明必红／空白词条必红／allowlist 剔除／按包归属 九条自证 OK');
 }
 
 /** 入口守卫（照 tooling/i18n-langs.mjs／skill-html-snapshot.mjs 的先例）：本件被别处 import 时**不跑** CLI，
