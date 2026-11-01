@@ -2,6 +2,7 @@
 // 体积上限 P9 已冻（256k，见 docs/memo-migration-split.md）——#1279 扩面经用户 2026-10-15 批准抬到 2.4MB（与饼干记账同门）。超限 throw 由调用方走 fallback 显式降级，不静默截断。
 import type { Envelope } from 'base-link-core';
 import { MemoRenderError } from './errors.js';
+import { m } from '../entries/index.js';
 
 export const MEMO_HTML_MAX_BYTES = 2_400_000;
 
@@ -18,7 +19,8 @@ function itemHtml(n: Record<string, unknown>): string {
 }
 
 function listHtml(items: unknown[]): string {
-  if (!items.length) return '<div class="ilife-empty">暂无记录</div>';
+  // #1225：结构＋文案拆三段（整句跟 m() 走，HTML 骨架不进词条）。
+  if (!items.length) return '<div class="ilife-empty">' + m('skill-memo-ilife.render-html.c001') + '</div>';
   return items.map((x) => itemHtml(x as Record<string, unknown>)).join('');
 }
 

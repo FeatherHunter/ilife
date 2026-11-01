@@ -21,7 +21,11 @@ import { listNotes, searchNotes } from '../db/readonly.js';
 import { pageEnvelope, wishPlanSnapshot, wishCompleteSnapshot, buildListPage, querySnapshot } from '../render/index.js';
 import { dueMatches, normalizeDue } from './due.js';
 import { planWizard, completeWizard } from './wizards.js';
+
+// #1225：kind 是页型协议值（不是文案），模块级常量，不译。
+const WISH_PAGE_KIND: '过程页' = '过程页';
 import { buildWishReceipt } from './receipt.js';
+import { m } from '../entries/index.js';
 
 /** `memo.wish`：排期结果页（缺省）／排期向导（`wizard:plan`）／完成向导（`wizard:complete`）。 */
 export function runWish(params: Record<string, unknown>, db: MemoDb): CommandOut {
@@ -31,15 +35,16 @@ export function runWish(params: Record<string, unknown>, db: MemoDb): CommandOut
     if (params.wizard === 'plan') {
       const w = planWizard(db, { ids: params.ids, all: params.all, suggestDue: params.suggestDue });
       const snap = wishPlanSnapshot(toRows(w.items), w.suggestDue, w.includeAll);
-      const message = '找到 ' + w.items.length + ' 个心愿' + (w.includeAll ? '（含已排期）' : '（仅未排期）');
+      const planScope = w.includeAll ? m('skill-memo-ilife.wish-run.c001') : m('skill-memo-ilife.wish-run.c002');
+      const message = m('skill-memo-ilife.wish-run.c003', { p0: String(w.items.length), p1: String(planScope) });
       const payload = pageEnvelope({
-        commandCn: '心愿排期', wakeWord: '心愿排期', sceneId: 'wish-batch-plan',
+        commandCn: m('skill-memo-ilife.wish-run.c004'), wakeWord: m('skill-memo-ilife.wish-run.c005'), sceneId: 'wish-batch-plan',
         title: snap.title, summary: snap.summary, sections: snap.sections,
         copyLog: {
-          thinking: '过程型向导 · 只读收集心愿列表，勾选＋填排期后复制指令回 AI（HTML 不写库）',
-          data_structure: "notes 表（category='心愿'）· id/content/category/sub_category/due/feishu_task_guid",
-          call_chain: 'memo.wish wizard:plan → render_wish_plan → 共享 filler',
-          exception: '无',
+          thinking: m('skill-memo-ilife.wish-run.c006'),
+          data_structure: m('skill-memo-ilife.wish-run.c007'),
+          call_chain: m('skill-memo-ilife.wish-run.c008'),
+          exception: m('skill-memo-ilife.wish-run.c009'),
         },
         extra: { items: w.items, suggest_due: w.suggestDue, all: w.includeAll },
         message,
@@ -48,23 +53,25 @@ export function runWish(params: Record<string, unknown>, db: MemoDb): CommandOut
         data: { items: w.items, total: w.items.length, suggestDue: w.suggestDue, all: w.includeAll },
         exit: 0,
         deliver: buildWishReceipt({
-          scene: 'memo_wish_schedule', title: '心愿排期',
+          scene: 'memo_wish_schedule', title: m('skill-memo-ilife.wish-run.c010'),
           receipt: { ok: true, message, local: 'checked', remote: 'not-applicable', remoteId: null },
-          page: { kind: '过程页', template: 'wish_plan', values: payload },
+          page: { kind: WISH_PAGE_KIND, template: 'wish_plan', values: payload },
         }),
       };
     }
     const w = completeWizard(db, { ids: params.ids, onlyOverdue: params.onlyOverdue, all: params.all, content: params.content });
     const snap = wishCompleteSnapshot(toRows(w.items));
-    const message = '找到 ' + w.items.length + ' 个心愿' + (w.onlyOverdue ? '（仅未排期＋已过期）' : '');
+    // #1225：范围后缀抽成局部变量（迁移器不切链内分支）。
+    const overdueSuffix = w.onlyOverdue ? m('skill-memo-ilife.wish-run.c012') : '';
+    const message = m('skill-memo-ilife.wish-run.c013', { p0: String(w.items.length), p1: String(overdueSuffix) });
     const payload = pageEnvelope({
-      commandCn: '心愿完成', wakeWord: '完成心愿', sceneId: 'wish-complete',
+      commandCn: m('skill-memo-ilife.wish-run.c014'), wakeWord: m('skill-memo-ilife.wish-run.c015'), sceneId: 'wish-complete',
       title: snap.title, summary: snap.summary, sections: snap.sections,
       copyLog: {
-        thinking: '过程型向导 · 勾选＋填打卡内容后复制指令回 AI（completeWish 原子转换）',
-        data_structure: "notes 表（category='心愿'）· id/content/due/feishu_task_guid",
-        call_chain: 'memo.wish wizard:complete → render_wish_complete → 共享 filler',
-        exception: '无',
+        thinking: m('skill-memo-ilife.wish-run.c016'),
+        data_structure: m('skill-memo-ilife.wish-run.c017'),
+        call_chain: m('skill-memo-ilife.wish-run.c018'),
+        exception: m('skill-memo-ilife.wish-run.c019'),
       },
       extra: { items: w.items, default_content: w.defaultContent, only_overdue: w.onlyOverdue },
       message,
@@ -73,9 +80,9 @@ export function runWish(params: Record<string, unknown>, db: MemoDb): CommandOut
       data: { items: w.items, total: w.items.length, defaultContent: w.defaultContent, onlyOverdue: w.onlyOverdue },
       exit: 0,
       deliver: buildWishReceipt({
-        scene: 'memo_complete_wish', title: '完成心愿',
+        scene: 'memo_complete_wish', title: m('skill-memo-ilife.wish-run.c020'),
         receipt: { ok: true, message, local: 'checked', remote: 'not-applicable', remoteId: null },
-        page: { kind: '过程页', template: 'wish_complete', values: payload },
+        page: { kind: WISH_PAGE_KIND, template: 'wish_complete', values: payload },
       }),
     };
   }
@@ -92,51 +99,51 @@ export function runWish(params: Record<string, unknown>, db: MemoDb): CommandOut
   // `src/render/listPage.ts`，关键词过滤复用取数层同一条搜索原语（`searchNotes`），不另立第二份匹配规则。
   if (params.scene === 'memo_search_wish') {
     const q = params.q === undefined ? '' : String(params.q).trim();
-    const hit = q === '' ? items : searchNotes(db, q, { category: '心愿' }).filter((n) => dueMatches(n, params));
+    const hit = q === '' ? items : searchNotes(db, q, { category: m('skill-memo-ilife.wish-run.c022') }).filter((n) => dueMatches(n, params));
     const snap = querySnapshot(toRows(hit));
     return {
       data: { items: hit, total: hit.length },
       exit: 0,
       deliver: buildListPage({
         scene: 'memo_search_wish',
-        title: '查心愿',
-        subtitle: '共 ' + hit.length + ' 个心愿',
-        condition: q === '' ? [] : ['关键词「' + q + '」'],
+        title: m('skill-memo-ilife.wish-run.c023'),
+        subtitle: m('skill-memo-ilife.wish-run.c024', { p0: String(hit.length) }),
+        condition: q === '' ? [] : [m('skill-memo-ilife.wish-run.c025', { p0: String(q) })],
         summary: snap.summary,
         sections: snap.sections,
         copyLog: {
-          thinking: '查心愿 · 自动按「心愿」分类过滤，页内可再筛选与复制（列表查询族）',
-          data_structure: 'notes 表（category=心愿）· id／content／category／sub_category／due／created_at',
-          call_chain: 'memo.wish（scene=memo_search_wish）→ listNotes／searchNotes → querySnapshot → buildListPage(memo_query) → deliver 钩子落盘',
-          exception: '无',
+          thinking: m('skill-memo-ilife.wish-run.c026'),
+          data_structure: m('skill-memo-ilife.wish-run.c027'),
+          call_chain: m('skill-memo-ilife.wish-run.c028'),
+          exception: m('skill-memo-ilife.wish-run.c029'),
         },
         items: hit,
       }),
     };
   }
-  const message = '找到 ' + items.length + ' 个心愿，其中 ' + scheduled + ' 个已排期';
+  const message = m('skill-memo-ilife.wish-run.c030', { p0: String(items.length), p1: String(scheduled) });
   return {
     data: { items, total: items.length },
     exit: 0,
     deliver: buildWishReceipt({
       scene: 'memo_wish_schedule',
-      title: '心愿排期',
+      title: m('skill-memo-ilife.wish-run.c031'),
       receipt: { ok: true, message, local: 'checked', remote: 'not-applicable', remoteId: null },
-      entityLabel: '心愿清单',
+      entityLabel: m('skill-memo-ilife.wish-run.c032'),
       // #882：这一格填的是**条数**（多少个），不是记录号 —— 走字符串形态，族里就不给加 `#`
       // （旧的 `entityId: items.length` 会被拼成 `对象：心愿清单 #4`，读起来像第 4 条记录）。
-      entityId: items.length + ' 个',
+      entityId: m('skill-memo-ilife.wish-run.c033', { p0: String(items.length) }),
       extraSummary: [
         // #820 收尾：事实条一格一件事、一律「标签：值」（原先这几格没有标签，屏上落成整行说明）。
-        '心愿：' + items.length + ' 个',
-        '已排期：' + scheduled + ' 个',
-        '未排期：' + (items.length - scheduled) + ' 个',
-        ...(due === null ? [] : ['排期至：' + due]),
+        m('skill-memo-ilife.wish-run.c034', { p0: String(items.length) }),
+        m('skill-memo-ilife.wish-run.c035', { p0: String(scheduled) }),
+        m('skill-memo-ilife.wish-run.c036', { p0: String(items.length - scheduled) }),
+        ...(due === null ? [] : [m('skill-memo-ilife.wish-run.c037', { p0: String(due) })]),
       ],
       extraSections: [{
-        heading: '心愿清单',
+        heading: m('skill-memo-ilife.wish-run.c038'),
         // 编号与排期状态各走自己的维度（徽章），不再拼成 `#5 xxx：未排期` 一串（两个冒号串三件事）。
-        rows: items.map((n) => ({ id: n.id, text: n.content, status: n.due === null ? '未排期' : n.due })),
+        rows: items.map((n) => ({ id: n.id, text: n.content, status: n.due === null ? m('skill-memo-ilife.wish-run.c039') : n.due })),
       }],
     }),
   };

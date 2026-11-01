@@ -5727,7 +5727,8 @@
     "1225": {
       "title": "迁移 skill-memo-ilife 全部域：75 件（1,706 条）",
       "state": "open（待开工；清单已回填 #1308）",
-      "files": [
+      "files": [],
+      "migrated": [
         {
           "path": "packages/skill-memo-ilife/src/checkin/receipt.ts",
           "literals": 15,
@@ -5738,25 +5739,11 @@
           }
         },
         {
-          "path": "packages/skill-memo-ilife/src/checkin/routes.ts",
-          "literals": 8,
-          "byClass": {
-            "copy": 8
-          }
-        },
-        {
           "path": "packages/skill-memo-ilife/src/cli/cmd_read.ts",
           "literals": 26,
           "byClass": {
             "copy": 8,
             "concat": 18
-          }
-        },
-        {
-          "path": "packages/skill-memo-ilife/src/cli/config.ts",
-          "literals": 3,
-          "byClass": {
-            "derived": 3
           }
         },
         {
@@ -5785,40 +5772,11 @@
           }
         },
         {
-          "path": "packages/skill-memo-ilife/src/cli/keys.ts",
-          "literals": 14,
-          "byClass": {
-            "derived": 14
-          }
-        },
-        {
-          "path": "packages/skill-memo-ilife/src/cli/registry.ts",
-          "literals": 1,
-          "byClass": {
-            "derived": 1
-          }
-        },
-        {
-          "path": "packages/skill-memo-ilife/src/data/commands.ts",
-          "literals": 2,
-          "byClass": {
-            "copy": 2
-          }
-        },
-        {
           "path": "packages/skill-memo-ilife/src/db/readonly.ts",
           "literals": 15,
           "byClass": {
             "copy": 6,
             "concat": 9
-          }
-        },
-        {
-          "path": "packages/skill-memo-ilife/src/help/booklet.ts",
-          "literals": 187,
-          "byClass": {
-            "copy": 185,
-            "concat": 2
           }
         },
         {
@@ -5839,88 +5797,11 @@
           }
         },
         {
-          "path": "packages/skill-memo-ilife/src/help/manifest.ts",
-          "literals": 2,
-          "byClass": {
-            "ident": 2
-          }
-        },
-        {
-          "path": "packages/skill-memo-ilife/src/help/scenes/checkin.ts",
-          "literals": 27,
-          "byClass": {
-            "derived": 27
-          }
-        },
-        {
-          "path": "packages/skill-memo-ilife/src/help/scenes/init.ts",
-          "literals": 10,
-          "byClass": {
-            "derived": 10
-          }
-        },
-        {
-          "path": "packages/skill-memo-ilife/src/help/scenes/memo.ts",
-          "literals": 88,
-          "byClass": {
-            "derived": 88
-          }
-        },
-        {
-          "path": "packages/skill-memo-ilife/src/help/scenes/mood.ts",
-          "literals": 30,
-          "byClass": {
-            "derived": 30
-          }
-        },
-        {
-          "path": "packages/skill-memo-ilife/src/help/scenes/remind.ts",
-          "literals": 57,
-          "byClass": {
-            "derived": 57
-          }
-        },
-        {
-          "path": "packages/skill-memo-ilife/src/help/scenes/search.ts",
-          "literals": 74,
-          "byClass": {
-            "derived": 74
-          }
-        },
-        {
-          "path": "packages/skill-memo-ilife/src/help/scenes/sync.ts",
-          "literals": 7,
-          "byClass": {
-            "derived": 7
-          }
-        },
-        {
-          "path": "packages/skill-memo-ilife/src/help/scenes/wish.ts",
-          "literals": 53,
-          "byClass": {
-            "derived": 53
-          }
-        },
-        {
-          "path": "packages/skill-memo-ilife/src/init/commands.ts",
-          "literals": 3,
-          "byClass": {
-            "copy": 3
-          }
-        },
-        {
           "path": "packages/skill-memo-ilife/src/init/diagnosis.ts",
           "literals": 11,
           "byClass": {
             "copy": 9,
             "concat": 2
-          }
-        },
-        {
-          "path": "packages/skill-memo-ilife/src/init/index.ts",
-          "literals": 4,
-          "byClass": {
-            "copy": 4
           }
         },
         {
@@ -5930,13 +5811,6 @@
             "copy": 52,
             "concat": 10,
             "ident": 3
-          }
-        },
-        {
-          "path": "packages/skill-memo-ilife/src/init/routes.ts",
-          "literals": 6,
-          "byClass": {
-            "copy": 6
           }
         },
         {
@@ -5952,22 +5826,6 @@
           "literals": 1,
           "byClass": {
             "concat": 1
-          }
-        },
-        {
-          "path": "packages/skill-memo-ilife/src/memo/category.ts",
-          "literals": 32,
-          "byClass": {
-            "copy": 30,
-            "concat": 1,
-            "ident": 1
-          }
-        },
-        {
-          "path": "packages/skill-memo-ilife/src/memo/commands.ts",
-          "literals": 11,
-          "byClass": {
-            "copy": 11
           }
         },
         {
@@ -6004,49 +5862,12 @@
           }
         },
         {
-          "path": "packages/skill-memo-ilife/src/memo/routes.ts",
-          "literals": 19,
-          "byClass": {
-            "copy": 19
-          }
-        },
-        {
           "path": "packages/skill-memo-ilife/src/memo/run.ts",
           "literals": 76,
           "byClass": {
             "copy": 37,
             "concat": 37,
             "ident": 2
-          }
-        },
-        {
-          "path": "packages/skill-memo-ilife/src/mood/routes.ts",
-          "literals": 19,
-          "byClass": {
-            "copy": 19
-          }
-        },
-        {
-          "path": "packages/skill-memo-ilife/src/remind/commands.ts",
-          "literals": 5,
-          "byClass": {
-            "copy": 5
-          }
-        },
-        {
-          "path": "packages/skill-memo-ilife/src/remind/policy.ts",
-          "literals": 29,
-          "byClass": {
-            "copy": 12,
-            "concat": 16,
-            "ident": 1
-          }
-        },
-        {
-          "path": "packages/skill-memo-ilife/src/remind/routes.ts",
-          "literals": 7,
-          "byClass": {
-            "copy": 7
           }
         },
         {
@@ -6059,34 +5880,11 @@
           }
         },
         {
-          "path": "packages/skill-memo-ilife/src/remind/store.ts",
-          "literals": 20,
-          "byClass": {
-            "copy": 17,
-            "concat": 3
-          }
-        },
-        {
-          "path": "packages/skill-memo-ilife/src/render/envelope.ts",
-          "literals": 5,
-          "byClass": {
-            "concat": 5
-          }
-        },
-        {
           "path": "packages/skill-memo-ilife/src/render/html.ts",
           "literals": 3,
           "byClass": {
             "concat": 2,
             "ident": 1
-          }
-        },
-        {
-          "path": "packages/skill-memo-ilife/src/render/memoPageAssets.ts",
-          "literals": 40,
-          "byClass": {
-            "copy": 32,
-            "ident": 8
           }
         },
         {
@@ -6106,27 +5904,6 @@
           }
         },
         {
-          "path": "packages/skill-memo-ilife/src/render/templates.ts",
-          "literals": 2,
-          "byClass": {
-            "concat": 2
-          }
-        },
-        {
-          "path": "packages/skill-memo-ilife/src/search/commands.ts",
-          "literals": 5,
-          "byClass": {
-            "copy": 5
-          }
-        },
-        {
-          "path": "packages/skill-memo-ilife/src/search/routes.ts",
-          "literals": 13,
-          "byClass": {
-            "copy": 13
-          }
-        },
-        {
           "path": "packages/skill-memo-ilife/src/search/run.ts",
           "literals": 48,
           "byClass": {
@@ -6135,40 +5912,11 @@
           }
         },
         {
-          "path": "packages/skill-memo-ilife/src/shared/validators.ts",
-          "literals": 1,
-          "byClass": {
-            "concat": 1
-          }
-        },
-        {
-          "path": "packages/skill-memo-ilife/src/sync/auth.ts",
-          "literals": 2,
-          "byClass": {
-            "copy": 1,
-            "concat": 1
-          }
-        },
-        {
-          "path": "packages/skill-memo-ilife/src/sync/commands.ts",
-          "literals": 3,
-          "byClass": {
-            "copy": 3
-          }
-        },
-        {
           "path": "packages/skill-memo-ilife/src/sync/feishu.ts",
           "literals": 10,
           "byClass": {
             "copy": 8,
             "ident": 2
-          }
-        },
-        {
-          "path": "packages/skill-memo-ilife/src/sync/routes.ts",
-          "literals": 1,
-          "byClass": {
-            "copy": 1
           }
         },
         {
@@ -6185,27 +5933,6 @@
           "byClass": {
             "copy": 5,
             "concat": 23
-          }
-        },
-        {
-          "path": "packages/skill-memo-ilife/src/triggers/routes.generated.ts",
-          "literals": 84,
-          "byClass": {
-            "derived": 84
-          }
-        },
-        {
-          "path": "packages/skill-memo-ilife/src/triggers/routing.ts",
-          "literals": 4,
-          "byClass": {
-            "derived": 4
-          }
-        },
-        {
-          "path": "packages/skill-memo-ilife/src/wish/commands.ts",
-          "literals": 2,
-          "byClass": {
-            "copy": 2
           }
         },
         {
@@ -6240,13 +5967,6 @@
           }
         },
         {
-          "path": "packages/skill-memo-ilife/src/wish/policy.ts",
-          "literals": 1,
-          "byClass": {
-            "concat": 1
-          }
-        },
-        {
           "path": "packages/skill-memo-ilife/src/wish/receipt.ts",
           "literals": 13,
           "byClass": {
@@ -6264,13 +5984,6 @@
           }
         },
         {
-          "path": "packages/skill-memo-ilife/src/wish/routes.ts",
-          "literals": 11,
-          "byClass": {
-            "copy": 11
-          }
-        },
-        {
           "path": "packages/skill-memo-ilife/src/wish/run.ts",
           "literals": 48,
           "byClass": {
@@ -6278,6 +5991,340 @@
             "concat": 21,
             "ident": 2
           }
+        }
+      ],
+      "totals": {
+        "files": 75,
+        "literals": 1706
+      },
+      "excluded": [
+        {
+          "path": "packages/skill-memo-ilife/src/checkin/routes.ts",
+          "literals": 8,
+          "byClass": {
+            "copy": 8
+          },
+          "reason": "路由表：只含唤醒词／CLI 示例／preset 分类，唤醒词按语言路由表另行分载，本票只做文案迁移"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/cli/config.ts",
+          "literals": 3,
+          "byClass": {
+            "derived": 3
+          },
+          "reason": "仅剩开发报文（配置校验错误提示），不迁"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/cli/keys.ts",
+          "literals": 14,
+          "byClass": {
+            "derived": 14
+          },
+          "reason": "生成件：文件头注明机器生成、禁手改（gen-cli／gen-help-assets 产出）；手改会被下一次生成覆盖，且唤醒词/命令键冻结不译"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/cli/registry.ts",
+          "literals": 1,
+          "byClass": {
+            "derived": 1
+          },
+          "reason": "生成件：文件头注明机器生成、禁手改（gen-cli／gen-help-assets 产出）；手改会被下一次生成覆盖，且唤醒词/命令键冻结不译"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/data/commands.ts",
+          "literals": 2,
+          "byClass": {
+            "copy": 2
+          },
+          "reason": "命令声明件：title／wakeWord／example 是命令关键字与样例数据（ADR-0004 §4.9 冻结不译）；memo 侧改造成本牵动生成件 registry.ts，不在本票"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/help/booklet.ts",
+          "literals": 187,
+          "byClass": {
+            "copy": 185,
+            "concat": 2
+          },
+          "reason": "#848 册子 34 格冻结契约（wake/file/family/kind/check），heading 当前无渲染消费者"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/help/manifest.ts",
+          "literals": 2,
+          "byClass": {
+            "ident": 2
+          },
+          "reason": "派生文件名 stem（备忘录_HELP／备忘录_速查表），文件名主体冻结＋英文 _en 后缀另裁决"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/help/scenes/checkin.ts",
+          "literals": 27,
+          "byClass": {
+            "derived": 27
+          },
+          "reason": "生成件：文件头注明机器生成、禁手改（gen-cli／gen-help-assets 产出）；手改会被下一次生成覆盖，且唤醒词/命令键冻结不译"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/help/scenes/init.ts",
+          "literals": 10,
+          "byClass": {
+            "derived": 10
+          },
+          "reason": "生成件：文件头注明机器生成、禁手改（gen-cli／gen-help-assets 产出）；手改会被下一次生成覆盖，且唤醒词/命令键冻结不译"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/help/scenes/memo.ts",
+          "literals": 88,
+          "byClass": {
+            "derived": 88
+          },
+          "reason": "生成件：文件头注明机器生成、禁手改（gen-cli／gen-help-assets 产出）；手改会被下一次生成覆盖，且唤醒词/命令键冻结不译"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/help/scenes/mood.ts",
+          "literals": 30,
+          "byClass": {
+            "derived": 30
+          },
+          "reason": "生成件：文件头注明机器生成、禁手改（gen-cli／gen-help-assets 产出）；手改会被下一次生成覆盖，且唤醒词/命令键冻结不译"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/help/scenes/remind.ts",
+          "literals": 57,
+          "byClass": {
+            "derived": 57
+          },
+          "reason": "生成件：文件头注明机器生成、禁手改（gen-cli／gen-help-assets 产出）；手改会被下一次生成覆盖，且唤醒词/命令键冻结不译"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/help/scenes/search.ts",
+          "literals": 74,
+          "byClass": {
+            "derived": 74
+          },
+          "reason": "生成件：文件头注明机器生成、禁手改（gen-cli／gen-help-assets 产出）；手改会被下一次生成覆盖，且唤醒词/命令键冻结不译"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/help/scenes/sync.ts",
+          "literals": 7,
+          "byClass": {
+            "derived": 7
+          },
+          "reason": "生成件：文件头注明机器生成、禁手改（gen-cli／gen-help-assets 产出）；手改会被下一次生成覆盖，且唤醒词/命令键冻结不译"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/help/scenes/wish.ts",
+          "literals": 53,
+          "byClass": {
+            "derived": 53
+          },
+          "reason": "生成件：文件头注明机器生成、禁手改（gen-cli／gen-help-assets 产出）；手改会被下一次生成覆盖，且唤醒词/命令键冻结不译"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/init/commands.ts",
+          "literals": 3,
+          "byClass": {
+            "copy": 3
+          },
+          "reason": "命令声明件：title／wakeWord／example 是命令关键字与样例数据（ADR-0004 §4.9 冻结不译）；memo 侧改造成本牵动生成件 registry.ts，不在本票"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/init/index.ts",
+          "literals": 4,
+          "byClass": {
+            "copy": 4
+          },
+          "reason": "页型协议判别值（结果页/过程页）已抽 PAGE_KIND 常量，属数据位不译"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/init/routes.ts",
+          "literals": 6,
+          "byClass": {
+            "copy": 6
+          },
+          "reason": "路由表：只含唤醒词／CLI 示例／preset 分类，唤醒词按语言路由表另行分载，本票只做文案迁移"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/memo/category.ts",
+          "literals": 32,
+          "byClass": {
+            "copy": 30,
+            "concat": 1,
+            "ident": 1
+          },
+          "reason": "MEMO_TOPS 分类值＋子唤醒词表，均为 DB 值与唤醒词，不译"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/memo/commands.ts",
+          "literals": 11,
+          "byClass": {
+            "copy": 11
+          },
+          "reason": "命令声明件：title／wakeWord／example 是命令关键字与样例数据（ADR-0004 §4.9 冻结不译）；memo 侧改造成本牵动生成件 registry.ts，不在本票"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/memo/routes.ts",
+          "literals": 19,
+          "byClass": {
+            "copy": 19
+          },
+          "reason": "路由表：只含唤醒词／CLI 示例／preset 分类，唤醒词按语言路由表另行分载，本票只做文案迁移"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/mood/routes.ts",
+          "literals": 19,
+          "byClass": {
+            "copy": 19
+          },
+          "reason": "路由表：只含唤醒词／CLI 示例／preset 分类，唤醒词按语言路由表另行分载，本票只做文案迁移"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/remind/commands.ts",
+          "literals": 5,
+          "byClass": {
+            "copy": 5
+          },
+          "reason": "命令声明件：title／wakeWord／example 是命令关键字与样例数据（ADR-0004 §4.9 冻结不译）；memo 侧改造成本牵动生成件 registry.ts，不在本票"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/remind/policy.ts",
+          "literals": 29,
+          "byClass": {
+            "copy": 12,
+            "concat": 16,
+            "ident": 1
+          },
+          "reason": "reminders.repeat_type 枚举值（一次性/每天/每周/每月/每年）写入 DB，已抽常量，不译"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/remind/routes.ts",
+          "literals": 7,
+          "byClass": {
+            "copy": 7
+          },
+          "reason": "路由表：只含唤醒词／CLI 示例／preset 分类，唤醒词按语言路由表另行分载，本票只做文案迁移"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/remind/store.ts",
+          "literals": 20,
+          "byClass": {
+            "copy": 17,
+            "concat": 3
+          },
+          "reason": "只剩两条 SQL 与枚举比较，无用户可见文案；已按 HEAD 原样还原"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/render/envelope.ts",
+          "literals": 5,
+          "byClass": {
+            "concat": 5
+          },
+          "reason": "5 条开发报文（异常／诊断），不迁"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/render/memoPageAssets.ts",
+          "literals": 40,
+          "byClass": {
+            "copy": 32,
+            "ident": 8
+          },
+          "reason": "内嵌 JS/CSS 资产 payload（37 条代码注释），payload 件不迁；已按 HEAD 原样还原"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/render/templates.ts",
+          "literals": 2,
+          "byClass": {
+            "concat": 2
+          },
+          "reason": "2 条开发报文，不迁"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/search/commands.ts",
+          "literals": 5,
+          "byClass": {
+            "copy": 5
+          },
+          "reason": "命令声明件：title／wakeWord／example 是命令关键字与样例数据（ADR-0004 §4.9 冻结不译）；memo 侧改造成本牵动生成件 registry.ts，不在本票"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/search/routes.ts",
+          "literals": 13,
+          "byClass": {
+            "copy": 13
+          },
+          "reason": "路由表：只含唤醒词／CLI 示例／preset 分类，唤醒词按语言路由表另行分载，本票只做文案迁移"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/shared/validators.ts",
+          "literals": 1,
+          "byClass": {
+            "concat": 1
+          },
+          "reason": "1 条开发报文，不迁"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/sync/auth.ts",
+          "literals": 2,
+          "byClass": {
+            "copy": 1,
+            "concat": 1
+          },
+          "reason": "2 条开发报文，不迁"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/sync/commands.ts",
+          "literals": 3,
+          "byClass": {
+            "copy": 3
+          },
+          "reason": "命令声明件：title／wakeWord／example 是命令关键字与样例数据（ADR-0004 §4.9 冻结不译）；memo 侧改造成本牵动生成件 registry.ts，不在本票"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/sync/routes.ts",
+          "literals": 1,
+          "byClass": {
+            "copy": 1
+          },
+          "reason": "路由表：只含唤醒词／CLI 示例／preset 分类，唤醒词按语言路由表另行分载，本票只做文案迁移"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/triggers/routes.generated.ts",
+          "literals": 84,
+          "byClass": {
+            "derived": 84
+          },
+          "reason": "生成件：文件头注明机器生成、禁手改（gen-cli／gen-help-assets 产出）；手改会被下一次生成覆盖，且唤醒词/命令键冻结不译"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/triggers/routing.ts",
+          "literals": 4,
+          "byClass": {
+            "derived": 4
+          },
+          "reason": "3 条 MemoPolicyError 开发报文，不迁"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/wish/commands.ts",
+          "literals": 2,
+          "byClass": {
+            "copy": 2
+          },
+          "reason": "命令声明件：title／wakeWord／example 是命令关键字与样例数据（ADR-0004 §4.9 冻结不译）；memo 侧改造成本牵动生成件 registry.ts，不在本票"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/wish/policy.ts",
+          "literals": 1,
+          "byClass": {
+            "concat": 1
+          },
+          "reason": "1 条开发报文，不迁"
+        },
+        {
+          "path": "packages/skill-memo-ilife/src/wish/routes.ts",
+          "literals": 11,
+          "byClass": {
+            "copy": 11
+          },
+          "reason": "路由表：只含唤醒词／CLI 示例／preset 分类，唤醒词按语言路由表另行分载，本票只做文案迁移"
         },
         {
           "path": "packages/skill-memo-ilife/src/wish/taskWrite.ts",
@@ -6285,14 +6332,16 @@
           "byClass": {
             "copy": 1,
             "concat": 3
-          }
+          },
+          "reason": "4 条开发报文，不迁"
         },
         {
           "path": "packages/skill-memo-ilife/src/wish/tasks.ts",
           "literals": 5,
           "byClass": {
             "concat": 5
-          }
+          },
+          "reason": "5 条开发报文，不迁"
         },
         {
           "path": "packages/skill-memo-ilife/src/wish/wizards.ts",
@@ -6300,14 +6349,10 @@
           "byClass": {
             "copy": 8,
             "concat": 2
-          }
+          },
+          "reason": "四条 SQL（category='心愿' 为库值），已抽模块常量，不译"
         }
-      ],
-      "migrated": [],
-      "totals": {
-        "files": 75,
-        "literals": 1706
-      }
+      ]
     },
     "1226": {
       "title": "迁移 base-render 组件层前半：168 件（2,216 条）；另 2 件已迁",
@@ -9992,12 +10037,12 @@
   },
   "scopeSummary": {
     "ledgerFiles": 1226,
-    "migratedFiles": 162,
-    "pendingFiles": 1002,
-    "pendingLiterals": 33312,
-    "excludedFiles": 62,
-    "excludedLiterals": 2696,
-    "migratedLiterals": 6740
+    "migratedFiles": 194,
+    "pendingFiles": 927,
+    "pendingLiterals": 31606,
+    "excludedFiles": 105,
+    "excludedLiterals": 3607,
+    "migratedLiterals": 7535
   },
   "workflow": [
     "开工：从本文件取本票 files，逐件登记进 tooling/i18n-scope.json 的 files（先跑两道门拿红读数＝范围已挂但还没迁）。",

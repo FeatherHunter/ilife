@@ -31,8 +31,8 @@ const PKG = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SRCDIR = join(PKG, 'src');
 const lf = (p) => (readFileSync(p, 'utf8').match(/\n/g) || []).length;
 
-/** `src/` 第一层的闭集：9 个能力域 ＋ 6 个共用位（票面 §三 的目标树；`health.ts` 是跨包兼容口，见 #706）。 */
-const TOP_DIRS = ['checkin', 'cli', 'data', 'db', 'help', 'init', 'memo', 'mood', 'remind', 'render', 'search', 'shared', 'sync', 'triggers', 'wish'];
+/** `src/` 第一层的闭集：9 个能力域 ＋ 6 个共用位 ＋ 词条层（#1225；`health.ts` 是跨包兼容口，见 #706）。 */
+const TOP_DIRS = ['checkin', 'cli', 'data', 'db', 'entries', 'help', 'init', 'memo', 'mood', 'remind', 'render', 'search', 'shared', 'sync', 'triggers', 'wish'];
 const TOP_FILES = ['config.ts', 'health.ts', 'index.ts'];
 /** 9 个能力域（引用它们时只许写 `<域>/index.js`）。 */
 const DOMAINS = ['checkin', 'data', 'init', 'memo', 'mood', 'remind', 'search', 'sync', 'wish'];

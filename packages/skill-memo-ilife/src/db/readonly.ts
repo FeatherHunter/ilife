@@ -9,6 +9,7 @@ import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { MemoFetchError } from '../shared/errors.js';
 import { dbFilename } from '../shared/paths.js';
+import { m } from '../entries/index.js';
 
 /** 老 `notes` 行（`init.sql` 逐列：id 自增整数／content 正文／summary 短摘要／category／sub_category／
  *  media_path 附件相对路径／reminder_id 打卡追溯来源／feishu_task_guid 远端标识回写／due 排期日期／
@@ -100,7 +101,7 @@ function rowReminder(r: Record<string, unknown>): MemoReminder {
     id: r.id as number,
     note_id: (r.note_id as number | null) ?? null,
     remind_at: (r.remind_at as string | null) ?? null,
-    repeat_type: (r.repeat_type as string) ?? '一次性',
+    repeat_type: (r.repeat_type as string) ?? m('skill-memo-ilife.db-readonly.c001'),
     repeat_rule: (r.repeat_rule as string | null) ?? null,
     status: (r.status as string) ?? 'active',
     notified_at: (r.notified_at as string | null) ?? null,

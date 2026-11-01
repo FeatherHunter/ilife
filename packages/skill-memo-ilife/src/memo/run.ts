@@ -28,12 +28,16 @@ import { buildReceiptPage, changeCategorySnapshot, fillMemoPage, pageEnvelope } 
 import type { ReceiptScene } from '../render/index.js';
 import { buildReceipt, noteIdOfMessage, receiptOptsOf } from './receiptPage.js';
 import { memoBatchResultPage, memoCreatePage, memoRemovePage, memoUpdatePage } from './receipt.js';
+// #1225：kind 是页型协议值（不是文案），模块级常量，不译。
+const BATCH_PAGE_KIND: '结果页' | '过程页' = '过程页';
+
 import { bookletFileStem } from '../help/booklet.js';
 import { checkinCreatePage, checkinRemovePage, checkinUpdatePage } from '../checkin/index.js';
 import type { WishReceipt } from '../wish/index.js';
+import { m } from '../entries/index.js';
 
 function asIds(value: unknown): number[] {
-  if (!Array.isArray(value) || value.length === 0) fail(2, 'ids 须为非空数组');
+  if (!Array.isArray(value) || value.length === 0) fail(2, m('skill-memo-ilife.memo-run.c001'));
   return value.map((v) => needId(v, 'ids'));
 }
 
@@ -41,10 +45,10 @@ function asIds(value: unknown): number[] {
 // 返回去重后的正整数列（保序）。空即缺参数（exit 2）。
 function deleteIdsOf(params: Record<string, unknown>): number[] {
   const rawIds = params.ids !== undefined ? params.ids : params.id;
-  if (rawIds === undefined || rawIds === null || rawIds === '') fail(2, '删除须给笔记 id（可多个，空格分隔）');
+  if (rawIds === undefined || rawIds === null || rawIds === '') fail(2, m('skill-memo-ilife.memo-run.c002'));
   const list: unknown[] = Array.isArray(rawIds) ? rawIds : String(rawIds).trim().split(/\s+/);
-  if (list.length === 0) fail(2, '删除须给笔记 id（可多个，空格分隔）');
-  const ids = list.map((v) => needId(v, '删除'));
+  if (list.length === 0) fail(2, m('skill-memo-ilife.memo-run.c003'));
+  const ids = list.map((v) => needId(v, m('skill-memo-ilife.memo-run.c004')));
   return [...new Set(ids)];
 }
 
@@ -66,7 +70,7 @@ export function runCreate(params: Record<string, unknown>, db: MemoDb): CommandO
   // 关联提醒不在建时写（老 `add` 无 `--reminder-id`；打卡的 `reminder_id` 由打卡追溯链回填）。
   // HELP 的 `memo_add_checkin` 留着这一格是为了溯源：给了就大声说清，不静默丢掉。
   if (p.reminderId !== undefined && p.reminderId !== null && p.reminderId !== '') {
-    fail(2, '建时不可写关联提醒（老 add 无此参数；打卡的关联提醒由打卡追溯链回填）');
+    fail(2, m('skill-memo-ilife.memo-run.c005'));
   }
   const c = crudCreate(p);
   const top = normalizeTop(p.category);
@@ -92,11 +96,13 @@ export function runCreate(params: Record<string, unknown>, db: MemoDb): CommandO
   // 两步合一（添笔记 ＋ 设提醒）不出第三条路，`#837` Q⑥ 已定：不开新键、也不给 create 补参数。
   if (created !== null && p.remindAt !== undefined && p.remindAt !== null && p.remindAt !== '') {
     const o = receiptOptsOf(created);
-    return { data: r.receipt, exit: r.exit, deliver: buildReceipt('memo_remind_with_note', '记提醒', r.receipt, { ...o, summary: [...o.summary, '提醒时间：' + String(p.remindAt), '重复：' + (p.repeatType === undefined ? '一次性' : String(p.repeatType))] }) };
+    // #1225：链内条件分支抽成局部变量（迁移器只切「整串字面量＋参数」）。
+    const repeatText = p.repeatType === undefined ? m('skill-memo-ilife.memo-run.c006') : String(p.repeatType);
+    return { data: r.receipt, exit: r.exit, deliver: buildReceipt('memo_remind_with_note', m('skill-memo-ilife.memo-run.c007'), r.receipt, { ...o, summary: [...o.summary, m('skill-memo-ilife.memo-run.c008', { p0: String(String(p.remindAt)) }), m('skill-memo-ilife.memo-run.c009', { p0: String(repeatText) })] }) };
   }
   // #829：分类＝心愿 ⇒ 本域那一格（`记心愿`）；不是即别家那格（情绪日记）。
   if (created !== null && created.category === '心愿') {
-    return { data: r.receipt, exit: r.exit, deliver: wishReceiptFor('memo_add_wish', '记心愿', r.receipt, created) };
+    return { data: r.receipt, exit: r.exit, deliver: wishReceiptFor('memo_add_wish', m('skill-memo-ilife.memo-run.c010'), r.receipt, created) };
   }
   // #826：分类＝备忘 ⇒ 本域那一格（`记备忘`，册子 seq 1）。
   const memo = memoCreatePage(r.receipt, created);
@@ -111,7 +117,7 @@ export function runCreate(params: Record<string, unknown>, db: MemoDb): CommandO
   return {
     data: r.receipt,
     exit: r.exit,
-    deliver: buildReceipt('memo_add_mood', '记情绪', r.receipt, createdId === null ? { entityLabel: '情绪日记', entityId: '未新建', summary: ['本次未新建笔记'] } : receiptOptsOf(getNote(db, createdId))),
+    deliver: buildReceipt('memo_add_mood', m('skill-memo-ilife.memo-run.c011'), r.receipt, createdId === null ? { entityLabel: m('skill-memo-ilife.memo-run.c012'), entityId: m('skill-memo-ilife.memo-run.c013'), summary: [m('skill-memo-ilife.memo-run.c014')] } : receiptOptsOf(getNote(db, createdId))),
   };
 }
 
@@ -128,12 +134,12 @@ export function runUpdate(params: Record<string, unknown>, db: MemoDb): CommandO
     return {
       data: r.receipt,
       exit: r.exit,
-      deliver: wishReceiptFor('memo_wish_schedule', '心愿排期', r.receipt, null, {
-        entityLabel: '心愿批次',
+      deliver: wishReceiptFor('memo_wish_schedule', m('skill-memo-ilife.memo-run.c015'), r.receipt, null, {
+        entityLabel: m('skill-memo-ilife.memo-run.c016'),
         // #882：同上——「这一趟动了几条」是条数，不是记录号 ⇒ 字符串形态，族里不给加 `#`。
-        entityId: r.receipt.updated + ' 条',
-        extraSummary: ['本地更新 ' + r.receipt.updated + ' 条', '远端同步 ' + r.receipt.feishuSynced + ' 条', '跳过 ' + r.receipt.skipped + ' 条'],
-        extraSections: errors.length === 0 ? [] : [{ heading: '没做成的', rows: [...errors] }],
+        entityId: m('skill-memo-ilife.memo-run.c017', { p0: String(r.receipt.updated) }),
+        extraSummary: [m('skill-memo-ilife.memo-run.c018', { p0: String(r.receipt.updated) }), m('skill-memo-ilife.memo-run.c019', { p0: String(r.receipt.feishuSynced) }), m('skill-memo-ilife.memo-run.c020', { p0: String(r.receipt.skipped) })],
+        extraSections: errors.length === 0 ? [] : [{ heading: m('skill-memo-ilife.memo-run.c021'), rows: [...errors] }],
       }),
     };
   }
@@ -145,35 +151,35 @@ export function runUpdate(params: Record<string, unknown>, db: MemoDb): CommandO
   if (p.done === true) {
     const r = completeWish(db, { id, content: p.content });
     if (isWish) {
-      return { data: r.receipt, exit: r.exit, deliver: wishReceiptFor('memo_complete_wish', '完成心愿', r.receipt, before) };
+      return { data: r.receipt, exit: r.exit, deliver: wishReceiptFor('memo_complete_wish', m('skill-memo-ilife.memo-run.c022'), r.receipt, before) };
     }
     return { data: r.receipt, exit: r.exit };
   }
-  if (p.done !== undefined) fail(2, 'done 只认 true（完成心愿）；改字段另给参数');
+  if (p.done !== undefined) fail(2, m('skill-memo-ilife.memo-run.c023'));
   const patch: NotePatch = {};
   if (p.title !== undefined || p.body !== undefined) {
     const t = typeof p.title === 'string' ? p.title.trim() : '';
     const b = typeof p.body === 'string' ? p.body.trim() : '';
-    if (!t && !b) fail(2, '正文不可改成空');
+    if (!t && !b) fail(2, m('skill-memo-ilife.memo-run.c024'));
     patch.content = b !== '' ? b : t !== '' ? t : getNote(db, id).content;
   }
   if (p.category !== undefined) patch.category = normalizeTop(p.category);
   if (p.sub !== undefined) patch.sub_category = normalizeSub(p.sub);
   if (p.media !== undefined) patch.media_path = normalizeMediaPath(p.media);
-  if (p.reminderId !== undefined) patch.reminder_id = needId(p.reminderId, '关联提醒');
+  if (p.reminderId !== undefined) patch.reminder_id = needId(p.reminderId, m('skill-memo-ilife.memo-run.c025'));
   // 老实现没有「改提醒时间」这一路：提醒时间定盘即不可改，错了废弃重建，大声失败不静默。
-  if (p.remindAt !== undefined) fail(2, '提醒时间不可改（废弃旧提醒、重建一条）');
+  if (p.remindAt !== undefined) fail(2, m('skill-memo-ilife.memo-run.c026'));
   if (p.due !== undefined) patch.due = dueForCategory(patch.category ?? getNote(db, id).category, p.due);
-  if (Object.keys(patch).length === 0) fail(2, '至少需要提供一个更新字段：content/category/sub/media/reminderId/due');
+  if (Object.keys(patch).length === 0) fail(2, m('skill-memo-ilife.memo-run.c027'));
   const r = updateWish(db, { id, patch });
   // #831：情绪日记那条走本族页（改后那一行是权威，回执页照它出）。
   const after = getNote(db, id);
   // #829：心愿那条走本域的页（`改心愿`，册子 seq 22）。
   if (after.category === '心愿') {
-    return { data: r.receipt, exit: r.exit, deliver: wishReceiptFor('memo_update_wish', '改心愿', r.receipt, after) };
+    return { data: r.receipt, exit: r.exit, deliver: wishReceiptFor('memo_update_wish', m('skill-memo-ilife.memo-run.c028'), r.receipt, after) };
   }
   if (after.category === '情绪日记') {
-    return { data: r.receipt, exit: r.exit, deliver: buildReceipt('memo_update_mood', '改情绪', r.receipt, receiptOptsOf(after)) };
+    return { data: r.receipt, exit: r.exit, deliver: buildReceipt('memo_update_mood', m('skill-memo-ilife.memo-run.c029'), r.receipt, receiptOptsOf(after)) };
   }
   // #826：纯分类补丁→单条改分类（seq 4）／纯子分类补丁→改子分类（seq 5）／备忘行字段改→改备忘（seq 2）。
   const memo = memoUpdatePage(r.receipt, after, Object.keys(patch));
@@ -194,9 +200,9 @@ export function runUpdate(params: Record<string, unknown>, db: MemoDb): CommandO
 export function runRemove(params: Record<string, unknown>, db: MemoDb): CommandOut {
   // 废弃提醒（老 `dismiss`）：按提醒 id 标 dismissed，笔记保留。
   if (params.mode === 'abandon') {
-    const rid = needId(params.id, '废弃提醒');
+    const rid = needId(params.id, m('skill-memo-ilife.memo-run.c030'));
     abandonReminder(db, rid);
-    return { data: { ok: true, message: '提醒已废弃（笔记保留）：' + rid }, exit: 0 };
+    return { data: { ok: true, message: m('skill-memo-ilife.memo-run.c031', { p0: String(rid) }) }, exit: 0 };
   }
   // #850 · 删除分层闸（用户说删即确认，AI 带 `confirm:true`；关联与批量另设清单闸）：
   // 单条无关联直删；有关联先出清单（含提醒数）再要 `withReminders:true`；批量（≥2）一律先出清单
@@ -207,7 +213,7 @@ export function runRemove(params: Record<string, unknown>, db: MemoDb): CommandO
   const withReminders = deleteWithRemindersOf(params);
   // 先校验存在（老 `delete_note` 第一步）：缺哪个报哪个（exit 4，不静默）。
   for (const nid of ids) {
-    try { getNote(db, nid); } catch { fail(4, '无此笔记：' + nid); }
+    try { getNote(db, nid); } catch { fail(4, m('skill-memo-ilife.memo-run.c032', { p0: String(nid) })); }
   }
   const allReminders = listReminderRows(db, undefined).filter((r) => r.note_id !== null && ids.includes(r.note_id));
   const related = allReminders.length;
@@ -220,7 +226,9 @@ export function runRemove(params: Record<string, unknown>, db: MemoDb): CommandO
     return {
       data: {
         ok: false,
-        message: '批量删除须先看清单：' + ids.length + ' 条笔记' + (related ? '，关联 ' + related + ' 个提醒' : '（无关联提醒）') + '；确认后带 confirm:true 重调' + (related ? '（有关联时另带 withReminders:true 级联）' : ''),
+        message: related
+          ? m('skill-memo-ilife.memo-run.c033', { p0: String(ids.length), p1: String(related) })
+          : m('skill-memo-ilife.memo-run.c034', { p0: String(ids.length) }),
         ids, total: ids.length, items: notes, related, reminders: allReminders,
       },
       exit: 2,
@@ -230,13 +238,13 @@ export function runRemove(params: Record<string, unknown>, db: MemoDb): CommandO
     return {
       data: {
         ok: false,
-        message: '笔记 ' + ids.join(' ') + ' 关联 ' + related + ' 个提醒，请加 withReminders:true 级联删除（提醒不会被自动删除）',
+        message: m('skill-memo-ilife.memo-run.c035', { p0: String(ids.join(' ')), p1: String(related) }),
         ids, total: ids.length, items: notes, related, reminders: allReminders,
       },
       exit: 2,
     };
   }
-  if (!confirm) fail(2, '删除须带 confirm:true（用户说删即确认，AI 显式带上；废弃提醒走 abandon）');
+  if (!confirm) fail(2, m('skill-memo-ilife.memo-run.c036'));
   // #661 · C 口径：默认照老「远端标完成」，显式 `purge:true` 才连飞书任务一起删（两种语义用参数讲清）。
   if (!isBatch) {
     // #831：情绪日记那条走本族页。**删前先取那一行**——删完 `getNote` 就取不到了。
@@ -244,10 +252,10 @@ export function runRemove(params: Record<string, unknown>, db: MemoDb): CommandO
     const w = removeWish(db, ids[0], params.purge === true);
     // #829：心愿那条走本域的页（`删心愿`，册子 seq 21）——同样是删前那一行作权威。
     if (before.category === '心愿') {
-      return { data: w.receipt, exit: w.exit, deliver: wishReceiptFor('memo_delete_wish', '删心愿', w.receipt, before) };
+      return { data: w.receipt, exit: w.exit, deliver: wishReceiptFor('memo_delete_wish', m('skill-memo-ilife.memo-run.c037'), w.receipt, before) };
     }
     if (before.category === '情绪日记') {
-      return { data: w.receipt, exit: w.exit, deliver: buildReceipt('memo_delete_mood', '删情绪', w.receipt, receiptOptsOf(before)) };
+      return { data: w.receipt, exit: w.exit, deliver: buildReceipt('memo_delete_mood', m('skill-memo-ilife.memo-run.c038'), w.receipt, receiptOptsOf(before)) };
     }
     // #826：删前那一行分类＝备忘 ⇒ 本域那一格（`删备忘`，册子 seq 3）。
     const memo = memoRemovePage(w.receipt, before);
@@ -276,7 +284,7 @@ export function runRemove(params: Record<string, unknown>, db: MemoDb): CommandO
   return {
     data: {
       ok: doneAll,
-      message: doneAll ? '已删除 ' + removed + ' 条' : '批量删除部分完成：已删=' + removed + '，错误=' + errors.length,
+      message: doneAll ? m('skill-memo-ilife.memo-run.c039', { p0: String(removed) }) : m('skill-memo-ilife.memo-run.c040', { p0: String(removed), p1: String(errors.length) }),
       removed, errors, ids,
     },
     exit: doneAll ? 0 : 4,
@@ -288,17 +296,17 @@ export function runBatch(params: Record<string, unknown>, db: MemoDb): CommandOu
   // #665 批量改分类：不带目标分类即收集（出向导页）；带目标分类＋ids 即执行。
   const from = params.fromCategory !== undefined ? normalizeTop(params.fromCategory) : null;
   const to = params.toCategory !== undefined ? normalizeTop(params.toCategory) : null;
-  if (from !== null && to !== null && from === to) fail(2, '原分类与目标分类相同：' + from);
+  if (from !== null && to !== null && from === to) fail(2, m('skill-memo-ilife.memo-run.c041', { p0: String(from) }));
   // 执行（老 `update-category` 逐条）：目标分类＋一批 id；只给目标分类不给 id 即收集预览。
   if (params.ids !== undefined) {
-    if (to === null) fail(2, '执行改分类须给 toCategory（只收集不执行时别给 ids）');
+    if (to === null) fail(2, m('skill-memo-ilife.memo-run.c042'));
     const r = applyBatchCategory(db, asIds(params.ids), to);
     const doneAll = r.errors.length === 0;
     // #882：这一句只在**写侧这一处**拼，信封的 message 与页 lead 同源（页装配件不重算）；
     // 措辞走中文条数，不再露半角等号（同一句原先在 `memo/receipt.ts` 又拼了一遍）。
     const receipt: WishReceipt = {
       ok: doneAll,
-      message: '改分类完成：更新 ' + r.updated + ' 条，跳过 ' + r.skipped + ' 条',
+      message: m('skill-memo-ilife.memo-run.c043', { p0: String(r.updated), p1: String(r.skipped) }),
       local: 'updated',
       remote: 'not-applicable',
       remoteId: null,
@@ -313,15 +321,16 @@ export function runBatch(params: Record<string, unknown>, db: MemoDb): CommandOu
   const items = collectBatchItems(db, from);
   const snap = changeCategorySnapshot(toRows(items), from, to);
   // 文案口径（#870）：分类名用「」括起，不用半角单引号——中文页上的半角标点归 H7（t849 §1）。
-  const message = '原分类「' + (from ?? '全部') + '」下 ' + items.length + ' 条笔记';
+  const fromLabel = from ?? m('skill-memo-ilife.memo-run.c044');
+  const message = m('skill-memo-ilife.memo-run.c045', { p0: String(fromLabel), p1: String(items.length) });
   const payload = pageEnvelope({
-    commandCn: '批量改分类', wakeWord: '备忘改分类', sceneId: 'batch-update-category',
+    commandCn: m('skill-memo-ilife.memo-run.c046'), wakeWord: m('skill-memo-ilife.memo-run.c047'), sceneId: 'batch-update-category',
     title: snap.title, summary: snap.summary, sections: snap.sections,
     copyLog: {
-      thinking: '过程型向导 · 勾选后复制改分类指令回 AI（只改顶层分类，sub_category 不动）',
-      data_structure: 'notes 表 · id/content/category/sub_category/media_path/due',
-      call_chain: 'memo.batch → render_change_category → 共享 filler',
-      exception: '无',
+      thinking: m('skill-memo-ilife.memo-run.c048'),
+      data_structure: m('skill-memo-ilife.memo-run.c049'),
+      call_chain: m('skill-memo-ilife.memo-run.c050'),
+      exception: m('skill-memo-ilife.memo-run.c051'),
     },
     extra: { items, from_category: from, to_category: to, target_conflict_count: to ? countNotesByCategory(db, to) : 0 },
     message,
@@ -330,7 +339,7 @@ export function runBatch(params: Record<string, unknown>, db: MemoDb): CommandOu
     data: { ok: true, message, items, total: items.length, fromCategory: from, toCategory: to },
     exit: 0,
     // #826：过程页主体按册子取（seq 31 `备忘改分类-批量-向导`）；模板仍是本域这张向导页（主体名由域票填，#848 证据 §没碰什么）。
-    deliver: { html: fillMemoPage('change_category', payload), stem: bookletFileStem('memo_batch_change_category', '过程页') },
+    deliver: { html: fillMemoPage('change_category', payload), stem: bookletFileStem('memo_batch_change_category', BATCH_PAGE_KIND) },
   };
 }
 

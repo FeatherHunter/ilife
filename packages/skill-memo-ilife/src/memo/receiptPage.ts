@@ -12,12 +12,13 @@ import type { ReceiptScene } from '../render/receipt.js';
 import { buildReceiptPage } from '../render/receipt.js';
 import { normalizeTop } from './category.js';
 import type { WishReceipt } from '../wish/index.js';
+import { m } from '../entries/index.js';
 
 /** #831 · 从写侧回执里取笔记 id：写侧两种说法都以「：id」结尾（`已记一条：7`／`已存在这条心愿（未新建）：7`）。
  *  取不到即 null（调用方按「未新建」出页，不猜一个号）。 */
 export function noteIdOfMessage(message: string): number | null {
-  const m = /(\d+)\D*$/.exec(message);
-  const n = m === null ? NaN : Number(m[1]);
+  const hit = /(\d+)\D*$/.exec(message);
+  const n = hit === null ? NaN : Number(hit[1]);
   return Number.isInteger(n) && n > 0 ? n : null;
 }
 
@@ -37,10 +38,10 @@ export function receiptOptsOf(note: { id: number; category: string; sub_category
     summary: [
       // #820 收尾（负责人 2026-09-22）：事实条一律「标签：值」，一格说一件事 ——
       // 分类与子分类**各占一格**，不再用「／」把两级拼在一格（符号顶替设计）；标签统一用「正文」。
-      '笔记编号：' + note.id,
-      '正文：' + note.content,
-      '分类：' + note.category,
-      ...(note.sub_category === null ? [] : ['子分类：' + note.sub_category]),
+      m('skill-memo-ilife.memo-receiptPage.c001', { p0: String(note.id) }),
+      m('skill-memo-ilife.memo-receiptPage.c002', { p0: String(note.content) }),
+      m('skill-memo-ilife.memo-receiptPage.c003', { p0: String(note.category) }),
+      ...(note.sub_category === null ? [] : [m('skill-memo-ilife.memo-receiptPage.c004', { p0: String(note.sub_category) })]),
     ],
   };
 }
@@ -65,11 +66,11 @@ export function buildReceipt(
     sections: [],
     receipt: { entityLabel: opts.entityLabel, entityId: opts.entityId, local: r.local, remote: r.remote, remoteId: r.remoteId },
     copyLog: {
-      thinking: title + ' · 写命令回执渲染为通用回执页（页族定义处 src/render/receipt.ts）',
-      data_structure: 'notes／reminders 两表；回执字段 local／remote／remoteId 取自写侧',
-      call_chain: 'cmd_read dispatch → ' + scene + ' → buildReceiptPage → fillMemoPage(receipt) → deliver 钩子落盘',
-      exception: '无',
+      thinking: m('skill-memo-ilife.memo-receiptPage.c005', { p0: String(title) }),
+      data_structure: m('skill-memo-ilife.memo-receiptPage.c006'),
+      call_chain: m('skill-memo-ilife.memo-receiptPage.c007', { p0: String(scene) }),
+      exception: m('skill-memo-ilife.memo-receiptPage.c008'),
     },
-    retryPrompt: '若这一页的内容不对，请把要改的那一条（笔记编号与要改成的样子）发我，我重跑一次：' + title,
+    retryPrompt: m('skill-memo-ilife.memo-receiptPage.c009', { p0: String(title) }),
   });
 }

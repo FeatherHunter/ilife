@@ -16,10 +16,11 @@ import type { ReceiptScene } from '../render/receipt.js';
 import { bookletFileStem } from '../help/booklet.js';
 import type { MemoNote } from '../db/readonly.js';
 import type { WishReceipt } from './ensure.js';
+import { m } from '../entries/index.js';
 
 /** 排期那一格的人话：`YYYY-MM-DD` 原样；没有即写「未定」，不空着也不拿 0 顶。 */
 function dueText(due: string | null): string {
-  return due === null || due === '' ? '未定' : due;
+  return due === null || due === '' ? m('skill-memo-ilife.wish-receipt.c001') : due;
 }
 
 /** 本域结果页的场景 id（`src/help/booklet.ts` seq 18／19／20／21／22 逐字）。 */
@@ -57,9 +58,9 @@ export interface WishReceiptInput {
 function summaryOf(loc: MemoNote | null, extra: readonly string[]): string[] {
   const out: string[] = [];
   if (loc !== null) {
-    out.push('正文：' + loc.content);
-    out.push('心愿编号：' + loc.id);
-    out.push('排期：' + dueText(loc.due));
+    out.push(m('skill-memo-ilife.wish-receipt.c002', { p0: String(loc.content) }));
+    out.push(m('skill-memo-ilife.wish-receipt.c003', { p0: String(loc.id) }));
+    out.push(m('skill-memo-ilife.wish-receipt.c004', { p0: String(dueText(loc.due)) }));
   }
   for (const line of extra) out.push(line);
   return out;
@@ -76,23 +77,23 @@ export function buildWishReceipt(input: WishReceiptInput): { readonly html: stri
   }
   const loc = input.loc ?? null;
   const r = input.receipt;
-  const entityLabel = input.entityLabel ?? loc?.category ?? '心愿';
+  const entityLabel = input.entityLabel ?? loc?.category ?? m('skill-memo-ilife.wish-receipt.c005');
   const entityId = input.entityId ?? loc?.id ?? '—';
   return buildReceiptPage({
     scene: input.scene,
     title: input.title,
     message: r.message,
-    badges: { category: loc?.category ?? '心愿', sub: loc?.sub_category ?? null },
+    badges: { category: loc?.category ?? m('skill-memo-ilife.wish-receipt.c006'), sub: loc?.sub_category ?? null },
     summary: summaryOf(loc, input.extraSummary ?? []),
     sections: [...(input.extraSections ?? [])],
     receipt: { entityLabel, entityId, local: r.local, remote: r.remote, remoteId: r.remoteId },
     copyLog: {
-      thinking: input.title + ' · 心愿域写回执渲染为通用回执页（页族定义处 src/render/receipt.ts）',
-      data_structure: 'notes 表（id/content/category/sub_category/due/feishu_task_guid）；回执三格 local／remote／remoteId 取自写侧',
-      call_chain: 'cmd_read 分派 → ' + input.scene + ' → buildWishReceipt → buildReceiptPage → fillMemoPage(receipt) → deliver 落盘',
-      exception: '无',
+      thinking: m('skill-memo-ilife.wish-receipt.c007', { p0: String(input.title) }),
+      data_structure: m('skill-memo-ilife.wish-receipt.c008'),
+      call_chain: m('skill-memo-ilife.wish-receipt.c009', { p0: String(input.scene) }),
+      exception: m('skill-memo-ilife.wish-receipt.c010'),
     },
-    retryPrompt: '若这一页的内容不对，请把要改的那一条（心愿编号与要改成的样子）发我，我重跑一次：' + input.title,
+    retryPrompt: m('skill-memo-ilife.wish-receipt.c011', { p0: String(input.title) }),
   });
 }
 

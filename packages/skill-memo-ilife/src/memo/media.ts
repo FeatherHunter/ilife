@@ -22,6 +22,7 @@ import { isAbsolute, relative, resolve, sep } from 'node:path';
 import { MemoPolicyError } from '../shared/errors.js';
 import { loadMemoConfig } from '../config.js';
 import { mediaDirOf } from '../shared/paths.js';
+import { m } from '../entries/index.js';
 
 /** 附件路径不在附件目录内时的错码（口径层的坏输入）。 */
 const CODE = 'POLICY_BAD_INPUT' as const;
@@ -48,12 +49,10 @@ export function resolveMediaDir(): string {
     st = statSync(abs);
   } catch {
     bad(
-      '附件目录不存在：' + abs + '（取自配置项 media.dir，空串＝<数据目录>/media）——' +
-        '请把 ~/.ilife/memo.yaml 里的 media.dir 指向一个已存在的附件目录，或先把目录建出来；' +
-        '本技能不替你建目录，也不退回按路径开头比对',
+      m('skill-memo-ilife.memo-media.c001', { p0: String(abs) }),
     );
   }
-  if (!st.isDirectory()) bad('附件目录不是目录：' + abs + '——media.dir 要指向目录，不是文件');
+  if (!st.isDirectory()) bad(m('skill-memo-ilife.memo-media.c002', { p0: String(abs) }));
   return abs;
 }
 
@@ -80,11 +79,11 @@ function absoluteOf(input: string, dir: string, dirText: string): string {
  */
 export function normalizeMediaPath(v: unknown): string | null {
   if (!v) return null;
-  if (typeof v !== 'string') bad('附件须为文本路径');
+  if (typeof v !== 'string') bad(m('skill-memo-ilife.memo-media.c003'));
   const dir = resolveMediaDir();
   const rel = relative(dir, absoluteOf(v, dir, mediaDirText()));
   if (!contains(rel)) {
-    bad('附件路径不在附件目录内：' + v + '（附件目录：' + dir + '）——请给附件目录内的路径，不用 .. 穿出去');
+    bad(m('skill-memo-ilife.memo-media.c004', { p0: String(v), p1: String(dir) }));
   }
   return rel;
 }

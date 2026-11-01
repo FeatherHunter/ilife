@@ -5,6 +5,7 @@ import { execFileSync } from 'node:child_process';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { MemoFetchError } from '../shared/errors.js';
+import { m } from '../entries/index.js';
 
 export const LARK_DEFAULT_TIMEOUT_MS = 30000;
 export const LARK_WISH_SCOPE = 'task';
@@ -14,47 +15,16 @@ export const LARK_WEBSITE_URL = 'https://www.feishu.cn/feishu-cli' as const;
 
 /** 面板「飞书 CLI」状态行三档都要逐字显示的官网行（定稿 #759 v5 口径，不改写、不加话）。
  *  显示成文字 ＋ 点一下新窗口跳转（插件侧 `LarkStatus` 落这一条）。 */
-export const LARK_WEBSITE_LINE = '飞书CLI官网为：https://www.feishu.cn/feishu-cli' as const;
+export function larkWebsiteLine(): string {
+  return m('skill-memo-ilife.sync-feishu.c001');
+}
 
 /** 复制安装指引按钮复制的正文（定稿 #759 v5，唯一真相处；作息管家共用同一段）。
  *  读者是 AI（人把它粘给一个 agent 去装机）：机器自己能给出的真值一律引原文，不转述。
  *  正文逐字，改一字先回定稿票 #759。 */
-export const LARK_INSTALL_PROMPT = `在这台机器上安装并配置飞书 CLI（lark-cli）。你来推进，做完为止。
-
-必须满足的终态（每条都要真跑，把命令原文和输出贴回来）：
-1) lark-cli --version >= 1.0.82（更低的版本没有我们要用的 --no-wait）
-2) where lark-cli（Windows）或 which lark-cli（macOS/Linux）能命中；Windows 上还要确认 %APPDATA%\\npm\\lark-cli.cmd 这个文件存在
-3) lark-cli auth status 的输出里有 identities.user.openId
-4) lark-cli auth check --scope task 退出码 0（连退出码一起贴）—— 备忘录要用任务域
-5) lark-cli calendar +agenda 退出码 0（连退出码一起贴）—— 作息管家要读你的主日历
-6) 技能侧也能用：跑一次作息管家的「飞书探测」（＝一条不落地的同步探测），不报「缺 CLI／未登录／日历不可达」
-
-怎么做：
-7) Node.js/npm 不可用就先装。
-8) 安装：npm install -g @larksuite/cli。只装这个官方包（bin 名 lark-cli）；不要装 npm 上的 lark-cli。
-9) 官方指南里的第二件事也照做：npx -y skills add https://open.feishu.cn --skill -y
-10) 配置与登录照这两条走（都是 CLI 自己在 --help 里写给 AI agent 的写法，别改写成别的）：
-    先初始化：lark-cli config init --new
-      它会阻塞等你完成浏览器授权，所以起在后台、从它的输出里把验证链接捞出来
-      （CLI 原文：Run it in the background and retrieve the verification URL from its output）；
-      链接给我，我批准后你继续。
-      如果它报 Inside an Agent context 之类被拒，照它的提示改用 lark-cli config bind。
-    再授权：lark-cli auth login --no-wait --json --domain calendar,task
-      它会立刻返回一个验证链接（或二维码）；把链接给我，我批准后你再用
-      lark-cli auth login --device-code <拿到的 device code> 收尾。
-    官方指南：https://open.feishu.cn/document/no_class/mcp-archive/feishu-cli-installation-guide.md
-    子命令以 lark-cli auth --help / config --help 和官方文档为准，不要凭猜；做完要能过第 3、4、5 条。
-11) npm 全局目录如果不在系统 PATH 上，把它加进系统 PATH（不是只在当前终端 export）。
-
-怎么推进：
-12) 除第 13 条那三类，其余你自己一口气做完，不要逐步问我确认：安装、改 PATH、重试、修报错都自己做完。
-13) 只有这三类必须我介入；遇到就用 /wizard 生成脚本带我走，走完你接着自动往下做：
-    ① 浏览器里的初始化授权 / 登录（把验证链接或二维码给我）；
-    ② 系统权限提示（管理员/sudo）；
-    ③ Node.js 需要我先定怎么装。
-14) 任何一步失败：自己按报错修；修不动再一次性告诉我「卡在哪、报错原文、需要我做什么」。
-
-参考官网：https://www.feishu.cn/feishu-cli` as const;
+export function larkInstallPrompt(): string {
+return m('skill-memo-ilife.sync-feishu.c002');
+}
 
 /** 失败回执上带的安装指引（与复制按钮同一内容）：prompt 全文 ＋ 官网行。 */
 export interface LarkSetupInfo {
@@ -64,7 +34,7 @@ export interface LarkSetupInfo {
 
 /** 取一份安装指引（单点构造，调用方只 spread 它）。 */
 export function larkSetupInfo(): LarkSetupInfo {
-  return { prompt: LARK_INSTALL_PROMPT, websiteLine: LARK_WEBSITE_LINE };
+  return { prompt: larkInstallPrompt(), websiteLine: larkWebsiteLine() };
 }
 
 // 跨平台定位（#760 起**无显式配置覆盖**：`lark.cliPath` 键已删，检测不到就提示＋复制安装指引）。
@@ -143,7 +113,9 @@ export function larkVersion(cli: string): string {
 }
 
 /** 读不到版本时的占位串（唯一定义地）：只许出现在**报文／页**里；回执那一格拿它换 `null`（＝不交值）。 */
-export const LARK_VERSION_UNREADABLE = '读不到' as const;
+export function larkVersionUnreadable(): string {
+  return m('skill-memo-ilife.sync-feishu.c003');
+}
 
 /** 版本显示口径（唯一定义地）：`lark-cli --version` 的首行原文（本机实测 `lark-cli version 1.0.82`）只留
  *  首个数字段（`1.0.82`），工具名与 `version` 字样都不上屏；取不到数字段就给占位串「读不到」。
@@ -151,8 +123,8 @@ export const LARK_VERSION_UNREADABLE = '读不到' as const;
  *  **与作息管家 `skill-schedule` 的 `src/fetch/feishu.ts` 那一份逐字同形**（跨包锁进 #936）：同一个正则、
  *  同一个占位串、同一个 `null` 兜底。 */
 export function shortLarkVersion(raw: string): string {
-  const m = raw.match(/\d+(?:\.\d+)*/);
-  return m ? m[0] : LARK_VERSION_UNREADABLE;
+  const hit = raw.match(/\d+(?:\.\d+)*/);
+  return hit ? hit[0] : larkVersionUnreadable();
 }
 
 /** 回执那一格的版本号（#936）：**只交版本号**（首个数字段），读不到＝`null`（这一格不交值，面板就不画胶囊）。
@@ -161,7 +133,7 @@ export function shortLarkVersion(raw: string): string {
  *  提取口径只有一处（上面那个正则），两处的差别只在兜底——报文给「读不到」，回执给 `null`。 */
 export function larkVersionCell(raw: string): string | null {
   const v = shortLarkVersion(raw);
-  return v === LARK_VERSION_UNREADABLE ? null : v;
+  return v === larkVersionUnreadable() ? null : v;
 }
 
 // 身份真值源：auth status 输出 identities.user.openId；无 openId 即未登录 throw。

@@ -35,6 +35,7 @@ import {
   templateFileCount,
 } from './probe.js';
 import { larkSetupInfo, LARK_WEBSITE_URL } from '../../sync/index.js';
+import { m } from '../../entries/index.js';
 
 /** 报告里的三档判据（与面板侧镜像同值）。 */
 export type HealthStatus = 'red' | 'yellow' | 'green';
@@ -73,27 +74,27 @@ export function buildMemoHealthReport(): MemoHealthReport {
   // ① 配置文件本身：能不能解析；它落在默认位置还是别处（只陈述，不评价）。
   const defaultConfigFile = join(homedir(), '.ilife', MEMO_CONFIG_STEM + '.yaml');
   const relocated = paths.configFile !== defaultConfigFile;
-  const where = relocated ? '位置与默认不同（见配置文件落点）' : '默认位置';
+  const where = relocated ? m('skill-memo-ilife.cli-health-items.c001') : m('skill-memo-ilife.cli-health-items.c002');
   if (read.kind === 'bad') {
     items.push({
-      id: 'config.file', title: '配置文件', status: 'red',
+      id: 'config.file', title: m('skill-memo-ilife.cli-health-items.c003'), status: 'red',
       message: read.message,
-      action: '照报文指的行号改回「键: 值」的写法；改不动就删掉这个文件，让技能按默认值重落一份。',
-      source: '配置文件',
+      action: m('skill-memo-ilife.cli-health-items.c004'),
+      source: m('skill-memo-ilife.cli-health-items.c005'),
     });
   } else if (read.kind === 'missing') {
     items.push({
-      id: 'config.file', title: '配置文件', status: 'yellow',
-      message: '配置文件还不存在：' + p(paths.configFile) + '（现在跑的是默认值）。',
-      action: '在面板上保存一次即会落一份；也可点「重置为默认」。',
-      source: '默认值',
+      id: 'config.file', title: m('skill-memo-ilife.cli-health-items.c006'), status: 'yellow',
+      message: m('skill-memo-ilife.cli-health-items.c007', { p0: String(p(paths.configFile)) }),
+      action: m('skill-memo-ilife.cli-health-items.c008'),
+      source: m('skill-memo-ilife.cli-health-items.c009'),
     });
   } else {
     items.push({
-      id: 'config.file', title: '配置文件', status: 'green',
-      message: '能解析：' + p(paths.configFile) + '（' + where + '）。',
+      id: 'config.file', title: m('skill-memo-ilife.cli-health-items.c010'), status: 'green',
+      message: m('skill-memo-ilife.cli-health-items.c011', { p0: String(p(paths.configFile)), p1: String(where) }),
       action: '',
-      source: '配置文件',
+      source: m('skill-memo-ilife.cli-health-items.c012'),
     });
   }
 
@@ -103,12 +104,12 @@ export function buildMemoHealthReport(): MemoHealthReport {
   const dataDirSource = sourceOf(present, 'db.dir');
   const dataDirVerdict = dirVerdict(dataDir);
   items.push({
-    id: 'db.dir', title: '数据目录',
+    id: 'db.dir', title: m('skill-memo-ilife.cli-health-items.c013'),
     status: !dataDirVerdict.exists || !dataDirVerdict.writable ? 'red' : 'green',
     message: dbDirMessage(dataDir, dataDirVerdict),
     action: !dataDirVerdict.exists
-      ? '先建这个目录，或把配置里的「数据目录」改到一个已存在的位置。'
-      : dataDirVerdict.writable ? '' : '去掉这个目录的只读属性，或把「数据目录」改到别处。',
+      ? m('skill-memo-ilife.cli-health-items.c014')
+      : dataDirVerdict.writable ? '' : m('skill-memo-ilife.cli-health-items.c015'),
     source: dataDirSource,
   });
 
@@ -119,31 +120,38 @@ export function buildMemoHealthReport(): MemoHealthReport {
   const dbSource = sourceOf(present, 'db.name');
   if (!existsSync(dbFile)) {
     items.push({
-      id: 'db.file', title: '库文件', status: 'red',
-      message: '不在：' + p(dbFile) + '。',
-      action: '确认「数据目录」与「库文件名」对不对；本技能直连老库、**不建空库**，所以要由老技能或初始化建出它。',
+      id: 'db.file', title: m('skill-memo-ilife.cli-health-items.c016'), status: 'red',
+      message: m('skill-memo-ilife.cli-health-items.c017', { p0: String(p(dbFile)) }),
+      action: m('skill-memo-ilife.cli-health-items.c018'),
       source: dbSource,
     });
   } else {
     const tables = tableCount(dbFile);
     if (!tables.ok) {
       items.push({
-        id: 'db.file', title: '库文件', status: 'red',
-        message: '在，但打不开：' + p(dbFile) + '（' + tables.reason + '）。',
-        action: '这个文件可能不是库文件或已损坏；先备份，再看要不要让技能重建一份。',
+        id: 'db.file', title: m('skill-memo-ilife.cli-health-items.c019'), status: 'red',
+        message: m('skill-memo-ilife.cli-health-items.c020', { p0: String(p(dbFile)), p1: String(tables.reason) }),
+        action: m('skill-memo-ilife.cli-health-items.c021'),
         source: dbSource,
       });
     } else if (tables.count < DB_TABLE_THRESHOLD) {
       items.push({
-        id: 'db.file', title: '库文件', status: 'yellow',
-        message: '在，但表不全：' + p(dbFile) + '（' + String(tables.count) + ' / ' + String(DB_TABLE_THRESHOLD) + ' 张表）。',
-        action: '缺表会让对应的功能报错；跑一次会写库的命令让它补齐，或从备份恢复。',
+        id: 'db.file', title: m('skill-memo-ilife.cli-health-items.c022'), status: 'yellow',
+        message: m('skill-memo-ilife.cli-health-items.c023', {
+          p0: String(p(dbFile)),
+          p1: String(String(tables.count)),
+          p2: String(String(DB_TABLE_THRESHOLD)),
+        }),
+        action: m('skill-memo-ilife.cli-health-items.c024'),
         source: dbSource,
       });
     } else {
       items.push({
-        id: 'db.file', title: '库文件', status: 'green',
-        message: '在，' + String(tables.count) + ' 张表齐：' + p(dbFile) + '。',
+        id: 'db.file', title: m('skill-memo-ilife.cli-health-items.c025'), status: 'green',
+        message: m('skill-memo-ilife.cli-health-items.c026', {
+          p0: String(String(tables.count)),
+          p1: String(p(dbFile)),
+        }),
         action: '',
         source: dbSource,
       });
@@ -156,22 +164,25 @@ export function buildMemoHealthReport(): MemoHealthReport {
   const htmlVerdict = dirVerdict(htmlDir);
   const htmlSource = sourceOf(present, 'html.dir');
   items.push({
-    id: 'html.dir', title: '产物目录',
+    id: 'html.dir', title: m('skill-memo-ilife.cli-health-items.c027'),
     status: !htmlVerdict.exists ? 'green' : htmlVerdict.writable ? 'green' : 'yellow',
     message: !htmlVerdict.exists
-      ? '还没建：' + p(htmlDir) + '（交付页面时才落这里，那时自动建）。'
+      ? m('skill-memo-ilife.cli-health-items.c028', { p0: String(p(htmlDir)) })
       : htmlVerdict.writable
-        ? '在且能写：' + p(htmlDir) + '。'
-        : '在，但写不进去：' + p(htmlDir) + '（交付会转成内联回执，不再落盘）。',
-    action: !htmlVerdict.exists || htmlVerdict.writable ? '' : '去掉这个目录的只读属性，或改配置文件里的 html.dir（该项只读，面板上不给改）。',
+        ? m('skill-memo-ilife.cli-health-items.c029', { p0: String(p(htmlDir)) })
+        : m('skill-memo-ilife.cli-health-items.c030', { p0: String(p(htmlDir)) }),
+    action: !htmlVerdict.exists || htmlVerdict.writable ? '' : m('skill-memo-ilife.cli-health-items.c031'),
     source: htmlSource,
   });
 
   // ⑤ 这个值从哪来：只陈述数据目录与库文件名的来源，不判好坏（六家通用最后一条）。
+  // #1225：条件表达式抽成整句局部变量（迁移器不切链内分支；两句各自成词条，不留孤立句号词条）。
+  const sourceLine = read.kind === 'missing'
+    ? m('skill-memo-ilife.cli-health-items.c032', { p0: String(dataDirSource), p1: String(dbSource) })
+    : m('skill-memo-ilife.cli-health-items.c033', { p0: String(dataDirSource), p1: String(dbSource) });
   items.push({
-    id: 'value.source', title: '这个值从哪来', status: 'green',
-    message: '数据目录走「' + dataDirSource + '」，库文件名走「' + dbSource + '」'
-      + (read.kind === 'missing' ? '（配置文件还不存在，落点全按默认值）。' : '。'),
+    id: 'value.source', title: m('skill-memo-ilife.cli-health-items.c034'), status: 'green',
+    message: sourceLine,
     action: '', source: dataDirSource,
   });
 
@@ -181,16 +192,19 @@ export function buildMemoHealthReport(): MemoHealthReport {
   const mediaConfigured = textOf(readValue(values, 'media', 'dir'));
   const mediaDir = mediaDirOf(dataDir, mediaConfigured);
   const mediaVerdict = dirVerdict(mediaDir);
-  const mediaMissing = mediaConfigured === '' ? '默认落点目录不在：' : '配了但目录不在：';
+  const mediaMissing = mediaConfigured === '' ? m('skill-memo-ilife.cli-health-items.c035') : m('skill-memo-ilife.cli-health-items.c036');
   items.push({
-    id: 'media.dir', title: '附件目录',
+    id: 'media.dir', title: m('skill-memo-ilife.cli-health-items.c037'),
     status: mediaVerdict.exists && mediaVerdict.writable ? 'green' : 'yellow',
     message: !mediaVerdict.exists
       ? mediaMissing + p(mediaDir) + '。'
       : mediaVerdict.writable
-        ? '在且能写：' + p(mediaDir) + '。'
-        : '在，但写不进去：' + p(mediaDir) + '（' + mediaVerdict.reason + '）。',
-    action: mediaVerdict.exists && mediaVerdict.writable ? '' : '建出这个目录（或去掉只读），或把「附件目录」改到别处。',
+        ? m('skill-memo-ilife.cli-health-items.c038', { p0: String(p(mediaDir)) })
+        : m('skill-memo-ilife.cli-health-items.c039', {
+          p0: String(p(mediaDir)),
+          p1: String(mediaVerdict.reason),
+        }),
+    action: mediaVerdict.exists && mediaVerdict.writable ? '' : m('skill-memo-ilife.cli-health-items.c040'),
     source: sourceOf(present, 'media.dir'),
   });
 
@@ -200,17 +214,17 @@ export function buildMemoHealthReport(): MemoHealthReport {
   const tier = larkTier(larkCli);
   const larkWhere = larkCli === null ? '' : p(larkCli);
   items.push({
-    id: 'lark.cli', title: '飞书 CLI',
+    id: 'lark.cli', title: m('skill-memo-ilife.cli-health-items.c041'),
     status: tier === 'full' ? 'green' : 'yellow',
     message: tier === 'missing'
-      ? '找不到 lark-cli：飞书同步用不了（其余功能不受影响）。'
+      ? m('skill-memo-ilife.cli-health-items.c042')
       : tier === 'partial'
-        ? '找得到 lark-cli，但还没登录或没拿到 task 域授权：飞书同步用不了。'
-        : '已登录且 task 域可写：' + larkWhere + '。',
+        ? m('skill-memo-ilife.cli-health-items.c043')
+        : m('skill-memo-ilife.cli-health-items.c044', { p0: String(larkWhere) }),
     action: tier === 'missing'
-      ? '要用飞书同步就装它：npm install -g @larksuite/cli（官方包是 @larksuite/cli，bin 名恰为 lark-cli；npm 上的 lark-cli 是僵尸包，别装）。完整安装指引见面板「飞书 CLI」状态行的复制按钮。'
-      : tier === 'partial' ? '补授权：点面板「飞书 CLI」状态行的「复制安装指引」，照那段做（登录后要能过 lark-cli auth check --scope task）。' : '',
-    source: '默认值',
+      ? m('skill-memo-ilife.cli-health-items.c045')
+      : tier === 'partial' ? m('skill-memo-ilife.cli-health-items.c046') : '',
+    source: m('skill-memo-ilife.cli-health-items.c047'),
   });
 
   // ⑧ 包内模板目录（备忘特有）：整页交付模板是包内固定件，缺了页面就渲染不出来 ⇒ 红。报文给件数。
@@ -218,12 +232,15 @@ export function buildMemoHealthReport(): MemoHealthReport {
   const templatesOk = existsSync(templatesDir);
   const templateCount = templatesOk ? templateFileCount(templatesDir) : 0;
   items.push({
-    id: 'templates.dir', title: '包内模板目录',
+    id: 'templates.dir', title: m('skill-memo-ilife.cli-health-items.c048'),
     status: templatesOk ? 'green' : 'red',
     message: templatesOk
-      ? '在，' + String(templateCount) + ' 件模板：' + p(templatesDir) + '。'
-      : '不在：' + p(templatesDir) + '。',
-    action: templatesOk ? '' : '技能包装得不完整：重装这个技能包，或跑一次它的构建。',
+      ? m('skill-memo-ilife.cli-health-items.c049', {
+        p0: String(String(templateCount)),
+        p1: String(p(templatesDir)),
+      })
+      : m('skill-memo-ilife.cli-health-items.c050', { p0: String(p(templatesDir)) }),
+    action: templatesOk ? '' : m('skill-memo-ilife.cli-health-items.c051'),
   });
 
   const setup = larkSetupInfo();

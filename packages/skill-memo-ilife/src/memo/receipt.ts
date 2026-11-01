@@ -13,6 +13,7 @@ import { buildReceipt, receiptOptsOf } from './receiptPage.js';
 import type { ReceiptScene } from '../render/receipt.js';
 import type { MemoNote } from '../db/readonly.js';
 import type { WishReceipt } from '../wish/index.js';
+import { m } from '../entries/index.js';
 
 /** 本域 6 格的场景 id（`src/help/booklet.ts` seq 1–6 逐字；6 格全在通用回执族）。 */
 export type MemoReceiptScene = Extract<
@@ -30,7 +31,7 @@ type MemoPage = { readonly html: string; readonly stem: string };
 /** 记备忘：只认 notes 表那一行的分类＝备忘；其他分类归各自域票，本件回 undefined。 */
 export function memoCreatePage(r: WishReceipt, created: MemoNote | null): MemoPage | undefined {
   if (created === null || created.category !== '备忘') return undefined;
-  return buildReceipt('memo_add_basic', '记备忘', r, receiptOptsOf(created));
+  return buildReceipt('memo_add_basic', m('skill-memo-ilife.memo-receipt.c001'), r, receiptOptsOf(created));
 }
 
 /** 改备忘系三格：纯分类补丁 → 单条改分类；纯子分类补丁 → 改子分类；
@@ -42,19 +43,19 @@ export function memoUpdatePage(
   patchKeys: readonly string[],
 ): MemoPage | undefined {
   if (patchKeys.length === 1 && patchKeys[0] === 'category') {
-    return buildReceipt('memo_change_category_single', '备忘改分类', r, receiptOptsOf(after));
+    return buildReceipt('memo_change_category_single', m('skill-memo-ilife.memo-receipt.c002'), r, receiptOptsOf(after));
   }
   if (patchKeys.length === 1 && patchKeys[0] === 'sub_category') {
-    return buildReceipt('memo_change_subcategory', '备忘改子分类', r, receiptOptsOf(after));
+    return buildReceipt('memo_change_subcategory', m('skill-memo-ilife.memo-receipt.c003'), r, receiptOptsOf(after));
   }
   if (after.category !== '备忘') return undefined;
-  return buildReceipt('memo_update_basic', '改备忘', r, receiptOptsOf(after));
+  return buildReceipt('memo_update_basic', m('skill-memo-ilife.memo-receipt.c004'), r, receiptOptsOf(after));
 }
 
 /** 删备忘：删前那一行的分类＝备忘才出页；其他 → undefined。 */
 export function memoRemovePage(r: WishReceipt, before: MemoNote): MemoPage | undefined {
   if (before.category !== '备忘') return undefined;
-  return buildReceipt('memo_delete_basic', '删备忘', r, receiptOptsOf(before));
+  return buildReceipt('memo_delete_basic', m('skill-memo-ilife.memo-receipt.c005'), r, receiptOptsOf(before));
 }
 
 /** 批量改分类执行支的结果页（册子 seq 6，通用回执族）：更新／跳过记账进摘要，
@@ -73,17 +74,19 @@ export function memoBatchResultPage(input: {
   readonly from: string | null;
   readonly to: string;
 }): MemoPage {
-  return buildReceipt('memo_batch_change_category', '备忘改分类', input.receipt, {
-    entityLabel: '批量改分类',
-    entityId: input.updated + ' 条',
+  // #1225：`??` 兜底抽成局部变量（迁移器不切链内分支）。
+  const fromLabel = input.from ?? m('skill-memo-ilife.memo-receipt.c006');
+  return buildReceipt('memo_batch_change_category', m('skill-memo-ilife.memo-receipt.c007'), input.receipt, {
+    entityLabel: m('skill-memo-ilife.memo-receipt.c008'),
+    entityId: m('skill-memo-ilife.memo-receipt.c009', { p0: String(input.updated) }),
     category: input.to,
     summary: [
       // #820 收尾：两类分类各占一格，不再挤成「原分类 X，目标分类 Y」一句话；计数两格补标签冒号。
-      '原分类：' + (input.from ?? '全部'),
-      '目标分类：' + input.to,
-      '更新：' + input.updated + ' 条',
-      '跳过：' + input.skipped + ' 条',
-      ...input.errors.map((e) => '没做成：' + e),
+      m('skill-memo-ilife.memo-receipt.c010', { p0: String(fromLabel) }),
+      m('skill-memo-ilife.memo-receipt.c011', { p0: String(input.to) }),
+      m('skill-memo-ilife.memo-receipt.c012', { p0: String(input.updated) }),
+      m('skill-memo-ilife.memo-receipt.c013', { p0: String(input.skipped) }),
+      ...input.errors.map((e) => m('skill-memo-ilife.memo-receipt.c014', { p0: String(e) })),
     ],
   });
 }

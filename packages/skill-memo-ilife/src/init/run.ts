@@ -13,6 +13,7 @@ import { buildMemoEnvelope, initSnapshot, pageEnvelope } from '../render/index.j
 import { bookletFileStem } from '../help/index.js';
 import { INIT_SCENE_ID, InitInputError, readInitDiagnosis, renderInitPage } from './index.js';
 import type { InitPageMode } from './index.js';
+import { m } from '../entries/index.js';
 
 /** 复制日志载荷的 `envelope` 位（从公共层 `text` 两件的入参取形）。 */
 type MemoCopyEnvelope = Parameters<typeof buildDataText>[0]['envelope'];
@@ -23,7 +24,7 @@ type MemoCopyLogFields = NonNullable<Parameters<typeof buildLogText>[0]['copyLog
 /** `memo.init`：首次使用两页装配（报告页缺省／向导页显式），只渲染。 */
 export function runInit(params: Record<string, unknown>): CommandOut {
   const modeRaw = params.mode === undefined ? 'report' : String(params.mode);
-  if (modeRaw !== 'report' && modeRaw !== 'wizard') fail(2, 'mode 只认 wizard（缺省出报告页 `首次使用`）');
+  if (modeRaw !== 'report' && modeRaw !== 'wizard') fail(2, m('skill-memo-ilife.init-run.c001'));
   const mode: InitPageMode = modeRaw === 'wizard' ? 'guide' : 'report';
   let diag;
   try {
@@ -34,18 +35,18 @@ export function runInit(params: Record<string, unknown>): CommandOut {
   }
   const snap = initSnapshot(diag);
   const message = mode === 'guide'
-    ? '首次使用引导页已生成（只渲染，不建库不写配置）'
-    : '初始化报告已生成（只渲染，不建库不写配置）';
+    ? m('skill-memo-ilife.init-run.c002')
+    : m('skill-memo-ilife.init-run.c003');
   const payload = pageEnvelope({
-    commandCn: '首次使用', wakeWord: '首次使用', sceneId: INIT_SCENE_ID,
+    commandCn: m('skill-memo-ilife.init-run.c004'), wakeWord: m('skill-memo-ilife.init-run.c005'), sceneId: INIT_SCENE_ID,
     title: snap.title, summary: snap.summary, sections: snap.sections,
     copyLog: {
       thinking: mode === 'guide'
-        ? '首次使用 · 引导过程页（先处理必装缺失，再做待办项）'
-        : '首次使用 · AI 诊断结果渲染为报告页（检查清单＋待办＋验证清单）',
+        ? m('skill-memo-ilife.init-run.c006')
+        : m('skill-memo-ilife.init-run.c007'),
       data_structure: '--data JSON：{items:[{name,status,desc,action}], todos:[{title,steps}], verify:[]}',
-      call_chain: 'memo.init --params → dispatchInit → src/init 两页装配 → base-paint 文档壳',
-      exception: '无',
+      call_chain: m('skill-memo-ilife.init-run.c008'),
+      exception: m('skill-memo-ilife.init-run.c009'),
     },
     extra: { items: diag.items, todos: diag.todos, verify: diag.verify },
     message,

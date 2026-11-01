@@ -6,26 +6,31 @@ import type { MemoKey } from '../cli/keys.js';
 import { MEMO_KEY_SHAPES } from '../render/index.js';
 import { WAKE_ROUTES } from '../triggers/routes.generated.js';
 import { MEMO_HELP_GROUPS } from './sceneData.js';
+import { m } from '../entries/index.js';
 
 export interface HelpHit { phrase: string; key: MemoKey; shape: string; cli: string; desc: string; }
 
 // 键 → 一句话（HELP 速查表「说明」列）。**键的类型取自生成的 `MemoKey`**：写错一个字编译期就红，
 // 不靠人记（#855 复核提的门洞：此处原是手写字符串表，写第二份 `'memo.search': 'list'` 也无人拦）。
 // #858：`memo.stats`（聚合统计）整条退役，本表同步撤行。
-const DESCS: Partial<Record<MemoKey, string>> = {
-  'memo.search': '搜笔记（关键词/CJK 子串，可按分类过滤）',
-  'memo.detail': '看单条详情（须 id）',
-  'memo.create': '记一条（含记提醒须 remindAt）',
-  'memo.update': '更新笔记（须 id；完成心愿走 done）',
-  'memo.remove': '删除（须 confirm；废弃提醒走 abandon 留笔记）',
-  'memo.remind': '查提醒（含已完成；已废弃走 status=dismissed）',
-  'memo.wish': '心愿排期',
-  'memo.sync': '飞书同步（须 lark 四门全绿）',
-  'memo.batch': '批量改分类向导',
-  // #850：两新键一句话（HELP 场景主名唯一上游，命令只做 HELP 承诺的事）。
-  'memo.init': '初始化报告（首次使用，只渲染不建库）',
-  'memo.reminder': '给已有笔记加提醒（note_id 可选，不给即独立提醒）',
-};
+// #1225：原是模块级常量表（中文死在模块顶层＝词条层取不到渲染语言），改成**按需函数**——
+// 每次调用现建一份，取词走 m()（语言来自渲染语言上下文）。
+function descsOf(): Partial<Record<MemoKey, string>> {
+  return {
+    'memo.search': m('skill-memo-ilife.help-lookup.c001'),
+    'memo.detail': m('skill-memo-ilife.help-lookup.c002'),
+    'memo.create': m('skill-memo-ilife.help-lookup.c003'),
+    'memo.update': m('skill-memo-ilife.help-lookup.c004'),
+    'memo.remove': m('skill-memo-ilife.help-lookup.c005'),
+    'memo.remind': m('skill-memo-ilife.help-lookup.c006'),
+    'memo.wish': m('skill-memo-ilife.help-lookup.c007'),
+    'memo.sync': m('skill-memo-ilife.help-lookup.c008'),
+    'memo.batch': m('skill-memo-ilife.help-lookup.c009'),
+    // #850：两新键一句话（HELP 场景主名唯一上游，命令只做 HELP 承诺的事）。
+    'memo.init': m('skill-memo-ilife.help-lookup.c010'),
+    'memo.reminder': m('skill-memo-ilife.help-lookup.c011'),
+  };
+}
 // 注（#760）：「飞书授权」唤醒词随授权三支退役，故速查表不再有它这一行；诊断走
 // `memo.auth --params '{"step":"status"}'`（只读）或面板「飞书 CLI」状态行。
 
@@ -59,6 +64,7 @@ function sceneNameById(): Map<string, string> {
  *  速查面有行」——按唯一词去重会把 `memo.batch`（只有批量那一格的词指向它）整键挤出表外。
  */
 export function buildHelpLookup(): HelpHit[] {
+  const descs = descsOf();
   const names = sceneNameById();
   const seen = new Set<string>();
   const rows: (typeof WAKE_ROUTES)[number][] = [];
@@ -76,7 +82,7 @@ export function buildHelpLookup(): HelpHit[] {
     shape: MEMO_KEY_SHAPES[r.key] || '??',
     // 「例」列＝路由声明自己那行「照抄即能跑」（同一处事实，不在速查里再拼一遍参数）。
     cli: r.cli,
-    desc: DESCS[r.key] || '',
+    desc: descs[r.key] || '',
   }));
 }
 

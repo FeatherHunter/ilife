@@ -122,7 +122,9 @@ describe('#882 · 回执页族「对象」行（定义级：数字＝记录号�
   // `r.receipt.updated + ' 条'`（**条数**，心愿批次）；remind/run.ts `note === null ? row.id : note.id`；
   // wish/receipt.ts `input.entityId ?? loc?.id ?? '—'`（兜底）；wish/run.ts `items.length + ' 个'`（**条数**，心愿清单）。
   it('调用面：`entityId` 取值位的字符串字面量只许是这四处（新冒一处即红）', () => {
-    const known = [' 个', ' 条', '未新建', '—']; // 条数两处（心愿清单／心愿批次）／批量支／兜底两处
+    // #1225 起条数／兜底文案进词条层：取值位写成 `m('skill-memo-ilife.<file>.cNNN')`，
+    // 键名不是文案（渲染时才解析），这里只留真字面量。
+    const known = ['—']; // 兜底一处
     const hits = [];
     for (const f of srcFiles(join(pkg, 'src'))) {
       const rel = relative(pkg, f).replace(/\\/g, '/');
@@ -132,7 +134,10 @@ describe('#882 · 回执页族「对象」行（定义级：数字＝记录号�
         // 整行取会把同一行的 `'对象：'`、`'打卡'` 这类不相关的字面量也算进来。
         const m = /entityId\s*[:=](?!=)\s*([^,;}\n]+)/.exec(line);
         if (m === null) continue;
-        for (const lit of m[1].matchAll(/'([^']*)'/g)) hits.push([rel, lit[1]]);
+        for (const lit of m[1].matchAll(/'([^']*)'/g)) {
+          if (/^skill-memo-ilife\./.test(lit[1])) continue; // i18n 键名，不是文案
+          hits.push([rel, lit[1]]);
+        }
       }
     }
     assert.deepEqual(

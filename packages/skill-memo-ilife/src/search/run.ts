@@ -25,25 +25,27 @@ import { normalizeTop } from '../memo/index.js';
 import { dueMatches } from '../wish/index.js';
 import { toRows } from '../shared/rows.js';
 import { buildListPage, querySnapshot, type ListPageScene } from '../render/index.js';
+import { m } from '../entries/index.js';
 
 // #850 · 创建时间区间参数（HELP `start`＋`end`，双 `YYYY-MM-DD`）。双必填：缺一边即缺槽位（exit 2，
 // 人话）；起止倒置即报错；`timeRange` 月份形已退役（无权威出处），给了即指路到 `start`／`end`。
 const DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 function needRangeDate(value: unknown, name: string): string {
-  if (typeof value !== 'string' || value.trim().length === 0) fail(2, '缺槽位 ' + name + '：按时间搜备忘须给开始／结束日期（YYYY-MM-DD）');
+  if (typeof value !== 'string' || value.trim().length === 0) fail(2, m('skill-memo-ilife.search-run.c001', { p0: String(name) }));
   const s = (value as string).trim();
-  const m = DATE_RE.exec(s);
-  if (!m) fail(2, name + ' 只认 YYYY-MM-DD：' + s);
+  // #1225：原名 m 会遮蔽词条层的 m()，改名换语义不变。
+  const hit = DATE_RE.exec(s);
+  if (!hit) fail(2, m('skill-memo-ilife.search-run.c002', { p0: String(name), p1: String(s) }));
   const dt = new Date(s + 'T00:00:00Z');
-  if (Number.isNaN(dt.getTime()) || dt.toISOString().slice(0, 10) !== s) fail(2, name + ' 不是真日期：' + s);
+  if (Number.isNaN(dt.getTime()) || dt.toISOString().slice(0, 10) !== s) fail(2, m('skill-memo-ilife.search-run.c003', { p0: String(name), p1: String(s) }));
   return s;
 }
 
 function rangeLimitOf(value: unknown): number {
   if (value === undefined) return 20;
   const n = typeof value === 'number' ? value : typeof value === 'string' && value.trim() !== '' ? Number(value) : NaN;
-  if (!Number.isInteger(n) || n <= 0) fail(2, 'limit 须为正整数');
+  if (!Number.isInteger(n) || n <= 0) fail(2, m('skill-memo-ilife.search-run.c004'));
   return n as number;
 }
 
@@ -74,21 +76,24 @@ type DetailScene = 'memo_get_detail';
 type DomainScene = SearchScene | DetailScene;
 
 /** 格 → 页题（一律用 HELP 的场景词，不写内部标识符）。 */
-const SCENE_TITLES: Record<DomainScene, string> = {
-  memo_search_keyword: '搜备忘',
-  memo_search_alias: '查备忘',
-  memo_search_by_date: '按时间搜备忘',
-  memo_search_checkin: '查打卡',
-  memo_search_mood: '查情绪',
-  memo_get_detail: '看备忘',
-};
+function sceneTitleOf(scene: DomainScene): string {
+  const table: Readonly<Record<DomainScene, string>> = {
+    memo_search_keyword: m('skill-memo-ilife.search-run.c034'),
+    memo_search_alias: m('skill-memo-ilife.search-run.c035'),
+    memo_search_by_date: m('skill-memo-ilife.search-run.c036'),
+    memo_search_checkin: m('skill-memo-ilife.search-run.c037'),
+    memo_search_mood: m('skill-memo-ilife.search-run.c038'),
+    memo_get_detail: m('skill-memo-ilife.search-run.c039'),
+  };
+  return table[scene];
+}
 
 /** 显式 `scene` 优先；缺省用本支的老形状那一格。**只认本域 5 格**。 */
 function sceneOf(params: Record<string, unknown>, fallback: SearchScene): SearchScene {
   const s = params.scene;
   if (s === undefined || s === '') return fallback;
   if (typeof s === 'string' && (SEARCH_SCENES as readonly string[]).includes(s)) return s as SearchScene;
-  fail(2, 'scene 只认本域这 5 格：' + SEARCH_SCENES.join('／'));
+  fail(2, m('skill-memo-ilife.search-run.c005', { p0: String(SEARCH_SCENES.join('／')) }));
 }
 
 /** 列表页交付：快照走列表族共用的 `querySnapshot`，页壳与文件名主体全在族定义地与册子。
@@ -104,7 +109,7 @@ function listDeliver(input: {
   const snap = querySnapshot(toRows(input.items));
   return buildListPage({
     scene: input.scene,
-    title: SCENE_TITLES[input.scene],
+    title: sceneTitleOf(input.scene),
     subtitle: input.subtitle,
     condition: input.condition ?? [],
     summary: snap.summary,
@@ -117,13 +122,13 @@ function listDeliver(input: {
 /** 本次生效的过滤条件 → 人话（只写用户给的那个条件的名字与值）。 */
 function filterWords(params: Record<string, unknown>): { text: string; scene: SearchScene } {
   const category = params.category === undefined ? '' : String(params.category);
-  if (category === '打卡') return { text: '分类「打卡」', scene: 'memo_search_checkin' };
-  if (category === '情绪日记') return { text: '分类「情绪日记」', scene: 'memo_search_mood' };
+  if (category === '打卡') return { text: m('skill-memo-ilife.search-run.c006'), scene: 'memo_search_checkin' };
+  if (category === '情绪日记') return { text: m('skill-memo-ilife.search-run.c007'), scene: 'memo_search_mood' };
   const bits: string[] = [];
-  if (params.q !== undefined && String(params.q) !== '') bits.push('关键词「' + String(params.q) + '」');
-  if (category !== '') bits.push('分类「' + category + '」');
-  if (params.sub !== undefined && String(params.sub) !== '') bits.push('子分类「' + String(params.sub) + '」');
-  if (params.due !== undefined && String(params.due) !== '') bits.push('排期「' + String(params.due) + '」');
+  if (params.q !== undefined && String(params.q) !== '') bits.push(m('skill-memo-ilife.search-run.c008', { p0: String(String(params.q)) }));
+  if (category !== '') bits.push(m('skill-memo-ilife.search-run.c009', { p0: String(category) }));
+  if (params.sub !== undefined && String(params.sub) !== '') bits.push(m('skill-memo-ilife.search-run.c010', { p0: String(String(params.sub)) }));
+  if (params.due !== undefined && String(params.due) !== '') bits.push(m('skill-memo-ilife.search-run.c011', { p0: String(String(params.due)) }));
   return { text: bits.join('，'), scene: 'memo_search_keyword' };
 }
 
@@ -131,13 +136,13 @@ function filterWords(params: Record<string, unknown>): { text: string; scene: Se
 export function runSearch(params: Record<string, unknown>, db: MemoDb): CommandOut {
   // #850：创建时间区间通道（HELP `start`＋`end` 双必填，按 `created_at` 倒序；与排期 `due` 正交可叠加）。
   // `timeRange` 月份形已退役：给了即指路，不再有两个说法。
-  if (params.timeRange !== undefined) fail(2, 'timeRange 已退役：请给 start（YYYY-MM-DD）＋ end（YYYY-MM-DD），按创建时间过滤');
+  if (params.timeRange !== undefined) fail(2, m('skill-memo-ilife.search-run.c012'));
   const hasStart = params.start !== undefined;
   const hasEnd = params.end !== undefined;
   if (hasStart || hasEnd) {
     const start = needRangeDate(params.start, 'start');
     const end = needRangeDate(params.end, 'end');
-    if (start > end) fail(2, '开始日期不能晚于结束日期：' + start + ' > ' + end);
+    if (start > end) fail(2, m('skill-memo-ilife.search-run.c013', { p0: String(start), p1: String(end) }));
     const category = categoryFilterOf(params.category);
     const limit = rangeLimitOf(params.limit);
     const rows = searchNotesByCreatedRange(db, { start, end, category, limit });
@@ -148,17 +153,17 @@ export function runSearch(params: Record<string, unknown>, db: MemoDb): CommandO
       deliver: listDeliver({
         scene: sceneOf(params, 'memo_search_by_date'),
         items: hit,
-        subtitle: '共 ' + hit.length + ' 条',
+        subtitle: m('skill-memo-ilife.search-run.c014', { p0: String(hit.length) }),
         condition: [
-          '创建时间 ' + start + ' 至 ' + end,
-          ...(category === undefined ? [] : ['分类「' + category + '」']),
-          ...(limit === 20 ? [] : ['最多取前 ' + limit + ' 条']),
+          m('skill-memo-ilife.search-run.c015', { p0: String(start), p1: String(end) }),
+          ...(category === undefined ? [] : [m('skill-memo-ilife.search-run.c016', { p0: String(category) })]),
+          ...(limit === 20 ? [] : [m('skill-memo-ilife.search-run.c017', { p0: String(limit) })]),
         ],
         copyLog: {
-          thinking: '按创建时间区间查 · 按 created_at 过滤后倒序，排期条件可另叠',
-          data_structure: 'notes 表 · id／content／category／sub_category／due／created_at（按 created_at 倒序）',
-          call_chain: 'memo.search → searchNotesByCreatedRange → querySnapshot → buildListPage(memo_query) → deliver 钩子落盘',
-          exception: '无',
+          thinking: m('skill-memo-ilife.search-run.c018'),
+          data_structure: m('skill-memo-ilife.search-run.c019'),
+          call_chain: m('skill-memo-ilife.search-run.c020'),
+          exception: m('skill-memo-ilife.search-run.c021'),
         },
       }),
     };
@@ -174,13 +179,13 @@ export function runSearch(params: Record<string, unknown>, db: MemoDb): CommandO
     deliver: listDeliver({
       scene: sceneOf(params, words.scene),
       items: hit,
-      subtitle: '共 ' + hit.length + ' 条',
+      subtitle: m('skill-memo-ilife.search-run.c022', { p0: String(hit.length) }),
       condition: words.text === '' ? [] : [words.text],
       copyLog: {
-        thinking: '关键词／分类查 · 命中即列，页内可再筛选与复制',
-        data_structure: 'notes 表 · id／content／category／sub_category／due／media_path／created_at',
-        call_chain: 'memo.search → searchNotes／listNotes → querySnapshot → buildListPage(memo_query) → deliver 钩子落盘',
-        exception: '无',
+        thinking: m('skill-memo-ilife.search-run.c023'),
+        data_structure: m('skill-memo-ilife.search-run.c024'),
+        call_chain: m('skill-memo-ilife.search-run.c025'),
+        exception: m('skill-memo-ilife.search-run.c026'),
       },
     }),
   };
@@ -188,19 +193,19 @@ export function runSearch(params: Record<string, unknown>, db: MemoDb): CommandO
 
 /** `memo.detail`：单条详情（缺 id 即槽位错，exit 2）＋ 「看备忘」那一格随行。 */
 export function runDetail(params: Record<string, unknown>, db: MemoDb): CommandOut {
-  const item = getNote(db, needId(params.id, '详情'));
+  const item = getNote(db, needId(params.id, m('skill-memo-ilife.search-run.c027')));
   return {
     data: { item },
     exit: 0,
     deliver: listDeliver({
       scene: 'memo_get_detail',
       items: [item],
-      subtitle: '笔记 #' + String(item.id) + ' 的全部内容',
+      subtitle: m('skill-memo-ilife.search-run.c028', { p0: String(String(item.id)) }),
       copyLog: {
-        thinking: '单条详情 · 按 id 直取一行（老 detail 口径）',
-        data_structure: 'notes 表 · id／content／category／sub_category／due／media_path／created_at／updated_at',
-        call_chain: 'memo.detail → getNote → querySnapshot → buildListPage(memo_query) → deliver 钩子落盘',
-        exception: '无',
+        thinking: m('skill-memo-ilife.search-run.c029'),
+        data_structure: m('skill-memo-ilife.search-run.c030'),
+        call_chain: m('skill-memo-ilife.search-run.c031'),
+        exception: m('skill-memo-ilife.search-run.c032'),
       },
     }),
   };

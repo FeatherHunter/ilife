@@ -4,21 +4,25 @@
 // 老实现的两条口径照搬：① 只对心愿生效；② 非心愿**静默置空**、不报错（`memo_cli.py:137`）。
 import type { MemoNote } from '../db/readonly.js';
 import { MemoPolicyError } from '../shared/errors.js';
+import { m } from '../entries/index.js';
 
-/** 面向使用者的中文说法：排期字段一律叫这个，不夹英文术语。 */
-export const WISH_DUE_LABEL = '排期日期';
+/** 面向使用者的中文说法：排期字段一律叫这个，不夹英文术语。
+ *  #1225：改成按需函数（模块级常量带中文＝词条层拿不到渲染语言，残留门判红）。 */
+export function wishDueLabel(): string {
+  return m('skill-memo-ilife.wish-due.c001');
+}
 
 const DUE_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 /** 规范化排期日期：空值 → null（显式清期）；合法 `YYYY-MM-DD` → 原值；其余抛错，不静默当 0。 */
 export function normalizeDue(value: unknown): string | null {
   if (value === undefined || value === null || value === '') return null;
-  if (typeof value !== 'string') throw new MemoPolicyError('POLICY_BAD_INPUT', WISH_DUE_LABEL + ' 须为 YYYY-MM-DD 字符串');
+  if (typeof value !== 'string') throw new MemoPolicyError('POLICY_BAD_INPUT', wishDueLabel() + ' 须为 YYYY-MM-DD 字符串');
   const iso = value.trim();
-  const m = DUE_RE.exec(iso);
-  if (!m) throw new MemoPolicyError('POLICY_BAD_INPUT', WISH_DUE_LABEL + ' 只认 YYYY-MM-DD：' + iso);
+  const hit = DUE_RE.exec(iso);
+  if (!hit) throw new MemoPolicyError('POLICY_BAD_INPUT', wishDueLabel() + ' 只认 YYYY-MM-DD：' + iso);
   if (new Date(iso + 'T00:00:00Z').toISOString().slice(0, 10) !== iso) {
-    throw new MemoPolicyError('POLICY_BAD_INPUT', WISH_DUE_LABEL + ' 不是真日期：' + iso);
+    throw new MemoPolicyError('POLICY_BAD_INPUT', wishDueLabel() + ' 不是真日期：' + iso);
   }
   return iso;
 }

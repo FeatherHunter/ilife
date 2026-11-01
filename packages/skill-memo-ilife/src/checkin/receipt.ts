@@ -14,6 +14,7 @@ import { buildReceiptPage } from '../render/receipt.js';
 import type { ReceiptScene } from '../render/receipt.js';
 import type { MemoNote } from '../db/readonly.js';
 import type { WishReceipt } from '../wish/index.js';
+import { m } from '../entries/index.js';
 
 /** 本域 3 格的场景 id（`src/help/booklet.ts` seq 23／24／25 逐字；3 格全在通用回执族）。 */
 export type CheckinReceiptScene = Extract<
@@ -33,10 +34,10 @@ interface CheckinPage {
  *  标签与备忘族统一用「正文」（原先本域写「内容」，同一件事两个名字）；两级分类各占一格，不再拼「／」）。 */
 function summaryOf(note: MemoNote): string[] {
   return [
-    '打卡编号：' + note.id,
-    '正文：' + note.content,
-    '分类：' + note.category,
-    ...(note.sub_category === null ? [] : ['子分类：' + note.sub_category]),
+    m('skill-memo-ilife.checkin-receipt.c001', { p0: String(note.id) }),
+    m('skill-memo-ilife.checkin-receipt.c002', { p0: String(note.content) }),
+    m('skill-memo-ilife.checkin-receipt.c003', { p0: String(note.category) }),
+    ...(note.sub_category === null ? [] : [m('skill-memo-ilife.checkin-receipt.c004', { p0: String(note.sub_category) })]),
   ];
 }
 
@@ -54,31 +55,31 @@ function buildCheckinReceipt(
     badges: { category: note.category, sub: note.sub_category },
     summary: summaryOf(note),
     sections: [],
-    receipt: { entityLabel: '打卡', entityId: note.id, local: r.local, remote: r.remote, remoteId: r.remoteId },
+    receipt: { entityLabel: m('skill-memo-ilife.checkin-receipt.c005'), entityId: note.id, local: r.local, remote: r.remote, remoteId: r.remoteId },
     copyLog: {
-      thinking: title + ' 写命令回执渲染为通用回执页（页族定义处 src/render/receipt.ts）',
-      data_structure: 'notes 表（id／content／category／sub_category）；回执三格 local／remote／remoteId 取自写侧',
-      call_chain: 'cmd_read 分派 → ' + scene + ' → buildCheckinReceipt → buildReceiptPage → fillMemoPage(receipt) → deliver 落盘',
-      exception: '无',
+      thinking: m('skill-memo-ilife.checkin-receipt.c006', { p0: String(title) }),
+      data_structure: m('skill-memo-ilife.checkin-receipt.c007'),
+      call_chain: m('skill-memo-ilife.checkin-receipt.c008', { p0: String(scene) }),
+      exception: m('skill-memo-ilife.checkin-receipt.c009'),
     },
-    retryPrompt: '若这一页的内容不对，请把要改的那一条（打卡编号与要改成的样子）发我，我重跑一次：' + title,
+    retryPrompt: m('skill-memo-ilife.checkin-receipt.c010', { p0: String(title) }),
   });
 }
 
 /** 记打卡：只认 `notes` 表那一行的分类＝打卡；其他分类归各自域，本件回 `undefined`。 */
 export function checkinCreatePage(r: WishReceipt, created: MemoNote | null): CheckinPage | undefined {
   if (created === null || created.category !== CHECKIN_TOP) return undefined;
-  return buildCheckinReceipt('memo_add_checkin', '记打卡', r, created);
+  return buildCheckinReceipt('memo_add_checkin', m('skill-memo-ilife.checkin-receipt.c011'), r, created);
 }
 
 /** 改打卡：改完那一行的分类＝打卡才出页（改前那一行由调用方先判，见 `runUpdate` 的分岔顺序）。 */
 export function checkinUpdatePage(r: WishReceipt, after: MemoNote): CheckinPage | undefined {
   if (after.category !== CHECKIN_TOP) return undefined;
-  return buildCheckinReceipt('memo_update_checkin', '改打卡', r, after);
+  return buildCheckinReceipt('memo_update_checkin', m('skill-memo-ilife.checkin-receipt.c012'), r, after);
 }
 
 /** 删打卡：删前那一行的分类＝打卡才出页（删完就取不到了，调用方必须先取）。 */
 export function checkinRemovePage(r: WishReceipt, before: MemoNote): CheckinPage | undefined {
   if (before.category !== CHECKIN_TOP) return undefined;
-  return buildCheckinReceipt('memo_delete_checkin', '删打卡', r, before);
+  return buildCheckinReceipt('memo_delete_checkin', m('skill-memo-ilife.checkin-receipt.c013'), r, before);
 }

@@ -15,6 +15,7 @@ import { runSentinel } from './sentinel.js';
 import { reconcileWishes } from '../wish/index.js';
 import { fillMemoPage, pageEnvelope, syncSnapshot } from '../render/index.js';
 import { bookletFileStem } from '../help/index.js';
+import { m } from '../entries/index.js';
 
 /** `memo.sync`：飞书↔本机反向对账 ＋ 同步报告页随行。 */
 export function runSync(params: Record<string, unknown>, db: MemoDb): CommandOut {
@@ -24,13 +25,13 @@ export function runSync(params: Record<string, unknown>, db: MemoDb): CommandOut
   const r = reconcileWishes(db);
   const snap = syncSnapshot(r.receipt);
   const payload = pageEnvelope({
-    commandCn: '备忘录同步', wakeWord: '备忘录同步', sceneId: 'sync-from-feishu',
+    commandCn: m('skill-memo-ilife.sync-run.c001'), wakeWord: m('skill-memo-ilife.sync-run.c002'), sceneId: 'sync-from-feishu',
     title: snap.title, summary: snap.summary, sections: snap.sections,
     copyLog: {
-      thinking: '双向对账 · 飞书 done/due 反向同步到本机（只读扫描 ＋ 有变更才写）',
-      data_structure: 'reconcile 11 项统计（backfilled/synced/due_*/skipped_*/errors）',
-      call_chain: 'memo.sync → reconcileWishes → render_sync_report → 共享 filler',
-      exception: r.receipt.errors.length ? r.receipt.errors.join('; ') : '无',
+      thinking: m('skill-memo-ilife.sync-run.c003'),
+      data_structure: m('skill-memo-ilife.sync-run.c004'),
+      call_chain: m('skill-memo-ilife.sync-run.c005'),
+      exception: r.receipt.errors.length ? r.receipt.errors.join('; ') : m('skill-memo-ilife.sync-run.c006'),
     },
     extra: { ...r.receipt },
     message: r.receipt.message,
@@ -46,12 +47,12 @@ export function runAuth(params: Record<string, unknown>, db: MemoDb): CommandOut
   // prompt，内容见 `memo.config.read` 回执的 `lark.prompt`）；「飞书授权」唤醒词同步退役。
   const step = params.step === undefined ? 'status' : String(params.step);
   if (step === 'status') {
-    return { data: { ok: true, message: '授权状态', step: 'status', ...authStatus() }, exit: 0 };
+    return { data: { ok: true, message: m('skill-memo-ilife.sync-run.c007'), step: 'status', ...authStatus() }, exit: 0 };
   }
   if (step === 'diag') {
     // #666 自检 sentinel（D-03 任务半场）：显式才跑；默认四步不碰它，零写。
     const r = runSentinel(params.dryRun === true ? { dryRun: true } : undefined);
     return { data: r.receipt, exit: r.exit };
   }
-  fail(2, 'step 只认 status/diag（授权引导 init/qr/poll 已退役：完整安装指引见 memo.config.read 回执的 lark.prompt）');
+  fail(2, m('skill-memo-ilife.sync-run.c008'));
 }

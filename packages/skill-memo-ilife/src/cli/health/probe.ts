@@ -11,6 +11,7 @@ import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
+import { m } from '../../entries/index.js';
 
 /** 库表数门槛：老库 `init.sql` 两张业务表（`notes`＋`reminders`），新建库时由老技能建。 */
 export const DB_TABLE_THRESHOLD = 2 as const;
@@ -70,7 +71,7 @@ export function dirVerdict(dir: string): DirVerdict {
 function dirVerdictUncached(dir: string): DirVerdict {
   if (!existsSync(dir)) return { exists: false, writable: false, reason: '' };
   try {
-    if (!statSync(dir).isDirectory()) return { exists: false, writable: false, reason: '同名文件占了它的位置' };
+    if (!statSync(dir).isDirectory()) return { exists: false, writable: false, reason: m('skill-memo-ilife.cli-health-probe.c001') };
   } catch (e) {
     return { exists: false, writable: false, reason: e instanceof Error ? e.message : String(e) };
   }
@@ -80,9 +81,12 @@ function dirVerdictUncached(dir: string): DirVerdict {
 
 /** 目录判据的人话（#1142 快慢共用同一口径：完整体检与 read 轻量告警都调它，不各写一遍）。 */
 export function dbDirMessage(dir: string, verdict: DirVerdict): string {
-  if (!verdict.exists) return '不在：' + p(dir) + (verdict.reason !== '' ? '（' + verdict.reason + '）' : '');
-  if (verdict.writable) return '在且能写：' + p(dir) + '。';
-  return '在，但写不进去：' + p(dir) + '（' + verdict.reason + '）。';
+  if (!verdict.exists) return m('skill-memo-ilife.cli-health-probe.c002', {
+    p0: String(p(dir)),
+    p1: String(verdict.reason !== '' ? '（' + verdict.reason + '）' : ''),
+  });
+  if (verdict.writable) return m('skill-memo-ilife.cli-health-probe.c003', { p0: String(p(dir)) });
+  return m('skill-memo-ilife.cli-health-probe.c004', { p0: String(p(dir)), p1: String(verdict.reason) });
 }
 
 /** 模板件数：把 `templates/` 数一遍（只数 `.html`，含子目录；读不出来的子树按 0 计）。

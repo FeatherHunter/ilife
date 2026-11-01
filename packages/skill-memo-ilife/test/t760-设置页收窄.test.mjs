@@ -31,13 +31,13 @@ import { fileURLToPath } from 'node:url';
 import { parseConfigYaml } from '../../base-link-core/dist/config/yaml.js';
 import { configDirOf, homeEnvOf, requireIsolatedHome, useHome } from '../../../test/helpers/home-test-base.mjs';
 import { initMemoTestDb, makeLarkStub } from '../../../tooling/contract-seam.mjs';
-import { LARK_INSTALL_PROMPT } from '../dist/sync/feishu.js';
+import { larkInstallPrompt } from '../dist/sync/feishu.js';
 import { noLarkPathEnv, stubPathEnv } from './helpers/config-base.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CLI = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
 
-/** 官网行独立字面量（与技能侧 `LARK_WEBSITE_LINE` 逐字对读，防两边一起漂）。 */
+/** 官网行独立字面量（与技能侧 `larkWebsiteLine()` 逐字对读，防两边一起漂）。 */
 const WEBSITE_LINE = '飞书CLI官网为：https://www.feishu.cn/feishu-cli';
 const WEBSITE_URL = 'https://www.feishu.cn/feishu-cli';
 
@@ -110,7 +110,7 @@ describe('#760 设置页收窄 · 技能侧回执与落点', () => {
         ['cliPath', 'prompt', 'tier', 'version', 'websiteLine', 'websiteUrl']);
       assert.equal(data.lark.websiteLine, WEBSITE_LINE, '官网行逐字');
       assert.equal(data.lark.websiteUrl, WEBSITE_URL);
-      assert.equal(data.lark.prompt, LARK_INSTALL_PROMPT, 'prompt 与技能侧唯一真相处逐字一致');
+      assert.equal(data.lark.prompt, larkInstallPrompt(), 'prompt 与技能侧唯一真相处逐字一致');
     });
 
     it('回执那几格与配置文件里的取值逐字一致（按文件那份取值现算一遍对账）', () => {
@@ -227,7 +227,7 @@ describe('#760 设置页收窄 · 技能侧回执与落点', () => {
       assert.equal(data.lark.tier, 'missing');
       assert.equal(data.lark.cliPath, null);
       assert.equal(data.lark.version, null);
-      assert.equal(data.lark.prompt, LARK_INSTALL_PROMPT);
+      assert.equal(data.lark.prompt, larkInstallPrompt());
       assert.equal(data.lark.websiteLine, WEBSITE_LINE);
     });
 
@@ -327,7 +327,7 @@ describe('#760 设置页收窄 · 技能侧回执与落点', () => {
       assert.equal(r.code, 4, '远端没成走 exit 4：' + r.stderr);
       const data = JSON.parse(r.stdout).data;
       assert.equal(data.remote, 'unavailable');
-      assert.equal(data.larkSetup.prompt, LARK_INSTALL_PROMPT, '回执 prompt 与复制按钮同一内容');
+      assert.equal(data.larkSetup.prompt, larkInstallPrompt(), '回执 prompt 与复制按钮同一内容');
       assert.equal(data.larkSetup.websiteLine, WEBSITE_LINE);
     });
 

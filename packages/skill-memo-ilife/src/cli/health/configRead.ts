@@ -10,6 +10,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { configPaths } from 'base-link-core';
 import { MEMO_CONFIG_DEFAULTS, MEMO_CONFIG_STEM } from '../../config.js';
+import { m } from '../../entries/index.js';
 
 /** 只读解析结果：文件不在／读得出取值与「哪些键真在文件里」／读不出来（报文带行号与文件名）。 */
 export type ConfigRead =
@@ -25,7 +26,10 @@ export function readMemoConfigReadOnly(): ConfigRead {
   try {
     text = readFileSync(file, 'utf8');
   } catch (e) {
-    return { kind: 'bad', message: '读配置文件失败：' + file + '（' + (e instanceof Error ? e.message : String(e)) + '）' };
+    return { kind: 'bad', message: m('skill-memo-ilife.cli-health-configRead.c001', {
+      p0: String(file),
+      p1: String(e instanceof Error ? e.message : String(e)),
+    }) };
   }
   const parsed = parseSubset(text, file);
   if (!parsed.ok) return { kind: 'bad', message: parsed.message };
@@ -60,10 +64,14 @@ function parseSubset(text: string, file: string):
   let openGroupLine = 0;
   /** 标量解析的失败口：`parseScalar` 把报文写进 `scalarError`，调用处读它即可（不抛，免得类型糊）。 */
   let scalarError = '';
-  const fail = (line: number, why: string) => ({ ok: false as const, message: '配置件第 ' + String(line) + ' 行：' + why + '（文件：' + file + '）' });
+  const fail = (line: number, why: string) => ({ ok: false as const, message: m('skill-memo-ilife.cli-health-configRead.c002', {
+    p0: String(String(line)),
+    p1: String(why),
+    p2: String(file),
+  }) });
   const closeGroup = (): string | null => {
     if (openGroup !== null && Object.keys(values[openGroup] as Record<string, unknown>).length === 0) {
-      return fail(openGroupLine, '键「' + openGroup + '」冒号后没有值，也没有子项').message;
+      return fail(openGroupLine, m('skill-memo-ilife.cli-health-configRead.c003', { p0: String(openGroup) })).message;
     }
     openGroup = null;
     return null;
@@ -75,20 +83,24 @@ function parseSubset(text: string, file: string):
     if (/^\s*#/.test(raw)) continue;
     const head = /^[ \t]*/.exec(raw)?.[0] ?? '';
     const body = raw.slice(head.length);
-    if (head.includes('\t')) return fail(lineNo, '缩进里有制表符：本子集只许空格，且嵌套缩进恰好 2 个空格');
-    if (body.startsWith('-')) return fail(lineNo, '本子集不支持列表（「-」开头的行）');
+    if (head.includes('\t')) return fail(lineNo, m('skill-memo-ilife.cli-health-configRead.c004'));
+    if (body.startsWith('-')) return fail(lineNo, m('skill-memo-ilife.cli-health-configRead.c005'));
     const matched = /^([A-Za-z_][A-Za-z0-9_.-]*)[ \t]*:[ \t]*(.*)$/.exec(body);
-    if (matched === null) return fail(lineNo, '不是「键: 值」形状：' + body.trim());
+    if (matched === null) return fail(lineNo, m('skill-memo-ilife.cli-health-configRead.c006', { p0: String(body.trim()) }));
     const key = matched[1] as string;
     const rest = (matched[2] ?? '').trim();
     if (head.length > 0) {
-      if (head.length !== 2) return fail(lineNo, '缩进必须恰好 2 个空格（本子集只支持一层嵌套），实为 ' + String(head.length) + ' 个空格');
-      if (openGroup === null) return fail(lineNo, '缩进的子项「' + key + '」上面没有开着子的顶层键');
+      if (head.length !== 2) return fail(lineNo, m('skill-memo-ilife.cli-health-configRead.c007', { p0: String(String(head.length)) }));
+      if (openGroup === null) return fail(lineNo, m('skill-memo-ilife.cli-health-configRead.c008', { p0: String(key) }));
       const group = values[openGroup] as Record<string, unknown>;
       if (Object.prototype.hasOwnProperty.call(group, key)) {
-        return fail(lineNo, '键「' + openGroup + '.' + key + '」重复定义（第 ' + String(lineOf.get(openGroup + '.' + key)) + ' 行已定义）');
+        return fail(lineNo, m('skill-memo-ilife.cli-health-configRead.c009', {
+          p0: String(openGroup),
+          p1: String(key),
+          p2: String(String(lineOf.get(openGroup + '.' + key))),
+        }));
       }
-      if (rest === '') return fail(lineNo, '键「' + openGroup + '.' + key + '」冒号后没有值');
+      if (rest === '') return fail(lineNo, m('skill-memo-ilife.cli-health-configRead.c010', { p0: String(openGroup), p1: String(key) }));
       const scalar = parseScalar(rest, lineNo, fail, (message) => {
         scalarError = message;
       });
@@ -100,7 +112,10 @@ function parseSubset(text: string, file: string):
     const closedError = closeGroup();
     if (closedError !== null) return { ok: false, message: closedError };
     if (Object.prototype.hasOwnProperty.call(values, key)) {
-      return fail(lineNo, '键「' + key + '」重复定义（第 ' + String(lineOf.get(key)) + ' 行已定义）');
+      return fail(lineNo, m('skill-memo-ilife.cli-health-configRead.c011', {
+        p0: String(key),
+        p1: String(String(lineOf.get(key))),
+      }));
     }
     lineOf.set(key, lineNo);
     if (rest === '') {
@@ -153,7 +168,7 @@ function parseScalar(
       out += ch;
     }
     if (!closed) {
-      onError(fail(lineNo, '引号没有闭合：' + text).message);
+      onError(fail(lineNo, m('skill-memo-ilife.cli-health-configRead.c012', { p0: String(text) })).message);
       return '';
     }
     return out;
@@ -167,7 +182,7 @@ function parseScalar(
   }
   const body = text.slice(0, cut).trim();
   if (body === '') {
-    onError(fail(lineNo, '冒号后没有值（只有注释）').message);
+    onError(fail(lineNo, m('skill-memo-ilife.cli-health-configRead.c013')).message);
     return '';
   }
   if (body === 'true') return true;
@@ -204,5 +219,5 @@ export function textOf(value: unknown): string {
 
 /** 「这个值从哪来」：真在文件里写了就是「配置文件」，否则按默认值（文件不存在则全按默认值）。 */
 export function sourceOf(present: ReadonlySet<string>, key: string): string {
-  return present.has(key) ? '配置文件' : '默认值';
+  return present.has(key) ? m('skill-memo-ilife.cli-health-configRead.c014') : m('skill-memo-ilife.cli-health-configRead.c015');
 }

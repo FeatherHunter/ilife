@@ -6,5 +6,5 @@
  * 跨域**只许经门**，不许深引域内实现件（`test/cmd-registry-855.test.mjs` 的「域间零直引」守着）。
  */
 export { SYNC_COMMANDS } from './commands.js';
-export { LARK_WEBSITE_LINE, LARK_WEBSITE_URL, larkReady, larkSetupInfo, larkTierInfo, runLark } from './feishu.js';
+export { larkWebsiteLine, LARK_WEBSITE_URL, larkReady, larkSetupInfo, larkTierInfo, runLark } from './feishu.js';
 export type { LarkSetupInfo, LarkTier } from './feishu.js';
