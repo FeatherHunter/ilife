@@ -22,7 +22,7 @@ const COMMENT_START_RE = /^\s*\/\*/;
 /** 表头结束行：`export const <语言> = {`。 */
 const OPEN_RE = /^\s*export const [A-Za-z0-9_]+ = \{\s*$/;
 /** 表结束行：`};`。 */
-const CLOSE_RE = /^\s*\}\s*;?\s*$/;
+const CLOSE_RE = /^\s*\}\s*(?:as const satisfies MessageTable)?\s*;?\s*$/;
 /** 迁移期空表（单行）：`export const zh = {} as const satisfies MessageTable;`——第一次迁入时展开成多行。 */
 const EMPTY_ONE_LINE_RE = /^(\s*)export const ([A-Za-z0-9_]+) = \{\} as const satisfies MessageTable;\s*$/;
 
@@ -85,7 +85,8 @@ export function quoteKey(key) {
  *  · entries＝`[{key, value, literal}]`，按表内顺序。
  */
 export function parseTableText(text, path) {
-  if (!text.endsWith('\n')) return { ok: false, why: '表文件末行没有换行（形状与仓内其余表不一致）：' + path };
+  // 迁移期空表骨架可能没写末行换行：补齐后再读（读进来的文本本身按行处理，写回时统一带换行）。
+  if (!text.endsWith('\n')) text += '\n';
   const lines = text.split('\n');
   const emptyAt = lines.findIndex((line) => EMPTY_ONE_LINE_RE.test(line));
   if (emptyAt >= 0) {
@@ -93,7 +94,7 @@ export function parseTableText(text, path) {
     const m = EMPTY_ONE_LINE_RE.exec(lines[emptyAt]);
     const openLine = m[1] + 'export const ' + m[2] + ' = {';
     const closeLine = '} as const satisfies MessageTable;';
-    return { ok: true, path, head: lines.slice(0, emptyAt).concat([openLine]), items: [], tail: [closeLine] };
+    return { ok: true, path, head: lines.slice(0, emptyAt).concat([openLine]), items: [], entries: [], tail: [closeLine, ''] };
   }
   const openAt = lines.findIndex((line) => OPEN_RE.test(line));
   if (openAt < 0) return { ok: false, why: '表里找不到 `export const <语言> = {` 行：' + path };

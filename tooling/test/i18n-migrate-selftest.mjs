@@ -129,7 +129,8 @@ export function runMigrateSelftest(api) {
     check('模板插值整句化成 {p0}', zh4.ok && zh4.entries[0].value === '共 {p0} 笔', JSON.stringify(zh4.ok ? zh4.entries : zh4.why));
     check('模板参数取表达式原文', readText(root4, REL4).indexOf('p0: String(n)') >= 0, readText(root4, REL4));
 
-    // ⑤ 开发期失败报文不迁（throw／new Error／fail(...)）
+    // ⑤ 开发者报文的豁免**只有门认的那三类**（throw new *Error／badInput／assert*）：
+    //    throw 的实参不迁；fail(...)／console.*(...) 的实参照迁（门会判红，迁移器跳过就是假绿）。
     const REL5 = 'packages/demo-pkg/src/ui/guard.ts';
     const src5 = [
       'export function check(why: string): void {',
@@ -140,10 +141,11 @@ export function runMigrateSelftest(api) {
     ].join('\n');
     const root5 = mk({ [REL5]: src5 });
     const report5 = migrate({ root: root5, files: [REL5], ticket: 997, dry: false });
-    check('dev 报文整件不迁（skip）', report5.files[0].status === 'skip', report5.files[0].status + ' ' + report5.files[0].why);
-    check('dev 报文一个字节都不动', readText(root5, REL5) === src5, readText(root5, REL5));
-    check('dev 报文两条都进报告（SKIP_DEV_MESSAGE）',
-      report5.files[0].skips.filter((skip) => skip.reason === 'SKIP_DEV_MESSAGE').length === 2,
+    check('throw 的实参不迁、fail 的实参照迁（文件整体 ok）', report5.files[0].status === 'ok', report5.files[0].status + ' ' + (report5.files[0].why || ''));
+    check('throw 的实参一个字节都不动', readText(root5, REL5).indexOf("throw new Error('内部：空值')") >= 0, readText(root5, REL5));
+    check('fail 的实参换成了 m(...) 取词', readText(root5, REL5).indexOf("fail(m('demo-pkg.ui-guard.c001', { p0: String(why) }))") >= 0, readText(root5, REL5));
+    check('开发者报文只记 1 条 SKIP_DEV_MESSAGE（throw 那条）',
+      report5.files[0].skips.filter((skip) => skip.reason === 'SKIP_DEV_MESSAGE').length === 1,
       JSON.stringify(report5.files[0].skips));
 
     // ⑥ 比较操作数不迁，同文件里的真文案照迁

@@ -31,8 +31,13 @@ const GENERATED_HEAD_RE = /机器生成|禁手改|请勿手改|GENERATED|do not 
 const PLACEHOLDER_RE = /\{([A-Za-z_][A-Za-z0-9_]*)\}/g;
 /** 冻结的命令键前缀（词条 key 不许以它们打头）。 */
 const CMD_PREFIX_RE = /^(bill|calorie|chef|home|memo|schedule|life|ilife)\./;
-/** 开发期失败报文：这些调用的实参不上屏。 */
-const DEV_CALLEES = new Set(['fail', 'failIf', 'failWith', 'assert', 'assertEqual', 'assertDeepEqual', 'assertTrue', 'assertFalse', 'assertOk', 'panic', 'die', 'invariant', 'ensure', 'expect', 'log', 'warn', 'error', 'info', 'debug', 'trace']);
+/** 开发期报文：这些调用的实参不上屏。
+ *
+ *  本集合与 key 残留门（tooling/check-i18n-keys.mjs 的 devMessageTexts）**逐项对齐**：
+ *  门的豁免只有 `badInput(…)`／`assert*(…)`／`throw new *Error(…)` 三类；
+ *  其余调用（`fail(…)`、`console.log(…)` 等）的实参门会判红，故这里也不许跳——跳过会留下「迁移器说没问题、门却红」的假绿假红。
+ */
+const DEV_CALLEES = new Set(['badInput', 'assertPlainObject', 'assertActionId', 'assertDate', 'assertShape']);
 /** 比较／匹配用串：这些方法收到的串是判据，不是文案。 */
 const MATCH_METHODS = new Set(['includes', 'startsWith', 'endsWith', 'indexOf', 'lastIndexOf', 'match', 'matchAll', 'test', 'search', 'replace', 'replaceAll', 'split', 'exec', 'localeCompare', 'toEqual', 'toMatch', 'toBe']);
 /** 比较运算符：操作数是判据。 */
