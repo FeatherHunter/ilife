@@ -1776,28 +1776,37 @@
     "1216": {
       "title": "迁移 skill-calorie 触发器域（triggers）：15 件（7,060 条）",
       "state": "open（待开工；清单已回填 #1308）",
-      "files": [
+      "files": [],
+      "migrated": [],
+      "totals": {
+        "files": 14,
+        "literals": 4592
+      },
+      "excluded": [
         {
           "path": "packages/skill-calorie/src/triggers/help-lookup.ts",
           "literals": 38,
           "byClass": {
             "copy": 32,
             "concat": 6
-          }
+          },
+          "reason": "唤醒词路由语料与 SoT 镜像：WAKE_TABLE／NEW_WORD_TABLE／CATEGORY_SCENE 是「唤醒词→命令」判定的单一来源，被 calorie-triggers／calorie-routing 单测逐字断言；按 #1236 裁决唤醒词冻结不译，入屏 HELP 文案由 help-assets 生成件承载（生成件不迁）"
         },
         {
           "path": "packages/skill-calorie/src/triggers/index.ts",
           "literals": 13,
           "byClass": {
             "copy": 13
-          }
+          },
+          "reason": "触发层 SoT 镜像：CATEGORIES 等按场景 SoT 原样照搬（parity 证据），被 calorie-triggers 单测与 soal 快照断言；数据不译（手册 §4.5）"
         },
         {
           "path": "packages/skill-calorie/src/triggers/routes.generated.ts",
           "literals": 702,
           "byClass": {
             "derived": 702
-          }
+          },
+          "reason": "生成件：packages/skill-calorie/scripts/gen-routes.mjs 由声明派生，手改会被 pnpm gen 覆盖、gen:check 判红"
         },
         {
           "path": "packages/skill-calorie/src/triggers/routing.ts",
@@ -1805,7 +1814,8 @@
           "byClass": {
             "copy": 48,
             "ident": 25
-          }
+          },
+          "reason": "路由判定与理由码表：NON_EXEC_REASONS 是路由记录 reason 的单一来源、与 routes.generated.ts 配对，被 routing 单测逐字锁定；路由语料按 #1236 冻结不译"
         },
         {
           "path": "packages/skill-calorie/src/triggers/scene-01-home.ts",
@@ -1813,7 +1823,8 @@
           "byClass": {
             "copy": 85,
             "ident": 6
-          }
+          },
+          "reason": "唤醒词/意图 SoT 镜像：wake_word／aliases／desc／user_intent／prompt_template 是路由事实源，整表被 test/calorie-sot.snapshot.json 的 19 字段 sha（entry_sha）逐条锁定，改任一字段即红；按 #1236 裁决唤醒词与意图语料冻结不译、英文词表首轮另起（约 30 条，非本票）"
         },
         {
           "path": "packages/skill-calorie/src/triggers/scene-02-diet.ts",
@@ -1821,7 +1832,8 @@
           "byClass": {
             "copy": 609,
             "ident": 31
-          }
+          },
+          "reason": "唤醒词/意图 SoT 镜像：wake_word／aliases／desc／user_intent／prompt_template 是路由事实源，整表被 test/calorie-sot.snapshot.json 的 19 字段 sha（entry_sha）逐条锁定，改任一字段即红；按 #1236 裁决唤醒词与意图语料冻结不译、英文词表首轮另起（约 30 条，非本票）"
         },
         {
           "path": "packages/skill-calorie/src/triggers/scene-03-weight.ts",
@@ -1829,7 +1841,8 @@
           "byClass": {
             "copy": 510,
             "ident": 8
-          }
+          },
+          "reason": "唤醒词/意图 SoT 镜像：wake_word／aliases／desc／user_intent／prompt_template 是路由事实源，整表被 test/calorie-sot.snapshot.json 的 19 字段 sha（entry_sha）逐条锁定，改任一字段即红；按 #1236 裁决唤醒词与意图语料冻结不译、英文词表首轮另起（约 30 条，非本票）"
         },
         {
           "path": "packages/skill-calorie/src/triggers/scene-04-exercise.ts",
@@ -1837,7 +1850,8 @@
           "byClass": {
             "copy": 350,
             "ident": 18
-          }
+          },
+          "reason": "唤醒词/意图 SoT 镜像：wake_word／aliases／desc／user_intent／prompt_template 是路由事实源，整表被 test/calorie-sot.snapshot.json 的 19 字段 sha（entry_sha）逐条锁定，改任一字段即红；按 #1236 裁决唤醒词与意图语料冻结不译、英文词表首轮另起（约 30 条，非本票）"
         },
         {
           "path": "packages/skill-calorie/src/triggers/scene-05-workout.ts",
@@ -1845,7 +1859,8 @@
           "byClass": {
             "copy": 253,
             "ident": 27
-          }
+          },
+          "reason": "唤醒词/意图 SoT 镜像：wake_word／aliases／desc／user_intent／prompt_template 是路由事实源，整表被 test/calorie-sot.snapshot.json 的 19 字段 sha（entry_sha）逐条锁定，改任一字段即红；按 #1236 裁决唤醒词与意图语料冻结不译、英文词表首轮另起（约 30 条，非本票）"
         },
         {
           "path": "packages/skill-calorie/src/triggers/scene-06-goal.ts",
@@ -1853,7 +1868,8 @@
           "byClass": {
             "copy": 202,
             "ident": 22
-          }
+          },
+          "reason": "唤醒词/意图 SoT 镜像：wake_word／aliases／desc／user_intent／prompt_template 是路由事实源，整表被 test/calorie-sot.snapshot.json 的 19 字段 sha（entry_sha）逐条锁定，改任一字段即红；按 #1236 裁决唤醒词与意图语料冻结不译、英文词表首轮另起（约 30 条，非本票）"
         },
         {
           "path": "packages/skill-calorie/src/triggers/scene-07-profile.ts",
@@ -1861,7 +1877,8 @@
           "byClass": {
             "copy": 24,
             "ident": 8
-          }
+          },
+          "reason": "唤醒词/意图 SoT 镜像：wake_word／aliases／desc／user_intent／prompt_template 是路由事实源，整表被 test/calorie-sot.snapshot.json 的 19 字段 sha（entry_sha）逐条锁定，改任一字段即红；按 #1236 裁决唤醒词与意图语料冻结不译、英文词表首轮另起（约 30 条，非本票）"
         },
         {
           "path": "packages/skill-calorie/src/triggers/scene-08-body.ts",
@@ -1869,7 +1886,8 @@
           "byClass": {
             "copy": 102,
             "ident": 14
-          }
+          },
+          "reason": "唤醒词/意图 SoT 镜像：wake_word／aliases／desc／user_intent／prompt_template 是路由事实源，整表被 test/calorie-sot.snapshot.json 的 19 字段 sha（entry_sha）逐条锁定，改任一字段即红；按 #1236 裁决唤醒词与意图语料冻结不译、英文词表首轮另起（约 30 条，非本票）"
         },
         {
           "path": "packages/skill-calorie/src/triggers/scene-09-photo.ts",
@@ -1877,7 +1895,8 @@
           "byClass": {
             "copy": 80,
             "ident": 16
-          }
+          },
+          "reason": "唤醒词/意图 SoT 镜像：wake_word／aliases／desc／user_intent／prompt_template 是路由事实源，整表被 test/calorie-sot.snapshot.json 的 19 字段 sha（entry_sha）逐条锁定，改任一字段即红；按 #1236 裁决唤醒词与意图语料冻结不译、英文词表首轮另起（约 30 条，非本票）"
         },
         {
           "path": "packages/skill-calorie/src/triggers/scene-10-analysis.ts",
@@ -1885,14 +1904,10 @@
           "byClass": {
             "copy": 1311,
             "ident": 90
-          }
+          },
+          "reason": "唤醒词/意图 SoT 镜像：wake_word／aliases／desc／user_intent／prompt_template 是路由事实源，整表被 test/calorie-sot.snapshot.json 的 19 字段 sha（entry_sha）逐条锁定，改任一字段即红；按 #1236 裁决唤醒词与意图语料冻结不译、英文词表首轮另起（约 30 条，非本票）"
         }
-      ],
-      "migrated": [],
-      "totals": {
-        "files": 14,
-        "literals": 4592
-      }
+      ]
     },
     "1217": {
       "title": "迁移 skill-calorie 渲染与分析域（render＋analysis）：55 件（3,392 条）",
@@ -10115,10 +10130,10 @@
   "scopeSummary": {
     "ledgerFiles": 1226,
     "migratedFiles": 412,
-    "pendingFiles": 638,
-    "pendingLiterals": 27035,
-    "excludedFiles": 176,
-    "excludedLiterals": 4373,
+    "pendingFiles": 624,
+    "pendingLiterals": 22443,
+    "excludedFiles": 190,
+    "excludedLiterals": 8965,
     "migratedLiterals": 11340
   },
   "workflow": [
