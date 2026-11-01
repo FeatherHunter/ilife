@@ -9717,69 +9717,6 @@
       "state": "open（待开工；清单由 #1220 与各迁移票分离而来）",
       "files": [
         {
-          "path": "packages/skill-bill/src/write/declaration.ts",
-          "literals": 156,
-          "byClass": {
-            "payload": 156
-          }
-        },
-        {
-          "path": "packages/skill-bill/src/query/declaration.ts",
-          "literals": 118,
-          "byClass": {
-            "payload": 118
-          }
-        },
-        {
-          "path": "packages/skill-bill/src/analysis/declaration.ts",
-          "literals": 173,
-          "byClass": {
-            "payload": 173
-          }
-        },
-        {
-          "path": "packages/skill-bill/src/account/declaration.ts",
-          "literals": 34,
-          "byClass": {
-            "payload": 34
-          }
-        },
-        {
-          "path": "packages/skill-bill/src/goal/declaration.ts",
-          "literals": 33,
-          "byClass": {
-            "payload": 33
-          }
-        },
-        {
-          "path": "packages/skill-bill/src/setup/declaration.ts",
-          "literals": 33,
-          "byClass": {
-            "payload": 33
-          }
-        },
-        {
-          "path": "packages/skill-bill/src/link/declaration.ts",
-          "literals": 22,
-          "byClass": {
-            "payload": 22
-          }
-        },
-        {
-          "path": "packages/skill-bill/src/triggers/wake-assets.ts",
-          "literals": 3,
-          "byClass": {
-            "payload": 3
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/triggers/wake-assets.ts",
-          "literals": 2468,
-          "byClass": {
-            "payload": 2468
-          }
-        },
-        {
           "path": "packages/skill-home/src/items/pages/add_form.ts",
           "literals": 66,
           "byClass": {
@@ -10004,13 +9941,6 @@
           }
         },
         {
-          "path": "packages/skill-chef/src/history/routes.ts",
-          "literals": 11,
-          "byClass": {
-            "payload": 11
-          }
-        },
-        {
           "path": "packages/skill-home/src/items/pages/category_manage.ts",
           "literals": 43,
           "byClass": {
@@ -10120,7 +10050,88 @@
         }
       ],
       "migrated": [],
-      "excluded": [],
+      "excluded": [
+        {
+          "path": "packages/skill-calorie/src/triggers/wake-assets.ts",
+          "literals": 2468,
+          "byClass": {
+            "payload": 2468
+          },
+          "reason": "生成件：由实物 JSON 机器生成的唤醒词/场景资产（文件头写明禁手改），唤醒词语料按 #1236 裁决冻结不译；英文词表另起票 #1310"
+        },
+        {
+          "path": "packages/skill-chef/src/history/routes.ts",
+          "literals": 11,
+          "byClass": {
+            "payload": 11
+          },
+          "reason": "唤醒词→命令路由表：route 键、唤醒语与 CLI 样例是路由判定数据，按 #1236 冻结不译；英文路由另起票 #1310"
+        },
+        {
+          "path": "packages/skill-bill/src/write/declaration.ts",
+          "literals": 156,
+          "byClass": {
+            "payload": 156
+          },
+          "reason": "唤醒词/意图声明件：声明件是「唤醒词→命令」唯一事实源，字面量只准住声明件（test/t721 判据锁），按 #1236 裁决冻结不译；英文词表另起票 #1310"
+        },
+        {
+          "path": "packages/skill-bill/src/query/declaration.ts",
+          "literals": 118,
+          "byClass": {
+            "payload": 118
+          },
+          "reason": "唤醒词/意图声明件：声明件是「唤醒词→命令」唯一事实源，字面量只准住声明件（test/t721 判据锁），按 #1236 裁决冻结不译；英文词表另起票 #1310"
+        },
+        {
+          "path": "packages/skill-bill/src/analysis/declaration.ts",
+          "literals": 173,
+          "byClass": {
+            "payload": 173
+          },
+          "reason": "唤醒词/意图声明件：声明件是「唤醒词→命令」唯一事实源，字面量只准住声明件（test/t721 判据锁），按 #1236 裁决冻结不译；英文词表另起票 #1310"
+        },
+        {
+          "path": "packages/skill-bill/src/account/declaration.ts",
+          "literals": 34,
+          "byClass": {
+            "payload": 34
+          },
+          "reason": "唤醒词/意图声明件：声明件是「唤醒词→命令」唯一事实源，字面量只准住声明件（test/t721 判据锁），按 #1236 裁决冻结不译；英文词表另起票 #1310"
+        },
+        {
+          "path": "packages/skill-bill/src/goal/declaration.ts",
+          "literals": 33,
+          "byClass": {
+            "payload": 33
+          },
+          "reason": "唤醒词/意图声明件：声明件是「唤醒词→命令」唯一事实源，字面量只准住声明件（test/t721 判据锁），按 #1236 裁决冻结不译；英文词表另起票 #1310"
+        },
+        {
+          "path": "packages/skill-bill/src/setup/declaration.ts",
+          "literals": 33,
+          "byClass": {
+            "payload": 33
+          },
+          "reason": "唤醒词/意图声明件：声明件是「唤醒词→命令」唯一事实源，字面量只准住声明件（test/t721 判据锁），按 #1236 裁决冻结不译；英文词表另起票 #1310"
+        },
+        {
+          "path": "packages/skill-bill/src/link/declaration.ts",
+          "literals": 22,
+          "byClass": {
+            "payload": 22
+          },
+          "reason": "唤醒词/意图声明件：声明件是「唤醒词→命令」唯一事实源，字面量只准住声明件（test/t721 判据锁），按 #1236 裁决冻结不译；英文词表另起票 #1310"
+        },
+        {
+          "path": "packages/skill-bill/src/triggers/wake-assets.ts",
+          "literals": 3,
+          "byClass": {
+            "payload": 3
+          },
+          "reason": "生成件：由实物 JSON 机器生成的唤醒词/场景资产，唤醒词语料按 #1236 冻结不译"
+        }
+      ],
       "totals": {
         "files": 54,
         "literals": 5537
@@ -10130,10 +10141,10 @@
   "scopeSummary": {
     "ledgerFiles": 1226,
     "migratedFiles": 412,
-    "pendingFiles": 624,
-    "pendingLiterals": 22443,
-    "excludedFiles": 190,
-    "excludedLiterals": 8965,
+    "pendingFiles": 614,
+    "pendingLiterals": 19392,
+    "excludedFiles": 200,
+    "excludedLiterals": 12016,
     "migratedLiterals": 11340
   },
   "workflow": [
