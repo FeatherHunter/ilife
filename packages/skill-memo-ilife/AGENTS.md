@@ -69,6 +69,9 @@
 | `src/data/schema.ts` | 31 | 31 | 未越线，在册备查 |
 | `src/data/tables.ts` | 19 | 19 | 未越线，在册备查 |
 | `src/db/readonly.ts` | 333 | 333 | 未越线，在册备查 |
+| `src/entries/en.ts` | 8 | 8 | 未越线，在册备查 |
+| `src/entries/index.ts` | 20 | 20 | 未越线，在册备查 |
+| `src/entries/zh.ts` | 14 | 14 | 未越线，在册备查 |
 | `src/health.ts` | 17 | 17 | 未越线，在册备查 |
 | `src/help/booklet.ts` | 92 | 92 | 未越线，在册备查 |
 | `src/help/helpFile.ts` | 220 | 222 | 未越线，在册备查 |
