@@ -48,6 +48,7 @@ import { REPORT_DEFAULT_WINDOW, buildReportPlate } from './reportPlate.js';
 import type { ReportKind, ReportPlate } from './reportPlate.js';
 import { seriesAvg } from './series.js';
 import { shiftISODate, todayISO } from './utils.js';
+import { m } from '../entries/index.js';
 
 /* ── 多指标趋势族（#113 「趋势 2＋其他 6」里的趋势两支） ─────────────────────────────────── */
 
@@ -221,7 +222,7 @@ function viewPredict(params: Record<string, unknown>, db: DatabaseSync): ViewOut
   const targetLoss = optNum(params, 'target_loss');
   if (targetLoss !== undefined) {
     const daysTarget = optNum(params, 'days_target');
-    if (daysTarget === undefined) fail(2, '缺参数 days_target（模拟减重 Xkg 须给天数）');
+    if (daysTarget === undefined) fail(2, m('skill-calorie.analysis-commands.c001'));
     const { start, end } = defaultRange(db, params, 14);
     const r = buildSimTargetView(db, start, end, targetLoss as number, daysTarget as number);
     const metrics = nums({
@@ -283,7 +284,7 @@ function viewHelpLookup(params: Record<string, unknown>): ViewOut {
   // C2/C3 #43 · 唯一搜索入口 searchHelp：别名感知 + 可执行排前 + 高频词合成首条（去legacy首命中）。
   const found = searchHelp(TRIGGERS, q);
   if (found.length === 0) throw new CalorieRenderError('missing-data', '唤醒词无命中：' + q);
-  const sceneToCategory: Record<string, string> = { '01': '主页', '02': '饮食', '03': '体重', '04': '运动', '05': '健身计划', '06': '目标管理', '07': '基础信息', '08': '身体细节', '09': '身材照片', '10': '分析' };
+  const sceneToCategory: Record<string, string> = { '01': m('skill-calorie.analysis-commands.c002'), '02': m('skill-calorie.analysis-commands.c003'), '03': m('skill-calorie.analysis-commands.c004'), '04': m('skill-calorie.analysis-commands.c005'), '05': m('skill-calorie.analysis-commands.c006'), '06': m('skill-calorie.analysis-commands.c007'), '07': m('skill-calorie.analysis-commands.c008'), '08': m('skill-calorie.analysis-commands.c009'), '09': m('skill-calorie.analysis-commands.c010'), '10': m('skill-calorie.analysis-commands.c011') };
   const hits = found.map((h) => {
     const src = TRIGGERS.find((t) => t.wake_word === h.wake_word && ('key' in t ? String((t as { key?: unknown }).key ?? '') : '') === String(h.key ?? ''));
     const category = src ? src.category : (sceneToCategory[h.scene] ?? h.scene);
@@ -296,12 +297,14 @@ function viewHelpLookup(params: Record<string, unknown>): ViewOut {
 
 function viewHistory(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
   const days = optNum(params, 'days') ?? 7;
-  if (!Number.isInteger(days) || (days as number) < 1 || (days as number) > 365) fail(2, 'days 须为 1..365 整数');
+  if (!Number.isInteger(days) || (days as number) < 1 || (days as number) > 365) fail(2, m('skill-calorie.analysis-commands.c012'));
   const h = getCalorieHistory(db, days as number);
   if (h.rows.length === 0) throw new CalorieRenderError('missing-data', '最近' + String(days) + '天无记录');
   const items = h.rows.map((r) => ({ date: r.date, calories: r.calories, protein: r.protein, status: r.status }));
-  const html = '<section class="ilife-page" data-skill="calorie" data-slot="ilife:calorie:history"><h1>热量历史（最近' + h.days + '天）</h1>' +
-    items.map((r) => '<div class="ilife-item"><b>' + r.date + '</b> ' + r.calories + ' 卡 · ' + String(r.status).replace(/&/g, '&amp;') + '</div>').join('') + '</section>';
+  const title = m('skill-calorie.analysis-commands.c900', { p0: String(h.days) });
+  const unit = m('skill-calorie.analysis-commands.c901');
+  const html = '<section class="ilife-page" data-skill="calorie" data-slot="ilife:calorie:history"><h1>' + title + '</h1>' +
+    items.map((r) => '<div class="ilife-item"><b>' + r.date + '</b> ' + r.calories + ' ' + unit + ' · ' + String(r.status).replace(/&/g, '&amp;') + '</div>').join('') + '</section>';
   return { data: { items, total: items.length }, html };
 }
 
@@ -359,9 +362,9 @@ function viewReport(kind: ReportKind, params: Record<string, unknown>, db: Datab
         // 最低分项＝该项命中率（0–100）。**不是一个数**：`items` 已按命中率升序，故 `items[0]` 就是最低项。
         weakest: weakest === undefined ? undefined : weakest.rate,
         // 对比形态
-        deltaTdee: deltaOf(plate, '日均总消耗'),
-        deltaWeightKg: deltaOf(plate, '日均体重'),
-        deltaCalorie: deltaOf(plate, '日均摄入'),
+        deltaTdee: deltaOf(plate, m('skill-calorie.analysis-commands.c013')),
+        deltaWeightKg: deltaOf(plate, m('skill-calorie.analysis-commands.c014')),
+        deltaCalorie: deltaOf(plate, m('skill-calorie.analysis-commands.c015')),
       }),
     },
     html: buildReportDoc(plate, commandOf(kind, range.start, range.end)),

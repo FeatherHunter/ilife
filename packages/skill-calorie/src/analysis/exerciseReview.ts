@@ -8,6 +8,7 @@ import type { DatabaseSync } from 'node:sqlite';
 import { FetchError } from '../fetch/errors.js';
 import { round2 } from '../kcal.js';
 import { estimateCaloriesMet, inferCategory, listWindow } from '../exercise/exerciseStore.js';
+import { m } from '../entries/index.js';
 
 export interface ExerciseTypeStat {
   type: string; sessions: number; burned: number; minutes: number;
@@ -33,7 +34,7 @@ export function buildExerciseReview(db: DatabaseSync, start: string, end: string
   let estSum = 0;
   for (const r of rows) {
     const date = String(r.date);
-    const type = String(r.exercise_type ?? '未知');
+    const type = String(r.exercise_type ?? m('skill-calorie.analysis-exerciseReview.c001'));
     const burned = Number(r.calories_burned ?? 0);
     const minutes = Number(r.duration_minutes ?? 0);
     daySet.add(date);

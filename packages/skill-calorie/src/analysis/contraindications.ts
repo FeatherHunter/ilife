@@ -6,6 +6,7 @@
  * （显式路径；缺失由 openDb 侧阻断，不在此静默）。
  */
 import type { DatabaseSync } from 'node:sqlite';
+import { m } from '../entries/index.js';
 
 export type Severity = 'info' | 'warn' | 'error';
 export type ContraPart = '腰' | '膝' | '肩';
@@ -101,7 +102,11 @@ export function scanPlan(db: DatabaseSync, part: string = 'all'): PlanScan {
     const movements = JSON.parse(p[4] || '[]') as Array<{ name?: string }>;
     // 「这一场是计划的哪一格」的人话写法（T351-v10）：原来是 `W1D3(下肢)`——英文周次代码直接印在页上，
     // 读者看不懂（负责人 2026-09-15 第 ④ 条：文字不能出现不合理）。改成「第 1 周 周三（下肢）」。
-    const usage = '第 ' + p[0] + ' 周 周' + (DOW_CN[p[1]] ?? String(p[1])) + '（' + p[3] + '）';
+    const usage = m('skill-calorie.analysis-contraindications.c001', {
+      p0: String(p[0]),
+      p1: String(DOW_CN[p[1]] ?? String(p[1])),
+      p2: String(p[3]),
+    });
     for (const m of movements) {
       movementCount += 1;
       const name = m.name ?? '';
@@ -143,7 +148,7 @@ export function scanPlan(db: DatabaseSync, part: string = 'all'): PlanScan {
       movement: hit.movementName,
       rule: hit.ruleName,
       reason: hit.reason,
-      replace: '用含 ' + SAFE_VARIANTS.slice(0, 3).join('/') + ' 等关键字的安全变体',
+      replace: m('skill-calorie.analysis-contraindications.c002', { p0: String(SAFE_VARIANTS.slice(0, 3).join('/')) }),
       safeExamples: SAFE_VARIANTS.slice(0, 4),
     });
   }

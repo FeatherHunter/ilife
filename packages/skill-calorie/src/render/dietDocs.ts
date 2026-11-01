@@ -54,13 +54,16 @@ export interface DietMealRow {
 import type { DaySeries } from '../analysis/series.js';
 import type { DietOverview, MealDistribution } from './diet.js';
 import type { HealthPlate } from '../analysis/healthPlate.js';
+import { m } from '../entries/index.js';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；测试钉死一致）。 */
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
 
 /** 本文件各页共用的 head 标题（整页模板住 `src/shared/docPage.ts`，标题走参数）；#591 去 `·`（门禁 R1），取值照同域 ② 类页现行口径（`diet/todayDocs.ts` 的「卡路里饮食」）。 */
-const DOC_TITLE = '卡路里饮食';
+function DOC_TITLE() {
+  return m('skill-calorie.render-dietDocs.c090');
+}
 
 /* LF 口径：#618 要给本件（HEAD 已是 350 LF）加一处映射，同票把下面两个小件压成一行等价写法（本包告警线
    台账住 `packages/skill-calorie/AGENTS.md`，不在本票写集 ⇒ 不越线、不改台账）。 */
@@ -69,14 +72,18 @@ const r1 = (n: number): number => Math.round(n * 10) / 10;
 
 /** #618 趋势卡的中文判语（**本件唯一一处映射**，8 张窗口页共走 `buildViewDietDoc` 故只此一份）：用户原话
  *  「趋势这个卡片写的是『up/down』不应该有英文」；数据层 `'up' | 'down' | 'flat'`（`analysis/trend.ts:26`）口径不动，只在页面侧换人话，表外值原样透传（照 `trendPredictDocs.ts` 的 `DEFICIT_TREND_ZH ?? …`）。 */
-const TREND_ZH: Record<string, string> = { up: '上升', down: '下降', flat: '持平' };
+function trendZhMap(): Record<string, string> {
+  return { up: m('skill-calorie.render-dietDocs.c091'), down: m('skill-calorie.render-dietDocs.c092'), flat: m('skill-calorie.render-dietDocs.c093') };
+}
 
 /** 餐别口径一行（**正文里说一次**的版本，不带常量名）。
  *
  *  #496 · 原文案是「窗口跟 MEAL_WINDOWS · 加餐=下午茶+夜宵」——把源码常量名印给用户看
  *  （`.scratch/t155o/text-review-P0.md` 第 2、62、68 条，四份审查件共 14 席命中）。
  *  现在只留读者用得上的那半句：加餐是哪几顿（#591：「、」也去掉，两顿用「和」并列）。 */
-const MEAL_NOTE = '加餐时段：下午茶和夜宵';
+function mealNote(): string {
+  return m('skill-calorie.render-dietDocs.c094');
+}
 
 /* ── 条目列表页（`calorie.view.diet` 的窗口词；老实物 `today_meals.html` 对照） ── */
 
@@ -140,23 +147,23 @@ export function buildViewDietDoc(input: ViewDietDocInput): string {
   /* §五 第 4 行：页内导航只列**真会出**的区块（点不到的项就是死链接）。 */
   const toc = renderTocBlock({
     items: [
-      { id: LIST_ANCHOR.kpi, text: '读数' },
-      ...(empty ? [] : [{ id: LIST_ANCHOR.trend, text: '每日摄入' }]),
-      { id: LIST_ANCHOR.dist, text: '餐别分布' },
+      { id: LIST_ANCHOR.kpi, text: m('skill-calorie.render-dietDocs.c001') },
+      ...(empty ? [] : [{ id: LIST_ANCHOR.trend, text: m('skill-calorie.render-dietDocs.c002') }]),
+      { id: LIST_ANCHOR.dist, text: m('skill-calorie.render-dietDocs.c003') },
       ...(empty ? [] : [
-        { id: LIST_ANCHOR.daily, text: '按日汇总' },
-        { id: LIST_ANCHOR.meals, text: '每日明细' },
+        { id: LIST_ANCHOR.daily, text: m('skill-calorie.render-dietDocs.c004') },
+        { id: LIST_ANCHOR.meals, text: m('skill-calorie.render-dietDocs.c005') },
       ]),
-      { id: LIST_ANCHOR.copy, text: '复制区' },
+      { id: LIST_ANCHOR.copy, text: m('skill-calorie.render-dietDocs.c006') },
     ],
   });
   /* #551 · 页头：窗口条 ＋ 事实条（形状住 `../diet/dietUi.ts`）。事实条**只留一件**——
      记录／合计／日均／趋势四件都在纸里各住各的槽，页头不再复述同一组数。 */
-  const head = dietHead(o.start, o.end, '共 ' + o.days + ' 天', [['有记录', o.loggedDays + ' 天']]);
+  const head = dietHead(o.start, o.end, m('skill-calorie.render-dietDocs.c007', { p0: String(o.days) }), [[m('skill-calorie.render-dietDocs.c008'), m('skill-calorie.render-dietDocs.c009', { p0: String(o.loggedDays) })]]);
   /* 日均占目标的几成：印章与刻度条两端的判语都由它派生（一处算式，三处只读）。 */
   const goalPct = o.calorieGoal > 0 && o.avgCalories !== null
     ? Math.round((o.avgCalories / o.calorieGoal) * 100) : null;
-  const trendZh = TREND_ZH[o.trend.summary.trend] ?? o.trend.summary.trend;
+  const trendText = trendZhMap()[o.trend.summary.trend] ?? o.trend.summary.trend;
   const remain = o.avgCalories === null ? null : o.calorieGoal - o.avgCalories;
   /* 原型里"逐日"的形状是**一排打孔格**（原型 `.punch`，用户点名那件「这 7 天」控件），落点在刻度条
      与账目之间（原型顺序：刻度 → 这 7 天 → 账目）。窗口 ≤7 天＝整窗都在格上，标题「这 N 天」；
@@ -171,7 +178,7 @@ export function buildViewDietDoc(input: ViewDietDocInput): string {
     ? distDate
     : (stripLogged.length === 0 ? null : (stripLogged[stripLogged.length - 1] as DaySeries).date);
   const stripHtml = days.length < 2 ? '' : renderPunchStrip({
-    heading: days.length <= STRIP_DAYS ? '这 ' + days.length + ' 天' : '近 ' + STRIP_DAYS + ' 天',
+    heading: days.length <= STRIP_DAYS ? m('skill-calorie.render-dietDocs.c010', { p0: String(days.length) }) : m('skill-calorie.render-dietDocs.c011', { p0: String(STRIP_DAYS) }),
     days: stripCells.map((d) => ({
       label: d.date.slice(5),
       value: d.calories === null ? null : fmt(d.calories),
@@ -181,16 +188,16 @@ export function buildViewDietDoc(input: ViewDietDocInput): string {
   /** 纸里的正文：主数字头 → 刻度条 → 账目 → 每日摄入 → 餐别分布 → 按日汇总 → 全部记录 → 口径行。 */
   const sheetParts: string[] = [anchored(LIST_ANCHOR.kpi, [
     renderSummaryHead({
-      eyebrow: '日均摄入',
+      eyebrow: m('skill-calorie.render-dietDocs.c012'),
       value: fmt(o.avgCalories),
-      unit: '卡',
-      denominator: '/ ' + o.calorieGoal + ' 卡',
+      unit: m('skill-calorie.render-dietDocs.c013'),
+      denominator: m('skill-calorie.render-dietDocs.c014', { p0: String(o.calorieGoal) }),
       ...(goalPct === null ? {} : {
         stamp: goalPct > 100
-          ? { text: '超目标 ' + (goalPct - 100) + '%', tone: 'danger' as const }
+          ? { text: m('skill-calorie.render-dietDocs.c015', { p0: String(goalPct - 100) }), tone: 'danger' as const }
           : (goalPct < 70
-            ? { text: '只有目标的 ' + goalPct + '%', tone: 'warn' as const }
-            : { text: '达标 ' + goalPct + '%', tone: 'ok' as const }),
+            ? { text: m('skill-calorie.render-dietDocs.c016', { p0: String(goalPct) }), tone: 'warn' as const }
+            : { text: m('skill-calorie.render-dietDocs.c017', { p0: String(goalPct) }), tone: 'ok' as const }),
       }),
       /* 2026-09-24 用户裁定「主数字收到样张那一档（46px，最像小票）」：档名 `m` 就是小票原型
          `.total .n` 的真数（大字档 `xl` 是 92px，留给大字版式那一套页用）。 */
@@ -200,18 +207,21 @@ export function buildViewDietDoc(input: ViewDietDocInput): string {
       value: o.avgCalories ?? 0,
       goal: o.calorieGoal,
       variant: 'cells',
-      leftLabel: '日均 ' + fmt(o.avgCalories) + ' / ' + o.calorieGoal + ' 卡'
-        + (goalPct === null ? '' : '（' + goalPct + '%）'),
-      rightLabel: remain === null ? '—' : (remain >= 0 ? '差 ' + remain + ' 卡' : '超 ' + (-remain) + ' 卡'),
+      leftLabel: m('skill-calorie.render-dietDocs.c018', {
+        p0: String(fmt(o.avgCalories)),
+        p1: String(o.calorieGoal),
+        p2: String(goalPct === null ? '' : '（' + goalPct + '%）'),
+      }),
+      rightLabel: remain === null ? '—' : (remain >= 0 ? m('skill-calorie.render-dietDocs.c019', { p0: String(remain) }) : m('skill-calorie.render-dietDocs.c020', { p0: String(-remain) })),
     }),
     stripHtml,
     renderLedgerRows({
-      heading: '账目',
+      heading: m('skill-calorie.render-dietDocs.c021'),
       rows: [
-        { label: '热量目标', value: String(o.calorieGoal), unit: '卡' },
-        { label: '记录条数', value: String(mealTotal), unit: '条' },
-        { label: '每日摄入趋势', value: trendZh },
-        { label: '合计', value: String(o.totalCalories), unit: '卡', kind: 'total' as const },
+        { label: m('skill-calorie.render-dietDocs.c022'), value: String(o.calorieGoal), unit: m('skill-calorie.render-dietDocs.c023') },
+        { label: m('skill-calorie.render-dietDocs.c024'), value: String(mealTotal), unit: m('skill-calorie.render-dietDocs.c025') },
+        { label: m('skill-calorie.render-dietDocs.c026'), value: trendText },
+        { label: m('skill-calorie.render-dietDocs.c027'), value: String(o.totalCalories), unit: m('skill-calorie.render-dietDocs.c028'), kind: 'total' as const },
       ],
     }),
   ].join(''))];
@@ -222,81 +232,82 @@ export function buildViewDietDoc(input: ViewDietDocInput): string {
     const max = vals.reduce((a, b) => ((b.calories as number) > (a.calories as number) ? b : a), vals[0] as DaySeries);
     const min = vals.reduce((a, b) => ((b.calories as number) < (a.calories as number) ? b : a), vals[0] as DaySeries);
     sheetParts.push(anchored(LIST_ANCHOR.trend, renderLedgerRows({
-      heading: '每日摄入',
+      heading: m('skill-calorie.render-dietDocs.c029'),
       rows: [
-        { label: '最多的一天 ' + max.date.slice(5), value: fmt(max.calories), unit: '卡' },
-        { label: '最少的一天 ' + min.date.slice(5), value: fmt(min.calories), unit: '卡' },
-        { label: '趋势', value: trendZh },
+        { label: m('skill-calorie.render-dietDocs.c030', { p0: String(max.date.slice(5)) }), value: fmt(max.calories), unit: m('skill-calorie.render-dietDocs.c031') },
+        { label: m('skill-calorie.render-dietDocs.c032', { p0: String(min.date.slice(5)) }), value: fmt(min.calories), unit: m('skill-calorie.render-dietDocs.c033') },
+        { label: m('skill-calorie.render-dietDocs.c034'), value: trendText },
       ],
     })));
   } else if (loggedDays.length === 1) {
     const only = loggedDays[0] as DaySeries;
     sheetParts.push(anchored(LIST_ANCHOR.trend, renderLedgerRows({
-      heading: '每日摄入',
-      rows: [{ label: '有记录的一天 ' + only.date.slice(5), value: fmt(only.calories), unit: '卡' }],
+      heading: m('skill-calorie.render-dietDocs.c035'),
+      rows: [{ label: m('skill-calorie.render-dietDocs.c036', { p0: String(only.date.slice(5)) }), value: fmt(only.calories), unit: m('skill-calorie.render-dietDocs.c037') }],
     })));
   }
   if (dist.totalCalories > 0) {
     /* 餐别分布（柱图 → 账目行）：一行一餐，括号里带这一餐的记录条数；没记的那一餐写 `—`。 */
     sheetParts.push(anchored(LIST_ANCHOR.dist, renderLedgerRows({
-      heading: '餐别分布 ' + distDate,
+      heading: m('skill-calorie.render-dietDocs.c038', { p0: String(distDate) }),
       rows: dist.slices.map((s) => (s.count > 0
-        ? { label: s.meal + '（' + s.count + ' 餐）', value: String(s.calories), unit: '卡' }
+        ? { label: m('skill-calorie.render-dietDocs.c039', { p0: String(s.meal), p1: String(s.count) }), value: String(s.calories), unit: m('skill-calorie.render-dietDocs.c040') }
         : { label: s.meal, value: '—' })),
     })));
     /* #496 · 餐别口径（加餐是哪几顿）只在纸里说一次，不带常量名。 */
-    sheetParts.push(renderCaliberLine(MEAL_NOTE));
+    sheetParts.push(renderCaliberLine(mealNote()));
   } else {
     /* 裁定 5：零值不画柱身；裁定 4：这一支的值位是「尾日没记录」而不是「吃了 0 卡」⇒ 值位写 `—`。 */
     sheetParts.push(anchored(LIST_ANCHOR.dist, renderLedgerRows({
-      heading: '餐别分布 ' + distDate,
+      heading: m('skill-calorie.render-dietDocs.c041', { p0: String(distDate) }),
       rows: dist.slices.map((s) => ({ label: s.meal, value: '—' })),
     })));
-    sheetParts.push(renderCaliberLine(distDate + ' 这天没有记录，窗内其余日子有数。'));
+    sheetParts.push(renderCaliberLine(m('skill-calorie.render-dietDocs.c042', { p0: String(distDate) })));
   }
   if (empty) {
     /* §五 第 12 行：空态块 ＋ 一句「怎么记第一条」的引导句（裁定 4）。 */
     sheetParts.push(anchored(LIST_ANCHOR.meals, emptyGuide({
       icon: '🍽️',
-      text: '这一段时间（' + o.start + ' ~ ' + o.end + '）没有饮食记录。',
-      hint: '要让它有内容，说「记一餐」把吃的那顿记上；补以前的日期就说「补记饮食」。',
+      text: m('skill-calorie.render-dietDocs.c043', { p0: String(o.start), p1: String(o.end) }),
+      hint: m('skill-calorie.render-dietDocs.c044'),
     })));
   } else {
     /* §五 第 9 行：**按日汇总也走账目行**——公共层在窄档把六列表"卡片化"成一列七块（整页 2242px，
        实测截图），一列「日期 → 摄入」才是小票语汇里日级该有的形状；逐日的三宏量在下面明细行里逐条可见。
        明细从**九列表改明细行**（一条记录一行：时间／餐别／食物／克数 …… 热量 ＋ 备注行 ＋ 三宏量行下读数）。 */
     sheetParts.push(anchored(LIST_ANCHOR.daily, renderLedgerRows({
-      heading: '按日汇总',
+      heading: m('skill-calorie.render-dietDocs.c045'),
       rows: days.map((d) => (d.calories === null
         ? { label: d.date, value: fmt(d.calories) }
-        : { label: d.date, value: fmt(d.calories), unit: '卡' })),
+        : { label: d.date, value: fmt(d.calories), unit: m('skill-calorie.render-dietDocs.c046') })),
     })));
-    sheetParts.push(renderCaliberLine('无记录日写 — 不断 0'));
+    sheetParts.push(renderCaliberLine(m('skill-calorie.render-dietDocs.c047')));
+    const mealsSuffix = mealsTruncated ? m('skill-calorie.render-dietDocs.c048', { p0: String(meals.length) }) : '';
     sheetParts.push(anchored(LIST_ANCHOR.meals, renderEntryRows({
       /* #496 · 标题写「全部记录」：这一页的明细就是窗内全部记录（截断时明示只列前 N 条）。 */
-      heading: '全部记录（共 ' + mealTotal + ' 条' + (mealsTruncated ? '，仅列前 ' + meals.length + ' 条' : '') + '）',
-      rows: rows.map((m) => {
-        const badge = String(inferMealType(String(m.time ?? '')) ?? '');
-        const note = String(m.note ?? '').trim();
+      heading: m('skill-calorie.render-dietDocs.c049', { p0: String(mealTotal), p1: String(mealsSuffix) }),
+      rows: rows.map((item) => {
+        const badge = String(inferMealType(String(item.time ?? '')) ?? '');
+        const note = String(item.note ?? '').trim();
         return {
-          time: m.date + ' ' + minuteOf(m.time),
+          time: item.date + ' ' + minuteOf(item.time),
           ...(badge === '' ? {} : { badge }),
-          name: m.food_name,
-          measure: m.grams + ' g',
-          value: String(m.calories),
-          unit: '卡',
+          name: item.food_name,
+          measure: item.grams + ' g',
+          value: String(item.calories),
+          unit: m('skill-calorie.render-dietDocs.c050'),
           ...(note === '' ? {} : { note }),
           facts: [
-            '蛋白 ' + fmt(m.protein) + ' g',
-            '碳水 ' + fmt(m.carbs) + ' g',
-            '脂肪 ' + fmt(m.fat) + ' g',
+            m('skill-calorie.render-dietDocs.c051', { p0: String(fmt(item.protein)) }),
+            m('skill-calorie.render-dietDocs.c052', { p0: String(fmt(item.carbs)) }),
+            m('skill-calorie.render-dietDocs.c053', { p0: String(fmt(item.fat)) }),
           ],
         };
       }),
     })));
   }
   /* §五 第 13 行：缺值口径一条（餐别口径已在纸里那一条说过一次，不重复；#591 门禁 R2 的口径行做法照旧）。 */
-  sheetParts.push(renderCaliberLine('本页缺值一律写成 —，不当成 0 卡。'));
+  sheetParts.push(renderCaliberLine(m('skill-calorie.render-dietDocs.c054')));
   /* §五 第 14 行：复制区（双按钮；`command` 不在时只出「复制数据」，不留死按钮）。
      **落点在纸里**（2026-09-24 用户裁定「纸内，但要有小票的巧思」）：它成小票下缘那一联「存根」
      ——撕线（`receiptStub`）在它上面，组件自己那条裁切线留在纸底，两线夹着一联就是存根。 */
@@ -312,19 +323,19 @@ export function buildViewDietDoc(input: ViewDietDocInput): string {
   /* #560 · 屏上来源脚注撤（用户裁决原文：「用户 2026-09-15 点名：所有 HTML 页面底部的「数据来源：xxx」都删掉（用户直接看得见按钮与内容，不需要脚注复读来路）。」）；
      `sourceLine` helper 与复制载荷 `copyLog.source` 保留（技术原件，只删屏上脚注）。 */
   return assembleDocPage({
-    docTitle: DOC_TITLE,
+    docTitle: DOC_TITLE(),
     /* 用户缺陷（2026-09-15）：页名不再带窗口日期——窗口区间归页头窗口条，全页只出现一次。
        2026-09-24 追加：页名跟**唤醒词**走（「本周饮食」等由 `src/home/today.ts` 按 `window` 参数给），
        不再一律「饮食总览」；不给时回落「饮食总览」。 */
-    title: input.title ?? '饮食总览',
+    title: input.title ?? m('skill-calorie.render-dietDocs.c055'),
     /* #496 · 眉标原写命令键「calorie.view.diet · 饮食域」——`t425-融合基准.md:127-132`（裁定 1）
        定死不上屏；改样张口径的中文族名，#591 再去掉族名里的 `·`（门禁 R1，同 `diet/todayDocs.ts`）。 */
-    eyebrow: '卡路里饮食',
+    eyebrow: m('skill-calorie.render-dietDocs.c056'),
     /* §五 第 3 行：结论句改成**口径句**（日均只按有记录的天算）——合计住纸里合计行、日均住主数字头、
        趋势住账目行，副题再报一遍同一组数就是同一件事说第四遍。 */
     subtitle: o.loggedDays > 0
-      ? '日均只按有记录的 ' + o.loggedDays + ' 天算，其余日子算缺数。'
-      : '本窗还没有饮食记录。',
+      ? m('skill-calorie.render-dietDocs.c057', { p0: String(o.loggedDays) })
+      : m('skill-calorie.render-dietDocs.c058'),
     content: '<style>' + sheetStyleCss() + '</style>' + toc + head
       + renderSheetFrame({
         variant: 'receipt', notch: true, cutLine: true, content: sheetParts.join('') + receiptStub(copy),
@@ -335,34 +346,36 @@ export function buildViewDietDoc(input: ViewDietDocInput): string {
 
 /* ── 健康盘（health_dashboard.html 对照：四维＋今日该做什么＋复制回 AI） ── */
 
-const HEALTH_DIMS = [
-  { key: 'calorie', name: '摄入' },
-  { key: 'exercise', name: '运动' },
-  { key: 'weight', name: '体重' },
-  { key: 'deficit', name: '缺口' },
-] as const;
+function healthDims(): readonly { readonly key: 'weight' | 'calorie' | 'exercise' | 'deficit'; readonly name: string }[] {
+  return [
+    { key: 'calorie', name: m('skill-calorie.render-dietDocs.c095') },
+    { key: 'exercise', name: m('skill-calorie.render-dietDocs.c096') },
+    { key: 'weight', name: m('skill-calorie.render-dietDocs.c097') },
+    { key: 'deficit', name: m('skill-calorie.render-dietDocs.c098') },
+  ];
+}
 
 export function buildHealthDoc(h: HealthPlate): string {
   const dims = (h.dashboard.data ?? {}) as { weight?: unknown; calorie?: unknown; exercise?: unknown; deficit?: unknown };
-  const missing = HEALTH_DIMS.filter((d) => dims[d.key] === null || dims[d.key] === undefined).map((d) => d.name);
+  const missing = healthDims().filter((d) => dims[d.key] === null || dims[d.key] === undefined).map((d) => d.name);
   const parts: string[] = [renderKpiGrid([
-    { label: '区间', value: h.start + ' ~ ' + h.end, detail: '有记录 ' + h.loggedDays + ' 天' },
-    { label: '日均摄入', value: fmt(h.avgIntake), unit: '卡' },
-    { label: '日均缺口', value: fmt(h.avgDeficit), unit: '卡' },
+    { label: m('skill-calorie.render-dietDocs.c059'), value: h.start + ' ~ ' + h.end, detail: m('skill-calorie.render-dietDocs.c060', { p0: String(h.loggedDays) }) },
+    { label: m('skill-calorie.render-dietDocs.c061'), value: fmt(h.avgIntake), unit: m('skill-calorie.render-dietDocs.c062') },
+    { label: m('skill-calorie.render-dietDocs.c063'), value: fmt(h.avgDeficit), unit: m('skill-calorie.render-dietDocs.c064') },
     {
-      label: '四维', value: h.dashboard.status === 'ok' ? '齐' : '部分缺',
-      detail: missing.length === 0 ? '体重维有' : '缺：' + missing.join('、'),
+      label: m('skill-calorie.render-dietDocs.c065'), value: h.dashboard.status === 'ok' ? m('skill-calorie.render-dietDocs.c066') : m('skill-calorie.render-dietDocs.c067'),
+      detail: missing.length === 0 ? m('skill-calorie.render-dietDocs.c068') : m('skill-calorie.render-dietDocs.c069', { p0: String(missing.join('、')) }),
       status: missing.length === 0 ? 'ok' : 'warn',
     },
   ])];
   parts.push(renderListRows({
-    items: HEALTH_DIMS.map((d) => {
+    items: healthDims().map((d) => {
       const v = dims[d.key];
       const has = v !== null && v !== undefined;
       return {
         left: d.name,
-        main: has ? '有数据' : '缺数据（先补记录）',
-        right: has ? '✓' : '缺',
+        main: has ? m('skill-calorie.render-dietDocs.c070') : m('skill-calorie.render-dietDocs.c071'),
+        right: has ? '✓' : m('skill-calorie.render-dietDocs.c072'),
       };
     }),
   }));
@@ -374,23 +387,23 @@ export function buildHealthDoc(h: HealthPlate): string {
   if (h.avgIntake !== null && goalAvg) {
     const ratio = h.avgIntake / goalAvg;
     if (ratio > 1.1) {
-      actions.push({ left: '!', main: '摄入超标', right: '日均 ' + h.avgIntake + ' 卡 vs 目标 ' + r1(goalAvg) + ' 卡' });
+      actions.push({ left: '!', main: m('skill-calorie.render-dietDocs.c073'), right: m('skill-calorie.render-dietDocs.c074', { p0: String(h.avgIntake), p1: String(r1(goalAvg)) }) });
     } else if (ratio < 0.7) {
-      actions.push({ left: '!', main: '摄入不足', right: '日均仅 ' + h.avgIntake + ' 卡，长期可能影响代谢' });
+      actions.push({ left: '!', main: m('skill-calorie.render-dietDocs.c075'), right: m('skill-calorie.render-dietDocs.c076', { p0: String(h.avgIntake) }) });
     }
   }
   if (h.avgDeficit !== null) {
-    if (h.avgDeficit > 700) actions.push({ left: '🔥', main: '缺口过大', right: '日均缺口 ' + h.avgDeficit + ' 卡，超过 700 不健康' });
-    else if (h.avgDeficit < 0) actions.push({ left: '🍔', main: '热量盈余', right: '日均 ' + Math.abs(h.avgDeficit) + ' 卡盈余，可能在增重' });
+    if (h.avgDeficit > 700) actions.push({ left: '🔥', main: m('skill-calorie.render-dietDocs.c077'), right: m('skill-calorie.render-dietDocs.c078', { p0: String(h.avgDeficit) }) });
+    else if (h.avgDeficit < 0) actions.push({ left: '🍔', main: m('skill-calorie.render-dietDocs.c079'), right: m('skill-calorie.render-dietDocs.c080', { p0: String(Math.abs(h.avgDeficit)) }) });
   }
-  if (missing.length > 0) actions.push({ left: '补', main: '部分维度缺数据', right: '缺：' + missing.join('、') });
-  if (actions.length === 0) actions.push({ left: '✓', main: '一切正常', right: '指标均在合理范围内' });
+  if (missing.length > 0) actions.push({ left: m('skill-calorie.render-dietDocs.c081'), main: m('skill-calorie.render-dietDocs.c082'), right: m('skill-calorie.render-dietDocs.c083', { p0: String(missing.join('、')) }) });
+  if (actions.length === 0) actions.push({ left: '✓', main: m('skill-calorie.render-dietDocs.c084'), right: m('skill-calorie.render-dietDocs.c085') });
   parts.push(renderDisclosure({
-    title: '今日该做什么（共 ' + actions.length + ' 条）',
+    title: m('skill-calorie.render-dietDocs.c086', { p0: String(actions.length) }),
     open: true,
     contentHtml: renderListRows({ items: actions }),
   }));
-  parts.push(dataCopyArea('复制回 AI', {
+  parts.push(dataCopyArea(m('skill-calorie.render-dietDocs.c087'), {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.health',
       data: {
@@ -403,9 +416,9 @@ export function buildHealthDoc(h: HealthPlate): string {
     },
   }));
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '健康盘 ' + h.start + ' ~ ' + h.end,
-    eyebrow: 'calorie.view.health · 饮食域',
+    docTitle: DOC_TITLE(),
+    title: m('skill-calorie.render-dietDocs.c088', { p0: String(h.start), p1: String(h.end) }),
+    eyebrow: m('skill-calorie.render-dietDocs.c089'),
     subtitle: h.dashboard.message,
     content: parts.join(''),
     charts: false, pageUi: true,

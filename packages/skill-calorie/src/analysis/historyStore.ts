@@ -4,6 +4,7 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { getNutritionGoal } from '../goal/nutritionGoal.js';
 import { todayISO } from './utils.js';
+import { m } from '../entries/index.js';
 
 export interface DayIntake {
   date: string;
@@ -44,9 +45,12 @@ export function getCalorieHistory(db: DatabaseSync, days = 7, now = new Date(tod
     days,
     goal,
     rows: rows.map((r) => {
-      if (goal === null) return { ...r, remaining: null, status: '未设目标' };
+      if (goal === null) return { ...r, remaining: null, status: m('skill-calorie.analysis-historyStore.c001') };
       const remaining = Math.round(goal - r.calories);
-      return { ...r, remaining, status: remaining !== 0 ? `${remaining >= 0 ? '+' : ''}${remaining}卡` : '达标' };
+      return { ...r, remaining, status: remaining !== 0 ? m('skill-calorie.analysis-historyStore.c002', {
+        p0: String(remaining >= 0 ? '+' : ''),
+        p1: String(remaining),
+      }) : m('skill-calorie.analysis-historyStore.c003') };
     }),
   };
 }

@@ -7,6 +7,7 @@ import type { SimBase, SimPoint } from './simulate.js';
 /* #717 批④：本件判「缺口水平靠不靠谱」用的是**容差带**（0.3–1.2），不是目标速率（0.5–1.0）——
    两者从前都是裸数字，现在各自具名、正本都在共用位（本件原写 `weekly >= 0.3 && weekly <= 1.2`）。 */
 import { DEFICIT_RATE_TOLERANCE } from '../shared/healthRate.js';
+import { m } from '../entries/index.js';
 
 const round = (n: number): number => Math.round(n);
 const round2 = (n: number): number => Math.round(n * 100) / 100;
@@ -17,7 +18,7 @@ const round2 = (n: number): number => Math.round(n * 100) / 100;
  *  空库跑 20 条预测词时读者会看到「需要 ≥14 天…当前只有 14 天」这种自相矛盾的句子（#466 的根因）。
  *  现在由**调用方**把两样都按同一条量纲传进来：`need`＝门槛原文，`have`＝实际有效记录的读数（如「13 天体重记录」）。 */
 function degrade(kind: string, title: string, need: string, have: string): SimBase {
-  return { kind, title, degraded: true, degradeMsg: '数据不足:需要 ' + need + ',当前只有 ' + have + '。', insight: '数据不足,无法预测。' };
+  return { kind, title, degraded: true, degradeMsg: m('skill-calorie.analysis-simulate2.c001', { p0: String(need), p1: String(have) }), insight: m('skill-calorie.analysis-simulate2.c002') };
 }
 
 function weightVals(series: DaySeries[]): number[] {
@@ -29,7 +30,7 @@ export interface WeightSimCut extends SimBase { current?: number; cutKcal?: numb
 export function weightSimCut(series: DaySeries[], cutKcal: number, title: string, kind = 'weight_sim_cut'): WeightSimCut {
   const dfAvg = seriesAvg(series, 'deficit');
   const wv = weightVals(series);
-  if (wv.length === 0) return degrade(kind, title, '至少 1 天体重记录', wv.length + ' 天体重记录');
+  if (wv.length === 0) return degrade(kind, title, m('skill-calorie.analysis-simulate2.c003'), m('skill-calorie.analysis-simulate2.c004', { p0: String(wv.length) }));
   const current = wv[wv.length - 1] as number;
   const newDeficit = (dfAvg ?? 0) + cutKcal;
   const weeklyLoss = (newDeficit * 7) / KCAL_PER_KG;
@@ -45,14 +46,28 @@ export function weightSimCut(series: DaySeries[], cutKcal: number, title: string
     pts.push({ date: shiftISODate(last.date, horizon), value: round2(current - (weeklyLoss * horizon) / 7) });
   }
   const feasible = HEALTHY_RATE[0] <= weeklyLoss && weeklyLoss <= HEALTHY_RATE[1];
+  /* #1197 §4.7：条件分枝与符号位先落成局部变量，整句才好迁成 m(key, {...})。 */
+  const avgSign = (dfAvg ?? 0) >= 0 ? '+' : '';
+  const avgDfText = String(round(dfAvg ?? 0));
+  const perWeekText = String(round2((cutKcal * 7) / KCAL_PER_KG));
+  const rateNote = feasible ? m('skill-calorie.analysis-simulate2.c005') : m('skill-calorie.analysis-simulate2.c006');
   return {
     kind, title, degraded: false,
     start: (series[0] as DaySeries).date, end: last.date, days: series.length,
     current: round2(current), cutKcal,
     newDeficit: round(newDeficit), weeklyLoss: round2(weeklyLoss), feasible,
-    assumption: '当前日均缺口 ' + ((dfAvg ?? 0) >= 0 ? '+' : '') + round(dfAvg ?? 0) + ' 卡,再每天多减 ' + cutKcal + ' 卡(≈ 每周 ' + round2((cutKcal * 7) / KCAL_PER_KG) + ' kg);90 天轨迹见下',
+    assumption: m('skill-calorie.analysis-simulate2.c007', {
+      p0: String(avgSign),
+      p1: String(avgDfText),
+      p2: String(cutKcal),
+      p3: String(perWeekText),
+    }),
     forecast: { label: title, horizonDays: 90, points: pts },
-    insight: '模拟 90 天:约减 ' + round1((weeklyLoss * 90) / 7) + ' kg,速率 ' + weeklyLoss.toFixed(2) + ' kg/周(' + (feasible ? '健康范围内' : '⚠️ 超出健康范围 0.5-1.0,建议减量') + ')。',
+    insight: m('skill-calorie.analysis-simulate2.c008', {
+      p0: String(round1((weeklyLoss * 90) / 7)),
+      p1: String(weeklyLoss.toFixed(2)),
+      p2: String(rateNote),
+    }),
   };
 
   function round1(n: number): number { return Math.round(n * 10) / 10; }
@@ -62,7 +77,7 @@ export interface WeightSimTarget extends SimBase { current?: number; targetLoss?
 
 export function weightSimTarget(series: DaySeries[], targetKg: number, days: number, title: string, kind = 'weight_sim_target'): WeightSimTarget {
   const wv = weightVals(series);
-  if (wv.length === 0) return degrade(kind, title, '至少 1 天体重记录', wv.length + ' 天体重记录');
+  if (wv.length === 0) return degrade(kind, title, m('skill-calorie.analysis-simulate2.c009'), m('skill-calorie.analysis-simulate2.c010', { p0: String(wv.length) }));
   const current = wv[wv.length - 1] as number;
   const weeklyRate = targetKg / (days / 7);
   const neededDeficit = round((targetKg * KCAL_PER_KG) / days);
@@ -81,14 +96,24 @@ export function weightSimTarget(series: DaySeries[], targetKg: number, days: num
   if (days % 7 !== 0) {
     pts.push({ date: shiftISODate(last.date, days), value: round2(current - targetKg) });
   }
+  const feasibilityNote = feasible ? m('skill-calorie.analysis-simulate2.c011') : slow ? m('skill-calorie.analysis-simulate2.c012', { p0: String(weeklyRate.toFixed(2)) }) : m('skill-calorie.analysis-simulate2.c013');
   return {
     kind, title, degraded: false,
     start: (series[0] as DaySeries).date, end: last.date, days: series.length,
     current: round2(current), targetLoss: targetKg, daysTarget: days,
     weeklyRate: round2(weeklyRate), neededDeficit, feasible,
-    assumption: days + ' 天减 ' + targetKg + ' kg = 每周 ' + weeklyRate.toFixed(2) + ' kg,需日均缺口 ' + neededDeficit + ' 卡(≈ 每天少吃 2 碗米饭 + 30 分钟快走)',
+    assumption: m('skill-calorie.analysis-simulate2.c014', {
+      p0: String(days),
+      p1: String(targetKg),
+      p2: String(weeklyRate.toFixed(2)),
+      p3: String(neededDeficit),
+    }),
     forecast: { label: title, horizonDays: days, points: pts },
-    insight: '所需日均缺口 ' + neededDeficit + ' 卡,速率 ' + weeklyRate.toFixed(2) + ' kg/周' + (feasible ? '(可行,在健康范围内)。' : slow ? '(⚠️ 不可行:每周仅 ' + weeklyRate.toFixed(2) + ' kg,偏慢,缩短时间或提高目标)。' : '(⚠️ 不可行:超出每周 0.5-1.0 kg 安全范围,拉长时间或降低目标)。'),
+    insight: m('skill-calorie.analysis-simulate2.c015', {
+      p0: String(neededDeficit),
+      p1: String(weeklyRate.toFixed(2)),
+      p2: String(feasibilityNote),
+    }),
   };
 }
 
@@ -130,7 +155,7 @@ function residualStdCal(series: DaySeries[], slope: number): number {
 
 export function calorieForecast(series: DaySeries[], horizonDays: number, title: string, kind = 'calorie_forecast'): CalorieForecast {
   const cal = series.map((s) => s.calories).filter((v): v is number => v !== null && v !== undefined);
-  if (cal.length < SIM_MIN_DAYS) return degrade(kind, title, '≥' + SIM_MIN_DAYS + ' 天摄入记录', cal.length + ' 天摄入记录');
+  if (cal.length < SIM_MIN_DAYS) return degrade(kind, title, m('skill-calorie.analysis-simulate2.c016', { p0: String(SIM_MIN_DAYS) }), m('skill-calorie.analysis-simulate2.c017', { p0: String(cal.length) }));
   const [rate, latest] = linearRateCal(series);
   const sigma = residualStdCal(series, rate ?? 0);
   const last = series[series.length - 1] as DaySeries;
@@ -155,9 +180,19 @@ export function calorieForecast(series: DaySeries[], horizonDays: number, title:
     kind, title, degraded: false,
     start: (series[0] as DaySeries).date, end: last.date, days: series.length,
     current: round(latest as number), goal, dailyRate: round1(rate as number),
-    assumption: '按近 ' + series.length + ' 天摄入趋势外推(日变化 ' + ((rate as number) >= 0 ? '+' : '') + (rate as number).toFixed(1) + ' 卡/天)',
+    assumption: m('skill-calorie.analysis-simulate2.c018', {
+      p0: String(series.length),
+      p1: String((rate as number) >= 0 ? '+' : ''),
+      p2: String((rate as number).toFixed(1)),
+    }),
     forecast: fc,
-    insight: horizonDays + ' 天后日均摄入预计 ' + round(endV) + ' 卡(目标 ' + goal + ' 卡,' + (nearGoal ? '' : '⚠️ ') + '偏离 ' + round(Math.abs(endV - (goal ?? 0))) + ' 卡)。',
+    insight: m('skill-calorie.analysis-simulate2.c019', {
+      p0: String(horizonDays),
+      p1: String(round(endV)),
+      p2: String(goal),
+      p3: String(nearGoal ? '' : '⚠️ '),
+      p4: String(round(Math.abs(endV - (goal ?? 0)))),
+    }),
   };
 
   function round1(n: number): number { return Math.round(n * 10) / 10; }
@@ -167,17 +202,22 @@ export interface CalorieGoalEta extends SimBase { avg?: number; goal?: number; o
 
 export function calorieGoalEta(series: DaySeries[], title: string, kind = 'calorie_goal'): CalorieGoalEta {
   const cal = series.map((s) => s.calories).filter((v): v is number => v !== null && v !== undefined);
-  if (cal.length < SIM_MIN_DAYS) return degrade(kind, title, '≥' + SIM_MIN_DAYS + ' 天摄入记录', cal.length + ' 天摄入记录');
+  if (cal.length < SIM_MIN_DAYS) return degrade(kind, title, m('skill-calorie.analysis-simulate2.c020', { p0: String(SIM_MIN_DAYS) }), m('skill-calorie.analysis-simulate2.c021', { p0: String(cal.length) }));
   const avg = cal.reduce((a, b) => a + b, 0) / cal.length;
   const goal = (series[series.length - 1] as DaySeries).calorieGoal ?? 1800;
   const onTarget = Math.abs(avg - goal) <= goal * 0.1;
+  const targetNote = onTarget ? m('skill-calorie.analysis-simulate2.c022') : avg > goal ? m('skill-calorie.analysis-simulate2.c023', { p0: String(round(avg - goal)) }) : m('skill-calorie.analysis-simulate2.c024');
   return {
     kind, title, degraded: false,
     start: (series[0] as DaySeries).date, end: (series[series.length - 1] as DaySeries).date, days: series.length,
     avg: round(avg), goal, onTarget,
     gap: round(goal - avg),
-    assumption: '目标 = daily_goal 表当日热量目标;达成判定 = 日均偏离 ≤10%',
-    insight: '日均摄入 ' + round(avg) + ' 卡 vs 目标 ' + goal + ' 卡,' + (onTarget ? '已在目标 ±10% 内 ✅' : avg > goal ? '⚠️ 超出目标 ' + round(avg - goal) + ' 卡,先查超标日来源' : '⚠️ 低于目标,注意别低于 BMR') + '。',
+    assumption: m('skill-calorie.analysis-simulate2.c025'),
+    insight: m('skill-calorie.analysis-simulate2.c026', {
+      p0: String(round(avg)),
+      p1: String(goal),
+      p2: String(targetNote),
+    }),
   };
 }
 
@@ -192,16 +232,25 @@ export function calorieDeficitEta(series: DaySeries[], title: string, kind = 'ca
    *  本来就是**摄入（＋运动）**那些天，不含「只有运动、没有摄入」的天。量纲词写成并集会把读者引到
    *  一个不存在的口径上：那几天既没进分母、也没进分子。判据件＝
    *  `test/analysis-deficit-eta-466.test.mjs`（① 两段量纲词逐字相等；② 读数＝`deficit` 非空条数）。 */
-  if (df.length < SIM_MIN_DAYS) return degrade(kind, title, '≥' + SIM_MIN_DAYS + ' 天摄入+运动记录', df.length + ' 天摄入+运动记录');
+  if (df.length < SIM_MIN_DAYS) return degrade(kind, title, m('skill-calorie.analysis-simulate2.c027', { p0: String(SIM_MIN_DAYS) }), m('skill-calorie.analysis-simulate2.c028', { p0: String(df.length) }));
   const avgDf = df.reduce((a, b) => a + b, 0) / df.length;
   const weekly = (avgDf * 7) / KCAL_PER_KG;
   const healthy = weekly >= DEFICIT_RATE_TOLERANCE[0] && weekly <= DEFICIT_RATE_TOLERANCE[1];
+  const dfSign = avgDf >= 0 ? '+' : '';
+  const weekSign = weekly >= 0 ? '+' : '';
+  const gapNote = healthy ? m('skill-calorie.analysis-simulate2.c029') : m('skill-calorie.analysis-simulate2.c030');
   return {
     kind, title, degraded: false,
     start: (series[0] as DaySeries).date, end: (series[series.length - 1] as DaySeries).date, days: series.length,
     avgDeficit: round(avgDf), weeklyLoss: round2(weekly),
-    assumption: '缺口 = (TDEE + 运动消耗) − 摄入;每 7700 卡 ≈ 1 kg',
-    insight: '日均缺口 ' + (avgDf >= 0 ? '+' : '') + round(avgDf) + ' 卡 → 每周约 ' + (weekly >= 0 ? '+' : '') + weekly.toFixed(2) + ' kg' + (healthy ? '(健康范围内)。' : '(⚠️ 缺口过大或不足,建议调整到 +300~+500 卡/天)。'),
+    assumption: m('skill-calorie.analysis-simulate2.c031'),
+    insight: m('skill-calorie.analysis-simulate2.c032', {
+      p0: String(dfSign),
+      p1: String(String(round(avgDf))),
+      p2: String(weekSign),
+      p3: String(weekly.toFixed(2)),
+      p4: String(gapNote),
+    }),
   };
 }
 
@@ -209,15 +258,20 @@ export interface CalorieStability extends SimBase { avg?: number; sigma?: number
 
 export function calorieStability(series: DaySeries[], title: string, kind = 'calorie_stability'): CalorieStability {
   const cal = series.map((s) => s.calories).filter((v): v is number => v !== null && v !== undefined);
-  if (cal.length < SIM_MIN_DAYS) return degrade(kind, title, '≥' + SIM_MIN_DAYS + ' 天摄入记录', cal.length + ' 天摄入记录');
+  if (cal.length < SIM_MIN_DAYS) return degrade(kind, title, m('skill-calorie.analysis-simulate2.c033', { p0: String(SIM_MIN_DAYS) }), m('skill-calorie.analysis-simulate2.c034', { p0: String(cal.length) }));
   const avg = cal.reduce((a, b) => a + b, 0) / cal.length;
   const sigma = Math.sqrt(cal.reduce((a, c) => a + (c - avg) * (c - avg), 0) / (cal.length - 1));
   const stable = sigma <= 300;
+  const stableNote = stable ? m('skill-calorie.analysis-simulate2.c035') : m('skill-calorie.analysis-simulate2.c036');
   return {
     kind, title, degraded: false,
     start: (series[0] as DaySeries).date, end: (series[series.length - 1] as DaySeries).date, days: series.length,
     avg: round(avg), sigma: round(sigma), stable,
-    assumption: '稳定性判据:σ ≤ 300 卡 = 稳定;σ > 300 = 摄入忽高忽低',
-    insight: '摄入波动 σ = ' + round(sigma) + ' 卡(日均 ' + round(avg) + '),' + (stable ? '稳定,按当前节奏预测可信度较高' : '⚠️ 波动大:预测可信度低,先规律化进食(固定三餐+加餐)再谈预测') + '。',
+    assumption: m('skill-calorie.analysis-simulate2.c037'),
+    insight: m('skill-calorie.analysis-simulate2.c038', {
+      p0: String(round(sigma)),
+      p1: String(round(avg)),
+      p2: String(stableNote),
+    }),
   };
 }

@@ -23,7 +23,7 @@ import { nowStamp } from './receipt.js';
 import { planCopyBlock } from '../workout/planCopyBlock.js';
 // #946：本页的页框样式走 `planPreviewCss()`（页面级段 ＋ 同权单列规则）；`pageChromeCss` 不再由本件直取。
 import { planPageCss, planPreviewCss, planViewCss } from './workoutPlanCss.js';
-import { DOW, planWeeksHtml } from './workoutPlanLook.js';
+import { dowOf, planWeeksHtml } from './workoutPlanLook.js';
 import type { PlanWeek } from './workoutPlanLook.js';
 import type { PlanView, PlanVsActualView, PlanWizardView } from './planPlate.js';
 import type { PlanSessionRow } from '../workout/planStore.js';
@@ -31,23 +31,29 @@ import type { PreviewLine, WritePreview } from '../workout/write.js';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { copyLog } from '../shared/copyArea.js';
 import { DASH } from './workoutMovementTable.js';
+import { m } from '../entries/index.js';
 
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
-const DOC_TITLE = '卡路里·健身计划';
+function DOC_TITLE() {
+  return m('skill-calorie.render-workoutPlanDocs.c076');
+}
 
-/** 写前预览操作的中文名（老 `process_progress` 复制区同口径，页上不出现英文 `op`）。 */
-const OP_ZH: Record<string, string> = {
-  copy: '复制训练计划',
-  'set-week': '定一周计划',
-  'add-movement': '加训练动作',
-  'set-rest': '定休息日',
-  update: '改训练计划',
-  'update-day': '改某天训练',
-  'delete-day': '删某天训练',
-  'update-movement': '改动作',
-  delete: '撤销训练计划',
-};
+/** 写前预览操作的中文名（老 `process_progress` 复制区同口径，页上不出现英文 `op`）。
+ *  按需取词：模块级表会把语言在加载时固化，故收进函数。 */
+function opZh(): Record<string, string> {
+  return {
+    copy: m('skill-calorie.render-workoutPlanDocs.c077'),
+    'set-week': m('skill-calorie.render-workoutPlanDocs.c078'),
+    'add-movement': m('skill-calorie.render-workoutPlanDocs.c079'),
+    'set-rest': m('skill-calorie.render-workoutPlanDocs.c080'),
+    update: m('skill-calorie.render-workoutPlanDocs.c081'),
+    'update-day': m('skill-calorie.render-workoutPlanDocs.c082'),
+    'delete-day': m('skill-calorie.render-workoutPlanDocs.c083'),
+    'update-movement': m('skill-calorie.render-workoutPlanDocs.c084'),
+    delete: m('skill-calorie.render-workoutPlanDocs.c085'),
+  };
+}
 
 interface PlanDocOpts {
   readonly key: string;
@@ -74,12 +80,12 @@ function payloadBar(confirmPayload: string, modifyPayload: string): string {
   return renderActionBar({
     ...(confirmPayload === '' ? {} : {
       copyData: {
-        actionId: HELP_COPY_ACTIONS.prompt.actionId, label: '复制确认指令', text: confirmPayload,
+        actionId: HELP_COPY_ACTIONS.prompt.actionId, label: m('skill-calorie.render-workoutPlanDocs.c001'), text: confirmPayload,
       },
     }),
     ...(modifyPayload === '' ? {} : {
       copyLog: {
-        actionId: HELP_COPY_ACTIONS.params.actionId, label: '复制修改指令', text: modifyPayload,
+        actionId: HELP_COPY_ACTIONS.params.actionId, label: m('skill-calorie.render-workoutPlanDocs.c002'), text: modifyPayload,
       },
     }),
   });
@@ -108,12 +114,21 @@ function dualCopy(input: {
 /** 复制数据的一行＝一周：周次 ＋ 场数 ＋ 逐场「周X 场次名 N 个动作」。 */
 function weekLine(wn: number, list: readonly PlanSessionRow[]): string {
   const brief = list.map((s) => {
-    const dow = DOW[s.day_of_week] ?? '周' + s.day_of_week;
-    if (s.is_rest_day === 1) return dow + ' 休息日';
+    const dow = dowOf(s.day_of_week) ?? m('skill-calorie.render-workoutPlanDocs.c003', { p0: String(s.day_of_week) });
+    if (s.is_rest_day === 1) return m('skill-calorie.render-workoutPlanDocs.c004', { p0: String(dow) });
     const moves = Array.isArray(s.movements) ? s.movements : [];
-    return dow + ' ' + (s.session_label === '' || s.session_label === undefined ? '训练' : s.session_label) + ' ' + moves.length + ' 个动作';
+    const label = s.session_label === '' || s.session_label === undefined ? m('skill-calorie.render-workoutPlanDocs.c005') : s.session_label;
+    return m('skill-calorie.render-workoutPlanDocs.c006', {
+      p0: String(dow),
+      p1: String(label),
+      p2: String(moves.length),
+    });
   });
-  return '第 ' + wn + ' 周 · ' + list.length + ' 场 · ' + brief.join(' · ');
+  return m('skill-calorie.render-workoutPlanDocs.c007', {
+    p0: String(wn),
+    p1: String(list.length),
+    p2: String(brief.join(' · ')),
+  });
 }
 
 /** #947 · 计划页没有周区块可出时那一块空态（判据点名的四句话都在这儿）。
@@ -129,15 +144,15 @@ function weekLine(wn: number, list: readonly PlanSessionRow[]): string {
 function planEmptyBlock(v: PlanView, planWeeks: number): string {
   if (v.planState === 'empty') {
     return renderEmptyBlock({
-      title: '训练安排',
-      text: '计划里还没有任何训练安排（计划在，一行课都没有）',
-      hint: '要说「定训练计划」，把第一周排出来',
+      title: m('skill-calorie.render-workoutPlanDocs.c008'),
+      text: m('skill-calorie.render-workoutPlanDocs.c009'),
+      hint: m('skill-calorie.render-workoutPlanDocs.c010'),
     });
   }
   return renderEmptyBlock({
-    title: '训练安排',
-    text: '这一天没有训练安排',
-    hint: '点上面那一周的「周一…周日」页签换一天看，或点「第 N 周」换一周看',
+    title: m('skill-calorie.render-workoutPlanDocs.c011'),
+    text: m('skill-calorie.render-workoutPlanDocs.c012'),
+    hint: m('skill-calorie.render-workoutPlanDocs.c013'),
   });
 }
 
@@ -150,10 +165,14 @@ function planEmptyBlock(v: PlanView, planWeeks: number): string {
  *  只在没有周区块时才出。 */
 function planStateNote(v: PlanView, planWeeks: number): string {
   if (v.planState !== 'ended' && v.planState !== 'future') return '';
-  const what = v.planState === 'ended' ? '计划已结束' : '计划还没开始';
+  const what = v.planState === 'ended' ? m('skill-calorie.render-workoutPlanDocs.c014') : m('skill-calorie.render-workoutPlanDocs.c015');
   if (v.planStart === null || v.planEnd === null) return renderConclusionBar(what);
-  return renderConclusionBar(what + '：计划范围 ' + v.planStart + ' 至 ' + v.planEnd
-    + '（共 ' + String(planWeeks) + ' 周）');
+  return renderConclusionBar(m('skill-calorie.render-workoutPlanDocs.c016', {
+    p0: String(what),
+    p1: String(v.planStart),
+    p2: String(v.planEnd),
+    p3: String(String(planWeeks)),
+  }));
 }
 
 /** 结果/读验证（order176–184）：页头＋指标卡＋两级页签（周／日）＋场次卡四列明细＋态别空态＋复制区。
@@ -189,7 +208,7 @@ export function buildPlanResultDoc(v: PlanView, opts: PlanDocOpts): string {
   }
   const weeks: PlanWeek[] = [...byWeek.keys()].sort((a, b) => a - b)
     .map((week) => ({ week, sessions: byWeek.get(week) ?? [] }));
-  const planName = v.title === null || v.title === '' ? '未命名计划' : v.title;
+  const planName = v.title === null || v.title === '' ? m('skill-calorie.render-workoutPlanDocs.c017') : v.title;
   // 周页签的默认选中项＝**本周**：周次由取数层按同一个 `weekOfDate` 算出（`PlanView.anchorWeek`，显式
   // 日期入参优先、否则今天）；算不出或那一周不在本页时由 `planWeeksHtml` 兜底选第 1 周。
   const currentWeek = v.anchorWeek;
@@ -217,19 +236,26 @@ export function buildPlanResultDoc(v: PlanView, opts: PlanDocOpts): string {
   // 故带参与不带参两页的「总场次」逐字相等；当次过滤读到多少由第 4 张卡「本周」表达。
   // 前两张卡的槽位与改前逐字相同（只换取数字段），不添说明行——不带参数那一页的读数按票面要逐字一致。
   const planWeeks = v.totalWeeks ?? weeks.length;
+  const totalWeeksNote = v.totalWeeks === null ? m('skill-calorie.render-workoutPlanDocs.c018') : '';
+  const weekHead = v.anchorWeek === null ? m('skill-calorie.render-workoutPlanDocs.c019') : m('skill-calorie.render-workoutPlanDocs.c020', { p0: String(v.anchorWeek) });
   const parts: string[] = [
     metaStrip,
     planStateNote(v, planWeeks),
     renderKpiGrid([
-      { label: '总场次', value: String(v.planSessions), unit: '场' },
-      { label: '总动作', value: String(v.planMovements), unit: '个' },
-      { label: '总周数', value: String(planWeeks), unit: '周',
-        detail: '其中 ' + weeks.length + ' 周有安排' + (v.totalWeeks === null ? '（计划未标总周数）' : '') },
+      { label: m('skill-calorie.render-workoutPlanDocs.c021'), value: String(v.planSessions), unit: m('skill-calorie.render-workoutPlanDocs.c022') },
+      { label: m('skill-calorie.render-workoutPlanDocs.c023'), value: String(v.planMovements), unit: m('skill-calorie.render-workoutPlanDocs.c024') },
+      { label: m('skill-calorie.render-workoutPlanDocs.c025'), value: String(planWeeks), unit: m('skill-calorie.render-workoutPlanDocs.c026'),
+        detail: m('skill-calorie.render-workoutPlanDocs.c027', {
+          p0: String(weeks.length),
+          p1: String(totalWeeksNote),
+        }) },
       // 「本周」口径＝**本次过滤真读到多少**（越界／未开始的日子落在计划外 ⇒ 照实 0，不编数；
       // 本日无课 ⇒ 0 场，不拿「为保住出口而上屏的整周」冒充）。
-      { label: '本周', value: String(v.visibleSessions), unit: '场',
-        detail: (v.anchorWeek === null ? '算不出周次' : '第 ' + v.anchorWeek + ' 周')
-          + ' · 动作 ' + v.visibleMovements + ' 个' },
+      { label: m('skill-calorie.render-workoutPlanDocs.c028'), value: String(v.visibleSessions), unit: m('skill-calorie.render-workoutPlanDocs.c029'),
+        detail: m('skill-calorie.render-workoutPlanDocs.c030', {
+          p0: String(weekHead),
+          p1: String(v.visibleMovements),
+        }) },
     ]),
     // #947 ③：**本日无课**那一档（`ok` 态 ＋ 按日期过滤真读到 0 场）——那一周照出（要留住「换一天看」
     // 的星期页签），空态句另出一块说明「这一天没有安排」。判据读 `visibleSessions`（取数层的**过滤结果**），
@@ -242,18 +268,18 @@ export function buildPlanResultDoc(v: PlanView, opts: PlanDocOpts): string {
         version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: opts.key,
         data: { items: weeks.map((w) => weekLine(w.week, w.sessions)), total: v.totalSessions },
       },
-      dataTitle: '【calorie 训练计划查看】',
+      dataTitle: m('skill-calorie.render-workoutPlanDocs.c031'),
       log: copyLog({
         command: opts.command,
-        source: 'workout_plans（训练计划，只读）',
+        source: m('skill-calorie.render-workoutPlanDocs.c032'),
         actionAt: nowStamp(), version: DOC_VERSION,
       }),
     }),
   ];
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '健身计划',
-    eyebrow: '训练计划查看',
+    docTitle: DOC_TITLE(),
+    title: m('skill-calorie.render-workoutPlanDocs.c033'),
+    eyebrow: m('skill-calorie.render-workoutPlanDocs.c034'),
     subtitle: planName,
     // 页内样式（本族唯一产出者，见 `./workoutPlanCss.ts`）随正文进内容区：晚于 head 的共享样式表，
     // 同特异性下本页胜；只作用本页（样式块不在别的页上）。
@@ -270,45 +296,50 @@ export function buildPlanVsActualDoc(v: PlanVsActualView, opts: PlanDocOpts): st
       date: d.date,
       plan: d.planned.length > 0 ? d.planned.join('、') : DASH,
       done: d.logged.length > 0 ? d.logged.join('、') : DASH,
-      miss: d.missed.length === 0 ? '全命中' : '漏 ' + d.missed.join('、'),
+      miss: d.missed.length === 0 ? m('skill-calorie.render-workoutPlanDocs.c035') : m('skill-calorie.render-workoutPlanDocs.c036', { p0: String(d.missed.join('、')) }),
     }));
   const parts: string[] = [
     renderKpiGrid([
-      { label: '完成率', value: v.completionRate === null ? DASH : v.completionRate + '%' },
-      { label: '计划', value: v.plannedCount + ' 个', detail: '窗内计划动作' },
-      { label: '完成', value: v.doneCount + ' 个', detail: '命中动作' },
+      { label: m('skill-calorie.render-workoutPlanDocs.c037'), value: v.completionRate === null ? DASH : v.completionRate + '%' },
+      { label: m('skill-calorie.render-workoutPlanDocs.c038'), value: m('skill-calorie.render-workoutPlanDocs.c039', { p0: String(v.plannedCount) }), detail: m('skill-calorie.render-workoutPlanDocs.c040') },
+      { label: m('skill-calorie.render-workoutPlanDocs.c041'), value: m('skill-calorie.render-workoutPlanDocs.c042', { p0: String(v.doneCount) }), detail: m('skill-calorie.render-workoutPlanDocs.c043') },
     ]),
     renderDataTable({
       columns: [
-        { key: 'date', label: '日期' },
-        { key: 'plan', label: '计划动作' },
-        { key: 'done', label: '实际完成' },
-        { key: 'miss', label: '缺口' },
+        { key: 'date', label: m('skill-calorie.render-workoutPlanDocs.c044') },
+        { key: 'plan', label: m('skill-calorie.render-workoutPlanDocs.c045') },
+        { key: 'done', label: m('skill-calorie.render-workoutPlanDocs.c046') },
+        { key: 'miss', label: m('skill-calorie.render-workoutPlanDocs.c047') },
       ],
       rows,
-      caption: '逐日对照',
-      emptyText: '范围内无计划或实绩数据',
+      caption: m('skill-calorie.render-workoutPlanDocs.c048'),
+      emptyText: m('skill-calorie.render-workoutPlanDocs.c049'),
     }),
     planCopyBlock({
       envelope: {
         version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: opts.key,
         data: {
-          items: rows.map((r) => r.date + ' · 计划 ' + r.plan + ' · 完成 ' + r.done + ' · ' + r.miss),
+          items: rows.map((r) => m('skill-calorie.render-workoutPlanDocs.c050', {
+            p0: String(r.date),
+            p1: String(r.plan),
+            p2: String(r.done),
+            p3: String(r.miss),
+          })),
           total: v.plannedCount,
         },
       },
-      dataTitle: '【calorie 计划对比实际】',
+      dataTitle: m('skill-calorie.render-workoutPlanDocs.c051'),
       log: copyLog({
         command: opts.command,
-        source: 'workout_plans ＋ exercise_log（计划对比实际，只读）',
+        source: m('skill-calorie.render-workoutPlanDocs.c052'),
         actionAt: nowStamp(), version: DOC_VERSION,
       }),
     }),
   ];
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '计划对比实际',
-    eyebrow: '健身计划',
+    docTitle: DOC_TITLE(),
+    title: m('skill-calorie.render-workoutPlanDocs.c053'),
+    eyebrow: m('skill-calorie.render-workoutPlanDocs.c054'),
     // 窗口用 `→` 摆在副标题（唯一一处），不再进指标卡副行当重复件，也不用 `·` 串第二件事。
     subtitle: v.start + ' → ' + v.end,
     content: planPageCss() + parts.join(''),
@@ -323,42 +354,42 @@ export function buildPlanVsActualDoc(v: PlanVsActualView, opts: PlanDocOpts): st
 export function buildPlanProcessDoc(v: WritePreview, opts: PlanDocOpts): string {
   /** 预览行 → 表格行：`week` 为 null 的概述行只填「训练」一列，其余列印「—」。 */
   const rowsOf = (lines: readonly PreviewLine[], withChange: boolean) => lines.map((l) => ({
-    week: l.week === null ? DASH : '第 ' + l.week + ' 周',
-    dow: l.dow === null || l.dow === 0 ? DASH : DOW[l.dow] ?? '周' + l.dow,
+    week: l.week === null ? DASH : m('skill-calorie.render-workoutPlanDocs.c055', { p0: String(l.week) }),
+    dow: l.dow === null || l.dow === 0 ? DASH : dowOf(l.dow) ?? m('skill-calorie.render-workoutPlanDocs.c056', { p0: String(l.dow) }),
     label: l.label,
-    moves: l.moves === null ? DASH : l.moves + ' 个',
+    moves: l.moves === null ? DASH : m('skill-calorie.render-workoutPlanDocs.c057', { p0: String(l.moves) }),
     ...(withChange ? { change: l.change === '' ? DASH : l.change } : {}),
   }));
   const cols = (withChange: boolean) => [
-    { key: 'week', label: '周次' },
-    { key: 'dow', label: '星期' },
-    { key: 'label', label: '训练' },
-    { key: 'moves', label: '动作数' },
-    ...(withChange ? [{ key: 'change', label: '变更' }] : []),
+    { key: 'week', label: m('skill-calorie.render-workoutPlanDocs.c058') },
+    { key: 'dow', label: m('skill-calorie.render-workoutPlanDocs.c059') },
+    { key: 'label', label: m('skill-calorie.render-workoutPlanDocs.c060') },
+    { key: 'moves', label: m('skill-calorie.render-workoutPlanDocs.c061') },
+    ...(withChange ? [{ key: 'change', label: m('skill-calorie.render-workoutPlanDocs.c062') }] : []),
   ];
   const parts: string[] = [
     renderDataTable({
       columns: cols(false),
       rows: rowsOf(v.before, false),
-      caption: '改前（' + v.before.length + ' 行）',
-      emptyText: '改前为空',
+      caption: m('skill-calorie.render-workoutPlanDocs.c063', { p0: String(v.before.length) }),
+      emptyText: m('skill-calorie.render-workoutPlanDocs.c064'),
     }),
     // 改后一整栏都是「参数没齐」的提示行时不摆表：一句话填进「训练」列、其余四列全是「—」，
   // 那不是表格该有的样子（第 ⑤ 条）；改走共享空态块，一句话说清要补什么。
   v.after.length > 0 && v.after.every((l) => l.week === null)
-    ? renderEmptyBlock({ title: '改后', text: v.after.map((l) => l.label).join('。') })
+    ? renderEmptyBlock({ title: m('skill-calorie.render-workoutPlanDocs.c065'), text: v.after.map((l) => l.label).join('。') })
     : renderDataTable({
       columns: cols(true),
       rows: rowsOf(v.after, true),
-      caption: '改后（' + v.after.length + ' 行，只读不写库）',
-      emptyText: '改后为空',
+      caption: m('skill-calorie.render-workoutPlanDocs.c066', { p0: String(v.after.length) }),
+      emptyText: m('skill-calorie.render-workoutPlanDocs.c067'),
     }),
     renderDisclosure({
-      title: '确认说明', open: true,
+      title: m('skill-calorie.render-workoutPlanDocs.c068'), open: true,
       contentHtml: renderListRows({
         items: [
-          { left: '方式', main: '复制确认指令后执行写命令', right: '' },
-          { left: '影响', main: v.note === '' ? DASH : v.note, right: '' },
+          { left: m('skill-calorie.render-workoutPlanDocs.c069'), main: m('skill-calorie.render-workoutPlanDocs.c070'), right: '' },
+          { left: m('skill-calorie.render-workoutPlanDocs.c071'), main: v.note === '' ? DASH : v.note, right: '' },
         ],
       }),
     }),
@@ -366,15 +397,15 @@ export function buildPlanProcessDoc(v: WritePreview, opts: PlanDocOpts): string 
     // 「复制指令」预览块那一处（那一段的载荷是入口唤醒词的 `prompt_template`，`#944` 故障 3 点名要换掉）。
     payloadBar(opts.confirmPayload ?? '', opts.modifyPayload ?? ''),
     dualCopy({
-      key: opts.key, command: opts.command, source: 'workout_plans（写前预览，只读）',
-      dataTitle: '【calorie 写前预览】',
+      key: opts.key, command: opts.command, source: m('skill-calorie.render-workoutPlanDocs.c072'),
+      dataTitle: m('skill-calorie.render-workoutPlanDocs.c073'),
       metrics: { beforeLines: v.before.length, afterLines: v.after.length },
     }),
   ];
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '写前预览',
-    eyebrow: '健身计划',
+    docTitle: DOC_TITLE(),
+    title: m('skill-calorie.render-workoutPlanDocs.c074'),
+    eyebrow: m('skill-calorie.render-workoutPlanDocs.c075'),
     // 副标题只留一件事：这一页具体要写什么（`v.title` 例如「定第 1 周计划」）。
     // 另外那半句「这是哪一条写词」已由标题「写前预览」与表标题交代，不再叠一层重复。
     subtitle: v.title,

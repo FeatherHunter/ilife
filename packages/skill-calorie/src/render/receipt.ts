@@ -11,6 +11,7 @@
  * ＋ `writtenFields`，并以 `m5Line` 给出旧版整行文本的等价物。既有字段一字未改。
  */
 import { CalorieRenderError } from './errors.js';
+import { m } from '../entries/index.js';
 
 export interface TagDiff {
   before: string[];
@@ -107,7 +108,12 @@ export function m5LineOf(input: {
     ? String(input.recordId)
     : (input.ids.length > 0 ? input.ids.join(',') : 'n/a');
   const fields = input.writtenFields.length > 0 ? input.writtenFields.join(',') : '—';
-  return 'id=' + idText + ' | 日期 ' + input.actionAt + ' | 影响 ' + input.affectedRows + ' 行 | 字段 ' + fields;
+  return m('skill-calorie.render-receipt.c001', {
+    p0: String(idText),
+    p1: String(input.actionAt),
+    p2: String(input.affectedRows),
+    p3: String(fields),
+  });
 }
 
 /** M5 字段派生（单一来源：`buildCrudReceipt` 与 `withM5` 都走这里）。 */
@@ -219,7 +225,7 @@ export function buildErrorReceipt(input: {
   suggestions?: string[];
   fixPrompt?: string;
 }): ErrorReceipt {
-  const sceneName = input.sceneName || '操作失败';
+  const sceneName = input.sceneName || m('skill-calorie.render-receipt.c002');
   let dataText = '—';
   if (input.data !== undefined && input.data !== null) {
     try {
@@ -230,14 +236,14 @@ export function buildErrorReceipt(input: {
   }
   return {
     sceneName,
-    op: input.op || '操作未完成',
+    op: input.op || m('skill-calorie.render-receipt.c003'),
     sub: input.sub || '',
-    reason: input.reason || '(未知原因)',
+    reason: input.reason || m('skill-calorie.render-receipt.c004'),
     dataText,
     suggestions: input.suggestions && input.suggestions.length > 0
       ? [...input.suggestions]
-      : ['修正后重试', '更换参数/目标', '联系开发者'],
-    fixPrompt: input.fixPrompt || '// 修正 prompt 未生成',
-    meta: buildReceiptMeta(sceneName, input.wakeWord || sceneName, '错误回执(写库前校验/执行中失败)'),
+      : [m('skill-calorie.render-receipt.c005'), m('skill-calorie.render-receipt.c006'), m('skill-calorie.render-receipt.c007')],
+    fixPrompt: input.fixPrompt || m('skill-calorie.render-receipt.c008'),
+    meta: buildReceiptMeta(sceneName, input.wakeWord || sceneName, m('skill-calorie.render-receipt.c009')),
   };
 }

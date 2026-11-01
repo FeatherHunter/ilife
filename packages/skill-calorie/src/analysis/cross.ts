@@ -9,6 +9,7 @@ import { FetchError } from '../fetch/errors.js';
 import { MEASUREMENT_ZH } from '../fetch/body.js';
 import type { DaySeries } from './series.js';
 import { BODY_ALIVE, EX_ALIVE } from './utils.js';
+import { m } from '../entries/index.js';
 
 /** #440 · 围度各部位在「变化 TOP」里的列序（**只定序**，不改行为：并列时按此取前 3）。
  *  中文名一律从 `fetch/body.ts` 的 `MEASUREMENT_ZH` 取，本处不自持第二份名表。 */
@@ -23,20 +24,36 @@ const round2 = (n: number): number => Math.round(n * 100) / 100;
 const round3 = (n: number): number => Math.round(n * 1000) / 1000;
 const round4 = (n: number): number => Math.round(n * 10000) / 10000;
 
-export const PAIRS: Record<string, [string, string, string, string, string]> = {
-  weight_calorie: ['weightKg', 'calories', '体重(kg)', '摄入(卡)', 'weekday'],
-  weight_exercise: ['weightKg', 'exerciseKcal', '体重(kg)', '运动消耗(卡)', 'exercise'],
-  weight_protein: ['weightKg', 'protein', '体重(kg)', '蛋白摄入(g)', 'protein'],
-  weight_deficit: ['weightKg', 'deficit', '体重(kg)', '热量缺口(卡)', 'deficit'],
-  calorie_exercise: ['calories', 'exerciseKcal', '摄入(卡)', '运动消耗(卡)', 'deficit_src'],
-  weight_bodyfat: ['weightKg', 'bodyFatPct', '体重(kg)', '体脂率(%)', 'divergence'],
-  weight_waist: ['weightKg', 'waistCm', '体重(kg)', '腰围(cm)', 'waist_divergence'],
-  water_weight: ['waterMl', 'weightKg', '饮水(ml)', '体重(kg)', 'water'],
-  protein_carbs: ['protein', 'carbs', '蛋白(g)', '碳水(g)', 'ratio'],
-  protein_fat: ['protein', 'fat', '蛋白(g)', '脂肪(g)', 'ratio'],
-  carbs_fat: ['carbs', 'fat', '碳水(g)', '脂肪(g)', 'ratio'],
+/** 配对表：两个字段名 ＋ 分层取证的模式（**只放数据，不放上屏的字**）。 */
+export const PAIRS: Record<string, [string, string, string]> = {
+  weight_calorie: ['weightKg', 'calories', 'weekday'],
+  weight_exercise: ['weightKg', 'exerciseKcal', 'exercise'],
+  weight_protein: ['weightKg', 'protein', 'protein'],
+  weight_deficit: ['weightKg', 'deficit', 'deficit'],
+  calorie_exercise: ['calories', 'exerciseKcal', 'deficit_src'],
+  weight_bodyfat: ['weightKg', 'bodyFatPct', 'divergence'],
+  weight_waist: ['weightKg', 'waistCm', 'waist_divergence'],
+  water_weight: ['waterMl', 'weightKg', 'water'],
+  protein_carbs: ['protein', 'carbs', 'ratio'],
+  protein_fat: ['protein', 'fat', 'ratio'],
+  carbs_fat: ['carbs', 'fat', 'ratio'],
 };
 export type PairName = keyof typeof PAIRS;
+
+/** 轴向标签（渲染期取词；判据一律认字段名与 `PairName`，不认这里出的字）。 */
+function axisLabelsOf(pair: string): [string, string] {
+  if (pair === 'weight_calorie') return [m('skill-calorie.analysis-cross.c046'), m('skill-calorie.analysis-cross.c047')];
+  if (pair === 'weight_exercise') return [m('skill-calorie.analysis-cross.c048'), m('skill-calorie.analysis-cross.c049')];
+  if (pair === 'weight_protein') return [m('skill-calorie.analysis-cross.c050'), m('skill-calorie.analysis-cross.c051')];
+  if (pair === 'weight_deficit') return [m('skill-calorie.analysis-cross.c052'), m('skill-calorie.analysis-cross.c053')];
+  if (pair === 'calorie_exercise') return [m('skill-calorie.analysis-cross.c054'), m('skill-calorie.analysis-cross.c055')];
+  if (pair === 'weight_bodyfat') return [m('skill-calorie.analysis-cross.c056'), m('skill-calorie.analysis-cross.c057')];
+  if (pair === 'weight_waist') return [m('skill-calorie.analysis-cross.c058'), m('skill-calorie.analysis-cross.c059')];
+  if (pair === 'water_weight') return [m('skill-calorie.analysis-cross.c060'), m('skill-calorie.analysis-cross.c061')];
+  if (pair === 'protein_carbs') return [m('skill-calorie.analysis-cross.c062'), m('skill-calorie.analysis-cross.c063')];
+  if (pair === 'protein_fat') return [m('skill-calorie.analysis-cross.c064'), m('skill-calorie.analysis-cross.c065')];
+  return [m('skill-calorie.analysis-cross.c066'), m('skill-calorie.analysis-cross.c067')];
+}
 
 export function pearson(pairs: Array<[number, number]>): number | null {
   const n = pairs.length;
@@ -72,7 +89,7 @@ function delta(vals: number[]): number | null {
 }
 
 export interface StratRow { label: string; days: number; aDelta: number | null; bAvg: number | null; note: string }
-export interface Strat { rows: StratRow[]; extra: string[] }
+export interface Strat { rows: StratRow[]; extra: string[]; /** 判据位：存在体重／体脂背离信号（比较只认它，译成英文也不变）。 */ divergence: boolean }
 
 function weekdayOf(iso: string): number {
   return new Date(iso + 'T12:00:00Z').getUTCDay();
@@ -81,6 +98,7 @@ function weekdayOf(iso: string): number {
 function strat(series: DaySeries[], mode: string, a: string, b: string, db?: DatabaseSync): Strat {
   const rows: StratRow[] = [];
   const extra: string[] = [];
+  let divergence = false;
   const mk = (label: string, rowsIn: DaySeries[]): StratRow => {
     const av = rowsIn.map((s) => val(s, a)).filter((v): v is number => v !== null);
     const bv = rowsIn.map((s) => val(s, b)).filter((v): v is number => v !== null);
@@ -100,7 +118,7 @@ function strat(series: DaySeries[], mode: string, a: string, b: string, db?: Dat
       if (val(s, a) === null) continue;
       (isCond ? cond : non).push(s);
     }
-    const labels: Record<string, [string, string]> = { weekday: ['工作日', '周末'], exercise: ['运动日', '休息日'], protein: ['蛋白达标日', '未达标日'], deficit: ['有缺口日', '无缺口日'], water: ['饮水达标日', '未达标日'] };
+    const labels: Record<string, [string, string]> = { weekday: [m('skill-calorie.analysis-cross.c001'), m('skill-calorie.analysis-cross.c002')], exercise: [m('skill-calorie.analysis-cross.c003'), m('skill-calorie.analysis-cross.c004')], protein: [m('skill-calorie.analysis-cross.c005'), m('skill-calorie.analysis-cross.c006')], deficit: [m('skill-calorie.analysis-cross.c007'), m('skill-calorie.analysis-cross.c008')], water: [m('skill-calorie.analysis-cross.c009'), m('skill-calorie.analysis-cross.c010')] };
     const [l0, l1] = labels[mode] as [string, string];
     rows.push(mk(l0, cond), mk(l1, non));
     const d1 = rows[0]?.aDelta ?? 0;
@@ -109,19 +127,24 @@ function strat(series: DaySeries[], mode: string, a: string, b: string, db?: Dat
       /* #160 文本返工：备注写人话——「变化比另一组多／少 ＋ 绝对值」。旧串 `Δ差异 +-1.20` 两头都不对：
        *  既有读者认不得的 Δ，负差还会打两个符号（`+` 判断与负号叠在一起）。口径见组合页 HTML 注释。 */
       const gap = round2(Math.abs(d1 - d2)).toFixed(2);
-      (rows[0] as StratRow).note = '变化比' + l1 + (d1 - d2 >= 0 ? '多 ' : '少 ') + gap;
-      (rows[1] as StratRow).note = '变化比' + l0 + (d2 - d1 >= 0 ? '多 ' : '少 ') + gap;
+      const wordA = d1 - d2 >= 0 ? m('skill-calorie.analysis-cross.c011') : m('skill-calorie.analysis-cross.c012');
+      const wordB = d2 - d1 >= 0 ? m('skill-calorie.analysis-cross.c013') : m('skill-calorie.analysis-cross.c014');
+      (rows[0] as StratRow).note = m('skill-calorie.analysis-cross.c015', { p0: String(l1), p1: String(wordA), p2: String(gap) });
+      (rows[1] as StratRow).note = m('skill-calorie.analysis-cross.c016', { p0: String(l0), p1: String(wordB), p2: String(gap) });
     }
     if (mode === 'exercise') {
       if (db && series.length > 0) {
         try {
           const start = (series[0] as DaySeries).date;
           const end = (series[series.length - 1] as DaySeries).date;
-          const st = db.prepare("SELECT SUM(calories_burned) AS v FROM exercise_log WHERE date BETWEEN ? AND ? AND category = '力量' AND " + EX_ALIVE).get(start, end) as { v: number | null };
-          const ca = db.prepare("SELECT SUM(calories_burned) AS v FROM exercise_log WHERE date BETWEEN ? AND ? AND category = '有氧' AND " + EX_ALIVE).get(start, end) as { v: number | null };
-          extra.push('其中力量消耗 ' + round(st.v ?? 0) + ' 卡、有氧消耗 ' + round(ca.v ?? 0) + ' 卡');
-        } catch { extra.push('力量和有氧这次没能分开算，只算了合计'); }
-      } else extra.push('力量和有氧这次没能分开算，只算了合计');
+          const st = db.prepare(m('skill-calorie.analysis-cross.c017', { p0: String(EX_ALIVE) })).get(start, end) as { v: number | null };
+          const ca = db.prepare(m('skill-calorie.analysis-cross.c018', { p0: String(EX_ALIVE) })).get(start, end) as { v: number | null };
+          extra.push(m('skill-calorie.analysis-cross.c019', {
+            p0: String(round(st.v ?? 0)),
+            p1: String(round(ca.v ?? 0)),
+          }));
+        } catch { extra.push(m('skill-calorie.analysis-cross.c020')); }
+      } else extra.push(m('skill-calorie.analysis-cross.c021'));
     }
   } else if (mode === 'deficit_src') {
     const cal = series.map((s) => s.calories).filter((v): v is number => v !== null && v !== undefined);
@@ -129,27 +152,41 @@ function strat(series: DaySeries[], mode: string, a: string, b: string, db?: Dat
     const tdee = series.length > 0 ? (series[0] as DaySeries).tdee : null;
     const calAvg = cal.length > 0 ? round1(cal.reduce((x, y) => x + y, 0) / cal.length) : null;
     const exAvg = ex.length > 0 ? round1(ex.reduce((x, y) => x + y, 0) / ex.length) : null;
-    rows.push({ label: '日均摄入', days: cal.length, aDelta: null, bAvg: calAvg, note: '' });
-    rows.push({ label: '日均运动', days: ex.length, aDelta: null, bAvg: exAvg, note: '' });
+    rows.push({ label: m('skill-calorie.analysis-cross.c022'), days: cal.length, aDelta: null, bAvg: calAvg, note: '' });
+    rows.push({ label: m('skill-calorie.analysis-cross.c023'), days: ex.length, aDelta: null, bAvg: exAvg, note: '' });
     if (calAvg !== null && tdee !== null && tdee !== undefined) {
       /* #160 文本返工：算式留公式、术语换人话（`TDEE` 是英文缩写，读者认不得；口径与算式不变）。 */
       const daily = round(tdee + (exAvg ?? 0) - calAvg);
-      extra.push('缺口这样算：日常消耗 ' + tdee + ' 卡 ＋ 运动 ' + (exAvg ?? 0) + ' 卡 − 吃进 ' + calAvg
-        + ' 卡 ＝ 平均每天缺口 ' + (daily >= 0 ? '+' : '−') + Math.abs(daily) + ' 卡');
+      extra.push(m('skill-calorie.analysis-cross.c024', {
+        p0: String(tdee),
+        p1: String(exAvg ?? 0),
+        p2: String(calAvg),
+        p3: String(daily >= 0 ? '+' : '−'),
+        p4: String(Math.abs(daily)),
+      }));
     }
   } else if (mode === 'divergence') {
     const wv = series.map((s) => s.weightKg).filter((v): v is number => v !== null && v !== undefined);
     const bv = series.map((s) => s.bodyFatPct).filter((v): v is number => v !== null && v !== undefined);
     const wDelta = delta(wv);
     const bDelta = delta(bv);
-    extra.push(wDelta !== null && bDelta !== null ? '体重净变化 ' + (wDelta >= 0 ? '+' : '') + wDelta.toFixed(2) + ' kg;体脂净变化 ' + (bDelta >= 0 ? '+' : '') + bDelta.toFixed(2) + ' 个百分点' : '体重/体脂样本不足,无法背离检测');
+    extra.push(wDelta !== null && bDelta !== null ? m('skill-calorie.analysis-cross.c025', {
+      p0: String(wDelta >= 0 ? '+' : ''),
+      p1: String(wDelta.toFixed(2)),
+      p2: String(bDelta >= 0 ? '+' : ''),
+      p3: String(bDelta.toFixed(2)),
+    }) : m('skill-calorie.analysis-cross.c026'));
     if (wDelta !== null && bDelta !== null) {
-      extra.push(wDelta < -0.3 && bDelta > -0.5 ? '⚠️ 背离:体重降但体脂未同步降,警惕肌肉流失' : '体重与体脂同向变化,脂肪确实在减少');
+      divergence = wDelta < -0.3 && bDelta > -0.5;
+      extra.push(divergence ? m('skill-calorie.analysis-cross.c027') : m('skill-calorie.analysis-cross.c028'));
     }
   } else if (mode === 'waist_divergence') {
     const wv = series.map((s) => s.weightKg).filter((v): v is number => v !== null && v !== undefined);
     const wDelta = delta(wv);
-    extra.push(wDelta !== null ? '体重净变化 ' + (wDelta >= 0 ? '+' : '') + wDelta.toFixed(2) + ' kg' : '体重样本不足');
+    extra.push(wDelta !== null ? m('skill-calorie.analysis-cross.c029', {
+      p0: String(wDelta >= 0 ? '+' : ''),
+      p1: String(wDelta.toFixed(2)),
+    }) : m('skill-calorie.analysis-cross.c030'));
     const cols: Array<[string, string]> = WAIST_DIVERGENCE_ORDER.map((f) => [f, MEASUREMENT_ZH[f] ?? f]);
     if (db && series.length > 0) {
       try {
@@ -164,54 +201,57 @@ function strat(series: DaySeries[], mode: string, a: string, b: string, db?: Dat
           }
         }
         deltas.sort((a, b) => Math.abs(b[1] as number) - Math.abs(a[1] as number));
-        extra.push('各部位变化 TOP:' + (deltas.length > 0 ? deltas.slice(0, 3).map(([n, d]) => n + ' ' + (d >= 0 ? '+' : '') + (d as number).toFixed(1) + 'cm').join('、') : '窗口内无围度数据'));
-      } catch (e) { extra.push('围度明细不可用: ' + (e as Error).message); }
-    } else extra.push('围度明细不可用: 缺 db');
+        const topText = deltas.length > 0 ? deltas.slice(0, 3).map(([n, d]) => n + ' ' + (d >= 0 ? '+' : '') + (d as number).toFixed(1) + 'cm').join('、') : m('skill-calorie.analysis-cross.c031');
+        extra.push(m('skill-calorie.analysis-cross.c032', { p0: String(topText) }));
+      } catch (e) { extra.push(m('skill-calorie.analysis-cross.c033', { p0: String((e as Error).message) })); }
+    } else extra.push(m('skill-calorie.analysis-cross.c034'));
   } else if (mode === 'ratio') {
     const ab = series.filter((s) => s.protein !== null || s.carbs !== null || s.fat !== null).map((s) => [s.protein ?? 0, s.carbs ?? 0, s.fat ?? 0]);
     if (ab.length >= 4) {
       const half = Math.floor(ab.length / 2);
       const ratio = (rowsIn: number[][]): string => {
         const p = rowsIn.reduce((a, r) => a + (r[0] as number), 0) || 1;
-        return '蛋白' + round(rowsIn.reduce((a, r) => a + (r[0] as number), 0) / p * 100) + '% 碳水' + round(rowsIn.reduce((a, r) => a + (r[1] as number), 0) / p * 100) + '% 脂肪' + round(rowsIn.reduce((a, r) => a + (r[2] as number), 0) / p * 100) + '%';
+        return m('skill-calorie.analysis-cross.c035', {
+          p0: String(round(rowsIn.reduce((a, r) => a + (r[0] as number), 0) / p * 100)),
+          p1: String(round(rowsIn.reduce((a, r) => a + (r[1] as number), 0) / p * 100)),
+          p2: String(round(rowsIn.reduce((a, r) => a + (r[2] as number), 0) / p * 100)),
+        });
       };
-      extra.push('前段占比:' + ratio(ab.slice(0, half)));
-      extra.push('后段占比:' + ratio(ab.slice(half)));
+      extra.push(m('skill-calorie.analysis-cross.c036', { p0: String(ratio(ab.slice(0, half))) }));
+      extra.push(m('skill-calorie.analysis-cross.c037', { p0: String(ratio(ab.slice(half))) }));
     }
   }
-  return { rows, extra };
+  return { rows, extra, divergence };
 }
 
 function insight(pair: string, r: number | null, lag: Array<{ lag: number; r: number | null }>, st: Strat, days: number, aligned: number): string {
   /* #160 文本返工：整句重写成读者话。旧句（`窗口内共 30 天,摄入(卡)与目标指标的关联呈强负相关(r=-0.77);滞后 1 天相关性更强(r=-0.79)。`）
    *  三条都不留：`目标指标` 是读者无从知道的自造词；`强负相关(r=…)` 是统计词；分号把两件事挤在一句。
    *  新句只用「谁多的时候谁怎样」说方向，r 与档位留给页面（组合页 KPI 卡＋HTML 注释）。 */
-  const labels = PAIRS[pair] as [string, string, string, string, string];
+  const [la, lb] = axisLabelsOf(pair);
   const short = (s: string): string => s.replace(/\(.*?\)/g, '').replace(/（.*?）/g, '') || s;
-  const la = labels[2];
-  const lb = labels[3];
   const aShort = short(la);
   const bShort = short(lb);
   /* r 算不出来只有两种来路：对得上的天数不足两个，或其中一项这几天一个数不变（分母为零）。
    *  两句话分开说，别像旧句那样把「没算出来」说成「天数太少」。 */
   if (r === null) {
     return aligned < 2
-      ? lb + '和' + la + '能对上的天数太少，先多记几天再看它俩有没有关系。'
-      : lb + '和' + la + '这几天几乎没怎么变，暂时看不出关系，先多记几天再看。';
+      ? m('skill-calorie.analysis-cross.c038', { p0: String(lb), p1: String(la) })
+      : m('skill-calorie.analysis-cross.c039', { p0: String(lb), p1: String(la) });
   }
-  let line = '这 ' + days + ' 天里，' + (Math.abs(r) < 0.3
-    ? bShort + '和' + aShort + '看着没有稳定的一起变'
-    : (r > 0 ? bShort + '多的时候，' + aShort + '也高' : bShort + '多的时候，' + aShort + '反而低')) + '。';
+  const trendText = Math.abs(r) < 0.3
+    ? m('skill-calorie.analysis-cross.c040', { p0: String(bShort), p1: String(aShort) })
+    : (r > 0 ? m('skill-calorie.analysis-cross.c041', { p0: String(bShort), p1: String(aShort) }) : m('skill-calorie.analysis-cross.c042', { p0: String(bShort), p1: String(aShort) }));
+  let line = m('skill-calorie.analysis-cross.c043', { p0: String(days), p1: String(trendText) });
   if (pair === 'weight_calorie' && lag.length > 0) {
     const best = lag.reduce((a, b) => Math.abs(b.r ?? 0) > Math.abs(a.r ?? 0) ? b : a);
     if (best.r !== null && Math.abs(best.r) > Math.abs(r)) {
-      line += '换成往前推 ' + best.lag + ' 天再和当天比，更看得出来。';
+      line += m('skill-calorie.analysis-cross.c044', { p0: String(best.lag) });
     }
   }
-  const ext = st.extra.join('\n');
-  /* 只说真有的那件事：旧实现按 `ext.includes('背离')` 判，样本不足那句（`体重/体脂样本不足,无法背离检测`）
-   *  也会命中，于是「没算出来」反被写成「存在背离信号」；两句又互相包含（同信息说两遍）。 */
-  if (ext.includes('⚠️ 背离')) line += '另外，体重降了但体脂没跟着降，留意肌肉流失。';
+  /* 只说真有的那件事：判据取 `st.divergence`（控制标记），不再拿显示文本 `includes` 猜——
+   *  样本不足那句（`体重/体脂样本不足,无法背离检测`）当年也会命中，于是「没算出来」反被写成「存在背离信号」。 */
+  if (st.divergence) line += m('skill-calorie.analysis-cross.c045');
   return line;
 }
 
@@ -219,7 +259,8 @@ export interface PairAnalysis { pair: string; labels: { a: string; b: string }; 
 
 export function analyzePair(series: DaySeries[], pair: string, db?: DatabaseSync, window = '30d'): PairAnalysis {
   if (!(pair in PAIRS)) throw new FetchError('未知配对 ' + pair + '，可选: ' + Object.keys(PAIRS).join(', '));
-  const [fa, fb, la, lb, mode] = PAIRS[pair] as [string, string, string, string, string];
+  const [fa, fb, mode] = PAIRS[pair] as [string, string, string];
+  const [la, lb] = axisLabelsOf(pair);
   const line = series.filter((s) => val(s, fa) !== null || val(s, fb) !== null).map((s) => ({ date: s.date, a: val(s, fa), b: val(s, fb) }));
   const alignedPairs: Array<[number, number]> = [];
   for (const s of series) {

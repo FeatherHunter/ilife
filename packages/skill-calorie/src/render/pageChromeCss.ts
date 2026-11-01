@@ -21,20 +21,21 @@
  */
 
 /** 页面级样式块（含 `<style>` 包裹，照包内先例直插正文：晚于 head 的共享样式表，同特异性下本页胜）。 */
+import { m } from '../entries/index.js';
 export function pageChromeCss(maxWidth: number): string {
   const w = Number.isFinite(maxWidth) && maxWidth > 0 ? Math.floor(maxWidth) : 960;
   return '<style>\n' + [
-    '/* 页宽与上下内边距：老页 `*{box-sizing:border-box}`，故显式钉上（' + w + ' 是含内边距的总宽） */',
+    m('skill-calorie.render-pageChromeCss.c001', { p0: String(w) }),
     '.ilife-block-page-shell{box-sizing:border-box;max-width:' + w + 'px;padding:32px 20px 60px}',
-    '/* 触屏三件（照 HELP）：页面内可点的件不许出现系统蓝高亮块、不许双击缩放延迟。',
-    '   触摸目标 ≥44px 由各页自己的可点件声明（页签／按钮各有各的档），本件只钉这两条通用属性。 */',
+    m('skill-calorie.render-pageChromeCss.c002'),
+    m('skill-calorie.render-pageChromeCss.c003'),
     '.ilife-block-page-shell button,.ilife-block-page-shell summary'
       + '{-webkit-tap-highlight-color:transparent;touch-action:manipulation}',
-    '/* 折叠头也是可点件（过程页／回执页都有），触摸目标按 HELP 的下限 44px 给足 */',
+    m('skill-calorie.render-pageChromeCss.c004'),
     '.ilife-block-page-shell summary{min-height:44px;display:flex;align-items:center}',
-    '/* 按钮行自约束宽度并居中（照 HELP）：不加这条，复制胶囊会被页宽拉成半屏宽的长条 */',
+    m('skill-calorie.render-pageChromeCss.c005'),
     '.ilife-block-page-shell .ilife-action-bar{max-width:520px;margin:0 auto}',
-    '/* 窄屏（820 · 同 HELP）的页面级部分：页壳收紧内距、指标卡两列＋奇数末位通栏 */',
+    m('skill-calorie.render-pageChromeCss.c006'),
     '@media (max-width:820px){',
     '.ilife-block-page-shell{padding:20px 16px 48px}',
     '.ilife-block-page-shell-title{font-size:26px}',

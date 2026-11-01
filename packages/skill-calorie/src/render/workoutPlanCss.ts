@@ -23,6 +23,7 @@
  * 打印：页签是导航件，打印时藏起来，两级面板一律展开（内容在 DOM 里，不靠脚本显示）。
  */
 import { pageChromeCss } from './pageChromeCss.js';
+import { m } from '../entries/index.js';
 /** 部位色板（老 `workout_plan_view.html:185-189` 的 `PART_COLORS` 逐字）：库中词／类名后缀／
  *  rgb 分量／文字色。老页把色值当内联 `style="background:色20;color:色"` 印在每颗徽章上（`色20`
  *  是 12.5% 的十六进制 alpha）；本页一律落类名，正文里零内联样式。 */
@@ -221,20 +222,20 @@ export function planViewCss(weekCount: number): string {
     '.ilw-pb{display:inline-block;font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:4px;'
       + 'white-space:nowrap}',
     badgeCss(),
-    '/* 周次页签激活态：主色字＋下划线（老 .tab.active／.tab.active::after） */',
+    m('skill-calorie.render-workoutPlanCss.c001'),
     rule(stateSel(wkIds, 'checked', 'ilw-tabs', 'ilw-tab'), 'color:var(--accent);font-weight:600'),
     stateSelAfter(wkIds, 'checked', 'ilw-tabs', 'ilw-tab')
       + '{content:"";position:absolute;left:12px;right:12px;bottom:-1px;height:2px;'
       + 'background:var(--accent);border-radius:1px}',
     rule(stateSel(wkIds, 'focus-visible', 'ilw-tabs', 'ilw-tab'), 'outline:2px solid var(--accent);'
       + 'outline-offset:2px'),
-    '/* 周面板：任一周页签被选中先全收，再放选中的那一个（默认选中项由装配件钉在「本周」上） */',
+    m('skill-calorie.render-workoutPlanCss.c002'),
     '.ilw-wkr:checked~.ilw-week{display:none}',
     ...Array.from({ length: n }, (_, i) => '#ilw-wk-' + i + ':checked~.ilw-week[data-wk="' + i + '"]{display:block}'),
   ];
   for (let i = 0; i < n; i += 1) {
     const dyIds = Array.from({ length: 7 }, (_, d) => 'ilw-dy-' + i + '-' + (d + 1));
-    dyn.push('/* 第 ' + (i + 1) + ' 组日页签：激活态深底白字（老 .day-tab.active）＋面板收放 */');
+    dyn.push(m('skill-calorie.render-workoutPlanCss.c003', { p0: String(i + 1) }));
     dyn.push(rule(stateSel(dyIds, 'checked', 'ilw-day-tabs', 'ilw-day-tab'),
       'background:var(--ink);border-color:var(--ink);color:#fff'));
     dyn.push(rule(stateSel(dyIds, 'focus-visible', 'ilw-day-tabs', 'ilw-day-tab'),

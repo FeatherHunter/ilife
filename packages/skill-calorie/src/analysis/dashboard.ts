@@ -12,6 +12,7 @@ import { weightTrend } from '../weight/index.js';
 import { parseDate, shiftISODate } from './utils.js';
 import { FetchError } from '../fetch/errors.js';
 import type { AnalysisResult } from './result.js';
+import { m } from '../entries/index.js';
 
 export interface HealthDashboard {
   start: string;
@@ -60,6 +61,6 @@ export function healthDashboard(db: DatabaseSync, startDate: string, endDate?: s
       exercise: (dims['exercise'] as AnalysisResult<unknown>).data,
       deficit: (dims['deficit'] as AnalysisResult<unknown>).data,
     },
-    message: '健康报告 ' + start + ' ~ ' + end,
+    message: m('skill-calorie.analysis-dashboard.c001', { p0: String(start), p1: String(end) }),
   };
 }

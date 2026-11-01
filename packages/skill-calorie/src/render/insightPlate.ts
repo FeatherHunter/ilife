@@ -25,6 +25,7 @@ import type { PlanScan } from '../analysis/contraindications.js';
 import { dedupeReport } from '../fetch/batch.js';
 import { FetchError } from '../fetch/errors.js';
 import { CalorieRenderError } from './errors.js';
+import { m } from '../entries/index.js';
 
 function assertDate(s: string): void {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(s) || Number.isNaN(Date.parse(s + 'T12:00:00Z'))) {
@@ -57,7 +58,7 @@ export function buildPredictView(
     throw new CalorieRenderError('bad-input', 'horizonDays 须为 7..180 整数');
   }
   const series = buildSeries(db, start, end);
-  const fc = weightForecast(series, horizonDays, '体重预测');
+  const fc = weightForecast(series, horizonDays, m('skill-calorie.render-insightPlate.c001'));
   if (fc.degraded || fc.current === undefined || !fc.forecast) {
     throw new CalorieRenderError('missing-data', fc.degradeMsg || '数据不足，无法预测（需≥14 天体重记录）');
   }
@@ -89,7 +90,7 @@ export function buildPredictTargetView(
     throw new CalorieRenderError('bad-input', 'target 须为 30..200 的体重 kg 数');
   }
   const series = buildSeries(db, start, end);
-  const t = weightTarget(series, targetKg, '预测体重(自定义目标)');
+  const t = weightTarget(series, targetKg, m('skill-calorie.render-insightPlate.c002'));
   if (t.degraded || t.current === undefined || t.target === undefined || t.eta === undefined) {
     throw new CalorieRenderError('missing-data', t.degradeMsg || '数据不足，无法预测（需≥14 天体重记录）');
   }
@@ -110,7 +111,7 @@ export function buildSimCutView(
     throw new CalorieRenderError('bad-input', 'cut_kcal 须为 50..2000 的整数卡数');
   }
   const series = buildSeries(db, start, end);
-  const r = weightSimCut(series, Math.round(cutKcal), '模拟减重(每天-' + Math.round(cutKcal) + '卡)');
+  const r = weightSimCut(series, Math.round(cutKcal), m('skill-calorie.render-insightPlate.c003', { p0: String(Math.round(cutKcal)) }));
   if (r.degraded || r.current === undefined || r.weeklyLoss === undefined) {
     throw new CalorieRenderError('missing-data', r.degradeMsg || '数据不足，无法模拟（需至少 1 条体重记录）');
   }
@@ -135,7 +136,7 @@ export function buildSimTargetView(
     throw new CalorieRenderError('bad-input', 'days_target 须为 7..365 整数天数');
   }
   const series = buildSeries(db, start, end);
-  const r = weightSimTarget(series, targetLossKg, daysTarget, '模拟减重(' + daysTarget + '天减' + targetLossKg + 'kg)');
+  const r = weightSimTarget(series, targetLossKg, daysTarget, m('skill-calorie.render-insightPlate.c004', { p0: String(daysTarget), p1: String(targetLossKg) }));
   if (r.degraded || r.current === undefined || r.neededDeficit === undefined) {
     throw new CalorieRenderError('missing-data', r.degradeMsg || '数据不足，无法模拟（需至少 1 条体重记录）');
   }
@@ -156,7 +157,7 @@ export function buildCalorieForecastView(
     throw new CalorieRenderError('bad-input', 'horizonDays 须为 7..180 整数');
   }
   const series = buildSeries(db, start, end);
-  const r = calorieForecast(series, horizonDays, '摄入预测(按当前速率 ' + horizonDays + ' 天)');
+  const r = calorieForecast(series, horizonDays, m('skill-calorie.render-insightPlate.c005', { p0: String(horizonDays) }));
   if (r.degraded || r.current === undefined || !r.forecast) {
     throw new CalorieRenderError('missing-data', r.degradeMsg || '数据不足，无法预测（需≥14 天摄入记录）');
   }
@@ -173,7 +174,7 @@ export function buildCalorieGoalView(
   assertDate(end);
   if (start > end) throw new CalorieRenderError('bad-input', 'start 不得晚于 end');
   const series = buildSeries(db, start, end);
-  const r = calorieGoalEta(series, '摄入预测(营养目标达成预测)');
+  const r = calorieGoalEta(series, m('skill-calorie.render-insightPlate.c006'));
   if (r.degraded || r.avg === undefined || r.goal === undefined) {
     throw new CalorieRenderError('missing-data', r.degradeMsg || '数据不足，无法预测（需≥14 天摄入记录）');
   }
@@ -190,7 +191,7 @@ export function buildCalorieDeficitView(
   assertDate(end);
   if (start > end) throw new CalorieRenderError('bad-input', 'start 不得晚于 end');
   const series = buildSeries(db, start, end);
-  const r = calorieDeficitEta(series, '摄入预测(卡路里缺口预测)');
+  const r = calorieDeficitEta(series, m('skill-calorie.render-insightPlate.c007'));
   if (r.degraded || r.avgDeficit === undefined || r.weeklyLoss === undefined) {
     throw new CalorieRenderError('missing-data', r.degradeMsg || '数据不足，无法预测（需≥14 天摄入+运动记录）');
   }
@@ -207,7 +208,7 @@ export function buildCalorieStabilityView(
   assertDate(end);
   if (start > end) throw new CalorieRenderError('bad-input', 'start 不得晚于 end');
   const series = buildSeries(db, start, end);
-  const r = calorieStability(series, '摄入预测(摄入稳定性预测)');
+  const r = calorieStability(series, m('skill-calorie.render-insightPlate.c008'));
   if (r.degraded || r.avg === undefined || r.sigma === undefined) {
     throw new CalorieRenderError('missing-data', r.degradeMsg || '数据不足，无法预测（需≥14 天摄入记录）');
   }
@@ -266,7 +267,7 @@ export interface ContraView {
 }
 
 export function buildContraView(db: DatabaseSync, part = 'all'): ContraView {
-  const allowed = ['all', '腰', '膝', '肩'];
+  const allowed = ['all', m('skill-calorie.render-insightPlate.c009'), m('skill-calorie.render-insightPlate.c010'), m('skill-calorie.render-insightPlate.c011')];
   if (!allowed.includes(part)) throw new CalorieRenderError('bad-input', 'part 非法（all/腰/膝/肩）：' + String(part));
   const scan = scanPlan(db, part);
   if (scan.scannedSessions === 0) throw new CalorieRenderError('missing-data', '无训练计划可扫描（先定训练计划）');

@@ -32,6 +32,7 @@ import type { FoodRanking } from '../diet/dietEngine.js';
 import type { HealthPlate } from '../analysis/healthPlate.js';
 import type { AllRankings } from '../diet/rankingPlate.js';
 import type { ProductLibrary, ProductSearch, ProductStats } from '../diet/libraryPlate.js';
+import { m } from '../entries/index.js';
 
 function pageShell(skill: string, slot: string, title: string, body: string): string {
   return (
@@ -52,7 +53,7 @@ function kpi(label: string, value: string, sub?: string): string {
 }
 
 function bar(label: string, pct: number | null): string {
-  const p = pct === null || pct === undefined ? '未设目标' : pct + '%';
+  const p = pct === null || pct === undefined ? m('skill-calorie.render-html.c001') : pct + '%';
   const w = pct === null || pct === undefined ? 0 : Math.max(0, Math.min(100, pct));
   return (
     '<div class="' + cx('bar') + '"><span style="color:' + token('muted') + '">' + escapeHtml(label) + ' ' + escapeHtml(p) + '</span>' +
@@ -81,7 +82,7 @@ function fileBadge(exists: boolean | null): string {
 export function photoCardHtml(c: PhotoCard): string {
   return (
     '<figure class="' + cx('photo') + '" data-id="' + c.id + '" style="border:1px solid ' + token('border') + ';border-radius:' + token('radius') + 'px">' +
-    '<img src="' + escapeHtml(c.photoPath) + '" alt="身材照#' + c.id + '" data-file-exists="' + String(c.fileExists) + '" />' +
+    '<img src="' + escapeHtml(c.photoPath) + '" alt="' + m('skill-calorie.render-html.c900', { p0: String(c.id) }) + '" data-file-exists="' + String(c.fileExists) + '" />' +
     '<figcaption>#' + c.id + ' ' + escapeHtml(c.date) + ' ' + escapeHtml(c.time ?? '') + ' ' + tagChips(c.tagList) + ' ' + fileBadge(c.fileExists) +
     (c.note ? '<div>' + escapeHtml(c.note) + '</div>' : '') + '</figcaption></figure>'
   );
@@ -94,52 +95,56 @@ export function renderPhotoReceiptHtml(r: CrudReceipt): string {
       (it.reason ? '（' + escapeHtml(it.reason) + '）' : '') + '</div>').join('')
     : '<div style="color:' + token('muted') + '">无逐张明细</div>';
   const diff = r.tagDiff
-    ? '<div>改前：' + escapeHtml(r.tagDiff.before.join('、') || '—') + ' → 改后：' + escapeHtml(r.tagDiff.after.join('、') || '—') + '</div>'
+    ? '<div>' + m('skill-calorie.render-html.c901', {
+      p0: escapeHtml(r.tagDiff.before.join('、') || '—'), p1: escapeHtml(r.tagDiff.after.join('、') || '—'),
+    }) + '</div>'
     : '';
   const dist = r.distance
-    ? '<div>距上次「' + escapeHtml(r.distance.tag) + '」照已隔 ' + r.distance.days + ' 天</div>'
+    ? '<div>' + m('skill-calorie.render-html.c902', { p0: escapeHtml(r.distance.tag), p1: String(r.distance.days) }) + '</div>'
     : '';
   const body = '<div class="' + cx('receipt') + '">' + escapeHtml(r.summary) + '</div>' +
     (r.noChange ? '<div style="color:' + token('danger') + '">未产生实际变化</div>' : '') +
     diff + dist + items;
-  return pageShell('calorie', 'ilife:calorie:photo:receipt', r.scene + '回执', body);
+  return pageShell('calorie', 'ilife:calorie:photo:receipt', m('skill-calorie.render-html.c002', { p0: String(r.scene) }), body);
 }
 
 export function renderGalleryHtml(g: GalleryData): string {
-  const counts = g.tagCounts.map((t) => kpi(t.tag, t.count + ' 张')).join('');
+  const counts = g.tagCounts.map((t) => kpi(t.tag, m('skill-calorie.render-html.c003', { p0: String(t.count) }))).join('');
   const body = '<div class="' + cx('grid') + '">' +
-    kpi('共', g.totalCount + ' 张', g.filters.dateFrom + ' ~ ' + g.filters.dateTo) +
-    kpi('标签筛选', g.filters.tag || '全部') +
-    kpi('距上次拍照', g.daysSinceLast === null ? '—' : g.daysSinceLast + ' 天') + '</div>' +
+    kpi(m('skill-calorie.render-html.c004'), m('skill-calorie.render-html.c005', { p0: String(g.totalCount) }), g.filters.dateFrom + ' ~ ' + g.filters.dateTo) +
+    kpi(m('skill-calorie.render-html.c006'), g.filters.tag || m('skill-calorie.render-html.c007')) +
+    kpi(m('skill-calorie.render-html.c008'), g.daysSinceLast === null ? '—' : m('skill-calorie.render-html.c009', { p0: String(g.daysSinceLast) })) + '</div>' +
     '<div class="' + cx('section') + '"><h2>标签计数</h2><div class="' + cx('grid') + '">' + counts + '</div></div>' +
     '<div class="' + cx('grid') + '">' + g.photos.map(photoCardHtml).join('') + '</div>';
-  return pageShell('calorie', 'ilife:calorie:photo:gallery', '看身材照 · ' + g.totalCount + ' 张', body);
+  return pageShell('calorie', 'ilife:calorie:photo:gallery', m('skill-calorie.render-html.c010', { p0: String(g.totalCount) }), body);
 }
 
 export function renderCompareHtml(c: CompareData): string {
   const body = '<div class="' + cx('grid') + '">' +
-    kpi('间隔', c.intervalDays + ' 天', c.orderByDate ? '按日期正序' : '按日期倒序') +
+    kpi(m('skill-calorie.render-html.c011'), m('skill-calorie.render-html.c012', { p0: String(c.intervalDays) }), c.orderByDate ? m('skill-calorie.render-html.c013') : m('skill-calorie.render-html.c014')) +
     (c.crossTagWarning
       ? '<div style="color:' + token('danger') + '">跨标签对比警告：非同标签对比，可比性较弱</div>'
       : '<div style="color:' + token('accent') + '">同标签对比</div>') + '</div>' +
     '<div class="' + cx('grid') + '">' + photoCardHtml(c.photo1) + photoCardHtml(c.photo2) + '</div>';
-  return pageShell('calorie', 'ilife:calorie:photo:compare', '对比两张照片 · 间隔 ' + c.intervalDays + ' 天', body);
+  return pageShell('calorie', 'ilife:calorie:photo:compare', m('skill-calorie.render-html.c015', { p0: String(c.intervalDays) }), body);
 }
 
 export function renderViewerHtml(v: ViewerData): string {
-  const nav = '<div>上一张：' + (v.prevId === null ? '无' : '#' + v.prevId) +
-    ' · 下一张：' + (v.nextId === null ? '无' : '#' + v.nextId) + '</div>';
-  return pageShell('calorie', 'ilife:calorie:photo:viewer', '身材照查看 #' + v.photo.id, photoCardHtml(v.photo) + nav);
+  const nav = '<div>' + m('skill-calorie.render-html.c903', {
+    p0: v.prevId === null ? m('skill-calorie.render-html.c016') : '#' + v.prevId,
+    p1: v.nextId === null ? m('skill-calorie.render-html.c017') : '#' + v.nextId,
+  }) + '</div>';
+  return pageShell('calorie', 'ilife:calorie:photo:viewer', m('skill-calorie.render-html.c018', { p0: String(v.photo.id) }), photoCardHtml(v.photo) + nav);
 }
 
 export function renderGifHtml(t: GifTask): string {
   const body = '<div class="' + cx('grid') + '">' +
-    kpi('标签', t.tag) +
-    kpi('照片数', t.photoCount + ' 张', (t.firstDate ?? '—') + ' ~ ' + (t.lastDate ?? '—')) +
-    kpi('照片 IDs', t.photoIds.length > 0 ? t.photoIds.join(',') : '无') + '</div>' +
+    kpi(m('skill-calorie.render-html.c019'), t.tag) +
+    kpi(m('skill-calorie.render-html.c020'), m('skill-calorie.render-html.c021', { p0: String(t.photoCount) }), (t.firstDate ?? '—') + ' ~ ' + (t.lastDate ?? '—')) +
+    kpi(m('skill-calorie.render-html.c022'), t.photoIds.length > 0 ? t.photoIds.join(',') : m('skill-calorie.render-html.c023')) + '</div>' +
     '<div style="color:' + token('muted') + '">' + escapeHtml(GIF_PASSTHROUGH_NOTE) + '</div>' +
     '<div style="color:' + token('muted') + '">' + escapeHtml(t.note) + '</div>';
-  return pageShell('calorie', 'ilife:calorie:photo:gif', '生成身材照 GIF · ' + t.photoCount + ' 张', body);
+  return pageShell('calorie', 'ilife:calorie:photo:gif', m('skill-calorie.render-html.c024', { p0: String(t.photoCount) }), body);
 }
 
 /** 唤醒词 HELP 速查（`calorie.help.lookup`）的一行；字段名沿用 envelope 口径。 */
@@ -167,8 +172,8 @@ export function renderHelpLookupHtml(hits: readonly HelpLookupHit[], query: stri
     '<span style="color:' + token('muted') + '">' + escapeHtml(h.category) + '</span>',
     h.desc, h.cli,
   )).join('');
-  const body = '<div>查询：' + escapeHtml(query) + ' · 命中 ' + hits.length + ' 条</div>' + rows;
-  return pageShell('calorie', 'ilife:calorie:help', '唤醒词 HELP 速查 · ' + escapeHtml(query) + '（' + hits.length + ' 条）', body) + copyRuntimeScriptHtml();
+  const body = '<div>' + m('skill-calorie.render-html.c904', { p0: escapeHtml(query), p1: String(hits.length) }) + '</div>' + rows;
+  return pageShell('calorie', 'ilife:calorie:help', m('skill-calorie.render-html.c025', { p0: String(escapeHtml(query)), p1: String(hits.length) }), body) + copyRuntimeScriptHtml();
 }
 
 export function renderErrorHtml(e: ErrorReceipt): string {
@@ -177,52 +182,52 @@ export function renderErrorHtml(e: ErrorReceipt): string {
     '<div>' + escapeHtml(e.op) + (e.sub ? ' · ' + escapeHtml(e.sub) : '') + '</div>' +
     '<pre>' + escapeHtml(e.dataText) + '</pre><ul>' + sug + '</ul>' +
     '<pre>' + escapeHtml(e.fixPrompt) + '</pre>';
-  return pageShell('calorie', 'ilife:calorie:photo:error', e.sceneName + '失败回执', body);
+  return pageShell('calorie', 'ilife:calorie:photo:error', m('skill-calorie.render-html.c026', { p0: String(e.sceneName) }), body);
 }
 
 export function renderGoalConfigHtml(g: GoalConfig): string {
   const n = g.nutrition;
   const body =
     '<div class="' + cx('grid') + '">' +
-    kpi('热量目标', n.calorie_goal + ' 卡') +
-    kpi('蛋白目标', fmt(n.protein_goal, ' g')) +
-    kpi('碳水目标', fmt(n.carbs_goal, ' g')) +
-    kpi('脂肪目标', fmt(n.fat_goal, ' g')) +
-    kpi('饮水目标', fmt(n.water_goal, ' ml')) +
-    kpi('状态', g.paused ? '已暂停' : '进行中', g.pausedAt ?? '') +
+    kpi(m('skill-calorie.render-html.c027'), m('skill-calorie.render-html.c028', { p0: String(n.calorie_goal) })) +
+    kpi(m('skill-calorie.render-html.c029'), fmt(n.protein_goal, ' g')) +
+    kpi(m('skill-calorie.render-html.c030'), fmt(n.carbs_goal, ' g')) +
+    kpi(m('skill-calorie.render-html.c031'), fmt(n.fat_goal, ' g')) +
+    kpi(m('skill-calorie.render-html.c032'), fmt(n.water_goal, ' ml')) +
+    kpi(m('skill-calorie.render-html.c033'), g.paused ? m('skill-calorie.render-html.c034') : m('skill-calorie.render-html.c035'), g.pausedAt ?? '') +
     '</div>' +
     (g.consistent
       ? '<div class="' + cx('ok') + '" style="color:' + token('accent') + '">宏量自洽（差 ' + g.diffKcal + ' 卡）</div>'
       : '<div class="' + cx('warn') + '" style="color:' + token('danger') + '">宏量与热量差 ' + g.diffKcal + ' 卡，建议复核</div>');
-  return pageShell('calorie', 'ilife:calorie:goal-config', '目标配置', body);
+  return pageShell('calorie', 'ilife:calorie:goal-config', m('skill-calorie.render-html.c036'), body);
 }
 
 export function renderGoalRecommendHtml(g: GoalRecommend): string {
   const r = g.recommend;
   const body =
     '<div class="' + cx('grid') + '">' +
-    kpi('方案', r.profileLabel, 'TDEE ' + r.tdee + ' 卡') +
-    kpi('热量目标', r.calorieGoal + ' 卡', '每周 ' + r.weeklyRateKg + ' kg') +
-    kpi('蛋白', r.proteinGoal + ' g') +
-    kpi('碳水', r.carbsGoal + ' g') +
-    kpi('脂肪', r.fatGoal + ' g') +
-    kpi('饮水', r.waterGoal + ' ml', g.water.basis) +
+    kpi(m('skill-calorie.render-html.c037'), r.profileLabel, m('skill-calorie.render-html.c038', { p0: String(r.tdee) })) +
+    kpi(m('skill-calorie.render-html.c039'), m('skill-calorie.render-html.c040', { p0: String(r.calorieGoal) }), m('skill-calorie.render-html.c041', { p0: String(r.weeklyRateKg) })) +
+    kpi(m('skill-calorie.render-html.c042'), r.proteinGoal + ' g') +
+    kpi(m('skill-calorie.render-html.c043'), r.carbsGoal + ' g') +
+    kpi(m('skill-calorie.render-html.c044'), r.fatGoal + ' g') +
+    kpi(m('skill-calorie.render-html.c045'), r.waterGoal + ' ml', g.water.basis) +
     '</div>' +
     '<div style="color:' + token('muted') + '">' + r.planReasons.map((x) => escapeHtml(x)).join('<br>') + '</div>' +
     (r.missing.length > 0
       ? '<div class="' + cx('warn') + '" style="color:' + token('danger') + '">缺项用默认补齐：' + escapeHtml(r.missing.join('、')) + '</div>'
       : '');
-  return pageShell('calorie', 'ilife:calorie:goal-recommend', '目标推荐（' + r.profileLabel + '）', body);
+  return pageShell('calorie', 'ilife:calorie:goal-recommend', m('skill-calorie.render-html.c046', { p0: String(r.profileLabel) }), body);
 }
 
 export function renderGoalWeightHtml(g: GoalWeight): string {
   const body =
     '<div class="' + cx('grid') + '">' +
-    kpi('目标体重', fmt(g.weightGoal, ' kg'), g.deadline ? '截止 ' + g.deadline : '') +
-    kpi('最新体重', fmt(g.latestKg, ' kg'), g.start + ' ~ ' + g.end) +
-    kpi('净变化', fmt(g.deltaKg, ' kg'), '有记录 ' + g.loggedDays + ' 天') +
+    kpi(m('skill-calorie.render-html.c047'), fmt(g.weightGoal, ' kg'), g.deadline ? m('skill-calorie.render-html.c048', { p0: String(g.deadline) }) : '') +
+    kpi(m('skill-calorie.render-html.c049'), fmt(g.latestKg, ' kg'), g.start + ' ~ ' + g.end) +
+    kpi(m('skill-calorie.render-html.c050'), fmt(g.deltaKg, ' kg'), m('skill-calorie.render-html.c051', { p0: String(g.loggedDays) })) +
     '</div>';
-  return pageShell('calorie', 'ilife:calorie:goal-weight', '体重目标 ' + g.start + ' ~ ' + g.end, body);
+  return pageShell('calorie', 'ilife:calorie:goal-weight', m('skill-calorie.render-html.c052', { p0: String(g.start), p1: String(g.end) }), body);
 }
 
 export function renderGoalProgressHtml(g: GoalProgress): string {
@@ -230,27 +235,27 @@ export function renderGoalProgressHtml(g: GoalProgress): string {
   const total = g.history.completedCount + g.history.incompleteCount;
   const body =
     '<div class="' + cx('grid') + '">' +
-    kpi('热量目标', n.calorie_goal + ' 卡') +
-    kpi('完成', g.history.completedCount + '/' + total, fmt(g.completionPct, '%')) +
-    kpi('周缺口', g.deficit.summary.weeklyDeficit + ' 卡', '预计 ' + g.deficit.summary.predictedLossKg + ' kg') +
-    kpi('缺口趋势', g.deficit.summary.trend) +
-    kpi('摄入趋势', g.trend.summary.trend, '均值 ' + g.trend.summary.avg + ' 卡') +
+    kpi(m('skill-calorie.render-html.c053'), m('skill-calorie.render-html.c054', { p0: String(n.calorie_goal) })) +
+    kpi(m('skill-calorie.render-html.c055'), g.history.completedCount + '/' + total, fmt(g.completionPct, '%')) +
+    kpi(m('skill-calorie.render-html.c056'), m('skill-calorie.render-html.c057', { p0: String(g.deficit.summary.weeklyDeficit) }), m('skill-calorie.render-html.c058', { p0: String(g.deficit.summary.predictedLossKg) })) +
+    kpi(m('skill-calorie.render-html.c059'), g.deficit.summary.trend) +
+    kpi(m('skill-calorie.render-html.c060'), g.trend.summary.trend, m('skill-calorie.render-html.c061', { p0: String(g.trend.summary.avg) })) +
     '</div>' +
-    bar('目标完成率', g.completionPct);
-  return pageShell('calorie', 'ilife:calorie:goal-progress', '目标进度 ' + g.start + ' ~ ' + g.end, body);
+    bar(m('skill-calorie.render-html.c062'), g.completionPct);
+  return pageShell('calorie', 'ilife:calorie:goal-progress', m('skill-calorie.render-html.c063', { p0: String(g.start), p1: String(g.end) }), body);
 }
 
 export function renderGoalStatusHtml(g: GoalStatus): string {
   const body =
     '<div class="' + cx('grid') + '">' +
-    kpi('状态', g.paused ? '已暂停' : '进行中', g.pausedAt ?? '') +
-    kpi('热量目标', g.nutrition.calorie_goal + ' 卡') +
-    kpi('饮水目标', fmt(g.nutrition.water_goal, ' ml')) +
+    kpi(m('skill-calorie.render-html.c064'), g.paused ? m('skill-calorie.render-html.c065') : m('skill-calorie.render-html.c066'), g.pausedAt ?? '') +
+    kpi(m('skill-calorie.render-html.c067'), m('skill-calorie.render-html.c068', { p0: String(g.nutrition.calorie_goal) })) +
+    kpi(m('skill-calorie.render-html.c069'), fmt(g.nutrition.water_goal, ' ml')) +
     '</div>' +
     (g.paused
       ? '<div class="' + cx('warn') + '" style="color:' + token('danger') + '">记录照常，仅目标暂停</div>'
       : '<div class="' + cx('ok') + '" style="color:' + token('accent') + '">目标进行中</div>');
-  return pageShell('calorie', 'ilife:calorie:goal-status', '目标状态', body);
+  return pageShell('calorie', 'ilife:calorie:goal-status', m('skill-calorie.render-html.c070'), body);
 }
 
 export function renderCombinedHtml(c: CombinedAnalysis): string {
@@ -258,169 +263,177 @@ export function renderCombinedHtml(c: CombinedAnalysis): string {
   const r = a.correlation.r === null || a.correlation.r === undefined ? '—' : String(a.correlation.r);
   const body =
     '<div class="' + cx('grid') + '">' +
-    kpi('配对', a.labels.a + ' vs ' + a.labels.b, c.pair + ' · ' + c.window) +
-    kpi('相关系数', r, 'n=' + a.correlation.n) +
-    kpi('A 均值', fmt(a.aAvg), '变化 ' + fmt(a.aDelta)) +
-    kpi('B 均值', fmt(a.bAvg), '变化 ' + fmt(a.bDelta)) +
-    kpi('窗口', c.start + ' ~ ' + c.end, c.series.length + ' 天') +
+    kpi(m('skill-calorie.render-html.c071'), a.labels.a + ' vs ' + a.labels.b, c.pair + ' · ' + c.window) +
+    kpi(m('skill-calorie.render-html.c072'), r, 'n=' + a.correlation.n) +
+    kpi(m('skill-calorie.render-html.c073'), fmt(a.aAvg), m('skill-calorie.render-html.c074', { p0: String(fmt(a.aDelta)) })) +
+    kpi(m('skill-calorie.render-html.c075'), fmt(a.bAvg), m('skill-calorie.render-html.c076', { p0: String(fmt(a.bDelta)) })) +
+    kpi(m('skill-calorie.render-html.c077'), c.start + ' ~ ' + c.end, m('skill-calorie.render-html.c078', { p0: String(c.series.length) })) +
     '</div>' +
     '<div style="color:' + token('muted') + '">' + escapeHtml(a.insight) + '</div>';
-  return pageShell('calorie', 'ilife:calorie:combined', '组合分析 ' + c.pair, body);
+  return pageShell('calorie', 'ilife:calorie:combined', m('skill-calorie.render-html.c079', { p0: String(c.pair) }), body);
 }
 
 export function renderDeficitHtml(d: DeficitData, title?: string): string {
   const body =
     '<div class="' + cx('grid') + '">' +
-    kpi('日均缺口', d.summary.avgDeficit + ' 卡', '趋势 ' + d.summary.trend) +
-    kpi('周缺口', d.summary.weeklyDeficit + ' 卡', '预计 ' + d.summary.predictedLossKg + ' kg') +
-    kpi('日均摄入', d.summary.avgIntake + ' 卡', '目标 ' + d.target.intake + ' 卡') +
-    kpi('日均消耗', d.summary.avgBurn + ' 卡', 'TDEE ' + d.target.tdee + ' 卡') +
+    kpi(m('skill-calorie.render-html.c080'), m('skill-calorie.render-html.c081', { p0: String(d.summary.avgDeficit) }), m('skill-calorie.render-html.c082', { p0: String(d.summary.trend) })) +
+    kpi(m('skill-calorie.render-html.c083'), m('skill-calorie.render-html.c084', { p0: String(d.summary.weeklyDeficit) }), m('skill-calorie.render-html.c085', { p0: String(d.summary.predictedLossKg) })) +
+    kpi(m('skill-calorie.render-html.c086'), m('skill-calorie.render-html.c087', { p0: String(d.summary.avgIntake) }), m('skill-calorie.render-html.c088', { p0: String(d.target.intake) })) +
+    kpi(m('skill-calorie.render-html.c089'), m('skill-calorie.render-html.c090', { p0: String(d.summary.avgBurn) }), m('skill-calorie.render-html.c091', { p0: String(d.target.tdee) })) +
     '</div>';
-  return pageShell('calorie', 'ilife:calorie:deficit', title ?? ('缺口 ' + d.meta.start + ' ~ ' + d.meta.end), body);
+  return pageShell('calorie', 'ilife:calorie:deficit', title ?? m('skill-calorie.render-html.c092', { p0: String(d.meta.start), p1: String(d.meta.end) }), body);
 }
 
 export function renderDietReviewHtml(r: DietReview): string {
-  const t = r.trend.status === 'ok' && r.trend.data ? r.trend.data.totalCal + ' 卡·日均 ' + r.trend.data.avgCal + ' 卡' : '—';
-  const m = r.macro.status === 'ok' && r.macro.data && r.macro.data.protein
-    ? '蛋白/碳水/脂肪 ' + r.macro.data.protein.pct + '/' + r.macro.data.carb?.pct + '/' + r.macro.data.fat?.pct
+  const t = r.trend.status === 'ok' && r.trend.data ? m('skill-calorie.render-html.c093', { p0: String(r.trend.data.totalCal), p1: String(r.trend.data.avgCal) }) : '—';
+  const macroText = r.macro.status === 'ok' && r.macro.data && r.macro.data.protein
+    ? m('skill-calorie.render-html.c094', {
+      p0: String(r.macro.data.protein.pct),
+      p1: String(r.macro.data.carb?.pct),
+      p2: String(r.macro.data.fat?.pct),
+    })
     : '—';
-  const meals = r.byMeal.map((s) => kpi(s.meal, s.totalCalories + ' 卡', s.days + ' 天')).join('');
+  const meals = r.byMeal.map((s) => kpi(s.meal, m('skill-calorie.render-html.c095', { p0: String(s.totalCalories) }), m('skill-calorie.render-html.c096', { p0: String(s.days) }))).join('');
   const body =
     '<div class="' + cx('section') + '"><h2>复盘 ' + escapeHtml(r.start) + ' ~ ' + escapeHtml(r.end) + '</h2>' +
     '<div class="' + cx('grid') + '">' +
-    kpi('热量', t, r.loggedDays + ' 天有记录') +
-    kpi('配比', m) +
+    kpi(m('skill-calorie.render-html.c097'), t, m('skill-calorie.render-html.c098', { p0: String(r.loggedDays) })) +
+    kpi(m('skill-calorie.render-html.c099'), macroText) +
     '</div></div>' +
     '<div class="' + cx('section') + '"><h2>按餐汇总（窗口跟 MEAL_WINDOWS，加餐=下午茶+夜宵）</h2>' +
     '<div class="' + cx('grid') + '">' + meals + '</div></div>';
-  return pageShell('calorie', 'ilife:calorie:diet-review', '饮食复盘 ' + r.start + ' ~ ' + r.end, body);
+  return pageShell('calorie', 'ilife:calorie:diet-review', m('skill-calorie.render-html.c100', { p0: String(r.start), p1: String(r.end) }), body);
 }
 
 export function renderHealthHtml(h: HealthPlate): string {
   const d = h.dashboard.data;
-  const w = d && (d as { weight?: unknown }).weight !== null && (d as { weight?: unknown }).weight !== undefined ? '有' : '缺';
+  const w = d && (d as { weight?: unknown }).weight !== null && (d as { weight?: unknown }).weight !== undefined ? m('skill-calorie.render-html.c101') : m('skill-calorie.render-html.c102');
   const body =
     '<div class="' + cx('grid') + '">' +
-    kpi('区间', h.start + ' ~ ' + h.end, '有记录 ' + h.loggedDays + ' 天') +
-    kpi('日均摄入', fmt(h.avgIntake, ' 卡')) +
-    kpi('日均缺口', fmt(h.avgDeficit, ' 卡')) +
-    kpi('四维', h.dashboard.status === 'ok' ? '齐' : '部分缺', '体重维' + w) +
-    kpi('报告', h.dashboard.message) +
+    kpi(m('skill-calorie.render-html.c103'), h.start + ' ~ ' + h.end, m('skill-calorie.render-html.c104', { p0: String(h.loggedDays) })) +
+    kpi(m('skill-calorie.render-html.c105'), fmt(h.avgIntake, m('skill-calorie.render-html.c106'))) +
+    kpi(m('skill-calorie.render-html.c107'), fmt(h.avgDeficit, m('skill-calorie.render-html.c108'))) +
+    kpi(m('skill-calorie.render-html.c109'), h.dashboard.status === 'ok' ? m('skill-calorie.render-html.c110') : m('skill-calorie.render-html.c111'), m('skill-calorie.render-html.c112', { p0: String(w) })) +
+    kpi(m('skill-calorie.render-html.c113'), h.dashboard.message) +
     '</div>';
-  return pageShell('calorie', 'ilife:calorie:health', '健康盘 ' + h.start + ' ~ ' + h.end, body);
+  return pageShell('calorie', 'ilife:calorie:health', m('skill-calorie.render-html.c114', { p0: String(h.start), p1: String(h.end) }), body);
 }
 
 export function renderRankingHtml(r: FoodRanking): string {
   const items = r.items
     .slice(0, 10)
-    .map((it) => kpi('#' + it.rank + ' ' + it.foodName, it.totalCal + ' 卡', it.cnt + ' 次·均 ' + it.avgCalPerMeal + ' 卡'))
+    .map((it) => kpi('#' + it.rank + ' ' + it.foodName, m('skill-calorie.render-html.c115', { p0: String(it.totalCal) }), m('skill-calorie.render-html.c116', { p0: String(it.cnt), p1: String(it.avgCalPerMeal) })))
     .join('');
   const body =
     '<div class="' + cx('section') + '"><h2>' + escapeHtml(r.title) + '</h2>' +
     '<div class="' + cx('grid') + '">' + items + '</div></div>';
-  return pageShell('calorie', 'ilife:calorie:ranking', '排行 ' + r.category, body);
+  return pageShell('calorie', 'ilife:calorie:ranking', m('skill-calorie.render-html.c117', { p0: String(r.category) }), body);
 }
 
 export function renderAllRankingsHtml(a: AllRankings): string {
   const parts = (Object.entries(a.boards) as Array<[string, FoodRanking | null]>)
     .map(([cat, b]) => {
-      if (!b) return kpi(cat, '—', '本窗无数据');
+      if (!b) return kpi(cat, '—', m('skill-calorie.render-html.c118'));
       const top = b.items[0];
-      return kpi(cat, top ? top.foodName + ' ' + top.totalCal + ' 卡' : '—', 'TOP ' + b.topN);
+      return kpi(cat, top ? m('skill-calorie.render-html.c119', { p0: String(top.foodName), p1: String(top.totalCal) }) : '—', 'TOP ' + b.topN);
     })
     .join('');
   const body =
     '<div class="' + cx('grid') + '">' + parts + '</div>' +
     '<div style="color:' + token('muted') + '">' + escapeHtml(a.start) + ' ~ ' + escapeHtml(a.end) + ' · ' + a.okCount + '/5 榜有数据</div>';
-  return pageShell('calorie', 'ilife:calorie:ranking-all', '全部排行', body);
+  return pageShell('calorie', 'ilife:calorie:ranking-all', m('skill-calorie.render-html.c120'), body);
 }
 
 export function renderProductSearchHtml(s: ProductSearch): string {
   const items = s.items
     .slice(0, 10)
-    .map((p) => kpi(p.product_name, p.calories + ' 卡', (p.brand ?? '') + '·蛋白 ' + p.protein + ' g'))
+    .map((p) => kpi(p.product_name, m('skill-calorie.render-html.c121', { p0: String(p.calories) }), m('skill-calorie.render-html.c122', { p0: String(p.brand ?? ''), p1: String(p.protein) })))
     .join('');
   const body =
-    '<div class="' + cx('grid') + '">' + kpi('关键词', s.keyword, '命中 ' + s.total + ' 条') + '</div>' +
+    '<div class="' + cx('grid') + '">' + kpi(m('skill-calorie.render-html.c123'), s.keyword, m('skill-calorie.render-html.c124', { p0: String(s.total) })) + '</div>' +
     '<div class="' + cx('grid') + '">' + items + '</div>';
-  return pageShell('calorie', 'ilife:calorie:search', '查食品 ' + s.keyword, body);
+  return pageShell('calorie', 'ilife:calorie:search', m('skill-calorie.render-html.c125', { p0: String(s.keyword) }), body);
 }
 
 export function renderProductLibraryHtml(l: ProductLibrary): string {
   const items = l.items
     .slice(0, 10)
-    .map((p) => kpi(p.product_name, p.calories + ' 卡', (p.brand ?? '') + '·' + (p.category ?? '')))
+    .map((p) => kpi(p.product_name, m('skill-calorie.render-html.c126', { p0: String(p.calories) }), (p.brand ?? '') + '·' + (p.category ?? '')))
     .join('');
   const body =
-    '<div class="' + cx('grid') + '">' + kpi('食品库', l.category ?? '全量', '共 ' + l.total + ' 条') + '</div>' +
+    '<div class="' + cx('grid') + '">' + kpi(m('skill-calorie.render-html.c127'), l.category ?? m('skill-calorie.render-html.c128'), m('skill-calorie.render-html.c129', { p0: String(l.total) })) + '</div>' +
     '<div class="' + cx('grid') + '">' + items + '</div>';
-  return pageShell('calorie', 'ilife:calorie:library', '食品库', body);
+  return pageShell('calorie', 'ilife:calorie:library', m('skill-calorie.render-html.c130'), body);
 }
 
 export function renderProductStatsHtml(s: ProductStats): string {
-  const items = s.stats.map((x) => kpi(x.source, x.count + ' 条')).join('');
+  const items = s.stats.map((x) => kpi(x.source, m('skill-calorie.render-html.c131', { p0: String(x.count) }))).join('');
   const body =
-    '<div class="' + cx('grid') + '">' + kpi('总数', s.total + ' 条') + '</div>' +
+    '<div class="' + cx('grid') + '">' + kpi(m('skill-calorie.render-html.c132'), m('skill-calorie.render-html.c133', { p0: String(s.total) })) + '</div>' +
     '<div class="' + cx('grid') + '">' + items + '</div>';
-  return pageShell('calorie', 'ilife:calorie:library-stats', '库统计', body);
+  return pageShell('calorie', 'ilife:calorie:library-stats', m('skill-calorie.render-html.c134'), body);
 }
 export function renderWeightHtml(w: WeightDashboard): string {
   const t = w.trend;
   const body =
     '<div class="' + cx('grid') + '">' +
-    kpi('体重盘', t.firstWeight + ' → ' + t.lastWeight + ' kg', t.firstDate + ' ~ ' + t.lastDate) +
-    kpi('均值', t.avgWeight + ' kg', '共 ' + t.recordCount + ' 条') +
-    kpi('变化', (t.changeKg >= 0 ? '+' : '') + t.changeKg + ' kg', '趋势' + t.trendCn) +
-    kpi('目标体重', fmt(w.weightGoal, ' kg'), w.deadline ? '截止 ' + w.deadline : '无截止') +
-    kpi('距目标', w.gapKg === null ? '—' : (w.gapKg >= 0 ? '+' : '') + w.gapKg + ' kg') +
+    kpi(m('skill-calorie.render-html.c135'), t.firstWeight + ' → ' + t.lastWeight + ' kg', t.firstDate + ' ~ ' + t.lastDate) +
+    kpi(m('skill-calorie.render-html.c136'), t.avgWeight + ' kg', m('skill-calorie.render-html.c137', { p0: String(t.recordCount) })) +
+    kpi(m('skill-calorie.render-html.c138'), (t.changeKg >= 0 ? '+' : '') + t.changeKg + ' kg', m('skill-calorie.render-html.c139', { p0: String(t.trendCn) })) +
+    kpi(m('skill-calorie.render-html.c140'), fmt(w.weightGoal, ' kg'), w.deadline ? m('skill-calorie.render-html.c141', { p0: String(w.deadline) }) : m('skill-calorie.render-html.c142')) +
+    kpi(m('skill-calorie.render-html.c143'), w.gapKg === null ? '—' : (w.gapKg >= 0 ? '+' : '') + w.gapKg + ' kg') +
     '</div>';
-  return pageShell('calorie', 'ilife:calorie:weight', '体重盘 ' + w.start + ' ~ ' + w.end, body);
+  return pageShell('calorie', 'ilife:calorie:weight', m('skill-calorie.render-html.c144', { p0: String(w.start), p1: String(w.end) }), body);
 }
 
 export function renderWeightHistoryHtml(h: WeightHistoryView): string {
   const rows = h.rows.slice(0, 10).map((r) => kpi(r.date, r.weight_kg + ' kg', (r.note ?? '') + ' BMI ' + (r.bmi ?? '—'))).join('');
-  const ch = h.change ? '变化 ' + (h.change.delta >= 0 ? '+' : '') + h.change.delta + ' kg（' + h.change.spanDays + '天）' : '单点无变化';
+  const ch = h.change ? m('skill-calorie.render-html.c145', {
+    p0: String(h.change.delta >= 0 ? '+' : ''),
+    p1: String(h.change.delta),
+    p2: String(h.change.spanDays),
+  }) : m('skill-calorie.render-html.c146');
   const body =
-    '<div class="' + cx('grid') + '">' + kpi('体重历史', h.range, ch) + '</div>' +
+    '<div class="' + cx('grid') + '">' + kpi(m('skill-calorie.render-html.c147'), h.range, ch) + '</div>' +
     '<div class="' + cx('grid') + '">' + rows + '</div>';
-  return pageShell('calorie', 'ilife:calorie:weight-history', '体重历史 ' + h.range, body);
+  return pageShell('calorie', 'ilife:calorie:weight-history', m('skill-calorie.render-html.c148', { p0: String(h.range) }), body);
 }
 
 export function renderWeightCompareHtml(v: WeightCompareView): string {
   const c = v.compare;
   const body =
     '<div class="' + cx('grid') + '">' +
-    kpi('体重对比', (c.avgDiff >= 0 ? '+' : '') + c.avgDiff + ' kg', c.direction) +
-    kpi('本期', c.currentPeriod.avgWeight + ' kg', v.start + ' ~ ' + v.end) +
-    kpi('对比期', c.comparePeriod.avgWeight + ' kg', v.compareStart + ' ~ ' + v.compareEnd) +
-    kpi('节奏', c.speedLabel) +
+    kpi(m('skill-calorie.render-html.c149'), (c.avgDiff >= 0 ? '+' : '') + c.avgDiff + ' kg', c.direction) +
+    kpi(m('skill-calorie.render-html.c150'), c.currentPeriod.avgWeight + ' kg', v.start + ' ~ ' + v.end) +
+    kpi(m('skill-calorie.render-html.c151'), c.comparePeriod.avgWeight + ' kg', v.compareStart + ' ~ ' + v.compareEnd) +
+    kpi(m('skill-calorie.render-html.c152'), c.speedLabel) +
     '</div>';
-  return pageShell('calorie', 'ilife:calorie:weight-compare', '体重对比', body);
+  return pageShell('calorie', 'ilife:calorie:weight-compare', m('skill-calorie.render-html.c153'), body);
 }
 
 export function renderWeightReviewHtml(v: WeightReviewView): string {
-  const m = v.milestone;
+  const milestone = v.milestone;
   const body =
     '<div class="' + cx('grid') + '">' +
-    kpi('体重复核', m.currentWeight + ' kg', m.currentDate) +
-    kpi('目标体重', m.weightGoal + ' kg', m.deadline ? '截止 ' + m.deadline : '无截止') +
-    kpi('差距', (m.gapKg >= 0 ? '+' : '') + m.gapKg + ' kg') +
-    kpi('状态', m.status) +
-    kpi('预计达成', m.estDate ?? '—', m.estDays === null || m.estDays === undefined ? '' : m.estDays + '天') +
+    kpi(m('skill-calorie.render-html.c154'), milestone.currentWeight + ' kg', milestone.currentDate) +
+    kpi(m('skill-calorie.render-html.c155'), milestone.weightGoal + ' kg', milestone.deadline ? m('skill-calorie.render-html.c156', { p0: String(milestone.deadline) }) : m('skill-calorie.render-html.c157')) +
+    kpi(m('skill-calorie.render-html.c158'), (milestone.gapKg >= 0 ? '+' : '') + milestone.gapKg + ' kg') +
+    kpi(m('skill-calorie.render-html.c159'), milestone.status) +
+    kpi(m('skill-calorie.render-html.c160'), milestone.estDate ?? '—', milestone.estDays === null || milestone.estDays === undefined ? '' : m('skill-calorie.render-html.c161', { p0: String(milestone.estDays) })) +
     '</div>';
-  return pageShell('calorie', 'ilife:calorie:weight-review', '体重复核 ' + v.today, body);
+  return pageShell('calorie', 'ilife:calorie:weight-review', m('skill-calorie.render-html.c162', { p0: String(v.today) }), body);
 }
 
 export function renderVolatilityHtml(v: VolatilityView): string {
   const o = v.volatility;
   const body =
     '<div class="' + cx('grid') + '">' +
-    kpi('波动分析', '基线 ' + o.baselineValue + ' kg', o.baselineToggleLabel) +
-    kpi('阈值', '黄±' + o.thresholds.yellow + ' 红±' + o.thresholds.red + ' kg', 'σ=' + o.baselineSigma + 'kg') +
-    kpi('预警', o.earlyWarning.message, o.earlyWarning.date + ' ' + o.earlyWarning.kg + 'kg') +
-    kpi('近期异常', o.recentAnomalies.length + ' 个', '共 ' + o.points.length + ' 点') +
+    kpi(m('skill-calorie.render-html.c163'), m('skill-calorie.render-html.c164', { p0: String(o.baselineValue) }), o.baselineToggleLabel) +
+    kpi(m('skill-calorie.render-html.c165'), m('skill-calorie.render-html.c166', { p0: String(o.thresholds.yellow), p1: String(o.thresholds.red) }), 'σ=' + o.baselineSigma + 'kg') +
+    kpi(m('skill-calorie.render-html.c167'), o.earlyWarning.message, o.earlyWarning.date + ' ' + o.earlyWarning.kg + 'kg') +
+    kpi(m('skill-calorie.render-html.c168'), m('skill-calorie.render-html.c169', { p0: String(o.recentAnomalies.length) }), m('skill-calorie.render-html.c170', { p0: String(o.points.length) })) +
     '</div>';
-  return pageShell('calorie', 'ilife:calorie:volatility', '波动分析 ' + v.start + ' ~ ' + v.end, body);
+  return pageShell('calorie', 'ilife:calorie:volatility', m('skill-calorie.render-html.c171', { p0: String(v.start), p1: String(v.end) }), body);
 }
 
 export function renderBodyCompositionHtml(v: BodyCompositionView): string {
@@ -430,25 +443,25 @@ export function renderBodyCompositionHtml(v: BodyCompositionView): string {
   }).join('');
   const body =
     '<div class="' + cx('grid') + '">' +
-    kpi('体成分看', v.source ?? '全部来源', '共 ' + v.total + ' 条') +
-    kpi('最新体脂', v.latestPct === null ? '—' : v.latestPct + '%') +
-    kpi('趋势点', v.trend.length + ' 天') +
+    kpi(m('skill-calorie.render-html.c172'), v.source ?? m('skill-calorie.render-html.c173'), m('skill-calorie.render-html.c174', { p0: String(v.total) })) +
+    kpi(m('skill-calorie.render-html.c175'), v.latestPct === null ? '—' : v.latestPct + '%') +
+    kpi(m('skill-calorie.render-html.c176'), m('skill-calorie.render-html.c177', { p0: String(v.trend.length) })) +
     '</div><div class="' + cx('grid') + '">' + items + '</div>';
-  return pageShell('calorie', 'ilife:calorie:body-composition', '体成分看', body);
+  return pageShell('calorie', 'ilife:calorie:body-composition', m('skill-calorie.render-html.c178'), body);
 }
 
 export function renderBodyMeasureHtml(v: BodyMeasureView): string {
   const items = v.items.slice(0, 8).map((r) => {
     const d = r as Record<string, unknown>;
-    return kpi(String(d['date'] ?? ''), v.metric ? String(d[v.metric] ?? '—') + 'cm' : '有记录', String(d['note'] ?? ''));
+    return kpi(String(d['date'] ?? ''), v.metric ? String(d[v.metric] ?? '—') + 'cm' : m('skill-calorie.render-html.c179'), String(d['note'] ?? ''));
   }).join('');
   const body =
     '<div class="' + cx('grid') + '">' +
-    kpi('围度看', v.metric ?? '全部围度', '共 ' + v.total + ' 条') +
-    kpi('最新', v.latestVal === null ? '—' : v.latestVal + 'cm', v.metric ?? '') +
-    kpi('趋势点', v.trend.length + ' 天') +
+    kpi(m('skill-calorie.render-html.c180'), v.metric ?? m('skill-calorie.render-html.c181'), m('skill-calorie.render-html.c182', { p0: String(v.total) })) +
+    kpi(m('skill-calorie.render-html.c183'), v.latestVal === null ? '—' : v.latestVal + 'cm', v.metric ?? '') +
+    kpi(m('skill-calorie.render-html.c184'), m('skill-calorie.render-html.c185', { p0: String(v.trend.length) })) +
     '</div><div class="' + cx('grid') + '">' + items + '</div>';
-  return pageShell('calorie', 'ilife:calorie:body-measure', '围度看', body);
+  return pageShell('calorie', 'ilife:calorie:body-measure', m('skill-calorie.render-html.c186'), body);
 }
 
 /** T351 视觉修复·实施兵B：计划四函数改薄委托，整页装配住 `workoutPlanDocs.ts`
@@ -489,98 +502,101 @@ export function renderPlanWizardHtml(v: PlanWizardView, opts?: { key?: string; c
 export function renderExerciseGoalHtml(v: ExerciseGoalView): string {
   const body =
     '<div class="' + cx('grid') + '">' +
-    kpi('运动目标视图', v.start + ' ~ ' + v.end, v.days + '天') +
-    kpi('目标', v.goalTotal + ' 卡', '日均 ' + v.dailyGoal + ' 卡') +
-    kpi('实际', v.actual + ' 卡', v.achieved ? '已达成' : '未达成') +
-    kpi('完成度', v.pct === null ? '—' : v.pct + '%', '差 ' + v.gap + ' 卡') +
-    '</div>' + bar('运动完成率', v.pct);
-  return pageShell('calorie', 'ilife:calorie:exercise-goal', '运动目标视图', body);
+    kpi(m('skill-calorie.render-html.c187'), v.start + ' ~ ' + v.end, m('skill-calorie.render-html.c188', { p0: String(v.days) })) +
+    kpi(m('skill-calorie.render-html.c189'), m('skill-calorie.render-html.c190', { p0: String(v.goalTotal) }), m('skill-calorie.render-html.c191', { p0: String(v.dailyGoal) })) +
+    kpi(m('skill-calorie.render-html.c192'), m('skill-calorie.render-html.c193', { p0: String(v.actual) }), v.achieved ? m('skill-calorie.render-html.c194') : m('skill-calorie.render-html.c195')) +
+    kpi(m('skill-calorie.render-html.c196'), v.pct === null ? '—' : v.pct + '%', m('skill-calorie.render-html.c197', { p0: String(v.gap) })) +
+    '</div>' + bar(m('skill-calorie.render-html.c198'), v.pct);
+  return pageShell('calorie', 'ilife:calorie:exercise-goal', m('skill-calorie.render-html.c199'), body);
 }
 
 export function renderGoalExpiringHtml(v: GoalExpiringView): string {
   const body =
     '<div class="' + cx('grid') + '">' +
-    kpi('即将到期目标', v.deadline, v.expiring ? '即将到期' : '未到期') +
-    kpi('剩余', v.daysLeft + ' 天', '窗口 ' + v.withinDays + ' 天') +
-    kpi('体重目标', fmt(v.weightGoal, ' kg')) +
-    kpi('热量目标', v.calorieGoal === null ? '—' : v.calorieGoal + ' 卡') +
+    kpi(m('skill-calorie.render-html.c200'), v.deadline, v.expiring ? m('skill-calorie.render-html.c201') : m('skill-calorie.render-html.c202')) +
+    kpi(m('skill-calorie.render-html.c203'), m('skill-calorie.render-html.c204', { p0: String(v.daysLeft) }), m('skill-calorie.render-html.c205', { p0: String(v.withinDays) })) +
+    kpi(m('skill-calorie.render-html.c206'), fmt(v.weightGoal, ' kg')) +
+    kpi(m('skill-calorie.render-html.c207'), v.calorieGoal === null ? '—' : m('skill-calorie.render-html.c208', { p0: String(v.calorieGoal) })) +
     '</div>';
-  return pageShell('calorie', 'ilife:calorie:goal-expiring', '即将到期目标', body);
+  return pageShell('calorie', 'ilife:calorie:goal-expiring', m('skill-calorie.render-html.c209'), body);
 }
 
 export function renderGoalPredictHtml(v: GoalPredictView): string {
   const body =
     '<div class="' + cx('grid') + '">' +
-    kpi('目标预测达成', '目标 ' + v.targetKg + ' kg', v.start + ' ~ ' + v.end) +
-    kpi('当前', v.current + ' kg') +
-    kpi('预计达成', v.eta, '剩余 ' + v.daysLeft + ' 天') +
-    kpi('速率', v.ratePerWeek + ' kg/周', v.feasible ? '健康' : '超范围') +
+    kpi(m('skill-calorie.render-html.c210'), m('skill-calorie.render-html.c211', { p0: String(v.targetKg) }), v.start + ' ~ ' + v.end) +
+    kpi(m('skill-calorie.render-html.c212'), v.current + ' kg') +
+    kpi(m('skill-calorie.render-html.c213'), v.eta, m('skill-calorie.render-html.c214', { p0: String(v.daysLeft) })) +
+    kpi(m('skill-calorie.render-html.c215'), m('skill-calorie.render-html.c216', { p0: String(v.ratePerWeek) }), v.feasible ? m('skill-calorie.render-html.c217') : m('skill-calorie.render-html.c218')) +
     '</div>';
-  return pageShell('calorie', 'ilife:calorie:goal-predict', '目标预测达成', body);
+  return pageShell('calorie', 'ilife:calorie:goal-predict', m('skill-calorie.render-html.c219'), body);
 }
 
 export function renderGoalVsActualHtml(v: GoalVsActualView): string {
   const body =
     '<div class="' + cx('grid') + '">' +
-    kpi('目标对比实际', v.start + ' ~ ' + v.end, '完成 ' + v.completedCount + '/' + (v.completedCount + v.incompleteCount)) +
-    kpi('热量目标', v.calorieGoal === null ? '—' : v.calorieGoal + ' 卡') +
-    kpi('完成率', v.completionPct === null ? '—' : v.completionPct + '%') +
-    kpi('摄入均值', v.trendAvg + ' 卡') +
-    '</div>' + bar('目标完成率', v.completionPct);
-  return pageShell('calorie', 'ilife:calorie:goal-vs-actual', '目标对比实际', body);
+    kpi(m('skill-calorie.render-html.c220'), v.start + ' ~ ' + v.end, m('skill-calorie.render-html.c221', {
+      p0: String(v.completedCount),
+      p1: String(v.completedCount + v.incompleteCount),
+    })) +
+    kpi(m('skill-calorie.render-html.c222'), v.calorieGoal === null ? '—' : m('skill-calorie.render-html.c223', { p0: String(v.calorieGoal) })) +
+    kpi(m('skill-calorie.render-html.c224'), v.completionPct === null ? '—' : v.completionPct + '%') +
+    kpi(m('skill-calorie.render-html.c225'), m('skill-calorie.render-html.c226', { p0: String(v.trendAvg) })) +
+    '</div>' + bar(m('skill-calorie.render-html.c227'), v.completionPct);
+  return pageShell('calorie', 'ilife:calorie:goal-vs-actual', m('skill-calorie.render-html.c228'), body);
 }
 
 export function renderPredictHtml(v: PredictView): string {
   const body =
     '<div class="' + cx('grid') + '">' +
-    kpi('体重预测', v.current + ' → ' + v.forecastValue + ' kg', v.horizonDays + '天') +
-    kpi('速率', v.ratePerWeek + ' kg/周') +
-    kpi('区间', (v.forecastLo ?? '—') + ' ~ ' + (v.forecastHi ?? '—') + ' kg') +
+    kpi(m('skill-calorie.render-html.c229'), v.current + ' → ' + v.forecastValue + ' kg', m('skill-calorie.render-html.c230', { p0: String(v.horizonDays) })) +
+    kpi(m('skill-calorie.render-html.c231'), m('skill-calorie.render-html.c232', { p0: String(v.ratePerWeek) })) +
+    kpi(m('skill-calorie.render-html.c233'), (v.forecastLo ?? '—') + ' ~ ' + (v.forecastHi ?? '—') + ' kg') +
     '</div><div style="color:' + token('muted') + '">' + escapeHtml(v.insight) + '</div>';
-  return pageShell('calorie', 'ilife:calorie:predict', '体重预测', body);
+  return pageShell('calorie', 'ilife:calorie:predict', m('skill-calorie.render-html.c234'), body);
 }
 
 export function renderAnomalyHtml(v: AnomalyView): string {
   const findings = v.diagnosis.findings.slice(0, 5).map((f) => '<div><b>' + escapeHtml(f.cause) + '</b><div>' + escapeHtml(f.evidence) + '</div><div>' + escapeHtml(f.action) + '</div></div>').join('');
   const body =
     '<div class="' + cx('grid') + '">' +
-    kpi('异常诊断', v.kind, v.start + ' ~ ' + v.end) +
-    kpi('发现', v.findingCount + ' 条', v.diagnosis.title) +
+    kpi(m('skill-calorie.render-html.c235'), v.kind, v.start + ' ~ ' + v.end) +
+    kpi(m('skill-calorie.render-html.c236'), m('skill-calorie.render-html.c237', { p0: String(v.findingCount) }), v.diagnosis.title) +
     '</div><div>' + findings + '</div><div style="color:' + token('muted') + '">' + escapeHtml(v.diagnosis.insight) + '</div>';
-  return pageShell('calorie', 'ilife:calorie:anomaly', '异常诊断 ' + v.kind, body);
+  return pageShell('calorie', 'ilife:calorie:anomaly', m('skill-calorie.render-html.c238', { p0: String(v.kind) }), body);
 }
 
 export function renderContraHtml(v: ContraView): string {
   const body =
     '<div class="' + cx('grid') + '">' +
-    kpi('禁忌扫描', v.summaryStatus, '部位 ' + v.part) +
-    kpi('训练场次', v.scannedSessions + ' 个', '动作 ' + v.scannedMovements + ' 个') +
-    kpi('error', v.errorCount + ' 个') +
-    kpi('warn', v.warnCount + ' 个') +
-    kpi('info', v.infoCount + ' 个') +
+    kpi(m('skill-calorie.render-html.c239'), v.summaryStatus, m('skill-calorie.render-html.c240', { p0: String(v.part) })) +
+    kpi(m('skill-calorie.render-html.c241'), m('skill-calorie.render-html.c242', { p0: String(v.scannedSessions) }), m('skill-calorie.render-html.c243', { p0: String(v.scannedMovements) })) +
+    kpi('error', m('skill-calorie.render-html.c244', { p0: String(v.errorCount) })) +
+    kpi('warn', m('skill-calorie.render-html.c245', { p0: String(v.warnCount) })) +
+    kpi('info', m('skill-calorie.render-html.c246', { p0: String(v.infoCount) })) +
     '</div>';
-  return pageShell('calorie', 'ilife:calorie:contraindication', '禁忌扫描', body);
+  return pageShell('calorie', 'ilife:calorie:contraindication', m('skill-calorie.render-html.c247'), body);
 }
 
 export function renderDedupeHtml(v: DedupeView): string {
-  const groups = v.groups.slice(0, 8).map((g) => kpi(escapeHtml(g.productName), g.ids.join(',') , (g.brand ?? '') + ' ' + g.ids.length + '条')).join('');
+  const groups = v.groups.slice(0, 8).map((g) => kpi(escapeHtml(g.productName), g.ids.join(',') , m('skill-calorie.render-html.c248', { p0: String(g.brand ?? ''), p1: String(g.ids.length) }))).join('');
   const body =
     '<div class="' + cx('grid') + '">' +
-    kpi('去重报告', v.groupCount + ' 组', '重复 ' + v.rowCount + ' 条/库 ' + v.totalProducts + ' 条') +
+    kpi(m('skill-calorie.render-html.c249'), m('skill-calorie.render-html.c250', { p0: String(v.groupCount) }), m('skill-calorie.render-html.c251', { p0: String(v.rowCount), p1: String(v.totalProducts) })) +
     '</div><div class="' + cx('grid') + '">' + groups + '</div>';
-  return pageShell('calorie', 'ilife:calorie:dedupe', '去重报告', body);
+  return pageShell('calorie', 'ilife:calorie:dedupe', m('skill-calorie.render-html.c252'), body);
 }
 
 export function renderProfileHtml(v: ProfileView): string {
   const p = v.profile;
   const body =
     '<div class="' + cx('grid') + '">' +
-    kpi('档案视图', (p.gender ?? '—') + ' ' + (p.age ?? '—') + '岁', '身高 ' + (p.height_cm ?? '—') + 'cm') +
-    kpi('活动量', p.activity_level ?? '—') +
-    kpi('备注', p.note ?? '') +
-    kpi('目标', v.hasGoal ? '已设' : '未设', v.nutrition ? v.nutrition.calorie_goal + ' 卡' : '') +
-    kpi('最新体重', v.latestWeightKg === null ? '—' : v.latestWeightKg + ' kg') +
+    kpi(m('skill-calorie.render-html.c253'), m('skill-calorie.render-html.c254', { p0: String(p.gender ?? '—'), p1: String(p.age ?? '—') }), m('skill-calorie.render-html.c255', { p0: String(p.height_cm ?? '—') })) +
+    kpi(m('skill-calorie.render-html.c256'), p.activity_level ?? '—') +
+    kpi(m('skill-calorie.render-html.c257'), p.note ?? '') +
+    kpi(m('skill-calorie.render-html.c258'), v.hasGoal ? m('skill-calorie.render-html.c259') : m('skill-calorie.render-html.c260'), v.nutrition ? m('skill-calorie.render-html.c261', { p0: String(v.nutrition.calorie_goal) }) : '') +
+    kpi(m('skill-calorie.render-html.c262'), v.latestWeightKg === null ? '—' : v.latestWeightKg + ' kg') +
     '</div>';
-  return pageShell('calorie', 'ilife:calorie:profile', '档案视图', body);
+  return pageShell('calorie', 'ilife:calorie:profile', m('skill-calorie.render-html.c263'), body);
 }
 

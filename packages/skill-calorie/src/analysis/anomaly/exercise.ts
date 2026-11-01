@@ -2,24 +2,30 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { base, degrade, exerciseRows, round, seriesAvg } from './common.js';
 import type { DaySeries, Diagnosis, ExRow } from './common.js';
+import { m } from '../../entries/index.js';
 
 export function diagExerciseInsufficient(series: DaySeries[]): Diagnosis {
-  const out = base(series, 'exercise_insufficient', '诊断运动不足');
+  const out = base(series, 'exercise_insufficient', m('skill-calorie.analysis-anomaly-exercise.c001'));
   const days = series.length;
   const weeks = Math.max(days / 7, 1);
   const exDays = series.filter((s) => (s.exerciseKcal ?? 0) > 0).length;
   const freq = round((exDays / weeks) * 10) / 10;
   const avgKcal = seriesAvg(series, 'exerciseKcal') ?? 0;
-  out.findings.push({ cause: '运动频率', evidence: '窗口 ' + days + ' 天运动 ' + exDays + ' 天,折合 ' + freq + '/周(建议 3-5 次/周)', confidence: '高', action: '频率不足时先从 2-3 次/周快走/骑行开始,固定时间比强度重要' });
-  out.findings.push({ cause: '运动消耗', evidence: '日均运动消耗 ' + avgKcal + ' 卡', confidence: '中', action: '每周目标 150 分钟中等强度,或日均消耗 150-250 卡' });
-  out.insight = '运动 ' + freq + '/周,' + (freq < 3 ? '不达标,建议提到 3 次以上。' : '频率达标,保持。');
+  out.findings.push({ cause: m('skill-calorie.analysis-anomaly-exercise.c002'), evidence: m('skill-calorie.analysis-anomaly-exercise.c003', {
+    p0: String(days),
+    p1: String(exDays),
+    p2: String(freq),
+  }), confidence: m('skill-calorie.analysis-anomaly-exercise.c004'), action: m('skill-calorie.analysis-anomaly-exercise.c005') });
+  out.findings.push({ cause: m('skill-calorie.analysis-anomaly-exercise.c006'), evidence: m('skill-calorie.analysis-anomaly-exercise.c007', { p0: String(avgKcal) }), confidence: m('skill-calorie.analysis-anomaly-exercise.c008'), action: m('skill-calorie.analysis-anomaly-exercise.c009') });
+  const freqNote = freq < 3 ? m('skill-calorie.analysis-anomaly-exercise.c010') : m('skill-calorie.analysis-anomaly-exercise.c011');
+  out.insight = m('skill-calorie.analysis-anomaly-exercise.c012', { p0: String(freq), p1: String(freqNote) });
   return out;
 }
 
 export function diagExerciseOverload(db: DatabaseSync, series: DaySeries[]): Diagnosis {
-  const out = base(series, 'exercise_overload', '诊断运动过量');
+  const out = base(series, 'exercise_overload', m('skill-calorie.analysis-anomaly-exercise.c013'));
   const rows = exerciseRows(db, out.start as string, out.end as string);
-  if (rows.length === 0) return degrade(out, '窗口内无运动记录,无需诊断过量。');
+  if (rows.length === 0) return degrade(out, m('skill-calorie.analysis-anomaly-exercise.c014'));
   const dates = [...new Set(rows.map((r) => r.date))].sort();
   let streak = 1;
   let maxStreak = 1;
@@ -30,19 +36,20 @@ export function diagExerciseOverload(db: DatabaseSync, series: DaySeries[]): Dia
   }
   const over = maxStreak >= 7;
   out.findings.push({
-    cause: '连续训练检测',
-    evidence: '最长连续运动 ' + maxStreak + ' 天(建议每周至少 1 个休息日)',
-    confidence: '高',
-    action: over ? '⚠️ 连续 ' + maxStreak + ' 天训练:插入 1-2 个主动恢复日(拉伸/散步),防止过度训练' : '训练节奏有休息日,合理',
+    cause: m('skill-calorie.analysis-anomaly-exercise.c015'),
+    evidence: m('skill-calorie.analysis-anomaly-exercise.c016', { p0: String(maxStreak) }),
+    confidence: m('skill-calorie.analysis-anomaly-exercise.c017'),
+    action: over ? m('skill-calorie.analysis-anomaly-exercise.c018', { p0: String(maxStreak) }) : m('skill-calorie.analysis-anomaly-exercise.c019'),
   });
-  out.insight = '最长连续运动 ' + maxStreak + ' 天,' + (over ? '存在过量风险。' : '节奏合理。');
+  const overNote = over ? m('skill-calorie.analysis-anomaly-exercise.c020') : m('skill-calorie.analysis-anomaly-exercise.c021');
+  out.insight = m('skill-calorie.analysis-anomaly-exercise.c022', { p0: String(maxStreak), p1: String(overNote) });
   return out;
 }
 
 function shareOf(rows: ExRow[]): { dist: Record<string, { times: number; share: number; kcal: number }>; totalTimes: number } {
   const byCat = new Map<string, { times: number; kcal: number; minutes: number }>();
   for (const r of rows) {
-    const cat = r.category ?? '有氧';
+    const cat = r.category ?? m('skill-calorie.analysis-anomaly-exercise.c023');
     const d = byCat.get(cat) ?? { times: 0, kcal: 0, minutes: 0 };
     d.times += 1;
     d.kcal += r.kcal ?? 0;
@@ -56,31 +63,36 @@ function shareOf(rows: ExRow[]): { dist: Record<string, { times: number; share: 
 }
 
 export function diagExerciseTypeImbalance(db: DatabaseSync, series: DaySeries[]): Diagnosis {
-  const out = base(series, 'exercise_type_imbalance', '诊断运动类型失衡');
+  const out = base(series, 'exercise_type_imbalance', m('skill-calorie.analysis-anomaly-exercise.c024'));
   const rows = exerciseRows(db, out.start as string, out.end as string);
-  if (rows.length === 0) return degrade(out, '窗口内无运动记录,无法分析类型分布。');
+  if (rows.length === 0) return degrade(out, m('skill-calorie.analysis-anomaly-exercise.c025'));
   const { dist } = shareOf(rows);
   const strengthShare = dist['力量']?.share ?? 0;
   out.findings.push({
-    cause: '类型占比',
-    evidence: Object.entries(dist).map(([k, v]) => k + ' ' + v.share + '%(' + v.times + '次)').join('、'),
-    confidence: '中',
-    action: strengthShare < 30 ? '力量训练占比 ' + strengthShare + '%:增肌/保肌建议力量占 40-50%,有氧 30-40%,柔韧 10-20%' : '力量与有氧搭配较均衡',
+    cause: m('skill-calorie.analysis-anomaly-exercise.c026'),
+    evidence: Object.entries(dist).map(([k, v]) => m('skill-calorie.analysis-anomaly-exercise.c027', {
+      p0: String(k),
+      p1: String(v.share),
+      p2: String(v.times),
+    })).join('、'),
+    confidence: m('skill-calorie.analysis-anomaly-exercise.c028'),
+    action: strengthShare < 30 ? m('skill-calorie.analysis-anomaly-exercise.c029', { p0: String(strengthShare) }) : m('skill-calorie.analysis-anomaly-exercise.c030'),
   });
-  out.insight = '力量 ' + strengthShare + '%,' + (strengthShare < 30 ? '有氧为主,建议补力量训练。' : '搭配均衡。');
+  const mixNote = strengthShare < 30 ? m('skill-calorie.analysis-anomaly-exercise.c031') : m('skill-calorie.analysis-anomaly-exercise.c032');
+  out.insight = m('skill-calorie.analysis-anomaly-exercise.c033', { p0: String(strengthShare), p1: String(mixNote) });
   return out;
 }
 
 export function diagExerciseEfficiency(db: DatabaseSync, series: DaySeries[]): Diagnosis {
-  const out = base(series, 'exercise_efficiency', '诊断运动效率(含有效判断)');
+  const out = base(series, 'exercise_efficiency', m('skill-calorie.analysis-anomaly-exercise.c034'));
   const rows = exerciseRows(db, out.start as string, out.end as string);
-  if (rows.length === 0) return degrade(out, '窗口内无运动记录,无法评估效率。');
+  if (rows.length === 0) return degrade(out, m('skill-calorie.analysis-anomaly-exercise.c035'));
   const totalKcal = rows.reduce((a, r) => a + (r.kcal ?? 0), 0);
   const totalMin = rows.reduce((a, r) => a + (r.minutes ?? 0), 0);
   const eff = totalMin ? round((totalKcal / totalMin) * 10) / 10 : null;
   const byCat = new Map<string, typeof rows>();
   for (const r of rows) {
-    const k = r.category ?? '有氧';
+    const k = r.category ?? m('skill-calorie.analysis-anomaly-exercise.c036');
     if (!byCat.has(k)) byCat.set(k, []);
     (byCat.get(k) as typeof rows).push(r);
   }
@@ -88,32 +100,35 @@ export function diagExerciseEfficiency(db: DatabaseSync, series: DaySeries[]): D
   for (const [k, v] of byCat) {
     catEff[k] = round((v.reduce((a, r) => a + (r.kcal ?? 0), 0) / (v.reduce((a, r) => a + (r.minutes ?? 0), 0) || 1)) * 10) / 10;
   }
+  const hasCat = Object.keys(catEff).length > 0;
+  const catNote = hasCat ? m('skill-calorie.analysis-anomaly-exercise.c037', { p0: String(JSON.stringify(catEff)) }) : '';
   out.findings.push({
-    cause: '单位时长消耗',
-    evidence: '平均 ' + (eff ?? '—') + ' 卡/分钟(有氧常见 7-11 卡/分;力量按组算偏低属正常)' + (Object.keys(catEff).length > 0 ? ';分类: ' + JSON.stringify(catEff) : ''),
-    confidence: '中',
-    action: '偏低时优先看强度(是否只是散步)与时长记录是否完整',
+    cause: m('skill-calorie.analysis-anomaly-exercise.c038'),
+    evidence: m('skill-calorie.analysis-anomaly-exercise.c039', { p0: String(eff ?? '—'), p1: String(catNote) }),
+    confidence: m('skill-calorie.analysis-anomaly-exercise.c040'),
+    action: m('skill-calorie.analysis-anomaly-exercise.c041'),
   });
-  out.insight = '单位消耗 ' + (eff ?? '—') + ' 卡/分,' + (eff !== null && eff >= 6 ? '效率正常。' : '效率偏低,建议提高强度或确认时长。');
+  const effNote = eff !== null && eff >= 6 ? m('skill-calorie.analysis-anomaly-exercise.c042') : m('skill-calorie.analysis-anomaly-exercise.c043');
+  out.insight = m('skill-calorie.analysis-anomaly-exercise.c044', { p0: String(eff ?? '—'), p1: String(effNote) });
   return out;
 }
 
 export function diagExerciseAdvice(db: DatabaseSync, series: DaySeries[]): Diagnosis {
-  const out = base(series, 'exercise_advice', '诊断运动建议(含类型推荐)');
+  const out = base(series, 'exercise_advice', m('skill-calorie.analysis-anomaly-exercise.c045'));
   const rows = exerciseRows(db, out.start as string, out.end as string);
   const byCat = new Map<string, number>();
   for (const r of rows) {
-    const k = r.category ?? '有氧';
+    const k = r.category ?? m('skill-calorie.analysis-anomaly-exercise.c046');
     byCat.set(k, (byCat.get(k) ?? 0) + 1);
   }
   const total = [...byCat.values()].reduce((a, b) => a + b, 0) || 1;
-  const strengthShare = (byCat.get('力量') ?? 0) / total;
+  const strengthShare = (byCat.get(m('skill-calorie.analysis-anomaly-exercise.c047')) ?? 0) / total;
   out.findings.push({
-    cause: '类型推荐',
-    evidence: strengthShare < 0.3 ? '当前力量占比 ' + round(strengthShare * 100) + '%,有氧为主' : '力量与有氧已有搭配',
-    confidence: '中',
-    action: strengthShare < 0.3 ? '推荐每周 2 次力量(深蹲/卧推/划船 3 大项)+ 2 次有氧(快走/单车 30-40 分钟),力量优先补上' : '维持现有搭配,尝试每周加 1 次高强度间歇(20 分钟)',
+    cause: m('skill-calorie.analysis-anomaly-exercise.c048'),
+    evidence: strengthShare < 0.3 ? m('skill-calorie.analysis-anomaly-exercise.c049', { p0: String(round(strengthShare * 100)) }) : m('skill-calorie.analysis-anomaly-exercise.c050'),
+    confidence: m('skill-calorie.analysis-anomaly-exercise.c051'),
+    action: strengthShare < 0.3 ? m('skill-calorie.analysis-anomaly-exercise.c052') : m('skill-calorie.analysis-anomaly-exercise.c053'),
   });
-  out.insight = strengthShare < 0.3 ? '建议补力量训练' : '建议加入高强度间歇突破平台。';
+  out.insight = strengthShare < 0.3 ? m('skill-calorie.analysis-anomaly-exercise.c054') : m('skill-calorie.analysis-anomaly-exercise.c055');
   return out;
 }

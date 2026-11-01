@@ -14,6 +14,7 @@ import { buildExerciseReview } from '../analysis/exerciseReview.js';
 import { todayISO } from '../analysis/utils.js';
 import { FetchError } from '../fetch/errors.js';
 import { CalorieRenderError } from './errors.js';
+import { m } from '../entries/index.js';
 
 function assertDate(s: string): void {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(s) || Number.isNaN(Date.parse(s + 'T12:00:00Z'))) {
@@ -182,7 +183,7 @@ export function buildPlanView(db: DatabaseSync, opts: PlanFilter = {}): PlanView
   if (opts.movement !== undefined && opts.movement !== '') {
     const q = opts.movement;
     sessions = sessions.filter((s) =>
-      (s.movements ?? []).some((m) => typeof m.name === 'string' && (m.name.includes(q) || q.includes(m.name))),
+      (s.movements ?? []).some((mv) => typeof mv.name === 'string' && (mv.name.includes(q) || q.includes(mv.name))),
     );
   }
   const scope = scopeOf(opts);
@@ -282,7 +283,7 @@ export function buildPlanVsActualView(
     const { week, dow } = weekOfDate(start0, d);
     const planned = plan.sessions
       .filter((s) => s.week_number === week && s.day_of_week === dow)
-      .flatMap((s) => (s.movements ?? []).map((m) => m.name).filter((n): n is string => typeof n === 'string' && n !== ''));
+      .flatMap((s) => (s.movements ?? []).map((mv) => mv.name).filter((n): n is string => typeof n === 'string' && n !== ''));
     const logged = loggedByDate.get(d) ?? [];
     const hit = (name: string): boolean => logged.some((t) => t.includes(name) || name.includes(t));
     const missed = planned.filter((n) => !hit(n));
@@ -364,8 +365,8 @@ function setsPhrase(sets: readonly { reps: number; weight: number; unit: string 
   const weights = [...new Set(sets.map((s) => s.weight))];
   const load = weights.some((w) => w > 0)
     ? weights.join('／') + (sets[0].unit ?? 'kg')
-    : (sets[0].unit === '自重' ? '自重' : '');
-  const counts = sets.length + ' 组 × ' + reps.join('／') + ' 次';
+    : (sets[0].unit === '自重' ? m('skill-calorie.render-planPlate.c001') : '');
+  const counts = m('skill-calorie.render-planPlate.c002', { p0: String(sets.length), p1: String(reps.join('／')) });
   return load === '' ? counts : counts + ' <span class="ilw-tag">' + load + '</span>';
 }
 
@@ -378,16 +379,16 @@ function wizardTreeOf(p: PlanInput): WizardTree {
       dow: typeof d.day_of_week === 'number' ? d.day_of_week : 0,
       sessions: (d.sessions ?? []).map((s) => ({
         label: s.session_label === undefined || s.session_label === ''
-          ? (s.is_rest_day === true ? '休息日' : '训练') : s.session_label,
+          ? (s.is_rest_day === true ? m('skill-calorie.render-planPlate.c003') : m('skill-calorie.render-planPlate.c004')) : s.session_label,
         time: s.time_start === undefined || s.time_start === null || s.time_start === ''
           ? '' : (s.time_end === undefined || s.time_end === null || s.time_end === '' || s.time_end === s.time_start
             ? s.time_start : s.time_start + '–' + s.time_end),
         rest: s.is_rest_day === true,
-        moves: (s.movements ?? []).map((m) => ({
-          name: m.name === undefined || m.name === '' ? '（未具名动作）' : m.name,
-          part: m.part ?? '',
-          type: m.type === 'main' ? '主要' : m.type === 'iso' ? '孤立' : (m.type ?? ''),
-          sets: setsPhrase(m.sets),
+        moves: (s.movements ?? []).map((mv) => ({
+          name: mv.name === undefined || mv.name === '' ? m('skill-calorie.render-planPlate.c005') : mv.name,
+          part: mv.part ?? '',
+          type: mv.type === 'main' ? m('skill-calorie.render-planPlate.c006') : mv.type === 'iso' ? m('skill-calorie.render-planPlate.c007') : (mv.type ?? ''),
+          sets: setsPhrase(mv.sets),
         })),
       })),
     })),
@@ -401,7 +402,7 @@ function wizardTreeOf(p: PlanInput): WizardTree {
     }
   }
   return {
-    title: cfg.title === undefined || cfg.title === '' ? '未命名计划' : cfg.title,
+    title: cfg.title === undefined || cfg.title === '' ? m('skill-calorie.render-planPlate.c008') : cfg.title,
     description: cfg.description ?? '',
     startDate: cfg.start_date ?? '',
     level: cfg.user_level ?? '',
