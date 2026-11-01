@@ -85,10 +85,12 @@ jobs:
         run: |
           set -euo pipefail
           VERSION=${{ steps.ver.outputs.version }}
+          OUT="$PWD/dist-pkg"
           rm -rf dist-pkg
           mkdir -p dist-pkg
+          # 在包目录内打包：从仓库根用相对路径 npm pack 会被当成 GitHub 简写（ssh://git@github.com/packages/...）。
           for dir in plugin-manager plugin-bill-ilife plugin-calorie plugin-chef plugin-home-ilife plugin-memo-ilife plugin-schedule-ilife; do
-            npm pack "packages/$dir" --pack-destination dist-pkg
+            ( cd "packages/$dir" && npm pack --pack-destination "$OUT" )
           done
           cp "dist-pkg/dsh-life-pack-$VERSION.tgz" dist-pkg/dsh-life-pack.tgz
           ls -l dist-pkg
