@@ -18,11 +18,11 @@ import { SCENE as batchScene, sceneBatch } from '../dist/write/scene-batch.js';
 import { sceneFor } from '../dist/write/scene.js';
 
 describe('#1206 首切 7 件：词条＋语言链', () => {
-  it('词条 zh／en 同 key（170 条＝124 既有＋42 首切＋回执核对两列净增 2＋#1280 合并分类两列 2）且英文列无空串', () => {
+  it('词条 zh／en 同 key（477 条＝170 既有＋#1205 迁入 293＋清红补录 14）且英文列无空串', () => {
     const zhKeys = Object.keys(SKILL_BILL_CATALOG.zh).sort();
     const enKeys = Object.keys(SKILL_BILL_CATALOG.en).sort();
     assert.deepEqual(enKeys, zhKeys);
-    assert.equal(zhKeys.length, 170);
+    assert.equal(zhKeys.length, 477);
     for (const k of enKeys) assert.ok(SKILL_BILL_CATALOG.en[k].length > 0, '英文缺译：' + k);
   });
 

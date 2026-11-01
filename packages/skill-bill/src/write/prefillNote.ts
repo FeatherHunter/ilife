@@ -16,6 +16,7 @@
  *   - **来源逐格可追**：库里顶来的写「来自记录编号 N（最近一笔）」，缺省顶的写「缺省值（库里还没有可用的…）」，
  *     两种来源不许混成一句「自动填的」。
  */
+import { m } from '../entries/index.js';
 import { renderDataTable } from 'base-paint/blocks';
 import { DEFAULTS } from '../shared/category.js';
 import { DEFAULT_TIME_SUFFIX, defaultTimeOn } from '../shared/dateRange.js';
@@ -32,9 +33,9 @@ export interface PrefillMark {
 /** 采集页要的四格（值 ＋ 中文名 ＋ 来源后缀）。缺省值一处定义：账本／币种／账户引口径层的 `DEFAULTS`
  *  （账户缺省是空串＝落库默认，不走「缺省值（账户）」那一岔）。 */
 const PREFILL_FIELDS: readonly { readonly name: string; readonly label: string; readonly fallback: string; readonly what: string }[] = [
-  { name: 'account', label: '账户', fallback: DEFAULTS.account, what: '账户' },
-  { name: 'ledger', label: '账本', fallback: DEFAULTS.ledger, what: '账本' },
-  { name: 'currency', label: '币种', fallback: DEFAULTS.currency, what: '币种' },
+  { name: 'account', label: m('skill-bill.write-prefillNote.c001'), fallback: DEFAULTS.account, what: m('skill-bill.write-prefillNote.c002') },
+  { name: 'ledger', label: m('skill-bill.write-prefillNote.c003'), fallback: DEFAULTS.ledger, what: m('skill-bill.write-prefillNote.c004') },
+  { name: 'currency', label: m('skill-bill.write-prefillNote.c005'), fallback: DEFAULTS.currency, what: m('skill-bill.write-prefillNote.c006') },
 ];
 
 /** 取一个字段的字符串值（非字符串／空串一律当没给）。 */
@@ -54,18 +55,18 @@ export function prefillOf(input: {
     if (textOf(input.params[f.name]) !== '') continue;
     const fromHistory = last === undefined ? '' : textOf(last[f.name as keyof BillRow]);
     if (fromHistory !== '') {
-      marks.push({ name: f.name, label: f.label, value: fromHistory, from: '来自记录编号 ' + last?.id + '（最近一笔）' });
+      marks.push({ name: f.name, label: f.label, value: fromHistory, from: m('skill-bill.write-prefillNote.c007', { p1: String(last?.id) }) });
       continue;
     }
     marks.push({
       name: f.name, label: f.label, value: f.fallback,
-      from: f.fallback === '' ? '缺省值（库里还没有可用的' + f.what + '，留空＝落库默认）' : '缺省值（' + f.what + '）',
+      from: f.fallback === '' ? m('skill-bill.write-prefillNote.c008', { p1: String(f.what) }) : m('skill-bill.write-prefillNote.c009', { p1: String(f.what) }),
     });
   }
   if (textOf(input.params['time']) === '') {
     marks.push({
-      name: 'time', label: '时间', value: defaultTimeOn(input.today),
-      from: '缺省值（本页执行那天 ' + DEFAULT_TIME_SUFFIX + '）',
+      name: 'time', label: m('skill-bill.write-prefillNote.c010'), value: defaultTimeOn(input.today),
+      from: m('skill-bill.write-prefillNote.c011', { p1: String(DEFAULT_TIME_SUFFIX) }),
     });
   }
   return marks;
@@ -75,8 +76,8 @@ export function prefillOf(input: {
  *  本轮整改：原来的 `预填 支付宝 · 来自记录编号 1` 里那个 `·` 落在选择器回显上（版式位），
  *  改一句连读的「已经替你填上 支付宝，来自…」——一句话说清，不用分隔符。 */
 export function prefillHint(marks: readonly PrefillMark[], name: string): string | undefined {
-  const hit = marks.find((m) => m.name === name);
-  return hit === undefined ? undefined : '已经替你填上 ' + hit.value + '，' + hit.from;
+  const hit = marks.find((candidate) => candidate.name === name);
+  return hit === undefined ? undefined : m('skill-bill.write-prefillNote.c012', { p1: String(hit.value), p2: String(hit.from) });
 }
 
 /** 预填标注表：字段／取值／来源三列。**空数组＝没有预填，页上不出这一段**（返回空串）。 */
@@ -84,11 +85,11 @@ export function prefillNote(marks: readonly PrefillMark[]): string {
   if (marks.length === 0) return '';
   return renderDataTable({
     columns: [
-      { key: 'label', label: '字段' },
-      { key: 'value', label: '预填值' },
-      { key: 'from', label: '来源' },
+      { key: 'label', label: m('skill-bill.write-prefillNote.c013') },
+      { key: 'value', label: m('skill-bill.write-prefillNote.c014') },
+      { key: 'from', label: m('skill-bill.write-prefillNote.c015') },
     ],
-    rows: marks.map((m) => ({ label: m.label, value: m.value === '' ? '（留空＝落库默认）' : m.value, from: m.from })),
-    caption: '预填标注（每个被顶上的格都写清来源）',
+    rows: marks.map((mark) => ({ label: mark.label, value: mark.value === '' ? m('skill-bill.write-prefillNote.c016') : mark.value, from: mark.from })),
+    caption: m('skill-bill.write-prefillNote.c017'),
   });
 }

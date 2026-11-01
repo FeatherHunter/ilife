@@ -5,7 +5,7 @@
  *   ① 取词语义：空白值＝未录（沿回退链取下一站）；全站空白必须抛 MissingMessageError，不把空串交给端口。
  *   ② 缺词条门：空白词条逐件点名并判红；填上译文必绿（夹具）。
  *   ③ 占位符门：同 key 的占位符集合不一致必红、补齐必绿；集合口径（顺序／重复不判红）、缺列只报数、读不出必红。
- *   ④ 真仓库读数：四道 i18n 门 exit 0 且报真读数；两道门的 --selftest 七条自证都过。
+ *   ④ 真仓库读数：四道 i18n 门 exit 0 且报真读数；两道门的 --selftest 自证条数（八条／十条）都过。
  *
  * 跑法：node --test tooling/test/i18n-params-1306.test.mjs
  * 前置：包装好（tsc -b）——第 ① 组读 packages/base-entries/dist/index.js，与包内 test/entries.test.mjs 同形。
@@ -147,7 +147,7 @@ test('#1306 真仓库读数：四道 i18n 门 exit 0 且报真读数', () => {
 });
 
 test('#1306 两道带自证的门：--selftest 自证都过（红绿样例随门走，不靠人手复现）', () => {
-  const expected = { 'check-i18n-entries.mjs': /七条自证 OK/, 'check-i18n-params.mjs': /十条自证 OK/ };
+  const expected = { 'check-i18n-entries.mjs': /八条自证 OK/, 'check-i18n-params.mjs': /十条自证 OK/ };
   for (const [gate, tag] of Object.entries(expected)) {
     const r = spawnSync(NODE, [join(ROOT, 'tooling', gate), '--selftest'], { encoding: 'utf8', cwd: ROOT });
     assert.equal(r.status, 0, gate + ' --selftest 必须 exit 0：' + r.stderr + r.stdout);

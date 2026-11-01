@@ -18,6 +18,8 @@
  *   ⑤ key 抽取不到就报「抽不出 key」而不是绿（正则失配＝门失明，照 check-data-absence 的「缺标记即红」口径）；
  *   ⑥ 词条值是空串／纯空白：直接判红（#1306）——空串不是「显式空白」，是待译漏记；缺英文不许留空串顶替。
  *      与 packages/base-entries/src/resolve.ts 同口径：空白值视同未录，回退链取下一站；门禁则两头都不放行。
+ *   ⑦ 范围清单 allowlist 里的串**不进「该进词条」的判据**（#1205）：豁免只给「语义上本就不该进词条的位」——
+ *      命令关键字冻结、协议字段值、派生件。按串全等屏蔽，抽取阶段就剔除，不是判红后再放过。
  *
  * 用法：
  *   node tooling/check-i18n-entries.mjs             # 门禁口径（范围为空＝EMPTY-SCOPE 显式报 + exit 0）
@@ -113,6 +115,7 @@ export { entryTableFiles as entryTableCandidates, loadEntryTable };
 
 /** 主判据：返回 {files, keys, missing:[{file,key,lang}], blind:[{file,why}], tableErrors:[{lang,why}]}。 */
 export function audit(scope, root = ROOT_DIR, langs = LANGUAGES) {
+  const allow = new Set(scope.allowlist || []);
   const files = [];
   const missing = [];
   const blind = [];
@@ -137,8 +140,10 @@ export function audit(scope, root = ROOT_DIR, langs = LANGUAGES) {
     if (!existsSync(p)) { blind.push({ file: rel, why: '清单里的件在盘上不存在（删了/改名了：显式更新清单）' }); continue; }
     const src = readFileSync(p, 'utf8');
     if (!importsEntries(src)) { blind.push({ file: rel, why: '没 import 词条层（没迁完就挂号）' }); continue; }
-    const ks = extractKeys(src);
-    if (ks.length === 0) { blind.push({ file: rel, why: '抽不出任何 key（正则失配＝门失明，不许当绿）' }); continue; }
+    const extracted = extractKeys(src);
+    if (extracted.length === 0) { blind.push({ file: rel, why: '抽不出任何 key（正则失配＝门失明，不许当绿）' }); continue; }
+    // 冻结位／协议字段值（allowlist）不是「该进词条」的串：抽取阶段剔除，不拿它判缺词条（#1205）。
+    const ks = extracted.filter((k) => !allow.has(k));
     files.push({ file: rel, keys: ks });
     for (const k of ks) keys.add(k);
     for (const k of ks) {
@@ -262,11 +267,21 @@ function selftest(scope) {
     writeFileSync(join(srcDir, 'en.json'), JSON.stringify({ 'demo.title': 'Title', 'demo.missing': 'Added' }), 'utf8');
     const seven = audit({ files: ['demo.ts'] }, tmp);
     want(seven.blanks.length === 0, '填上译文后必须零空白（实得 ' + seven.blanks.length + '）');
+    // ⑧ allowlist 里的串不判缺词条（#1205）：同一件、同一串，登记前缺 2 处、登记后缺 0 处。
+    const nl = String.fromCharCode(10);
+    writeFileSync(fixture, ['import { e } from \'base-entries\';', "export const a = e('demo.title');", "export const k = 'demo.protocol';"].join(nl), 'utf8');
+    writeFileSync(join(srcDir, 'zh.json'), JSON.stringify({ 'demo.title': '标题' }), 'utf8');
+    const noAllow = audit({ files: ['demo.ts'] }, tmp);
+    want(noAllow.missing.length === 2, 'allowlist 未登记时 demo.protocol 必须在 2 门语言里判缺（实得 ' + noAllow.missing.length + '）');
+    const withAllow = audit({ files: ['demo.ts'], allowlist: ['demo.protocol'] }, tmp);
+    want(withAllow.missing.length === 0, '登记 allowlist 后必须零缺词条（实得 ' + withAllow.missing.length + '）');
+    want(withAllow.keys.length === 1, 'allowlist 串不许进 keys 读数（实得 ' + withAllow.keys.length + '）');
+    console.log('SELFTEST allowlist 读数：未登记 missing=' + noAllow.missing.length + '／登记后 missing=' + withAllow.missing.length);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
   if (bad.length) { for (const b of bad) console.error('SELFTEST FAIL ' + b); process.exit(1); }
-  console.log('SELFTEST: 空范围显式报数／缺词条必红／补上必绿／没迁完必红／缺表必红／失明必红／空白词条必红 七条自证 OK');
+  console.log('SELFTEST: 空范围显式报数／缺词条必红／补上必绿／没迁完必红／缺表必红／失明必红／空白词条必红／allowlist 剔除 八条自证 OK');
 }
 
 /** 入口守卫（照 tooling/i18n-langs.mjs／skill-html-snapshot.mjs 的先例）：本件被别处 import 时**不跑** CLI，

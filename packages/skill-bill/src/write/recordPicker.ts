@@ -25,6 +25,7 @@
  * 读不通不许静默：库路径没设、库打不开这些情形由本件报出来（`ok:false` ＋ `reason`），
  *  页面据此出空态并把原因写在话里，不拿一张空表冒充「库里没有记录」。
  */
+import { m } from '../entries/index.js';
 import { renderCaliberLine, renderDataTable } from 'base-paint/blocks';
 import type { BillRow, BillDb } from '../fetch/db.js';
 import { closeBillDb, fetchAll, openBillDb } from '../fetch/index.js';
@@ -52,19 +53,19 @@ interface PickLabels {
 
 const LABELS: Record<PickMode, PickLabels> = {
   update: {
-    label: '要改的那条记录',
-    what: '没撤销过的记录',
-    hint: '从下面列出的记录里挑一条，再说清要改哪一项、改成什么，跟助手说一遍。',
+    label: m('skill-bill.write-recordPicker.c001'),
+    what: m('skill-bill.write-recordPicker.c002'),
+    hint: m('skill-bill.write-recordPicker.c003'),
   },
   undo: {
-    label: '要撤销的那条记录',
-    what: '没撤销过的记录',
-    hint: '从下面列出的记录里挑一条：撤销只是打个标记，记录还在，随时可以恢复。',
+    label: m('skill-bill.write-recordPicker.c004'),
+    what: m('skill-bill.write-recordPicker.c005'),
+    hint: m('skill-bill.write-recordPicker.c006'),
   },
   restore: {
-    label: '要恢复的那条记录',
-    what: '已经撤销过的记录',
-    hint: '只列已经撤销过的那些：恢复＝把撤销标记清掉，这一笔回到查询与统计里。',
+    label: m('skill-bill.write-recordPicker.c007'),
+    what: m('skill-bill.write-recordPicker.c008'),
+    hint: m('skill-bill.write-recordPicker.c009'),
   },
 };
 
@@ -103,9 +104,9 @@ interface CandidateRead {
  *  `已于 X 打标撤销（软删：行还在库里，置 NULL 即可恢复）` → 「已于 X 撤销过（记录还在，点恢复就回来）」。 */
 function whyOf(mode: PickMode, row: BillRow): string {
   if (mode === 'restore') {
-    return '已于 ' + String(row.deleted_at) + ' 撤销过（记录还在，点恢复就回来）';
+    return m('skill-bill.write-recordPicker.c010', { p1: String(String(row.deleted_at)) });
   }
-  return mode === 'update' ? '还没撤销过 可以改' : '还没撤销过 可以撤';
+  return mode === 'update' ? m('skill-bill.write-recordPicker.c011') : m('skill-bill.write-recordPicker.c012');
 }
 
 /** 候选行那一列的摘要：分类 ＋ 备注。
@@ -155,16 +156,16 @@ export function pickerBlock(input: {
   const read = readCandidates(input.mode);
   if (!read.ok) {
     return emptyNote({
-      title: '候选读不出来',
-      text: '这一格要的候选没能从库里读出来：' + read.reason + '。',
-      next: '请先在能读库的环境里跑（库路径指向那个库），再说一遍。',
+      title: m('skill-bill.write-recordPicker.c013'),
+      text: m('skill-bill.write-recordPicker.c014', { p1: String(read.reason) }),
+      next: m('skill-bill.write-recordPicker.c015'),
     });
   }
   if (read.items.length === 0) {
     return emptyNote({
-      title: '没有可选的' + meta.label,
-      text: '这一格要的是' + meta.what + '，库里一条都没有。',
-      next: '不拿最近一笔顶替。请先说清是哪一笔（或先记一笔），再说一遍。',
+      title: m('skill-bill.write-recordPicker.c016', { p1: String(meta.label) }),
+      text: m('skill-bill.write-recordPicker.c017', { p1: String(meta.what) }),
+      next: m('skill-bill.write-recordPicker.c018'),
     });
   }
   return candidatePick({
@@ -174,8 +175,7 @@ export function pickerBlock(input: {
     selectedId: input.selectedId ?? null,
     hint: input.hint ?? meta.hint,
   }) + renderCaliberLine(
-    '库里共 ' + read.total + ' 条' + (input.mode === 'restore' ? '已打标撤销' : '未撤销')
-      + '的记录，本页列最近 ' + read.items.length + ' 条（按时间倒序）。',
+    m('skill-bill.write-recordPicker.c019', { p1: String(read.total), p2: input.mode === 'restore' ? m('skill-bill.write-recordPicker.c025') : m('skill-bill.write-recordPicker.c026'), p3: String(read.items.length) }),
   );
 }
 
@@ -213,7 +213,7 @@ function snapshotRows(row: BillRow): readonly { readonly k: string; readonly v: 
     { k: fieldLabelOf('note'), v: row.note },
     {
       k: fieldLabelOf('deleted_at'),
-      v: isDeleted(row) ? '已撤销（' + String(row.deleted_at) + '）' : '没撤销过',
+      v: isDeleted(row) ? m('skill-bill.write-recordPicker.c020', { p1: String(String(row.deleted_at)) }) : m('skill-bill.write-recordPicker.c021'),
     },
   ];
 }
@@ -222,9 +222,9 @@ function snapshotRows(row: BillRow): readonly { readonly k: string; readonly v: 
  *  表头说明里那个 `·` 改全角空格（本轮整改：表头说明是版式位，行内不再拿 `·` 当版式）。 */
 export function snapshotTable(row: BillRow, caption?: string): string {
   return renderDataTable({
-    columns: [{ key: 'k', label: '字段' }, { key: 'v', label: '值' }],
+    columns: [{ key: 'k', label: m('skill-bill.write-recordPicker.c022') }, { key: 'v', label: m('skill-bill.write-recordPicker.c023') }],
     rows: snapshotRows(row),
-    caption: caption ?? '这一条记录（记录编号 ' + row.id + '　只读回显）',
+    caption: caption ?? m('skill-bill.write-recordPicker.c024', { p1: String(row.id) }),
   });
 }
 

@@ -6,6 +6,7 @@
  *   ② **分类落收入侧**：侧别判定住 `../shared/photoEscape.ts`，本件只把 `kind` 给 `income`；
  *   ③ 采集页多一条方向口径行、回执页多一条「收入侧，正数」口径行——两句都写在本件的差异里。
  */
+import { m } from '../entries/index.js';
 import { nextStepOf } from './typeBadge.js';
 import { wakeWordOfKind } from '../triggers/wakeTable.js';
 import type { Scene } from './scene.js';
@@ -19,36 +20,36 @@ export const SCENE: Scene = {
   key: KEY,
   kind: 'income',
   op: '',
-  family: '基础收支族',
+  family: m('skill-bill.write-scene-income.c001'),
   ...bindExpensePages({
     word: WORD,
     kind: 'income',
-    replaces: { amount: '<正数金额，如 12.5>', category: '<收入侧三级分类，如 工资/月薪/9月>' },
+    replaces: { amount: m('skill-bill.write-scene-income.c002'), category: m('skill-bill.write-scene-income.c016') },
     progress: true,
     section1WhenBlockedOnly: false,
-    section1: '先看这一笔缺什么',
-    calibers: () => ['收入记正数，负数会被拦在这一页。'],
+    section1: m('skill-bill.write-scene-income.c003'),
+    calibers: () => [m('skill-bill.write-scene-income.c004')],
     factsGrid: false,
-    foldNote: '补齐后照上面那条口令跟助手说一遍。',
+    foldNote: m('skill-bill.write-scene-income.c005'),
     prefill: 'caliber',
     emptyAccount: {
-      text: '库里还没有带账户的记录，账户这一格现在是空的。',
-      next: '账户为空就记到默认账户。',
+      text: m('skill-bill.write-scene-income.c006'),
+      next: m('skill-bill.write-scene-income.c007'),
     },
-    section2: '把缺的格逐格补齐',
-    description: '补齐必需项即可继续。分类落收入侧的一级名目。',
+    section2: m('skill-bill.write-scene-income.c008'),
+    description: m('skill-bill.write-scene-income.c009'),
     marksShape: 'short',
     prompt: (_input, blocked) => plainPrompt(WORD, blocked),
-    promptTitle: '这一段就是补齐后要发给助手的话',
-    section3: '补齐了再请助手记',
+    promptTitle: m('skill-bill.write-scene-income.c010'),
+    section3: m('skill-bill.write-scene-income.c011'),
     subtitle: missingSubtitle,
-    logDetail: () => '没写库（采集页）',
-    receiptState: '写库成功（收入取正数）',
+    logDetail: () => m('skill-bill.write-scene-income.c012'),
+    receiptState: m('skill-bill.write-scene-income.c013'),
     receiptNext: () => nextStepOf({ page: 'receipt', exit: true }),
-    receiptCaliber: '收入侧，正数。',
+    receiptCaliber: m('skill-bill.write-scene-income.c014'),
     dropDefaultHints: true,
     cards: 'scene',
-    receiptCaption: '本次写入',
+    receiptCaption: m('skill-bill.write-scene-income.c015'),
     receiptEyebrow: WORD,
   }),
 };

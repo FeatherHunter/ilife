@@ -20,6 +20,7 @@
  *  缺项那枚红标走 `renderStatusBadge`、合计行与口径走 `renderCaliberLine`、
  *  零行空态走共用位的 `./emptyNote.js`（它包 base 的 `renderEmptyBlock`）。
  */
+import { m } from '../entries/index.js';
 import { renderStatusBadge } from 'base-paint';
 import { renderCaliberLine, renderParamForm } from 'base-paint/blocks';
 import type { ParamFieldInput } from 'base-paint/blocks';
@@ -78,7 +79,7 @@ function rowFields(input: {
     const value = input.row[f.name];
     return {
       name: input.name + '-' + (input.index + 1) + '-' + f.name,
-      label: '第 ' + (input.index + 1) + ' 行　' + f.label,
+      label: m('skill-bill.write-rowEditorTable.c001', { p1: String((input.index + 1)), p2: String(f.label) }),
       ...(f.hint === undefined ? {} : { hint: f.hint }),
       ...(f.required === true ? { required: true } : {}),
       ...(value === undefined || value === '' ? {} : { value }),
@@ -95,7 +96,7 @@ function labelsOf(fields: readonly RowEditorField[], names: readonly string[]): 
 function totalLine(input: RowEditorInput): string {
   const name = input.totalOf;
   if (name === undefined || name === '') {
-    return '合计 ' + input.rows.length + ' 行（未指定求和列，本表不出金额合计）。';
+    return m('skill-bill.write-rowEditorTable.c002', { p1: String(input.rows.length) });
   }
   let sum = 0;
   let counted = 0;
@@ -107,32 +108,31 @@ function totalLine(input: RowEditorInput): string {
     sum += n;
     counted += 1;
   }
-  const label = input.totalLabel ?? '合计';
-  return label + ' ' + input.rows.length + ' 行，其中 ' + counted + ' 行有金额，合计 ' + sum.toFixed(2)
-    + (counted === input.rows.length ? '' : '（没算进去的格是数字写不清的）');
+  const label = input.totalLabel ?? m('skill-bill.write-rowEditorTable.c003');
+  return m('skill-bill.write-rowEditorTable.c004', { p1: String(label), p2: String(input.rows.length), p3: String(counted), p4: String(sum.toFixed(2)), p5: counted === input.rows.length ? '' : m('skill-bill.write-rowEditorTable.c012') });
 }
 
 /** 逐行可编辑表整块：逐行一张小表单 ＋ 缺项逐行标红 ＋ 合计行；零行只出空态。 */
 export function rowEditorTable(input: RowEditorInput): string {
   if (input.rows.length === 0) {
     return emptyNote({
-      title: '这张表一行都没有',
-      text: '要逐行填的那张表是空的，没有东西可改。',
-      next: '请把每一行的' + input.fields.map((f) => f.label).join('／') + '告诉助手，再说一遍。',
+      title: m('skill-bill.write-rowEditorTable.c005'),
+      text: m('skill-bill.write-rowEditorTable.c006'),
+      next: m('skill-bill.write-rowEditorTable.c007', { p1: String(input.fields.map((f) => f.label).join('／')) }),
     });
   }
   const missing = rowEditorMissing(input);
-  const reds = missing.map((m) => renderStatusBadge({
+  const reds = missing.map((miss) => renderStatusBadge({
     status: 'danger',
-    text: '第 ' + m.row + ' 行缺：' + labelsOf(input.fields, m.fields),
+    text: m('skill-bill.write-rowEditorTable.c008', { p1: String(miss.row), p2: String(labelsOf(input.fields, miss.fields)) }),
   }));
   const rows = input.rows.map((row, i) => renderParamForm({
-    description: '第 ' + (i + 1) + ' 行',
+    description: m('skill-bill.write-rowEditorTable.c009', { p1: String((i + 1)) }),
     fields: rowFields({ name: input.name, fields: input.fields, row, index: i }),
   }));
   return rows.join('') + reds.join('') + renderCaliberLine(
     missing.length === 0
-      ? '每行的必需格都齐了：' + totalLine(input)
-      : '有 ' + missing.length + ' 行缺必需格（缺的那几行先不给复制，补齐再说）：' + totalLine(input),
+      ? m('skill-bill.write-rowEditorTable.c010', { p1: String(totalLine(input)) })
+      : m('skill-bill.write-rowEditorTable.c011', { p1: String(missing.length), p2: String(totalLine(input)) }),
   );
 }

@@ -17,6 +17,7 @@
  * 一件不自造：列表走 `renderDataTable`、单选走 `renderParamForm` 的单选项、依据徽标走 `renderStatusBadge`、
  *  一行口径走 `renderCaliberLine`、空态走共用位的 `./emptyNote.js`（它包 base 的 `renderEmptyBlock`）。
  */
+import { m } from '../entries/index.js';
 import { renderStatusBadge } from 'base-paint';
 import { renderCaliberLine, renderDataTable, renderParamForm } from 'base-paint/blocks';
 import { emptyNote } from './emptyNote.js';
@@ -70,10 +71,10 @@ function whyBadges(items: readonly CandidateItem[]): string {
   }
   const first = (items[0]?.why ?? '').trim();
   if (items.length > 1 && items.every((it) => it.why.trim() === first)) {
-    return renderCaliberLine('以下 ' + items.length + ' 条候选依据相同：' + first + '。');
+    return renderCaliberLine(m('skill-bill.write-candidatePick.c001', { p1: String(items.length), p2: String(first) }));
   }
   const lines = items.map((it) => {
-    return renderStatusBadge({ status: 'warn', text: badgeTextOf('候选 #' + it.id + '：' + it.why) });
+    return renderStatusBadge({ status: 'warn', text: badgeTextOf(m('skill-bill.write-candidatePick.c002', { p1: String(it.id), p2: String(it.why) })) });
   });
   return lines.join('');
 }
@@ -90,13 +91,13 @@ function whyBadges(items: readonly CandidateItem[]): string {
 export function candidateEmpty(input: { readonly label: string; readonly what?: string }): string {
   const told = (input.what ?? '').trim();
   const clauses = told === '' ? [] : told.split('；');
-  const head = clauses.length === 0 ? '这一格要的是那类记录' : clauses[0];
+  const head = clauses.length === 0 ? m('skill-bill.write-candidatePick.c003') : clauses[0];
   const rest = clauses.slice(1).map((s) => s.trim()).filter((s) => s !== '').join('');
   const want = head.endsWith('。') ? head : head + '。';
   return emptyNote({
-    title: '没有可选的' + input.label,
-    text: want + '列表里一条都没有。',
-    next: rest + '不拿最近一笔顶替。请把' + input.label + '告诉助手（或先说清是哪一笔），再跟助手说一遍。',
+    title: m('skill-bill.write-candidatePick.c004', { p1: String(input.label) }),
+    text: m('skill-bill.write-candidatePick.c005', { p1: String(want) }),
+    next: m('skill-bill.write-candidatePick.c006', { p1: String(rest), p2: String(input.label) }),
   });
 }
 
@@ -107,13 +108,13 @@ export function candidateRows(items: readonly CandidateItem[]): string {
   if (items.length === 0) return '';
   return renderDataTable({
     columns: [
-      { key: 'id', label: '记录编号' },
-      { key: 'label', label: '摘要' },
-      { key: 'amount', label: '金额', align: 'right' },
-      { key: 'time', label: '时间' },
+      { key: 'id', label: m('skill-bill.write-candidatePick.c007') },
+      { key: 'label', label: m('skill-bill.write-candidatePick.c008') },
+      { key: 'amount', label: m('skill-bill.write-candidatePick.c009'), align: 'right' },
+      { key: 'time', label: m('skill-bill.write-candidatePick.c010') },
     ],
     rows: items.map((it) => ({ id: it.id, label: optionLabelOf(it.label), amount: it.amount, time: it.time })),
-    caption: '可选的记录（共 ' + items.length + ' 条）',
+    caption: m('skill-bill.write-candidatePick.c011', { p1: String(items.length) }),
   }) + whyBadges(items);
 }
 
@@ -132,7 +133,7 @@ export function candidatePick(input: CandidatePickInput): string {
   const hit = selected === null ? undefined : input.candidates.find((it) => it.id === selected);
   const table = hit === undefined ? candidateRows(input.candidates) : '';
   return renderParamForm({
-    description: input.hint ?? '从下面列出的记录里挑一条。挑中的编号要跟复制指令里的那一个一致。',
+    description: input.hint ?? m('skill-bill.write-candidatePick.c012'),
     fields: [{
       name,
       label,
@@ -142,7 +143,7 @@ export function candidatePick(input: CandidatePickInput): string {
     }],
   }) + table + renderCaliberLine(
     hit === undefined
-      ? '候选未预选（不给默认选中）：请用户从列表里指明是哪一条，再跟助手说一遍。'
-      : '候选已认准 ' + optionOf(hit) + '：请用户核一眼依据，再跟助手说一遍。',
+      ? m('skill-bill.write-candidatePick.c013')
+      : m('skill-bill.write-candidatePick.c014', { p1: String(optionOf(hit)) }),
   );
 }

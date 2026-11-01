@@ -170,6 +170,9 @@ export function devMessageTexts(source) {
  *   基准语言 zh：出现 CJK 即残留；
  *   非基准语言：只判**成句的散文**——首词小写 ＋ ≥4 词 ＋ 出现功能词，或句末标点 ＋ ≥3 词；
  *     这样「代码形状的英文」（键、字段路径、标识）不误报，真句子的英文照样红。
+ *   ⑤ 内联脚本行（#1205）：非基准语言列里，**同时出现花括号与分号／等号**（或箭头函数）的串是随页内联的
+ *      JS 代码，不是给读者看的句子——中文列照旧严格判 CJK（代码里的中文也得上屏，不能漏）；英文列放行，
+ *      否则 var on = 0; 这种行会被功能词、逐词判据误报成散文。
  *   注：`/\s+/` 那一处曾误写成 `/s+/`（少一个反斜杠）⇒ 英文列一句都判不出来而门全绿；
  *   本件 `--selftest` 因此同时钉一句中文与一句英文的变异／还原两行。 */
 export function residueOf(text, lang, devTexts = new Set()) {
@@ -182,6 +185,8 @@ export function residueOf(text, lang, devTexts = new Set()) {
   if (lang === DEFAULT_LANGUAGE) {
     return new RegExp(reg.scriptRe).test(t) ? "含中文（该进 " + lang + " 词条表）" : null;
   }
+  // ⑤ 内联脚本行（#1205）：花括号 ＋ 分号/等号，或箭头函数——代码，不是句子。中文列不走这条分支。
+  if ((/[{}]/.test(t) && /[;=]/.test(t)) || /=>/.test(t)) return null;
   const words = t.trim().split(/\s+/).filter((w) => /[A-Za-z]/.test(w));
   if (words.length < 3) return null;
   const startsLower = /^[a-z]/.test(words[0]);
@@ -338,11 +343,28 @@ function selftest(scope) {
     writeFileSync(join(tmp, 'raw.ts'), "export const x = '中文但没有迁';", 'utf8');
     const fourRaw = audit({ files: ['raw.ts'], allowlist: [] }, tmp);
     want(fourRaw.blind.length === 1 && fourRaw.residue.length === 0, '没迁完的件必须报 blind 而不是 residue');
+    // ⑤ 内联脚本行（#1205）：随页内联的 JS 代码不是句子，英文列放行；同一行里的中文照旧判红。
+    writeFileSync(fixture, [
+      "import { e } from 'base-entries';",
+      "export const a = e('demo.title');",
+      "export const runtime = 'var on = 0; (C.slots || []).forEach(function(s){ if(s.opt) on++; });';",
+    ].join(String.fromCharCode(10)), 'utf8');
+    const codeOnly = audit({ files: ['demo.ts'], allowlist: [] }, tmp);
+    want(codeOnly.residue.length === 0, '内联脚本行不带中文时英文列必须放行（实得 residue=' + codeOnly.residue.length + '）');
+    writeFileSync(fixture, [
+      "import { e } from 'base-entries';",
+      "export const a = e('demo.title');",
+      "export const mark = 'var c = \"未给\";';",
+    ].join(String.fromCharCode(10)), 'utf8');
+    const codeZh = audit({ files: ['demo.ts'], allowlist: [] }, tmp);
+    want(codeZh.residue.some((x) => x.lang === 'zh'), '内联脚本行里的中文必须照旧判红（实得 ' + JSON.stringify(codeZh.residue.map((x) => x.lang)) + '）');
+    want(!codeZh.residue.some((x) => x.lang === 'en'), '同一行英文列仍须放行（实得 ' + JSON.stringify(codeZh.residue.map((x) => x.lang)) + '）');
+    console.log('SELFTEST 内联脚本行读数：无中文 residue=' + codeOnly.residue.length + '／含中文 residue=' + codeZh.residue.length);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
   if (bad.length) { for (const b of bad) console.error('SELFTEST FAIL ' + b); process.exit(1); }
-  console.log('SELFTEST: 空范围显式报数／注释豁免／命令关键字豁免／中文残留必红／英文残留必红／开发者报文按调用点豁免／搬走必绿／没迁完报失明 —— 八条自证 OK');
+  console.log('SELFTEST: 空范围显式报数／注释豁免／命令关键字豁免／中文残留必红／英文残留必红／开发者报文按调用点豁免／搬走必绿／没迁完报失明／内联脚本行豁免 —— 九条自证 OK');
 }
 
 /** 入口守卫（照 tooling/i18n-langs.mjs／skill-html-snapshot.mjs 的先例）：本件被别处 import 时**不跑** CLI，

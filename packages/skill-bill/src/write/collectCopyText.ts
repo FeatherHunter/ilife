@@ -2,6 +2,7 @@
 // base 冻结不动，bill 内采集口径只住这一件。
 // SAY 与回落壳共用本门，复用回执门方向词与共用件单行化／CSV／截断口径。
 // 用处：saySheet 采集载荷与五模板回落壳复制区三份覆写经公开接口调。
+import { m } from '../entries/index.js';
 import { DOC_TITLE, sceneKeyOf } from '../shared/pageIdentity.js';
 import { MISSING, csvCell, oneLine, truncate } from '../shared/copyText.js';
 import { copyDirectionOf } from './copyTextReceipt.js';
@@ -15,11 +16,11 @@ export interface CollectCopyFacts {
   readonly currency: string;
   readonly missing: readonly string[];
 }
-const PAGE_TAIL = '采集';
-const GIVEN_EMPTY = '无';
-const MISSING_EMPTY = '无';
+const PAGE_TAIL = m('skill-bill.write-collectCopyText.c001');
+const GIVEN_EMPTY = m('skill-bill.write-collectCopyText.c002');
+const MISSING_EMPTY = m('skill-bill.write-collectCopyText.c003');
 const NOTE_LIMIT = 200;
-const NEXT_READY = '已填齐，可以复制去说了。';
+const NEXT_READY = m('skill-bill.write-collectCopyText.c004');
 
 function pickText(v: string): string {
   const t = typeof v === 'string' ? v : '';
@@ -45,8 +46,8 @@ function pageLine(word: string): string {
 }
 function cleanMissing(missing: readonly string[]): string[] {
   const out: string[] = [];
-  for (const m of missing) {
-    const t = typeof m === 'string' ? m.trim() : '';
+  for (const item of missing) {
+    const t = typeof item === 'string' ? item.trim() : '';
     if (t === '' || out.includes(t)) continue;
     out.push(oneLine(t));
   }
@@ -55,13 +56,13 @@ function cleanMissing(missing: readonly string[]): string[] {
 export interface CollectExtra { readonly label: string; readonly value: string; }
 function givenContent(facts: CollectCopyFacts, extra?: readonly CollectExtra[]): string {
   const parts: string[] = [];
-  if (facts.category.trim() !== '') parts.push('分类 ' + oneLine(facts.category));
-  if (facts.amount !== null && Number.isFinite(facts.amount) && facts.amount !== 0) parts.push('金额 ' + signed2(facts.amount));
-  if (facts.time.trim() !== '') parts.push('时间 ' + oneLine(facts.time));
-  if (facts.account.trim() !== '') parts.push('账户 ' + oneLine(facts.account));
-  if (facts.ledger.trim() !== '') parts.push('账本 ' + oneLine(facts.ledger));
-  if (facts.note.trim() !== '') parts.push('备注 ' + noteText(facts.note));
-  if (facts.currency.trim() !== '') parts.push('币种 ' + oneLine(facts.currency));
+  if (facts.category.trim() !== '') parts.push(m('skill-bill.write-collectCopyText.c005', { p1: String(oneLine(facts.category)) }));
+  if (facts.amount !== null && Number.isFinite(facts.amount) && facts.amount !== 0) parts.push(m('skill-bill.write-collectCopyText.c006', { p1: String(signed2(facts.amount)) }));
+  if (facts.time.trim() !== '') parts.push(m('skill-bill.write-collectCopyText.c007', { p1: String(oneLine(facts.time)) }));
+  if (facts.account.trim() !== '') parts.push(m('skill-bill.write-collectCopyText.c008', { p1: String(oneLine(facts.account)) }));
+  if (facts.ledger.trim() !== '') parts.push(m('skill-bill.write-collectCopyText.c009', { p1: String(oneLine(facts.ledger)) }));
+  if (facts.note.trim() !== '') parts.push(m('skill-bill.write-collectCopyText.c010', { p1: String(noteText(facts.note)) }));
+  if (facts.currency.trim() !== '') parts.push(m('skill-bill.write-collectCopyText.c011', { p1: String(oneLine(facts.currency)) }));
   const xs = extra ?? [];
   for (const e of xs) {
     const lab = typeof e.label === 'string' ? e.label.trim() : '';
@@ -79,16 +80,16 @@ function nextContent(word: string, facts: CollectCopyFacts): string {
   const w = typeof word === 'string' ? word.trim() : '';
   const items = cleanMissing(facts.missing);
   if (items.length === 0) return NEXT_READY;
-  return '补齐后跟助手说一遍「' + w + '」';
+  return m('skill-bill.write-collectCopyText.c012', { p1: String(w) });
 }
 function givenLine(facts: CollectCopyFacts, extra?: readonly CollectExtra[]): string {
-  return '已给 ' + givenContent(facts, extra);
+  return m('skill-bill.write-collectCopyText.c013', { p1: String(givenContent(facts, extra)) });
 }
 function missingLine(facts: CollectCopyFacts): string {
-  return '还差 ' + missingContent(facts);
+  return m('skill-bill.write-collectCopyText.c014', { p1: String(missingContent(facts)) });
 }
 function nextLine(word: string, facts: CollectCopyFacts): string {
-  return '下一步 ' + nextContent(word, facts);
+  return m('skill-bill.write-collectCopyText.c015', { p1: String(nextContent(word, facts)) });
 }
 export function buildCollectCopyText(word: string, kind: string, facts: CollectCopyFacts, extra?: readonly CollectExtra[]): string {
   void kind;
@@ -132,16 +133,16 @@ export function buildCollectCopyCsv(word: string, kind: string, facts: CollectCo
   const k = typeof kind === 'string' ? kind : '';
   const direction = copyDirectionOf(k, facts.amount);
   const rows: ReadonlyArray<readonly [string, string]> = [
-    ['已给', givenContent(facts, extra)],
-    ['还差', missingContent(facts)],
-    ['下一步', nextContent(w, facts)],
-    ['分类', pickText(facts.category)],
-    ['金额', signed2(facts.amount)],
-    ['方向', direction],
-    ['时间', pickText(facts.time)],
-    ['账户', pickText(facts.account)],
-    ['账本', pickText(facts.ledger)],
-    ['备注', noteText(facts.note)],
+    [m('skill-bill.write-collectCopyText.c016'), givenContent(facts, extra)],
+    [m('skill-bill.write-collectCopyText.c017'), missingContent(facts)],
+    [m('skill-bill.write-collectCopyText.c018'), nextContent(w, facts)],
+    [m('skill-bill.write-collectCopyText.c019'), pickText(facts.category)],
+    [m('skill-bill.write-collectCopyText.c020'), signed2(facts.amount)],
+    [m('skill-bill.write-collectCopyText.c021'), direction],
+    [m('skill-bill.write-collectCopyText.c022'), pickText(facts.time)],
+    [m('skill-bill.write-collectCopyText.c023'), pickText(facts.account)],
+    [m('skill-bill.write-collectCopyText.c024'), pickText(facts.ledger)],
+    [m('skill-bill.write-collectCopyText.c025'), noteText(facts.note)],
   ];
   const xs = extra ?? [];
   const all = rows.slice();

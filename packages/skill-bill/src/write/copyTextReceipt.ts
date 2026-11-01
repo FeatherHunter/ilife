@@ -10,6 +10,7 @@
  * 口径出处：原型三份 `.scratch/bill-copy-demo/new-{text,json,csv}.csv`（咖啡一笔 7248）与
  * 纸面一致（receiptPaper 行一致）；规则：标签空格值/方向词代符号/未给统一/备注压行200字/CSV RFC4180/JSON数仍数。
  */
+import { m } from '../entries/index.js';
 import { DOC_TITLE } from '../shared/pageIdentity.js';
 import { MISSING, csvCell, oneLine, truncate } from '../shared/copyText.js';
 import { wakeWordOf } from './userWording.js';
@@ -27,13 +28,13 @@ export interface ReceiptCopyFacts {
 }
 
 /** 结论动作（**只一处定义**，13 种共用同一动作，方向另走 copyDirectionOf）。 */
-const ACTION = '已记好';
+const ACTION = m('skill-bill.write-copyTextReceipt.c001');
 
 
 
 /** 页身份尾段与金额单位（只一处定义）。 */
-const PAGE_TAIL = '回执';
-const UNIT = '元';
+const PAGE_TAIL = m('skill-bill.write-copyTextReceipt.c002');
+const UNIT = m('skill-bill.write-copyTextReceipt.c003');
 
 /** 备注压行上限（字数按 Array.from 计，CJK 一字一数）。 */
 const NOTE_LIMIT = 200;
@@ -41,17 +42,17 @@ const NOTE_LIMIT = 200;
 /** 13 种固定词（11 行） + 2 派生（batch/plain 空串按金额符号派生，见 copyDirectionOf）。
  *  取值照 receiptPaper 文案表 titleWord（纸面标题同词，复制恒等于已显示行）；batch/plain 无固定词故派生。 */
 const FIXED_WORDS: Readonly<Record<string, string>> = {
-  expense: '支出',
-  income: '收入',
-  photo: '账单',
-  refund: '退款',
-  reimburse: '报销',
-  'reimburse-done': '到账',
-  lend: '借出',
-  borrow: '借入',
-  collect: '收回',
-  repay: '偿还',
-  installment: '分期',
+  expense: m('skill-bill.write-copyTextReceipt.c004'),
+  income: m('skill-bill.write-copyTextReceipt.c005'),
+  photo: m('skill-bill.write-copyTextReceipt.c006'),
+  refund: m('skill-bill.write-copyTextReceipt.c007'),
+  reimburse: m('skill-bill.write-copyTextReceipt.c008'),
+  'reimburse-done': m('skill-bill.write-copyTextReceipt.c009'),
+  lend: m('skill-bill.write-copyTextReceipt.c010'),
+  borrow: m('skill-bill.write-copyTextReceipt.c011'),
+  collect: m('skill-bill.write-copyTextReceipt.c012'),
+  repay: m('skill-bill.write-copyTextReceipt.c013'),
+  installment: m('skill-bill.write-copyTextReceipt.c014'),
 };
 
 /** 方向词（**唯一定义地**）：固定词直取；batch/plain/空串/未知按金额符号派生（负支出/正收入，空按支出兜底，add 路恒有金额）。 */
@@ -60,10 +61,10 @@ export function copyDirectionOf(kind: string, amount: number | null): string {
   const hit = FIXED_WORDS[k];
   if (hit !== undefined) return hit;
   if (amount !== null && Number.isFinite(amount)) {
-    if (amount < 0) return '支出';
-    if (amount > 0) return '收入';
+    if (amount < 0) return m('skill-bill.write-copyTextReceipt.c015');
+    if (amount > 0) return m('skill-bill.write-copyTextReceipt.c016');
   }
-  return '支出';
+  return m('skill-bill.write-copyTextReceipt.c017');
 }
 
 
@@ -118,12 +119,12 @@ export function buildReceiptCopyText(kind: string, facts: ReceiptCopyFacts): str
   return [
     pageLine(k),
     conclusionLine(k, facts.amount),
-    '分类 ' + pickText(facts.category),
-    '时间 ' + pickText(facts.time),
-    '账户 ' + pickText(facts.account),
-    '账本 ' + pickText(facts.ledger),
-    '备注 ' + noteText(facts.note),
-    '编号 ' + (facts.recordId === null ? MISSING : String(facts.recordId)),
+    m('skill-bill.write-copyTextReceipt.c018', { p1: String(pickText(facts.category)) }),
+    m('skill-bill.write-copyTextReceipt.c019', { p1: String(pickText(facts.time)) }),
+    m('skill-bill.write-copyTextReceipt.c020', { p1: String(pickText(facts.account)) }),
+    m('skill-bill.write-copyTextReceipt.c021', { p1: String(pickText(facts.ledger)) }),
+    m('skill-bill.write-copyTextReceipt.c022', { p1: String(noteText(facts.note)) }),
+    m('skill-bill.write-copyTextReceipt.c023', { p1: String((facts.recordId === null ? MISSING : String(facts.recordId))) }),
   ].join('\n');
 }
 
@@ -160,15 +161,15 @@ export function buildReceiptCopyCsv(kind: string, facts: ReceiptCopyFacts): stri
   const conclusion = conclusionLine(k, facts.amount);
   const direction = copyDirectionOf(k, facts.amount);
   const rows: ReadonlyArray<readonly [string, string]> = [
-    ['结论', conclusion],
-    ['分类', pickText(facts.category)],
-    ['金额', signed2(facts.amount)],
-    ['方向', direction],
-    ['时间', pickText(facts.time)],
-    ['账户', pickText(facts.account)],
-    ['账本', pickText(facts.ledger)],
-    ['备注', noteText(facts.note)],
-    ['编号', facts.recordId === null ? MISSING : String(facts.recordId)],
+    [m('skill-bill.write-copyTextReceipt.c024'), conclusion],
+    [m('skill-bill.write-copyTextReceipt.c025'), pickText(facts.category)],
+    [m('skill-bill.write-copyTextReceipt.c026'), signed2(facts.amount)],
+    [m('skill-bill.write-copyTextReceipt.c027'), direction],
+    [m('skill-bill.write-copyTextReceipt.c028'), pickText(facts.time)],
+    [m('skill-bill.write-copyTextReceipt.c029'), pickText(facts.account)],
+    [m('skill-bill.write-copyTextReceipt.c030'), pickText(facts.ledger)],
+    [m('skill-bill.write-copyTextReceipt.c031'), noteText(facts.note)],
+    [m('skill-bill.write-copyTextReceipt.c032'), facts.recordId === null ? MISSING : String(facts.recordId)],
   ];
   const lines = ['field,value'];
   for (const [field, value] of rows) lines.push(csvCell(field) + ',' + csvCell(value));

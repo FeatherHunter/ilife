@@ -7,11 +7,13 @@
  * 谁在用（本票实数，指名）：`src/write/template-{expense,flow,batch,installment,update}.ts`
  *  五张模板各取自己用得到的那几个名字。
  */
+import { m } from '../entries/index.js';
 import type { ParamFieldInput } from 'base-paint/blocks';
 import type { SerializableEnvelope } from 'base-paint';
 import { pageShell } from '../shared/pageShell.js';
 import type { PageShellInput } from '../shared/pageShell.js';
 import { DOC_SKILL, DOC_VERSION, sceneKeyOf } from '../shared/pageIdentity.js';
+import { MISSING } from '../shared/copyText.js';
 import { prefillHint } from './prefillNote.js';
 import type { PrefillMark } from './prefillNote.js';
 import { optionsFor } from './recentPicks.js';
@@ -23,13 +25,6 @@ import type { RecordSlot } from './slots.js';
 
 /** 提示条那一块要的图标档（`renderFeedbackBlock` 的闭集）。 */
 export type NoticeIcon = 'danger' | 'ok' | 'warn' | 'copy' | 'info';
-
-/** 缺项标签那一行要的：一处缺项的中文名 + 为什么缺（`blockedSlots.ts` 的产出形状）。 */
-export interface BlockedLine {
-  readonly name: string;
-  readonly label: string;
-  readonly why: string;
-}
 
 /** 字段卡的一格（普通数据：名字／中文名／怎么给／是否必需）。 */
 export interface FieldSlot {
@@ -65,7 +60,7 @@ export function formFields(input: {
   readonly pick: Record<string, readonly string[]>;
 }): ParamFieldInput[] {
   return input.slots.map((s) => {
-    const mark = input.marks.find((m) => m.name === s.name);
+    const mark = input.marks.find((candidate) => candidate.name === s.name);
     const value = isGiven(input.params[s.name]) ? String(input.params[s.name]) : (mark?.value ?? '');
     const options = optionsFor(input.pick, s.name, value);
     return {
@@ -86,14 +81,14 @@ export function defaultSlots(input: CollectInput): readonly FieldSlot[] {
 
 /** 预填来源串收短（本域五页共用这一处）：只把括号里的附注去掉，两类来源的区分一字不动。 */
 export function shorter(marks: readonly PrefillMark[]): readonly PrefillMark[] {
-  return marks.map((m) => ({ ...m, from: m.from.replace(/（[^）]*）/g, '') }));
+  return marks.map((mark) => ({ ...mark, from: mark.from.replace(/（[^）]*）/g, '') }));
 }
 
 /** 摘要五格里有没有一格是**用户真给了值**的（全空即不出读数行，照 #688 裁定 6）。
  *  「时间」那一格不算：`factsOf` 缺省取本页执行那天，永远非空——它进了这一判据就永远为真，等于没有条件。 */
 export function hasAnyFact(facts: SummaryFacts): boolean {
   return [facts.amount, facts.category, facts.account, facts.ledger].some((v) => (
-    v !== null && v !== undefined && String(v).trim() !== '' && String(v) !== '未给'
+    v !== null && v !== undefined && String(v).trim() !== '' && String(v) !== MISSING
   ));
 }
 
@@ -101,21 +96,21 @@ export function hasAnyFact(facts: SummaryFacts): boolean {
 export function tailCardsOf(style: CardsStyle, input: ReceiptInput): readonly TailCard[] {
   if (style === 'scene') {
     return [
-      { label: '这次记了几笔', value: input.receipt.affectedRows + ' 笔' },
+      { label: m('skill-bill.write-pageParts.c001'), value: m('skill-bill.write-pageParts.c002', { p1: String(input.receipt.affectedRows) }) },
       {
-        label: '写进去的项',
-        value: input.receipt.writtenFields.length + ' 项',
-        detail: '逐项见下面的明细表',
+        label: m('skill-bill.write-pageParts.c003'),
+        value: m('skill-bill.write-pageParts.c004', { p1: String(input.receipt.writtenFields.length) }),
+        detail: m('skill-bill.write-pageParts.c005'),
       },
     ];
   }
-  const firstLabel = style === 'generic-expense' ? '这次记了几笔' : '记了几笔';
+  const firstLabel = style === 'generic-expense' ? m('skill-bill.write-pageParts.c006') : m('skill-bill.write-pageParts.c007');
   return [
-    { label: firstLabel, value: input.receipt.affectedRows + ' 笔', detail: '按库里的改动算' },
+    { label: firstLabel, value: m('skill-bill.write-pageParts.c008', { p1: String(input.receipt.affectedRows) }), detail: m('skill-bill.write-pageParts.c009') },
     {
-      label: '写进去的项',
-      value: input.receipt.writtenFields.length + ' 项',
-      detail: input.receipt.writtenFields.length === 0 ? '没改到任何一项' : '逐项见下面的明细表',
+      label: m('skill-bill.write-pageParts.c010'),
+      value: m('skill-bill.write-pageParts.c011', { p1: String(input.receipt.writtenFields.length) }),
+      detail: input.receipt.writtenFields.length === 0 ? m('skill-bill.write-pageParts.c012') : m('skill-bill.write-pageParts.c013'),
     },
   ];
 }
@@ -138,14 +133,14 @@ export function probeOfReceipt(input: ReceiptInput): {
 }
 
 /** 写入域各页的眉标：**只在本域写一次**（共用位 `shared/pageShell.ts` 不持「域名→取值」表，照守卫③b）。 */
-export const EYEBROW = '记账｜写入域';
+export const EYEBROW = m('skill-bill.write-pageParts.c014');
 
 /** 写入域回执页的眉标（1059 落地 6 页＋1065 落地 10 页）：中文场景名——`饼干记账｜<场景>`（冻结 ok 版品牌行逐字；禁 bill.* 码，照 1046②）。
  *
  * 取值只在本域写一次（同 `EYEBROW` 的守卫③b）；采集页仍走通用 `EYEBROW`。
  * 未落地的老回执页不传这一件（模板里缺省回通用眉标），16 页之外零指纹波动。 */
 export function receiptEyebrowOf(word: string): string {
-  return '饼干记账｜' + word;
+  return m('skill-bill.write-pageParts.c015', { p1: String(word) });
 }
 
 /** 本域各页统一走它：补上眉标再转共用位的 `pageShell`；调用点写法 `pageShell({…})` 不变。 */

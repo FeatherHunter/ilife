@@ -36,6 +36,7 @@
  * 本件不自造任何页面骨架与样式：字段卡走 `base-paint/blocks` 的 `renderParamForm`，其余块由各场景件
  *  从代表页那套共用件里取。
  */
+import { m } from '../entries/index.js';
 import { renderParamForm } from 'base-paint/blocks';
 import type { ParamFieldInput } from 'base-paint/blocks';
 import type { BillRow } from '../fetch/db.js';
@@ -130,7 +131,7 @@ function formFieldsOf(input: {
   readonly pick: Record<string, readonly string[]>;
 }): ParamFieldInput[] {
   return input.slots.map((s) => {
-    const mark = input.marks.find((m) => m.name === s.name);
+    const mark = input.marks.find((candidate) => candidate.name === s.name);
     const value = isGiven(input.params[s.name]) ? String(input.params[s.name]) : (mark?.value ?? '');
     const options = optionsFor(input.pick, s.name, value);
     return {
@@ -176,8 +177,6 @@ export function blockedPromptOf(input: {
     command: commandLine(input.key, filled),
     // #733：句尾原来缀着 `照这条说：<命令全名>。`（如 `bill.record.add`）——那是**具体脚本**，
     //   按维护者 2026-09-19 的口径不该出现在复制出去的 prompt 里，整句删掉。
-    prompt: '这一笔还差 ' + input.blocked.length + ' 项：'
-      + input.blocked.map((i) => i.label + '（' + i.why + '）').join('、')
-      + '。\n这一页先不写库。补齐之后跟助手说一遍。',
+    prompt: m('skill-bill.write-photoEscape.c001', { p1: String(input.blocked.length), p2: String(input.blocked.map((i) => i.label + '（' + i.why + '）').join('、')) }),
   };
 }

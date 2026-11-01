@@ -7,6 +7,7 @@
  *
  * 谁在用（一处，指名）：`./template-update.ts` 的 `receiptPage`（改记录／撤销／恢复三支共用）。
  */
+import { m } from '../entries/index.js';
 import { escapeHtml } from 'base-paint';
 import type { BillReceipt } from '../shared/writeParts.js';
 import { WRITE_DECLARATION } from './declaration.js';
@@ -26,10 +27,10 @@ export function receiptTitle(
   params: Record<string, unknown>,
 ): string {
   if (result === 'undo') {
-    return '已撤销记录' + (receipt.recordId === null ? '' : ' ' + receipt.recordId);
+    return m('skill-bill.write-receiptSheet.c001', { p1: String((receipt.recordId === null ? '' : ' ' + receipt.recordId)) });
   }
   if (result === 'restore') {
-    return '已恢复记录' + (receipt.recordId === null ? '' : ' ' + receipt.recordId);
+    return m('skill-bill.write-receiptSheet.c002', { p1: String((receipt.recordId === null ? '' : ' ' + receipt.recordId)) });
   }
   const labels = receipt.writtenFields.map((f) => fieldLabelOf(f));
   if (labels.length === 1 && labels[0] !== undefined) {
@@ -37,35 +38,35 @@ export function receiptTitle(
     const row = detail.find((d) => d.k === label);
     const raw = row?.v ?? params[receipt.writtenFields[0] as string];
     const value = typeof raw === 'string' ? raw : String(raw ?? '');
-    return escapeHtml(label) + (value === '' ? '已改' : '已改为<span class="hl">' + escapeHtml(value) + '</span>');
+    return escapeHtml(label) + (value === '' ? m('skill-bill.write-receiptSheet.c003') : m('skill-bill.write-receiptSheet.c004', { p1: String(escapeHtml(value)) }));
   }
-  if (labels.length === 0) return '没有改动';
-  return '改了' + labels.length + '项：' + escapeHtml(labels.join('、'));
+  if (labels.length === 0) return m('skill-bill.write-receiptSheet.c005');
+  return m('skill-bill.write-receiptSheet.c006', { p1: String(labels.length), p2: String(escapeHtml(labels.join('、'))) });
 }
 
 /** 主数字头那枚印章：改记录支按有无改动；撤销／恢复两支按状态（tone 走公共层闭集）。 */
 export function receiptStamp(result: ReceiptResult, receipt: BillReceipt): { readonly text: string; readonly tone: 'ok' | 'warn' | 'danger' } {
-  if (result === 'undo') return { text: '已撤销', tone: 'danger' };
-  if (result === 'restore') return { text: '已恢复', tone: 'ok' };
-  return receipt.noChange ? { text: '无改动', tone: 'warn' } : { text: '已改动', tone: 'ok' };
+  if (result === 'undo') return { text: m('skill-bill.write-receiptSheet.c007'), tone: 'danger' };
+  if (result === 'restore') return { text: m('skill-bill.write-receiptSheet.c008'), tone: 'ok' };
+  return receipt.noChange ? { text: m('skill-bill.write-receiptSheet.c009'), tone: 'warn' } : { text: m('skill-bill.write-receiptSheet.c010'), tone: 'ok' };
 }
 
 /** 改后落点账目行：分类／账户／账本／时间各一处（空值写「未给」，与摘要行同一口径）。
  *  分类走纸面显示写法（`../shared/category.js` 的 `categoryLabelOf`，原型 v5 印的是全角斜线那串）。 */
 export function landedRows(facts: SummaryFacts): readonly { readonly label: string; readonly value: string }[] {
-  const pick = (v: string): string => (v.trim() === '' ? '未给' : v);
+  const pick = (v: string): string => (v.trim() === '' ? m('skill-bill.write-receiptSheet.c011') : v);
   return [
-    { label: '分类', value: facts.category.trim() === '' ? '未给' : categoryLabelOf(facts.category) },
-    { label: '账户', value: pick(facts.account) },
-    { label: '账本', value: pick(facts.ledger) },
-    { label: '时间', value: pick(facts.time) },
+    { label: m('skill-bill.write-receiptSheet.c012'), value: facts.category.trim() === '' ? m('skill-bill.write-receiptSheet.c013') : categoryLabelOf(facts.category) },
+    { label: m('skill-bill.write-receiptSheet.c014'), value: pick(facts.account) },
+    { label: m('skill-bill.write-receiptSheet.c015'), value: pick(facts.ledger) },
+    { label: m('skill-bill.write-receiptSheet.c016'), value: pick(facts.time) },
   ];
 }
 
 /** 退出口那一行口径（#993 v5 原型的 `.caliber`）：撤销是**打标**不是物理删除。
  *  逐字取原型那一句，只去掉它前面那截设计注记「口径小字：」（注记不上屏）。
  *  只给带撤销出口的两支（改记录／撤销）；恢复那一支不印这一句。 */
-export const UNDO_CALIBER = '撤销只打标、可恢复，原记录保留痕迹，不会物理删除。';
+export const UNDO_CALIBER = m('skill-bill.write-receiptSheet.c017');
 
 /** 退出口真按钮的复制位（#993）：#733 杀的是无载荷死按钮，本位带撤销／恢复的人话 prompt。
  *  文案不另写第二份——逐字取写入域声明（`./declaration.js`，HELP 页上同一份）里
@@ -86,10 +87,10 @@ export function exitCopyOf(
     const scene = entry.scenes.find((s) => s.id === want);
     if (scene !== undefined) { template = scene.prompt_template; break; }
   }
-  if (template === null) throw new Error('receiptSheet: 写入域声明里找不到场景 `' + want + '`（退出口复制位无模板可用）');
+  if (template === null) throw new Error('receiptSheet: 写入域声明里找不到场景 ' + want + '（退出口复制位无模板可用）');
   return {
-    label: isUndo ? '撤销这一笔' : '恢复这一笔',
+    label: isUndo ? m('skill-bill.write-receiptSheet.c018') : m('skill-bill.write-receiptSheet.c019'),
     actionId: isUndo ? 'ilife-undo-copy' : 'ilife-restore-copy',
-    text: template.replace('{{target}}', '记录编号 ' + recordId),
+    text: template.replace('{{target}}', m('skill-bill.write-receiptSheet.c020', { p1: String(recordId) })),
   };
 }

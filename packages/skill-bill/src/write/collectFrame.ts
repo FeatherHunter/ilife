@@ -10,6 +10,7 @@
  * 文案纪律：纯中文加数字，不含 `·`／`|`／英文标识（机审版式位与区外内部话两列保持零命中）；
  * 每句带唤醒词或段号，页内不重句。
  */
+import { m } from '../entries/index.js';
 import { renderCaliberLine, renderChipRow, renderConclusionBar } from 'base-paint/blocks';
 
 /** 进度：补上这几项就能记（只读数，不判定）。
@@ -19,7 +20,7 @@ export function collectProgress(input: { readonly wakeWord: string; readonly mis
   const n = Number.isFinite(input.missing) && input.missing > 0 ? Math.floor(input.missing) : 0;
   // t728 去冗：这一行**只说「补上会怎样」**——唤醒词归 H1、缺几项与缺哪几项归副标题与缺项徽章，
   // 三处不再互相复述（改前这一行同时复述了 H1 的唤醒词与副标题的项数）。
-  return renderCaliberLine('补齐这 ' + n + ' 项就能记进账本');
+  return renderCaliberLine(m('skill-bill.write-collectFrame.c001', { p1: String(n) }));
 }
 
 /** 缺项标签：缺的格逐枚成标签（空即不出块）。 */
@@ -32,6 +33,6 @@ export function collectMissingTags(input: { readonly labels: readonly string[] }
 /** 分段标题：第几段加一句中文标题（黑块前后分段用）。 */
 export function collectSectionTitle(input: { readonly no: number; readonly title: string }): string {
   const no = Number.isFinite(input.no) && input.no > 0 ? Math.floor(input.no) : 1;
-  const title = input.title.trim() === '' ? '继续往下看' : input.title.trim();
-  return renderConclusionBar('第 ' + no + ' 段 ' + title);
+  const title = input.title.trim() === '' ? m('skill-bill.write-collectFrame.c002') : input.title.trim();
+  return renderConclusionBar(m('skill-bill.write-collectFrame.c003', { p1: String(no), p2: String(title) }));
 }

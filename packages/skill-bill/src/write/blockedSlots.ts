@@ -21,17 +21,23 @@
  *  带 `kind`＋`amount` 的撤销／恢复本来也可能被这条判定拦下、改出采集页，收窄后不再管它们。
  *  方向那句话的取值（要负数／要正数）不在这里另写一份：走 `./summaryRow.ts` 的 `directionOf`。
  */
+import { m } from '../entries/index.js';
 import { renderActionBar } from 'base-paint';
 import { renderCaliberLine, renderDataTable, renderPreBlock } from 'base-paint/blocks';
 import { directionOf, money2 } from './summaryRow.js';
 import { errorReceipt } from './errorReceipt.js';
 import { fieldLabelOf } from './userWording.js';
 
-/** 一个阻断项：哪个槽位／中文名／为什么挡住。 */
+/** 一个阻断项：哪个槽位／中文名／为什么挡住。
+ *
+ *  `why` 是**给用户看的说法**（随语言变，走词条表）；判「是不是缺槽位」只许看 `missing`，
+ *  **不许拿显示文本比字面**（显示文本一译成英文，中文比较就永远不成立）。 */
 export interface BlockedItem {
   readonly name: string;
   readonly label: string;
   readonly why: string;
+  /** 缺槽位那一类（控制数据，不是文案）。方向不符／场景自带的额外阻断项没有这一格。 */
+  readonly missing?: boolean;
 }
 
 /** 判定入参：本次参数 ＋ 必需槽位里缺的那些 ＋ 本型（`params.kind`，空串＝本支不判方向）。 */
@@ -51,13 +57,13 @@ function amountOf(raw: unknown): number | null {
 
 /** 判定：缺的必需槽位 ＋ 方向不符的金额（**方向只服务录入路径**，见件头）。**空数组＝可以往下走写库那一步**。 */
 export function blockedItems(input: BlockedProbe): BlockedItem[] {
-  const items: BlockedItem[] = input.missing.map((s) => ({ name: s.name, label: s.label, why: '没给' }));
+  const items: BlockedItem[] = input.missing.map((s) => ({ name: s.name, label: s.label, why: m('skill-bill.write-blockedSlots.c001'), missing: true }));
   const d = directionOf(input.kind);
   const amount = amountOf(input.params['amount']);
   if (d !== undefined && amount !== null && amount !== 0 && Math.sign(amount) !== d.sign) {
     items.push({
-      name: 'amount', label: '金额',
-      why: '方向和这一型对不上：' + d.require + '，给的是 ' + money2(amount),
+      name: 'amount', label: m('skill-bill.write-blockedSlots.c002'),
+      why: m('skill-bill.write-blockedSlots.c003', { p1: String(d.require), p2: String(money2(amount)) }),
     });
   }
   return items;
@@ -74,11 +80,9 @@ export function blockedMessage(
   blocked: readonly BlockedItem[],
 ): string {
   if (missing.length > 0) {
-    return '缺必需槽位：' + missing.map((m) => fieldLabelOf(m.name)).join('、')
-      + '（已出采集页，补齐之后跟助手说一遍）';
+    return m('skill-bill.write-blockedSlots.c004', { p1: String(missing.map((slot) => fieldLabelOf(slot.name)).join('、')) });
   }
-  return '写库已阻断：' + blocked.map((i) => fieldLabelOf(i.name) + '（' + i.why + '）').join('、')
-    + '（已出采集页，改好之后跟助手说一遍）';
+  return m('skill-bill.write-blockedSlots.c005', { p1: String(blocked.map((i) => fieldLabelOf(i.name) + '（' + i.why + '）').join('、')) });
 }
 
 /** 阻断条的入参：判定结果 ＋ 那条「补齐后可重跑」的写库指令原文。 */
@@ -115,35 +119,35 @@ export function blockedBar(input: BlockedBarInput): string {
   const n = input.items.length;
   if (n === 0) return '';
   return errorReceipt({
-    title: '还缺什么',
+    title: m('skill-bill.write-blockedSlots.c006'),
     // t728：改前这里是把缺项名 `join('、')` 接在句尾（`还缺 3 项，补齐再记：分类、金额、向谁借`）——
     //   用户逐字点名的那类写法（拿顿号当日志排版，一段文本里塞 ≥3 件并列的事）。
     //   现在事由只说「还缺几项」，**缺的是哪几项由下面那行徽章出形状**（每项一枚胶囊，与整页标签同一形状）。
-    message: '还缺 ' + n + ' 项，补齐再记',
-    retryPrompt: '补齐了，说一遍试试',
+    message: m('skill-bill.write-blockedSlots.c007', { p1: String(n) }),
+    retryPrompt: m('skill-bill.write-blockedSlots.c008'),
     language: input.language,
   }) + renderDataTable({
     // t728 逐页审计实测：改前这里是三列 `还缺哪一项／是什么／为什么写不进去`，而**前两列印的是同一个词**
     //   （`fieldLabelOf(i.name)` 与 `i.label` 在实测里逐行同值：`分类` / `分类`、`金额` / `金额`）——
     //   同一格相邻两列重复，还多占 390 档一整条列头线。改法＝去掉重复那一列，留「字段 ＋ 原因」两列。
     columns: [
-      { key: 'label', label: '字段' },
-      { key: 'why', label: '原因' },
+      { key: 'label', label: m('skill-bill.write-blockedSlots.c009') },
+      { key: 'why', label: m('skill-bill.write-blockedSlots.c010') },
     ],
     rows: input.items.map((i) => ({
       label: i.label,
-      why: i.why === '没给' ? '未提供' : i.why,
+      why: i.missing === true ? m('skill-bill.write-blockedSlots.c011') : i.why,
     })),
-    caption: '缺一项就先不写库',
+    caption: m('skill-bill.write-blockedSlots.c012'),
   }) + renderActionBar({
     // #733 复现实测：这颗按钮在**内联脚本里出现 0 次** —— 委派第一道 `node.closest("[data-action-id]")`
     //   认得出它，第二道 `getAttribute("data-t") === null → return` 就早退 ⇒ 点了零动作、零反馈。
     //   它是「补齐之前不许写库」的**状态标记**，不是可点控件（该由宿主判定补齐没有，这一页做不到），
     //   故走判据 1 认可的那一档：`disabled` ＋ `aria-disabled`，吃公共层 `action-btn[disabled]` 的浅底样式。
-    buttons: [{ label: '⛔ 先补齐（' + n + ' 项）', kind: 'ghost', actionId: BLOCKED_WRITE_ACTION, disabled: true }],
+    buttons: [{ label: m('skill-bill.write-blockedSlots.c013', { p1: String(n) }), kind: 'ghost', actionId: BLOCKED_WRITE_ACTION, disabled: true }],
   }) + renderCaliberLine(
     input.note === undefined || input.note === ''
-      ? '这一页先不写库。补齐之后照上面那句跟助手说一遍才会写。'
+      ? m('skill-bill.write-blockedSlots.c014')
       : input.note,
   );
 }

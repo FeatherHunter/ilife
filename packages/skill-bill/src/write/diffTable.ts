@@ -18,6 +18,7 @@
  * 一件不自造：表格走 `renderDataTable`、改前→改后那行紧凑形态走 base 的 `renderChangeRows`、
  *  一行口径走 `renderCaliberLine`、零改动空态走共用位的 `./emptyNote.js`（它包 base 的 `renderEmptyBlock`）。
  */
+import { m } from '../entries/index.js';
 import { renderCaliberLine, renderChangeRows, renderDataTable } from 'base-paint/blocks';
 import { emptyNote } from './emptyNote.js';
 import { fieldLabelOf } from './userWording.js';
@@ -34,9 +35,9 @@ export interface DiffRow {
 /** 一个值写成文本：`undefined`／`null`／空白串**同面**，一律写「未设置」，其余按十进制串写。
  *  同面这条要紧：没给这一列与给了空串如果在文本上不一样，同一件事就会被算成一次改动。 */
 function textOf(v: unknown): string {
-  if (v === undefined || v === null) return '未设置';
+  if (v === undefined || v === null) return m('skill-bill.write-diffTable.c001');
   const s = String(v);
-  return s.trim() === '' ? '未设置' : s;
+  return s.trim() === '' ? m('skill-bill.write-diffTable.c002') : s;
 }
 
 /** 造 diff 行：按 `fields` 的顺序逐列比，**改了没改由这里算**。 */
@@ -55,8 +56,7 @@ export function diffOf(input: {
 /** 真改动那一行那一句口径。 */
 function caliberOf(rows: readonly DiffRow[]): string {
   const changed = rows.filter((r) => r.changed).length;
-  return '共比了 ' + rows.length + ' 个字段，真改动 ' + changed + ' 个'
-    + (changed === rows.length ? '（每一个都动了）' : '（原值与新值一样的那些没列出来）') + '。';
+  return m('skill-bill.write-diffTable.c003', { p1: String(rows.length), p2: String(changed), p3: changed === rows.length ? m('skill-bill.write-diffTable.c012') : m('skill-bill.write-diffTable.c013') });
 }
 
 /** diff 表整块：改了哪一项／改前／改后三列；零改动（或一个字段都没比）只出空态。行数为零时也不出空表。
@@ -66,19 +66,19 @@ export function diffTable(input: { readonly rows: readonly DiffRow[]; readonly c
   const changed = input.rows.filter((r) => r.changed);
   if (changed.length === 0) {
     return emptyNote({
-      title: '没有一处改动',
-      text: input.rows.length === 0 ? '这一次没有要比对的字段。' : '给的新值与原值一模一样，等于没改。',
-      next: '请把要改成什么说清（改哪一项、改成什么），再跟助手说一遍。',
+      title: m('skill-bill.write-diffTable.c004'),
+      text: input.rows.length === 0 ? m('skill-bill.write-diffTable.c005') : m('skill-bill.write-diffTable.c006'),
+      next: m('skill-bill.write-diffTable.c007'),
     });
   }
   return renderDataTable({
     columns: [
-      { key: 'field', label: '字段' },
-      { key: 'before', label: '改前' },
-      { key: 'after', label: '改后' },
+      { key: 'field', label: m('skill-bill.write-diffTable.c008') },
+      { key: 'before', label: m('skill-bill.write-diffTable.c009') },
+      { key: 'after', label: m('skill-bill.write-diffTable.c010') },
     ],
     rows: changed.map((r) => ({ field: fieldLabelOf(r.field), before: r.before, after: r.after })),
-    caption: input.caption ?? '本次改动的字段（' + changed.length + ' 项）',
+    caption: input.caption ?? m('skill-bill.write-diffTable.c011', { p1: String(changed.length) }),
   }) + renderCaliberLine(caliberOf(input.rows));
 }
 

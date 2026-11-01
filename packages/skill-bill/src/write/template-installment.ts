@@ -220,7 +220,7 @@ function collectPage(spec: InstallmentSpec, input: CollectInput): string {
   const filled: Record<string, unknown> = { ...params };
   for (const b of blocked) filled[b.name] = '<' + b.label + '>';
   // 缺项逐项一行（一行一件事），不带库列名、不用顿号连写。
-  const lackLines = blocked.map((i) => i.label + '：' + (i.why === '没给' ? '没给' : i.why)).join('\n');
+  const lackLines = blocked.map((i) => i.label + '：' + i.why).join('\n');
   const prompt = (blocked.length === 0
     ? '照下面这个口径记这一笔分期，每期金额与日期按预览表来。'
     : '这一笔还差 ' + blocked.length + ' 项，逐项补齐：\n' + lackLines)

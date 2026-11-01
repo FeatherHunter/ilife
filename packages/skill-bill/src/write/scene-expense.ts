@@ -5,6 +5,7 @@
  *   ② 金额取负数（方向由 `../shared/blockedSlots.ts` 的 `DIRECTION` 拦）；
  *   ③ 采集页出进度、出账户空态、口径行零条（方向那句话说在字段卡说明里）。
  */
+import { m } from '../entries/index.js';
 import { nextStepOf } from './typeBadge.js';
 import { wakeWordOfKind } from '../triggers/wakeTable.js';
 import type { Scene } from './scene.js';
@@ -18,36 +19,36 @@ export const SCENE: Scene = {
   key: KEY,
   kind: 'expense',
   op: '',
-  family: '基础收支族',
+  family: m('skill-bill.write-scene-expense.c001'),
   ...bindExpensePages({
     word: WORD,
     kind: 'expense',
     replaces: {},
     progress: true,
     section1WhenBlockedOnly: false,
-    section1: '先看这一笔缺什么',
+    section1: m('skill-bill.write-scene-expense.c002'),
     calibers: () => [],
     factsGrid: false,
-    foldNote: '写库：还没发生，本页只采集。补齐后照上面那条口令跟助手说一遍。',
+    foldNote: m('skill-bill.write-scene-expense.c003'),
     prefill: 'caliber',
     emptyAccount: {
-      text: '库里还没有带账户的记录，账户这一格现在是空的。',
-      next: '账户为空就记到默认账户。',
+      text: m('skill-bill.write-scene-expense.c004'),
+      next: m('skill-bill.write-scene-expense.c005'),
     },
-    section2: '把缺的格逐格补齐',
-    description: '补齐必需项即可继续。',
+    section2: m('skill-bill.write-scene-expense.c006'),
+    description: m('skill-bill.write-scene-expense.c007'),
     marksShape: 'short',
     prompt: (_input, blocked) => plainPrompt(WORD, blocked),
-    promptTitle: '这一段就是补齐后要发给助手的话',
-    section3: '补齐了再请助手记',
+    promptTitle: m('skill-bill.write-scene-expense.c008'),
+    section3: m('skill-bill.write-scene-expense.c009'),
     subtitle: missingSubtitle,
-    logDetail: () => '没写库（采集页）',
-    receiptState: '写库成功',
+    logDetail: () => m('skill-bill.write-scene-expense.c010'),
+    receiptState: m('skill-bill.write-scene-expense.c011'),
     receiptNext: (input) => nextStepOf({ page: 'receipt', exit: input.receipt.recordId !== null }),
     receiptCaliber: '',
     dropDefaultHints: false,
     cards: 'generic-expense',
-    receiptCaption: '写进去的项与值',
+    receiptCaption: m('skill-bill.write-scene-expense.c012'),
     receiptEyebrow: WORD,
   }),
 };

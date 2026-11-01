@@ -165,7 +165,7 @@ export function crumbOf(category: string): string {
 
 /** 缺项逐项一行（**唯一定义地**）：一行一件事，不带库列名、不用顿号连写。 */
 export function lackLines(blocked: readonly BlockedItem[]): string {
-  return blocked.map((i) => i.label + '：' + (i.why === '没给' ? '没给' : i.why)).join('\n');
+  return blocked.map((i) => i.label + '：' + i.why).join('\n');
 }
 
 /** 复制 prompt 那段的头一句（**唯一定义地**）：缺项时先说还差几项再逐项列，不缺就出本件那句话。 */
