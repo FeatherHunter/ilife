@@ -15,22 +15,25 @@
  *   ② 清单里每件在盘上存在，且真的 import 了词条层（缺 import＝没迁完就挂号，红）；
  *   ③ 每件用到的每个 key：在**每门语言**的词条表里都有词条（entryTables 由 tooling/i18n-langs.mjs 的 LANGUAGES 决定）；
  *   ④ 缺词条表的语言：报「这门语言还没建词条表」（不是缺词条，但同样红——没有表就无从判定）；
- *   ⑤ key 抽取不到就报「抽不出 key」而不是绿（正则失配＝门失明，照 check-data-absence 的「缺标记即红」口径）。
+ *   ⑤ key 抽取不到就报「抽不出 key」而不是绿（正则失配＝门失明，照 check-data-absence 的「缺标记即红」口径）；
+ *   ⑥ 词条值是空串／纯空白：直接判红（#1306）——空串不是「显式空白」，是待译漏记；缺英文不许留空串顶替。
+ *      与 packages/base-entries/src/resolve.ts 同口径：空白值视同未录，回退链取下一站；门禁则两头都不放行。
  *
  * 用法：
  *   node tooling/check-i18n-entries.mjs             # 门禁口径（范围为空＝EMPTY-SCOPE 显式报 + exit 0）
  *   node tooling/check-i18n-entries.mjs --list       # 只列范围与抽到的 key，不判
  *   node tooling/check-i18n-entries.mjs --selftest   # 变异自证：塞一件缺词条必红、还原必绿
  *   node tooling/check-i18n-entries.mjs --scope <文件> --root <目录>   # 夹具／变异入口
- * 末行固定：RESULT: files=<n> keys=<n> missing=<n>
+ * 末行固定：RESULT: files=<n> keys=<n> missing=<n> blanks=<n>
  * 依赖：零第三方；读源码与词条表，**不写任何文件**。
  */
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { LANGUAGES, DEFAULT_LANGUAGE, EMPTY_SCOPE_VERDICT, normalizeLang } from './i18n-langs.mjs';
+import { LANGUAGES, DEFAULT_LANGUAGE, EMPTY_SCOPE_VERDICT } from './i18n-langs.mjs';
+import { entryTableFiles, loadEntryTable } from './i18n-tables.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..');
@@ -104,49 +107,9 @@ export function importsEntries(source) {
     || /from\s*['"][^'"]*\/entries\/(?:index|[a-z-]+)\.js['"]/.test(source);
 }
 
-/** 词条表：**逐包现找**（词条随包存放，ADR-0004 §3）——`packages/<包>/src/entries/<语言>.{ts,json}`。
- *
- *  为什么不是写死一条路径：词条表按包分命名空间，加一个包＝多一处表；写死路径会让「表不在那儿」被读成
- *  「没有表」。#1202 试点落在 base-render，JSON 路线（base-entries 的 entries/*.json）也认，两条一起扫。 */
-export function entryTableCandidates(root, lang) {
-  const want = normalizeLang(lang);
-  const pkgs = join(root, "packages");
-  const out = [];
-  if (!existsSync(pkgs)) return out;
-  for (const dirent of readdirSync(pkgs, { withFileTypes: true })) {
-    if (!dirent.isDirectory()) continue;
-    for (const ext of [".ts", ".json"]) {
-      const p = join(pkgs, dirent.name, "src", "entries", want + ext);
-      if (existsSync(p)) out.push(p);
-    }
-  }
-  return out;
-}
-
-/** 读一门语言的词条表（可跨包多份：并集）。一份都没有 → {ok:false}（由调用方决定报法，不静默）。 */
-export function loadEntryTable(root, lang) {
-  const paths = entryTableCandidates(root, lang);
-  if (paths.length === 0) return { ok: false, why: "这门语言的词条表一份都没有（找过 packages/*/src/entries/<语言>.{ts,json}）" };
-  const keys = new Set();
-  for (const p of paths) {
-    const raw = readFileSync(p, "utf8");
-    if (p.endsWith(".json")) {
-      let data;
-      try { data = JSON.parse(raw); } catch (e) { return { ok: false, why: "词条表 JSON 坏：" + p + " → " + e.message }; }
-      if (!data || typeof data !== "object" || Array.isArray(data)) return { ok: false, why: "词条表必须是对象（key → 词条）：" + p };
-      for (const k of Object.keys(data)) keys.add(k);
-      continue;
-    }
-    // .ts 形态：抽对象字面量里的字符串 key（`key: 值`）。抽不到 key ⇒ 形状变了，报红不许当绿。
-    const ENT = new RegExp("['\"]([A-Za-z0-9_.-]+)['\"]\\s*:", "g");
-    let m;
-    let n = 0;
-    while ((m = ENT.exec(raw)) !== null) { keys.add(m[1]); n += 1; }
-    if (n === 0) return { ok: false, why: "词条表抽不出 key（形状变了：期望 `key: 值`）：" + p };
-  }
-  return { ok: true, path: paths.join(", "), keys };
-}
-
+/** 词条表在哪儿／长什么样／哪些值算「未录」：唯一实现搬到 tooling/i18n-tables.mjs（占位符门同用一份）。
+ *  这里转出旧名 entryTableCandidates，供既有引用与自证测试沿用（改名不是本票的目的）。 */
+export { entryTableFiles as entryTableCandidates, loadEntryTable };
 
 /** 主判据：返回 {files, keys, missing:[{file,key,lang}], blind:[{file,why}], tableErrors:[{lang,why}]}。 */
 export function audit(scope, root = ROOT_DIR, langs = LANGUAGES) {
@@ -156,7 +119,13 @@ export function audit(scope, root = ROOT_DIR, langs = LANGUAGES) {
   const stray = [];
   const keys = new Set();
   const tables = new Map();
-  for (const lang of langs) tables.set(lang, loadEntryTable(root, lang));
+  const blanks = [];
+  for (const lang of langs) {
+    const table = loadEntryTable(root, lang);
+    tables.set(lang, table);
+    // 空白值逐文件收集（不因跨包并集被别包的同一 key 藏掉）：哪门语言的哪一份表的哪个 key 留了空
+    if (table.ok) for (const blank of table.blanks) blanks.push({ lang, key: blank.key, path: blank.path });
+  }
   // 词条表只在**范围非空**时是硬前提：范围 0 件时没有要判的 key，缺表是「词条层还没建」，
   // 报出声但不拦（起步必须绿）；范围一旦非空，缺表就是硬红（没有表就无从判定缺词条）。
   const tableErrors = scope.files.length === 0
@@ -185,7 +154,7 @@ export function audit(scope, root = ROOT_DIR, langs = LANGUAGES) {
     if (!t.ok) continue;
     for (const k of t.keys) if (!used.has(k)) stray.push({ lang, key: k });
   }
-  return { files, keys: [...keys].sort(), missing, blind, stray, tableErrors };
+  return { files, keys: [...keys].sort(), missing, blind, stray, tableErrors, blanks };
 }
 
 function main() {
@@ -201,17 +170,20 @@ function main() {
   if (empty) console.log('EMPTY-SCOPE ' + EMPTY_SCOPE_VERDICT + '（清单：' + SCOPE_PATH + '）');
   if (LIST) {
     for (const f of r.files) console.log('KEY ' + f.file + '  ' + f.keys.length + ' 个：' + f.keys.join(','));
-    console.log('RESULT: files=' + r.files.length + ' keys=' + r.keys.length + ' missing=' + r.missing.length);
+    console.log('RESULT: files=' + r.files.length + ' keys=' + r.keys.length + ' missing=' + r.missing.length
+      + ' blanks=' + r.blanks.length);
     return;
   }
   let bad = 0;
   for (const t of r.tableErrors) { console.error('RED 词条表不可用：' + t.lang + ' → ' + t.why); bad += 1; }
   for (const b of r.blind) { console.error('RED 抽不出/没迁完：' + b.file + ' → ' + b.why); bad += 1; }
   for (const m of r.missing) { console.error('RED 缺词条：' + m.file + ' 的 key ' + m.key + ' 在语言 ' + m.lang + ' 的词条表里没有'); bad += 1; }
+  for (const b of r.blanks) { console.error('RED 空白词条：语言 ' + b.lang + ' 的表 ' + b.path + ' 里 key ' + b.key + ' 的值是空串／纯空白（不是「显式空白」，是待译漏记）'); bad += 1; }
   console.log('TABLES: ' + [...LANGUAGES].map((l) => { const t = auditTables(l); return l + '=' + t; }).join(' '));
-  console.log('RESULT: files=' + r.files.length + ' keys=' + r.keys.length + ' missing=' + r.missing.length);
+  console.log('RESULT: files=' + r.files.length + ' keys=' + r.keys.length + ' missing=' + r.missing.length
+    + ' blanks=' + r.blanks.length);
   if (bad > 0) {
-    console.error('FAIL: 缺词条门未过（' + bad + ' 处；缺词条＝迁移漏记，补词条表或补迁入，不许删清单行）');
+    console.error('FAIL: 缺词条门未过（' + bad + ' 处；缺词条／空白词条＝迁移漏记，补词条表或补迁入，不许删清单行）');
     process.exit(1);
   }
   console.log(empty
@@ -264,11 +236,20 @@ function selftest(scope) {
     writeFileSync(join(tmp, 'weird.ts'), 'import { e } from \'base-entries\';\nexport const y = e(someVar);\n', 'utf8');
     const five = audit({ files: ['weird.ts'] }, tmp);
     want(five.blind.length === 1, '抽不出 key 必须报 blind（实得 ' + five.blind.length + '）');
+    // ⑦ 空白词条值（空串／纯空白）→ 必须报 blanks；填上真实译文 → 必须零空白（#1306）
+    writeFileSync(join(srcDir, 'en.json'), JSON.stringify({ 'demo.title': '', 'demo.missing': '   ' }), 'utf8');
+    const six = audit({ files: ['demo.ts'] }, tmp);
+    want(six.blanks.length === 2, '空串与纯空白两个值都必须报 blanks（实得 ' + six.blanks.length + '）');
+    want(six.blanks.every((b) => b.lang === 'en' && b.path.endsWith('en.json')), '空白词条必须点名语言与表文件');
+    console.log('SELFTEST 空白读数：blanks=' + six.blanks.length + '（' + six.blanks.map((b) => b.key).join(',') + '）');
+    writeFileSync(join(srcDir, 'en.json'), JSON.stringify({ 'demo.title': 'Title', 'demo.missing': 'Added' }), 'utf8');
+    const seven = audit({ files: ['demo.ts'] }, tmp);
+    want(seven.blanks.length === 0, '填上译文后必须零空白（实得 ' + seven.blanks.length + '）');
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
   if (bad.length) { for (const b of bad) console.error('SELFTEST FAIL ' + b); process.exit(1); }
-  console.log('SELFTEST: 空范围显式报数／缺词条必红／补上必绿／没迁完必红／缺表必红／失明必红 六条自证 OK');
+  console.log('SELFTEST: 空范围显式报数／缺词条必红／补上必绿／没迁完必红／缺表必红／失明必红／空白词条必红 七条自证 OK');
 }
 
 /** 入口守卫（照 tooling/i18n-langs.mjs／skill-html-snapshot.mjs 的先例）：本件被别处 import 时**不跑** CLI，

@@ -97,6 +97,43 @@ describe('缺词条回退链：请求语言 → 基准语言 zh → 终站 en', 
   });
 });
 
+describe('空串词条：视同未录，沿回退链取下一站（#1306）', () => {
+  // 为什么把空串当「未录」：词条表是数据，写模式第一批把英文列留空串＝待译，文档口径是「空串走回退链取 zh」；
+  // 若 resolve 把空串原样返回，英文页上就会出现看不见的空白——不崩、不报错、门也查不到（#1306 的两类风险之一）。
+  const blank = defineCatalog({
+    zh: { title: 'ZH-TITLE', allBlank: '', zhOnly: 'ZH-ONLY' },
+    en: { title: '', allBlank: '', zhOnly: '' },
+  });
+
+  it('英文列留空串 → 回退到 zh，不返回空串', () => {
+    assert.strictEqual(resolve(blank, 'en', 'title'), 'ZH-TITLE');
+  });
+
+  it('请求语言没有表／没有值 → 继续走链，zh 是第二站', () => {
+    assert.strictEqual(resolve(blank, 'ja', 'title'), 'ZH-TITLE');
+  });
+
+  it('所有语言都空串 → 抛 MissingMessageError（绝不静默返回空串）', () => {
+    assert.throws(
+      () => resolve(blank, 'zh', 'allBlank'),
+      (error) => {
+        assert.ok(error instanceof MissingMessageError);
+        assert.strictEqual(error.code, 'ENTRIES_MISSING_MESSAGE');
+        assert.deepStrictEqual([...error.languages], ['zh', 'en']);
+        return true;
+      },
+    );
+  });
+
+  it('端口看到的实取语言是真正取到值的那一站', () => {
+    const seen = [];
+    const spy = (request) => { seen.push(request); return request.template; };
+    assert.strictEqual(resolve(blank, 'en', 'title', undefined, { evaluate: spy }), 'ZH-TITLE');
+    assert.strictEqual(seen[0].sourceLanguage, 'zh');
+    assert.strictEqual(seen[0].language, 'en');
+  });
+});
+
 describe('插值：朴素 ICU 语义（只认 {name} 具名占位）', () => {
   it('按 params 替换具名占位（字符串与数字都可）', () => {
     assert.strictEqual(evaluate({ template: 'x{name}y', language: 'zh', sourceLanguage: 'zh', params: { name: 'V' } }), 'xVy');

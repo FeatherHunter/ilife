@@ -6,6 +6,8 @@
 //   · 全缺＝「缺词条」策略：抛 MissingMessageError，**不许静默出 undefined／空串**。
 //     类型面 MessageId 保证 id 必是基准语言表里的 key（正常路径到不了「全缺」这一格），
 //     但词条表是运行期数据（可来自外部文件、可被裁剪），故这一格仍必须显式抛错。
+//   · 空白值（空串／纯空白）＝「未录」（票 #1306）：跳过该站继续沿链取，不许把空串当文案交给端口；
+//     全部候选站都是空白才按缺词条抛。写模式第一批把英文列留空串＝待译，靠这条走中文回退。
 import { BASE_LANGUAGE } from './catalog.js';
 import type { Catalog, MessageId, MessageTable } from './catalog.js';
 import { MissingMessageError } from './errors.js';
@@ -41,9 +43,18 @@ function tableFor(catalog: Catalog, language: string): MessageTable | undefined 
   return undefined;
 }
 
-/** 表里读一条：按 `string | undefined` 读——表可能来自外部数据，运行期真会有缺口。 */
-function entryOf(table: MessageTable, id: string): string | undefined {
-  return (table as Readonly<Record<string, string | undefined>>)[id];
+/**
+ * 表里读一条可用模板：按 `string | undefined` 读——表可能来自外部数据，运行期真会有缺口。
+ *
+ * 缺键与**空白值**都算「未录」（票 #1306）。空白值不当作显式空白：原样交给求值端口就等于
+ * 在页面上留一块看不见的空白，不崩、不报错、机器也查不到；按未录处理才会继续沿回退链取到
+ * 看得懂的那一站，全部语言都空白时由调用方收到 MissingMessageError。门禁同口径拒绝空白词条值
+ * （tooling/check-i18n-entries.mjs），两头都不放行「留空串当待译」。
+ */
+function templateOf(table: MessageTable, id: string): string | undefined {
+  const raw = (table as Readonly<Record<string, string | undefined>>)[id];
+  if (raw === undefined || raw.trim() === '') return undefined;
+  return raw;
 }
 
 /**
@@ -66,7 +77,7 @@ export function resolve<C extends Catalog>(
   for (const candidate of chain) {
     const table = tableFor(catalog, candidate);
     if (table === undefined) continue;
-    const template = entryOf(table, id);
+    const template = templateOf(table, id);
     if (template === undefined) continue;
     return evaluate({
       template,

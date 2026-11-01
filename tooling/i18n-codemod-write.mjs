@@ -74,7 +74,10 @@ export function rewriteFile(root, rel, segment) {
   return { text: out, pairs };
 }
 
-/** 落两份词条表（zh／en）。en 本轮留空串＝待译。 */
+/** 落两份词条表（zh／en）。en 先留空串＝待译中间态。
+ *
+ *  #1306 起空串按「未录」处理（resolve 跳过该站）并被缺词条门判红，所以这只是一份**草稿产物**：
+ *  迁移票收尾前必须把 en 补齐成真实译文；空 en 不许进提交。 */
 export function writeEntryTables(root, pkg, segment, pairs) {
   const dir = join(root, 'packages', pkg, 'src', 'entries');
   mkdirSync(dir, { recursive: true });
@@ -89,7 +92,7 @@ export function writeEntryTables(root, pkg, segment, pairs) {
   ].join(NL);
   const bodyOf = (zh) => pairs.map((p) => '  ' + JSON.stringify(p[0]) + ': ' + JSON.stringify(zh ? p[1] : '') + ',').join(NL);
   writeFileSync(join(dir, stem + '.zh.ts'), head('zh', '中文列：值与改写前的源码字面量逐字节相同（未声明的差异为零）。') + NL + bodyOf(true) + NL + '};' + NL, 'utf8');
-  writeFileSync(join(dir, stem + '.en.ts'), head('en', '英文列：**待译**（本轮留空串）。空串走回退链取 zh，故不启用多语言时产物不变。') + NL + bodyOf(false) + NL + '};' + NL, 'utf8');
+  writeFileSync(join(dir, stem + '.en.ts'), head('en', '英文列：**待译中间态**（#1306 起空串＝未录且缺词条门判红：提交前必须补齐英文）。') + NL + bodyOf(false) + NL + '};' + NL, 'utf8');
   return { zh: stem + '.zh.ts', en: stem + '.en.ts', count: pairs.length };
 }
 
