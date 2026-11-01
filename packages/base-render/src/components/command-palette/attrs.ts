@@ -18,6 +18,7 @@
  */
 
 /** 本件的类名根：全部槽位类名都是 `COMMAND_PALETTE_CLASS + '-' + 槽名`。 */
+import { m } from '../../entries/index.js';
 export const COMMAND_PALETTE_CLASS = 'ilife-block-command-palette';
 
 /** 槽位闭集（标记契约的一部分：`render.ts`／`style.ts`／`runtime.ts` 与判据都用这里的名字拼类名）。 */
@@ -146,36 +147,36 @@ export const COMMAND_PALETTE_HOVER_QUERY = '(hover: hover) and (pointer: fine)';
 /* ── 文案（缺省的那几句；调用方可以换，但语义别换） ─────────────────── */
 
 /** 缺省文案与状态句（渲染期与运行时段**读同一份**，免得两处各写一句）。 */
-export const COMMAND_PALETTE_TEXT = Object.freeze({
+export const COMMAND_PALETTE_TEXT = {
   /** 入口键上的字。 */
-  entry: '找页面 / 动作',
+  get entry() { return m('base-render.components-command-palette-attrs.c001'); },
   /** 入口键旁那行提示：它解释「入口就是这一枚，不用记任何东西」。 */
-  hint: '页头这一枚就是入口，点它就行。',
+  get hint() { return m('base-render.components-command-palette-attrs.c002'); },
   /** 分组标题两枚，以及它们各自的说明。 */
-  actionGroup: '动作',
-  actionNote: '在当前技能里直接做',
-  pageGroup: '页面',
-  pageNote: '跳到别的技能',
+  get actionGroup() { return m('base-render.components-command-palette-attrs.c003'); },
+  get actionNote() { return m('base-render.components-command-palette-attrs.c004'); },
+  get pageGroup() { return m('base-render.components-command-palette-attrs.c005'); },
+  get pageNote() { return m('base-render.components-command-palette-attrs.c006'); },
   /** 行右那一格的字：动作是「执行」，页面是「打开」。 */
-  actAction: '执行',
-  actPage: '打开',
+  get actAction() { return m('base-render.components-command-palette-attrs.c007'); },
+  get actPage() { return m('base-render.components-command-palette-attrs.c008'); },
   /** 停用那一档：行的副文字写原因，行右那格写这个。 */
-  off: '不可用',
-  offPrefix: '不可用：',
+  get off() { return m('base-render.components-command-palette-attrs.c009'); },
+  get offPrefix() { return m('base-render.components-command-palette-attrs.c010'); },
   /** 关掉键的无障碍名（键上写的是 ✕）。 */
-  close: '关掉',
+  get close() { return m('base-render.components-command-palette-attrs.c011'); },
   /** 输入框的无障碍名。 */
-  query: '搜页面与动作',
+  get query() { return m('base-render.components-command-palette-attrs.c012'); },
   /** 空态：没有一条命中时写的那句话（中间夹着用户打的词）。 */
-  emptyPre: '没有找到与「',
-  emptyPost: '」相关的页面或动作。',
+  get emptyPre() { return m('base-render.components-command-palette-attrs.c013'); },
+  get emptyPost() { return m('base-render.components-command-palette-attrs.c014'); },
   /** 脚注四档：空输入列常用去处／命中几条／一条没中／正在找。 */
-  footIdle: '列的是常用去处，点任意一行就执行或打开。',
-  footHitPre: '命中 ',
-  footHitPost: ' 条，点任意一行就执行或打开。',
-  footNone: '换个短一点的词试试。',
-  footBusy: '正在找…',
-} as const);
+  get footIdle() { return m('base-render.components-command-palette-attrs.c015'); },
+  get footHitPre() { return m('base-render.components-command-palette-attrs.c016'); },
+  get footHitPost() { return m('base-render.components-command-palette-attrs.c017'); },
+  get footNone() { return m('base-render.components-command-palette-attrs.c018'); },
+  get footBusy() { return m('base-render.components-command-palette-attrs.c019'); },
+};
 
 /* ── 入参类型 ───────────────────────────────────────────────────── */
 

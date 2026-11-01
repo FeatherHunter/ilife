@@ -12,6 +12,7 @@ import { charts } from './dispatch.js';
 import { renderEmptyState } from '../../controls.js';
 import { STYLE_PREFIX } from '../../style.js';
 import { ACTION_ID_ATTR, ChartCommonOptions, ChartKind, ChartOutput, STATUS_DEFAULT_TEXT } from '../../spec/index.js';
+import { m } from '../../entries/index.js';
 
 /* ── 通用选项（`ChartCommonOptions`） ──────────────────────────────────── */
 
@@ -125,7 +126,7 @@ export function emptyOutput(kind: ChartKind, raw: unknown, hint?: string): Chart
   const common = resolveCommon(raw, { width: 1, height: 1, labels: 'none', showValues: false });
   const html = '<div class="' + commonClasses(common, STYLE_PREFIX + 'charts-' + kind + ' ' + STYLE_PREFIX + 'charts-empty')
     + '" data-chart-kind="' + kind + '" data-chart-empty="1">'
-    + renderEmptyState({ icon: EMPTY_ICON, text, hint: hint === undefined ? EMPTY_HINT : hint })
+    + renderEmptyState({ icon: EMPTY_ICON(), text, hint: hint === undefined ? EMPTY_HINT() : hint })
     + '</div>';
   return { kind, html, empty: true, points: 0 };
 }
@@ -148,6 +149,6 @@ export function minPointsHintOf(raw: unknown, count: number): string {
   const custom = o === undefined ? undefined : o.minPointsHint;
   if (typeof custom === 'string' && custom !== '') return custom;
   const min = o === undefined ? undefined : o.minPoints;
-  return '本窗只有 ' + String(count) + ' 个点，画不出趋势（至少 ' + String(min) + ' 个）';
+  return m('base-render.components-charts-options.c001', { p0: String(String(count)), p1: String(String(min)) });
 }
 

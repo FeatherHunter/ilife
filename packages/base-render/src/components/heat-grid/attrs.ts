@@ -11,6 +11,7 @@
  */
 
 /** 本件的类名根：全部槽位类名都是 `HEAT_GRID_CLASS + '-' + 槽名`。 */
+import { m } from '../../entries/index.js';
 export const HEAT_GRID_CLASS = 'ilife-block-heat-grid';
 
 /** 槽位闭集（标记契约的一部分：`render.ts`、`style.ts` 与判据都用这里的名字拼类名，不各抄一份字面量）。 */
@@ -71,7 +72,7 @@ export type HeatGridForm = (typeof HEAT_GRID_FORMS)[number];
 export const HEAT_GRID_COLUMNS = 7;
 
 /** 缺省列头（周一…周日）。 */
-export const HEAT_GRID_WEEKDAYS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'] as const;
+export function HEAT_GRID_WEEKDAYS(): readonly string[] { return [m('base-render.components-heat-grid-attrs.c001'), m('base-render.components-heat-grid-attrs.c002'), m('base-render.components-heat-grid-attrs.c003'), m('base-render.components-heat-grid-attrs.c004'), m('base-render.components-heat-grid-attrs.c005'), m('base-render.components-heat-grid-attrs.c006'), m('base-render.components-heat-grid-attrs.c007')]; }
 
 /** 色阶档数：`is-l0`…`is-l4`（5 档）。 */
 export const HEAT_GRID_LEVEL_COUNT = 5;

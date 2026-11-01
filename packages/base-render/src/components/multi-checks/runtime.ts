@@ -15,6 +15,7 @@ import {
   MULTI_CHECKS_UNIT_ATTR,
   multiChecksSlot,
 } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -43,103 +44,113 @@ export function buildMultiChecksJs(): string {
      全选之后勾选框都变了、已选数那句却纹丝不动）。 */
   const CLS_COUNT = q('.' + multiChecksSlot('count'));
   const CLS_SUM = q('.' + multiChecksSlot('sum'));
-  return '(function(){' + LF
-    + '  var ATTR_NAME=' + q(MULTI_CHECKS_NAME_ATTR) + ', ATTR_ITEM=' + q(MULTI_CHECKS_ITEM_ATTR) + ';' + LF
-    + '  var ATTR_GROUP=' + q(MULTI_CHECKS_GROUP_ATTR) + ', ATTR_ALL=' + q(MULTI_CHECKS_ALL_ATTR) + ';' + LF
-    + '  var ATTR_ACTION=' + q(MULTI_CHECKS_ACTION_ATTR) + ', ATTR_AMOUNT=' + q(MULTI_CHECKS_AMOUNT_ATTR) + ';' + LF
-    + '  var ATTR_MONEY=' + q(MULTI_CHECKS_MONEY_ATTR) + ', ATTR_UNIT=' + q(MULTI_CHECKS_UNIT_ATTR) + ';' + LF
-    + '  var ATTR_LOADING=' + q(MULTI_CHECKS_LOADING_ATTR) + ', ATTR_BOUND=' + q(MULTI_CHECKS_BOUND_ATTR) + ';' + LF
-    + '  var ATTR_RUNTIME=' + q(MULTI_CHECKS_RUNTIME_ATTR) + ';' + LF
-    + '  var EV_CHANGE=' + q(MULTI_CHECKS_EVENT_CHANGE) + ', EV_ACTION=' + q(MULTI_CHECKS_EVENT_ACTION) + ';' + LF
-    + '  var SEL_COUNT=' + CLS_COUNT + ', SEL_SUM=' + CLS_SUM + ', NONE_TEXT=' + q(MULTI_CHECKS_NONE_TEXT) + ';' + LF
-    + '  var doc=document;' + LF
-    + '  if (doc.documentElement.getAttribute(ATTR_RUNTIME)==="1") return;' + LF
-    + '  doc.documentElement.setAttribute(ATTR_RUNTIME,"1");' + LF
-    + '  function rootOf(el){ return el && el.closest ? el.closest("["+ATTR_NAME+"]") : null; }' + LF
-    + '  function rowsOf(root){ return root.querySelectorAll("input[type=checkbox]["+ATTR_ITEM+"]"); }' + LF
-    /* **只挑组头**（`:not([ATTR_ITEM])`）：行上也带着组键（运行时按它把行归到组头）。
-       不排除的话，下面那趟"组头三态"会把**行的勾选**一起改写（2026-09 实拍：点第 4 行，
-       计数 +1 但那一行的勾马上没了、事件 ids 里也没有它）。 */
-    + '  function groupsOf(root){ return root.querySelectorAll("input[type=checkbox]["+ATTR_GROUP+"]:not(["+ATTR_ITEM+"])"); }' + LF
-    + '  function centsOf(input){' + LF
-    + '    var v=input.getAttribute(ATTR_AMOUNT); if (v===null) return null;' + LF
-    + '    var n=Number(v); return isFinite(n) ? Math.round(n) : null;' + LF
-    + '  }' + LF
-    /* 整数分 → `1,286.40`（与 render 期那份 formatCents 同一套算法；千分位用循环拼，不用正则）。 */
-    + '  function fmt(cents){' + LF
-    + '    var neg=cents<0, abs=Math.abs(cents), int=String(Math.floor(abs/100)), out="", n=0, i;' + LF
-    + '    for (i=int.length-1;i>=0;i-=1){ out=int.charAt(i)+out; n+=1; if (n%3===0 && i>0) out=","+out; }' + LF
-    + '    var frac=String(abs%100); if (frac.length<2) frac="0"+frac;' + LF
-    + '    return (neg?"-":"")+out+"."+frac;' + LF
-    + '  }' + LF
-    /* 三态：`checked` ＋ `indeterminate` 一处写；`aria-checked` 跟着同一趟走（标记面与机器面不许打架）。 */
-    + '  function paintBox(box, count, total){' + LF
-    + '    box.checked = total>0 && count===total;' + LF
-    + '    box.indeterminate = count>0 && count<total;' + LF
-    + '    if (box.indeterminate) box.setAttribute("aria-checked","mixed"); else box.removeAttribute("aria-checked");' + LF
-    + '  }' + LF
-    + '  function refresh(root){' + LF
-    + '    if (root.getAttribute(ATTR_LOADING)==="1") return;' + LF
-    + '    var rows=rowsOf(root), total=rows.length, count=0, cents=0, i, j;' + LF
-    + '    for (i=0;i<total;i+=1){ if (rows[i].checked){ count+=1; var c=centsOf(rows[i]); if (c!==null) cents+=c; } }' + LF
-    + '    var all=root.querySelector("input[type=checkbox]["+ATTR_ALL+"]");' + LF
-    + '    if (all) paintBox(all, count, total);' + LF
-    + '    var heads=groupsOf(root), head=null;' + LF
-    + '    for (i=0;i<heads.length;i+=1){' + LF
-    + '      head=heads[i];' + LF
-    + '      var gid=head.getAttribute(ATTR_GROUP), gn=0, gt=0;' + LF
-    + '      for (j=0;j<total;j+=1){' + LF
-    + '        if (rows[j].getAttribute(ATTR_GROUP)!==gid) continue;' + LF
-    + '        gt+=1; if (rows[j].checked) gn+=1;' + LF
-    + '      }' + LF
-    + '      paintBox(head, gn, gt);' + LF
-    + '    }' + LF
-    + '    var unit=root.getAttribute(ATTR_UNIT)||"条", moneyUnit=root.getAttribute(ATTR_MONEY);' + LF
-    + '    var countEl=root.querySelector(SEL_COUNT);' + LF
-    + '    if (countEl) countEl.textContent="已选 "+count+" / "+total+" "+unit;' + LF
-    + '    var sumEl=root.querySelector(SEL_SUM);' + LF
-    /* 金额的符号写在**货币号前**（`-¥56.00`）：`¥-56.00` 读起来像"负的日元"，也不合账目习惯。 */
-    + '    var sumText = count===0 ? NONE_TEXT' + LF
-    + '      : (moneyUnit!==null ? "合计 "+(cents<0 ? "-" : "")+moneyUnit+fmt(Math.abs(cents)) : "已勾 "+count+" "+unit);' + LF
-    + '    if (sumEl) sumEl.textContent=sumText;' + LF
-    + '    var acts=root.querySelectorAll("["+ATTR_ACTION+"]");' + LF
-    + '    for (i=0;i<acts.length;i+=1){ if (count===0) acts[i].setAttribute("disabled",""); else acts[i].removeAttribute("disabled"); }' + LF
-    + '    var ids=[];' + LF
-    + '    for (i=0;i<total;i+=1) if (rows[i].checked) ids.push(rows[i].getAttribute(ATTR_ITEM));' + LF
-    + '    return {count:count, ids:ids, total:moneyUnit!==null ? cents : null};' + LF
-    + '  }' + LF
-    + '  function fire(root, name, payload){' + LF
-    + '    payload.name=root.getAttribute(ATTR_NAME);' + LF
-    + '    root.dispatchEvent(new CustomEvent(name,{bubbles:true,detail:payload}));' + LF
-    + '  }' + LF
-    + '  doc.addEventListener("change", function(e){' + LF
-    + '    var t=e.target;' + LF
-    + '    if (!t || t.type!=="checkbox") return;' + LF
-    + '    var root=rootOf(t); if (!root) return;' + LF
-    + '    var i, rows=rowsOf(root), grp=null;' + LF
-    + '    if (t.hasAttribute(ATTR_ITEM)) {' + LF
-    + '      /* 单行勾选：什么也不用往下推，交给下面的统一刷新。 */' + LF
-    + '    } else if (t.hasAttribute(ATTR_ALL)) {' + LF
-    + '      for (i=0;i<rows.length;i+=1) if (!rows[i].disabled) rows[i].checked=t.checked;' + LF
-    + '    } else if (t.hasAttribute(ATTR_GROUP)) {' + LF
-    + '      grp=t.getAttribute(ATTR_GROUP);' + LF
-    + '      for (i=0;i<rows.length;i+=1){' + LF
-    + '        if (rows[i].getAttribute(ATTR_GROUP)!==grp) continue;' + LF
-    + '        if (!rows[i].disabled) rows[i].checked=t.checked;' + LF
-    + '      }' + LF
-    + '    } else { return; }' + LF
-    + '    var info=refresh(root); if (!info) return;' + LF
-    + '    fire(root, EV_CHANGE, {ids:info.ids, count:info.count, total:info.total});' + LF
-    + '  });' + LF
-    + '  doc.addEventListener("click", function(e){' + LF
-    + '    var t=e.target; if (!t || !t.closest) return;' + LF
-    + '    var btn=t.closest("["+ATTR_ACTION+"]"); if (!btn || btn.disabled) return;' + LF
-    + '    var root=rootOf(btn); if (!root) return;' + LF
-    + '    var info=refresh(root); if (!info) return;' + LF
-    + '    fire(root, EV_ACTION, {action:btn.getAttribute(ATTR_ACTION), ids:info.ids});' + LF
-    + '  });' + LF
-    /* init 那一趟：打绑定标记 ＋ 把三态与两句读数按真实勾选对齐（SSR 面与机器面收敛到一处）。 */
-    + '  var all=doc.querySelectorAll("["+ATTR_NAME+"]");' + LF
-    + '  for (var k=0;k<all.length;k+=1){ all[k].setAttribute(ATTR_BOUND,"1"); refresh(all[k]); }' + LF
-    + '}());';
+  return m('base-render.components-multi-checks-runtime.c001', {
+    p0: String(LF),
+    p1: String(q(MULTI_CHECKS_NAME_ATTR)),
+    p2: String(q(MULTI_CHECKS_ITEM_ATTR)),
+    p3: String(LF),
+    p4: String(q(MULTI_CHECKS_GROUP_ATTR)),
+    p5: String(q(MULTI_CHECKS_ALL_ATTR)),
+    p6: String(LF),
+    p7: String(q(MULTI_CHECKS_ACTION_ATTR)),
+    p8: String(q(MULTI_CHECKS_AMOUNT_ATTR)),
+    p9: String(LF),
+    p10: String(q(MULTI_CHECKS_MONEY_ATTR)),
+    p11: String(q(MULTI_CHECKS_UNIT_ATTR)),
+    p12: String(LF),
+    p13: String(q(MULTI_CHECKS_LOADING_ATTR)),
+    p14: String(q(MULTI_CHECKS_BOUND_ATTR)),
+    p15: String(LF),
+    p16: String(q(MULTI_CHECKS_RUNTIME_ATTR)),
+    p17: String(LF),
+    p18: String(q(MULTI_CHECKS_EVENT_CHANGE)),
+    p19: String(q(MULTI_CHECKS_EVENT_ACTION)),
+    p20: String(LF),
+    p21: String(CLS_COUNT),
+    p22: String(CLS_SUM),
+    p23: String(q(MULTI_CHECKS_NONE_TEXT())),
+    p24: String(LF),
+    p25: String(LF),
+    p26: String(LF),
+    p27: String(LF),
+    p28: String(LF),
+    p29: String(LF),
+    p30: String(LF),
+    p31: String(LF),
+    p32: String(LF),
+    p33: String(LF),
+    p34: String(LF),
+    p35: String(LF),
+    p36: String(LF),
+    p37: String(LF),
+    p38: String(LF),
+    p39: String(LF),
+    p40: String(LF),
+    p41: String(LF),
+    p42: String(LF),
+    p43: String(LF),
+    p44: String(LF),
+    p45: String(LF),
+    p46: String(LF),
+    p47: String(LF),
+    p48: String(LF),
+    p49: String(LF),
+    p50: String(LF),
+    p51: String(LF),
+    p52: String(LF),
+    p53: String(LF),
+    p54: String(LF),
+    p55: String(LF),
+    p56: String(LF),
+    p57: String(LF),
+    p58: String(LF),
+    p59: String(LF),
+    p60: String(LF),
+    p61: String(LF),
+    p62: String(LF),
+    p63: String(LF),
+    p64: String(LF),
+    p65: String(LF),
+    p66: String(LF),
+    p67: String(LF),
+    p68: String(LF),
+    p69: String(LF),
+    p70: String(LF),
+    p71: String(LF),
+    p72: String(LF),
+    p73: String(LF),
+    p74: String(LF),
+    p75: String(LF),
+    p76: String(LF),
+    p77: String(LF),
+    p78: String(LF),
+    p79: String(LF),
+    p80: String(LF),
+    p81: String(LF),
+    p82: String(LF),
+    p83: String(LF),
+    p84: String(LF),
+    p85: String(LF),
+    p86: String(LF),
+    p87: String(LF),
+    p88: String(LF),
+    p89: String(LF),
+    p90: String(LF),
+    p91: String(LF),
+    p92: String(LF),
+    p93: String(LF),
+    p94: String(LF),
+    p95: String(LF),
+    p96: String(LF),
+    p97: String(LF),
+    p98: String(LF),
+    p99: String(LF),
+    p100: String(LF),
+    p101: String(LF),
+    p102: String(LF),
+    p103: String(LF),
+    p104: String(LF),
+    p105: String(LF),
+    p106: String(LF),
+  });
 }

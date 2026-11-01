@@ -16,6 +16,7 @@ import {
   DRAWER_EDGE_PX, DRAWER_GAP_PX, DRAWER_MAX_WIDTH_PX, DRAWER_MIN_HEIGHT_PX, DRAWER_OPTION_MIN_HEIGHT_PX,
   DRAWER_SIDE_WIDTH_PX, drawerClass, drawerOpenerClass, drawerSlot,
 } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 本件样式段的入参。 */
 export interface DrawerSheetCssInput {
@@ -40,7 +41,7 @@ export function drawerSheetCss(input?: DrawerSheetCssInput): string {
   const side = String(DRAWER_EDGE_PX * 2) + 'px';
   return [
     '/* drawer-sheet（底部弹层 · 形态 C 多选 ＋ 完成 N 项）：真 <dialog> ＋ showModal()；零 box-shadow。 */',
-    '/* 层次：粗边 ＋ 外圈晕 ＋ 更暗遮罩（贴底与贴右两档共用同一套配方）。 */',
+    m('base-render.components-drawer-sheet-style.c001'),
     panel + '{box-sizing:border-box;',
     '  width:min(' + DRAWER_MAX_WIDTH_PX + 'px, calc(100% - ' + side + '));',
     '  max-width:calc(100% - ' + side + ');',

@@ -17,6 +17,7 @@ import {
   MENU_ANCHOR_QUERY, MENU_AREA_QUERY, MENU_EDGE_PX, MENU_GAP_PX, MENU_MAX_HEIGHT_PX,
   MENU_MIN_HEIGHT_PX, MENU_OFFSET_PX, MENU_WIDTH_PX, menuClass, menuSlot,
 } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 本件样式段的入参。 */
 export interface PopoverMenuCssInput {
@@ -39,8 +40,8 @@ export function popoverMenuCss(input?: PopoverMenuCssInput): string {
   const offset = String(MENU_OFFSET_PX) + 'px';
   const panel = root + ' ' + slot('panel');
   return [
-    '/* popover-menu（浮出菜单 · 形态 A 贴着按钮）：popover ＋ role=menu；零 box-shadow。 */',
-    '/* 层次：粗边 ＋ 外圈晕 ＋ 顶层（`popover` 的顶层是浏览器给的，不靠任何投影）。 */',
+    m('base-render.components-popover-menu-style.c001'),
+    m('base-render.components-popover-menu-style.c002'),
     root + ' ' + '.' + c + '{position:relative;display:inline-flex}',
     root + ' ' + slot('trigger') + '{display:inline-flex;align-items:center;gap:6px;box-sizing:border-box;',
     '  min-height:' + min + ';padding:0 14px;border:2px solid ' + edge + ';',

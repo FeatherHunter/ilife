@@ -9,6 +9,7 @@
  */
 
 /** 换行（仓库口径：不写字面换行转义，与 `blocks.ts`／`pageShapes.ts` 同）。 */
+import { m } from '../../entries/index.js';
 const LF = String.fromCharCode(10);
 
 /* ══════════════════════════════════════════════════════════════
@@ -21,7 +22,7 @@ export function pageBarsCss(input?: { readonly prefix?: string }): string {
     && typeof input.prefix === 'string' && input.prefix !== '' ? input.prefix : 'ilife-';
   const root = '.' + p + 'page-ui';
   return [
-    '/* ① 时间格带：7 格（或 N 格）等宽，一格一天；缺数格留空槽、不补零。 */',
+    m('base-render.components-page-bars-style.c001'),
     root + ' .' + p + 'block-day-strip {',
     '  background: var(--card);',
     '  border: 1px solid var(--line);',
@@ -107,7 +108,7 @@ export function pageBarsCss(input?: { readonly prefix?: string }): string {
     '  color: #8f2f24;',
     '  font-weight: 600;',
     '}',
-    '/* ② 等式条：两段轨道 ＋ 端点读数。 */',
+    m('base-render.components-page-bars-style.c002'),
     root + ' .' + p + 'block-equation-bar {',
     '  background: var(--card);',
     '  border: 1px solid var(--line);',
@@ -158,7 +159,7 @@ export function pageBarsCss(input?: { readonly prefix?: string }): string {
     '  font-size: 12.5px;',
     '  font-variant-numeric: tabular-nums;',
     '}',
-    '/* ③ 态声明条：徽标 ＋ 说明（＋ 动作）。语气色与状态徽章同一套语义色。 */',
+    m('base-render.components-page-bars-style.c003'),
     root + ' .' + p + 'block-state-banner {',
     '  display: flex;',
     '  flex-wrap: wrap;',

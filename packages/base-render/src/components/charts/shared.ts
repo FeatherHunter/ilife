@@ -10,6 +10,7 @@
 import { charts } from './dispatch.js';
 import { escapeHtml } from '../../contract.js';
 import { CHART_PALETTE, ChartErrorCode, ChartItem, ChartKind } from '../../spec/index.js';
+import { m } from '../../entries/index.js';
 
 export const LF = String.fromCharCode(10);
 /* ── 错误形态（§3.5：与 `TemplateError`／`ControlsError` 并列、互不继承、一律抛出、不返空） ── */
@@ -92,10 +93,10 @@ export const DOT_STRIDE_MAX = 30;
 /** scatter 缺省 Y 轴刻度条数（旧 `charts.js:854` `yTicks:4`；冻结 `ScatterChartOptions` 无该字段，
  *  故按**缺省行为**渲染 4 条、不新增可关闭开关——登记为契约缺口，归后续票，R2-G1 裁定）。 */
 export const SCATTER_Y_TICKS = 4;
-export const EMPTY_ICON = '📊';
-export const EMPTY_HINT = '有记录后自动生成图表';
-export const DONUT_ZERO_HINT = '合计为零, 无环形数据';
-export const OWN_SCALE_NOTE = '各指标独立刻度';
+export function EMPTY_ICON(): string { return '📊'; }
+export function EMPTY_HINT(): string { return m('base-render.components-charts-shared.c011'); }
+export function DONUT_ZERO_HINT(): string { return m('base-render.components-charts-shared.c012'); }
+export function OWN_SCALE_NOTE(): string { return m('base-render.components-charts-shared.c013'); }
 /** 水平网格线**无 Y 轴标注时**的条数（#512：有标注时改按标注条数画，见 `gridSvg`）。 */
 export const GRID_LINES = 3;
 
@@ -113,7 +114,7 @@ export function hash32(text: string): string {
 /* ── 输入校验（`CHART_STRUCTURE_RULE = 'throw'`） ──────────────────────── */
 
 export function requireObject(value: unknown, field: string): Record<string, unknown> {
-  if (!isPlainObject(value)) badStructure(field + ' 必须是对象');
+  if (!isPlainObject(value)) badStructure(m('base-render.components-charts-shared.c001', { p0: String(field) }));
   return value as Record<string, unknown>;
 }
 
@@ -124,32 +125,41 @@ export function requireObject(value: unknown, field: string): Record<string, unk
  *  （静默置 0）不复刻（R1-A2／FX-78-A1b-12，记账见 a1-evidence.md）。 */
 export function normalizeItems(raw: unknown, kind: ChartKind, allowNull: boolean, mode: 'value' | 'values' = 'value'): ChartItem[] {
   if (!Array.isArray(raw)) {
-    badStructure('charts.' + kind + ': items 必须是数组, 收到 ' + (raw === null ? 'null' : typeof raw));
+    badStructure(m('base-render.components-charts-shared.c002', {
+      p0: String(kind),
+      p1: String(raw === null ? 'null' : typeof raw),
+    }));
   }
   const list = raw as readonly unknown[];
   return list.map((entry, i) => {
     const field = 'charts.' + kind + ': items[' + i + ']';
     const item = requireObject(entry, field);
-    if (typeof item.label !== 'string' || item.label.trim() === '') badStructure(field + '.label 缺失');
+    if (typeof item.label !== 'string' || item.label.trim() === '') badStructure(m('base-render.components-charts-shared.c003', { p0: String(field) }));
     const value = item.value;
     let values: readonly number[] | undefined;
     if (mode === 'values') {
       if (!isNum(value)) {
-        badStructure(field + '.value 无效（缺省/非数字）: ' + JSON.stringify(value === undefined ? null : value));
+        badStructure(m('base-render.components-charts-shared.c004', {
+          p0: String(field),
+          p1: String(JSON.stringify(value === undefined ? null : value)),
+        }));
       }
-      if (!Array.isArray(item.values) || item.values.length === 0) badStructure(field + '.values 必须是非空数组');
+      if (!Array.isArray(item.values) || item.values.length === 0) badStructure(m('base-render.components-charts-shared.c005', { p0: String(field) }));
       values = (item.values as readonly unknown[]).map((v, j) => {
-        if (!isNum(v)) badStructure(field + '.values[' + j + '] 无效（缺省/非数字）');
+        if (!isNum(v)) badStructure(m('base-render.components-charts-shared.c006', { p0: String(field), p1: String(j) }));
         return v;
       });
     } else {
       if (!(value === null && allowNull) && !isNum(value)) {
-        badStructure(field + '.value 无效（缺省/非数字）: ' + JSON.stringify(value === undefined ? null : value));
+        badStructure(m('base-render.components-charts-shared.c007', {
+          p0: String(field),
+          p1: String(JSON.stringify(value === undefined ? null : value)),
+        }));
       }
       if (item.values !== undefined) {
-        if (!Array.isArray(item.values) || item.values.length === 0) badStructure(field + '.values 必须是非空数组');
+        if (!Array.isArray(item.values) || item.values.length === 0) badStructure(m('base-render.components-charts-shared.c008', { p0: String(field) }));
         values = (item.values as readonly unknown[]).map((v, j) => {
-          if (!isNum(v)) badStructure(field + '.values[' + j + '] 无效（缺省/非数字）');
+          if (!isNum(v)) badStructure(m('base-render.components-charts-shared.c009', { p0: String(field), p1: String(j) }));
           return v;
         });
       }
@@ -168,7 +178,7 @@ export function normalizeItems(raw: unknown, kind: ChartKind, allowNull: boolean
 
 /** `pct` 非数 → `pct-invalid`；超界统一为 0~100（旧 §6.5 逐字行为）。 */
 export function normalizePct(raw: unknown, kind: ChartKind): number {
-  if (!isNum(raw)) badPct('charts.' + kind + ': pct 无效: ' + String(raw));
+  if (!isNum(raw)) badPct(m('base-render.components-charts-shared.c010', { p0: String(kind), p1: String(String(raw)) }));
   return Math.max(0, Math.min(100, raw));
 }
 

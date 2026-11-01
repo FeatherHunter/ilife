@@ -16,6 +16,7 @@ import {
   EDIT_VALUE_CLASS, EDIT_DISABLED_ATTR,
 } from './attrs.js';
 import type { EditableValueAffordance, EditableValueInput, EditableValueKind } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 铅笔图标（13px，`currentColor`）。内联 SVG 是**公共层自产标记**，不含内联事件处理器。 */
 const PEN_SVG = '<svg class="' + EDIT_VALUE_CLASS + '-pen" viewBox="0 0 24 24" width="13" height="13" fill="none"'
@@ -170,7 +171,7 @@ export function renderEditableValue(input: EditableValueInput): string {
   if (input.disabled === true) attrs.push(EDIT_DISABLED_ATTR + '="1"');
 
   const hitAttrs: string[] = [EDIT_HIT_ATTR + '=""', 'type="button"', 'class="' + EDIT_VALUE_CLASS + '-hit"'];
-  hitAttrs.push(label === undefined ? 'aria-label="改这一个值"' : 'aria-label="改' + esc(label) + '"');
+  hitAttrs.push(label === undefined ? m('base-render.components-editable-value-render.c001') : m('base-render.components-editable-value-render.c002', { p0: String(esc(label)) }));
   if (input.disabled === true) hitAttrs.push('disabled', 'aria-disabled="true"');
 
   const body = '<span class="' + EDIT_VALUE_CLASS + '-text">' + esc(display) + '</span>'

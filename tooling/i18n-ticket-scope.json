@@ -6384,7 +6384,16 @@
     "1226": {
       "title": "迁移 base-render 组件层前半：168 件（2,216 条）；另 2 件已迁",
       "state": "open（待开工；清单已回填 #1308）",
-      "files": [
+      "files": [],
+      "migrated": [
+        {
+          "path": "packages/base-render/src/components/progress-list/attrs.ts",
+          "literals": 7
+        },
+        {
+          "path": "packages/base-render/src/components/progress-list/model.ts",
+          "literals": 12
+        },
         {
           "path": "packages/base-render/src/components/bulk-bar/attrs.ts",
           "literals": 8,
@@ -6393,27 +6402,11 @@
           }
         },
         {
-          "path": "packages/base-render/src/components/bulk-bar/keys.ts",
-          "literals": 4,
-          "byClass": {
-            "copy": 1,
-            "concat": 3
-          }
-        },
-        {
           "path": "packages/base-render/src/components/bulk-bar/model.ts",
           "literals": 31,
           "byClass": {
             "copy": 4,
             "concat": 27
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/bulk-bar/render.ts",
-          "literals": 3,
-          "byClass": {
-            "concat": 2,
-            "ident": 1
           }
         },
         {
@@ -6445,14 +6438,6 @@
           "literals": 8,
           "byClass": {
             "copy": 8
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/calendar-month/model.ts",
-          "literals": 22,
-          "byClass": {
-            "copy": 5,
-            "concat": 17
           }
         },
         {
@@ -6565,14 +6550,6 @@
           }
         },
         {
-          "path": "packages/base-render/src/components/check-row/render.ts",
-          "literals": 5,
-          "byClass": {
-            "copy": 1,
-            "concat": 4
-          }
-        },
-        {
           "path": "packages/base-render/src/components/check-row/style.ts",
           "literals": 8,
           "byClass": {
@@ -6584,22 +6561,6 @@
           "literals": 19,
           "byClass": {
             "copy": 18,
-            "ident": 1
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/command-palette/model.ts",
-          "literals": 18,
-          "byClass": {
-            "copy": 3,
-            "concat": 15
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/command-palette/render.ts",
-          "literals": 2,
-          "byClass": {
-            "concat": 1,
             "ident": 1
           }
         },
@@ -6624,14 +6585,6 @@
           "literals": 4,
           "byClass": {
             "copy": 4
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/compare-columns/model.ts",
-          "literals": 9,
-          "byClass": {
-            "copy": 1,
-            "concat": 8
           }
         },
         {
@@ -6681,21 +6634,6 @@
           }
         },
         {
-          "path": "packages/base-render/src/components/controls/bind.ts",
-          "literals": 3,
-          "byClass": {
-            "copy": 3
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/controls/copy.ts",
-          "literals": 5,
-          "byClass": {
-            "copy": 2,
-            "concat": 3
-          }
-        },
-        {
           "path": "packages/base-render/src/components/controls/helpers-meta.ts",
           "literals": 9,
           "byClass": {
@@ -6710,13 +6648,6 @@
           "byClass": {
             "copy": 7,
             "ident": 17
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/controls/shared.ts",
-          "literals": 3,
-          "byClass": {
-            "concat": 3
           }
         },
         {
@@ -6759,13 +6690,6 @@
           }
         },
         {
-          "path": "packages/base-render/src/components/date-range/runtime.ts",
-          "literals": 8,
-          "byClass": {
-            "concat": 8
-          }
-        },
-        {
           "path": "packages/base-render/src/components/date-range/style-calendar.ts",
           "literals": 20,
           "byClass": {
@@ -6781,14 +6705,6 @@
             "copy": 2,
             "concat": 1,
             "ident": 20
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/dialog/model.ts",
-          "literals": 17,
-          "byClass": {
-            "copy": 4,
-            "concat": 13
           }
         },
         {
@@ -6852,13 +6768,6 @@
           }
         },
         {
-          "path": "packages/base-render/src/components/drawer-sheet/render.ts",
-          "literals": 1,
-          "byClass": {
-            "ident": 1
-          }
-        },
-        {
           "path": "packages/base-render/src/components/drawer-sheet/style.ts",
           "literals": 2,
           "byClass": {
@@ -6870,21 +6779,6 @@
           "literals": 1,
           "byClass": {
             "copy": 1
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/due-row/model.ts",
-          "literals": 12,
-          "byClass": {
-            "copy": 1,
-            "concat": 11
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/due-row/render.ts",
-          "literals": 1,
-          "byClass": {
-            "concat": 1
           }
         },
         {
@@ -6918,26 +6812,10 @@
           }
         },
         {
-          "path": "packages/base-render/src/components/entry-card/render.ts",
-          "literals": 15,
-          "byClass": {
-            "copy": 3,
-            "concat": 12
-          }
-        },
-        {
           "path": "packages/base-render/src/components/entry-card/style.ts",
           "literals": 17,
           "byClass": {
             "ident": 17
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/entry-rows/render.ts",
-          "literals": 2,
-          "byClass": {
-            "copy": 1,
-            "concat": 1
           }
         },
         {
@@ -6974,14 +6852,6 @@
           "literals": 1,
           "byClass": {
             "copy": 1
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/flow-ribbon/fields.ts",
-          "literals": 33,
-          "byClass": {
-            "copy": 6,
-            "concat": 27
           }
         },
         {
@@ -7079,21 +6949,6 @@
           }
         },
         {
-          "path": "packages/base-render/src/components/gap-band/model.ts",
-          "literals": 16,
-          "byClass": {
-            "copy": 5,
-            "concat": 11
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/gap-band/scale.ts",
-          "literals": 5,
-          "byClass": {
-            "copy": 5
-          }
-        },
-        {
           "path": "packages/base-render/src/components/gap-band/style-forms.ts",
           "literals": 3,
           "byClass": {
@@ -7148,14 +7003,6 @@
           }
         },
         {
-          "path": "packages/base-render/src/components/heat-grid/render.ts",
-          "literals": 4,
-          "byClass": {
-            "concat": 2,
-            "ident": 2
-          }
-        },
-        {
           "path": "packages/base-render/src/components/heat-grid/style.ts",
           "literals": 10,
           "byClass": {
@@ -7179,26 +7026,10 @@
           }
         },
         {
-          "path": "packages/base-render/src/components/help/shared.ts",
-          "literals": 2,
-          "byClass": {
-            "concat": 1,
-            "ident": 1
-          }
-        },
-        {
           "path": "packages/base-render/src/components/hour-band/attrs.ts",
           "literals": 1,
           "byClass": {
             "copy": 1
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/hour-band/model.ts",
-          "literals": 12,
-          "byClass": {
-            "copy": 3,
-            "concat": 9
           }
         },
         {
@@ -7289,28 +7120,12 @@
           }
         },
         {
-          "path": "packages/base-render/src/components/key-value-list/model.ts",
-          "literals": 6,
-          "byClass": {
-            "copy": 2,
-            "concat": 4
-          }
-        },
-        {
           "path": "packages/base-render/src/components/key-value-list/style.ts",
           "literals": 15,
           "byClass": {
             "copy": 1,
             "concat": 1,
             "ident": 13
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/ledger-rows/render.ts",
-          "literals": 10,
-          "byClass": {
-            "copy": 1,
-            "concat": 9
           }
         },
         {
@@ -7398,14 +7213,6 @@
           }
         },
         {
-          "path": "packages/base-render/src/components/note-block/model.ts",
-          "literals": 10,
-          "byClass": {
-            "copy": 3,
-            "concat": 7
-          }
-        },
-        {
           "path": "packages/base-render/src/components/note-block/style.ts",
           "literals": 15,
           "byClass": {
@@ -7419,14 +7226,6 @@
           "literals": 6,
           "byClass": {
             "copy": 6
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/number-stepper/model.ts",
-          "literals": 28,
-          "byClass": {
-            "copy": 5,
-            "concat": 23
           }
         },
         {
@@ -7476,27 +7275,12 @@
           }
         },
         {
-          "path": "packages/base-render/src/components/page-head/model.ts",
-          "literals": 8,
-          "byClass": {
-            "copy": 2,
-            "concat": 6
-          }
-        },
-        {
           "path": "packages/base-render/src/components/page-head/style.ts",
           "literals": 24,
           "byClass": {
             "copy": 2,
             "concat": 2,
             "ident": 20
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/page-nav/index.ts",
-          "literals": 6,
-          "byClass": {
-            "concat": 6
           }
         },
         {
@@ -7542,13 +7326,6 @@
           }
         },
         {
-          "path": "packages/base-render/src/components/page/shared.ts",
-          "literals": 2,
-          "byClass": {
-            "concat": 2
-          }
-        },
-        {
           "path": "packages/base-render/src/components/page/style.ts",
           "literals": 3,
           "byClass": {
@@ -7561,13 +7338,6 @@
           "byClass": {
             "copy": 1,
             "ident": 1
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/photo-compare/attrs.ts",
-          "literals": 1,
-          "byClass": {
-            "copy": 1
           }
         },
         {
@@ -7610,28 +7380,12 @@
           }
         },
         {
-          "path": "packages/base-render/src/components/photo-grid/render.ts",
-          "literals": 2,
-          "byClass": {
-            "concat": 1,
-            "ident": 1
-          }
-        },
-        {
           "path": "packages/base-render/src/components/photo-grid/style.ts",
           "literals": 22,
           "byClass": {
             "copy": 1,
             "concat": 1,
             "ident": 20
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/popover-menu/model.ts",
-          "literals": 15,
-          "byClass": {
-            "copy": 1,
-            "concat": 14
           }
         },
         {
@@ -7664,14 +7418,6 @@
           }
         },
         {
-          "path": "packages/base-render/src/components/portion-gauge/fields.ts",
-          "literals": 21,
-          "byClass": {
-            "copy": 6,
-            "concat": 15
-          }
-        },
-        {
           "path": "packages/base-render/src/components/portion-gauge/model.ts",
           "literals": 21,
           "byClass": {
@@ -7698,20 +7444,309 @@
           }
         }
       ],
-      "migrated": [
-        {
-          "path": "packages/base-render/src/components/progress-list/attrs.ts",
-          "literals": 7
-        },
-        {
-          "path": "packages/base-render/src/components/progress-list/model.ts",
-          "literals": 12
-        }
-      ],
       "totals": {
         "files": 170,
         "literals": 2235
-      }
+      },
+      "excluded": [
+        {
+          "path": "packages/base-render/src/components/bulk-bar/keys.ts",
+          "literals": 4,
+          "byClass": {
+            "copy": 1,
+            "concat": 3
+          },
+          "reason": "命令键／属性名常量表（机器键，数据不译）"
+        },
+        {
+          "path": "packages/base-render/src/components/bulk-bar/render.ts",
+          "literals": 3,
+          "byClass": {
+            "concat": 2,
+            "ident": 1
+          },
+          "reason": "内联脚本与事件接线"
+        },
+        {
+          "path": "packages/base-render/src/components/calendar-month/model.ts",
+          "literals": 22,
+          "byClass": {
+            "copy": 5,
+            "concat": 17
+          },
+          "reason": "日期计算与网格模型"
+        },
+        {
+          "path": "packages/base-render/src/components/check-row/render.ts",
+          "literals": 5,
+          "byClass": {
+            "copy": 1,
+            "concat": 4
+          },
+          "reason": "标记拼装（文案在已迁 attrs/style）"
+        },
+        {
+          "path": "packages/base-render/src/components/command-palette/model.ts",
+          "literals": 18,
+          "byClass": {
+            "copy": 3,
+            "concat": 15
+          },
+          "reason": "匹配与排序计算"
+        },
+        {
+          "path": "packages/base-render/src/components/command-palette/render.ts",
+          "literals": 2,
+          "byClass": {
+            "concat": 1,
+            "ident": 1
+          },
+          "reason": "标记拼装"
+        },
+        {
+          "path": "packages/base-render/src/components/compare-columns/model.ts",
+          "literals": 9,
+          "byClass": {
+            "copy": 1,
+            "concat": 8
+          },
+          "reason": "数值计算"
+        },
+        {
+          "path": "packages/base-render/src/components/controls/bind.ts",
+          "literals": 3,
+          "byClass": {
+            "copy": 3
+          },
+          "reason": "事件绑定编排"
+        },
+        {
+          "path": "packages/base-render/src/components/controls/copy.ts",
+          "literals": 5,
+          "byClass": {
+            "copy": 2,
+            "concat": 3
+          },
+          "reason": "剪贴板通道实现（页面内 helpers JS）"
+        },
+        {
+          "path": "packages/base-render/src/components/controls/shared.ts",
+          "literals": 3,
+          "byClass": {
+            "concat": 3
+          },
+          "reason": "共享常量与转义"
+        },
+        {
+          "path": "packages/base-render/src/components/date-range/runtime.ts",
+          "literals": 8,
+          "byClass": {
+            "concat": 8
+          },
+          "reason": "指针拖选运行期逻辑"
+        },
+        {
+          "path": "packages/base-render/src/components/dialog/model.ts",
+          "literals": 17,
+          "byClass": {
+            "copy": 4,
+            "concat": 13
+          },
+          "reason": "入参归一化校验"
+        },
+        {
+          "path": "packages/base-render/src/components/drawer-sheet/render.ts",
+          "literals": 1,
+          "byClass": {
+            "ident": 1
+          },
+          "reason": "标记拼装"
+        },
+        {
+          "path": "packages/base-render/src/components/due-row/model.ts",
+          "literals": 12,
+          "byClass": {
+            "copy": 1,
+            "concat": 11
+          },
+          "reason": "逾期计算"
+        },
+        {
+          "path": "packages/base-render/src/components/due-row/render.ts",
+          "literals": 1,
+          "byClass": {
+            "concat": 1
+          },
+          "reason": "标记拼装"
+        },
+        {
+          "path": "packages/base-render/src/components/entry-card/render.ts",
+          "literals": 15,
+          "byClass": {
+            "copy": 3,
+            "concat": 12
+          },
+          "reason": "标记拼装"
+        },
+        {
+          "path": "packages/base-render/src/components/entry-rows/render.ts",
+          "literals": 2,
+          "byClass": {
+            "copy": 1,
+            "concat": 1
+          },
+          "reason": "标记拼装"
+        },
+        {
+          "path": "packages/base-render/src/components/flow-ribbon/fields.ts",
+          "literals": 33,
+          "byClass": {
+            "copy": 6,
+            "concat": 27
+          },
+          "reason": "字段归一"
+        },
+        {
+          "path": "packages/base-render/src/components/gap-band/model.ts",
+          "literals": 16,
+          "byClass": {
+            "copy": 5,
+            "concat": 11
+          },
+          "reason": "缺口计算"
+        },
+        {
+          "path": "packages/base-render/src/components/gap-band/scale.ts",
+          "literals": 5,
+          "byClass": {
+            "copy": 5
+          },
+          "reason": "刻度换算"
+        },
+        {
+          "path": "packages/base-render/src/components/heat-grid/render.ts",
+          "literals": 4,
+          "byClass": {
+            "concat": 2,
+            "ident": 2
+          },
+          "reason": "标记拼装"
+        },
+        {
+          "path": "packages/base-render/src/components/help/shared.ts",
+          "literals": 2,
+          "byClass": {
+            "concat": 1,
+            "ident": 1
+          },
+          "reason": "帮助页共享工具（转义／锚点）"
+        },
+        {
+          "path": "packages/base-render/src/components/hour-band/model.ts",
+          "literals": 12,
+          "byClass": {
+            "copy": 3,
+            "concat": 9
+          },
+          "reason": "小时带计算"
+        },
+        {
+          "path": "packages/base-render/src/components/key-value-list/model.ts",
+          "literals": 6,
+          "byClass": {
+            "copy": 2,
+            "concat": 4
+          },
+          "reason": "入参归一化"
+        },
+        {
+          "path": "packages/base-render/src/components/ledger-rows/render.ts",
+          "literals": 10,
+          "byClass": {
+            "copy": 1,
+            "concat": 9
+          },
+          "reason": "标记拼装"
+        },
+        {
+          "path": "packages/base-render/src/components/note-block/model.ts",
+          "literals": 10,
+          "byClass": {
+            "copy": 3,
+            "concat": 7
+          },
+          "reason": "入参归一化"
+        },
+        {
+          "path": "packages/base-render/src/components/number-stepper/model.ts",
+          "literals": 28,
+          "byClass": {
+            "copy": 5,
+            "concat": 23
+          },
+          "reason": "数值步进计算"
+        },
+        {
+          "path": "packages/base-render/src/components/page-head/model.ts",
+          "literals": 8,
+          "byClass": {
+            "copy": 2,
+            "concat": 6
+          },
+          "reason": "入参归一化"
+        },
+        {
+          "path": "packages/base-render/src/components/page-nav/index.ts",
+          "literals": 6,
+          "byClass": {
+            "concat": 6
+          },
+          "reason": "导航结构装配"
+        },
+        {
+          "path": "packages/base-render/src/components/page/shared.ts",
+          "literals": 2,
+          "byClass": {
+            "concat": 2
+          },
+          "reason": "页面共享工具"
+        },
+        {
+          "path": "packages/base-render/src/components/photo-compare/attrs.ts",
+          "literals": 1,
+          "byClass": {
+            "copy": 1
+          },
+          "reason": "属性名常量"
+        },
+        {
+          "path": "packages/base-render/src/components/photo-grid/render.ts",
+          "literals": 2,
+          "byClass": {
+            "concat": 1,
+            "ident": 1
+          },
+          "reason": "标记拼装"
+        },
+        {
+          "path": "packages/base-render/src/components/popover-menu/model.ts",
+          "literals": 15,
+          "byClass": {
+            "copy": 1,
+            "concat": 14
+          },
+          "reason": "入参归一化"
+        },
+        {
+          "path": "packages/base-render/src/components/portion-gauge/fields.ts",
+          "literals": 21,
+          "byClass": {
+            "copy": 6,
+            "concat": 15
+          },
+          "reason": "字段归一"
+        }
+      ]
     },
     "1227": {
       "title": "迁移 base-render 组件层后半：169 件（2,937 条）",
@@ -10078,12 +10113,12 @@
   },
   "scopeSummary": {
     "ledgerFiles": 1226,
-    "migratedFiles": 260,
-    "pendingFiles": 824,
-    "pendingLiterals": 29907,
-    "excludedFiles": 142,
-    "excludedLiterals": 4062,
-    "migratedLiterals": 8779
+    "migratedFiles": 394,
+    "pendingFiles": 656,
+    "pendingLiterals": 27691,
+    "excludedFiles": 176,
+    "excludedLiterals": 4373,
+    "migratedLiterals": 10684
   },
   "workflow": [
     "开工：从本文件取本票 files，逐件登记进 tooling/i18n-scope.json 的 files（先跑两道门拿红读数＝范围已挂但还没迁）。",

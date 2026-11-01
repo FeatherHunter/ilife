@@ -62,38 +62,38 @@ function cellHtml(item: PhotoGridItemModel, ratio: PhotoGridRatio): string {
 }
 
 /** 末尾那一格：虚线框 ＋ 加号 ＋ 「加一张」（**内容格**，不是按钮）。 */
-function addHtml(m: PhotoGridModel): string {
+function addHtml(model: PhotoGridModel): string {
   const parts: string[] = ['<span class="' + photoGridSlot('add') + '">'];
   parts.push('<span class="' + photoGridSlot('add-mark') + '" aria-hidden="true">' + esc(PHOTO_GRID_ADD_MARK) + '</span>');
-  parts.push('<span class="' + photoGridSlot('add-label') + '">' + esc(m.addLabel ?? PHOTO_GRID_ADD_LABEL) + '</span>');
-  if (m.addHint !== undefined) {
-    parts.push('<span class="' + photoGridSlot('add-hint') + '">' + esc(m.addHint) + '</span>');
+  parts.push('<span class="' + photoGridSlot('add-label') + '">' + esc(model.addLabel ?? PHOTO_GRID_ADD_LABEL()) + '</span>');
+  if (model.addHint !== undefined) {
+    parts.push('<span class="' + photoGridSlot('add-hint') + '">' + esc(model.addHint) + '</span>');
   }
   parts.push('</span>');
   return parts.join('');
 }
 
 /** 一行的格（末尾那个「加一张」跟着**最后一组**走：它是这面墙的出口，不是某一组的）。 */
-function gridHtml(group: PhotoGridGroupModel, m: PhotoGridModel, last: boolean): string {
+function gridHtml(group: PhotoGridGroupModel, model: PhotoGridModel, last: boolean): string {
   const parts: string[] = ['<div class="' + photoGridSlot('grid') + '">'];
-  for (const item of group.photos) parts.push(cellHtml(item, m.ratio));
-  if (m.add && last) parts.push(addHtml(m));
+  for (const item of group.photos) parts.push(cellHtml(item, model.ratio));
+  if (model.add && last) parts.push(addHtml(model));
   parts.push('</div>');
   return parts.join('');
 }
 
 /** 形态 A 的骨架。平铺＝一组（无组头）；分组＝逐组一块（组头写月份与张数）。 */
-function renderGrid(m: PhotoGridModel): string {
+function renderGrid(model: PhotoGridModel): string {
   const parts: string[] = [];
-  if (m.total === 0) {
-    parts.push('<p class="' + photoGridSlot('empty') + '">' + esc(PHOTO_GRID_EMPTY_TEXT) + '</p>');
-    if (m.add) parts.push('<div class="' + photoGridSlot('grid') + '">' + addHtml(m) + '</div>');
+  if (model.total === 0) {
+    parts.push('<p class="' + photoGridSlot('empty') + '">' + esc(PHOTO_GRID_EMPTY_TEXT()) + '</p>');
+    if (model.add) parts.push('<div class="' + photoGridSlot('grid') + '">' + addHtml(model) + '</div>');
     return parts.join('');
   }
-  m.groups.forEach((group, i) => {
-    const last = i === m.groups.length - 1;
+  model.groups.forEach((group, i) => {
+    const last = i === model.groups.length - 1;
     if (group.month === undefined) {
-      parts.push(gridHtml(group, m, last));
+      parts.push(gridHtml(group, model, last));
       return;
     }
     parts.push('<div class="' + photoGridSlot('group') + '">');
@@ -102,11 +102,11 @@ function renderGrid(m: PhotoGridModel): string {
       + '<span class="' + photoGridSlot('group-count') + '">' + esc(group.countText) + '</span>'
       + (group.note === undefined ? '' : '<span class="' + photoGridSlot('note') + '">' + esc(group.note) + '</span>')
       + '</p>');
-    parts.push(gridHtml(group, m, last));
+    parts.push(gridHtml(group, model, last));
     parts.push('</div>');
   });
-  const foot: string[] = ['<span class="' + photoGridSlot('count') + '">共 ' + esc(String(m.total)) + ' 张</span>'];
-  for (const seg of m.note) foot.push('<span class="' + photoGridSlot('note') + '">' + esc(seg) + '</span>');
+  const foot: string[] = ['<span class="' + photoGridSlot('count') + '">共 ' + esc(String(model.total)) + ' 张</span>'];
+  for (const seg of model.note) foot.push('<span class="' + photoGridSlot('note') + '">' + esc(seg) + '</span>');
   parts.push('<p class="' + photoGridSlot('foot') + '">' + foot.join('') + '</p>');
   return parts.join('');
 }
@@ -118,7 +118,7 @@ const SKELETONS: Readonly<Record<PhotoGridModel['form'], (m: PhotoGridModel) => 
 
 /** 渲染照片网格（纯函数：同样的入参恒产同样的字节；转义只经 `shared/escape.ts`）。 */
 export function renderPhotoGrid(input: unknown): string {
-  const m = normalizePhotoGrid(input);
-  const extra = m.extraClass === undefined ? '' : ' ' + m.extraClass;
-  return '<div class="' + PHOTO_GRID_CLASS + ' is-' + m.form + extra + '">' + SKELETONS[m.form](m) + '</div>';
+  const model = normalizePhotoGrid(input);
+  const extra = model.extraClass === undefined ? '' : ' ' + model.extraClass;
+  return '<div class="' + PHOTO_GRID_CLASS + ' is-' + model.form + extra + '">' + SKELETONS[model.form](model) + '</div>';
 }

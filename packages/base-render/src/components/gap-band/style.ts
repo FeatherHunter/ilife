@@ -27,6 +27,7 @@
 import { skinVar } from '../skin/contract.js';
 import { GAP_BAND_NARROW_PX, gapBandSlot, type GapBandSlot } from './attrs.js';
 import { gapBandDeviationCss } from './style-forms.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -59,9 +60,9 @@ export function gapBandCss(input?: { readonly prefix?: string }): string {
   const c = (slot: GapBandSlot): string => '.' + gapBandSlot(slot, p);
 
   return [
-    '/* gap-band（差值带 · 两个形态：连续差值带／每日偏差柱）：计划和实际之间差多少、差在哪几天。',
-    '   色一律从强调色系与文字档出（淡洗给带子面、实线给实际线、虚线给计划线）：换皮只换取值、',
-    '   不换结构；任何一档都不拿文字墨色当面。 */',
+    m('base-render.components-gap-band-style.c001'),
+    m('base-render.components-gap-band-style.c002'),
+    m('base-render.components-gap-band-style.c003'),
     box + ' {',
     /* 宽度判据的落点：本件是**自己的容器**——嵌进侧栏／面板／卡片时照样按自己的宽度排。 */
     '  container-type: inline-size;',
@@ -122,8 +123,8 @@ export function gapBandCss(input?: { readonly prefix?: string }): string {
     '  overflow-wrap: anywhere;',
     '}',
     /* ── band 档：坐标框（纵轴刻度列 ‖ 差值图区）＋ 横轴日子行 ── */
-    '/* `padding-top` 与 `row-gap` 是给两处「长出框外」的余量：首末两枚刻度各平移半个字高',
-    '   （把中心对到轴顶与轴底）—— 都只长进这两处留白里，不压到别的东西。 */',
+    m('base-render.components-gap-band-style.c004'),
+    m('base-render.components-gap-band-style.c005'),
     s('plotbox') + ' {',
     '  display: grid;',
     '  grid-template-columns: max-content minmax(0, 1fr);',
@@ -325,11 +326,11 @@ export function gapBandCss(input?: { readonly prefix?: string }): string {
     '  font-variant-numeric: tabular-nums;',
     '  overflow-wrap: anywhere;',
     '}',
-    '/* deviation 档与两档共用段（`style-forms.ts`）：同一份纪律、同一个前缀，插在这里——',
-    '   顺序即层叠顺序，改动前后产物逐字节相同。 */',
+    m('base-render.components-gap-band-style.c006'),
+    m('base-render.components-gap-band-style.c007'),
     gapBandDeviationCss({ prefix: p }),
-    '/* 窄容器（<阈值，阈值住 `attrs.ts`）：图区与刻度列一起矮一档 —— **一列不减**。',
-    '   宽度靠 `flex: 1 1 0` 自己变窄，不横滑、也不藏横滑（柱区那一档住 `style-forms.ts`）。 */',
+    m('base-render.components-gap-band-style.c008'),
+    m('base-render.components-gap-band-style.c009'),
     '@container (max-width: ' + String(GAP_BAND_NARROW_PX) + 'px) {',
     '  ' + s('plot') + ' {',
     '    height: ' + String(GAP_BAND_NARROW_PLOT_PX) + 'px;',

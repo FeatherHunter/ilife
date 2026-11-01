@@ -50,7 +50,7 @@ function cellHtml(cell: CalendarMonthDayModel | null): string {
   if (cell.missing) cls.push('is-missing');
   return '<div class="' + cls.join(' ') + '">'
     + '<span class="' + calendarMonthSlot('d') + '">' + esc(cell.day)
-    + (cell.today ? '<em class="' + calendarMonthSlot('today-mark') + '">' + esc(CALENDAR_MONTH_TODAY_MARK) + '</em>' : '')
+    + (cell.today ? '<em class="' + calendarMonthSlot('today-mark') + '">' + esc(CALENDAR_MONTH_TODAY_MARK()) + '</em>' : '')
     + '</span>'
     + '<span class="' + calendarMonthSlot('v') + '">' + esc(cell.value) + '</span>'
     /* 小柱是读数位的**形状重复**（值已经在格内），对读屏器没有信息 ⇒ aria-hidden。 */

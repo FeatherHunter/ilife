@@ -69,12 +69,12 @@ function rowHtml(it: BulkBarItemModel): string {
 }
 
 /** 条目那一列；一条都没有 ⇒ **设计过的空态**（不是留白）。 */
-function listHtml(m: BulkBarModel): string {
+function listHtml(model: BulkBarModel): string {
   const parts: string[] = ['<div class="' + bulkBarSlot('list') + '">'];
-  if (m.items.length === 0) {
-    parts.push('<p class="' + bulkBarSlot('empty') + '" role="status">' + esc(m.emptyText) + '</p>');
+  if (model.items.length === 0) {
+    parts.push('<p class="' + bulkBarSlot('empty') + '" role="status">' + esc(model.emptyText) + '</p>');
   } else {
-    for (const it of m.items) parts.push(rowHtml(it));
+    for (const it of model.items) parts.push(rowHtml(it));
   }
   parts.push('</div>');
   return parts.join('');
@@ -82,16 +82,16 @@ function listHtml(m: BulkBarModel): string {
 
 /** 一枚动作按钮。忙碌那枚字**住在正常那枚字里面**（不是并排的兄弟）：它绝对定位在标签这块上，
  *  一个字都不参与按钮的固有宽 ⇒ 换字不跳版、也不改变动作排的换行。 */
-function actHtml(m: BulkBarModel, a: BulkBarActionModel, inConfirm: boolean): string {
+function actHtml(model: BulkBarModel, a: BulkBarActionModel, inConfirm: boolean): string {
   const parts: string[] = ['<button type="button" class="' + bulkBarSlot('act') + ' is-' + a.tone + '"'];
   if (!inConfirm) parts.push(' ' + BULK_BAR_ACTION_ATTR + '="' + esc(a.key) + '"');
   parts.push(' ' + BULK_BAR_TONE_ATTR + '="' + esc(a.tone) + '"');
   if (a.preview !== undefined) {
-    parts.push(' aria-expanded="' + (m.openAction === a.key ? 'true' : 'false') + '"');
-    parts.push(' aria-controls="' + esc(bulkBarConfirmId(m.name, a.key)) + '"');
+    parts.push(' aria-expanded="' + (model.openAction === a.key ? 'true' : 'false') + '"');
+    parts.push(' aria-controls="' + esc(bulkBarConfirmId(model.name, a.key)) + '"');
   }
-  if (a.error !== undefined) parts.push(' aria-describedby="' + esc(bulkBarErrorId(m.name, a.key)) + '"');
-  else if (m.hint !== undefined) parts.push(' aria-describedby="' + esc(bulkBarHintId(m.name)) + '"');
+  if (a.error !== undefined) parts.push(' aria-describedby="' + esc(bulkBarErrorId(model.name, a.key)) + '"');
+  else if (model.hint !== undefined) parts.push(' aria-describedby="' + esc(bulkBarHintId(model.name)) + '"');
   if (a.disabled || a.busy) parts.push(' disabled');
   if (a.busy) parts.push(' aria-busy="true" ' + BULK_BAR_BUSY_ATTR + '="1"');
   parts.push('>');
@@ -103,19 +103,19 @@ function actHtml(m: BulkBarModel, a: BulkBarActionModel, inConfirm: boolean): st
 }
 
 /** 动作那一排（选中 ≥1 条时才在可点范围内）。 */
-function actsHtml(m: BulkBarModel): string {
+function actsHtml(model: BulkBarModel): string {
   const parts: string[] = ['<div class="' + bulkBarSlot('acts') + '">'];
-  for (const a of m.actions) parts.push(actHtml(m, a, false));
+  for (const a of model.actions) parts.push(actHtml(model, a, false));
   parts.push('</div>');
   return parts.join('');
 }
 
 /** 错态那句字：**写在按钮旁边**（按钮的 `aria-describedby` 指它），不只染色。 */
-function errorHtml(m: BulkBarModel): string {
+function errorHtml(model: BulkBarModel): string {
   const parts: string[] = [];
-  for (const a of m.actions) {
+  for (const a of model.actions) {
     if (a.error === undefined) continue;
-    parts.push('<p class="' + bulkBarSlot('error') + '" id="' + esc(bulkBarErrorId(m.name, a.key)) + '" role="alert">'
+    parts.push('<p class="' + bulkBarSlot('error') + '" id="' + esc(bulkBarErrorId(model.name, a.key)) + '" role="alert">'
       + esc(a.label) + '：' + esc(a.error) + '</p>');
   }
   return parts.join('');
@@ -133,15 +133,15 @@ function previewRowHtml(row: BulkBarPreviewModel['rows'][number]): string {
   parts.push('<b class="' + bulkBarSlot('next') + '">' + esc(row.to) + '</b>');
   if (row.note !== undefined) parts.push('<span class="' + bulkBarSlot('pnote') + '">' + esc(row.note) + '</span>');
   parts.push('</span>');
-  parts.push('<em class="' + bulkBarSlot('pstate') + '">' + (row.keep ? BULK_BAR_KEEP_TEXT : BULK_BAR_SKIP_TEXT) + '</em>');
+  parts.push('<em class="' + bulkBarSlot('pstate') + '">' + (row.keep ? BULK_BAR_KEEP_TEXT() : BULK_BAR_SKIP_TEXT()) + '</em>');
   parts.push('</p>');
   return parts.join('');
 }
 
 /** 就地确认面：改成什么（输入 ＋ 最近用过）→ 会改哪几条（逐条）→ 页脚（结论 ＋ 取消 ＋ 主按钮）。 */
-function confirmHtml(m: BulkBarModel, a: BulkBarActionModel, p: BulkBarPreviewModel): string {
-  const parts: string[] = ['<div class="' + bulkBarSlot('confirm') + '" id="' + esc(bulkBarConfirmId(m.name, a.key)) + '"'
-    + ' role="group" aria-label="' + esc(p.title) + '"' + (m.openAction === a.key ? '' : ' hidden') + '>'];
+function confirmHtml(model: BulkBarModel, a: BulkBarActionModel, p: BulkBarPreviewModel): string {
+  const parts: string[] = ['<div class="' + bulkBarSlot('confirm') + '" id="' + esc(bulkBarConfirmId(model.name, a.key)) + '"'
+    + ' role="group" aria-label="' + esc(p.title) + '"' + (model.openAction === a.key ? '' : ' hidden') + '>'];
   parts.push('<div class="' + bulkBarSlot('chead') + '"><b class="' + bulkBarSlot('ctitle') + '">' + esc(p.title) + '</b>'
     + (p.cap === undefined ? '' : '<span class="' + bulkBarSlot('ccap') + '">' + esc(p.cap) + '</span>') + '</div>');
   parts.push('<div class="' + bulkBarSlot('cbody') + '">');
@@ -174,23 +174,23 @@ function confirmHtml(m: BulkBarModel, a: BulkBarActionModel, p: BulkBarPreviewMo
 }
 
 /** 那条**浮出来的操作条**：已选数 ‖ 动作排 ‖ 提示（＋ 可能的错态与就地确认面）。 */
-function barHtml(m: BulkBarModel): string {
+function barHtml(model: BulkBarModel): string {
   let selected = 0;
-  for (const it of m.items) if (it.selected) selected += 1;
+  for (const it of model.items) if (it.selected) selected += 1;
   const parts: string[] = ['<div class="' + bulkBarSlot('bar') + '"' + (selected === 0 ? ' hidden' : '') + '>'];
-  parts.push('<p class="' + bulkBarSlot('count') + '" id="' + esc(bulkBarCountId(m.name)) + '" aria-live="polite">'
+  parts.push('<p class="' + bulkBarSlot('count') + '" id="' + esc(bulkBarCountId(model.name)) + '" aria-live="polite">'
     + '<b class="' + bulkBarSlot('num') + '">' + String(selected) + '</b>'
-    + '<span class="' + bulkBarSlot('unit') + '">' + esc(m.countUnit + BULK_BAR_COUNT_SUFFIX) + '</span>'
-    + (m.tail === undefined ? '' : '<span class="' + bulkBarSlot('tail') + '">' + esc(m.tail) + '</span>')
+    + '<span class="' + bulkBarSlot('unit') + '">' + esc(model.countUnit + BULK_BAR_COUNT_SUFFIX()) + '</span>'
+    + (model.tail === undefined ? '' : '<span class="' + bulkBarSlot('tail') + '">' + esc(model.tail) + '</span>')
     + '</p>');
-  parts.push(actsHtml(m));
-  if (m.hint !== undefined) {
-    parts.push('<p class="' + bulkBarSlot('hint') + '" id="' + esc(bulkBarHintId(m.name)) + '">' + esc(m.hint) + '</p>');
+  parts.push(actsHtml(model));
+  if (model.hint !== undefined) {
+    parts.push('<p class="' + bulkBarSlot('hint') + '" id="' + esc(bulkBarHintId(model.name)) + '">' + esc(model.hint) + '</p>');
   }
-  parts.push(errorHtml(m));
-  for (const a of m.actions) {
+  parts.push(errorHtml(model));
+  for (const a of model.actions) {
     if (a.preview === undefined) continue;
-    parts.push(confirmHtml(m, a, a.preview));
+    parts.push(confirmHtml(model, a, a.preview));
   }
   parts.push('</div>');
   return parts.join('');
@@ -198,8 +198,8 @@ function barHtml(m: BulkBarModel): string {
 
 /** 形态 A 的骨架：宿主（条目那一列 ＋ 操作条）。操作条**在流内**（`position:sticky`），
  *  条顶永不带出宿主的下沿 ⇒ 条与条目从不重叠；长列表滚到中段时它仍粘在视口底部可达。 */
-function renderSelectBar(m: BulkBarModel): string {
-  return '<div class="' + bulkBarSlot('host') + '">' + listHtml(m) + barHtml(m) + '</div>';
+function renderSelectBar(model: BulkBarModel): string {
+  return '<div class="' + bulkBarSlot('host') + '">' + listHtml(model) + barHtml(model) + '</div>';
 }
 
 /** 形态 → 骨架（本件只有一格；分派写在这里，加第二形态就是加一支）。 */
@@ -209,10 +209,10 @@ const SKELETONS: Readonly<Record<BulkBarForm, (m: BulkBarModel) => string>> = {
 
 /** 渲染批量操作条（纯函数：同样的入参恒产同样的字节；转义只经 `shared/escape.ts`）。 */
 export function renderBulkBar(input: unknown): string {
-  const m = normalizeBulkBar(input);
-  const extra = m.extraClass === undefined ? '' : ' ' + m.extraClass;
-  return '<div class="' + BULK_BAR_CLASS + ' is-' + m.form + extra + '"'
-    + ' ' + BULK_BAR_NAME_ATTR + '="' + esc(m.name) + '"'
-    + ' ' + BULK_BAR_FORM_ATTR + '="' + esc(m.form) + '">'
-    + SKELETONS[m.form](m) + '</div>';
+  const model = normalizeBulkBar(input);
+  const extra = model.extraClass === undefined ? '' : ' ' + model.extraClass;
+  return '<div class="' + BULK_BAR_CLASS + ' is-' + model.form + extra + '"'
+    + ' ' + BULK_BAR_NAME_ATTR + '="' + esc(model.name) + '"'
+    + ' ' + BULK_BAR_FORM_ATTR + '="' + esc(model.form) + '">'
+    + SKELETONS[model.form](model) + '</div>';
 }

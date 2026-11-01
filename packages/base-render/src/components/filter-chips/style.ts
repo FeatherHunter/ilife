@@ -11,6 +11,7 @@ import { skinVar } from '../skin/contract.js';
 import {
   CHIPS_LOADING_ATTR, CHIPS_ROOT_CLASS, CHIPS_ROW_ATTR, CHIPS_EMPTY_ATTR, CHIPS_ERROR_ATTR, CHIP_N_ATTR,
 } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 宽档上限：1280 档下 chip 行不铺满整页（390 档下这条上限不生效）。 */
 export const CHIPS_MAX_WIDTH_PX = 760;
@@ -46,7 +47,7 @@ export function filterChipsCss(): string {
 
   return [
     '/* filterChips（筛选条 · 形态 A：常用一行 ＋「更多」可展开）。chip 全是原生 <button>，',
-    '   选中态住 aria-pressed（底色 ＋ 字重 ＋ ✓ 三样一起给）；行只换行，不横滑、不截断。 */',
+    m('base-render.components-filter-chips-style.c001'),
     R + '{display:grid;gap:10px;min-width:0;max-width:' + CHIPS_MAX_WIDTH_PX + 'px;',
     '  color:' + ink + ';font-family:' + font + ';font-size:' + fsBody + ';line-height:1.5}',
     R + '-sec{display:grid;gap:8px;min-width:0}',

@@ -42,7 +42,7 @@ function headHtml(m: GoalStairsModel): string {
     + '<b class="' + c('title') + '">' + esc(m.title) + '</b>'
     + '<span class="' + c('count') + '">' + esc(m.countWord) + '</span>'
     + '<span class="' + c('tail') + '">'
-    + '<span class="' + c('tail-lead') + '">' + esc(GOAL_STAIRS_TODAY_LEAD) + '</span>'
+    + '<span class="' + c('tail-lead') + '">' + esc(GOAL_STAIRS_TODAY_LEAD()) + '</span>'
     + '<b class="' + c('tail-day') + '">' + esc(m.today) + '</b>'
     + '</span>'
     + '</div>';
@@ -53,7 +53,7 @@ function headRowHtml(r: GoalStairsRowModel): string {
   const parts: string[] = ['<div class="' + c('head') + '">'];
   parts.push('<b class="' + c('name') + '">' + esc(r.name) + '</b>');
   parts.push('<span class="' + c('window') + '">' + esc(r.windowWord) + '</span>');
-  if (r.late) parts.push('<span class="' + c('late') + '">' + esc(GOAL_STAIRS_LATE_WORD) + '</span>');
+  if (r.late) parts.push('<span class="' + c('late') + '">' + esc(GOAL_STAIRS_LATE_WORD()) + '</span>');
   parts.push('<span class="' + c('state') + ' is-' + r.state + '">' + esc(r.stateWord) + '</span>');
   parts.push('</div>');
   return parts.join('');

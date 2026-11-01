@@ -28,6 +28,7 @@ import {
   assertKeys, fmtAmount, optClass, optRealText, readoutsOf, reqLinks, reqRealText, reqSources, reqUses, sumBy,
 } from './fields.js';
 import { matrixModel, railsModel, sankeyModel, type FlowRibbonBase, type FlowRibbonModel } from './forms.js';
+import { m } from '../../entries/index.js';
 
 /* 模型类型住 `forms.ts`（三个骨架装配出来的形状），读数小件住 `fields.ts`（它与那两支格式化函数
    是同一件事的两半）；这里原样再报一次，方便 `render.ts` 从一个地方读全。 */
@@ -60,7 +61,7 @@ export function normalizeFlowRibbon(input: unknown): FlowRibbonModel {
   const uses = reqUses(raw.uses);
   const links = reqLinks(raw.links, sources, uses, FLOW_RIBBON_MAX_LINKS);
   const total = links.reduce((acc, l) => acc + l.amount, 0);
-  const unit = optRealText(raw.unit, 'flow-ribbon: input.unit') ?? FLOW_RIBBON_DEFAULT_UNIT;
+  const unit = optRealText(raw.unit, 'flow-ribbon: input.unit') ?? FLOW_RIBBON_DEFAULT_UNIT();
   const srcReadouts = readoutsOf(sources, sumBy(sources, links, 'from'), total);
   const useReadouts = readoutsOf(uses, sumBy(uses, links, 'to'), total);
   const base: FlowRibbonBase = {
@@ -71,7 +72,7 @@ export function normalizeFlowRibbon(input: unknown): FlowRibbonModel {
     note: '',
     extraClass: optClass(raw.extraClass),
     total,
-    totalText: '共 ' + fmtAmount(total) + ' ' + unit,
+    totalText: m('base-render.components-flow-ribbon-model.c001', { p0: String(fmtAmount(total)), p1: String(unit) }),
     ariaLabel: '',
     legend: [],
   };
@@ -84,18 +85,23 @@ export function normalizeFlowRibbon(input: unknown): FlowRibbonModel {
 }
 
 /** 三种形态各自的口径句（**不是装饰**：本件的读数纪律就写在这几句里）。 */
-function defaultNote(m: FlowRibbonModel): string {
-  if (m.form === 'sankey') {
-    return '口径：带宽＝金额（不是笔数），两侧共用同一把尺子（' + m.perPctText
-      + '）——左边一股与右边一格可以横着比；同一层的节点加起来＝总额 ' + fmtAmount(m.total) + ' ' + m.unit
-      + '，进＝出。节点之间留 ' + String(FLOW_RIBBON_GAP_PCT) + '% 的缝只为分得开，不代表有任何金额。';
+function defaultNote(mdl: FlowRibbonModel): string {
+  if (mdl.form === 'sankey') {
+    return m('base-render.components-flow-ribbon-model.c002', {
+      p0: String(mdl.perPctText),
+      p1: String(fmtAmount(mdl.total)),
+      p2: String(mdl.unit),
+      p3: String(String(FLOW_RIBBON_GAP_PCT)),
+    });
   }
-  if (m.form === 'matrix') {
-    return '口径：格里的数字是金额，百分数＝这一格占总额；条长按全表最大格（' + m.maxText + ' ' + m.unit
-      + '）算，不是按本行最大——否则每行最深的那一格看起来一样重要。空格写 ' + FLOW_RIBBON_MISSING
-      + '（不是 0）：代表这一股确实没往这里流。行合计＝列合计＝' + fmtAmount(m.total) + ' ' + m.unit
-      + '，两者是同一批钱的两种数法。';
+  if (mdl.form === 'matrix') {
+    return m('base-render.components-flow-ribbon-model.c003', {
+      p0: String(mdl.maxText),
+      p1: String(mdl.unit),
+      p2: String(FLOW_RIBBON_MISSING),
+      p3: String(fmtAmount(mdl.total)),
+      p4: String(mdl.unit),
+    });
   }
-  return '口径：每格的宽度＝这一格占总额的比例（两条轨同一总额、各自拉满 100%），段与段贴合、中间只留 1px 纸缝，'
-    + '所以上下两轨的宽度可以横着比。绝对额逐条写在轨下的名单里（格宽放不下读数的格子不出字，读数一个不少）。';
+  return m('base-render.components-flow-ribbon-model.c004');
 }

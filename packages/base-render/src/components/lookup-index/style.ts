@@ -7,6 +7,7 @@
  */
 import { skinVar } from '../skin/contract.js';
 import { lookupIndexSlot, type LookupIndexSlot } from './render.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -101,7 +102,7 @@ export function lookupIndexCss(input?: { readonly prefix?: string }): string {
     '  color: ' + skinVar('ink-2') + ';',
     '  overflow-wrap: anywhere;',
     '}',
-    '/* 别名行：标黄底（形）＋ 前导“别名”由标记写出（字），色不是唯一信息。 */',
+    m('base-render.components-lookup-index-style.c001'),
     box + ' ' + '.' + lookupIndexSlot('row', p) + '.is-alias {',
     '  background: ' + skinVar('warn-soft') + ';',
     '  border-radius: ' + skinVar('radius-sm') + ';',
@@ -124,8 +125,8 @@ export function lookupIndexCss(input?: { readonly prefix?: string }): string {
     '  margin-top: 14px;',
     '  padding: 0;',
     '  border: 1px solid ' + skinVar('line') + ';',
-    '  border-radius: ' + skinVar('radius-card') + '; /* 判地字面 · 授权照抄：12px（组卡片圆角；皮肤号 radius-card 在票据纸下正是 12px） */',
-    '  background: #fbf7ec; /* 判地字面 · 授权照抄：#fbf7ec（组卡片暖底） */',
+    m('base-render.components-lookup-index-style.c002', { p0: String(skinVar('radius-card')) }),
+    m('base-render.components-lookup-index-style.c003'),
     '  overflow: hidden;',
     '}',
     s('group') + '.is-fold > ' + head + ' {',
@@ -171,7 +172,7 @@ export function lookupIndexCss(input?: { readonly prefix?: string }): string {
     '  color: ' + skinVar('ink-2') + ';',
     '  font-weight: 700;',
     '  white-space: nowrap;',
-    '  background: #fff; /* 判地字面 · 授权照抄：#fff（计数胶囊底） */',
+    m('base-render.components-lookup-index-style.c004'),
     '  border: 1px solid ' + skinVar('line') + ';',
     '  border-radius: ' + skinVar('radius-pill') + ';',
     '  padding: 3px 10px;',
@@ -188,7 +189,7 @@ export function lookupIndexCss(input?: { readonly prefix?: string }): string {
     '  gap: 10px;',
     '  padding: 10px 0;',
     '  min-height: 44px;',
-    '  border-top: 1px dotted #eee6d2; /* 判地字面 · 授权照抄：#eee6d2（行间点线） */',
+    m('base-render.components-lookup-index-style.c005'),
     '  font-size: 13.5px;',
     '  line-height: 1.6;',
     '}',
@@ -202,8 +203,8 @@ export function lookupIndexCss(input?: { readonly prefix?: string }): string {
     '  font-size: 12px;',
     '  font-weight: 700;',
     '  color: ' + skinVar('accent') + ';',
-    '  background: #fff; /* 判地字面 · 授权照抄：#fff（唤醒词胶囊底） */',
-    '  border: 1px solid #f0d7c2; /* 判地字面 · 授权照抄：#f0d7c2（唤醒词胶囊边） */',
+    m('base-render.components-lookup-index-style.c006'),
+    m('base-render.components-lookup-index-style.c007'),
     '  border-radius: 6px;',
     '  padding: 2px 7px;',
     '  white-space: nowrap;',

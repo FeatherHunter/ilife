@@ -14,6 +14,7 @@ import { gridSvg, legendHtml, ticksSvg, valueIndexes, xLabelsSvg } from './svg.j
 import { charts } from './dispatch.js';
 import { STYLE_PREFIX } from '../../style.js';
 import { CHART_PALETTE, ChartBand, ChartFillBetween, ChartItem, ChartMarkLine, ChartMarkPoint, ChartOutput, ChartSeries, LineChartInput, LineChartOptions } from '../../spec/index.js';
+import { m } from '../../entries/index.js';
 
 /* ── line ─────────────────────────────────────────────────────────────── */
 
@@ -49,7 +50,7 @@ function resolveLineSeries(raw: unknown, mainItems: readonly ChartItem[], line: 
   }
   return list.map((entry, i) => {
     const series = requireObject(entry, 'charts.line: series[' + i + ']');
-    if (typeof series.name !== 'string') badStructure('charts.line: series[' + i + '].name 必须是字符串');
+    if (typeof series.name !== 'string') badStructure(m('base-render.components-charts-line.c001', { p0: String(i) }));
     const items = normalizeItems(series.items, 'line', true);
     return {
       name: series.name,
@@ -276,10 +277,13 @@ export function renderLine(raw: LineChartInput): ChartOutput {
   if (line.band !== undefined) {
     const hi = line.band.hi;
     const lo = line.band.lo;
-    if (!Array.isArray(hi) || !Array.isArray(lo)) badStructure('charts.line: band.hi/lo 必须是数组');
+    if (!Array.isArray(hi) || !Array.isArray(lo)) badStructure(m('base-render.components-charts-line.c002'));
     if (hi.length !== main.items.length || lo.length !== main.items.length) {
-      badStructure('charts.line: band.hi/lo 长度必须与 items 等长 (' + main.items.length + '), 收到 hi='
-        + hi.length + ' lo=' + lo.length);
+      badStructure(m('base-render.components-charts-line.c003', {
+        p0: String(main.items.length),
+        p1: String(hi.length),
+        p2: String(lo.length),
+      }));
     }
     band = line.band;
   }
@@ -366,7 +370,7 @@ export function renderLine(raw: LineChartInput): ChartOutput {
     series.push({
       /* #424 返工：条目名按**实际窗口**生成（调用点传的是变量窗口，如 `reviewDocs.ts:52` 的
        *  `avgLine: win`）——写死「7 天均线」在窗口 ≠7 时是错的。 */
-      name: avgWindow + ' 天均线',
+      name: m('base-render.components-charts-line.c004', { p0: String(avgWindow) }),
       items: avgItems,
       color: MUTED_COLOR,
       dashed: true,
@@ -386,14 +390,18 @@ export function renderLine(raw: LineChartInput): ChartOutput {
   let fillSvg = '';
   if (line.fillBetween !== undefined) {
     const fb = line.fillBetween;
-    if (!isNum(fb.a) || !isNum(fb.b)) badStructure('charts.line: fillBetween.a/b 必须为系列索引数字');
+    if (!isNum(fb.a) || !isNum(fb.b)) badStructure(m('base-render.components-charts-line.c005'));
     const ia = Math.round(fb.a);
     const ib = Math.round(fb.b);
     if (ia < 0 || ia >= seriesPts.length || ib < 0 || ib >= seriesPts.length) {
-      badStructure('charts.line: fillBetween.a/b 越界 (系列数 ' + seriesPts.length + ', a=' + ia + ' b=' + ib + ')');
+      badStructure(m('base-render.components-charts-line.c006', {
+        p0: String(seriesPts.length),
+        p1: String(ia),
+        p2: String(ib),
+      }));
     }
-    if (ia === ib) badStructure('charts.line: fillBetween.a/b 不能相同');
-    if (seriesPts[ia].length !== seriesPts[ib].length) badStructure('charts.line: fillBetween 两系列 items 长度不一致');
+    if (ia === ib) badStructure(m('base-render.components-charts-line.c007'));
+    if (seriesPts[ia].length !== seriesPts[ib].length) badStructure(m('base-render.components-charts-line.c008'));
     const d = betweenPath(seriesPts[ia], seriesPts[ib]);
     if (d !== '') {
       const color = typeof fb.color === 'string' && fb.color !== '' ? fb.color : DEFAULT_SERIES_COLOR;
@@ -532,7 +540,7 @@ export function renderLine(raw: LineChartInput): ChartOutput {
       }
     }
   }
-  if (line.legend && anyOwnScale) legendEntries.push({ name: OWN_SCALE_NOTE, color: MUTED_COLOR, note: 'dashed' });
+  if (line.legend && anyOwnScale) legendEntries.push({ name: OWN_SCALE_NOTE(), color: MUTED_COLOR, note: 'dashed' });
 
   /* highlightLast：最后一个有效点高亮 + 数值标签 */
   if (line.highlightLast) {

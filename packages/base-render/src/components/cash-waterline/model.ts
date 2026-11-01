@@ -23,6 +23,7 @@ import {
 /* 格式化与校验小件都住在 `fields.ts`（同一批三个形态共用，理由见那份的文件头）。 */
 import { forbid, fmtPct, fmtQty, optInRange, optInt, reqDays, reqFlowLines, reqInt, reqPositive, reqWeeks,
   assertKeys, CASH_WATERLINE_INPUT_KEYS } from './fields.js';
+import { m } from '../../entries/index.js';
 
 /** 横轴的两种出法：`columns`＝一格一天（逐格对齐）／`range`＝一行区间读数（天数多到格子站不下字）。 */
 export type CashWaterlineAxis =
@@ -190,7 +191,7 @@ function buildWaterline(raw: Record<string, unknown>, common: CashWaterlineCommo
       today,
       /* 今天那一格写「今天」；其余刻度位写**轴上那枚字**（`axisLabel`，缺省＝日期；
          两者都占着自己那一列，**逐格对齐**）。 */
-      axis: today && !dense ? '今天' : (picked.includes(i) ? (day.axisLabel ?? day.label) : ''),
+      axis: today && !dense ? m('base-render.components-cash-waterline-model.c001') : (picked.includes(i) ? (day.axisLabel ?? day.label) : ''),
     };
   });
   const lowRows: CashWaterlineLowRow[] = built.filter((d) => d.low)
@@ -199,11 +200,21 @@ function buildWaterline(raw: Record<string, unknown>, common: CashWaterlineCommo
   /* 图例那句话：**连着跌**才说「X 起 N 天」（不连着的说「共 N 天」——「起 N 天」会骗人）。 */
   const lowAt: number[] = built.map((d, i) => (d.low ? i : -1)).filter((i) => i >= 0);
   const contiguous = lowAt.every((at, i) => i === 0 || at === lowAt[i - 1] + 1);
-  const legendLow = lowCount === 0 ? '全程在底线之上'
-    : (contiguous ? built[lowAt[0]].label + ' 起 ' + String(lowCount) + ' 天'
-      : '共 ' + String(lowCount) + ' 天');
+  const legendLow = lowCount === 0 ? m('base-render.components-cash-waterline-model.c002')
+    : (contiguous ? m('base-render.components-cash-waterline-model.c003', {
+      p0: String(built[lowAt[0]].label),
+      p1: String(String(lowCount)),
+    })
+      : m('base-render.components-cash-waterline-model.c004', { p0: String(String(lowCount)) }));
   const first = built[0];
   const last = built[n - 1];
+  const todayPart = todayIndex === undefined
+    ? ''
+    : m('base-render.components-cash-waterline-model.c005', {
+      p0: String(built[todayIndex].label),
+      p1: String(built[todayIndex].pctText),
+    });
+  const lowPart = lowCount === 0 ? m('base-render.components-cash-waterline-model.c006') : m('base-render.components-cash-waterline-model.c007', { p0: String(legendLow) });
   return {
     ...common,
     form: 'waterline',
@@ -214,15 +225,23 @@ function buildWaterline(raw: Record<string, unknown>, common: CashWaterlineCommo
     todayIndex,
     axis: dense
       ? { mode: 'range', rangeText: first.label + ' – ' + last.label,
-        todayText: todayIndex === undefined ? undefined : '今天 ' + built[todayIndex].label }
+        todayText: todayIndex === undefined ? undefined : m('base-render.components-cash-waterline-model.c008', { p0: String(built[todayIndex].label) }) }
       : { mode: 'columns' },
     headExtra: common.budgetText === undefined
-      ? '底线 ' + common.thresholdText
-      : '底线 ' + common.budgetText + '（' + common.thresholdText + '）',
-    ariaLabel: '逐日水位柱：' + first.label + ' 余量 ' + first.pctText + '，' + last.label + ' 余量 ' + last.pctText
-      + (todayIndex === undefined ? '' : '，今天（' + built[todayIndex].label + '）余量 ' + built[todayIndex].pctText)
-      + '；底线 ' + common.thresholdText + '；'
-      + (lowCount === 0 ? '全程在底线之上' : legendLow + '跌破底线'),
+      ? m('base-render.components-cash-waterline-model.c009', { p0: String(common.thresholdText) })
+      : m('base-render.components-cash-waterline-model.c010', {
+        p0: String(common.budgetText),
+        p1: String(common.thresholdText),
+      }),
+    ariaLabel: m('base-render.components-cash-waterline-model.c011', {
+      p0: String(first.label),
+      p1: String(first.pctText),
+      p2: String(last.label),
+      p3: String(last.pctText),
+      p4: String(todayPart),
+      p5: String(common.thresholdText),
+      p6: String(lowPart),
+    }),
   };
 }
 
@@ -252,16 +271,22 @@ function buildBullet(raw: Record<string, unknown>, common: CashWaterlineCommon):
     };
   });
   const firstLow = built.find((w) => w.low);
-  const legendLow = firstLow === undefined ? '全程在底线之上' : firstLow.label + ' 越过底线';
+  const legendLow = firstLow === undefined ? m('base-render.components-cash-waterline-model.c012') : m('base-render.components-cash-waterline-model.c013', { p0: String(firstLow.label) });
+  const usedParts: string[] = [];
+  for (const w of built) usedParts.push(m('base-render.components-cash-waterline-model.c014', { p0: String(w.label), p1: String(w.usedText) }));
   return {
     ...common,
     form: 'bullet',
     weeks: built,
     usedThresholdPct: Math.round((100 - common.thresholdPct) * 10) / 10,
     legendLow,
-    headExtra: '竖线＝底线 ' + common.thresholdText,
-    ariaLabel: '每周子弹图：' + built.map((w) => w.label + ' 已用 ' + w.usedText).join('、')
-      + '；底线 ' + common.thresholdText + '（换算成已用是 ' + fmtPct(100 - common.thresholdPct) + '%）；' + legendLow,
+    headExtra: m('base-render.components-cash-waterline-model.c015', { p0: String(common.thresholdText) }),
+    ariaLabel: m('base-render.components-cash-waterline-model.c016', {
+      p0: String(usedParts.join('、')),
+      p1: String(common.thresholdText),
+      p2: String(fmtPct(100 - common.thresholdPct)),
+      p3: String(legendLow),
+    }),
   };
 }
 
@@ -289,28 +314,38 @@ function buildFlow(raw: Record<string, unknown>, common: CashWaterlineCommon): C
       amountText: money(l.amount),
       fillPct: total <= 0 ? 0 : Math.min(100, Math.round((l.amount / total) * 1000) / 10),
     }));
-  const verdictText = '按这 ' + String(elapsedDays) + ' 天的日均 ' + money(avg) + '，剩下 ' + String(remainDays)
-    + ' 天要花 ' + money(need) + '，' + (ok ? '还余 ' + money(gap) + '。' : '还差 ' + money(-gap) + '。');
+  const gapTail = ok ? m('base-render.components-cash-waterline-model.c017', { p0: String(money(gap)) }) : m('base-render.components-cash-waterline-model.c018', { p0: String(money(-gap)) });
+  const verdictText = m('base-render.components-cash-waterline-model.c019', {
+    p0: String(String(elapsedDays)),
+    p1: String(money(avg)),
+    p2: String(String(remainDays)),
+    p3: String(money(need)),
+    p4: String(gapTail),
+  });
   const flow: CashWaterlineFlowReads = {
     inflow: asLines(inflow, inTotal),
     outflow: asLines(outflow, outTotal),
     /* 那一格写「笔」还是「项」：**给没给真笔数**由调用方说清——
        屏上只列得出 N 行明细，把行数写成「N 笔」是拿明细行数冒名交易笔数（原型那格是「38 笔」）。 */
     inCountText: raw.inflowCount === undefined
-      ? String(inflow.length) + ' 项'
-      : String(reqInt(raw.inflowCount, 'cash-waterline: input.inflowCount', 1, 1000000)) + ' 笔',
+      ? m('base-render.components-cash-waterline-model.c020', { p0: String(String(inflow.length)) })
+      : m('base-render.components-cash-waterline-model.c021', {
+        p0: String(String(reqInt(raw.inflowCount, 'cash-waterline: input.inflowCount', 1, 1000000))),
+      }),
     outCountText: raw.outflowCount === undefined
-      ? String(outflow.length) + ' 项'
-      : String(reqInt(raw.outflowCount, 'cash-waterline: input.outflowCount', 1, 1000000)) + ' 笔',
+      ? m('base-render.components-cash-waterline-model.c022', { p0: String(String(outflow.length)) })
+      : m('base-render.components-cash-waterline-model.c023', {
+        p0: String(String(reqInt(raw.outflowCount, 'cash-waterline: input.outflowCount', 1, 1000000))),
+      }),
     inTotalText: money(inTotal),
     outTotalText: money(outTotal),
     leftText: money(left),
-    leftPctText: '占预算 ' + fmtPct(leftPct) + '%',
+    leftPctText: m('base-render.components-cash-waterline-model.c024', { p0: String(fmtPct(leftPct)) }),
     leftPct,
     leftFillPct: Math.max(0, Math.min(100, leftPct)),
     avgText: money(avg),
     needText: money(need),
-    verdictWord: ok ? '✓ 撑得住' : '！ 撑不住',
+    verdictWord: ok ? m('base-render.components-cash-waterline-model.c025') : m('base-render.components-cash-waterline-model.c026'),
     verdictText,
     ok,
   };
@@ -318,9 +353,15 @@ function buildFlow(raw: Record<string, unknown>, common: CashWaterlineCommon): C
     ...common,
     form: 'flow',
     flow,
-    headExtra: '还剩 ' + String(remainDays) + ' 天',
-    ariaLabel: '进出水三栏：进 ' + flow.inTotalText + '、出 ' + flow.outTotalText + '、余 ' + flow.leftText
-      + '（' + flow.leftPctText + '）；' + flow.verdictWord + '——' + verdictText,
+    headExtra: m('base-render.components-cash-waterline-model.c027', { p0: String(String(remainDays)) }),
+    ariaLabel: m('base-render.components-cash-waterline-model.c028', {
+      p0: String(flow.inTotalText),
+      p1: String(flow.outTotalText),
+      p2: String(flow.leftText),
+      p3: String(flow.leftPctText),
+      p4: String(flow.verdictWord),
+      p5: String(verdictText),
+    }),
   };
 }
 
@@ -346,7 +387,7 @@ export function normalizeCashWaterline(input: unknown): CashWaterlineModel {
     ? CASH_WATERLINE_DEFAULT_THRESHOLD_PCT
     : optInRange(raw.thresholdPct, 'cash-waterline: input.thresholdPct', 0, 100) as number;
   const thresholdText = fmtPct(thresholdPct) + '%';
-  const unit = optText(raw.unit, 'cash-waterline: input.unit') ?? CASH_WATERLINE_DEFAULT_UNIT;
+  const unit = optText(raw.unit, 'cash-waterline: input.unit') ?? CASH_WATERLINE_DEFAULT_UNIT();
   /* 预算：三者都收——`bullet`／`flow` 用它算占比（必填，由各自的 builder 校验「给了没有」），
      `waterline` 可选（收下就把底线写成钱数，卡头第三格「底线 1 800 元（30%）」）。 */
   const budget = raw.budget === undefined ? undefined : reqPositive(raw.budget, 'cash-waterline: input.budget');
@@ -369,13 +410,10 @@ export function normalizeCashWaterline(input: unknown): CashWaterlineModel {
  *  旧文案写着「＝剩余额度 ÷ 近日均消耗」而实现算的是差额——文案照抄了原型的错）。 */
 function defaultNote(form: CashWaterlineForm, thresholdText: string): string {
   if (form === 'waterline') {
-    return '口径：柱高＝当天结束时「预算 − 已花」占预算的百分比；虚线是底线 ' + thresholdText
-      + '；跌破的那几天在下面逐日点名（日期 ＋ 那天花了多少），不是只把柱子染红。';
+    return m('base-render.components-cash-waterline-model.c029', { p0: String(thresholdText) });
   }
   if (form === 'bullet') {
-    return '口径：横条＝本周结束时累计已用掉的比例（100% 是整段预算），竖线是余量跌破底线 ' + thresholdText
-      + ' 的位置。超过 100% 的部分条形画到满格、读数里照实点名，不缩回 100%。';
+    return m('base-render.components-cash-waterline-model.c030', { p0: String(thresholdText) });
   }
-  return '口径：进／出／余三栏同一口径（含退款冲抵）；「撑不撑得住」＝拿余去减「按近日均消耗（日均）'
-    + '还要花的钱」：够就说还余多少，不够就说还差多少——判定写成字（撑得住／撑不住 ＋ 差多少），不只靠颜色。';
+  return m('base-render.components-cash-waterline-model.c031');
 }

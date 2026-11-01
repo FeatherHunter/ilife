@@ -33,20 +33,21 @@ import {
   type PortionGaugeModel,
   type PortionGaugeRowModel,
 } from './model.js';
+import { m } from '../../entries/index.js';
 
 /** 卡头：标题（＋ A 档的「这一份叫什么」）＋ 口径那枚 ＋ 换算基准。 */
-function headHtml(m: PortionGaugeModel): string {
+function headHtml(model: PortionGaugeModel): string {
   const parts: string[] = ['<div class="' + portionGaugeSlot('hd') + '">'];
-  parts.push('<h4 class="' + portionGaugeSlot('title') + '">' + esc(m.title) + '</h4>');
+  parts.push('<h4 class="' + portionGaugeSlot('title') + '">' + esc(model.title) + '</h4>');
   /* A 档才有「这一份叫什么」（`convert` 那一档的模型里 `gauge` 恒为 `null` ⇒ 这段不进标记）。 */
-  if (m.gauge !== null) {
-    parts.push('<b class="' + portionGaugeSlot('subject') + '">' + esc(m.gauge.name) + '</b>');
+  if (model.gauge !== null) {
+    parts.push('<b class="' + portionGaugeSlot('subject') + '">' + esc(model.gauge.name) + '</b>');
   }
-  if (m.stamp !== undefined) {
-    parts.push('<span class="' + portionGaugeSlot('stamp') + '">' + esc(m.stamp) + '</span>');
+  if (model.stamp !== undefined) {
+    parts.push('<span class="' + portionGaugeSlot('stamp') + '">' + esc(model.stamp) + '</span>');
   }
-  if (m.tail !== undefined) {
-    parts.push('<span class="' + portionGaugeSlot('tail') + '">' + esc(m.tail) + '</span>');
+  if (model.tail !== undefined) {
+    parts.push('<span class="' + portionGaugeSlot('tail') + '">' + esc(model.tail) + '</span>');
   }
   parts.push('</div>');
   return parts.join('');
@@ -83,30 +84,30 @@ function rowHtml(r: PortionGaugeRowModel): string {
 }
 
 /** 脚注一句人话 ＋（有缺换算时）缺的那一行。 */
-function footHtml(m: PortionGaugeModel): string {
-  const parts: string[] = ['<p class="' + portionGaugeSlot('note') + '">' + esc(m.note) + '</p>'];
-  if (m.missingCount > 0) {
+function footHtml(model: PortionGaugeModel): string {
+  const parts: string[] = ['<p class="' + portionGaugeSlot('note') + '">' + esc(model.note) + '</p>'];
+  if (model.missingCount > 0) {
     /* 那个数在 `model.ts` 就定好形（与克数同一把分组）：这里只贴，不再自己 `String()` 一遍
        ——两处各拼一遍必然走散（同 `gramsText`／`shareText` 的口径）。 */
-    parts.push('<p class="' + portionGaugeSlot('missing') + '">还差 ' + m.missingText
-      + ' 样没有换算</p>');
+    const missingLine = m('base-render.components-portion-gauge-render.c001', { p0: String(model.missingText) });
+    parts.push('<p class="' + portionGaugeSlot('missing') + '">' + missingLine + '</p>');
   }
   return parts.join('');
 }
 
 /** 形态 `convert` 的骨架：卡头 → 一行一样 → 脚注。 */
-function renderConvert(m: PortionGaugeModel): string {
-  const parts: string[] = [headHtml(m)];
+function renderConvert(model: PortionGaugeModel): string {
+  const parts: string[] = [headHtml(model)];
   parts.push('<div class="' + portionGaugeSlot('conv') + '">'
-    + m.rows.map(rowHtml).join('') + '</div>');
-  parts.push(footHtml(m));
+    + model.rows.map(rowHtml).join('') + '</div>');
+  parts.push(footHtml(model));
   return parts.join('');
 }
 
 /** A 档那一份量感（归一化保证 `form === 'gauge'` 时它**不是** `null`；真缺了就当错报，不静默降级）。 */
-function gaugeOf(m: PortionGaugeModel): PortionGaugeGaugeModel {
-  if (m.gauge === null) badInput('portion-gauge: 形态 gauge 缺 input.gauge');
-  return m.gauge;
+function gaugeOf(model: PortionGaugeModel): PortionGaugeGaugeModel {
+  if (model.gauge === null) badInput('portion-gauge: 形态 gauge 缺 input.gauge');
+  return model.gauge;
 }
 
 /** 尺子：余量底 → 已用那一段 → 刻度竖线 → 参照刻度竖线（位置一律由 `model.ts` 定形）。 */
@@ -130,9 +131,9 @@ function railHtml(g: PortionGaugeGaugeModel): string {
 }
 
 /** 形态 `gauge` 的骨架：卡头 → 占比大字 → 尺子（两枚参照刻度值 ＋ 轨道）→ 实物参照 →（给了才出）脚注。 */
-function renderGauge(m: PortionGaugeModel): string {
-  const g = gaugeOf(m);
-  const parts: string[] = [headHtml(m)];
+function renderGauge(model: PortionGaugeModel): string {
+  const g = gaugeOf(model);
+  const parts: string[] = [headHtml(model)];
   parts.push('<p class="' + portionGaugeSlot('lead') + '"><b class="'
     + portionGaugeSlot('lead-value') + '">' + esc(g.usedText) + '</b></p>');
   const box: string[] = ['<span class="' + portionGaugeSlot('gauge') + '">'];
@@ -150,7 +151,7 @@ function renderGauge(m: PortionGaugeModel): string {
   if (g.equiv !== undefined) {
     parts.push('<p class="' + portionGaugeSlot('equiv') + '"><b>' + esc(g.equiv) + '</b></p>');
   }
-  if (m.note !== '') parts.push('<p class="' + portionGaugeSlot('note') + '">' + esc(m.note) + '</p>');
+  if (model.note !== '') parts.push('<p class="' + portionGaugeSlot('note') + '">' + esc(model.note) + '</p>');
   return parts.join('');
 }
 
@@ -162,8 +163,8 @@ const SKELETONS: Readonly<Record<PortionGaugeForm, (m: PortionGaugeModel) => str
 
 /** 渲染份量换算（纯函数：同样的入参恒产同样的字节；转义只经 `shared/escape.ts`）。 */
 export function renderPortionGauge(input: unknown): string {
-  const m = normalizePortionGauge(input);
-  const extra = m.extraClass === undefined ? '' : ' ' + m.extraClass;
-  return '<div class="' + PORTION_GAUGE_CLASS + ' is-' + m.form + extra + '">'
-    + SKELETONS[m.form](m) + '</div>';
+  const model = normalizePortionGauge(input);
+  const extra = model.extraClass === undefined ? '' : ' ' + model.extraClass;
+  return '<div class="' + PORTION_GAUGE_CLASS + ' is-' + model.form + extra + '">'
+    + SKELETONS[model.form](model) + '</div>';
 }

@@ -19,9 +19,10 @@ import {
   POPOVER_CLASS, POPOVER_TRIGGER_ATTR, POPOVER_TRIGGER_CLASS,
 } from './attrs.js';
 import type { PopoverFullTextInput } from './model.js';
+import { m } from '../../entries/index.js';
 
 /** 缺省无障碍名（三字，是「看全文」这个动作本身，不是新的词）。 */
-const DEFAULT_LABEL = '看全文';
+function DEFAULT_LABEL(): string { return m('base-render.components-popover-render.c001'); }
 
 /** `id` 只许标识符字符：它同时是面板 `id` 与触发处的 `popovertarget`。 */
 const ID_RE = /^[A-Za-z0-9_-]+$/;
@@ -50,7 +51,7 @@ export function renderPopoverFullText(input: PopoverFullTextInput): string {
   check(input);
   const id = input.id;
   const text = esc(input.text);
-  const label = esc(input.label === undefined ? DEFAULT_LABEL : input.label);
+  const label = esc(input.label === undefined ? DEFAULT_LABEL() : input.label);
   const anchor = POPOVER_ANCHOR_PREFIX + id;
   const triggerClass = (input.className === undefined ? '' : esc(input.className) + ' ') + POPOVER_TRIGGER_CLASS;
   return '<span class="' + POPOVER_CLASS + '" ' + POPOVER_ATTR + '="' + esc(id) + '">'

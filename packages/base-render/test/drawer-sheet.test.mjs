@@ -335,7 +335,7 @@ describe('drawerSheet ④ 真机两档（headless Chrome ＋ CDP）', () => {
         assert.equal(zero.disabled, true, why + '一个都没勾时完成键必须按不动');
         const zeroNote = await p.ev('(function(){var z=document.querySelector("[data-ilife-drawer-zero]");'
           + 'return z && !z.hidden ? z.textContent : "";}())');
-        assert.equal(zeroNote, DRAWER_ZERO_NOTE, why + '脚条上要写出为什么按不动');
+        assert.equal(zeroNote, DRAWER_ZERO_NOTE(), why + '脚条上要写出为什么按不动');
         /* Esc 关掉 ＋ 焦点归还 */
         await p.key('Escape');
         const closed = await p.ev('(function(){var d=document.getElementById("dw-many");var ae=document.activeElement;'

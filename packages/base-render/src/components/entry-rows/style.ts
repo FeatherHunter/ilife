@@ -11,6 +11,7 @@
  *   · 备注占满一整行（`flex-basis:100%`）并缩进到名称列，**行高随备注长出来**、不挤压上一行的槽位。
  */
 import { skinVar } from '../skin/contract.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -30,7 +31,7 @@ export function entryRowsCss(input?: { readonly prefix?: string }): string {
      否则会拼成 `.+page-ui .a + .+page-ui .a`，那条规则要求"件里再套一层 page-ui"，**永远命中不到**。 */
   const b = '.' + p + 'block-entry-row';
   return [
-    '/* entry-rows（明细行）：时间 ・ 类别 ・ 名称 ・ 数量 ………… 值；备注另起一行。 */',
+    m('base-render.components-entry-rows-style.c001'),
     root + ' .' + p + 'block-entry-rows {',
     '  display: flex;',
     '  flex-direction: column;',
@@ -52,7 +53,7 @@ export function entryRowsCss(input?: { readonly prefix?: string }): string {
     '  min-width: 0;',
     '  font-size: 13.5px;',
     '}',
-    '/* 记录之间用点线（账目行用的是 hairline）：同页两族同时出现时读得出"这是两种东西"。 */',
+    m('base-render.components-entry-rows-style.c002'),
     s + ' + ' + b + ' {',
     '  border-top: 1px dashed var(--line);',
     '}',
@@ -114,7 +115,7 @@ export function entryRowsCss(input?: { readonly prefix?: string }): string {
     '  line-height: 1.6;',
     '  overflow-wrap: anywhere;',
     '}',
-    '/* 行下读数：一排小字，**逐项一个 span、靠列距分开**（不写任何分隔符字符）。 */',
+    m('base-render.components-entry-rows-style.c003'),
     s + '-facts {',
     '  display: flex;',
     '  flex: 1 1 100%;',

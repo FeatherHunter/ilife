@@ -25,6 +25,7 @@ import {
 import {
   assertKeys, groupNum, INPUT_KEYS, optRealText, reqGauge, reqMissingCount, reqRealText, reqRows,
 } from './fields.js';
+import { m } from '../../entries/index.js';
 
 /** 一行的内部形状：每个字段都已校验、已归一、已算好（`render.ts` 只拼标记，一个算术都不写）。 */
 export interface PortionGaugeRowModel {
@@ -102,10 +103,9 @@ export interface PortionGaugeModel {
 }
 
 /** 本件的口径句（调用方不给 `note` 时用它；分隔符只用逗号与句号）。 */
-export const PORTION_GAUGE_NOTE = '口径：左边永远是菜谱写的单位（份，碗，把），'
-  + '右边永远是营养库认的单位（g）。中间是这一份菜的换算系数，'
-  + '系数变了要写明是哪一版菜谱改的，不悄悄改数。'
-  + '缺换算系数的食材整行不画，只在下面写还差几样没有换算。';
+export function PORTION_GAUGE_NOTE(): string {
+  return m('base-render.components-portion-gauge-model.c008');
+}
 
 /** 尺子的刻度：四等分（0／25／50／75）。**右端那枚不画**——它由「一天上限」那枚参照收口
  *  （同一处画两条线＝同一个位置说两遍）。 */
@@ -135,7 +135,7 @@ function markPos(pct: number): string {
 /** A 档那一份量感：大字、两枚参照刻度值、刻度竖线、无障碍名都在这一处定形。 */
 function gaugeModel(g: PortionGaugeGauge): PortionGaugeGaugeModel {
   const usedText = String(g.usedPct) + '%';
-  const capLabel = '一天上限 ' + g.capText;
+  const capLabel = m('base-render.components-portion-gauge-model.c001', { p0: String(g.capText) });
   const ticks: readonly PortionGaugeTickModel[] = RAIL_TICKS
     .map((p) => ({ pos: 'left: ' + String(p) + '%', major: p % 50 === 0 }));
   /* 上限那枚收右端；有建议时它排在前面（屏上先读到建议，再读到上限）。 */
@@ -143,14 +143,22 @@ function gaugeModel(g: PortionGaugeGauge): PortionGaugeGaugeModel {
   let refLabel: string | undefined;
   let pad: string | undefined;
   if (g.refPct !== undefined && g.refText !== undefined) {
-    refLabel = '一餐建议 ' + g.refText;
+    refLabel = m('base-render.components-portion-gauge-model.c002', { p0: String(g.refText) });
     pad = refPad(g.refPct);
     marks.unshift({ kind: 'ref', pos: markPos(g.refPct) });
   }
   /* 无障碍名把这一条读数说成一句话：数**出自上面同一批字段**（不另算一遍）。 */
-  const ariaText = '量感条：' + g.name + '用掉一天上限 ' + g.capText + '的' + usedText
-    + (refLabel === undefined || g.refPct === undefined
-      ? '。' : '，' + refLabel + '那枚刻度落在 ' + String(g.refPct) + '% 处。');
+  const refPart = refLabel === undefined || g.refPct === undefined
+    ? '。' : m('base-render.components-portion-gauge-model.c003', {
+      p0: String(refLabel),
+      p1: String(String(g.refPct)),
+    });
+  const ariaText = m('base-render.components-portion-gauge-model.c004', {
+    p0: String(g.name),
+    p1: String(g.capText),
+    p2: String(usedText),
+    p3: String(refPart),
+  });
   return {
     name: g.name,
     usedPct: g.usedPct,
@@ -183,15 +191,18 @@ export function normalizePortionGauge(input: unknown): PortionGaugeModel {
        （出处句与左栏同引），百分比只取一位（占比句与条宽同引）。 */
     const gramsText = groupNum(r.grams) + ' g';
     const pctText = String(r.sharePct) + '%';
-    const toName = r.toLabel ?? '营养库口径';
+    const toName = r.toLabel ?? m('base-render.components-portion-gauge-model.c005');
     const model: PortionGaugeRowModel = {
       name: r.name,
-      sub: (r.kind === undefined ? '' : r.kind + '，') + '菜谱写「' + r.recipe + '」',
+      sub: m('base-render.components-portion-gauge-model.c006', {
+        p0: String(r.kind === undefined ? '' : r.kind + '，'),
+        p1: String(r.recipe),
+      }),
       gramsText,
       recipeText: r.recipe,
       toLabelText: r.basis === undefined ? toName : toName + '（' + r.basis + '）',
       sharePct: r.sharePct,
-      shareText: '占一天' + r.shareOf + ' ' + pctText,
+      shareText: m('base-render.components-portion-gauge-model.c007', { p0: String(r.shareOf), p1: String(pctText) }),
     };
     return model;
   });
@@ -201,7 +212,7 @@ export function normalizePortionGauge(input: unknown): PortionGaugeModel {
   /* 脚注缺省按形态分：`convert` 用本件的口径句；`gauge` **不出脚注**（那两条参照刻度值在尺子上
      自己报了名，再写一句口径＝同一件事印两遍，正是用户砍掉的那类文字）。 */
   const noteIn = optRealText(raw.note, 'portion-gauge: input.note');
-  const note = noteIn ?? (form === 'gauge' ? '' : PORTION_GAUGE_NOTE);
+  const note = noteIn ?? (form === 'gauge' ? '' : PORTION_GAUGE_NOTE());
 
   return {
     form: form as PortionGaugeForm,

@@ -12,6 +12,7 @@
  *  宿主用定宽列时，进出编辑**不得**改变任何列的 x 与行高——"编辑不变形"是这一件的存在理由之一。
  */
 import { EDIT_VALUE_CLASS } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 命中区与编辑器的共同高度下限（px）。取 `ACTION_BAR_DEFAULTS.minHeightPx` 的同一档 44（用户裁定：
  *  「触摸区 ≥44×44」是全宽口径，不只窄屏）——本组件不提供"密集档"开关：低于 44 的命中区就是不许留的中间档。 */
@@ -26,7 +27,7 @@ export function editableValueCss(): string {
   const h = EDIT_VALUE_MIN_HEIGHT_PX + 'px';
   const w = EDIT_VALUE_EDITOR_MAX_WIDTH_PX + 'px';
   return [
-    '/* editableValue（就地可编辑值）：值即入口。命中区与编辑器同盒模型 ⇒ 进出编辑不变形。 */',
+    m('base-render.components-editable-value-style.c001'),
     '.' + c + '{display:inline-flex;align-items:center;min-height:' + h + ';max-width:100%}',
     '.' + c + '-hit{display:inline-flex;align-items:center;gap:7px;box-sizing:border-box;',
     /* 命中区**不写** `max-width:100%`：它与"由内容定宽"形成循环，Chrome 解成 0，

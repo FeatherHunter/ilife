@@ -10,6 +10,7 @@
 import { assertActionId, assertNoInlineHandler, assertPlainObject, badInput, esc } from './shared.js';
 import { ACTION_BAR_DEFAULTS, ACTION_BAR_KINDS, ACTION_ID_ATTR, ActionBarButton, ActionBarInput, ActionBarKind, COPY_FORMATS, CopyButtonInput, CopyFormatTexts, DEFAULT_DATA_ATTR, RenderActionBar } from '../../spec/index.js';
 import { STYLE_PREFIX } from '../../style.js';
+import { m } from '../../entries/index.js';
 
 /* ── actionBar（复制三件套） ──────────────────────────────────────────── */
 
@@ -66,7 +67,7 @@ export const COPY_MENU_LABEL_CLASS = 'copy-menu-label';
  *  三个小写英文词，读不懂（`.scratch/t155o/text-review-P0.md` 第 20／44 条，卡路里 81 页 ＋
  *  饼干记账的复制区页同形）。`JSON` 与 `CSV` 是这个仓既有写法里的通用缩写，保留原样。
  *  运行时「数据复制成功（〈标签〉）」那条提示读回的就是这里的值，故它跟着一起变中文。 */
-const COPY_FORMAT_LABELS: Record<string, string> = { text: '纯文本', json: 'JSON', csv: 'CSV' };
+const COPY_FORMAT_LABELS: Record<string, string> = { get text() { return m('base-render.components-controls-action-bar.c001'); }, get json() { return 'JSON'; }, get csv() { return 'CSV'; } };
 /** 菜单项**用途提示**（老仓原样：`粘贴给 AI / 自己看`／`结构化存档`／`表格导入`）的类名。
  *  老仓靠 `.fmt-item span`（后代选择器）收这行灰小字；本仓**显式给类名**——一是不用后代选择器
  *  把标签也一并染成 11px 灰（`.copy-menu-item span` 会连窗口里两个 span 一起命中），
@@ -80,11 +81,11 @@ export const COPY_MENU_OPEN_CLASS = 'copy-menu-open';
  *  `复制数据 ▾` 里的三角是「这里能展开」的纯装饰，用一个字形顶替了一次设计。现在三角由
  *  `style.ts` copyButton 区的 `::after` 用 `border` ＋ `rotate` 画出来（零字符），
  *  而**语义不留白**：这句写进 `aria-label`，读屏与抓取器仍读得出「这颗按钮要选格式」。 */
-const COPY_MENU_OPENER_ARIA = '（点开选格式）';
+function COPY_MENU_OPENER_ARIA(): string { return m('base-render.components-controls-action-bar.c002'); }
 /** 选中某个格式后的成功提示词干（老仓 `.fmt-menu` 那张菜单当年报的是「…数据复制成功(格式)」；
  *  本仓句头沿用既有「已复制」以外的**独立**一句，避免与单格式提示混同）。格式名由运行时从菜单项
  *  标签读回（即 `COPY_FORMAT_LABELS` 的中文名），不在运行时另立第二张表。 */
-export const COPY_FORMAT_OK_MSG = '数据复制成功';
+export function COPY_FORMAT_OK_MSG(): string { return m('base-render.components-controls-action-bar.c003'); }
 
 /** 三格式形态的校验 ＋ 归一（#247）：与 `text` 互斥；三格式恒齐、值恒为串；`hints` 恒三串。 */
 function normalizeFormats(
@@ -169,7 +170,7 @@ function copyMenuHtml(button: NormalizedCopyButton, formats: { readonly texts: r
   }
   const opener = '<button type="button" class="' + STYLE_PREFIX + 'copy-btn ' + STYLE_PREFIX + 'copy-btn-ghost" '
     + COPY_MENU_OPEN_ATTR + '="1" aria-haspopup="menu" aria-expanded="false" '
-    + 'aria-label="' + esc(openLabel + COPY_MENU_OPENER_ARIA) + '">' + esc(openLabel) + '</button>';
+    + 'aria-label="' + esc(openLabel + COPY_MENU_OPENER_ARIA()) + '">' + esc(openLabel) + '</button>';
   return '<div class="' + STYLE_PREFIX + COPY_MENU_WRAP_CLASS + '">' + opener
     + '<div class="' + STYLE_PREFIX + COPY_MENU_CLASS + '" role="menu">' + items.join('') + '</div></div>';
 }

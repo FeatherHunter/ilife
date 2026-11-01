@@ -23,6 +23,7 @@ import {
   dragSortText,
   type DragSortForm,
 } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 归一化后的一行（每个字段都已校验；`pos`／序号类文案都是算出来的）。 */
 export interface DragSortRow {
@@ -91,7 +92,7 @@ function optRealText(value: unknown, field: string): string | undefined {
 /** 只许入参表里写着的键：多给一个键（多半是打错名）＝拒，不静默吞掉。 */
 function assertKeys(raw: Record<string, unknown>, allowed: readonly string[], field: string): void {
   for (const key of Object.keys(raw)) {
-    if (!allowed.includes(key)) badInput(field + ' 里没有 `' + key + '` 这个键（入参表以外的键一律拒）');
+    if (!allowed.includes(key)) badInput(field + ' 里没有 「' + key + '」 这个键（入参表以外的键一律拒）');
   }
 }
 
@@ -212,7 +213,10 @@ export function normalizeDragSort(input: unknown): DragSortModel {
       locked: r.locked, why: r.why, pos,
       posText: buttons
         ? dragSortText('posOne', { p: pos })
-        : '第 ' + String(pos) + ' 位，共 ' + String(total) + ' 步',
+        : m('base-render.components-drag-sort-model.c001', {
+          p0: String(String(pos)),
+          p1: String(String(total)),
+        }),
       grip,
       canUp,
       canDown,

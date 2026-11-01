@@ -66,9 +66,9 @@ export function buildDateRangeJs(): string {
     + ', ATTR_ANCHOR=' + q(DATE_RANGE_DAYS_ATTR_ANCHOR) + ';' + '\n'
     + '  var ATTR_DISABLED=' + q(DATE_RANGE_DISABLED_ATTR) + ', ATTR_LOADING=' + q(DATE_RANGE_LOADING_ATTR)
     + ', ATTR_BOUND=' + q(DATE_RANGE_BOUND_ATTR) + ';' + '\n'
-    + '  var EV_CHANGE=' + q(DATE_RANGE_EVENT_CHANGE) + ', WORD_UNSET=' + q(DATE_RANGE_UNSET)
-    + ', WORD_CUSTOM=' + q(DATE_RANGE_CUSTOM) + ', WORD_LOADING=' + q(DATE_RANGE_LOADING) + ';' + '\n'
-    + '  var PREFIX=' + q(DATE_RANGE_PRESET_PREFIX) + ', SUFFIX=' + q(DATE_RANGE_DAYS_SUFFIX)
+    + '  var EV_CHANGE=' + q(DATE_RANGE_EVENT_CHANGE) + ', WORD_UNSET=' + q(DATE_RANGE_UNSET())
+    + ', WORD_CUSTOM=' + q(DATE_RANGE_CUSTOM()) + ', WORD_LOADING=' + q(DATE_RANGE_LOADING()) + ';' + '\n'
+    + '  var PREFIX=' + q(DATE_RANGE_PRESET_PREFIX()) + ', SUFFIX=' + q(DATE_RANGE_DAYS_SUFFIX())
     + ', CELLS=' + String(DATE_RANGE_CELLS) + ', COLS=' + String(DATE_RANGE_COLUMNS) + ';' + '\n'
     + '  var CLS=' + q(DATE_RANGE_CLASS) + ', CLS_DAY=' + q(dateRangeSlot('day'))
     + ', CLS_STATE=' + q(dateRangeSlot('state')) + ', CLS_ERROR=' + q(dateRangeSlot('error'))

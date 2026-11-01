@@ -25,9 +25,10 @@ import {
   POPOVER_GAP_PX, POPOVER_MEASURE_ATTR, POPOVER_READY_ATTR, POPOVER_TRIGGER_ATTR, POPOVER_TRIGGER_CLASS,
 } from './attrs.js';
 import type { PopoverFullTextJsInput } from './model.js';
+import { m } from '../../entries/index.js';
 
 /** 触发处缺省的无障碍名（与渲染件同一句；页面可自己给 aria-label 覆盖）。 */
-const DEFAULT_LABEL = '看全文';
+function DEFAULT_LABEL(): string { return m('base-render.components-popover-runtime.c001'); }
 
 /** 缺省候选选择器（本件唯一的「哪些落点算长文本」口径）。 */
 export const POPOVER_TEXT_SELECTORS: readonly string[] = POPOVER_DEFAULT_SELECTORS;
@@ -51,7 +52,7 @@ export function buildPopoverFullTextJs(input?: PopoverFullTextJsInput): string {
     "var SEQ=" + q(POPOVER_ANCHOR_PREFIX) + ";",
     "var ROOT=" + q(POPOVER_CLASS) + ", TRIG=" + q(POPOVER_TRIGGER_CLASS) + ", CARD=" + q(POPOVER_CARD_CLASS) + ";",
     "var A_ROOT=" + q(POPOVER_ATTR) + ", A_TRIG=" + q(POPOVER_TRIGGER_ATTR) + ", A_CARD=" + q(POPOVER_CARD_ATTR) + ";",
-    "var GAP=" + q(String(POPOVER_GAP_PX)) + ", EDGE=" + q(String(POPOVER_EDGE_PX)) + ", LABEL=" + q(DEFAULT_LABEL) + ";",
+    "var GAP=" + q(String(POPOVER_GAP_PX)) + ", EDGE=" + q(String(POPOVER_EDGE_PX)) + ", LABEL=" + q(DEFAULT_LABEL()) + ";",
   ];
   for (const c of consts) out.push(emit(c));
   out.push(emit("var doc=document;"));

@@ -46,7 +46,7 @@ function actHtml(row: NormalizedDueRow): string {
   if (action.disabled) attrs.push('disabled', 'aria-disabled="true"', DUE_DISABLED_ATTR + '="1"');
   if (action.loading) attrs.push('aria-busy="true"', DUE_LOADING_ATTR + '="1"');
   if (row.error !== undefined) attrs.push('aria-describedby="' + esc(errId(row.key)) + '"');
-  const label = action.loading ? DUE_LOADING_LABEL : action.label;
+  const label = action.loading ? DUE_LOADING_LABEL() : action.label;
   return '<span class="' + slot('act') + '">'
     + '<button ' + attrs.join(' ') + '>' + esc(label) + '</button>'
     + (action.note === undefined ? '' : '<span class="' + slot('act-note') + '">' + esc(action.note) + '</span>')

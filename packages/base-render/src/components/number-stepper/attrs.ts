@@ -12,6 +12,7 @@
  */
 
 /** 本件的类名根：全部槽位类名都是 `numberStepperSlot(槽名)` 拼出来的。 */
+import { m } from '../../entries/index.js';
 export const NUMBER_STEPPER_CLASS = 'ilife-block-number-stepper';
 
 /** 形态闭集：本件只落地形态 A「标准：加减＋常用值排」。 */
@@ -108,12 +109,12 @@ export const NUMBER_STEPPER_VALUE_MIN_PX = 88;
 export const NUMBER_STEPPER_MISSING = '—';
 
 /** 状态字（字这一档的四个词：**状态不只靠颜色**）。 */
-export const NUMBER_STEPPER_AT_MIN = '已到下限';
-export const NUMBER_STEPPER_AT_MAX = '已到上限';
-export const NUMBER_STEPPER_UNSET = '未设置';
-export const NUMBER_STEPPER_LOADING = '更新中';
+export function NUMBER_STEPPER_AT_MIN(): string { return m('base-render.components-number-stepper-attrs.c001'); }
+export function NUMBER_STEPPER_AT_MAX(): string { return m('base-render.components-number-stepper-attrs.c002'); }
+export function NUMBER_STEPPER_UNSET(): string { return m('base-render.components-number-stepper-attrs.c003'); }
+export function NUMBER_STEPPER_LOADING(): string { return m('base-render.components-number-stepper-attrs.c004'); }
 /** 常用值那一排左端的小标签。 */
-export const NUMBER_STEPPER_QUICK_LABEL = '常用';
+export function NUMBER_STEPPER_QUICK_LABEL(): string { return m('base-render.components-number-stepper-attrs.c005'); }
 /** 减号／加号键面（几何上是两个全角符号，读屏器另有 `aria-label`）。 */
 export const NUMBER_STEPPER_DEC_GLYPH = '−';
 export const NUMBER_STEPPER_INC_GLYPH = '＋';

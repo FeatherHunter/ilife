@@ -18,6 +18,7 @@ import {
   type CashWaterlineFlowLine,
   type CashWaterlineWeek,
 } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /* ── 格式化 ─────────────────────────────────────────────────────── */
 
@@ -134,7 +135,7 @@ function reqList(value: unknown, field: string, max: number, what: string): read
 export function forbid(raw: Record<string, unknown>, form: string, keys: readonly string[]): void {
   for (const key of keys) {
     if (raw[key] !== undefined) {
-      badInput('cash-waterline: 形态 `' + form + '` 不吃 input.' + key
+      badInput('cash-waterline: 形态「' + form + '」不吃 input.' + key
         + '（那是别的形态的读数；换形态请把 input.form 一起换，本件不替你挑一个）');
     }
   }
@@ -161,7 +162,7 @@ export function assertKeys(raw: object, allowed: readonly string[], field: strin
   for (const key of Object.getOwnPropertyNames(raw)) note(key);
   for (const key in raw) note(key);
   if (bad.length > 0) {
-    badInput(field + ' 里没有 `' + bad.join('`／`') + '` 这个键（入参表以外的键一律拒：'
+    badInput(field + ' 里没有 「' + bad.join('」「') + '」 这个键（入参表以外的键一律拒：'
       + '写错的键静默吞掉会让调用方以为自己设上了；继承来的与不可枚举的键同样算）');
   }
 }
@@ -184,7 +185,7 @@ export const CASH_WATERLINE_FLOW_LINE_KEYS = ['name', 'amount'] as const;
 
 /** 一天：逐字段校验（**日期非空且够短、余量 0–100、花费 ≥ 0**）。 */
 export function reqDays(value: unknown): readonly CashWaterlineDay[] {
-  return reqList(value, 'cash-waterline: input.days', CASH_WATERLINE_MAX_DAYS, '逐日读数，一天一条').map((one, i) => {
+  return reqList(value, 'cash-waterline: input.days', CASH_WATERLINE_MAX_DAYS, m('base-render.components-cash-waterline-fields.c001')).map((one, i) => {
     assertPlainObject(one, 'cash-waterline: input.days[' + String(i) + ']');
     const day = one as Record<string, unknown>;
     const at = 'cash-waterline: input.days[' + String(i) + ']';
@@ -211,7 +212,7 @@ export function reqDays(value: unknown): readonly CashWaterlineDay[] {
 
 /** 一周：`inflow`／`outflow` 都是 ≥0 的有限数（净额与占比由本件算，**调用方不给**）。 */
 export function reqWeeks(value: unknown): readonly CashWaterlineWeek[] {
-  return reqList(value, 'cash-waterline: input.weeks', CASH_WATERLINE_MAX_WEEKS, '逐周读数，一周一条').map((one, i) => {
+  return reqList(value, 'cash-waterline: input.weeks', CASH_WATERLINE_MAX_WEEKS, m('base-render.components-cash-waterline-fields.c002')).map((one, i) => {
     assertPlainObject(one, 'cash-waterline: input.weeks[' + String(i) + ']');
     const w = one as Record<string, unknown>;
     const at = 'cash-waterline: input.weeks[' + String(i) + ']';
@@ -226,7 +227,7 @@ export function reqWeeks(value: unknown): readonly CashWaterlineWeek[] {
 
 /** 进出水的一行（名字非空、金额 **> 0**：零金额的行看不见，也不该占一行）。 */
 export function reqFlowLines(value: unknown, field: string): readonly CashWaterlineFlowLine[] {
-  return reqList(value, field, CASH_WATERLINE_MAX_LINES, '明细行，一行一条').map((one, i) => {
+  return reqList(value, field, CASH_WATERLINE_MAX_LINES, m('base-render.components-cash-waterline-fields.c003')).map((one, i) => {
     assertPlainObject(one, field + '[' + String(i) + ']');
     const line = one as Record<string, unknown>;
     assertKeys(line, CASH_WATERLINE_FLOW_LINE_KEYS, field + '[' + String(i) + ']');

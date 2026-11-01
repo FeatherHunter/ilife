@@ -9,6 +9,7 @@
  */
 import { skinVar } from '../skin/contract.js';
 import { FLOW_RIBBON_NARROW_PX, flowRibbonSlot, type FlowRibbonSlot } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -34,9 +35,7 @@ export function flowRibbonRailsCss(input?: { readonly prefix?: string }): string
   const c = (slot: FlowRibbonSlot): string => '.' + flowRibbonSlot(slot, p);
 
   return [
-    `/* ── 两条构成轨 ＋ 中间汇合读数 ──────────────────────────────────
-   每格宽度＝这一格占总额的比例：**同一个总额、两条轨各自拉满 100%**，故上下两轨可以横着比。
-   宽度写在 width 上（不是靠内容撑），这正是原型阶段踩过的那个坑（flex: 0 0 auto 按文字宽度排）。 */`,
+    m('base-render.components-flow-ribbon-style-rails.c001'),
     s('rails') + ' {',
     '  display: grid;',
     '  gap: 5px;',

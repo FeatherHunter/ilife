@@ -97,4 +97,4 @@ export function normalizePageHead(input: unknown): PageHeadModel {
 }
 
 /** 口径行左端的标签（归一化期就定下来：口径行只要出，就带它）。 */
-export const PAGE_HEAD_CALIBER = PAGE_HEAD_CALIBER_LABEL;
+export const PAGE_HEAD_CALIBER = PAGE_HEAD_CALIBER_LABEL();

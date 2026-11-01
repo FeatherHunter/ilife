@@ -23,6 +23,7 @@ import {
   type GapBandForm,
 } from './attrs.js';
 import { niceAxis, plainText, round2, signedText, tickTexts, topPct, unitPart, type Axis } from './scale.js';
+import { m } from '../../entries/index.js';
 
 /* ── 内部类型（`render.ts` 只吃它们；`model.ts` 只把类型名再报一次给出口） ── */
 
@@ -140,8 +141,8 @@ const reading = (v: number, unit: string | undefined): string => plainText(v) + 
 
 /** 差的短写法（锚点里那枚：`多 0.9 h`／`少 1.0 h`／`和计划持平`）。 */
 const diffShort = (d: number, unit: string | undefined): string => (d > 0
-  ? '多 ' + reading(d, unit)
-  : (d < 0 ? '少 ' + reading(Math.abs(d), unit) : '和计划持平'));
+  ? m('base-render.components-gap-band-forms.c001', { p0: String(reading(d, unit)) })
+  : (d < 0 ? m('base-render.components-gap-band-forms.c002', { p0: String(reading(Math.abs(d), unit)) }) : m('base-render.components-gap-band-forms.c003')));
 
 /* ── A 档：连续差值带 ─────────────────────────────────────────────── */
 
@@ -183,25 +184,36 @@ export function bandModel(c: GapBandCommon, plan: number, days: readonly GapBand
   const net = Number(diffs.reduce((a, d) => a + d, 0).toFixed(2));
   const below = diffs.filter((d) => d < 0).length;
   const sumText = signedText(net) + unitPart(c.unit);
+  const planDirWord = net < 0 ? m('base-render.components-gap-band-forms.c004') : m('base-render.components-gap-band-forms.c005');
+  const planUnderText = below === 0 ? m('base-render.components-gap-band-forms.c006', { p0: String(String(n)) }) : m('base-render.components-gap-band-forms.c007', { p0: String(String(below)) });
   const sumDesc = net === 0
-    ? '净差 0' + unitPart(c.unit) + '，' + String(n) + ' 天合起来和计划持平'
-    : '净差，' + String(n) + ' 天合起来比计划' + (net < 0 ? '少 ' : '多 ')
-      + reading(Math.abs(net), c.unit) + '，'
-      + (below === 0 ? String(n) + ' 天全达计划' : String(below) + ' 天没达计划');
+    ? m('base-render.components-gap-band-forms.c008', { p0: String(unitPart(c.unit)), p1: String(String(n)) })
+    : m('base-render.components-gap-band-forms.c009', {
+      p0: String(String(n)),
+      p1: String(planDirWord),
+      p2: String(reading(Math.abs(net), c.unit)),
+      p3: String(planUnderText),
+    });
   const dayVals = days.map((d) => d.label + ' ' + plainText(d.value)).join('，');
   const extreme = hi === lo
-    ? '每天和计划持平'
-    : '最深的一处是' + days[lo].label + diffShort(diffs[lo], c.unit)
-      + '，最高的一处是' + days[hi].label + diffShort(diffs[hi], c.unit);
+    ? m('base-render.components-gap-band-forms.c010')
+    : m('base-render.components-gap-band-forms.c011', {
+      p0: String(days[lo].label),
+      p1: String(diffShort(diffs[lo], c.unit)),
+      p2: String(days[hi].label),
+      p3: String(diffShort(diffs[hi], c.unit)),
+    });
   return {
     form: 'band',
     title: c.title,
     stamp: c.stamp,
-    tail: '计划 ' + reading(plan, c.unit),
-    note: c.noteIn ?? '口径：带子是实际线和计划线之间的面积，不填 0 基线，填到 0 就看不出差了。'
-      + '带子两端连成一片，不按天切开。最深和最高两处读数挂在图上，计划线穿通整块，刻度值贴在刻度上。',
-    ariaLabel: '差值带：计划 ' + reading(plan, c.unit) + '，' + dayVals
-      + '，带子是实际线和计划线之间的面积，' + extreme + '。',
+    tail: m('base-render.components-gap-band-forms.c012', { p0: String(reading(plan, c.unit)) }),
+    note: c.noteIn ?? m('base-render.components-gap-band-forms.c013'),
+    ariaLabel: m('base-render.components-gap-band-forms.c014', {
+      p0: String(reading(plan, c.unit)),
+      p1: String(dayVals),
+      p2: String(extreme),
+    }),
     ticks: tickTexts(axis, c.unit).map((text, i) => {
       /* 刻度的值与位置（从大往小，与文字同一支量化）：位置＝`upPct(值)`，
          于是"刻度文字说 7"与"7 画在哪"是同一份真值。判据从印出来的文字反推轴域、逐枚对账。 */
@@ -211,15 +223,15 @@ export function bandModel(c: GapBandCommon, plan: number, days: readonly GapBand
     linePoints,
     bandPoints,
     planTopPct: planY,
-    planText: '计划 ' + reading(plan, c.unit),
+    planText: m('base-render.components-gap-band-forms.c015', { p0: String(reading(plan, c.unit)) }),
     anchors,
     xLabels: days.map((d) => ({ day: d.label, valueText: plainText(d.value) })),
     sumText,
     sumDesc,
     legend: [
-      { kind: 'line', text: '实际线（2px 实线）' },
-      { kind: 'plan', text: '计划线（虚线）' },
-      { kind: 'band', text: '带子是两线之差' },
+      { kind: 'line', text: m('base-render.components-gap-band-forms.c016') },
+      { kind: 'plan', text: m('base-render.components-gap-band-forms.c017') },
+      { kind: 'band', text: m('base-render.components-gap-band-forms.c018') },
     ],
     extraClass: c.extraClass,
   };
@@ -237,7 +249,7 @@ export function deviationModel(
   const bars: GapBandDevBarModel[] = days.map((d, i) => {
     const dev = devs[i];
     const shown = maxAbs === 0 ? 0 : round2((Math.abs(dev) / maxAbs) * GAP_BAND_DEV_MAX_PCT);
-    const word = dev > 0 ? '超 ' : (dev < 0 ? '差 ' : '持平');
+    const word = dev > 0 ? m('base-render.components-gap-band-forms.c019') : (dev < 0 ? m('base-render.components-gap-band-forms.c020') : m('base-render.components-gap-band-forms.c021'));
     return {
       label: d.label,
       devText: signedText(Number(dev.toFixed(2))),
@@ -250,31 +262,35 @@ export function deviationModel(
   const net = Number(devs.reduce((a, d) => a + d, 0).toFixed(2));
   const under = devs.filter((d) => d < 0).length;
   const sumText = signedText(net) + unitPart(c.unit);
+  const dirWord = net < 0 ? m('base-render.components-gap-band-forms.c022') : m('base-render.components-gap-band-forms.c023');
+  const underText = under === 0 ? m('base-render.components-gap-band-forms.c024', { p0: String(String(n)) }) : m('base-render.components-gap-band-forms.c025', { p0: String(String(under)) });
   const sumDesc = net === 0
-    ? '净差 0' + unitPart(c.unit) + '，' + String(n) + ' 天合起来和目标持平'
-    : '净差，' + String(n) + ' 天合起来比目标' + (net < 0 ? '少 ' : '多 ')
-      + reading(Math.abs(net), c.unit) + '，'
-      + (under === 0 ? String(n) + ' 天全达目标' : String(under) + ' 天没达目标');
+    ? m('base-render.components-gap-band-forms.c026', { p0: String(unitPart(c.unit)), p1: String(String(n)) })
+    : m('base-render.components-gap-band-forms.c027', {
+      p0: String(String(n)),
+      p1: String(dirWord),
+      p2: String(reading(Math.abs(net), c.unit)),
+      p3: String(underText),
+    });
   const items = days.map((d, i) => {
     const dev = devs[i];
-    return d.label + (dev > 0 ? '超 ' : (dev < 0 ? '差 ' : '持平'))
+    return d.label + (dev > 0 ? m('base-render.components-gap-band-forms.c028') : (dev < 0 ? m('base-render.components-gap-band-forms.c029') : m('base-render.components-gap-band-forms.c030')))
       + (dev === 0 ? '' : reading(Math.abs(dev), c.unit));
   }).join('，');
   return {
     form: 'deviation',
     title: c.title,
     stamp: c.stamp,
-    tail: '朝上超了目标',
-    note: c.noteIn ?? '口径：柱高是实际减目标的绝对值，方向是超了还是差了，'
-      + '数字一律带正负号，不靠颜色读。零位线是目标，不是 0 卡。累计写在底部读数里，单看某一天会误事。',
-    ariaLabel: '每日偏差柱：' + items + '，累计净差 ' + sumText + '。',
+    tail: m('base-render.components-gap-band-forms.c031'),
+    note: c.noteIn ?? m('base-render.components-gap-band-forms.c032'),
+    ariaLabel: m('base-render.components-gap-band-forms.c033', { p0: String(items), p1: String(sumText) }),
     bars,
     sumText,
     sumDesc,
     legend: [
-      { kind: 'up', text: '朝上超了目标' },
-      { kind: 'down', text: '朝下还差' },
-      { kind: 'zero', text: '零位线是目标' },
+      { kind: 'up', text: m('base-render.components-gap-band-forms.c034') },
+      { kind: 'down', text: m('base-render.components-gap-band-forms.c035') },
+      { kind: 'zero', text: m('base-render.components-gap-band-forms.c036') },
     ],
     extraClass: c.extraClass,
   };

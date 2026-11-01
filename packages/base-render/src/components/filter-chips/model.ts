@@ -6,6 +6,7 @@
 import { assertPlainObject, badInput, optExtraClass, optText, reqText } from '../shared/validate.js';
 import { CHIPS_DEFAULTS, CHIPS_FORMS } from './attrs.js';
 import type { FilterChipOption, FilterChipsForm } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 export interface ChipOption {
   readonly value: string;
@@ -79,7 +80,7 @@ export function normalizeFilterChips(raw: unknown): FilterChipsModel {
   }
   const selected: string[] = [];
   for (const v of Array.isArray(rawSelected) ? rawSelected : []) {
-    const value = reqText(v, 'renderFilterChips: input.selected 的每一项');
+    const value = reqText(v, m('base-render.components-filter-chips-model.c001'));
     if (!known.has(value)) badInput('renderFilterChips: input.selected 里有 options 外的值：' + value);
     if (selected.includes(value)) badInput('renderFilterChips: input.selected 重复：' + value);
     selected.push(value);

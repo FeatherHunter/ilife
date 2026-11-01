@@ -11,6 +11,7 @@
  */
 
 /** 本件的类名根：全部槽位类名都是 `dateRangeSlot(槽名)` 拼出来的。 */
+import { m } from '../../entries/index.js';
 export const DATE_RANGE_CLASS = 'ilife-block-date-range';
 
 /** 形态闭集：本件只落地形态 B「日历缩略」。 */
@@ -139,19 +140,19 @@ export const DATE_RANGE_FULL_BLEED_MAX_PX = 340;
 /** 未选时的写法：**缺值写成 `—`**（与「今天」区分）。 */
 export const DATE_RANGE_MISSING = '—';
 /** 未选那一段的口径句里的说法。 */
-export const DATE_RANGE_UNSET = '还未选';
+export function DATE_RANGE_UNSET(): string { return m('base-render.components-date-range-attrs.c001'); }
 /** 不在任何一档上时的说法（按的是自己填的两端）。 */
-export const DATE_RANGE_CUSTOM = '自定义区间';
+export function DATE_RANGE_CUSTOM(): string { return m('base-render.components-date-range-attrs.c002'); }
 /** 更新中。 */
-export const DATE_RANGE_LOADING = '更新中';
+export function DATE_RANGE_LOADING(): string { return m('base-render.components-date-range-attrs.c003'); }
 /** 起点／终点两格的名字。 */
-export const DATE_RANGE_FROM_LABEL = '从';
-export const DATE_RANGE_TO_LABEL = '到';
+export function DATE_RANGE_FROM_LABEL(): string { return m('base-render.components-date-range-attrs.c004'); }
+export function DATE_RANGE_TO_LABEL(): string { return m('base-render.components-date-range-attrs.c005'); }
 /** 日历里「今天」那一格的读屏名后缀与星期表头。 */
-export const DATE_RANGE_WEEK_LABELS = ['一', '二', '三', '四', '五', '六', '日'] as const;
+export function DATE_RANGE_WEEK_LABELS(): readonly string[] { return [m('base-render.components-date-range-attrs.c006'), m('base-render.components-date-range-attrs.c007'), m('base-render.components-date-range-attrs.c008'), m('base-render.components-date-range-attrs.c009'), m('base-render.components-date-range-attrs.c010'), m('base-render.components-date-range-attrs.c011'), m('base-render.components-date-range-attrs.c012')]; }
 /** 一句口径里的固定说法。 */
-export const DATE_RANGE_DAYS_SUFFIX = '（含首尾）';
-export const DATE_RANGE_PRESET_PREFIX = '当前按 ';
+export function DATE_RANGE_DAYS_SUFFIX(): string { return m('base-render.components-date-range-attrs.c013'); }
+export function DATE_RANGE_PRESET_PREFIX(): string { return m('base-render.components-date-range-attrs.c014'); }
 /** 一屏日历恒铺 6 行 × 7 列（整月 ＋ 两端补齐），**固定 42 格**：换月不跳版。 */
 export const DATE_RANGE_CELLS = 42;
 export const DATE_RANGE_COLUMNS = 7;

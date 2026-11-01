@@ -17,6 +17,7 @@ import {
   type GanttTimelineScale,
   type GanttTimelineTick,
 } from './scale.js';
+import { m } from '../../entries/index.js';
 
 /** 一条段（已校验）：起止与状态。 */
 export interface GanttTimelineSegmentView {
@@ -122,8 +123,8 @@ const GLYPH: Readonly<Record<GanttTimelineState | 'crit', string>> = {
 /** 各档的读法（图例里的字）。**里程碑也在里面**：只给 `milestones` 不给 `keyPath` 时，
  *  没有这一档图例就整段不出，那枚 `◆` 在图上没有任何字面解释（README 把「◆ 里程碑」列入三样之义）。 */
 const WORD: Readonly<Record<GanttTimelineStateKey, string>> = {
-  done: '已完成', doing: '进行中', wait: '等待', plan: '未开始',
-  idle: '空闲（点线块里的数字是分钟）', crit: '关键路径', milestone: '里程碑',
+  get done() { return m('base-render.components-gantt-timeline-layout.c001'); }, get doing() { return m('base-render.components-gantt-timeline-layout.c002'); }, get wait() { return m('base-render.components-gantt-timeline-layout.c003'); }, get plan() { return m('base-render.components-gantt-timeline-layout.c004'); },
+  get idle() { return m('base-render.components-gantt-timeline-layout.c005'); }, get crit() { return m('base-render.components-gantt-timeline-layout.c006'); }, get milestone() { return m('base-render.components-gantt-timeline-layout.c007'); },
 };
 /** 图例的次序：关键路径在最前，其余按"完成度"从后往前，里程碑收尾。 */
 const LEGEND_ORDER: readonly GanttTimelineStateKey[] = ['crit', 'done', 'doing', 'wait', 'plan', 'idle', 'milestone'];
@@ -144,30 +145,56 @@ export function laneEndMinutes(lane: GanttTimelineLaneView): number {
 
 /** 关键路径图例那一句（**逐段写清顺序与分钟数**，与原型同一套读法）。 */
 function keyLegendWord(key: GanttTimelineKeyView, total: number): string {
-  const chain = key.steps.map((s) => s.name + ' ' + String(s.minutes) + ' 分').join(' → ');
-  return key.label + '（' + chain + ' ＝ ' + String(total) + ' 分）';
+  const chain = key.steps.map((s) => m('base-render.components-gantt-timeline-layout.c008', {
+    p0: String(s.name),
+    p1: String(String(s.minutes)),
+  })).join(' → ');
+  return m('base-render.components-gantt-timeline-layout.c009', {
+    p0: String(key.label),
+    p1: String(chain),
+    p2: String(String(total)),
+  });
 }
 
 /** 无障碍名：这一张图在说什么（读屏只有这一句，所以它在、且写全）。 */
 function ariaOf(r: GanttTimelineReadings, total: number): string {
   const parts: string[] = [];
   if (r.keyPath !== undefined) {
-    const chain = r.keyPath.steps.map((s) => s.name + ' ' + String(s.minutes) + ' 分').join(' → ');
-    parts.push(r.keyPath.label + '：' + chain + '，共 ' + String(total) + ' 分');
+    const chain = r.keyPath.steps.map((s) => m('base-render.components-gantt-timeline-layout.c010', {
+      p0: String(s.name),
+      p1: String(String(s.minutes)),
+    })).join(' → ');
+    parts.push(m('base-render.components-gantt-timeline-layout.c011', {
+      p0: String(r.keyPath.label),
+      p1: String(chain),
+      p2: String(String(total)),
+    }));
   }
   for (const lane of r.lanes) {
-    if (lane.segments.length === 0) { parts.push(lane.label + ' 整段空闲'); continue; }
+    if (lane.segments.length === 0) { parts.push(m('base-render.components-gantt-timeline-layout.c012', { p0: String(lane.label) })); continue; }
     /* 空档段那一段同样的写法：起点写 `from`（曾写成 `minutes`，读出来是「空闲 30 到 90 分」——
        60 分起的那段空档被读成 30 分起）。 */
-    const each = lane.segments.slice().sort((a, b) => a.from - b.from).map((m) => (m.state === 'idle'
-      ? '空闲 ' + String(m.from)
-      : WORD[m.state] + ' ' + String(m.from)) + ' 到 ' + String(m.from + m.minutes) + ' 分').join('，');
+    const segParts: string[] = [];
+    for (const seg of lane.segments.slice().sort((a, b) => a.from - b.from)) {
+      const head = seg.state === 'idle' ? m('base-render.components-gantt-timeline-layout.c013', { p0: String(String(seg.from)) }) : WORD[seg.state] + ' ' + String(seg.from);
+      segParts.push(m('base-render.components-gantt-timeline-layout.c014', {
+        p0: String(head),
+        p1: String(String(seg.from + seg.minutes)),
+      }));
+    }
+    const each = segParts.join('，');
     parts.push(lane.label + '：' + each);
   }
-  for (const m of r.milestones) parts.push(m.label + ' 是 ' + String(m.at) + ' 分的里程碑');
-  if (r.cursor !== undefined) parts.push('游标在 ' + String(r.cursor.at) + ' 分：' + r.cursor.label);
-  return r.title + '。' + (parts.length > 0 ? parts.join('。') + '。' : '')
-    + '横轴 ' + String(r.scale.spanMinutes) + ' 分，缺记录的时间段留空，不补 0。';
+  for (const ms of r.milestones) parts.push(m('base-render.components-gantt-timeline-layout.c015', { p0: String(ms.label), p1: String(String(ms.at)) }));
+  if (r.cursor !== undefined) parts.push(m('base-render.components-gantt-timeline-layout.c016', {
+    p0: String(String(r.cursor.at)),
+    p1: String(r.cursor.label),
+  }));
+  return m('base-render.components-gantt-timeline-layout.c017', {
+    p0: String(r.title),
+    p1: String(parts.length > 0 ? parts.join('。') + '。' : ''),
+    p2: String(String(r.scale.spanMinutes)),
+  });
 }
 
 /** 装配：逐行落位（关键路径 → 泳道 → 里程碑）、图例、无障碍名、游标。 */
@@ -188,8 +215,14 @@ export function layoutGanttTimeline(r: GanttTimelineReadings): GanttTimelineLayo
       return {
         mark: String(i + 1), state: 'crit' as const, from: start, minutes: step.minutes,
         column: at.column, span: at.span, atEnd: false,
-        title: key.label + ' 第 ' + String(i + 1) + ' 段 ' + step.name + '：' + String(start) + ' 分起 '
-          + String(step.minutes) + ' 分（到 ' + String(cursor) + ' 分）',
+        title: m('base-render.components-gantt-timeline-layout.c018', {
+          p0: String(key.label),
+          p1: String(String(i + 1)),
+          p2: String(step.name),
+          p3: String(String(start)),
+          p4: String(String(step.minutes)),
+          p5: String(String(cursor)),
+        }),
       };
     });
     seen.add('crit');
@@ -201,6 +234,7 @@ export function layoutGanttTimeline(r: GanttTimelineReadings): GanttTimelineLayo
       const at = cellSpan(seg.from, seg.minutes, scale, 1);
       seen.add(seg.state);
       const to = seg.from + seg.minutes;
+      const idleWord = seg.state === 'idle' ? m('base-render.components-gantt-timeline-layout.c019') : '';
       return {
         mark: seg.state === 'idle' ? '' : GLYPH[seg.state],
         state: seg.state,
@@ -209,25 +243,33 @@ export function layoutGanttTimeline(r: GanttTimelineReadings): GanttTimelineLayo
         column: at.column,
         span: at.span,
         text: seg.state === 'idle' ? String(seg.minutes) + '′' : seg.label,
-        title: lane.label + '：' + String(seg.from) + ' 分起' + (seg.state === 'idle' ? '空闲 ' : '')
-          + String(seg.minutes) + ' 分（到 ' + String(to) + ' 分）',
+        title: m('base-render.components-gantt-timeline-layout.c020', {
+          p0: String(lane.label),
+          p1: String(String(seg.from)),
+          p2: String(idleWord),
+          p3: String(String(seg.minutes)),
+          p4: String(String(to)),
+        }),
         atEnd: false,
       };
     });
     const busy = busyMinutes(lane);
     rows.push({
       kind: 'lane', kindClass: 'is-lane', label: lane.label,
-      note: lane.note ?? (busy > 0 ? '占用 ' + String(busy) + ' 分' : '未占用'),
+      note: lane.note ?? (busy > 0 ? m('base-render.components-gantt-timeline-layout.c021', { p0: String(String(busy)) }) : m('base-render.components-gantt-timeline-layout.c022')),
       marks,
     });
   }
 
-  for (const m of r.milestones) {
-    const at = milestoneSpan(m.at, scale);
+  for (const ms of r.milestones) {
+    const at = milestoneSpan(ms.at, scale);
     rows.push({
-      kind: 'milestone', kindClass: 'is-milestone', label: m.label, note: m.note,
-      marks: [{ mark: '◆', state: 'crit', from: m.at, minutes: 0, column: at.column, span: at.span,
-        atEnd: at.atEnd, title: m.label + '：' + String(m.at) + ' 分' }],
+      kind: 'milestone', kindClass: 'is-milestone', label: ms.label, note: ms.note,
+      marks: [{ mark: '◆', state: 'crit', from: ms.at, minutes: 0, column: at.column, span: at.span,
+        atEnd: at.atEnd, title: m('base-render.components-gantt-timeline-layout.c023', {
+          p0: String(ms.label),
+          p1: String(String(ms.at)),
+        }) }],
     });
   }
 

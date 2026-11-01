@@ -31,7 +31,7 @@ function bodyHtml(m: NoteBlockModel): string {
   if (m.attachedTo !== undefined || m.time !== undefined) {
     const att: string[] = [];
     if (m.attachedTo !== undefined) {
-      att.push('<span>' + esc(NOTE_BLOCK_ATT_PREFIX + ' ' + m.attachedTo) + '</span>');
+      att.push('<span>' + esc(NOTE_BLOCK_ATT_PREFIX() + ' ' + m.attachedTo) + '</span>');
     }
     if (m.time !== undefined) att.push('<span class="' + noteBlockSlot('time') + '">' + esc(m.time) + '</span>');
     parts.push('<p class="' + noteBlockSlot('att') + '">' + att.join('') + '</p>');
@@ -74,7 +74,7 @@ function renderNote(m: NoteBlockModel, extra: string): string {
   if (m.time !== undefined) {
     parts.push('<span class="' + noteBlockSlot('time') + '">' + esc(m.time) + '</span>');
   }
-  parts.push('<span class="' + noteBlockSlot('len') + '">' + esc(String(m.length) + NOTE_BLOCK_LEN_SUFFIX) + '</span>');
+  parts.push('<span class="' + noteBlockSlot('len') + '">' + esc(String(m.length) + NOTE_BLOCK_LEN_SUFFIX()) + '</span>');
   if (m.peek !== undefined) {
     parts.push('<span class="' + noteBlockSlot('peek') + '">' + esc(m.peek) + '</span>');
   }

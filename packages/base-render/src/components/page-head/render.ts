@@ -62,7 +62,7 @@ function segmentHtml(slot: 'sub', segments: readonly string[]): string {
 /** 口径行：左端一枚标签（「口径」）＋ 逐段一枚 `<span>`（段间一条发丝线）。 */
 function caliberHtml(segments: readonly string[]): string {
   const spans = segments.map((s) => '<span>' + esc(s) + '</span>').join('');
-  return '<p class="' + pageHeadSlot('caliber') + '"><b>' + esc(PAGE_HEAD_CALIBER_LABEL) + '</b>' + spans + '</p>';
+  return '<p class="' + pageHeadSlot('caliber') + '"><b>' + esc(PAGE_HEAD_CALIBER_LABEL()) + '</b>' + spans + '</p>';
 }
 
 /** 形态 B 的骨架。**眉标与页标题住在同一排**（`top`）——正是这一步让主读数落成「第二行」：

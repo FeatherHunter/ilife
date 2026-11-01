@@ -18,6 +18,7 @@ import {
   type HeatGridForm,
   type HeatGridRow,
 } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 一格：值 ＋ 色档 ＋ 是不是峰值。 */
 export interface HeatGridCellModel {
@@ -75,7 +76,7 @@ function keyText(level: number, stops: readonly number[], unit?: string): string
   /* 最后一档是开区间（「7 条以上」）：它的下界取自**最后一个上界 ＋ 1**，没有对应的上界。 */
   const high = stops[Math.min(level, stops.length) - 1];
   return level === stops.length + 1
-    ? String(high + 1) + u + '以上'
+    ? m('base-render.components-heat-grid-model.c001', { p0: String(String(high + 1) + u) })
     : String(low) + '–' + String(high) + u;
 }
 
@@ -98,7 +99,7 @@ function reqStops(value: unknown): readonly number[] {
 
 /** 列头：给了就必须恰好七枚非空串（列维度是「一周七天」，多一枚少一枚都会错位）。 */
 function reqWeekdays(value: unknown): readonly string[] {
-  if (value === undefined) return HEAT_GRID_WEEKDAYS;
+  if (value === undefined) return HEAT_GRID_WEEKDAYS();
   if (!Array.isArray(value) || value.length !== HEAT_GRID_COLUMNS) {
     badInput('heat-grid: input.weekdays 必须恰好 ' + HEAT_GRID_COLUMNS + ' 枚列头（周一…周日）');
   }
@@ -207,6 +208,11 @@ export function normalizeHeatGrid(input: unknown): HeatGridModel {
     });
   }
   const total = rows.reduce((acc, row) => acc + row.values.reduce((a, one) => a + one, 0), 0);
+  const peakPart = peakAt === '' ? '' : m('base-render.components-heat-grid-model.c002', {
+    p0: String(peakAt),
+    p1: String(String(max)),
+    p2: String(unitText),
+  });
 
   return {
     form: form as HeatGridForm,
@@ -219,8 +225,11 @@ export function normalizeHeatGrid(input: unknown): HeatGridModel {
     facts: optFacts(raw.facts),
     note: optText(raw.note, 'heat-grid: input.note'),
     max,
-    ariaLabel: '合计 ' + String(total) + unitText
-      + (peakAt === '' ? '' : '，峰值 ' + peakAt + ' ' + String(max) + unitText),
+    ariaLabel: m('base-render.components-heat-grid-model.c003', {
+      p0: String(String(total)),
+      p1: String(unitText),
+      p2: String(peakPart),
+    }),
     extraClass: optExtraClass(raw.extraClass, 'heat-grid: input.extraClass'),
   };
 }

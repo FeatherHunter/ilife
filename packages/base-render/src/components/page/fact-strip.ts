@@ -7,6 +7,7 @@
  */
 
 import { esc, reqText, optText } from './shared.js';
+import { m } from '../../entries/index.js';
 /* ══════════════════════════════════════════════════════════════
  * ① 事实条：一排「标签 ＋ 值」的格子
  * ══════════════════════════════════════════════════════════════ */
@@ -70,7 +71,7 @@ export function renderFactStrip(input: FactStripInput): string {
 /** 本件样式段（族组装器 `pageShapeCss()` 按原顺序拼回）。 */
 export function factStripCss(p: string, root: string): string[] {
   return [
-      '/* ① 事实条：一格「标签 ＋ 值」，格与格靠 22px 列距分开（不用任何分隔符字符）。 */',
+      m('base-render.components-page-fact-strip.c001'),
       root + ' .' + p + 'block-fact-strip {',
       '  display: flex;',
       '  flex-wrap: wrap;',
@@ -103,12 +104,12 @@ export function factStripCss(p: string, root: string): string[] {
       root + ' .' + p + 'block-fact-strip-value-danger {',
       '  color: #a83228;',
       '}',
-      '/* #950 B4：缺数（`value: null`）——占位字 `—` ＋ 降调；与「0」在观感上分开。 */',
+      m('base-render.components-page-fact-strip.c002'),
       root + ' .' + p + 'block-fact-strip-value-missing {',
       '  color: var(--fg3);',
       '  font-weight: 500;',
       '}',
-      '/* #950 B4：单位位（值位只吃数，单位小一号跟在后面）。 */',
+      m('base-render.components-page-fact-strip.c003'),
       root + ' .' + p + 'block-fact-strip-unit {',
       '  margin-left: 4px;',
       '  color: var(--fg2);',

@@ -12,6 +12,7 @@
  */
 
 /** 本件的类名根：全部槽位类名都是 `COMPARE_COLUMNS_CLASS + '-' + 槽名`。 */
+import { m } from '../../entries/index.js';
 export const COMPARE_COLUMNS_CLASS = 'ilife-block-compare-columns';
 
 /** 槽位闭集（`render.ts` 与判据都用这里的名字拼类名，不各抄一份字面量）。 */
@@ -97,10 +98,10 @@ export const COMPARE_COLUMNS_SENSES = ['neutral', 'up-good', 'down-good'] as con
 export type CompareColumnsSense = (typeof COMPARE_COLUMNS_SENSES)[number];
 
 /** 差额行的标签（差额只要出，就带它：读者一眼看出这一行是「两个窗口之差」）。 */
-export const COMPARE_COLUMNS_DIFF_LABEL = '差额合计';
+export function COMPARE_COLUMNS_DIFF_LABEL(): string { return m('base-render.components-compare-columns-attrs.c001'); }
 
 /** 口径行左端的标签（与页头／其余件同一条写法）。 */
-export const COMPARE_COLUMNS_CALIBER_LABEL = '口径';
+export function COMPARE_COLUMNS_CALIBER_LABEL(): string { return m('base-render.components-compare-columns-attrs.c002'); }
 
 /** 一项：两窗都有的那个项名 ＋ 两侧的**数**（不是串）。
  *  给数不给串，是因为条长按它算——条长与数字必须同源；显示串由本件按 `showNumber()` 出。 */

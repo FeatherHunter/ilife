@@ -18,6 +18,7 @@
 import { skinVar } from '../skin/contract.js';
 import { PORTION_GAUGE_NARROW_PX, portionGaugeSlot, type PortionGaugeSlot } from './attrs.js';
 import { portionGaugeGaugeCss } from './style-gauge.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -41,9 +42,9 @@ export function portionGaugeCss(input?: { readonly prefix?: string }): string {
   const c = (slot: PortionGaugeSlot): string => '.' + portionGaugeSlot(slot, p);
 
   return [
-    '/* portion-gauge（份量换算 · 换算三栏）：一行一样食材，菜谱单位 → 营养库单位 → 实物占比。',
-    '   色一律从 token 出（占比填充走强调色实底、缺换算那一行走提醒色）：换皮只换取值、不换结构；',
-    '   任何一档都不拿文字墨色当面。 */',
+    m('base-render.components-portion-gauge-style.c001'),
+    m('base-render.components-portion-gauge-style.c002'),
+    m('base-render.components-portion-gauge-style.c003'),
     box + ' {',
     /* 宽度判据的落点：本件是**自己的容器**——嵌进侧栏／面板／卡片时照样按自己的宽度排。 */
     '  container-type: inline-size;',
@@ -266,14 +267,14 @@ export function portionGaugeCss(input?: { readonly prefix?: string }): string {
     '}',
     /* ── A 档量感条那半（同一份纪律、同一份样式段；搬走的是行数，不是取值）── */
     ...portionGaugeGaugeCss(input),
-    '/* 本件自身不带可点元素。这一条是**地板**：调用方把某一行包成入口时焦点必须看得见。 */',
+    m('base-render.components-portion-gauge-style.c004'),
     box + ' :focus-visible {',
     '  outline: 2px solid ' + skinVar('accent') + ';',
     '  outline-offset: 2px;',
     '}',
-    '/* 窄容器（<' + String(PORTION_GAUGE_NARROW_PX) + 'px）：换算框与占比行改走单列 —— **一栏不减**。',
-    '   方向标转过去指着下一行（上 → 下），右栏的数顶到左缘（与左栏同一边）。',
-    '   宽度靠 `minmax(0, 1fr)` 自己收窄，不横滑、也不藏横滑。 */',
+    m('base-render.components-portion-gauge-style.c005', { p0: String(String(PORTION_GAUGE_NARROW_PX)) }),
+    m('base-render.components-portion-gauge-style.c006'),
+    m('base-render.components-portion-gauge-style.c007'),
     '@container (max-width: ' + String(PORTION_GAUGE_NARROW_PX) + 'px) {',
     '  ' + s('eq') + ' {',
     '    grid-template-columns: minmax(0, 1fr);',

@@ -15,6 +15,7 @@
  *  摊开的绝大多数是本来就短的文字，它们本来就不溢出，摊开后观感不变。
  */
 import { POPOVER_DEFAULT_SELECTORS, POPOVER_SCOPE } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 const root = POPOVER_SCOPE;
 
@@ -46,7 +47,7 @@ const CATCH_ALL: readonly string[] = [
 /** 无 JS 降级用的那段 `<style>` 文本（由 docShell 包进 `<noscript>`）。 */
 export function popoverNoScriptCss(): string {
   return [
-    '/* popover 无 JS 降级：脚本禁用时把长文本摊开，全文可读（全文不丢＝安全底线）。 */',
+    m('base-render.components-popover-noscript.c001'),
     /* 这里的 !important 是**安全**的：整段住在 <noscript> 里，有脚本时**根本不解析**、
        零副作用；无脚本时它是唯一兜底，必须压得住明细行自己那条 text-overflow:ellipsis
        （那条特异性更高，w12 搜备注的 6 处就是被它压住的）。 */

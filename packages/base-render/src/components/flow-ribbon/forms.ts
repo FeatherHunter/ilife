@@ -24,6 +24,7 @@ import {
 } from './fields.js';
 /* 构成轨那一段住 `forms-rails.ts`（`style-rails.ts` 同款拆法）：本文件原样转出，`model.ts` 不用改。 */
 import type { FlowRibbonRailsModel } from './forms-rails.js';
+import { m } from '../../entries/index.js';
 export { railsModel, type FlowRibbonRailsModel, type FlowRibbonSeg } from './forms-rails.js';
 
 /** 图例的一项（形 ＋ 字）。 */
@@ -193,13 +194,21 @@ export function sankeyModel(base: FlowRibbonBase, sources: readonly FlowRibbonRe
         l2: clampPct(Math.min(l1 + h, src.topPct + src.heightPct)),
         r1,
         r2: clampPct(Math.min(r1 + h, use.topPct + use.heightPct)),
-        title: src.name + ' → ' + use.name + '：' + fmtAmount(link.amount) + ' ' + base.unit
-          + '（占总额 ' + shareOf(link.amount, base.total) + '）',
+        title: m('base-render.components-flow-ribbon-forms.c001', {
+          p0: String(src.name),
+          p1: String(use.name),
+          p2: String(fmtAmount(link.amount)),
+          p3: String(base.unit),
+          p4: String(shareOf(link.amount, base.total)),
+        }),
       });
     }
   }
 
-  const perPctText = '1% 高 ≈ ' + fmtAmount(Math.round(base.total / spanPct)) + ' ' + base.unit;
+  const perPctText = m('base-render.components-flow-ribbon-forms.c002', {
+    p0: String(fmtAmount(Math.round(base.total / spanPct))),
+    p1: String(base.unit),
+  });
   const missing = srcNodes.concat(useNodes).filter((n) => !n.inside);
   const readouts = missing.map((n, i) => ({
     name: n.name,
@@ -224,11 +233,15 @@ export function sankeyModel(base: FlowRibbonBase, sources: readonly FlowRibbonRe
     lanes,
     readouts,
     legend: srcNodes.map((n) => ({ mark: n.mark, text: n.name })),
-    ariaLabel: '桑基图：左边 ' + String(srcNodes.length) + ' 股来源（'
-      + srcNodes.map((n) => n.name + ' ' + n.amountText).join('、') + '），右边 '
-      + String(useNodes.length) + ' 类用途（' + useNodes.map((n) => n.name + ' ' + n.amountText).join('、')
-      + '），共 ' + fmtAmount(base.total) + ' ' + base.unit + '；两侧同一把尺子（' + perPctText + '）——'
-      + '左边一股与右边一格可以横着比',
+    ariaLabel: m('base-render.components-flow-ribbon-forms.c003', {
+      p0: String(String(srcNodes.length)),
+      p1: String(srcNodes.map((n) => n.name + ' ' + n.amountText).join('、')),
+      p2: String(String(useNodes.length)),
+      p3: String(useNodes.map((n) => n.name + ' ' + n.amountText).join('、')),
+      p4: String(fmtAmount(base.total)),
+      p5: String(base.unit),
+      p6: String(perPctText),
+    }),
   };
 }
 
@@ -246,7 +259,11 @@ export function matrixModel(base: FlowRibbonBase, sources: readonly FlowRibbonRe
         shareText: '',
         barPct: 0,
         mixPct: 0,
-        title: from + ' → ' + use + '：这一股确实没往这里流（写 ' + FLOW_RIBBON_MISSING + '，不写 0）',
+        title: m('base-render.components-flow-ribbon-forms.c004', {
+          p0: String(from),
+          p1: String(use),
+          p2: String(FLOW_RIBBON_MISSING),
+        }),
       };
     }
     const barPct = round2(link.amount / maxCell * 100);
@@ -259,8 +276,13 @@ export function matrixModel(base: FlowRibbonBase, sources: readonly FlowRibbonRe
       /* 底色深浅：**从强调色 token 算**（6% 起、最大格 26%），不许写死色值；
          条长与深浅是同一把尺子的两种读法（都按全表最大格）。 */
       mixPct: round1(6 + barPct * 0.2),
-      title: from + ' → ' + use + '：' + fmtAmount(link.amount) + ' ' + base.unit
-        + '（占总额 ' + shareOf(link.amount, base.total) + '）',
+      title: m('base-render.components-flow-ribbon-forms.c005', {
+        p0: String(from),
+        p1: String(use),
+        p2: String(fmtAmount(link.amount)),
+        p3: String(base.unit),
+        p4: String(shareOf(link.amount, base.total)),
+      }),
     };
   };
   const rows: FlowRibbonMatrixRow[] = sources.map((s) => ({
@@ -277,7 +299,12 @@ export function matrixModel(base: FlowRibbonBase, sources: readonly FlowRibbonRe
        故这里不算几何，零值明示"无条"（渲染侧本就不写 `style`，死数据不许留）。 */
     barPct: 0,
     mixPct: 0,
-    title: u.name + ' 合计：' + u.amountText + ' ' + base.unit + '（占总额 ' + u.shareText + '）',
+    title: m('base-render.components-flow-ribbon-forms.c006', {
+      p0: String(u.name),
+      p1: String(u.amountText),
+      p2: String(base.unit),
+      p3: String(u.shareText),
+    }),
   }));
   return {
     ...base,
@@ -287,11 +314,16 @@ export function matrixModel(base: FlowRibbonBase, sources: readonly FlowRibbonRe
     foot,
     maxText: fmtAmount(maxCell),
     legend: [],
-    ariaLabel: '交叉矩阵：行是 ' + String(sources.length) + ' 个来源（'
-      + sources.map((s) => s.name + ' ' + s.amountText).join('、') + '），列是 ' + String(uses.length) + ' 类用途（'
-      + uses.map((u) => u.name + ' ' + u.amountText).join('、') + '）；格里的数字是金额与它占总额的比例，'
-      + '条长＝这一格 ÷ 全表最大格 ' + fmtAmount(maxCell) + ' ' + base.unit + '；共 '
-      + fmtAmount(base.total) + ' ' + base.unit + '，行合计＝列合计',
+    ariaLabel: m('base-render.components-flow-ribbon-forms.c007', {
+      p0: String(String(sources.length)),
+      p1: String(sources.map((s) => s.name + ' ' + s.amountText).join('、')),
+      p2: String(String(uses.length)),
+      p3: String(uses.map((u) => u.name + ' ' + u.amountText).join('、')),
+      p4: String(fmtAmount(maxCell)),
+      p5: String(base.unit),
+      p6: String(fmtAmount(base.total)),
+      p7: String(base.unit),
+    }),
   };
 }
 

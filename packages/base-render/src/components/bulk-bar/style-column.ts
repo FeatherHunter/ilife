@@ -10,6 +10,7 @@
 import { skinVar } from '../skin/contract.js';
 import { bulkBarSlot, type BulkBarSlot } from './attrs.js';
 import { BULK_BAR_BOX_PX, BULK_BAR_MIN_TARGET_PX, BULK_BAR_ROW_MIN_HEIGHT_PX } from './style-sizes.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -26,8 +27,8 @@ export function bulkBarColumnCss(input?: { readonly prefix?: string }): string {
   const s = (slot: BulkBarSlot): string => root + ' ' + c(slot);
 
   return [
-    '/* bulk-bar（批量操作条 · 形态 A「选中后浮出来的操作条（底部）」）：条目列 ＋ 选中 ≥1 条时浮出的操作条。',
-    '   层次不靠阴影与大圆角：靠发丝线、底色块与字重差 ⇒ 换皮只换取值。 */',
+    m('base-render.components-bulk-bar-style-column.c001'),
+    m('base-render.components-bulk-bar-style-column.c002'),
     box + ' {',
     /* 宽度判据的落点：本件是**自己的容器**——嵌进侧栏／面板／卡片时照样按自己的宽度排。 */
     '  container-type: inline-size;',
@@ -55,7 +56,7 @@ export function bulkBarColumnCss(input?: { readonly prefix?: string }): string {
     '  gap: 0;',
     '  min-width: 0;',
     '}',
-    '/* 条目那一列：纸面 ＋ 发丝线（圆角靠这一层裁一次，行的高亮才不出角）。 */',
+    m('base-render.components-bulk-bar-style-column.c003'),
     s('list') + ' {',
     '  display: grid;',
     '  grid-template-columns: minmax(0, 1fr);',
@@ -66,9 +67,9 @@ export function bulkBarColumnCss(input?: { readonly prefix?: string }): string {
     '  overflow: hidden;',
     '}',
     '/* 一行：勾选框（命中盒 44×44）‖ 主字与副语 ‖ 右端读数。**整行是 `<label>`＝命中区**。',
-    '   三块走 flex ＋ `flex-wrap`：读数按内容宽排（`flex:0 1 auto`），但**最多占 45%**',
-    '   （`max-width`）——不设这个上限的话，一串超长读数会把主字挤成一列孤字；',
-    '   反过来主字也不设上限，位置不够时两块各让一步、各自折行（永不 `…` 截断）。 */',
+    m('base-render.components-bulk-bar-style-column.c004'),
+    m('base-render.components-bulk-bar-style-column.c005'),
+    m('base-render.components-bulk-bar-style-column.c006'),
     s('row') + ' {',
     '  display: flex;',
     '  flex-wrap: wrap;',
@@ -83,12 +84,12 @@ export function bulkBarColumnCss(input?: { readonly prefix?: string }): string {
     s('row') + ':first-child {',
     '  border-top: 0;',
     '}',
-    '/* 整行选中（四档口径里的「整行／整块选中」）：底 `surface-2` ＋ 左端 2px 强调侧标；行内主字仍 `ink`。 */',
+    m('base-render.components-bulk-bar-style-column.c007'),
     s('row') + '.is-on {',
     '  background: ' + skinVar('surface-2') + ';',
     '  box-shadow: inset 2px 0 0 ' + skinVar('accent') + ';',
     '}',
-    '/* 勾不动的那一行：光标给出来，原因由 `-why` 那行字写着（不只染色）。 */',
+    m('base-render.components-bulk-bar-style-column.c008'),
     s('row') + '.is-off {',
     '  cursor: not-allowed;',
     '  color: ' + skinVar('ink-3') + ';',
@@ -101,8 +102,8 @@ export function bulkBarColumnCss(input?: { readonly prefix?: string }): string {
     '  width: ' + String(BULK_BAR_MIN_TARGET_PX) + 'px;',
     '  height: ' + String(BULK_BAR_MIN_TARGET_PX) + 'px;',
     '}',
-    '/* 原生框铺满 44×44 命中盒：视觉隐藏走 `opacity:0`，**不是** `display:none`',
-    '   （那会把键盘可达性一并干掉；`:focus-visible` 的环改画在旁边那枚视觉盒上）。 */',
+    m('base-render.components-bulk-bar-style-column.c009'),
+    m('base-render.components-bulk-bar-style-column.c010'),
     s('check') + ' input {',
     '  position: absolute;',
     '  inset: 0;',
@@ -124,7 +125,7 @@ export function bulkBarColumnCss(input?: { readonly prefix?: string }): string {
     '  border-radius: ' + skinVar('radius-sm') + ';',
     '  background: ' + skinVar('surface') + ';',
     '}',
-    '/* 勾上（无文字的格那一档）：`accent` 实底 ＋ 一枚对钩（勾＝图形，才许放实底上）。 */',
+    m('base-render.components-bulk-bar-style-column.c011'),
     s('check') + ' input:checked + ' + c('box') + ' {',
     '  background: ' + skinVar('accent') + ';',
     '  border-color: ' + skinVar('accent') + ';',
@@ -167,8 +168,8 @@ export function bulkBarColumnCss(input?: { readonly prefix?: string }): string {
     '  font-style: normal;',
     '  overflow-wrap: anywhere;',
     '}',
-    '/* 行右端的读数（金额／条数）：等宽数字、**永不 `…` 截断**（位置不够就折行）。',
-    '   宽到最多 45% —— 上限不是为了省地方，是为了**别把主字挤成一列孤字**。 */',
+    m('base-render.components-bulk-bar-style-column.c012'),
+    m('base-render.components-bulk-bar-style-column.c013'),
     s('reading') + ' {',
     '  flex: 0 1 auto;',
     '  min-width: 0;',

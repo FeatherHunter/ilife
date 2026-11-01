@@ -89,7 +89,7 @@ function optRealText(value: unknown, field: string): string | undefined {
 /** 只许入参表里写着的键：多给一个键（多半是打错名）＝拒，不静默吞掉。 */
 function assertKeys(raw: Record<string, unknown>, allowed: readonly string[], field: string): void {
   for (const key of Object.keys(raw)) {
-    if (!allowed.includes(key)) badInput(field + ' 里没有 `' + key + '` 这个键（入参表以外的键一律拒：写错的键静默吞掉会让调用方以为自己设上了）');
+    if (!allowed.includes(key)) badInput(field + ' 里没有 「' + key + '」 这个键（入参表以外的键一律拒：写错的键静默吞掉会让调用方以为自己设上了）');
   }
 }
 

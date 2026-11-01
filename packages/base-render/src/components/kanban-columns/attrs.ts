@@ -24,6 +24,7 @@
  */
 
 /** 本件的类名根：全部槽位类名都是 `KANBAN_COLUMNS_CLASS + '-' + 槽名`。 */
+import { m } from '../../entries/index.js';
 export const KANBAN_COLUMNS_CLASS = 'ilife-block-kanban-columns';
 
 /** 槽位闭集（标记契约的一部分：`render.ts`／`style.ts`／`runtime.ts` 与判据都用这里的名字拼类名）。 */
@@ -188,37 +189,37 @@ export const KANBAN_COLUMNS_MARKS = ['●', '▸', '✓', '◆'] as const;
 
 /* ── 文案（缺省的那几句；调用方换列名与卡名，状态句的语义别换） ───────── */
 
-export const KANBAN_COLUMNS_TEXT = Object.freeze({
+export const KANBAN_COLUMNS_TEXT = {
   /** 脚注：这一件的拿法（只说看得见的通路，不提拖拽那一路）。`status` 档：最小单位是一张卡。 */
-  hint: '点一张卡选中，再点目标列的收纳按钮挪过去。',
+  get hint() { return m('base-render.components-kanban-columns-attrs.c002'); },
   /** `grouped` 档的脚注：那一档的最小单位是**一行物件**，字面照实写「一行物件」——
    *  同一句话在两档里指的不是同一样东西，术语不许含糊。 */
-  rowHint: '点一行物件选中，再点目标列的收纳按钮挪过去。',
+  get rowHint() { return m('base-render.components-kanban-columns-attrs.c003'); },
   /** 取消键上的字。 */
-  cancel: '取消选中',
+  get cancel() { return m('base-render.components-kanban-columns-attrs.c004'); },
   /** 空槽两句：空着也保留列头与计数（空列不许消失）。 */
-  emptyTitle: '这一列现在是空的',
+  get emptyTitle() { return m('base-render.components-kanban-columns-attrs.c005'); },
   /* 两句话之间不写 `；`：那枚分隔符会撞仓库那把尺子（`test/separator-probe.mjs` 的 R2：
      可见文本里出现 `；` 就是「用符号简化了 UI 展示」的设计债）。 */
-  emptyNote: '卡片挪过来就有内容。空着也保留列头与计数',
+  get emptyNote() { return m('base-render.components-kanban-columns-attrs.c006'); },
   /** 没选中时状态句写的那一句（真读数，不是占位）。 */
-  idle: '还没选中卡片。',
+  get idle() { return m('base-render.components-kanban-columns-attrs.c007'); },
   /** `grouped` 档没选中那一句（同样是读数：那一档的最小单位是行）。 */
-  rowIdle: '还没选中物件。',
+  get rowIdle() { return m('base-render.components-kanban-columns-attrs.c008'); },
   /** 收纳键的字（中间夹列名）：`放到「做过了」`。 */
-  receivePre: '放到「',
-  receivePost: '」',
+  get receivePre() { return m('base-render.components-kanban-columns-attrs.c009'); },
+  get receivePost() { return '」'; },
   /** 落点线上的字：`放这里＝标记为「做过了」`。 */
-  dropPre: '放这里＝标记为「',
-  dropPost: '」',
+  get dropPre() { return m('base-render.components-kanban-columns-attrs.c010'); },
+  get dropPost() { return '」'; },
   /** 加键的字（`＋`，无障碍名另拼）。 */
-  add: '＋',
+  get add() { return '＋'; },
   /** 加键无障碍名的两半：`往「想做」里加一张`。 */
-  addPre: '往「',
-  addPost: '」里加一张',
+  get addPre() { return m('base-render.components-kanban-columns-attrs.c011'); },
+  get addPost() { return m('base-render.components-kanban-columns-attrs.c012'); },
   /** 计数单位（列不给 `unit` 时的缺省）。 */
-  unit: '件',
-} as const);
+  get unit() { return m('base-render.components-kanban-columns-attrs.c013'); },
+};
 
 /** 收纳键上的字（`放到「做过了」`）。 */
 export function kanbanReceiveText(name: string): string {
@@ -242,7 +243,7 @@ export function kanbanCountText(count: number, unit: string): string {
 
 /** 选中那一句的**模板**（两档同一句语义，只住这一处）：`已选中「X」，点目标列的收纳按钮挪过去。` */
 function pickedText(name: string): string {
-  return '已选中「' + name + '」，点目标列的收纳按钮挪过去。';
+  return m('base-render.components-kanban-columns-attrs.c001', { p0: String(name) });
 }
 
 /** 状态句（真读数：没选中写一句，选中了写清选的是谁、下一步点哪儿）。

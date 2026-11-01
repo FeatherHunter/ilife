@@ -112,7 +112,7 @@ describe('photo-grid ① 渲染契约', () => {
     const html = renderPhotoGrid(SAMPLE);
     assert.match(html, /-add"><span class="ilife-block-photo-grid-add-mark" aria-hidden="true">＋<\/span>/);
     assert.ok(html.includes(PHOTO_GRID_ADD_MARK + '</span>'));
-    assert.ok(html.includes('>' + PHOTO_GRID_ADD_LABEL + '</span>'));
+    assert.ok(html.includes('>' + PHOTO_GRID_ADD_LABEL() + '</span>'));
     assert.equal((html.match(new RegExp('-add"', 'g')) || []).length, 1, '「加一张」只许出现一格');
     assert.ok(stripComments(photoGridCss()).includes('-add {\n  display: grid;'));
     assert.equal(renderPhotoGrid({ ...SAMPLE, add: false }).includes('-add"'), false, '给 false 就不出那一格');
@@ -145,7 +145,7 @@ describe('photo-grid ① 渲染契约', () => {
 
   it('一格都没有 ⇒ 空态 ＋ 只剩「加一张」那一格（新账本本来就没有照片）', () => {
     const html = renderPhotoGrid({ photos: [] });
-    assert.ok(html.includes(PHOTO_GRID_EMPTY_TEXT));
+    assert.ok(html.includes(PHOTO_GRID_EMPTY_TEXT()));
     assert.equal((html.match(/<figure/g) || []).length, 0);
     assert.ok(html.includes('-add"'));
   });

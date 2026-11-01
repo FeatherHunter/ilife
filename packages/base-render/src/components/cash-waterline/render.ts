@@ -39,23 +39,24 @@ import {
   type CashWaterlineWaterlineModel,
   type CashWaterlineWeekModel,
 } from './model.js';
+import { m } from '../../entries/index.js';
 
 /** 卡头：标题 ＋ 右端那一组（本件算出来的**第三格** ＋ 调用方给的那句）。三形态共用。 */
-function headHtml(m: CashWaterlineModel): string {
+function headHtml(model: CashWaterlineModel): string {
   const parts: string[] = ['<div class="' + cashWaterlineSlot('hd') + '">',
-    '<h4 class="' + cashWaterlineSlot('title') + '">' + esc(m.title) + '</h4>',
+    '<h4 class="' + cashWaterlineSlot('title') + '">' + esc(model.title) + '</h4>',
     '<div class="' + cashWaterlineSlot('hd-tail') + '">',
-    '<span class="' + cashWaterlineSlot('head-extra') + '">' + esc(m.headExtra) + '</span>'];
-  if (m.stamp !== undefined) {
-    parts.push('<span class="' + cashWaterlineSlot('stamp') + '">' + esc(m.stamp) + '</span>');
+    '<span class="' + cashWaterlineSlot('head-extra') + '">' + esc(model.headExtra) + '</span>'];
+  if (model.stamp !== undefined) {
+    parts.push('<span class="' + cashWaterlineSlot('stamp') + '">' + esc(model.stamp) + '</span>');
   }
   parts.push('</div></div>');
   return parts.join('');
 }
 
 /** 脚注：口径行（本件永远出一句——不给就由 `model.ts` 写自己的口径）。 */
-function noteHtml(m: CashWaterlineModel): string {
-  return '<p class="' + cashWaterlineSlot('note') + '">' + esc(m.note) + '</p>';
+function noteHtml(model: CashWaterlineModel): string {
+  return '<p class="' + cashWaterlineSlot('note') + '">' + esc(model.note) + '</p>';
 }
 
 /** 图例的一行（色块 ＋ 一句话；数字另在点名那块里）。 */
@@ -71,29 +72,29 @@ function legendItemHtml(kind: string, text: string): string {
  *  今天那一格永远写字（写「今天」）——它在哪一列都跑不掉。
  *  天数多到一格站不下一个字时（`axis.mode === 'range'`）改出**一行区间读数**：
  *  「09-01 – 09-31」＋（今天那一格）——照实说清这一段是哪几天，而不是把 5px 宽的字硬塞进格子。 */
-function axisHtml(m: CashWaterlineWaterlineModel): string {
-  if (m.axis.mode === 'range') {
+function axisHtml(model: CashWaterlineWaterlineModel): string {
+  if (model.axis.mode === 'range') {
     const parts: string[] = ['<div class="' + cashWaterlineSlot('xax') + ' is-range">',
-      '<span class="' + cashWaterlineSlot('xax-cell') + ' is-range">' + esc(m.axis.rangeText) + '</span>'];
-    if (m.axis.todayText !== undefined) {
+      '<span class="' + cashWaterlineSlot('xax-cell') + ' is-range">' + esc(model.axis.rangeText) + '</span>'];
+    if (model.axis.todayText !== undefined) {
       parts.push('<span class="' + cashWaterlineSlot('xax-cell') + ' is-range is-today">'
-        + esc(m.axis.todayText) + '</span>');
+        + esc(model.axis.todayText) + '</span>');
     }
     parts.push('</div>');
     return parts.join('');
   }
   return '<div class="' + cashWaterlineSlot('xax') + '">'
-    + m.days.map((d) => '<span class="' + cashWaterlineSlot('xax-cell') + (d.today ? ' is-today' : '') + '">'
+    + model.days.map((d) => '<span class="' + cashWaterlineSlot('xax-cell') + (d.today ? ' is-today' : '') + '">'
       + esc(d.axis) + '</span>').join('') + '</div>';
 }
 
 /** 告急日点名：跌破底线的日子逐条写出来（日期 ＋ 那天花了多少 ＋ 余量）。 */
-function lowListHtml(m: CashWaterlineWaterlineModel): string {
-  if (m.lowCount === 0) return '';
+function lowListHtml(model: CashWaterlineWaterlineModel): string {
+  if (model.lowCount === 0) return '';
   const parts: string[] = ['<div class="' + cashWaterlineSlot('lowlist') + '">',
-    '<p class="' + cashWaterlineSlot('low-title') + '">跌破底线的日子 · ' + esc(String(m.lowCount)) + ' 天</p>',
+    '<p class="' + cashWaterlineSlot('low-title') + '">跌破底线的日子 · ' + esc(String(model.lowCount)) + ' 天</p>',
     '<ul class="' + cashWaterlineSlot('low-rows') + '">'];
-  for (const row of m.lowRows) {
+  for (const row of model.lowRows) {
     parts.push('<li class="' + cashWaterlineSlot('low-row') + '">'
       + '<b class="' + cashWaterlineSlot('low-day') + '">' + esc(row.label) + '</b>'
       + '<span class="' + cashWaterlineSlot('low-spend') + '">那天花 ' + esc(row.spendText) + '</span>'
@@ -104,27 +105,27 @@ function lowListHtml(m: CashWaterlineWaterlineModel): string {
 }
 
 /** 形态 A 的骨架：卡头 → 画布（底线 ＋ 逐日柱）→ 横轴 → 图例 → 点名 → 脚注。 */
-function renderWaterline(m: CashWaterlineWaterlineModel): string {
-  const parts: string[] = [headHtml(m)];
-  parts.push('<div class="' + cashWaterlineSlot('plot') + '" role="img" aria-label="' + esc(m.ariaLabel) + '">');
+function renderWaterline(model: CashWaterlineWaterlineModel): string {
+  const parts: string[] = [headHtml(model)];
+  parts.push('<div class="' + cashWaterlineSlot('plot') + '" role="img" aria-label="' + esc(model.ariaLabel) + '">');
   parts.push('<span class="' + cashWaterlineSlot('thr') + '" aria-hidden="true">'
-    + '<b class="' + cashWaterlineSlot('thr-text') + '">底线 ' + esc(m.thresholdText) + '</b></span>');
-  for (const day of m.days) {
+    + '<b class="' + cashWaterlineSlot('thr-text') + '">底线 ' + esc(model.thresholdText) + '</b></span>');
+  for (const day of model.days) {
     const cls = ' is-' + (day.low ? 'low' : 'keep') + (day.today ? ' is-today' : '');
     parts.push('<span class="' + cashWaterlineSlot('col') + cls + '" aria-hidden="true">'
       + '<i class="' + cashWaterlineSlot('fill') + '" style="' + CASH_WATERLINE_HEIGHT_VAR
       + ': ' + String(day.pct) + '%"></i></span>');
   }
   parts.push('</div>');
-  parts.push(axisHtml(m));
+  parts.push(axisHtml(model));
   parts.push('<ul class="' + cashWaterlineSlot('legend') + '">'
-    + legendItemHtml('keep', '余量占预算')
-    + legendItemHtml('low', '跌破底线（' + m.legendLow + '）')
+    + legendItemHtml('keep', m('base-render.components-cash-waterline-render.c001'))
+    + legendItemHtml('low', m('base-render.components-cash-waterline-render.c002', { p0: String(model.legendLow) }))
     /* 没标今天就不出这一行图例：图例是"图上有什么"的说明，不能替图多写一条。 */
-    + (m.todayIndex === undefined ? '' : legendItemHtml('today', '今天'))
+    + (model.todayIndex === undefined ? '' : legendItemHtml('today', m('base-render.components-cash-waterline-render.c003')))
     + '</ul>');
-  parts.push(lowListHtml(m));
-  parts.push(noteHtml(m));
+  parts.push(lowListHtml(model));
+  parts.push(noteHtml(model));
   return parts.join('');
 }
 
@@ -132,13 +133,17 @@ function renderWaterline(m: CashWaterlineWaterlineModel): string {
 
 /** 一周那一行：行头（名字 ｜ 进 ｜ 出 ｜ 净 ｜ 越过底线的读数）＋ 轨道（填充 ＋ 底线刻度）。 */
 function weekRowHtml(week: CashWaterlineWeekModel): string {
+  const inflowLine = m('base-render.components-cash-waterline-render.c004', { p0: String(week.inflowText) });
+  const outflowLine = m('base-render.components-cash-waterline-render.c005', { p0: String(week.outflowText) });
+  const netLine = m('base-render.components-cash-waterline-render.c006', { p0: String(week.netText) });
+  const usedLine = m('base-render.components-cash-waterline-render.c007', { p0: String(week.usedText) });
   const parts: string[] = ['<div class="' + cashWaterlineSlot('brow') + (week.low ? ' is-low' : '') + '">'];
   parts.push('<span class="' + cashWaterlineSlot('bhd') + '">'
     + '<b class="' + cashWaterlineSlot('bhd-name') + '">' + esc(week.label) + '</b>'
-    + '<span class="' + cashWaterlineSlot('bhd-num') + '">进 ' + esc(week.inflowText) + '</span>'
-    + '<span class="' + cashWaterlineSlot('bhd-num') + '">出 ' + esc(week.outflowText) + '</span>'
-    + '<span class="' + cashWaterlineSlot('net') + '">净 ' + esc(week.netText) + '</span>'
-    + (week.over ? '<span class="' + cashWaterlineSlot('over') + '">已用 ' + esc(week.usedText) + '</span>' : '')
+    + '<span class="' + cashWaterlineSlot('bhd-num') + '">' + esc(inflowLine) + '</span>'
+    + '<span class="' + cashWaterlineSlot('bhd-num') + '">' + esc(outflowLine) + '</span>'
+    + '<span class="' + cashWaterlineSlot('net') + '">' + esc(netLine) + '</span>'
+    + (week.over ? '<span class="' + cashWaterlineSlot('over') + '">' + esc(usedLine) + '</span>' : '')
     + '</span>');
   parts.push('<span class="' + cashWaterlineSlot('rail') + '">'
     + '<i class="' + cashWaterlineSlot('rail-fill') + '" aria-hidden="true" style="' + CASH_WATERLINE_WIDTH_VAR
@@ -152,16 +157,16 @@ function weekRowHtml(week: CashWaterlineWeekModel): string {
  *
  *  **不给整块挂 `role="img"`**：这一形态的内容全是字（周名、进／出、净、已用比例），
  *  挂 `role="img"` 会把子树判成图形、把那些字从读屏里抹掉。给一句 `role="group"` 的名字即可。 */
-function renderBullet(m: CashWaterlineBulletModel): string {
-  const parts: string[] = [headHtml(m)];
-  parts.push('<div class="' + cashWaterlineSlot('bullet') + '" role="group" aria-label="' + esc(m.ariaLabel) + '">');
-  for (const week of m.weeks) parts.push(weekRowHtml(week));
+function renderBullet(model: CashWaterlineBulletModel): string {
+  const parts: string[] = [headHtml(model)];
+  parts.push('<div class="' + cashWaterlineSlot('bullet') + '" role="group" aria-label="' + esc(model.ariaLabel) + '">');
+  for (const week of model.weeks) parts.push(weekRowHtml(week));
   parts.push('</div>');
   parts.push('<ul class="' + cashWaterlineSlot('legend') + '">'
-    + legendItemHtml('keep', '本周结束时已用掉预算的比例')
-    + legendItemHtml('low', '跌破底线（' + m.legendLow + '）')
+    + legendItemHtml('keep', m('base-render.components-cash-waterline-render.c008'))
+    + legendItemHtml('low', m('base-render.components-cash-waterline-render.c009', { p0: String(model.legendLow) }))
     + '</ul>');
-  parts.push(noteHtml(m));
+  parts.push(noteHtml(model));
   return parts.join('');
 }
 
@@ -197,37 +202,37 @@ function flowCardHtml(kind: string, name: string, countText: string, totalText: 
 }
 
 /** 形态 C 的骨架：卡头 → 三栏 → 脚注（三栏里的字都在，`role="group"` 只给这一块一个名字）。 */
-function renderFlow(m: CashWaterlineFlowModel): string {
-  const f = m.flow;
-  const parts: string[] = [headHtml(m),
-    '<div class="' + cashWaterlineSlot('three') + '" role="group" aria-label="' + esc(m.ariaLabel) + '">'];
-  parts.push(flowCardHtml('in', '进', f.inCountText, f.inTotalText, f.inflow));
-  parts.push(flowCardHtml('out', '出', f.outCountText, f.outTotalText, f.outflow));
-  parts.push(flowCardHtml('left', '余', f.leftPctText, f.leftText,
-    [{ name: '日均', amountText: f.avgText, fillPct: f.leftFillPct }],
+function renderFlow(model: CashWaterlineFlowModel): string {
+  const f = model.flow;
+  const parts: string[] = [headHtml(model),
+    '<div class="' + cashWaterlineSlot('three') + '" role="group" aria-label="' + esc(model.ariaLabel) + '">'];
+  parts.push(flowCardHtml('in', m('base-render.components-cash-waterline-render.c010'), f.inCountText, f.inTotalText, f.inflow));
+  parts.push(flowCardHtml('out', m('base-render.components-cash-waterline-render.c011'), f.outCountText, f.outTotalText, f.outflow));
+  parts.push(flowCardHtml('left', m('base-render.components-cash-waterline-render.c012'), f.leftPctText, f.leftText,
+    [{ name: m('base-render.components-cash-waterline-render.c013'), amountText: f.avgText, fillPct: f.leftFillPct }],
     { word: f.verdictWord, text: f.verdictText, ok: f.ok }));
   parts.push('</div>');
-  parts.push(noteHtml(m));
+  parts.push(noteHtml(model));
   return parts.join('');
 }
 
 /** 形态 → 骨架（分派写在这里，加第四形态就是加一支）。 */
 const SKELETONS: Readonly<Record<CashWaterlineForm, (m: CashWaterlineModel) => string>> = {
-  waterline: (m) => renderWaterline(m as CashWaterlineWaterlineModel),
-  bullet: (m) => renderBullet(m as CashWaterlineBulletModel),
-  flow: (m) => renderFlow(m as CashWaterlineFlowModel),
+  waterline: (model) => renderWaterline(model as CashWaterlineWaterlineModel),
+  bullet: (model) => renderBullet(model as CashWaterlineBulletModel),
+  flow: (model) => renderFlow(model as CashWaterlineFlowModel),
 };
 
 /** 渲染现金水位（纯函数：同样的入参恒产同样的字节；转义只经 `shared/escape.ts`）。 */
 export function renderCashWaterline(input: unknown): string {
-  const m = normalizeCashWaterline(input);
-  const extra = m.extraClass === undefined ? '' : ' ' + m.extraClass;
+  const model = normalizeCashWaterline(input);
+  const extra = model.extraClass === undefined ? '' : ' ' + model.extraClass;
   /* 几何只经**本件自己的**自定义属性交给样式段（名字住 `attrs.ts`，不占 `--ilife-*` 那个皮肤命名空间）：
      形态 A 给底线在画布上的位置，形态 B 给底线换算成「已用」的位置（形态 C 的条宽逐行自带，不需要根上的变量）。 */
   const vars: string[] = [];
-  if (m.form === 'waterline') vars.push(CASH_WATERLINE_THRESHOLD_VAR + ': ' + String(m.thresholdPct) + '%');
-  if (m.form === 'bullet') vars.push(CASH_WATERLINE_USED_THRESHOLD_VAR + ': ' + String(m.usedThresholdPct) + '%');
+  if (model.form === 'waterline') vars.push(CASH_WATERLINE_THRESHOLD_VAR + ': ' + String(model.thresholdPct) + '%');
+  if (model.form === 'bullet') vars.push(CASH_WATERLINE_USED_THRESHOLD_VAR + ': ' + String(model.usedThresholdPct) + '%');
   const style = vars.length === 0 ? '' : ' style="' + vars.join('; ') + '"';
-  return '<div class="' + CASH_WATERLINE_CLASS + ' is-' + m.form + extra + '"' + style + '>'
-    + SKELETONS[m.form](m) + '</div>';
+  return '<div class="' + CASH_WATERLINE_CLASS + ' is-' + model.form + extra + '"' + style + '>'
+    + SKELETONS[model.form](model) + '</div>';
 }

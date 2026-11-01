@@ -16,6 +16,7 @@ import {
   type PhotoGridItem,
   type PhotoGridRatio,
 } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 归一化后的一格。 */
 export interface PhotoGridItemModel {
@@ -63,7 +64,7 @@ function itemModel(value: unknown, field: string): PhotoGridItemModel {
     if (typeof countGiven !== 'number' || !Number.isInteger(countGiven) || countGiven < 1) {
       badInput(field + '.count 必须是 >= 1 的整数（这一格是几张叠着）');
     }
-    if (countGiven >= PHOTO_GRID_MIN_STACK) stackText = String(countGiven) + ' 张';
+    if (countGiven >= PHOTO_GRID_MIN_STACK) stackText = m('base-render.components-photo-grid-model.c001', { p0: String(String(countGiven)) });
   }
   return {
     src,
@@ -88,7 +89,8 @@ function groupModel(value: unknown, field: string, withMonth: boolean): PhotoGri
   /* 「几天」＝题注条上出现过的**不同日期**个数（不解析日期本身，标了几个不同的日子就是几天）。 */
   const days = new Set<string>();
   for (const p of photos) if (p.date !== undefined) days.add(p.date);
-  const countText = (days.size > 0 ? String(days.size) + ' 天 · ' : '') + String(photos.length) + ' 张';
+  const dayPart = days.size > 0 ? m('base-render.components-photo-grid-model.c002', { p0: String(String(days.size)) }) : '';
+  const countText = m('base-render.components-photo-grid-model.c003', { p0: String(dayPart + String(photos.length)) });
   return {
     month,
     note: optText(raw.note, field + '.note'),

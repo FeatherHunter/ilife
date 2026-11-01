@@ -17,6 +17,7 @@ import {
   hourBandSlot,
   type HourBandSlot,
 } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -52,9 +53,9 @@ export function hourBandCss(input?: { readonly prefix?: string }): string {
   const k = ladder();
 
   const out: string[] = [
-    '/* hour-band（时段带 · 形态 A「单带＋整点刻度尺（0–23）＋下方明细行」）：一天摊成一条带，',
-    '   每段按"当天第几分钟"定位，**长度就是「多久」**；段宽时再写一遍时长，下面逐段列明细行。',
-    '   层次不靠阴影与大圆角（小票纸零阴影、大字报刊零圆角）：靠发丝线、字重与深浅阶梯 ⇒ 换皮只换取值。 */',
+    m('base-render.components-hour-band-style.c001'),
+    m('base-render.components-hour-band-style.c002'),
+    m('base-render.components-hour-band-style.c003'),
     root + ' .' + p + 'block-hour-band {',
     /* 宽度判据的落点：本件是**自己的容器**——嵌进侧栏／面板／卡片时照样按自己的宽度决定刻度密度。 */
     '  container-type: inline-size;',
@@ -66,7 +67,7 @@ export function hourBandCss(input?: { readonly prefix?: string }): string {
     '  font-size: ' + skinVar('fs-body') + ';',
     '  line-height: 1.5;',
     '}',
-    '/* 头部：标题 ＋ 用途 ＋ 合计（合计顶右缘；容器一窄，三件自己折行，谁也不压谁）。 */',
+    m('base-render.components-hour-band-style.c004'),
     s('hd') + ' {',
     '  display: flex;',
     '  flex-wrap: wrap;',
@@ -110,7 +111,7 @@ export function hourBandCss(input?: { readonly prefix?: string }): string {
     '  font-variant-numeric: tabular-nums;',
     '  overflow-wrap: anywhere;',
     '}',
-    '/* 那条带：底的软色＝"这一天"，段＝"在做什么"（段是百分比定位，恒在带内）。 */',
+    m('base-render.components-hour-band-style.c005'),
     s('band') + ' {',
     '  position: relative;',
     '  min-width: 0;',
@@ -137,8 +138,8 @@ export function hourBandCss(input?: { readonly prefix?: string }): string {
     out.push(s('sg') + '.is-l' + String(tone) + ' { background: ' + k[tone - 1] + '; }');
   }
   out.push(
-    '/* 段里的时长字：写在**卡面小牌**上（深浅块上的字不赌色阶亮度，换皮也读得清）。',
-    '   段太窄时本字不上屏（归一化期就判掉），时长另有明细行的读数兜底。 */',
+    m('base-render.components-hour-band-style.c006'),
+    m('base-render.components-hour-band-style.c007'),
     s('sg-text') + ' {',
     '  text-decoration: none;',
     '  padding: 2px 4px;',
@@ -152,7 +153,7 @@ export function hourBandCss(input?: { readonly prefix?: string }): string {
     '  font-variant-numeric: tabular-nums;',
     '  white-space: nowrap;',
     '}',
-    '/* 整点刻度尺：**和带同一张 24 列模板**（刻度永远落在整点上）。 */',
+    m('base-render.components-hour-band-style.c008'),
     s('ruler') + ' {',
     '  display: grid;',
     '  grid-template-columns: repeat(' + String(HOUR_BAND_HOURS) + ', minmax(0, 1fr));',
@@ -169,7 +170,7 @@ export function hourBandCss(input?: { readonly prefix?: string }): string {
     '  text-align: center;',
     '  white-space: nowrap;',
     '}',
-    '/* 图例：色块 ＋ 类别名（色块 aria-hidden，名字是字）。 */',
+    m('base-render.components-hour-band-style.c009'),
     s('lgs') + ' {',
     '  display: flex;',
     '  flex-wrap: wrap;',
@@ -198,7 +199,7 @@ export function hourBandCss(input?: { readonly prefix?: string }): string {
     out.push(s('sw') + '.is-l' + String(tone) + ' { background: ' + k[tone - 1] + '; }');
   }
   out.push(
-    '/* 明细行：起止／名称／时长／补充读数。起止与时长 `nowrap`（**关键读数不截断**），名称换行。 */',
+    m('base-render.components-hour-band-style.c010'),
     s('rows') + ' {',
     '  display: grid;',
     '  gap: 0;',
@@ -243,7 +244,7 @@ export function hourBandCss(input?: { readonly prefix?: string }): string {
     '  font-variant-numeric: tabular-nums;',
     '  white-space: nowrap;',
     '}',
-    '/* 未记录那一行：名字转弱（**"这一段没有记录"是它的语义**）。 */',
+    m('base-render.components-hour-band-style.c011'),
     s('r') + '.is-nil ' + c('n') + ' {',
     '  color: ' + skinVar('ink-3') + ';',
     '}',
@@ -255,17 +256,17 @@ export function hourBandCss(input?: { readonly prefix?: string }): string {
     '  line-height: 1.6;',
     '  overflow-wrap: anywhere;',
     '}',
-    '/* 本件自身不带可点元素。这一条是**地板**：调用方若把某行包成链接，焦点必须看得见——',
-    '   不许只写 `outline:none` 而不给替代。 */',
+    m('base-render.components-hour-band-style.c012'),
+    m('base-render.components-hour-band-style.c013'),
     root + ' .' + p + 'block-hour-band :focus-visible {',
     '  outline: 2px solid ' + skinVar('accent') + ';',
     '  outline-offset: 2px;',
     '}',
-    '/* 窄容器（<' + String(HOUR_BAND_RULER_NARROW_PX) + 'px）：刻度尺**只留偶数点**（每 2 小时一格）。',
-    '   24 个数字在窄档会挤成一团（那正是"压字"），隔一格读起来反而更清楚；',
-    '   **用 `visibility` 而不是 `display:none`**：`display:none` 的格子退出网格布局，',
-    '   剩下的 12 枚会**往前挤**（0 号位变成 1 点的位置）——刻度就整体错位了（判据量相邻空隙时抓到的）。',
-    '   判的是**本件自己的宽度**：本件会被嵌进侧栏／面板／卡片，视口宽 ≠ 组件宽。 */',
+    m('base-render.components-hour-band-style.c014', { p0: String(String(HOUR_BAND_RULER_NARROW_PX)) }),
+    m('base-render.components-hour-band-style.c015'),
+    m('base-render.components-hour-band-style.c016'),
+    m('base-render.components-hour-band-style.c017'),
+    m('base-render.components-hour-band-style.c018'),
     '@container (max-width: ' + String(HOUR_BAND_RULER_NARROW_PX - 1) + 'px) {',
     '  ' + s('ruler-hour') + '.is-odd {',
     '    visibility: hidden;',

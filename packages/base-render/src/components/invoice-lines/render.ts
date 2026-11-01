@@ -23,6 +23,7 @@ import {
   invoiceLinesSlot,
 } from './attrs.js';
 import { normalizeInvoiceLines, type InvoiceLinesModel, type InvoiceLineModel } from './model.js';
+import { m } from '../../entries/index.js';
 
 /** 一行（原价／减项／加项）。 */
 function lineHtml(line: InvoiceLineModel): string {
@@ -31,7 +32,7 @@ function lineHtml(line: InvoiceLineModel): string {
   parts.push('<span class="' + invoiceLinesSlot('label') + '">' + esc(line.label) + '</span>');
   parts.push('<span class="' + invoiceLinesSlot('amount') + '">' + esc(line.amountText) + '</span>');
   if (line.why !== undefined) {
-    const tag = line.kind === 'base' ? '' : '<b>' + esc(line.kind === 'cut' ? INVOICE_LINES_WHY_CUT : INVOICE_LINES_WHY_ADD) + '</b>';
+    const tag = line.kind === 'base' ? '' : '<b>' + esc(line.kind === 'cut' ? INVOICE_LINES_WHY_CUT() : INVOICE_LINES_WHY_ADD()) + '</b>';
     parts.push('<span class="' + invoiceLinesSlot('why') + '">' + tag + esc(line.why) + '</span>');
   }
   parts.push('</li>');
@@ -39,53 +40,56 @@ function lineHtml(line: InvoiceLineModel): string {
 }
 
 /** 实付那一行：重线收口 ＋ 加粗放大；均摊与前后的差额都写在它的副语里。 */
-function totalHtml(m: InvoiceLinesModel): string {
+function totalHtml(model: InvoiceLinesModel): string {
   const parts: string[] = ['<li class="' + invoiceLinesSlot('line') + ' is-total" data-ilife-invoice-kind="total">'];
-  parts.push('<span class="' + invoiceLinesSlot('label') + '">' + esc(m.totalLabel) + '</span>');
-  parts.push('<span class="' + invoiceLinesSlot('amount') + '">' + esc(m.totalText) + '</span>');
-  const subs: string[] = ['<span>' + esc(m.deltaText) + '</span>'];
-  if (m.discountText !== undefined) subs.push('<span>' + esc(m.discountText) + '</span>');
-  if (m.shareText !== undefined) subs.push('<span>' + esc(m.shareText) + '</span>');
+  parts.push('<span class="' + invoiceLinesSlot('label') + '">' + esc(model.totalLabel) + '</span>');
+  parts.push('<span class="' + invoiceLinesSlot('amount') + '">' + esc(model.totalText) + '</span>');
+  const subs: string[] = ['<span>' + esc(model.deltaText) + '</span>'];
+  if (model.discountText !== undefined) subs.push('<span>' + esc(model.discountText) + '</span>');
+  if (model.shareText !== undefined) subs.push('<span>' + esc(model.shareText) + '</span>');
   parts.push('<span class="' + invoiceLinesSlot('why') + '">' + subs.join('') + '</span>');
-  if (m.shareNote !== undefined) {
-    parts.push('<span class="' + invoiceLinesSlot('share') + '">' + esc(m.shareNote) + '</span>');
+  if (model.shareNote !== undefined) {
+    parts.push('<span class="' + invoiceLinesSlot('share') + '">' + esc(model.shareNote) + '</span>');
   }
   parts.push('</li>');
   return parts.join('');
 }
 
 /** 形态 A 的骨架。 */
-function renderChain(m: InvoiceLinesModel): string {
+function renderChain(model: InvoiceLinesModel): string {
   const parts: string[] = ['<ol class="' + invoiceLinesSlot('list') + '">'];
-  for (const line of m.lines) parts.push(lineHtml(line));
-  parts.push(totalHtml(m));
+  for (const line of model.lines) parts.push(lineHtml(line));
+  parts.push(totalHtml(model));
   parts.push('</ol>');
-  if (m.note.length > 0) {
-    const spans = m.note.map((s) => '<span>' + esc(s) + '</span>').join('');
+  if (model.note.length > 0) {
+    const spans = model.note.map((s) => '<span>' + esc(s) + '</span>').join('');
     parts.push('<p class="' + invoiceLinesSlot('note') + '">' + spans + '</p>');
   }
   return parts.join('');
 }
 
 /** 形态 D 的骨架：一条纯 CSS 瀑布条 ＋ 逐行图例。 */
-function renderWaterfall(m: InvoiceLinesModel): string {
+function renderWaterfall(model: InvoiceLinesModel): string {
   const parts: string[] = ['<div class="' + invoiceLinesSlot('bar') + '" role="img" aria-label="'
-    + esc('从 ' + m.baseText + ' 到 ' + m.totalText + ' 的分解：' + m.deltaText) + '">'];
-  for (const seg of m.segments) {
+    + esc(m('base-render.components-invoice-lines-render.c001', {
+      p0: String(model.baseText),
+      p1: String(model.totalText),
+      p2: String(model.deltaText),
+    })) + '">'];
+  for (const seg of model.segments) {
     parts.push('<span class="' + invoiceLinesSlot('seg') + ' is-' + seg.kind + '" style="width: '
       + esc(String(seg.pct)) + '%">'
       + (seg.wide ? '<b>' + esc(seg.label) + '</b><i>' + esc(seg.amountText) + '</i>' : '')
       + '</span>');
   }
   parts.push('</div>');
-  parts.push('<p class="' + invoiceLinesSlot('foot') + '">' + esc('条长以「原价 ＋ 加项」为满分：' + m.spanText
-    + '；减项与实付合起来正好铺满。') + '</p>');
+  parts.push('<p class="' + invoiceLinesSlot('foot') + '">' + esc(m('base-render.components-invoice-lines-render.c002', { p0: String(model.spanText) })) + '</p>');
   parts.push('<ul class="' + invoiceLinesSlot('legend') + '">');
   parts.push('<li class="' + invoiceLinesSlot('legend-row') + ' is-base">'
     + '<i class="' + invoiceLinesSlot('legend-swatch') + ' is-base" aria-hidden="true"></i>'
-    + '<span class="' + invoiceLinesSlot('legend-label') + '">' + esc(m.lines[0].label) + '</span>'
-    + '<span class="' + invoiceLinesSlot('legend-amount') + '">' + esc(m.baseText) + '</span></li>');
-  for (const line of m.lines) {
+    + '<span class="' + invoiceLinesSlot('legend-label') + '">' + esc(model.lines[0].label) + '</span>'
+    + '<span class="' + invoiceLinesSlot('legend-amount') + '">' + esc(model.baseText) + '</span></li>');
+  for (const line of model.lines) {
     if (line.kind === 'base') continue;
     parts.push('<li class="' + invoiceLinesSlot('legend-row') + ' is-' + line.kind + '">'
       + '<i class="' + invoiceLinesSlot('legend-swatch') + ' is-' + line.kind + '" aria-hidden="true"></i>'
@@ -94,13 +98,13 @@ function renderWaterfall(m: InvoiceLinesModel): string {
   }
   parts.push('<li class="' + invoiceLinesSlot('legend-row') + ' is-total">'
     + '<i class="' + invoiceLinesSlot('legend-swatch') + ' is-total" aria-hidden="true"></i>'
-    + '<span class="' + invoiceLinesSlot('legend-label') + '">' + esc(m.totalLabel) + '</span>'
-    + '<span class="' + invoiceLinesSlot('legend-amount') + '">' + esc(m.totalText) + '</span></li>');
+    + '<span class="' + invoiceLinesSlot('legend-label') + '">' + esc(model.totalLabel) + '</span>'
+    + '<span class="' + invoiceLinesSlot('legend-amount') + '">' + esc(model.totalText) + '</span></li>');
   parts.push('</ul>');
-  const subs: string[] = ['<span>' + esc(m.deltaText) + '</span>'];
-  if (m.discountText !== undefined) subs.push('<span>' + esc(m.discountText) + '</span>');
-  if (m.shareText !== undefined) subs.push('<span>' + esc(m.shareText) + '</span>');
-  for (const seg of m.note) subs.push('<span>' + esc(seg) + '</span>');
+  const subs: string[] = ['<span>' + esc(model.deltaText) + '</span>'];
+  if (model.discountText !== undefined) subs.push('<span>' + esc(model.discountText) + '</span>');
+  if (model.shareText !== undefined) subs.push('<span>' + esc(model.shareText) + '</span>');
+  for (const seg of model.note) subs.push('<span>' + esc(seg) + '</span>');
   parts.push('<p class="' + invoiceLinesSlot('note') + '">' + subs.join('') + '</p>');
   return parts.join('');
 }
@@ -113,8 +117,8 @@ const SKELETONS: Readonly<Record<InvoiceLinesModel['form'], (m: InvoiceLinesMode
 
 /** 渲染金额分解（纯函数：同样的入参恒产同样的字节；转义只经 `shared/escape.ts`）。 */
 export function renderInvoiceLines(input: unknown): string {
-  const m = normalizeInvoiceLines(input);
-  const extra = m.extraClass === undefined ? '' : ' ' + m.extraClass;
-  return '<div class="' + INVOICE_LINES_CLASS + ' is-' + m.form + extra + '">'
-    + SKELETONS[m.form](m) + '</div>';
+  const model = normalizeInvoiceLines(input);
+  const extra = model.extraClass === undefined ? '' : ' ' + model.extraClass;
+  return '<div class="' + INVOICE_LINES_CLASS + ' is-' + model.form + extra + '">'
+    + SKELETONS[model.form](model) + '</div>';
 }

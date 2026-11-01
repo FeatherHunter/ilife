@@ -26,6 +26,7 @@ import {
   type GoalStairsState,
   type GoalStairsStep,
 } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 只许入参表里写着的键：多给一个键（多半是打错名）＝拒，不静默吞掉。
  *
@@ -43,7 +44,7 @@ function assertKeys(raw: Record<string, unknown>, allowed: readonly string[], fi
   for (const key of Object.getOwnPropertyNames(raw)) note(key);
   for (const key in raw) note(key);
   if (bad.length > 0) {
-    badInput(field + ' 里没有 `' + bad.join('`／`') + '` 这个键（入参表以外的键一律拒：'
+    badInput(field + ' 里没有 「' + bad.join('」「') + '」 这个键（入参表以外的键一律拒：'
       + '写错的键静默吞掉会让调用方以为自己设上了；继承来的与不可枚举的键同样算）');
   }
 }
@@ -52,19 +53,18 @@ function assertKeys(raw: Record<string, unknown>, allowed: readonly string[], fi
 const INPUT_KEYS = ['title', 'today', 'todayPct', 'steps', 'form', 'note', 'extraClass'] as const;
 
 /** `GoalStairsStep` 的键（一段的入参表；`steps` 的每个元素）。 */
-const STEP_KEYS = ['from', 'to', 'start', 'startPct', 'endPct', 'state'] as const;
+function STEP_KEYS(): readonly string[] { return ['from', 'to', 'start', 'startPct', 'endPct', 'state']; }
 
 /** 中文小数目字：卡头那枚段数写成「四段」（1–8 段都取得到；超出闭集由段数上下限先拦下）。 */
-const COUNT_WORDS = ['一', '二', '三', '四', '五', '六', '七', '八'];
+function COUNT_WORDS(): readonly string[] { return [m('base-render.components-goal-stairs-model.c002'), m('base-render.components-goal-stairs-model.c003'), m('base-render.components-goal-stairs-model.c004'), m('base-render.components-goal-stairs-model.c005'), m('base-render.components-goal-stairs-model.c006'), m('base-render.components-goal-stairs-model.c007'), m('base-render.components-goal-stairs-model.c008'), m('base-render.components-goal-stairs-model.c009')]; }
 
 /** 本形态的缺省口径句。**从句里不出现 `·` 与 `；`，也不并列三段以上**——仓库的分隔符门
  *  对可见文本零豁免（口径见 `test/separator-probe.mjs`）。
  *  注：**这不是原型那一句**。原型 C 档的 `.dv-cap` 里没有 `；`（唯一的 `；` 在那件 `dup` 分工说明里），
  *  本句是按层规新写的：把「模型那句业务口径」换成件自己的读数纪律。 */
-export const GOAL_STAIRS_DEFAULT_NOTE =
-  '口径：从目标日往回倒推每一段的最晚动手日（这一段要走的量除以还能用的天数）。'
-  + '竖线是今天，整段落在竖线左边的窗口已经过期，会点名写「来不及」。'
-  + '已达成的那段再写一个 ✓，不只靠颜色。';
+export function GOAL_STAIRS_DEFAULT_NOTE(): string {
+  return m('base-render.components-goal-stairs-model.c010');
+}
 
 /** 一段（内部类型：每个字段都已校验、已归一）。 */
 export interface GoalStairsRowModel {
@@ -105,8 +105,8 @@ export interface GoalStairsModel {
 
 /** 段数 → 卡头那枚字（`四段`）。1–8 取中文小数目字，超出闭集由段数上下限先拦下。 */
 function countWordOf(count: number): string {
-  const word = COUNT_WORDS[count - 1];
-  return (word === undefined ? String(count) : word) + GOAL_STAIRS_COUNT_UNIT;
+  const word = COUNT_WORDS()[count - 1];
+  return (word === undefined ? String(count) : word) + GOAL_STAIRS_COUNT_UNIT();
 }
 
 /** 百分数：0–100 的有限数。**越界与缺位是两条不同的错**，各报各的（调用方一眼知道缺什么）。 */
@@ -127,7 +127,7 @@ function reqStep(value: unknown, index: number): GoalStairsStep {
   const at = 'goal-stairs: input.steps[' + String(index) + ']';
   assertPlainObject(value, at);
   const raw = value as Record<string, unknown>;
-  assertKeys(raw, STEP_KEYS, at);
+  assertKeys(raw, STEP_KEYS(), at);
   const from = reqText(raw.from, at + '.from');
   const to = reqText(raw.to, at + '.to');
   const start = reqText(raw.start, at + '.start');
@@ -175,8 +175,12 @@ function rowOf(step: GoalStairsStep, index: number, todayPct: number): GoalStair
   const no = String(index + 1);
   return {
     index: index + 1,
-    name: '第 ' + no + ' 段 ' + step.from + ' → ' + step.to,
-    windowWord: GOAL_STAIRS_WINDOW_LEAD + ' ' + step.start + ' ' + GOAL_STAIRS_WINDOW_TAIL,
+    name: m('base-render.components-goal-stairs-model.c001', {
+      p0: String(no),
+      p1: String(step.from),
+      p2: String(step.to),
+    }),
+    windowWord: GOAL_STAIRS_WINDOW_LEAD() + ' ' + step.start + ' ' + GOAL_STAIRS_WINDOW_TAIL(),
     stateWord: GOAL_STAIRS_STATE_WORDS[step.state],
     state: step.state,
     /* 过期＝窗口**整段**落在竖线左边（右端也strictly在左边），且这一段还没达成。
@@ -184,7 +188,7 @@ function rowOf(step: GoalStairsStep, index: number, todayPct: number): GoalStair
     late: step.state !== 'done' && step.endPct < todayPct,
     startPct: step.startPct,
     endPct: step.endPct,
-    dueWord: GOAL_STAIRS_DUE_LEAD + ' ' + step.start,
+    dueWord: GOAL_STAIRS_DUE_LEAD() + ' ' + step.start,
     dueFlip: step.startPct > GOAL_STAIRS_DUE_FLIP_PCT,
   };
 }
@@ -212,7 +216,7 @@ export function normalizeGoalStairs(input: unknown): GoalStairsModel {
     todayPct,
     countWord: countWordOf(steps.length),
     rows: steps.map((step, i) => rowOf(step, i, todayPct)),
-    note: note === undefined ? GOAL_STAIRS_DEFAULT_NOTE : note,
+    note: note === undefined ? GOAL_STAIRS_DEFAULT_NOTE() : note,
     extraClass: optExtraClass(raw.extraClass, 'goal-stairs: input.extraClass'),
   };
 }

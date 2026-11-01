@@ -90,9 +90,9 @@ describe('compare-columns ① 渲染契约（结构）', () => {
     assert.equal((html.match(new RegExp(slot('side') + ' ' + compareColumnsSideClass('left'), 'g')) || []).length, 3);
     assert.equal((html.match(new RegExp(slot('side') + ' ' + compareColumnsSideClass('right'), 'g')) || []).length, 3);
     assert.ok(html.includes('<span class="' + slot('label') + '">餐费</span>'), '项名住中缝那一列');
-    assert.ok(html.includes('<span class="' + slot('diff-label') + '">' + COMPARE_COLUMNS_DIFF_LABEL + '</span>'),
+    assert.ok(html.includes('<span class="' + slot('diff-label') + '">' + COMPARE_COLUMNS_DIFF_LABEL() + '</span>'),
       '差额单独一行，标签恒为「差额合计」');
-    assert.ok(html.includes('<p class="' + slot('caliber') + '"><b>' + COMPARE_COLUMNS_CALIBER_LABEL + '</b>'),
+    assert.ok(html.includes('<p class="' + slot('caliber') + '"><b>' + COMPARE_COLUMNS_CALIBER_LABEL() + '</b>'),
       '口径行带标签');
     assert.ok(!/<script/i.test(html), '不产脚本');
     assert.ok(!/\son[a-z]+=/i.test(html), '不产内联事件处理器');

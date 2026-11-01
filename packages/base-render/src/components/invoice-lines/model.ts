@@ -21,6 +21,7 @@ import {
   type InvoiceLinesForm,
   type InvoiceShare,
 } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 归一化后的一行。 */
 export interface InvoiceLineModel {
@@ -111,7 +112,7 @@ function lineModel(value: unknown, index: number, money: (n: number) => string):
     badInput(field + '.kind 必须是 ' + INVOICE_LINE_KINDS.join('／') + ' 之一');
   }
   const kind = kindGiven as InvoiceLineKind;
-  if (index === 0 && kind !== 'base') badInput(field + '：第一行必须是 kind: "base" 的原价（没有原价就没有「拆」这件事）');
+  if (index === 0 && kind !== 'base') badInput(field + '：第一行必须是 kind=base 的原价（没有原价就没有「拆」这件事）');
   if (index > 0 && kind === 'base') badInput(field + '：原价只许出现在第一行');
   const amount = reqNum(raw.amount, field + '.amount');
   if (amount <= 0) badInput(field + '.amount 必须是**正的量**（符号由 kind 定：减项前面挂 −）');
@@ -162,7 +163,7 @@ export function normalizeInvoiceLines(input: unknown): InvoiceLinesModel {
   }
   /* 钱符号先定下来：**每一行的金额都带它**（只有实付带符号、减项不带，读者会以为减项不是钱）。 */
   const symbol = optText(raw.symbol, 'invoice-lines: input.symbol') ?? INVOICE_LINES_SYMBOL;
-  const totalLabel = optText(raw.totalLabel, 'invoice-lines: input.totalLabel') ?? INVOICE_LINES_TOTAL_LABEL;
+  const totalLabel = optText(raw.totalLabel, 'invoice-lines: input.totalLabel') ?? INVOICE_LINES_TOTAL_LABEL();
   const money = (n: number): string => symbol + formatInvoiceAmount(n);
   const lines = given.map((l, i) => lineModel(l, i, money));
 
@@ -180,11 +181,13 @@ export function normalizeInvoiceLines(input: unknown): InvoiceLinesModel {
   if (total < 0) badInput('invoice-lines: 减项合计超过了原价（实付成了负数：' + money(total) + '）——先核对这几行的金额');
 
   const diff = Math.round((base - total) * 100) / 100;
-  const deltaText = diff > 0 ? '比原价少 ' + money(diff)
-    : (diff < 0 ? '比原价多 ' + money(-diff) : '与原价相同');
+  const deltaText = diff > 0 ? m('base-render.components-invoice-lines-model.c001', { p0: String(money(diff)) })
+    : (diff < 0 ? m('base-render.components-invoice-lines-model.c002', { p0: String(money(-diff)) }) : m('base-render.components-invoice-lines-model.c003'));
   /* 折扣：**折**是按十成算的（实付 ÷ 原价 × 10），不是百分数 —— 134／168 ＝ 8.0 折。 */
   const discountText = diff > 0 && base > 0
-    ? '合 ' + (Math.round((total / base) * 100) / 10).toFixed(1) + ' 折'
+    ? m('base-render.components-invoice-lines-model.c004', {
+      p0: String((Math.round((total / base) * 100) / 10).toFixed(1)),
+    })
     : undefined;
 
   /* 均摊：写进实付那一行的副语。除不尽时**说清差的那几分钱去哪了**，不四舍五入糊过去。 */
@@ -197,11 +200,18 @@ export function normalizeInvoiceLines(input: unknown): InvoiceLinesModel {
     const people = reqNum(share.people, 'invoice-lines: input.share.people');
     if (!Number.isInteger(people) || people < 2) badInput('invoice-lines: input.share.people 必须是 >= 2 的整数');
     const each = Math.round((total / people) * 100) / 100;
-    shareText = INVOICE_LINES_SHARE_WORD + ' ' + String(people) + ' 人，每人 ' + money(each);
+    shareText = m('base-render.components-invoice-lines-model.c005', {
+      p0: String(INVOICE_LINES_SHARE_WORD()),
+      p1: String(String(people)),
+      p2: String(money(each)),
+    });
     const rest = Math.round((total - each * people) * 100) / 100;
     shareNote = optText(share.note, 'invoice-lines: input.share.note')
       ?? (rest === 0 ? undefined
-        : '除不尽：先按每人 ' + money(each) + ' 算，差的 ' + money(rest) + ' 记在付款人头上');
+        : m('base-render.components-invoice-lines-model.c006', {
+          p0: String(money(each)),
+          p1: String(money(rest)),
+        }));
   }
 
   /* 瀑布条：条长满分 ＝ 原价 ＋ 加项合计（减项与实付合起来正好铺满；加项自己抬高了起点）。 */

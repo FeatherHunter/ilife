@@ -49,6 +49,7 @@ import {
   type KanbanColumnsForm,
 } from './attrs.js';
 import { normalizeKanbanColumns, type KanbanCardRow, type KanbanColumnRow, type KanbanColumnsModel, type KanbanGroupRow, type KanbanItemRow } from './model.js';
+import { m } from '../../entries/index.js';
 
 /** 一张卡：标题 ＋ 副语 ＋ 状态（记号 ＋ 它在哪一列）。整卡是一枚按钮，没有第二颗。 */
 function cardHtml(col: KanbanColumnRow, card: KanbanCardRow, picked: boolean): string {
@@ -85,9 +86,9 @@ function headHtml(col: KanbanColumnRow): string {
 }
 
 /** 一列：列头 ＋ 列身（选中态的落点线 ＋ 卡 ＋ 空槽 ＋ 收纳键）。 */
-function colHtml(m: KanbanColumnsModel, col: KanbanColumnRow): string {
-  const pickedHere = m.picked !== undefined && m.picked.colKey === col.key;
-  const canReceive = m.picked !== undefined && !pickedHere;
+function colHtml(model: KanbanColumnsModel, col: KanbanColumnRow): string {
+  const pickedHere = model.picked !== undefined && model.picked.colKey === col.key;
+  const canReceive = model.picked !== undefined && !pickedHere;
   const parts: string[] = ['<section class="' + kanbanColumnsSlot('col') + '"'
     + ' ' + KANBAN_COLUMNS_COL_ATTR + '="' + esc(col.key) + '"'
     + ' aria-label="' + esc(col.name + ' ' + col.count) + '">'];
@@ -97,7 +98,7 @@ function colHtml(m: KanbanColumnsModel, col: KanbanColumnRow): string {
     parts.push('<p class="' + kanbanColumnsSlot('drop') + '">' + esc(kanbanDropText(col.name)) + '</p>');
   }
   for (const card of col.cards) {
-    parts.push(cardHtml(col, card, m.picked !== undefined && m.picked.key === card.key));
+    parts.push(cardHtml(col, card, model.picked !== undefined && model.picked.key === card.key));
   }
   if (col.cards.length === 0) {
     parts.push('<p class="' + kanbanColumnsSlot('slot') + '">'
@@ -113,12 +114,12 @@ function colHtml(m: KanbanColumnsModel, col: KanbanColumnRow): string {
 }
 
 /** 窄档的分段切换：N 枚真按钮（宽档整条 `hidden`：三列本来就并排，不需要第二套入口）。 */
-function switchHtml(m: KanbanColumnsModel): string {
+function switchHtml(model: KanbanColumnsModel): string {
   const parts: string[] = ['<div class="' + kanbanColumnsSlot('switch') + '" role="group"'
-    + ' aria-label="' + esc('看哪一列') + '">'];
-  m.columns.forEach((col, i) => {
+    + ' aria-label="' + esc(m('base-render.components-kanban-columns-render.c001')) + '">'];
+  model.columns.forEach((col, i) => {
     const at = i + 1;
-    const on = at === m.activeCol;
+    const on = at === model.activeCol;
     parts.push('<button type="button" class="' + kanbanColumnsSlot('seg') + (on ? ' is-on' : '') + '"'
       + ' ' + KANBAN_COLUMNS_SEG_ATTR + '="' + String(at) + '"'
       + ' aria-pressed="' + (on ? 'true' : 'false') + '">'
@@ -129,36 +130,36 @@ function switchHtml(m: KanbanColumnsModel): string {
 }
 
 /** 骨架的头（宿主 ＋ 窄档分段切换）：两档**逐字节同一份**——抽出来只为「改一处、两档一起改」。 */
-function openHtml(m: KanbanColumnsModel): string {
-  const pickedAttr = m.picked === undefined ? '' : ' ' + KANBAN_COLUMNS_PICK_ATTR + '="' + esc(m.picked.key) + '"';
+function openHtml(model: KanbanColumnsModel): string {
+  const pickedAttr = model.picked === undefined ? '' : ' ' + KANBAN_COLUMNS_PICK_ATTR + '="' + esc(model.picked.key) + '"';
   return '<div class="' + kanbanColumnsSlot('host') + '"'
-    + ' ' + KANBAN_COLUMNS_ATTR + '="' + esc(m.id) + '"'
-    + ' ' + KANBAN_COLUMNS_SHOW_ATTR + '="' + String(m.activeCol) + '"' + pickedAttr + '>'
-    + switchHtml(m);
+    + ' ' + KANBAN_COLUMNS_ATTR + '="' + esc(model.id) + '"'
+    + ' ' + KANBAN_COLUMNS_SHOW_ATTR + '="' + String(model.activeCol) + '"' + pickedAttr + '>'
+    + switchHtml(model);
 }
 
 /** 骨架的尾巴（状态句 ＋ 取消键 ＋ 脚注）：两档**逐字节同一份**——这是这一件的状态读数与拿法，
  *  不是哪一档的旁白（旁白是原型里那些「这一块地方是干什么的」，本件一句都不搬）。
  *  唯一的形态差异在脚注那**一个词**：`status` 档的最小单位是卡、`grouped` 档是一行物件。 */
-function tailHtml(m: KanbanColumnsModel): string {
+function tailHtml(model: KanbanColumnsModel): string {
   const parts: string[] = ['<p class="' + kanbanColumnsSlot('status') + '" role="status"'
-    + ' ' + KANBAN_COLUMNS_STATUS_ATTR + '="' + esc(m.id) + '">' + esc(m.status) + '</p>'];
-  if (m.picked !== undefined) {
+    + ' ' + KANBAN_COLUMNS_STATUS_ATTR + '="' + esc(model.id) + '">' + esc(model.status) + '</p>'];
+  if (model.picked !== undefined) {
     parts.push('<button type="button" class="' + kanbanColumnsSlot('cancel') + '"'
-      + ' ' + KANBAN_COLUMNS_CANCEL_ATTR + '="' + esc(m.id) + '">'
+      + ' ' + KANBAN_COLUMNS_CANCEL_ATTR + '="' + esc(model.id) + '">'
       + esc(KANBAN_COLUMNS_TEXT.cancel) + '</button>');
   }
-  const hint = m.form === 'grouped' ? KANBAN_COLUMNS_TEXT.rowHint : KANBAN_COLUMNS_TEXT.hint;
+  const hint = model.form === 'grouped' ? KANBAN_COLUMNS_TEXT.rowHint : KANBAN_COLUMNS_TEXT.hint;
   parts.push('<p class="' + kanbanColumnsSlot('hint') + '">' + esc(hint) + '</p>');
   return parts.join('');
 }
 
 /** 形态 status 的骨架：分段切换 → 列区 → 状态句（＋取消键）→ 脚注。 */
-function renderStatus(m: KanbanColumnsModel): string {
-  const parts: string[] = [openHtml(m)];
-  parts.push('<div class="' + kanbanColumnsSlot('cols') + ' is-n' + String(m.columns.length) + '">'
-    + m.columns.map((col) => colHtml(m, col)).join('') + '</div>');
-  parts.push(tailHtml(m));
+function renderStatus(model: KanbanColumnsModel): string {
+  const parts: string[] = [openHtml(model)];
+  parts.push('<div class="' + kanbanColumnsSlot('cols') + ' is-n' + String(model.columns.length) + '">'
+    + model.columns.map((col) => colHtml(model, col)).join('') + '</div>');
+  parts.push(tailHtml(model));
   parts.push('</div>');
   return parts.join('');
 }
@@ -193,16 +194,16 @@ function groupHtml(col: KanbanColumnRow, group: KanbanGroupRow, pickedKey?: stri
 
 /** 一列（`grouped`）：列头 ＋ 列身（二级组 ＋ 收纳键）。
  *  **没有落点线、没有空槽旁白**：拿起之后每一列那枚收纳键自己亮起来（「放到「厨房」」就是那句话）。 */
-function groupedColHtml(m: KanbanColumnsModel, col: KanbanColumnRow): string {
-  const pickedHere = m.picked !== undefined && m.picked.colKey === col.key;
-  const canReceive = m.picked !== undefined && !pickedHere;
+function groupedColHtml(model: KanbanColumnsModel, col: KanbanColumnRow): string {
+  const pickedHere = model.picked !== undefined && model.picked.colKey === col.key;
+  const canReceive = model.picked !== undefined && !pickedHere;
   const parts: string[] = ['<section class="' + kanbanColumnsSlot('col') + '"'
     + ' ' + KANBAN_COLUMNS_COL_ATTR + '="' + esc(col.key) + '"'
     + ' aria-label="' + esc(col.name + ' ' + col.count) + '">'];
   parts.push(headHtml(col));
   parts.push('<div class="' + kanbanColumnsSlot('body') + '">');
   for (const group of col.groups) {
-    parts.push(groupHtml(col, group, m.picked === undefined ? undefined : m.picked.key));
+    parts.push(groupHtml(col, group, model.picked === undefined ? undefined : model.picked.key));
   }
   parts.push('<button type="button" class="' + kanbanColumnsSlot('receive') + '"'
     + ' ' + KANBAN_COLUMNS_RECEIVE_ATTR + '="' + esc(col.key) + '"'
@@ -214,11 +215,11 @@ function groupedColHtml(m: KanbanColumnsModel, col: KanbanColumnRow): string {
 }
 
 /** 形态 grouped 的骨架：分段切换 → 列区 → 状态句（＋取消键）→ 脚注（与 status 同一套头尾）。 */
-function renderGrouped(m: KanbanColumnsModel): string {
-  const parts: string[] = [openHtml(m)];
-  parts.push('<div class="' + kanbanColumnsSlot('cols') + ' is-n' + String(m.columns.length) + '">'
-    + m.columns.map((col) => groupedColHtml(m, col)).join('') + '</div>');
-  parts.push(tailHtml(m));
+function renderGrouped(model: KanbanColumnsModel): string {
+  const parts: string[] = [openHtml(model)];
+  parts.push('<div class="' + kanbanColumnsSlot('cols') + ' is-n' + String(model.columns.length) + '">'
+    + model.columns.map((col) => groupedColHtml(model, col)).join('') + '</div>');
+  parts.push(tailHtml(model));
   parts.push('</div>');
   return parts.join('');
 }
@@ -231,8 +232,8 @@ const SKELETONS: Readonly<Record<KanbanColumnsForm, (m: KanbanColumnsModel) => s
 
 /** 渲染看板列（纯函数：同样的入参恒产同样的字节；转义只经 `shared/escape.ts`）。 */
 export function renderKanbanColumns(input: unknown): string {
-  const m = normalizeKanbanColumns(input);
-  const extra = m.extraClass === undefined ? '' : ' ' + m.extraClass;
-  return '<div class="' + KANBAN_COLUMNS_CLASS + ' ' + kanbanColumnsFormClass(m.form) + extra + '">'
-    + SKELETONS[m.form](m) + '</div>';
+  const model = normalizeKanbanColumns(input);
+  const extra = model.extraClass === undefined ? '' : ' ' + model.extraClass;
+  return '<div class="' + KANBAN_COLUMNS_CLASS + ' ' + kanbanColumnsFormClass(model.form) + extra + '">'
+    + SKELETONS[model.form](model) + '</div>';
 }

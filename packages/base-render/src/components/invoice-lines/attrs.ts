@@ -12,6 +12,7 @@
  */
 
 /** 本件的类名根。 */
+import { m } from '../../entries/index.js';
 export const INVOICE_LINES_CLASS = 'ilife-block-invoice-lines';
 
 /** 槽位闭集。 */
@@ -70,12 +71,12 @@ export const INVOICE_LINES_KIND_MARKS: Readonly<Record<InvoiceLineKind, string>>
 });
 
 /** 减项／加项那行左端的两枚标签：**每行读得出「为什么」**就靠它们把原因点出来。 */
-export const INVOICE_LINES_WHY_CUT = '为什么减';
-export const INVOICE_LINES_WHY_ADD = '为什么加';
+export function INVOICE_LINES_WHY_CUT(): string { return m('base-render.components-invoice-lines-attrs.c001'); }
+export function INVOICE_LINES_WHY_ADD(): string { return m('base-render.components-invoice-lines-attrs.c002'); }
 
 /** 缺省的钱符号与实付行的名字。 */
 export const INVOICE_LINES_SYMBOL = '¥';
-export const INVOICE_LINES_TOTAL_LABEL = '实付';
+export function INVOICE_LINES_TOTAL_LABEL(): string { return m('base-render.components-invoice-lines-attrs.c003'); }
 
 /** 金额的小数位（钱按两位排：`168.00`）。 */
 export const INVOICE_LINES_DECIMALS = 2;
@@ -87,7 +88,7 @@ export const INVOICE_LINES_TOTAL_SCALE = 1.6;
 export const INVOICE_LINES_SEGMENT_MIN_PCT = 12;
 
 /** 均摊那句的左端词（「均摊 2 人，每人 ¥67.00」）。 */
-export const INVOICE_LINES_SHARE_WORD = '均摊';
+export function INVOICE_LINES_SHARE_WORD(): string { return m('base-render.components-invoice-lines-attrs.c004'); }
 
 /** 一笔钱里的一行。`amount` 是**正的量**（符号由 `kind` 定：减项前面挂 `−`）。 */
 export interface InvoiceLine {

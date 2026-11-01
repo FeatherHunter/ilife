@@ -14,6 +14,7 @@
  */
 import { skinVar } from '../skin/contract.js';
 import { heatGridSlot, type HeatGridSlot } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -46,9 +47,9 @@ export function heatGridCss(input?: { readonly prefix?: string }): string {
   const s = (slot: HeatGridSlot): string => root + ' .' + heatGridSlot(slot, p);
 
   return [
-    '/* heat-grid（热力格 · 形态 A「行时段 × 列星期」）：每一格的深浅表示量，带一档色键。',
-    '   五档深浅从强调色算出来（往卡面混）：换皮只换取值，色阶不写死；深浅不是唯一信息——',
-    '   色键给数字区间、峰值格带 ▲、右侧读数给数字。 */',
+    m('base-render.components-heat-grid-style.c001'),
+    m('base-render.components-heat-grid-style.c002'),
+    m('base-render.components-heat-grid-style.c003'),
     box + ' {',
     /* 宽度判据的落点：本件是**自己的容器**——嵌进侧栏／面板／卡片时照样按自己的宽度排。 */
     '  container-type: inline-size;',
@@ -100,8 +101,8 @@ export function heatGridCss(input?: { readonly prefix?: string }): string {
     '  gap: 12px 22px;',
     '  min-width: 0;',
     '}',
-    '/* **这一条是关键**：第一列按行标签的字宽占位（max-content），其余七列等分剩余宽度（minmax(0,1fr)）。',
-    '   七列在任何容器宽度下都摊在容器内 —— 不需要横滑、也不会有哪一列被挤出容器。 */',
+    m('base-render.components-heat-grid-style.c004'),
+    m('base-render.components-heat-grid-style.c005'),
     s('grid') + ' {',
     '  flex: 1 1 320px;',
     '  display: grid;',
@@ -157,7 +158,7 @@ export function heatGridCss(input?: { readonly prefix?: string }): string {
     s('cell') + '.is-l4, ' + s('swatch') + '.is-l4 {',
     '  background: ' + levelBg(4) + ';',
     '}',
-    '/* 峰值格那枚 ▲：**形是深浅之外的第二条信息**。深格用强调底上的字色、浅格用主文字色。 */',
+    m('base-render.components-heat-grid-style.c006'),
     s('peak-mark') + ' {',
     '  font-size: 10px;',
     '  line-height: 1;',
@@ -250,13 +251,13 @@ export function heatGridCss(input?: { readonly prefix?: string }): string {
     '  line-height: 1.6;',
     '  overflow-wrap: anywhere;',
     '}',
-    '/* 本件自身不带可点元素。这一条是**地板**：调用方把格子做成链接（点开某一天）时焦点必须看得见。 */',
+    m('base-render.components-heat-grid-style.c007'),
     box + ' :focus-visible {',
     '  outline: 2px solid ' + skinVar('accent') + ';',
     '  outline-offset: 2px;',
     '}',
-    '/* 窄容器（<' + String(NARROW_PX) + 'px）：行矮一档、列距收一档 —— **七列照旧全在**',
-    '   （列数不减：减列就是把一周砍成半周）；靠 `minmax(0,1fr)` 让每列自己变窄，不横滑、不藏横滑。 */',
+    m('base-render.components-heat-grid-style.c008', { p0: String(String(NARROW_PX)) }),
+    m('base-render.components-heat-grid-style.c009'),
     '@container (max-width: ' + String(NARROW_PX) + 'px) {',
     '  ' + s('grid') + ' {',
     '    grid-auto-rows: minmax(' + String(NARROW_ROW_PX) + 'px, auto);',

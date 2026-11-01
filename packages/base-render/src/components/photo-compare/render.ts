@@ -19,6 +19,7 @@ import {
   photoCompareSlot,
 } from './attrs.js';
 import { normalizePhotoCompare, type PhotoCompareDeltaModel, type PhotoCompareModel, type PhotoCompareSideModel } from './model.js';
+import { m } from '../../entries/index.js';
 
 /** 台面上那张照片的定形比例（窄档并排时由它定形；宽档台面自己带比例，框铺满）。 */
 const FRAME_RATIO = '4-5';
@@ -65,27 +66,30 @@ function deltaHtml(d: PhotoCompareDeltaModel): string {
 }
 
 /** 形态 A 的骨架。 */
-function renderDrag(m: PhotoCompareModel): string {
+function renderDrag(model: PhotoCompareModel): string {
   const parts: string[] = [];
   parts.push('<div class="' + photoCompareSlot('stage') + '">');
-  parts.push(layerHtml(m.before, 'before'));
-  parts.push(layerHtml(m.after, 'after'));
+  parts.push(layerHtml(model.before, 'before'));
+  parts.push(layerHtml(model.after, 'after'));
   parts.push('<span class="' + photoCompareSlot('divider') + '" aria-hidden="true"></span>');
   /* 拖动条是**原生 `range`**：键盘 `←`／`→` 各一档（`step`），指针拖、触摸拖都由原生接管；
      命中盒铺满台面，把手 44×44（`PHOTO_COMPARE_MIN_HIT_PX`）——不靠脚本才成立。 */
   parts.push('<input class="' + photoCompareSlot('range') + '" type="range" min="0" max="100" step="'
-    + String(PHOTO_COMPARE_STEP) + '" value="' + esc(String(m.position)) + '"'
-    + ' aria-label="' + esc(m.rangeLabel) + '"'
-    + ' aria-valuetext="' + esc('左 ' + m.before.date + '，右 ' + m.after.date) + '">');
+    + String(PHOTO_COMPARE_STEP) + '" value="' + esc(String(model.position)) + '"'
+    + ' aria-label="' + esc(model.rangeLabel) + '"'
+    + ' aria-valuetext="' + esc(m('base-render.components-photo-compare-render.c001', {
+      p0: String(model.before.date),
+      p1: String(model.after.date),
+    })) + '">');
   parts.push('</div>');
-  if (m.verdict !== undefined) {
-    parts.push('<p class="' + photoCompareSlot('verdict') + '">' + esc(m.verdict) + '</p>');
+  if (model.verdict !== undefined) {
+    parts.push('<p class="' + photoCompareSlot('verdict') + '">' + esc(model.verdict) + '</p>');
   }
   parts.push('<ul class="' + photoCompareSlot('deltas') + '">');
-  for (const d of m.deltas) parts.push(deltaHtml(d));
+  for (const d of model.deltas) parts.push(deltaHtml(d));
   parts.push('</ul>');
-  if (m.note !== undefined) {
-    parts.push('<p class="' + photoCompareSlot('note') + '">' + esc(m.note) + '</p>');
+  if (model.note !== undefined) {
+    parts.push('<p class="' + photoCompareSlot('note') + '">' + esc(model.note) + '</p>');
   }
   return parts.join('');
 }
@@ -97,10 +101,10 @@ const SKELETONS: Readonly<Record<PhotoCompareModel['form'], (m: PhotoCompareMode
 
 /** 渲染前后对比（纯函数：同样的入参恒产同样的字节；转义只经 `shared/escape.ts`）。 */
 export function renderPhotoCompare(input: unknown): string {
-  const m = normalizePhotoCompare(input);
-  const extra = m.extraClass === undefined ? '' : ' ' + m.extraClass;
-  return '<div class="' + PHOTO_COMPARE_CLASS + ' is-' + m.form + extra + '"'
+  const model = normalizePhotoCompare(input);
+  const extra = model.extraClass === undefined ? '' : ' ' + model.extraClass;
+  return '<div class="' + PHOTO_COMPARE_CLASS + ' is-' + model.form + extra + '"'
     + ' data-ilife-photo-compare=""'
-    + ' style="' + PHOTO_COMPARE_SPLIT_VAR + ': ' + esc(String(m.position)) + '%">'
-    + SKELETONS[m.form](m) + '</div>';
+    + ' style="' + PHOTO_COMPARE_SPLIT_VAR + ': ' + esc(String(model.position)) + '%">'
+    + SKELETONS[model.form](model) + '</div>';
 }

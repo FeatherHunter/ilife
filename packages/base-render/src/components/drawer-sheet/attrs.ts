@@ -11,6 +11,12 @@
  */
 
 /** 本件的类名根。 */
+import { m } from '../../entries/index.js';
+/** 模板原样返回（占位符由本件的运行时替换，求值端口不碰）：`{名}` 映射回它自己。 */
+const KEEP_PLACEHOLDERS: Readonly<Record<string, string>> = {
+  n: '{n}', from: '{from}', to: '{to}', label: '{label}', p: '{p}', why: '{why}',
+};
+
 export const DRAWER_CLASS = 'ilife-block-drawer-sheet';
 
 /** 类名根（带前缀）。 */
@@ -99,7 +105,7 @@ export const DRAWER_COUNT_ATTR = 'data-ilife-drawer-count';
 export const DRAWER_NOTE_ATTR = 'data-ilife-drawer-note';
 /** 「一个都没勾」那句话：勾上以后它被 `hidden` 收起。 */
 export const DRAWER_ZERO_ATTR = 'data-ilife-drawer-zero';
-/** 完成键上的模板（含 `{n}` 时，运行时就地换数；不含就一个字不动）。 */
+/** 完成键上的模板（含 `«n»` 时，运行时就地换数；不含就一个字不动）。 */
 export const DRAWER_TEMPLATE_ATTR = 'data-ilife-drawer-template';
 /** 绑定完成标记（幂等）。 */
 export const DRAWER_BOUND_ATTR = 'data-ilife-drawer-bound';
@@ -109,12 +115,12 @@ export const DRAWER_EVENT_CHANGE = 'ilife:drawer-change';
 export const DRAWER_EVENT_DONE = 'ilife:drawer-done';
 export const DRAWER_EVENT_CLOSE = 'ilife:drawer-close';
 
-/** 计数行与完成键的两句现成话（**模板里的 `{n}` 是唯一可变处**）。 */
-export const DRAWER_COUNT_LEAD = '已选';
-export const DRAWER_COUNT_UNIT = '个';
-export const DRAWER_DONE_TEMPLATE = '完成 {n} 项';
+/** 计数行与完成键的两句现成话（**模板里的 `«n»` 是唯一可变处**）。 */
+export function DRAWER_COUNT_LEAD(): string { return m('base-render.components-drawer-sheet-attrs.c001'); }
+export function DRAWER_COUNT_UNIT(): string { return m('base-render.components-drawer-sheet-attrs.c002'); }
+export function DRAWER_DONE_TEMPLATE(): string { return m('base-render.components-drawer-sheet-attrs.c003', KEEP_PLACEHOLDERS); }
 /** 一个都没勾时的那句话（替掉完成键的可用档，说明「为什么按不动」）。 */
-export const DRAWER_ZERO_NOTE = '一个都没勾';
+export function DRAWER_ZERO_NOTE(): string { return m('base-render.components-drawer-sheet-attrs.c004'); }
 /** 缺项一律写成它（全仓同一条地板：缺值写成 `—`，不写 0、不留空）。 */
 export const DRAWER_MISSING = '—';
 
@@ -158,7 +164,7 @@ export interface DrawerSheetInput {
   readonly hint?: string;
   /** 脚条计数后的说明（如「覆盖 7 条记录」）。 */
   readonly summary?: string;
-  /** 完成键的字模板（含 `{n}` 时就地换数）；缺省 `完成 {n} 项`。 */
+  /** 完成键的字模板（含 `«n»` 时就地换数）；缺省 `完成 «n» 项`。 */
   readonly doneLabel?: string;
   /** 贴哪一边，缺省 `bottom`（底部弹层）。 */
   readonly edge?: DrawerEdge;

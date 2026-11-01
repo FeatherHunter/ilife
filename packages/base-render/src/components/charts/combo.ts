@@ -15,6 +15,7 @@ import { Pt, polyPath } from './line.js';
 import { charts } from './dispatch.js';
 import { STYLE_PREFIX } from '../../style.js';
 import { ChartOutput, ComboChartInput, ComboChartOptions } from '../../spec/index.js';
+import { m } from '../../entries/index.js';
 
 /* ── combo ────────────────────────────────────────────────────────────── */
 
@@ -30,11 +31,15 @@ export function renderCombo(raw: ComboChartInput): ChartOutput {
   if (belowMinPoints(input.options, comboPoints)) return emptyOutput('combo', input.options, minPointsHintOf(input.options, comboPoints));
   if (bars.length > 0 && lines.length > 0) {
     if (bars.length !== lines.length) {
-      badStructure('charts.combo: bars 与 lines 长度不一致 (' + bars.length + ' vs ' + lines.length + ')');
+      badStructure(m('base-render.components-charts-combo.c001', { p0: String(bars.length), p1: String(lines.length) }));
     }
     bars.forEach((item, i) => {
       if (item.label !== lines[i].label) {
-        badStructure('charts.combo: bars 与 lines 的 label 必须一致 (items[' + i + ']: ' + item.label + ' vs ' + lines[i].label + ')');
+        badStructure(m('base-render.components-charts-combo.c002', {
+          p0: String(i),
+          p1: String(item.label),
+          p2: String(lines[i].label),
+        }));
       }
     });
   }
@@ -102,7 +107,7 @@ export function renderCombo(raw: ComboChartInput): ChartOutput {
   }
 
   const legend = opts !== undefined && opts.legend === true
-    ? legendHtml([{ name: '量', color: barColor }, { name: '趋势', color: lineColor }])
+    ? legendHtml([{ name: m('base-render.components-charts-combo.c003'), color: barColor }, { name: m('base-render.components-charts-combo.c004'), color: lineColor }])
     : '';
 
   const points = bars.length + lines.length;

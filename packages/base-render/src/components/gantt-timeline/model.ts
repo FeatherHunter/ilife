@@ -34,13 +34,15 @@ import {
   type GanttTimelineSegmentView,
 } from './layout.js';
 import { isOnGrid, scaleOf, tickCount, ticksOf } from './scale.js';
+import { m } from '../../entries/index.js';
 
 /** 内部类型：入参校验产出的读数 ＋ 装配产出的行与图例（每个字段都已校验、已归一）。 */
 export interface GanttTimelineModel extends GanttTimelineReadings, GanttTimelineLayout {}
 
 /** 本件的缺省口径句（**这一句是这一件的读数纪律，不是装饰**）。 */
-const DEFAULT_NOTE = '口径：一行＝一条泳道（不是一道菜），问的是这条资源什么时候空。'
-  + '关键路径单独一条，标 1 起的顺序号。空档段画成点线块并写分钟数，不装作占用。';
+function DEFAULT_NOTE(): string {
+  return m('base-render.components-gantt-timeline-model.c007');
+}
 
 /* ── 入参小件（数字／状态／格线） ─────────────────────────────────── */
 
@@ -91,7 +93,7 @@ function assertKeys(raw: object, allowed: readonly string[], field: string): voi
   for (const key of Object.getOwnPropertyNames(raw)) note(key);
   for (const key in raw) note(key);
   if (bad.length > 0) {
-    badInput(field + ' 里没有 `' + bad.join('`／`') + '` 这个键（入参表以外的键一律拒：'
+    badInput(field + ' 里没有 「' + bad.join('」「') + '」 这个键（入参表以外的键一律拒：'
       + '写错的键静默吞掉会让调用方以为自己设上了；继承来的与不可枚举的键同样算）');
   }
 }
@@ -135,7 +137,7 @@ function parseSegments(raw: unknown, laneLabel: string, cellMinutes: number): re
     const minutes = num(one.minutes, where + '.minutes');
     if (minutes <= 0) badInput(where + '.minutes 必须是正数');
     const to = from + minutes;
-    onGrid(to, cellMinutes, where + '.from 与 minutes 之和');
+    onGrid(to, cellMinutes, m('base-render.components-gantt-timeline-model.c001', { p0: String(where) }));
     if (state === 'idle' && minutes / cellMinutes < GANTT_TIMELINE_IDLE_MIN_CELLS - 1e-9) {
       badInput(where + '.minutes 太短：空档段至少要占 ' + String(GANTT_TIMELINE_IDLE_MIN_CELLS)
         + ' 格（再短的块里那枚分钟数要拆成好几行才放得下）');
@@ -200,8 +202,8 @@ function parseKeyPath(raw: unknown, cellMinutes: number): GanttTimelineKeyView {
     steps.push({ name: reqText(step.name, where + '.name'), minutes });
   });
   return {
-    label: optText(one.label, 'gantt-timeline: input.keyPath.label') ?? '关键路径',
-    note: optText(one.note, 'gantt-timeline: input.keyPath.note') ?? '不能并行的 ' + String(n) + ' 段',
+    label: optText(one.label, 'gantt-timeline: input.keyPath.label') ?? m('base-render.components-gantt-timeline-model.c002'),
+    note: optText(one.note, 'gantt-timeline: input.keyPath.note') ?? m('base-render.components-gantt-timeline-model.c003', { p0: String(String(n)) }),
     steps,
   };
 }
@@ -224,7 +226,7 @@ function parseMilestones(raw: unknown, cellMinutes: number): readonly GanttTimel
     return {
       at,
       label: reqText(one.label, where + '.label'),
-      note: optText(one.note, where + '.note') ?? String(at) + ' 分 里程碑',
+      note: optText(one.note, where + '.note') ?? m('base-render.components-gantt-timeline-model.c004', { p0: String(String(at)) }),
     };
   });
 }
@@ -292,16 +294,16 @@ export function normalizeGanttTimeline(input: unknown): GanttTimelineModel {
   const readings: GanttTimelineReadings = {
     form: form as GanttTimelineForm,
     title,
-    stamp: optText(raw.stamp, 'gantt-timeline: input.stamp') ?? String(lanes.length) + ' 条泳道',
+    stamp: optText(raw.stamp, 'gantt-timeline: input.stamp') ?? m('base-render.components-gantt-timeline-model.c005', { p0: String(String(lanes.length)) }),
     tail: optText(raw.tail, 'gantt-timeline: input.tail'),
-    axisName: optText(raw.axisName, 'gantt-timeline: input.axisName') ?? '分钟',
+    axisName: optText(raw.axisName, 'gantt-timeline: input.axisName') ?? m('base-render.components-gantt-timeline-model.c006'),
     scale,
     ticks: ticksOf(scale, tickText),
     keyPath,
     lanes,
     milestones,
     cursor,
-    note: optText(raw.note, 'gantt-timeline: input.note') ?? DEFAULT_NOTE,
+    note: optText(raw.note, 'gantt-timeline: input.note') ?? DEFAULT_NOTE(),
     extraClass: optExtraClass(raw.extraClass, 'gantt-timeline: input.extraClass'),
   };
   return { ...readings, ...layoutGanttTimeline(readings) };

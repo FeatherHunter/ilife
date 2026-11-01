@@ -136,7 +136,7 @@ describe('calendar-month ① 渲染契约', () => {
   it('今天：墨圈类 ＋「今」字两路都在（不只靠颜色）', () => {
     const html = renderCalendarMonth(demoInput());
     assert.equal((html.match(/is-today/g) || []).length, 1);
-    assert.match(html, new RegExp('class="' + S('today-mark') + '">' + CALENDAR_MONTH_TODAY_MARK + '<'));
+    assert.match(html, new RegExp('class="' + S('today-mark') + '">' + CALENDAR_MONTH_TODAY_MARK() + '<'));
     assert.match(stripComments(calendarMonthCss()), new RegExp('\\.is-today \\{[^}]*outline: 2px solid'));
   });
 

@@ -19,6 +19,7 @@
  */
 import { skinVar } from '../skin/contract.js';
 import { dueRowClass, dueRowSlot, type DueRowSlot } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -47,7 +48,7 @@ export function dueRowCss(input?: { readonly prefix?: string }): string {
   const item = sc('item');
   const v = skinVar;
   return [
-    '/* due-row（到期行）：还剩多少天放大成读数，每行一个动作。 */',
+    m('base-render.components-due-row-style.c001'),
     s + ' {',
     '  display: flex;',
     '  flex-direction: column;',
@@ -79,7 +80,7 @@ export function dueRowCss(input?: { readonly prefix?: string }): string {
     '  flex-direction: column;',
     '  min-width: 0;',
     '}',
-    '/* 行：左竖条给档位（实线／点线／双线），右边是倒计时与动作。 */',
+    m('base-render.components-due-row-style.c002'),
     item + ' {',
     '  display: flex;',
     '  flex-wrap: wrap;',
@@ -107,7 +108,7 @@ export function dueRowCss(input?: { readonly prefix?: string }): string {
     '  gap: 4px 10px;',
     '  min-width: 0;',
     '}',
-    '/* 档位字三档形状：底线／描边实底／双线框。 */',
+    m('base-render.components-due-row-style.c003'),
     sc('tag') + ' {',
     '  display: inline-flex;',
     '  align-items: center;',
@@ -140,7 +141,7 @@ export function dueRowCss(input?: { readonly prefix?: string }): string {
     '  border-radius: 0;',
     '  color: ' + v('danger') + ';',
     '}',
-    '/* 点三档形状：空心圆／实心方／实心菱。 */',
+    m('base-render.components-due-row-style.c004'),
     sc('dot') + ' {',
     '  flex: 0 0 auto;',
     '  width: 8px;',
@@ -192,7 +193,7 @@ export function dueRowCss(input?: { readonly prefix?: string }): string {
     '  margin-left: auto;',
     '  min-width: 0;',
     '}',
-    '/* 倒计时：这一件的主读数（放大 ＋ 等宽数字 ＋ 永不截断）。 */',
+    m('base-render.components-due-row-style.c005'),
     sc('countdown') + ' {',
     '  display: inline-flex;',
     '  align-items: baseline;',
@@ -235,7 +236,7 @@ export function dueRowCss(input?: { readonly prefix?: string }): string {
     '  margin-top: 4px;',
     '  min-width: 0;',
     '}',
-    '/* 动作：真按钮。命中盒 44 高、宽度锁住（换字不跳版）。 */',
+    m('base-render.components-due-row-style.c006'),
     sc('button') + ' {',
     '  display: inline-flex;',
     '  align-items: center;',
@@ -272,7 +273,7 @@ export function dueRowCss(input?: { readonly prefix?: string }): string {
     '  text-align: right;',
     '  overflow-wrap: anywhere;',
     '}',
-    '/* 错态：写在按钮旁边（不只染色）。 */',
+    m('base-render.components-due-row-style.c007'),
     sc('err') + ' {',
     '  padding-left: 8px;',
     '  border-left: 3px solid ' + v('danger') + ';',
@@ -299,18 +300,18 @@ export function dueRowCss(input?: { readonly prefix?: string }): string {
     '  color: ' + v('ink-3') + ';',
     '  font-size: ' + v('fs-sm') + ';',
     '}',
-    '/* 悬停：包在设备能力查询里（不是唯一通路——按钮本来就是按下去的）。 */',
+    m('base-render.components-due-row-style.c008'),
     '@media (hover:hover) and (pointer:fine) {',
     '  ' + sc('button') + ':hover:not([disabled]) {',
     '    background: ' + v('accent-text') + ';',
     '    border-color: ' + v('accent-text') + ';',
     '  }',
     '}',
-    '/* 减动效：过渡关掉，状态照落。 */',
+    m('base-render.components-due-row-style.c009'),
     '@media (prefers-reduced-motion:reduce) {',
     '  ' + sc('button') + ' { transition: none; }',
     '}',
-    '/* 窄档：右侧那一块（倒计时 ＋ 动作）挪到下一行、左对齐。 */',
+    m('base-render.components-due-row-style.c010'),
     '@container ' + DUE_ROW_CONTAINER + ' (max-width: ' + DUE_ROW_NARROW_MAX_PX + 'px) {',
     '  ' + sc('side') + ' {',
     '    align-items: flex-start;',

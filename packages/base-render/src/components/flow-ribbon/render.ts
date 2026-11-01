@@ -40,18 +40,19 @@ import {
   type FlowRibbonSankeyNode,
   type FlowRibbonModel,
 } from './model.js';
+import { m } from '../../entries/index.js';
 
 /** 百分比 → 行内样式里那个串（几何一律两位小数，与 `model.ts` 的取整同口径）。 */
 const pct = (n: number): string => String(n) + '%';
 
 /** 卡头：标题 ＋ 时间窗 ＋ **从数据算出来**的总额。三形态共用。 */
-function headHtml(m: FlowRibbonModel): string {
+function headHtml(model: FlowRibbonModel): string {
   const parts: string[] = ['<div class="' + flowRibbonSlot('hd') + '">',
-    '<h4 class="' + flowRibbonSlot('title') + '">' + esc(m.title) + '</h4>'];
-  if (m.stamp !== undefined) {
-    parts.push('<span class="' + flowRibbonSlot('stamp') + '">' + esc(m.stamp) + '</span>');
+    '<h4 class="' + flowRibbonSlot('title') + '">' + esc(model.title) + '</h4>'];
+  if (model.stamp !== undefined) {
+    parts.push('<span class="' + flowRibbonSlot('stamp') + '">' + esc(model.stamp) + '</span>');
   }
-  parts.push('<span class="' + flowRibbonSlot('tail') + '">' + esc(m.totalText) + '</span>', '</div>');
+  parts.push('<span class="' + flowRibbonSlot('tail') + '">' + esc(model.totalText) + '</span>', '</div>');
   return parts.join('');
 }
 
@@ -65,15 +66,15 @@ function readoutRowHtml(row: FlowRibbonReadout & { readonly mark: string }): str
 }
 
 /** 脚注：口径行（本件永远出一句——不给就由 `model.ts` 写自己的口径）。 */
-function noteHtml(m: FlowRibbonModel): string {
-  return '<p class="' + flowRibbonSlot('note') + '">' + esc(m.note) + '</p>';
+function noteHtml(model: FlowRibbonModel): string {
+  return '<p class="' + flowRibbonSlot('note') + '">' + esc(model.note) + '</p>';
 }
 
 /** 图例（每一项：色块 ＋ 名字）。三形态里只有桑基出（那三个色阶档是它独有的读法）。 */
-function legendHtml(m: FlowRibbonModel): string {
-  if (m.legend.length === 0) return '';
+function legendHtml(model: FlowRibbonModel): string {
+  if (model.legend.length === 0) return '';
   return '<ul class="' + flowRibbonSlot('legend') + '">'
-    + m.legend.map((one) => '<li class="' + flowRibbonSlot('legend-item') + '">'
+    + model.legend.map((one) => '<li class="' + flowRibbonSlot('legend-item') + '">'
       + '<i class="' + flowRibbonSlot('legend-mark') + ' ' + one.mark + '" aria-hidden="true"></i>'
       + esc(one.text) + '</li>').join('')
     + '</ul>';
@@ -97,12 +98,12 @@ function sankeyNodeHtml(node: FlowRibbonSankeyNode, side: 'src' | 'use'): string
 }
 
 /** 桑基骨架：卡头 → 画布（带子 ＋ 两列节点）→ 读数名单（有装不下的才出）→ 图例 → 脚注。 */
-function renderSankey(m: FlowRibbonSankeyModel): string {
-  const parts: string[] = [headHtml(m),
-    '<div class="' + flowRibbonSlot('plot') + '" role="img" aria-label="' + esc(m.ariaLabel)
-    + '" style="' + FLOW_RIBBON_PLOT_VAR + ': ' + String(m.plotPx) + 'px">'];
+function renderSankey(model: FlowRibbonSankeyModel): string {
+  const parts: string[] = [headHtml(model),
+    '<div class="' + flowRibbonSlot('plot') + '" role="img" aria-label="' + esc(model.ariaLabel)
+    + '" style="' + FLOW_RIBBON_PLOT_VAR + ': ' + String(model.plotPx) + 'px">'];
   /* 带子在下、节点在上（节点是不透明的框，压在带子的两头收口）。 */
-  for (const lane of m.lanes) {
+  for (const lane of model.lanes) {
     parts.push('<span class="' + flowRibbonSlot('lane') + ' ' + lane.mark + '" aria-hidden="true" title="'
       + esc(lane.title) + '" style="'
       + FLOW_RIBBON_LANE_L1_VAR + ': ' + pct(lane.l1) + '; '
@@ -110,17 +111,17 @@ function renderSankey(m: FlowRibbonSankeyModel): string {
       + FLOW_RIBBON_LANE_R1_VAR + ': ' + pct(lane.r1) + '; '
       + FLOW_RIBBON_LANE_R2_VAR + ': ' + pct(lane.r2) + '"></span>');
   }
-  for (const node of m.sources) parts.push(sankeyNodeHtml(node, 'src'));
-  for (const node of m.uses) parts.push(sankeyNodeHtml(node, 'use'));
+  for (const node of model.sources) parts.push(sankeyNodeHtml(node, 'src'));
+  for (const node of model.uses) parts.push(sankeyNodeHtml(node, 'use'));
   parts.push('</div>');
-  if (m.readouts.length > 0) {
+  if (model.readouts.length > 0) {
     parts.push('<div class="' + flowRibbonSlot('readout') + '">',
       '<p class="' + flowRibbonSlot('readout-hd') + '">装不进节点框的读数 · '
-      + String(m.readouts.length) + ' 条（那一股太细、或名字与金额比框宽——读数在这里一个不少）</p>',
-      m.readouts.map(readoutRowHtml).join(''), '</div>');
+      + String(model.readouts.length) + ' 条（那一股太细、或名字与金额比框宽——读数在这里一个不少）</p>',
+      model.readouts.map(readoutRowHtml).join(''), '</div>');
   }
-  parts.push(legendHtml(m));
-  parts.push(noteHtml(m));
+  parts.push(legendHtml(model));
+  parts.push(noteHtml(model));
   return parts.join('');
 }
 
@@ -143,17 +144,17 @@ function matrixCellHtml(cell: FlowRibbonMatrixCell, which: 'mat-cell' | 'mat-tot
 }
 
 /** 矩阵骨架：卡头 → 表（表头 ＋ 逐来源一行 ＋ 合计行）→ 脚注。 */
-function renderMatrix(m: FlowRibbonMatrixModel): string {
-  const parts: string[] = [headHtml(m),
-    '<table class="' + flowRibbonSlot('matrix') + '" aria-label="' + esc(m.ariaLabel) + '">',
+function renderMatrix(model: FlowRibbonMatrixModel): string {
+  const parts: string[] = [headHtml(model),
+    '<table class="' + flowRibbonSlot('matrix') + '" aria-label="' + esc(model.ariaLabel) + '">',
     '<thead class="' + flowRibbonSlot('mat-head') + '"><tr>',
     '<th class="' + flowRibbonSlot('mat-rowhd') + '" scope="col">来源 ＼ 用途</th>'];
-  for (const name of m.useNames) {
+  for (const name of model.useNames) {
     parts.push('<th class="' + flowRibbonSlot('mat-cell') + '" scope="col" ' + FLOW_RIBBON_USE_ATTR + '="'
       + esc(name) + '">' + esc(name) + '</th>');
   }
   parts.push('</tr></thead><tbody class="' + flowRibbonSlot('mat-body') + '">');
-  for (const row of m.rows) {
+  for (const row of model.rows) {
     parts.push('<tr class="' + flowRibbonSlot('mat-row') + '"><th class="' + flowRibbonSlot('mat-rowhd')
       + '" scope="row">' + esc(row.name) + '<em class="' + flowRibbonSlot('cell-num') + '">'
       + esc(row.amountText) + '</em></th>');
@@ -162,23 +163,27 @@ function renderMatrix(m: FlowRibbonMatrixModel): string {
   }
   parts.push('</tbody><tfoot class="' + flowRibbonSlot('mat-foot') + '"><tr class="' + flowRibbonSlot('mat-row')
     + '"><th class="' + flowRibbonSlot('mat-rowhd') + '">合计</th>');
-  for (const cell of m.foot) parts.push(matrixCellHtml(cell, 'mat-total'));
+  for (const cell of model.foot) parts.push(matrixCellHtml(cell, 'mat-total'));
   parts.push('</tr></tfoot></table>');
-  parts.push(noteHtml(m));
+  parts.push(noteHtml(model));
   return parts.join('');
 }
 
 /* ── 形态 `rails` ───────────────────────────────────────────────── */
 
 /** 一条构成轨：逐格宽度＝占比（绝对值写在下面的名单里，格小到放不下百分数时那一格不出字）。 */
-function railHtml(m: FlowRibbonRailsModel, side: 'src' | 'use'): string {
-  const segs = side === 'src' ? m.sourceSegs : m.useSegs;
-  const head = side === 'src' ? m.sourceHead : m.useHead;
+function railHtml(model: FlowRibbonRailsModel, side: 'src' | 'use'): string {
+  const segs = side === 'src' ? model.sourceSegs : model.useSegs;
+  const head = side === 'src' ? model.sourceHead : model.useHead;
   const parts: string[] = ['<span class="' + flowRibbonSlot('rails-hd') + '">' + esc(head) + '</span>',
     '<div class="' + flowRibbonSlot('rail') + ' is-' + side + '">'];
   for (const seg of segs) {
     parts.push('<span class="' + flowRibbonSlot('seg') + '" aria-hidden="true" title="'
-      + esc(seg.name + ' ' + seg.amountText + '（占总额 ' + seg.shareText + '）') + '" style="'
+      + esc(m('base-render.components-flow-ribbon-render.c001', {
+        p0: String(seg.name),
+        p1: String(seg.amountText),
+        p2: String(seg.shareText),
+      })) + '" style="'
       + FLOW_RIBBON_WIDTH_VAR + ': ' + pct(seg.widthPct) + '">'
       + (seg.numbered ? '<b class="' + flowRibbonSlot('seg-pct') + '">' + esc(seg.shareText) + '</b>' : '')
       + '</span>');
@@ -195,35 +200,35 @@ function railsColHtml(head: string, rows: readonly (FlowRibbonReadout & { readon
 }
 
 /** 构成轨骨架：卡头 → 两轨 ＋ 中间汇合读数 → 逐条名单 → 脚注。 */
-function renderRails(m: FlowRibbonRailsModel): string {
-  const parts: string[] = [headHtml(m),
-    '<div class="' + flowRibbonSlot('rails') + '" role="img" aria-label="' + esc(m.ariaLabel) + '">'];
-  parts.push(railHtml(m, 'src'));
+function renderRails(model: FlowRibbonRailsModel): string {
+  const parts: string[] = [headHtml(model),
+    '<div class="' + flowRibbonSlot('rails') + '" role="img" aria-label="' + esc(model.ariaLabel) + '">'];
+  parts.push(railHtml(model, 'src'));
   parts.push('<div class="' + flowRibbonSlot('hub') + '">'
-    + '<span class="' + flowRibbonSlot('hub-eq') + '">' + esc(m.hubEqText) + '</span>'
-    + '<span class="' + flowRibbonSlot('hub-net') + '">' + esc(m.hubNetText) + '</span></div>');
-  parts.push(railHtml(m, 'use'));
+    + '<span class="' + flowRibbonSlot('hub-eq') + '">' + esc(model.hubEqText) + '</span>'
+    + '<span class="' + flowRibbonSlot('hub-net') + '">' + esc(model.hubNetText) + '</span></div>');
+  parts.push(railHtml(model, 'use'));
   parts.push('</div>');
   parts.push('<div class="' + flowRibbonSlot('rails-list') + '">');
-  parts.push(railsColHtml('来源 · ' + String(m.sourceSegs.length) + ' 股',
-    m.sourceRows.map((r, i) => ({ ...r, mark: 'is-s' + String(i + 1) }))));
-  parts.push(railsColHtml('用途 · ' + String(m.useSegs.length) + ' 类',
-    m.useRows.map((r) => ({ ...r, mark: 'is-tgt' }))));
+  parts.push(railsColHtml(m('base-render.components-flow-ribbon-render.c002', { p0: String(String(model.sourceSegs.length)) }),
+    model.sourceRows.map((r, i) => ({ ...r, mark: 'is-s' + String(i + 1) }))));
+  parts.push(railsColHtml(m('base-render.components-flow-ribbon-render.c003', { p0: String(String(model.useSegs.length)) }),
+    model.useRows.map((r) => ({ ...r, mark: 'is-tgt' }))));
   parts.push('</div>');
-  parts.push(noteHtml(m));
+  parts.push(noteHtml(model));
   return parts.join('');
 }
 
 /** 形态 → 骨架（分派写在这里，加第四形态就是加一支）。 */
 const SKELETONS: Readonly<Record<FlowRibbonForm, (m: FlowRibbonModel) => string>> = {
-  sankey: (m) => renderSankey(m as FlowRibbonSankeyModel),
-  matrix: (m) => renderMatrix(m as FlowRibbonMatrixModel),
-  rails: (m) => renderRails(m as FlowRibbonRailsModel),
+  sankey: (model) => renderSankey(model as FlowRibbonSankeyModel),
+  matrix: (model) => renderMatrix(model as FlowRibbonMatrixModel),
+  rails: (model) => renderRails(model as FlowRibbonRailsModel),
 };
 
 /** 渲染流向带（纯函数：同样的入参恒产同样的字节；转义只经 `shared/escape.ts`）。 */
 export function renderFlowRibbon(input: unknown): string {
-  const m = normalizeFlowRibbon(input);
-  const extra = m.extraClass === undefined ? '' : ' ' + m.extraClass;
-  return '<div class="' + FLOW_RIBBON_CLASS + ' is-' + m.form + extra + '">' + SKELETONS[m.form](m) + '</div>';
+  const model = normalizeFlowRibbon(input);
+  const extra = model.extraClass === undefined ? '' : ' ' + model.extraClass;
+  return '<div class="' + FLOW_RIBBON_CLASS + ' is-' + model.form + extra + '">' + SKELETONS[model.form](model) + '</div>';
 }

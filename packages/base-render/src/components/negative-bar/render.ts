@@ -8,6 +8,7 @@
  */
 import { esc } from '../shared/escape.js';
 import { assertPlainObject, badInput, optExtraClass, optText, reqText } from '../shared/validate.js';
+import { m } from '../../entries/index.js';
 
 /** 本件的类名根（**常量只住这里**：样式从这里取，不各写一份）。 */
 export const NEGATIVE_BAR_CLASS = 'ilife-block-negative-bar';
@@ -18,7 +19,7 @@ export type NegativeBarMode = (typeof NEGATIVE_BAR_MODES)[number];
 export const NEGATIVE_BAR_TONES = ['neutral', 'danger'] as const;
 export type NegativeBarTone = (typeof NEGATIVE_BAR_TONES)[number];
 /** 缺省注（调用方不给就用它：说清为什么没条）。 */
-export const NEGATIVE_BAR_DEFAULT_NOTE = '负值不画实条，只留数';
+export function NEGATIVE_BAR_DEFAULT_NOTE(): string { return m('base-render.components-negative-bar-render.c001'); }
 /** 槽位闭集。 */
 export const NEGATIVE_BAR_SLOTS = ['label', 'box', 'value', 'note'] as const;
 export type NegativeBarSlot = (typeof NEGATIVE_BAR_SLOTS)[number];
@@ -81,7 +82,7 @@ export function normalizeNegativeBar(input: unknown): NegativeBarModel {
     pctText: optText(raw.pctText, 'renderNegativeBar: input.pctText'),
     mode: mode as NegativeBarMode,
     tone: toneGiven as NegativeBarTone,
-    note: optText(raw.note, 'renderNegativeBar: input.note') ?? NEGATIVE_BAR_DEFAULT_NOTE,
+    note: optText(raw.note, 'renderNegativeBar: input.note') ?? NEGATIVE_BAR_DEFAULT_NOTE(),
     extraClass: optExtraClass(raw.extraClass, 'renderNegativeBar: input.extraClass'),
   };
 }

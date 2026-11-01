@@ -16,6 +16,7 @@ import {
   type PhotoCompareSide,
   type PhotoCompareTone,
 } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 归一化后的一张。 */
 export interface PhotoCompareSideModel {
@@ -104,7 +105,7 @@ export function normalizePhotoCompare(input: unknown): PhotoCompareModel {
   const before = sideModel(raw.before, 'photo-compare: input.before');
   const after = sideModel(raw.after, 'photo-compare: input.after');
   if (before.date === after.date) {
-    badInput('photo-compare: input.before.date 与 input.after.date 不许同一天（同一天没有"前后"）');
+    badInput('photo-compare: input.before.date 与 input.after.date 不许同一天（同一天没有「前后」）');
   }
 
   const given: unknown = raw.deltas;
@@ -133,7 +134,7 @@ export function normalizePhotoCompare(input: unknown): PhotoCompareModel {
     verdict: optText(raw.verdict, 'photo-compare: input.verdict'),
     note: optText(raw.note, 'photo-compare: input.note'),
     position,
-    rangeLabel: '拖动竖线，比较 ' + before.date + ' 与 ' + after.date + ' 两张照片',
+    rangeLabel: m('base-render.components-photo-compare-model.c001', { p0: String(before.date), p1: String(after.date) }),
     extraClass: optExtraClass(raw.extraClass, 'photo-compare: input.extraClass'),
   };
 }

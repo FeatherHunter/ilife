@@ -22,8 +22,8 @@ import {
 import { fillDoneCount, normalizeDrawerOpener, normalizeDrawerSheet, type DrawerModel } from './model.js';
 
 /** 一枚候选项：整行是 `<label>`（命中区），里面一枚真勾选框 ＋ 文字块 ＋ 读数位。 */
-function optionHtml(m: DrawerModel, at: number): string {
-  const o = m.options[at];
+function optionHtml(model: DrawerModel, at: number): string {
+  const o = model.options[at];
   const attrs: string[] = [
     'class="' + drawerSlot('opt') + '"',
     DRAWER_OPT_ATTR + '="' + esc(o.value) + '"',
@@ -42,53 +42,53 @@ function optionHtml(m: DrawerModel, at: number): string {
 }
 
 /** 清单：一项都没有时出**设计过的空态**（不留空壳、不拿占位符顶替）。 */
-function bodyHtml(m: DrawerModel): string {
-  if (m.options.length === 0) {
-    return '<p class="' + drawerSlot('empty') + '">' + esc(m.emptyLine) + '</p>';
+function bodyHtml(model: DrawerModel): string {
+  if (model.options.length === 0) {
+    return '<p class="' + drawerSlot('empty') + '">' + esc(model.emptyLine) + '</p>';
   }
-  const rows = m.options.map((_, i) => optionHtml(m, i)).join('');
-  const hint = m.hint === undefined ? '' : '<p class="' + drawerSlot('hint') + '">' + esc(m.hint) + '</p>';
+  const rows = model.options.map((_, i) => optionHtml(model, i)).join('');
+  const hint = model.hint === undefined ? '' : '<p class="' + drawerSlot('hint') + '">' + esc(model.hint) + '</p>';
   return '<div class="' + drawerSlot('body') + '">' + rows + hint + '</div>';
 }
 
 /** 脚条：计数（`<b>` 里那个数归运行时改）＋ 完成键（模板里 `{n}` 那处归运行时改）。 */
-function footHtml(m: DrawerModel, picked: number): string {
+function footHtml(model: DrawerModel, picked: number): string {
   /* 两句脚注**都写在标记里**（`summary` 与「一个都没勾」），运行时只切 `hidden`——
      不在运行期拼人话：句子住标记，行为只切显隐。 */
-  const note = m.summary === undefined ? '' : '<span class="' + drawerSlot('countnote') + '" '
-    + DRAWER_NOTE_ATTR + '="1"' + (picked === 0 ? ' hidden' : '') + '>' + esc(m.summary) + '</span>';
+  const note = model.summary === undefined ? '' : '<span class="' + drawerSlot('countnote') + '" '
+    + DRAWER_NOTE_ATTR + '="1"' + (picked === 0 ? ' hidden' : '') + '>' + esc(model.summary) + '</span>';
   const zero = '<span class="' + drawerSlot('countnote') + '" ' + DRAWER_ZERO_ATTR + '="1"'
-    + (picked === 0 ? '' : ' hidden') + '>' + esc(DRAWER_ZERO_NOTE) + '</span>';
-  const count = '<span class="' + drawerSlot('count') + '" id="' + esc(m.id) + '-count">'
-    + esc(DRAWER_COUNT_LEAD) + ' <b ' + DRAWER_COUNT_ATTR + '="">' + String(picked) + '</b> ' + esc(DRAWER_COUNT_UNIT)
+    + (picked === 0 ? '' : ' hidden') + '>' + esc(DRAWER_ZERO_NOTE()) + '</span>';
+  const count = '<span class="' + drawerSlot('count') + '" id="' + esc(model.id) + '-count">'
+    + esc(DRAWER_COUNT_LEAD()) + ' <b ' + DRAWER_COUNT_ATTR + '="">' + String(picked) + '</b> ' + esc(DRAWER_COUNT_UNIT())
     + note + zero + '</span>';
   const doneAttrs: string[] = [
     'class="' + drawerSlot('done') + '"',
     'type="button"',
     DRAWER_DONE_ATTR + '="1"',
-    DRAWER_TEMPLATE_ATTR + '="' + esc(m.doneLabel) + '"',
+    DRAWER_TEMPLATE_ATTR + '="' + esc(model.doneLabel) + '"',
   ];
   if (picked === 0) {
     /* 一个都没勾：完成键按不动，为什么写在脚条那句话里（不只变色）。 */
     doneAttrs.push('disabled', 'aria-disabled="true"');
   }
-  const done = '<button ' + doneAttrs.join(' ') + '>' + esc(fillDoneCount(m.doneLabel, picked)) + '</button>';
+  const done = '<button ' + doneAttrs.join(' ') + '>' + esc(fillDoneCount(model.doneLabel, picked)) + '</button>';
   return '<div class="' + drawerSlot('foot') + '">' + count + done + '</div>';
 }
 
 /** 形态 C 的骨架。 */
-function renderMulti(m: DrawerModel): string {
-  const picked = m.options.filter((o) => o.checked && !o.disabled).length;
+function renderMulti(model: DrawerModel): string {
+  const picked = model.options.filter((o) => o.checked && !o.disabled).length;
   const head = '<div class="' + drawerSlot('head') + '">'
     + '<div class="' + drawerSlot('headtext') + '">'
-    + '<h2 class="' + drawerSlot('title') + '" id="' + esc(m.id) + '-title">' + esc(m.title) + '</h2>'
-    + (m.sub === undefined ? '' : '<span class="' + drawerSlot('sub') + '">' + esc(m.sub) + '</span>')
+    + '<h2 class="' + drawerSlot('title') + '" id="' + esc(model.id) + '-title">' + esc(model.title) + '</h2>'
+    + (model.sub === undefined ? '' : '<span class="' + drawerSlot('sub') + '">' + esc(model.sub) + '</span>')
     + '</div>'
     + '<button class="' + drawerSlot('close') + '" type="button" ' + DRAWER_CLOSE_ATTR + '="1" aria-label="关闭">✕</button>'
     + '</div>';
-  const grab = m.edge === 'bottom'
+  const grab = model.edge === 'bottom'
     ? '<span class="' + drawerSlot('grab') + '" aria-hidden="true"></span>' : '';
-  return grab + head + bodyHtml(m) + footHtml(m, picked);
+  return grab + head + bodyHtml(model) + footHtml(model, picked);
 }
 
 /** 形态 → 骨架（本件只有一格；分派写在这里，加第二形态就是加一支）。 */
@@ -98,26 +98,26 @@ const SKELETONS: Readonly<Record<DrawerForm, (m: DrawerModel) => string>> = {
 
 /** 渲染一个底部弹层（纯函数：同样的入参恒产同样的字节；转义只经 `shared/escape.ts`）。 */
 export function renderDrawerSheet(input: unknown): string {
-  const m = normalizeDrawerSheet(input);
-  const classes = [drawerClass(), 'is-' + m.form, 'edge-' + m.edge]
-    .concat(m.extraClass === undefined ? [] : [m.extraClass]).join(' ');
+  const model = normalizeDrawerSheet(input);
+  const classes = [drawerClass(), 'is-' + model.form, 'edge-' + model.edge]
+    .concat(model.extraClass === undefined ? [] : [model.extraClass]).join(' ');
   const attrs: string[] = [
     'class="' + esc(classes) + '"',
-    'id="' + esc(m.id) + '"',
-    DRAWER_ATTR + '="' + esc(m.id) + '"',
-    'aria-labelledby="' + esc(m.id + '-title') + '"',
-    'aria-describedby="' + esc(m.id + '-count') + '"',
+    'id="' + esc(model.id) + '"',
+    DRAWER_ATTR + '="' + esc(model.id) + '"',
+    'aria-labelledby="' + esc(model.id + '-title') + '"',
+    'aria-describedby="' + esc(model.id + '-count') + '"',
   ];
-  if (m.open) attrs.push('open');
-  return '<dialog ' + attrs.join(' ') + '>' + SKELETONS[m.form](m) + '</dialog>';
+  if (model.open) attrs.push('open');
+  return '<dialog ' + attrs.join(' ') + '>' + SKELETONS[model.form](model) + '</dialog>';
 }
 
 /** 渲染一枚触发键（**焦点归还回路的另一头**：它带 `data-ilife-drawer-open`）。 */
 export function renderDrawerOpener(input: unknown): string {
-  const m = normalizeDrawerOpener(input);
-  const classes = [drawerOpenerClass()].concat(m.extraClass === undefined ? [] : [m.extraClass]).join(' ');
-  const label = m.label === undefined ? m.text : m.label;
+  const model = normalizeDrawerOpener(input);
+  const classes = [drawerOpenerClass()].concat(model.extraClass === undefined ? [] : [model.extraClass]).join(' ');
+  const label = model.label === undefined ? model.text : model.label;
   return '<button class="' + esc(classes) + '" type="button"'
-    + ' ' + DRAWER_OPEN_ATTR + '="' + esc(m.sheetId) + '"'
-    + ' aria-haspopup="dialog" aria-label="' + esc(label) + '">' + esc(m.text) + '</button>';
+    + ' ' + DRAWER_OPEN_ATTR + '="' + esc(model.sheetId) + '"'
+    + ' aria-haspopup="dialog" aria-label="' + esc(label) + '">' + esc(model.text) + '</button>';
 }
