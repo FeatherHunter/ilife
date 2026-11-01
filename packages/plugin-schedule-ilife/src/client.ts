@@ -19,10 +19,11 @@
 import * as React from 'react';
 import { ConfigPanel, StatusBlock } from 'dsh-life-pack/config-panel';
 import { RPC_CHANNEL, RPC_ENDPOINT_CONFIG_CHECK, isRpcResult } from './contract.js';
-import { PLUGIN, SLOT_ORDER, SLOT_TITLE } from './slot.js';
+import { PLUGIN, SLOT_ORDER, SLOT_TITLE, slotTitle } from './slot.js';
 import { SEAL_SEED, sealStates } from './seal-states.generated.js';
-import { CONFIG_ITEMS } from './settings.js';
+import { CONFIG_ITEMS, configItems } from './settings.js';
 import type { ClientCtx, RpcCallFace } from './dsh-ctx.js';
+import { m } from './entries/index.js';
 
 /** client 短名声明：只有这两个（#736 的目录选择走**可选查找**，不写进来——
  * 写进来＝硬依赖，提供方缺席时整包被停靠，设置页会跟着装不上；见 cookbook §13）。 */
@@ -41,17 +42,17 @@ export type HealthOutcome =
 
 /** 读一次配置体检（只读；判据由技能侧出，本包只透传，不重写一个字）。 */
 export async function fetchHealthSurface(call: unknown): Promise<HealthOutcome> {
-  if (typeof call !== 'function') return { ok: false, message: '宿主连接缺席：connection.rpc.call 不可用' };
+  if (typeof call !== 'function') return { ok: false, message: m('plugin-schedule-ilife.client.c001') };
   try {
     const raw: unknown = await (call as RpcCallFace)('/api', RPC_CHANNEL.slice(1), { method: RPC_ENDPOINT_CONFIG_CHECK, payload: {} }, AbortSignal.timeout(READ_TIMEOUT_MS));
-    if (!isRpcResult(raw)) return { ok: false, message: '回执信封异常（非 ok 信封）' };
-    if (!raw.ok) return { ok: false, message: raw.error?.message ?? '体检回执被拒（宿主未给报文）' };
+    if (!isRpcResult(raw)) return { ok: false, message: m('plugin-schedule-ilife.client.c002') };
+    if (!raw.ok) return { ok: false, message: raw.error?.message ?? m('plugin-schedule-ilife.client.c003') };
     return { ok: true, report: raw.value };
   } catch (e) {
     if (e instanceof Error && (e.name === 'AbortError' || e.name === 'TimeoutError')) {
-      return { ok: false, message: `配置请求超时（${Math.round(READ_TIMEOUT_MS / 1000)}s）：宿主未回` };
+      return { ok: false, message: m('plugin-schedule-ilife.client.c004', { p0: String(Math.round(READ_TIMEOUT_MS / 1000)) }) };
     }
-    return { ok: false, message: `体检失败：${e instanceof Error ? e.message : String(e)}` };
+    return { ok: false, message: m('plugin-schedule-ilife.client.c005', { p0: String(e instanceof Error ? e.message : String(e)) }) };
   }
 }
 
@@ -82,7 +83,12 @@ export function larkItemOf(report: unknown): HealthItemLite | null {
 export const LARK_OFFICIAL_URL = 'https://www.feishu.cn/feishu-cli' as const;
 
 /** 状态行上逐字显示的那一行（三档都在、显示成文字、可点击跳转，不改写、不加话）。 */
-export const LARK_OFFICIAL_LINE = '飞书CLI官网为：https://www.feishu.cn/feishu-cli' as const;
+export function larkOfficialLine(): string {
+  return m('plugin-schedule-ilife.client.c025', { p0: LARK_OFFICIAL_URL });
+}
+
+/** 兼容镜像：模块加载期取一次基准语言；渲染路径一律走 larkOfficialLine()。 */
+export const LARK_OFFICIAL_LINE = larkOfficialLine();
 
 /** 「复制 prompt」按钮复制的内容（定稿住 #759 最新一条评论 v5 的逐字全文，两家的实施票都引它，
  *  不在本票里另写一份；官网指南 shape 变化时改 #759 那一条，这里跟着换）。 */
@@ -214,7 +220,7 @@ function LarkLine(props: { readonly getCall: GetCall; readonly styles: PanelStyl
     const item = larkItemOf(r.report);
     setLark(
       item === null
-        ? { kind: 'failed', message: '体检回执里没有飞书 CLI 那一项' }
+        ? { kind: 'failed', message: m('plugin-schedule-ilife.client.c006') }
         : { kind: 'ready', item, reading: r.report.lark ?? null },
     );
   }, [props.getCall]);
@@ -229,44 +235,44 @@ function LarkLine(props: { readonly getCall: GetCall; readonly styles: PanelStyl
     // #1302：挂载不再自动打体检电话——先画「还没检测」，点「重新检测」才发 config.check。
     // 路径位给空串而不是 null：null 会画骨架条，等于假装正在检测；闲态不该有骨架。
     return React.createElement(StatusBlock, {
-      name: '飞书 CLI',
+      name: m('plugin-schedule-ilife.client.c007'),
       tone: 'pending',
-      text: '还没检测，点「重新检测」跑一次体检',
+      text: m('plugin-schedule-ilife.client.c008'),
       path: '',
       version: null,
       actions: [
-        { text: '复制安装指引', onPress: () => void onCopyPrompt() },
-        { text: '重新检测', onPress: () => void loadHealth() },
+        { text: m('plugin-schedule-ilife.client.c009'), onPress: () => void onCopyPrompt() },
+        { text: m('plugin-schedule-ilife.client.c010'), onPress: () => void loadHealth() },
       ],
-      link: { text: LARK_OFFICIAL_LINE, href: LARK_OFFICIAL_URL },
+      link: { text: larkOfficialLine(), href: LARK_OFFICIAL_URL },
     });
   }
   if (lark.kind === 'loading') {
     // 骨架期照真源：状态点默认灰 ＋「检测中」＋ 路径位骨架条 ＋ 版本胶囊不画；两枚按钮**照画**
     // ⇒ 与就绪态同高，填充时不跳（真源 `planRows()` 的口径）。
     return React.createElement(StatusBlock, {
-      name: '飞书 CLI',
+      name: m('plugin-schedule-ilife.client.c011'),
       tone: 'pending',
       // 真源在「检测中」后面带一个省略号，本仓有一条跨包锁（控件文案零省略号，`t764` 的 E 组）⇒
       // 这里去掉那一个字符，是本件与真源唯一的字面差（已记账）。
-      text: '检测中',
+      text: m('plugin-schedule-ilife.client.c012'),
       path: null,
       version: null,
       actions: [
-        { text: '复制安装指引', onPress: () => void onCopyPrompt() },
-        { text: '重新检测', onPress: () => void loadHealth() },
+        { text: m('plugin-schedule-ilife.client.c013'), onPress: () => void onCopyPrompt() },
+        { text: m('plugin-schedule-ilife.client.c014'), onPress: () => void loadHealth() },
       ],
-      link: { text: LARK_OFFICIAL_LINE, href: LARK_OFFICIAL_URL },
+      link: { text: larkOfficialLine(), href: LARK_OFFICIAL_URL },
     });
   }
   if (lark.kind === 'failed') {
     return React.createElement(StatusBlock, {
-      name: '飞书 CLI',
+      name: m('plugin-schedule-ilife.client.c015'),
       tone: 'bad',
       text: lark.message,
       path: '',
-      actions: [{ text: '重新检测', onPress: () => void loadHealth() }],
-      link: { text: LARK_OFFICIAL_LINE, href: LARK_OFFICIAL_URL },
+      actions: [{ text: m('plugin-schedule-ilife.client.c016'), onPress: () => void loadHealth() }],
+      link: { text: larkOfficialLine(), href: LARK_OFFICIAL_URL },
     });
   }
   const item = lark.item;
@@ -275,29 +281,29 @@ function LarkLine(props: { readonly getCall: GetCall; readonly styles: PanelStyl
     'div',
     null,
     React.createElement(StatusBlock, {
-      name: '飞书 CLI',
+      name: m('plugin-schedule-ilife.client.c017'),
       // 档位与真源同：绿点＝就绪／红点＝没找到／黄点＝找到了但还差点什么。
       tone: item.status === 'green' ? 'ok' : item.status === 'red' ? 'bad' : 'warn',
       // 短句按档给（真源 `.ic-stxt` 就是一行短句）；「去哪修」那句长话不在这一行里。
       text:
         item.status === 'green'
-          ? '已登录，日历可读'
+          ? m('plugin-schedule-ilife.client.c018')
           : item.status === 'red'
-            ? '没找到飞书 CLI'
-            : '找到了，但还没登录／日历读不到',
+            ? m('plugin-schedule-ilife.client.c019')
+            : m('plugin-schedule-ilife.client.c020'),
       // 路径与版本胶囊取体检回执新交的那一格（#936 技能侧）；旧技能包不带 ⇒ 路径空、无胶囊。
       path: reading?.cliPath ?? '',
       version: reading?.version ?? null,
       actions: [
-        { text: '复制安装指引', onPress: () => void onCopyPrompt() },
-        { text: '重新检测', onPress: () => void loadHealth() },
+        { text: m('plugin-schedule-ilife.client.c021'), onPress: () => void onCopyPrompt() },
+        { text: m('plugin-schedule-ilife.client.c022'), onPress: () => void loadHealth() },
       ],
-      link: { text: LARK_OFFICIAL_LINE, href: LARK_OFFICIAL_URL },
+      link: { text: larkOfficialLine(), href: LARK_OFFICIAL_URL },
     }),
     copied === 'done'
-      ? React.createElement('div', { style: props.styles.okText }, '已复制安装指引')
+      ? React.createElement('div', { style: props.styles.okText }, m('plugin-schedule-ilife.client.c023'))
       : copied === 'failed'
-        ? React.createElement('div', { style: props.styles.error }, '复制失败：剪贴板不可用，请手动复制对话框里的安装指引')
+        ? React.createElement('div', { style: props.styles.error }, m('plugin-schedule-ilife.client.c024'))
         : null,
   );
 }
@@ -316,15 +322,15 @@ export function apply(ctx: ClientCtx): void {
         name: 'ilife.config-tab',
         id: PLUGIN,
         order: SLOT_ORDER,
-        label: () => SLOT_TITLE,
+        label: () => slotTitle(),
         // #706：本包自己那条 RPC 通道交给总管（各家都写这一格），总管据此调配置体检——
         // 它因此不必在源码里写死任何一家的通道名（零单品依赖照旧成立）。
         channel: RPC_CHANNEL,
       },
       () => React.createElement(ConfigPanel, {
         channel: RPC_CHANNEL,
-        items: CONFIG_ITEMS,
-        title: SLOT_TITLE,
+        items: configItems(),
+        title: slotTitle(),
         // 三枚签（1145）：HELP＋技能＋插件，各家只说自家档位与三段文案。
         seals: sealStates(SLOT_TITLE),
         sealSeed: SEAL_SEED,

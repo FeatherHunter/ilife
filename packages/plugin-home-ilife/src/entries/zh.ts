@@ -9,4 +9,32 @@
  */
 import type { MessageTable } from 'base-entries';
 
-export const zh = {} as const satisfies MessageTable;
+export const zh = {
+  /* ── packages/plugin-home-ilife/src/index.ts（#1229 迁入） ── */
+  'plugin-home-ilife.index.c001': "载荷须为 {values: object}",
+  'plugin-home-ilife.index.c002': "未知端点：{p0}",
+  'plugin-home-ilife.index.c003': "[dsh-home-ilife] connection.fetch 缺席：设置页的配置端点未注册",
+  /* ── packages/plugin-home-ilife/src/skill-tool.ts（#1229 迁入） ── */
+  'plugin-home-ilife.skill-tool.c001': "命令（home.* 键），例如 home.help.lookup",
+  'plugin-home-ilife.skill-tool.c002': "可选参数对象，原样交技能出口（--params JSON）",
+  'plugin-home-ilife.skill-tool.c003': "运行居家管家技能的唯一出口（argv+JSON+exit），返回 envelope JSON。写完／看完居家管家数据的唯一途径；不经 shell、不依赖 PATH。key 例：home.help.lookup（居家管家帮助）、home.item.search（查物品）。如果这次带了个文件地址，就把文件交给用户，同时贴出地址；如果没带文件，就只回答文字，不要编造文件。",
+  /* ── packages/plugin-home-ilife/src/bridge.ts（#1229 迁入） ── */
+  'plugin-home-ilife.bridge.c001': "总管缺席，请补装：dsh plugin add dsh-life-pack dsh-home-ilife（不许单卸总管）",
+  /* ── packages/plugin-home-ilife/src/settings.ts（#1229 迁入） ── */
+  'plugin-home-ilife.settings.c001': "数据目录",
+  'plugin-home-ilife.settings.c002': "库文件与产物的根目录。留空＝用默认目录。",
+  'plugin-home-ilife.settings.c003': "库文件名",
+  'plugin-home-ilife.settings.c004': "数据目录下的库文件。",
+  'plugin-home-ilife.settings.c005': "HTML 产物目录",
+  'plugin-home-ilife.settings.c006': "交付页面的存放目录。`.`或留空＝产物放库根。",
+  'plugin-home-ilife.settings.c007': "备份目录",
+  'plugin-home-ilife.settings.c008': "备份与恢复的读写目录。",
+  'plugin-home-ilife.settings.c009': "主密钥文件",
+  'plugin-home-ilife.settings.c010': "主密钥文件的位置。",
+  'plugin-home-ilife.settings.c011': "高级",
+  /* ── packages/plugin-home-ilife/src/slot.ts（#1229 迁入） ── */
+  'plugin-home-ilife.slot.c001': "居家管家",
+  /* ── packages/plugin-home-ilife/src/index.ts（#1229 迁入·协议报文） ── */
+  'plugin-home-ilife.index.c004': "body is not JSON",
+  'plugin-home-ilife.index.c005': "Invalid home request.",
+} as const satisfies MessageTable;

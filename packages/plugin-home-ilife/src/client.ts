@@ -16,9 +16,9 @@
 import * as React from 'react';
 import { ConfigPanel } from 'dsh-life-pack/config-panel';
 import { RPC_CHANNEL } from './contract.js';
-import { PLUGIN, SLOT_ORDER, SLOT_TITLE } from './slot.js';
+import { PLUGIN, SLOT_ORDER, SLOT_TITLE, slotTitle } from './slot.js';
 import { SEAL_SEED, sealStates } from './seal-states.generated.js';
-import { CONFIG_ITEMS } from './settings.js';
+import { CONFIG_ITEMS, configItems } from './settings.js';
 import type { ClientCtx } from './dsh-ctx.js';
 
 /** client 短名声明：只有这两个（#736 的目录选择走**可选查找**，不写进来——
@@ -47,15 +47,15 @@ export function apply(ctx: ClientCtx): void {
         name: 'ilife.config-tab',
         id: PLUGIN,
         order: SLOT_ORDER,
-        label: () => SLOT_TITLE,
+        label: () => slotTitle(),
         // #706：本包自己那条 RPC 通道交给总管（各家都写这一格），总管据此调配置体检——
         // 它因此不必在源码里写死任何一家的通道名（零单品依赖照旧成立）。
         channel: RPC_CHANNEL,
       },
       () => React.createElement(ConfigPanel, {
         channel: RPC_CHANNEL,
-        items: CONFIG_ITEMS,
-        title: SLOT_TITLE,
+        items: configItems(),
+        title: slotTitle(),
         // 三枚签（1145）：HELP＋技能＋插件，各家只说自家档位与三段文案。
         seals: sealStates(SLOT_TITLE),
         sealSeed: SEAL_SEED,

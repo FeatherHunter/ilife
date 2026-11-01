@@ -15,7 +15,7 @@
  */
 
 import * as React from 'react';
-import { MANUAL_ENTRY } from './nav.js';
+import { MANUAL_ENTRY, manualEntry } from './nav.js';
 
 /** 入口上的两处字样（腰封＋名牌各印一次，定义只此一处）。单一来源＝导航表那行。 */
 export const MANUAL_ENTRY_LABEL = MANUAL_ENTRY.title;
@@ -79,15 +79,16 @@ export function manualEntryCss(): string {
  * data-ilife-press（与标题行两入口同语言）。
  */
 export function ManualEntryButton(props: ManualEntryButtonProps): React.ReactElement {
+  const entry = manualEntry();
   return React.createElement(
     'button',
     {
       type: 'button',
       className: 'bkbtn',
-      title: MANUAL_ENTRY.tip,
-      'aria-label': MANUAL_ENTRY.tip,
+      title: entry.tip,
+      'aria-label': entry.tip,
       // 按压反馈的键取导航表那一行（'manual'）——四个手册用例按它找入口，别再各写一份。
-      'data-ilife-press': MANUAL_ENTRY.key,
+      'data-ilife-press': entry.key,
       onClick: props.onOpen,
     },
     // 鎏金背光：先画、垫在书下（同为定位元素且无 z-index，照 DOM 序先画的在下），点透。
@@ -98,7 +99,7 @@ export function ManualEntryButton(props: ManualEntryButtonProps): React.ReactEle
       React.createElement(
         'span',
         { className: 'eabook' },
-        React.createElement('span', { className: 'eaband' }, MANUAL_ENTRY_LABEL),
+        React.createElement('span', { className: 'eaband' }, entry.title),
       ),
     ),
   );
@@ -137,7 +138,7 @@ export function ManualPopoverShell(props: ManualPopoverShellProps): React.ReactE
       {
         className: 'manual-popover',
         role: 'dialog',
-        'aria-label': MANUAL_ENTRY_LABEL,
+        'aria-label': manualEntry().title,
         'data-ilife-manual': 'book-shell',
         // 书自己那一格的点击不外传（否则点书也会被上面那层当成「书外」）
         onClick: (event: React.MouseEvent) => { event.stopPropagation(); },

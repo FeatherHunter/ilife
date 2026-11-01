@@ -33,7 +33,7 @@
  */
 
 import * as React from 'react';
-import { ADVANCED_CHEV_MS, ADVANCED_CHEV_SHIFT_PX, ADVANCED_GROUP_TITLE, ADVANCED_OPEN_MAX_PX, ADVANCED_OPEN_MS, DISABLED_OPACITY, DISABLED_SHAKE_MS, FOCUS_RING_GAP_PX, FOCUS_RING_WIDTH_PX, HOVER_GLOW_EDGE_PERCENT, HOVER_GLOW_SOFT_PERCENT, HOVER_LIFT_PX, HOVER_SPOTLIGHT_RADIUS_PX, HOVER_WASH_PERCENT, INTERACTION_TRANSITION, LIQUID_GHOST_MS, LONGPRESS_MS, LONGPRESS_RING_HEIGHT_PX, NOTICE_FADE_MS, NOTICE_RISE_PX, PRESS_SCALE, SPOTLIGHT_FADE_MS, SPOTLIGHT_PEAK_PERCENT, TAB_DOT_PULSE_MS, TAB_HOVER_WASH_PERCENT, TAB_TRANSITION } from './config-panel-contract.js';
+import { ADVANCED_CHEV_MS, ADVANCED_CHEV_SHIFT_PX, ADVANCED_OPEN_MAX_PX, ADVANCED_OPEN_MS, DISABLED_OPACITY, DISABLED_SHAKE_MS, FOCUS_RING_GAP_PX, FOCUS_RING_WIDTH_PX, HOVER_GLOW_EDGE_PERCENT, HOVER_GLOW_SOFT_PERCENT, HOVER_LIFT_PX, HOVER_SPOTLIGHT_RADIUS_PX, HOVER_WASH_PERCENT, INTERACTION_TRANSITION, LIQUID_GHOST_MS, LONGPRESS_MS, LONGPRESS_RING_HEIGHT_PX, NOTICE_FADE_MS, NOTICE_RISE_PX, PRESS_SCALE, SPOTLIGHT_FADE_MS, SPOTLIGHT_PEAK_PERCENT, TAB_DOT_PULSE_MS, TAB_HOVER_WASH_PERCENT, TAB_TRANSITION } from './config-panel-contract.js';
 import type { ConfigItem, ConfigSurfaceReply } from './config-panel-contract.js';
 import { DirectoryBrowserFromRow } from './directory-browser-ui.js';
 import type { DirectoryRowBrowser } from './directory-browser-state.js';
@@ -42,6 +42,12 @@ import { TitleBlock } from './title-seal.js';
 import { SealStamp, sealTipOf } from './seal-stamp.js';
 import { SealFilterDefs, SealScrollDialog } from './seal-scroll.js';
 import type { SealInstance } from './config-panel-contract.js';
+import { m } from './entries/index.js';
+
+/** 高级组标题（渲染期取词；契约件只留形状常量，见 config-panel-contract.ts 的说明）。 */
+export function advancedGroupTitle(): string {
+  return m('plugin-manager.config-panel-contract.c001');
+}
 
 /** 面板的样式表：取值逐项照 v3.1（颜色走 DSH 主题别名，写死值只做回退；字号一律相对单位 em）。
  *
@@ -636,9 +642,9 @@ export type CopyState = 'idle' | 'done' | 'failed';
 
 /** 复制那一枚按钮的字面（定稿 v3 第三条：就地变，不弹提示）。 */
 export function copyLabelOf(state: CopyState | undefined): string {
-  if (state === 'done') return '已复制';
-  if (state === 'failed') return '复制失败';
-  return '复制';
+  if (state === 'done') return m('plugin-manager.config-panel-view.c001');
+  if (state === 'failed') return m('plugin-manager.config-panel-view.c002');
+  return m('plugin-manager.config-panel-view.c003');
 }
 
 /** 面板状态徽标那七档（v3.1 的 `SKILL_STATES` 与 `badgeHTML` 逐档对应）。
@@ -671,11 +677,11 @@ export function panelBadgeOf(facts: BadgeFacts): PanelBadge {
 
 /** 徽标那一档画的字（v3.1 `badgeHTML` 的字面，只把「已保存 · 刚刚」的演示时刻换成档名）。 */
 export function badgeTextOf(kind: PanelBadge, dirtyCount: number): string {
-  if (kind === 'dirty') return `${dirtyCount} 项未保存`;
-  if (kind === 'busy') return '正在写入';
-  if (kind === 'saved') return '已保存';
-  if (kind === 'invalid') return '配置里有值用不了';
-  if (kind === 'writeFailed') return '写入失败';
+  if (kind === 'dirty') return m('plugin-manager.config-panel-view.c004', { p0: String(dirtyCount) });
+  if (kind === 'busy') return m('plugin-manager.config-panel-view.c005');
+  if (kind === 'saved') return m('plugin-manager.config-panel-view.c006');
+  if (kind === 'invalid') return m('plugin-manager.config-panel-view.c007');
+  if (kind === 'writeFailed') return m('plugin-manager.config-panel-view.c008');
   return '';
 }
 
@@ -763,7 +769,7 @@ export function Row(props: RowProps): React.ReactElement {
           'span',
           { style: S.follow },
           React.createElement('span', { style: S.followMark }, '↳'),
-          '将跟随更新',
+          m('plugin-manager.config-panel-view.c009'),
         )
       : null;
 
@@ -820,7 +826,7 @@ export function Row(props: RowProps): React.ReactElement {
             // 回这枚 Promise 是有意的：React 不看 onClick 的返回值，而用例能直接 await 它。
             onClick: () => entry.onOpen(item.key),
           },
-          '浏览文件夹',
+          m('plugin-manager.config-panel-view.c010'),
         )
       : null;
   return React.createElement(
@@ -830,7 +836,7 @@ export function Row(props: RowProps): React.ReactElement {
       'div',
       { style: S.label },
       item.title,
-      React.createElement('span', { style: S.chip }, '可改'),
+      React.createElement('span', { style: S.chip }, m('plugin-manager.config-panel-view.c011')),
     ),
     React.createElement('div', { style: S.hint }, item.hint),
     control,
@@ -891,25 +897,27 @@ export interface PanelBodyProps {
   readonly extra?: ((parts: PanelParts) => React.ReactNode) | undefined;
 }
 
-/** 应用内浏览器对话框的文案（面板自带，逐条对应图上那几个位置）。 */
-const BROWSER_LABELS = {
-  title: '选择文件夹',
-  close: '关闭',
-  up: '上一级',
-  pathPlaceholder: '直接填绝对路径，回车即进入',
-  go: '转到',
-  showHidden: (n: number) => '显示隐藏目录（' + n + '）',
-  empty: '这个目录里没有子目录。',
-  loading: '正在读取',
-  newFolder: '新建文件夹',
-  createConfirm: '创建',
-  createCancel: '取消',
-  select: '选',
-  selected: '已选',
-  open: '选定这个目录',
-  cancel: '取消',
-  willPick: '将选定：',
-} as const;
+/** 应用内浏览器对话框的文案（面板自带，逐条对应图上那几个位置；渲染期现取，#1229）。 */
+function browserLabels() {
+  return {
+    title: m('plugin-manager.config-panel-view.c027'),
+    close: m('plugin-manager.config-panel-view.c028'),
+    up: m('plugin-manager.config-panel-view.c029'),
+    pathPlaceholder: m('plugin-manager.config-panel-view.c030'),
+    go: m('plugin-manager.config-panel-view.c031'),
+    showHidden: (n: number) => m('plugin-manager.config-panel-view.c032', { p0: String(n) }),
+    empty: m('plugin-manager.config-panel-view.c033'),
+    loading: m('plugin-manager.config-panel-view.c034'),
+    newFolder: m('plugin-manager.config-panel-view.c035'),
+    createConfirm: m('plugin-manager.config-panel-view.c036'),
+    createCancel: m('plugin-manager.config-panel-view.c037'),
+    select: m('plugin-manager.config-panel-view.c038'),
+    selected: m('plugin-manager.config-panel-view.c039'),
+    open: m('plugin-manager.config-panel-view.c040'),
+    cancel: m('plugin-manager.config-panel-view.c041'),
+    willPick: m('plugin-manager.config-panel-view.c042'),
+  };
+}
 
 /** 画整面（四支控件、三支错误落位、底栏、附加块槽都在这里）。 */
 export function PanelBody(props: PanelBodyProps): React.ReactElement {
@@ -989,7 +997,7 @@ const slotGeom = (slot: number, seed: number): { readonly top: string; readonly 
   const head = React.createElement(
     'div',
     { style: S.head },
-    React.createElement(TitleBlock, { product, purpose: '配置' }),
+    React.createElement(TitleBlock, { product, purpose: m('plugin-manager.config-panel-view.c012') }),
     React.createElement(PanelBadgeView, { kind: badge, dirtyCount }),
     dialog,
   );
@@ -1023,15 +1031,15 @@ const slotGeom = (slot: number, seed: number): { readonly top: string; readonly 
           'div',
           { style: S.fileWrap },
           fileRow(
-            '配置文件',
+            m('plugin-manager.config-panel-view.c013'),
             surface === null ? null : surface.path,
             { ...S.skeleton, width: '68%', maxWidth: 420 },
             // #939：这一句原先独占第三行、首次运行时会多 17px ⇒ 挂到同一行的行尾，两行高度恒定。
             surface !== null && surface.created
-              ? React.createElement('span', { style: S.muted }, '（配置文件刚按默认值生成）')
+              ? React.createElement('span', { style: S.muted }, m('plugin-manager.config-panel-view.c014'))
               : null,
           ),
-          fileRow('数据目录', surface === null ? null : headDataDir, { ...S.skeleton, width: '46%', maxWidth: 300 }),
+          fileRow(m('plugin-manager.config-panel-view.c015'), surface === null ? null : headDataDir, { ...S.skeleton, width: '46%', maxWidth: 300 }),
         );
 
   const parts: PanelParts = { styles: S, reply: surface };
@@ -1049,8 +1057,8 @@ const slotGeom = (slot: number, seed: number): { readonly top: string; readonly 
       React.createElement(
         'div',
         { style: S.bar },
-        React.createElement('button', { style: S.btn, type: 'button', 'data-ilife-press': 'retry', 'data-ilife-longpress': 'retry', onClick: props.onRetry }, '重试'),
-        React.createElement('button', { style: S.btn, type: 'button', 'data-ilife-press': 'reset', 'data-ilife-longpress': 'reset', onClick: props.onReset }, '重置为默认'),
+        React.createElement('button', { style: S.btn, type: 'button', 'data-ilife-press': 'retry', 'data-ilife-longpress': 'retry', onClick: props.onRetry }, m('plugin-manager.config-panel-view.c016')),
+        React.createElement('button', { style: S.btn, type: 'button', 'data-ilife-press': 'reset', 'data-ilife-longpress': 'reset', onClick: props.onReset }, m('plugin-manager.config-panel-view.c017')),
       ),
       // #1160 T1：按压＋焦点双环的样式只此一枚 <style>，罩本卡内 data-ilife-press／focus 两类。
       // 放末位：首位会把既有形状判据 kidsOf(card)[0]===head 顶掉（920 红），末位不影响任何既有断言。
@@ -1108,7 +1116,7 @@ const slotGeom = (slot: number, seed: number): { readonly top: string; readonly 
             'summary',
             { style: S.summary, 'data-ilife-advanced': 'head' },
             React.createElement('span', { style: S.groupMark, 'data-ilife-advanced': 'mark' }, '›'),
-            ADVANCED_GROUP_TITLE,
+            advancedGroupTitle(),
           ),
           React.createElement(
             'div',
@@ -1123,23 +1131,23 @@ const slotGeom = (slot: number, seed: number): { readonly top: string; readonly 
       React.createElement(
         'button',
         { style: dirty ? S.btnPrimary : S.btn, type: 'button', disabled: frozen || !dirty, 'data-ilife-press': 'save', 'data-ilife-longpress': 'save', onClick: props.onSave },
-        props.busy ? '处理中' : dirty ? `保存（${dirtyCount} 项未保存）` : '保存',
+        props.busy ? m('plugin-manager.config-panel-view.c018') : dirty ? m('plugin-manager.config-panel-view.c019', { p0: String(dirtyCount) }) : m('plugin-manager.config-panel-view.c020'),
       ),
-      React.createElement('button', { style: S.btn, type: 'button', disabled: frozen, 'data-ilife-press': 'reset', 'data-ilife-longpress': 'reset', onClick: props.onReset }, '重置为默认'),
-      React.createElement('button', { style: S.btn, type: 'button', disabled: frozen, 'data-ilife-press': 'retry', 'data-ilife-longpress': 'retry', onClick: props.onRetry }, '重新读取'),
+      React.createElement('button', { style: S.btn, type: 'button', disabled: frozen, 'data-ilife-press': 'reset', 'data-ilife-longpress': 'reset', onClick: props.onReset }, m('plugin-manager.config-panel-view.c021')),
+      React.createElement('button', { style: S.btn, type: 'button', disabled: frozen, 'data-ilife-press': 'retry', 'data-ilife-longpress': 'retry', onClick: props.onRetry }, m('plugin-manager.config-panel-view.c022')),
       // 那半句话是**最后一个孩子**：v3.1 的 `.ic-bar .ic-note{margin-left:auto}` 靠它把说明顶到行尾，
       // 三枚按钮留在左边（顺序反了就会成「说明靠左、按钮靠右」，与真源相反）。
       dirty
-        ? React.createElement('div', { style: S.saveMsg }, `浏览改动后请点保存（${dirtyCount} 项未保存），保存后跟随项自动更新`)
+        ? React.createElement('div', { style: S.saveMsg }, m('plugin-manager.config-panel-view.c023', { p0: String(dirtyCount) }))
         : ready
-          ? React.createElement('div', { style: S.barNote }, '没有未保存的改动')
+          ? React.createElement('div', { style: S.barNote }, m('plugin-manager.config-panel-view.c024'))
           // #939：原先加载期在头部独占一行「配置读取中」；搬到底栏这一格——不删（首屏没有第二个"正在读"的表示），
           // 但也不占头部那两行的高度（`config-panel-908` 仍按文字断言它在这张卡里）。
-          : React.createElement('div', { style: S.barNote }, '配置读取中'),
+          : React.createElement('div', { style: S.barNote }, m('plugin-manager.config-panel-view.c025')),
     ),
-    props.picking ? React.createElement('div', { style: S.muted }, '已唤起系统文件夹对话框：选中后自动填上，取消则不动。') : null,
+    props.picking ? React.createElement('div', { style: S.muted }, m('plugin-manager.config-panel-view.c026')) : null,
     props.browseRow !== null
-      ? React.createElement(DirectoryBrowserFromRow, { open: true, row: props.browseRow, labels: BROWSER_LABELS })
+      ? React.createElement(DirectoryBrowserFromRow, { open: true, row: props.browseRow, labels: browserLabels() })
       : null,
     props.writeError !== null
       ? React.createElement('div', { style: S.error, role: 'alert' }, props.writeError)

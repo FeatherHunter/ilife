@@ -7,14 +7,14 @@ import { createMultiHostUpdate } from 'dsh-plugin-update/batch';
 import type { MultiHostUpdate, MultiTargetSpec } from 'dsh-plugin-update/batch';
 import { installedVersionOf } from './manager-version.js';
 import { VERSION_UNKNOWN } from './update-contract.js';
-import { BATCH_PREFIX, MANAGER_TARGET_KEY, UPDATE_TARGETS } from './update-targets.js';
+import { BATCH_PREFIX, MANAGER_TARGET_KEY, updateTargets } from './update-targets.js';
 
 /** 缺席包占位运行版本：读不到已装版时给读取器的占位（沿用旧口径）。 */
 export const MISSING_RUNNING_VERSION = '0.0.0' as const;
 
 /** 七目标转批量 targets：prefix 照抄更新目标表，pluginId 沿上游缺省。 */
 export function buildBatchTargets(): MultiTargetSpec[] {
-  return UPDATE_TARGETS.map((target) => ({
+  return updateTargets().map((target) => ({
     key: target.key,
     title: target.title,
     packageName: target.packageName,

@@ -9121,7 +9121,8 @@
     "1229": {
       "title": "迁移 7 个插件的文本：57 件（575 条）",
       "state": "open（待开工；清单已回填 #1308）",
-      "files": [
+      "files": [],
+      "migrated": [
         {
           "path": "packages/plugin-bill-ilife/src/bridge.ts",
           "literals": 10,
@@ -9136,13 +9137,6 @@
           "byClass": {
             "copy": 3,
             "concat": 1
-          }
-        },
-        {
-          "path": "packages/plugin-bill-ilife/src/seal-states.generated.ts",
-          "literals": 11,
-          "byClass": {
-            "derived": 11
           }
         },
         {
@@ -9193,13 +9187,6 @@
           }
         },
         {
-          "path": "packages/plugin-calorie/src/seal-states.generated.ts",
-          "literals": 11,
-          "byClass": {
-            "derived": 11
-          }
-        },
-        {
           "path": "packages/plugin-calorie/src/settings.ts",
           "literals": 23,
           "byClass": {
@@ -9236,13 +9223,6 @@
           "byClass": {
             "copy": 2,
             "concat": 1
-          }
-        },
-        {
-          "path": "packages/plugin-chef/src/seal-states.generated.ts",
-          "literals": 11,
-          "byClass": {
-            "derived": 11
           }
         },
         {
@@ -9285,13 +9265,6 @@
           }
         },
         {
-          "path": "packages/plugin-home-ilife/src/seal-states.generated.ts",
-          "literals": 11,
-          "byClass": {
-            "derived": 11
-          }
-        },
-        {
           "path": "packages/plugin-home-ilife/src/settings.ts",
           "literals": 11,
           "byClass": {
@@ -9320,13 +9293,6 @@
           "byClass": {
             "copy": 8,
             "concat": 2
-          }
-        },
-        {
-          "path": "packages/plugin-manager/src/config-panel-contract.ts",
-          "literals": 1,
-          "byClass": {
-            "copy": 1
           }
         },
         {
@@ -9392,47 +9358,11 @@
           }
         },
         {
-          "path": "packages/plugin-manager/src/install.ts",
-          "literals": 4,
-          "byClass": {
-            "copy": 1,
-            "concat": 3
-          }
-        },
-        {
           "path": "packages/plugin-manager/src/nav.ts",
           "literals": 14,
           "byClass": {
             "copy": 12,
             "concat": 2
-          }
-        },
-        {
-          "path": "packages/plugin-manager/src/seal-paper-schemes.ts",
-          "literals": 1,
-          "byClass": {
-            "concat": 1
-          }
-        },
-        {
-          "path": "packages/plugin-manager/src/seal-scroll.ts",
-          "literals": 2,
-          "byClass": {
-            "concat": 2
-          }
-        },
-        {
-          "path": "packages/plugin-manager/src/seal-stamp.ts",
-          "literals": 2,
-          "byClass": {
-            "concat": 2
-          }
-        },
-        {
-          "path": "packages/plugin-manager/src/seal-vocabulary.generated.ts",
-          "literals": 9,
-          "byClass": {
-            "derived": 9
           }
         },
         {
@@ -9472,13 +9402,6 @@
           "byClass": {
             "copy": 2,
             "concat": 1
-          }
-        },
-        {
-          "path": "packages/plugin-memo-ilife/src/seal-states.generated.ts",
-          "literals": 11,
-          "byClass": {
-            "derived": 11
           }
         },
         {
@@ -9530,13 +9453,6 @@
           }
         },
         {
-          "path": "packages/plugin-schedule-ilife/src/seal-states.generated.ts",
-          "literals": 11,
-          "byClass": {
-            "derived": 11
-          }
-        },
-        {
           "path": "packages/plugin-schedule-ilife/src/settings.ts",
           "literals": 7,
           "byClass": {
@@ -9560,11 +9476,109 @@
           }
         }
       ],
-      "migrated": [],
       "totals": {
         "files": 57,
         "literals": 575
-      }
+      },
+      "excluded": [
+        {
+          "path": "packages/plugin-bill-ilife/src/seal-states.generated.ts",
+          "literals": 11,
+          "byClass": {
+            "derived": 11
+          },
+          "reason": "生成件：文件头「自动生成 · 勿手改」；sealStates() 的 label/progress/status 全 zh，须由生成器处置"
+        },
+        {
+          "path": "packages/plugin-calorie/src/seal-states.generated.ts",
+          "literals": 11,
+          "byClass": {
+            "derived": 11
+          },
+          "reason": "生成件：文件头「自动生成 · 勿手改」；sealStates() 的 label/progress/status 全 zh，须由生成器处置"
+        },
+        {
+          "path": "packages/plugin-chef/src/seal-states.generated.ts",
+          "literals": 11,
+          "byClass": {
+            "derived": 11
+          },
+          "reason": "生成件：文件头「自动生成 · 勿手改」；sealStates() 的 label/progress/status 全 zh，须由生成器处置"
+        },
+        {
+          "path": "packages/plugin-home-ilife/src/seal-states.generated.ts",
+          "literals": 11,
+          "byClass": {
+            "derived": 11
+          },
+          "reason": "生成件：文件头「自动生成 · 勿手改」；sealStates() 的 label/progress/status 全 zh，须由生成器处置"
+        },
+        {
+          "path": "packages/plugin-manager/src/config-panel-contract.ts",
+          "literals": 1,
+          "byClass": {
+            "copy": 1
+          },
+          "reason": "冻结契约面：ADVANCED_GROUP_TITLE 是跨包契约常量；单件内存编译本件，任何相对 import 会在 require 阶段炸。渲染期取词已落 config-panel-view.ts 的 advancedGroupTitle()，本件只加说明注释"
+        },
+        {
+          "path": "packages/plugin-manager/src/install.ts",
+          "literals": 4,
+          "byClass": {
+            "copy": 1,
+            "concat": 3
+          },
+          "reason": "仅 4 段 throw new Error 开发报文（SKIP_DEV_MESSAGE），无用户可见文案"
+        },
+        {
+          "path": "packages/plugin-manager/src/seal-paper-schemes.ts",
+          "literals": 1,
+          "byClass": {
+            "concat": 1
+          },
+          "reason": "0 条 CJK 字面量（纯样式与结构）"
+        },
+        {
+          "path": "packages/plugin-manager/src/seal-scroll.ts",
+          "literals": 2,
+          "byClass": {
+            "concat": 2
+          },
+          "reason": "仅 throw new Error('未知的印档：…') 开发报文"
+        },
+        {
+          "path": "packages/plugin-manager/src/seal-stamp.ts",
+          "literals": 2,
+          "byClass": {
+            "concat": 2
+          },
+          "reason": "仅 throw new Error('未知印章组合：…') 开发报文"
+        },
+        {
+          "path": "packages/plugin-manager/src/seal-vocabulary.generated.ts",
+          "literals": 9,
+          "byClass": {
+            "derived": 9
+          },
+          "reason": "生成件：印章词汇表（关闭钮/SECTION 标题等）全 zh，改源重生成"
+        },
+        {
+          "path": "packages/plugin-memo-ilife/src/seal-states.generated.ts",
+          "literals": 11,
+          "byClass": {
+            "derived": 11
+          },
+          "reason": "生成件：文件头「自动生成 · 勿手改」；sealStates() 的 label/progress/status 全 zh，须由生成器处置"
+        },
+        {
+          "path": "packages/plugin-schedule-ilife/src/seal-states.generated.ts",
+          "literals": 11,
+          "byClass": {
+            "derived": 11
+          },
+          "reason": "生成件：文件头「自动生成 · 勿手改」；sealStates() 的 label/progress/status 全 zh，须由生成器处置"
+        }
+      ]
     },
     "1232": {
       "title": "迁移 base-render 页面壳与规范面：8 件（173 条）",
@@ -10064,12 +10078,12 @@
   },
   "scopeSummary": {
     "ledgerFiles": 1226,
-    "migratedFiles": 215,
-    "pendingFiles": 881,
-    "pendingLiterals": 30482,
-    "excludedFiles": 130,
-    "excludedLiterals": 3977,
-    "migratedLiterals": 8289
+    "migratedFiles": 260,
+    "pendingFiles": 824,
+    "pendingLiterals": 29907,
+    "excludedFiles": 142,
+    "excludedLiterals": 4062,
+    "migratedLiterals": 8779
   },
   "workflow": [
     "开工：从本文件取本票 files，逐件登记进 tooling/i18n-scope.json 的 files（先跑两道门拿红读数＝范围已挂但还没迁）。",

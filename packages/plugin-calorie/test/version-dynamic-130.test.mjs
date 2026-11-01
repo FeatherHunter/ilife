@@ -17,7 +17,7 @@
 // 与 test/client-bundle-48.test.mjs（client 束纯度，21/21）各自守。
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, copyFileSync, existsSync, rmSync, symlinkSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, copyFileSync, cpSync, existsSync, rmSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname, resolve, relative } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -116,12 +116,16 @@ async function panelVersionLine(host) {
  * 故模拟安装必须带上这条**声明过的依赖**（真装机的 node_modules 里本来就有它，见 package.json 的 dependencies），
  * 且总管那份是**真件**不是替身。`skillVersion === null` ＝ 技能包 manifest 不落盘（技能没装进来那一态）。 */
 const MANAGER_DIR = join(REPO, 'packages', 'plugin-manager');
+/** #1229 起 bridge 走词条层，词条层再 import 'base-entries'（插件声明过的依赖）——模拟安装同样要带上真件。 */
+const BASE_ENTRIES_DIR = join(REPO, 'packages', 'base-entries');
 
 function makeFakeInstall(pluginVersion, skillVersion) {
   const root = mkdtempSync(join(tmpdir(), 't130-install-'));
   const pluginDir = join(root, 'node_modules', PLUGIN_NAME);
   mkdirSync(join(pluginDir, 'dist'), { recursive: true });
   copyFileSync(join(DIST, 'bridge.js'), join(pluginDir, 'dist', 'bridge.js'));
+  // #1229 起 bridge 的提示语走词条层（import './entries/index.js'），模拟安装要带上它。
+  cpSync(join(DIST, 'entries'), join(pluginDir, 'dist', 'entries'), { recursive: true });
   writeJson(join(pluginDir, 'package.json'), { ...PLUGIN_PKG, version: pluginVersion });
   if (skillVersion !== null) {
     const skillDir = join(root, 'node_modules', SKILL_NAME);
@@ -130,6 +134,7 @@ function makeFakeInstall(pluginVersion, skillVersion) {
   }
   try {
     symlinkSync(MANAGER_DIR, join(root, 'node_modules', 'dsh-life-pack'), 'junction');
+    symlinkSync(BASE_ENTRIES_DIR, join(root, 'node_modules', 'base-entries'), 'junction');
   } catch (e) {
     rmSync(root, { recursive: true, force: true });
     throw new Error('模拟安装缺总管链接（dsh-life-pack 是插件声明过的依赖）：' + (e instanceof Error ? e.message : String(e)));

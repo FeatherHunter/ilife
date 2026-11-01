@@ -35,6 +35,7 @@ import { openRowBrowser, pickerModeOf, readPickAnswer } from './directory-browse
 import type { DirectoryRowBrowser, DirectoryRowEntry, PickOutcome } from './directory-browser-api.js';
 import { createRootsSource } from './directory-browser-roots.js';
 import { MANAGER_ACTIONS, MANAGER_RPC } from './update-contract.js';
+import { m } from './entries/index.js';
 
 /** 目录选择命名空间：本件只认「有一格 `pick`」这一件事（软依赖守卫用）。 */
 interface PickerFace {
@@ -64,7 +65,7 @@ async function pickDirectory(picker: PickerFace): Promise<PickOutcome> {
     return readPickAnswer(await picker.pick());
   } catch (e) {
     const reason = e instanceof Error ? e.message : String(e);
-    return { kind: 'unavailable', message: '打不开系统文件夹对话框（' + reason + '）：请直接在框里填绝对路径。' };
+    return { kind: 'unavailable', message: m('plugin-manager.config-panel.c001', { p0: String(reason) }) };
   }
 }
 
@@ -303,7 +304,7 @@ export function ConfigPanel(props: ConfigPanelProps): React.ReactElement {
     setError(null);
     const r = await saveConfigSurface(props.getCall(), props.channel, fromDraft(props.items, draft));
     setBusy(false);
-    if (r.ok) await writeThenReload('已保存，立即生效（不用重启宿主）');
+    if (r.ok) await writeThenReload(m('plugin-manager.config-panel.c002'));
     else setWriteError(r.message);
   };
 
@@ -314,7 +315,7 @@ export function ConfigPanel(props: ConfigPanelProps): React.ReactElement {
     setError(null);
     const r = await resetConfigSurface(props.getCall(), props.channel);
     setBusy(false);
-    if (r.ok) await writeThenReload('已重置为默认（原配置已另存一份 .bak）');
+    if (r.ok) await writeThenReload(m('plugin-manager.config-panel.c003'));
     else setWriteError(r.message);
   };
 

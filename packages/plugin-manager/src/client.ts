@@ -20,7 +20,7 @@
  */
 
 import * as React from 'react';
-import { MANAGER_PLUGIN, MANAGER_TABS, recoFor } from './nav.js';
+import { MANAGER_PLUGIN, MANAGER_TABS, managerTabs, recoFor } from './nav.js';
 import { ActionCluster, AuthorPlugins } from './base-ui.js';
 import { clampSpread, planManual, spreadOfPage } from './manual-plan.js';
 import type { ManualScene, ManualSheet } from './manual-plan.js';
@@ -41,6 +41,7 @@ import type {
   RpcCallFace,
   SlotLedgerEntry,
 } from './dsh-ctx.js';
+import { m } from './entries/index.js';
 
 export const inject = ['slots', 'connection'];
 
@@ -421,8 +422,8 @@ function tabButton(
       key: 'sh' + sh.sheet,
       role: 'button',
       tabIndex: 0,
-      'aria-label': '翻到第' + sh.facing + '页',
-      title: '翻到第' + sh.facing + '页',
+      'aria-label': m('plugin-manager.client.c001', { p0: String(sh.facing) }),
+      title: m('plugin-manager.client.c002', { p0: String(sh.facing) }),
       'data-ilife-manual': 'tab',
       'data-pg': sh.facing,
       onClick: () => { goPage(sh.facing); },
@@ -744,12 +745,12 @@ function ManualBookShell(props: {
           type: 'button',
           style: { ...S.manualBrass, ...(prevOff ? S.manualBrassOff : null) },
           disabled: prevOff,
-          'aria-label': '上一跨页',
+          'aria-label': m('plugin-manager.client.c003'),
           'data-ilife-manual': 'prev',
           'data-ilife-press': 'manual-prev',
           onClick: () => { startTurn(-1); },
         },
-        '‹ 上一页',
+        m('plugin-manager.client.c004'),
       ),
       React.createElement(
         'button',
@@ -757,12 +758,12 @@ function ManualBookShell(props: {
           type: 'button',
           style: { ...S.manualBrass, ...(nextOff ? S.manualBrassOff : null) },
           disabled: nextOff,
-          'aria-label': '下一跨页',
+          'aria-label': m('plugin-manager.client.c005'),
           'data-ilife-manual': 'next',
           'data-ilife-press': 'manual-next',
           onClick: () => { startTurn(1); },
         },
-        '下一页 ›',
+        m('plugin-manager.client.c006'),
       ),
     ),
     hover === null
@@ -777,7 +778,7 @@ function ManualBookShell(props: {
         },
         tabCardLine(hover.pg, hoverScene),
         tabCardLine(hoverOtherPage, hoverOtherScene),
-        React.createElement('div', null, '点一下翻到这一页 ›'),
+        React.createElement('div', null, m('plugin-manager.client.c007')),
       ),
   );
 }
@@ -914,7 +915,7 @@ function CopyCmdButton(props: { text: string; onCopied: () => void }): React.Rea
         void copyCmdText(props.text).then(props.onCopied, () => undefined);
       },
     },
-    '复制',
+    m('plugin-manager.client.c008'),
   );
 }
 
@@ -951,13 +952,13 @@ function AbsentTabPanel(props: {
     React.createElement(
       'div',
       { className: 'ilife-step', 'data-step': '1' },
-      React.createElement('span', { className: 'ilife-step-t' }, props.tab.plugin + ' 未安装'),
-      '请补装后使用。',
+      React.createElement('span', { className: 'ilife-step-t' }, m('plugin-manager.client.c009', { p0: String(props.tab.plugin) })),
+      m('plugin-manager.client.c010'),
     ),
     React.createElement(
       'div',
       { className: 'ilife-step', 'data-step': '2' },
-      React.createElement('span', { className: 'ilife-step-t' }, '一键安装'),
+      React.createElement('span', { className: 'ilife-step-t' }, m('plugin-manager.client.c011')),
       React.createElement(
         'div',
         { className: 'ilife-tray' },
@@ -971,7 +972,7 @@ function AbsentTabPanel(props: {
     React.createElement(
       'div',
       { className: 'ilife-step', 'data-step': '3' },
-      React.createElement('span', { className: 'ilife-step-t' }, '备选：手动安装'),
+      React.createElement('span', { className: 'ilife-step-t' }, m('plugin-manager.client.c012')),
       cmdRows.map((row) => React.createElement(
         'span',
         { key: row.key, className: 'ilife-cmdrow' },
@@ -979,7 +980,7 @@ function AbsentTabPanel(props: {
         React.createElement(CopyCmdButton, { text: row.text, onCopied: pokeToast }),
       )),
     ),
-    toastOn ? React.createElement('div', { 'data-ilife-absent': 'toast', role: 'status' }, '✓ 已复制') : null,
+    toastOn ? React.createElement('div', { 'data-ilife-absent': 'toast', role: 'status' }, m('plugin-manager.client.c013')) : null,
   );
 }
 
@@ -1086,9 +1087,10 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [callReady]);
   const [visitedIds, setVisitedIds] = React.useState<ReadonlySet<string>>(() => new Set());
-  const active = MANAGER_TABS.some((t) => t.plugin === activeId)
+  const tabs = managerTabs();
+  const active = tabs.some((t) => t.plugin === activeId)
     ? (activeId as string)
-    : MANAGER_TABS[0].plugin;
+    : tabs[0].plugin;
   React.useEffect(() => {
     setVisitedIds((previous) => {
       if (previous.has(active)) return previous;
@@ -1110,14 +1112,14 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
   function onTabKeyDown(event: React.KeyboardEvent, index: number): void {
     let nextIndex: number | undefined;
     switch (event.key) {
-      case 'ArrowRight': nextIndex = (index + 1) % MANAGER_TABS.length; break;
-      case 'ArrowLeft': nextIndex = (index - 1 + MANAGER_TABS.length) % MANAGER_TABS.length; break;
+      case 'ArrowRight': nextIndex = (index + 1) % managerTabs().length; break;
+      case 'ArrowLeft': nextIndex = (index - 1 + managerTabs().length) % managerTabs().length; break;
       case 'Home': nextIndex = 0; break;
-      case 'End': nextIndex = MANAGER_TABS.length - 1; break;
+      case 'End': nextIndex = managerTabs().length - 1; break;
       default: return;
     }
     event.preventDefault();
-    const next = MANAGER_TABS[nextIndex];
+    const next = managerTabs()[nextIndex];
     setActiveId(next.plugin);
     tabRefs.current[nextIndex]?.focus();
   }
@@ -1131,7 +1133,7 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
   const ghostRef = React.useRef<HTMLSpanElement | null>(null);
   const prevTabRect = React.useRef<{ readonly left: number; readonly top: number; readonly width: number; readonly height: number } | null>(null);
   React.useEffect(() => {
-    const index = MANAGER_TABS.findIndex((tab) => tab.plugin === active);
+    const index = managerTabs().findIndex((tab) => tab.plugin === active);
     const el = index < 0 ? null : tabRefs.current[index];
     const glider = gliderRef.current;
     const ghost = ghostRef.current;
@@ -1220,7 +1222,7 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
     React.createElement(
       'div',
       { style: S.headRow },
-        React.createElement('div', { style: S.head }, '爱生活'),
+        React.createElement('div', { style: S.head }, m('plugin-manager.client.c014')),
         // #986：版本号构建期注入，首帧就是真值；不再有读中／读不到两态（漂移由构建门守）。
         React.createElement(
           'span',
@@ -1237,12 +1239,12 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
               style: health.running ? { ...S.healthBtn, opacity: 0.55, cursor: 'default' } : S.healthBtn,
               disabled: health.running,
               onClick: health.run,
-              title: '对六家各跑一次配置体检（只看不改：不建目录、不改配置、不自动重置）',
-              'aria-label': '体检',
+              title: m('plugin-manager.client.c015'),
+              'aria-label': m('plugin-manager.client.c016'),
               'data-ilife-press': 'health-run',
               'data-ilife-longpress': 'health-run',
             },
-            health.running ? '体检中…' : '体检',
+            health.running ? m('plugin-manager.client.c017') : m('plugin-manager.client.c018'),
           ),
           React.createElement('style', { 'data-ilife-interaction': 't1' }, interactionCss()),
           React.createElement('span', {
@@ -1259,7 +1261,7 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
       ),
     React.createElement(
       'div',
-      { role: 'tablist', 'aria-label': '爱生活技能页签', style: { ...S.tablist, position: 'relative', isolation: 'isolate' }, 'data-ilife-tablist': 't6' },
+      { role: 'tablist', 'aria-label': m('plugin-manager.client.c019'), style: { ...S.tablist, position: 'relative', isolation: 'isolate' }, 'data-ilife-tablist': 't6' },
       // T6（#1165）：一枚页签样式＋goo 滤镜＋glider 滑块层；页签按钮本身仍按 slot 账本＋MANAGER_TABS 映射（机制不动，只加表现）。
       React.createElement('style', { 'data-ilife-tabs': 't6' }, tabInteractionCss()),
       React.createElement(
@@ -1292,7 +1294,7 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
           },
         }),
       ),
-      MANAGER_TABS.map((tab, index) => {
+      managerTabs().map((tab, index) => {
         const selected = tab.plugin === active;
         const light = lightOf(tab.plugin);
         // 圆点从「实心／空心＝装没装」换成「颜色＝体检档位」（票 #732）：装了就是实心、
@@ -1329,10 +1331,10 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
               onTabKeyDown(event, index);
             },
             title: light === undefined
-              ? '这一家没装（或产物没注册页签槽）'
+              ? m('plugin-manager.client.c020')
               : light.title + '：' + (light.hasChannel
-                ? (light.status === null ? '还没体检' : '体检读数见本页签下方的表')
-                : '没有配置体检出口'),
+                ? (light.status === null ? m('plugin-manager.client.c021') : m('plugin-manager.client.c022'))
+                : m('plugin-manager.client.c023')),
           },
           isAbsent
             ? React.createElement('span', {
@@ -1372,7 +1374,7 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
         );
       }),
     ),
-    MANAGER_TABS.filter((tab) => tab.plugin === active || visitedIds.has(tab.plugin)).map((tab) => {
+    managerTabs().filter((tab) => tab.plugin === active || visitedIds.has(tab.plugin)).map((tab) => {
       const selected = tab.plugin === active;
       return React.createElement(
         'div',
@@ -1448,12 +1450,12 @@ function LifePackSection(props: LifePackSectionProps & { getCall: () => RpcCallF
                 {
                   type: 'button',
                   style: S.manualBrass,
-                  title: '关闭使用手册',
-                  'aria-label': '关闭使用手册',
+                  title: m('plugin-manager.client.c024'),
+                  'aria-label': m('plugin-manager.client.c025'),
                   'data-ilife-press': 'manual-close',
                   onClick: () => { setManualOpen(false); },
                 },
-                '关闭',
+                m('plugin-manager.client.c026'),
               ),
             ),
           }),
@@ -1500,7 +1502,7 @@ export function apply(ctx: ClientCtx): void {
         name: 'settings.section',
         id: 'dsh-life-pack',
         order: 21,
-        label: () => '爱生活',
+        label: () => m('plugin-manager.client.c027'),
         inject: sectionInjected,
         children: { 'ilife.config-tab': { kind: 'list', scope: 'root' } },
       },

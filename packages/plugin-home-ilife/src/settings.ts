@@ -30,6 +30,7 @@
  * （`files.help`／`files.lookup` 已于 #794 出配置表，文件名回到技能侧代码常量，不上页。）
  */
 
+import { m } from './entries/index.js';
 export const SETTINGS_OWNER = 'dsh-home-ilife' as const;
 export const SETTINGS_SLOT = 'ilife:home' as const;
 
@@ -67,66 +68,80 @@ export interface ConfigItem {
 }
 
 /** 常用项：库与产物落在哪，放页面上。 */
-const COMMON: readonly ConfigItem[] = [
-  {
-    key: 'db.dir',
-    title: '数据目录',
-    tier: 'common',
-    control: 'directory',
-    // 留空＝技能按默认目录落文件；页面上把解析出来的绝对路径直接填进这一行（见 client.ts 的 toDraft）。
-    prefillFrom: 'dataDir',
-    hint: '库文件与产物的根目录。留空＝用默认目录。',
-  },
-  {
-    key: 'db.name',
-    title: '库文件名',
-    tier: 'common',
-    control: 'text',
-    readonly: true,
-    resolveFrom: 'dbFile',
-    hint: '数据目录下的库文件。',
-  },
-  {
-    key: 'html.dir',
-    title: 'HTML 产物目录',
-    tier: 'common',
-    control: 'text',
-    readonly: true,
-    resolveFrom: 'htmlDir',
-    hint: '交付页面的存放目录。`.`或留空＝产物放库根。',
-  },
-];
+function commonItems(): readonly ConfigItem[] {
+  return [
+    {
+      key: 'db.dir',
+      title: m('plugin-home-ilife.settings.c001'),
+      tier: 'common',
+      control: 'directory',
+      // 留空＝技能按默认目录落文件；页面上把解析出来的绝对路径直接填进这一行（见 client.ts 的 toDraft）。
+      prefillFrom: 'dataDir',
+      hint: m('plugin-home-ilife.settings.c002'),
+    },
+    {
+      key: 'db.name',
+      title: m('plugin-home-ilife.settings.c003'),
+      tier: 'common',
+      control: 'text',
+      readonly: true,
+      resolveFrom: 'dbFile',
+      hint: m('plugin-home-ilife.settings.c004'),
+    },
+    {
+      key: 'html.dir',
+      title: m('plugin-home-ilife.settings.c005'),
+      tier: 'common',
+      control: 'text',
+      readonly: true,
+      resolveFrom: 'htmlDir',
+      hint: m('plugin-home-ilife.settings.c006'),
+    },
+  ];
+}
 
 /** 高级项：默认收起。改错了多半只是自己撞上麻烦，不确定就别动。 */
-const ADVANCED: readonly ConfigItem[] = [
-  {
-    key: 'backup.dir',
-    title: '备份目录',
-    tier: 'advanced',
-    control: 'directory',
-    readonly: true,
-    resolveFrom: 'backupDir',
-    hint: '备份与恢复的读写目录。',
-  },
-  {
-    key: 'key.file',
-    title: '主密钥文件',
-    tier: 'advanced',
-    control: 'text',
-    readonly: true,
-    resolveFrom: 'keyFile',
-    hint: '主密钥文件的位置。',
-  },
-];
+function advancedItems(): readonly ConfigItem[] {
+  return [
+    {
+      key: 'backup.dir',
+      title: m('plugin-home-ilife.settings.c007'),
+      tier: 'advanced',
+      control: 'directory',
+      readonly: true,
+      resolveFrom: 'backupDir',
+      hint: m('plugin-home-ilife.settings.c008'),
+    },
+    {
+      key: 'key.file',
+      title: m('plugin-home-ilife.settings.c009'),
+      tier: 'advanced',
+      control: 'text',
+      readonly: true,
+      resolveFrom: 'keyFile',
+      hint: m('plugin-home-ilife.settings.c010'),
+    },
+  ];
+}
 
 /** 设置页的行表，顺序即页面顺序。 */
-export const CONFIG_ITEMS: readonly ConfigItem[] = [...COMMON, ...ADVANCED];
+export function configItems(): readonly ConfigItem[] {
+  return [...commonItems(), ...advancedItems()];
+}
+
+/** 兼容镜像：测试与跨包消费方按常量读；渲染路径用 configItems()。 */
+export const CONFIG_ITEMS: readonly ConfigItem[] = configItems();
 
 /** 常用项行数（页面上直接画出来的那些）。 */
-export const COMMON_ITEM_COUNT = COMMON.length;
+export const COMMON_ITEM_COUNT = commonItems().length;
 
 /** 高级组标题与副文案。 */
-export const ADVANCED_GROUP_TITLE = '高级' as const;
+export function advancedGroupTitle(): string {
+  return m('plugin-home-ilife.settings.c011');
+}
+
+/** 兼容镜像：契约常量形状不变；渲染路径用 advancedGroupTitle()。 */
+export const ADVANCED_GROUP_TITLE = advancedGroupTitle();
 
 /** 按 `a.b` 路径从配置取值里读（缺层或类型不符一律回 undefined）。 */
 export function readPath(values: Record<string, unknown>, key: string): unknown {

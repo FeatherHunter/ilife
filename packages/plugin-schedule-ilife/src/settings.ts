@@ -28,6 +28,7 @@
  * **#764 起 `files.help`／`lark.cliPath` 出配置表**（键已退休，见技能侧 `SCHEDULE_CONFIG_RETIRED`），
  * 故本表是 3 行（可改 1 ＋ 只读 2）。
  */
+import { m } from './entries/index.js';
 export const SETTINGS_OWNER = 'dsh-schedule-ilife' as const;
 export const SETTINGS_SLOT = 'ilife:schedule' as const;
 
@@ -65,69 +66,83 @@ export interface ConfigItem {
 }
 
 /** 常用项：#764 起是「可改 1 ＋ 只读 2」（高级组已空，见下）。 */
-const COMMON: readonly ConfigItem[] = [
-  {
-    key: 'db.dir',
-    title: '数据目录',
-    tier: 'common',
-    control: 'directory',
-    // 留空＝技能按默认目录落文件；页面上把解析出来的绝对路径直接填进这一行（见 client.ts 的 toDraft）。
-    prefillFrom: 'dataDir',
-    hint: '库文件与产物的根目录。留空＝用默认目录。',
-  },
-  {
-    key: 'db.name',
-    title: '库文件名',
-    tier: 'common',
-    control: 'text',
-    readonly: true,
-    resolveFrom: 'dbFile',
-    hint: '数据目录下的库文件。',
-  },
-  {
-    key: 'html.dir',
-    title: 'HELP 产物目录',
-    tier: 'common',
-    control: 'text',
-    readonly: true,
-    resolveFrom: 'htmlDir',
-    hint: 'HELP 页面的存放目录。',
-  },
-];
+function commonItems(): readonly ConfigItem[] {
+  return [
+    {
+      key: 'db.dir',
+      title: m('plugin-schedule-ilife.settings.c001'),
+      tier: 'common',
+      control: 'directory',
+      // 留空＝技能按默认目录落文件；页面上把解析出来的绝对路径直接填进这一行（见 client.ts 的 toDraft）。
+      prefillFrom: 'dataDir',
+      hint: m('plugin-schedule-ilife.settings.c002'),
+    },
+    {
+      key: 'db.name',
+      title: m('plugin-schedule-ilife.settings.c003'),
+      tier: 'common',
+      control: 'text',
+      readonly: true,
+      resolveFrom: 'dbFile',
+      hint: m('plugin-schedule-ilife.settings.c004'),
+    },
+    {
+      key: 'html.dir',
+      title: m('plugin-schedule-ilife.settings.c005'),
+      tier: 'common',
+      control: 'text',
+      readonly: true,
+      resolveFrom: 'htmlDir',
+      hint: m('plugin-schedule-ilife.settings.c006'),
+    },
+  ];
+}
 
 /** 高级项：#764 起已空（`files.help`／`lark.cliPath` 出配置表）——组还在，行没有。
  *  空组不渲染（见 client.ts），行表长度即 3。 */
-const ADVANCED: readonly ConfigItem[] = [];
+function advancedItems(): readonly ConfigItem[] {
+  return [];
+}
 
 /** 设置页的行表，顺序即页面顺序。 */
-export const CONFIG_ITEMS: readonly ConfigItem[] = [...COMMON, ...ADVANCED];
+export function configItems(): readonly ConfigItem[] {
+      return [...commonItems(), ...advancedItems()];
+}
+
+/** 兼容镜像：测试与跨包消费方按常量读；渲染路径用 configItems()。 */
+export const CONFIG_ITEMS: readonly ConfigItem[] = configItems();
 
 /** 常用项行数（页面上直接画出来的那些）。 */
-export const COMMON_ITEM_COUNT = COMMON.length;
+export const COMMON_ITEM_COUNT = commonItems().length;
 
 /** 高级组标题与副文案。 */
-export const ADVANCED_GROUP_TITLE = '高级' as const;
+export function advancedGroupTitle(): string {
+      return m('plugin-schedule-ilife.settings.c007');
+}
+
+/** 兼容镜像：契约常量形状不变；渲染路径用 advancedGroupTitle()。 */
+export const ADVANCED_GROUP_TITLE = advancedGroupTitle();
 
 /** 按 `a.b` 路径从配置取值里读（缺层或类型不符一律回 undefined）。 */
 export function readPath(values: Record<string, unknown>, key: string): unknown {
-  const parts = key.split('.');
-  let cur: unknown = values;
-  for (const part of parts) {
-    if (typeof cur !== 'object' || cur === null || Array.isArray(cur)) return undefined;
-    cur = (cur as Record<string, unknown>)[part];
-  }
-  return cur;
+      const parts = key.split('.');
+      let cur: unknown = values;
+      for (const part of parts) {
+      if (typeof cur !== 'object' || cur === null || Array.isArray(cur)) return undefined;
+      cur = (cur as Record<string, unknown>)[part];
+      }
+      return cur;
 }
 
 /** 按 `a.b` 路径把值写进配置取值（中间层缺就建一层空组；已存在非组即覆盖成组）。 */
 export function writePath(values: Record<string, unknown>, key: string, value: unknown): void {
-  const parts = key.split('.');
-  let cur: Record<string, unknown> = values;
-  for (let i = 0; i < parts.length - 1; i++) {
-    const part = parts[i]!;
-    const next = cur[part];
-    if (typeof next !== 'object' || next === null || Array.isArray(next)) cur[part] = {};
-    cur = cur[part] as Record<string, unknown>;
-  }
-  cur[parts[parts.length - 1]!] = value;
+      const parts = key.split('.');
+      let cur: Record<string, unknown> = values;
+      for (let i = 0; i < parts.length - 1; i++) {
+      const part = parts[i]!;
+      const next = cur[part];
+      if (typeof next !== 'object' || next === null || Array.isArray(next)) cur[part] = {};
+      cur = cur[part] as Record<string, unknown>;
+      }
+      cur[parts[parts.length - 1]!] = value;
 }

@@ -20,10 +20,11 @@
 import * as React from 'react';
 import { ConfigPanel } from 'dsh-life-pack/config-panel';
 import { RPC_CHANNEL, RPC_ENDPOINT_READ, DEFAULT_READ_KEY, isRpcResult } from './contract.js';
-import { SLOT_TITLE, PLUGIN } from './slot.js';
+import { SLOT_TITLE, slotTitle, PLUGIN } from './slot.js';
 import { SEAL_SEED, sealStates } from './seal-states.generated.js';
-import { CONFIG_ITEMS } from './settings.js';
+import { CONFIG_ITEMS, configItems } from './settings.js';
 import type { ClientCtx, RpcCallFace, RpcCallResult } from './dsh-ctx.js';
+import { m } from './entries/index.js';
 
 /** client 短名声明：只有这两个（#736 的目录选择走**可选查找**，不写进来——
  * 写进来＝硬依赖，提供方缺席时整包被停靠，设置页会跟着装不上；见 cookbook §13）。 */
@@ -79,7 +80,10 @@ export function normalizeVersion(v: unknown): string {
 
 /** 版本行文本（纯函数，供 VersionLine 与单测复用；骨架恒为 `dsh-calorie X · skill-calorie Y`）。 */
 export function formatVersionLine(pluginVersion: unknown, skillVersion: unknown): string {
-  return `${normalizeVersion(pluginVersion)} · 技能 ${normalizeVersion(skillVersion)}`;
+  return m('plugin-calorie.client.c001', {
+    p0: String(normalizeVersion(pluginVersion)),
+    p1: String(normalizeVersion(skillVersion)),
+  });
 }
 
 /** 版本行：纯渲染 host 传来的值＋unknown 降级（用户要求：每技能设置页自报家门）。 */
@@ -150,7 +154,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   const limit = new Promise<never>((_, reject) => {
     timer = setTimeout(() => {
       timer = undefined;
-      const e = new Error(`取数超时（${Math.round(ms / 1000)}s）：宿主未回，先查宿主日志与 DB 环境`);
+      const e = new Error(m('plugin-calorie.client.c013', { p0: String(Math.round(ms / 1000)) }));
       e.name = 'TimeoutError';
       reject(e);
     }, ms);
@@ -166,7 +170,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 /** 单次读数（纯异步函数，无 hook；挂载期调用一次，无轮询）。 */
 async function fetchRead(call: unknown, key: string, params: Record<string, unknown>): Promise<ReadOutcome> {
   // extractRpc 同式守卫：非函数即缺席态。
-  if (typeof call !== 'function') return { ok: false, absent: true, message: '宿主连接缺席：connection.rpc.call 不可用' };
+  if (typeof call !== 'function') return { ok: false, absent: true, message: m('plugin-calorie.client.c002') };
   let result: RpcCallResult;
   try {
     // 防御纵深 + 自家超时双保险（AbortSignal 帮正规传输提前收工；race 保传输忽略 signal 时仍落字）。
@@ -175,20 +179,20 @@ async function fetchRead(call: unknown, key: string, params: Record<string, unkn
       call('/api', RPC_CHANNEL.slice(1), { method: RPC_ENDPOINT_READ, payload: { key, params } }, AbortSignal.timeout(READ_TIMEOUT_MS)),
       READ_TIMEOUT_MS,
     );
-    if (!isRpcResult(raw)) return { ok: false, absent: false, message: '回执信封异常（非 ok 信封）' };
+    if (!isRpcResult(raw)) return { ok: false, absent: false, message: m('plugin-calorie.client.c003') };
     result = raw;
   } catch (e) {
-    if (e instanceof Error && e.name === 'AbortError') return { ok: false, absent: false, message: '取数超时（20s）：宿主未回，先查宿主日志与 DB 环境' };
-    return { ok: false, absent: false, message: `取数失败：${e instanceof Error ? e.message : String(e)}` };
+    if (e instanceof Error && e.name === 'AbortError') return { ok: false, absent: false, message: m('plugin-calorie.client.c004') };
+    return { ok: false, absent: false, message: m('plugin-calorie.client.c005', { p0: String(e instanceof Error ? e.message : String(e)) }) };
   }
   if (!result.ok) {
     const code = result.error?.code ?? 'unknown';
     const message = result.error?.message ?? '';
-    if (code === 'missing-cli') return { ok: false, absent: true, message: `技能出口缺席（missing-cli）：${message}` };
-    return { ok: false, absent: false, message: `取数失败（${code}）：${message}` };
+    if (code === 'missing-cli') return { ok: false, absent: true, message: m('plugin-calorie.client.c006', { p0: String(message) }) };
+    return { ok: false, absent: false, message: m('plugin-calorie.client.c007', { p0: String(code), p1: String(message) }) };
   }
   const text = extractTotal(result.value);
-  if (text === null) return { ok: false, absent: false, message: '取数为空（不冒充正常）' };
+  if (text === null) return { ok: false, absent: false, message: m('plugin-calorie.client.c008') };
   return { ok: true, text };
 }
 
@@ -210,7 +214,7 @@ function CalorieWork(props: { getCall: GetCall }): React.ReactElement {
       } catch (e) {
         // 调用口同步抛错兜底：fetchRead 之外的错不成不可见 rejection，直接落字。
         if (!alive) return;
-        setState({ kind: 'error', message: `取数失败：${e instanceof Error ? e.message : String(e)}` });
+        setState({ kind: 'error', message: m('plugin-calorie.client.c009', { p0: String(e instanceof Error ? e.message : String(e)) }) });
         return;
       }
       if (!alive) return;
@@ -238,13 +242,13 @@ function CalorieWork(props: { getCall: GetCall }): React.ReactElement {
     };
   }, [props.getCall]);
   if (state.kind === 'loading') {
-    return React.createElement('div', { style: W.card }, React.createElement('div', { style: W.muted }, '卡路里加载中'));
+    return React.createElement('div', { style: W.card }, React.createElement('div', { style: W.muted }, m('plugin-calorie.client.c010')));
   }
   if (state.kind === 'data') {
     return React.createElement(
       'div',
       { style: W.card },
-      React.createElement('div', { style: W.title }, `卡路里 · ${state.date}`),
+      React.createElement('div', { style: W.title }, m('plugin-calorie.client.c011', { p0: String(state.date) })),
       React.createElement('div', { style: W.total }, `total ${state.total}`),
       React.createElement(VersionLine, { pluginVersion: versions.plugin, skillVersion: versions.skill }),
     );
@@ -296,15 +300,15 @@ export function apply(ctx: ClientCtx): void {
         name: 'ilife.config-tab',
         id: PLUGIN,
         order: 75,
-        label: () => SLOT_TITLE,
+        label: () => slotTitle(),
         // #706：本包自己那条 RPC 通道交给总管（各家都写这一格），总管据此调配置体检——
         // 它因此不必在源码里写死任何一家的通道名（零单品依赖照旧成立）。
         channel: RPC_CHANNEL,
       },
       () => React.createElement(ConfigPanel, {
         channel: RPC_CHANNEL,
-        items: CONFIG_ITEMS,
-        title: SLOT_TITLE,
+        items: configItems(),
+        title: slotTitle(),
         // 三枚签（1145）：HELP＋技能＋插件，各家只说自家档位与三段文案。
         seals: sealStates(SLOT_TITLE),
         sealSeed: SEAL_SEED,
@@ -325,7 +329,7 @@ export function apply(ctx: ClientCtx): void {
       if (!bs || typeof bs.registerTab !== 'function') return false;
       const dispose = bs.registerTab({
         id: 'ilife-calorie:work',
-        title: '卡路里',
+        title: m('plugin-calorie.client.c012'),
         order: 61,
         single: true,
         component: () => React.createElement(CalorieWork, { getCall }),

@@ -31,6 +31,7 @@
  * 「附件目录」那一条的语义照 #712 落地后的口径写（真目录 ＋ 真包含判定），不是旧的字符串前缀；
  * 默认落点照 #759（`<数据目录>/media`）。
  */
+import { m } from './entries/index.js';
 export const SETTINGS_OWNER = 'dsh-memo-ilife' as const;
 export const SETTINGS_SLOT = 'ilife:memo' as const;
 
@@ -70,53 +71,65 @@ export interface ConfigItem {
 }
 
 /** 常用项：改了就影响「库与产物落在哪」，放页面上。 */
-const COMMON: readonly ConfigItem[] = [
-  {
-    key: 'db.dir',
-    title: '数据目录',
-    tier: 'common',
-    control: 'directory',
-    // 留空＝技能按默认目录落文件；页面上把解析出来的绝对路径直接填进这一行（见 client.ts 的 toDraft）。
-    prefillFrom: 'dataDir',
-    hint: '库文件与产物的根目录。留空＝用默认目录。',
-  },
-  {
-    key: 'db.name',
-    title: '库文件名',
-    tier: 'common',
-    control: 'text',
-    readonly: true,
-    resolveFrom: 'dbFile',
-    hint: '数据目录下的库文件（备忘不建库，显示的是会落在哪）。',
-  },
-  {
-    key: 'html.dir',
-    title: 'HTML 产物目录名',
-    tier: 'common',
-    control: 'text',
-    readonly: true,
-    resolveFrom: 'htmlDir',
-    hint: '数据目录下存放 HELP 页面的子目录名。',
-  },
-  {
-    key: 'media.dir',
-    title: '附件目录',
-    tier: 'common',
-    control: 'directory',
-    // 留空＝<数据目录>/media；页面上把解析出来的绝对路径直接填进这一行；目录必须已存在，技能不建。
-    prefillFrom: 'mediaDir',
-    hint: '附件的存放根目录。留空＝数据目录下的 media（目录须已存在，技能不替你建）。',
-  },
-];
+function commonItems(): readonly ConfigItem[] {
+  return [
+    {
+      key: 'db.dir',
+      title: m('plugin-memo-ilife.settings.c001'),
+      tier: 'common',
+      control: 'directory',
+      // 留空＝技能按默认目录落文件；页面上把解析出来的绝对路径直接填进这一行（见 client.ts 的 toDraft）。
+      prefillFrom: 'dataDir',
+      hint: m('plugin-memo-ilife.settings.c002'),
+    },
+    {
+      key: 'db.name',
+      title: m('plugin-memo-ilife.settings.c003'),
+      tier: 'common',
+      control: 'text',
+      readonly: true,
+      resolveFrom: 'dbFile',
+      hint: m('plugin-memo-ilife.settings.c004'),
+    },
+    {
+      key: 'html.dir',
+      title: m('plugin-memo-ilife.settings.c005'),
+      tier: 'common',
+      control: 'text',
+      readonly: true,
+      resolveFrom: 'htmlDir',
+      hint: m('plugin-memo-ilife.settings.c006'),
+    },
+    {
+      key: 'media.dir',
+      title: m('plugin-memo-ilife.settings.c007'),
+      tier: 'common',
+      control: 'directory',
+      // 留空＝<数据目录>/media；页面上把解析出来的绝对路径直接填进这一行；目录必须已存在，技能不建。
+      prefillFrom: 'mediaDir',
+      hint: m('plugin-memo-ilife.settings.c008'),
+    },
+  ];
+}
 
 /** 设置页的行表，顺序即页面顺序（#760 起高级组清空：删键 4 项出表，无高级项）。 */
-export const CONFIG_ITEMS: readonly ConfigItem[] = [...COMMON];
+export function configItems(): readonly ConfigItem[] {
+  return [...commonItems()];
+}
+
+/** 兼容镜像：测试与跨包消费方按常量读；渲染路径用 configItems()。 */
+export const CONFIG_ITEMS: readonly ConfigItem[] = configItems();
 
 /** 常用项行数（页面上直接画出来的那些）。 */
-export const COMMON_ITEM_COUNT = COMMON.length;
+export const COMMON_ITEM_COUNT = commonItems().length;
 
 /** 高级组标题与副文案。 */
-export const ADVANCED_GROUP_TITLE = '高级' as const;
+export function advancedGroupTitle(): string {
+  return m('plugin-memo-ilife.settings.c009');
+}
+
+/** 兼容镜像：契约常量形状不变；渲染路径用 advancedGroupTitle()。 */
+export const ADVANCED_GROUP_TITLE = advancedGroupTitle();
 
 /** 按 `a.b` 路径从配置取值里读（缺层或类型不符一律回 undefined）。 */
 export function readPath(values: Record<string, unknown>, key: string): unknown {

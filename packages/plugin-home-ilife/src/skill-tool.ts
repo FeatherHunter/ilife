@@ -15,15 +15,15 @@ import { dirname, join } from 'node:path';
 import { createRequire } from 'node:module';
 import type { ToolDefinitionMirror } from './dsh-ctx.js';
 import { SKILL_PACKAGE, SPAWN_TIMEOUT_MS, SkillBridgeError, assertCliPresent, resolveNodeBin } from './bridge.js';
+import { m } from './entries/index.js';
 
 /** 模型看到的工具名（DSH 工具名用下划线小写，照 `read_file` 同形）。 */
 export const SKILL_TOOL_NAME = 'run_home_command' as const;
 
-const TOOL_DESCRIPTION =
-  '运行居家管家技能的唯一出口（argv+JSON+exit），返回 envelope JSON。'
-  + '写完／看完居家管家数据的唯一途径；不经 shell、不依赖 PATH。'
-  + 'key 例：home.help.lookup（居家管家帮助）、home.item.search（查物品）。'
-  + '如果这次带了个文件地址，就把文件交给用户，同时贴出地址；如果没带文件，就只回答文字，不要编造文件。';
+/** 模型看到的工具说明：注册时现取，词条随语言走（#1229）。 */
+function toolDescription(): string {
+  return m('plugin-home-ilife.skill-tool.c003');
+}
 
 /** 技能包 `package.json` 的 `bin` 声明里，唯一出口那一条的名字后缀。 */
 const EXIT_BIN_SUFFIX = '-cmd-read';
@@ -86,12 +86,12 @@ export function createSkillTool(deps: SkillToolDeps = {}): ToolDefinitionMirror 
   const run = deps.run ?? defaultRun;
   return {
     name: SKILL_TOOL_NAME,
-    description: TOOL_DESCRIPTION,
+    description: toolDescription(),
     parameters: {
       type: 'object',
       properties: {
-        key: { type: 'string', description: '命令（home.* 键），例如 home.help.lookup' },
-        params: { type: 'object', description: '可选参数对象，原样交技能出口（--params JSON）' },
+        key: { type: 'string', description: m('plugin-home-ilife.skill-tool.c001') },
+        params: { type: 'object', description: m('plugin-home-ilife.skill-tool.c002') },
       },
       required: ['key'],
     },

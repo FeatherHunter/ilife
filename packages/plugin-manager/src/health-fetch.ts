@@ -15,6 +15,7 @@ import { HEALTH_ENDPOINT, isHealthReport } from './health-contract.js';
 import type { HealthReport } from './health-contract.js';
 import { CARRIER_BASE } from './update-contract.js';
 import type { RpcCallFace } from './dsh-ctx.js';
+import { m } from './entries/index.js';
 
 /** 传输口：与面板共用同一张脸（`connection.rpc.call` 的四参形状，见 dsh-ctx 的 RpcCallFace）。 */
 export type HealthCallFace = RpcCallFace;
@@ -57,7 +58,7 @@ export interface HealthTabRow {
 }
 
 function timeoutText(): string {
-  return '体检超时（' + String(Math.round(HEALTH_TIMEOUT_MS / 1000)) + 's）：技能没在时限内回话。';
+  return m('plugin-manager.health-fetch.c001', { p0: String(String(Math.round(HEALTH_TIMEOUT_MS / 1000))) });
 }
 
 async function fetchOne(call: HealthCallFace, row: HealthTabRow): Promise<{ readonly report: HealthReport | null; readonly error: string | null }> {
@@ -69,21 +70,23 @@ async function fetchOne(call: HealthCallFace, row: HealthTabRow): Promise<{ read
       AbortSignal.timeout(HEALTH_TIMEOUT_MS),
     );
     if (!result || typeof result !== 'object' || typeof (result as { ok?: unknown }).ok !== 'boolean') {
-      return { report: null, error: '回执信封异常（非 ok 信封）。' };
+      return { report: null, error: m('plugin-manager.health-fetch.c002') };
     }
     if (!result.ok) {
       const error = (result as { error?: { code?: unknown; message?: unknown } }).error;
-      const message = typeof error?.message === 'string' && error.message.length > 0 ? error.message : '体检没跑起来。';
+      const message = typeof error?.message === 'string' && error.message.length > 0 ? error.message : m('plugin-manager.health-fetch.c003');
       return { report: null, error: message };
     }
     const value = (result as { value?: unknown }).value;
-    if (!isHealthReport(value)) return { report: null, error: '体检报告形状认不出（技能包与总管版本对不上？）。' };
+    if (!isHealthReport(value)) return { report: null, error: m('plugin-manager.health-fetch.c004') };
     return { report: value, error: null };
   } catch (error) {
     if (error instanceof Error && (error.name === 'AbortError' || error.name === 'TimeoutError')) {
       return { report: null, error: timeoutText() };
     }
-    return { report: null, error: '体检没跑起来：' + (error instanceof Error ? error.message : String(error)) };
+    return { report: null, error: m('plugin-manager.health-fetch.c005', {
+      p0: String(error instanceof Error ? error.message : String(error)),
+    }) };
   }
 }
 
@@ -97,7 +100,7 @@ export async function loadHealthReports(
   tabs: readonly HealthTabRow[],
   onRow?: (row: HealthFetchRow) => void,
 ): Promise<HealthFetchResult> {
-  if (typeof call !== 'function') return { rows: [], error: '宿主连接缺席：connection.rpc.call 不可用' };
+  if (typeof call !== 'function') return { rows: [], error: m('plugin-manager.health-fetch.c006') };
   const rows = await Promise.all(tabs.map(async (tab): Promise<HealthFetchRow> => {
     const one = await fetchOne(call, tab);
     const row: HealthFetchRow = { id: tab.id, report: one.report, error: one.error };

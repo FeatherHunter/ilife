@@ -19,6 +19,7 @@ import type { RpcResult } from './contract.js';
 import { SkillBridgeError, readViaCli, readConfigSurface, writeConfigValues, resetConfigToDefaults, readConfigHealth } from './bridge.js';
 import type { HostCtx, HostConnectionFace, RpcHandler } from './dsh-ctx.js';
 import { SKILL_TOOL_NAME, createSkillTool, resolveSkillEntry } from './skill-tool.js';
+import { m } from './entries/index.js';
 
 export const name = 'dsh-memo-ilife';
 export const inject: readonly string[] = ['connection', 'webServer', 'skills', 'tools'];
@@ -37,19 +38,19 @@ const handleMemoRpc: RpcHandler = async (endpoint, payload): Promise<RpcResult> 
   try {
     if (endpoint === RPC_ENDPOINT_READ) {
       const parsed = parseReadPayload(payload ?? {});
-      if (!parsed) return fail('bad-request', '载荷须为 {key: string, params: object}');
+      if (!parsed) return fail('bad-request', m('plugin-memo-ilife.index.c001'));
       return ok(await readViaCli(parsed.key, parsed.params));
     }
     if (endpoint === RPC_ENDPOINT_CONFIG_GET) return ok(await readConfigSurface());
     if (endpoint === RPC_ENDPOINT_CONFIG_SAVE) {
       const parsed = parseSavePayload(payload ?? {});
-      if (!parsed) return fail('bad-request', '载荷须为 {values: object}');
+      if (!parsed) return fail('bad-request', m('plugin-memo-ilife.index.c002'));
       return ok(await writeConfigValues(parsed.values));
     }
     if (endpoint === RPC_ENDPOINT_CONFIG_RESET) return ok(await resetConfigToDefaults());
     // #706 配置体检：只读一次，把技能侧那份报告原样交回面板（本包不校验、不重写）。
     if (endpoint === RPC_ENDPOINT_CONFIG_CHECK) return ok(await readConfigHealth());
-    return fail('bad-request', `未知端点：${String(endpoint)}`);
+    return fail('bad-request', m('plugin-memo-ilife.index.c003', { p0: String(String(endpoint)) }));
   } catch (e) {
     // 配置面的报错也走这条：技能侧 cli/config.ts 把 base-link-core 的
     // ConfigError 报文原样交出来（已带行号与文件名），readViaCli 把它带在
@@ -103,13 +104,13 @@ export function apply(ctx: HostCtx): void {
       async fetch(request: any) {
         if (request.method !== 'POST') return new Response('method not allowed', { status: 405 });
         let message: any;
-        try { message = await request.json(); } catch { return new Response('body is not JSON', { status: 400 }); }
+        try { message = await request.json(); } catch { return new Response(m('plugin-memo-ilife.index.c004'), { status: 400 }); }
         const rpcId = typeof message?.rpcId === 'string' ? message.rpcId : 'invalid-request';
         const call = message?.payload;
         if (message?.type !== 'client-request' || typeof message.rpcId !== 'string'
           || message.method !== RPC_CHANNEL.slice(1) || !call || typeof call.method !== 'string'
           || !Object.hasOwn(call, 'payload')) {
-          return reply(rpcId, { ok: false, error: { code: 'gateway/bad-request', message: 'Invalid memo request.', details: {} } });
+          return reply(rpcId, { ok: false, error: { code: 'gateway/bad-request', message: m('plugin-memo-ilife.index.c005'), details: {} } });
         }
         try { return reply(rpcId, await handleMemoRpc(call.method, call.payload)); }
         catch { return new Response('memo handler failed', { status: 500 }); }

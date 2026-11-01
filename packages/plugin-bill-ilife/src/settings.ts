@@ -27,6 +27,7 @@
  * **#762 起那两个产物名主体出配置表**（键已退休、文件名回到技能侧代码常量）；
  * **#749 起那 5 行转只读**，故本表仍是 6 行（可改 1 ＋ 只读 5）。
  */
+import { m } from './entries/index.js';
 export const SETTINGS_OWNER = 'dsh-bill-ilife' as const;
 export const SETTINGS_SLOT = 'ilife:cookie' as const;
 
@@ -64,75 +65,89 @@ export interface ConfigItem {
 }
 
 /** 常用项：改了就影响「库与产物落在哪」，放页面上。 */
-const COMMON: readonly ConfigItem[] = [
-  {
-    key: 'db.dir',
-    title: '数据目录',
-    tier: 'common',
-    control: 'directory',
-    // 留空＝技能按默认目录落文件；页面上把解析出来的绝对路径直接填进这一行（见 client.ts 的 toDraft）。
-    prefillFrom: 'dataDir',
-    hint: '库文件与备份的根目录。留空＝用默认目录。',
-  },
-  {
-    key: 'db.name',
-    title: '库文件名',
-    tier: 'common',
-    control: 'text',
-    readonly: true,
-    resolveFrom: 'dbFile',
-    hint: '数据目录下的库文件。',
-  },
-  {
-    key: 'db.goals',
-    title: '预算／账户文件名',
-    tier: 'common',
-    control: 'text',
-    readonly: true,
-    resolveFrom: 'goalsFile',
-    hint: '与库同目录的预算与账户文件。',
-  },
-  {
-    key: 'html.dir',
-    title: 'HELP 产物目录名',
-    tier: 'common',
-    control: 'text',
-    readonly: true,
-    resolveFrom: 'htmlDir',
-    hint: 'HELP 与速查表的存放目录。',
-  },
-];
+function commonItems(): readonly ConfigItem[] {
+  return [
+    {
+      key: 'db.dir',
+      title: m('plugin-bill-ilife.settings.c001'),
+      tier: 'common',
+      control: 'directory',
+      // 留空＝技能按默认目录落文件；页面上把解析出来的绝对路径直接填进这一行（见 client.ts 的 toDraft）。
+      prefillFrom: 'dataDir',
+      hint: m('plugin-bill-ilife.settings.c002'),
+    },
+    {
+      key: 'db.name',
+      title: m('plugin-bill-ilife.settings.c003'),
+      tier: 'common',
+      control: 'text',
+      readonly: true,
+      resolveFrom: 'dbFile',
+      hint: m('plugin-bill-ilife.settings.c004'),
+    },
+    {
+      key: 'db.goals',
+      title: m('plugin-bill-ilife.settings.c005'),
+      tier: 'common',
+      control: 'text',
+      readonly: true,
+      resolveFrom: 'goalsFile',
+      hint: m('plugin-bill-ilife.settings.c006'),
+    },
+    {
+      key: 'html.dir',
+      title: m('plugin-bill-ilife.settings.c007'),
+      tier: 'common',
+      control: 'text',
+      readonly: true,
+      resolveFrom: 'htmlDir',
+      hint: m('plugin-bill-ilife.settings.c008'),
+    },
+  ];
+}
 
 /** 高级项：默认收起。改错了多半只是自己撞上麻烦，不确定就别动。 */
-const ADVANCED: readonly ConfigItem[] = [
-  {
-    key: 'backup.dir',
-    title: '备份目录',
-    tier: 'advanced',
-    control: 'directory',
-    readonly: true,
-    resolveFrom: 'backupDir',
-    hint: '备份与恢复的读写目录。',
-  },
-  {
-    key: 'backup.stem',
-    title: '备份文件名前缀',
-    tier: 'advanced',
-    control: 'text',
-    readonly: true,
-    resolveFrom: 'backupSample',
-    hint: '备份文件名的前缀，后面自动加时间戳。',
-  },
-];
+function advancedItems(): readonly ConfigItem[] {
+  return [
+    {
+      key: 'backup.dir',
+      title: m('plugin-bill-ilife.settings.c009'),
+      tier: 'advanced',
+      control: 'directory',
+      readonly: true,
+      resolveFrom: 'backupDir',
+      hint: m('plugin-bill-ilife.settings.c010'),
+    },
+    {
+      key: 'backup.stem',
+      title: m('plugin-bill-ilife.settings.c011'),
+      tier: 'advanced',
+      control: 'text',
+      readonly: true,
+      resolveFrom: 'backupSample',
+      hint: m('plugin-bill-ilife.settings.c012'),
+    },
+  ];
+}
 
 /** 设置页的行表，顺序即页面顺序。 */
-export const CONFIG_ITEMS: readonly ConfigItem[] = [...COMMON, ...ADVANCED];
+export function configItems(): readonly ConfigItem[] {
+  return [...commonItems(), ...advancedItems()];
+}
+
+/** 兼容镜像：测试与跨包消费方按常量读；渲染路径用 configItems()。 */
+export const CONFIG_ITEMS: readonly ConfigItem[] = configItems();
 
 /** 常用项行数（页面上直接画出来的那些）。 */
-export const COMMON_ITEM_COUNT = COMMON.length;
+export const COMMON_ITEM_COUNT = commonItems().length;
 
 /** 高级组标题与副文案。 */
-export const ADVANCED_GROUP_TITLE = '高级' as const;
+export function advancedGroupTitle(): string {
+  return m('plugin-bill-ilife.settings.c013');
+}
+
+/** 兼容镜像：契约常量形状不变；渲染路径用 advancedGroupTitle()。 */
+export const ADVANCED_GROUP_TITLE = advancedGroupTitle();
 
 /** 按 `a.b` 路径从配置取值里读（缺层或类型不符一律回 undefined）。 */
 export function readPath(values: Record<string, unknown>, key: string): unknown {
