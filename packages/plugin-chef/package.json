@@ -30,6 +30,7 @@
     "node": ">=22.13"
   },
   "dependencies": {
+    "base-entries": "0.3.55",
     "dsh-life-pack": "0.3.86",
     "skill-chef": "0.3.55"
   },
