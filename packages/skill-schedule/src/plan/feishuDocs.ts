@@ -22,10 +22,12 @@ import { assembleDocPage, type PageHead } from '../shared/docPage.js';
 import { pageSections } from '../shared/pageNav.js';
 import { minutesOfDayEnd } from './planDocs.js';
 import { planPartsCss, renderSectionTitle } from './planParts.js';
-import { REMOTE_LABEL, planCopyArea, type RemoteState } from './receipt.js';
-import { TIER_CN, TIER_NEXT, TIER_VALUE, type TierReport } from './probe.js';
+import { remoteLabelOf, planCopyArea, type RemoteState } from './receipt.js';
+import { tierCnOf, tierNextOf, tierValueOf, type TierReport } from './probe.js';
+import { m } from '../entries/index.js';
 
-const EYEBROW = '作息管家 日程与计划';
+/** 页眉（品牌＋域）。#1197：改成函数——`m()` 只在渲染期取词，模块级常量的初值会定死语言。 */
+const eyebrowOf = (): string => m('skill-schedule.plan-feishuDocs.c001');
 
 /** 外部来的原话（命令行 stderr、回执 message、错误串）上屏前过分隔符门（#516）：
  *  页自己的文案本来就照纪律写，这几处是**别的进程吐出来的字**——真让它把 `／`／`、` 带上屏，
@@ -40,24 +42,27 @@ function plain(text: string): string {
 /** 事实条「命令行版本」只印数字（口径唯一定义地是 `fetch` 门的 `shortLarkVersion`）。
  *  `null`（没装）印「没装」，`unknown`／无数字印「读不到」。 */
 
-/** 同步回执的分格（`runSync` 的 `counts`）在页上的名字与读法，一处定义。 */
-const COUNT_LABELS: readonly { readonly key: string; readonly label: string; readonly hint: string }[] = [
-  { key: 'backfilled', label: '回填标识', hint: '远端本来就有但本地缺标识的，这一趟认回来的' },
-  { key: 'created', label: '远端新建', hint: '本地有但远端没有，这一趟补上去的' },
-  { key: 'updated', label: '远端改动', hint: '两边标题或备注不一样，按本地那一条改过去的' },
-  { key: 'timeSynced', label: '时段回写', hint: '你在飞书里改过时段，尊重你，把它写回本地的' },
-  { key: 'deleted', label: '远端清理', hint: '孤儿与同槽冗余，这一趟清掉的' },
-  { key: 'pastSkipped', label: '过去日期跳过', hint: '昨天以前的计划不补建，免得死灰复燃' },
-  { key: 'duplicates', label: '同槽冗余', hint: '同一时段里历史留下的重复对象' },
-  { key: 'failed', label: '失败', hint: '这一趟没成的那几件' },
-];
+/** 同步回执的分格（`runSync` 的 `counts`）在页上的名字与读法，一处定义。
+ *  #1197：由模块级常量表改成函数——常量初值在模块加载期就定死语言了，取词要落在页函数里（§4.8）。 */
+function countLabels(): readonly { readonly key: string; readonly label: string; readonly hint: string }[] {
+  return [
+  { key: 'backfilled', label: m('skill-schedule.plan-feishuDocs.c002'), hint: m('skill-schedule.plan-feishuDocs.c003') },
+  { key: 'created', label: m('skill-schedule.plan-feishuDocs.c004'), hint: m('skill-schedule.plan-feishuDocs.c005') },
+  { key: 'updated', label: m('skill-schedule.plan-feishuDocs.c006'), hint: m('skill-schedule.plan-feishuDocs.c007') },
+  { key: 'timeSynced', label: m('skill-schedule.plan-feishuDocs.c008'), hint: m('skill-schedule.plan-feishuDocs.c009') },
+  { key: 'deleted', label: m('skill-schedule.plan-feishuDocs.c010'), hint: m('skill-schedule.plan-feishuDocs.c011') },
+  { key: 'pastSkipped', label: m('skill-schedule.plan-feishuDocs.c012'), hint: m('skill-schedule.plan-feishuDocs.c013') },
+  { key: 'duplicates', label: m('skill-schedule.plan-feishuDocs.c014'), hint: m('skill-schedule.plan-feishuDocs.c015') },
+  { key: 'failed', label: m('skill-schedule.plan-feishuDocs.c016'), hint: m('skill-schedule.plan-feishuDocs.c017') },
+  ];
+}
 
 function eventRows(events: readonly PlanEvent[]): DataTableRow[] {
   return events.map((p) => ({
-    time: p.time_start + ' 至 ' + p.time_end,
+    time: m('skill-schedule.plan-feishuDocs.c018', { p0: String(p.time_start), p1: String(p.time_end) }),
     title: p.title,
     category: l1Of(p.category ?? ''),
-    remote: p.feishu_event_id === null ? '没同步过' : '已同步飞书',
+    remote: p.feishu_event_id === null ? m('skill-schedule.plan-feishuDocs.c019') : m('skill-schedule.plan-feishuDocs.c020'),
   }));
 }
 
@@ -80,13 +85,13 @@ function localCounts(handle: ScheduleDb, date: string): { total: number; synced:
 export function probePage(handle: ScheduleDb, date: string, report: TierReport): string {
   const local = localCounts(handle, date);
   const kpis: readonly KpiCardInput[] = [
-    { label: '能力档位', value: TIER_VALUE[report.tier], detail: plain(report.why) },
-    { label: '这一天本地计划', value: String(local.total), unit: '条', detail: '共 ' + fmtDurShort(local.minutes) },
-    { label: '带远端标识的', value: String(local.synced), unit: '条', detail: '同步过的那些' },
+    { label: m('skill-schedule.plan-feishuDocs.c021'), value: tierValueOf(report.tier), detail: plain(report.why) },
+    { label: m('skill-schedule.plan-feishuDocs.c022'), value: String(local.total), unit: m('skill-schedule.plan-feishuDocs.c023'), detail: m('skill-schedule.plan-feishuDocs.c024', { p0: String(fmtDurShort(local.minutes)) }) },
+    { label: m('skill-schedule.plan-feishuDocs.c025'), value: String(local.synced), unit: m('skill-schedule.plan-feishuDocs.c026'), detail: m('skill-schedule.plan-feishuDocs.c027') },
     {
-      label: '这一趟写了几笔',
+      label: m('skill-schedule.plan-feishuDocs.c028'),
       value: '0',
-      detail: '只读探测，远端一行没动',
+      detail: m('skill-schedule.plan-feishuDocs.c029'),
       // 三档全通时给满，其余档按三门过了几门给（读数同源：探测结果那一份）。
       // #896 · 读 authenticated 布尔位，不读 openId 原值（回执不带原串，见 probe.ts 件头）。
       bar: { pct: Math.round(([report.cliPath === null ? 0 : 1, report.authenticated ? 1 : 0, report.calendar ? 1 : 0]
@@ -94,70 +99,77 @@ export function probePage(handle: ScheduleDb, date: string, report: TierReport):
     },
   ];
   const head: PageHead = {
-    docTitle: '作息管家 飞书探测',
-    eyebrow: EYEBROW,
-    title: '飞书探测',
-    subtitle: '看本机的飞书能力到哪一档，以及 ' + date + ' 这一天本地排了什么。这一步只读，不写任何对象。',
+    docTitle: m('skill-schedule.plan-feishuDocs.c030'),
+    eyebrow: eyebrowOf(),
+    title: m('skill-schedule.plan-feishuDocs.c031'),
+    subtitle: m('skill-schedule.plan-feishuDocs.c032', { p0: String(date) }),
   };
   const steps: readonly DataTableRow[] = [
-    { step: '装有命令行', state: report.cliPath === null ? '没找到' : '在场', why: report.cliPath === null ? '家目录与查找路径里都没有' : '找到了可执行文件' },
-    { step: '授权登录过', state: report.authenticated ? '过了' : '没过', why: report.authenticated ? '查到了登录身份' : '终端里查不到登录身份' },
-    { step: '日历拉得动', state: report.calendar ? '拉得动' : '拉不动', why: report.calendar ? '今日议程这一问有回应' : '今日议程那一问没成' },
+    { step: m('skill-schedule.plan-feishuDocs.c033'), state: report.cliPath === null ? m('skill-schedule.plan-feishuDocs.c034') : m('skill-schedule.plan-feishuDocs.c035'), why: report.cliPath === null ? m('skill-schedule.plan-feishuDocs.c036') : m('skill-schedule.plan-feishuDocs.c037') },
+    { step: m('skill-schedule.plan-feishuDocs.c038'), state: report.authenticated ? m('skill-schedule.plan-feishuDocs.c039') : m('skill-schedule.plan-feishuDocs.c040'), why: report.authenticated ? m('skill-schedule.plan-feishuDocs.c041') : m('skill-schedule.plan-feishuDocs.c042') },
+    { step: m('skill-schedule.plan-feishuDocs.c043'), state: report.calendar ? m('skill-schedule.plan-feishuDocs.c044') : m('skill-schedule.plan-feishuDocs.c045'), why: report.calendar ? m('skill-schedule.plan-feishuDocs.c046') : m('skill-schedule.plan-feishuDocs.c047') },
   ];
   const { toc, body } = pageSections([
-    { navText: '这一趟探测的结论', html: renderKpiGrid(kpis, { title: '这一趟探测的结论' }) },
-    { html: renderConclusionBar('飞书能力：' + TIER_CN[report.tier] + '。' + plain(report.why)
-      + '。要动远端就说「日程管家同步」，要留个只读的快照就是这一页。') },
-    { navText: '三道门逐道看', html: renderSectionTitle('三道门逐道看')
+    { navText: m('skill-schedule.plan-feishuDocs.c048'), html: renderKpiGrid(kpis, { title: m('skill-schedule.plan-feishuDocs.c049') }) },
+    { html: renderConclusionBar(m('skill-schedule.plan-feishuDocs.c050', {
+      p0: String(tierCnOf(report.tier)),
+      p1: String(plain(report.why)),
+    })) },
+    { navText: m('skill-schedule.plan-feishuDocs.c051'), html: renderSectionTitle(m('skill-schedule.plan-feishuDocs.c052'))
       + renderDataTable({
         columns: [
-          { key: 'step', label: '探什么' },
-          { key: 'state', label: '结果' },
-          { key: 'why', label: '怎么看出来的' },
+          { key: 'step', label: m('skill-schedule.plan-feishuDocs.c053') },
+          { key: 'state', label: m('skill-schedule.plan-feishuDocs.c054') },
+          { key: 'why', label: m('skill-schedule.plan-feishuDocs.c055') },
         ],
         rows: steps,
       }) },
     { html: renderFactStrip({
       items: [
-        { label: '命令行版本', value: report.version === null ? '没装' : shortLarkVersion(report.version) },
-        { label: '探测日期', value: date },
-        { label: '本地这一天的计划', value: String(local.total) + ' 条' },
-        { label: '远端这一趟', value: '没碰' },
+        { label: m('skill-schedule.plan-feishuDocs.c056'), value: report.version === null ? m('skill-schedule.plan-feishuDocs.c057') : shortLarkVersion(report.version) },
+        { label: m('skill-schedule.plan-feishuDocs.c058'), value: date },
+        { label: m('skill-schedule.plan-feishuDocs.c059'), value: m('skill-schedule.plan-feishuDocs.c060', { p0: String(String(local.total)) }) },
+        { label: m('skill-schedule.plan-feishuDocs.c061'), value: m('skill-schedule.plan-feishuDocs.c062') },
       ],
     }) },
-    { navText: '下一步怎么走', html: renderSectionTitle('下一步怎么走')
+    { navText: m('skill-schedule.plan-feishuDocs.c063'), html: renderSectionTitle(m('skill-schedule.plan-feishuDocs.c064'))
       + renderListRows({
-        items: TIER_NEXT[report.tier].map((text) => ({ main: text })),
-        emptyText: '没有下一步',
+        items: tierNextOf(report.tier).map((text) => ({ main: text })),
+        emptyText: m('skill-schedule.plan-feishuDocs.c065'),
       }) },
-    { navText: '本地这一天的账', html: renderSectionTitle('本地这一天的账')
-      + '<p class="sch-pl-note">这一份读的是本地库：这一天排了几条计划，其中几条已经带上远端标识。远端那一边这一趟没拉，故不报对方的条数。</p>'
+    { navText: m('skill-schedule.plan-feishuDocs.c066'), html: renderSectionTitle(m('skill-schedule.plan-feishuDocs.c067'))
+      + '<p class="sch-pl-note">' + m('skill-schedule.plan-feishuDocs.c133') + '</p>'
       + renderDataTable({
         columns: [
-          { key: 'time', label: '时段' },
-          { key: 'title', label: '计划' },
-          { key: 'category', label: '分类' },
-          { key: 'remote', label: '远端标识' },
+          { key: 'time', label: m('skill-schedule.plan-feishuDocs.c068') },
+          { key: 'title', label: m('skill-schedule.plan-feishuDocs.c069') },
+          { key: 'category', label: m('skill-schedule.plan-feishuDocs.c070') },
+          { key: 'remote', label: m('skill-schedule.plan-feishuDocs.c071') },
         ],
         rows: eventRows(listPlanEvents(handle, date)),
-        emptyText: '这一天本地没有计划',
+        emptyText: m('skill-schedule.plan-feishuDocs.c072'),
       })
-      + renderCaliberLine('探测只读，三道门都只问不写，本地库这一趟也没动过') },
+      + renderCaliberLine(m('skill-schedule.plan-feishuDocs.c073')) },
     { html: renderPreBlock({
-      label: '要真同步就说这一句',
-      command: '同步 ' + date + ' 的日程到飞书',
+      label: m('skill-schedule.plan-feishuDocs.c074'),
+      command: m('skill-schedule.plan-feishuDocs.c075', { p0: String(date) }),
       actionId: 'ilife-sch-probe-copy-next',
-      copyLabel: '复制这句话',
+      copyLabel: m('skill-schedule.plan-feishuDocs.c076'),
     }) },
-    { navText: '复制与留档', html: scheduleCopyArea({
-      title: '复制与留档',
+    { navText: m('skill-schedule.plan-feishuDocs.c077'), html: scheduleCopyArea({
+      title: m('skill-schedule.plan-feishuDocs.c078'),
       dataActionId: 'ilife-sch-probe-copy-data',
       logActionId: 'ilife-sch-probe-copy-log',
       ...planCopyArea({
-        message: '飞书探测：日期 ' + date + '，档位 ' + TIER_CN[report.tier] + '，原因 ' + report.why
-          + '，本地这一天计划 ' + String(local.total) + ' 条、带远端标识 ' + String(local.synced) + ' 条，这一趟写入 0 笔',
+        message: m('skill-schedule.plan-feishuDocs.c079', {
+          p0: String(date),
+          p1: String(tierCnOf(report.tier)),
+          p2: String(report.why),
+          p3: String(String(local.total)),
+          p4: String(String(local.synced)),
+        }),
         command: 'schedule-cmd-read schedule.plan.write --params {"op":"sync","dryRun":true,"date":"' + date + '"}',
-        source: '本机命令行探测与本地日程计划表',
+        source: m('skill-schedule.plan-feishuDocs.c080'),
       }),
     }) },
   ]);
@@ -180,18 +192,18 @@ function syncConclusion(payload: SyncPayload): string {
   const c = payload.counts;
   const moved = (c.backfilled ?? 0) + (c.created ?? 0) + (c.updated ?? 0) + (c.timeSynced ?? 0) + (c.deleted ?? 0);
   const head = payload.remote === 'unavailable'
-    ? '这一趟远端没成，本地那边没有改动。'
-    : (moved === 0 ? '两边本来就是对得上，这一趟没有要动的东西。' : '这一趟一共动了 ' + String(moved) + ' 处。');
+    ? m('skill-schedule.plan-feishuDocs.c081')
+    : (moved === 0 ? m('skill-schedule.plan-feishuDocs.c082') : m('skill-schedule.plan-feishuDocs.c083', { p0: String(String(moved)) }));
   const parts = [
-    '回填标识 ' + String(c.backfilled ?? 0) + ' 笔',
-    '远端新建 ' + String(c.created ?? 0) + ' 笔',
-    '远端改动 ' + String(c.updated ?? 0) + ' 笔',
-    '时段回写 ' + String(c.timeSynced ?? 0) + ' 笔',
-    '远端清理 ' + String(c.deleted ?? 0) + ' 笔',
+    m('skill-schedule.plan-feishuDocs.c084', { p0: String(String(c.backfilled ?? 0)) }),
+    m('skill-schedule.plan-feishuDocs.c085', { p0: String(String(c.created ?? 0)) }),
+    m('skill-schedule.plan-feishuDocs.c086', { p0: String(String(c.updated ?? 0)) }),
+    m('skill-schedule.plan-feishuDocs.c087', { p0: String(String(c.timeSynced ?? 0)) }),
+    m('skill-schedule.plan-feishuDocs.c088', { p0: String(String(c.deleted ?? 0)) }),
   ].join('，');
   const tail = (c.failed ?? 0) === 0
-    ? '失败 0 笔。'
-    : '失败 ' + String(c.failed ?? 0) + ' 笔，逐条在下面。';
+    ? m('skill-schedule.plan-feishuDocs.c089')
+    : m('skill-schedule.plan-feishuDocs.c090', { p0: String(String(c.failed ?? 0)) });
   return head + parts + '。' + tail;
 }
 
@@ -199,80 +211,90 @@ function syncConclusion(payload: SyncPayload): string {
 export function syncPage(handle: ScheduleDb, date: string, payload: SyncPayload): string {
   const events = listPlanEvents(handle, date);
   const failed = payload.counts.failed ?? 0;
-  const kpis: readonly KpiCardInput[] = COUNT_LABELS.map((c) => ({
+  const labels = countLabels();
+  const kpis: readonly KpiCardInput[] = labels.map((c) => ({
     label: c.label,
     value: String(payload.counts[c.key] ?? 0),
-    unit: '笔',
+    unit: m('skill-schedule.plan-feishuDocs.c091'),
     detail: c.hint,
   }));
+  // §4.7 · 计数串与「没成的」那一支先抽局部变量，链里只拼字面量＋变量。
+  const countsText = labels.map((c) => m('skill-schedule.plan-feishuDocs.c092', {
+    p0: String(c.label),
+    p1: String(String(payload.counts[c.key] ?? 0)),
+  })).join('，');
+  const errorsNote = payload.errors.length === 0 ? '' : m('skill-schedule.plan-feishuDocs.c093', { p0: String(payload.errors.join('，')) });
   const { toc, body } = pageSections([
-    { navText: '这一趟的账', html: renderKpiGrid(kpis, { title: '这一趟的账' }) },
+    { navText: m('skill-schedule.plan-feishuDocs.c094'), html: renderKpiGrid(kpis, { title: m('skill-schedule.plan-feishuDocs.c095') }) },
     { html: renderConclusionBar(syncConclusion(payload)) },
     { html: renderFactStrip({
       items: [
-        { label: '同步的日期', value: date },
-        { label: '远端侧', value: REMOTE_LABEL[payload.remote] },
-        { label: '本地这一天的计划', value: String(events.length) + ' 条' },
-        { label: '没成的', value: String(failed) + ' 笔' },
+        { label: m('skill-schedule.plan-feishuDocs.c096'), value: date },
+        { label: m('skill-schedule.plan-feishuDocs.c097'), value: remoteLabelOf(payload.remote) },
+        { label: m('skill-schedule.plan-feishuDocs.c098'), value: m('skill-schedule.plan-feishuDocs.c099', { p0: String(String(events.length)) }) },
+        { label: m('skill-schedule.plan-feishuDocs.c100'), value: m('skill-schedule.plan-feishuDocs.c101', { p0: String(String(failed)) }) },
       ],
     }) },
-    { navText: '这一趟的结果', html: renderFeedbackBlock({
-      title: '这一趟的结果',
+    { navText: m('skill-schedule.plan-feishuDocs.c102'), html: renderFeedbackBlock({
+      title: m('skill-schedule.plan-feishuDocs.c103'),
       toast: failed === 0
         ? { icon: payload.remote === 'unavailable' ? 'warn' : 'ok', msg: plain(payload.message) }
         : { icon: 'danger', msg: plain(payload.message), lines: payload.errors.map(plain) },
       staticNotice: true,
     }) },
-    { navText: payload.notes.length === 0 ? '' : '顺带记下的', html: payload.notes.length === 0 ? '' : renderSectionTitle('顺带记下的')
-      + renderListRows({ items: payload.notes.map((text) => ({ main: plain(text) })), emptyText: '没有顺带记下的' }) },
-    { navText: payload.errors.length === 0 ? '' : '没成的逐条名单', html: payload.errors.length === 0 ? '' : renderSectionTitle('没成的逐条名单')
-      + renderListRows({ items: payload.errors.map((text) => ({ main: plain(text) })), emptyText: '没有没成的' }) },
-    { navText: '本地这一天的排布', html: renderSectionTitle('本地这一天的排布')
-      + renderCaliberLine('远端只动带归属标记的对象，你在飞书日历上自己加的那些一律不碰')
+    { navText: payload.notes.length === 0 ? '' : m('skill-schedule.plan-feishuDocs.c104'), html: payload.notes.length === 0 ? '' : renderSectionTitle(m('skill-schedule.plan-feishuDocs.c105'))
+      + renderListRows({ items: payload.notes.map((text) => ({ main: plain(text) })), emptyText: m('skill-schedule.plan-feishuDocs.c106') }) },
+    { navText: payload.errors.length === 0 ? '' : m('skill-schedule.plan-feishuDocs.c107'), html: payload.errors.length === 0 ? '' : renderSectionTitle(m('skill-schedule.plan-feishuDocs.c108'))
+      + renderListRows({ items: payload.errors.map((text) => ({ main: plain(text) })), emptyText: m('skill-schedule.plan-feishuDocs.c109') }) },
+    { navText: m('skill-schedule.plan-feishuDocs.c110'), html: renderSectionTitle(m('skill-schedule.plan-feishuDocs.c111'))
+      + renderCaliberLine(m('skill-schedule.plan-feishuDocs.c112'))
       + renderDataTable({
         columns: [
-          { key: 'time', label: '时段' },
-          { key: 'title', label: '计划' },
-          { key: 'category', label: '分类' },
-          { key: 'remote', label: '远端标识' },
+          { key: 'time', label: m('skill-schedule.plan-feishuDocs.c113') },
+          { key: 'title', label: m('skill-schedule.plan-feishuDocs.c114') },
+          { key: 'category', label: m('skill-schedule.plan-feishuDocs.c115') },
+          { key: 'remote', label: m('skill-schedule.plan-feishuDocs.c116') },
         ],
         rows: eventRows(events),
-        emptyText: '这一天本地没有计划',
+        emptyText: m('skill-schedule.plan-feishuDocs.c117'),
       }) },
-    { navText: '下一步', html: renderSectionTitle('下一步')
+    { navText: m('skill-schedule.plan-feishuDocs.c118'), html: renderSectionTitle(m('skill-schedule.plan-feishuDocs.c119'))
       + renderListRows({
         items: [
-          { main: '要看另一天的差异，把日期一并说清楚，比如「同步 2026-09-22 的日程」。' },
-          { main: '只想先看一眼而不动远端，就说「飞书探测」，那一页只读。' },
+          { main: m('skill-schedule.plan-feishuDocs.c120') },
+          { main: m('skill-schedule.plan-feishuDocs.c121') },
         ],
-        emptyText: '没有下一步',
+        emptyText: m('skill-schedule.plan-feishuDocs.c122'),
       }) },
     { html: renderPreBlock({
-      label: '再同步一天就说这一句',
-      command: '同步 ' + date + ' 的日程到飞书',
+      label: m('skill-schedule.plan-feishuDocs.c123'),
+      command: m('skill-schedule.plan-feishuDocs.c124', { p0: String(date) }),
       actionId: 'ilife-sch-sync-copy-next',
-      copyLabel: '复制这句话',
+      copyLabel: m('skill-schedule.plan-feishuDocs.c125'),
     }) },
-    { navText: '复制与留档', html: scheduleCopyArea({
-      title: '复制与留档',
+    { navText: m('skill-schedule.plan-feishuDocs.c126'), html: scheduleCopyArea({
+      title: m('skill-schedule.plan-feishuDocs.c127'),
       dataActionId: 'ilife-sch-sync-copy-data',
       logActionId: 'ilife-sch-sync-copy-log',
       ...planCopyArea({
-        message: '日程管家同步：日期 ' + date + '，' + payload.message + '，'
-          + COUNT_LABELS.map((c) => c.label + ' ' + String(payload.counts[c.key] ?? 0) + ' 笔').join('，')
-          + (payload.errors.length === 0 ? '' : '，没成的 ' + payload.errors.join('，')),
+        message: m('skill-schedule.plan-feishuDocs.c128', {
+          p0: String(date),
+          p1: String(payload.message),
+          p2: String(countsText),
+          p3: String(errorsNote),
+        }),
         command: 'schedule-cmd-read schedule.plan.write --params {"op":"sync","date":"' + date + '"}',
-        source: '本地日程计划表与飞书日历',
+        source: m('skill-schedule.plan-feishuDocs.c129'),
         ok: payload.errors.length === 0,
       }),
     }) },
   ]);
   return assembleDocPage({
     head: {
-      docTitle: '作息管家 日程管家同步',
-      eyebrow: EYEBROW,
-      title: '日程管家同步',
-      subtitle: date + ' 这一天本地与飞书对了一遍，这一页报的是这一趟真做了什么。',
+      docTitle: m('skill-schedule.plan-feishuDocs.c130'),
+      eyebrow: eyebrowOf(),
+      title: m('skill-schedule.plan-feishuDocs.c131'),
+      subtitle: m('skill-schedule.plan-feishuDocs.c132', { p0: String(date) }),
     },
     content: toc + body,
     extraCss: planPartsCss(),

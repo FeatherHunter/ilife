@@ -15,6 +15,7 @@ import { receiptResult, type PlanOpCtx, type PlanOpResult } from './context.js';
 import { buildReceipt } from './receipt.js';
 import { probeTiers, runProbe } from './probe.js';
 import { takeSnapshot, alignOne, matchIn, orphansOf, removeRemote, cleanSlot, type RemoteSnapshot } from './remoteDay.js';
+import { m } from '../entries/index.js';
 
 export interface ReconcileOutcome {
   backfilled: { id: number; remoteId: string }[];
@@ -38,7 +39,7 @@ export function reconcileIds(snap: RemoteSnapshot, locals: PlanEvent[]): Reconci
     }
     const hit = index.get(e.time_start + '|' + e.time_end + '|' + e.title) ?? [];
     if (hit.length === 1) out.backfilled.push({ id: e.id, remoteId: hit[0] });
-    else if (hit.length > 1) out.skipped.push('本地 #' + e.id + '「' + e.title + '」远端有 ' + hit.length + ' 条撞键候选，跳过（需手工处理）');
+    else if (hit.length > 1) out.skipped.push(m('skill-schedule.plan-sync.c001', { p0: String(e.id), p1: String(e.title), p2: String(hit.length) }));
   }
   return out;
 }
@@ -49,10 +50,10 @@ export function runSync(ctx: PlanOpCtx): PlanOpResult {
   // 这一条以前没有：`dryRun` 到了这一层被丢掉，「飞书探测」会真跑一趟同步（真往用户日历里写）。
   if (ctx.params.dryRun === true) return runProbe(ctx, probeTiers());
   if (!ctx.cli) {
-    const why = ctx.remoteWhy ?? '远端不可用';
+    const why = ctx.remoteWhy ?? m('skill-schedule.plan-sync.c002');
     return receiptResult(buildReceipt({
       op: 'sync',
-      message: '重同步阻断：远端不可用（' + why + '）',
+      message: m('skill-schedule.plan-sync.c003', { p0: String(why) }),
       local: 'unchanged', remote: 'unavailable', remoteId: null,
       errors: [why], date,
     }));
@@ -64,10 +65,10 @@ export function runSync(ctx: PlanOpCtx): PlanOpResult {
   try {
     snap = takeSnapshot(ctx.cli, date);
   } catch (e) {
-    const m = e instanceof Error ? e.message : String(e);
+    const errMessage = e instanceof Error ? e.message : String(e);
     return receiptResult(buildReceipt({
-      op: 'sync', message: '重同步阻断：' + m, local: 'unchanged', remote: 'unavailable',
-      remoteId: null, errors: [m], date,
+      op: 'sync', message: m('skill-schedule.plan-sync.c004', { p0: String(errMessage) }), local: 'unchanged', remote: 'unavailable',
+      remoteId: null, errors: [errMessage], date,
     }));
   }
   errors.push(...snap.pullErrors);
@@ -111,7 +112,10 @@ export function runSync(ctx: PlanOpCtx): PlanOpResult {
         counts.updated++;
       } catch (err) {
         counts.failed++;
-        errors.push('远端改失败：' + hit.eventId + '（' + (err instanceof Error ? err.message : String(err)) + '）');
+        errors.push(m('skill-schedule.plan-sync.c005', {
+          p0: String(hit.eventId),
+          p1: String(err instanceof Error ? err.message : String(err)),
+        }));
       }
     }
   }
@@ -120,7 +124,7 @@ export function runSync(ctx: PlanOpCtx): PlanOpResult {
   for (const orphan of orphansOf(snap)) {
     const r = removeRemote(snap, orphan.eventId);
     if (r.ok) counts.deleted++;
-    else { counts.failed++; errors.push('孤儿清理失败：' + orphan.eventId + '（' + r.error + '）'); }
+    else { counts.failed++; errors.push(m('skill-schedule.plan-sync.c006', { p0: String(orphan.eventId), p1: String(r.error) })); }
   }
 
   // 收口：同槽冗余（带锚）兜底清理——留一条（优先认领过的那条），其余删。
@@ -146,11 +150,21 @@ export function runSync(ctx: PlanOpCtx): PlanOpResult {
     : counts.created > 0 ? 'created_feishu'
       : counts.updated > 0 ? 'updated_feishu'
         : counts.deleted > 0 ? 'deleted_feishu' : 'found_feishu';
-  const message = '已同步 ' + date + '：回填 ' + counts.backfilled + '／新增 ' + counts.created
-    + '／更新 ' + counts.updated + '／清理 ' + counts.deleted + '／时段回写 ' + counts.timeSynced
-    + (counts.pastSkipped ? '／过去日期跳过 ' + counts.pastSkipped : '')
-    + (counts.duplicates ? '／同槽冗余 ' + counts.duplicates : '')
-    + (errors.length ? '／错误 ' + errors.length : '');
+  // §4.7 · 三处条件分支各抽一个局部变量。
+  const pastNote = counts.pastSkipped ? m('skill-schedule.plan-sync.c007', { p0: String(counts.pastSkipped) }) : '';
+  const dupNote = counts.duplicates ? m('skill-schedule.plan-sync.c008', { p0: String(counts.duplicates) }) : '';
+  const errCountNote = errors.length ? m('skill-schedule.plan-sync.c009', { p0: String(errors.length) }) : '';
+  const message = m('skill-schedule.plan-sync.c010', {
+    p0: String(date),
+    p1: String(counts.backfilled),
+    p2: String(counts.created),
+    p3: String(counts.updated),
+    p4: String(counts.deleted),
+    p5: String(counts.timeSynced),
+    p6: String(pastNote),
+    p7: String(dupNote),
+    p8: String(errCountNote),
+  });
   return receiptResult(buildReceipt({
     op: 'sync', message, local: 'updated', remote, remoteId: null, errors, notes, date, counts,
   }));

@@ -10,6 +10,7 @@ import { larkCreateEvent, larkDeleteEvent, FEISHU_SENTINEL_MARK, FEISHU_OWNER_MA
 import { dayStartISO } from './iso.js';
 import { receiptResult, type PlanOpCtx, type PlanOpResult } from './context.js';
 import { buildReceipt } from './receipt.js';
+import { m } from '../entries/index.js';
 
 export function runCheck(ctx: PlanOpCtx): PlanOpResult {
   const now = new Date();
@@ -18,16 +19,16 @@ export function runCheck(ctx: PlanOpCtx): PlanOpResult {
   const dryRun = ctx.params.dryRun === true;
 
   if (!ctx.cli) {
-    const why = ctx.remoteWhy ?? '远端不可用';
+    const why = ctx.remoteWhy ?? m('skill-schedule.plan-check.c001');
     return receiptResult(buildReceipt({
-      op: 'check', message: '自检未跑：' + why, local: 'checked', remote: 'unavailable',
+      op: 'check', message: m('skill-schedule.plan-check.c002', { p0: String(why) }), local: 'checked', remote: 'unavailable',
       remoteId: null, errors: [why],
       extra: { left: null, leftId: null, cleanup: null, dryRun },
     }));
   }
   if (dryRun) {
     return receiptResult(buildReceipt({
-      op: 'check', message: '自检（dryRun）：远端四门已过，未写任何对象', local: 'checked',
+      op: 'check', message: m('skill-schedule.plan-check.c003'), local: 'checked',
       remote: 'none', remoteId: null,
       extra: { left: null, leftId: null, cleanup: null, dryRun: true },
     }));
@@ -39,15 +40,15 @@ export function runCheck(ctx: PlanOpCtx): PlanOpResult {
   try {
     const made = larkCreateEvent(
       ctx.cli, startISO, startISO.replace('T00:00:00', 'T00:30:00'),
-      FEISHU_SENTINEL_MARK + ' 日程写权限自检 ' + stamp,
-      FEISHU_OWNER_MARK + ' · 自检留下，跑完即删',
+      m('skill-schedule.plan-check.c004', { p0: String(FEISHU_SENTINEL_MARK), p1: String(stamp) }),
+      m('skill-schedule.plan-check.c005', { p0: String(FEISHU_OWNER_MARK) }),
     );
     sentinelId = made.eventId;
   } catch (e) {
-    const m = e instanceof Error ? e.message : String(e);
+    const errMessage = e instanceof Error ? e.message : String(e);
     return receiptResult(buildReceipt({
-      op: 'check', message: '自检失败：远端建对象没成（' + m + '）', local: 'checked',
-      remote: 'unavailable', remoteId: null, errors: [m],
+      op: 'check', message: m('skill-schedule.plan-check.c006', { p0: String(errMessage) }), local: 'checked',
+      remote: 'unavailable', remoteId: null, errors: [errMessage],
       extra: { left: null, leftId: null, cleanup: null, dryRun: false },
     }));
   }
@@ -55,21 +56,25 @@ export function runCheck(ctx: PlanOpCtx): PlanOpResult {
   try {
     larkDeleteEvent(ctx.cli, sentinelId);
   } catch (e) {
-    const m = e instanceof Error ? e.message : String(e);
+    const errMessage = e instanceof Error ? e.message : String(e);
     const cleanup = 'lark-cli calendar events delete --calendar-id primary --event-id ' + sentinelId;
     return receiptResult(buildReceipt({
       op: 'check',
-      message: '自检写下了一条测试日程但**没删掉**：' + sentinelId + '（飞书日历 ' + date + ' 00:00~00:30，标题带「'
-        + FEISHU_SENTINEL_MARK + '」）。清法：' + cleanup,
+      message: m('skill-schedule.plan-check.c007', {
+        p0: String(sentinelId),
+        p1: String(date),
+        p2: String(FEISHU_SENTINEL_MARK),
+        p3: String(cleanup),
+      }),
       local: 'checked', remote: 'unavailable', remoteId: sentinelId,
-      errors: ['自检清理失败：' + m],
-      extra: { left: '飞书日历上一条 30 分钟测试日程', leftId: sentinelId, cleanup, dryRun: false },
+      errors: [m('skill-schedule.plan-check.c008', { p0: String(errMessage) })],
+      extra: { left: m('skill-schedule.plan-check.c009'), leftId: sentinelId, cleanup, dryRun: false },
     }));
   }
 
   return receiptResult(buildReceipt({
     op: 'check',
-    message: '自检通过：远端写权限真验过（建了一条测试日程并已删干净，' + sentinelId + '）',
+    message: m('skill-schedule.plan-check.c010', { p0: String(sentinelId) }),
     local: 'checked', remote: 'deleted_feishu', remoteId: sentinelId,
     counts: { created: 1, deleted: 1 },
     extra: { left: null, leftId: null, cleanup: null, dryRun: false },

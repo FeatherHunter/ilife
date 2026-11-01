@@ -1,6 +1,7 @@
 // HELP 速查：WAKE_TABLE 唯一上游；短语→key/cli/一句话。构建期注入 SKILL.md（scripts/build-help.mjs）。
 import { WAKE_TABLE, type ScheduleKey } from '../policy/index.js';
 import { SCHEDULE_KEY_SHAPES } from '../render/index.js';
+import { m } from '../entries/index.js';
 
 export interface HelpHit { phrase: string; key: ScheduleKey; shape: string; cli: string; desc: string; }
 
@@ -14,33 +15,37 @@ function exampleParams(e: { key: ScheduleKey; needs?: string[]; preset?: Record<
           : n === 'dates' ? ['2026-09-21', '2026-09-22']
             : n === 'time_start' ? '09:00'
               : n === 'time_end' ? '10:00'
-                : n === 'title' ? '晨会'
-                  : '<值>';
+                : n === 'title' ? m('skill-schedule.help-lookup.c001')
+                  : m('skill-schedule.help-lookup.c002');
     }
   }
   const keys = Object.keys(p);
   return keys.length ? ' --params \'' + JSON.stringify(p) + '\'' : '';
 }
 
-const DESCS: Record<string, string> = {
-  'schedule.record.today': '查单日作息（相对日期直写，缺省今天；初始化即开库）',
-  'schedule.record.range': '区间汇总（一级时长 metrics；须 start/end 或 range/recentDays）',
-  'schedule.record.detail': '单条详情（须 id；或 date 看首条）',
-  'schedule.record.write': '记作息 op=add / 修正 op=amend（须 id）/ 写摘要 op=summary',
-  'schedule.record.compare': '对比 kind=months/ranges/category/anomaly',
-  'schedule.plan.today': '查日程（单日/多日/标题搜）',
-  'schedule.plan.write': '商量预览/落盘/补/改/删/复盘/飞书同步（op 分流）',
-  'schedule.help.lookup': 'HELP 现找（q 可空，不过滤即全表）',
-};
+/** 每条命令一句话（HELP 速查那一列）。#1197：由模块级常量表改成函数——`m()` 只在渲染期取词。 */
+function descs(): Record<string, string> {
+  return {
+    'schedule.record.today': m('skill-schedule.help-lookup.c003'),
+    'schedule.record.range': m('skill-schedule.help-lookup.c004'),
+    'schedule.record.detail': m('skill-schedule.help-lookup.c005'),
+    'schedule.record.write': m('skill-schedule.help-lookup.c006'),
+    'schedule.record.compare': m('skill-schedule.help-lookup.c007'),
+    'schedule.plan.today': m('skill-schedule.help-lookup.c008'),
+    'schedule.plan.write': m('skill-schedule.help-lookup.c009'),
+    'schedule.help.lookup': m('skill-schedule.help-lookup.c010'),
+  };
+}
 
 // 全量速查表（WAKE_TABLE 有几条就有几行）。
 export function buildHelpLookup(): HelpHit[] {
+  const descTable = descs();
   return WAKE_TABLE.map((e) => ({
     phrase: e.phrase,
     key: e.key,
     shape: SCHEDULE_KEY_SHAPES[e.key] || '??',
     cli: 'schedule-cmd-read ' + e.key + exampleParams(e),
-    desc: DESCS[e.key] || '',
+    desc: descTable[e.key] || '',
   }));
 }
 

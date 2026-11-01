@@ -9,8 +9,9 @@ import { getPlanEvent, setFeishuEventId, updatePlanEvent, deactivatePlanEvent, l
 import { SchedulePolicyError } from '../fetch/errors.js';
 import { validateUpdateInput, toMinutes } from '../policy/index.js';
 import { receiptResult, type PlanOpCtx, type PlanOpResult } from './context.js';
-import { buildReceipt, REMOTE_LABEL, type RemoteState } from './receipt.js';
+import { buildReceipt, remoteLabelOf, type RemoteState } from './receipt.js';
 import { takeSnapshot, alignOne, cleanSlot, removeRemote, type RemoteSnapshot } from './remoteDay.js';
+import { m } from '../entries/index.js';
 
 export function runUpdate(ctx: PlanOpCtx): PlanOpResult {
   const { id, patch } = validateUpdateInput(ctx.params);
@@ -53,7 +54,7 @@ export function runUpdate(ctx: PlanOpCtx): PlanOpResult {
           if (old && old !== made.remoteId) {
             const del = removeRemote(snap, old);
             if (del.ok) counts.remoteDeleted++;
-            else errors.push('删旧远端事件失败：' + old + '（' + del.error + '）');
+            else errors.push(m('skill-schedule.plan-single.c001', { p0: String(old), p1: String(del.error) }));
           }
           const slot = cleanSlot(snap, {
             date: after.date, timeStart: nextStart, timeEnd: nextEnd,
@@ -83,7 +84,7 @@ export function runUpdate(ctx: PlanOpCtx): PlanOpResult {
               counts.remoteUpdated++;
               remote = 'updated_feishu';
             } catch (e) {
-              errors.push('远端改失败：' + (e instanceof Error ? e.message : String(e)));
+              errors.push(m('skill-schedule.plan-single.c002', { p0: String(e instanceof Error ? e.message : String(e)) }));
               remote = 'unavailable';
             }
           } else {
@@ -104,8 +105,14 @@ export function runUpdate(ctx: PlanOpCtx): PlanOpResult {
   }
 
   const changes = Object.keys(patch).join('／');
-  const message = '已改计划 #' + id + '（' + changes + '）' + (moved ? '，时段 → ' + nextStart + '~' + nextEnd : '')
-    + '（' + REMOTE_LABEL[remote] + '）';
+  // §4.7 · 链内的条件分支先抽成局部变量，外层 + 链只拼「字面量＋变量」（迁移器只认这个形状）。
+  const movedNote = moved ? m('skill-schedule.plan-single.c003', { p0: String(nextStart), p1: String(nextEnd) }) : '';
+  const message = m('skill-schedule.plan-single.c004', {
+    p0: String(id),
+    p1: String(changes),
+    p2: String(movedNote),
+    p3: String(remoteLabelOf(remote)),
+  });
   return receiptResult(buildReceipt({
     op: 'update', message, local: 'updated', remote, remoteId, errors, notes, id, date: after.date, counts,
   }));
@@ -134,7 +141,7 @@ export function runDeactivate(ctx: PlanOpCtx): PlanOpResult {
       if (before.feishu_event_id) {
         const r = removeRemote(snap, before.feishu_event_id);
         if (r.ok) counts.remoteDeleted++;
-        else errors.push('远端删失败：' + before.feishu_event_id + '（' + r.error + '）');
+        else errors.push(m('skill-schedule.plan-single.c005', { p0: String(before.feishu_event_id), p1: String(r.error) }));
       }
       // 同槽兜底：软删之后这个槽位不该再留任何「我管的」远端对象（老实现只在改时段时兜底，
       // 删除路径同样会留残——同一口径，一并兜住）。
@@ -157,8 +164,13 @@ export function runDeactivate(ctx: PlanOpCtx): PlanOpResult {
     remote = 'skipped';
   }
 
-  const message = '已删计划（软删 #' + id + '）' + (remote === 'deleted_feishu' ? '，远端那条也删了' : '')
-    + '（' + REMOTE_LABEL[remote] + '）';
+  // §4.7 · 同上：条件分支抽局部变量。
+  const deletedNote = remote === 'deleted_feishu' ? m('skill-schedule.plan-single.c006') : '';
+  const message = m('skill-schedule.plan-single.c007', {
+    p0: String(id),
+    p1: String(deletedNote),
+    p2: String(remoteLabelOf(remote)),
+  });
   return receiptResult(buildReceipt({
     op: 'deactivate', message, local: 'deleted', remote, remoteId, errors, notes, id, date: before.date, counts,
   }));

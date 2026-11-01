@@ -4574,7 +4574,8 @@
     "1222": {
       "title": "迁移 skill-schedule 计划与帮助域（plan＋help）：24 件（1,649 条）",
       "state": "open（待开工；清单已回填 #1308）",
-      "files": [
+      "files": [],
+      "migrated": [
         {
           "path": "packages/skill-schedule/src/help/helpFile.ts",
           "literals": 21,
@@ -4590,13 +4591,6 @@
           "byClass": {
             "copy": 5,
             "ident": 5
-          }
-        },
-        {
-          "path": "packages/skill-schedule/src/help/scenes/help-assets.ts",
-          "literals": 566,
-          "byClass": {
-            "derived": 566
           }
         },
         {
@@ -4732,13 +4726,6 @@
           }
         },
         {
-          "path": "packages/skill-schedule/src/plan/routes.ts",
-          "literals": 15,
-          "byClass": {
-            "copy": 15
-          }
-        },
-        {
           "path": "packages/skill-schedule/src/plan/single.ts",
           "literals": 21,
           "byClass": {
@@ -4762,11 +4749,28 @@
           }
         }
       ],
-      "migrated": [],
       "totals": {
         "files": 24,
         "literals": 1649
-      }
+      },
+      "excluded": [
+        {
+          "path": "packages/skill-schedule/src/help/scenes/help-assets.ts",
+          "literals": 566,
+          "byClass": {
+            "derived": 566
+          },
+          "reason": "派生生成件：文件头写明由 gen:help-assets 从 spec 机器生成、禁手改；手改会在下一次 gen 被覆盖（迁移器 SKIP_MODULE_CONST）"
+        },
+        {
+          "path": "packages/skill-schedule/src/plan/routes.ts",
+          "literals": 15,
+          "byClass": {
+            "copy": 15
+          },
+          "reason": "唤醒词→命令的路由表（15 条 PLAN_ROUTES）：是数据不是文案，译了就路由不到命令（迁移器 SKIP_MODULE_CONST）"
+        }
+      ]
     },
     "1223": {
       "title": "迁移 skill-schedule 其余域：45 件（1,470 条）",
@@ -9974,12 +9978,12 @@
   },
   "scopeSummary": {
     "ledgerFiles": 1226,
-    "migratedFiles": 81,
-    "pendingFiles": 1097,
-    "pendingLiterals": 38735,
-    "excludedFiles": 48,
-    "excludedLiterals": 1790,
-    "migratedLiterals": 2223
+    "migratedFiles": 103,
+    "pendingFiles": 1073,
+    "pendingLiterals": 37086,
+    "excludedFiles": 50,
+    "excludedLiterals": 2371,
+    "migratedLiterals": 3291
   },
   "workflow": [
     "开工：从本文件取本票 files，逐件登记进 tooling/i18n-scope.json 的 files（先跑两道门拿红读数＝范围已挂但还没迁）。",

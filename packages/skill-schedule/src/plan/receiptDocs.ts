@@ -35,34 +35,39 @@ import { scheduleCopyArea } from '../render/copyArea.js';
 import { assembleDocPage, type PageHead } from '../shared/docPage.js';
 import { pageSections } from '../shared/pageNav.js';
 import { hourCellsOf, renderHourBand } from '../shared/pageParts.js';
-import { REMOTE_LABEL, planCopyArea, type RemoteState } from './receipt.js';
+import { remoteLabelOf, planCopyArea, type RemoteState } from './receipt.js';
 import { planPartsCss, renderChangePanel } from './planParts.js';
+import { m } from '../entries/index.js';
 
 /** 域词（页眉那一行）。 */
-const EYEBROW = '作息管家 日程与计划';
+/** 页眉（品牌＋域）。#1197：改成函数——`m()` 只在渲染期取词，模块级常量的初值会定死语言。 */
+const eyebrowOf = (): string => m('skill-schedule.plan-receiptDocs.c001');
 /** 一级分类的权威顺序（色带配色与图例都照它），定义只此一处：`policy` 的白名单。 */
 const L1_ORDER: readonly string[] = [...LEVEL1_WHITELIST];
 
-/** 回执页上的字段中文名（库列名与命令参数名都不上屏；一处定义）。 */
-const FIELD_LABELS: Readonly<Record<string, string>> = {
-  date: '日期',
-  time_start: '开始时间',
-  time_end: '结束时间',
-  title: '标题',
-  notes: '备注',
-  category: '分类',
-  completion: '完成状态',
-  completion_note: '完成说明',
-};
+/** 回执页上的字段中文名（库列名与命令参数名都不上屏；一处定义）。
+ *  #1197：由模块级常量表改成函数——常量初值在模块加载期就定死语言了，取词要落在页函数里（§4.8）。 */
+function fieldLabels(): Readonly<Record<string, string>> {
+  return {
+  date: m('skill-schedule.plan-receiptDocs.c002'),
+  time_start: m('skill-schedule.plan-receiptDocs.c003'),
+  time_end: m('skill-schedule.plan-receiptDocs.c004'),
+  title: m('skill-schedule.plan-receiptDocs.c005'),
+  notes: m('skill-schedule.plan-receiptDocs.c006'),
+  category: m('skill-schedule.plan-receiptDocs.c007'),
+  completion: m('skill-schedule.plan-receiptDocs.c008'),
+  completion_note: m('skill-schedule.plan-receiptDocs.c009'),
+  };
+}
 
-const span = (start: string, end: string): string => start + ' 至 ' + end;
+const span = (start: string, end: string): string => m('skill-schedule.plan-receiptDocs.c010', { p0: String(start), p1: String(end) });
 const empty = (v: unknown): string => (v === null || v === undefined || v === '' ? '—' : String(v));
 /** #894 · 完成状态上屏写法：库里存的是半角口径，页上走全角映射（取值不动）。 */
 const completionText = (v: unknown): string =>
   (v === null || v === undefined || v === '' ? '—' : completionLabelOf(String(v)));
 
 /** 事件行在页上的分类写法：没标分类的那一条写「未分类」（不印空串）。 */
-const categoryOf = (e: PlanEvent): string => (e.category === null || e.category === '' ? '未分类' : e.category);
+const categoryOf = (e: PlanEvent): string => (e.category === null || e.category === '' ? m('skill-schedule.plan-receiptDocs.c011') : e.category);
 
 function cellsOf(events: readonly PlanEvent[]): ReturnType<typeof hourCellsOf> {
   return hourCellsOf(events.map((e) => ({
@@ -89,82 +94,96 @@ export function ensureReceiptPage(handle: ScheduleDb, r: EnsureReceipt): string 
   const minutes = event === undefined ? 0 : toMinutes(event.time_end) - toMinutes(event.time_start);
   const sameCategory = event === undefined ? 0 : day.filter((e) => e.category === event.category).length;
   const hit = renderFeedbackBlock({
-    title: '这一步没有新建',
+    title: m('skill-schedule.plan-receiptDocs.c012'),
     toast: {
       icon: 'info',
-      msg: '这个日期配这一段起止本来就有一条了，补计划认了原来那条，没有重复建。回执里的编号还是它。',
+      msg: m('skill-schedule.plan-receiptDocs.c013'),
     },
     staticNotice: true,
   });
   const head: PageHead = {
-    docTitle: '作息管家 补计划回执',
-    eyebrow: EYEBROW,
-    title: '补计划回执',
+    docTitle: m('skill-schedule.plan-receiptDocs.c014'),
+    eyebrow: eyebrowOf(),
+    title: m('skill-schedule.plan-receiptDocs.c015'),
     subtitle: event === undefined
-      ? r.date + ' 这一条没有在库里找到，先把这一趟的读数摆出来。'
-      : '补的是 ' + r.date + ' 的 ' + span(event.time_start, event.time_end) + '，标题是「' + event.title + '」。',
+      ? m('skill-schedule.plan-receiptDocs.c016', { p0: String(r.date) })
+      : m('skill-schedule.plan-receiptDocs.c017', {
+        p0: String(r.date),
+        p1: String(span(event.time_start, event.time_end)),
+        p2: String(event.title),
+      }),
   };
   const current: DataTableRow[] = event === undefined ? [] : [
-    { k: '编号', v: String(event.id) },
-    { k: '日期', v: event.date },
-    { k: '时段', v: span(event.time_start, event.time_end) },
-    { k: '时长', v: fmtDur(minutes) },
-    { k: '标题', v: event.title },
-    { k: '分类', v: categoryOf(event) },
-    { k: '备注', v: empty(event.notes) },
-    { k: '完成状态', v: completionText(event.completion) },
+    { k: m('skill-schedule.plan-receiptDocs.c018'), v: String(event.id) },
+    { k: m('skill-schedule.plan-receiptDocs.c019'), v: event.date },
+    { k: m('skill-schedule.plan-receiptDocs.c020'), v: span(event.time_start, event.time_end) },
+    { k: m('skill-schedule.plan-receiptDocs.c021'), v: fmtDur(minutes) },
+    { k: m('skill-schedule.plan-receiptDocs.c022'), v: event.title },
+    { k: m('skill-schedule.plan-receiptDocs.c023'), v: categoryOf(event) },
+    { k: m('skill-schedule.plan-receiptDocs.c024'), v: empty(event.notes) },
+    { k: m('skill-schedule.plan-receiptDocs.c025'), v: completionText(event.completion) },
   ];
+  // §4.7 · 结论那两支各含文案，先算成局部变量；链里只拼字面量＋变量。
+  const spanText = event === undefined ? m('skill-schedule.plan-receiptDocs.c026') : span(event.time_start, event.time_end);
+  const createdNote = r.created ? m('skill-schedule.plan-receiptDocs.c027') : m('skill-schedule.plan-receiptDocs.c028');
+  const createdConclusion = m('skill-schedule.plan-receiptDocs.c029', {
+    p0: String(r.date),
+    p1: String(spanText),
+    p2: String(day.length),
+  });
+  const hitConclusion = m('skill-schedule.plan-receiptDocs.c030', { p0: String(r.date), p1: String(day.length) });
   const { toc, body } = pageSections([
-    { navText: r.created ? '' : '这一步没有新建', html: r.created ? '' : hit },
-    { html: renderConclusionBar(r.created
-      ? '已经补上 ' + r.date + ' 的 ' + (event === undefined ? '这一条' : span(event.time_start, event.time_end))
-        + '，这一天现在排了 ' + day.length + ' 件。'
-      : '这一天本来就有这一段，这一步没有新建，' + r.date + ' 现在排了 ' + day.length + ' 件。') },
-    { navText: '这一趟的结果', html: renderKpiGrid([
-      { label: '事件编号', value: String(r.id), detail: r.date },
+    { navText: r.created ? '' : m('skill-schedule.plan-receiptDocs.c031'), html: r.created ? '' : hit },
+    { html: renderConclusionBar(r.created ? createdConclusion : hitConclusion) },
+    { navText: m('skill-schedule.plan-receiptDocs.c032'), html: renderKpiGrid([
+      { label: m('skill-schedule.plan-receiptDocs.c033'), value: String(r.id), detail: r.date },
       {
-        label: '本地这一半', value: r.created ? '新建' : '原有',
-        detail: r.created ? '这条是新写进去的' : '命中已有那条，没有重复建',
+        label: m('skill-schedule.plan-receiptDocs.c034'), value: r.created ? m('skill-schedule.plan-receiptDocs.c035') : m('skill-schedule.plan-receiptDocs.c036'),
+        detail: r.created ? m('skill-schedule.plan-receiptDocs.c037') : m('skill-schedule.plan-receiptDocs.c038'),
       },
-      { label: '时段', value: event === undefined ? '—' : fmtDurShort(minutes), detail: event === undefined ? '—' : span(event.time_start, event.time_end) },
-      { label: '这一天', value: String(day.length) + ' 件', detail: '同一分类 ' + String(sameCategory) + ' 件' },
-    ], { title: '这一趟的结果' }) },
-    { navText: '这一条的前后', html: renderChangePanel({ title: '这一条的前后', rows: [
-      { label: '库里有没有', before: r.created ? '没有' : '已经有了', after: '有这一条' },
-      { label: '事件编号', before: r.created ? '—' : String(r.id), after: String(r.id), arrow: false },
+      { label: m('skill-schedule.plan-receiptDocs.c039'), value: event === undefined ? '—' : fmtDurShort(minutes), detail: event === undefined ? '—' : span(event.time_start, event.time_end) },
+      { label: m('skill-schedule.plan-receiptDocs.c040'), value: m('skill-schedule.plan-receiptDocs.c041', { p0: String(String(day.length)) }), detail: m('skill-schedule.plan-receiptDocs.c042', { p0: String(String(sameCategory)) }) },
+    ], { title: m('skill-schedule.plan-receiptDocs.c043') }) },
+    { navText: m('skill-schedule.plan-receiptDocs.c044'), html: renderChangePanel({ title: m('skill-schedule.plan-receiptDocs.c045'), rows: [
+      { label: m('skill-schedule.plan-receiptDocs.c046'), before: r.created ? m('skill-schedule.plan-receiptDocs.c047') : m('skill-schedule.plan-receiptDocs.c048'), after: m('skill-schedule.plan-receiptDocs.c049') },
+      { label: m('skill-schedule.plan-receiptDocs.c050'), before: r.created ? '—' : String(r.id), after: String(r.id), arrow: false },
     ] }) },
     { html: renderFactStrip({
       items: [
-        { label: '远端侧', value: REMOTE_LABEL[r.remote] },
-        { label: '这一天现有', value: String(day.length) + ' 件' },
-        { label: '同分类', value: String(sameCategory) + ' 件' },
-        { label: '完成状态', value: event === undefined ? '—' : completionText(event.completion) },
+        { label: m('skill-schedule.plan-receiptDocs.c051'), value: remoteLabelOf(r.remote) },
+        { label: m('skill-schedule.plan-receiptDocs.c052'), value: m('skill-schedule.plan-receiptDocs.c053', { p0: String(String(day.length)) }) },
+        { label: m('skill-schedule.plan-receiptDocs.c054'), value: m('skill-schedule.plan-receiptDocs.c055', { p0: String(String(sameCategory)) }) },
+        { label: m('skill-schedule.plan-receiptDocs.c056'), value: event === undefined ? '—' : completionText(event.completion) },
       ],
     }) },
-    { navText: '复制与留档', html: scheduleCopyArea({
-      title: '复制与留档',
+    { navText: m('skill-schedule.plan-receiptDocs.c057'), html: scheduleCopyArea({
+      title: m('skill-schedule.plan-receiptDocs.c058'),
       dataActionId: 'ilife-sch-plan-copy-data',
       logActionId: 'ilife-sch-plan-copy-log',
       ...planCopyArea({
-        message: '补计划回执：日期 ' + r.date + '，事件编号 ' + String(r.id) + '，时段 '
-          + (event === undefined ? '—' : span(event.time_start, event.time_end)) + '，本地这一半 '
-          + (r.created ? '新建' : '命中已有') + '，远端侧 ' + REMOTE_LABEL[r.remote],
+        message: m('skill-schedule.plan-receiptDocs.c059', {
+          p0: String(r.date),
+          p1: String(String(r.id)),
+          p2: String(event === undefined ? '—' : span(event.time_start, event.time_end)),
+          p3: String(createdNote),
+          p4: String(remoteLabelOf(r.remote)),
+        }),
         command: 'schedule-cmd-read schedule.plan.write --params {"op":"ensure","date":"' + r.date + '"}',
-        source: '日程计划表（' + r.date + ' 现有 ' + String(day.length) + ' 件）',
+        source: m('skill-schedule.plan-receiptDocs.c060', { p0: String(r.date), p1: String(String(day.length)) }),
       }),
     }) },
     { html: renderDisclosure({
-      title: '这一条现在的样子',
+      title: m('skill-schedule.plan-receiptDocs.c061'),
       contentHtml: renderDataTable({
-        caption: '库里这一条',
-        columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+        caption: m('skill-schedule.plan-receiptDocs.c062'),
+        columns: [{ key: 'k', label: m('skill-schedule.plan-receiptDocs.c063') }, { key: 'v', label: m('skill-schedule.plan-receiptDocs.c064') }],
         rows: current,
-        emptyText: '库里没有找到这一条',
+        emptyText: m('skill-schedule.plan-receiptDocs.c065'),
       }),
     }) },
     // 段名是「<日期> 这一天现在的排布」；目录项与它逐字同源（同一句拼接写两处）。
-    { navText: r.date + ' 这一天现在的排布', html: event === undefined ? '' : renderHourBand(cellsOf(day), {
-      order: L1_ORDER, title: r.date + ' 这一天现在的排布', height: 120,
+    { navText: m('skill-schedule.plan-receiptDocs.c066', { p0: String(r.date) }), html: event === undefined ? '' : renderHourBand(cellsOf(day), {
+      order: L1_ORDER, title: m('skill-schedule.plan-receiptDocs.c067', { p0: String(r.date) }), height: 120,
     }) },
   ]);
   return assembleDocPage({ head, content: toc + body, extraCss: planPartsCss() });
@@ -191,50 +210,61 @@ export function ensureBatchReceiptPage(handle: ScheduleDb, days: readonly Ensure
       date: d.date,
       time: event === undefined ? '—' : span(event.time_start, event.time_end),
       title: event === undefined ? '—' : event.title,
-      result: d.created ? '新建' : '命中已有',
-      remote: REMOTE_LABEL[d.remote],
+      result: d.created ? m('skill-schedule.plan-receiptDocs.c068') : m('skill-schedule.plan-receiptDocs.c069'),
+      remote: remoteLabelOf(d.remote),
     };
   });
+  const daysText = sorted.length === 0 ? m('skill-schedule.plan-receiptDocs.c070') : m('skill-schedule.plan-receiptDocs.c071', { p0: String(sorted[0]), p1: String(sorted[sorted.length - 1]) });
   const head: PageHead = {
-    docTitle: '作息管家 补计划回执',
-    eyebrow: EYEBROW,
-    title: '批量补计划回执',
-    subtitle: '补的是 ' + (sorted.length === 0 ? '一个日期也没给' : sorted[0] + ' 至 ' + sorted[sorted.length - 1])
-      + '，一共 ' + days.length + ' 天。',
+    docTitle: m('skill-schedule.plan-receiptDocs.c072'),
+    eyebrow: eyebrowOf(),
+    title: m('skill-schedule.plan-receiptDocs.c073'),
+    subtitle: m('skill-schedule.plan-receiptDocs.c074', { p0: String(daysText), p1: String(days.length) }),
   };
+  // §4.7 · 逐天结果那串里嵌着条件，先抽局部变量。
+  const dayLines = days.map((d) => {
+    const createdNote = d.created ? m('skill-schedule.plan-receiptDocs.c075') : m('skill-schedule.plan-receiptDocs.c076');
+    return d.date + ' ' + createdNote + ' ' + remoteLabelOf(d.remote);
+  });
   const { toc, body } = pageSections([
     { html: renderConclusionBar(failed === 0
-      ? '这次 ' + days.length + ' 天都补上了，新建 ' + created + ' 天，命中已有 ' + found + ' 天。'
-      : '这次 ' + days.length + ' 天里 ' + failed + ' 天的远端侧没成，本地那一半照写。') },
-    { navText: '这一趟的结果', html: renderKpiGrid([
-      { label: '天数', value: String(days.length) + ' 天', detail: '这一趟补的' },
-      { label: '新建', value: String(created) + ' 天', detail: '本地原来没有这一段' },
-      { label: '命中已有', value: String(found) + ' 天', detail: '同一天同一段起止已存在' },
-      { label: '远端侧没成', value: String(failed) + ' 天', detail: failed === 0 ? '一天不差' : '本地那一半照写' },
-    ], { title: '这一趟的结果' }) },
+      ? m('skill-schedule.plan-receiptDocs.c077', {
+        p0: String(days.length),
+        p1: String(created),
+        p2: String(found),
+      })
+      : m('skill-schedule.plan-receiptDocs.c078', { p0: String(days.length), p1: String(failed) })) },
+    { navText: m('skill-schedule.plan-receiptDocs.c079'), html: renderKpiGrid([
+      { label: m('skill-schedule.plan-receiptDocs.c080'), value: m('skill-schedule.plan-receiptDocs.c081', { p0: String(String(days.length)) }), detail: m('skill-schedule.plan-receiptDocs.c082') },
+      { label: m('skill-schedule.plan-receiptDocs.c083'), value: m('skill-schedule.plan-receiptDocs.c084', { p0: String(String(created)) }), detail: m('skill-schedule.plan-receiptDocs.c085') },
+      { label: m('skill-schedule.plan-receiptDocs.c086'), value: m('skill-schedule.plan-receiptDocs.c087', { p0: String(String(found)) }), detail: m('skill-schedule.plan-receiptDocs.c088') },
+      { label: m('skill-schedule.plan-receiptDocs.c089'), value: m('skill-schedule.plan-receiptDocs.c090', { p0: String(String(failed)) }), detail: failed === 0 ? m('skill-schedule.plan-receiptDocs.c091') : m('skill-schedule.plan-receiptDocs.c092') },
+    ], { title: m('skill-schedule.plan-receiptDocs.c093') }) },
     { html: renderDataTable({
-      caption: '逐天结果',
+      caption: m('skill-schedule.plan-receiptDocs.c094'),
       columns: [
-        { key: 'date', label: '日期' },
-        { key: 'time', label: '时段' },
-        { key: 'title', label: '标题' },
-        { key: 'result', label: '本地这一半' },
-        { key: 'remote', label: '远端侧' },
+        { key: 'date', label: m('skill-schedule.plan-receiptDocs.c095') },
+        { key: 'time', label: m('skill-schedule.plan-receiptDocs.c096') },
+        { key: 'title', label: m('skill-schedule.plan-receiptDocs.c097') },
+        { key: 'result', label: m('skill-schedule.plan-receiptDocs.c098') },
+        { key: 'remote', label: m('skill-schedule.plan-receiptDocs.c099') },
       ],
       rows: tables,
-      emptyText: '这一趟一天也没收到',
+      emptyText: m('skill-schedule.plan-receiptDocs.c100'),
     }) },
-    { html: renderCaliberLine('同一天同一段起止只留一条 ｜ 再补一次不算新建，也不会重复') },
-    { navText: '复制与留档', html: scheduleCopyArea({
-      title: '复制与留档',
+    { html: renderCaliberLine(m('skill-schedule.plan-receiptDocs.c101')) },
+    { navText: m('skill-schedule.plan-receiptDocs.c102'), html: scheduleCopyArea({
+      title: m('skill-schedule.plan-receiptDocs.c103'),
       dataActionId: 'ilife-sch-plan-copy-data',
       logActionId: 'ilife-sch-plan-copy-log',
       ...planCopyArea({
-        message: '批量补计划回执：' + String(days.length) + ' 天，'
-          + days.map((d) => d.date + ' ' + (d.created ? '新建' : '命中已有') + ' ' + REMOTE_LABEL[d.remote]).join('，'),
+        message: m('skill-schedule.plan-receiptDocs.c104', {
+          p0: String(String(days.length)),
+          p1: String(dayLines.join('，')),
+        }),
         command: 'schedule-cmd-read schedule.plan.write --params {"op":"ensure","dates":['
           + days.map((d) => '"' + d.date + '"').join(',') + ']}',
-        source: '日程计划表（' + String(days.length) + ' 天）',
+        source: m('skill-schedule.plan-receiptDocs.c105', { p0: String(String(days.length)) }),
       }),
     }) },
   ]);
@@ -253,61 +283,70 @@ function fieldValue(key: string, value: unknown): string {
 export function updateReceiptPage(
   handle: ScheduleDb, before: PlanEvent, after: PlanEvent, patchKeys: readonly string[], remote: RemoteState,
 ): string {
+  const labels = fieldLabels();
   const rows: ChangeRowInput[] = patchKeys
-    .filter((key) => FIELD_LABELS[key] !== undefined)
+    .filter((key) => labels[key] !== undefined)
     .map((key) => ({
-      label: FIELD_LABELS[key],
+      label: labels[key],
       before: fieldValue(key, (before as unknown as Record<string, unknown>)[key]),
       after: fieldValue(key, (after as unknown as Record<string, unknown>)[key]),
     }));
   const moved = before.time_start !== after.time_start || before.time_end !== after.time_end;
   const day = listPlanEvents(handle, after.date);
   const head: PageHead = {
-    docTitle: '作息管家 改计划回执',
-    eyebrow: EYEBROW,
-    title: '改计划回执',
-    subtitle: '改的是 ' + after.date + ' 的 ' + span(before.time_start, before.time_end)
-      + '，改完是 ' + span(after.time_start, after.time_end) + '。',
+    docTitle: m('skill-schedule.plan-receiptDocs.c106'),
+    eyebrow: eyebrowOf(),
+    title: m('skill-schedule.plan-receiptDocs.c107'),
+    subtitle: m('skill-schedule.plan-receiptDocs.c108', {
+      p0: String(after.date),
+      p1: String(span(before.time_start, before.time_end)),
+      p2: String(span(after.time_start, after.time_end)),
+    }),
   };
   const { toc, body } = pageSections([
     { html: renderConclusionBar(moved
-      ? '这一条已经改好，时段挪到了 ' + span(after.time_start, after.time_end) + '，改的是哪几格下面逐格对照。'
-      : '这一条已经改好，时段没动，改的是哪几格下面逐格对照。') },
-    { navText: '这一趟的结果', html: renderKpiGrid([
-      { label: '事件编号', value: String(after.id), detail: after.date },
-      { label: '现在的时段', value: fmtDurShort(toMinutes(after.time_end) - toMinutes(after.time_start)), detail: span(after.time_start, after.time_end) },
-      { label: '改动处数', value: String(rows.length) + ' 处', detail: moved ? '其中时段也变了' : '时段没动' },
-      { label: '这一天', value: String(day.length) + ' 件', detail: '改完之后的排布' },
-    ], { title: '这一趟的结果' }) },
-    { navText: '这次改了什么', html: renderChangePanel({ title: '这次改了什么', rows }) },
-    { navText: '时段变了，飞书那条也换过', html: moved
+      ? m('skill-schedule.plan-receiptDocs.c109', { p0: String(span(after.time_start, after.time_end)) })
+      : m('skill-schedule.plan-receiptDocs.c110')) },
+    { navText: m('skill-schedule.plan-receiptDocs.c111'), html: renderKpiGrid([
+      { label: m('skill-schedule.plan-receiptDocs.c112'), value: String(after.id), detail: after.date },
+      { label: m('skill-schedule.plan-receiptDocs.c113'), value: fmtDurShort(toMinutes(after.time_end) - toMinutes(after.time_start)), detail: span(after.time_start, after.time_end) },
+      { label: m('skill-schedule.plan-receiptDocs.c114'), value: m('skill-schedule.plan-receiptDocs.c115', { p0: String(String(rows.length)) }), detail: moved ? m('skill-schedule.plan-receiptDocs.c116') : m('skill-schedule.plan-receiptDocs.c117') },
+      { label: m('skill-schedule.plan-receiptDocs.c118'), value: m('skill-schedule.plan-receiptDocs.c119', { p0: String(String(day.length)) }), detail: m('skill-schedule.plan-receiptDocs.c120') },
+    ], { title: m('skill-schedule.plan-receiptDocs.c121') }) },
+    { navText: m('skill-schedule.plan-receiptDocs.c122'), html: renderChangePanel({ title: m('skill-schedule.plan-receiptDocs.c123'), rows }) },
+    { navText: m('skill-schedule.plan-receiptDocs.c124'), html: moved
       ? renderFeedbackBlock({
-        title: '时段变了，飞书那条也换过',
+        title: m('skill-schedule.plan-receiptDocs.c125'),
         toast: {
           icon: 'warn',
-          msg: '远端日历没有「改时间」这个动作，所以这一趟是先按新时段建一条，建好之后把旧的那条删掉。两步都成了才算远端侧成功。',
+          msg: m('skill-schedule.plan-receiptDocs.c126'),
         },
         staticNotice: true,
       })
       : '' },
     { html: renderFactStrip({
       items: [
-        { label: '远端侧', value: REMOTE_LABEL[remote] },
-        { label: '现在的标题', value: after.title },
-        { label: '现在的分类', value: categoryOf(after) },
-        { label: '完成状态', value: completionText(after.completion) },
+        { label: m('skill-schedule.plan-receiptDocs.c127'), value: remoteLabelOf(remote) },
+        { label: m('skill-schedule.plan-receiptDocs.c128'), value: after.title },
+        { label: m('skill-schedule.plan-receiptDocs.c129'), value: categoryOf(after) },
+        { label: m('skill-schedule.plan-receiptDocs.c130'), value: completionText(after.completion) },
       ],
     }) },
-    { navText: '复制与留档', html: scheduleCopyArea({
-      title: '复制与留档',
+    { navText: m('skill-schedule.plan-receiptDocs.c131'), html: scheduleCopyArea({
+      title: m('skill-schedule.plan-receiptDocs.c132'),
       dataActionId: 'ilife-sch-plan-copy-data',
       logActionId: 'ilife-sch-plan-copy-log',
       ...planCopyArea({
-        message: '改计划回执：日期 ' + after.date + '，事件编号 ' + String(after.id) + '，这次改了 '
-          + String(rows.length) + ' 处（' + rows.map((r) => r.label).join('，') + '），现在的时段 '
-          + span(after.time_start, after.time_end) + '，远端侧 ' + REMOTE_LABEL[remote],
+        message: m('skill-schedule.plan-receiptDocs.c133', {
+          p0: String(after.date),
+          p1: String(String(after.id)),
+          p2: String(String(rows.length)),
+          p3: String(rows.map((r) => r.label).join('，')),
+          p4: String(span(after.time_start, after.time_end)),
+          p5: String(remoteLabelOf(remote)),
+        }),
         command: 'schedule-cmd-read schedule.plan.write --params {"op":"update","id":' + String(after.id) + '}',
-        source: '日程计划表（' + after.date + ' 现有 ' + String(day.length) + ' 件）',
+        source: m('skill-schedule.plan-receiptDocs.c134', { p0: String(after.date), p1: String(String(day.length)) }),
       }),
     }) },
   ]);
@@ -321,56 +360,63 @@ export function deactivateReceiptPage(handle: ScheduleDb, before: PlanEvent, rem
   const day = listPlanEvents(handle, before.date);
   const minutes = toMinutes(before.time_end) - toMinutes(before.time_start);
   const head: PageHead = {
-    docTitle: '作息管家 删计划回执',
-    eyebrow: EYEBROW,
-    title: '删计划回执',
-    subtitle: '删的是 ' + before.date + ' 的 ' + span(before.time_start, before.time_end) + '，标题是「' + before.title + '」。',
+    docTitle: m('skill-schedule.plan-receiptDocs.c135'),
+    eyebrow: eyebrowOf(),
+    title: m('skill-schedule.plan-receiptDocs.c136'),
+    subtitle: m('skill-schedule.plan-receiptDocs.c137', {
+      p0: String(before.date),
+      p1: String(span(before.time_start, before.time_end)),
+      p2: String(before.title),
+    }),
   };
   const { toc, body } = pageSections([
-    { html: renderConclusionBar('这一条已经不再算进 ' + before.date + ' 了，这一天现在排着 ' + day.length
-      + ' 件。库里那一条没有真的删掉，只是标记成不再算。') },
-    { navText: '这一趟的结果', html: renderKpiGrid([
-      { label: '事件编号', value: String(before.id), detail: before.date },
-      { label: '删掉的时段', value: fmtDurShort(minutes), detail: span(before.time_start, before.time_end) },
-      { label: '这一天', value: String(day.length) + ' 件', detail: '比删之前少一件' },
-      { label: '本地这一半', value: '不再算', detail: '标记成不活跃' },
-    ], { title: '这一趟的结果' }) },
-    { navText: '这一条的前后', html: renderChangePanel({ title: '这一条的前后', rows: [
-      { label: '这一条', before: '在排', after: '不再算' },
-      { label: '这一天在排的件数', before: String(day.length + 1) + ' 件', after: String(day.length) + ' 件' },
-      { label: '远端那条', before: before.feishu_event_id === null ? '没有' : '有', after: before.feishu_event_id === null ? '没有' : '按这一趟的结果处理' },
+    { html: renderConclusionBar(m('skill-schedule.plan-receiptDocs.c138', { p0: String(before.date), p1: String(day.length) })) },
+    { navText: m('skill-schedule.plan-receiptDocs.c139'), html: renderKpiGrid([
+      { label: m('skill-schedule.plan-receiptDocs.c140'), value: String(before.id), detail: before.date },
+      { label: m('skill-schedule.plan-receiptDocs.c141'), value: fmtDurShort(minutes), detail: span(before.time_start, before.time_end) },
+      { label: m('skill-schedule.plan-receiptDocs.c142'), value: m('skill-schedule.plan-receiptDocs.c143', { p0: String(String(day.length)) }), detail: m('skill-schedule.plan-receiptDocs.c144') },
+      { label: m('skill-schedule.plan-receiptDocs.c145'), value: m('skill-schedule.plan-receiptDocs.c146'), detail: m('skill-schedule.plan-receiptDocs.c147') },
+    ], { title: m('skill-schedule.plan-receiptDocs.c148') }) },
+    { navText: m('skill-schedule.plan-receiptDocs.c149'), html: renderChangePanel({ title: m('skill-schedule.plan-receiptDocs.c150'), rows: [
+      { label: m('skill-schedule.plan-receiptDocs.c151'), before: m('skill-schedule.plan-receiptDocs.c152'), after: m('skill-schedule.plan-receiptDocs.c153') },
+      { label: m('skill-schedule.plan-receiptDocs.c154'), before: m('skill-schedule.plan-receiptDocs.c155', { p0: String(String(day.length + 1)) }), after: m('skill-schedule.plan-receiptDocs.c156', { p0: String(String(day.length)) }) },
+      { label: m('skill-schedule.plan-receiptDocs.c157'), before: before.feishu_event_id === null ? m('skill-schedule.plan-receiptDocs.c158') : m('skill-schedule.plan-receiptDocs.c159'), after: before.feishu_event_id === null ? m('skill-schedule.plan-receiptDocs.c160') : m('skill-schedule.plan-receiptDocs.c161') },
     ] }) },
-    { navText: '这是软删，不是抹掉', html: renderFeedbackBlock({
-      title: '这是软删，不是抹掉',
+    { navText: m('skill-schedule.plan-receiptDocs.c162'), html: renderFeedbackBlock({
+      title: m('skill-schedule.plan-receiptDocs.c163'),
       toast: {
         icon: 'info',
-        msg: '库里那一条还在，只是不再算进这一天的排布。同槽位上属于本技能的远端对象一并清掉，别的对象不动。',
+        msg: m('skill-schedule.plan-receiptDocs.c164'),
       },
       staticNotice: true,
     }) },
     { html: renderFactStrip({
       items: [
-        { label: '远端侧', value: REMOTE_LABEL[remote] },
-        { label: '原来的标题', value: before.title },
-        { label: '原来的分类', value: categoryOf(before) },
-        { label: '完成状态', value: completionText(before.completion) },
+        { label: m('skill-schedule.plan-receiptDocs.c165'), value: remoteLabelOf(remote) },
+        { label: m('skill-schedule.plan-receiptDocs.c166'), value: before.title },
+        { label: m('skill-schedule.plan-receiptDocs.c167'), value: categoryOf(before) },
+        { label: m('skill-schedule.plan-receiptDocs.c168'), value: completionText(before.completion) },
       ],
     }) },
-    { html: renderCaliberLine('删计划只动这一条 ｜ 别的事件与别的日期一件不动') },
-    { navText: '复制与留档', html: scheduleCopyArea({
-      title: '复制与留档',
+    { html: renderCaliberLine(m('skill-schedule.plan-receiptDocs.c169')) },
+    { navText: m('skill-schedule.plan-receiptDocs.c170'), html: scheduleCopyArea({
+      title: m('skill-schedule.plan-receiptDocs.c171'),
       dataActionId: 'ilife-sch-plan-copy-data',
       logActionId: 'ilife-sch-plan-copy-log',
       ...planCopyArea({
-        message: '删计划回执：日期 ' + before.date + '，事件编号 ' + String(before.id) + '，删掉的时段 '
-          + span(before.time_start, before.time_end) + '，这一天现在 ' + String(day.length) + ' 件，远端侧 '
-          + REMOTE_LABEL[remote],
+        message: m('skill-schedule.plan-receiptDocs.c172', {
+          p0: String(before.date),
+          p1: String(String(before.id)),
+          p2: String(span(before.time_start, before.time_end)),
+          p3: String(String(day.length)),
+          p4: String(remoteLabelOf(remote)),
+        }),
         command: 'schedule-cmd-read schedule.plan.write --params {"op":"deactivate","id":' + String(before.id) + '}',
-        source: '日程计划表（' + before.date + ' 现有 ' + String(day.length) + ' 件）',
+        source: m('skill-schedule.plan-receiptDocs.c173', { p0: String(before.date), p1: String(String(day.length)) }),
       }),
     }) },
     // 段名是「<日期> 这一天现在的排布」；目录项与它逐字同源。
-    { navText: before.date + ' 这一天现在的排布', html: renderHourBand(cellsOf(day), { order: L1_ORDER, title: before.date + ' 这一天现在的排布', height: 120 }) },
+    { navText: m('skill-schedule.plan-receiptDocs.c174', { p0: String(before.date) }), html: renderHourBand(cellsOf(day), { order: L1_ORDER, title: m('skill-schedule.plan-receiptDocs.c175', { p0: String(before.date) }), height: 120 }) },
   ]);
   return assembleDocPage({ head, content: toc + body, extraCss: planPartsCss() });
 }

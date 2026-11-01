@@ -12,6 +12,7 @@ import { larkCreateEvent, larkDeleteEvent, composeFeishuDescription } from '../f
 import { pullFeishuDate, type RemoteEvent } from './pull.js';
 import { toFeishuISO } from './iso.js';
 import type { RemoteState } from './receipt.js';
+import { m } from '../entries/index.js';
 
 export interface RemoteSnapshot {
   cli: string;
@@ -71,7 +72,7 @@ export function alignOne(snap: RemoteSnapshot, spec: AlignSpec): AlignOutcome {
   if (hit) {
     snap.claimed.add(hit.eventId);
     if (spec.remoteId && spec.remoteId !== hit.eventId) {
-      notes.push('本地存的远端标识与远端实际不符，已按四元组改认：' + spec.remoteId + ' → ' + hit.eventId);
+      notes.push(m('skill-schedule.plan-remoteDay.c001', { p0: String(spec.remoteId), p1: String(hit.eventId) }));
     }
     return { remote: 'found_feishu', remoteId: hit.eventId, errors, notes };
   }
@@ -79,7 +80,7 @@ export function alignOne(snap: RemoteSnapshot, spec: AlignSpec): AlignOutcome {
   const foreign = snap.events.find(
     (e) => !e.owned && e.summary === spec.title && e.slotStart === spec.timeStart && e.slotEnd === spec.timeEnd,
   );
-  if (foreign) notes.push('远端同槽位存在不带归属标记的事件（不是本技能管的，不动它）：' + foreign.eventId);
+  if (foreign) notes.push(m('skill-schedule.plan-remoteDay.c002', { p0: String(foreign.eventId) }));
   try {
     const created = larkCreateEvent(
       snap.cli,
@@ -92,8 +93,8 @@ export function alignOne(snap: RemoteSnapshot, spec: AlignSpec): AlignOutcome {
     snap.claimed.add(created.eventId);
     return { remote: 'created_feishu', remoteId: created.eventId, errors, notes };
   } catch (e) {
-    const m = e instanceof Error ? e.message : String(e);
-    return { remote: 'unavailable', remoteId: null, errors: [...errors, m], notes };
+    const errMessage = e instanceof Error ? e.message : String(e);
+    return { remote: 'unavailable', remoteId: null, errors: [...errors, errMessage], notes };
   }
 }
 
@@ -115,7 +116,10 @@ export function cleanSlot(snap: RemoteSnapshot, spec: AlignSpec & { keepId: stri
       snap.claimed.delete(e.eventId);
       snap.events = snap.events.filter((x) => x.eventId !== e.eventId);
     } catch (err) {
-      errors.push('同槽清理失败：' + e.eventId + '（' + (err instanceof Error ? err.message : String(err)) + '）');
+      errors.push(m('skill-schedule.plan-remoteDay.c003', {
+        p0: String(e.eventId),
+        p1: String(err instanceof Error ? err.message : String(err)),
+      }));
     }
   }
   return { deleted, errors };
@@ -134,8 +138,8 @@ export function removeRemote(snap: RemoteSnapshot, eventId: string): { ok: boole
     snap.events = snap.events.filter((e) => e.eventId !== eventId);
     return { ok: true };
   } catch (e) {
-    const m = e instanceof Error ? e.message : String(e);
-    return { ok: false, error: m };
+    const errMessage = e instanceof Error ? e.message : String(e);
+    return { ok: false, error: errMessage };
   }
 }
 

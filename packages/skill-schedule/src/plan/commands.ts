@@ -5,7 +5,16 @@
  */
 import type { CommandSpec } from '../shared/commandSpec.js';
 import { writePlan } from './handlers.js';
+import { m } from '../entries/index.js';
 
-export const PLAN_COMMANDS = [
-  { kind: 'write', key: 'schedule.plan.write', title: '写计划', wakeWord: '补计划', run: writePlan, example: 'schedule-cmd-read schedule.plan.write --params \'{"op":"ensure","date":"2026-09-01","time_start":"09:00","time_end":"10:00","title":"晨会"}\'' },
-] satisfies readonly CommandSpec[];
+/** 一条写计划命令的声明（按调用重建）。#1197：标题随语言取值，故整张表搬进函数体；
+ *  `PLAN_COMMANDS` 仍是模块加载期那一份 zh 快照（生成的 `cli/registry.ts` 只拿它做分派索引，
+ *  与 skill-bill 的 `RECORD_COMMANDS` 同型）。唤醒词与可执行示例是数据位（§4.9）：
+ *  示例含可运行的中文样例数据，译了就跑不通。 */
+function planCommands(): readonly CommandSpec[] {
+  return [
+    { kind: 'write', key: 'schedule.plan.write', title: m('skill-schedule.plan-commands.c001'), wakeWord: m('skill-schedule.plan-commands.c002'), run: writePlan, example: m('skill-schedule.plan-commands.c003') },
+  ];
+}
+
+export const PLAN_COMMANDS = planCommands();

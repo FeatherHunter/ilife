@@ -25,6 +25,7 @@ import type { HelpShellData } from 'base-paint/help-shell';
 import { HELP_ASSETS, HELP_GROUPS } from './scenes/help-assets.js';
 import type { HelpGroupAsset } from './scenes/help-assets.js';
 import { ScheduleRenderError } from '../render/errors.js';
+import { m } from '../entries/index.js';
 
 /** 「作息管家help」交付文件的**文件名主体**（代码常量，不进配置文件）。
  *  #764 起配置项 `files.help` 已删（定稿 #761：文件名回代码常量，产物名逐字不变，照 #749 样板），
@@ -36,9 +37,14 @@ export function helpFileStem(): string {
   return HELP_FILE_STEM;
 }
 
-/** 5 键头（旧实物口径的逐字取值）。 */
-export const HELP_FILE_SKILL_NAME = '作息管家' as const;
-export const HELP_FILE_TITLE = '作息管家 · 使用手册(HELP)' as const;
+/** 5 键头：文案走词条表，**运行期取词**（模块加载时固化语言会锁死在一种语言上）。 */
+export function helpFileSkillName(): string {
+  return m('skill-schedule.help-helpFile.c005');
+}
+
+export function helpFileTitle(): string {
+  return m('skill-schedule.help-helpFile.c006');
+}
 /** 技能数据世代版本（照 bill 口径：**不是** npm 包 `skill-schedule@0.1.0`）。 */
 export const HELP_FILE_VERSION = '2.0' as const;
 /** 首次使用横幅的 prompt 取自该场景（单源；键＝内容资产里的场景 id）。 */
@@ -57,14 +63,16 @@ export interface HelpContact {
   readonly copy_all: true;
 }
 
-export const HELP_CONTACT: HelpContact = Object.freeze({
-  items: Object.freeze([
-    Object.freeze({ label: '邮箱', value: '975559549@qq.com' }),
-    Object.freeze({ label: 'GitHub', value: 'https://github.com/FeatherHunter/ilife', url: true as const }),
-    Object.freeze({ label: 'Issues', value: 'https://github.com/FeatherHunter/ilife/issues', url: true as const }),
-  ]),
-  copy_all: true as const,
-});
+export function helpContact(): HelpContact {
+  return Object.freeze({
+    items: Object.freeze([
+      Object.freeze({ label: m('skill-schedule.help-helpFile.c007'), value: '975559549@qq.com' }),
+      Object.freeze({ label: 'GitHub', value: 'https://github.com/FeatherHunter/ilife', url: true as const }),
+      Object.freeze({ label: 'Issues', value: 'https://github.com/FeatherHunter/ilife/issues', url: true as const }),
+    ]),
+    copy_all: true as const,
+  });
+}
 
 /** 首次使用横幅（照 bill 五键 ＋ 显隐开关 `hidden`）。 */
 export interface HelpInitBanner {
@@ -78,8 +86,8 @@ export interface HelpInitBanner {
 
 /** 全量 HELP JSON（5 必需键 ＋ 两块可选键；共享 help 模板运行时契约的超集）。 */
 export interface HelpFileData {
-  readonly skill_name: typeof HELP_FILE_SKILL_NAME;
-  readonly title: typeof HELP_FILE_TITLE;
+  readonly skill_name: string;
+  readonly title: string;
   readonly subtitle: string;
   readonly contact: HelpContact;
   readonly groups: typeof HELP_GROUPS;
@@ -112,8 +120,13 @@ function assetCounts(): { groups: number; wakeWords: number; scenes: number } {
 /** 页头摘要行（旧口径）：计数与版本派生。只进载荷 `subtitle`——A 路模板读了该键后全文零引用（无渲染落点）。 */
 export function deriveSummaryLine(now: Date): string {
   const n = assetCounts();
-  return String(n.groups) + ' 类别 · ' + String(n.wakeWords) + ' 唤醒词 · ' + String(n.scenes)
-    + ' 场景 · 版本 ' + HELP_FILE_VERSION + ' · 更新于 ' + formatHelpMinute(now);
+  return m('skill-schedule.help-helpFile.c001', {
+    p0: String(String(n.groups)),
+    p1: String(String(n.wakeWords)),
+    p2: String(String(n.scenes)),
+    p3: String(HELP_FILE_VERSION),
+    p4: String(formatHelpMinute(now)),
+  });
 }
 
 /** 坏分组即抛（不静默降级）：校验内容资产的**三层形状**与场景必填字段，首个命中即抛。
@@ -156,9 +169,9 @@ export function buildInitBanner(initialized: boolean): HelpInitBanner {
       'HELP 首次使用横幅缺 prompt：内容资产无场景 ' + HELP_INIT_SCENE_ID);
   }
   return {
-    title: '🚀 第一次用作息管家?',
-    subtitle: '从「首次使用」开始 — 建库、确认数据目录、验证读写，全程零决策。完成初始化后,本区域将不再出现。',
-    button_text: '📋 复制初始化 prompt',
+    title: m('skill-schedule.help-helpFile.c002'),
+    subtitle: m('skill-schedule.help-helpFile.c003'),
+    button_text: m('skill-schedule.help-helpFile.c004'),
     prompt,
     closable: true,
     hidden: initialized === true,
@@ -170,10 +183,10 @@ export function buildHelpFileData(now: Date = new Date(), opts: HelpFileOptions 
   assertGroupsUsable();
   const summaryLine = deriveSummaryLine(now);
   return {
-    skill_name: HELP_FILE_SKILL_NAME,
-    title: HELP_FILE_TITLE,
+    skill_name: helpFileSkillName(),
+    title: helpFileTitle(),
     subtitle: summaryLine,
-    contact: HELP_CONTACT,
+    contact: helpContact(),
     groups: HELP_GROUPS,
     version: HELP_FILE_VERSION,
     init_banner: buildInitBanner(opts.initialized === true),

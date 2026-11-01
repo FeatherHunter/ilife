@@ -8,15 +8,16 @@
 import { upsertPlanEvents, setFeishuEventId } from '../fetch/index.js';
 import { validateUpsertInput } from '../policy/index.js';
 import { receiptResult, type PlanOpCtx, type PlanOpResult } from './context.js';
-import { buildReceipt, REMOTE_LABEL, type RemoteState } from './receipt.js';
+import { buildReceipt, remoteLabelOf, type RemoteState } from './receipt.js';
 import { takeSnapshot, alignOne, orphansOf, removeRemote } from './remoteDay.js';
+import { m } from '../entries/index.js';
 
 /** `op=preview`：只校验不落盘（24h 覆盖 ＋ 字段合法），不碰远端。 */
 export function runPreview(ctx: PlanOpCtx): PlanOpResult {
   const { date, events } = validateUpsertInput(ctx.params);
   return receiptResult(buildReceipt({
     op: 'preview',
-    message: '预览通过：' + date + ' ' + events.length + ' 个事件 00:00~24:00 连续（确认后 op=upsert 落盘）',
+    message: m('skill-schedule.plan-upsert.c001', { p0: String(date), p1: String(events.length) }),
     local: 'preview',
     remote: 'none',
     remoteId: null,
@@ -72,7 +73,7 @@ export function runUpsert(ctx: PlanOpCtx): PlanOpResult {
       for (const orphan of orphansOf(snap)) {
         const r = removeRemote(snap, orphan.eventId);
         if (r.ok) counts.deleted++;
-        else { counts.failed++; errors.push('孤儿清理失败：' + orphan.eventId + '（' + r.error + '）'); }
+        else { counts.failed++; errors.push(m('skill-schedule.plan-upsert.c002', { p0: String(orphan.eventId), p1: String(r.error) })); }
       }
       remote = dominantRemote(counts);
     } else {
@@ -85,8 +86,14 @@ export function runUpsert(ctx: PlanOpCtx): PlanOpResult {
     remote = 'skipped';
   }
 
-  const message = '已落盘（覆盖）：' + date + ' ' + rows.length + ' 个事件；远端新增 ' + counts.created
-    + '／认出 ' + counts.found + '／清理 ' + counts.deleted + '（' + REMOTE_LABEL[remote] + '）';
+  const message = m('skill-schedule.plan-upsert.c003', {
+    p0: String(date),
+    p1: String(rows.length),
+    p2: String(counts.created),
+    p3: String(counts.found),
+    p4: String(counts.deleted),
+    p5: String(remoteLabelOf(remote)),
+  });
   return receiptResult(buildReceipt({
     op: 'upsert', message, local: 'upserted', remote,
     remoteId: null, errors, notes, date, counts: { ...counts, events: rows.length },

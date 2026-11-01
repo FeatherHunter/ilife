@@ -37,6 +37,7 @@ import {
 import { buildRecordRange, buildRecordToday } from '../render/views.js';
 import { minutesOfDayEnd } from './planDocs.js';
 import { shiftDay } from './iso.js';
+import { m } from '../entries/index.js';
 
 /** 四档（老侧 `render_replay` 的 `granularity`）＋ 本件按跨度判出来的那一档。 */
 export type ReplayGranularity = 'day' | 'week' | 'month' | 'range';
@@ -90,8 +91,8 @@ export function replayWindowOf(granularity: unknown, params: Record<string, unkn
   const anchor = resolveDateParam(params);
   let start = anchor;
   let end = anchor;
-  if (requested === 'week') { const w = relativeToRange('本周', dateOf(anchor)); start = w.start; end = w.end; }
-  else if (requested === 'month') { const w = relativeToRange('本月', dateOf(anchor)); start = w.start; end = w.end; }
+  if (requested === 'week') { const w = relativeToRange(m('skill-schedule.plan-replayDocs.c001'), dateOf(anchor)); start = w.start; end = w.end; }
+  else if (requested === 'month') { const w = relativeToRange(m('skill-schedule.plan-replayDocs.c002'), dateOf(anchor)); start = w.start; end = w.end; }
   else if (requested === 'range') { const w = resolveRangeParam(params); start = w.start; end = w.end; }
   const days = eachDay(start, end).length;
   const effective = requested === 'range' ? routeBySpan(days) : requested;
@@ -186,9 +187,9 @@ export function crossDomainOf(plans: readonly PlanEvent[], records: readonly Sch
     }
     if (actual > 0) {
       pairs.push({
-        id: p.id, date: p.date, time: p.time_start + ' 至 ' + p.time_end, title: p.title,
+        id: p.id, date: p.date, time: m('skill-schedule.plan-replayDocs.c003', { p0: String(p.time_start), p1: String(p.time_end) }), title: p.title,
         planMinutes, actualMinutes: actual, deltaMinutes: actual - planMinutes,
-        completion: p.completion === null || p.completion === '' ? '未复盘' : p.completion,
+        completion: p.completion === null || p.completion === '' ? m('skill-schedule.plan-replayDocs.c004') : p.completion,
       });
     }
     if (UNEXECUTED.includes(p.completion ?? '')) unexecuted.push(p);
@@ -283,8 +284,8 @@ export function replayData(handle: ScheduleDb, win: ReplayWindow): ReplayData {
   const completionByL1 = names.map((name) => {
     const mine = plans.filter((p) => l1Of(p.category ?? '') === name);
     const d = mine.filter((p) => p.completion === '已完成').length;
-    const m = mine.filter((p) => p.completion !== null && p.completion !== '' && p.completion !== '未复盘').length;
-    return { name, total: mine.length, done: d, marked: m, rate: m === 0 ? null : Math.round((d / m) * 1000) / 10 };
+    const markedCount = mine.filter((p) => p.completion !== null && p.completion !== '' && p.completion !== '未复盘').length;
+    return { name, total: mine.length, done: d, marked: markedCount, rate: markedCount === 0 ? null : Math.round((d / markedCount) * 1000) / 10 };
   }).sort((a, b) => b.total - a.total);
   const monthly = win.effective === 'month';
   const prevSpan = previousWindow(win.start, win.end, win.days, monthly);

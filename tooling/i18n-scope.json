@@ -86,7 +86,14 @@
     "SELECT r.name AS name FROM recipes r LEFT JOIN cooking_steps s ON s.recipe_id = r.id WHERE s.id IS NULL AND r.status != '已废弃'",
     "SELECT r.name AS name, s.sequence AS seq FROM cooking_steps s JOIN recipes r ON r.id = s.recipe_id WHERE (s.heat_level IS NULL OR s.heat_level = '') AND r.status != '已废弃'",
     "SELECT r.name AS name FROM recipes r LEFT JOIN recipe_history hh ON hh.recipe_id = r.id WHERE hh.id IS NULL AND r.status != '已废弃'",
-    "SELECT DISTINCT r.* FROM recipes r LEFT JOIN ingredients i ON i.recipe_id = r.id WHERE (r.name LIKE ? OR r.description LIKE ? OR i.name LIKE ?) AND r.status != '已废弃' ORDER BY r.name ASC"
+    "SELECT DISTINCT r.* FROM recipes r LEFT JOIN ingredients i ON i.recipe_id = r.id WHERE (r.name LIKE ? OR r.description LIKE ? OR i.name LIKE ?) AND r.status != '已废弃' ORDER BY r.name ASC",
+    "已完成",
+    "部分完成",
+    "未完成",
+    "未完成(不可抗力)",
+    "未复盘",
+    "维持",
+    "作息管家_HELP"
   ],
   "files": [
     "packages/base-render/src/components/progress-list/model.ts",
@@ -169,6 +176,28 @@
     "packages/skill-chef/src/update/run-write.ts",
     "packages/skill-chef/src/view/page.ts",
     "packages/skill-chef/src/view/pageCss.ts",
-    "packages/skill-chef/src/view/run.ts"
+    "packages/skill-chef/src/view/run.ts",
+    "packages/skill-schedule/src/help/helpFile.ts",
+    "packages/skill-schedule/src/help/lookup.ts",
+    "packages/skill-schedule/src/plan/check.ts",
+    "packages/skill-schedule/src/plan/commands.ts",
+    "packages/skill-schedule/src/plan/discussDocs.ts",
+    "packages/skill-schedule/src/plan/ensure.ts",
+    "packages/skill-schedule/src/plan/feishuDocs.ts",
+    "packages/skill-schedule/src/plan/index.ts",
+    "packages/skill-schedule/src/plan/overview.ts",
+    "packages/skill-schedule/src/plan/planDocs.ts",
+    "packages/skill-schedule/src/plan/planParts.ts",
+    "packages/skill-schedule/src/plan/probe.ts",
+    "packages/skill-schedule/src/plan/pull.ts",
+    "packages/skill-schedule/src/plan/receipt.ts",
+    "packages/skill-schedule/src/plan/receiptDocs.ts",
+    "packages/skill-schedule/src/plan/remoteDay.ts",
+    "packages/skill-schedule/src/plan/replayDocs.ts",
+    "packages/skill-schedule/src/plan/replaySections.ts",
+    "packages/skill-schedule/src/plan/reviewDocs.ts",
+    "packages/skill-schedule/src/plan/single.ts",
+    "packages/skill-schedule/src/plan/sync.ts",
+    "packages/skill-schedule/src/plan/upsert.ts"
   ]
 }
