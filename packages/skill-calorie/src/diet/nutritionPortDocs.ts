@@ -240,9 +240,9 @@ const BALANCE = (): Record<string, { text: string; badge: string; status: 'ok' |
  *  `perG` 是老实物 `render_nutrition_ratio.py` 与 `#317` 环图共用的换算系数（蛋白／碳水 4、
  *  脂肪 9 千卡每克）；热量来源占比与推荐范围换算都以它为准。 */
 const MACROS = [
-  { key: 'protein', name: '蛋白', color: '#5856d6', perG: 4 },
-  { key: 'carb', name: '碳水', color: '#34c759', perG: 4 },
-  { key: 'fat', name: '脂肪', color: '#ff9500', perG: 9 },
+  { key: 'protein', name: m('skill-calorie.diet-nutritionPortDocs.c146'), color: '#5856d6', perG: 4 },
+  { key: 'carb', name: m('skill-calorie.diet-nutritionPortDocs.c147'), color: '#34c759', perG: 4 },
+  { key: 'fat', name: m('skill-calorie.diet-nutritionPortDocs.c148'), color: '#ff9500', perG: 9 },
 ] as const;
 
 /** 一个营养素在本窗的四个读数（**一处取值**：上面那份口径 × 视图）。
@@ -343,7 +343,7 @@ export function buildNutritionRatioBlock(v: NutritionRatioView, opts?: Nutrition
        推荐范围对比表统一；说明行早已是「每天目标 N 克」（#496 的 `goalDetail`）。 */
     anchored('sec-kpi', renderKpiGrid([
       ...macros.map((macro, i) => ({
-        label: macro.name, value: String(macro.g), unit: '克', detail: goalDetail(macro.pct, targets[i] as number | null),
+        label: macro.name, value: String(macro.g), unit: m('skill-calorie.diet-nutritionPortDocs.c149'), detail: goalDetail(macro.pct, targets[i] as number | null),
       })),
       {
         label: m('skill-calorie.diet-nutritionPortDocs.c007'), value: String(v.totalCalorie), unit: m('skill-calorie.diet-nutritionPortDocs.c008'),
@@ -405,7 +405,7 @@ export function buildNutritionRatioBlock(v: NutritionRatioView, opts?: Nutrition
     const below = macro.pct < macro.range.min;
     const above = macro.pct > macro.range.max;
     const inRange = !below && !above;
-    const gap = above ? '↑ ' + (macro.g - maxG) + ' 克' : (below ? '↓ ' + (minG - macro.g) + ' 克' : '✓');
+    const gap = above ? m('skill-calorie.diet-nutritionPortDocs.c150', { p0: String(macro.g - maxG) }) : (below ? m('skill-calorie.diet-nutritionPortDocs.c151', { p0: String(minG - macro.g) }) : '✓');
     /* #511 · 下限／上限两列原写 `10%（48g）`——`g` 是英文缩写，且括号里的克数是**整窗合计**、
        读者会当成一天的量（审查件第 78 条）。单位改「克」，并把「这一列是几天合计」写进格子；
        表题再补一句同口径，免得逐格都读一遍才知道分母。 */
@@ -781,7 +781,7 @@ function overviewPeriodBlock(id: string, name: string, p: DietOverviewPeriod): s
   const cards = renderKpiGrid([
     { label: m('skill-calorie.diet-nutritionPortDocs.c116'), value: String(p.totalCalorie), unit: m('skill-calorie.diet-nutritionPortDocs.c117'), detail: m('skill-calorie.diet-nutritionPortDocs.c118', { p0: String(p.start), p1: String(p.end) }) },
     { label: m('skill-calorie.diet-nutritionPortDocs.c119'), value: String(p.avgCalorie), unit: m('skill-calorie.diet-nutritionPortDocs.c120'), detail: m('skill-calorie.diet-nutritionPortDocs.c121', { p0: String(p.days) }) },
-    { label: m('skill-calorie.diet-nutritionPortDocs.c122'), value: String(p.totalProtein), unit: '克' },
+    { label: m('skill-calorie.diet-nutritionPortDocs.c122'), value: String(p.totalProtein), unit: m('skill-calorie.diet-nutritionPortDocs.c149') },
     { label: m('skill-calorie.diet-nutritionPortDocs.c123'), value: String(p.loggedDays), unit: m('skill-calorie.diet-nutritionPortDocs.c124'), detail: m('skill-calorie.diet-nutritionPortDocs.c125', { p0: String(p.days) }) },
   ]);
   const chart = p.daily.some((d) => d.calorie > 0)

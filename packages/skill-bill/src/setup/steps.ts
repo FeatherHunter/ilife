@@ -26,7 +26,7 @@ export interface WizardStep {
 /** 状态 → 徽章文本（**唯一定义地**：页面与测试都读它）。
  *  `#1214`：改成**函数**按语言取词——模块级常量表会在模块加载期取词，语言一旦出口即被固化成 zh。 */
 export function stepStateText(state: WizardStep['state']): string {
-  if (state === 'done') return '已完成';
+  if (state === 'done') return m('skill-bill.setup-steps.c042');
   if (state === 'current') return m('skill-bill.setup-steps.c001');
   if (state === 'todo') return m('skill-bill.setup-steps.c002');
   return m('skill-bill.setup-steps.c003');

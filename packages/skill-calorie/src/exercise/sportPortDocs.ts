@@ -104,7 +104,7 @@ function shell(card: Card): string {
 
 /** 窗口卡：这一页看的是哪一段（开始／结束两个真日期）。 */
 function windowCard(start: string, end: string, description: string): Card {
-  return { id: 'sec-window', label: '窗口', html: windowForm(start, end, description) };
+  return { id: 'sec-window', label: m('skill-calorie.exercise-sportPortDocs.c223'), html: windowForm(start, end, description) };
 }
 
 /** 数值格的人话写法：缺值一律「—」（不空着、也不编 0）；`unit` 空串即不带单位。
@@ -294,7 +294,7 @@ function footFacts(source: string, start: string, end: string, count: number): C
     label: m('skill-calorie.exercise-sportPortDocs.c004'),
     html: factStrip([
       { k: m('skill-calorie.exercise-sportPortDocs.c005'), v: source },
-      { k: '窗口', v: start + ' → ' + end },
+      { k: m('skill-calorie.exercise-sportPortDocs.c223'), v: start + ' → ' + end },
       { k: m('skill-calorie.exercise-sportPortDocs.c006'), v: m('skill-calorie.exercise-sportPortDocs.c007', { p0: String(fmtNum(count, 0)) }) },
     ]),
   };
@@ -410,7 +410,7 @@ export function buildStrengthDoc(v: StrengthView): string {
       label: m('skill-calorie.exercise-sportPortDocs.c029'),
       html: renderDataTable({
         columns: [
-          { key: 'date', label: '日期' },
+          { key: 'date', label: m('skill-calorie.exercise-sportPortDocs.c224') },
           { key: 'type', label: m('skill-calorie.exercise-sportPortDocs.c030') },
           { key: 'load', label: m('skill-calorie.exercise-sportPortDocs.c031') },
           { key: 'note', label: m('skill-calorie.exercise-sportPortDocs.c032') },
@@ -520,7 +520,7 @@ export function buildCardioDoc(v: CardioView): string {
       label: m('skill-calorie.exercise-sportPortDocs.c062'),
       html: renderDataTable({
         columns: [
-          { key: 'date', label: '日期' },
+          { key: 'date', label: m('skill-calorie.exercise-sportPortDocs.c224') },
           { key: 'type', label: m('skill-calorie.exercise-sportPortDocs.c063') },
           { key: 'minutes', label: m('skill-calorie.exercise-sportPortDocs.c064') },
           { key: 'km', label: m('skill-calorie.exercise-sportPortDocs.c065') },
@@ -936,7 +936,7 @@ export function buildTrendDoc(v: TrendView): string {
       label: m('skill-calorie.exercise-sportPortDocs.c180'),
       html: renderDataTable({
         columns: [
-          { key: 'date', label: '日期' },
+          { key: 'date', label: m('skill-calorie.exercise-sportPortDocs.c224') },
           { key: 'sessions', label: m('skill-calorie.exercise-sportPortDocs.c181'), align: 'right' },
           { key: 'minutes', label: m('skill-calorie.exercise-sportPortDocs.c182'), align: 'right' },
           { key: 'burned', label: m('skill-calorie.exercise-sportPortDocs.c183'), align: 'right' },

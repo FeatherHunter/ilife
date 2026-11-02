@@ -123,9 +123,9 @@ function str(v: unknown): string {
 // 范围词中文化（all→全屋，location→按位置；机审英文裸词行零容忍，原文只进数据原文）。
 function parseRound(message: string): { id: string; scope: string; total: string } {
   const hit = message.match(/盘点：#(\d+)\s*(\S+)?\s*共\s*(\d+)\s*条/);
-  if (!hit) return { id: '—', scope: '全屋', total: '—' };
+  if (!hit) return { id: '—', scope: m('skill-home.items-pages-inventory-round.c031'), total: '—' };
   const raw = hit[2] ?? '';
-  const scope = raw === '' || raw === 'all' ? '全屋' : raw === 'location' ? '按位置' : raw;
+  const scope = raw === '' || raw === 'all' ? m('skill-home.items-pages-inventory-round.c031') : raw === 'location' ? m('skill-home.items-pages-inventory-round.c032') : raw;
   return { id: hit[1], scope, total: hit[3] };
 }
 

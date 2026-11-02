@@ -107,7 +107,7 @@ function asMissing(env: Envelope): { items: MissingItem[]; scope: string } {
       category_name: String(o.category_name ?? ''),
     };
   }).filter((x) => x.name);
-  return { items, scope: String((d.scope as string | undefined) ?? '全屋') };
+  return { items, scope: String((d.scope as string | undefined) ?? m('skill-home.express-pages-missing.c030')) };
 }
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。

@@ -150,7 +150,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + row(isUpdate ? m('skill-home.items-pages-add-form.c008') : m('skill-home.items-pages-add-form.c009'), '—')
     + row(m('skill-home.items-pages-add-form.c010'), isUpdate ? '—' : escapeHtml(count))
     + row(m('skill-home.items-pages-add-form.c011'), '—')
-    + row(m('skill-home.items-pages-add-form.c012'), isUpdate ? '—' : '在家')
+    + row(m('skill-home.items-pages-add-form.c012'), isUpdate ? '—' : m('skill-home.items-pages-add-form.c034'))
     + row(m('skill-home.items-pages-add-form.c013'), '—')
     + row(m('skill-home.items-pages-add-form.c014'), '—')
     + row(m('skill-home.items-pages-add-form.c015'), '—')

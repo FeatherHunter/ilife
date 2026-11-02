@@ -45,7 +45,7 @@ function fieldsLine(pairs: readonly (readonly [string, unknown])[]): string {
 function compositionFields(snap: Record<string, unknown>): string {
   const src = String(snap['source'] ?? '');
   return fieldsLine([
-    ['日期', snap['date']],
+    [m('skill-calorie.body-remove.c016'), snap['date']],
     [m('skill-calorie.body-remove.c001'), SOURCE_LABELS[src as SourceChoice] ?? src],
     [m('skill-calorie.body-remove.c002'), snap['body_fat_pct']],
     ...CALIPER_FIELDS.map((f, i): [string, unknown] => [CALIPER_SITE_LABELS[i] ?? f, snap[f]]),
@@ -56,7 +56,7 @@ function compositionFields(snap: Record<string, unknown>): string {
 /** 围度快照：逐字段（日期／13 部位／备注），中文名取 `MEASUREMENT_ZH`（唯一来源）。 */
 function measureFields(snap: Record<string, unknown>): string {
   return fieldsLine([
-    ['日期', snap['date']],
+    [m('skill-calorie.body-remove.c016'), snap['date']],
     ...MEASUREMENT_FIELDS.map((f): [string, unknown] => [MEASUREMENT_ZH[f], snap[f]]),
     [m('skill-calorie.body-remove.c004'), snap['note']],
   ]);

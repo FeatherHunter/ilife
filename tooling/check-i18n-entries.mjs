@@ -18,8 +18,9 @@
  *   ⑤ key 抽取不到就报「抽不出 key」而不是绿（正则失配＝门失明，照 check-data-absence 的「缺标记即红」口径）；
  *   ⑥ 词条值是空串／纯空白：直接判红（#1306）——空串不是「显式空白」，是待译漏记；缺英文不许留空串顶替。
  *      与 packages/base-entries/src/resolve.ts 同口径：空白值视同未录，回退链取下一站；门禁则两头都不放行。
- *   ⑦ 范围清单 allowlist 里的串**不进「该进词条」的判据**（#1205）：豁免只给「语义上本就不该进词条的位」——
- *      命令关键字冻结、协议字段值、派生件。按串全等屏蔽，抽取阶段就剔除，不是判红后再放过。
+ *   ⑦ 范围清单 allowlist 里的「文件＋串」对**不进「该进词条」的判据**（#1205／#1320）：豁免只给「语义上本就不该
+ *      进词条的位」——命令关键字冻结、协议字段值、派生件。豁免按「这件文件里的这个字面量」生效，抽取阶段就剔除，
+ *      不是判红后再放过；同一串在没登记的文件里照旧判缺词条（见 tooling/i18n-allowlist.mjs）。
  *   ⑧ **按包判归属**（#1199 S10）：key 在「本包表 ∪ 这件文件显式 import 的别包 catalog」里有没有，
  *      不是全仓并集有没有。命名空间＝包名（ADR-0004 §3）：跨包同名 key 不是同一条词条，拿别包的表判
  *      「本包有没有」会把缺失藏掉。
@@ -44,6 +45,7 @@ import { fileURLToPath } from 'node:url';
 
 import { LANGUAGES, DEFAULT_LANGUAGE, EMPTY_SCOPE_VERDICT } from './i18n-langs.mjs';
 import { entryTableFiles, loadEntryTable, loadTablesByPackage } from './i18n-tables.mjs';
+import { allowlistPathProblems, compileAllowlist, parseAllowlist } from './i18n-allowlist.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..');
@@ -217,7 +219,7 @@ export { entryTableFiles as entryTableCandidates, loadEntryTable };
 
 /** 主判据：返回 {files, keys, missing:[{file,key,lang}], blind:[{file,why}], stray, tableErrors, blanks, tableSizes, emptyTables}。 */
 export function audit(scope, root = ROOT_DIR, langs = LANGUAGES) {
-  const allow = new Set(scope.allowlist || []);
+  const allow = compileAllowlist(parseAllowlist(scope.allowlist || [], '范围清单的 allowlist'));
   const files = [];
   const missing = [];
   const blind = [];
@@ -263,8 +265,9 @@ export function audit(scope, root = ROOT_DIR, langs = LANGUAGES) {
     if (!importsEntries(src)) { blind.push({ file: rel, why: '没 import 词条层（没迁完就挂号）' }); continue; }
     const extracted = extractKeys(src);
     if (extracted.length === 0) { blind.push({ file: rel, why: '抽不出任何 key（正则失配＝门失明，不许当绿）' }); continue; }
-    // 冻结位／协议字段值（allowlist）不是「该进词条」的串：抽取阶段剔除，不拿它判缺词条（#1205）。
-    const ks = extracted.filter((k) => !allow.has(k));
+    // 冻结位／协议字段值（allowlist）不是「该进词条」的串：按「这件文件＋这个串」在抽取阶段剔除（#1205／#1320）。
+    const allowed = allow.textsFor(rel);
+    const ks = extracted.filter((k) => !allowed.has(k));
     files.push({ file: rel, keys: ks });
     for (const k of ks) keys.add(k);
     const cat = catalogsOfSource(rel, src, root);
@@ -311,14 +314,25 @@ export function audit(scope, root = ROOT_DIR, langs = LANGUAGES) {
 function main() {
   let scope;
   try { scope = loadScope(); } catch (e) { console.error('FAIL: ' + e.message); process.exit(2); }
+  let allow;
+  try {
+    allow = compileAllowlist(parseAllowlist(scope.allowlist || [], SCOPE_PATH + ' 的 allowlist'));
+  } catch (e) { console.error('FAIL: ' + e.message); process.exit(2); }
 
   if (SELFTEST) return selftest(scope);
 
   const r = audit(scope);
   const empty = scope.files.length === 0;
   console.log('# #1199 缺词条门（语言列：' + LANGUAGES.join('／') + '；基准语言 ' + DEFAULT_LANGUAGE + '）');
-  console.log('SCOPE: ' + SCOPE_PATH + ' files=' + scope.files.length + ' allowlist=' + (scope.allowlist || []).length);
+  console.log('SCOPE: ' + SCOPE_PATH + ' files=' + scope.files.length + ' allowlist=' + allow.records.length + '（文件·串对 ' + allow.pairs + '）');
   if (empty) console.log('EMPTY-SCOPE ' + EMPTY_SCOPE_VERDICT + '（清单：' + SCOPE_PATH + '）');
+  // allowlist 的路径落点必须可复核：登记了不在范围清单里的件／盖不住任何件的目录前缀＝红（#1320）。
+  const pathProblems = allowlistPathProblems(allow.records, scope.files, scope.files);
+  if (pathProblems.length > 0) {
+    for (const p of pathProblems) console.error('RED allowlist 落点不可复核：' + p.why);
+    console.error('FAIL: allowlist 落点不可复核（' + pathProblems.length + ' 条；登记的文件必须真在范围清单里）');
+    process.exit(1);
+  }
   if (LIST) {
     for (const f of r.files) console.log('KEY ' + f.file + '  ' + f.keys.length + ' 个：' + f.keys.join(','));
     console.log('RESULT: files=' + r.files.length + ' keys=' + r.keys.length + ' missing=' + r.missing.length
@@ -411,10 +425,19 @@ function selftest(scope) {
     writeFileSync(join(srcDir, 'zh.json'), JSON.stringify({ 'demo.title': '标题' }), 'utf8');
     const noAllow = audit({ files: ['demo.ts'] }, tmp);
     want(noAllow.missing.length === 2, 'allowlist 未登记时 demo.protocol 必须在 2 门语言里判缺（实得 ' + noAllow.missing.length + '）');
-    const withAllow = audit({ files: ['demo.ts'], allowlist: ['demo.protocol'] }, tmp);
+    const withAllow = audit({ files: ['demo.ts'], allowlist: [{ files: ['demo.ts'], texts: ['demo.protocol'], why: '夹具：协议字段值' }] }, tmp);
     want(withAllow.missing.length === 0, '登记 allowlist 后必须零缺词条（实得 ' + withAllow.missing.length + '）');
     want(withAllow.keys.length === 1, 'allowlist 串不许进 keys 读数（实得 ' + withAllow.keys.length + '）');
-    console.log('SELFTEST allowlist 读数：未登记 missing=' + noAllow.missing.length + '／登记后 missing=' + withAllow.missing.length);
+    // ⑫ 同串两用（#1320）：同一个协议字段值在数据位登记过，界面位（当 key 用）再出现必须照旧判缺；豁免按「文件＋串」。
+    writeFileSync(join(tmp, 'data.ts'), ["import { e } from 'base-entries';", "export const a = e('demo.title');", "export const protocol = 'demo.protocol';"].join(nl), 'utf8');
+    writeFileSync(join(tmp, 'ui.ts'), ["import { e } from 'base-entries';", "export const a = e('demo.title');", "export const y = e('demo.protocol');"].join(nl), 'utf8');
+    const sameText = audit({ files: ['data.ts', 'ui.ts'], allowlist: [{ files: ['data.ts'], texts: ['demo.protocol'], why: '夹具：数据位协议值' }] }, tmp);
+    want(sameText.missing.length === 2 && sameText.missing.every((m) => m.file === 'ui.ts'), '同串两用必须只剔除数据位那一件、界面位照旧判缺 2 门语言（实得 ' + JSON.stringify(sameText.missing.map((m) => m.file + ':' + m.lang)) + '）');
+    const wrongFile = audit({ files: ['data.ts', 'ui.ts'], allowlist: [{ files: ['ui.ts'], texts: ['demo.protocol'], why: '夹具：登记错文件' }] }, tmp);
+    want(wrongFile.missing.length === 2 && wrongFile.missing.every((m) => m.file === 'data.ts'), '豁免登记在另一件文件时必须不管用（实得 ' + JSON.stringify(wrongFile.missing.map((m) => m.file)) + '）');
+    const pathProblems = allowlistPathProblems([{ files: ['nope.ts'], texts: ['demo.protocol'], why: '夹具：不存在的件' }], ['data.ts', 'ui.ts'], ['data.ts', 'ui.ts']);
+    want(pathProblems.length === 1, 'allowlist 登记了范围外/不存在的件必须报落点问题（实得 ' + pathProblems.length + '）');
+    console.log('SELFTEST allowlist 读数：未登记 missing=' + noAllow.missing.length + '／登记后 missing=' + withAllow.missing.length + '／同串两用界面位 missing=' + sameText.missing.length + '／登记错文件 missing=' + wrongFile.missing.length);
     // ⑨ 按包判归属（#1199 S10）：alpha 包表里有 demo.title，beta 包表里没有——
     //     beta 包的文件用这个 key 必须判缺 2 处（两门语言），跨包并集不许把它藏掉。
     const alphaDir = join(tmp, 'packages', 'alpha', 'src', 'entries');
@@ -478,7 +501,7 @@ function selftest(scope) {
     rmSync(tmp, { recursive: true, force: true });
   }
   if (bad.length) { for (const b of bad) console.error('SELFTEST FAIL ' + b); process.exit(1); }
-  console.log('SELFTEST: 空范围显式报数／缺词条必红／补上必绿／没迁完必红／缺表必红／失明必红／空白词条必红／allowlist 剔除／按包归属／别包 catalog 计入／catalog 标识核对 十一条自证 OK');
+  console.log('SELFTEST: 空范围显式报数／缺词条必红／补上必绿／没迁完必红／缺表必红／失明必红／空白词条必红／allowlist 剔除／按包归属／别包 catalog 计入／catalog 标识核对／同串两用（数据位剔除·界面位判缺） 十二条自证 OK');
 }
 
 /** 入口守卫（照 tooling/i18n-langs.mjs／skill-html-snapshot.mjs 的先例）：本件被别处 import 时**不跑** CLI，

@@ -134,7 +134,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   };
   const stepLabel = (i: number): string => {
     const s = stepState(i);
-    return s === 'done' ? '已完成' : s === 'current' ? m('skill-home.setup-pages-import-restore.c007') : m('skill-home.setup-pages-import-restore.c008');
+    return s === 'done' ? m('skill-home.setup-pages-import-restore.c043') : s === 'current' ? m('skill-home.setup-pages-import-restore.c007') : m('skill-home.setup-pages-import-restore.c008');
   };
   const titles = [m('skill-home.setup-pages-import-restore.c009'), m('skill-home.setup-pages-import-restore.c010'), m('skill-home.setup-pages-import-restore.c011'), m('skill-home.setup-pages-import-restore.c012')];
   const steps = titles.map((t, i) => '<div class="su-step" data-status="'

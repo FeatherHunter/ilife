@@ -450,7 +450,7 @@ function contraCopyBlock(v: ContraView): string {
       envelope: sceneEnvelope(data.envelope),
       copyLog: copyLog({
         command: 'calorie-cmd-read calorie.view.contraindication',
-        source: 'workout_plans（只读）',
+        source: m('skill-calorie.render-trendDocs.c901'),
         actionAt: nowStamp(), version: DOC_VERSION,
       }),
     }),

@@ -73,7 +73,7 @@ export const WINDOW_DEFAULTS = {
       Object.freeze({ value: 'today', label: m('base-render.components-window-picker-attrs.c017'), days: 1 }),
       Object.freeze({ value: 'week', label: m('base-render.components-window-picker-attrs.c018'), days: 7 }),
       Object.freeze({ value: 'month', label: m('base-render.components-window-picker-attrs.c019'), days: 30 }),
-      Object.freeze({ value: WINDOW_CUSTOM, label: '自定义' }),
+      Object.freeze({ value: WINDOW_CUSTOM, label: m('base-render.components-window-picker-attrs.c023') }),
     ]);
   },
   get loadingText(): string { return m('base-render.components-window-picker-attrs.c020'); },

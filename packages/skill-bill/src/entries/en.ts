@@ -1674,6 +1674,7 @@ export const en = {
   'skill-bill.analysis-template-bars.c029': "No records in this period",
   'skill-bill.analysis-template-bars.c030': "That's all",
   'skill-bill.analysis-template-bars.c031': "Fetched {p0} records",
+  'skill-bill.analysis-template-bars.c032': "Daily average",
   /* ── packages/skill-bill/src/analysis/template-charts.ts（#1208 迁入） ── */
   'skill-bill.analysis-template-charts.c001': "Reading",
   'skill-bill.analysis-template-charts.c002': "No records in this period",
@@ -2601,6 +2602,7 @@ export const en = {
   'skill-bill.goal-scene-saving.c042': "{p0} yuan short",
   'skill-bill.goal-scene-saving.c043': "{p0} yuan over",
   'skill-bill.goal-scene-saving.c044': "Monthly net saving {p0} yuan",
+  'skill-bill.goal-scene-saving.c045': "Completed",
   /* ── packages/skill-bill/src/goal/scene-set-budget.ts（#1213 迁入） ── */
   'skill-bill.goal-scene-set-budget.c001': "Fill in the amount to write.",
   'skill-bill.goal-scene-set-budget.c002': "{p0} missing; see the table below.",
@@ -2902,6 +2904,7 @@ export const en = {
   'skill-bill.setup-steps.c039': "Accept the column mapping first, then confirm",
   'skill-bill.setup-steps.c040': "Import and report the result",
   'skill-bill.setup-steps.c041': "Nothing is written before you confirm; a backup is made first",
+  'skill-bill.setup-steps.c042': "Done",
   /* ── packages/skill-bill/src/setup/template-list.ts（--files 迁入） ── */
   'skill-bill.setup-template-list.c001': " · the latest one · this is it",
   'skill-bill.setup-template-list.c002': " · this one in the backup folder",
@@ -3498,6 +3501,8 @@ export const en = {
   'skill-bill.help-helpFile.c005': "Start with 「初始化」 — it detects the environment, confirms the data directory, creates the database and verifies it, with no decisions for you to make. Once initialization is done, this section disappears.",
   'skill-bill.help-helpFile.c006': "📋 Copy the initialization prompt",
   'skill-bill.help-helpFile.c008': "Email",
+  'skill-bill.help-helpFile.c009': "Cookie Accounting",
+  'skill-bill.help-helpFile.c010': "Cookie Accounting · User Manual (HELP)",
   /* ── packages/skill-bill/src/help/lookup.ts（#1215 迁入） ── */
   'skill-bill.help-lookup.c001': "午饭",
   'skill-bill.help-lookup.c002': "餐饮/夜宵",

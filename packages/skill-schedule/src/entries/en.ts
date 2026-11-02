@@ -814,6 +814,7 @@ export const en = {
   'skill-schedule.fetch-feishu.c004': "Create",
   'skill-schedule.fetch-feishu.c005': "Update",
   'skill-schedule.fetch-feishu.c006': "Feishu CLI",
+  'skill-schedule.fetch-feishu.c007': "Unreadable",
   /* ── packages/skill-schedule/src/policy/record.ts：无可迁文案（缺省日期是数据关键词「今天」，留在源码） ── */
   /* ── packages/skill-schedule/src/query/handlers.ts（#1223 迁入） ── */
   'skill-schedule.query-handlers.c001': "Empty DB: genuinely no records (not a failure)",
@@ -1311,6 +1312,7 @@ export const en = {
   'skill-schedule.analyze-analyzeDocs.c112': "Thu",
   'skill-schedule.analyze-analyzeDocs.c113': "Fri",
   'skill-schedule.analyze-analyzeDocs.c114': "Sat",
+  'skill-schedule.analyze-analyzeDocs.c115': "Daily average",
   /* ── packages/skill-schedule/src/health.ts（#1223 迁入） ── */
   'skill-schedule.health.c001': "Failed to read the config file: {p0} ({p1})",
   'skill-schedule.health.c002': "Config file line {p0}: {p1} (file: {p2})",
@@ -1528,6 +1530,7 @@ export const en = {
   'skill-schedule.query-queryDocs.c143': "Sun",
   'skill-schedule.query-queryDocs.c144': "DB status",
   'skill-schedule.query-queryDocs.c145': "Daily average {p0}",
+  'skill-schedule.query-queryDocs.c146': "Daily average",
   /* ── packages/skill-schedule/src/shared/pageParts.ts（#1223 迁入） ── */
   'skill-schedule.shared-pageParts.c001': "No records",
   'skill-schedule.shared-pageParts.c002': "{p0} {p1}:00 · {p2} · {p3} min",

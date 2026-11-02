@@ -64,7 +64,20 @@ export function scanMovement(name: string, parts: string[] = [...CONTRA_PARTS]):
 const SEV_ORDER: Record<Severity, number> = { error: 3, warn: 2, info: 1 };
 
 /** 星期名（`day_of_week` 1–7）：命中明细里「这一场是计划哪一格」的写法用。 */
-const DOW_CN = ['', '一', '二', '三', '四', '五', '六', '日'];
+/* #1320 · 星期汉字是上屏文案：改渲染期取词（0 位空串／越界回原值的语义与原来的数组索引一致）。 */
+function dowCnOf(dn: number): string | undefined {
+  switch (dn) {
+    case 0: return '';
+    case 1: return m('skill-calorie.analysis-contraindications.c003');
+    case 2: return m('skill-calorie.analysis-contraindications.c004');
+    case 3: return m('skill-calorie.analysis-contraindications.c005');
+    case 4: return m('skill-calorie.analysis-contraindications.c006');
+    case 5: return m('skill-calorie.analysis-contraindications.c007');
+    case 6: return m('skill-calorie.analysis-contraindications.c008');
+    case 7: return m('skill-calorie.analysis-contraindications.c009');
+    default: return undefined;
+  }
+}
 
 export function worstSeverity(rules: ContraRule[]): Severity | null {
   if (rules.length === 0) return null;
@@ -104,7 +117,7 @@ export function scanPlan(db: DatabaseSync, part: string = 'all'): PlanScan {
     // 读者看不懂（负责人 2026-09-15 第 ④ 条：文字不能出现不合理）。改成「第 1 周 周三（下肢）」。
     const usage = m('skill-calorie.analysis-contraindications.c001', {
       p0: String(p[0]),
-      p1: String(DOW_CN[p[1]] ?? String(p[1])),
+      p1: String(dowCnOf(p[1]) ?? String(p[1])),
       p2: String(p[3]),
     });
     for (const m of movements) {

@@ -221,7 +221,7 @@ export interface WritePreview {
 
 /** 场次行（改前／改后两栏共用）。 */
 function sessLine(wn: number, dow: number, label: string, moveCount: number | null, rest: boolean): PreviewLine {
-  return { week: wn, dow, label: label === '' ? (rest ? '休息日' : m('skill-calorie.workout-write.c047')) : label, moves: moveCount, rest, change: '' };
+  return { week: wn, dow, label: label === '' ? (rest ? m('skill-calorie.workout-write.c201') : m('skill-calorie.workout-write.c047')) : label, moves: moveCount, rest, change: '' };
 }
 
 /** 概述行／提示行：没有周次与星期，整句写进 `label`（其余列在页上印「—」）。 */
@@ -287,7 +287,7 @@ export function previewSetWeek(params: Record<string, unknown>, db: DatabaseSync
     const o = (typeof d === 'object' && d !== null && !Array.isArray(d) ? d : {}) as Record<string, unknown>;
     const dn = typeof o.dayOfWeek === 'number' ? o.dayOfWeek : null;
     const rest = o.rest === true;
-    return sessLine(week, dn ?? 0, String(o.sessionLabel ?? (rest ? '休息' : m('skill-calorie.workout-write.c065'))), null, rest);
+    return sessLine(week, dn ?? 0, String(o.sessionLabel ?? (rest ? m('skill-calorie.workout-write.c202') : m('skill-calorie.workout-write.c065'))), null, rest);
   }) : [noteLine(m('skill-calorie.workout-write.c066'))];
   return { op: 'set-week', title: m('skill-calorie.workout-write.c067', { p0: String(week) }), before, after, note: m('skill-calorie.workout-write.c068') };
 }

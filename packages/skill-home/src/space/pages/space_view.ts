@@ -14,7 +14,7 @@ import { m } from '../../entries/index.js';
 function pageText() {
   return {
     k001: (p0: string) => m('skill-home.space-pages-space-view.c001', { p0: String(p0) }),
-    k002: '全屋',
+    k002: m('skill-home.space-pages-space-view.c035'),
     k003: m('skill-home.space-pages-space-view.c002'),
     k004: m('skill-home.space-pages-space-view.c003'),
     k005: (p0: string, p1: string) => m('skill-home.space-pages-space-view.c004', { p0: String(p0), p1: String(p1) }),

@@ -27,10 +27,15 @@ export const WIZARD_MEASURE_LABELS: Record<string, string> = Object.fromEntries(
   Object.entries(WIZARD_MEASURE_CAMEL).map(([camel, field]) => [camel, MEASUREMENT_ZH[field] ?? field]),
 );
 
+/* #1320 · 模块级取词违规（S1）修正：部位名是上屏标签，改 getter 在渲染期取词（与 wizardPlate 同一份文案、各自分节）。 */
 export const WIZARD_CALIPER_LABELS: Record<string, string> = {
-  caliper_chest_mm: '胸', caliper_abdominal_mm: '腹', caliper_thigh_mm: '大腿',
-  caliper_tricep_mm: '三头肌', caliper_subscapular_mm: '肩胛下',
-  caliper_suprailiac_mm: '髂上', caliper_midaxillary_mm: '腋中线',
+  get caliper_chest_mm(): string { return m('skill-calorie.body-wizardPrompt.c018'); },
+  get caliper_abdominal_mm(): string { return m('skill-calorie.body-wizardPrompt.c019'); },
+  get caliper_thigh_mm(): string { return m('skill-calorie.body-wizardPrompt.c020'); },
+  get caliper_tricep_mm(): string { return m('skill-calorie.body-wizardPrompt.c021'); },
+  get caliper_subscapular_mm(): string { return m('skill-calorie.body-wizardPrompt.c022'); },
+  get caliper_suprailiac_mm(): string { return m('skill-calorie.body-wizardPrompt.c023'); },
+  get caliper_midaxillary_mm(): string { return m('skill-calorie.body-wizardPrompt.c024'); },
 };
 
 const MEASURE_UPPER = ['chestCm', 'waistCm', 'abdomenCm', 'hipCm', 'shoulderCm'];

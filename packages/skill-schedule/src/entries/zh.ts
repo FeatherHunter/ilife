@@ -820,6 +820,7 @@ export const zh = {
   'skill-schedule.fetch-feishu.c004': "创建",
   'skill-schedule.fetch-feishu.c005': "更新",
   'skill-schedule.fetch-feishu.c006': "飞书命令行",
+  'skill-schedule.fetch-feishu.c007': "读不到",
   /* ── packages/skill-schedule/src/policy/record.ts：无可迁文案（缺省日期是数据关键词「今天」，留在源码） ── */
   /* ── packages/skill-schedule/src/query/handlers.ts（#1223 迁入） ── */
   'skill-schedule.query-handlers.c001': "库空：真实无记录（非故障）",
@@ -1317,6 +1318,7 @@ export const zh = {
   'skill-schedule.analyze-analyzeDocs.c112': "周四",
   'skill-schedule.analyze-analyzeDocs.c113': "周五",
   'skill-schedule.analyze-analyzeDocs.c114': "周六",
+  'skill-schedule.analyze-analyzeDocs.c115': "日均",
   /* ── packages/skill-schedule/src/health.ts（#1223 迁入） ── */
   'skill-schedule.health.c001': "读配置文件失败：{p0}（{p1}）",
   'skill-schedule.health.c002': "配置件第 {p0} 行：{p1}（文件：{p2}）",
@@ -1534,6 +1536,7 @@ export const zh = {
   'skill-schedule.query-queryDocs.c143': "周日",
   'skill-schedule.query-queryDocs.c144': "作息库现状",
   'skill-schedule.query-queryDocs.c145': "日均 {p0}",
+  'skill-schedule.query-queryDocs.c146': "日均",
   /* ── packages/skill-schedule/src/shared/pageParts.ts（#1223 迁入） ── */
   'skill-schedule.shared-pageParts.c001': "无记录",
   'skill-schedule.shared-pageParts.c002': "{p0} {p1}:00 · {p2} · {p3} 分钟",

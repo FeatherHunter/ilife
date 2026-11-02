@@ -159,9 +159,10 @@ export interface NutritionDetailView {
  *  营养素深度那张表整列是 `0g`／`540mg`／`77.1mg/天`，读者要认识英文缩写才读得懂）。
  *  单位是上屏字，取数侧跟着读侧一起改——`nutritionPortDocs` 直接拼 `it.unit`／`it.good`，不留两处口径。 */
 const dri = () => [
-  { key: 'fiber', label: '膳食纤维', unit: '克', target: 25, good: '≥25 克/天' },
-  { key: 'sodium', label: '钠', unit: '毫克', target: 2000, good: '≤2000 毫克/天' },
-  { key: 'sugar', label: '糖', unit: '克', target: 50, good: '≤50 克/天' },
+  /* #1320：本表只在渲染期（buildNutritionDetailView）调用一次，故取词直接写在函数体里。 */
+  { key: 'fiber', label: m('skill-calorie.diet-nutritionPort.c002'), unit: m('skill-calorie.diet-nutritionPort.c003'), target: 25, good: m('skill-calorie.diet-nutritionPort.c004') },
+  { key: 'sodium', label: m('skill-calorie.diet-nutritionPort.c005'), unit: m('skill-calorie.diet-nutritionPort.c006'), target: 2000, good: m('skill-calorie.diet-nutritionPort.c007') },
+  { key: 'sugar', label: m('skill-calorie.diet-nutritionPort.c008'), unit: m('skill-calorie.diet-nutritionPort.c009'), target: 50, good: m('skill-calorie.diet-nutritionPort.c010') },
 ] as const;
 
 export function buildNutritionDetailView(db: DatabaseSync, start: string, end: string): NutritionDetailView {

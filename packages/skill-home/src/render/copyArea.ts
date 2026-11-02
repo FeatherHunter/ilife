@@ -66,9 +66,6 @@ export interface HomeCopyLogInput {
   readonly version?: string;
 }
 
-/** 与按钮同名的标题只留按钮（`renderCopyBlock` 侧同口径兜底，直调同样生效）。 */
-const COPY_TITLE_DUP_OF_BUTTON = '复制数据';
-
 /** 三格式入参：`data` 位那份数据 → 三种格式各算一份 ＋ 菜单提示（内转 `SerializableEnvelope`，见上）。 */
 function formatsOf(data: { readonly envelope: Envelope; readonly title?: string; readonly occurredAt?: string }): {
   readonly text: string;
@@ -96,7 +93,7 @@ export function homeNowStamp(d = new Date()): string {
 export function homeCopyArea(input: HomeCopyAreaInput): string {
   const data = input.data;
   const log = input.log;
-  const title = input.title === COPY_TITLE_DUP_OF_BUTTON ? undefined : input.title;
+  const title = input.title === copyButtonLabel() ? undefined : input.title;
   if (data !== undefined || log !== undefined) {
     return renderCopyBlock({
       ...(title === undefined ? {} : { title }),
@@ -207,7 +204,7 @@ function hmcpBinderJs(copiedText: string): string {
 export function homeCompactCopyArea(input: HomeCopyAreaInput): string {
   const data = input.data;
   const log = input.log;
-  const title = input.title === COPY_TITLE_DUP_OF_BUTTON ? undefined : input.title;
+  const title = input.title === copyButtonLabel() ? undefined : input.title;
   if (data === undefined && log === undefined) {
     return renderEmptyBlock({
       ...(title === undefined ? {} : { title }),
@@ -231,7 +228,7 @@ export function homeCompactCopyArea(input: HomeCopyAreaInput): string {
     ghostHtml += '<div class="' + HMCP_CLASSES.menuWrap + '">'
       + '<button type="button" class="' + HMCP_CLASSES.copyBtn + ' ' + HMCP_CLASSES.copyBtnGhost + '" '
       + HMCP_MENU_OPEN_ATTR + '="1" aria-haspopup="menu" aria-expanded="false" '
-      + 'aria-label="' + hmcpAttr(m('skill-home.render-copyArea.c001', { p0: String(COPY_TITLE_DUP_OF_BUTTON) })) + '">'
+      + 'aria-label="' + hmcpAttr(m('skill-home.render-copyArea.c001', { p0: copyButtonLabel() })) + '">'
       + escapeHtml(copyButtonLabel()) + '</button>'
       + '<div class="' + HMCP_CLASSES.menu + '" role="menu">' + items + '</div></div>'
       + '<script type="application/json" id="' + HMCP_PAYLOAD_ID + '">' + payload + '</script>'

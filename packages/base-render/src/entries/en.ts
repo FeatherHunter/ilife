@@ -2232,6 +2232,7 @@ export const en = {
   /* ── packages/base-render/src/components/step-flow/attrs.ts（#1227 迁入） ── */
   'base-render.components-step-flow-attrs.c001': "In progress",
   'base-render.components-step-flow-attrs.c002': "Not started",
+  'base-render.components-step-flow-attrs.c003': "Done",
   /* ── packages/base-render/src/components/sync-status/attrs.ts（#1227 迁入） ── */
   'base-render.components-sync-status-attrs.c001': "✓ Synced",
   'base-render.components-sync-status-attrs.c002': "✗ Failed",
@@ -2258,6 +2259,7 @@ export const en = {
   'base-render.components-toast-card-attrs.c001': "Please note",
   'base-render.components-toast-card-attrs.c002': "Failed",
   'base-render.components-toast-card-attrs.c003': "Close this toast",
+  'base-render.components-toast-card-attrs.c004': "Done",
   /* ── packages/base-render/src/components/undo-timeline/text.ts（#1227 迁入） ── */
   'base-render.components-undo-timeline-text.c001': "Undo this change",
   'base-render.components-undo-timeline-text.c002': "Restore this entry",
@@ -2289,6 +2291,7 @@ export const en = {
   'base-render.components-window-picker-attrs.c020': "Switching…",
   'base-render.components-window-picker-attrs.c021': "Window not set: choose a range first",
   'base-render.components-window-picker-attrs.c022': "The end date is earlier than the start date: a window has to run from start to end",
+  'base-render.components-window-picker-attrs.c023': "Custom",
   /* ── packages/base-render/src/components/sort-toggle/attrs.ts（#1227 迁入） ── */
   'base-render.components-sort-toggle-attrs.c001': 'This view sorts by "{field}", but the entries have no such key (data-ilife-sort-{field})',
   'base-render.components-sort-toggle-attrs.c002': '"{label}"',
@@ -2456,6 +2459,7 @@ export const en = {
   'base-render.components-relation-picker-render.c001': "{p0} items",
   'base-render.components-relation-picker-render.c002': "Used",
   'base-render.components-relation-picker-render.c003': "Click \"Change\" to pick again (the field row and this row always read the same value)",
+  'base-render.components-relation-picker-render.c004': "Search {p0}",
   /* ── packages/base-render/src/components/scatter-fit/render.ts（#1227 迁入） ── */
   'base-render.components-scatter-fit-render.c001': "strongest {p0}",
   'base-render.components-scatter-fit-render.c002': "Lag",

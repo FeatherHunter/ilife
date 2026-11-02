@@ -9,7 +9,7 @@ export type { BillTemplate } from './templates.js';
 // `../write/receiptOut.js`／`../goal/query.js`／`../account/query.js`／`../help/items.js`），
 // 由消费方直接取新家，不再经本模块与包门转出（包门只许收窄）。
 export {
-  HELP_FILE_STEM, HELP_FILE_SKILL_NAME, HELP_FILE_TITLE, HELP_FILE_VERSION, HELP_INIT_SCENE_ID, HELP_CONTACT,
+  HELP_FILE_STEM, HELP_FILE_VERSION, HELP_INIT_SCENE_ID, HELP_CONTACT,
   SKILL_PACKAGE_VERSION,
   formatHelpMinute, deriveSummaryLine, buildMetaBlocks, buildInitBanner, buildHelpFileData, renderHelpFileHtml,
   buildHelpIndex,

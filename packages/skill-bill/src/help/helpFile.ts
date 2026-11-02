@@ -36,9 +36,14 @@ import { m } from '../entries/index.js';
  *  「空串＝按默认落点」那条通则随配置项一起退休：这里只有一个值。 */
 export const HELP_FILE_STEM = '饼干记账_HELP' as const;
 
-/** 5 键头（老实物逐字）。 */
-export const HELP_FILE_SKILL_NAME = '饼干记账' as const;
-export const HELP_FILE_TITLE = '饼干记账 · 使用手册(HELP)' as const;
+/** 5 键头里的两条上屏文案（老实物逐字）。#1320 · 语言只在取词那一刻定，模块加载期取词会把语言固化，
+ *  故改成函数（兄弟包先例：skill-home/src/help/helpFile.ts:61-66；本包 #1220 同一裁定）。 */
+function helpFileSkillName(): string {
+  return m('skill-bill.help-helpFile.c009');
+}
+function helpFileTitle(): string {
+  return m('skill-bill.help-helpFile.c010');
+}
 /** 技能数据世代版本（老口径 `summary.version`，非 npm 包版本）。 */
 export const HELP_FILE_VERSION = '2.0' as const;
 
@@ -125,8 +130,8 @@ export interface HelpInitBanner {
 
 /** 老 5 键 ＋ 三块可选键（共享 help 模板运行时契约的超集）＋ 两块关于页事实键。 */
 export interface HelpFileData {
-  readonly skill_name: typeof HELP_FILE_SKILL_NAME;
-  readonly title: typeof HELP_FILE_TITLE;
+  readonly skill_name: string;
+  readonly title: string;
   readonly subtitle: string;
   readonly contact: HelpContact;
   readonly groups: typeof WAKE_GROUPS;
@@ -297,8 +302,8 @@ export function buildHelpFileData(now: Date = new Date(), opts: HelpFileOptions 
   }
   const summaryLine = deriveSummaryLine(now);
   return {
-    skill_name: HELP_FILE_SKILL_NAME,
-    title: HELP_FILE_TITLE,
+    skill_name: helpFileSkillName(),
+    title: helpFileTitle(),
     subtitle: summaryLine,
     contact: HELP_CONTACT,
     /* 三步填充次序固定：候选 → 配置现值 → 候选项附注（附注印在候选行上，故必须排在候选之后）。 */

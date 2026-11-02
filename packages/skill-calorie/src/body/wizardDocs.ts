@@ -204,7 +204,7 @@ function compositionForm(v: CompositionWizardView): string {
     // 「皮褶钳那一支的体脂率不用手填」与上面那块换算口径说同一件事，只留「带星号的必填」。
     description: m('skill-calorie.body-wizardDocs.c029'),
     fields: [
-      { name: 'date', label: '日期', value: v.date, hint: 'YYYY-MM-DD', required: true },
+      { name: 'date', label: m('skill-calorie.body-wizardDocs.c065'), value: v.date, hint: 'YYYY-MM-DD', required: true },
       {
         name: 'source', label: m('skill-calorie.body-wizardDocs.c030'), value: v.source ?? '', hint: m('skill-calorie.body-wizardDocs.c031'), required: true,
         options: SOURCE_CHOICES.map((s) => ({ value: s, label: SOURCE_LABELS[s] })),
@@ -215,7 +215,7 @@ function compositionForm(v: CompositionWizardView): string {
       },
       {
         name: 'sex', label: m('skill-calorie.body-wizardDocs.c034'), value: v.sex ?? '', hint: m('skill-calorie.body-wizardDocs.c035'),
-        options: [{ value: 'male', label: '男' }, { value: 'female', label: '女' }],
+        options: [{ value: 'male', label: m('skill-calorie.body-wizardDocs.c066') }, { value: 'female', label: m('skill-calorie.body-wizardDocs.c067') }],
       },
       {
         name: 'body_fat_pct', label: m('skill-calorie.body-wizardDocs.c036'), value: bfValue, required: !isCaliper, readonly: isCaliper,

@@ -215,7 +215,7 @@ function renderOverlay(model: RelationPickerModel): string {
     + '<div class="' + relationPickerSlot('panel') + '" id="' + esc(panelId) + '" popover="auto" role="dialog"'
     + ' style="position-anchor: ' + esc(RELATION_PICKER_ANCHOR_PREFIX + model.id) + '"'
     + ' aria-label="' + esc(model.label) + '" ' + RELATION_PICKER_PANEL_ATTR + '="' + esc(model.id) + '">'
-    + inputHtml(model, '搜' + model.label) + colhHtml(model)
+    + inputHtml(model, m('base-render.components-relation-picker-render.c004', { p0: model.label })) + colhHtml(model)
     + groupHtml(model, 'recent', RELATION_PICKER_TEXT.recentGroup, model.recents, false)
     + groupHtml(model, 'all', model.allLabel, model.all, false)
     + newHtml(model) + emptyHtml(model) + footHtml(model) + '</div>';
@@ -228,7 +228,7 @@ function renderInline(model: RelationPickerModel): string {
   const parts: string[] = [fieldHtml(model, inlineId, false)];
   parts.push('<div class="' + relationPickerSlot('inline') + '" id="' + esc(inlineId) + '"'
     + ' ' + RELATION_PICKER_INLINE_ATTR + '="' + esc(model.id) + '"' + (model.expanded ? '' : ' hidden') + '>');
-  parts.push(inputHtml(model, '搜' + model.label));
+  parts.push(inputHtml(model, m('base-render.components-relation-picker-render.c004', { p0: model.label })));
   if (model.recents.length > 0) {
     /* 一枚都不露时，这条带子自己也收起来（与组头同一条口径：不给屏上留一条 20px 的空带）。 */
     const none = model.recents.every((r) => r.hidden);

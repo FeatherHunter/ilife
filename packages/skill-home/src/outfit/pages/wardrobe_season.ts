@@ -157,8 +157,8 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const template = readFileSync(new URL('../../../templates/outfit/wardrobe_season.html', import.meta.url), 'utf8');
   const data = (env.data ?? {}) as Record<string, unknown>;
   const s = (data.season ?? {}) as Record<string, unknown>;
-  const season = str(s.season) || '冬季';
-  const action = s.action === '拿出' ? '拿出' : '收纳';
+  const season = str(s.season) || m('skill-home.outfit-outfit.c018');
+  const action = s.action === '拿出' ? m('skill-home.outfit-outfit.c019') : m('skill-home.outfit-outfit.c020');
   const items = arr(s.items).map((x) => ({
     id: typeof x.id === 'number' ? x.id : 0, name: str(x.name),
     categoryName: str(x.categoryName), tags: Array.isArray(x.tags) ? (x.tags as unknown[]).map(String) : [],

@@ -114,14 +114,17 @@ export function larkVersion(cli: string): string {
   return r.stdout.trim().split('\n')[0] || 'unknown';
 }
 
-/** 读不到版本时的占位串（唯一定义地）：只许出现在**报文／页**里；回执那一格拿它换 `null`（＝不交值）。 */
-export const LARK_VERSION_UNREADABLE = '读不到' as const;
+/** 读不到版本时的占位串（唯一定义地；取词放在调用时，模块顶层不取词）：只许出现在**报文／页**里；
+ *  回执那一格拿它换 `null`（＝不交值）。 */
+export function larkVersionUnreadable(): string {
+  return m('skill-schedule.fetch-feishu.c007');
+}
 
 /** 版本显示口径（唯一定义地）：`--version` 首行原文与 `unknown` 都不许上屏，只留首个数字段，无则「读不到」。
  *  取用者：`src/plan/feishuDocs.ts` 版本格、`src/health.ts` 体检绿档。 */
 export function shortLarkVersion(raw: string): string {
   const m = raw.match(/\d+(?:\.\d+)*/);
-  return m ? m[0] : LARK_VERSION_UNREADABLE;
+  return m ? m[0] : larkVersionUnreadable();
 }
 
 /** 回执那一格的版本号（#936）：**只交版本号**（首个数字段，如 `1.0.82`），读不到＝`null`（这一格不交值）。
@@ -131,7 +134,7 @@ export function shortLarkVersion(raw: string): string {
  *  **与备忘录 `skill-memo-ilife` 的 `src/sync/feishu.ts` 那一份逐字同形**（跨包锁进 #936）。 */
 export function larkVersionCell(raw: string): string | null {
   const v = shortLarkVersion(raw);
-  return v === LARK_VERSION_UNREADABLE ? null : v;
+  return v === larkVersionUnreadable() ? null : v;
 }
 
 /** 面板「飞书 CLI」状态区要的三格（#936）：三档 ＋ 路径 ＋ 版本号。

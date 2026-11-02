@@ -161,7 +161,7 @@ export function buildGoalDoc(v: GoalView, metrics: Record<string, number>, comma
         { item: m('skill-calorie.goal-resultDocs.c021'), goal: num(n.calorie_goal, m('skill-calorie.goal-resultDocs.c022')) },
         { item: m('skill-calorie.goal-resultDocs.c023'), goal: num(n.protein_goal, 'g') },
         { item: m('skill-calorie.goal-resultDocs.c024'), goal: num(n.carbs_goal, 'g') },
-        { item: '脂肪', goal: num(n.fat_goal, 'g') },
+        { item: m('skill-calorie.goal-resultDocs.c220'), goal: num(n.fat_goal, 'g') },
         { item: m('skill-calorie.goal-resultDocs.c025'), goal: num(n.water_goal, 'ml') },
       ],
       caption: m('skill-calorie.goal-resultDocs.c026'),
@@ -224,11 +224,11 @@ export function buildGoalVsActualDoc(v: GoalVsActualView, metrics: Record<string
     ])),
     section('sec-days', renderDataTable({
       columns: [
-        { key: 'date', label: '日期' },
+        { key: 'date', label: m('skill-calorie.goal-resultDocs.c221') },
         { key: 'intake', label: m('skill-calorie.goal-resultDocs.c066'), align: 'right' },
         { key: 'goal', label: m('skill-calorie.goal-resultDocs.c067'), align: 'right' },
         { key: 'pct', label: m('skill-calorie.goal-resultDocs.c068'), align: 'right' },
-        { key: 'status', label: '状态' },
+        { key: 'status', label: m('skill-calorie.goal-resultDocs.c222') },
       ],
       /* 没记录的日期照裁定 4 写 `—`（不拿 0 顶）——「这三天没记」与「记了但吃 0 卡」是两回事。 */
       rows: v.history.goalHistory.map((d) => ({
@@ -370,7 +370,7 @@ export function buildGoalConfigDoc(g: GoalConfig, metrics: Record<string, number
       p5: String(consistencyNote),
       p6: String(pausedNote),
     }),
-    [cardOf(m('skill-calorie.goal-resultDocs.c155'), n.calorie_goal, m('skill-calorie.goal-resultDocs.c156')), cardOf(m('skill-calorie.goal-resultDocs.c157'), n.protein_goal, 'g'), cardOf(m('skill-calorie.goal-resultDocs.c158'), n.carbs_goal, 'g'), cardOf(m('skill-calorie.goal-resultDocs.c159'), n.fat_goal, 'g'), cardOf(m('skill-calorie.goal-resultDocs.c160'), n.water_goal, 'ml'), { label: '状态', value: g.paused ? m('skill-calorie.goal-resultDocs.c161') : m('skill-calorie.goal-resultDocs.c162'), detail: g.paused ? m('skill-calorie.goal-resultDocs.c163', { p0: String(g.pausedAt ?? '—') }) : m('skill-calorie.goal-resultDocs.c164') }],
+    [cardOf(m('skill-calorie.goal-resultDocs.c155'), n.calorie_goal, m('skill-calorie.goal-resultDocs.c156')), cardOf(m('skill-calorie.goal-resultDocs.c157'), n.protein_goal, 'g'), cardOf(m('skill-calorie.goal-resultDocs.c158'), n.carbs_goal, 'g'), cardOf(m('skill-calorie.goal-resultDocs.c159'), n.fat_goal, 'g'), cardOf(m('skill-calorie.goal-resultDocs.c160'), n.water_goal, 'ml'), { label: m('skill-calorie.goal-resultDocs.c222'), value: g.paused ? m('skill-calorie.goal-resultDocs.c161') : m('skill-calorie.goal-resultDocs.c162'), detail: g.paused ? m('skill-calorie.goal-resultDocs.c163', { p0: String(g.pausedAt ?? '—') }) : m('skill-calorie.goal-resultDocs.c164') }],
     m('skill-calorie.goal-resultDocs.c165'),
     [{ item: m('skill-calorie.goal-resultDocs.c166'), reading: num(n.calorie_goal + g.diffKcal, m('skill-calorie.goal-resultDocs.c167')), note: m('skill-calorie.goal-resultDocs.c168') }, { item: m('skill-calorie.goal-resultDocs.c169'), reading: m('skill-calorie.goal-resultDocs.c170', { p0: String((g.diffKcal >= 0 ? '+' : '') + g.diffKcal) }), note: g.consistent ? m('skill-calorie.goal-resultDocs.c171') : m('skill-calorie.goal-resultDocs.c172') }, { item: m('skill-calorie.goal-resultDocs.c173'), reading: g.paused ? m('skill-calorie.goal-resultDocs.c174') : m('skill-calorie.goal-resultDocs.c175'), note: g.paused ? m('skill-calorie.goal-resultDocs.c176', { p0: String(g.pausedAt ?? '—') }) : m('skill-calorie.goal-resultDocs.c177') }],
     metrics, command, [m('skill-calorie.goal-resultDocs.c178'), m('skill-calorie.goal-resultDocs.c179')]);
@@ -386,7 +386,7 @@ export function buildGoalStatusDoc(g: GoalStatus, metrics: Record<string, number
       p1: String(n.calorie_goal),
       p2: String(num(n.water_goal, 'ml')),
     }),
-    [{ label: '状态', value: g.paused ? m('skill-calorie.goal-resultDocs.c187') : m('skill-calorie.goal-resultDocs.c188'), detail: g.paused ? m('skill-calorie.goal-resultDocs.c189', { p0: String(g.pausedAt ?? '—') }) : m('skill-calorie.goal-resultDocs.c190') }, cardOf(m('skill-calorie.goal-resultDocs.c191'), n.calorie_goal, m('skill-calorie.goal-resultDocs.c192')), cardOf(m('skill-calorie.goal-resultDocs.c193'), n.water_goal, 'ml'), { label: m('skill-calorie.goal-resultDocs.c194'), value: g.pausedAt ?? '—', detail: g.paused ? m('skill-calorie.goal-resultDocs.c195') : m('skill-calorie.goal-resultDocs.c196') }],
+    [{ label: m('skill-calorie.goal-resultDocs.c222'), value: g.paused ? m('skill-calorie.goal-resultDocs.c187') : m('skill-calorie.goal-resultDocs.c188'), detail: g.paused ? m('skill-calorie.goal-resultDocs.c189', { p0: String(g.pausedAt ?? '—') }) : m('skill-calorie.goal-resultDocs.c190') }, cardOf(m('skill-calorie.goal-resultDocs.c191'), n.calorie_goal, m('skill-calorie.goal-resultDocs.c192')), cardOf(m('skill-calorie.goal-resultDocs.c193'), n.water_goal, 'ml'), { label: m('skill-calorie.goal-resultDocs.c194'), value: g.pausedAt ?? '—', detail: g.paused ? m('skill-calorie.goal-resultDocs.c195') : m('skill-calorie.goal-resultDocs.c196') }],
     m('skill-calorie.goal-resultDocs.c197'),
     [{ item: m('skill-calorie.goal-resultDocs.c198'), reading: g.paused ? m('skill-calorie.goal-resultDocs.c199') : m('skill-calorie.goal-resultDocs.c200'), note: g.paused ? m('skill-calorie.goal-resultDocs.c201', { p0: String(g.pausedAt ?? '—') }) : m('skill-calorie.goal-resultDocs.c202') }, { item: m('skill-calorie.goal-resultDocs.c203'), reading: num(n.calorie_goal, m('skill-calorie.goal-resultDocs.c204')), note: m('skill-calorie.goal-resultDocs.c205') }, { item: m('skill-calorie.goal-resultDocs.c206'), reading: num(n.water_goal, 'ml'), note: m('skill-calorie.goal-resultDocs.c207') }, { item: m('skill-calorie.goal-resultDocs.c208'), reading: m('skill-calorie.goal-resultDocs.c209'), note: m('skill-calorie.goal-resultDocs.c210') }],
     metrics, command, [m('skill-calorie.goal-resultDocs.c211'), m('skill-calorie.goal-resultDocs.c212')]);

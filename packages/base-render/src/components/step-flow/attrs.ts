@@ -52,7 +52,7 @@ export type StepState = (typeof STEP_STATES)[number];
 
 /** 状态字（三态各有自己的形状，见 `style.ts`；要换说法就在 `steps[].stateWord` 上覆盖）。 */
 export const STEP_STATE_WORDS: Readonly<Record<StepState, string>> = {
-  get done(): string { return '已完成'; },
+  get done(): string { return m('base-render.components-step-flow-attrs.c003'); },
   get now(): string { return m('base-render.components-step-flow-attrs.c001'); },
   get todo(): string { return m('base-render.components-step-flow-attrs.c002'); },
 };

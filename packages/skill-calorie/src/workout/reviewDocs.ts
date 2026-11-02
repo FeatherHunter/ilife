@@ -53,7 +53,19 @@ const DASH = '—';
 const HEAT_CAP = 84;
 
 /** 星期名（`Date.getDay()` 口径：0＝周日）；「周几」由日期自己算，不从库里取。 */
-const DOW_CN = ['日', '一', '二', '三', '四', '五', '六'];
+/* #1320 · 星期汉字是上屏文案：改渲染期取词（下标＝Date.getDay()，0 是周日）。 */
+function dowCnOf(dow: number): string | undefined {
+  switch (dow) {
+    case 0: return m('skill-calorie.workout-reviewDocs.c033');
+    case 1: return m('skill-calorie.workout-reviewDocs.c034');
+    case 2: return m('skill-calorie.workout-reviewDocs.c035');
+    case 3: return m('skill-calorie.workout-reviewDocs.c036');
+    case 4: return m('skill-calorie.workout-reviewDocs.c037');
+    case 5: return m('skill-calorie.workout-reviewDocs.c038');
+    case 6: return m('skill-calorie.workout-reviewDocs.c039');
+    default: return undefined;
+  }
+}
 
 /** ISO 日期 → 星期几（0＝周日）。取正午 UTC 免时区把日期翻到前一天。 */
 function dowOf(iso: string): number {
@@ -81,7 +93,7 @@ function toneOf(pct: number | null): string {
 function dateCell(iso: string): string {
   const [, mo, dd] = iso.split('-');
   return '<span class="ilr-cell-date">' + Number(mo) + '/' + Number(dd)
-    + '<span class="ilr-cell-dow"> ' + m('skill-calorie.render-workoutPlanLook.c003', { p0: DOW_CN[dowOf(iso)] }) + '</span></span>';
+    + '<span class="ilr-cell-dow"> ' + m('skill-calorie.workout-reviewDocs.c032', { p0: dowCnOf(dowOf(iso)) ?? String(dowOf(iso)) }) + '</span></span>';
 }
 
 /** 窗口条：这一页看的是哪一段。两枚日期块 ＋ 箭头 ＋ 天数胶囊（原来靠 `~` 与 `·` 串在一行字里）。

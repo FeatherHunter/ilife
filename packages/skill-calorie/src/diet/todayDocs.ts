@@ -87,9 +87,9 @@ export function buildTodayDietDoc(input: TodayDietDocInput): string {
   const distChart = dist.totalCalories > 0;
   const macroChart = macro !== null && Boolean(macro.protein || macro.carb || macro.fat);
   const macroRows = macro === null ? [] : [
-    { label: '蛋白', value: String(macro.protein === null ? 0 : macro.protein.pct), unit: '%' },
-    { label: '碳水', value: String(macro.carb === null ? 0 : macro.carb.pct), unit: '%' },
-    { label: '脂肪', value: String(macro.fat === null ? 0 : macro.fat.pct), unit: '%' },
+    { label: m('skill-calorie.diet-todayDocs.c067'), value: String(macro.protein === null ? 0 : macro.protein.pct), unit: '%' },
+    { label: m('skill-calorie.diet-todayDocs.c068'), value: String(macro.carb === null ? 0 : macro.carb.pct), unit: '%' },
+    { label: m('skill-calorie.diet-todayDocs.c069'), value: String(macro.fat === null ? 0 : macro.fat.pct), unit: '%' },
   ];
   /** 纸里的正文（小票版）：主数字头 → 刻度条 → 账目 → 各餐 → 营养配比 → 明细 → 口径与来源。
    *  **复制区不在纸里**：它在裁切线之外（见下方 `td-copy` 那一节）。 */
@@ -166,9 +166,9 @@ export function buildTodayDietDoc(input: TodayDietDocInput): string {
         unit: m('skill-calorie.diet-todayDocs.c030'),
         ...(note === '' ? {} : { note }),
         facts: [
-          '蛋白 ' + (meal.protein === null || meal.protein === undefined ? '—' : meal.protein + ' g'),
-          '碳水 ' + (meal.carbs === null || meal.carbs === undefined ? '—' : meal.carbs + ' g'),
-          '脂肪 ' + (meal.fat === null || meal.fat === undefined ? '—' : meal.fat + ' g'),
+          m('skill-calorie.diet-todayDocs.c070', { p0: meal.protein === null || meal.protein === undefined ? '—' : meal.protein + ' g' }),
+          m('skill-calorie.diet-todayDocs.c071', { p0: meal.carbs === null || meal.carbs === undefined ? '—' : meal.carbs + ' g' }),
+          m('skill-calorie.diet-todayDocs.c072', { p0: meal.fat === null || meal.fat === undefined ? '—' : meal.fat + ' g' }),
         ],
       };
     }),
@@ -247,9 +247,9 @@ export const DIET_LIST_COLUMNS = (): readonly DataTableColumn[] => [
   { key: 'food', label: m('skill-calorie.diet-todayDocs.c063') },
   { key: 'grams', label: m('skill-calorie.diet-todayDocs.c064'), align: 'right' },
   { key: 'cal', label: m('skill-calorie.diet-todayDocs.c065'), align: 'right' },
-  { key: 'pro', label: '蛋白', align: 'right' },
-  { key: 'carbs', label: '碳水', align: 'right' },
-  { key: 'fat', label: '脂肪', align: 'right' },
+  { key: 'pro', label: m('skill-calorie.diet-todayDocs.c067'), align: 'right' },
+  { key: 'carbs', label: m('skill-calorie.diet-todayDocs.c068'), align: 'right' },
+  { key: 'fat', label: m('skill-calorie.diet-todayDocs.c069'), align: 'right' },
   { key: 'note', label: m('skill-calorie.diet-todayDocs.c066') },
 ];
 
