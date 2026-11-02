@@ -65,11 +65,11 @@ function cli(db, args) {
 }
 
 describe('#1204 特殊收支五件：词条＋语言链', () => {
-  it('词条 zh／en 同 key（4114 条＝各迁移票合入后总键数，逐票增量见 tooling/i18n-ticket-scope.json）且英文列无空串', () => {
+  it('词条 zh／en 同 key（4115 条＝各迁移票合入后总键数；#1316 补 help-lookupPage.c022 ＋1，逐票增量见 tooling/i18n-ticket-scope.json）且英文列无空串', () => {
     const zhKeys = Object.keys(SKILL_BILL_CATALOG.zh).sort();
     const enKeys = Object.keys(SKILL_BILL_CATALOG.en).sort();
     assert.deepEqual(enKeys, zhKeys);
-    assert.equal(zhKeys.length, 4114);
+    assert.equal(zhKeys.length, 4115);
     for (const k of enKeys) assert.ok(SKILL_BILL_CATALOG.en[k].length > 0, '英文缺译：' + k);
   });
 
