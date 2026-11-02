@@ -24,6 +24,7 @@ import { openDbReadOnly } from '../db/readonly.js';
 import { getPlan } from '../workout/index.js';
 import { weekOfDate } from '../render/index.js';
 import type { PushSession } from './push.js';
+import { m } from '../entries/index.js';
 
 /** 取数结局：`found: true` 即有明确答案（含“这天没排练”的空表）；否则看 `reason` 报 1。 */
 export type DayPlan =
@@ -37,11 +38,11 @@ export interface ResolveDayPlanOpts {
 
 /** 日期形状检查：`YYYY-MM-DD` 且为真实日历日；null＝通过，否则为人话原因。 */
 export function dateProblem(v: string): string | null {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return '日期须为 YYYY-MM-DD（实际：' + v + '）';
-  const [y, m, d] = v.split('-').map(Number);
-  const dt = new Date(Date.UTC(y as number, (m as number) - 1, d as number));
-  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== (m as number) - 1 || dt.getUTCDate() !== d) {
-    return '日期不是真实日历日（实际：' + v + '）';
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return m('skill-calorie.xunji-planSource.c001', { p0: String(v) });
+  const [y, mo, d] = v.split('-').map(Number);
+  const dt = new Date(Date.UTC(y as number, (mo as number) - 1, d as number));
+  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== (mo as number) - 1 || dt.getUTCDate() !== d) {
+    return m('skill-calorie.xunji-planSource.c002', { p0: String(v) });
   }
   return null;
 }
@@ -57,7 +58,7 @@ export function resolveDayPlan(dateStr: string, opts: ResolveDayPlanOpts = {}): 
     }
   }
   if (!existsSync(dbFile)) {
-    return { found: false, reason: '卡路里库文件不在（' + dbFile + '）：先确认配置项 db.dir 指对（空＝数据目录），再看库在不在' };
+    return { found: false, reason: m('skill-calorie.xunji-planSource.c003', { p0: String(dbFile) }) };
   }
   let db: { close: () => void } | null = null;
   try {
@@ -65,17 +66,17 @@ export function resolveDayPlan(dateStr: string, opts: ResolveDayPlanOpts = {}): 
     db = opened;
     const plan = getPlan(opened);
     if (!plan.config && plan.sessions.length === 0) {
-      return { found: false, reason: '无训练计划（先定训练计划）' };
+      return { found: false, reason: m('skill-calorie.xunji-planSource.c004') };
     }
     const start = plan.config?.start_date ?? null;
     if (!start) {
-      return { found: false, reason: '计划缺开始日期，无法定位周次' };
+      return { found: false, reason: m('skill-calorie.xunji-planSource.c005') };
     }
     const { week, dow } = weekOfDate(start, dateStr);
     const sessions = plan.sessions.filter((s) => s.week_number === week && s.day_of_week === dow);
     return { found: true, sessions, planWeek: week, dayOfWeek: dow };
   } catch (e) {
-    return { found: false, reason: '读训练计划失败：' + (e instanceof Error ? e.message : String(e)) };
+    return { found: false, reason: m('skill-calorie.xunji-planSource.c006', { p0: String(e instanceof Error ? e.message : String(e)) }) };
   } finally {
     try {
       db?.close();

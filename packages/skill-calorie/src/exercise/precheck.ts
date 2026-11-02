@@ -23,13 +23,10 @@ import { nowStamp } from '../render/receipt.js';
 import { copyArea, copyLog } from '../shared/copyArea.js';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { commandLine } from '../shared/writeParts.js';
+import { m } from '../entries/index.js';
 
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
-const DOC_TITLE = '卡路里 运动';
-const PRECHECK_TITLE = '运动目标预检';
-const EYEBROW = '运动对照目标';
-const GOAL_SOURCE = '每日目标 ＋ 运动记录';
 const WRITE_EXAMPLE_GOAL = 300;
 
 /** 预检确认页的入参（7 字段，不多于 8 个）。 */
@@ -50,38 +47,38 @@ export interface ExerciseGoalPrecheckView {
 /** 现值表：运动目标那一项缺席（未设置，不编 0）＋ 窗口三行。 */
 function currentTable(v: ExerciseGoalPrecheckView): string {
   return renderDataTable({
-    columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+    columns: [{ key: 'k', label: m('skill-calorie.exercise-precheck.c001') }, { key: 'v', label: m('skill-calorie.exercise-precheck.c002') }],
     rows: [
-      { k: '每日运动消耗目标', v: '未设置' },
+      { k: m('skill-calorie.exercise-precheck.c003'), v: m('skill-calorie.exercise-precheck.c004') },
       { k: '窗口', v: v.start === v.end ? v.start : v.start + ' ~ ' + v.end },
-      { k: '窗口天数', v: String(v.days) + ' 天' },
-      ...(v.wakeWord === null ? [] : [{ k: '唤醒词', v: v.wakeWord }]),
+      { k: '窗口天数', v: m('skill-calorie.exercise-precheck.c005', { p0: String(String(v.days)) }) },
+      ...(v.wakeWord === null ? [] : [{ k: m('skill-calorie.exercise-precheck.c006'), v: v.wakeWord }]),
     ],
-    caption: '改前基准：库内还没有每日运动消耗目标',
+    caption: m('skill-calorie.exercise-precheck.c007'),
   });
 }
 
 /** 要填的一项：目标值（正整数卡，示例 300）。 */
 function fillTable(): string {
   return renderDataTable({
-    columns: [{ key: 'k', label: '项' }, { key: 'v', label: '怎么填' }],
+    columns: [{ key: 'k', label: m('skill-calorie.exercise-precheck.c008') }, { key: 'v', label: m('skill-calorie.exercise-precheck.c009') }],
     rows: [
-      { k: '目标值(卡)', v: '正整数，例如 300（每天要消耗的运动热量）' },
-      { k: '怎么答', v: '直接说一句「定运动目标 300 卡」（把 300 换成你要的值）' },
+      { k: m('skill-calorie.exercise-precheck.c010'), v: m('skill-calorie.exercise-precheck.c011') },
+      { k: m('skill-calorie.exercise-precheck.c012'), v: m('skill-calorie.exercise-precheck.c013') },
     ],
-    caption: '要填的项：只填这一项',
+    caption: m('skill-calorie.exercise-precheck.c014'),
   });
 }
 
 /** 确认后操作：本页不写库，确认后跑下面这条会改数据库的命令，再重跑上面的查询命令看终页。 */
 function writeBlock(v: ExerciseGoalPrecheckView): string {
   return renderDataTable({
-    columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+    columns: [{ key: 'k', label: m('skill-calorie.exercise-precheck.c015') }, { key: 'v', label: m('skill-calorie.exercise-precheck.c016') }],
     rows: [
-      { k: '确认后跑', v: v.writeCommand },
-      { k: '再看终页', v: v.command },
+      { k: m('skill-calorie.exercise-precheck.c017'), v: v.writeCommand },
+      { k: m('skill-calorie.exercise-precheck.c018'), v: v.command },
     ],
-    caption: '确认后操作（这一步不写库）',
+    caption: m('skill-calorie.exercise-precheck.c019'),
   });
 }
 
@@ -92,13 +89,13 @@ function copyZone(v: ExerciseGoalPrecheckView, envelope: SerializableEnvelope): 
       copyLog: { actionId: CALORIE_COPY_ACTION.actionId, label: CALORIE_COPY_ACTION.label, text: v.writeCommand },
     });
   return instruction + copyArea({
-    data: { envelope, title: '【calorie 运动目标预检】' },
+    data: { envelope, title: m('skill-calorie.exercise-precheck.c020') },
     log: {
       envelope,
       copyLog: copyLog({
         command: v.command,
-        source: GOAL_SOURCE,
-        m5Line: '确认后执行 ' + v.writeCommand,
+        source: m('skill-calorie.exercise-precheck.c036'),
+        m5Line: m('skill-calorie.exercise-precheck.c021', { p0: String(v.writeCommand) }),
         actionAt: nowStamp(),
         version: DOC_VERSION,
       }),
@@ -109,36 +106,36 @@ function copyZone(v: ExerciseGoalPrecheckView, envelope: SerializableEnvelope): 
 /** 两条 vs 目标词的预检确认页整页：现值缺席说明 → 目标值输入指引 → 确认后复制指令。 */
 export function buildExerciseGoalPrecheckDoc(v: ExerciseGoalPrecheckView): string {
   const envelope: SerializableEnvelope = {
-    version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: PRECHECK_TITLE,
+    version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: m('skill-calorie.exercise-precheck.c037'),
     data: {
       metrics: metricsOf({ hasGoal: 0, precheck: 1, days: v.days }),
     },
   };
   const cards: KpiCardInput[] = [
-    ...(v.wakeWord === null ? [] : [{ label: '唤醒词', value: v.wakeWord, detail: '先问目标值，确认后再看终页' } as KpiCardInput]),
-    { label: '现值', value: '未设置', detail: '还没设每日运动消耗目标' },
-    { label: '窗口', value: v.windowLabel, detail: v.start === v.end ? v.start : v.start + ' ~ ' + v.end },
+    ...(v.wakeWord === null ? [] : [{ label: m('skill-calorie.exercise-precheck.c022'), value: v.wakeWord, detail: m('skill-calorie.exercise-precheck.c023') } as KpiCardInput]),
+    { label: m('skill-calorie.exercise-precheck.c024'), value: m('skill-calorie.exercise-precheck.c025'), detail: m('skill-calorie.exercise-precheck.c026') },
+    { label: m('skill-calorie.exercise-precheck.c040'), value: v.windowLabel, detail: v.start === v.end ? v.start : v.start + ' ~ ' + v.end },
   ];
   const sections = [
-    { id: 'sec-current', label: '现值缺席说明' },
-    { id: 'sec-fill', label: '目标值输入指引' },
-    { id: 'sec-write', label: '确认后操作' },
+    { id: 'sec-current', label: m('skill-calorie.exercise-precheck.c027') },
+    { id: 'sec-fill', label: m('skill-calorie.exercise-precheck.c028') },
+    { id: 'sec-write', label: m('skill-calorie.exercise-precheck.c029') },
   ];
   const content = [
     renderKpiGrid(cards),
     renderTocBlock({ items: sections.map((s) => ({ id: s.id, text: s.label })) }),
-    '<section id="sec-current">' + renderDisclosure({ title: '现值缺席说明', contentHtml: '<p>还没设每日运动消耗目标，所以这张对照页还出不来终页。下面先把目标值定下来。</p>' + currentTable(v), open: true }) + '</section>',
-    '<section id="sec-fill">' + renderDisclosure({ title: '目标值输入指引', contentHtml: '<p>目标值是每天要消耗的运动热量，须为正整数（卡）。下面确认后复制指令里的 300 只是示例，换成你要的值再跑。</p>' + fillTable(), open: true }) + '</section>',
-    '<section id="sec-write">' + renderDisclosure({ title: '确认后操作', contentHtml: '<p>确认后执行下面这条会改数据库的命令写入目标值，再重跑上面的查询命令看终页。本页只预检，不写库。</p>' + writeBlock(v), open: true }) + '</section>',
-    renderCaliberLine('完成度＝实际 ÷ 目标（本页还没有目标，不算完成度）'),
-    renderCaliberLine('这一页只预检，不写库'),
+    '<section id="sec-current">' + renderDisclosure({ title: m('skill-calorie.exercise-precheck.c030'), contentHtml: '<p>' + m('skill-calorie.exercise-precheck.c041') + '</p>' + currentTable(v), open: true }) + '</section>',
+    '<section id="sec-fill">' + renderDisclosure({ title: m('skill-calorie.exercise-precheck.c031'), contentHtml: '<p>' + m('skill-calorie.exercise-precheck.c042') + '</p>' + fillTable(), open: true }) + '</section>',
+    '<section id="sec-write">' + renderDisclosure({ title: m('skill-calorie.exercise-precheck.c032'), contentHtml: '<p>' + m('skill-calorie.exercise-precheck.c043') + '</p>' + writeBlock(v), open: true }) + '</section>',
+    renderCaliberLine(m('skill-calorie.exercise-precheck.c033')),
+    renderCaliberLine(m('skill-calorie.exercise-precheck.c034')),
     copyZone(v, envelope),
   ].join('');
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: PRECHECK_TITLE,
-    eyebrow: EYEBROW,
-    subtitle: '还没设每日运动消耗目标，先定目标值再看对照',
+    docTitle: m('skill-calorie.exercise-precheck.c038'),
+    title: m('skill-calorie.exercise-precheck.c037'),
+    eyebrow: m('skill-calorie.exercise-precheck.c039'),
+    subtitle: m('skill-calorie.exercise-precheck.c035'),
     content,
     printable: true,
     pageUi: true,

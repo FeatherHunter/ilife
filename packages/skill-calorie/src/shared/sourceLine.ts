@@ -10,6 +10,7 @@
  */
 import { renderCaliberLine } from 'base-paint/blocks';
 import { CalorieRenderError } from '../render/errors.js';
+import { m } from '../entries/index.js';
 
 function reqText(value: unknown, field: string): string {
   if (typeof value !== 'string' || value.trim() === '') {
@@ -31,9 +32,9 @@ export function sourceLine(input: { readonly source: string; readonly start: str
   if (!Number.isInteger(line.count) || line.count < 0) {
     throw new CalorieRenderError('bad-input', 'sourceLine: input.count 须为非负整数');
   }
-  const parts: string[] = ['数据来源'];
+  const parts: string[] = [m('skill-calorie.shared-sourceLine.c001')];
   if (typeof line.source === 'string' && line.source.trim() !== '') parts.push(line.source.trim());
   parts.push(start + ' → ' + end);
-  parts.push('共 ' + line.count + ' 条');
+  parts.push(m('skill-calorie.shared-sourceLine.c002', { p0: String(line.count) }));
   return renderCaliberLine(parts.join(' · '));
 }

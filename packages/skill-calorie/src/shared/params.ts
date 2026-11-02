@@ -14,6 +14,7 @@ import type { DatabaseSync } from 'node:sqlite';
 import { shiftISODate, todayISO } from '../analysis/utils.js';
 import { applyOffset, resolveDay, resolveWindow } from '../analysis/series.js';
 import { CalorieRenderError } from '../render/errors.js';
+import { m } from '../entries/index.js';
 
 export function fail(code: number, msg: string): never {
   console.error('ERR ' + code + ': ' + msg);
@@ -22,51 +23,51 @@ export function fail(code: number, msg: string): never {
 
 export function needStr(params: Record<string, unknown>, name: string): string {
   const v = params[name];
-  if (typeof v !== 'string' || v.length === 0) fail(2, '缺参数 ' + name);
+  if (typeof v !== 'string' || v.length === 0) fail(2, m('skill-calorie.shared-params.c001', { p0: String(name) }));
   return v as string;
 }
 
 export function optStr(params: Record<string, unknown>, name: string): string | undefined {
   const v = params[name];
   if (v === undefined || v === null) return undefined;
-  if (typeof v !== 'string') fail(2, '参数 ' + name + ' 须为字符串');
+  if (typeof v !== 'string') fail(2, m('skill-calorie.shared-params.c002', { p0: String(name) }));
   return v as string;
 }
 
 export function needNum(params: Record<string, unknown>, name: string): number {
   const v = params[name];
-  if (typeof v !== 'number' || !Number.isFinite(v)) fail(2, '缺参数 ' + name + '（须为有限 number）');
+  if (typeof v !== 'number' || !Number.isFinite(v)) fail(2, m('skill-calorie.shared-params.c003', { p0: String(name) }));
   return v as number;
 }
 
 export function optNum(params: Record<string, unknown>, name: string): number | undefined {
   const v = params[name];
   if (v === undefined || v === null) return undefined;
-  if (typeof v !== 'number' || !Number.isFinite(v)) fail(2, '参数 ' + name + ' 须为有限 number');
+  if (typeof v !== 'number' || !Number.isFinite(v)) fail(2, m('skill-calorie.shared-params.c004', { p0: String(name) }));
   return v as number;
 }
 
 export function optInt(params: Record<string, unknown>, name: string): number | undefined {
   const v = optNum(params, name);
   if (v === undefined) return undefined;
-  if (!Number.isInteger(v)) fail(2, '参数 ' + name + ' 须为整数');
+  if (!Number.isInteger(v)) fail(2, m('skill-calorie.shared-params.c005', { p0: String(name) }));
   return v as number;
 }
 
 export function needId(params: Record<string, unknown>, name = 'id'): number {
   const v = params[name];
-  if (typeof v !== 'number' || !Number.isInteger(v) || (v as number) <= 0) fail(2, '缺参数 ' + name + '（正整数记录 id）');
+  if (typeof v !== 'number' || !Number.isInteger(v) || (v as number) <= 0) fail(2, m('skill-calorie.shared-params.c006', { p0: String(name) }));
   return v as number;
 }
 
 export function needArr(params: Record<string, unknown>, name: string): unknown[] {
   const v = params[name];
-  if (!Array.isArray(v) || v.length === 0) fail(2, '缺参数 ' + name + '（非空数组）');
+  if (!Array.isArray(v) || v.length === 0) fail(2, m('skill-calorie.shared-params.c007', { p0: String(name) }));
   return v as unknown[];
 }
 
 export function assertISO(v: string, field: string): void {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) fail(2, field + ' 非法（须 YYYY-MM-DD）：' + v);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) fail(2, m('skill-calorie.shared-params.c008', { p0: String(field), p1: String(v) }));
 }
 
 /** 真日历检查（形状＋该月真有这一天；`#944` 边角一次收口）。
@@ -123,7 +124,7 @@ export function windowRange(params: Record<string, unknown>): { start: string; e
   }
   assertISO(s, 'start');
   assertISO(e, 'end');
-  if (s > e) fail(2, 'start 不得晚于 end');
+  if (s > e) fail(2, m('skill-calorie.shared-params.c009'));
   return { start: s, end: e };
 }
 
@@ -140,7 +141,7 @@ export function dayField(params: Record<string, unknown>, field: string): string
 /** 单日字段（必填）：相对词与显式日期都收；缺则按用法报 exit 2。 */
 export function needDay(params: Record<string, unknown>, field: string): string {
   const v = dayField(params, field);
-  if (!v) fail(2, '缺参数 ' + field);
+  if (!v) fail(2, m('skill-calorie.shared-params.c010', { p0: String(field) }));
   return v as string;
 }
 
@@ -157,7 +158,7 @@ export function wday(params: Record<string, unknown>, field: string): string | u
 /** 写命令的必填日期位（语义同 `wday`）。 */
 export function needWday(params: Record<string, unknown>, field: string): string {
   const v = wday(params, field);
-  if (!v) fail(2, '缺参数 ' + field);
+  if (!v) fail(2, m('skill-calorie.shared-params.c011', { p0: String(field) }));
   return v as string;
 }
 
@@ -183,14 +184,14 @@ export function defaultRange(db: DatabaseSync, params: Record<string, unknown>, 
   if (end) assertISO(end, 'end');
   if (start) assertISO(start, 'start');
   if (start && end) {
-    if (start > end) fail(2, 'start 不得晚于 end');
+    if (start > end) fail(2, m('skill-calorie.shared-params.c012'));
     return { start, end };
   }
   const latest = latestFoodDate(db) ?? todayISO();
   end = end ?? latest;
   assertISO(end, 'end');
   if (start) {
-    if (start > (end as string)) fail(2, 'start 不得晚于 end');
+    if (start > (end as string)) fail(2, m('skill-calorie.shared-params.c013'));
     return { start, end: end as string };
   }
   return { start: shiftISODate(end as string, -(defDays - 1)), end: end as string };

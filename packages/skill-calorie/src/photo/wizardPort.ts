@@ -22,6 +22,7 @@ import type { DatabaseSync } from 'node:sqlite';
 import { listPhotos } from './photos.js';
 import { toCard } from './photo.js';
 import { CalorieRenderError } from '../render/errors.js';
+import { m } from '../entries/index.js';
 
 const ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -74,13 +75,18 @@ function normSrcPaths(raw: unknown): string[] {
 
 export function buildPhotoLogWizardPrompt(srcPaths: string[], tag: string | null, note: string | null): string {
   // #474：两处缺项占位句去参数名、说人话（用户看不出 `srcPaths`／`tag` 指的是哪一栏）。
-  if (srcPaths.length === 0) return '// 还没填照片路径：把照片的完整路径粘到上面那一栏（最多 20 张）';
-  if (!tag) return '// 还没填标签：从上面的常用标签里点一个（同一类照片用同一个）';
+  if (srcPaths.length === 0) return m('skill-calorie.photo-wizardPort.c001');
+  if (!tag) return m('skill-calorie.photo-wizardPort.c002');
   const files = srcPaths.map((f) => '"' + f + '"').join(' ');
   const params = { srcPaths, tag, ...(note ? { note } : {}) };
-  return '请帮我记录 ' + srcPaths.length + ' 张身材照到卡路里\n\n参数:\n- 照片文件:' + files +
-    '\n- tag:' + tag + (note ? '\n- 备注:' + note : '') +
-    '\n\n命令:\n```bash\ncalorie-cmd-read calorie.photo.add --params \'' + JSON.stringify(params) + '\'\n```\n\n完成后返回写库回执。';
+  const noteLine = note ? m('skill-calorie.photo-wizardPort.c003', { p0: String(note) }) : '';
+  return m('skill-calorie.photo-wizardPort.c004', {
+    p0: String(srcPaths.length),
+    p1: String(files),
+    p2: String(tag),
+    p3: String(noteLine),
+    p4: String(JSON.stringify(params)),
+  });
 }
 
 export function buildPhotoLogWizardView(raw: Record<string, unknown>): PhotoLogWizardView {
@@ -101,7 +107,7 @@ export function buildPhotoLogWizardView(raw: Record<string, unknown>): PhotoLogW
 /** 过渡效果的中文词（#474）：表单下拉的 `option` 文本与 prompt 里的「- 过渡:」共用这一份，
  *  两处不许走散；**机器值仍是 `cut/fade/dissolve`**（命令段与校验口径一字未改）。 */
 export function transitionText(transition: string): string {
-  const map: Record<string, string> = { cut: '硬切', fade: '淡入淡出', dissolve: '溶解' };
+  const map: Record<string, string> = { cut: m('skill-calorie.photo-wizardPort.c005'), fade: m('skill-calorie.photo-wizardPort.c006'), dissolve: m('skill-calorie.photo-wizardPort.c007') };
   return map[transition] ?? transition;
 }
 
@@ -172,40 +178,54 @@ export function buildGifPlannerPrompt(v: {
   duration: number; loop: number; width: number; height: number;
   watermark: string | null; transition: string; output: string | null; tag: string | null;
 }): string {
-  if (v.selectedIds.length === 0) return '// 未选中任何照片（先按 tag 列出，再给 photoIds 框选）';
+  if (v.selectedIds.length === 0) return m('skill-calorie.photo-wizardPort.c008');
   const lines: string[] = [];
-  lines.push('请帮我生成身材变化 GIF');
+  lines.push(m('skill-calorie.photo-wizardPort.c009'));
   lines.push('');
-  lines.push('参数:');
-  lines.push('- 已选 ' + v.selectedIds.length + ' 张(按顺序):ID = ' + v.selectedIds.join(' '));
+  lines.push(m('skill-calorie.photo-wizardPort.c010'));
+  lines.push(m('skill-calorie.photo-wizardPort.c011', {
+    p0: String(v.selectedIds.length),
+    p1: String(v.selectedIds.join(' ')),
+  }));
   const cropIds = v.selectedIds.filter((id) => v.crops[String(id)]);
   if (cropIds.length > 0) {
-    lines.push('- 裁剪(每张单独):');
+    lines.push(m('skill-calorie.photo-wizardPort.c012'));
     for (const id of cropIds) {
       const [x1, y1, x2, y2] = v.crops[String(id)] as [number, number, number, number];
-      lines.push('    ' + id + ': (' + x1 + ', ' + y1 + ') ' + (x2 - x1) + '×' + (y2 - y1) + ' → 即 (' + x1 + ', ' + y1 + ', ' + x2 + ', ' + y2 + ')');
+      lines.push(m('skill-calorie.photo-wizardPort.c013', {
+        p0: String(id),
+        p1: String(x1),
+        p2: String(y1),
+        p3: String(x2 - x1),
+        p4: String(y2 - y1),
+        p5: String(x1),
+        p6: String(y1),
+        p7: String(x2),
+        p8: String(y2),
+      }));
     }
   } else {
-    lines.push('- 裁剪:无(整图)');
+    lines.push(m('skill-calorie.photo-wizardPort.c014'));
   }
-  lines.push('- 速度:' + v.duration + 'ms/帧');
-  lines.push('- 循环:' + (v.loop === 0 ? '无限循环' : v.loop + ' 次循环'));
-  lines.push('- 尺寸:' + v.width + '×' + v.height);
-  if (v.watermark) lines.push('- 水印:"' + v.watermark + '"');
+  lines.push(m('skill-calorie.photo-wizardPort.c015', { p0: String(v.duration) }));
+  const loopText = v.loop === 0 ? m('skill-calorie.photo-wizardPort.c016') : m('skill-calorie.photo-wizardPort.c017', { p0: String(v.loop) });
+  lines.push(m('skill-calorie.photo-wizardPort.c018', { p0: String(loopText) }));
+  lines.push(m('skill-calorie.photo-wizardPort.c019', { p0: String(v.width), p1: String(v.height) }));
+  if (v.watermark) lines.push(m('skill-calorie.photo-wizardPort.c020', { p0: String(v.watermark) }));
   // #474（审查整改 2）·「指令与下拉用同一个词」：这里落**下拉选项文本**（硬切／淡入淡出／溶解），
   //  与表单所见同一份词（`transitionText` 是两处唯一的措辞出处）。
   //  机器面一字未改：命令段 `--params` 与表单 `option value` 仍是 `cut`／`fade`／`dissolve`——
   //  参数字符串才是程序读的那面，`- 过渡:` 这行是给读者看的。
-  lines.push('- 过渡:' + transitionText(v.transition));
-  if (v.output) lines.push('- 输出:' + v.output);
+  lines.push(m('skill-calorie.photo-wizardPort.c021', { p0: String(transitionText(v.transition)) }));
+  if (v.output) lines.push(m('skill-calorie.photo-wizardPort.c022', { p0: String(v.output) }));
   lines.push('');
-  lines.push('命令:');
+  lines.push(m('skill-calorie.photo-wizardPort.c023'));
   lines.push('```bash');
-  const gifParams: Record<string, unknown> = { tag: v.tag ?? '正面' };
+  const gifParams: Record<string, unknown> = { tag: v.tag ?? m('skill-calorie.photo-wizardPort.c024') };
   lines.push('calorie-cmd-read calorie.photo.gif --params \'' + JSON.stringify(gifParams) + '\'');
   lines.push('```');
   lines.push('');
-  lines.push('完成后用浏览器打开生成的 GIF 文件让用户确认。');
+  lines.push(m('skill-calorie.photo-wizardPort.c025'));
   return lines.join('\n');
 }
 

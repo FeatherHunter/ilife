@@ -12,6 +12,7 @@ import type { CrudReceipt } from '../render/receipt.js';
 import { fail, needStr, optStr } from '../shared/params.js';
 import type { WriteOut } from '../shared/commandSpec.js';
 import { R, out } from '../shared/writeParts.js';
+import { m } from '../entries/index.js';
 
 /** 档案库列名 ↔ CLI 参数名（逐字段对照只用这 5 项，与 `PROFILE_UPDATABLE` 同集）。 */
 const PROFILE_COLS: Record<string, keyof ProfileRow> = {
@@ -34,12 +35,12 @@ function profileDiffItems(before: ProfileRow | null, after: ProfileRow, fields: 
 
 /** 设置档案／改档案的公共体：`isSet` 决定走单例 upsert 还是只改已有档案（无行时按用户裁定报错）。 */
 function profileUpsert(isSet: boolean, params: Record<string, unknown>, db: DatabaseSync): WriteOut {
-  const scene = isSet ? '设置档案' : '改档案';
-  const wake = isSet ? '设置档案' : '改档案';
+  const scene = isSet ? m('skill-calorie.profile-write.c001') : m('skill-calorie.profile-write.c002');
+  const wake = isSet ? m('skill-calorie.profile-write.c003') : m('skill-calorie.profile-write.c004');
   const picked: Record<string, unknown> = {};
   if (params['fields'] !== undefined) {
     const f = params['fields'];
-    if (typeof f !== 'object' || f === null || Array.isArray(f)) fail(2, 'fields 须为对象');
+    if (typeof f !== 'object' || f === null || Array.isArray(f)) fail(2, m('skill-calorie.profile-write.c005'));
     Object.assign(picked, f);
   } else if (params['field'] !== undefined) {
     picked[String(needStr(params, 'field'))] = params['value'];
@@ -49,14 +50,19 @@ function profileUpsert(isSet: boolean, params: Record<string, unknown>, db: Data
     }
   }
   for (const k of Object.keys(picked)) {
-    if (!['age', 'gender', 'heightCm', 'activityLevel', 'note'].includes(k)) fail(2, '不支持字段: ' + k);
+    if (!['age', 'gender', 'heightCm', 'activityLevel', 'note'].includes(k)) fail(2, m('skill-calorie.profile-write.c006', { p0: String(k) }));
   }
-  if (Object.keys(picked).length === 0) fail(2, '至少传 1 个档案字段');
+  if (Object.keys(picked).length === 0) fail(2, m('skill-calorie.profile-write.c007'));
   // #175 · 两条词分走各自的能力：`设置档案` 是单例 upsert（无行则建行），
   // `改档案` 只改已有档案（无行时按用户裁定报错，见 fetch/profile.ts 的空库守卫）。
   const r = isSet ? setProfile(db, picked) : updateProfile(db, picked);
   const after = r.after;
-  return out(R(scene, 'update', '已' + scene + '（身高 ' + (after.height_cm ?? '—') + ' · 年龄 ' + (after.age ?? '—') + ' · 活动量 ' + (after.activity_level ?? '—') + '）', wake, 'user_profile (写库回执)', {
+  return out(R(scene, 'update', m('skill-calorie.profile-write.c008', {
+    p0: String(scene),
+    p1: String(after.height_cm ?? '—'),
+    p2: String(after.age ?? '—'),
+    p3: String(after.activity_level ?? '—'),
+  }), wake, m('skill-calorie.profile-write.c009'), {
     recordId: 1, ids: [1], idSource: 'singleton', writtenFields: Object.keys(picked), noChange: r.changed.length === 0,
     // #179 · 改档案回执带逐字段对照（设置档案没有「改前」概念，items 保持空）。
     items: isSet ? [] : profileDiffItems(r.before, after, Object.keys(picked)),
@@ -76,9 +82,9 @@ export function writeProfileUpdate(params: Record<string, unknown>, db: Database
 /** `calorie.profile.activity` · 设活动量（单独一条词；不动其他档案字段）。 */
 export function writeProfileActivity(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
   const level = optStr(params, 'activityLevel') ?? optStr(params, 'level') ?? '';
-  if (!level.trim()) fail(2, '缺参数 activityLevel');
+  if (!level.trim()) fail(2, m('skill-calorie.profile-write.c010'));
   const r = setActivityLevel(db, level);
-  return out(R('设活动量', 'update', '已设活动量：' + (r.before ?? '—') + '→' + r.after, '设活动量', 'user_profile (写库回执)', {
+  return out(R(m('skill-calorie.profile-write.c011'), 'update', m('skill-calorie.profile-write.c012', { p0: String(r.before ?? '—'), p1: String(r.after) }), m('skill-calorie.profile-write.c013'), m('skill-calorie.profile-write.c014'), {
     recordId: 1, ids: [1], idSource: 'singleton', writtenFields: ['activityLevel'], noChange: r.before === r.after,
   }));
 }

@@ -35,6 +35,7 @@ import {
   assertISO, dayField, daysIn, defaultRange, fail, latestFoodDate, nums, optNum, optStr, windowRange,
 } from '../shared/params.js';
 import type { ViewOut } from '../shared/commandSpec.js';
+import { m } from '../entries/index.js';
 
 /** `calorie.view.home` · 今日总览：`windowDays` 1..90（无窗口参数时默认 7）；
  *  `section` 选视图（`overview` 今日主页／`week` 本周主页／`streak` 连续记录天数／`budget` 今日热量预算／
@@ -46,10 +47,10 @@ export function viewHomeToday(params: Record<string, unknown>, db: DatabaseSync)
   const date = win?.end ?? dayField(params, 'date') ?? dayField(params, 'today') ?? latestFoodDate(db) ?? todayISO();
   assertISO(date, 'date');
   const windowDays = win ? daysIn(win) : (optNum(params, 'windowDays') ?? 7);
-  if (!Number.isInteger(windowDays) || windowDays < 1 || windowDays > 90) fail(2, 'windowDays 须为 1..90 整数');
+  if (!Number.isInteger(windowDays) || windowDays < 1 || windowDays > 90) fail(2, m('skill-calorie.home-today.c001'));
   const rawSection = optStr(params, 'section');
   if (rawSection !== undefined && !(HOME_SECTIONS as readonly string[]).includes(rawSection)) {
-    fail(2, 'section 须为 ' + HOME_SECTIONS.join('／') + ' 之一');
+    fail(2, m('skill-calorie.home-today.c002', { p0: String(HOME_SECTIONS.join('／')) }));
   }
   const section = (rawSection ?? 'overview') as HomeSection;
   const h = buildHomeData(db, date, windowDays as number);
@@ -111,13 +112,16 @@ export function viewDietOverview(params: Record<string, unknown>, db: DatabaseSy
     if (mealView !== undefined) {
       return { data: { metrics: {} }, html: buildMealDistributionPage(mealView, command) };
     }
+    const entryText = entry === ENTRY_OVERVIEW ? m('skill-calorie.home-today.c003') : m('skill-calorie.home-today.c004');
+    const dayWord = end === todayISO() ? '今天' : m('skill-calorie.home-today.c005');
+  const rangeWord = start === end ? dayWord : m('skill-calorie.home-today.c006');
     return {
       data: { metrics: {} },
       html: buildEmptyWindowDoc({
         key: 'calorie.view.diet',
-        metaLeft: (entry === ENTRY_OVERVIEW ? '看饮食总览' : '饮食总览') + ' · 饮食',
-        title: '🍽️ 饮食总览 ' + start + ' ~ ' + end,
-        blockTitle: '窗口读数',
+        metaLeft: m('skill-calorie.home-today.c007', { p0: String(entryText) }),
+        title: m('skill-calorie.home-today.c008', { p0: String(start), p1: String(end) }),
+        blockTitle: m('skill-calorie.home-today.c009'),
         /* 空态句只回答用户一个问题：**哪一段没有记录**（2026-09-25 用户裁定「从第一性原理出发、以用户的视角，
            不能有废话或者多余的话」）。三处删文：
              · 区间括号整段撤——页题那一行就是 `起 ~ 止`，同样一段日期在标题下再说一遍是纯重复；
@@ -125,11 +129,11 @@ export function viewDietOverview(params: Record<string, unknown>, db: DatabaseSy
              · 「（不编数）」是给复核者看的政策注，不是给用户看的话。
            期别改由**人话**给：单日且是今天就写「今天」，别的单日写「这一天」，多日写「这一段时间」
            （多日时区间仍住页题，不在这里复述）。 */
-        emptyText: (start === end ? (end === todayISO() ? '今天' : '这一天') : '这一段时间') + '没有饮食记录。',
+        emptyText: m('skill-calorie.home-today.c010', { p0: String(rangeWord) }),
         /* 引导句只留「下一句该说什么」两句并列，删掉「要让它有内容」（废话：这页本来就要有内容）与
            「把吃的那顿记上／就说」这类垫字。 */
-        guide: '说「记一餐」记下吃的；补以前的日期说「补记饮食」。',
-        footnote: '📊 数据来源 · 饮食记录 · ' + start + ' → ' + end,
+        guide: m('skill-calorie.home-today.c011'),
+        footnote: m('skill-calorie.home-today.c012', { p0: String(start), p1: String(end) }),
         command,
       }),
     };
@@ -169,13 +173,13 @@ export function viewDietOverview(params: Record<string, unknown>, db: DatabaseSy
    *  与 `src/triggers/scene-02-diet.ts` 里那 8 条窗口词的 `window` 参数逐字对应；
    *  表外（`entry=overview` 那条总览词、`今日` 概览词）回落「饮食总览」。 */
   const WINDOW_TITLE: Record<string, string> = {
-    '昨日': '昨日饮食', '本周': '本周饮食', '上周': '上周饮食', '本月': '本月饮食', '上月': '上月饮食',
-    '7d': '最近 7 天饮食', '30d': '最近 30 天饮食', 'custom': '某段时间饮食',
+    '昨日': m('skill-calorie.home-today.c013'), '本周': m('skill-calorie.home-today.c014'), '上周': m('skill-calorie.home-today.c015'), '本月': m('skill-calorie.home-today.c016'), '上月': m('skill-calorie.home-today.c017'),
+    '7d': m('skill-calorie.home-today.c018'), '30d': m('skill-calorie.home-today.c019'), 'custom': m('skill-calorie.home-today.c020'),
   };
   return { data: { metrics }, html: buildViewDietDoc({
     overview: o, dist, distDate: date as string, days: o.series,
     meals: mealSlice, mealTotal, mealsTruncated: mealTotal > MEAL_CAP, command,
-    title: WINDOW_TITLE[optStr(params, 'window') ?? ''] ?? '饮食总览',
+    title: WINDOW_TITLE[optStr(params, 'window') ?? ''] ?? m('skill-calorie.home-today.c021'),
     /* 只在给了 `meal` 时带上这一个位：`buildViewDietDoc` 一见它就整页换餐别分布页
        （`render/dietDocs.ts`），并带上本次命令原文供复制区用。 */
     ...(mealView === undefined
@@ -271,7 +275,7 @@ function loadGoalProgress(db: DatabaseSync, start: string, end: string, historyD
 export function viewGoalProgress(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
   const { start, end } = defaultRange(db, params);
   const historyDays = optNum(params, 'historyDays') ?? 30;
-  if (!Number.isInteger(historyDays) || (historyDays as number) < 1 || (historyDays as number) > 365) fail(2, 'historyDays 须为 1..365 整数');
+  if (!Number.isInteger(historyDays) || (historyDays as number) < 1 || (historyDays as number) > 365) fail(2, m('skill-calorie.home-today.c022'));
   const command = goalProgressCommand(start, end, optStr(params, 'window') ?? null);
   const loaded = loadGoalProgress(db, start, end, historyDays as number);
   const doc = {

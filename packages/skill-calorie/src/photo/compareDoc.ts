@@ -41,25 +41,36 @@ import { PHOTO_LIST_PAGE_MAX_BYTES } from './galleryDoc.js';
 import { embedPhotos, type PhotoEmbed } from './photoThumb.js';
 import { chipRow, intervalStrip, noteSegments, photoUiCss } from './photoUi.js';
 import type { CompareData, PhotoCard } from './photo.js';
+import { m } from '../entries/index.js';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；测试钉死一致）。 */
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
 
 /** 本页 head 标题（整页模板住 `src/shared/docPage.ts`，标题走参数）。
- *  #526：`卡路里·身材照片` 里的 `·` 是符号顶替版面，改空格。 */
-const DOC_TITLE = '卡路里 身材照片';
+ *  取词在**调用时**发生（模块级常量不得在顶层取词：语言由运行期上下文决定）。 */
+function docTitle(): string {
+  return m('skill-calorie.photo-compareDoc.c022');
+}
 
 /** 本页小节标题的类名（#467 先例那把尺，不新造样式）。 */
 const H2_CLASS = 'ilife-block-kpi-card-title';
 
 /** 复制日志第 3 段后半的数据来源（前半＝库文件名，由 `shared/copyArea.ts` 的 `copyLog` 拼）。 */
-const LOG_SOURCE = 'body_photos（两张照片记录）';
+/** 复制日志第 3 段后半的数据来源（前半＝库文件名，由 `shared/copyArea.ts` 的 `copyLog` 拼）。
+ *  取词在**调用时**发生（模块级常量不得在顶层取词）。 */
+function logSource(): string {
+  return m('skill-calorie.photo-compareDoc.c023');
+}
 
 /** 标签不一样时给读者的判语与建议（#473 那句人话的语义，#526 收成**一条结论条**：
  *  原来同一件事在 KPI 卡、提醒行两处各说一遍；括号里那对 `正面／侧面` 改由卡片自己的徽章说）。 */
-const CROSS_TAG_TEXT = '这两张的标签不一样，放在一起看不出真实变化。建议挑同角度的两张再对比。';
-const SAME_TAG_TEXT = '两张标签一样，放在一起可以直接对照看变化。';
+function crossTagText(): string {
+  return m('skill-calorie.photo-compareDoc.c024');
+}
+function sameTagText(): string {
+  return m('skill-calorie.photo-compareDoc.c025');
+}
 
 function fileKeyOf(photoPath: string): string {
   return photoPath.split('/').pop()?.split('\\').pop() ?? photoPath;
@@ -70,10 +81,10 @@ function fileKeyOf(photoPath: string): string {
 function relTime(date: string, today: string): string {
   const days = Math.round((Date.parse(today + 'T12:00:00Z') - Date.parse(date + 'T12:00:00Z')) / 86400000);
   if (days <= 0) return '今天';
-  if (days === 1) return '昨天';
-  if (days < 30) return days + ' 天前';
-  if (days < 365) return Math.round(days / 30) + ' 个月前';
-  return Math.round(days / 365) + ' 年前';
+  if (days === 1) return m('skill-calorie.photo-compareDoc.c001');
+  if (days < 30) return m('skill-calorie.photo-compareDoc.c002', { p0: String(days) });
+  if (days < 365) return m('skill-calorie.photo-compareDoc.c003', { p0: String(Math.round(days / 30)) });
+  return m('skill-calorie.photo-compareDoc.c004', { p0: String(Math.round(days / 365)) });
 }
 
 /** 什么时候拍的：`2026-05-30 17:44`（秒位不进页面）。 */
@@ -91,22 +102,21 @@ function cardHtml(p: PhotoCard, e: PhotoEmbed | undefined, dropped: boolean, tod
   const fileName = e?.fileName ?? fileKeyOf(p.photoPath);
   const shown = !dropped && e?.dataUri;
   const stage = shown
-    ? '<div class="phu-shot"><img src="' + e?.dataUri + '" alt="身材照 ' + p.id
-      + '" style="max-width:100%;width:100%;height:100%;object-fit:cover" /></div>'
+    ? '<div class="phu-shot"><img src="' + e?.dataUri + '" alt="' + m('skill-calorie.photo-compareDoc.c026', { p0: String(p.id) }) + '" style="max-width:100%;width:100%;height:100%;object-fit:cover" /></div>'
     : (() => {
       // #526 收口第二轮：占位改用公共层同规格媒体占位件（`renderMediaPlaceholder`，与真图同一段框体装配）。
       // 「为什么没显示」由页顶那条提示块**一处**说；这一格说**哪一份文件 ＋ 这一张该怎么办**。
-      const next = dropped ? '想看原图：自己打开这份文件' : '把文件放回照片目录就会有图';
-      const why = dropped ? '这一张太大，没放进本页' : '照片记录还在，文件不在照片目录里';
+      const next = dropped ? m('skill-calorie.photo-compareDoc.c005') : m('skill-calorie.photo-compareDoc.c006');
+      const why = dropped ? m('skill-calorie.photo-compareDoc.c007') : m('skill-calorie.photo-compareDoc.c008');
       return '<div class="phu-shot">' + renderMediaPlaceholder({
-        alt: '身材照 ' + p.id, ratio: '4-5',
-        reason: '没显示：' + fileName, next: (noticeCovers ? '' : why + '。') + next,
+        alt: m('skill-calorie.photo-compareDoc.c009', { p0: String(p.id) }), ratio: '4-5',
+        reason: m('skill-calorie.photo-compareDoc.c010', { p0: String(fileName) }), next: (noticeCovers ? '' : why + '。') + next,
       }) + '</div>';
     })();
-  const tags = p.tagList.length > 0 ? [...p.tagList] : ['无标签'];
+  const tags = p.tagList.length > 0 ? [...p.tagList] : [m('skill-calorie.photo-compareDoc.c011')];
   return '<figure class="phu-card" data-id="' + p.id + '" style="flex:1 1 240px;min-width:0">' + stage
     + '<figcaption class="phu-cap"><div class="phu-when">' + escapeHtml(whenText(p)) + '</div>'
-    + chipRow(['编号 ' + p.id, ...tags, relTime(p.date, today)])
+    + chipRow([m('skill-calorie.photo-compareDoc.c012', { p0: String(p.id) }), ...tags, relTime(p.date, today)])
     + '<div class="phu-file"><code>' + escapeHtml(fileName) + '</code></div>'
     + (p.note === null || p.note === '' ? ''
       : '<div class="phu-file"><span class="phu-segs">' + noteSegments(p.note) + '</span></div>')
@@ -118,8 +128,8 @@ function cardHtml(p: PhotoCard, e: PhotoEmbed | undefined, dropped: boolean, tod
 function detailRows(c: CompareData, dropped: ReadonlySet<string>): Array<Record<string, unknown>> {
   return [c.photo1, c.photo2].map((p) => ({
     id: p.id, date: p.date, tags: p.tagList.join(' ') || '—',
-    status: p.fileExists === false ? '缺文件'
-      : (dropped.has(fileKeyOf(p.photoPath)) ? '太大没显示' : (p.fileExists === null ? '没核对' : '')),
+    status: p.fileExists === false ? m('skill-calorie.photo-compareDoc.c013')
+      : (dropped.has(fileKeyOf(p.photoPath)) ? m('skill-calorie.photo-compareDoc.c014') : (p.fileExists === null ? m('skill-calorie.photo-compareDoc.c015') : '')),
   }));
 }
 
@@ -139,8 +149,8 @@ function budgetNoticeHtml(embeds: readonly PhotoEmbed[], dropped: ReadonlySet<st
   const names = embeds.filter((e) => dropped.has(e.fileName)).map((e) => e.fileName);
   return notice({
     // #499 钉死的两句（`photo-shape-read-281` 逐字断言）：提示块**一处**点名哪张没显示＋替代操作。
-    msg: '这两张里有一张太大，本页没显示：' + names.map(escapeHtml).join('，'),
-    detail: '可以打开文件名自己看，或改查单张详情分开看',
+    msg: m('skill-calorie.photo-compareDoc.c016', { p0: String(names.map(escapeHtml).join('，')) }),
+    detail: m('skill-calorie.photo-compareDoc.c017'),
   });
 }
 
@@ -149,13 +159,13 @@ function recordTable(c: CompareData, dropped: ReadonlySet<string>): string {
   const rows = detailRows(c, dropped);
   const withStatus = rows.some((r) => r['status'] !== '');
   const columns = [
-    { key: 'id', label: '编号', align: 'right' as const },
+    { key: 'id', label: m('skill-calorie.photo-compareDoc.c018'), align: 'right' as const },
     { key: 'date', label: '日期' },
-    { key: 'tags', label: '标签' },
+    { key: 'tags', label: m('skill-calorie.photo-compareDoc.c019') },
     ...(withStatus ? [{ key: 'status', label: '状态' }] : []),
   ];
   return '<section><h2 class="' + H2_CLASS + '">两张照片的原始记录</h2>'
-    + renderDataTable({ columns, rows, emptyText: '无对照明细' }) + '</section>';
+    + renderDataTable({ columns, rows, emptyText: m('skill-calorie.photo-compareDoc.c020') }) + '</section>';
 }
 
 /** 复制区（#654）：三格式数据 ＋ 复制日志六段（口径与 `galleryDoc.copyAreaOf` 同形：
@@ -174,7 +184,7 @@ function copyAreaOf(c: CompareData, command: string): string {
     data: { envelope },
     log: {
       envelope,
-      copyLog: copyLog({ command, source: LOG_SOURCE, actionAt: nowStamp(), version: DOC_VERSION }),
+      copyLog: copyLog({ command, source: logSource(), actionAt: nowStamp(), version: DOC_VERSION }),
     },
   });
 }
@@ -184,7 +194,7 @@ function contentOf(c: CompareData, embeds: readonly PhotoEmbed[], dropped: Reado
   const today = todayISO();
   const parts: string[] = [photoUiCss()];
   // 判语一处说（#526）：标签一样／不一样＋该怎么做，原来这层意思在 KPI 卡与提醒行各说一遍。
-  parts.push(renderConclusionBar(c.crossTagWarning ? CROSS_TAG_TEXT : SAME_TAG_TEXT));
+  parts.push(renderConclusionBar(c.crossTagWarning ? crossTagText() : sameTagText()));
   parts.push(intervalOf(c));
   if (dropped.size > 0) parts.push(budgetNoticeHtml(embeds, dropped));
   // #484：两张并排（宽屏）／上下排列（窄屏）——折行容器＋可压窄的卡，两卡都放得下才不溢出。
@@ -201,10 +211,10 @@ function contentOf(c: CompareData, embeds: readonly PhotoEmbed[], dropped: Reado
 
 function shellOf(c: CompareData, content: string): string {
   return assembleDocPage({
-    docTitle: DOC_TITLE,
+    docTitle: docTitle(),
     // #526：标题不再挂「· 间隔 N 天」（那半句已成间隔条），副标题也不再写 `日期 vs 日期`
     //（两张日期就在间隔条的两端，同一事实不第二遍）。
-    title: '对比两张照片',
+    title: m('skill-calorie.photo-compareDoc.c021'),
     eyebrow: '',
     subtitle: null,
     content,

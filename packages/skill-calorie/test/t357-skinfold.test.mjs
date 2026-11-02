@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { openDb } from '../dist/index.js';
 import { CALIPER_FIELDS } from '../dist/fetch/body.js';
-import { JP7_METHOD, jp7BodyFatPct } from '../dist/body/log.js';
+import { jp7BodyFatPct, jp7Method } from '../dist/body/log.js';
 import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
 import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
 // #676 · 测试隔离基座：配置目录（库目录／训记状态目录一并）指到本次运行的临时目录，真库与真实家目录零接触。
@@ -161,7 +161,7 @@ test('可见文本含算法出处（Jackson-Pollock），且不含写死的 18.5
   const c = BASE[0];
   const env = runWrite(dir, { source: 'home_caliper', sex: 'male', age: c.age, date: '2026-09-06', ...caliperParams(c.calipers) });
   assert.equal(env.data.message, env.data.receipt.summary);
-  assert.ok(env.data.message.includes(JP7_METHOD), '回执可见文本应含算法出处：' + env.data.message);
+  assert.ok(env.data.message.includes(jp7Method()), '回执可见文本应含算法出处：' + env.data.message);
   assert.match(env.data.message, /Jackson-Pollock/);
   assert.match(env.data.message, /12\.02%/, '换算值应出现在可见文本里');
   assert.equal(env.data.message.includes('18.5'), false, '可见文本不许出现写死的 18.5');

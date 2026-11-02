@@ -15,13 +15,14 @@ import type { WriteOut } from '../shared/commandSpec.js';
 import { photoDirOrThrow } from './dir.js';
 import { embedPhotos } from './photoThumb.js';
 import { buildPhotoAddDoc } from './receipt.js';
+import { m } from '../entries/index.js';
 
 /** `calorie.photo.add` · 记身材照（至多 20 张；源文件都不存在即 missing-data，不写半条空记录）。 */
 export function writePhotoAdd(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
   const raw = params['srcPaths'] ?? params['srcPath'];
   const srcPaths = (Array.isArray(raw) ? raw : [raw]).filter((s) => typeof s === 'string' && (s as string).length > 0) as string[];
-  if (srcPaths.length === 0) fail(2, '缺参数 srcPaths（照片源文件路径数组）');
-  if (srcPaths.length > 20) fail(2, 'srcPaths 至多 20 张');
+  if (srcPaths.length === 0) fail(2, m('skill-calorie.photo-store.c001'));
+  if (srcPaths.length > 20) fail(2, m('skill-calorie.photo-store.c002'));
   const tag = needStr(params, 'tag');
   const dir = photoDirOrThrow(params);
   const today = wday(params, 'date') ?? todayISO();

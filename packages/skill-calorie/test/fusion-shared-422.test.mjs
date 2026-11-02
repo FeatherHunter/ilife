@@ -19,7 +19,7 @@ import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 
-import { OPERATION_ICONS, OPERATION_LABELS, OPERATION_TONES, operationHead } from '../dist/shared/operationHead.js';
+import { OPERATION_ICONS, OPERATION_TONES, operationHead, operationLabel } from '../dist/shared/operationHead.js';
 import { fieldLabel, registerFieldLabels } from '../dist/shared/fieldLabel.js';
 import { sourceLine } from '../dist/shared/sourceLine.js';
 import { emptyGuide } from '../dist/shared/emptyGuide.js';
@@ -96,9 +96,8 @@ function result(name, value, files) {
 /* ── ① 六件各自可单独调起 ─────────────────────────────────────────────── */
 
 test('四态头：三张表只在一处定义 ＋ 操作卡头部（图标＋状标签＋标题＋记录号＋时刻行）', () => {
-  assert.deepEqual(Object.keys(OPERATION_LABELS).sort(), ['add', 'create', 'delete', 'update']);
-  assert.equal(OPERATION_LABELS.update, '修改');
-  assert.equal(OPERATION_LABELS.delete, '删除');
+  // #1219：标签表改为按需取词（`operationLabel(op)`），四态键面与逐值仍在本件一处。
+  assert.deepEqual(['create', 'add', 'update', 'delete'].map(operationLabel), ['新增', '新增', '修改', '删除']);
   assert.deepEqual(OPERATION_TONES, { create: 'ok', add: 'ok', update: 'warn', delete: 'danger' });
   assert.deepEqual(OPERATION_ICONS, { create: '✓', add: '✓', update: '✎', delete: '✕' });
 
@@ -222,7 +221,8 @@ test('单源：四态标签表的中文标签同键只在一处', () => {
   result('单源-四态图标表-键值绑定命中文件数', iconHits.length, iconHits);
   assert.deepEqual(iconHits, ['skill-calorie/src/shared/operationHead.ts'], '四态图标表须只在一处');
 
-  const labelHits = filesMatching(skill, /duration_minutes\s*:\s*'时长'/);
+  // #1219：标签值改为按需取词（`m(...)`），判据钉「键 → 本域词条」的绑定，仍只许一处。
+  const labelHits = filesMatching(skill, /duration_minutes\s*:\s*m\('skill-calorie\.exercise-fieldLabels\./);
   result('单源-运动域字段标签表-命中文件数', labelHits.length, labelHits);
   assert.equal(labelHits.length, 1, '运动域字段标签表当刻只有一处：' + labelHits.join('、'));
 });

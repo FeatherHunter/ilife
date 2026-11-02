@@ -26,9 +26,11 @@ import type { SegNavIcon } from 'base-paint';
 import { renderChartBlock, renderDataTable, renderDistributionRows, renderListRows } from 'base-paint/blocks';
 import { seriesSum } from '../analysis/series.js';
 import type { DaySeries } from '../analysis/series.js';
-import { DEFICIT_CALIBER, equationBlock, todayCards } from './homeCards.js';
+import { deficitCaliber, equationBlock, todayCards } from './homeCards.js';
 import type { HomeNavItem } from './homeFrame.js';
 import type { HomeData } from './home.js';
+import { m } from '../entries/index.js';
+import type { SkillCalorieMessageId } from '../entries/index.js';
 
 /** 视图档名（`section` 参数的五个合法值；登记在 `src/home/routes.ts` 的 `cli` 里）。 */
 export type HomeSection = 'overview' | 'week' | 'streak' | 'budget' | 'month';
@@ -61,31 +63,31 @@ export interface HomeViewBody {
  *  段标题的 emoji 是「这块是什么」，导航的图标是「点这个去哪」——两套图形共用一套清单就够。 */
 
 const OVERVIEW_SECTIONS = {
-  overview: { id: 'sec-overview', icon: '🔥', name: '今日速览', nav: 'grid' },
-  trend: { id: 'sec-trend', icon: '📈', name: '每日摄入', nav: 'line' },
-  daily: { id: 'sec-daily', icon: '📊', name: '按日汇总', nav: 'table' },
+  overview: { id: 'sec-overview', icon: '🔥', name: 'skill-calorie.home-homeViewParts.c047', nav: 'grid' },
+  trend: { id: 'sec-trend', icon: '📈', name: 'skill-calorie.home-homeViewParts.c048', nav: 'line' },
+  daily: { id: 'sec-daily', icon: '📊', name: 'skill-calorie.home-homeViewParts.c049', nav: 'table' },
 } as const;
 
 const WEEK_SECTIONS = {
-  week: { id: 'sec-week', icon: '📅', name: '窗内概览', nav: 'grid' },
-  trend: { id: 'sec-trend', icon: '📈', name: '每日摄入', nav: 'line' },
-  days: { id: 'sec-days', icon: '📋', name: '逐日明细', nav: 'table' },
+  week: { id: 'sec-week', icon: '📅', name: 'skill-calorie.home-homeViewParts.c050', nav: 'grid' },
+  trend: { id: 'sec-trend', icon: '📈', name: 'skill-calorie.home-homeViewParts.c048', nav: 'line' },
+  days: { id: 'sec-days', icon: '📋', name: 'skill-calorie.home-homeViewParts.c051', nav: 'table' },
 } as const;
 
 const STREAK_SECTIONS = {
-  streak: { id: 'sec-streak', icon: '🏅', name: '连续记录', nav: 'goal' },
-  daily: { id: 'sec-daily', icon: '📊', name: '按日汇总', nav: 'table' },
+  streak: { id: 'sec-streak', icon: '🏅', name: 'skill-calorie.home-homeViewParts.c052', nav: 'goal' },
+  daily: { id: 'sec-daily', icon: '📊', name: 'skill-calorie.home-homeViewParts.c049', nav: 'table' },
 } as const;
 
 const BUDGET_SECTIONS = {
-  budget: { id: 'sec-budget', icon: '🎯', name: '今日预算', nav: 'goal' },
-  quota: { id: 'sec-quota', icon: '🧮', name: '今日账', nav: 'table' },
+  budget: { id: 'sec-budget', icon: '🎯', name: 'skill-calorie.home-homeViewParts.c053', nav: 'goal' },
+  quota: { id: 'sec-quota', icon: '🧮', name: 'skill-calorie.home-homeViewParts.c054', nav: 'table' },
 } as const;
 
 /** 段标题的**文本形状**（图标 ＋ 空格 ＋ 名）：与 `homeDocs.ts::secTitle` 同形；两件各有一份清单，
  *  因为两件管的区块不同，形状判据（emoji 每块一枚）逐字一致。 */
-export function partTitle(section: { readonly icon: string; readonly name: string }): string {
-  return section.icon + ' ' + section.name;
+export function partTitle(section: { readonly icon: string; readonly name: SkillCalorieMessageId }): string {
+  return section.icon + ' ' + m(section.name);
 }
 
 /* ── 共用小区块 ──────────────────────────────────────────────────────────── */
@@ -109,15 +111,15 @@ function quotaBlock(d: HomeData): string {
   const bar = d.caloriePct === null || d.caloriePct === undefined
     ? ''
     : renderDistributionRows({ rows: [
-      { label: '热量预算用掉', value: Math.round(d.caloriePct) + '%', pct: d.caloriePct },
+      { label: m('skill-calorie.home-homeViewParts.c001'), value: Math.round(d.caloriePct) + '%', pct: d.caloriePct },
     ] });
   return bar + renderListRows({
     items: [
-      { main: '已摄入', right: fmt(cal) + ' 卡' },
-      { main: '目标', right: goal === null || goal === undefined ? '未设目标' : goal + ' 卡' },
-      { main: '今日消耗', right: fmt(d.burnToday) + ' 卡' },
+      { main: m('skill-calorie.home-homeViewParts.c002'), right: m('skill-calorie.home-homeViewParts.c003', { p0: String(fmt(cal)) }) },
+      { main: m('skill-calorie.home-homeViewParts.c004'), right: goal === null || goal === undefined ? m('skill-calorie.home-homeViewParts.c005') : m('skill-calorie.home-homeViewParts.c006', { p0: String(goal) }) },
+      { main: m('skill-calorie.home-homeViewParts.c007'), right: m('skill-calorie.home-homeViewParts.c008', { p0: String(fmt(d.burnToday)) }) },
     ],
-    emptyText: '今日还没有账',
+    emptyText: m('skill-calorie.home-homeViewParts.c009'),
   });
 }
 
@@ -135,10 +137,10 @@ function chartSection(series: DaySeries[], avgIntake: number | null, day: (date:
       options: {
         connectNulls: true, yMin: 0,
         yTicks: 3, labels: 'select', format: (v: number) => String(Math.round(v)),
-        markLine: { value: avgIntake ?? undefined, label: '周均' },
+        markLine: { value: avgIntake ?? undefined, label: m('skill-calorie.home-homeViewParts.c010') },
       },
     },
-  }) + factLine('这条虚线是周均摄入，只算有记录的天。') + '</section>';
+  }) + factLine(m('skill-calorie.home-homeViewParts.c011')) + '</section>';
 }
 
 /** 按日表的行（两档共用）：倒序＝最近的一天在最上；今日那行标记「（今日）」（`DataTableInput`
@@ -147,7 +149,7 @@ function dayRows(input: HomeViewInput, logged?: (s: DaySeries) => string): Reado
   const { d } = input;
   const day = input.day ?? ((x: string) => x);
   return d.week.series.slice().reverse().map((s) => ({
-    date: s.date === d.date ? day(s.date) + '（今日）' : day(s.date),
+    date: s.date === d.date ? m('skill-calorie.home-homeViewParts.c012', { p0: String(day(s.date)) }) : day(s.date),
     cal: s.calories ?? '—',
     ...(logged === undefined ? { deficit: s.deficit ?? '—' } : { logged: logged(s) }),
   }));
@@ -155,28 +157,28 @@ function dayRows(input: HomeViewInput, logged?: (s: DaySeries) => string): Reado
 
 const DAY_COLS = [
   { key: 'date', label: '日期' },
-  { key: 'cal', label: '摄入（卡）', align: 'right' as const },
+  { key: 'cal', label: m('skill-calorie.home-homeViewParts.c055'), align: 'right' as const },
 ];
 
 /** 按日汇总表（`overview` 档）：日期／摄入／缺口三列。 */
 function dailyTable(input: HomeViewInput): string {
   return renderDataTable({
-    columns: [...DAY_COLS, { key: 'deficit', label: '缺口（卡）', align: 'right' }],
+    columns: [...DAY_COLS, { key: 'deficit', label: m('skill-calorie.home-homeViewParts.c013'), align: 'right' }],
     rows: dayRows(input),
     caption: partTitle(OVERVIEW_SECTIONS.daily),
-    emptyText: '本窗无按日汇总',
+    emptyText: m('skill-calorie.home-homeViewParts.c014'),
   });
 }
 
 /** 记录情况表（`streak` 档）：日期／摄入／记录情况三列——**记录情况**是这一档的主角，逐日看得见
  *  哪一天断了；与 `overview` 的「缺口」列不同列、不同表名，两份产物逐行不同。 */
 function recordTable(input: HomeViewInput): string {
-  const logged = (s: DaySeries): string => (s.calories === null || s.calories === undefined ? '无记录' : '有记录');
+  const logged = (s: DaySeries): string => (s.calories === null || s.calories === undefined ? m('skill-calorie.home-homeViewParts.c015') : m('skill-calorie.home-homeViewParts.c016'));
   return renderDataTable({
-    columns: [...DAY_COLS, { key: 'logged', label: '记录情况' }],
+    columns: [...DAY_COLS, { key: 'logged', label: m('skill-calorie.home-homeViewParts.c017') }],
     rows: dayRows(input, logged),
     caption: partTitle(STREAK_SECTIONS.daily),
-    emptyText: '本窗无按日汇总',
+    emptyText: m('skill-calorie.home-homeViewParts.c018'),
   });
 }
 
@@ -212,17 +214,17 @@ function lastGap(series: DaySeries[]): string | null {
  *  **一条一句一行**（不拼 `；` 串——`；` 表示该内容还欠一次版式设计，见 `.scratch/sep-audit/probe.mjs` 口径）。
  *  返数组，由调用方逐句过 `factLine()`；今天没记录时只有一句。 */
 function streakLead(d: HomeData): readonly string[] {
-  if (d.streakDays === 0) return ['今天还没有记录——记一餐就从今天起算。'];
+  if (d.streakDays === 0) return [m('skill-calorie.home-homeViewParts.c019')];
   const first = d.week.series[d.week.series.length - d.streakDays]?.date ?? d.date;
   const gap = lastGap(d.week.series);
   return [
-    '连续记录从 ' + first + ' 起到今天，' + d.streakDays + ' 天没有断。',
-    gap === null ? '窗内没有断点。' : '上一个断点是 ' + gap + '。',
+    m('skill-calorie.home-homeViewParts.c020', { p0: String(first), p1: String(d.streakDays) }),
+    gap === null ? m('skill-calorie.home-homeViewParts.c021') : m('skill-calorie.home-homeViewParts.c022', { p0: String(gap) }),
   ];
 }
 
 /** 一个区块的开头：`<section id=…>` ＋ 段标题（KPI 网格那三块没有标题槽，标题由本页自产）。 */
-function openSection(sec: { readonly id: string; readonly icon: string; readonly name: string }): string {
+function openSection(sec: { readonly id: string; readonly icon: string; readonly name: SkillCalorieMessageId }): string {
   return '<section id="' + sec.id + '"><h2 class="ilife-block-kpi-card-title">' + partTitle(sec) + '</h2>';
 }
 
@@ -231,7 +233,7 @@ function openSection(sec: { readonly id: string; readonly icon: string; readonly
 function tocOf(
   list: readonly { readonly id: string; readonly name: string; readonly nav: SegNavIcon }[],
 ): HomeViewBody['toc'] {
-  return list.map((s) => ({ id: s.id, text: s.name, icon: s.nav }));
+  return list.map((s) => ({ id: s.id, text: m(s.name as SkillCalorieMessageId), icon: s.nav }));
 }
 
 /* ── 各档的正文（区块清单 ＋ 页内导航项，两份同源）────────────────────────── */
@@ -245,12 +247,12 @@ function overviewBody(input: HomeViewInput): HomeViewBody {
   const charts = d.week.series.some(hasData);
   const sections: string[] = [
     openSection(OVERVIEW_SECTIONS.overview)
-      + factLine('今日 ' + todayCards(d).length + ' 项，目标取当前配置。')
-      + input.todayCards + equationBlock(d) + factLine(DEFICIT_CALIBER) + '</section>',
+      + factLine(m('skill-calorie.home-homeViewParts.c023', { p0: String(todayCards(d).length) }))
+      + input.todayCards + equationBlock(d) + factLine(deficitCaliber()) + '</section>',
   ];
   if (charts) sections.push(chartSection(d.week.series, d.week.avgIntake, day));
   sections.push('<section id="' + OVERVIEW_SECTIONS.daily.id + '">' + dailyTable(input)
-    + factLine('缺口是消耗减摄入的差。缺数一律写 —。') + '</section>');
+    + factLine(m('skill-calorie.home-homeViewParts.c024')) + '</section>');
   return {
     sections, charts,
     toc: tocOf(charts
@@ -270,11 +272,11 @@ function weekBody(input: HomeViewInput): HomeViewBody {
   // 没有可见标题的 `<section>` 上，读者点过去只见一片清单、认不出这块叫什么（清单产出器无标题槽）。
   sections.push(openSection(WEEK_SECTIONS.days) + renderListRows({
     items: d.week.series.slice().reverse().map((s) => ({
-      main: s.date === d.date ? day(s.date) + '（今日）' : day(s.date),
-      right: hasData(s) ? s.calories + ' 卡' : '无记录',
+      main: s.date === d.date ? m('skill-calorie.home-homeViewParts.c025', { p0: String(day(s.date)) }) : day(s.date),
+      right: hasData(s) ? m('skill-calorie.home-homeViewParts.c026', { p0: String(s.calories) }) : m('skill-calorie.home-homeViewParts.c027'),
     })),
-    emptyText: '本窗没有逐日明细',
-  }) + factLine('逐日一行：那天摄入多少卡，没记录的那天写无记录。') + '</section>');
+    emptyText: m('skill-calorie.home-homeViewParts.c028'),
+  }) + factLine(m('skill-calorie.home-homeViewParts.c029')) + '</section>');
   return {
     sections, charts,
     toc: tocOf(charts
@@ -291,10 +293,10 @@ function streakBody(input: HomeViewInput): HomeViewBody {
     sections: [
       openSection(STREAK_SECTIONS.streak)
         + streakLead(d).map(factLine).join('') + input.streakCards
-        + factLine('连续记录只算有饮食记录的天。当前 ' + d.streakDays + ' 天，窗内最长 ' + best + ' 天。')
+        + factLine(m('skill-calorie.home-homeViewParts.c030', { p0: String(d.streakDays), p1: String(best) }))
         + '</section>',
       '<section id="' + STREAK_SECTIONS.daily.id + '">' + recordTable(input)
-        + factLine('记录情况只看那一天有没有数据。缺数一律写 —。') + '</section>',
+        + factLine(m('skill-calorie.home-homeViewParts.c031')) + '</section>',
     ],
     charts: false,
     toc: tocOf([STREAK_SECTIONS.streak, STREAK_SECTIONS.daily]),
@@ -311,13 +313,13 @@ function budgetBody(input: HomeViewInput): HomeViewBody {
     sections: [
       openSection(BUDGET_SECTIONS.budget)
         + factLine(left === null
-          ? '热量目标还没有，先在「定营养目标」里设一个。'
+          ? m('skill-calorie.home-homeViewParts.c032')
           : left >= 0
-            ? '目标减去已摄入，今天还能吃 ' + left + ' 卡。'
-            : '目标已经用满，还超出了 ' + -left + ' 卡。')
+            ? m('skill-calorie.home-homeViewParts.c033', { p0: String(left) })
+            : m('skill-calorie.home-homeViewParts.c034', { p0: String(-left) }))
         + input.budgetCards + '</section>',
       openSection(BUDGET_SECTIONS.quota) + quotaBlock(d)
-        + factLine('预算是目标这一侧的账：已摄入从目标里扣，消耗不顶预算。') + '</section>',
+        + factLine(m('skill-calorie.home-homeViewParts.c035')) + '</section>',
     ],
     charts: false,
     toc: tocOf([BUDGET_SECTIONS.budget, BUDGET_SECTIONS.quota]),
@@ -338,12 +340,12 @@ export const HOME_VIEW_BODIES: Readonly<Record<HomeSection, (input: HomeViewInpu
 /** 五档的**页名**（页头 H1）：只说这一页拿哪一块当主角——窗口区间全页只住副题一处，不在这里复述。 */
 export function viewTitle(section: HomeSection, d: HomeData): string {
   switch (section) {
-    case 'overview': return d.week.windowDays <= 1 ? '今日总览' : '近 ' + d.week.windowDays + ' 天总览';
-    case 'week': return '本周主页';
-    case 'streak': return '连续记录 ' + d.streakDays + ' 天';
-    case 'budget': return '今日热量预算';
-    case 'month': return '本月主页';
-    default: return '今日总览';
+    case 'overview': return d.week.windowDays <= 1 ? m('skill-calorie.home-homeViewParts.c056') : m('skill-calorie.home-homeViewParts.c057', { p0: String(d.week.windowDays) });
+    case 'week': return m('skill-calorie.home-homeViewParts.c058');
+    case 'streak': return m('skill-calorie.home-homeViewParts.c059', { p0: String(d.streakDays) });
+    case 'budget': return m('skill-calorie.home-homeViewParts.c060');
+    case 'month': return m('skill-calorie.home-homeViewParts.c061');
+    default: return m('skill-calorie.home-homeViewParts.c036');
   }
 }
 
@@ -354,24 +356,27 @@ export function viewConclusion(section: HomeSection, d: HomeData): string {
   const cal = d.daily.totals.cal;
   const goal = d.calorieGoal;
   if ((section === 'overview' || section === 'budget') && d.daily.entryCount === 0) {
-    return '今天还没有记录。记一餐，完成度与缺口就有数了。';
+    return m('skill-calorie.home-homeViewParts.c037');
   }
   if (section === 'streak') {
     return d.streakDays === 0
-      ? '今天还没有记录，连续记录今天会断。'
-      : '连续记录已经 ' + d.streakDays + ' 天，今天继续记就不会断。';
+      ? m('skill-calorie.home-homeViewParts.c038')
+      : m('skill-calorie.home-homeViewParts.c039', { p0: String(d.streakDays) });
   }
   if (section === 'budget') {
-    if (goal === null || goal === undefined) return '热量目标还没有，先在「定营养目标」里设一个。';
+    if (goal === null || goal === undefined) return m('skill-calorie.home-homeViewParts.c040');
     const left = goal - cal;
-    return left < 0 ? '今日已超热量目标 ' + -left + ' 卡，明天把摄入压回目标内。' : '今日预算还剩 ' + left + ' 卡。';
+    return left < 0 ? m('skill-calorie.home-homeViewParts.c041', { p0: String(-left) }) : m('skill-calorie.home-homeViewParts.c042', { p0: String(left) });
   }
   if (section === 'week' || section === 'month') {
-    return '窗内有记录 ' + d.week.loggedDays + ' 天，日均摄入 ' + fmt(d.week.avgIntake) + ' 卡。';
+    return m('skill-calorie.home-homeViewParts.c043', {
+      p0: String(d.week.loggedDays),
+      p1: String(fmt(d.week.avgIntake)),
+    });
   }
-  if (goal === null || goal === undefined) return '热量目标还没有，先在「定营养目标」里设一个。';
+  if (goal === null || goal === undefined) return m('skill-calorie.home-homeViewParts.c044');
   const left = goal - cal;
   return left < 0
-    ? '今日已超热量目标 ' + -left + ' 卡，明天把摄入压回目标内。'
-    : '热量在目标内，距目标还差 ' + left + ' 卡。';
+    ? m('skill-calorie.home-homeViewParts.c045', { p0: String(-left) })
+    : m('skill-calorie.home-homeViewParts.c046', { p0: String(left) });
 }

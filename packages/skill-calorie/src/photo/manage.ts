@@ -15,6 +15,7 @@ import type { WriteOut } from '../shared/commandSpec.js';
 import { photoDirOrThrow } from './dir.js';
 import { embedPhoto } from './photoThumb.js';
 import { buildPhotoRemoveDoc, buildPhotoTagDoc } from './receipt.js';
+import { m } from '../entries/index.js';
 
 /** `calorie.photo.remove` · 删身材照（硬删除；查不到即 missing-data）。 */
 export function writePhotoRemove(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
@@ -35,7 +36,7 @@ export function writePhotoRemove(params: Record<string, unknown>, db: DatabaseSy
 export function writePhotoTag(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
   const id = needId(params);
   const op = needStr(params, 'op');
-  if (op !== 'set' && op !== 'add' && op !== 'remove') fail(2, 'op 须为 set/add/remove：' + op);
+  if (op !== 'set' && op !== 'add' && op !== 'remove') fail(2, m('skill-calorie.photo-manage.c001', { p0: String(op) }));
   const row = getPhotoRow(db, id);
   if (!row) throw new CalorieRenderError('missing-data', '身材照 #' + id + ' 不存在');
   const before = [...row.tag_list];
@@ -44,7 +45,7 @@ export function writePhotoTag(params: Record<string, unknown>, db: DatabaseSync)
   if (op === 'set') {
     const raw = params['tags'] ?? params['tag'];
     const tags = Array.isArray(raw) ? (raw as unknown[]).map(String) : parseTags(typeof raw === 'string' ? raw : '');
-    if (tags.length === 0) fail(2, '缺参数 tags（新标签全量）');
+    if (tags.length === 0) fail(2, m('skill-calorie.photo-manage.c002'));
     updateTag(db, id, serializeTags(tags));
     scene = '改照片标签';
   } else if (op === 'add') {
@@ -53,7 +54,7 @@ export function writePhotoTag(params: Record<string, unknown>, db: DatabaseSync)
     scene = '加照片标签';
   } else {
     const tag = needStr(params, 'tag');
-    if (parseTags(tag).length !== 1) fail(2, '删标签一次只删 1 个');
+    if (parseTags(tag).length !== 1) fail(2, m('skill-calorie.photo-manage.c005'));
     tagRemove(db, id, tag);
     scene = '删照片标签';
   }

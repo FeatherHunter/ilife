@@ -13,17 +13,26 @@ import type { DatabaseSync } from 'node:sqlite';
 import { buildCrudReceipt } from '../render/receipt.js';
 import type { CrudReceipt, M5IdSource } from '../render/receipt.js';
 import type { WriteOut } from './commandSpec.js';
+import { m } from '../entries/index.js';
 
 /** 删除口径单一来源（prose 词条 ＋ `items[].status` 状态串同源派生）。
  * `recoverable` 恒 false：全仓 0 个 restore/undo/recover 入口，故不得出现「可恢复」承诺。 */
-export const SOFT_EXCLUDED_INNER = '软删除：行保留，已从查询与统计中排除；暂无恢复入口';
-export const SOFT_EXCLUDED = '（' + SOFT_EXCLUDED_INNER + '）';
-export const HARD_INNER = '硬删除，不可恢复';
-export const HARD_WORDING = '（' + HARD_INNER + '）';
+export function softExcludedInner(): string {
+  return m('skill-calorie.shared-writeParts.c004');
+}
+export function softExcluded(): string {
+  return m('skill-calorie.shared-writeParts.c005', { p0: softExcludedInner() });
+}
+export function hardInner(): string {
+  return m('skill-calorie.shared-writeParts.c006');
+}
+export function hardWording(): string {
+  return m('skill-calorie.shared-writeParts.c007', { p0: hardInner() });
+}
 
 /** 状态串与 prose 同源：kind 决定「软/硬」，两者一律带「不可恢复」。 */
-export function deleteStatus(kind: 'soft' | 'hard', base = '已删除'): string {
-  return base + (kind === 'soft' ? '（软，不可恢复）' : '（硬，不可恢复）');
+export function deleteStatus(kind: 'soft' | 'hard', base = m('skill-calorie.shared-writeParts.c001')): string {
+  return base + (kind === 'soft' ? m('skill-calorie.shared-writeParts.c002') : m('skill-calorie.shared-writeParts.c003'));
 }
 
 export function esc(s: unknown): string {

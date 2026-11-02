@@ -32,7 +32,7 @@ import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { openDb } from '../dist/index.js';
 import { buildExerciseReceiptDoc } from '../dist/exercise/receipt.js';
-import { OPERATION_ICONS, OPERATION_LABELS, OPERATION_TONES } from '../dist/shared/operationHead.js';
+import { OPERATION_ICONS, OPERATION_TONES, operationLabel } from '../dist/shared/operationHead.js';
 import { assertDocPage } from './doc-page-assert.mjs';
 import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
 import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
@@ -428,9 +428,8 @@ test('#423 状态卡判空：没有写入也没有改动 → KPI 区整块不出
 });
 
 test('#423 四态头三表单源（#422 共用件逐值）', () => {
-  assert.deepEqual(Object.keys(OPERATION_LABELS).sort(), ['add', 'create', 'delete', 'update']);
   assert.deepEqual(
-    ['create', 'add', 'update', 'delete'].map((op) => OPERATION_LABELS[op]),
+    ['create', 'add', 'update', 'delete'].map((op) => operationLabel(op)),
     ['新增', '新增', '修改', '删除'],
   );
   assert.deepEqual(

@@ -25,6 +25,14 @@ import { buildGoalRecommendDoc } from './goalRecommendDoc.js';
 import { buildGoalConfigDoc, buildGoalDoc, buildGoalExpiringDoc, buildGoalStatusDoc, buildGoalVsActualDoc } from './resultDocs.js';
 import { buildGoalWeightDoc } from './goalWeightDoc.js';
 import { buildGoalDraft, isGoalProfile } from './set.js';
+import { m } from '../entries/index.js';
+import { GOAL_ROUTES } from './routes.js';
+
+/** 命令面唤醒词是冻结资产（不译）：按路由序号从唯一来源取，本件不重写一份中文。 */
+const wakeOfOrder = (order: number): string => GOAL_ROUTES.find((r) => r.order === order)?.wakeWord ?? '';
+const WAKE_PAUSE = wakeOfOrder(229);
+const WAKE_RESUME = wakeOfOrder(230);
+const WAKE_CHANGES: readonly string[] = [226, 227, 228].map(wakeOfOrder);
 
 /** `calorie.view.goal` · 目标分析（完成度 ＋ 缺口 ＋ 趋势 ＋ 历史）。
  * #254 整页化：页面装配改走 `./resultDocs.ts::buildGoalDoc`（取数口径一行不动；
@@ -63,7 +71,7 @@ export function viewGoalConfig(params: Record<string, unknown>, db: DatabaseSync
  * 旧 `renderGoalRecommendHtml` 片段按票面留在 `../render/html.ts`，本票不删）。 */
 export function viewGoalRecommend(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
   const profile = optStr(params, 'profile') ?? 'cut';
-  if (!['cut', 'maintain', 'bulk'].includes(profile)) fail(2, 'profile 非法（cut/maintain/bulk）：' + profile);
+  if (!['cut', 'maintain', 'bulk'].includes(profile)) fail(2, m('skill-calorie.goal-read.c001', { p0: String(profile) }));
   const g = buildGoalRecommend(db, profile);
   const metrics = nums({
     calorieGoal: g.recommend.calorieGoal, proteinGoal: g.recommend.proteinGoal, carbsGoal: g.recommend.carbsGoal,
@@ -129,12 +137,12 @@ export function viewGoalWizard(params: Record<string, unknown>, db: DatabaseSync
   }
   const wakeWord = optStr(params, 'wake') ?? null;
   // #252 · 暂停/重启不出预检页（没有可确认的内容），直接用法阻断，不落盘。
-  if (wakeWord === '暂停所有目标' || wakeWord === '重启所有目标') {
+  if (wakeWord === WAKE_PAUSE || wakeWord === WAKE_RESUME) {
     throw new CalorieRenderError('bad-input', '暂停／重启不出预检页（没有可确认的内容，直接跑写命令）');
   }
   const draft = buildGoalDraft(db, { profile: profileRaw === undefined ? null : profileRaw });
   // #252 · 改类词空库阻断：无目标行时 exit4 不落盘；定类空库 exit0 照常出页。
-  if ((wakeWord === '改营养目标' || wakeWord === '改体重目标' || wakeWord === '改饮水目标') && draft.current === null) {
+  if (wakeWord !== null && WAKE_CHANGES.includes(wakeWord) && draft.current === null) {
     throw new CalorieRenderError('missing-data', '尚无目标（先定目标，再改目标）');
   }
   const hit = wakeWord === null ? null : TRIGGERS.find((t) => t.wake_word === wakeWord) ?? null;

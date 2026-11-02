@@ -33,6 +33,7 @@ import type {
 import { TRIGGERS } from '../triggers/index.js';
 import type { SceneTrigger, Trigger } from '../triggers/index.js';
 import { routesFor } from '../triggers/routing.js';
+import { m } from '../entries/index.js';
 /** 换行（仓库口径：`String.fromCharCode(10)`，不写字面 `\n`）。 */
 const LF = String.fromCharCode(10);
 
@@ -306,8 +307,12 @@ export function buildHelpSceneData(opts: HelpSceneDataOptions = {}): SceneData {
     (total, group) => total + group.subgroups.reduce((sub, item) => sub + item.scenes.length, 0),
     0,
   );
-  const subtitle = String(rendered.length) + ' 分类 · ' + String(sceneCount) + ' 场景'
-    + (updatedAt === undefined ? '' : ' · 更新于 ' + updatedAt);
+  const updatedNote = updatedAt === undefined ? '' : m('skill-calorie.photo-helpScene.c001', { p0: String(updatedAt) });
+  const subtitle = m('skill-calorie.photo-helpScene.c002', {
+    p0: String(String(rendered.length)),
+    p1: String(String(sceneCount)),
+    p2: String(updatedNote),
+  });
 
   return {
     skill_name: HELP_SKILL_NAME,

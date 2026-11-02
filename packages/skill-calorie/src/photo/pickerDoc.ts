@@ -30,22 +30,29 @@ import { assembleDocPage } from '../shared/docPage.js';
 import { copyArea, copyLog, notice, promptCopyArea } from '../shared/copyArea.js';
 import { nowStamp } from '../render/receipt.js';
 import { todayISO } from '../analysis/utils.js';
-import { embedPhoto, embedPhotosWithinBudget, type PhotoEmbed } from './photoThumb.js';
+import { EMBED_BUDGET_REASON, embedPhoto, embedPhotosWithinBudget, type PhotoEmbed } from './photoThumb.js';
 import { PHOTO_LIST_PAGE_MAX_BYTES } from './galleryDoc.js';
 import { chipRow, factRows, photoUiCss } from './photoUi.js';
 import type { PhotoCard } from './photo.js';
 import type { PhotoPickerView } from './picker.js';
+import { m } from '../entries/index.js';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；测试钉死一致）。 */
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
 
 /** 本页 head 标题（整页模板住 `src/shared/docPage.ts`，标题走参数）。
- *  #527：`·` 是符号顶替版面（题名不是并列语义），改空格。 */
-const DOC_TITLE = '卡路里 身材照片';
+ *  取词在**调用时**发生（模块级常量不得在顶层取词：语言由运行期上下文决定）。 */
+function docTitle(): string {
+  return m('skill-calorie.photo-pickerDoc.c057');
+}
 
 /** 复制日志第 3 段后半的数据来源（前半＝库文件名，由 `shared/copyArea.ts` 的 `copyLog` 拼）。 */
-const LOG_SOURCE = 'body_photos（候选窗照片，本页只读不删）';
+/** 复制日志第 3 段后半的数据来源（前半＝库文件名，由 `shared/copyArea.ts` 的 `copyLog` 拼）。
+ *  取词在**调用时**发生（模块级常量不得在顶层取词）。 */
+function logSource(): string {
+  return m('skill-calorie.photo-pickerDoc.c058');
+}
 
 /** 逐张内嵌的**大小上限**：#527 首定。超过它的候选**不内嵌字节**、改出同规格占位件——
  *  这是呈现层的退让（页面字节有界），不改 `photoThumb` 的 `PHOTO_EMBED_MAX_BYTES`（那是能力上限），
@@ -59,10 +66,10 @@ function relTime(date: string, today: string): string {
   const days = Math.round((Date.parse(today + 'T12:00:00Z') - Date.parse(date + 'T12:00:00Z')) / 86400000);
   if (!Number.isFinite(days) || days < 0) return '';
   if (days === 0) return '今天';
-  if (days === 1) return '昨天';
-  if (days < 30) return days + ' 天前';
-  if (days < 365) return Math.round(days / 30) + ' 个月前';
-  return Math.round(days / 365) + ' 年前';
+  if (days === 1) return m('skill-calorie.photo-pickerDoc.c001');
+  if (days < 30) return m('skill-calorie.photo-pickerDoc.c002', { p0: String(days) });
+  if (days < 365) return m('skill-calorie.photo-pickerDoc.c003', { p0: String(Math.round(days / 30)) });
+  return m('skill-calorie.photo-pickerDoc.c004', { p0: String(Math.round(days / 365)) });
 }
 
 /** 拍的日子只留 `07-17`（年份这一页用不上）；相对时间单独一条事实。 */
@@ -83,22 +90,23 @@ function candidateGridHtml(
     const key = p.photoPath.split('/').pop()?.split('\\').pop() ?? p.photoPath;
     const e: PhotoEmbed | undefined = byName.get(key);
     const shown = e?.dataUri != null;
+    const missText = e?.missing ?? m('skill-calorie.photo-pickerDoc.c005');
     const stage = shown
-      ? '<div class="phu-shot"><img src="' + (e as PhotoEmbed).dataUri + '" alt="身材照 ' + p.id
+      ? '<div class="phu-shot"><img src="' + (e as PhotoEmbed).dataUri + '" alt="' + m('skill-calorie.photo-pickerDoc.c059', { p0: String(p.id) })
         + '" style="max-width:100%;width:100%;height:100%;object-fit:cover" /></div>'
       : '<div class="phu-shot">' + renderMediaPlaceholder({
-        alt: '身材照 ' + p.id,
+        alt: m('skill-calorie.photo-pickerDoc.c006', { p0: String(p.id) }),
         ratio: '4-5',
         // 两种「没上图」分开说：预算没排上（#461）说页面放不下，其余按读文件的失败原因说。
         reason: skipReason.has(key)
-          ? ('这一页装不下这么多图：' + key)
-          : ('照片没放进这一页：' + key + '（' + (e?.missing ?? '未知原因') + '）'),
-        next: skipReason.has(key) ? '想先看它：按文件名自己打开，确认过再按下面的编号让我删' : '把文件放回照片目录再跑一次',
+          ? m('skill-calorie.photo-pickerDoc.c007', { p0: String(key) })
+          : m('skill-calorie.photo-pickerDoc.c008', { p0: String(key), p1: String(missText) }),
+        next: skipReason.has(key) ? m('skill-calorie.photo-pickerDoc.c009') : m('skill-calorie.photo-pickerDoc.c010'),
       }) + '</div>';
-    const tags = p.tagList.length > 0 ? [...p.tagList] : ['无标签'];
+    const tags = p.tagList.length > 0 ? [...p.tagList] : [m('skill-calorie.photo-pickerDoc.c011')];
     const rel = relTime(p.date, today);
     const bad = p.fileExists === false
-      ? ' ' + renderStatusBadge({ status: 'danger', text: '找不到文件' })
+      ? ' ' + renderStatusBadge({ status: 'danger', text: m('skill-calorie.photo-pickerDoc.c012') })
       : '';
     return '<figure class="phu-card" data-id="' + p.id + '">' + stage
       + '<figcaption class="phu-cap"><div class="phu-cap-no">照片 ' + p.id + bad + '</div>'
@@ -114,31 +122,35 @@ function candidateGridHtml(
  *  #461：这一张的字节由调用方先算好（`snapInlined` 与预算里那份**同一个判据**），本件不再自己读文件。 */
 function snapshotHtml(sel: PhotoCard | null, e: PhotoEmbed | null, snapInlined: boolean, today: string): string {
   if (!sel) {
-    return '<h2 class="phu-sec" id="phu-snapshot">快照</h2>'
-      + renderEmptyBlock({ text: '还没说要删哪张：把上面某张的编号说给我（例如 19），我放大给你看' });
+    return '<h2 class="phu-sec" id="phu-snapshot">' + m('skill-calorie.photo-pickerDoc.c061') + '</h2>'
+      + renderEmptyBlock({ text: m('skill-calorie.photo-pickerDoc.c013') });
   }
   // #484：快照是「放大给你看」的那一张（页内文案就这么写的），故不跟着候选缩略图一起收小。
+  const missWord = e?.missing ?? m('skill-calorie.photo-pickerDoc.c014');
   const stage = snapInlined
-    ? '<div class="phu-snap"><img src="' + (e?.dataUri ?? '') + '" alt="快照' + sel.id
+    ? '<div class="phu-snap"><img src="' + (e?.dataUri ?? '') + '" alt="' + m('skill-calorie.photo-pickerDoc.c060', { p0: String(sel.id) })
       + '" style="max-width:100%;max-height:60vh;width:100%;height:auto;object-fit:contain" /></div>'
     : renderMediaPlaceholder({
-      alt: '快照 ' + sel.id,
+      alt: m('skill-calorie.photo-pickerDoc.c015', { p0: String(sel.id) }),
       ratio: '4-5',
-      reason: '这一张放不进页面：' + (e?.fileName ?? sel.photoPath) + '（' + (e?.missing ?? '原图太大') + '）',
-      next: '想删它：按文件名自己打开最后确认一次，再复制下面的指令',
+      reason: m('skill-calorie.photo-pickerDoc.c016', {
+        p0: String(e?.fileName ?? sel.photoPath),
+        p1: String(missWord),
+      }),
+      next: m('skill-calorie.photo-pickerDoc.c017'),
     });
   const rel = relTime(sel.date, today);
-  return '<h2 class="phu-sec" id="phu-snapshot">快照</h2>'
+  return '<h2 class="phu-sec" id="phu-snapshot">' + m('skill-calorie.photo-pickerDoc.c061') + '</h2>'
     + '<figure class="phu-card" data-snapshot="' + sel.id + '">' + stage
     + '<figcaption class="phu-cap">'
     + '<div class="phu-cap-no">快照 照片 ' + sel.id + '</div>'
     + factRows([
-      { k: '拍摄', v: sel.date + (sel.time === null ? '' : ' ' + sel.time) },
-      { k: '距今天数', v: rel === '' ? '算不出来' : rel },
-      { k: '标签', v: sel.tagList.join('、') || '无标签' },
-      ...(sel.note === null || sel.note === '' ? [] : [{ k: '备注', v: sel.note }]),
-      { k: '文件', v: sel.photoPath },
-      ...(sel.fileExists === false ? [{ k: '文件核对', v: '照片记录还在，文件不在照片目录里（删不掉）' }] : []),
+      { k: m('skill-calorie.photo-pickerDoc.c018'), v: sel.date + (sel.time === null ? '' : ' ' + sel.time) },
+      { k: m('skill-calorie.photo-pickerDoc.c019'), v: rel === '' ? m('skill-calorie.photo-pickerDoc.c020') : rel },
+      { k: m('skill-calorie.photo-pickerDoc.c021'), v: sel.tagList.join('、') || m('skill-calorie.photo-pickerDoc.c022') },
+      ...(sel.note === null || sel.note === '' ? [] : [{ k: m('skill-calorie.photo-pickerDoc.c023'), v: sel.note }]),
+      { k: m('skill-calorie.photo-pickerDoc.c024'), v: sel.photoPath },
+      ...(sel.fileExists === false ? [{ k: m('skill-calorie.photo-pickerDoc.c025'), v: m('skill-calorie.photo-pickerDoc.c026') }] : []),
     ])
     + '</figcaption></figure>';
 }
@@ -160,7 +172,7 @@ function copyAreaOf(v: PhotoPickerView, command: string): string {
     data: { envelope },
     log: {
       envelope,
-      copyLog: copyLog({ command, source: LOG_SOURCE, actionAt: nowStamp(), version: DOC_VERSION }),
+      copyLog: copyLog({ command, source: logSource(), actionAt: nowStamp(), version: DOC_VERSION }),
     },
   });
 }
@@ -180,11 +192,11 @@ export function buildPhotoPickerDoc(v: PhotoPickerView, photosDir: string | null
   const snapInlined = snap !== null && snap.dataUri !== null && (snap.bytes ?? 0) <= PICKER_INLINE_MAX_BYTES;
   const snapBytes = snapInlined ? Buffer.byteLength(snap?.dataUri ?? '', 'utf8') : 0;
   const shell = (content: string): string => assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '删照候选',
+    docTitle: docTitle(),
+    title: m('skill-calorie.photo-pickerDoc.c027'),
     // #530：眉标原来是 `删照片 · 只看不删`（探针 R1 命中：`·` 串两件事）→ 改括号式。
-    eyebrow: '删照片（只看不删）',
-    subtitle: '先看候选，点开一张确认，再复制指令让我删',
+    eyebrow: m('skill-calorie.photo-pickerDoc.c028'),
+    subtitle: m('skill-calorie.photo-pickerDoc.c029'),
     content,
     // #527 收口：本页原先漏了 `pageUi` 位（同 `gifDoc`）⇒ 公共层媒体件的规则整段没进页，
     //  超预算候选走的 `renderMediaPlaceholder`（公共件）因此没有框体样式。家族其余页都接了，
@@ -197,29 +209,29 @@ export function buildPhotoPickerDoc(v: PhotoPickerView, photosDir: string | null
     const missCount = v.candidates.filter((p) => p.fileExists === false).length;
     const budgetCount = cantSee - missCount;
     const parts: string[] = [photoUiCss()];
-    parts.push(chipRow(['本页列 ' + v.candidates.length + ' 张', v.truncated ? '库里还有 ' + (v.fullCount - v.candidates.length) + ' 张' : '']));
+    parts.push(chipRow([m('skill-calorie.photo-pickerDoc.c030', { p0: String(v.candidates.length) }), v.truncated ? m('skill-calorie.photo-pickerDoc.c031', { p0: String(v.fullCount - v.candidates.length) }) : '']));
     parts.push(renderTocBlock({ items: v.selected === null
-      ? [{ id: 'phu-candidates', text: '候选照片' }]
-      : [{ id: 'phu-candidates', text: '候选照片' }, { id: 'phu-snapshot', text: '快照' }] }));
+      ? [{ id: 'phu-candidates', text: m('skill-calorie.photo-pickerDoc.c032') }]
+      : [{ id: 'phu-candidates', text: m('skill-calorie.photo-pickerDoc.c033') }, { id: 'phu-snapshot', text: m('skill-calorie.photo-pickerDoc.c034') }] }));
     parts.push(renderKpiGrid([
-      { label: '本页显示', value: String(v.candidates.length), unit: '张', detail: v.truncated ? '库里还有 ' + (v.fullCount - v.candidates.length) + ' 张没列出来' : '全部列出来了' },
-      { label: '已选', value: v.selected ? '照片 ' + v.selected.id : '未选', detail: v.selected ? (v.selectedInList ? '在候选窗内' : '不在当前候选窗内') : '先选再看快照' },
+      { label: m('skill-calorie.photo-pickerDoc.c035'), value: String(v.candidates.length), unit: m('skill-calorie.photo-pickerDoc.c036'), detail: v.truncated ? m('skill-calorie.photo-pickerDoc.c037', { p0: String(v.fullCount - v.candidates.length) }) : m('skill-calorie.photo-pickerDoc.c038') },
+      { label: m('skill-calorie.photo-pickerDoc.c039'), value: v.selected ? m('skill-calorie.photo-pickerDoc.c040', { p0: String(v.selected.id) }) : m('skill-calorie.photo-pickerDoc.c041'), detail: v.selected ? (v.selectedInList ? m('skill-calorie.photo-pickerDoc.c042') : m('skill-calorie.photo-pickerDoc.c043')) : m('skill-calorie.photo-pickerDoc.c044') },
       cantSee > 0
-        ? { label: '能看', value: String(okCount), unit: '张', detail: missCount > 0 ? missCount + ' 张文件找不到' : '还有几张放不下', status: 'warn', statusText: '有看不见的' }
-        : { label: '能看', value: String(okCount), unit: '张', detail: '全部都能看' },
+        ? { label: m('skill-calorie.photo-pickerDoc.c045'), value: String(okCount), unit: m('skill-calorie.photo-pickerDoc.c046'), detail: missCount > 0 ? m('skill-calorie.photo-pickerDoc.c047', { p0: String(missCount) }) : m('skill-calorie.photo-pickerDoc.c048'), status: 'warn', statusText: m('skill-calorie.photo-pickerDoc.c049') }
+        : { label: m('skill-calorie.photo-pickerDoc.c050'), value: String(okCount), unit: m('skill-calorie.photo-pickerDoc.c051'), detail: m('skill-calorie.photo-pickerDoc.c052') },
     ]));
     // 页顶提示块（#438 口径：计数一处说 ＋ 给替代操作；本页的替代操作是「按编号挑着删」）。
     // 「这一页放不下」的件数只在这里说一次——读数卡的说明栏只说文件缺失那一档（同一事实一页一处）。
     if (budgetCount > 0) {
       parts.push(notice({
-        msg: '还有 ' + budgetCount + ' 张没进这一页',
-        detail: '一页装不下这么多图。想全看：先按编号挑着删，删完再跑一次这一页',
+        msg: m('skill-calorie.photo-pickerDoc.c053', { p0: String(budgetCount) }),
+        detail: m('skill-calorie.photo-pickerDoc.c054'),
       }));
     }
     parts.push(candidateGridHtml(v.candidates, embeds, skipReason, today));
     parts.push(snapshotHtml(v.selected, snap, snapInlined, today));
     if (v.selected && !v.selectedInList) {
-      parts.push(renderEmptyBlock({ text: '已选照片 ' + v.selected.id + ' 不在当前候选窗内（快照照常显示，候选按筛选条件列出）' }));
+      parts.push(renderEmptyBlock({ text: m('skill-calorie.photo-pickerDoc.c055', { p0: String(v.selected.id) }) }));
     }
     parts.push(promptCopyArea(v.prompt));
     parts.push(copyAreaOf(v, command));
@@ -232,7 +244,7 @@ export function buildPhotoPickerDoc(v: PhotoPickerView, photosDir: string | null
     const rest = picks.embeds.filter((e) => e.dataUri !== null && !picks.skipReason.has(e.fileName))
       .sort((a, b) => (b.bytes ?? 0) - (a.bytes ?? 0));
     if (rest.length === 0) break;
-    picks.skipReason.set((rest[0] as PhotoEmbed).fileName, '体积预算未内嵌');
+    picks.skipReason.set((rest[0] as PhotoEmbed).fileName, EMBED_BUDGET_REASON);
     html = shell(contentOf(picks.embeds, picks.skipReason));
   }
   return html;

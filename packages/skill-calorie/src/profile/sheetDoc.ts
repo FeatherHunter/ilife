@@ -26,18 +26,27 @@ import { copyArea, copyLog } from '../shared/copyArea.js';
 import { activityLabel, genderLabel } from './labels.js';
 import { PROFILE_SOURCE } from './view.js';
 import type { ProfileSettingView } from './setup.js';
+import { m } from '../entries/index.js';
+import { PROFILE_ROUTES } from './routes.js';
 
 /** 页脚「还原」那颗的 actionId（页内脚本按它绑定；不带载荷、初始禁用）。 */
 export const SHEET_RESET_ACTION = 'calorie-profile-sheet-reset';
 const WIZARD_KEY = 'calorie.view.profile-wizard';
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
-const DOC_TITLE = '卡路里·档案变更单';
+const docTitle = (): string => m('skill-calorie.profile-sheetDoc.c024');
 
 /** 三条写入词各自的页名（一词一页：页名跟着词走，旧版恒叫「档案预检」）。 */
-const SHEET_TITLE: Record<string, string> = {
-  设置档案: '档案设置单', 设活动量: '活动量变更单', 改档案: '档案变更单',
-};
+/** 三条写入词：唤醒词从路由唯一来源取，页名跟词走（一词一页）。 */
+const wakeOfOrder = (order: number): string => PROFILE_ROUTES.find((r) => r.order === order)?.wakeWord ?? '';
+const SET_WORD = wakeOfOrder(233);
+const ACTIVITY_WORD = wakeOfOrder(234);
+const UPDATE_WORD = wakeOfOrder(235);
+function sheetTitle(wake: string | null): string {
+  if (wake === SET_WORD) return m('skill-calorie.profile-sheetDoc.c025');
+  if (wake === ACTIVITY_WORD) return m('skill-calorie.profile-sheetDoc.c026');
+  return m('skill-calorie.profile-sheetDoc.c027');
+}
 const CHANGE_KEYS: readonly string[] = ['age', 'gender', 'heightCm', 'activityLevel', 'note'];
 const RAW_OF: Record<string, (p: { age: number | null; gender: string | null; height_cm: number | null; activity_level: string | null; note: string | null }) => string> = {
   heightCm: (p) => (p.height_cm === null ? '' : String(p.height_cm)),
@@ -47,10 +56,19 @@ const RAW_OF: Record<string, (p: { age: number | null; gender: string | null; he
   note: (p) => p.note ?? '',
 };
 
-const SET_FIELDS = [{ camel: 'heightCm', label: '身高（cm）' }, { camel: 'age', label: '年龄' }, { camel: 'gender', label: '性别（男/女）' }, { camel: 'activityLevel', label: '活动量（久坐/轻度/中度/活跃/高度活跃）' }];
-const UPDATE_FIELDS = [...SET_FIELDS, { camel: 'note', label: '备注' }];
+function setFields(): readonly { camel: string; label: string }[] {
+  return [
+    { camel: 'heightCm', label: m('skill-calorie.profile-sheetDoc.c028') },
+    { camel: 'age', label: m('skill-calorie.profile-sheetDoc.c029') },
+    { camel: 'gender', label: m('skill-calorie.profile-sheetDoc.c030') },
+    { camel: 'activityLevel', label: m('skill-calorie.profile-sheetDoc.c031') },
+  ];
+}
+function updateFields(): readonly { camel: string; label: string }[] {
+  return [...setFields(), { camel: 'note', label: m('skill-calorie.profile-sheetDoc.c032') }];
+}
 function fieldsFor(w: string | null): readonly { camel: string; label: string }[] {
-  return w === '设置档案' ? SET_FIELDS : (w === '设活动量' ? [SET_FIELDS[3] as { camel: string; label: string }] : UPDATE_FIELDS);
+  return w === SET_WORD ? setFields() : (w === ACTIVITY_WORD ? [setFields()[3] as { camel: string; label: string }] : updateFields());
 }
 
 /** 单号：`PF-MMDD-HHMM`（取 `nowStamp()` 的本地时间，与原型同形状）。看不懂时间戳就退回纯数字尾巴，不编单号。 */
@@ -62,12 +80,17 @@ function sheetNo(at: string): string {
 
 /** 摘要带「影响」那一格：`每日消耗 a → b 卡/天（±d，±x%）`（原型口径；无变化写「不变」）。 */
 function tdeeText(now: number | null, next: number | null): string {
-  if (now === null || next === null) return '按活动量算';
+  if (now === null || next === null) return m('skill-calorie.profile-sheetDoc.c001');
   const d = next - now;
-  if (d === 0) return '每日消耗 ' + now + ' → ' + next + ' 卡/天（不变）';
+  if (d === 0) return m('skill-calorie.profile-sheetDoc.c002', { p0: String(now), p1: String(next) });
   const signed = (n: number): string => (n > 0 ? '+' : '') + n;
   const pct = Math.round((d / now) * 1000) / 10;
-  return '每日消耗 ' + now + ' → ' + next + ' 卡/天（' + signed(d) + '，' + signed(pct) + '%）';
+  return m('skill-calorie.profile-sheetDoc.c003', {
+    p0: String(now),
+    p1: String(next),
+    p2: String(signed(d)),
+    p3: String(signed(pct)),
+  });
 }
 
 interface SheetRow {
@@ -85,24 +108,24 @@ function sheetRows(v: ProfileSettingView): SheetRow[] {
     const afterRaw = pick(f.camel) || beforeRaw;
     const row: SheetRow = {
       key: f.camel, label: f.label.replace(/（.*）$/, ''), unit: '', kind: 'text',
-      beforeRaw, before: beforeRaw === '' ? '未设置' : beforeRaw,
-      afterRaw, after: afterRaw === '' ? '未设置' : afterRaw, note: '',
+      beforeRaw, before: beforeRaw === '' ? m('skill-calorie.profile-sheetDoc.c004') : beforeRaw,
+      afterRaw, after: afterRaw === '' ? m('skill-calorie.profile-sheetDoc.c005') : afterRaw, note: '',
     };
     if (f.camel === 'heightCm') { row.unit = 'cm'; row.kind = 'number'; }
-    if (f.camel === 'age') { row.unit = '岁'; row.kind = 'number'; }
+    if (f.camel === 'age') { row.unit = m('skill-calorie.profile-sheetDoc.c006'); row.kind = 'number'; }
     if (f.camel === 'gender') {
       row.kind = 'select';
       row.options = [{ value: 'male', label: '男' }, { value: 'female', label: '女' }];
       row.before = genderLabel(beforeRaw); row.after = genderLabel(afterRaw);
-      row.note = beforeRaw === afterRaw ? '不变' : '改性别';
+      row.note = beforeRaw === afterRaw ? m('skill-calorie.profile-sheetDoc.c007') : m('skill-calorie.profile-sheetDoc.c008');
     }
     if (f.camel === 'activityLevel') {
       row.kind = 'select';
       row.options = ACTIVITY_LEVELS.map((lv) => ({ value: lv, label: ACTIVITY_LEVEL_LABELS[lv] as string }));
       row.before = activityLabel(beforeRaw); row.after = activityLabel(afterRaw);
-      row.note = beforeRaw === afterRaw ? '不变' : '影响每日消耗';
+      row.note = beforeRaw === afterRaw ? m('skill-calorie.profile-sheetDoc.c009') : m('skill-calorie.profile-sheetDoc.c010');
     }
-    if (f.camel === 'note') row.note = '仅存档';
+    if (f.camel === 'note') row.note = m('skill-calorie.profile-sheetDoc.c011');
     return row;
   });
 }
@@ -222,13 +245,28 @@ function sheetScript(rows: readonly SheetRow[], bmr: number | null, nowTdee: num
     + '  var FAC=' + JSON.stringify(TDEE_ACTIVITY_FACTORS) + ';\n'
     + '  var BMR=' + JSON.stringify(bmr) + ', NOW=' + JSON.stringify(nowTdee) + ';\n'
     + '  var ZH=' + JSON.stringify(Object.fromEntries(ACTIVITY_LEVELS.map((lv) => [lv, ACTIVITY_LEVEL_LABELS[lv]])))
-    + ';\n  var GZ={male:"男",female:"女"};\n'
+    + ';\n  var GZ=' + JSON.stringify({ male: m('skill-calorie.profile-sheetDoc.c056'), female: m('skill-calorie.profile-sheetDoc.c057') })
+    + ';\n  var T=' + JSON.stringify({
+      sayPrefix: m('skill-calorie.profile-sheetDoc.c033'), saySame: m('skill-calorie.profile-sheetDoc.c034'),
+      sayOpen: m('skill-calorie.profile-sheetDoc.c035'), sayClose: m('skill-calorie.profile-sheetDoc.c036'),
+      listSep: m('skill-calorie.profile-sheetDoc.c037'), kcalPerDay: m('skill-calorie.profile-sheetDoc.c038'),
+      unchanged: m('skill-calorie.profile-sheetDoc.c039'), noteOnly: m('skill-calorie.profile-sheetDoc.c040'),
+      burnItem: m('skill-calorie.profile-sheetDoc.c041'), byActivity: m('skill-calorie.profile-sheetDoc.c042'),
+      burnFrom: m('skill-calorie.profile-sheetDoc.c043'), burnFlat: m('skill-calorie.profile-sheetDoc.c044'),
+      burnDelta: m('skill-calorie.profile-sheetDoc.c045'), closeParen: m('skill-calorie.profile-sheetDoc.c046'),
+      comma: m('skill-calorie.profile-sheetDoc.c047'), pending: m('skill-calorie.profile-sheetDoc.c048'),
+      dirty: m('skill-calorie.profile-sheetDoc.c049'), clean: m('skill-calorie.profile-sheetDoc.c050'),
+      signPrefix: m('skill-calorie.profile-sheetDoc.c051'), collapse: m('skill-calorie.profile-sheetDoc.c052'),
+      restPrefix: m('skill-calorie.profile-sheetDoc.c053'), restSuffix: m('skill-calorie.profile-sheetDoc.c054'),
+      items: m('skill-calorie.profile-sheetDoc.c055'),
+    })
+    + ';\n'
     + '  function val(k){ var n=document.querySelector(\'[data-ilife-edit="\'+k+\'"]\'); return n?n.getAttribute("data-ilife-edit-value"):""; }\n'
     + '  function shown(k,u){ var v=val(k); if (k==="activityLevel") return ZH[v]||v; if (k==="gender") return GZ[v]||v;'
     + ' return v+(u?(" "+u):""); }\n'
     + '  function changed(){ return ROWS.filter(function(r){ return val(r.key)!==r.beforeRaw; }); }\n'
-    + '  function say(){ var ks=changed(); if (!ks.length) return "确认写入："+WORD+"（与库内现值一致）";'
-    + ' return "确认写入："+WORD+"（"+ks.map(function(r){ return r.label+" "+shown(r.key,r.unit); }).join("、")+"）"; }\n'
+    + '  function say(){ var ks=changed(); if (!ks.length) return T.sayPrefix+WORD+T.saySame;'
+    + ' return T.sayPrefix+WORD+T.sayOpen+ks.map(function(r){ return r.label+" "+shown(r.key,r.unit); }).join(T.listSep)+T.sayClose; }\n'
     + '  function tdee(v){ var f=FAC[v]; return (BMR===null||!f)?null:Math.round(BMR*f); }\n'
     + '  function paint(){\n'
     + '    ROWS.forEach(function(r){\n'
@@ -240,30 +278,30 @@ function sheetScript(rows: readonly SheetRow[], bmr: number | null, nowTdee: num
     + '      if (tr){ if (same) tr.removeAttribute("data-changed"); else tr.setAttribute("data-changed","1"); }\n'
     + '      var tag=document.querySelector(\'[data-tag="\'+r.key+\'"]\'); if (!tag) return;\n'
     + '      if (r.key==="activityLevel"){ var t=tdee(v), d=(t===null||NOW===null)?null:(t-NOW);\n'
-    + '        tag.textContent=(d===null||d===0)?"不变":((d>0?"+":"")+d+" 卡/天");\n'
+    + '        tag.textContent=(d===null||d===0)?T.unchanged:((d>0?"+":"")+d+T.kcalPerDay);\n'
     + '        tag.className="cs-tag"+((d===null||d===0)?"":" cs-tag-warn"); }\n'
-    + '      else { tag.textContent=same?"不变":(r.key==="note"?"仅存档":"每日消耗参与项"); tag.className="cs-tag"; }\n'
+    + '      else { tag.textContent=same?T.unchanged:(r.key==="note"?T.noteOnly:T.burnItem); tag.className="cs-tag"; }\n'
     + '    });\n'
     + '    var ks=changed(), lv=val("activityLevel"), t=tdee(lv); var d=(t===null||NOW===null)?null:t-NOW;\n'
     + '    var cells=document.querySelectorAll(".cs-sum .ilife-block-fact-strip-value");\n'
-    + '    if (cells.length>=2){ cells[0].textContent=ks.length+" 项";\n'
+    + '    if (cells.length>=2){ cells[0].textContent=ks.length+T.items;\n'
     + '      var warn=(d!==null&&d!==0);\n'
-    + '      cells[1].textContent=(d===null)?"按活动量算":(d===0?("每日消耗 "+NOW+" → "+t+" 卡/天（不变）")\n'
-    + '        :("每日消耗 "+NOW+" → "+t+" 卡/天（"+(d>0?"+":"")+d+"，"+(d>0?"+":"")+Math.round(d/NOW*1000)/10+"%）"));\n'
+    + '      cells[1].textContent=(d===null)?T.byActivity:(d===0?(T.burnFrom+NOW+" → "+t+T.burnFlat)\n'
+    + '        :(T.burnFrom+NOW+" → "+t+T.burnDelta+(d>0?"+":"")+d+T.comma+(d>0?"+":"")+Math.round(d/NOW*1000)/10+"%"+T.closeParen));\n'
     + '      cells[1].className="ilife-block-fact-strip-value"+(warn?" ilife-block-fact-strip-value-warn":""); }\n'
     + '    var badge=document.querySelector(".cs-badge");\n'
-    + '    if (badge){ var all=(ks.length===ROWS.length); badge.textContent=all?"待确认":(ks.length?"已改，待签发":"无改动");'
+    + '    if (badge){ var all=(ks.length===ROWS.length); badge.textContent=all?T.pending:(ks.length?T.dirty:T.clean);'
     + ' badge.className="cs-badge"+(all?"":" cs-badge-dirty"); }\n'
     + '    var cap=document.getElementById("csSay"); if (cap) cap.textContent=say();\n'
     + '    var sign=document.querySelector(\'[data-action-id="' + CALORIE_COPY_ACTION.actionId + '"]\');\n'
-    + '    if (sign) sign.setAttribute("data-t","【calorie 档案预检】"+say());\n'
+    + '    if (sign) sign.setAttribute("data-t",T.signPrefix+say());\n'
     + '    var reset=document.querySelector(\'[data-action-id="' + SHEET_RESET_ACTION + '"]\');\n'
     + '    if (reset) reset.disabled=(ks.length===ROWS.length);\n'
     /* 折起条：计数与开合状态都随改随算（改了某字段，那一行当场从"收起的那些"里出来）。 */
     + '    var rest=document.querySelectorAll(\'.cs-diff tr[data-row]:not([data-changed])\').length;\n'
     + '    var bar=document.querySelector(".cs-rest-btn"), tbl=document.querySelector(".cs-diff");\n'
     + '    var open=!!(tbl && tbl.classList.contains("cs-rest-open"));\n'
-    + '    if (bar){ bar.textContent=open?"收起未改项":("其余 "+rest+" 项与库里一致");'
+    + '    if (bar){ bar.textContent=open?T.collapse:(T.restPrefix+rest+T.restSuffix);'
     + ' bar.setAttribute("aria-expanded", open?"true":"false"); bar.style.display=(rest===0&&!open)?"none":""; }\n'
     + '  }\n'
     + '  var rbtn=document.querySelector(".cs-rest-btn");\n'
@@ -305,10 +343,9 @@ export function buildChangeSheetDoc(v: ProfileSettingView): string {
   /** 那句话（页脚脚注与主按钮载荷同源）：照原型 `确认写入：<词>（<字段 新值>…）`，一字不改地由页内脚本重算。
    *  —— 词必须跟着本页走：2026-09-24 实拍里「设活动量」页说成「确认写入：改档案」，就是这里写死的。 */
   const changedRows = rows.filter((r) => r.afterRaw !== r.beforeRaw);
-  const instruction = '【calorie 档案预检】确认写入：' + wake + '（'
-    + (changedRows.length === 0 ? '与库内现值一致'
-      : changedRows.map((r) => r.label + ' ' + r.after + (r.unit === '' ? '' : ' ' + r.unit)).join('、'))
-    + '）';
+  const changedText = changedRows.length === 0 ? m('skill-calorie.profile-sheetDoc.c012')
+      : changedRows.map((r) => r.label + ' ' + r.after + (r.unit === '' ? '' : ' ' + r.unit)).join('、');
+  const instruction = m('skill-calorie.profile-sheetDoc.c013', { p0: String(wake), p1: String(changedText) });
   /** 改活动量之后的每日消耗（表里那一行的草稿值决定；拿不到就是 `null`，不编数）。 */
   const nextTdee = ((): number | null => {
     const lv = rows.find((r) => r.key === 'activityLevel')?.afterRaw ?? '';
@@ -318,7 +355,7 @@ export function buildChangeSheetDoc(v: ProfileSettingView): string {
   const body = [
     SHEET_CSS,
     '<div class="cs">',
-    '<div class="cs-head"><h2 class="cs-title">' + (SHEET_TITLE[wake] ?? '档案变更单') + '</h2>'
+    '<div class="cs-head"><h2 class="cs-title">' + sheetTitle(wake) + '</h2>'
       + '<span class="cs-badge">待确认</span></div>',
     /* 单号行（用户 2026-09-24 裁定）：**去掉 `·` 分隔符、去掉重复事实**——「来源 基础信息／原话」眉标与页题
        已经写着，再抄一遍只让这一行变长；留下的两件＝单据身份 ＋ 唯一的操作提示，左右各一件，窄屏自然折行。 */
@@ -326,8 +363,10 @@ export function buildChangeSheetDoc(v: ProfileSettingView): string {
       + '<span class="cs-meta-hint">点「将改为」即可改</span></p>',
     '<div class="cs-sum">' + renderFactStrip({
       items: [
-        { label: '变更', value: rows.filter((r) => r.afterRaw !== r.beforeRaw).length + ' 项' },
-        { label: '影响', value: tdeeText(nowTdee, nextTdee) },
+        { label: m('skill-calorie.profile-sheetDoc.c015'), value: m('skill-calorie.profile-sheetDoc.c016', {
+          p0: String(rows.filter((r) => r.afterRaw !== r.beforeRaw).length),
+        }) },
+        { label: m('skill-calorie.profile-sheetDoc.c017'), value: tdeeText(nowTdee, nextTdee) },
       ],
     }) + '</div>',
     '<table class="cs-diff">',
@@ -342,14 +381,13 @@ export function buildChangeSheetDoc(v: ProfileSettingView): string {
       + '<td><span class="cs-tag" data-tag="' + r.key + '">' + r.note + '</span></td></tr>').join(''),
     /* 未改项折起那一条（手机档才显示；文案与计数由页内脚本随改随算）。 */
     '<tr class="cs-rest-bar"><td colspan="4"><button type="button" class="cs-rest-btn" aria-expanded="false">'
-      + '其余 ' + rows.filter((r) => r.afterRaw === r.beforeRaw).length + ' 项与库里一致</button></td></tr>',
+      + m('skill-calorie.profile-sheetDoc.c053') + rows.filter((r) => r.afterRaw === r.beforeRaw).length + m('skill-calorie.profile-sheetDoc.c054') + '</button></td></tr>',
     '</tbody></table>',
-    renderCaliberLine('依据：每日消耗 ＝ 基础代谢 ' + (bmr ?? '—') + ' × 活动系数，按最近体重 '
-      + (v.latestWeightKg ?? '—') + ' kg 算；运动消耗另计。'),
+    renderCaliberLine(m('skill-calorie.profile-sheetDoc.c018', { p0: String(bmr ?? '—'), p1: String(v.latestWeightKg ?? '—') })),
     '<div class="cs-foot">',
     renderActionBar({
-      copyLog: { actionId: CALORIE_COPY_ACTION.actionId, label: '签发并写入', text: instruction },
-      buttons: [{ label: '还原', kind: 'ghost', actionId: SHEET_RESET_ACTION, disabled: true }],
+      copyLog: { actionId: CALORIE_COPY_ACTION.actionId, label: m('skill-calorie.profile-sheetDoc.c019'), text: instruction },
+      buttons: [{ label: m('skill-calorie.profile-sheetDoc.c020'), kind: 'ghost', actionId: SHEET_RESET_ACTION, disabled: true }],
     }),
     '<p class="cs-foot-note">按下去＝把这句话交给 AI 执行：<b id="csSay">' + instruction + '</b></p>',
     '</div>',
@@ -358,7 +396,7 @@ export function buildChangeSheetDoc(v: ProfileSettingView): string {
     '<div class="cs-copy">',
     copyArea({
       // 粘贴出去的页名写中文（#238 清单 13 条）：内部命令名对用户没有意义。
-      data: { envelope, title: '【calorie 档案预检】' },
+      data: { envelope, title: m('skill-calorie.profile-sheetDoc.c021') },
       log: {
         envelope,
         copyLog: copyLog({
@@ -373,13 +411,13 @@ export function buildChangeSheetDoc(v: ProfileSettingView): string {
   void COPY_ACTION_IDS;
   void CHANGE_KEYS;
   return assembleDocPage({
-    docTitle: DOC_TITLE,
+    docTitle: docTitle(),
     /* 文档壳那行页题与副标题**本页不印**（用户 2026-09-24 裁定：重复文字直接删）——
        卡片抬头已经写着"这是什么单"，壳再写一遍就是同一屏两个同名大字；
        但公共层 `renderPageShell` **明写 title 必须是非空字符串**（实拍跑出过
        `ERR 4: renderPageShell: input.title 必须是非空字符串`），故照实传值、由本页样式把那一行收掉（副标题直接不给）。 */
-    title: SHEET_TITLE[wake] ?? '档案变更单',
-    eyebrow: '基础信息 ' + wake,
+    title: sheetTitle(wake),
+    eyebrow: m('skill-calorie.profile-sheetDoc.c023', { p0: String(wake) }),
     subtitle: null,
     content: body,
     pageUi: true,

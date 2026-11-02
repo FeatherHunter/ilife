@@ -10,6 +10,7 @@ import { CalorieRenderError } from '../render/errors.js';
 import { fail, needNum, optNum } from '../shared/params.js';
 import type { WriteOut } from '../shared/commandSpec.js';
 import { R, out } from '../shared/writeParts.js';
+import { m } from '../entries/index.js';
 
 /** `calorie.goal.set` 本次**实际被 SET 的列** → CLI 参数名（正本 §3.4「update 键＝本次实际变更字段」）。
  * 与 `goal/nutritionGoal.ts` 的两条 UPSERT 同源（#127 已改）：传 `water` 走 6 列
@@ -28,15 +29,23 @@ export function writeGoalSet(params: Record<string, unknown>, db: DatabaseSync):
   const carbs = needNum(params, 'carbs');
   const fat = needNum(params, 'fat');
   const water = optNum(params, 'water');
-  if (!(calorie > 0)) fail(2, '热量目标必须为正数');
+  if (!(calorie > 0)) fail(2, m('skill-calorie.goal-write.c001'));
   for (const [k, v] of [['protein', protein], ['carbs', carbs], ['fat', fat]] as const) {
-    if (v < 0) fail(2, k + ' 不能为负');
+    if (v < 0) fail(2, m('skill-calorie.goal-write.c002', { p0: String(k) }));
   }
-  if (water !== undefined && water < 0) fail(2, 'water 不能为负');
+  if (water !== undefined && water < 0) fail(2, m('skill-calorie.goal-write.c003'));
   const had = getNutritionGoal(db) !== null;
   const r = setNutritionGoal(db, { calorie, protein, carbs, fat, water });
-  const tail = r.consistent ? ' · 宏量自洽' : ' · ⚠宏量换算差 ' + r.diffKcal + ' 卡（>50 建议复核）';
-  return out(R('定营养目标', had ? 'update' : 'create', '已定营养目标：' + r.calorieGoal + ' 卡·蛋白 ' + r.proteinGoal + '·碳水 ' + r.carbsGoal + '·脂肪 ' + r.fatGoal + (r.waterGoal === null ? '' : '·饮水 ' + r.waterGoal) + tail, '定营养目标', 'daily_goal (写库回执)', {
+  const tail = r.consistent ? m('skill-calorie.goal-write.c004') : m('skill-calorie.goal-write.c005', { p0: String(r.diffKcal) });
+  const waterNote = r.waterGoal === null ? '' : m('skill-calorie.goal-write.c006', { p0: String(r.waterGoal) });
+  return out(R(m('skill-calorie.goal-write.c007'), had ? 'update' : 'create', m('skill-calorie.goal-write.c008', {
+    p0: String(r.calorieGoal),
+    p1: String(r.proteinGoal),
+    p2: String(r.carbsGoal),
+    p3: String(r.fatGoal),
+    p4: String(waterNote),
+    p5: String(tail),
+  }), m('skill-calorie.goal-write.c009'), m('skill-calorie.goal-write.c010'), {
     recordId: 1, ids: [1], idSource: 'singleton', writtenFields: goalSetWrittenFields(water !== undefined),
   }));
 }
@@ -46,7 +55,7 @@ export function writeGoalWater(params: Record<string, unknown>, db: DatabaseSync
   const water = needNum(params, 'water');
   if (getNutritionGoal(db) === null) throw new CalorieRenderError('missing-data', '尚无营养目标行（先定营养目标）');
   const r = updateWaterGoal(db, water);
-  return out(R('定饮水目标', 'update', '已定饮水目标：' + (r.oldWaterGoal ?? '—') + '→' + r.newWaterGoal + ' ml', '定饮水目标', 'daily_goal (写库回执)', {
+  return out(R(m('skill-calorie.goal-write.c011'), 'update', m('skill-calorie.goal-write.c012', { p0: String(r.oldWaterGoal ?? '—'), p1: String(r.newWaterGoal) }), m('skill-calorie.goal-write.c013'), m('skill-calorie.goal-write.c014'), {
     recordId: 1, ids: [1], idSource: 'singleton', writtenFields: ['water'], noChange: r.oldWaterGoal === r.newWaterGoal,
   }));
 }
@@ -60,14 +69,20 @@ export function writeGoalWater(params: Record<string, unknown>, db: DatabaseSync
  * `writtenFields` 报 `r.written`（本次真进过 SET 列表的列），不再按「参数给了没」报。 */
 export function writeGoalWeight(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
   const kg = needNum(params, 'kg');
-  if (!(kg > 0) || kg > 500) fail(2, 'kg 须为 0..500');
+  if (!(kg > 0) || kg > 500) fail(2, m('skill-calorie.goal-write.c015'));
   const input: Parameters<typeof setWeightGoal>[1] = { kg };
   for (const name of ['deadline', 'startKg', 'startDate'] as const) {
     if (Object.hasOwn(params, name) && params[name] !== undefined) input[name] = params[name];
   }
   const r = setWeightGoal(db, input);
   const wroteDeadline = r.written.includes('deadline') && r.deadline !== null;
-  return out(R('定体重目标', 'update', '已定体重目标 ' + r.weightGoal + ' kg' + (wroteDeadline ? '（截止 ' + r.deadline + '）' : '') + (r.startKg !== null ? ' · 起点 ' + r.startKg + ' kg' : ''), '定体重目标', 'daily_goal (写库回执)', {
+  const deadlineNote = wroteDeadline ? m('skill-calorie.goal-write.c016', { p0: String(r.deadline) }) : '';
+  const startNote = r.startKg !== null ? m('skill-calorie.goal-write.c017', { p0: String(r.startKg) }) : '';
+  return out(R(m('skill-calorie.goal-write.c018'), 'update', m('skill-calorie.goal-write.c019', {
+    p0: String(r.weightGoal),
+    p1: String(deadlineNote),
+    p2: String(startNote),
+  }), m('skill-calorie.goal-write.c020'), m('skill-calorie.goal-write.c021'), {
     recordId: 1, ids: [1], idSource: 'singleton',
     writtenFields: r.written,
   }));
@@ -80,7 +95,7 @@ export function writeGoalWeight(params: Record<string, unknown>, db: DatabaseSyn
  * 参数 `goal` 须为正整数；0／负数／非数字／缺参一律失败 2。 */
 export function writeGoalExercise(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
   const goal = needNum(params, 'goal');
-  if (!Number.isInteger(goal) || !(goal > 0)) fail(2, 'goal 须为正整数');
+  if (!Number.isInteger(goal) || !(goal > 0)) fail(2, m('skill-calorie.goal-write.c022'));
   const before = db.prepare('SELECT exercise_goal FROM daily_goal WHERE id = 1').get() as
     | { exercise_goal: number | null }
     | undefined;
@@ -91,7 +106,7 @@ export function writeGoalExercise(params: Record<string, unknown>, db: DatabaseS
       ' ON CONFLICT(id) DO UPDATE SET exercise_goal = excluded.exercise_goal,' +
       ' updated_at = CURRENT_TIMESTAMP',
   ).run(goal);
-  return out(R('定运动目标', 'update', '已定运动目标：' + (old ?? '—') + '→' + goal + ' 卡', '定运动目标', 'daily_goal (写库回执)', {
+  return out(R(m('skill-calorie.goal-write.c023'), 'update', m('skill-calorie.goal-write.c024', { p0: String(old ?? '—'), p1: String(goal) }), m('skill-calorie.goal-write.c025'), m('skill-calorie.goal-write.c026'), {
     recordId: 1, ids: [1], idSource: 'singleton', writtenFields: ['goal'], noChange: old === goal,
   }));
 }
@@ -99,7 +114,7 @@ export function writeGoalExercise(params: Record<string, unknown>, db: DatabaseS
 /** `calorie.goal.pause` · 暂停所有目标（记录照常，仅目标暂停）。 */
 export function writeGoalPause(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
   const r = pauseAllGoals(db);
-  return out(R('暂停所有目标', 'update', '已暂停所有目标（记录照常，仅目标暂停）', '暂停所有目标', 'daily_goal (写库回执)', {
+  return out(R(m('skill-calorie.goal-write.c027'), 'update', m('skill-calorie.goal-write.c028'), m('skill-calorie.goal-write.c029'), m('skill-calorie.goal-write.c030'), {
     recordId: r.id, ids: [r.id], idSource: 'singleton', writtenFields: ['goal_paused'],
   }));
 }
@@ -107,7 +122,7 @@ export function writeGoalPause(params: Record<string, unknown>, db: DatabaseSync
 /** `calorie.goal.resume` · 重启所有目标（从暂停恢复）。 */
 export function writeGoalResume(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
   const r = resumeAllGoals(db);
-  return out(R('重启所有目标', 'update', '已重启所有目标（恢复正常）', '重启所有目标', 'daily_goal (写库回执)', {
+  return out(R(m('skill-calorie.goal-write.c031'), 'update', m('skill-calorie.goal-write.c032'), m('skill-calorie.goal-write.c033'), m('skill-calorie.goal-write.c034'), {
     recordId: r.id, ids: [r.id], idSource: 'singleton', writtenFields: ['goal_paused'],
   }));
 }

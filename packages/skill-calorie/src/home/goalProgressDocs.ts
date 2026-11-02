@@ -34,24 +34,27 @@ import { emptyGuide } from '../shared/emptyGuide.js';
 import { nowStamp } from '../render/receipt.js';
 import type { DayGoalStatus } from '../goal/goalHistory.js';
 import type { GoalProgress } from '../goal/goalPlates.js';
+import { m } from '../entries/index.js';
+import type { SkillCalorieMessageId } from '../entries/index.js';
 
 /** head 标题（整页模板住 `src/shared/docPage.ts`）＋ envelope 头（值冻结对齐 `cli/keys.ts`）。 */
-const DOC_TITLE = '卡路里 目标进度';
+const DOC_TITLE_KEY = 'skill-calorie.home-goalProgressDocs.c063' as const;
+const docTitle = (): string => m(DOC_TITLE_KEY);
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
 
 /** 页头眉标（人话）：**只留产品名**（裁定 1 禁上屏英文内部标识符，故不印命令键）。 */
-const EYEBROW = '卡路里';
+const eyebrow = (): string => m('skill-calorie.home-goalProgressDocs.c064');
 
 /** 可见文本缺值口径（裁定 4）：写 `—`，不写 0、不写空串、不拿缺省值顶替。 */
 const DASH = '—';
 
 /** 五个区块的身份清单（锚点 id ＋ 图标 ＋ 名）：页内导航与段标题**同走这一份**，锚点不会指到不存在的 id。
  *  图标全页只留段标题一处（每块一枚），导航不把同一枚印第二遍（#401g 口径）。 */
-const SEC_GOAL = { id: 'sec-goal', icon: '🎯', name: '目标完成' } as const;
-const SEC_TREND = { id: 'sec-trend', icon: '📈', name: '摄入走势' } as const;
-const SEC_HISTORY = { id: 'sec-history', icon: '📊', name: '每日达标' } as const;
-const SEC_GUIDE = { id: 'sec-guide', icon: '📝', name: '先记一笔' } as const;
+const SEC_GOAL = { id: 'sec-goal', icon: '🎯', name: 'skill-calorie.home-goalProgressDocs.c065' } as const;
+const SEC_TREND = { id: 'sec-trend', icon: '📈', name: 'skill-calorie.home-goalProgressDocs.c066' } as const;
+const SEC_HISTORY = { id: 'sec-history', icon: '📊', name: 'skill-calorie.home-goalProgressDocs.c067' } as const;
+const SEC_GUIDE = { id: 'sec-guide', icon: '📝', name: 'skill-calorie.home-goalProgressDocs.c068' } as const;
 /** 复制区落点锚（`sec-copy`）：用户缺陷 6（2026-09-15）「有『💰 数据与日志』文字的直接删」⇒
  *  本页复制区**不出标题**（`copyArea` 不传 `title`），页内导航也不再收这一项（#401 主页族同口径）。
  *  `id` 保留，外链深跳稳定。 */
@@ -59,11 +62,11 @@ const SEC_COPY = { id: 'sec-copy' } as const;
 
 /** 来源脚注上给**读者看**的来源名（可见文本零 snake_case；库表名只留在复制日志的来源段里）。
  *  #467 切片后页上来源行已删（用户逐字点名），本常量只供复制日志第 4 段 `source` 用。 */
-const SOURCE_LOGGED = '饮食记录，运动记录，每日目标';
+const sourceLogged = (): string => m('skill-calorie.home-goalProgressDocs.c069');
 
 /** 段标题的**文本形状**（图标 ＋ 空格 ＋ 名）：段标题与表格 caption 都走它，不手抄第二遍。 */
-function secTitle(section: { readonly icon: string; readonly name: string }): string {
-  return section.icon + ' ' + section.name;
+function secTitle(section: { readonly icon: string; readonly name: SkillCalorieMessageId }): string {
+  return section.icon + ' ' + m(section.name);
 }
 
 /** KPI 网格没有标题槽（`renderKpiGrid` 只吃卡数组），故这一处手写 `<h2>`；类名与 `homeDocs.ts:241` 同一把尺。 */
@@ -176,9 +179,9 @@ function factsOf(input: GoalProgressDocInput): Facts {
 function rateStatus(rate: number | null | undefined): { status: StatusKind; statusText: string } | null {
   if (rate === null || rate === undefined) return null;
   const shown = Math.round(rate) + '%';
-  if (rate >= 90) return { status: 'ok', statusText: '多数达标 ' + shown };
-  if (rate >= 60) return { status: 'warn', statusText: '达标过半 ' + shown };
-  return { status: 'danger', statusText: '多数没达标 ' + shown };
+  if (rate >= 90) return { status: 'ok', statusText: m('skill-calorie.home-goalProgressDocs.c001', { p0: String(shown) }) };
+  if (rate >= 60) return { status: 'warn', statusText: m('skill-calorie.home-goalProgressDocs.c002', { p0: String(shown) }) };
+  return { status: 'danger', statusText: m('skill-calorie.home-goalProgressDocs.c003', { p0: String(shown) }) };
 }
 
 /** 完成率（0–100）：**分子分母有一个缺就不给**（缺值口径裁定 4——没有目标就不摆徽章）。
@@ -192,9 +195,9 @@ function pctOf(value: number | null, goal: number | null): number | null {
  *  缺口为正 ⟺ 摄入比消耗少（与卡名同向），词与卡名成一句，不再反着说「消耗多于摄入」。 */
 function deficitDirection(n: number | null | undefined): { status: StatusKind; statusText: string } | null {
   if (n === null || n === undefined) return null;
-  if (n > 0) return { status: 'ok', statusText: '摄入比消耗少' };
-  if (n < 0) return { status: 'warn', statusText: '摄入比消耗多' };
-  return { status: 'empty', statusText: '摄入与消耗持平' };
+  if (n > 0) return { status: 'ok', statusText: m('skill-calorie.home-goalProgressDocs.c004') };
+  if (n < 0) return { status: 'warn', statusText: m('skill-calorie.home-goalProgressDocs.c005') };
+  return { status: 'empty', statusText: m('skill-calorie.home-goalProgressDocs.c006') };
 }
 
 /** 摄入趋势的中文说法：数据层的 `'up' | 'down' | 'flat'` **不上屏**，这里换成人话。
@@ -208,19 +211,19 @@ function trendPhrase(points: readonly (number | null)[]): string {
   const logged = points.filter((p): p is number => p !== null && p !== undefined);
   if (logged.length < 2) return '';
   const delta = Math.round((logged[logged.length - 1] as number) - (logged[0] as number));
-  const head = '跟窗口里第一个有记录的日子比，摄入';
-  if (delta < -50) return head + '下降了 ' + Math.abs(delta) + ' 卡。';
-  if (delta > 50) return head + '上升了 ' + delta + ' 卡。';
-  return head + '基本没变。';
+  const head = m('skill-calorie.home-goalProgressDocs.c007');
+  if (delta < -50) return m('skill-calorie.home-goalProgressDocs.c008', { p0: String(head), p1: String(Math.abs(delta)) });
+  if (delta > 50) return m('skill-calorie.home-goalProgressDocs.c009', { p0: String(head), p1: String(delta) });
+  return m('skill-calorie.home-goalProgressDocs.c010', { p0: String(head) });
 }
 
 /** 单日达标账的说法：数据层给的是「完成／未完成」两值，但达标带是 80%–120% ⇒ 按 `pct` 分三档更好读
  *  （口径不变，仍是同一条带；只是「未完成」拆成偏少与超出两种，读者才知道往哪边调）。 */
 function verdictOf(d: DayGoalStatus): string {
   if (d.status === '无记录' || d.pct === null) return DASH;
-  if (d.pct < 80) return '偏少';
-  if (d.pct > 120) return '超出';
-  return '达标';
+  if (d.pct < 80) return m('skill-calorie.home-goalProgressDocs.c011');
+  if (d.pct > 120) return m('skill-calorie.home-goalProgressDocs.c012');
+  return m('skill-calorie.home-goalProgressDocs.c013');
 }
 
 /** 结论条文本（读序＝标题 → 一句结论 → 数字卡）：先给判定，后给两个读数。
@@ -228,11 +231,16 @@ function verdictOf(d: DayGoalStatus): string {
 function conclusionText(f: Facts): string {
   if (f.avgIntake === null) return '';
   const goal = f.goal;
-  if (goal === null || goal === undefined) return '热量目标还没有，先在「定营养目标」里设一个。';
+  if (goal === null || goal === undefined) return m('skill-calorie.home-goalProgressDocs.c014');
   const diff = Math.round(f.avgIntake - goal);
-  if (diff === 0) return '本窗日均摄入 ' + f.avgIntake + ' 卡，正好贴着热量目标 ' + goal + ' 卡。';
-  return '本窗日均摄入 ' + f.avgIntake + ' 卡，比热量目标 ' + goal + ' 卡'
-    + (diff > 0 ? '高 ' : '低 ') + Math.abs(diff) + ' 卡。';
+  if (diff === 0) return m('skill-calorie.home-goalProgressDocs.c015', { p0: String(f.avgIntake), p1: String(goal) });
+  const dirWord = diff > 0 ? m('skill-calorie.home-goalProgressDocs.c016') : m('skill-calorie.home-goalProgressDocs.c017');
+  return m('skill-calorie.home-goalProgressDocs.c018', {
+    p0: String(f.avgIntake),
+    p1: String(goal),
+    p2: String(dirWord),
+    p3: String(Math.abs(diff)),
+  });
 }
 
 /** KPI 四张：热量目标／日均缺口／本窗累计缺口／达标天数（达标账另带它自己的窗口字面）。
@@ -241,20 +249,23 @@ function conclusionText(f: Facts): string {
 function kpiCards(f: Facts, historyDays: number): KpiCardInput[] {
   return [
     {
-      label: '热量目标', value: num(f.goal), unit: '卡',
-      detail: '本窗日均摄入 ' + num(f.avgIntake) + ' 卡',
+      label: m('skill-calorie.home-goalProgressDocs.c019'), value: num(f.goal), unit: m('skill-calorie.home-goalProgressDocs.c020'),
+      detail: m('skill-calorie.home-goalProgressDocs.c021', { p0: String(num(f.avgIntake)) }),
       ...(rateStatus(pctOf(f.avgIntake, f.goal)) ?? {}),
     },
-    { label: '日均缺口', value: num(f.avgDeficit), unit: '卡', ...(deficitDirection(f.avgDeficit) ?? {}) },
+    { label: m('skill-calorie.home-goalProgressDocs.c022'), value: num(f.avgDeficit), unit: m('skill-calorie.home-goalProgressDocs.c023'), ...(deficitDirection(f.avgDeficit) ?? {}) },
     {
-      label: '本窗累计缺口', value: num(f.windowDeficit), unit: '卡',
-      detail: '折合体重 ' + num(f.lossKg) + ' 公斤',
+      label: m('skill-calorie.home-goalProgressDocs.c024'), value: num(f.windowDeficit), unit: m('skill-calorie.home-goalProgressDocs.c025'),
+      detail: m('skill-calorie.home-goalProgressDocs.c026', { p0: String(num(f.lossKg)) }),
       ...(deficitDirection(f.windowDeficit) ?? {}),
     },
     {
       // 卡名的窗口字面挂着 `historyDays`（它是入参、不是本窗天数）：这一列说的是**达标账那个窗口**。
-      label: '近 ' + historyDays + ' 天达标天数', value: num(f.completed), unit: '天',
-      detail: '近 ' + historyDays + ' 天里有记录 ' + num(f.loggedInHistory) + ' 天',
+      label: m('skill-calorie.home-goalProgressDocs.c027', { p0: String(historyDays) }), value: num(f.completed), unit: m('skill-calorie.home-goalProgressDocs.c028'),
+      detail: m('skill-calorie.home-goalProgressDocs.c029', {
+        p0: String(historyDays),
+        p1: String(num(f.loggedInHistory)),
+      }),
       ...(rateStatus(f.rate) ?? {}),
     },
   ];
@@ -265,9 +276,9 @@ function kpiCards(f: Facts, historyDays: number): KpiCardInput[] {
  *  唤醒词句已按 #467 切片·用户逐字点名删除。 */
 function notCountedRows(f: Facts): ListRowInput[] {
   return [
-    { left: '蛋白', main: '每天目标', right: f.proteinGoal === null ? '还没设' : num(f.proteinGoal) + ' 克' },
-    { left: '饮水', main: '每天目标', right: f.waterGoal === null ? '还没设' : num(f.waterGoal) + ' 毫升' },
-    { left: '运动', main: '每天消耗目标', right: f.exerciseGoal === null ? '还没设' : num(f.exerciseGoal) + ' 卡' },
+    { left: '蛋白', main: m('skill-calorie.home-goalProgressDocs.c030'), right: f.proteinGoal === null ? m('skill-calorie.home-goalProgressDocs.c031') : num(f.proteinGoal) + ' 克' },
+    { left: m('skill-calorie.home-goalProgressDocs.c032'), main: m('skill-calorie.home-goalProgressDocs.c033'), right: f.waterGoal === null ? m('skill-calorie.home-goalProgressDocs.c034') : m('skill-calorie.home-goalProgressDocs.c035', { p0: String(num(f.waterGoal)) }) },
+    { left: '运动', main: m('skill-calorie.home-goalProgressDocs.c036'), right: f.exerciseGoal === null ? m('skill-calorie.home-goalProgressDocs.c037') : m('skill-calorie.home-goalProgressDocs.c038', { p0: String(num(f.exerciseGoal)) }) },
   ];
 }
 
@@ -288,22 +299,27 @@ const HISTORY_ROWS = 62;
 function historyTable(g: GoalProgress, historyDays: number, day: (d: string) => string, today: string): string {
   const all = g.history.goalHistory.filter((d) => d.status !== '无记录').reverse();
   const rows = all.slice(0, HISTORY_ROWS).map((d) => ({
-    date: d.date === today ? day(d.date) + '（今日）' : day(d.date),
+    date: d.date === today ? m('skill-calorie.home-goalProgressDocs.c039', { p0: String(day(d.date)) }) : day(d.date),
     cal: d.calorieActual,
     pct: d.pct === null ? DASH : Math.round(d.pct) + '%',
     verdict: verdictOf(d),
   }));
-  const truncated = all.length > HISTORY_ROWS ? '，本表只列最近 ' + HISTORY_ROWS + ' 天' : '';
+  const truncated = all.length > HISTORY_ROWS ? m('skill-calorie.home-goalProgressDocs.c040', { p0: String(HISTORY_ROWS) }) : '';
   return renderDataTable({
     columns: [
       { key: 'date', label: '日期' },
-      { key: 'cal', label: '摄入（卡）', align: 'right' },
-      { key: 'pct', label: '占目标', align: 'right' },
-      { key: 'verdict', label: '达成情况' },
+      { key: 'cal', label: m('skill-calorie.home-goalProgressDocs.c041'), align: 'right' },
+      { key: 'pct', label: m('skill-calorie.home-goalProgressDocs.c042'), align: 'right' },
+      { key: 'verdict', label: m('skill-calorie.home-goalProgressDocs.c043') },
     ],
     rows,
-    caption: secTitle(SEC_HISTORY) + '（近 ' + historyDays + ' 天里有记录 ' + all.length + ' 天）' + truncated,
-    emptyText: '近 ' + historyDays + ' 天里一天记录也没有',
+    caption: m('skill-calorie.home-goalProgressDocs.c044', {
+      p0: String(secTitle(SEC_HISTORY)),
+      p1: String(historyDays),
+      p2: String(all.length),
+      p3: String(truncated),
+    }),
+    emptyText: m('skill-calorie.home-goalProgressDocs.c045', { p0: String(historyDays) }),
   });
 }
 
@@ -323,7 +339,7 @@ function intakeChart(g: GoalProgress, day: (d: string) => string, f: Facts): str
         yTicks: 3,
         labels: 'select',
         format: (v: number) => String(Math.round(v)),
-        markLine: f.targetInRange && f.goal !== null ? { value: f.goal, label: '热量目标' } : undefined,
+        markLine: f.targetInRange && f.goal !== null ? { value: f.goal, label: m('skill-calorie.home-goalProgressDocs.c046') } : undefined,
       },
     },
   });
@@ -334,11 +350,14 @@ function intakeChart(g: GoalProgress, day: (d: string) => string, f: Facts): str
 function chartCaliber(f: Facts, g: GoalProgress): string {
   const logged = loggedValues(g.trend.series.map((p) => p.calorie));
   const trend = trendPhrase(g.trend.series.map((p) => p.calorie));
-  if (f.targetInRange) return '虚线是热量目标 ' + num(f.goal) + ' 卡，点是有记录的每一天。' + trend;
+  if (f.targetInRange) return m('skill-calorie.home-goalProgressDocs.c047', { p0: String(num(f.goal)), p1: String(trend) });
   const span = logged.length === 0 ? ''
-    : '本窗有记录的日子最低 ' + Math.min(...logged) + ' 卡、最高 ' + Math.max(...logged) + ' 卡，'
-      + '热量目标 ' + num(f.goal) + ' 卡在这段量程之外，所以图上没画那条虚线。';
-  return span + '图上的点是有记录的每一天。' + trend;
+    : m('skill-calorie.home-goalProgressDocs.c048', {
+      p0: String(Math.min(...logged)),
+      p1: String(Math.max(...logged)),
+      p2: String(num(f.goal)),
+    });
+  return m('skill-calorie.home-goalProgressDocs.c049', { p0: String(span), p1: String(trend) });
 }
 
 /** `calorie.view.goal-progress` 的整页装配（`<!doctype html>` 起，双击即开）。
@@ -351,7 +370,7 @@ export function buildGoalProgressDoc(input: GoalProgressDocInput): string {
   const f = factsOf(input);
   const day = dayLabel(input.start, input.end);
   const empty = input.data === null;
-  const toc: Array<{ id: string; text: string }> = [{ id: SEC_GOAL.id, text: SEC_GOAL.name }];
+  const toc: Array<{ id: string; text: string }> = [{ id: SEC_GOAL.id, text: m(SEC_GOAL.name) }];
   const sections: string[] = [];
 
   sections.push('<section id="' + SEC_GOAL.id + '"><h2 class="' + H2_CLASS + '">' + secTitle(SEC_GOAL) + '</h2>'
@@ -364,26 +383,26 @@ export function buildGoalProgressDoc(input: GoalProgressDocInput): string {
 
   if (empty) {
     // 空窗（裁定 4）：整页仍是完整页，缺值一律 `—`，空态句后接一句「怎么记第一条」的引导句。
-    toc.push({ id: SEC_GUIDE.id, text: SEC_GUIDE.name });
+    toc.push({ id: SEC_GUIDE.id, text: m(SEC_GUIDE.name) });
     sections.push('<section id="' + SEC_GUIDE.id + '"><h2 class="' + H2_CLASS + '">' + secTitle(SEC_GUIDE) + '</h2>'
       + emptyGuide({
         icon: '🍽️',
-        text: '这一段还没有饮食记录，所以除了热量目标以外的读数都算不出来。',
-        hint: '先记一餐：说「记一餐」，或者直接说「看今日主页」记一条。',
+        text: m('skill-calorie.home-goalProgressDocs.c050'),
+        hint: m('skill-calorie.home-goalProgressDocs.c051'),
       })
-      + renderCaliberLine('这一段一条记录也没有，所以读数一律写 —，不按 0 算。')
+      + renderCaliberLine(m('skill-calorie.home-goalProgressDocs.c052'))
       + '</section>');
   } else {
     const g = input.data as GoalProgress;
     // 折线要两点以上才不是假图（`t425` 裁定 5）：窗口里只有一个有记录日时整块不出、说明句也不出。
     if (f.loggedDays >= 2) {
-      toc.push({ id: SEC_TREND.id, text: SEC_TREND.name });
+      toc.push({ id: SEC_TREND.id, text: m(SEC_TREND.name) });
       sections.push('<section id="' + SEC_TREND.id + '">'
         + intakeChart(g, day, f)
         + renderCaliberLine(chartCaliber(f, g))
         + '</section>');
     }
-    toc.push({ id: SEC_HISTORY.id, text: SEC_HISTORY.name });
+    toc.push({ id: SEC_HISTORY.id, text: m(SEC_HISTORY.name) });
     // #467 切片·用户逐字点名删转场整句（原「上面那张折线图是窗口…／这个窗口里只有一天…＋下面这张表看的是近…」整行已删）
     // ＋删达标口径两句（原「达标口径：当日摄入占目标的 80% 到 120% 之间算达标。」＋「没记录的日子不列表，既不算达标也不算落空。」已删）。
     sections.push('<section id="' + SEC_HISTORY.id + '">' + historyTable(g, input.historyDays, day, input.end)
@@ -409,7 +428,7 @@ export function buildGoalProgressDoc(input: GoalProgressDocInput): string {
       envelope,
       copyLog: copyLog({
         command: input.command,
-        source: SOURCE_LOGGED + '（只读）',
+        source: m('skill-calorie.home-goalProgressDocs.c053', { p0: sourceLogged() }),
         actionAt: nowStamp(),
         version: DOC_VERSION,
       }),
@@ -419,9 +438,9 @@ export function buildGoalProgressDoc(input: GoalProgressDocInput): string {
   const content = [
     // 页头胶囊：页面身份 ＋ 本窗天数 ＋ 有记录几天（窗口区间归页头副题那一行，全页只出现一次）。
     renderChips({ items: [
-      { text: '目标进度' },
-      { text: '窗口 ' + f.windowDays + ' 天' },
-      { text: '有记录 ' + f.loggedDays + '/' + f.windowDays + ' 天' },
+      { text: m('skill-calorie.home-goalProgressDocs.c054') },
+      { text: m('skill-calorie.home-goalProgressDocs.c055', { p0: String(f.windowDays) }) },
+      { text: m('skill-calorie.home-goalProgressDocs.c056', { p0: String(f.loggedDays), p1: String(f.windowDays) }) },
     ] }),
     // 结论条只在有读数时出；空窗那句由空态块承担（同一句话一页只出现一处）。
     empty ? '' : renderConclusionBar(conclusionText(f)),
@@ -433,13 +452,14 @@ export function buildGoalProgressDoc(input: GoalProgressDocInput): string {
 
   // 页名一处派生：h1 与 `<title>` 走同一个串（浏览器标签页上也带着窗口，不再只写「目标进度」）；
   // #628 起先看窗口词（`command` 里 `window` 原文）：周窗（本周／week_cur）页名一律带「本周」二字（周一 1 天窗如实写「近 1 天目标进度（本周）」，不许只写「今日」）；`<title>` 那串**不带 `·`**（分隔符探针口径见 `docs/skills/skill-calorie/t161-勘察-响应式与视觉配方.md:434-445`），窗口改用括号承载。
-  const week628 = /"window"\s*:\s*"(本周|week_cur)"/.test(input.command);
-  const title = week628 ? '近 ' + f.windowDays + ' 天目标进度（本周）' : (f.windowDays <= 1 ? '今日目标进度' : '近 ' + f.windowDays + ' 天目标进度');
+  const WEEK_WINDOW = '本周';
+  const week628 = new RegExp('"window"\\s*:\\s*"(' + WEEK_WINDOW + '|week_cur)"').test(input.command);
+  const title = week628 ? m('skill-calorie.home-goalProgressDocs.c057', { p0: String(f.windowDays) }) : (f.windowDays <= 1 ? m('skill-calorie.home-goalProgressDocs.c058') : m('skill-calorie.home-goalProgressDocs.c059', { p0: String(f.windowDays) }));
   return assembleDocPage({
-    docTitle: week628 ? DOC_TITLE + '（本周）' : (title === '今日目标进度' ? DOC_TITLE : DOC_TITLE + '（近 ' + f.windowDays + ' 天）'),
+    docTitle: week628 ? m('skill-calorie.home-goalProgressDocs.c060', { p0: docTitle() }) : (title === m('skill-calorie.home-goalProgressDocs.c058') ? docTitle() : m('skill-calorie.home-goalProgressDocs.c061', { p0: docTitle(), p1: String(f.windowDays) })),
     title,
-    eyebrow: EYEBROW,
-    subtitle: input.start + ' 至 ' + input.end,
+    eyebrow: eyebrow(),
+    subtitle: m('skill-calorie.home-goalProgressDocs.c062', { p0: String(input.start), p1: String(input.end) }),
     content,
     charts: !empty && f.loggedDays >= 2, pageUi: true,
   });

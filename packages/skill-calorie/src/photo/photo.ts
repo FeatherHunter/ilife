@@ -16,6 +16,7 @@ import {
 import { shiftISODate, todayISO } from '../analysis/utils.js';
 import { CalorieRenderError } from '../render/errors.js';
 import { buildCrudReceipt, type CrudReceipt, type PhotoDistance } from '../render/receipt.js';
+import { m } from '../entries/index.js';
 
 export interface PhotoCard {
   id: number;
@@ -101,7 +102,8 @@ export function buildGalleryData(db: DatabaseSync, filter: GalleryFilter = {}, p
     limit: filter.limit === undefined ? 500 : filter.limit,
   });
   if (rows.length === 0) {
-    throw new CalorieRenderError('missing-data', '无身材照（' + dateFrom + ' ~ ' + dateTo + (filter.tag ? ' · 标签 ' + filter.tag : '') + '）');
+    const tagNote = filter.tag ? m('skill-calorie.photo-photo.c001', { p0: String(filter.tag) }) : '';
+    throw new CalorieRenderError('missing-data', '无身材照（' + dateFrom + ' ~ ' + dateTo + tagNote + '）');
   }
   const counts = new Map<string, number>();
   for (const r of listPhotos(db, { days: 36500, limit: null })) {
@@ -266,11 +268,11 @@ export function buildAddReceipt(
   added: AddedPhoto[],
   opts: { tag: string; note?: string; distance?: PhotoDistance | null; failedCount?: number; srcPaths?: readonly string[] },
 ): CrudReceipt {
-  const scene = added.length > 1 ? '批量存照片' : (opts.note ? '存照片（含备注）' : '存一张照片');
+  const scene = added.length > 1 ? m('skill-calorie.photo-photo.c005') : (opts.note ? m('skill-calorie.photo-photo.c006') : m('skill-calorie.photo-photo.c007'));
   const missing = missingSourcesOf(opts.srcPaths);
   const failedCount = missing.length > 0 ? missing.length : (opts.failedCount ?? 0);
-  let summary = '已存入 ' + added.length + ' 张身材照';
-  if (failedCount > 0) summary += '，' + failedCount + ' 张未存入';
+  let summary = m('skill-calorie.photo-photo.c008', { p0: String(added.length) });
+  if (failedCount > 0) summary += m('skill-calorie.photo-photo.c009', { p0: String(failedCount) });
   return buildCrudReceipt({
     scene,
     action: 'add',
@@ -278,12 +280,12 @@ export function buildAddReceipt(
     recordId: added.length > 0 ? (added[0]?.id ?? null) : null,
     summary,
     items: [
-      ...added.map((a) => ({ id: a.id, file: a.file, status: '成功', reason: '' })),
-      ...missing.map((p) => ({ file: basename(p), status: '失败', reason: '源文件不存在（或读不到）' })),
+      ...added.map((a) => ({ id: a.id, file: a.file, status: m('skill-calorie.photo-photo.c010'), reason: '' })),
+      ...missing.map((p) => ({ file: basename(p), status: m('skill-calorie.photo-photo.c011'), reason: m('skill-calorie.photo-photo.c012') })),
     ],
     distance: opts.distance ?? null,
-    wakeWord: '记身材照',
-    source: 'body_photos (写库回执)',
+    wakeWord: m('skill-calorie.photo-photo.c013'),
+    source: m('skill-calorie.photo-photo.c014'),
   });
 }
 
@@ -298,11 +300,15 @@ export function buildAddReceipt(
  * 且全页只留 1 处，由 `receipt.ts` 自写副标题与状态句承担（页面不再直接印这两串）。
  */
 export function buildDeleteReceipt(snapshot: PhotoRow): CrudReceipt {
-  const tags = [...snapshot.tag_list].join('、') || '无标签';
-  const summary = '已删除身材照 #' + snapshot.id + '(' + snapshot.date + ' · ' + tags + ')' +
-    (snapshot.note ? ' · ' + snapshot.note : '') + '（硬删除，不可恢复）';
+  const tags = [...snapshot.tag_list].join('、') || m('skill-calorie.photo-photo.c015');
+  const summary = m('skill-calorie.photo-photo.c016', {
+    p0: String(snapshot.id),
+    p1: String(snapshot.date),
+    p2: String(tags),
+    p3: String(snapshot.note ? ' · ' + snapshot.note : ''),
+  });
   return buildCrudReceipt({
-    scene: '删身材照',
+    scene: m('skill-calorie.photo-photo.c017'),
     action: 'delete',
     op: 'delete',
     recordId: snapshot.id,
@@ -312,11 +318,11 @@ export function buildDeleteReceipt(snapshot: PhotoRow): CrudReceipt {
       date: snapshot.date,
       photoPath: basename(snapshot.photo_path),
       tagList: [...snapshot.tag_list],
-      status: '已删除（硬，不可恢复）',
+      status: m('skill-calorie.photo-photo.c018'),
       reason: '',
     }],
-    wakeWord: '删身材照',
-    source: 'body_photos (删除快照)',
+    wakeWord: m('skill-calorie.photo-photo.c019'),
+    source: m('skill-calorie.photo-photo.c020'),
   });
 }
 
@@ -331,15 +337,20 @@ export function buildTagReceipt(
   const noChange = [...before].join(',') === [...after].join(',');
   let summary: string;
   if (scene === '改照片标签') {
-    summary = '照片 #' + photoId + ' 标签已改为：' + after.join('、') + (noChange ? '；以上标签与原来一致，未产生实际变化' : '');
+    const noChangeNote = noChange ? m('skill-calorie.photo-photo.c021') : '';
+    summary = m('skill-calorie.photo-photo.c022', {
+      p0: String(photoId),
+      p1: String(after.join('、')),
+      p2: String(noChangeNote),
+    });
   } else if (scene === '加照片标签') {
     summary = noChange
-      ? '⚠ 标签已存在（当前标签：' + before.join('、') + '），未做修改'
-      : '已为照片 #' + photoId + ' 追加标签，当前标签：' + after.join('、');
+      ? m('skill-calorie.photo-photo.c023', { p0: String(before.join('、')) })
+      : m('skill-calorie.photo-photo.c024', { p0: String(photoId), p1: String(after.join('、')) });
   } else {
     summary = noChange
-      ? '⚠ 标签不存在（当前标签：' + before.join('、') + '），未做修改'
-      : '已从照片 #' + photoId + ' 移除标签，剩余标签：' + after.join('、');
+      ? m('skill-calorie.photo-photo.c025', { p0: String(before.join('、')) })
+      : m('skill-calorie.photo-photo.c026', { p0: String(photoId), p1: String(after.join('、')) });
   }
   return buildCrudReceipt({
     scene,
@@ -350,6 +361,6 @@ export function buildTagReceipt(
     tagDiff: { before: [...before], after: [...after] },
     noChange,
     wakeWord: scene,
-    source: 'body_photos (标签更新)',
+    source: m('skill-calorie.photo-photo.c027'),
   });
 }

@@ -27,6 +27,7 @@ import { energyOf, todayISO } from '../analysis/utils.js';
 import type { EnergyResult } from '../analysis/utils.js';
 /* #717 批④：1 公斤的热量当量正本住共用位（本处原写裸字面 7700）。 */
 import { KCAL_PER_KG } from '../shared/kcalPerKg.js';
+import { m } from '../entries/index.js';
 
 /** 体重速率的安全线（卡/天）：老技能 `weight_goal.py:158-167` 同值，严格大于才算越线。 */
 export const WEIGHT_RATE_SAFE_LINE_KCAL = 1000;
@@ -113,9 +114,15 @@ export function buildWeightDraft(
   const requiredDailyKcal = gapKg !== null && daysLeft !== null && daysLeft > 0
     ? Math.trunc((gapKg / daysLeft) * KCAL_PER_KG)
     : null;
+  // 原先这枚方向词住在 rateWarning 那条链里（那里 requiredDailyKcal 已被判非 null）；
+  // 抽出来当一句话之后要自己处理 null——null 那一支 rateWarning 恒为 null，用不到方向词。
+  const dirWord = (requiredDailyKcal ?? 0) >= 0 ? m('skill-calorie.goal-set.c001') : m('skill-calorie.goal-set.c002');
   const rateWarning = requiredDailyKcal !== null && Math.abs(requiredDailyKcal) > WEIGHT_RATE_SAFE_LINE_KCAL
-    ? '按这个截止日算，每天要 ' + (requiredDailyKcal >= 0 ? '减' : '增') + ' ' + Math.abs(requiredDailyKcal)
-      + ' 卡（安全线 ±' + WEIGHT_RATE_SAFE_LINE_KCAL + ' 卡/天）——建议把截止日往后放，或把目标调小'
+    ? m('skill-calorie.goal-set.c003', {
+      p0: String(dirWord),
+      p1: String(Math.abs(requiredDailyKcal)),
+      p2: String(WEIGHT_RATE_SAFE_LINE_KCAL),
+    })
     : null;
   return { targetKg, startKg, startDate, deadline, latestKg, gapKg, daysLeft, requiredDailyKcal, rateWarning };
 }
@@ -138,17 +145,33 @@ function recommendNutrition(
   const diffKcal = calculatedKcal - calorieGoal;
   const label = NUTRI_PROFILE_LABELS[profile];
   const reasons = [
-    label + '模板：TDEE ' + energy.tdee + ' 卡 × 热量调整 ' + (p.calorieAdj >= 0 ? '+' : '') + p.calorieAdj
-      + ' 卡 → 每日 ' + calorieGoal + ' 卡',
-    '蛋白 ' + proteinGoal + ' g（体重 ' + weightKg.toFixed(1) + ' kg × ' + p.proteinGPerKg + ' g/kg）',
-    '脂肪 ' + fatGoal + ' g（占热量 ' + Math.trunc(p.fatPct * 100) + '%）· 碳水 ' + carbsGoal + ' g（余量）',
-    '饮水 ' + waterGoal + ' ml（体重 × ' + p.waterMlPerKg + ' ml/kg）',
-    '预计每周变化 ' + NUTRI_PROFILE_WEEKLY_RATE[profile].toFixed(1) + ' kg（每人不同，按实际体重趋势复核）',
-    '活动系数 ×' + energy.factor + '（取档案里的活动量档位，不是默认值）',
+    m('skill-calorie.goal-set.c004', {
+      p0: String(label),
+      p1: String(energy.tdee),
+      p2: String(p.calorieAdj >= 0 ? '+' : ''),
+      p3: String(p.calorieAdj),
+      p4: String(calorieGoal),
+    }),
+    m('skill-calorie.goal-set.c005', {
+      p0: String(proteinGoal),
+      p1: String(weightKg.toFixed(1)),
+      p2: String(p.proteinGPerKg),
+    }),
+    m('skill-calorie.goal-set.c006', {
+      p0: String(fatGoal),
+      p1: String(Math.trunc(p.fatPct * 100)),
+      p2: String(carbsGoal),
+    }),
+    m('skill-calorie.goal-set.c007', { p0: String(waterGoal), p1: String(p.waterMlPerKg) }),
+    m('skill-calorie.goal-set.c008', { p0: String(NUTRI_PROFILE_WEEKLY_RATE[profile].toFixed(1)) }),
+    m('skill-calorie.goal-set.c009', { p0: String(energy.factor) }),
   ];
   if (Math.abs(diffKcal) > 50) {
-    reasons.push('⚠️ 自洽性校验：宏量换算 ' + calculatedKcal + ' 卡，与热量目标差 '
-      + (diffKcal >= 0 ? '+' : '') + diffKcal + ' 卡（>50 建议复核）');
+    reasons.push(m('skill-calorie.goal-set.c010', {
+      p0: String(calculatedKcal),
+      p1: String(diffKcal >= 0 ? '+' : ''),
+      p2: String(diffKcal),
+    }));
   }
   return {
     calorieGoal, proteinGoal, carbsGoal, fatGoal, waterGoal,

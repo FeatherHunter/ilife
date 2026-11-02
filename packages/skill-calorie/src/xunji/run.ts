@@ -28,6 +28,7 @@ import { runOverlayPlanCommand, type OverlayDeps } from './overlay-plan.js';
 import { runRunSyncCommand, type RunSyncDeps } from './run-sync.js';
 import { resolveDbDir, resolveDbFileName } from '../paths.js';
 import { exitForFailure } from './exitMap.js';
+import { m } from '../entries/index.js';
 
 /** 一次子命令调用的读数：退出码 ＋ 人话 ＋ 机器读数（＋ 命令行入口要打的那句）。 */
 export interface XunjiRun {
@@ -79,7 +80,7 @@ export interface XunjiCommandDeps {
 const NAMES = XUNJI_SUBCOMMANDS.map((s) => s.name).join('|');
 
 function refusal(sub: XunjiSubcommand, why: string, data: unknown): XunjiRun {
-  const line = why + '（用法：' + sub.usage + '）';
+  const line = m('skill-calorie.xunji-run.c001', { p0: String(why), p1: String(sub.usage) });
   return { subcommand: sub.name, code: XUNJI_EXIT_CODES.error, message: why, data, stderr: line };
 }
 
@@ -91,17 +92,17 @@ function runVerify(sub: XunjiSubcommand, names: readonly string[], catalogPath: 
     return {
       subcommand: 'verify',
       code: XUNJI_EXIT_CODES.error,
-      message: '动作库读不出，无法验证（不是「动作不合法」）：' + String(report.catalog_error),
+      message: m('skill-calorie.xunji-run.c002', { p0: String(String(report.catalog_error)) }),
       data: report,
-      stderr: '动作库读不出，无法验证：' + String(report.catalog_error),
+      stderr: m('skill-calorie.xunji-run.c003', { p0: String(String(report.catalog_error)) }),
     };
   }
   if (report.invalid_count > 0) {
     const bad = report.results.filter((r) => r.valid === false).map((r) => r.name).join('、');
-    return { subcommand: 'verify', code: XUNJI_EXIT_CODES.invalid, message: report.invalid_count + ' 个动作名不在库：' + bad, data: report, stderr: null };
+    return { subcommand: 'verify', code: XUNJI_EXIT_CODES.invalid, message: m('skill-calorie.xunji-run.c004', { p0: String(report.invalid_count), p1: String(bad) }), data: report, stderr: null };
   }
-  if (report.total === 0) return refusal(sub, '缺参数：<动作名>', { usage: sub.usage });
-  return { subcommand: 'verify', code: XUNJI_EXIT_CODES.ok, message: '全部 ' + report.total + ' 个动作名都在库', data: report, stderr: null };
+  if (report.total === 0) return refusal(sub, m('skill-calorie.xunji-run.c005'), { usage: sub.usage });
+  return { subcommand: 'verify', code: XUNJI_EXIT_CODES.ok, message: m('skill-calorie.xunji-run.c006', { p0: String(report.total) }), data: report, stderr: null };
 }
 
 /** `upsert` 的真实现（老 `__main__.py:163-213` 的入参口径，调用走 `upsertTrains`）。 */
@@ -111,16 +112,16 @@ async function runUpsert(sub: XunjiSubcommand, values: Readonly<Record<string, s
   const hasJson = typeof json === 'string';
   const hasFile = typeof jsonFile === 'string';
   if (hasJson === hasFile) {
-    return refusal(sub, '用法：upsert 必须二选一传 --json <res[]> 字符串 或 --json-file <路径>', { usage: sub.usage });
+    return refusal(sub, m('skill-calorie.xunji-run.c007'), { usage: sub.usage });
   }
   let parsed: unknown;
   try {
     parsed = JSON.parse(hasFile ? readFileSync(jsonFile as string, 'utf8') : (json as string));
   } catch (e) {
-    return refusal(sub, 'res[] 解析失败：' + (e instanceof Error ? e.message : String(e)), { usage: sub.usage });
+    return refusal(sub, m('skill-calorie.xunji-run.c008', { p0: String(e instanceof Error ? e.message : String(e)) }), { usage: sub.usage });
   }
   if (!Array.isArray(parsed)) {
-    return refusal(sub, 'res[] 必须是 JSON 数组', { usage: sub.usage });
+    return refusal(sub, m('skill-calorie.xunji-run.c009'), { usage: sub.usage });
   }
   // 透传语义：只断言“数组”，条目形状不断言（`movements[].name` 原样上报，推送前不校验）。
   const resList = parsed as XunjiResItem[];
@@ -142,7 +143,7 @@ async function runUpsert(sub: XunjiSubcommand, values: Readonly<Record<string, s
     return {
       subcommand: 'upsert',
       code: XUNJI_EXIT_CODES.ok,
-      message: dryRun ? 'dry-run：备好 ' + n + ' 条，未调接口' : 'upsert 成功（' + n + ' 条）',
+      message: dryRun ? m('skill-calorie.xunji-run.c010', { p0: String(n) }) : m('skill-calorie.xunji-run.c011', { p0: String(n) }),
       data,
       stderr: null,
     };
@@ -169,7 +170,7 @@ function withAttempts(response: unknown, attempts: number): unknown {
 /** `push-plan` 的真实现（老 `__main__.py:114-123` 的退出口径：`fail_count > 0` 即 3）。 */
 async function runPushPlan(sub: XunjiSubcommand, values: Readonly<Record<string, string | boolean | readonly string[]>>, deps: XunjiCommandDeps): Promise<XunjiRun> {
   const date = values['--date'];
-  if (typeof date !== 'string') return refusal(sub, '缺参数：--date', { usage: sub.usage });
+  if (typeof date !== 'string') return refusal(sub, m('skill-calorie.xunji-run.c012'), { usage: sub.usage });
   const bad = dateProblem(date);
   if (bad !== null) return refusal(sub, bad, { usage: sub.usage });
   const dryRun = values['--dry-run'] === true;
@@ -188,15 +189,15 @@ async function runPushPlan(sub: XunjiSubcommand, values: Readonly<Record<string,
     rateLimit: { now: deps.now, sleep: deps.sleep, statePath: deps.rateLimitPath },
   });
   if (summary.fail_count > 0) {
-    const line = summary.fail_count + ' 个 session 推送失败（共 ' + summary.session_count + ' 个）';
+    const line = m('skill-calorie.xunji-run.c013', { p0: String(summary.fail_count), p1: String(summary.session_count) });
     return { subcommand: 'push-plan', code: XUNJI_EXIT_CODES.api, message: line, data: summary, stderr: line };
   }
   return {
     subcommand: 'push-plan',
     code: XUNJI_EXIT_CODES.ok,
     message: dryRun
-      ? 'dry-run：' + date + ' 备好 ' + summary.session_count + ' 个 session，未调接口'
-      : '推送成功：' + date + ' ' + summary.session_count + ' 个 session',
+      ? m('skill-calorie.xunji-run.c014', { p0: String(date), p1: String(summary.session_count) })
+      : m('skill-calorie.xunji-run.c015', { p0: String(date), p1: String(summary.session_count) }),
     data: summary,
     stderr: null,
   };
@@ -205,7 +206,7 @@ async function runPushPlan(sub: XunjiSubcommand, values: Readonly<Record<string,
 /** `fetch` 的真实现（老 `__main__.py:71-94` 的退出口径：鉴权错→2，接口错→3）。 */
 async function runFetch(sub: XunjiSubcommand, values: Readonly<Record<string, string | boolean | readonly string[]>>, deps: XunjiCommandDeps): Promise<XunjiRun> {
   const date = values['--date'];
-  if (typeof date !== 'string') return refusal(sub, '缺参数：--date', { usage: sub.usage });
+  if (typeof date !== 'string') return refusal(sub, m('skill-calorie.xunji-run.c016'), { usage: sub.usage });
   const bad = dateProblem(date);
   if (bad !== null) return refusal(sub, bad, { usage: sub.usage });
   const full = values['--full'] === true;
@@ -226,18 +227,18 @@ async function runFetch(sub: XunjiSubcommand, values: Readonly<Record<string, st
     if (raw) {
       return {
         subcommand: 'fetch', code: XUNJI_EXIT_CODES.ok,
-        message: '拉取成功（原始 JSON）：' + date,
+        message: m('skill-calorie.xunji-run.c017', { p0: String(date) }),
         data: withAttempts(outcome.response, outcome.attempts), stderr: null,
       };
     }
     const trains = parseTrains(outcome.response);
     return {
       subcommand: 'fetch', code: XUNJI_EXIT_CODES.ok,
-      message: '拉取成功：' + date + ' ' + trains.length + ' 条训练',
+      message: m('skill-calorie.xunji-run.c018', { p0: String(date), p1: String(trains.length) }),
       data: { date, trains_count: trains.length, trains }, stderr: null,
     };
   }
-  const line = '拉取失败（没拉到）：' + outcome.failure.message;
+  const line = m('skill-calorie.xunji-run.c019', { p0: String(outcome.failure.message) });
   return {
     subcommand: 'fetch',
     code: exitForFailure(outcome.failure),
@@ -263,7 +264,7 @@ async function runBackfill(sub: XunjiSubcommand, values: Readonly<Record<string,
   if (values['--days'] !== undefined) {
     const n = Number(values['--days']);
     if (!Number.isInteger(n) || n < 1) {
-      return refusal(sub, '天数须为 ≥1 整数（实际：' + String(values['--days']) + '）', { usage: sub.usage });
+      return refusal(sub, m('skill-calorie.xunji-run.c020', { p0: String(String(values['--days'])) }), { usage: sub.usage });
     }
     days = n;
   }
@@ -293,20 +294,24 @@ async function runBackfill(sub: XunjiSubcommand, values: Readonly<Record<string,
   });
   for (const r of result.results) {
     if (r.fetch_ok === false && r.failure !== null) {
-      const line = '回写失败（没拉到）：' + r.date + ' ' + r.failure.message;
+      const line = m('skill-calorie.xunji-run.c021', { p0: String(r.date), p1: String(r.failure.message) });
       return { subcommand: 'backfill', code: exitForFailure(r.failure), message: line, data: result, stderr: line };
     }
   }
   for (const r of result.results) {
     if (r.err !== null) {
-      const line = '回写失败（拉到了没写进）：' + r.date + ' ' + r.err;
+      const line = m('skill-calorie.xunji-run.c022', { p0: String(r.date), p1: String(r.err) });
       return { subcommand: 'backfill', code: XUNJI_EXIT_CODES.api, message: line, data: result, stderr: line };
     }
   }
-  const figured = result.days > 1 ? result.end_date + ' 往前 ' + result.days + ' 天' : result.end_date;
+  const figured = result.days > 1 ? m('skill-calorie.xunji-run.c023', { p0: String(result.end_date), p1: String(result.days) }) : result.end_date;
   return {
     subcommand: 'backfill', code: XUNJI_EXIT_CODES.ok,
-    message: '回写成功：' + figured + ' 新增 ' + result.total_inserted + '，更新 ' + result.total_updated,
+    message: m('skill-calorie.xunji-run.c024', {
+      p0: String(figured),
+      p1: String(result.total_inserted),
+      p2: String(result.total_updated),
+    }),
     data: result, stderr: null,
   };
 }
@@ -315,18 +320,18 @@ async function runBackfill(sub: XunjiSubcommand, values: Readonly<Record<string,
 export async function runXunjiCommand(argv: readonly string[], deps: XunjiCommandDeps = {}): Promise<XunjiRun> {
   const head = argv[0];
   if (head === undefined || head === '') {
-    const line = '缺子命令（可用：' + NAMES + '）';
+    const line = m('skill-calorie.xunji-run.c025', { p0: String(NAMES) });
     return { subcommand: null, code: XUNJI_EXIT_CODES.error, message: line, data: { subcommands: XUNJI_SUBCOMMANDS.map((s) => s.name) }, stderr: line };
   }
   const sub = findSubcommand(head);
   if (!sub) {
-    const line = '未知子命令：' + head + '（可用：' + NAMES + '）';
+    const line = m('skill-calorie.xunji-run.c026', { p0: String(head), p1: String(NAMES) });
     return { subcommand: head, code: XUNJI_EXIT_CODES.error, message: line, data: { subcommands: XUNJI_SUBCOMMANDS.map((s) => s.name) }, stderr: line };
   }
   const parsed = parseSubcommandArgs(sub, argv.slice(1));
   if (parsed.problem !== null) return refusal(sub, parsed.problem, { usage: sub.usage, args: parsed.values });
   if (sub.state === 'declared')
-    return refusal(sub, '未实现：' + sub.name + '（归 ' + String(sub.ownerTicket) + '）', { subcommand: sub.name, owner_ticket: sub.ownerTicket, args: parsed.values });
+    return refusal(sub, m('skill-calorie.xunji-run.c027', { p0: String(sub.name), p1: String(String(sub.ownerTicket)) }), { subcommand: sub.name, owner_ticket: sub.ownerTicket, args: parsed.values });
   if (sub.name === 'verify') {
     const raw = parsed.values['<动作名>'];
     const names = Array.isArray(raw) ? raw : [];

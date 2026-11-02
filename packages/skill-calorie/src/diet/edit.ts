@@ -13,7 +13,7 @@ import {
 import { CalorieRenderError } from '../render/errors.js';
 import type { WriteOut } from '../shared/commandSpec.js';
 import { assertISO, fail, needId, needStr, needWday, optNum, optStr } from '../shared/params.js';
-import { HARD_INNER, HARD_WORDING, R, cliNames, deleteStatus, out } from '../shared/writeParts.js';
+import { R, cliNames, deleteStatus, hardInner, hardWording, out } from '../shared/writeParts.js';
 import { m } from '../entries/index.js';
 
 /** `calorie.diet.update` · 改饮食。 */
@@ -71,7 +71,7 @@ export function writeDietRemove(params: Record<string, unknown>, db: DatabaseSyn
     p0: String(id),
     p1: String(r.food_name),
     p2: String(r.calories),
-    p3: String(HARD_INNER),
+    p3: hardInner(),
   }), m('skill-calorie.diet-edit.c016'), m('skill-calorie.diet-edit.c017'), {
     recordId: id, ids: [id], writtenFields: [], items: [{ id, status: deleteStatus('hard'), reason: '', detail: r.food_name }],
   }));
@@ -83,7 +83,7 @@ export function writeDietRemoveByDate(params: Record<string, unknown>, db: Datab
   assertISO(date, 'date');
   const r = deleteMealsByDate(db, date);
   if (r.deleted === 0) throw new CalorieRenderError('missing-data', '无饮食记录（' + date + '）');
-  return out(R(m('skill-calorie.diet-edit.c018'), 'delete', m('skill-calorie.diet-edit.c019', { p0: String(date), p1: String(r.deleted), p2: String(HARD_WORDING) }), m('skill-calorie.diet-edit.c020'), m('skill-calorie.diet-edit.c021'), { ids: [], idSource: 'condition', writtenFields: [] }));
+  return out(R(m('skill-calorie.diet-edit.c018'), 'delete', m('skill-calorie.diet-edit.c019', { p0: String(date), p1: String(r.deleted), p2: hardWording() }), m('skill-calorie.diet-edit.c020'), m('skill-calorie.diet-edit.c021'), { ids: [], idSource: 'condition', writtenFields: [] }));
 }
 
 /** `calorie.diet.remove-by-range` · 批量删饮食。 */
@@ -99,7 +99,7 @@ export function writeDietRemoveByRange(params: Record<string, unknown>, db: Data
     p0: String(start),
     p1: String(end),
     p2: String(r.deleted),
-    p3: String(HARD_WORDING),
+    p3: hardWording(),
   }), m('skill-calorie.diet-edit.c025'), m('skill-calorie.diet-edit.c026'), { ids: [], idSource: 'condition', writtenFields: [] }));
 }
 
@@ -115,6 +115,6 @@ export function writeDietRemoveByType(params: Record<string, unknown>, db: Datab
     p0: String(date),
     p1: String(mealType),
     p2: String(r.deleted),
-    p3: String(HARD_WORDING),
+    p3: hardWording(),
   }), m('skill-calorie.diet-edit.c030'), m('skill-calorie.diet-edit.c031'), { ids: [], idSource: 'condition', writtenFields: [] }));
 }

@@ -15,6 +15,7 @@ import { commandLine } from '../shared/writeParts.js';
 import { CalorieRenderError } from '../render/errors.js';
 import { buildPhotoPickerDoc } from './pickerDoc.js';
 import { photoDir } from './dir.js';
+import { m } from '../entries/index.js';
 
 export type PickerAction = 'remove' | 'tag';
 export type PickerTagOp = 'set' | 'add' | 'remove';
@@ -45,32 +46,32 @@ function bad(msg: string): never {
 
 function optId(raw: unknown): number | null {
   if (raw === undefined || raw === null) return null;
-  if (typeof raw !== 'number' || !Number.isInteger(raw) || raw <= 0) bad('参数 id 须为正整数照片 id');
+  if (typeof raw !== 'number' || !Number.isInteger(raw) || raw <= 0) bad(m('skill-calorie.photo-picker.c001'));
   return raw as number;
 }
 
 function optAction(raw: unknown): PickerAction {
   if (raw === undefined || raw === null) return 'remove';
-  if (raw !== 'remove' && raw !== 'tag') bad('参数 action 只许 remove/tag：' + String(raw));
+  if (raw !== 'remove' && raw !== 'tag') bad(m('skill-calorie.photo-picker.c002', { p0: String(String(raw)) }));
   return raw;
 }
 
 function optOp(raw: unknown): PickerTagOp | null {
   if (raw === undefined || raw === null) return null;
-  if (raw !== 'set' && raw !== 'add' && raw !== 'remove') bad('参数 op 只许 set/add/remove：' + String(raw));
+  if (raw !== 'set' && raw !== 'add' && raw !== 'remove') bad(m('skill-calorie.photo-picker.c003', { p0: String(String(raw)) }));
   return raw;
 }
 
 function optTag(raw: unknown, field: string): string | null {
   if (raw === undefined || raw === null) return null;
-  if (typeof raw !== 'string' || raw.trim() === '') bad('参数 ' + field + ' 须为非空字符串');
+  if (typeof raw !== 'string' || raw.trim() === '') bad(m('skill-calorie.photo-picker.c004', { p0: String(field) }));
   return raw.trim();
 }
 
 function optLimit(raw: unknown): number {
   if (raw === undefined || raw === null) return PICKER_DEFAULT_LIMIT;
   if (typeof raw !== 'number' || !Number.isInteger(raw) || raw < 1 || raw > PICKER_MAX_LIMIT) {
-    bad('参数 limit 须为 1..' + PICKER_MAX_LIMIT + ' 整数');
+    bad(m('skill-calorie.photo-picker.c005', { p0: String(PICKER_MAX_LIMIT) }));
   }
   return raw as number;
 }
@@ -83,19 +84,21 @@ export function buildPhotoPickerPrompt(input: {
 }): string {
   const { selectedId, action, op, newTag } = input;
   if (selectedId === null) {
-    return '// 还没选照片：把候选列表里某张的编号说给我（例如 19），我再把要执行的指令写出来';
+    return m('skill-calorie.photo-picker.c006');
   }
   if (action === 'remove') {
-    return '请帮我删除身材照 ' + selectedId + '（删了就找不回来，先看上面那张是不是它）' +
-      '\n\n命令:\n```bash\ncalorie-cmd-read calorie.photo.remove --params \'' +
-      JSON.stringify({ id: selectedId }) + '\'\n```\n\n完成后返回写库回执。';
+    return m('skill-calorie.photo-picker.c007', {
+      p0: String(selectedId),
+      p1: String(JSON.stringify({ id: selectedId })),
+    });
   }
   if (op === null || newTag === null) {
-    return '// 已选照片 ' + selectedId + '：还差两样——要把标签换成、加上，还是去掉哪个；换成／加上／去掉的标签叫什么';
+    return m('skill-calorie.photo-picker.c008', { p0: String(selectedId) });
   }
-  return '请帮我改照片标签 ' + selectedId + '（先核对本页快照里的原标签）' +
-    '\n\n命令:\n```bash\ncalorie-cmd-read calorie.photo.tag --params \'' +
-    JSON.stringify({ id: selectedId, op, tag: newTag }) + '\'\n```\n\n完成后返回写库回执。';
+  return m('skill-calorie.photo-picker.c009', {
+    p0: String(selectedId),
+    p1: String(JSON.stringify({ id: selectedId, op, tag: newTag })),
+  });
 }
 
 /** `calorie.view.photo-picker` · 删照候选：候选列表＋单张快照＋可复制 prompt（只读）。 */
@@ -103,7 +106,7 @@ export function viewPhotoPicker(params: Record<string, unknown>, db: DatabaseSyn
   data: Record<string, unknown>; html: string;
 } {
   for (const k of Object.keys(params)) {
-    if (!ALLOWED.has(k)) bad('不支持字段: ' + k);
+    if (!ALLOWED.has(k)) bad(m('skill-calorie.photo-picker.c010', { p0: String(k) }));
   }
   const id = optId(params['id']);
   const action = optAction(params['action']);
@@ -113,10 +116,10 @@ export function viewPhotoPicker(params: Record<string, unknown>, db: DatabaseSyn
   const dateFrom = params['dateFrom'] === undefined ? undefined : dayField(params, 'dateFrom');
   const dateTo = params['dateTo'] === undefined ? undefined : dayField(params, 'dateTo');
   const today = params['today'] === undefined ? undefined : dayField(params, 'today');
-  if (dateFrom && dateTo && dateFrom > dateTo) bad('dateFrom 不得晚于 dateTo');
+  if (dateFrom && dateTo && dateFrom > dateTo) bad(m('skill-calorie.photo-picker.c011'));
   const days = params['days'];
   if (days !== undefined && (typeof days !== 'number' || !Number.isInteger(days) || days < 1 || days > 36500)) {
-    bad('days 须为 1..36500 整数');
+    bad(m('skill-calorie.photo-picker.c012'));
   }
   const limit = optLimit(params['limit']);
   const dir = photoDir(params);
@@ -128,8 +131,9 @@ export function viewPhotoPicker(params: Record<string, unknown>, db: DatabaseSyn
     limit: null,
   });
   if (rows.length === 0) {
+    const tagNote = tag ? m('skill-calorie.photo-picker.c013', { p0: String(tag) }) : '';
     throw new CalorieRenderError('missing-data',
-      '无身材照（' + (dateFrom ?? '') + ' ~ ' + (dateTo ?? '') + (tag ? ' · 标签 ' + tag : '') + '）');
+      '无身材照（' + (dateFrom ?? '') + ' ~ ' + (dateTo ?? '') + tagNote + '）');
   }
   const fullCount = rows.length;
   const page = rows.slice(0, limit);
@@ -141,9 +145,14 @@ export function viewPhotoPicker(params: Record<string, unknown>, db: DatabaseSyn
     selected = toCard(row, dir ?? null);
   }
   const prompt = buildPhotoPickerPrompt({ selectedId: id, action, op, newTag });
+  const tagPrefix = tag ? m('skill-calorie.photo-picker.c014', { p0: String(tag) }) : '';
   const view: PhotoPickerView = {
     candidates, fullCount, truncated: fullCount > candidates.length,
-    filtersDesc: (tag ? '标签 ' + tag + ' · ' : '') + '近窗候选（本页 ' + candidates.length + '/' + fullCount + ' 张）',
+    filtersDesc: m('skill-calorie.photo-picker.c015', {
+      p0: String(tagPrefix),
+      p1: String(candidates.length),
+      p2: String(fullCount),
+    }),
     selected, selectedInList: selected !== null && candidates.some((c) => c.id === selected?.id),
     action, prompt,
   };

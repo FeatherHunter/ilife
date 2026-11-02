@@ -16,17 +16,20 @@
 import { STYLE_PREFIX, escapeHtml, renderStatusBadge } from 'base-paint';
 import type { StatusKind } from 'base-paint';
 import { CalorieRenderError } from '../render/errors.js';
+import { m } from '../entries/index.js';
 
 /** 四态键（`add` 与 `create` 同态：老表两键一行，新增类命令两种写法都认）。 */
 export type ReceiptOp = 'create' | 'add' | 'update' | 'delete';
 
 /** 状标签表（老实物 `opLabels` 逐值）。 */
-export const OPERATION_LABELS: Readonly<Record<ReceiptOp, string>> = Object.freeze({
-  create: '新增',
-  add: '新增',
-  update: '修改',
-  delete: '删除',
-});
+export function operationLabel(op: ReceiptOp): string {
+  switch (op) {
+    case 'create':
+    case 'add': return m('skill-calorie.shared-operationHead.c002');
+    case 'update': return m('skill-calorie.shared-operationHead.c003');
+    case 'delete': return m('skill-calorie.shared-operationHead.c004');
+  }
+}
 
 /** 色档表（老实物 `opColors` 逐格对到公共层档名：good→ok、bad→danger）。 */
 export const OPERATION_TONES: Readonly<Record<ReceiptOp, StatusKind>> = Object.freeze({
@@ -77,7 +80,7 @@ export function operationHead(input: OperationHeadInput): string {
     throw new CalorieRenderError('bad-input', 'operationHead: input.recordId 须为整数或 null');
   }
   const op = typeof head.op === 'string' ? head.op : '';
-  const label = OPERATION_LABELS[op as ReceiptOp] ?? op;
+  const label = op === 'create' || op === 'add' || op === 'update' || op === 'delete' ? operationLabel(op) : op;
   const tone: StatusKind = OPERATION_TONES[op as ReceiptOp] ?? 'empty';
   const icon = OPERATION_ICONS[op as ReceiptOp] ?? OP_FALLBACK_ICON;
   const source = typeof head.source === 'string' && head.source !== '' ? head.source : undefined;
@@ -86,7 +89,7 @@ export function operationHead(input: OperationHeadInput): string {
     + '<span class="' + cls + '-icon" aria-hidden="true">' + escapeHtml(icon) + '</span>'
     + renderStatusBadge({ status: tone, text: label })
     + '<h2 class="' + cls + '-title">' + escapeHtml(title) + '</h2>'
-    + '<p class="' + cls + '-id">记录号 ' + (recordId === null ? '未设置' : '#' + recordId) + '</p>'
+    + '<p class="' + cls + '-id">记录号 ' + (recordId === null ? m('skill-calorie.shared-operationHead.c001') : '#' + recordId) + '</p>'
     + '<p class="' + cls + '-time">' + escapeHtml(source === undefined ? actionAt : actionAt + ' · ' + source) + '</p>'
     + '</div>';
 }

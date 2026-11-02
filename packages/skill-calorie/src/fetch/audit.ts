@@ -5,6 +5,7 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { verifyMovements } from '../xunji/index.js';
+import { m } from '../entries/index.js';
 
 export type AuditStatus = 'ok' | 'warn' | 'fail';
 
@@ -48,7 +49,7 @@ export function auditPlanNames(
   // 库面两档与训记模块同一份（`catalogPath`／`catalog` 都是它的入参；缺省＝包内预置快照）。
   const report = verifyMovements(collectPlanNames(db), opts);
   if (!report.catalog_loaded) {
-    return { status: 'fail', data: null, message: '训记动作库加载失败：' + String(report.catalog_error) };
+    return { status: 'fail', data: null, message: m('skill-calorie.fetch-audit.c001', { p0: String(String(report.catalog_error)) }) };
   }
   const inCatalog = report.results.filter((r) => r.valid === true).map((r) => r.name).sort();
   const notInCatalog = report.results.filter((r) => r.valid === false).map((r) => r.name).sort();
@@ -63,7 +64,7 @@ export function auditPlanNames(
     data.suggestions = Object.fromEntries(notInCatalog.map((n) => [n, [...(byName.get(n) ?? [])]]));
   }
   if (notInCatalog.length === 0) {
-    return { status: 'ok', data, message: `全部 ${report.total} 个动作名均在库` };
+    return { status: 'ok', data, message: m('skill-calorie.fetch-audit.c002', { p0: String(report.total) }) };
   }
-  return { status: 'warn', data, message: `${notInCatalog.length} 个动作名不在库: ${notInCatalog.join('、')}` };
+  return { status: 'warn', data, message: m('skill-calorie.fetch-audit.c003', { p0: String(notInCatalog.length), p1: String(notInCatalog.join('、')) }) };
 }

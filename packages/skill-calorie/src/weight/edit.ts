@@ -6,7 +6,7 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { assertISO, fail, optNum, optStr, wday } from '../shared/params.js';
-import { F, HARD_INNER, HARD_WORDING, R, deleteStatus, out } from '../shared/writeParts.js';
+import { F, R, deleteStatus, hardInner, hardWording, out } from '../shared/writeParts.js';
 import type { WriteOut } from '../shared/commandSpec.js';
 import { deleteWeight, deleteWeightByDate, deleteWeightRange, updateWeight, updateWeightByDate } from './records.js';
 import { m } from '../entries/index.js';
@@ -67,7 +67,7 @@ export function writeWeightRemove(params: Record<string, unknown>, db: DatabaseS
       p0: String(id),
       p1: String(r.date),
       p2: String(r.weight_kg),
-      p3: String(HARD_INNER),
+      p3: hardInner(),
     }), m('skill-calorie.weight-edit.c019'), m('skill-calorie.weight-edit.c020'), {
       recordId: id, ids: [id], writtenFields: [],
       // 整页回执的快照表吃删前取值（摘要口径一字不动；`detail` 给原始数值，单位由页面加）。
@@ -80,7 +80,7 @@ export function writeWeightRemove(params: Record<string, unknown>, db: DatabaseS
     return out(R(m('skill-calorie.weight-edit.c021'), 'delete', m('skill-calorie.weight-edit.c022', {
       p0: String(date),
       p1: String(r.deletedCount),
-      p2: String(HARD_WORDING),
+      p2: hardWording(),
     }), m('skill-calorie.weight-edit.c023'), m('skill-calorie.weight-edit.c024'), {
       ids: [], idSource: 'condition', writtenFields: [],
       items: r.snapshot.map((row) => ({
@@ -98,7 +98,7 @@ export function writeWeightRemove(params: Record<string, unknown>, db: DatabaseS
       p0: String(start),
       p1: String(end),
       p2: String(r.deletedCount),
-      p3: String(HARD_WORDING),
+      p3: hardWording(),
     }), m('skill-calorie.weight-edit.c029'), m('skill-calorie.weight-edit.c030'), {
       ids: [], idSource: 'condition', writtenFields: [],
       items: r.snapshot.map((row) => ({

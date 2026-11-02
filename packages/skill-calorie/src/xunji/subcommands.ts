@@ -15,6 +15,7 @@
 
 /** 退出码（老 `__main__.py:29-34` 的自述：0 成功／1 一般错误／2 鉴权失败／3 接口报错／4 校验失败）。
  *  #595 实测两处「自述与实况不符」（401／403 实退 3），逐条映射表由 #607／#608／#610 出。 */
+import { m } from '../entries/index.js';
 export const XUNJI_EXIT_CODES = {
   ok: 0,
   error: 1,
@@ -95,7 +96,7 @@ export const XUNJI_SUBCOMMANDS: readonly XunjiSubcommand[] = [
       { flag: '--dry-run', value: '', required: false, note: '只构造请求，不调接口' },
     ],
     exits: [XUNJI_EXIT_CODES.ok, XUNJI_EXIT_CODES.error, XUNJI_EXIT_CODES.auth, XUNJI_EXIT_CODES.api],
-    example: `python scripts/xunji_bridge.py upsert --json '[{"datestr":"2026-07-13","localid":0,"title":"胸","start":0,"end":0,"movements":[]}]' --dry-run`,
+    example: `python scripts/xunji_bridge.py upsert --json '[{"datestr":"2026-07-13","localid":0,"title":"chest","start":0,"end":0,"movements":[]}]' --dry-run`,
     state: 'implemented',
     ownerTicket: null,
   },
@@ -201,15 +202,15 @@ export function parseSubcommandArgs(sub: XunjiSubcommand, argv: readonly string[
       const name = eq >= 0 ? token.slice(0, eq) : token;
       const inline = eq >= 0 ? token.slice(eq + 1) : undefined;
       const decl = sub.args.find((a) => a.flag === name);
-      if (!decl) return { values, problem: '未知参数：' + name };
+      if (!decl) return { values, problem: m('skill-calorie.xunji-subcommands.c001', { p0: String(name) }) };
       if (decl.value === '') {
-        if (inline !== undefined) return { values, problem: name + ' 是开关型参数，不带值' };
+        if (inline !== undefined) return { values, problem: m('skill-calorie.xunji-subcommands.c002', { p0: String(name) }) };
         values[name] = true;
         continue;
       }
       const value = inline ?? argv[i + 1];
       if (value === undefined || value === '' || (inline === undefined && value.startsWith('--'))) {
-        return { values, problem: name + ' 缺值' };
+        return { values, problem: m('skill-calorie.xunji-subcommands.c003', { p0: String(name) }) };
       }
       if (inline === undefined) i += 1;
       values[name] = value;
@@ -222,14 +223,14 @@ export function parseSubcommandArgs(sub: XunjiSubcommand, argv: readonly string[
       continue;
     }
     const target = takePositional();
-    if (!target) return { values, problem: '多余的位置参数：' + token };
+    if (!target) return { values, problem: m('skill-calorie.xunji-subcommands.c004', { p0: String(token) }) };
     values[target.flag] = token;
   }
   for (const a of sub.args) {
     if (!a.required) continue;
     const v = values[a.flag];
     if (v === undefined || (Array.isArray(v) && v.length === 0)) {
-      return { values, problem: '缺参数：' + a.flag };
+      return { values, problem: m('skill-calorie.xunji-subcommands.c005', { p0: String(a.flag) }) };
     }
   }
   return { values, problem: null };

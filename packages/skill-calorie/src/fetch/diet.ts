@@ -14,6 +14,7 @@ import { FetchError } from './errors.js';
 import { MEAL_NAMES, MEAL_WINDOWS, inferMealType } from '../shared/meal.js';
 import type { MealName } from '../shared/meal.js';
 import { timeOfDayISO, todayISO } from '../shared/time.js';
+import { m } from '../entries/index.js';
 
 export const WATER_NAME = '💧水';
 /** 写入口的 `--meal` 值域（＝五类餐名，来自共用位正本；`MEALS`／`MealName` 两个对外名字照旧转出）。 */
@@ -79,7 +80,7 @@ export function addMeal(db: DatabaseSync, input: MealInput): AddMealResult {
     throw new FetchError('营养值不能为负，克数必须为正');
   }
   if (input.mealOverride !== undefined && !(MEAL_NAMES as readonly string[]).includes(input.mealOverride)) {
-    throw new FetchError(`--meal 必须是以下值之一：${MEAL_NAMES.join('、')}`);
+    throw new FetchError(m('skill-calorie.fetch-diet.c007', { p0: MEAL_NAMES.join('、') }));
   }
   const today = input.date ?? todayStr();
   const now = input.time ?? nowStr();
@@ -91,8 +92,14 @@ export function addMeal(db: DatabaseSync, input: MealInput): AddMealResult {
   if (dup) {
     return {
       id: null, duplicate: true, dupId: dup.id, date: today, time: now,
-      food_name: foodName, meal, dateLabel: input.date ? today : '今日', rowsAffected: 0,
-      message: `重复记录已跳过(同日期/时间/食物名/克数/热量已存在: ${today} ${now} ${foodName} ${grams}g ${calories}kcal)`,
+      food_name: foodName, meal, dateLabel: input.date ? today : m('skill-calorie.fetch-diet.c001'), rowsAffected: 0,
+      message: m('skill-calorie.fetch-diet.c002', {
+        p0: String(today),
+        p1: String(now),
+        p2: String(foodName),
+        p3: String(grams),
+        p4: String(calories),
+      }),
     };
   }
   const info = db.prepare(
@@ -104,7 +111,7 @@ export function addMeal(db: DatabaseSync, input: MealInput): AddMealResult {
   const goal = readGoal(db);
   return {
     id: Number(info.lastInsertRowid), duplicate: false, date: today, time: now,
-    food_name: foodName, meal, dateLabel: input.date ? today : '今日', rowsAffected: 1,
+    food_name: foodName, meal, dateLabel: input.date ? today : m('skill-calorie.fetch-diet.c003'), rowsAffected: 1,
     todayTotals: {
       cal: totals['SUM(calories)'] ?? 0, pro: totals['SUM(protein)'] ?? 0,
       carbs: totals['SUM(carbs)'] ?? 0, fat: totals['SUM(fat)'] ?? 0, count: totals['COUNT(*)'] ?? 0,
@@ -124,7 +131,7 @@ export function updateMeal(db: DatabaseSync, entryId: number, fields: Record<str
   const id = Number(entryId);
   if (!Number.isInteger(id)) throw new FetchError('Entry ID 必须是数字');
   const bad = Object.keys(fields).filter((k) => !MEAL_UPDATABLE.has(k));
-  if (bad.length) throw new FetchError(`不支持字段: ${bad.join(', ')}; 支持: ${[...MEAL_UPDATABLE].join(', ')}`);
+  if (bad.length) throw new FetchError(m('skill-calorie.fetch-diet.c008', { p0: bad.join(', '), p1: [...MEAL_UPDATABLE].join(', ') }));
   if (!Object.keys(fields).length) throw new FetchError('至少传 1 个字段');
   const before = db.prepare(
     'SELECT id, date, time, food_name, grams, calories, protein, carbs, fat, note FROM food_log WHERE id = ?',
@@ -205,14 +212,20 @@ export function addMealsBatch(db: DatabaseSync, entries: BatchMealItem[]): {
       const food = String(e.food_name ?? '').trim();
       const cal = num(e.calories ?? NaN, 'calories');
       const pro = num(e.protein ?? NaN, 'protein');
-      if (!food || cal < 0 || pro < 0) { skipped++; failures.push([i, '食物名必填，营养值不能为负']); return; }
+      if (!food || cal < 0 || pro < 0) { skipped++; failures.push([i, m('skill-calorie.fetch-diet.c004')]); return; }
       const d = String(e.date ?? todayStr());
       const t = String(e.time ?? nowStr());
       const g = e.grams === undefined || e.grams === null ? 100 : num(e.grams, 'grams');
       const dup = db.prepare(
         'SELECT id FROM food_log WHERE date=? AND time=? AND food_name=? AND grams=? AND calories=? LIMIT 1',
       ).get(d, t, food, g, cal);
-      if (dup) { skipped++; failures.push([i, `重复记录已跳过: ${d} ${t} ${food} ${g}g ${cal}kcal`]); return; }
+      if (dup) { skipped++; failures.push([i, m('skill-calorie.fetch-diet.c005', {
+        p0: String(d),
+        p1: String(t),
+        p2: String(food),
+        p3: String(g),
+        p4: String(cal),
+      })]); return; }
       db.prepare(
         'INSERT INTO food_log (date, time, food_name, grams, calories, protein, carbs, fat, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
       ).run(d, t, food, g, cal, pro,
@@ -222,7 +235,7 @@ export function addMealsBatch(db: DatabaseSync, entries: BatchMealItem[]): {
       added++;
     } catch (err) {
       skipped++;
-      failures.push([i, `数值非法: ${err instanceof Error ? err.message : String(err)}`]);
+      failures.push([i, m('skill-calorie.fetch-diet.c006', { p0: String(err instanceof Error ? err.message : String(err)) })]);
     }
   });
   return { ok: true, added, skipped, failed: failures.length, failures };
@@ -232,7 +245,7 @@ export function updateMealsByDate(db: DatabaseSync, targetDate: string, fields: 
   ok: true; matched: number; updated: number; before: Record<string, unknown>[]; after: Record<string, unknown>[]; changedFields: string[];
 } {
   const bad = Object.keys(fields).filter((k) => !MEAL_UPDATABLE.has(k));
-  if (bad.length) throw new FetchError(`不支持字段: ${bad.join(', ')}`);
+  if (bad.length) throw new FetchError(m('skill-calorie.fetch-diet.c009', { p0: bad.join(', ') }));
   if (!Object.keys(fields).length) throw new FetchError('至少传 1 个字段');
   const ids = (db.prepare('SELECT id FROM food_log WHERE date = ? AND food_name != ?').all(targetDate, WATER_NAME) as { id: number }[])
     .map((r) => r.id);
@@ -274,7 +287,7 @@ export function deleteMealsByType(db: DatabaseSync, targetDate: string, mealType
   /* #717 批①·餐别归一的连带修：窗口取自共用位正本 `MEAL_WINDOWS`，**夜宵改跨零点**
      （`[22, 30)`）——22:00 之后的记录归成夜宵、此前却不落进夜宵窗，删「夜宵」删不掉它。 */
   const w = MEAL_WINDOWS[mealType as keyof typeof MEAL_WINDOWS];
-  if (!w || w.length === 0) throw new FetchError(`餐别必须是 ${Object.keys(MEAL_WINDOWS).join('/')} 之一`);
+  if (!w || w.length === 0) throw new FetchError(m('skill-calorie.fetch-diet.c010', { p0: Object.keys(MEAL_WINDOWS).join('/') }));
   const hourExpr = "CAST(strftime('%H', time) AS INT)";
   const where = w.length === 4
     ? `date = ? AND food_name != ? AND ((${hourExpr} >= ? AND ${hourExpr} < ?) OR (${hourExpr} >= ? AND ${hourExpr} < ?))`

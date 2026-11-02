@@ -24,6 +24,7 @@ import { dayField, nums, optStr } from '../shared/params.js';
 import { buildBodyCompositionCompareDoc as buildCompositionDoc } from './compareCompositionDoc.js';
 import { buildBodyMeasureCompareDoc as buildMeasureDoc } from './compareMeasureDoc.js';
 import type { ViewOut } from '../shared/commandSpec.js';
+import { m } from '../entries/index.js';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；与 bodyDocs.ts 同值）。 */
 export const DOC_VERSION = '0.1.0';
@@ -33,10 +34,10 @@ export const DOC_SKILL = 'calorie';
  * 是「该做形状」的信号，页签文字里落不了形状，就只写一个词）。同域的 `bodyDocs.ts` 另有一份
  * 同名（域票改它时应保持本值一致）。两页装配住在 `compareCompositionDoc.ts`／`compareMeasureDoc.ts`，
  * 由本件薄转出（出口位不变）。 */
-export const DOC_TITLE = '卡路里 身体细节';
+export function docTitle(): string { return m('skill-calorie.body-compare.c002'); }
 
 /** 徽标（本族两页共用一词）。 */
-export const BADGE = '身体细节';
+export function badge(): string { return m('skill-calorie.body-compare.c003'); }
 
 /** 页码 ①：`assembleDocPage` 的 `pageUi` 位（页面级移动端配方：安全区／44px 触摸区／640 档
  *  字号下限与读数卡两格／页内导航横滑／表格卡片化，配方本体在 `base-render/src/pageUi.ts`）。 */
@@ -44,7 +45,7 @@ export const PAGE_UI = true;
 
 /** 期别日期人话：单日只写那一天；跨日写「起至止」，**不拿 `~` 顶替「至」**（第 5 条）。 */
 export function rangeText(from: string, to: string): string {
-  return from === to ? from : from + ' 至 ' + to;
+  return from === to ? from : m('skill-calorie.body-compare.c001', { p0: String(from), p1: String(to) });
 }
 
 /* 围度 13 项中文名：一律取 `fetch/body.ts` 的 `MEASUREMENT_ZH`（#440 前本件自持过一份同字表，同源已收）；
@@ -64,7 +65,7 @@ function mustISO(v: string, field: string): string {
 /** 单日必填（含相对词 今日／昨日／前天 与 offset 平移，与 view.ts 同口径）。 */
 function needSingleDay(params: Record<string, unknown>, field: string): string {
   const v = dayField(params, field);
-  if (!v) throw new CalorieRenderError('bad-input', '缺参数 ' + field + '（须 YYYY-MM-DD，如 "2026-09-05"）');
+  if (!v) throw new CalorieRenderError('bad-input', '缺参数 ' + field + '（须 YYYY-MM-DD，如「2026-09-05」）');
   return mustISO(v, field);
 }
 

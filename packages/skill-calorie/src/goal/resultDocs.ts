@@ -37,11 +37,12 @@ import { copyArea, copyLog } from '../shared/copyArea.js';
 import type { GoalExpiringView, GoalVsActualView } from './goalExtraPlate.js';
 import type { GoalConfig, GoalStatus } from './goalPlates.js';
 import type { GoalView } from './goalPlate.js';
+import { m } from '../entries/index.js';
 
 /** 信封头（值冻结对齐 `cli/keys.ts`，与各 `*Docs.ts` 同值；标题取目标管理域）。 */
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
-const DOC_TITLE = '卡路里·目标管理';
+
 
 /** 缺值一律 `—`（`t425` 裁定 4）：本件只做这一处格式化，不拿 0 顶缺、不写空串。 */
 function num(v: number | null | undefined, unit: string): string {
@@ -66,8 +67,25 @@ export function section(id: string, html: string): string {
 }
 
 /** 缺口方向与摄入走向的读者话（数据层给的是 `loss`／`up` 这类内部取值，不上屏）。 */
-const DEFICIT_TREND_ZH: Record<string, string> = { loss: '缺口在变大', gain: '缺口在变小', flat: '基本持平' };
-const INTAKE_TREND_ZH: Record<string, string> = { up: '后半段比前半段多', down: '后半段比前半段少', flat: '前后半段基本持平' };
+function deficitTrendZh(k: string): string | undefined {
+  switch (k) {
+    case 'loss': return m('skill-calorie.goal-resultDocs.c214');
+    case 'gain': return m('skill-calorie.goal-resultDocs.c215');
+    case 'flat': return m('skill-calorie.goal-resultDocs.c216');
+    default: return undefined;
+  }
+}
+
+function intakeTrendZh(k: string): string | undefined {
+  switch (k) {
+    case 'up': return m('skill-calorie.goal-resultDocs.c217');
+    case 'down': return m('skill-calorie.goal-resultDocs.c218');
+    case 'flat': return m('skill-calorie.goal-resultDocs.c219');
+    default: return undefined;
+  }
+}
+
+function docTitle(): string { return m('skill-calorie.goal-resultDocs.c213'); }
 
 /** 页头第 1 行左的参数小字（`shared/docPage.ts:33` 定死这一行的用途＝窗口／区间）。
  *
@@ -76,7 +94,7 @@ const INTAKE_TREND_ZH: Record<string, string> = { up: '后半段比前半段多'
  *  （读数卡副说明／表题都写「起 至 止」），读者一眼看得出这一页看的是哪一段。
  *  区间只在这一行新出现一次，卡与表的区间一个字没动（本票只搬 H1 那一处）。 */
 function windowLineOf(metaLeft: string, start: string, end: string): string {
-  return metaLeft + ' · 窗口 ' + start + ' 至 ' + end;
+  return m('skill-calorie.goal-resultDocs.c001', { p0: String(metaLeft), p1: String(start), p2: String(end) });
 }
 
 /** 复制区（双按钮：复制数据 ＋ 复制日志；裁定 7）。载荷与 `data.metrics` 是同一份对象。 */
@@ -109,9 +127,13 @@ export function tailOf(key: string, metrics: Record<string, number>, command: st
 function goalSummaryOf(v: GoalView): string {
   const s = v.deficit.summary;
   const pct = v.completionPct === null ? '—' : v.completionPct + '%';
-  return '结论：热量目标 ' + v.nutrition.calorie_goal + ' 卡，本窗日均摄入 ' + s.avgIntake
-    + ' 卡，周缺口 ' + s.weeklyDeficit + ' 卡（按每 7700 卡折算约 ' + s.predictedLossKg + ' 公斤），'
-    + '近 30 天完成率 ' + pct + '。';
+  return m('skill-calorie.goal-resultDocs.c002', {
+    p0: String(v.nutrition.calorie_goal),
+    p1: String(s.avgIntake),
+    p2: String(s.weeklyDeficit),
+    p3: String(s.predictedLossKg),
+    p4: String(pct),
+  });
 }
 
 export function buildGoalDoc(v: GoalView, metrics: Record<string, number>, command: string): string {
@@ -121,58 +143,58 @@ export function buildGoalDoc(v: GoalView, metrics: Record<string, number>, comma
   const recorded = v.history.completedCount + v.history.incompleteCount;
   const body = [
     renderTocBlock({ items: [
-      { id: 'sec-readings', text: '读数' },
-      { id: 'sec-goal', text: '目标值' },
-      { id: 'sec-gap', text: '缺口与摄入' },
+      { id: 'sec-readings', text: m('skill-calorie.goal-resultDocs.c003') },
+      { id: 'sec-goal', text: m('skill-calorie.goal-resultDocs.c004') },
+      { id: 'sec-gap', text: m('skill-calorie.goal-resultDocs.c005') },
     ] }),
     section('sec-readings', renderKpiGrid([
-      cardOf('热量目标', n.calorie_goal, '卡'),
-      cardOf('蛋白目标', n.protein_goal, 'g'),
-      cardOf('饮水目标', n.water_goal, 'ml'),
-      { label: '达标天数', value: String(v.history.completedCount), unit: '天', detail: '近 30 天里有记录 ' + recorded + ' 天' },
-      cardOf('周缺口', s.weeklyDeficit, '卡', '日均缺口 ' + s.avgDeficit + ' 卡'),
-      cardOf('日均摄入', t.avg, '卡', v.start + ' 至 ' + v.end),
+      cardOf(m('skill-calorie.goal-resultDocs.c006'), n.calorie_goal, m('skill-calorie.goal-resultDocs.c007')),
+      cardOf(m('skill-calorie.goal-resultDocs.c008'), n.protein_goal, 'g'),
+      cardOf(m('skill-calorie.goal-resultDocs.c009'), n.water_goal, 'ml'),
+      { label: m('skill-calorie.goal-resultDocs.c010'), value: String(v.history.completedCount), unit: m('skill-calorie.goal-resultDocs.c011'), detail: m('skill-calorie.goal-resultDocs.c012', { p0: String(recorded) }) },
+      cardOf(m('skill-calorie.goal-resultDocs.c013'), s.weeklyDeficit, m('skill-calorie.goal-resultDocs.c014'), m('skill-calorie.goal-resultDocs.c015', { p0: String(s.avgDeficit) })),
+      cardOf(m('skill-calorie.goal-resultDocs.c016'), t.avg, m('skill-calorie.goal-resultDocs.c017'), m('skill-calorie.goal-resultDocs.c018', { p0: String(v.start), p1: String(v.end) })),
     ])),
     section('sec-goal', renderDataTable({
-      columns: [{ key: 'item', label: '项目' }, { key: 'goal', label: '目标值', align: 'right' }],
+      columns: [{ key: 'item', label: m('skill-calorie.goal-resultDocs.c019') }, { key: 'goal', label: m('skill-calorie.goal-resultDocs.c020'), align: 'right' }],
       rows: [
-        { item: '热量', goal: num(n.calorie_goal, '卡') },
-        { item: '蛋白质', goal: num(n.protein_goal, 'g') },
-        { item: '碳水化合物', goal: num(n.carbs_goal, 'g') },
+        { item: m('skill-calorie.goal-resultDocs.c021'), goal: num(n.calorie_goal, m('skill-calorie.goal-resultDocs.c022')) },
+        { item: m('skill-calorie.goal-resultDocs.c023'), goal: num(n.protein_goal, 'g') },
+        { item: m('skill-calorie.goal-resultDocs.c024'), goal: num(n.carbs_goal, 'g') },
         { item: '脂肪', goal: num(n.fat_goal, 'g') },
-        { item: '饮水', goal: num(n.water_goal, 'ml') },
+        { item: m('skill-calorie.goal-resultDocs.c025'), goal: num(n.water_goal, 'ml') },
       ],
-      caption: '现在每天要达成的目标值',
-      emptyText: '还没设过营养目标',
+      caption: m('skill-calorie.goal-resultDocs.c026'),
+      emptyText: m('skill-calorie.goal-resultDocs.c027'),
     })),
     section('sec-gap', renderDataTable({
       columns: [
-        { key: 'item', label: '项目' },
-        { key: 'reading', label: '读数', align: 'right' },
-        { key: 'note', label: '说明' },
+        { key: 'item', label: m('skill-calorie.goal-resultDocs.c028') },
+        { key: 'reading', label: m('skill-calorie.goal-resultDocs.c029'), align: 'right' },
+        { key: 'note', label: m('skill-calorie.goal-resultDocs.c030') },
       ],
       rows: [
-        { item: '日均摄入', reading: num(s.avgIntake, '卡'), note: '窗口里每天平均吃进去的' },
-        { item: '日均消耗', reading: num(s.avgBurn, '卡'), note: '日常消耗加当天运动 ' + s.avgExerciseBurn + ' 卡' },
-        { item: '日均缺口', reading: num(s.avgDeficit, '卡'), note: DEFICIT_TREND_ZH[s.trend] },
-        { item: '周缺口', reading: num(s.weeklyDeficit, '卡'), note: '按整周合计' },
-        { item: '预计减重', reading: num(s.predictedLossKg, 'kg'), note: '按每 7700 卡折算一公斤' },
-        { item: '摄入走向', reading: INTAKE_TREND_ZH[t.trend], note: '窗口前后半段比一比' },
+        { item: m('skill-calorie.goal-resultDocs.c031'), reading: num(s.avgIntake, m('skill-calorie.goal-resultDocs.c032')), note: m('skill-calorie.goal-resultDocs.c033') },
+        { item: m('skill-calorie.goal-resultDocs.c034'), reading: num(s.avgBurn, m('skill-calorie.goal-resultDocs.c035')), note: m('skill-calorie.goal-resultDocs.c036', { p0: String(s.avgExerciseBurn) }) },
+        { item: m('skill-calorie.goal-resultDocs.c037'), reading: num(s.avgDeficit, m('skill-calorie.goal-resultDocs.c038')), note: deficitTrendZh(s.trend) },
+        { item: m('skill-calorie.goal-resultDocs.c039'), reading: num(s.weeklyDeficit, m('skill-calorie.goal-resultDocs.c040')), note: m('skill-calorie.goal-resultDocs.c041') },
+        { item: m('skill-calorie.goal-resultDocs.c042'), reading: num(s.predictedLossKg, 'kg'), note: m('skill-calorie.goal-resultDocs.c043') },
+        { item: m('skill-calorie.goal-resultDocs.c044'), reading: intakeTrendZh(t.trend), note: m('skill-calorie.goal-resultDocs.c045') },
       ],
-      caption: '这一段时间的缺口与摄入（' + v.start + ' 至 ' + v.end + '）',
-      emptyText: '窗口里没有饮食记录',
+      caption: m('skill-calorie.goal-resultDocs.c046', { p0: String(v.start), p1: String(v.end) }),
+      emptyText: m('skill-calorie.goal-resultDocs.c047'),
     })),
-    tailOf('calorie.view.goal', metrics, command, '目标表与饮食记录',
-      ['缺口是当天消耗减掉当天摄入的差，正数代表有缺口。', '消耗算日常消耗加当天运动，摄入只算吃进去的，喝水不算。']),
+    tailOf('calorie.view.goal', metrics, command, m('skill-calorie.goal-resultDocs.c048'),
+      [m('skill-calorie.goal-resultDocs.c049'), m('skill-calorie.goal-resultDocs.c050')]),
   ].join('');
   return assembleDocPage({
-    docTitle: DOC_TITLE,
+    docTitle: docTitle(),
     // #566：H1 只留页面名；窗口区间住页头 meta-bar 左行（windowLineOf）。
-    title: '🎯 目标分析',
+    title: m('skill-calorie.goal-resultDocs.c051'),
     eyebrow: '',
     subtitle: null,
-    metaLeft: windowLineOf('看目标完成度 · 目标管理', v.start, v.end),
-    badge: '目标分析',
+    metaLeft: windowLineOf(m('skill-calorie.goal-resultDocs.c052'), v.start, v.end),
+    badge: m('skill-calorie.goal-resultDocs.c053'),
     summary: goalSummaryOf(v),
     content: body,
     charts: false,
@@ -190,62 +212,68 @@ export function buildGoalVsActualDoc(v: GoalVsActualView, metrics: Record<string
   const t = v.trend.summary;
   const body = [
     renderTocBlock({ items: [
-      { id: 'sec-readings', text: '读数' },
-      { id: 'sec-days', text: '逐日达成' },
-      { id: 'sec-trend', text: '摄入走向' },
+      { id: 'sec-readings', text: m('skill-calorie.goal-resultDocs.c054') },
+      { id: 'sec-days', text: m('skill-calorie.goal-resultDocs.c055') },
+      { id: 'sec-trend', text: m('skill-calorie.goal-resultDocs.c056') },
     ] }),
     section('sec-readings', renderKpiGrid([
-      cardOf('热量目标', v.calorieGoal, '卡'),
-      { label: '达标天数', value: String(v.completedCount), unit: '天', detail: '近 30 天里有记录 ' + recorded + ' 天' },
-      cardOf('完成率', v.completionPct, '%'),
-      cardOf('本窗日均摄入', v.trendAvg, '卡', v.start + ' 至 ' + v.end),
+      cardOf(m('skill-calorie.goal-resultDocs.c057'), v.calorieGoal, m('skill-calorie.goal-resultDocs.c058')),
+      { label: m('skill-calorie.goal-resultDocs.c059'), value: String(v.completedCount), unit: m('skill-calorie.goal-resultDocs.c060'), detail: m('skill-calorie.goal-resultDocs.c061', { p0: String(recorded) }) },
+      cardOf(m('skill-calorie.goal-resultDocs.c062'), v.completionPct, '%'),
+      cardOf(m('skill-calorie.goal-resultDocs.c063'), v.trendAvg, m('skill-calorie.goal-resultDocs.c064'), m('skill-calorie.goal-resultDocs.c065', { p0: String(v.start), p1: String(v.end) })),
     ])),
     section('sec-days', renderDataTable({
       columns: [
         { key: 'date', label: '日期' },
-        { key: 'intake', label: '摄入', align: 'right' },
-        { key: 'goal', label: '目标', align: 'right' },
-        { key: 'pct', label: '达成', align: 'right' },
+        { key: 'intake', label: m('skill-calorie.goal-resultDocs.c066'), align: 'right' },
+        { key: 'goal', label: m('skill-calorie.goal-resultDocs.c067'), align: 'right' },
+        { key: 'pct', label: m('skill-calorie.goal-resultDocs.c068'), align: 'right' },
         { key: 'status', label: '状态' },
       ],
       /* 没记录的日期照裁定 4 写 `—`（不拿 0 顶）——「这三天没记」与「记了但吃 0 卡」是两回事。 */
       rows: v.history.goalHistory.map((d) => ({
         date: d.date,
-        intake: d.status === '无记录' ? '—' : num(d.calorieActual, '卡'),
-        goal: num(d.calorieGoal, '卡'),
+        intake: d.status === '无记录' ? '—' : num(d.calorieActual, m('skill-calorie.goal-resultDocs.c069')),
+        goal: num(d.calorieGoal, m('skill-calorie.goal-resultDocs.c070')),
         pct: d.status === '无记录' ? '—' : num(d.pct, '%'),
         status: d.status,
       })),
-      caption: '最近 30 天逐日达成（达标线是当天摄入落在目标热量的 80% 到 120% 之间）',
-      emptyText: '这 30 天里一条饮食记录都没有',
+      caption: m('skill-calorie.goal-resultDocs.c071'),
+      emptyText: m('skill-calorie.goal-resultDocs.c072'),
     })),
     section('sec-trend', renderDataTable({
-      columns: [{ key: 'item', label: '项目' }, { key: 'reading', label: '读数', align: 'right' }],
+      columns: [{ key: 'item', label: m('skill-calorie.goal-resultDocs.c073') }, { key: 'reading', label: m('skill-calorie.goal-resultDocs.c074'), align: 'right' }],
       rows: [
-        { item: '窗口日均', reading: num(t.avg, '卡') },
-        { item: '工作日平均', reading: num(t.weekdayAvg, '卡') },
-        { item: '周末平均', reading: num(t.weekendAvg, '卡') },
-        { item: '窗口前半段', reading: num(t.startAvg, '卡') },
-        { item: '窗口后半段', reading: num(t.endAvg, '卡') },
-        { item: '平均偏差', reading: meanDev === null ? '—' : meanDev + ' %' },
+        { item: m('skill-calorie.goal-resultDocs.c075'), reading: num(t.avg, m('skill-calorie.goal-resultDocs.c076')) },
+        { item: m('skill-calorie.goal-resultDocs.c077'), reading: num(t.weekdayAvg, m('skill-calorie.goal-resultDocs.c078')) },
+        { item: m('skill-calorie.goal-resultDocs.c079'), reading: num(t.weekendAvg, m('skill-calorie.goal-resultDocs.c080')) },
+        { item: m('skill-calorie.goal-resultDocs.c081'), reading: num(t.startAvg, m('skill-calorie.goal-resultDocs.c082')) },
+        { item: m('skill-calorie.goal-resultDocs.c083'), reading: num(t.endAvg, m('skill-calorie.goal-resultDocs.c084')) },
+        { item: m('skill-calorie.goal-resultDocs.c085'), reading: meanDev === null ? '—' : meanDev + ' %' },
       ],
-      caption: '摄入走向（本窗 ' + v.start + ' 至 ' + v.end + '）',
-      emptyText: '窗口里没有饮食记录',
+      caption: m('skill-calorie.goal-resultDocs.c086', { p0: String(v.start), p1: String(v.end) }),
+      emptyText: m('skill-calorie.goal-resultDocs.c087'),
     })),
-    tailOf('calorie.view.goal-vs-actual', metrics, command, '目标表与饮食记录',
-      ['达标线是当天摄入落在热量目标的 80% 到 120% 之间，没记录的日期不计入达标也不计入未达标。',
-        '平均偏差是有记录那几天达成率偏离 100% 的均值，正数代表平均超目标；老技能同式，缺项时不算。']),
+    tailOf('calorie.view.goal-vs-actual', metrics, command, m('skill-calorie.goal-resultDocs.c088'),
+      [m('skill-calorie.goal-resultDocs.c089'),
+        m('skill-calorie.goal-resultDocs.c090')]),
   ].join('');
+  const goalText = v.calorieGoal === null ? '—' : m('skill-calorie.goal-resultDocs.c091', { p0: String(v.calorieGoal) });
   return assembleDocPage({
-    docTitle: DOC_TITLE,
+    docTitle: docTitle(),
     // #566：同 `buildGoalDoc`——H1 只留页面名，窗口区间住页头 meta-bar 左行。
-    title: '🎯 目标对比实际',
+    title: m('skill-calorie.goal-resultDocs.c092'),
     eyebrow: '',
     subtitle: null,
-    metaLeft: windowLineOf('看目标对比实际 · 目标管理', v.start, v.end),
-    badge: '目标对比实际',
-    summary: '结论：热量目标 ' + (v.calorieGoal === null ? '—' : v.calorieGoal + ' 卡') + '，最近 30 天里有记录 '
-      + recorded + ' 天、达标 ' + v.completedCount + ' 天（完成率 ' + pct + '），本窗日均摄入 ' + v.trendAvg + ' 卡。',
+    metaLeft: windowLineOf(m('skill-calorie.goal-resultDocs.c093'), v.start, v.end),
+    badge: m('skill-calorie.goal-resultDocs.c094'),
+    summary: m('skill-calorie.goal-resultDocs.c095', {
+      p0: String(goalText),
+      p1: String(recorded),
+      p2: String(v.completedCount),
+      p3: String(pct),
+      p4: String(v.trendAvg),
+    }),
     content: body,
     charts: false,
     pageUi: true,
@@ -254,57 +282,62 @@ export function buildGoalVsActualDoc(v: GoalVsActualView, metrics: Record<string
 
 /** 紧迫度（呈现层派生，不动取数：已过期／3 天内高／落提醒窗中／窗外低；老技能另按需算速率分档，需当前体重，口径差见本页口径行）。 */
 function urgencyOf(v: GoalExpiringView): string {
-  if (v.daysLeft < 0) return '已过期';
-  if (v.daysLeft <= 3) return '高';
-  if (v.daysLeft <= v.withinDays) return '中';
-  return '低';
+  if (v.daysLeft < 0) return m('skill-calorie.goal-resultDocs.c096');
+  if (v.daysLeft <= 3) return m('skill-calorie.goal-resultDocs.c097');
+  if (v.daysLeft <= v.withinDays) return m('skill-calorie.goal-resultDocs.c098');
+  return m('skill-calorie.goal-resultDocs.c099');
 }
 
 /* ── ③ 即将到期目标（`calorie.view.goal-expiring`：截止日 ＋ 剩余天数两态） ─────────────────── */
 
 export function buildGoalExpiringDoc(v: GoalExpiringView, metrics: Record<string, number>, command: string): string {
-  const state = v.expiring ? '即将到期' : '还没进提醒窗口';
+  const state = v.expiring ? m('skill-calorie.goal-resultDocs.c100') : m('skill-calorie.goal-resultDocs.c101');
   const body = [
     renderTocBlock({ items: [
-      { id: 'sec-readings', text: '读数' },
-      { id: 'sec-detail', text: '到期明细' },
+      { id: 'sec-readings', text: m('skill-calorie.goal-resultDocs.c102') },
+      { id: 'sec-detail', text: m('skill-calorie.goal-resultDocs.c103') },
     ] }),
     section('sec-readings', renderKpiGrid([
-      { label: '目标截止日', value: v.deadline, detail: state },
-      { label: '紧迫度', value: urgencyOf(v), detail: '剩余 ' + v.daysLeft + ' 天／窗口 ' + v.withinDays + ' 天' },
-      cardOf('剩余天数', v.daysLeft, '天', '提醒窗口 ' + v.withinDays + ' 天'),
-      cardOf('体重目标', v.weightGoal, 'kg'),
-      cardOf('热量目标', v.calorieGoal, '卡'),
+      { label: m('skill-calorie.goal-resultDocs.c104'), value: v.deadline, detail: state },
+      { label: m('skill-calorie.goal-resultDocs.c105'), value: urgencyOf(v), detail: m('skill-calorie.goal-resultDocs.c106', { p0: String(v.daysLeft), p1: String(v.withinDays) }) },
+      cardOf(m('skill-calorie.goal-resultDocs.c107'), v.daysLeft, m('skill-calorie.goal-resultDocs.c108'), m('skill-calorie.goal-resultDocs.c109', { p0: String(v.withinDays) })),
+      cardOf(m('skill-calorie.goal-resultDocs.c110'), v.weightGoal, 'kg'),
+      cardOf(m('skill-calorie.goal-resultDocs.c111'), v.calorieGoal, m('skill-calorie.goal-resultDocs.c112')),
     ])),
     section('sec-detail', renderDataTable({
       columns: [
-        { key: 'item', label: '项目' },
-        { key: 'reading', label: '读数', align: 'right' },
-        { key: 'note', label: '说明' },
+        { key: 'item', label: m('skill-calorie.goal-resultDocs.c113') },
+        { key: 'reading', label: m('skill-calorie.goal-resultDocs.c114'), align: 'right' },
+        { key: 'note', label: m('skill-calorie.goal-resultDocs.c115') },
       ],
       rows: [
-        { item: '目标截止日', reading: v.deadline, note: state },
-        { item: '剩余天数', reading: num(v.daysLeft, '天'), note: '从今天算起' },
-        { item: '提醒窗口', reading: num(v.withinDays, '天'), note: '剩余天数落进窗口才算即将到期' },
-        { item: '体重目标', reading: num(v.weightGoal, 'kg'), note: '取自体重目标' },
-        { item: '热量目标', reading: num(v.calorieGoal, '卡'), note: '取自营养目标' },
+        { item: m('skill-calorie.goal-resultDocs.c116'), reading: v.deadline, note: state },
+        { item: m('skill-calorie.goal-resultDocs.c117'), reading: num(v.daysLeft, m('skill-calorie.goal-resultDocs.c118')), note: m('skill-calorie.goal-resultDocs.c119') },
+        { item: m('skill-calorie.goal-resultDocs.c120'), reading: num(v.withinDays, m('skill-calorie.goal-resultDocs.c121')), note: m('skill-calorie.goal-resultDocs.c122') },
+        { item: m('skill-calorie.goal-resultDocs.c123'), reading: num(v.weightGoal, 'kg'), note: m('skill-calorie.goal-resultDocs.c124') },
+        { item: m('skill-calorie.goal-resultDocs.c125'), reading: num(v.calorieGoal, m('skill-calorie.goal-resultDocs.c126')), note: m('skill-calorie.goal-resultDocs.c127') },
       ],
-      caption: '这条目标离到期还有多远',
-      emptyText: '没有设过带截止日的目标',
+      caption: m('skill-calorie.goal-resultDocs.c128'),
+      emptyText: m('skill-calorie.goal-resultDocs.c129'),
     })),
-    tailOf('calorie.view.goal-expiring', metrics, command, '目标表与体重目标',
-      ['即将到期是指剩余天数落进你设的提醒窗口内，窗口默认 14 天。', '截止日与体重目标都要先设过才有这一页，缺一样就先补齐再来看。',
-        '紧迫度只按剩余天数分档（3 天内高／落窗中／窗外低）；老技能另按需算速率分档，需当前体重，取数口径另开票裁。']),
+    tailOf('calorie.view.goal-expiring', metrics, command, m('skill-calorie.goal-resultDocs.c130'),
+      [m('skill-calorie.goal-resultDocs.c131'), m('skill-calorie.goal-resultDocs.c132'),
+        m('skill-calorie.goal-resultDocs.c133')]),
   ].join('');
+  const windowNote = v.expiring ? m('skill-calorie.goal-resultDocs.c134') : m('skill-calorie.goal-resultDocs.c135');
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '⏳ 目标到期提醒',
+    docTitle: docTitle(),
+    title: m('skill-calorie.goal-resultDocs.c136'),
     eyebrow: '',
     subtitle: null,
-    metaLeft: '看即将到期的目标 · 目标管理',
-    badge: '即将到期目标',
-    summary: '结论：目标截止 ' + v.deadline + '，还剩 ' + v.daysLeft + ' 天，提醒窗口 ' + v.withinDays
-      + ' 天，' + (v.expiring ? '已经落进窗口，该安排收尾了。' : '还没进窗口，暂时不用处理。'),
+    metaLeft: m('skill-calorie.goal-resultDocs.c137'),
+    badge: m('skill-calorie.goal-resultDocs.c138'),
+    summary: m('skill-calorie.goal-resultDocs.c139', {
+      p0: String(v.deadline),
+      p1: String(v.daysLeft),
+      p2: String(v.withinDays),
+      p3: String(windowNote),
+    }),
     content: body,
     charts: false,
     pageUi: true,
@@ -315,30 +348,46 @@ export function buildGoalExpiringDoc(v: GoalExpiringView, metrics: Record<string
 /** 两页共用装配：读数卡＋明细表＋口径复制尾（与 #254 三页同一套 `tailOf`／`section`／`cardOf`／`num`）。 */
 function simpleGoalDoc(key: string, title: string, badge: string, metaLeft: string, summary: string, cards: { label: string; value: string; unit?: string; detail?: string }[], caption: string, rows: { item: string; reading: string; note: string }[], metrics: Record<string, number>, command: string, calibers: readonly string[]): string {
   const body = [
-    renderTocBlock({ items: [{ id: 'sec-readings', text: '读数' }, { id: 'sec-detail', text: '明细' }] }),
+    renderTocBlock({ items: [{ id: 'sec-readings', text: m('skill-calorie.goal-resultDocs.c140') }, { id: 'sec-detail', text: m('skill-calorie.goal-resultDocs.c141') }] }),
     section('sec-readings', renderKpiGrid(cards)),
-    section('sec-detail', renderDataTable({ columns: [{ key: 'item', label: '项目' }, { key: 'reading', label: '读数', align: 'right' }, { key: 'note', label: '说明' }], rows, caption, emptyText: '暂无明细' })),
-    tailOf(key, metrics, command, '目标表', calibers),
+    section('sec-detail', renderDataTable({ columns: [{ key: 'item', label: m('skill-calorie.goal-resultDocs.c142') }, { key: 'reading', label: m('skill-calorie.goal-resultDocs.c143'), align: 'right' }, { key: 'note', label: m('skill-calorie.goal-resultDocs.c144') }], rows, caption, emptyText: m('skill-calorie.goal-resultDocs.c145') })),
+    tailOf(key, metrics, command, m('skill-calorie.goal-resultDocs.c146'), calibers),
   ].join('');
-  return assembleDocPage({ docTitle: DOC_TITLE, title, eyebrow: '', subtitle: null, metaLeft, badge, summary, content: body, charts: false, pageUi: true });
+  return assembleDocPage({ docTitle: docTitle(), title, eyebrow: '', subtitle: null, metaLeft, badge, summary, content: body, charts: false, pageUi: true });
 }
 
 export function buildGoalConfigDoc(g: GoalConfig, metrics: Record<string, number>, command: string): string {
   const n = g.nutrition;
-  return simpleGoalDoc('calorie.view.goal-config', '⚙️ 目标配置', '目标配置', '看目标配置 · 目标管理',
-    '结论：热量目标 ' + n.calorie_goal + ' 卡（蛋白 ' + num(n.protein_goal, 'g') + '／碳水 ' + num(n.carbs_goal, 'g') + '／脂肪 ' + num(n.fat_goal, 'g') + '，饮水 ' + num(n.water_goal, 'ml') + '），宏量' + (g.consistent ? '自洽（差 ' + g.diffKcal + ' 卡）。' : '偏差 ' + g.diffKcal + ' 卡，建议复核。') + '目标' + (g.paused ? '已暂停。' : '进行中。'),
-    [cardOf('热量目标', n.calorie_goal, '卡'), cardOf('蛋白目标', n.protein_goal, 'g'), cardOf('碳水目标', n.carbs_goal, 'g'), cardOf('脂肪目标', n.fat_goal, 'g'), cardOf('饮水目标', n.water_goal, 'ml'), { label: '状态', value: g.paused ? '已暂停' : '进行中', detail: g.paused ? '暂停于 ' + (g.pausedAt ?? '—') : '目标进行中' }],
-    '宏量与热量目标对得上对不上',
-    [{ item: '宏量折算热量', reading: num(n.calorie_goal + g.diffKcal, '卡'), note: '蛋白×4＋碳水×4＋脂肪×9' }, { item: '与热量目标差', reading: (g.diffKcal >= 0 ? '+' : '') + g.diffKcal + ' 卡', note: g.consistent ? '50 卡以内算自洽' : '超出 50 卡，建议复核' }, { item: '暂停态', reading: g.paused ? '已暂停' : '进行中', note: g.paused ? '暂停于 ' + (g.pausedAt ?? '—') : '记录与目标照常' }],
-    metrics, command, ['宏量折算按蛋白 4 卡／碳水 4 卡／脂肪 9 卡，差值在 50 卡以内算自洽。', '暂停只停目标判定，记录照常。']);
+  const consistencyNote = g.consistent ? m('skill-calorie.goal-resultDocs.c147', { p0: String(g.diffKcal) }) : m('skill-calorie.goal-resultDocs.c148', { p0: String(g.diffKcal) });
+  const pausedNote = g.paused ? m('skill-calorie.goal-resultDocs.c149') : m('skill-calorie.goal-resultDocs.c150');
+  return simpleGoalDoc('calorie.view.goal-config', m('skill-calorie.goal-resultDocs.c151'), m('skill-calorie.goal-resultDocs.c152'), m('skill-calorie.goal-resultDocs.c153'),
+    m('skill-calorie.goal-resultDocs.c154', {
+      p0: String(n.calorie_goal),
+      p1: String(num(n.protein_goal, 'g')),
+      p2: String(num(n.carbs_goal, 'g')),
+      p3: String(num(n.fat_goal, 'g')),
+      p4: String(num(n.water_goal, 'ml')),
+      p5: String(consistencyNote),
+      p6: String(pausedNote),
+    }),
+    [cardOf(m('skill-calorie.goal-resultDocs.c155'), n.calorie_goal, m('skill-calorie.goal-resultDocs.c156')), cardOf(m('skill-calorie.goal-resultDocs.c157'), n.protein_goal, 'g'), cardOf(m('skill-calorie.goal-resultDocs.c158'), n.carbs_goal, 'g'), cardOf(m('skill-calorie.goal-resultDocs.c159'), n.fat_goal, 'g'), cardOf(m('skill-calorie.goal-resultDocs.c160'), n.water_goal, 'ml'), { label: '状态', value: g.paused ? m('skill-calorie.goal-resultDocs.c161') : m('skill-calorie.goal-resultDocs.c162'), detail: g.paused ? m('skill-calorie.goal-resultDocs.c163', { p0: String(g.pausedAt ?? '—') }) : m('skill-calorie.goal-resultDocs.c164') }],
+    m('skill-calorie.goal-resultDocs.c165'),
+    [{ item: m('skill-calorie.goal-resultDocs.c166'), reading: num(n.calorie_goal + g.diffKcal, m('skill-calorie.goal-resultDocs.c167')), note: m('skill-calorie.goal-resultDocs.c168') }, { item: m('skill-calorie.goal-resultDocs.c169'), reading: m('skill-calorie.goal-resultDocs.c170', { p0: String((g.diffKcal >= 0 ? '+' : '') + g.diffKcal) }), note: g.consistent ? m('skill-calorie.goal-resultDocs.c171') : m('skill-calorie.goal-resultDocs.c172') }, { item: m('skill-calorie.goal-resultDocs.c173'), reading: g.paused ? m('skill-calorie.goal-resultDocs.c174') : m('skill-calorie.goal-resultDocs.c175'), note: g.paused ? m('skill-calorie.goal-resultDocs.c176', { p0: String(g.pausedAt ?? '—') }) : m('skill-calorie.goal-resultDocs.c177') }],
+    metrics, command, [m('skill-calorie.goal-resultDocs.c178'), m('skill-calorie.goal-resultDocs.c179')]);
 }
 
 export function buildGoalStatusDoc(g: GoalStatus, metrics: Record<string, number>, command: string): string {
   const n = g.nutrition;
-  return simpleGoalDoc('calorie.view.goal-status', '⏸️ 目标状态', '目标状态', '看目标状态 · 目标管理',
-    '结论：目标' + (g.paused ? '已暂停' + (g.pausedAt === null ? '。' : '（' + g.pausedAt + '起）。') : '进行中。') + '热量目标 ' + n.calorie_goal + ' 卡，饮水目标 ' + num(n.water_goal, 'ml') + '。',
-    [{ label: '状态', value: g.paused ? '已暂停' : '进行中', detail: g.paused ? '暂停于 ' + (g.pausedAt ?? '—') : '目标进行中' }, cardOf('热量目标', n.calorie_goal, '卡'), cardOf('饮水目标', n.water_goal, 'ml'), { label: '暂停时间', value: g.pausedAt ?? '—', detail: g.paused ? '恢复后清零' : '未暂停过' }],
-    '目标当前是什么状态',
-    [{ item: '暂停态', reading: g.paused ? '已暂停' : '进行中', note: g.paused ? '暂停于 ' + (g.pausedAt ?? '—') : '记录与目标照常' }, { item: '热量目标', reading: num(n.calorie_goal, '卡'), note: '取自营养目标' }, { item: '饮水目标', reading: num(n.water_goal, 'ml'), note: '取自营养目标' }, { item: '恢复入口', reading: '说「重启所有目标」', note: '恢复后目标继续判定，记录不断' }],
-    metrics, command, ['暂停只停目标判定，记录照常。', '说「重启所有目标」即恢复进行中。']);
+  const pausedTail = g.pausedAt === null ? '。' : m('skill-calorie.goal-resultDocs.c180', { p0: String(g.pausedAt) });
+  const statusNote = g.paused ? m('skill-calorie.goal-resultDocs.c181', { p0: String(pausedTail) }) : m('skill-calorie.goal-resultDocs.c182');
+  return simpleGoalDoc('calorie.view.goal-status', m('skill-calorie.goal-resultDocs.c183'), m('skill-calorie.goal-resultDocs.c184'), m('skill-calorie.goal-resultDocs.c185'),
+    m('skill-calorie.goal-resultDocs.c186', {
+      p0: String(statusNote),
+      p1: String(n.calorie_goal),
+      p2: String(num(n.water_goal, 'ml')),
+    }),
+    [{ label: '状态', value: g.paused ? m('skill-calorie.goal-resultDocs.c187') : m('skill-calorie.goal-resultDocs.c188'), detail: g.paused ? m('skill-calorie.goal-resultDocs.c189', { p0: String(g.pausedAt ?? '—') }) : m('skill-calorie.goal-resultDocs.c190') }, cardOf(m('skill-calorie.goal-resultDocs.c191'), n.calorie_goal, m('skill-calorie.goal-resultDocs.c192')), cardOf(m('skill-calorie.goal-resultDocs.c193'), n.water_goal, 'ml'), { label: m('skill-calorie.goal-resultDocs.c194'), value: g.pausedAt ?? '—', detail: g.paused ? m('skill-calorie.goal-resultDocs.c195') : m('skill-calorie.goal-resultDocs.c196') }],
+    m('skill-calorie.goal-resultDocs.c197'),
+    [{ item: m('skill-calorie.goal-resultDocs.c198'), reading: g.paused ? m('skill-calorie.goal-resultDocs.c199') : m('skill-calorie.goal-resultDocs.c200'), note: g.paused ? m('skill-calorie.goal-resultDocs.c201', { p0: String(g.pausedAt ?? '—') }) : m('skill-calorie.goal-resultDocs.c202') }, { item: m('skill-calorie.goal-resultDocs.c203'), reading: num(n.calorie_goal, m('skill-calorie.goal-resultDocs.c204')), note: m('skill-calorie.goal-resultDocs.c205') }, { item: m('skill-calorie.goal-resultDocs.c206'), reading: num(n.water_goal, 'ml'), note: m('skill-calorie.goal-resultDocs.c207') }, { item: m('skill-calorie.goal-resultDocs.c208'), reading: m('skill-calorie.goal-resultDocs.c209'), note: m('skill-calorie.goal-resultDocs.c210') }],
+    metrics, command, [m('skill-calorie.goal-resultDocs.c211'), m('skill-calorie.goal-resultDocs.c212')]);
 }

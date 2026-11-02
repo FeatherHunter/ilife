@@ -11,6 +11,7 @@ import { CALIPER_FIELDS, compareCompositions, compareMeasurements, compositionSo
 import type { SourceFilter, SourceSeries } from '../fetch/body.js';
 import { FetchError } from '../fetch/errors.js';
 import { CalorieRenderError } from '../render/errors.js';
+import { m } from '../entries/index.js';
 
 /** #359 · 7 点站点标签：**次序与 `CALIPER_FIELDS` 逐位对齐**；标签原文照老技能向导页
  *  `D:\2Study\StudyNotes\SKILLS\卡路里\templates\body_composition_wizard.html:515`
@@ -51,9 +52,9 @@ export type CompositionWindow =
 /** 窗口口径句（页面可见文本的**唯一出处**，判据「两次跑的这句随参数变」认这一句）：
  *  `全部历史`／`近 N 天`／`A → B`。 */
 export function compositionWindowLabel(w: CompositionWindow): string {
-  if (w.kind === 'days') return '近 ' + w.days + ' 天';
+  if (w.kind === 'days') return m('skill-calorie.body-bodyPlate.c001', { p0: String(w.days) });
   if (w.kind === 'range') return w.from + ' → ' + w.to;
-  return '全部历史';
+  return m('skill-calorie.body-bodyPlate.c002');
 }
 
 /** 窗口 → 取数位入参：`{}`＝全部历史（`windowClause` 不加日期谓词）。 */
@@ -237,7 +238,7 @@ export function buildBodyMeasureView(
   const days = opts.days ?? 90;
   const windowGiven = opts.windowGiven === true;
   /** 窗口文案（人话）：区间两日都给写「X 至 Y」，否则写「近 N 天」。页面把这一句写进可见文本。 */
-  const windowLabel = opts.dateFrom && opts.dateTo ? (opts.dateFrom + ' 至 ' + opts.dateTo) : ('近 ' + days + ' 天');
+  const windowLabel = opts.dateFrom && opts.dateTo ? m('skill-calorie.body-bodyPlate.c003', { p0: String(opts.dateFrom), p1: String(opts.dateTo) }) : m('skill-calorie.body-bodyPlate.c004', { p0: String(days) });
   if (!Number.isInteger(days) || days < 1 || days > 365) {
     throw new CalorieRenderError('bad-input', 'days 须为 1..365 整数');
   }

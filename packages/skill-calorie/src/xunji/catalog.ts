@@ -16,6 +16,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readFileSync } from 'node:fs';
 import { loadCalorieConfig } from '../config.js';
+import { m } from '../entries/index.js';
 
 /** 包根：本模块往上两级（源码态 `src/xunji` 与构建态 `dist/xunji` 都成立，与渲染层模板装载器同法）。 */
 const PACKAGE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -94,23 +95,23 @@ export function readMovementCatalog(path: string = defaultCatalogPath()): Catalo
   try {
     raw = readFileSync(path, 'utf8');
   } catch (e) {
-    return { path, loaded: false, names: [], reason: '动作库读不到（' + path + '）：' + errorText(e) };
+    return { path, loaded: false, names: [], reason: m('skill-calorie.xunji-catalog.c001', { p0: String(path), p1: String(errorText(e)) }) };
   }
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
   } catch (e) {
-    return { path, loaded: false, names: [], reason: '动作库解析不出（' + path + '）：' + errorText(e) };
+    return { path, loaded: false, names: [], reason: m('skill-calorie.xunji-catalog.c002', { p0: String(path), p1: String(errorText(e)) }) };
   }
   const actions = (parsed as { actions?: unknown } | null | undefined)?.actions;
   if (!Array.isArray(actions)) {
-    return { path, loaded: false, names: [], reason: '动作库形状不对（' + path + '）：缺 actions 名数组' };
+    return { path, loaded: false, names: [], reason: m('skill-calorie.xunji-catalog.c003', { p0: String(path) }) };
   }
   // 只收非空字符串：老 `loadCatalog()` 对任意项做 `String()` 强转，会把数字／对象也变成「合法动作名」
   // （#606 有意偏离，见证据件 §四）——官方库 1092 条全是字符串，故这一档只影响坏输入。
   const names = actions.filter((a): a is string => typeof a === 'string' && a.trim() !== '');
   if (names.length === 0) {
-    return { path, loaded: false, names: [], reason: '动作库是空的（' + path + '）：0 个动作名' };
+    return { path, loaded: false, names: [], reason: m('skill-calorie.xunji-catalog.c004', { p0: String(path) }) };
   }
   return { path, loaded: true, names, reason: null };
 }
@@ -121,8 +122,8 @@ function sourceOf(opts: VerifyOptions): CatalogSource {
     const names = [...given];
     return {
       loaded: names.length > 0,
-      path: '调用方传入的动作名集合',
-      error: names.length > 0 ? null : '动作库缺失：调用方传了个空集合，无法验证',
+      path: m('skill-calorie.xunji-catalog.c005'),
+      error: names.length > 0 ? null : m('skill-calorie.xunji-catalog.c006'),
       names,
       set: new Set(names),
     };
@@ -154,7 +155,7 @@ export function suggestSimilar(name: string, names: Iterable<string>, maxN = 5):
 function verdictOf(name: string, src: CatalogSource): MovementVerdict {
   const clean = (name ?? '').trim();
   if (clean === '') {
-    return { name: clean, valid: false, catalog_loaded: src.loaded, suggestion: '动作名为空', suggestions: [] };
+    return { name: clean, valid: false, catalog_loaded: src.loaded, suggestion: m('skill-calorie.xunji-catalog.c007'), suggestions: [] };
   }
   if (!src.loaded) {
     return { name: clean, valid: null, catalog_loaded: false, suggestion: src.error, suggestions: [] };

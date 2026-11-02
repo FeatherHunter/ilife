@@ -21,6 +21,7 @@ import { FetchError } from '../fetch/errors.js';
 import { CalorieRenderError } from '../render/errors.js';
 /* #717 批③·时钟归一：本件原先自己读系统钟造日期（第 N 份副本），改读共用位。 */
 import { todayISO } from '../shared/time.js';
+import { m } from '../entries/index.js';
 
 function assertDate(s: string): void {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(s) || Number.isNaN(Date.parse(s + 'T12:00:00Z'))) {
@@ -80,7 +81,7 @@ export function buildGoalPredictView(db: DatabaseSync, start: string, end: strin
     throw new CalorieRenderError('missing-data', '无体重目标（先定体重目标）');
   }
   const series = buildSeries(db, start, end);
-  const fc = weightTarget(series, targetKg, '目标预测达成');
+  const fc = weightTarget(series, targetKg, m('skill-calorie.goal-goalExtraPlate.c001'));
   if (fc.degraded || fc.current === undefined || fc.eta === undefined || fc.daysLeft === undefined || fc.ratePerWeek === undefined) {
     throw new CalorieRenderError('missing-data', fc.degradeMsg || '数据不足，无法预测目标达成（需≥14 天体重记录）');
   }

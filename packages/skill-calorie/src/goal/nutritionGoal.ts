@@ -10,6 +10,7 @@ import { FetchError } from '../fetch/errors.js';
 /* #717 批④：BMR 算式只读共用位那一份（本件原写 10*w + 6.25*h - 5*a + (male ? 5 : -161)；
    本件自己的缺项回落 身高175／体重70／年龄30／male 原样保留）。 */
 import { mifflinStJeorBmr } from '../analysis/utils.js';
+import { m } from '../entries/index.js';
 
 export interface NutritionGoalRow {
   id: number;
@@ -56,15 +57,15 @@ export function setNutritionGoal(db: DatabaseSync, input: SetGoalInput): SetGoal
   if (input.protein === undefined || input.carbs === undefined || input.fat === undefined) {
     throw new FetchError('goal 必须 4 个参数全传（热量/蛋白/碳水/脂肪）');
   }
-  const calorie = toInt(input.calorie, '热量目标');
-  const protein = toInt(input.protein, '蛋白质目标');
-  const carbs = toInt(input.carbs, '碳水目标');
-  const fat = toInt(input.fat, '脂肪目标');
+  const calorie = toInt(input.calorie, m('skill-calorie.goal-nutritionGoal.c001'));
+  const protein = toInt(input.protein, m('skill-calorie.goal-nutritionGoal.c002'));
+  const carbs = toInt(input.carbs, m('skill-calorie.goal-nutritionGoal.c003'));
+  const fat = toInt(input.fat, m('skill-calorie.goal-nutritionGoal.c004'));
   if (calorie <= 0) throw new FetchError('热量目标必须为正数');
   if (protein < 0 || carbs < 0 || fat < 0) throw new FetchError('营养目标不能为负数');
   let water: number | null = null;
   if (input.water !== undefined && input.water !== null) {
-    water = toInt(input.water, '饮水目标');
+    water = toInt(input.water, m('skill-calorie.goal-nutritionGoal.c005'));
     if (water < 0) throw new FetchError('饮水目标不能为负数');
   }
   const diff = protein * 4 + carbs * 4 + fat * 9 - calorie;
@@ -156,13 +157,13 @@ export function recommendNutritionGoal(db: DatabaseSync, opts: RecommendInput = 
   let height = opts.heightCm ?? prof?.height_cm ?? null;
   let age = opts.age ?? prof?.age ?? null;
   let gender = opts.gender ?? prof?.gender ?? null;
-  if (!prof) missing.push('年龄', '性别', '身高');
+  if (!prof) missing.push(m('skill-calorie.goal-nutritionGoal.c006'), m('skill-calorie.goal-nutritionGoal.c007'), m('skill-calorie.goal-nutritionGoal.c008'));
   else {
-    if (prof.age === null || prof.age === undefined) missing.push('年龄');
-    if (!prof.gender) missing.push('性别');
-    if (prof.height_cm === null || prof.height_cm === undefined) missing.push('身高');
+    if (prof.age === null || prof.age === undefined) missing.push(m('skill-calorie.goal-nutritionGoal.c009'));
+    if (!prof.gender) missing.push(m('skill-calorie.goal-nutritionGoal.c010'));
+    if (prof.height_cm === null || prof.height_cm === undefined) missing.push(m('skill-calorie.goal-nutritionGoal.c011'));
   }
-  if (weight === null || weight === undefined) missing.push('体重');
+  if (weight === null || weight === undefined) missing.push(m('skill-calorie.goal-nutritionGoal.c012'));
   const w = weight ?? 70.0;
   const h = height ?? 175.0;
   const a = age ?? 30;
@@ -178,13 +179,35 @@ export function recommendNutritionGoal(db: DatabaseSync, opts: RecommendInput = 
   const calculated = protein * 4 + carbs * 4 + fat * 9;
   const diff = calculated - cal;
   const reasons = [
-    NUTRI_PROFILE_LABELS[profile] + '模板：TDEE ' + Math.trunc(tdee) + ' 卡 × 热量调整 ' + (p.calorieAdj >= 0 ? '+' : '') + p.calorieAdj + ' 卡 → 每日 ' + cal + ' 卡',
-    '蛋白 ' + protein + ' g（体重 ' + w.toFixed(1) + ' kg × ' + p.proteinGPerKg + ' g/kg）',
-    '脂肪 ' + fat + ' g（占热量 ' + Math.trunc(p.fatPct * 100) + '%）· 碳水 ' + carbs + ' g（余量）',
-    '饮水 ' + water + ' ml（体重 × ' + p.waterMlPerKg + ' ml/kg）',
-    '预计每周减重速率 ' + NUTRI_PROFILE_WEEKLY_RATE[profile].toFixed(1) + ' kg（Δ' + cal + ' - TDEE ' + Math.trunc(tdee) + '）',
+    m('skill-calorie.goal-nutritionGoal.c013', {
+      p0: String(NUTRI_PROFILE_LABELS[profile]),
+      p1: String(Math.trunc(tdee)),
+      p2: String(p.calorieAdj >= 0 ? '+' : ''),
+      p3: String(p.calorieAdj),
+      p4: String(cal),
+    }),
+    m('skill-calorie.goal-nutritionGoal.c014', {
+      p0: String(protein),
+      p1: String(w.toFixed(1)),
+      p2: String(p.proteinGPerKg),
+    }),
+    m('skill-calorie.goal-nutritionGoal.c015', {
+      p0: String(fat),
+      p1: String(Math.trunc(p.fatPct * 100)),
+      p2: String(carbs),
+    }),
+    m('skill-calorie.goal-nutritionGoal.c016', { p0: String(water), p1: String(p.waterMlPerKg) }),
+    m('skill-calorie.goal-nutritionGoal.c017', {
+      p0: String(NUTRI_PROFILE_WEEKLY_RATE[profile].toFixed(1)),
+      p1: String(cal),
+      p2: String(Math.trunc(tdee)),
+    }),
   ];
-  if (Math.abs(diff) > 50) reasons.push('⚠️ 自洽性校验：宏量换算 ' + calculated + ' 卡，与热量目标差 ' + (diff >= 0 ? '+' : '') + diff + ' 卡（>50 建议复核）');
+  if (Math.abs(diff) > 50) reasons.push(m('skill-calorie.goal-nutritionGoal.c018', {
+    p0: String(calculated),
+    p1: String(diff >= 0 ? '+' : ''),
+    p2: String(diff),
+  }));
   return {
     profile,
     profileLabel: NUTRI_PROFILE_LABELS[profile],
@@ -217,20 +240,25 @@ export function recommendWaterGoal(db: DatabaseSync, opts: WaterRecommendInput =
   const season = opts.season ?? (month >= 6 && month <= 9 ? '夏' : '冬');
   const mlPerKg = season === '夏' ? 35 : 30;
   const old = getNutritionGoal(db)?.water_goal ?? null;
+  const seasonNote = season === '夏' ? m('skill-calorie.goal-nutritionGoal.c021') : m('skill-calorie.goal-nutritionGoal.c022');
   return {
     weightKg: Math.round(w * 10) / 10,
     season,
     mlPerKg,
     recommendedWaterMl: Math.trunc(w * mlPerKg),
     oldWaterGoal: old,
-    basis: '体重 ' + w.toFixed(1) + ' kg × ' + mlPerKg + ' ml/kg（' + (season === '夏' ? '夏季偏高' : '冬季常规') + '）',
+    basis: m('skill-calorie.goal-nutritionGoal.c023', {
+      p0: String(w.toFixed(1)),
+      p1: String(mlPerKg),
+      p2: String(seasonNote),
+    }),
   };
 }
 
 export function updateWaterGoal(db: DatabaseSync, waterGoal: unknown): {
   id: number; updatedAt: string | null; rowsAffected: number; oldWaterGoal: number | null; newWaterGoal: number;
 } {
-  const water = toInt(waterGoal, '饮水目标');
+  const water = toInt(waterGoal, m('skill-calorie.goal-nutritionGoal.c024'));
   if (water < 0) throw new FetchError('饮水目标不能为负数');
   const old = getNutritionGoal(db)?.water_goal ?? null;
   const upd = db

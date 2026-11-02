@@ -26,6 +26,7 @@ import { WAKE_ASSETS, WAKE_GROUPS } from '../triggers/wake-assets.js';
 import type { WakeGroupAsset } from '../triggers/wake-assets.js';
 import { SCENE_09_PHOTO } from '../triggers/scene-09-photo.js';
 import { renderHelpShellHtml } from './helpShell.js';
+import { m } from '../entries/index.js';
 
 /** 「卡路里help」交付文件的文件名主体（接线层写死；调用方不接受外部传入，S3-3）。 */
 export const HELP_FILE_STEM = '卡路里_HELP' as const;
@@ -159,8 +160,11 @@ export function buildHelpFileData(now: Date = new Date()): HelpFileData {
   return {
     skill_name: HELP_FILE_SKILL_NAME,
     title: HELP_FILE_TITLE,
-    subtitle: String(groups.length) + ' 分类 · ' + String(WAKE_ASSETS.length)
-      + ' 场景 · 更新于 ' + formatHelpMinute(now),
+    subtitle: m('skill-calorie.photo-helpFile.c001', {
+      p0: String(String(groups.length)),
+      p1: String(String(WAKE_ASSETS.length)),
+      p2: String(formatHelpMinute(now)),
+    }),
     contact: HELP_CONTACT,
     version: HELP_FILE_VERSION,
     groups,

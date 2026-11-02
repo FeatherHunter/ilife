@@ -56,14 +56,17 @@ import { PHOTO_LIST_PAGE_MAX_BYTES } from './galleryDoc.js';
 import { chipRow, photoUiCss } from './photoUi.js';
 import { CALORIE_CONFIG_DEFAULTS, loadCalorieConfig } from '../config.js';
 import type { GifTask, PhotoCard } from './photo.js';
+import { m } from '../entries/index.js';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；测试钉死一致）。 */
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
 
 /** 本页 head 标题（整页模板住 `src/shared/docPage.ts`，标题走参数）。
- *  #527：`·` 是符号顶替版面（题名不是并列语义），改空格。 */
-const DOC_TITLE = '卡路里 身材照片';
+ *  取词在**调用时**发生（模块级常量不得在顶层取词：语言由运行期上下文决定）。 */
+function docTitle(): string {
+  return m('skill-calorie.photo-gifDoc.c050');
+}
 
 /** GIF 子目录名的**默认值**（老 `photos_dir / "gifs"` 逐字）；真值见 `gifSubDir()`（可配）。 */
 const GIF_SUB_DIR = CALORIE_CONFIG_DEFAULTS.photos.gifs;
@@ -79,7 +82,11 @@ const DASH = '—';
 
 /** 复制日志第 3 段后半的数据来源（前半＝库文件名，由 `shared/copyArea.ts` 的 `copyLog` 拼）：
  *  本页读的是照片记录（帧序来源）、写的是照片目录下的 `gifs/`（那一份 .gif），两处都点名。 */
-const LOG_SOURCE = 'body_photos＋gifs/（合成 GIF 落盘）';
+/** 复制日志第 3 段后半的数据来源（前半＝库文件名，由 `shared/copyArea.ts` 的 `copyLog` 拼）。
+ *  取词在**调用时**发生（模块级常量不得在顶层取词）。 */
+function logSource(): string {
+  return m('skill-calorie.photo-gifDoc.c051');
+}
 
 export interface GifPageInput {
   /** `buildGifTask` 的规划结果（标签／窗口／入片 id 与首末日期口径不变）。 */
@@ -157,12 +164,16 @@ function synthOf(task: GifTask, cards: readonly PhotoCard[], photosDir: string |
     reason: null,
   };
   if (photosDir === null) {
-    return { ...empty, reason: '未配照片目录（在卡路里设置页里填「照片目录」，或本次调用传 --params photosDir），读不到照片文件' };
+    return { ...empty, reason: m('skill-calorie.photo-gifDoc.c001') };
   }
   if (taken.length < GIF_LIMITS.minFrames) {
     return {
       ...empty,
-      reason: '可读照片不足 ' + GIF_LIMITS.minFrames + ' 张（计划 ' + cards.length + ' 张，缺文件 ' + missing.length + ' 张），合成不了多帧 GIF',
+      reason: m('skill-calorie.photo-gifDoc.c002', {
+        p0: String(GIF_LIMITS.minFrames),
+        p1: String(cards.length),
+        p2: String(missing.length),
+      }),
     };
   }
   const dir = join(photosDir, gifSubDir());
@@ -176,7 +187,7 @@ function synthOf(task: GifTask, cards: readonly PhotoCard[], photosDir: string |
       taken, missing, reason: null,
     };
   } catch (e) {
-    return { ...empty, reason: '合成失败：' + ((e as Error).message || String(e)) };
+    return { ...empty, reason: m('skill-calorie.photo-gifDoc.c003', { p0: String((e as Error).message || String(e)) }) };
   }
 }
 
@@ -197,21 +208,22 @@ function stageHtml(s: Synth, embed: boolean): string {
     //  `data-gif-stage` 是 `photo-responsive-484` 与判分脚本认的锚。
     return '<div data-gif-stage class="phu-gif-stage">' + renderMediaFigure({
       src: uri,
-      alt: '身材变化 GIF',
+      alt: m('skill-calorie.photo-gifDoc.c004'),
       ratio: '1-1',
-      caption: '这轮身材变化 GIF',
-      note: '合成的方帧放到 300px 宽看，放大后保持像素锐边。文件就在上面那格，点「复制路径」能拿走。',
+      caption: m('skill-calorie.photo-gifDoc.c005'),
+      note: m('skill-calorie.photo-gifDoc.c006'),
       id: 'gif-stage',
     }) + '</div>';
   }
+  const reasonText = s.reason ?? m('skill-calorie.photo-gifDoc.c007');
   const what = s.path === null
-    ? ('GIF 未合成：' + (s.reason ?? '未知原因'))
-    : ('GIF 文件较大，没放进这一页：' + baseNameOf(s.path));
+    ? m('skill-calorie.photo-gifDoc.c008', { p0: String(reasonText) })
+    : m('skill-calorie.photo-gifDoc.c009', { p0: String(baseNameOf(s.path)) });
   return notice({
     msg: what,
     detail: s.path === null
-      ? '替代操作：把照片文件补回照片目录后重跑，或先跑规划器核对候选'
-      : '请本地打开这个文件看：' + baseNameOf(s.path),
+      ? m('skill-calorie.photo-gifDoc.c010')
+      : m('skill-calorie.photo-gifDoc.c011', { p0: String(baseNameOf(s.path)) }),
   });
 }
 
@@ -230,7 +242,7 @@ function detailRows(cards: readonly PhotoCard[], s: Synth): Array<Record<string,
     file: c.photoPath,
     // #472 人话：用上的写「已用上」，文件名找不到写「找不到文件」；`fileExists === null`
     // （没配照片目录，压根没核过）单独一档——把它写成「找不到文件」是把没核过的说成没有。
-    status: s.taken.includes(c) ? '已用上' : (c.fileExists === null ? '未核对' : '找不到文件'),
+    status: s.taken.includes(c) ? m('skill-calorie.photo-gifDoc.c012') : (c.fileExists === null ? m('skill-calorie.photo-gifDoc.c013') : m('skill-calorie.photo-gifDoc.c014')),
   }));
 }
 
@@ -256,12 +268,19 @@ type GifPageData = {
 };
 
 function pageDataOf(task: GifTask, s: Synth, embedded: boolean, note: string | null): GifPageData {
-  const framesText = s.frames === null ? '未产出 GIF' : s.frames + ' 帧';
-  const state = s.path === null ? '未合成' : (embedded ? '已生成并内嵌本页' : '已生成，未内嵌本页');
+  const framesText = s.frames === null ? m('skill-calorie.photo-gifDoc.c015') : m('skill-calorie.photo-gifDoc.c016', { p0: String(s.frames) });
+  const state = s.path === null ? m('skill-calorie.photo-gifDoc.c017') : (embedded ? m('skill-calorie.photo-gifDoc.c018') : m('skill-calorie.photo-gifDoc.c019'));
+  const pathNote = s.path === null ? '' : m('skill-calorie.photo-gifDoc.c020', { p0: String(s.path) });
   return {
-    summary: 'GIF：标签 ' + task.tag + ' 共 ' + task.photoCount + ' 张（' + dash(task.firstDate) + ' 至 '
-      + dash(task.lastDate) + '）· ' + framesText + ' · ' + state
-      + (s.path === null ? '' : ' · 落点 ' + s.path),
+    summary: m('skill-calorie.photo-gifDoc.c021', {
+      p0: String(task.tag),
+      p1: String(task.photoCount),
+      p2: String(dash(task.firstDate)),
+      p3: String(dash(task.lastDate)),
+      p4: String(framesText),
+      p5: String(state),
+      p6: String(pathNote),
+    }),
     gif: {
       path: s.path,
       fileName: s.path === null ? null : baseNameOf(s.path),
@@ -284,11 +303,13 @@ function pageDataOf(task: GifTask, s: Synth, embedded: boolean, note: string | n
  *  故在卡下另出一排**事实条**（`#525` 的 `renderFactStrip` 口径，本域只给数据）。 */
 function outputFacts(s: Synth): string {
   if (s.frames === null) return '';
-  const perFrame = (GIF_LIMITS.delayCs / 100).toFixed(2).replace(/0$/, '') + ' 秒';
+  const perFrame = m('skill-calorie.photo-gifDoc.c022', {
+    p0: String((GIF_LIMITS.delayCs / 100).toFixed(2).replace(/0$/, '')),
+  });
   return renderFactStrip({
     items: [
-      { label: '每帧停', value: perFrame },
-      ...(s.width === null || s.height === null ? [] : [{ label: '边长', value: s.width + '×' + s.height + ' 像素' }]),
+      { label: m('skill-calorie.photo-gifDoc.c023'), value: perFrame },
+      ...(s.width === null || s.height === null ? [] : [{ label: m('skill-calorie.photo-gifDoc.c024'), value: m('skill-calorie.photo-gifDoc.c025', { p0: String(s.width), p1: String(s.height) }) }]),
     ],
   });
 }
@@ -303,7 +324,7 @@ function copyAreaOf(data: GifPageData, command: string): string {
     data: { envelope },
     log: {
       envelope,
-      copyLog: copyLog({ command, source: LOG_SOURCE, actionAt: nowStamp(), version: DOC_VERSION }),
+      copyLog: copyLog({ command, source: logSource(), actionAt: nowStamp(), version: DOC_VERSION }),
     },
   });
 }
@@ -315,37 +336,37 @@ function contentOf(cards: readonly PhotoCard[], s: Synth, embed: boolean, data: 
   const parts: string[] = [photoUiCss()];
   parts.push(renderKpiGrid([
     {
-      label: '合成', value: s.frames === null ? DASH : String(s.frames) + ' 帧',
-      detail: s.frames === null ? 'GIF 没合成出来' : '一张照片一帧，按拍摄时间从前到后排',
+      label: m('skill-calorie.photo-gifDoc.c026'), value: s.frames === null ? DASH : m('skill-calorie.photo-gifDoc.c027', { p0: String(String(s.frames)) }),
+      detail: s.frames === null ? m('skill-calorie.photo-gifDoc.c028') : m('skill-calorie.photo-gifDoc.c029'),
     },
     {
-      label: '尺寸',
+      label: m('skill-calorie.photo-gifDoc.c030'),
       value: s.width === null || s.height === null ? DASH : s.width + '×' + s.height,
-      ...(s.bytes === null ? {} : { detail: '文件大小 ' + (s.bytes / 1024).toFixed(1) + ' KB' }),
+      ...(s.bytes === null ? {} : { detail: m('skill-calorie.photo-gifDoc.c031', { p0: String((s.bytes / 1024).toFixed(1)) }) }),
     },
     {
-      label: '文件', value: data.gif.fileName ?? DASH,
-      ...(s.path === null ? {} : { detail: '重跑同标签同跨度会覆盖这个文件' }),
+      label: m('skill-calorie.photo-gifDoc.c032'), value: data.gif.fileName ?? DASH,
+      ...(s.path === null ? {} : { detail: m('skill-calorie.photo-gifDoc.c033') }),
     },
   ]));
   parts.push(outputFacts(s));
   if (s.path !== null) {
-    parts.push('<div>' + copyActionHtml(s.path, { actionId: CALORIE_COPY_ACTION.actionId, label: '复制路径' }) + '</div>');
+    parts.push('<div>' + copyActionHtml(s.path, { actionId: CALORIE_COPY_ACTION.actionId, label: m('skill-calorie.photo-gifDoc.c034') }) + '</div>');
   }
   parts.push(stageHtml(s, embed));
   parts.push(renderDataTable({
     columns: [
-      { key: 'id', label: '照片编号', align: 'right' },
+      { key: 'id', label: m('skill-calorie.photo-gifDoc.c035'), align: 'right' },
       { key: 'date', label: '日期' },
-      { key: 'time', label: '时间' },
-      { key: 'tag', label: '标签' },
-      { key: 'note', label: '备注' },
-      { key: 'file', label: '文件' },
+      { key: 'time', label: m('skill-calorie.photo-gifDoc.c036') },
+      { key: 'tag', label: m('skill-calorie.photo-gifDoc.c037') },
+      { key: 'note', label: m('skill-calorie.photo-gifDoc.c038') },
+      { key: 'file', label: m('skill-calorie.photo-gifDoc.c039') },
       { key: 'status', label: '状态' },
     ],
     rows: detailRows(cards, s),
-    caption: '合成用到的照片，按时间从上到下，就是动画顺序',
-    emptyText: '无入片明细',
+    caption: m('skill-calorie.photo-gifDoc.c040'),
+    emptyText: m('skill-calorie.photo-gifDoc.c041'),
   }));
   parts.push('<div class="phu-scroll-hint">表格宽，手机上按住左右滑可以看全</div>');
   parts.push(copyAreaOf(data, command));
@@ -356,17 +377,24 @@ function contentOf(cards: readonly PhotoCard[], s: Synth, embed: boolean, data: 
  *  现在标签与张数走徽章列、窗口自成一格；挑出几张如实说清，不再与 KPI 打架。 */
 function shellOf(task: GifTask, s: Synth, content: string): string {
   const span = task.firstDate === null || task.lastDate === null
-    ? '' : '拍摄时间 ' + dash(task.firstDate) + ' 至 ' + dash(task.lastDate);
+    ? '' : m('skill-calorie.photo-gifDoc.c042', {
+      p0: String(dash(task.firstDate)),
+      p1: String(dash(task.lastDate)),
+    });
+  const missingNote = s.missing.length === 0 ? '' : m('skill-calorie.photo-gifDoc.c043', { p0: String(s.missing.length) });
   const picked = s.taken.length === 0
-    ? task.photoCount + ' 张照片一张都没用上（原因见下）'
-    : task.photoCount + ' 张里挑出 ' + s.taken.length + ' 张能用的合成'
-      + (s.missing.length === 0 ? '' : '（' + s.missing.length + ' 张找不到文件）');
+    ? m('skill-calorie.photo-gifDoc.c044', { p0: String(task.photoCount) })
+    : m('skill-calorie.photo-gifDoc.c045', {
+      p0: String(task.photoCount),
+      p1: String(s.taken.length),
+      p2: String(missingNote),
+    });
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '生成身材照 GIF',
+    docTitle: docTitle(),
+    title: m('skill-calorie.photo-gifDoc.c046'),
     eyebrow: '',
     subtitle: null,
-    content: chipRow(['标签 ' + task.tag, task.photoCount + ' 张照片', span]) + '<p>' + escapeHtml(picked) + '</p>' + content,
+    content: chipRow([m('skill-calorie.photo-gifDoc.c047', { p0: String(task.tag) }), m('skill-calorie.photo-gifDoc.c048', { p0: String(task.photoCount) }), span]) + '<p>' + escapeHtml(picked) + '</p>' + content,
     charts: false,
     // #527 收口：本页原先漏了 `pageUi` 位 ⇒ 公共层媒体件那套规则（`.ilife-block-media-img` 的
     //  `width:100%;max-width:100%`、`.ilife-block-media-frame-1-1` 的比例框）整段没进页，
@@ -389,7 +417,7 @@ export function buildPhotoGifPage(input: GifPageInput): GifPageResult {
     const size = Buffer.byteLength(html, 'utf8');
     if (size > PHOTO_LIST_PAGE_MAX_BYTES) {
       embed = false;
-      note = '单页超上限 ' + PHOTO_LIST_PAGE_MAX_BYTES + ' 字节（本页 ' + size + ' 字节）：GIF 未内嵌';
+      note = m('skill-calorie.photo-gifDoc.c049', { p0: String(PHOTO_LIST_PAGE_MAX_BYTES), p1: String(size) });
       html = render(embed, note);
     }
   }

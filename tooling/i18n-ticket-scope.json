@@ -3082,7 +3082,8 @@
     "1219": {
       "title": "迁移 skill-calorie 其余域：135 件（4,541 条）",
       "state": "open（待开工；清单已回填 #1308）",
-      "files": [
+      "files": [],
+      "migrated": [
         {
           "path": "packages/skill-calorie/src/body/bodyDocs.ts",
           "literals": 88,
@@ -3106,13 +3107,6 @@
             "copy": 9,
             "concat": 4,
             "ident": 1
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/body/commands.ts",
-          "literals": 18,
-          "byClass": {
-            "copy": 18
           }
         },
         {
@@ -3174,13 +3168,6 @@
           }
         },
         {
-          "path": "packages/skill-calorie/src/body/routes.ts",
-          "literals": 21,
-          "byClass": {
-            "copy": 21
-          }
-        },
-        {
           "path": "packages/skill-calorie/src/body/wizardDocs.ts",
           "literals": 76,
           "byClass": {
@@ -3233,13 +3220,6 @@
           }
         },
         {
-          "path": "packages/skill-calorie/src/cli/keys.ts",
-          "literals": 142,
-          "byClass": {
-            "derived": 142
-          }
-        },
-        {
           "path": "packages/skill-calorie/src/cli/readArgs.ts",
           "literals": 9,
           "byClass": {
@@ -3248,38 +3228,10 @@
           }
         },
         {
-          "path": "packages/skill-calorie/src/cli/registry.ts",
-          "literals": 1,
-          "byClass": {
-            "derived": 1
-          }
-        },
-        {
           "path": "packages/skill-calorie/src/cli/write.ts",
           "literals": 2,
           "byClass": {
             "concat": 2
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/data/commands.ts",
-          "literals": 2,
-          "byClass": {
-            "copy": 2
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/db/readonly.ts",
-          "literals": 2,
-          "byClass": {
-            "concat": 2
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/exercise/commands.ts",
-          "literals": 22,
-          "byClass": {
-            "copy": 22
           }
         },
         {
@@ -3349,13 +3301,6 @@
           }
         },
         {
-          "path": "packages/skill-calorie/src/exercise/routes.ts",
-          "literals": 57,
-          "byClass": {
-            "copy": 57
-          }
-        },
-        {
           "path": "packages/skill-calorie/src/exercise/sportPortDocs.ts",
           "literals": 260,
           "byClass": {
@@ -3421,22 +3366,6 @@
           }
         },
         {
-          "path": "packages/skill-calorie/src/fetch/profile.ts",
-          "literals": 24,
-          "byClass": {
-            "copy": 12,
-            "concat": 9,
-            "ident": 3
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/fetch/shapes.ts",
-          "literals": 1,
-          "byClass": {
-            "concat": 1
-          }
-        },
-        {
           "path": "packages/skill-calorie/src/fetch/validate.ts",
           "literals": 6,
           "byClass": {
@@ -3445,43 +3374,11 @@
           }
         },
         {
-          "path": "packages/skill-calorie/src/goal/commands.ts",
-          "literals": 31,
-          "byClass": {
-            "copy": 31
-          }
-        },
-        {
           "path": "packages/skill-calorie/src/goal/goalExtraPlate.ts",
           "literals": 10,
           "byClass": {
             "copy": 9,
             "concat": 1
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/goal/goalHistory.ts",
-          "literals": 9,
-          "byClass": {
-            "copy": 8,
-            "concat": 1
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/goal/goalPlate.ts",
-          "literals": 3,
-          "byClass": {
-            "copy": 2,
-            "concat": 1
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/goal/goalPlates.ts",
-          "literals": 13,
-          "byClass": {
-            "copy": 7,
-            "concat": 5,
-            "ident": 1
           }
         },
         {
@@ -3552,13 +3449,6 @@
           }
         },
         {
-          "path": "packages/skill-calorie/src/goal/routes.ts",
-          "literals": 31,
-          "byClass": {
-            "copy": 31
-          }
-        },
-        {
           "path": "packages/skill-calorie/src/goal/set.ts",
           "literals": 26,
           "byClass": {
@@ -3584,34 +3474,11 @@
           }
         },
         {
-          "path": "packages/skill-calorie/src/home/commands.ts",
-          "literals": 12,
-          "byClass": {
-            "copy": 12
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/home/exercise.ts",
-          "literals": 2,
-          "byClass": {
-            "copy": 1,
-            "concat": 1
-          }
-        },
-        {
           "path": "packages/skill-calorie/src/home/goalProgressDocs.ts",
           "literals": 103,
           "byClass": {
             "copy": 32,
             "concat": 71
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/home/home.ts",
-          "literals": 5,
-          "byClass": {
-            "copy": 1,
-            "concat": 4
           }
         },
         {
@@ -3648,25 +3515,11 @@
           }
         },
         {
-          "path": "packages/skill-calorie/src/home/routes.ts",
-          "literals": 66,
-          "byClass": {
-            "copy": 66
-          }
-        },
-        {
           "path": "packages/skill-calorie/src/home/today.ts",
           "literals": 39,
           "byClass": {
             "copy": 27,
             "concat": 12
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/kcal.ts",
-          "literals": 7,
-          "byClass": {
-            "copy": 7
           }
         },
         {
@@ -3685,20 +3538,6 @@
             "copy": 15,
             "concat": 1,
             "ident": 1
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/paths.ts",
-          "literals": 2,
-          "byClass": {
-            "concat": 2
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/photo/commands.ts",
-          "literals": 23,
-          "byClass": {
-            "copy": 23
           }
         },
         {
@@ -3731,14 +3570,6 @@
             "copy": 35,
             "concat": 27,
             "ident": 2
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/photo/gif.ts",
-          "literals": 15,
-          "byClass": {
-            "copy": 7,
-            "concat": 8
           }
         },
         {
@@ -3802,21 +3633,6 @@
           }
         },
         {
-          "path": "packages/skill-calorie/src/photo/photoUi.ts",
-          "literals": 2,
-          "byClass": {
-            "ident": 2
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/photo/photos.ts",
-          "literals": 6,
-          "byClass": {
-            "copy": 2,
-            "concat": 4
-          }
-        },
-        {
           "path": "packages/skill-calorie/src/photo/picker.ts",
           "literals": 29,
           "byClass": {
@@ -3841,13 +3657,6 @@
             "copy": 41,
             "concat": 38,
             "ident": 2
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/photo/routes.ts",
-          "literals": 37,
-          "byClass": {
-            "copy": 37
           }
         },
         {
@@ -3893,24 +3702,10 @@
           }
         },
         {
-          "path": "packages/skill-calorie/src/profile/commands.ts",
-          "literals": 9,
-          "byClass": {
-            "copy": 9
-          }
-        },
-        {
           "path": "packages/skill-calorie/src/profile/labels.ts",
           "literals": 7,
           "byClass": {
             "copy": 7
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/profile/routes.ts",
-          "literals": 6,
-          "byClass": {
-            "copy": 6
           }
         },
         {
@@ -3957,49 +3752,11 @@
           }
         },
         {
-          "path": "packages/skill-calorie/src/schema.ts",
-          "literals": 7,
-          "byClass": {
-            "copy": 5,
-            "ident": 2
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/shared/contentSuffix.ts",
-          "literals": 9,
-          "byClass": {
-            "concat": 9
-          }
-        },
-        {
           "path": "packages/skill-calorie/src/shared/copyArea.ts",
           "literals": 8,
           "byClass": {
             "copy": 5,
             "concat": 3
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/shared/emptyGuide.ts",
-          "literals": 2,
-          "byClass": {
-            "copy": 1,
-            "concat": 1
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/shared/fieldLabel.ts",
-          "literals": 6,
-          "byClass": {
-            "copy": 2,
-            "concat": 4
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/shared/meal.ts",
-          "literals": 20,
-          "byClass": {
-            "copy": 20
           }
         },
         {
@@ -4015,13 +3772,6 @@
           "byClass": {
             "copy": 6,
             "concat": 3
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/shared/pageStrips.ts",
-          "literals": 1,
-          "byClass": {
-            "ident": 1
           }
         },
         {
@@ -4049,13 +3799,6 @@
           }
         },
         {
-          "path": "packages/skill-calorie/src/shared/time.ts",
-          "literals": 1,
-          "byClass": {
-            "concat": 1
-          }
-        },
-        {
           "path": "packages/skill-calorie/src/shared/writeParts.ts",
           "literals": 11,
           "byClass": {
@@ -4078,13 +3821,6 @@
             "copy": 3,
             "concat": 8,
             "ident": 1
-          }
-        },
-        {
-          "path": "packages/skill-calorie/src/xunji/exitMap.ts",
-          "literals": 22,
-          "byClass": {
-            "copy": 22
           }
         },
         {
@@ -4168,11 +3904,313 @@
           }
         }
       ],
-      "migrated": [],
       "totals": {
         "files": 135,
         "literals": 4541
-      }
+      },
+      "excluded": [
+        {
+          "path": "packages/skill-calorie/src/body/commands.ts",
+          "literals": 18,
+          "byClass": {
+            "copy": 18
+          },
+          "reason": "命令登记面（唤醒词／命令键／CLI 参数示例／退出码映射）：按《多语言-唤醒词裁决》首轮不翻，HELP 资产随 #1201 按语言分载"
+        },
+        {
+          "path": "packages/skill-calorie/src/body/routes.ts",
+          "literals": 21,
+          "byClass": {
+            "copy": 21
+          },
+          "reason": "命令登记面（唤醒词／命令键／CLI 参数示例／退出码映射）：按《多语言-唤醒词裁决》首轮不翻，HELP 资产随 #1201 按语言分载"
+        },
+        {
+          "path": "packages/skill-calorie/src/cli/keys.ts",
+          "literals": 142,
+          "byClass": {
+            "derived": 142
+          },
+          "reason": "命令登记面（唤醒词／命令键／CLI 参数示例／退出码映射）：按《多语言-唤醒词裁决》首轮不翻，HELP 资产随 #1201 按语言分载"
+        },
+        {
+          "path": "packages/skill-calorie/src/cli/registry.ts",
+          "literals": 1,
+          "byClass": {
+            "derived": 1
+          },
+          "reason": "命令登记面（唤醒词／命令键／CLI 参数示例／退出码映射）：按《多语言-唤醒词裁决》首轮不翻，HELP 资产随 #1201 按语言分载"
+        },
+        {
+          "path": "packages/skill-calorie/src/data/commands.ts",
+          "literals": 2,
+          "byClass": {
+            "copy": 2
+          },
+          "reason": "命令登记面（唤醒词／命令键／CLI 参数示例／退出码映射）：按《多语言-唤醒词裁决》首轮不翻，HELP 资产随 #1201 按语言分载"
+        },
+        {
+          "path": "packages/skill-calorie/src/db/readonly.ts",
+          "literals": 2,
+          "byClass": {
+            "concat": 2
+          },
+          "reason": "开发报文（throw CalorieRenderError／守卫断言）：不面向用户，不迁"
+        },
+        {
+          "path": "packages/skill-calorie/src/exercise/commands.ts",
+          "literals": 22,
+          "byClass": {
+            "copy": 22
+          },
+          "reason": "命令登记面（唤醒词／命令键／CLI 参数示例／退出码映射）：按《多语言-唤醒词裁决》首轮不翻，HELP 资产随 #1201 按语言分载"
+        },
+        {
+          "path": "packages/skill-calorie/src/exercise/routes.ts",
+          "literals": 57,
+          "byClass": {
+            "copy": 57
+          },
+          "reason": "命令登记面（唤醒词／命令键／CLI 参数示例／退出码映射）：按《多语言-唤醒词裁决》首轮不翻，HELP 资产随 #1201 按语言分载"
+        },
+        {
+          "path": "packages/skill-calorie/src/fetch/profile.ts",
+          "literals": 24,
+          "byClass": {
+            "copy": 12,
+            "concat": 9,
+            "ident": 3
+          },
+          "reason": "数据值（活动量档名／测量来源／餐别别名／DayStatus 状态闭集）：ADR-0004 数据不译，仅作库值与比较键"
+        },
+        {
+          "path": "packages/skill-calorie/src/fetch/shapes.ts",
+          "literals": 1,
+          "byClass": {
+            "concat": 1
+          },
+          "reason": "开发报文（throw CalorieRenderError／守卫断言）：不面向用户，不迁"
+        },
+        {
+          "path": "packages/skill-calorie/src/goal/commands.ts",
+          "literals": 31,
+          "byClass": {
+            "copy": 31
+          },
+          "reason": "命令登记面（唤醒词／命令键／CLI 参数示例／退出码映射）：按《多语言-唤醒词裁决》首轮不翻，HELP 资产随 #1201 按语言分载"
+        },
+        {
+          "path": "packages/skill-calorie/src/goal/goalHistory.ts",
+          "literals": 9,
+          "byClass": {
+            "copy": 8,
+            "concat": 1
+          },
+          "reason": "数据值（活动量档名／测量来源／餐别别名／DayStatus 状态闭集）：ADR-0004 数据不译，仅作库值与比较键"
+        },
+        {
+          "path": "packages/skill-calorie/src/goal/goalPlate.ts",
+          "literals": 3,
+          "byClass": {
+            "copy": 2,
+            "concat": 1
+          },
+          "reason": "开发报文（throw CalorieRenderError／守卫断言）：不面向用户，不迁"
+        },
+        {
+          "path": "packages/skill-calorie/src/goal/goalPlates.ts",
+          "literals": 13,
+          "byClass": {
+            "copy": 7,
+            "concat": 5,
+            "ident": 1
+          },
+          "reason": "开发报文（throw CalorieRenderError／守卫断言）：不面向用户，不迁"
+        },
+        {
+          "path": "packages/skill-calorie/src/goal/routes.ts",
+          "literals": 31,
+          "byClass": {
+            "copy": 31
+          },
+          "reason": "命令登记面（唤醒词／命令键／CLI 参数示例／退出码映射）：按《多语言-唤醒词裁决》首轮不翻，HELP 资产随 #1201 按语言分载"
+        },
+        {
+          "path": "packages/skill-calorie/src/home/commands.ts",
+          "literals": 12,
+          "byClass": {
+            "copy": 12
+          },
+          "reason": "命令登记面（唤醒词／命令键／CLI 参数示例／退出码映射）：按《多语言-唤醒词裁决》首轮不翻，HELP 资产随 #1201 按语言分载"
+        },
+        {
+          "path": "packages/skill-calorie/src/home/exercise.ts",
+          "literals": 2,
+          "byClass": {
+            "copy": 1,
+            "concat": 1
+          },
+          "reason": "开发报文（throw CalorieRenderError／守卫断言）：不面向用户，不迁"
+        },
+        {
+          "path": "packages/skill-calorie/src/home/home.ts",
+          "literals": 5,
+          "byClass": {
+            "copy": 1,
+            "concat": 4
+          },
+          "reason": "开发报文（throw CalorieRenderError／守卫断言）：不面向用户，不迁"
+        },
+        {
+          "path": "packages/skill-calorie/src/home/routes.ts",
+          "literals": 66,
+          "byClass": {
+            "copy": 66
+          },
+          "reason": "命令登记面（唤醒词／命令键／CLI 参数示例／退出码映射）：按《多语言-唤醒词裁决》首轮不翻，HELP 资产随 #1201 按语言分载"
+        },
+        {
+          "path": "packages/skill-calorie/src/kcal.ts",
+          "literals": 7,
+          "byClass": {
+            "copy": 7
+          },
+          "reason": "数据值（活动量档名／测量来源／餐别别名／DayStatus 状态闭集）：ADR-0004 数据不译，仅作库值与比较键"
+        },
+        {
+          "path": "packages/skill-calorie/src/paths.ts",
+          "literals": 2,
+          "byClass": {
+            "concat": 2
+          },
+          "reason": "开发报文（throw CalorieRenderError／守卫断言）：不面向用户，不迁"
+        },
+        {
+          "path": "packages/skill-calorie/src/photo/commands.ts",
+          "literals": 23,
+          "byClass": {
+            "copy": 23
+          },
+          "reason": "命令登记面（唤醒词／命令键／CLI 参数示例／退出码映射）：按《多语言-唤醒词裁决》首轮不翻，HELP 资产随 #1201 按语言分载"
+        },
+        {
+          "path": "packages/skill-calorie/src/photo/gif.ts",
+          "literals": 15,
+          "byClass": {
+            "copy": 7,
+            "concat": 8
+          },
+          "reason": "开发报文（throw CalorieRenderError／守卫断言）：不面向用户，不迁"
+        },
+        {
+          "path": "packages/skill-calorie/src/photo/photoUi.ts",
+          "literals": 2,
+          "byClass": {
+            "ident": 2
+          },
+          "reason": "版式结构词（模板拼接的「等／项／至」等结构位）：随模板统一处理，不单独成词条"
+        },
+        {
+          "path": "packages/skill-calorie/src/photo/photos.ts",
+          "literals": 6,
+          "byClass": {
+            "copy": 2,
+            "concat": 4
+          },
+          "reason": "开发报文（throw CalorieRenderError／守卫断言）：不面向用户，不迁"
+        },
+        {
+          "path": "packages/skill-calorie/src/photo/routes.ts",
+          "literals": 37,
+          "byClass": {
+            "copy": 37
+          },
+          "reason": "命令登记面（唤醒词／命令键／CLI 参数示例／退出码映射）：按《多语言-唤醒词裁决》首轮不翻，HELP 资产随 #1201 按语言分载"
+        },
+        {
+          "path": "packages/skill-calorie/src/profile/commands.ts",
+          "literals": 9,
+          "byClass": {
+            "copy": 9
+          },
+          "reason": "命令登记面（唤醒词／命令键／CLI 参数示例／退出码映射）：按《多语言-唤醒词裁决》首轮不翻，HELP 资产随 #1201 按语言分载"
+        },
+        {
+          "path": "packages/skill-calorie/src/profile/routes.ts",
+          "literals": 6,
+          "byClass": {
+            "copy": 6
+          },
+          "reason": "命令登记面（唤醒词／命令键／CLI 参数示例／退出码映射）：按《多语言-唤醒词裁决》首轮不翻，HELP 资产随 #1201 按语言分载"
+        },
+        {
+          "path": "packages/skill-calorie/src/schema.ts",
+          "literals": 7,
+          "byClass": {
+            "copy": 5,
+            "ident": 2
+          },
+          "reason": "SQL DDL／RAISE 文本：库结构语句，不译"
+        },
+        {
+          "path": "packages/skill-calorie/src/shared/contentSuffix.ts",
+          "literals": 9,
+          "byClass": {
+            "concat": 9
+          },
+          "reason": "版式结构词（模板拼接的「等／项／至」等结构位）：随模板统一处理，不单独成词条"
+        },
+        {
+          "path": "packages/skill-calorie/src/shared/emptyGuide.ts",
+          "literals": 2,
+          "byClass": {
+            "copy": 1,
+            "concat": 1
+          },
+          "reason": "开发报文（throw CalorieRenderError／守卫断言）：不面向用户，不迁"
+        },
+        {
+          "path": "packages/skill-calorie/src/shared/fieldLabel.ts",
+          "literals": 6,
+          "byClass": {
+            "copy": 2,
+            "concat": 4
+          },
+          "reason": "开发报文（throw CalorieRenderError／守卫断言）：不面向用户，不迁"
+        },
+        {
+          "path": "packages/skill-calorie/src/shared/meal.ts",
+          "literals": 20,
+          "byClass": {
+            "copy": 20
+          },
+          "reason": "数据值（活动量档名／测量来源／餐别别名／DayStatus 状态闭集）：ADR-0004 数据不译，仅作库值与比较键"
+        },
+        {
+          "path": "packages/skill-calorie/src/shared/pageStrips.ts",
+          "literals": 1,
+          "byClass": {
+            "ident": 1
+          },
+          "reason": "版式结构词（模板拼接的「等／项／至」等结构位）：随模板统一处理，不单独成词条"
+        },
+        {
+          "path": "packages/skill-calorie/src/shared/time.ts",
+          "literals": 1,
+          "byClass": {
+            "concat": 1
+          },
+          "reason": "开发报文（throw CalorieRenderError／守卫断言）：不面向用户，不迁"
+        },
+        {
+          "path": "packages/skill-calorie/src/xunji/exitMap.ts",
+          "literals": 22,
+          "byClass": {
+            "copy": 22
+          },
+          "reason": "命令登记面（唤醒词／命令键／CLI 参数示例／退出码映射）：按《多语言-唤醒词裁决》首轮不翻，HELP 资产随 #1201 按语言分载"
+        }
+      ]
     },
     "1220": {
       "title": "迁移 skill-home 物品与帮助域（items＋help）：32 件（1,815 条）",
@@ -10290,12 +10328,12 @@
   },
   "scopeSummary": {
     "ledgerFiles": 1226,
-    "migratedFiles": 764,
-    "pendingFiles": 135,
-    "pendingLiterals": 4541,
-    "excludedFiles": 327,
-    "excludedLiterals": 14897,
-    "migratedLiterals": 23310
+    "migratedFiles": 863,
+    "pendingFiles": 0,
+    "pendingLiterals": 0,
+    "excludedFiles": 363,
+    "excludedLiterals": 15534,
+    "migratedLiterals": 27214
   },
   "workflow": [
     "开工：从本文件取本票 files，逐件登记进 tooling/i18n-scope.json 的 files（先跑两道门拿红读数＝范围已挂但还没迁）。",

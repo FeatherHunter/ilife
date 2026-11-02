@@ -22,6 +22,7 @@ import type { RateLimiterDeps } from './rateLimit.js';
 import { upsertTrains } from './upsert.js';
 import type { UpsertOptions, UpsertOutcome } from './upsert.js';
 import type { PlanSessionRow } from '../workout/index.js';
+import { m } from '../entries/index.js';
 
 /** `pushDayPlan` 要的 session 形状（`planSource.ts` 给的就是这形；`movements` 缺时当空表）。 */
 export type PushSession = Pick<PlanSessionRow, 'session_label' | 'movements'>;
@@ -69,9 +70,10 @@ function hasTrains(response: unknown): boolean {
   return Array.isArray(trains) && trains.length > 0;
 }
 
-const VERIFY_NOTE =
-  '响应里 verified=True 的表示训记已显式回执；verified=False 的实际可能已写入，' +
-  '但训记 v2 接口响应缺陷导致 trains 为空——用 fetch --full 二次确认（归 #608）';
+/** 这句在**调用时**取词（模块级常量不得在顶层取词）。 */
+function verifyNote(): string {
+  return m('skill-calorie.xunji-push.c002');
+}
 
 /** 推一天（`dateStr` 原样进 `res[].datestr` 与幂等键前缀，不做任何日期换算）。 */
 export async function pushDayPlan(dateStr: string, sessions: readonly PushSession[], deps: PushDayDeps = {}): Promise<PushDaySummary> {
@@ -83,8 +85,8 @@ export async function pushDayPlan(dateStr: string, sessions: readonly PushSessio
       results: [],
       ok_count: 0,
       fail_count: 0,
-      verify_note: VERIFY_NOTE,
-      note: '无 session（可能休息日或计划未配置）',
+      verify_note: verifyNote(),
+      note: m('skill-calorie.xunji-push.c001'),
     };
   }
   const limiter = createRateLimiter(deps.rateLimit ?? {});
@@ -109,5 +111,5 @@ export async function pushDayPlan(dateStr: string, sessions: readonly PushSessio
       results.push({ session_label: label, client_request_id: clientRequestId, ok: false, verified: false, resp: { err: true, ...outcome.failure, attempts: outcome.attempts } });
     }
   }
-  return { date: dateStr, session_count: sessions.length, results, ok_count: ok, fail_count: fail, verify_note: VERIFY_NOTE };
+  return { date: dateStr, session_count: sessions.length, results, ok_count: ok, fail_count: fail, verify_note: verifyNote() };
 }

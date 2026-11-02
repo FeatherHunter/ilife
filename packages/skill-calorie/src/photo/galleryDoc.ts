@@ -45,23 +45,30 @@ import { copyArea, copyLog, notice } from '../shared/copyArea.js';
 import { nowStamp } from '../render/receipt.js';
 import { todayISO } from '../analysis/utils.js';
 import type { GalleryData, PhotoCard } from './photo.js';
-import { embedPhotos, embedPhotosWithinBudget, type PhotoEmbed } from './photoThumb.js';
+import { EMBED_BUDGET_REASON, embedPhotos, embedPhotosWithinBudget, type PhotoEmbed } from './photoThumb.js';
 import { chipRow, photoUiCss } from './photoUi.js';
+import { m } from '../entries/index.js';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；测试钉死一致）。 */
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
 
 /** 本页 head 标题（整页模板住 `src/shared/docPage.ts`，标题走参数）。
- *  #526：`卡路里·身材照片` 里的 `·` 是符号顶替版面（题名不是并列语义），改空格。 */
-const DOC_TITLE = '卡路里 身材照片';
+ *  取词在**调用时**发生（模块级常量不得在顶层取词：语言由运行期上下文决定）。 */
+function docTitle(): string {
+  return m('skill-calorie.photo-galleryDoc.c047');
+}
 
 /** 本页小节标题的类名（#467 先例：KPI 区那把尺，同 `viewerDoc`／`compareDoc`，不新造样式）。 */
 const H2_CLASS = 'ilife-block-kpi-card-title';
 
 /** 复制日志第 3 段后半的数据来源（前半＝库文件名，由 `shared/copyArea.ts` 的 `copyLog` 拼）。
  *  同族先例：`weight/review.ts` 的 `weight_log（体重复盘）`、`diet/libraryDocs.ts` 的 `食品库（在架食品）`。 */
-const LOG_SOURCE = 'body_photos（本窗照片记录）';
+/** 复制日志第 3 段后半的数据来源（前半＝库文件名，由 `shared/copyArea.ts` 的 `copyLog` 拼）。
+ *  取词在**调用时**发生（模块级常量不得在顶层取词）。 */
+function logSource(): string {
+  return m('skill-calorie.photo-galleryDoc.c048');
+}
 
 /** 单页体积上限（字节）：本票首定，供 281／282／352 复用（见 t341 文档）。
  *  实测 2 张小图约 60KB（含 ~60KB 文档壳）；1 MiB 直嵌仅容 3~4 张 200KB 实拍。
@@ -88,21 +95,23 @@ function isNonBudgetSkip(e: PhotoEmbed | undefined): boolean {
  *  两句都还在，只是不再互为复读。 */
 function missReason(e: PhotoEmbed | undefined, skipReason: string | undefined): { badge: string; why: string; what: string } {
   if (skipReason !== undefined) {
-    return { badge: '原图太大', why: '这张太大，一页装不下', what: '想看这一张：自己打开这份文件' };
+    return { badge: m('skill-calorie.photo-galleryDoc.c001'), why: m('skill-calorie.photo-galleryDoc.c002'), what: m('skill-calorie.photo-galleryDoc.c003') };
   }
-  const raw = e?.missing ?? '';
-  if (raw === '') return { badge: '没显示', why: '这一张没能放上页面', what: '下面留着它的文件名' };
-  if (raw.includes('过大')) return { badge: '原图太大', why: '这张太大，一页装不下', what: '想看这一张：自己打开这份文件' };
-  if (raw.includes('未配照片目录')) return { badge: '读不到', why: '还没有设照片目录，读不到文件', what: '设好照片目录再跑一次' };
-  if (raw.includes('文件缺失')) return { badge: '找不到文件', why: '照片记录还在，文件不在照片目录里', what: '把文件放回照片目录就会有图' };
-  return { badge: '读不出', why: '这一张读不出来', what: '下面留着它的文件名' };
+  // 判据位走内嵌件给的**机器类别**（`missingKind`），不拿面向用户的缺失句做 `includes`——
+  // 缺失句是取词结果，换语言就判不中了。
+  const kind = e?.missingKind;
+  if (kind === undefined) return { badge: m('skill-calorie.photo-galleryDoc.c004'), why: m('skill-calorie.photo-galleryDoc.c005'), what: m('skill-calorie.photo-galleryDoc.c006') };
+  if (kind === 'too-big') return { badge: m('skill-calorie.photo-galleryDoc.c007'), why: m('skill-calorie.photo-galleryDoc.c008'), what: m('skill-calorie.photo-galleryDoc.c009') };
+  if (kind === 'no-dir') return { badge: '读不到', why: m('skill-calorie.photo-galleryDoc.c010'), what: m('skill-calorie.photo-galleryDoc.c011') };
+  if (kind === 'file-missing') return { badge: m('skill-calorie.photo-galleryDoc.c012'), why: m('skill-calorie.photo-galleryDoc.c013'), what: m('skill-calorie.photo-galleryDoc.c014') };
+  return { badge: m('skill-calorie.photo-galleryDoc.c015'), why: m('skill-calorie.photo-galleryDoc.c016'), what: m('skill-calorie.photo-galleryDoc.c017') };
 }
 
 /** 相对天数（#472 图注第三段）：**装配层**按当刻「今天」现算；未到／算不出即不出这一段。 */
 function relativeDays(date: string, today: string): string {
   const days = Math.round((Date.parse(today + 'T12:00:00Z') - Date.parse(date + 'T12:00:00Z')) / 86400000);
   if (!Number.isFinite(days) || days < 0) return '';
-  return days === 0 ? '今天' : days + ' 天前';
+  return days === 0 ? '今天' : m('skill-calorie.photo-galleryDoc.c018', { p0: String(days) });
 }
 
 /** 窗口天数（页头身份行那一枚徽章）：取头尾真实区间，不拿 `days` 参数冒充。 */
@@ -130,20 +139,20 @@ function figureHtml(p: PhotoCard, e: PhotoEmbed | undefined, skipReason: string 
   // 格位仍由 `.phu-shot` 定（网格里等高），框体在它里面铺满（见 `photoUiCss()` 的收敛规则）。
   const stage = shown
     ? '<div class="phu-shot"><img src="' + (e as PhotoEmbed).dataUri
-      + '" alt="身材照 ' + p.id + '" style="max-width:100%;width:100%;height:100%;object-fit:cover" /></div>'
+      + '" alt="' + m('skill-calorie.photo-galleryDoc.c049', { p0: String(p.id) }) + '" style="max-width:100%;width:100%;height:100%;object-fit:cover" /></div>'
     : (() => {
-      const m = missReason(e, skipReason);
+      const miss = missReason(e, skipReason);
       return '<div class="phu-shot">' + renderMediaPlaceholder({
-        alt: '身材照 ' + p.id, ratio: '4-5',
-        reason: m.badge + '：' + fileName, next: m.why + '。' + m.what,
+        alt: m('skill-calorie.photo-galleryDoc.c019', { p0: String(p.id) }), ratio: '4-5',
+        reason: miss.badge + '：' + fileName, next: miss.why + '。' + miss.what,
       }) + '</div>';
     })();
   const rel = relativeDays(p.date, today);
   const when = p.date + (p.time === null ? '' : ' ' + p.time.slice(0, 5));
-  const tags = p.tagList.length > 0 ? [...p.tagList] : ['无标签'];
+  const tags = p.tagList.length > 0 ? [...p.tagList] : [m('skill-calorie.photo-galleryDoc.c020')];
   return '<figure class="phu-card" data-id="' + p.id + '">' + stage
     + '<figcaption class="phu-cap"><div class="phu-when">' + escapeHtml(when) + '</div>'
-    + chipRow(['编号 ' + p.id, ...tags, rel])
+    + chipRow([m('skill-calorie.photo-galleryDoc.c021', { p0: String(p.id) }), ...tags, rel])
     + '<div class="phu-file"><code>' + escapeHtml(fileName) + '</code></div>'
     + '</figcaption></figure>';
 }
@@ -159,14 +168,14 @@ function figureHtml(p: PhotoCard, e: PhotoEmbed | undefined, skipReason: string 
 function missNoticeHtml(budgetSkippedCount: number, missingCount: number): string {
   if (budgetSkippedCount <= 0 && missingCount <= 0) return '';
   if (budgetSkippedCount <= 0) {
-    return notice({ msg: missingCount + ' 张照片的文件不在照片目录里，图放不出来', detail: '把文件放回照片目录就会有图' });
+    return notice({ msg: m('skill-calorie.photo-galleryDoc.c022', { p0: String(missingCount) }), detail: m('skill-calorie.photo-galleryDoc.c023') });
   }
   if (missingCount <= 0) {
-    return notice({ msg: '还有 ' + budgetSkippedCount + ' 张原图太大，没进这一页', detail: '想全看：按标签挑，或者按日期挑一段时间' });
+    return notice({ msg: m('skill-calorie.photo-galleryDoc.c024', { p0: String(budgetSkippedCount) }), detail: m('skill-calorie.photo-galleryDoc.c025') });
   }
   return notice({
-    msg: '还有 ' + budgetSkippedCount + ' 张原图太大，没进这一页',
-    detail: '另有 ' + missingCount + ' 张文件不在照片目录里。想全看：按标签挑，或者按日期挑一段时间',
+    msg: m('skill-calorie.photo-galleryDoc.c026', { p0: String(budgetSkippedCount) }),
+    detail: m('skill-calorie.photo-galleryDoc.c027', { p0: String(missingCount) }),
   });
 }
 
@@ -188,10 +197,10 @@ function latestDateOf(g: GalleryData): string {
  *  缺什么集中在一条里说，读数卡只留「这一页有多少、最近一张是哪天」。 */
 function kpiCards(g: GalleryData, embeddedCount: number, daysSince: number | null): KpiCardInput[] {
   return [
-    { label: '本页显示', value: embeddedCount + ' 张', detail: '共找到 ' + g.totalCount + ' 张' },
+    { label: m('skill-calorie.photo-galleryDoc.c028'), value: m('skill-calorie.photo-galleryDoc.c029', { p0: String(embeddedCount) }), detail: m('skill-calorie.photo-galleryDoc.c030', { p0: String(g.totalCount) }) },
     {
-      label: '最近一张', value: latestDateOf(g),
-      detail: daysSince === null ? '日期算不出来' : (daysSince === 0 ? '就是今天拍的' : daysSince + ' 天前拍的'),
+      label: m('skill-calorie.photo-galleryDoc.c031'), value: latestDateOf(g),
+      detail: daysSince === null ? m('skill-calorie.photo-galleryDoc.c032') : (daysSince === 0 ? m('skill-calorie.photo-galleryDoc.c033') : m('skill-calorie.photo-galleryDoc.c034', { p0: String(daysSince) })),
     },
   ];
 }
@@ -206,22 +215,22 @@ function kpiCards(g: GalleryData, embeddedCount: number, daysSince: number | nul
 function detailTable(g: GalleryData, skipReason: ReadonlyMap<string, string>): string {
   const rows = g.photos.map((p) => {
     const key = fileNameOf(p.photoPath);
-    const status = p.fileExists === false ? '缺文件'
-      : (skipReason.get(key) !== undefined ? '太大没显示' : (p.fileExists === null ? '没核对' : ''));
+    const status = p.fileExists === false ? m('skill-calorie.photo-galleryDoc.c035')
+      : (skipReason.get(key) !== undefined ? m('skill-calorie.photo-galleryDoc.c036') : (p.fileExists === null ? m('skill-calorie.photo-galleryDoc.c037') : ''));
     return { id: p.id, date: p.date, tags: p.tagList.join(' '), status };
   });
   return '<section><h2 class="' + H2_CLASS + '">照片清单</h2>'
     + renderDataTable({
       columns: [
-        { key: 'id', label: '编号', align: 'right' },
+        { key: 'id', label: m('skill-calorie.photo-galleryDoc.c038'), align: 'right' },
         { key: 'date', label: '日期' },
-        { key: 'tags', label: '标签' },
+        { key: 'tags', label: m('skill-calorie.photo-galleryDoc.c039') },
         { key: 'status', label: '状态' },
       ],
       rows,
-      emptyText: '本窗无身材照',
+      emptyText: m('skill-calorie.photo-galleryDoc.c040'),
     })
-    + renderCaliberLine('按时间倒序') + '</section>';
+    + renderCaliberLine(m('skill-calorie.photo-galleryDoc.c041')) + '</section>';
 }
 
 /** 复制区（#654）：**双位齐全**——数据那颗走三格式菜单（`buildDataText` 三份），日志那颗走
@@ -245,7 +254,7 @@ function copyAreaOf(g: GalleryData, command: string): string {
     data: { envelope },
     log: {
       envelope,
-      copyLog: copyLog({ command, source: LOG_SOURCE, actionAt: nowStamp(), version: DOC_VERSION }),
+      copyLog: copyLog({ command, source: logSource(), actionAt: nowStamp(), version: DOC_VERSION }),
     },
   });
 }
@@ -262,7 +271,7 @@ function contentOf(
   const missingCount = missingOf(g, embeds, skipReason).length;
   const win = windowDaysOf(g);
   const parts: string[] = [photoUiCss()];
-  parts.push(chipRow([g.filters.tag ? '标签 ' + g.filters.tag : '全部标签', win > 0 ? '近 ' + win + ' 天' : '']));
+  parts.push(chipRow([g.filters.tag ? m('skill-calorie.photo-galleryDoc.c042', { p0: String(g.filters.tag) }) : m('skill-calorie.photo-galleryDoc.c043'), win > 0 ? m('skill-calorie.photo-galleryDoc.c044', { p0: String(win) }) : '']));
   // 阅读顺序（收口定）：① 这一页是什么＝标题＋徽章列；② 缺什么／怎么办＝这一块；③ 有多少＝读数卡；④ 图。
   parts.push(missNoticeHtml(skipReason.size, missingCount));
   parts.push(renderKpiGrid(kpiCards(g, embeddedCount, g.daysSinceLast)));
@@ -283,8 +292,8 @@ function contentOf(
 export function buildPhotoListDoc(g: GalleryData, photosDir: string | null | undefined, command: string): string {
   const today = todayISO();
   const shell = (content: string): string => assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '看身材照',
+    docTitle: docTitle(),
+    title: m('skill-calorie.photo-galleryDoc.c045'),
     eyebrow: '',
     subtitle: null,
     content,
@@ -303,7 +312,7 @@ export function buildPhotoListDoc(g: GalleryData, photosDir: string | null | und
       .sort((a, b) => (b.bytes ?? 0) - (a.bytes ?? 0));
     if (rest.length === 0) break;
     const victim = rest[0] as PhotoEmbed;
-    picks.skipReason.set(victim.fileName, '体积预算未内嵌');
+    picks.skipReason.set(victim.fileName, EMBED_BUDGET_REASON);
     html = shell(contentOf(g, picks.embeds, picks.skipReason, today, command));
   }
   return html;

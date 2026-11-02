@@ -40,6 +40,7 @@ import { PHOTO_LIST_PAGE_MAX_BYTES } from './galleryDoc.js';
 import { embedPhoto, type PhotoEmbed } from './photoThumb.js';
 import { chipRow, factRows, noteSegments, photoUiCss } from './photoUi.js';
 import type { PhotoCard, ViewerData } from './photo.js';
+import { m } from '../entries/index.js';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；测试钉死一致）。 */
 const DOC_VERSION = '0.1.0';
@@ -47,18 +48,32 @@ const DOC_SKILL = 'calorie';
 
 /** 本页 head 标题（整页模板住 `src/shared/docPage.ts`，标题走参数）。
  *  #526：`卡路里·身材照片` 里的 `·` 是符号顶替版面，改空格。 */
-const DOC_TITLE = '卡路里 身材照片';
+/** 本页 head 标题（整页模板住 `src/shared/docPage.ts`，标题走参数）。
+ *  取词在**调用时**发生（模块级常量不得在顶层取词：语言由运行期上下文决定）。 */
+function docTitle(): string {
+  return m('skill-calorie.photo-viewerDoc.c027');
+}
 
 /** 本页小节标题的类名（#467 先例：KPI 区那把尺，不新造样式）。 */
 const H2_CLASS = 'ilife-block-kpi-card-title';
 
 /** 复制日志第 3 段后半的数据来源（前半＝库文件名，由 `shared/copyArea.ts` 的 `copyLog` 拼）。 */
-const LOG_SOURCE = 'body_photos（单张照片记录）';
+/** 复制日志第 3 段后半的数据来源（前半＝库文件名，由 `shared/copyArea.ts` 的 `copyLog` 拼）。
+ *  取词在**调用时**发生（模块级常量不得在顶层取词）。 */
+function logSource(): string {
+  return m('skill-calorie.photo-viewerDoc.c028');
+}
 
 /** 删这张照片那两句（人话＋安全感）：全页「不可恢复」只说这一次，说成「找不回来」。 */
-const DELETE_HEADING = '删掉这张照片';
-const DELETE_SAFETY = '删了就找不回来，先确认上面那张是不是它';
-const DELETE_HINT = '点一下复制，粘到对话里发我就能跑';
+function deleteHeading(): string {
+  return m('skill-calorie.photo-viewerDoc.c029');
+}
+function deleteSafety(): string {
+  return m('skill-calorie.photo-viewerDoc.c030');
+}
+function deleteHint(): string {
+  return m('skill-calorie.photo-viewerDoc.c031');
+}
 
 /** 翻页命令原文（落盘静态页无稳定单图路由：锚点给可点形态，`data-command` 给照抄重跑命令）。
  *  #526：命令原文只住属性（`<pre>` 那两处已撤，见件头 ②）——读者可见的是两枚复制按钮。 */
@@ -71,10 +86,10 @@ function detailCommand(id: number): string {
 function relTime(date: string, today: string): string {
   const days = Math.round((Date.parse(today + 'T12:00:00Z') - Date.parse(date + 'T12:00:00Z')) / 86400000);
   if (days <= 0) return '今天';
-  if (days === 1) return '昨天';
-  if (days < 30) return days + ' 天前';
-  if (days < 365) return Math.round(days / 30) + ' 个月前';
-  return Math.round(days / 365) + ' 年前';
+  if (days === 1) return m('skill-calorie.photo-viewerDoc.c001');
+  if (days < 30) return m('skill-calorie.photo-viewerDoc.c002', { p0: String(days) });
+  if (days < 365) return m('skill-calorie.photo-viewerDoc.c003', { p0: String(Math.round(days / 30)) });
+  return m('skill-calorie.photo-viewerDoc.c004', { p0: String(Math.round(days / 365)) });
 }
 
 /** 什么时候拍的：`2026-05-30 17:44`（秒位不进页面）。 */
@@ -86,7 +101,7 @@ function whenText(p: PhotoCard): string {
 /** 文件大小（人话）：一位小数的 MB／整数 KB／「字节」兜底；读不出即空串。 */
 function sizeText(bytes: number | null): string {
   if (bytes === null || !Number.isFinite(bytes)) return '';
-  if (bytes < 1024) return bytes + ' 字节';
+  if (bytes < 1024) return m('skill-calorie.photo-viewerDoc.c005', { p0: String(bytes) });
   if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + ' KB';
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
@@ -112,11 +127,11 @@ function navHtml(v: ViewerData): string {
  *  图正常显示时**不出结论条**（看图就能看出来，见 `contentOf`）——那时「多大」由键值行说。 */
 function verdictOf(e: PhotoEmbed, dropped: boolean, p: PhotoCard): string {
   const size = sizeText(e.bytes);
-  if (p.fileExists === false) return '这份原图不在照片目录里，图放不出来';
-  if (dropped) return '这张原图 ' + (size === '' ? '' : size + '，') + '一页放不下，图没放进本页';
-  if (e.dataUri !== null) return '这张原图 ' + size + '，已经放在本页，可以直接看';
-  if (e.missing !== null && e.missing.includes('未配照片目录')) return '还没设照片目录，读不到这份原图';
-  return '这张原图读不出来，下面留着文件名';
+  if (p.fileExists === false) return m('skill-calorie.photo-viewerDoc.c006');
+  if (dropped) return m('skill-calorie.photo-viewerDoc.c007', { p0: String(size === '' ? '' : size + '，') });
+  if (e.dataUri !== null) return m('skill-calorie.photo-viewerDoc.c008', { p0: String(size) });
+  if (e.missingKind === 'no-dir') return m('skill-calorie.photo-viewerDoc.c009');
+  return m('skill-calorie.photo-viewerDoc.c010');
 }
 
 /** 占位那一格说什么（#526 收口第二轮 · 编排者转来的必改项）：**同一事实一页一处**。
@@ -124,10 +139,10 @@ function verdictOf(e: PhotoEmbed, dropped: boolean, p: PhotoCard): string {
  *  下一步做什么**——上一版这里还挂了一枚「原图太大」徽标，与结论条的「一页装不下」是同一件事，
  *  且「超过一页能装的量，没进这一页」与结论条那句逐字相近，全页复读两遍。现在两处各说各的。 */
 function missHint(p: PhotoCard, e: PhotoEmbed, dropped: boolean): { next: string } {
-  if (dropped) return { next: '想看原图：自己打开这份文件' };
-  if (p.fileExists === false) return { next: '把文件放回照片目录就会有图' };
-  if (e.missing !== null && e.missing.includes('未配照片目录')) return { next: '先设好照片目录，再跑一次' };
-  return { next: '把文件放回照片目录就会有图' };
+  if (dropped) return { next: m('skill-calorie.photo-viewerDoc.c011') };
+  if (p.fileExists === false) return { next: m('skill-calorie.photo-viewerDoc.c012') };
+  if (e.missingKind === 'no-dir') return { next: m('skill-calorie.photo-viewerDoc.c013') };
+  return { next: m('skill-calorie.photo-viewerDoc.c014') };
 }
 
 /** 大图卡（黑底 75vh contain，老页 `:28-29` 规则）；没图那态给占位——**明写哪一份文件与下一步**。 */
@@ -136,15 +151,15 @@ function figureHtml(p: PhotoCard, e: PhotoEmbed, dropped: boolean): string {
   if (!dropped && e.dataUri !== null) {
     return '<figure data-id="' + p.id + '" id="photo-' + p.id + '">'
       + '<div style="background:#000;display:flex;align-items:center;justify-content:center;max-height:75vh;overflow:hidden">'
-      + '<img src="' + e.dataUri + '" alt="身材照 ' + p.id
+      + '<img src="' + e.dataUri + '" alt="' + m('skill-calorie.photo-viewerDoc.c032', { p0: String(p.id) })
       + '" style="max-width:100%;max-height:75vh;object-fit:contain" /></div></figure>';
   }
-  const m = missHint(p, e, dropped);
+  const miss = missHint(p, e, dropped);
   // #526 收口第二轮：占位改用公共层同规格媒体占位件（框体与真图同一段装配，规格由代码保证）。
   return '<figure data-id="' + p.id + '" id="photo-' + p.id + '" class="phu-hero-miss">'
     + renderMediaPlaceholder({
-      alt: '身材照 ' + p.id, ratio: '4-5',
-      reason: '这张原图没显示：' + fileName, next: m.next,
+      alt: m('skill-calorie.photo-viewerDoc.c015', { p0: String(p.id) }), ratio: '4-5',
+      reason: m('skill-calorie.photo-viewerDoc.c016', { p0: String(fileName) }), next: miss.next,
     })
     + '</figure>';
 }
@@ -158,12 +173,12 @@ function figureHtml(p: PhotoCard, e: PhotoEmbed, dropped: boolean): string {
  *  于是同一页上「能不能看、为什么」全在结论条一处，「文件叫什么、多大、在哪」全在键值行一处。 */
 function infoHtml(p: PhotoCard, e: PhotoEmbed, shown: boolean): string {
   const place = p.fileExists === false
-    ? renderStatusBadge({ status: 'danger', text: '不在照片目录里' })
-    : (p.fileExists === null ? renderStatusBadge({ status: 'empty', text: '没核对' }) : '');
+    ? renderStatusBadge({ status: 'danger', text: m('skill-calorie.photo-viewerDoc.c017') })
+    : (p.fileExists === null ? renderStatusBadge({ status: 'empty', text: m('skill-calorie.photo-viewerDoc.c018') }) : '');
   const rows = [
-    { k: '文件', vHtml: '<code>' + escapeHtml(e.fileName) + '</code> ' + place },
-    { k: '原图大小', v: shown ? sizeText(e.bytes) : '' },
-    { k: '备注', vHtml: p.note === null || p.note === '' ? '' : '<span class="phu-segs">' + noteSegments(p.note) + '</span>' },
+    { k: m('skill-calorie.photo-viewerDoc.c019'), vHtml: '<code>' + escapeHtml(e.fileName) + '</code> ' + place },
+    { k: m('skill-calorie.photo-viewerDoc.c020'), v: shown ? sizeText(e.bytes) : '' },
+    { k: m('skill-calorie.photo-viewerDoc.c021'), vHtml: p.note === null || p.note === '' ? '' : '<span class="phu-segs">' + noteSegments(p.note) + '</span>' },
   ];
   return '<section><h2 class="' + H2_CLASS + '">这张照片的信息</h2>' + factRows(rows) + '</section>';
 }
@@ -181,13 +196,13 @@ function actionHtml(p: PhotoCard): string {
   const backParams = tag ? '{"tag": "' + tag + '"}' : '{}';
   const backCmd = 'calorie-cmd-read calorie.photo.list --params \'' + backParams + '\'';
   const delCmd = 'calorie-cmd-read calorie.photo.remove --params \'{"id": ' + p.id + '}\'';
-  return '<section><h2 class="' + H2_CLASS + '">' + DELETE_HEADING + '</h2>'
-    + '<p class="phu-act-s">' + DELETE_SAFETY + '</p>'
+  return '<section><h2 class="' + H2_CLASS + '">' + deleteHeading() + '</h2>'
+    + '<p class="phu-act-s">' + deleteSafety() + '</p>'
     + renderActionBar({
-      copyData: { actionId: CALORIE_COPY_ACTION.actionId, label: '复制删除指令', text: delCmd },
-      copyLog: { actionId: COPY_ACTION_IDS.actionBar.copyData, label: '复制回画廊指令', text: backCmd },
+      copyData: { actionId: CALORIE_COPY_ACTION.actionId, label: m('skill-calorie.photo-viewerDoc.c022'), text: delCmd },
+      copyLog: { actionId: COPY_ACTION_IDS.actionBar.copyData, label: m('skill-calorie.photo-viewerDoc.c023'), text: backCmd },
     })
-    + '<p class="phu-note">' + DELETE_HINT + '</p></section>';
+    + '<p class="phu-note">' + deleteHint() + '</p></section>';
 }
 
 /** 复制区（#654）：三格式数据 ＋ 复制日志六段（口径与 `galleryDoc.copyAreaOf` 同形：
@@ -206,7 +221,7 @@ function copyAreaOf(v: ViewerData, command: string): string {
     data: { envelope },
     log: {
       envelope,
-      copyLog: copyLog({ command, source: LOG_SOURCE, actionAt: nowStamp(), version: DOC_VERSION }),
+      copyLog: copyLog({ command, source: logSource(), actionAt: nowStamp(), version: DOC_VERSION }),
     },
   });
 }
@@ -216,7 +231,7 @@ function contentOf(v: ViewerData, e: PhotoEmbed, dropped: boolean, command: stri
   const today = todayISO();
   const shown = !dropped && e.dataUri !== null;
   const parts: string[] = [photoUiCss()];
-  parts.push(chipRow(['编号 ' + p.id, ...(p.tagList.length > 0 ? [...p.tagList] : ['无标签']),
+  parts.push(chipRow([m('skill-calorie.photo-viewerDoc.c024', { p0: String(p.id) }), ...(p.tagList.length > 0 ? [...p.tagList] : [m('skill-calorie.photo-viewerDoc.c025')]),
     whenText(p), relTime(p.date, today)]));
   // 结论条只在**有事要说**时出（2026-09-15 收口）：图没显示时说清「为什么／多大」；图正常显示时
   // 「已经放在本页，可以直接看」这句是看图就能看出来的话（原图大小改由信息段的「原图大小」键值行承担），
@@ -233,10 +248,10 @@ function contentOf(v: ViewerData, e: PhotoEmbed, dropped: boolean, command: stri
 function shellOf(v: ViewerData, content: string): string {
   const p = v.photo;
   return assembleDocPage({
-    docTitle: DOC_TITLE,
+    docTitle: docTitle(),
     // #526：标题改人话（原来是「身材照查看 #19」——`#19` 既撞内部标识符判据，也是给机器看的编号）；
     // 编号与标签改由页头身份徽章承载，两处各说各的、不重复。
-    title: p.date + ' 的身材照',
+    title: m('skill-calorie.photo-viewerDoc.c026', { p0: String(p.date) }),
     eyebrow: '',
     subtitle: null,
     content,

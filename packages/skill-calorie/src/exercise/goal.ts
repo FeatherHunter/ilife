@@ -18,6 +18,7 @@ import { commandLine } from '../shared/writeParts.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { listWindow } from './exerciseStore.js';
 import { buildExerciseGoalPrecheckDoc, exerciseGoalWriteExample } from './precheck.js';
+import { m } from '../entries/index.js';
 
 /** `calorie.view.exercise-goal` · 运动目标视图：目标／实际／完成度／差额。 */
 export function viewExerciseGoal(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
@@ -43,11 +44,17 @@ export function viewExerciseGoal(params: Record<string, unknown>, db: DatabaseSy
     return { data: { metrics }, html: buildExerciseGoalDoc(v) };
   }
   const windowParam = optStr(params, 'window');
-  const windowLabel = windowParam ?? (start === end ? '今日' : '自定义');
-  const wakeWord = windowParam === undefined || windowParam === 'custom' ? null : windowLabel === '本周' ? '看本周运动（vs 目标）' : '看今日运动（vs 目标）';
+  // 判据位：`window` 是命令面参数（中文值冻结，见 routes.ts 的 cli 示例），比较对象必须是参数原值，
+  // 不能拿显示文案 `windowLabel` 去比——它随语言变（同 `INT_UNITS` 那处）。
+  const isWeek = windowParam === '本周';
+  const isToday = windowParam === '今日';
+  const windowLabel = windowParam === undefined
+    ? (start === end ? m('skill-calorie.exercise-goal.c001') : m('skill-calorie.exercise-goal.c081'))
+    : isWeek ? m('skill-calorie.exercise-goal.c082') : isToday ? m('skill-calorie.exercise-goal.c001') : windowParam;
+  const wakeWord = windowParam === undefined || windowParam === 'custom' ? null : isWeek ? m('skill-calorie.exercise-goal.c002') : m('skill-calorie.exercise-goal.c003');
   const days = Math.round((Date.parse(end + 'T12:00:00Z') - Date.parse(start + 'T12:00:00Z')) / 86400000) + 1;
-  const viewCommand = windowLabel === '本周' || windowLabel === '今日'
-    ? commandLine('calorie.view.exercise-goal', { window: windowLabel })
+  const viewCommand = isWeek || isToday
+    ? commandLine('calorie.view.exercise-goal', { window: windowParam })
     : commandLine('calorie.view.exercise-goal', { start, end });
   const html = buildExerciseGoalPrecheckDoc({
     wakeWord, windowLabel, start, end, days,

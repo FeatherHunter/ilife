@@ -6,6 +6,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { basename, extname, join } from 'node:path';
+import { m } from '../entries/index.js';
 
 const MIME_OF: Record<string, string> = {
   '.png': 'image/png',
@@ -27,6 +28,8 @@ export interface PhotoEmbed {
   readonly bytes: number | null;
   /** 成功即 `null`；失败即面向用户的缺失句（含文件名，可直接断言）。 */
   readonly missing: string | null;
+  /** 缺失的**机器可判**类别（判据位：装配处按它分支，不拿面向用户的缺失句做 `includes`）。 */
+  readonly missingKind?: 'no-dir' | 'file-missing' | 'too-big';
 }
 
 function mimeOf(fileName: string): string {
@@ -38,16 +41,16 @@ export function embedPhoto(photosDir: string | null | undefined, photoPath: stri
   const fileName = basename(photoPath);
   const mime = mimeOf(fileName);
   if (!photosDir) {
-    return { fileName, mime, dataUri: null, bytes: null, missing: '未配照片目录，只显文件名：' + fileName };
+    return { fileName, mime, dataUri: null, bytes: null, missing: m('skill-calorie.photo-photoThumb.c001', { p0: String(fileName) }), missingKind: 'no-dir' };
   }
   let buf: Buffer;
   try {
     buf = readFileSync(join(photosDir, fileName));
   } catch {
-    return { fileName, mime, dataUri: null, bytes: null, missing: '文件缺失：' + fileName };
+    return { fileName, mime, dataUri: null, bytes: null, missing: m('skill-calorie.photo-photoThumb.c002', { p0: String(fileName) }), missingKind: 'file-missing' };
   }
   if (buf.length > PHOTO_EMBED_MAX_BYTES) {
-    return { fileName, mime, dataUri: null, bytes: buf.length, missing: '文件过大未内嵌（' + buf.length + ' 字节）：' + fileName };
+    return { fileName, mime, dataUri: null, bytes: buf.length, missing: m('skill-calorie.photo-photoThumb.c003', { p0: String(buf.length), p1: String(fileName) }), missingKind: 'too-big' };
   }
   return { fileName, mime, dataUri: 'data:' + mime + ';base64,' + buf.toString('base64'), bytes: buf.length, missing: null };
 }
@@ -69,8 +72,10 @@ export interface PhotoEmbedPicks {
   readonly skipReason: Map<string, string>;
 }
 
-/** 预算未嵌的原因句（老正本口径：`embed_skipped` 前端显示「未嵌入(体积超限)」）。 */
-export const EMBED_BUDGET_REASON = '体积预算未内嵌';
+/** 预算未嵌的**标记值**（老正本口径：`embed_skipped` 前端显示「未嵌入(体积超限)」）。
+ *  它是 `skipReason` 活表里的键值标记，装配处只判**在不在表里**、从不印它——故取标识符位
+ *  （不是面向用户的句子；上屏那句住 `photo-galleryDoc.c046`／`photo-pickerDoc.c056`）。 */
+export const EMBED_BUDGET_REASON = 'budget-skipped';
 
 /** 按预算挑选要内嵌的哪些张：`baseBytes` 是**不含任何内嵌字节**的页面底子大小，
  *  逐张按顺序试着加（`embeds` 与入参同序，故内嵌集恒是原序的一个子序列），

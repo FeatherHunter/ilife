@@ -52,6 +52,7 @@ import type { ViewOut } from '../shared/commandSpec.js';
 import { isLanguageArg } from 'base-link-core';
 import type { EnvelopeShape } from 'base-link-core';
 import { runWithLanguage } from 'base-entries';
+import { m } from '../entries/index.js';
 
 /** #294 · 读命令产物的形状（含交付种类）唯一定义地已上移 `shared/commandSpec.ts`：
  *  能力目录与分派层共用一份，本文件只按原名转出，既有调用方导入面不变。 */
@@ -66,10 +67,10 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
   // 未命中即「这个键不存在」，直接 fail——往分派层加分支这件事已经被棘轮挡在门外。
   const spec = REGISTRY[key];
   if (spec) {
-    if (spec.kind !== 'read') fail(3, '写键不走读分派：' + key);
+    if (spec.kind !== 'read') fail(3, m('skill-calorie.cli-cmd-read.c001', { p0: String(key) }));
     return spec.run(params, db);
   }
-  fail(3, '未知 calorie key：' + key);
+  fail(3, m('skill-calorie.cli-cmd-read.c002', { p0: String(key) }));
   throw new Error('unreachable');
 }
 
@@ -81,9 +82,9 @@ async function main(): Promise<void> {
     try {
       params = JSON.parse(o.params as string) as Record<string, unknown>;
     } catch (e) {
-      fail(2, '--params 须为 JSON：' + (e as Error).message);
+      fail(2, m('skill-calorie.cli-cmd-read.c003', { p0: String((e as Error).message) }));
     }
-    if (typeof params !== 'object' || params === null || Array.isArray(params)) fail(2, '--params 须为 JSON 对象');
+    if (typeof params !== 'object' || params === null || Array.isArray(params)) fail(2, m('skill-calorie.cli-cmd-read.c004'));
   }
   // #676 · 设置页的配置 key 在**预检与分派层之前**拦下：读写配置不该要求库目录已配（配置面正是
   // 「库目录配在哪」的入口），也不走 HTML 交付那条链；输出仍是唯一出口那条规矩（stdout 一行 envelope）。
@@ -112,7 +113,7 @@ async function main(): Promise<void> {
     }
     void (CALORIE_COMBOS as Record<string, unknown>)[o.key as string];
     const timer = setTimeout(() => {
-      toast('cmd_read 超时 terminate（' + String(o.timeout) + 'ms），已终止取数');
+      toast(m('skill-calorie.cli-cmd-read.c005', { p0: String(String(o.timeout)) }));
       process.exit(4);
     }, o.timeout as number);
     (timer as unknown as { unref: () => void }).unref();
@@ -138,8 +139,10 @@ async function main(): Promise<void> {
           });
         } catch (e) {
           if (e instanceof CalorieRenderError) throw e;
-          failWithReceipt('渲染失败：' + describeDeliveryTarget(o.html) + '：'
-            + ((e as Error).message || String(e)), o.key as string);
+          failWithReceipt(m('skill-calorie.cli-cmd-read.c006', {
+            p0: String(describeDeliveryTarget(o.html)),
+            p1: String((e as Error).message || String(e)),
+          }), o.key as string);
         }
       } finally {
         db.close();
@@ -149,20 +152,20 @@ async function main(): Promise<void> {
         // #500 · 身体域缺数据／缺参数走失败回执整页（exit 保持 4／2，按 #365 实测）；
         // 非身体键走原纯文本（其它域不动）。接线位是框架调用方（声明外最小 wiring，见证据）。
         if (e.code === 'missing-data') {
-          if (bodySceneFor(o.key as string) !== null) failWithBodyReceipt('取数失败（缺失阻断）：' + e.message, o.key as string, 4);
-          fail(4, '取数失败（缺失阻断）：' + e.message);
+          if (bodySceneFor(o.key as string) !== null) failWithBodyReceipt(m('skill-calorie.cli-cmd-read.c007', { p0: String(e.message) }), o.key as string, 4);
+          fail(4, m('skill-calorie.cli-cmd-read.c008', { p0: String(e.message) }));
         }
         if (e.code === 'bad-input') {
-          if (bodySceneFor(o.key as string) !== null) failWithBodyReceipt('参数失败：' + e.message, o.key as string, 2);
-          fail(2, '参数失败：' + e.message);
+          if (bodySceneFor(o.key as string) !== null) failWithBodyReceipt(m('skill-calorie.cli-cmd-read.c009', { p0: String(e.message) }), o.key as string, 2);
+          fail(2, m('skill-calorie.cli-cmd-read.c010', { p0: String(e.message) }));
         }
-        failWithReceipt('渲染失败：' + e.message, o.key as string);
+        failWithReceipt(m('skill-calorie.cli-cmd-read.c011', { p0: String(e.message) }), o.key as string);
       }
       if (e instanceof FetchError) {
-        if (bodySceneFor(o.key as string) !== null) failWithBodyReceipt('取数失败：' + (e as Error).message, o.key as string, 4);
-        fail(4, '取数失败：' + (e as Error).message);
+        if (bodySceneFor(o.key as string) !== null) failWithBodyReceipt(m('skill-calorie.cli-cmd-read.c012', { p0: String((e as Error).message) }), o.key as string, 4);
+        fail(4, m('skill-calorie.cli-cmd-read.c013', { p0: String((e as Error).message) }));
       }
-      fail(4, '未知失败：' + ((e as Error).message || String(e)));
+      fail(4, m('skill-calorie.cli-cmd-read.c014', { p0: String((e as Error).message || String(e)) }));
     } finally {
       clearTimeout(timer);
     }

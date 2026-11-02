@@ -9,6 +9,7 @@
 import { isLanguageArg } from 'base-link-core';
 import { resolveDbDir } from '../paths.js';
 import { fail } from '../shared/params.js';
+import { m } from '../entries/index.js';
 
 const DEFAULT_TIMEOUT_MS = 30000;
 
@@ -20,7 +21,7 @@ function preflight(): string {
   const v = process.versions.node.split('.').map(Number);
   const major = v[0] as number;
   const minor = v[1] as number;
-  if (!(major > 22 || (major === 22 && minor >= 13))) fail(1, 'node 低于 22.13：' + process.versions.node);
+  if (!(major > 22 || (major === 22 && minor >= 13))) fail(1, m('skill-calorie.cli-readArgs.c001', { p0: String(process.versions.node) }));
   // 库目录来自配置文件（`values.db.dir`，空＝配置数据目录）；配置读不出来即抛，不返空。
   return resolveDbDir();
 }
@@ -49,8 +50,8 @@ function parseArgs(a: string[]): ReadArgs {
     }
     else if (a[i] === '--timeout' && i + 1 < a.length) {
       o.timeout = Number(a[++i]);
-      if (!Number.isFinite(o.timeout) || (o.timeout as number) <= 0) fail(2, '--timeout 须为正数毫秒');
-    } else fail(2, '未知参数：' + a[i] + '（' + USAGE + '）');
+      if (!Number.isFinite(o.timeout) || (o.timeout as number) <= 0) fail(2, m('skill-calorie.cli-readArgs.c002'));
+    } else fail(2, m('skill-calorie.cli-readArgs.c003', { p0: String(a[i]), p1: String(USAGE) }));
   }
   return o;
 }
@@ -76,9 +77,9 @@ const BODY_EXACT_KEYS: readonly string[] = [
  * 返回场景名（`身体细节`），非身体键返 null（调用方走原纯文本，保持其它域不动）。 */
 function bodySceneFor(key: string | undefined): string | null {
   if (!key) return null;
-  if (BODY_EXACT_KEYS.includes(key)) return '身体细节';
-  if (key.startsWith('calorie.body.')) return '身体细节';
-  if (key.startsWith('calorie.view.body-')) return '身体细节';
+  if (BODY_EXACT_KEYS.includes(key)) return m('skill-calorie.cli-readArgs.c004');
+  if (key.startsWith('calorie.body.')) return m('skill-calorie.cli-readArgs.c005');
+  if (key.startsWith('calorie.view.body-')) return m('skill-calorie.cli-readArgs.c006');
   return null;
 }
 

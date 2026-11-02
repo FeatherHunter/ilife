@@ -28,6 +28,7 @@ import { exitForFailure } from './exitMap.js';
 import { XUNJI_EXIT_CODES } from './subcommands.js';
 import type { XunjiSubcommand } from './subcommands.js';
 import type { XunjiRun } from './run.js';
+import { m } from '../entries/index.js';
 
 /** `missing` 策略（老 `overlay_day_plan` 签名同名同值）：`fail` 有缺即报／`skip` 跳过只推有的。 */
 export type OverlayMissing = 'fail' | 'skip';
@@ -101,7 +102,7 @@ export async function overlayDayPlan(dateStr: string, deps: OverlayDeps = {}): P
   const fetchDay = deps.fetchDay ?? ((d: string) => fetchTrains(d, { ...deps.fetchOpts, includeFullData: true }));
   const outcome = await fetchDay(dateStr);
   if (!outcome.ok) {
-    const err = '拉取失败（没拉到）：' + outcome.failure.message;
+    const err = m('skill-calorie.xunji-overlay-plan.c001', { p0: String(outcome.failure.message) });
     return { ...base(dateStr, 0, 0), matched: [], missing_in_xunji: [], extra_in_xunji: [], ok_count: 0, fail_count: 1, err, note: null, failure: outcome.failure };
   }
   const trains = parseTrains(outcome.response);
@@ -114,7 +115,7 @@ export async function overlayDayPlan(dateStr: string, deps: OverlayDeps = {}): P
   if (sessions.length === 0) {
     return {
       ...base(dateStr, 0, trains.length), matched: [], missing_in_xunji: [], extra_in_xunji: [...queues.keys()],
-      ok_count: 0, fail_count: 0, err: null, note: '卡路里当天无 session（可能休息日或计划未配置），无可覆盖', failure: null,
+      ok_count: 0, fail_count: 0, err: null, note: m('skill-calorie.xunji-overlay-plan.c002'), failure: null,
     };
   }
   const resList: XunjiResItem[] = [];
@@ -134,13 +135,13 @@ export async function overlayDayPlan(dateStr: string, deps: OverlayDeps = {}): P
   if (missingInXunji.length > 0 && missingOpt === 'fail') {
     return {
       ...base(dateStr, sessions.length, trains.length), matched: [], missing_in_xunji: missingInXunji, extra_in_xunji: extra,
-      ok_count: 0, fail_count: 0, err: '卡路里有但训记没：' + missingInXunji.join('、') + '（missing=fail 报错退出）', note: null, failure: null,
+      ok_count: 0, fail_count: 0, err: m('skill-calorie.xunji-overlay-plan.c003', { p0: String(missingInXunji.join('、')) }), note: null, failure: null,
     };
   }
   if (resList.length === 0) {
     return {
       ...base(dateStr, sessions.length, trains.length), matched: [], missing_in_xunji: missingInXunji, extra_in_xunji: extra,
-      ok_count: 0, fail_count: 0, err: null, note: '无可推送的 session（全部 missing 或空）', failure: null,
+      ok_count: 0, fail_count: 0, err: null, note: m('skill-calorie.xunji-overlay-plan.c004'), failure: null,
     };
   }
   const clientRequestId = 'overlay_' + dateStr + '_' + randomUUID().replace(/-/g, '').slice(0, 8);
@@ -169,33 +170,38 @@ type Values = Readonly<Record<string, string | boolean | readonly string[]>>;
 /** `overlay-plan` 子命令的分派（`run.ts` 调；`missing=fail` 的缺 title 走 1）。 */
 export async function runOverlayPlanCommand(sub: XunjiSubcommand, values: Values, deps: OverlayDeps = {}): Promise<XunjiRun> {
   const refuse = (why: string, data: unknown): XunjiRun => ({
-    subcommand: 'overlay-plan', code: XUNJI_EXIT_CODES.error, message: why, data, stderr: why + '（用法：' + sub.usage + '）',
+    subcommand: 'overlay-plan', code: XUNJI_EXIT_CODES.error, message: why, data, stderr: m('skill-calorie.xunji-overlay-plan.c005', { p0: String(why), p1: String(sub.usage) }),
   });
   const date = values['--date'];
-  if (typeof date !== 'string') return refuse('缺参数：--date', { usage: sub.usage });
+  if (typeof date !== 'string') return refuse(m('skill-calorie.xunji-overlay-plan.c006'), { usage: sub.usage });
   const bad = dateProblem(date);
   if (bad !== null) return refuse(bad, { usage: sub.usage });
   const missingRaw = values['--missing'];
   if (missingRaw !== undefined && missingRaw !== 'fail' && missingRaw !== 'skip') {
-    return refuse('--missing 只能是 fail|skip（实际：' + String(missingRaw) + '）', { usage: sub.usage });
+    return refuse(m('skill-calorie.xunji-overlay-plan.c007', { p0: String(String(missingRaw)) }), { usage: sub.usage });
   }
   const result = await overlayDayPlan(date, {
     ...deps, dryRun: values['--dry-run'] === true, missing: missingRaw === 'skip' ? 'skip' : 'fail',
   });
   if (result.failure !== null) {
-    const line = result.err ?? '叠加失败';
+    const line = result.err ?? m('skill-calorie.xunji-overlay-plan.c008');
     return { subcommand: 'overlay-plan', code: exitForFailure(result.failure), message: line, data: result, stderr: line };
   }
   if (result.err !== null) {
     return { subcommand: 'overlay-plan', code: XUNJI_EXIT_CODES.error, message: result.err, data: result, stderr: result.err };
   }
   if (result.fail_count > 0) {
-    const line = '叠加失败：' + date + ' upsert 未成功';
+    const line = m('skill-calorie.xunji-overlay-plan.c009', { p0: String(date) });
     return { subcommand: 'overlay-plan', code: XUNJI_EXIT_CODES.api, message: line, data: result, stderr: line };
   }
   return {
     subcommand: 'overlay-plan', code: XUNJI_EXIT_CODES.ok,
-    message: '叠加成功：' + date + ' ' + result.ok_count + ' 条（训记 ' + result.trains_count + ' 条里对上 ' + result.matched.length + ' 条）',
+    message: m('skill-calorie.xunji-overlay-plan.c010', {
+      p0: String(date),
+      p1: String(result.ok_count),
+      p2: String(result.trains_count),
+      p3: String(result.matched.length),
+    }),
     data: result, stderr: null,
   };
 }

@@ -4,6 +4,7 @@ import type { DatabaseSync } from 'node:sqlite';
 import { validateRecord } from './validate.js';
 import { FetchError } from './errors.js';
 import { deprecateProduct } from '../diet/productStore.js';
+import { m } from '../entries/index.js';
 
 export type DuplicatePolicy = 'overwrite' | 'skip' | 'deprecate';
 
@@ -222,7 +223,7 @@ export function validateFile(file: string, jsonOutput?: string): { total: number
         },
         runs: [
           ...runs,
-          ...parseErrors.map((p) => ({ line: p.line, status: 'failed', name: '(解析失败)', reason: p.message })),
+          ...parseErrors.map((p) => ({ line: p.line, status: 'failed', name: m('skill-calorie.fetch-batch.c001'), reason: p.message })),
         ],
       }),
       'utf8',

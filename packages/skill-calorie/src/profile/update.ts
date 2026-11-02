@@ -20,16 +20,17 @@ import { assembleDocPage } from '../shared/docPage.js';
 import { copyArea, copyLog } from '../shared/copyArea.js';
 import { fieldLabel, localizeEnums } from './labels.js';
 import { reconcileDisclosure, statusCard } from '../shared/receiptParts.js';
-import { PROFILE_WRITTEN_DETAIL } from './setup.js';
+import { profileWrittenDetail } from './setup.js';
+import { m } from '../entries/index.js';
 
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
-const DOC_TITLE = '卡路里·档案预检';
+const docTitle = (): string => m('skill-calorie.profile-update.c014');
 
 /** 一格对照值：英文枚举翻中文；「改前没有值」也写成与页面其它地方同一个词。 */
 function diffCell(raw: string): string {
   const text = localizeEnums(raw.trim());
-  return text === '—' ? '未设置' : text;
+  return text === '—' ? m('skill-calorie.profile-update.c001') : text;
 }
 
 /** items 里逐字段对照：`status`＝字段名，`reason`＝「改前 → 改后」（回执带不出对照时为空表）。
@@ -51,22 +52,22 @@ export function buildProfileUpdateReceiptDoc(receipt: CrudReceipt, command: stri
     version: DOC_VERSION, skill: DOC_SKILL, shape: 'receipt', key: receipt.meta.wakeWord,
     data: { ok: true, message: receipt.summary },
   };
+  const writtenText = receipt.writtenFields.map(fieldLabel).join('、') || m('skill-calorie.profile-update.c002');
   const content = [
     renderKpiGrid([
-      statusCard(receipt, PROFILE_WRITTEN_DETAIL),
-      { label: '影响行数', value: receipt.affectedRows + ' 行', detail: '本次写入的行数' },
+      statusCard(receipt, profileWrittenDetail()),
+      { label: m('skill-calorie.profile-update.c003'), value: m('skill-calorie.profile-update.c004', { p0: String(receipt.affectedRows) }), detail: m('skill-calorie.profile-update.c005') },
       {
-        label: '改动字段',
-        value: rows.length + ' 项',
-        detail: receipt.writtenFields.map(fieldLabel).join('、') || '未设置',
+        label: m('skill-calorie.profile-update.c006'),
+        value: m('skill-calorie.profile-update.c007', { p0: String(rows.length) }),
+        detail: writtenText,
       },
     ]),
     renderDataTable({
-      columns: [{ key: 'field', label: '字段' }, { key: 'change', label: '改前 → 改后' }],
+      columns: [{ key: 'field', label: m('skill-calorie.profile-update.c008') }, { key: 'change', label: m('skill-calorie.profile-update.c009') }],
       rows,
-      caption: '改档案 5 项：改前 → 改后对照',
-      emptyText: '本次回执未带逐字段对照（写入字段：'
-        + (receipt.writtenFields.map(fieldLabel).join('、') || '未设置') + '）',
+      caption: m('skill-calorie.profile-update.c010'),
+      emptyText: m('skill-calorie.profile-update.c011', { p0: String(writtenText) }),
     }),
     reconcileDisclosure(receipt),
     copyArea({
@@ -81,9 +82,9 @@ export function buildProfileUpdateReceiptDoc(receipt: CrudReceipt, command: stri
     }),
   ].join('');
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: receipt.scene + ' · 回执',
-    eyebrow: '基础信息 · 写后回执',
+    docTitle: docTitle(),
+    title: m('skill-calorie.profile-update.c012', { p0: String(receipt.scene) }),
+    eyebrow: m('skill-calorie.profile-update.c013'),
     subtitle: localizeEnums(receipt.summary),
     content,
     pageUi: true,

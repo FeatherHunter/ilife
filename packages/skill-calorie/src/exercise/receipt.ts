@@ -33,14 +33,17 @@ import { copyArea, copyLog } from '../shared/copyArea.js';
 import { operationHead } from '../shared/operationHead.js';
 import type { ReceiptOp } from '../shared/operationHead.js';
 import { reconcileDisclosure, statusCard } from '../shared/receiptParts.js';
-import { fieldLabel } from '../shared/fieldLabel.js';
-import { EXERCISE_DOMAIN } from './fieldLabels.js';
+import { exerciseFieldLabel } from './fieldLabels.js';
 import type { ExerciseRow } from './exerciseStore.js';
 import { detailTableWanted, exerciseUiCss, factStrip, fieldsBlock, fmtNum, inlineShaped, rangeText, receiptSource } from './sportUi.js';
+import { m } from '../entries/index.js';
+import { EXERCISE_ROUTES } from './routes.js';
+
+/** 命令面资产：两条写词的唤醒词从路由唯一来源取（本件不重写中文）。 */
+const wakeOfOrder = (order: number): string => EXERCISE_ROUTES.find((r) => r.order === order)?.wakeWord ?? '';
 
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
-const DOC_TITLE = '卡路里 运动回执';
 
 /** 随行明细（写命令已落库，页面只读装配；空即按回执摘要兜底，不编数据）。 */
 export interface ExerciseReceiptDetail {
@@ -63,34 +66,34 @@ const SKIP_COLS = new Set(['id', 'created_at', 'updated_at', 'is_deleted']);
 
 /** 字段名 → 中文标签：查 `exercise/fieldLabels.ts` 那张域表的单源口径（`#449`，缺项回退原键名）。 */
 function label(col: string): string {
-  return fieldLabel(EXERCISE_DOMAIN, col);
+  return exerciseFieldLabel(col);
 }
 
 /** 给人看的格值：没有值写 `（空）`（#578：`—` 是无信息量空值行，不再上屏；
  *  明细表备注格另走 `detailCell` 的空白格，改前旧空值才印 `（空）`）。 */
 function cellText(v: unknown, unit?: string): string {
   const s = v === null || v === undefined ? '' : String(v).trim();
-  return s === '' ? '（空）' : (unit === undefined || unit === '' ? s : s + ' ' + unit);
+  return s === '' ? m('skill-calorie.exercise-receipt.c001') : (unit === undefined || unit === '' ? s : s + ' ' + unit);
 }
 
 /** 数值格走显示层取整（`sportUi.fmtNum`）：库内浮点原值不上屏；空印 `（空）`（#578 同上）。 */
 function numText(v: unknown, digits: number, unit: string): string {
   const t = v === null || v === undefined ? '' : String(v).trim();
-  return t === '' ? '（空）' : fmtNum(Number(t), digits) + ' ' + unit;
+  return t === '' ? m('skill-calorie.exercise-receipt.c002') : fmtNum(Number(t), digits) + ' ' + unit;
 }
 
 function rowText(row: ExerciseRow, col: string): string {
   const v: unknown = row[col];
   switch (col) {
-    case 'duration_minutes': return numText(v, 0, '分钟');
-    case 'calories_burned': return numText(v, 1, '卡');
+    case 'duration_minutes': return numText(v, 0, m('skill-calorie.exercise-receipt.c069'));
+    case 'calories_burned': return numText(v, 1, m('skill-calorie.exercise-receipt.c081'));
     case 'distance_km': return numText(v, 2, 'km');
     case 'avg_heart_rate':
     case 'max_heart_rate': return numText(v, 0, 'bpm');
-    case 'steps': return numText(v, 0, '步');
-    case 'reps': return numText(v, 0, '次');
+    case 'steps': return numText(v, 0, m('skill-calorie.exercise-receipt.c070'));
+    case 'reps': return numText(v, 0, m('skill-calorie.exercise-receipt.c071'));
     case 'load_kg': return numText(v, 1, 'kg');
-    case 'is_backfill': return v === 1 || v === true ? '是' : '否';
+    case 'is_backfill': return v === 1 || v === true ? m('skill-calorie.exercise-receipt.c072') : m('skill-calorie.exercise-receipt.c073');
     default: return cellText(v);
   }
 }
@@ -166,13 +169,13 @@ function changeCard(op: ReceiptOp, rows: readonly ExerciseRow[], pairs: readonly
     }
   }
   if (items.length === 0) return null;
-  const title = op === 'update' ? '改前 → 改后对照'
-    : op === 'delete' ? '删除前快照'
-      : '本次明细（新增内容）';
+  const title = op === 'update' ? m('skill-calorie.exercise-receipt.c003')
+    : op === 'delete' ? m('skill-calorie.exercise-receipt.c004')
+      : m('skill-calorie.exercise-receipt.c005');
   /** 导航词＝这一块自己的题（r7 的 P2-4）：原来四枚锚点里三枚与落点卡题同词根，只有「字段变更」
    *  这一枚不是——点「字段变更」落到的卡叫「本次明细（新增内容）／改前 → 改后对照／删除前快照」。
    *  这里按写形态取与卡题同一批词；`sec-change` 这个 id 不动（三件老判据钉的是 id 与数量）。 */
-  const tocLabel = op === 'update' ? '改前改后' : op === 'delete' ? '删除前快照' : '本次明细';
+  const tocLabel = op === 'update' ? m('skill-calorie.exercise-receipt.c006') : op === 'delete' ? m('skill-calorie.exercise-receipt.c007') : m('skill-calorie.exercise-receipt.c008');
   // 删单条：后果句下放成这一块首行的键值行（r6 的 P2-2 ＋ r7 的 P1-3；见 `deleteConsequenceRows`）。
   // 删多条（删某日／批量删）仍留在副标题：那里的摘要还承担「删了几天／几条」的对象信息，不切。
   return {
@@ -185,23 +188,29 @@ function changeCard(op: ReceiptOp, rows: readonly ExerciseRow[], pairs: readonly
 /* ───────────────────────────── ③ 明细卡（运动口径列） ───────────────────────────── */
 
 /** 明细列＝运动口径（日期／类型／时长／消耗／备注；#423 第 6 条：不再露饮食口径的「克」）。 */
-const DETAIL_COLUMNS = ['日期', '类型', '时长', '消耗', '备注'] as const;
+const DETAIL_COLUMNS = [
+  { id: 'date', label: 'skill-calorie.exercise-receipt.c074' },
+  { id: 'type', label: 'skill-calorie.exercise-receipt.c075' },
+  { id: 'duration', label: 'skill-calorie.exercise-receipt.c076' },
+  { id: 'kcal', label: 'skill-calorie.exercise-receipt.c077' },
+  { id: 'note', label: 'skill-calorie.exercise-receipt.c078' },
+] as const;
 
 function detailCard(rows: readonly ExerciseRow[]): Card | null {
   if (rows.length === 0) return null;
   return {
     id: 'sec-detail',
-    label: '逐条明细',
+    label: m('skill-calorie.exercise-receipt.c009'),
     // #578 明细卡层级：折叠标题是这一卡唯一的题，表不再复述同一标题
     // （`caption` 省略，列头即表的题）；空备注即空白格，不占位。
-    html: renderDisclosure({ title: '逐条明细', contentHtml: renderDataTable({
-      columns: DETAIL_COLUMNS.map((label) => ({ key: label, label })),
+    html: renderDisclosure({ title: m('skill-calorie.exercise-receipt.c010'), contentHtml: renderDataTable({
+      columns: DETAIL_COLUMNS.map((c) => ({ key: c.id, label: m(c.label) })),
       rows: rows.map((r) => ({
-        日期: detailCell(r['date']),
-        类型: detailCell(r['exercise_type']),
-        时长: detailNum(r['duration_minutes'], 0, '分钟'),
-        消耗: detailNum(r['calories_burned'], 1, '卡'),
-        备注: detailCell(r['note']),
+        date: detailCell(r['date']),
+        type: detailCell(r['exercise_type']),
+        duration: detailNum(r['duration_minutes'], 0, m('skill-calorie.exercise-receipt.c069')),
+        kcal: detailNum(r['calories_burned'], 1, m('skill-calorie.exercise-receipt.c011')),
+        note: detailCell(r['note']),
       })),
       }), open: true }),
   };
@@ -238,14 +247,14 @@ function dayCard(db: DatabaseSync, date: string): Card | null {
   ).get(date) as { n: number; kcal: number; mins: number };
   return {
     id: 'sec-day',
-    label: '当日累计',
+    label: m('skill-calorie.exercise-receipt.c012'),
     html: '<p class="sui-fields-k">当日累计（写后现值）</p>' + factStrip([
-      { k: '记录日期', v: date },
+      { k: m('skill-calorie.exercise-receipt.c013'), v: date },
       // #578：条数带 `（当天）`——计数卡那处 `N 条` 说的是本次，
       // 同屏两处同数不再裸奔（机读 dup 口径逐字比，见 t578 判据②）。
-      { k: '运动条数', v: String(r.n) + ' 条（当天）' },
-      { k: '消耗累计', v: fmtNum(r.kcal) + ' 卡' },
-      { k: '时长累计', v: fmtNum(r.mins, 0) + ' 分钟' },
+      { k: m('skill-calorie.exercise-receipt.c014'), v: m('skill-calorie.exercise-receipt.c015', { p0: String(String(r.n)) }) },
+      { k: m('skill-calorie.exercise-receipt.c016'), v: m('skill-calorie.exercise-receipt.c017', { p0: String(fmtNum(r.kcal)) }) },
+      { k: m('skill-calorie.exercise-receipt.c018'), v: m('skill-calorie.exercise-receipt.c079', { p0: String(fmtNum(r.mins, 0)) }) },
     ]),
   };
 }
@@ -266,23 +275,23 @@ function sourceCard(receipt: CrudReceipt, dates: readonly string[], fallback: st
   ];
   return {
     id: 'sec-source',
-    label: '数据来源',
+    label: m('skill-calorie.exercise-receipt.c019'),
     html: '<p class="sui-fields-k">数据来源</p>'
-      + factStrip(s === '' ? facts : [{ k: '来源', v: s }, ...facts]),
+      + factStrip(s === '' ? facts : [{ k: m('skill-calorie.exercise-receipt.c020'), v: s }, ...facts]),
   };
 }
 
 /** 口径行（#420 `renderCaliberLine`）：一条事实一行。#543：`；` 串拆开，
  *  `total_changes` 库口径词改人话；首条保留 `口径：` 前缀（回归判据读它）。 */
 function caliberLines(hasDay: boolean): string[] {
-  const lines = ['口径：影响行数＝本次写库实际改动的行数'];
+  const lines = [m('skill-calorie.exercise-receipt.c021')];
   // #578：读数卡 `影响行数 N 行` 与计数卡 `N 条` 同数两名——两处题都被既有关票判据
   // 钉死（`>影响行数</div>`／`新增条数` 等），数与题都不动，只增一句口径把同一件事说清。
-  lines.push('影响行数的「行」与计数卡的「条」是同一件事：本次写库实际改动的行数');
+  lines.push(m('skill-calorie.exercise-receipt.c022'));
   if (hasDay) {
-    lines.push('当日累计只算未删除的行，软删除的行不计');
+    lines.push(m('skill-calorie.exercise-receipt.c023'));
   }
-  lines.push('时长按分钟记，消耗按卡记');
+  lines.push(m('skill-calorie.exercise-receipt.c024'));
   return lines;
 }
 
@@ -290,7 +299,7 @@ function caliberLines(hasDay: boolean): string[] {
 function undoBlock(undoCli: unknown): string {
   if (typeof undoCli !== 'string' || undoCli.trim() === '') return '';
   return renderPreBlock({
-    label: '撤销指令（可复制重跑）',
+    label: m('skill-calorie.exercise-receipt.c025'),
     command: undoCli.trim(),
     actionId: CALORIE_COPY_ACTION.actionId,
     copyLabel: CALORIE_COPY_ACTION.label,
@@ -298,9 +307,9 @@ function undoBlock(undoCli: unknown): string {
 }
 
 function writtenDetailOf(key: string): string {
-  if (key === 'calorie.exercise.update') return '已更新运动记录';
-  if (key === 'calorie.exercise.remove') return '已删除运动记录';
-  return '已写入运动记录';
+  if (key === 'calorie.exercise.update') return m('skill-calorie.exercise-receipt.c026');
+  if (key === 'calorie.exercise.remove') return m('skill-calorie.exercise-receipt.c027');
+  return m('skill-calorie.exercise-receipt.c028');
 }
 
 /** 「状态」读数卡的主值（#543 视觉复评 r6 的 P1-4 ＋ **r7 的 P1-1**）：两条要求合起来只有一种取法——
@@ -309,7 +318,7 @@ function writtenDetailOf(key: string): string {
  *  故这里取的是**过程状态**而不是动作：成功完成写库 → `成功`（`noChange` 那一态仍在调用点判成
  *  `无改动`，与共用件 `statusCard` 的措辞同源，`fusion-423` 钉着它）。 */
 function statusWordOf(receipt: CrudReceipt): string {
-  return receipt.noChange ? '无改动' : '成功';
+  return receipt.noChange ? m('skill-calorie.exercise-receipt.c029') : m('skill-calorie.exercise-receipt.c030');
 }
 
 /** 删类后果句的内文（单源原文去括号＋行文整形）：单条落变更卡首行，多条落计数卡，
@@ -328,19 +337,19 @@ function consequenceInner(receipt: CrudReceipt): string {
  *  值内那个 `，` 是**判据钉死的连片指标**，不是本席拿标点顶设计。删多条（删某日／批量删）落计数卡。 */
 function consequenceFacts(receipt: CrudReceipt): string {
   const inner = consequenceInner(receipt);
-  return inner === '' ? '' : factStrip([{ k: '删除方式', v: inner }]);
+  return inner === '' ? '' : factStrip([{ k: m('skill-calorie.exercise-receipt.c031'), v: inner }]);
 }
 
 /** 页头副标题（#578：只留短结论，不复述记录值）——记录号／日期／条数／区间由操作头／
  *  计数卡／来源卡各说一遍，副标题再说一遍就是复述；括号后果句由删除方式卡说。
  *  无改动那一态副标题即 `无改动`（与状态卡同词：这一页的结论本来就是这一句）。 */
 function subtitleFor(receipt: CrudReceipt, op: ReceiptOp, isBatch: boolean, isCopy: boolean): string {
-  if (receipt.noChange) return '无改动';
-  if (isCopy) return '复制完成';
-  if (isBatch) return '批量记运动';
-  if (op === 'update') return '已更新运动';
-  if (op === 'delete') return '已删除运动';
-  return '已记运动';
+  if (receipt.noChange) return m('skill-calorie.exercise-receipt.c032');
+  if (isCopy) return m('skill-calorie.exercise-receipt.c033');
+  if (isBatch) return m('skill-calorie.exercise-receipt.c034');
+  if (op === 'update') return m('skill-calorie.exercise-receipt.c035');
+  if (op === 'delete') return m('skill-calorie.exercise-receipt.c036');
+  return m('skill-calorie.exercise-receipt.c037');
 }
 
 /** 三条写命令共用的写后回执整页：四态头 ＋ 计数／变更／明细／当日累计 ＋ 来源 ＋ 对账 ＋ 复制区。
@@ -361,8 +370,8 @@ export function buildExerciseReceiptDoc(
   const wake = receipt.meta.wakeWord;
   const op: ReceiptOp = receipt.op;
   const isAdd = key === 'calorie.exercise.add';
-  const isBatch = isAdd && wake === '批量补记运动';
-  const isCopy = isAdd && wake === '复制昨日运动';
+  const isBatch = isAdd && wake === wakeOfOrder(143);
+  const isCopy = isAdd && wake === wakeOfOrder(144);
   const target = detail.targetDate ?? (rows.length > 0 ? String(rows[0]?.['date'] ?? '') : '');
   const dates = [...new Set([
     ...rows.map((r) => String(r['date'] ?? '')),
@@ -374,19 +383,19 @@ export function buildExerciseReceiptDoc(
   // （副标题不再背括号，单条仍在变更卡首行——一页只一位说话人）。
   const delWay = op === 'delete' && rows.length > 1 ? consequenceInner(receipt) : '';
   const countRows: (readonly [string, string])[] = isBatch
-    ? [['写入', rows.length + ' 条'], ['跳过', '0 条'], ['失败', '0 条']]
+    ? [[m('skill-calorie.exercise-receipt.c038'), m('skill-calorie.exercise-receipt.c039', { p0: String(rows.length) })], ['跳过', m('skill-calorie.exercise-receipt.c040')], [m('skill-calorie.exercise-receipt.c041'), m('skill-calorie.exercise-receipt.c042')]]
     : isCopy
       ? (target === ''
-        ? [['复制', rows.length + ' 条'], ['跳过', String(detail.skipped ?? 0) + ' 条']]
-        : [['复制', rows.length + ' 条'], ['跳过', String(detail.skipped ?? 0) + ' 条'], ['目标日期', target]])
-      : op === 'update' ? [['命中条数', pairs.length + ' 条']]
+        ? [[m('skill-calorie.exercise-receipt.c043'), m('skill-calorie.exercise-receipt.c044', { p0: String(rows.length) })], ['跳过', m('skill-calorie.exercise-receipt.c045', { p0: String(String(detail.skipped ?? 0)) })]]
+        : [[m('skill-calorie.exercise-receipt.c046'), m('skill-calorie.exercise-receipt.c047', { p0: String(rows.length) })], ['跳过', m('skill-calorie.exercise-receipt.c048', { p0: String(String(detail.skipped ?? 0)) })], [m('skill-calorie.exercise-receipt.c049'), target]])
+      : op === 'update' ? [[m('skill-calorie.exercise-receipt.c050'), m('skill-calorie.exercise-receipt.c051', { p0: String(pairs.length) })]]
         : op === 'delete'
-          ? (delWay === '' ? [['删除条数', rows.length + ' 条']] : [['删除条数', rows.length + ' 条'], ['删除方式', delWay]])
-          : [['新增条数', rows.length + ' 条']];
+          ? (delWay === '' ? [[m('skill-calorie.exercise-receipt.c052'), m('skill-calorie.exercise-receipt.c053', { p0: String(rows.length) })]] : [[m('skill-calorie.exercise-receipt.c054'), m('skill-calorie.exercise-receipt.c055', { p0: String(rows.length) })], [m('skill-calorie.exercise-receipt.c056'), delWay]])
+          : [[m('skill-calorie.exercise-receipt.c057'), m('skill-calorie.exercise-receipt.c058', { p0: String(rows.length) })]];
   // 题只说「这张表是哪一档计数」：三件事由表行自陈，软删除那句只在删除卡说一次（不再复述）。
-  const countCaption = isBatch ? '批量计数'
-    : isCopy ? '复制结果'
-      : op === 'update' ? '命中记录' : op === 'delete' ? '删除结果' : '新增结果';
+  const countCaption = isBatch ? m('skill-calorie.exercise-receipt.c059')
+    : isCopy ? m('skill-calorie.exercise-receipt.c060')
+      : op === 'update' ? m('skill-calorie.exercise-receipt.c061') : op === 'delete' ? m('skill-calorie.exercise-receipt.c062') : m('skill-calorie.exercise-receipt.c063');
   const counts = countCard(countCaption, countRows);
   // ② 变更卡（共用一张）／③ 明细卡（运动口径，只有逐条形态才摆）／④ 当日累计卡（活行口径、空即不出）。
   const change = changeCard(op, rows, pairs, receipt);
@@ -409,7 +418,7 @@ export function buildExerciseReceiptDoc(
     const status = statusCard(receipt, writtenDetailOf(key));
     kpi.push({ label: status.label, value: statusWordOf(receipt) });
   }
-  if (receipt.affectedRows > 0) kpi.push({ label: '影响行数', value: receipt.affectedRows + ' 行' });
+  if (receipt.affectedRows > 0) kpi.push({ label: m('skill-calorie.exercise-receipt.c064'), value: m('skill-calorie.exercise-receipt.c065', { p0: String(receipt.affectedRows) }) });
   const fields = receipt.writtenFields;
 
   /** 「写入字段」那一块的题（r7 的 P2-6）：原来只写「写入字段（共 16 项）」，页下方明细却只列
@@ -430,7 +439,7 @@ export function buildExerciseReceiptDoc(
     exerciseUiCss(),
     renderTocBlock({ items: tocItems }),
     // #543 视觉复评 P1-A 第 1 条：页族名归眉标、命令名归 h1、操作对象归操作头——h2 只说「运动记录」。
-    operationHead({ op, title: '运动记录', recordId: receipt.recordId, actionAt: receipt.meta.actionAt }),
+    operationHead({ op, title: m('skill-calorie.exercise-receipt.c066'), recordId: receipt.recordId, actionAt: receipt.meta.actionAt }),
     kpi.length > 0 ? readoutShell(renderKpiGrid(kpi)) : '',
     fieldsBlock(fields.map((f) => label(f))),
     caliberLines(day !== null).map((t) => renderCaliberLine(t)).join(''),
@@ -449,10 +458,10 @@ export function buildExerciseReceiptDoc(
     }),
   ].join('');
   return assembleDocPage({
-    docTitle: DOC_TITLE,
+    docTitle: m('skill-calorie.exercise-receipt.c080'),
     // 唤醒词而不是场景名：批量补记／复制昨日／删某日的场景名与「记运动」同源，用场景名会让同一张 h1 落到八页上。
-    title: wake + '回执',
-    eyebrow: '运动写后回执',
+    title: m('skill-calorie.exercise-receipt.c067', { p0: String(wake) }),
+    eyebrow: m('skill-calorie.exercise-receipt.c068'),
     // #578：副标题只留短结论（见 `subtitleFor`）——记录号／日期／条数／区间与括号后果句
     // 由操作头／计数卡／来源卡／删除方式卡各说一遍，副标题不再复述。
     subtitle: subtitleFor(receipt, op, isBatch, isCopy),

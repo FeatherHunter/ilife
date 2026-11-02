@@ -46,28 +46,32 @@ import { assembleDocPage } from '../shared/docPage.js';
 import { copyArea, copyLog, notice } from '../shared/copyArea.js';
 import type { PhotoEmbed } from './photoThumb.js';
 import { chipRow, factRows, labelChips, receiptUiCss, sectionTitle, shotBlock } from './receiptUi.js';
+import { m } from '../entries/index.js';
 
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
-/** `<title>`：族名与页名之间原来是 `·`（判据 R1），改空格——标签页的 `<title>` 随本行一起变。 */
-const DOC_TITLE = '卡路里 身材照片回执';
+/** 本页 head 标题（整页模板住 `src/shared/docPage.ts`，标题走参数）。
+ *  取词在**调用时**发生（模块级常量不得在顶层取词：语言由运行期上下文决定）。 */
+function docTitle(): string {
+  return m('skill-calorie.photo-receipt.c068');
+}
 
 /** op 三态徽章（老实物 `:155-156` 配色；色值住本域，公共层色档徽章另用于逐张照片的状态）。 */
 function opBadgeOf(op: CrudReceipt['op']): { badge: string; color: string } {
-  if (op === 'delete') return { badge: '删除回执', color: '#ff3b30' };
-  if (op === 'update') return { badge: '变更回执', color: '#ff9500' };
-  return { badge: '存入回执', color: '#34c759' };
+  if (op === 'delete') return { badge: m('skill-calorie.photo-receipt.c001'), color: '#ff3b30' };
+  if (op === 'update') return { badge: m('skill-calorie.photo-receipt.c002'), color: '#ff9500' };
+  return { badge: m('skill-calorie.photo-receipt.c003'), color: '#34c759' };
 }
 
 /** 编号的人话形状：`#36` 是**内部标识符**（判据 R7 的票号形状），两页一律写「编号 36」。 */
 function idTextOf(id: number | undefined | null): string {
-  return id === undefined || id === null ? '没有编号' : '编号 ' + id;
+  return id === undefined || id === null ? m('skill-calorie.photo-receipt.c004') : m('skill-calorie.photo-receipt.c005', { p0: String(id) });
 }
 
 /** 空标签印「无标签」（#476 统一）；多标签走徽章列，**不再用 `、` 串**。 */
 function tagListOf(tags: readonly string[] | undefined): string[] {
   const kept = (tags ?? []).map(String).filter((t) => t !== '');
-  return kept.length === 0 ? ['无标签'] : kept;
+  return kept.length === 0 ? [m('skill-calorie.photo-receipt.c006')] : kept;
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -77,9 +81,9 @@ function tagListOf(tags: readonly string[] | undefined): string[] {
 /** 对照列头随场景换（老实物 `:215-219`）：改照片标签＝改前改后／加照片标签＝加前加后／
  *  删照片标签＝删除前删除后。 */
 function changeHeadOf(scene: string): { before: string; after: string } {
-  if (scene === '加照片标签') return { before: '加前', after: '加后' };
-  if (scene === '删照片标签') return { before: '删除前', after: '删除后' };
-  return { before: '改前', after: '改后' };
+  if (scene === '加照片标签') return { before: m('skill-calorie.photo-receipt.c007'), after: m('skill-calorie.photo-receipt.c008') };
+  if (scene === '删照片标签') return { before: m('skill-calorie.photo-receipt.c009'), after: m('skill-calorie.photo-receipt.c010') };
+  return { before: m('skill-calorie.photo-receipt.c011'), after: m('skill-calorie.photo-receipt.c012') };
 }
 
 /** 标签逐行三态：**一行一个标签**，改前／改后两列按状态填——保留＝两列都写状态词（中性），
@@ -93,7 +97,7 @@ function tagChangeRowsOf(before: readonly string[], after: readonly string[]): s
   return uniq.map((t) => {
     const b = inBefore.has(t);
     const a = inAfter.has(t);
-    const state = b && a ? '保留' : (a ? '新增' : '移除');
+    const state = b && a ? m('skill-calorie.photo-receipt.c013') : (a ? m('skill-calorie.photo-receipt.c014') : m('skill-calorie.photo-receipt.c015'));
     const row: ChangeRowInput = b && a
       ? { label: '\u2060', before: '', after: '', arrow: false }
       : { label: '\u2060', ...(a ? { after: t } : { before: t }), arrow: false };
@@ -114,11 +118,11 @@ function tagChangeBlock(receipt: CrudReceipt): string {
   const head = changeHeadOf(receipt.scene);
   const rows = tagChangeRowsOf(diff.before, diff.after);
   const body = rows.length === 0
-    ? '<div class="phr-tags-row">' + cellOf('保留')
-      + renderChangeRows({ rows: [{ label: '\u2060', before: '没有标签', after: '没有标签', arrow: false }] })
+    ? '<div class="phr-tags-row">' + cellOf(m('skill-calorie.photo-receipt.c016'))
+      + renderChangeRows({ rows: [{ label: '\u2060', before: m('skill-calorie.photo-receipt.c017'), after: m('skill-calorie.photo-receipt.c018'), arrow: false }] })
       + '</div>'
     : rows.join('');  return '<div class="phr-tags">'
-    + '<div class="phr-tags-row phr-tags-head">' + cellOf('变化') + cellOf(head.before)
+    + '<div class="phr-tags-row phr-tags-head">' + cellOf(m('skill-calorie.photo-receipt.c019')) + cellOf(head.before)
     + cellOf(head.after) + '<span class="phr-tags-arrow" aria-hidden="true"></span></div>'
     + body + '</div>';
 }
@@ -128,18 +132,18 @@ function tagChangeBlock(receipt: CrudReceipt): string {
 function tagNoticeOf(receipt: CrudReceipt): string {
   if (receipt.noChange) {
     const tags = tagListOf((receipt.tagDiff ?? { before: [], after: [] }).after).join('、');
-    return notice({ icon: 'info', title: '没有变化', msg: '这次没有改动任何东西', detail: '标签还是：' + tags });
+    return notice({ icon: 'info', title: m('skill-calorie.photo-receipt.c020'), msg: m('skill-calorie.photo-receipt.c021'), detail: m('skill-calorie.photo-receipt.c022', { p0: String(tags) }) });
   }
   const diff = receipt.tagDiff ?? { before: [], after: [] };
   const head = changeHeadOf(receipt.scene);
-  const tail = '（照片编号 ' + (receipt.recordId ?? '—') + '）';
+  const tail = m('skill-calorie.photo-receipt.c023', { p0: String(receipt.recordId ?? '—') });
   if (receipt.scene === '加照片标签') {
     const added = diff.after.filter((t) => !diff.before.includes(t));
-    return notice({ icon: 'ok', msg: (added.length > 0 ? '标签已加好：' + added.join('、') : '标签已加好') + tail });
+    return notice({ icon: 'ok', msg: (added.length > 0 ? m('skill-calorie.photo-receipt.c024', { p0: String(added.join('、')) }) : m('skill-calorie.photo-receipt.c025')) + tail });
   }
   if (receipt.scene === '删照片标签') {
     const gone = diff.before.filter((t) => !diff.after.includes(t));
-    return notice({ icon: 'ok', msg: (gone.length > 0 ? '标签已删掉：' + gone.join('、') : '标签已删掉') + tail });
+    return notice({ icon: 'ok', msg: (gone.length > 0 ? m('skill-calorie.photo-receipt.c026', { p0: String(gone.join('、')) }) : m('skill-calorie.photo-receipt.c027')) + tail });
   }
   return notice({ icon: 'ok', msg: head.after + '：' + tagListOf(diff.after).join('、') + tail });
 }
@@ -155,12 +159,12 @@ function tagNoticeOf(receipt: CrudReceipt): string {
 /** 页尾「给 AI 核对的信息」折叠块（本域自渲染：内文只留记录号＋数据库改动）。 */
 function aiCheckDisclosure(receipt: CrudReceipt): string {
   return renderDisclosure({
-    title: '给 AI 核对的信息',
+    title: m('skill-calorie.photo-receipt.c028'),
     contentHtml: renderDataTable({
-      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+      columns: [{ key: 'k', label: m('skill-calorie.photo-receipt.c029') }, { key: 'v', label: m('skill-calorie.photo-receipt.c030') }],
       rows: [
-        { k: '记录号', v: receipt.recordId === null ? '未设置' : String(receipt.recordId) },
-        { k: '数据库改动', v: '数据库改了 ' + receipt.affectedRows + ' 行（给 AI 核对用）' },
+        { k: m('skill-calorie.photo-receipt.c031'), v: receipt.recordId === null ? m('skill-calorie.photo-receipt.c032') : String(receipt.recordId) },
+        { k: m('skill-calorie.photo-receipt.c033'), v: m('skill-calorie.photo-receipt.c034', { p0: String(receipt.affectedRows) }) },
       ],
     }),
   });
@@ -195,9 +199,9 @@ function writeShell(input: {
   receipt: CrudReceipt; command: string; parts: readonly string[];
 }): string {
   return assembleDocPage({
-    docTitle: DOC_TITLE,
+    docTitle: docTitle(),
     title: input.receipt.scene,
-    eyebrow: '身材照片',
+    eyebrow: m('skill-calorie.photo-receipt.c035'),
     subtitle: null,
     pageUi: true,
     content: [receiptUiCss(), ...input.parts, aiCheckDisclosure(input.receipt),
@@ -215,17 +219,20 @@ function addCardsOf(receipt: CrudReceipt): KpiCardInput[] {
   const ok = receipt.items.length - failed;
   const cards: KpiCardInput[] = [failed > 0
     ? {
-      label: '本次要存', value: String(receipt.items.length), unit: '张',
-      status: 'warn', statusText: failed + ' 张没存进来',
+      label: m('skill-calorie.photo-receipt.c036'), value: String(receipt.items.length), unit: m('skill-calorie.photo-receipt.c037'),
+      status: 'warn', statusText: m('skill-calorie.photo-receipt.c038', { p0: String(failed) }),
     }
     : {
-      label: '入库张数', value: String(ok), unit: '张',
-      status: 'ok', statusText: '照片已存入',
+      label: m('skill-calorie.photo-receipt.c039'), value: String(ok), unit: m('skill-calorie.photo-receipt.c040'),
+      status: 'ok', statusText: m('skill-calorie.photo-receipt.c041'),
     }];
   if (receipt.distance) {
     cards.push({
-      label: '拍照节奏',
-      value: '距上次「' + receipt.distance.tag + '」拍照 ' + receipt.distance.days + ' 天',
+      label: m('skill-calorie.photo-receipt.c042'),
+      value: m('skill-calorie.photo-receipt.c043', {
+        p0: String(receipt.distance.tag),
+        p1: String(receipt.distance.days),
+      }),
     });
   }
   return cards;
@@ -237,8 +244,8 @@ function addNoticeOf(receipt: CrudReceipt): string {
   const failed = receipt.items.filter((it) => it.reason !== '').length;
   const ok = receipt.items.length - failed;
   if (failed === 0) return '';
-  if (ok === 0) return notice({ icon: 'warn', msg: failed + ' 张都没存进来', detail: '每张的原因写在下面' });
-  return notice({ icon: 'warn', msg: ok + ' 张照片都存好了', detail: '没存进来的那张，原因写在下面' });
+  if (ok === 0) return notice({ icon: 'warn', msg: m('skill-calorie.photo-receipt.c044', { p0: String(failed) }), detail: m('skill-calorie.photo-receipt.c045') });
+  return notice({ icon: 'warn', msg: m('skill-calorie.photo-receipt.c046', { p0: String(ok) }), detail: m('skill-calorie.photo-receipt.c047') });
 }
 
 /** 逐张结果：**一张一块**——图（存不进来的那一张只给文字位）＋这一张的三槽列表行
@@ -250,8 +257,8 @@ function shotRowsOf(receipt: CrudReceipt, byName: ReadonlyMap<string, PhotoEmbed
     if (it.reason !== '') {
       blocks.push(shotBlock('fail', renderListRows({
         items: [
-          { left: '没有编号', main: '源文件：' + (it.file ?? '—'), right: '没存进来' },
-          { main: '失败原因：' + it.reason },
+          { left: m('skill-calorie.photo-receipt.c048'), main: m('skill-calorie.photo-receipt.c049', { p0: String(it.file ?? '—') }), right: m('skill-calorie.photo-receipt.c050') },
+          { main: m('skill-calorie.photo-receipt.c051', { p0: String(it.reason) }) },
         ],
       })));
       continue;
@@ -259,25 +266,25 @@ function shotRowsOf(receipt: CrudReceipt, byName: ReadonlyMap<string, PhotoEmbed
     const e = byName.get(it.file ?? '');
     // #484：图给宽度约束＋缩略级上限（判据钉死这一处 240px）；没内嵌的写明为什么，不留白框。
     const media = e !== undefined && e.dataUri !== null
-      ? '<img src="' + e.dataUri + '" alt="刚存进来的身材照"'
+      ? '<img src="' + e.dataUri + '" alt="' + m('skill-calorie.photo-receipt.c069') + '"'
         + ' style="max-width:100%;max-height:240px;height:auto" />'
       : '<div class="phr-shot-miss">这一张的原图没能放进页面</div>';
     blocks.push(shotBlock('ok', media + renderListRows({
-      items: [{ left: idTextOf(it.id), main: it.file ?? '—', right: '已存入' }],
+      items: [{ left: idTextOf(it.id), main: it.file ?? '—', right: m('skill-calorie.photo-receipt.c052') }],
     })));
   }
   if (blocks.length === 0) return '';
-  return (receipt.items.length > 1 ? sectionTitle('逐张结果') : '') + blocks.join('');
+  return (receipt.items.length > 1 ? sectionTitle(m('skill-calorie.photo-receipt.c053')) : '') + blocks.join('');
 }
 
 /** 批次键值行：这次存进去的值（标签走徽章列，不串 `、`）。**写入时间不再单列一行**——
  *  它与「拍摄日期」在样张上同一天，读者看着像同一件事说两遍；回执时间仍在复制区载荷与
  *  「给 AI 核对的信息」里（机器面一行未动）。 */
 function addFactsOf(opts: { tag: string; note?: string; date: string }): string {
-  return labelChips('标签', [opts.tag])
+  return labelChips(m('skill-calorie.photo-receipt.c054'), [opts.tag])
     + factRows([
-      { k: '备注', v: opts.note ?? '' },
-      { k: '拍摄日期', v: opts.date },
+      { k: m('skill-calorie.photo-receipt.c055'), v: opts.note ?? '' },
+      { k: m('skill-calorie.photo-receipt.c056'), v: opts.date },
     ]);
 }
 
@@ -308,16 +315,16 @@ function removeSnapshotOf(receipt: CrudReceipt, embed: PhotoEmbed | null): strin
   const it = receipt.items[0];
   const img = embed && embed.dataUri !== null
     // #484：图给宽度约束＋缩略级上限（判据钉死这一处 240px）。
-    ? '<div class="phr-shot-stage"><img src="' + embed.dataUri + '" alt="删除前的身材照"'
+    ? '<div class="phr-shot-stage"><img src="' + embed.dataUri + '" alt="' + m('skill-calorie.photo-receipt.c070') + '"'
       + ' style="max-width:100%;max-height:240px;height:auto" /></div>'
     : '<div class="phr-shot-stage"><span>这张图没能留下来（原图已经随删除一起移走了）</span></div>';
-  return sectionTitle('删除前的样子') + img
-    + labelChips('标签', tagListOf(it?.tagList))
+  return sectionTitle(m('skill-calorie.photo-receipt.c057')) + img
+    + labelChips(m('skill-calorie.photo-receipt.c058'), tagListOf(it?.tagList))
     + factRows([
-      { k: '编号', v: it?.id === undefined || it?.id === null ? '' : String(it.id) },
-      { k: '拍摄日期', v: it?.date ?? '' },
-      { k: '原文件', v: it?.photoPath ?? embed?.fileName ?? '' },
-      { k: '删除时间', v: receipt.meta.actionAt },
+      { k: m('skill-calorie.photo-receipt.c059'), v: it?.id === undefined || it?.id === null ? '' : String(it.id) },
+      { k: m('skill-calorie.photo-receipt.c060'), v: it?.date ?? '' },
+      { k: m('skill-calorie.photo-receipt.c061'), v: it?.photoPath ?? embed?.fileName ?? '' },
+      { k: m('skill-calorie.photo-receipt.c062'), v: receipt.meta.actionAt },
     ]);
 }
 
@@ -328,8 +335,8 @@ export function buildPhotoRemoveDoc(
 ): string {
   const warn = notice({
     icon: 'warn',
-    msg: '永久删除，无法恢复',
-    detail: '照片已删除，图和记录都一起删掉了。想留底的话，下次删之前先另存一份。',
+    msg: m('skill-calorie.photo-receipt.c063'),
+    detail: m('skill-calorie.photo-receipt.c064'),
   });
   return writeShell({
     receipt,
@@ -351,10 +358,10 @@ export function buildPhotoTagDoc(receipt: CrudReceipt, opts: { command: string }
     parts: [
       chipRow([opBadgeOf(receipt.op).badge]),
       tagNoticeOf(receipt),
-      receipt.noChange ? '' : sectionTitle('标签对照') + tagChangeBlock(receipt),
+      receipt.noChange ? '' : sectionTitle(m('skill-calorie.photo-receipt.c065')) + tagChangeBlock(receipt),
       factRows([
-        { k: '编号', v: receipt.recordId === null ? '' : String(receipt.recordId) },
-        { k: '时间', v: receipt.meta.actionAt },
+        { k: m('skill-calorie.photo-receipt.c066'), v: receipt.recordId === null ? '' : String(receipt.recordId) },
+        { k: m('skill-calorie.photo-receipt.c067'), v: receipt.meta.actionAt },
       ]),
     ],
   });

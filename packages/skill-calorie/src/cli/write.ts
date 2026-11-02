@@ -51,12 +51,13 @@ import { REGISTRY } from './registry.js';
 import { fail } from '../shared/params.js';
 import { totalChanges } from '../shared/writeParts.js';
 import type { WriteOut } from '../shared/commandSpec.js';
+import { m } from '../entries/index.js';
 
 /** 写分发（唯一出口 cmd_read 内调用；未知键上游已拦，此处再拦一道）。
  * #97 · M5：`affectedRows` 在此统一注入——写库前后各取一次 SQLite `total_changes()`，
  * 增量即「影响 N 行」（35 键单一来源，逐键不各自自报）。 */
 export function dispatchWrite(key: string, params: Record<string, unknown>, db: DatabaseSync): WriteOut {
-  if (!isCalorieWriteKey(key)) fail(3, '未知 calorie 写键：' + key);
+  if (!isCalorieWriteKey(key)) fail(3, m('skill-calorie.cli-write.c001', { p0: String(key) }));
   const before = totalChanges(db);
   try {
     // #294 · 注册表先行：命中即走能力目录那道门（新增能力／新增命令都不必碰这个文件）。
@@ -77,7 +78,7 @@ export function dispatchWrite(key: string, params: Record<string, unknown>, db: 
 function dispatchInner(key: string, params: Record<string, unknown>, db: DatabaseSync): WriteOut {
   switch (key) {
     default:
-      fail(3, '未知 calorie 写键：' + key);
+      fail(3, m('skill-calorie.cli-write.c002', { p0: String(key) }));
       throw new Error('unreachable');
   }
 }

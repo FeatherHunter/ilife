@@ -10,25 +10,29 @@
  */
 import { CalorieRenderError } from '../render/errors.js';
 
-/** 域 → 标签表（登记即冻结拷贝，防调用方事后改表）。 */
-const DOMAIN_TABLES = new Map<string, Readonly<Record<string, string>>>();
+/** 域 → 标签表**取表函数**（登记即定型：对象包一层恒等函数，函数原样存——查表时现取，
+ *  语言由运行期上下文决定，故表值可以是按需取词的 m() 结果）。 */
+export type FieldLabelTable = Readonly<Record<string, string>> | (() => Readonly<Record<string, string>>);
+const DOMAIN_TABLES = new Map<string, () => Readonly<Record<string, string>>>();
 
 /** 登记一个域的字段标签表（同域二次登记即报错；空表不登记）。 */
-export function registerFieldLabels(domain: string, table: Readonly<Record<string, string>>): void {
+export function registerFieldLabels(domain: string, table: FieldLabelTable): void {
   if (typeof domain !== 'string' || domain.trim() === '') {
     throw new CalorieRenderError('bad-input', 'registerFieldLabels: domain 必须是非空字符串');
   }
-  if (table === null || typeof table !== 'object' || Array.isArray(table)) {
+  const read = typeof table === 'function' ? table : () => table;
+  const probe = read();
+  if (probe === null || typeof probe !== 'object' || Array.isArray(probe)) {
     throw new CalorieRenderError('bad-input', 'registerFieldLabels: ' + domain + ' 的标签表必须是对象');
   }
   const name = domain.trim();
-  if (Object.keys(table).length === 0) {
+  if (Object.keys(probe).length === 0) {
     throw new CalorieRenderError('bad-input', 'registerFieldLabels: ' + name + ' 的标签表是空的（空表不登记）');
   }
   if (DOMAIN_TABLES.has(name)) {
     throw new CalorieRenderError('bad-input', 'registerFieldLabels: 域 ' + name + ' 已登记过标签表（一个域只许一处定义）');
   }
-  DOMAIN_TABLES.set(name, Object.freeze({ ...table }));
+  DOMAIN_TABLES.set(name, () => Object.freeze({ ...read() }));
 }
 
 /** 查域内字段的中文标签：命中给标签，未命中／未登记域一律回退**原键名**。 */
@@ -36,8 +40,8 @@ export function fieldLabel(domain: string, key: string): string {
   if (typeof key !== 'string') {
     throw new CalorieRenderError('bad-input', 'fieldLabel: key 必须是字符串');
   }
-  const table = DOMAIN_TABLES.get(typeof domain === 'string' ? domain : '');
-  if (table === undefined) return key;
-  const label = table[key];
+  const read = DOMAIN_TABLES.get(typeof domain === 'string' ? domain : '');
+  if (read === undefined) return key;
+  const label = read()[key];
   return typeof label === 'string' && label !== '' ? label : key;
 }

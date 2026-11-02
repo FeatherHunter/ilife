@@ -39,6 +39,7 @@ import { copyActionHtml } from '../render/copy.js';
 import { dataCopyArea, notice } from '../shared/copyArea.js';
 import { renderFactStrip } from 'base-paint';
 import { wizardUiCss } from './wizardUi.js';
+import { m } from '../entries/index.js';
 
 /** 页面级移动端配方（`assembleDocPage({ pageUi: true })`，本族五页同值）。 */
 const PAGE_UI = true;
@@ -49,15 +50,13 @@ const DOC_SKILL = 'calorie';
 
 /** 本文件两页共用的 head 标题（整页模板住 `src/shared/docPage.ts`，标题走参数）。
  *  取域内统一口径（编排者 2026-09-15 裁定，照场景 09 已交付先例）：空格分隔、不上任何符号。 */
-const DOC_TITLE = '卡路里 身体细节';
-
 /** 核对区的折叠标题：一句人话（改前印「本次要写入的参数（要粘贴的只有下方复制区那一段）」，
  *  括号里是给开发者看的分工说明，读者只要知道「这一栏是核对用」）。 */
-const CHECK_TITLE = '核对：这次要写进去的值';
+const CHECK_TITLE = 'skill-calorie.body-wizardDocs.c059' as const;
 
 /** 皮褶 7 点这一组的说明：**不印系数与变量**（负责人第 4 条）。
  *  换算方法一句话说清，公式留给命令层；范围由每一格的 `min`／`max` 自己约束，不在这里列字面量。 */
-const CALIPER_HINT = '每处按毫米读皮褶值，7 处都量到才换算得出体脂率。';
+function caliperHint(): string { return m('skill-calorie.body-wizardDocs.c060'); }
 
 function fmtDate(d: string): string {
   return d;
@@ -65,11 +64,13 @@ function fmtDate(d: string): string {
 
 /* ── 1. 记围度预检确认页 ── */
 
-const MEASURE_GROUPS: { title: string; fields: string[] }[] = [
-  { title: '上身围度（5 项）', fields: ['chestCm', 'waistCm', 'abdomenCm', 'hipCm', 'shoulderCm'] },
-  { title: '下身围度（4 项）', fields: ['leftThighCm', 'rightThighCm', 'leftCalfCm', 'rightCalfCm'] },
-  { title: '手臂围度（4 项）', fields: ['leftArmCm', 'rightArmCm', 'leftForearmCm', 'rightForearmCm'] },
-];
+function measureGroups(): { title: string; fields: string[] }[] {
+  return [
+    { title: m('skill-calorie.body-wizardDocs.c061'), fields: ['chestCm', 'waistCm', 'abdomenCm', 'hipCm', 'shoulderCm'] },
+    { title: m('skill-calorie.body-wizardDocs.c062'), fields: ['leftThighCm', 'rightThighCm', 'leftCalfCm', 'rightCalfCm'] },
+    { title: m('skill-calorie.body-wizardDocs.c063'), fields: ['leftArmCm', 'rightArmCm', 'leftForearmCm', 'rightForearmCm'] },
+  ];
+}
 
 /** 一个围度输入框：区间逐部位取唯一来源 `MEASUREMENT_BOUNDS`，步长取 `MEASURE_STEP`（裁定 3）。 */
 function measureField(camel: string, value: string) {
@@ -79,7 +80,7 @@ function measureField(camel: string, value: string) {
     name: snake,
     label: (WIZARD_MEASURE_LABELS[camel] as string) + '（cm）',
     value,
-    hint: measureRangeText(snake) + ' · 如 95.0',
+    hint: m('skill-calorie.body-wizardDocs.c001', { p0: String(measureRangeText(snake)) }),
     step: MEASURE_STEP,
     min: b[0],
     max: b[1],
@@ -92,15 +93,19 @@ function measureForm(v: MeasureWizardView): string {
     return hit ? String(hit.value) : '';
   };
   const head = renderParamForm({
-    description: '量了哪项就填哪项，没量的留空，至少填 1 项。',
+    description: m('skill-calorie.body-wizardDocs.c002'),
     fields: [
-      { name: 'date', label: '测量日期', value: v.date, hint: 'YYYY-MM-DD', required: true },
-      { name: 'note', label: '备注', value: v.note ?? '', hint: '如：早上空腹，或减脂期第 30 天' },
+      { name: 'date', label: m('skill-calorie.body-wizardDocs.c003'), value: v.date, hint: 'YYYY-MM-DD', required: true },
+      { name: 'note', label: m('skill-calorie.body-wizardDocs.c004'), value: v.note ?? '', hint: m('skill-calorie.body-wizardDocs.c005') },
     ],
   });
-  const groups = MEASURE_GROUPS.map((g) =>
+  const groups = measureGroups().map((g) =>
     renderDisclosure({
-      title: g.title + '（已填 ' + g.fields.filter((f) => valOf(f) !== '').length + '/' + g.fields.length + '）',
+      title: m('skill-calorie.body-wizardDocs.c006', {
+        p0: String(g.title),
+        p1: String(g.fields.filter((f) => valOf(f) !== '').length),
+        p2: String(g.fields.length),
+      }),
       contentHtml: renderParamForm({
         fields: g.fields.map((camel) => measureField(camel, valOf(camel))),
       }),
@@ -122,7 +127,7 @@ function measureRecent(v: MeasureWizardView): string {
     }));
   if (rows.length === 0) return '';
   return renderDisclosure({
-    title: '上次记的（' + fmtDate(v.recent.date) + '）',
+    title: m('skill-calorie.body-wizardDocs.c007', { p0: String(fmtDate(v.recent.date)) }),
     contentHtml: renderDistributionRows({ rows }),
   });
 }
@@ -131,12 +136,12 @@ export function buildMeasureWizardDoc(v: MeasureWizardView): string {
   const content = [
     wizardUiCss(),
     renderKpiGrid([
-      { label: '已填', value: v.filledCount + '/13 项', detail: '至少填 1 项' },
-      { label: '这次记在哪天', value: fmtDate(v.date), detail: '补记历史日期就填旧的那天' },
+      { label: m('skill-calorie.body-wizardDocs.c008'), value: m('skill-calorie.body-wizardDocs.c009', { p0: String(v.filledCount) }), detail: m('skill-calorie.body-wizardDocs.c010') },
+      { label: m('skill-calorie.body-wizardDocs.c011'), value: fmtDate(v.date), detail: m('skill-calorie.body-wizardDocs.c012') },
     ]),
     measureRecent(v),
     measureForm(v),
-    renderDisclosure({ title: CHECK_TITLE, contentHtml: renderPreBlock({ command: v.preview }) }),
+    renderDisclosure({ title: m(CHECK_TITLE), contentHtml: renderPreBlock({ command: v.preview }) }),
     // 复制区：**一个动作区**里出两颗按钮——「复制指令」（那一段能直接跑的命令）＋「复制数据 ▾」（三格式）。
     // 改前是「复制指令 ＋ 复制日志」与「复制数据 ＋ 复制日志」两处动作区，四颗按钮两颗各占半宽，
     // 且「复制日志」出现两次（#494 记的旧缺陷）；日志那一颗在页面上不重复出、只有真产生日志时才该有。
@@ -148,13 +153,13 @@ export function buildMeasureWizardDoc(v: MeasureWizardView): string {
     }),
   ].join('');
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '记围度',
+    docTitle: m('skill-calorie.body-wizardDocs.c064'),
+    title: m('skill-calorie.body-wizardDocs.c013'),
     // #539 收口：B 线（给了 metaLeft）不渲染 eyebrow，这一串写了也白写——还留着 `·` 就是颗 latent 探针雷，
     // 改成无符号的归属词。零产物变化（B 线只认 metaLeft，见 shared/docPage.ts:131-141）。
-    eyebrow: '身体细节',
+    eyebrow: m('skill-calorie.body-wizardDocs.c014'),
     subtitle: null,
-    metaLeft: '填好确认一遍，再照复制区那一段把记录写进库里。',
+    metaLeft: m('skill-calorie.body-wizardDocs.c015'),
     content,
     pageUi: PAGE_UI,
   });
@@ -167,11 +172,12 @@ export function buildMeasureWizardDoc(v: MeasureWizardView): string {
  *  `—` 是「这个字段还没值」的内部写法，两样都不该上屏。 */
 function compositionFormula(v: CompositionWizardView): string {
   const isCaliper = isCaliperMode(v.source);
+  const modeWord = (isCaliper ? m('skill-calorie.body-wizardDocs.c016') : m('skill-calorie.body-wizardDocs.c017'));
   return notice({
-    title: '这几格怎么填（' + (isCaliper ? '皮褶钳' : '外部测量') + '）',
+    title: m('skill-calorie.body-wizardDocs.c018', { p0: String(modeWord) }),
     msg: isCaliper
-      ? '皮褶钳这一支：体脂率不用手填。把 7 处皮褶填齐，再补上年龄和性别，命令就会按 Jackson-Pollock 7 点法算出体脂率。'
-      : '外部设备这一支：体脂率就填设备读数（0 到 60）。皮褶钳那一支可以留空，交给命令换算。',
+      ? m('skill-calorie.body-wizardDocs.c019')
+      : m('skill-calorie.body-wizardDocs.c020'),
   });
 }
 
@@ -182,48 +188,49 @@ function compositionForm(v: CompositionWizardView): string {
     return hit ? String(hit.value) : '';
   };
   const caliperFields = [
-    { f: 'caliper_chest_mm', label: '胸部（mm）' }, { f: 'caliper_abdominal_mm', label: '腹部（mm）' },
-    { f: 'caliper_thigh_mm', label: '大腿（mm）' }, { f: 'caliper_tricep_mm', label: '三头肌（mm）' },
-    { f: 'caliper_subscapular_mm', label: '肩胛下（mm）' }, { f: 'caliper_suprailiac_mm', label: '髂上（mm）' },
-    { f: 'caliper_midaxillary_mm', label: '腋中线（mm）' },
+    { f: 'caliper_chest_mm', label: m('skill-calorie.body-wizardDocs.c021') }, { f: 'caliper_abdominal_mm', label: m('skill-calorie.body-wizardDocs.c022') },
+    { f: 'caliper_thigh_mm', label: m('skill-calorie.body-wizardDocs.c023') }, { f: 'caliper_tricep_mm', label: m('skill-calorie.body-wizardDocs.c024') },
+    { f: 'caliper_subscapular_mm', label: m('skill-calorie.body-wizardDocs.c025') }, { f: 'caliper_suprailiac_mm', label: m('skill-calorie.body-wizardDocs.c026') },
+    { f: 'caliper_midaxillary_mm', label: m('skill-calorie.body-wizardDocs.c027') },
   ];
   // 体脂率那一格（裁定 1）：皮褶钳模式只读，显示命令将算出的那一个；其余来源可手填。
   const bfValue = isCaliper
     ? (v.previewBodyFatPct === null ? '' : String(v.previewBodyFatPct))
     : (v.bodyFatPct === null ? '' : String(v.bodyFatPct));
+  const sumNote = (v.sum7 === null ? '' : m('skill-calorie.body-wizardDocs.c028', { p0: String(v.sum7) }));
   const head = renderParamForm({
     // 字段说明**不拿 `＋` 串成一行**（改前：「日期（必填）＋来源（必填）＋年龄／性别…」）：
     // 一句人话在上头，必填由每一格自己的星号承担。#539 收口：后半句
     // 「皮褶钳那一支的体脂率不用手填」与上面那块换算口径说同一件事，只留「带星号的必填」。
-    description: '带星号的必填。',
+    description: m('skill-calorie.body-wizardDocs.c029'),
     fields: [
       { name: 'date', label: '日期', value: v.date, hint: 'YYYY-MM-DD', required: true },
       {
-        name: 'source', label: '来源', value: v.source ?? '', hint: '选一个', required: true,
+        name: 'source', label: m('skill-calorie.body-wizardDocs.c030'), value: v.source ?? '', hint: m('skill-calorie.body-wizardDocs.c031'), required: true,
         options: SOURCE_CHOICES.map((s) => ({ value: s, label: SOURCE_LABELS[s] })),
       },
       {
-        name: 'age', label: '年龄', value: v.age === null ? '' : String(v.age),
-        hint: '填了才换算得出体脂率，如 30', min: 1, max: 120,
+        name: 'age', label: m('skill-calorie.body-wizardDocs.c032'), value: v.age === null ? '' : String(v.age),
+        hint: m('skill-calorie.body-wizardDocs.c033'), min: 1, max: 120,
       },
       {
-        name: 'sex', label: '性别', value: v.sex ?? '', hint: '填了才换算得出体脂率',
+        name: 'sex', label: m('skill-calorie.body-wizardDocs.c034'), value: v.sex ?? '', hint: m('skill-calorie.body-wizardDocs.c035'),
         options: [{ value: 'male', label: '男' }, { value: 'female', label: '女' }],
       },
       {
-        name: 'body_fat_pct', label: '体脂率 %', value: bfValue, required: !isCaliper, readonly: isCaliper,
-        hint: isCaliper ? '皮褶钳这一支不用手填，由命令换算' : '填设备上的读数，0 到 60',
+        name: 'body_fat_pct', label: m('skill-calorie.body-wizardDocs.c036'), value: bfValue, required: !isCaliper, readonly: isCaliper,
+        hint: isCaliper ? m('skill-calorie.body-wizardDocs.c037') : m('skill-calorie.body-wizardDocs.c038'),
         step: BF_INPUT.step, min: BF_INPUT.min, max: BF_INPUT.max,
       },
-      { name: 'note', label: '备注', value: v.note ?? '', hint: '如：早上空腹，或减脂期第 30 天' },
+      { name: 'note', label: m('skill-calorie.body-wizardDocs.c039'), value: v.note ?? '', hint: m('skill-calorie.body-wizardDocs.c040') },
     ],
   }) + renderDisclosure({
     // 折叠标题只报「填了几处」；总和改由块里那条口径行承载（改前把 `· 7 处总和:20 mm` 塞进标题）。
-    title: '皮褶钳 7 点（已填 ' + v.calipers.length + '/7）',
+    title: m('skill-calorie.body-wizardDocs.c041', { p0: String(v.calipers.length) }),
     contentHtml: renderParamForm({
-      description: CALIPER_HINT + (v.sum7 === null ? '' : ' 这 7 处已填齐，总和 ' + v.sum7 + ' 毫米。'),
+      description: caliperHint() + sumNote,
       fields: caliperFields.map((c) => ({
-        name: c.f, label: c.label, value: calVal(c.f), hint: '换算用',
+        name: c.f, label: c.label, value: calVal(c.f), hint: m('skill-calorie.body-wizardDocs.c042'),
         step: CALIPER_INPUT.step, min: CALIPER_INPUT.min, max: CALIPER_INPUT.max,
       })),
     }),
@@ -235,14 +242,14 @@ function compositionForm(v: CompositionWizardView): string {
 function compositionRecent(v: CompositionWizardView): string {
   if (!v.recent) return '';
   const src = v.recent.source === null
-    ? '没记来源'
+    ? m('skill-calorie.body-wizardDocs.c043')
     : (SOURCE_LABELS as Record<string, string>)[v.recent.source] ?? v.recent.source;
   return renderDisclosure({
-    title: '上次记的（' + fmtDate(v.recent.date) + '）',
+    title: m('skill-calorie.body-wizardDocs.c044', { p0: String(fmtDate(v.recent.date)) }),
     contentHtml: renderFactStrip({
       items: [
-        { label: '体脂率', value: v.recent.bodyFatPct === null ? '没记' : v.recent.bodyFatPct + '%' },
-        { label: '来源', value: src },
+        { label: m('skill-calorie.body-wizardDocs.c045'), value: v.recent.bodyFatPct === null ? m('skill-calorie.body-wizardDocs.c046') : v.recent.bodyFatPct + '%' },
+        { label: m('skill-calorie.body-wizardDocs.c047'), value: src },
       ],
     }),
   });
@@ -253,20 +260,20 @@ export function buildCompositionWizardDoc(v: CompositionWizardView): string {
     wizardUiCss(),
     renderKpiGrid([
       // 卡槽吃纯文本，只放短值：来源写中文名；体脂率那一格没值就整张卡不出（零信息值的卡不如不印）。
-      { label: '来源', value: v.sourceLabel ?? '家测皮褶钳', detail: v.source === null ? '没指定，按这一支打开' : '' },
+      { label: m('skill-calorie.body-wizardDocs.c048'), value: v.sourceLabel ?? m('skill-calorie.body-wizardDocs.c049'), detail: v.source === null ? m('skill-calorie.body-wizardDocs.c050') : '' },
       ...(v.previewBodyFatPct === null && v.bodyFatPct === null
         ? []
         : [{
-          label: '体脂率',
+          label: m('skill-calorie.body-wizardDocs.c051'),
           value: (v.previewBodyFatPct ?? v.bodyFatPct) + '%',
-          detail: v.previewBodyFatPct === null ? '设备读数' : '按 7 处皮褶换算出来的',
+          detail: v.previewBodyFatPct === null ? m('skill-calorie.body-wizardDocs.c052') : m('skill-calorie.body-wizardDocs.c053'),
         }]),
-      { label: '这次记在哪天', value: fmtDate(v.date), detail: '补记历史日期就填旧的那天' },
+      { label: m('skill-calorie.body-wizardDocs.c054'), value: fmtDate(v.date), detail: m('skill-calorie.body-wizardDocs.c055') },
     ]),
     compositionRecent(v),
     compositionFormula(v),
     compositionForm(v),
-    renderDisclosure({ title: CHECK_TITLE, contentHtml: renderPreBlock({ command: v.preview }) }),
+    renderDisclosure({ title: m(CHECK_TITLE), contentHtml: renderPreBlock({ command: v.preview }) }),
     // 复制区：一个动作区里两颗按钮（「复制指令」＋「复制数据 ▾」）；日志那一颗不重复出（同围度页那条注释）。
     copyActionHtml(v.prompt) + dataCopyArea('复制数据', {
       envelope: {
@@ -281,12 +288,12 @@ export function buildCompositionWizardDoc(v: CompositionWizardView): string {
     }),
   ].join('');
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '记体脂',
+    docTitle: m('skill-calorie.body-wizardDocs.c064'),
+    title: m('skill-calorie.body-wizardDocs.c056'),
     // #539 收口：同上，B 线不渲染 eyebrow，无符号归属词即可，零产物变化。
-    eyebrow: '身体细节',
+    eyebrow: m('skill-calorie.body-wizardDocs.c057'),
     subtitle: null,
-    metaLeft: '填好确认一遍，再照复制区那一段把记录写进库里。',
+    metaLeft: m('skill-calorie.body-wizardDocs.c058'),
     content,
     pageUi: PAGE_UI,
   });

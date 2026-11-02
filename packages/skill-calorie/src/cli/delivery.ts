@@ -21,6 +21,7 @@ import type { ErrorReceipt } from '../render/receipt.js';
 import { assembleDocPage } from '../shared/docPage.js';
 import { bodySceneFor } from './readArgs.js';
 import type { DeliveryKind, ViewOut } from '../shared/commandSpec.js';
+import { m } from '../entries/index.js';
 
 /** 本地 envelope 形状校验（镜像 link-core assertShapeData，不运行时 import）。 */
 function assertEnvelopeData(shape: EnvelopeShape, data: Record<string, unknown>): void {
@@ -75,7 +76,7 @@ function buildEnvelope(key: string, shape: EnvelopeShape, data: Record<string, u
 /** 交付落点的可读描述（回执文案用；默认目录名必须出现在文案里，便于用户定位）。
  *  「库目录」＝配置文件里的 `db.dir`（空串＝配置数据目录），与环境变量无关（#718：环境变量读取已删）。 */
 function describeDeliveryTarget(explicit: string | undefined): string {
-  return explicit !== undefined ? '显式落点 ' + explicit : '默认目录 <库目录>/' + HTML_DIR_NAME;
+  return explicit !== undefined ? m('skill-calorie.cli-delivery.c001', { p0: String(explicit) }) : m('skill-calorie.cli-delivery.c002', { p0: String(HTML_DIR_NAME) });
 }
 
 /** ③ 文本态的结构化文本：**同源**取 `buildDataText`（#77 契约，五 shape 投影）。
@@ -148,16 +149,16 @@ function failWithReceipt(reason: string, key: string | undefined): never {
   console.error('ERR 5: ' + reason);
   try {
     const receipt: ErrorReceipt = buildErrorReceipt({
-      sceneName: '渲染',
-      wakeWord: key ?? '渲染失败',
-      op: '渲染／落盘未完成',
+      sceneName: m('skill-calorie.cli-delivery.c003'),
+      wakeWord: key ?? m('skill-calorie.cli-delivery.c004'),
+      op: m('skill-calorie.cli-delivery.c005'),
       reason,
       suggestions: [
-        '检查库目录（配置项 db.dir，空＝数据目录）与 ' + HTML_DIR_NAME + ' 目录权限（只读／沙箱会自动转内联交付）',
-        '用 --html <可写绝对路径> 显式指定落点后重试',
-        '确认 ' + HTML_DIR_NAME + ' 未被同名文件占位（占位会挡住落点解析）',
+        m('skill-calorie.cli-delivery.c006', { p0: String(HTML_DIR_NAME) }),
+        m('skill-calorie.cli-delivery.c007'),
+        m('skill-calorie.cli-delivery.c008', { p0: String(HTML_DIR_NAME) }),
       ],
-      fixPrompt: 'calorie-cmd-read ' + (key ?? '<key>') + " --params '{…}' --html <可写绝对路径>",
+      fixPrompt: m('skill-calorie.cli-delivery.c009', { p0: String(key ?? '<key>') }),
     });
     const receiptHtml = renderErrorHtml(receipt);
     let delivery: Delivery;
@@ -178,7 +179,7 @@ function failWithReceipt(reason: string, key: string | undefined): never {
       ok: false, ...receipt, delivery, html: delivery.mode === 'inline' ? receiptHtml : undefined,
     }));
   } catch (e) {
-    console.error('TOAST: 回执生成失败（' + ((e as Error).message || String(e)) + '）');
+    console.error(m('skill-calorie.cli-delivery.c010', { p0: String((e as Error).message || String(e)) }));
   }
   process.exit(5);
 }
@@ -195,28 +196,28 @@ function failWithReceipt(reason: string, key: string | undefined): never {
 function failWithBodyReceipt(reason: string, key: string, code: 2 | 4): never {
   console.error('ERR ' + code + ': ' + reason);
   try {
-    const scene = bodySceneFor(key) ?? '身体细节';
+    const scene = bodySceneFor(key) ?? m('skill-calorie.cli-delivery.c011');
     const fix = 'calorie-cmd-read ' + key + " --params '{…}'";
     const suggestions = code === 2
-      ? ['补齐缺失参数后重试（缺哪个见页内原因）', '照命令示例补 --params 后重跑', '先看向导页确认必填项']
-      : ['先记一条身体记录再查（空库时）', '换个有数据的窗口或日期再查', '确认库内确有该来源记录'];
+      ? [m('skill-calorie.cli-delivery.c012'), m('skill-calorie.cli-delivery.c013'), m('skill-calorie.cli-delivery.c014')]
+      : [m('skill-calorie.cli-delivery.c015'), m('skill-calorie.cli-delivery.c016'), m('skill-calorie.cli-delivery.c017')];
     const receipt: ErrorReceipt = buildErrorReceipt({
       sceneName: scene,
       wakeWord: key,
-      op: code === 2 ? '参数缺失未完成' : '取数缺失未完成',
+      op: code === 2 ? m('skill-calorie.cli-delivery.c018') : m('skill-calorie.cli-delivery.c019'),
       reason,
       suggestions,
       fixPrompt: fix,
     });
     const fragment = renderErrorHtml(receipt);
     const full = assembleDocPage({
-      docTitle: '卡路里 身体细节',
-      title: scene + '失败回执',
+      docTitle: m('skill-calorie.cli-delivery.c020'),
+      title: m('skill-calorie.cli-delivery.c021', { p0: String(scene) }),
       subtitle: null,
       eyebrow: '',
-      metaLeft: '身体细节',
-      badge: '失败',
-      summary: reason + '｜重试指令：' + fix + '｜建议下一步：见页内清单',
+      metaLeft: m('skill-calorie.cli-delivery.c022'),
+      badge: m('skill-calorie.cli-delivery.c023'),
+      summary: m('skill-calorie.cli-delivery.c024', { p0: String(reason), p1: String(fix) }),
       content: fragment,
       pageUi: true,
     });
@@ -237,7 +238,7 @@ function failWithBodyReceipt(reason: string, key: string, code: 2 | 4): never {
       ok: false, ...receipt, delivery, html: delivery.mode === 'inline' ? full : undefined,
     }));
   } catch (e) {
-    console.error('TOAST: 回执生成失败（' + ((e as Error).message || String(e)) + '）');
+    console.error(m('skill-calorie.cli-delivery.c025', { p0: String((e as Error).message || String(e)) }));
   }
   process.exit(code);
 }

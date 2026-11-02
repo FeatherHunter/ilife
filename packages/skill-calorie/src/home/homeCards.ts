@@ -17,6 +17,7 @@ import { renderKpiGrid } from 'base-paint/blocks';
 import type { KpiCardInput } from 'base-paint/blocks';
 import { seriesSum } from '../analysis/series.js';
 import type { HomeData } from './home.js';
+import { m } from '../entries/index.js';
 
 /** 数字格式化（缺值写 `—`，与全页缺值口径同）。 */
 export function fmt(n: number | null | undefined): string {
@@ -32,7 +33,7 @@ function pctText(pct: number): string {
  *  三档与公共层语义色同一套（`ok` 达标／`warn` 接近／`danger` 偏少），不发明新色。 */
 function progressBadge(pct: number | null | undefined): Record<string, unknown> {
   if (pct === null || pct === undefined) return {};
-  const shown = '完成 ' + pctText(pct);
+  const shown = m('skill-calorie.home-homeCards.c001', { p0: String(pctText(pct)) });
   if (pct >= 90) return { status: 'ok' as StatusKind, statusText: shown };
   if (pct >= 60) return { status: 'warn' as StatusKind, statusText: shown };
   return { status: 'danger' as StatusKind, statusText: shown };
@@ -50,34 +51,36 @@ function gapBadge(goal: number | null | undefined, actual: number, unit?: string
   if (goal === null || goal === undefined) return {};
   const left = Math.round(goal - actual);
   if (left > 0) return { gap: unit === undefined ? { value: String(left) } : { value: String(left), unit } };
-  return { status: 'ok' as StatusKind, statusText: '已达标' };
+  return { status: 'ok' as StatusKind, statusText: m('skill-calorie.home-homeCards.c002') };
 }
 
 /** KPI 卡说明行：**只写目标**（缺目标写「未设目标」，不拼半截读数，`t425` 裁定 4 的缺值口径）。
  *  `unit` 可省——值那行已有单位槽，说明行再印一遍就是同一排两个「毫升」（#401e 的 R-b）。 */
 function goalDetail(goal: number | null | undefined, unit?: string): string {
-  if (goal === null || goal === undefined) return '未设目标';
-  return unit === undefined ? '目标 ' + goal : '目标 ' + goal + ' ' + unit;
+  if (goal === null || goal === undefined) return m('skill-calorie.home-homeCards.c003');
+  return unit === undefined ? m('skill-calorie.home-homeCards.c004', { p0: String(goal) }) : m('skill-calorie.home-homeCards.c005', { p0: String(goal), p1: String(unit) });
 }
 
 /** 缺口那两件**读法**（不是读数）：卡与段尾口径行共用这一份文本，别在两处各写一遍。
  *  卡上只留「消耗 N 卡」这个参照物，读法落到「今日速览」那块段尾的口径行（同一页同一块，事实一条不丢；
  *  `396-gap-caliber` 的三条针——缺口等于消耗减摄入／日常消耗加运动／日常消耗取档案静态值——仍逐字在场）。
  *  **为什么要搬**：这三句原先整个塞在缺口卡的说明行里，那张卡因此比同排高出一截、排面参差。 */
-export const DEFICIT_CALIBER = '缺口等于消耗减摄入，消耗为日常消耗加运动，日常消耗取档案静态值。';
+export function deficitCaliber(): string {
+  return m('skill-calorie.home-homeCards.c046');
+}
 
 /** 缺口卡说明行：只写**参照物**（消耗那个数）；消耗取不到时按缺值口径。 */
 function burnDetail(burn: number | null | undefined): string {
-  return burn === null || burn === undefined ? '未记消耗' : '消耗 ' + burn + ' 卡';
+  return burn === null || burn === undefined ? m('skill-calorie.home-homeCards.c006') : m('skill-calorie.home-homeCards.c007', { p0: String(burn) });
 }
 
 /** 缺口卡的方向胶囊（#401g 审查必改 #4）：四卡里唯一**没有目标**的读数，套完成率档位是假信息
  *  ⇒ 按差额正负给方向词；色沿用公共层四值，没有读数不给徽章。 */
 function deficitDirection(n: number | null | undefined): Record<string, unknown> {
   if (n === null || n === undefined) return {};
-  if (n > 0) return { status: 'ok' as StatusKind, statusText: '摄入比消耗少。与目标减摄入基准不同' };
-  if (n < 0) return { status: 'warn' as StatusKind, statusText: '摄入比消耗多。与目标减摄入基准不同' };
-  return { status: 'empty' as StatusKind, statusText: '摄入与消耗持平。与目标减摄入基准不同' };
+  if (n > 0) return { status: 'ok' as StatusKind, statusText: m('skill-calorie.home-homeCards.c008') };
+  if (n < 0) return { status: 'warn' as StatusKind, statusText: m('skill-calorie.home-homeCards.c009') };
+  return { status: 'empty' as StatusKind, statusText: m('skill-calorie.home-homeCards.c010') };
 }
 
 /** 「今日速览」前五张：热量／蛋白／碳水／脂肪／饮水（原型的卡序，也是读者的读序）。 */
@@ -85,7 +88,7 @@ function macroCards(d: HomeData): readonly KpiCardInput[] {
   const t = d.daily.totals;
   return [
     {
-      label: '今日摄入', value: fmt(t.cal), unit: '卡',
+      label: m('skill-calorie.home-homeCards.c011'), value: fmt(t.cal), unit: m('skill-calorie.home-homeCards.c012'),
       detail: goalDetail(d.calorieGoal), ...barOf(d.caloriePct), ...progressBadge(d.caloriePct),
     },
     {
@@ -101,7 +104,7 @@ function macroCards(d: HomeData): readonly KpiCardInput[] {
       detail: goalDetail(d.fatGoal), ...barOf(d.fatPct), ...gapBadge(d.fatGoal, t.fat, '克'),
     },
     {
-      label: '饮水', value: fmt(d.daily.waterMl), unit: '毫升',
+      label: m('skill-calorie.home-homeCards.c013'), value: fmt(d.daily.waterMl), unit: m('skill-calorie.home-homeCards.c014'),
       detail: goalDetail(d.waterGoal), ...barOf(d.waterPct), ...gapBadge(d.waterGoal, d.daily.waterMl),
     },
   ];
@@ -110,7 +113,7 @@ function macroCards(d: HomeData): readonly KpiCardInput[] {
 /** 缺口卡（第六张）：值 ＋ 消耗参照 ＋ 方向徽章（**不给条**：条住下面的等式条；读法住段尾口径行）。 */
 function deficitCard(d: HomeData): KpiCardInput {
   return {
-    label: '今日缺口（热量缺口）', value: fmt(d.deficitToday), unit: '卡',
+    label: m('skill-calorie.home-homeCards.c015'), value: fmt(d.deficitToday), unit: m('skill-calorie.home-homeCards.c016'),
     detail: burnDetail(d.burnToday),
     ...deficitDirection(d.deficitToday),
   };
@@ -170,7 +173,7 @@ export function equationBlock(d: HomeData): string {
   if (gap === null || gap === undefined || burn === null || burn === undefined) return '';
   if (gap < 0 || burn <= 0) return '';
   return renderEquationBar({
-    segments: [{ label: '摄入', value: intake }, { label: '缺口', value: gap }],
+    segments: [{ label: m('skill-calorie.home-homeCards.c017'), value: intake }, { label: m('skill-calorie.home-homeCards.c018'), value: gap }],
     total: burn,
     endLabels: true,
   });
@@ -179,14 +182,14 @@ export function equationBlock(d: HomeData): string {
 /** `streak` 档的四张卡：连续天数是第一主角（打头那张），另三张给它做分母与参照。 */
 export function streakCards(d: HomeData): readonly KpiCardInput[] {
   return [
-    { label: '连续记录（天）', value: String(d.streakDays), unit: '天', detail: '从最近一次断点起算' },
-    { label: '窗内记录天数', value: String(d.week.loggedDays), unit: '天', detail: '窗内共 ' + d.week.windowDays + ' 天' },
+    { label: m('skill-calorie.home-homeCards.c019'), value: String(d.streakDays), unit: m('skill-calorie.home-homeCards.c020'), detail: m('skill-calorie.home-homeCards.c021') },
+    { label: m('skill-calorie.home-homeCards.c022'), value: String(d.week.loggedDays), unit: m('skill-calorie.home-homeCards.c023'), detail: m('skill-calorie.home-homeCards.c024', { p0: String(d.week.windowDays) }) },
     {
-      label: '记录覆盖率', value: String(Math.round((d.week.loggedDays / d.week.windowDays) * 100)), unit: '%',
-      detail: '有记录的天 ÷ 窗内天数',
+      label: m('skill-calorie.home-homeCards.c025'), value: String(Math.round((d.week.loggedDays / d.week.windowDays) * 100)), unit: '%',
+      detail: m('skill-calorie.home-homeCards.c026'),
     },
     {
-      label: '今日摄入', value: fmt(d.daily.totals.cal), unit: '卡',
+      label: m('skill-calorie.home-homeCards.c027'), value: fmt(d.daily.totals.cal), unit: m('skill-calorie.home-homeCards.c028'),
       detail: goalDetail(d.calorieGoal), ...progressBadge(d.caloriePct),
     },
   ];
@@ -202,11 +205,11 @@ export function streakCards(d: HomeData): readonly KpiCardInput[] {
 export function weekCards(d: HomeData): readonly KpiCardInput[] {
   const t = d.daily.totals;
   return [
-    { label: '窗内摄入合计', value: fmt(seriesSum(d.week.series, 'calories')), unit: '卡', detail: '本窗共 ' + d.week.windowDays + ' 天' },
-    { label: '日均摄入', value: fmt(d.week.avgIntake), unit: '卡', detail: '只算有记录的天' },
-    { label: '日均缺口', value: fmt(d.week.avgDeficit), unit: '卡', detail: '消耗减摄入' },
-    { label: '有记录', value: String(d.week.loggedDays), unit: '天', detail: '连续记录 ' + d.streakDays + ' 天' },
-    { label: '今日摄入', value: fmt(t.cal), unit: '卡', ...progressBadge(d.caloriePct) },
-    { label: '今日消耗', value: fmt(d.burnToday), unit: '卡', detail: '日常消耗加运动' },
+    { label: m('skill-calorie.home-homeCards.c029'), value: fmt(seriesSum(d.week.series, 'calories')), unit: m('skill-calorie.home-homeCards.c030'), detail: m('skill-calorie.home-homeCards.c031', { p0: String(d.week.windowDays) }) },
+    { label: m('skill-calorie.home-homeCards.c032'), value: fmt(d.week.avgIntake), unit: m('skill-calorie.home-homeCards.c033'), detail: m('skill-calorie.home-homeCards.c034') },
+    { label: m('skill-calorie.home-homeCards.c035'), value: fmt(d.week.avgDeficit), unit: m('skill-calorie.home-homeCards.c036'), detail: m('skill-calorie.home-homeCards.c037') },
+    { label: m('skill-calorie.home-homeCards.c038'), value: String(d.week.loggedDays), unit: m('skill-calorie.home-homeCards.c039'), detail: m('skill-calorie.home-homeCards.c040', { p0: String(d.streakDays) }) },
+    { label: m('skill-calorie.home-homeCards.c041'), value: fmt(t.cal), unit: m('skill-calorie.home-homeCards.c042'), ...progressBadge(d.caloriePct) },
+    { label: m('skill-calorie.home-homeCards.c043'), value: fmt(d.burnToday), unit: m('skill-calorie.home-homeCards.c044'), detail: m('skill-calorie.home-homeCards.c045') },
   ];
 }

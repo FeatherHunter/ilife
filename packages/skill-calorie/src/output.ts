@@ -277,7 +277,7 @@ export function deliverHtml(input: {
 
 /** #83 · 回执落点**意图**（#237：名字里的时间戳与递补由共用件钉死，本函数只给目录 ＋ 主体）：
  *  主体 `操作失败`（旧 `render_error_receipt.py` 的 `COMMAND_CN` 逐字对齐；回执本身也走三态，写不进去即内联）。 */
-export function resolveReceiptHtmlPath(command = '操作失败'): HtmlLanding {
+export function resolveReceiptHtmlPath(command = m('skill-calorie.output.c001')): HtmlLanding {
   return { dir: htmlDir(), stem: command };
 }
 
@@ -320,4 +320,5 @@ export function dynamicSegmentFor(key: string, params: Record<string, unknown>):
 /** #330 · 内容标识段的实现住共享件 `src/shared/contentSuffix.ts`（六能力共用）：
  *  本件只改引用，行为不变；既有调用方（本件 `deliverHtml`）与测试导入面（`dist/output.js`）经再导出不变。 */
 import { writeSuffixFor } from './shared/contentSuffix.js';
+import { m } from './entries/index.js';
 export { writeSuffixFor };
