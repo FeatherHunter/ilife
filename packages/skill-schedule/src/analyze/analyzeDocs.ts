@@ -382,7 +382,7 @@ export function renderCategoryPage(input: CategoryPageInput): string {
     },
     { label: m('skill-schedule.analyze-analyzeDocs.c037'), value: fmtDur(total), detail: m('skill-schedule.analyze-analyzeDocs.c038') },
     { label: m('skill-schedule.analyze-analyzeDocs.c039'), value: String(active), unit: m('skill-schedule.analyze-analyzeDocs.c040'), detail: m('skill-schedule.analyze-analyzeDocs.c041', { p0: String(String(dates.length)) }) },
-    { label: '日均', value: fmtDur(Math.round(dailyAvg)), detail: m('skill-schedule.analyze-analyzeDocs.c042') },
+    { label: m('skill-schedule.analyze-analyzeDocs.c115'), value: fmtDur(Math.round(dailyAvg)), detail: m('skill-schedule.analyze-analyzeDocs.c042') },
   ];
   const head: PageHead = {
     docTitle: m('skill-schedule.analyze-analyzeDocs.c043'),

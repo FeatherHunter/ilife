@@ -255,7 +255,7 @@ export function renderWeekViewPage(records: readonly ScheduleRecord[], days: rea
     },
     kpis: [
       { label: m('skill-schedule.query-queryDocs.c035'), value: fmtDurShort(total), detail: m('skill-schedule.query-queryDocs.c036', { p0: String(records.length) }) },
-      { label: '日均', value: fmtDurShort(Math.round(total / Math.max(activeDays, 1))), detail: m('skill-schedule.query-queryDocs.c037', { p0: String(activeDays) }) },
+      { label: m('skill-schedule.query-queryDocs.c146'), value: fmtDurShort(Math.round(total / Math.max(activeDays, 1))), detail: m('skill-schedule.query-queryDocs.c037', { p0: String(activeDays) }) },
       { label: m('skill-schedule.query-queryDocs.c038'), value: String(score), detail: m('skill-schedule.query-queryDocs.c039'), bar: { pct: score } },
       { label: m('skill-schedule.query-queryDocs.c040'), value: ranked[0] ?? '—', detail: fmtDurShort(byL1[ranked[0]] ?? 0) },
     ],
