@@ -173,7 +173,7 @@ function extraLedgerOfBars(kind: unknown, input: DocInput<BarsPage>): readonly {
     const days = p.kpis[1];
     if (days !== undefined) out.push({ k: m('skill-bill.analysis-template-bars.c023'), v: days.value + ' ' + (days.unit ?? m('skill-bill.analysis-template-bars.c024')) });
     const perDay = p.kpis[2];
-    if (perDay !== undefined) out.push({ k: '日均', v: m('skill-bill.analysis-template-bars.c025', { p0: String(perDay.value) }) });
+    if (perDay !== undefined) out.push({ k: m('skill-bill.analysis-template-bars.c032'), v: m('skill-bill.analysis-template-bars.c025', { p0: String(perDay.value) }) });
     const rows = p.factCards[0]?.rows;
     const firstRow = rows?.[0];
     const lastRow = rows?.[1];

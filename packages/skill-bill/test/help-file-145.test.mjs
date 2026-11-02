@@ -1,7 +1,7 @@
 // #145 · 渲染接线锁：内容资产 → 共享 help 模板全页 HTML（5 键 ＋ 三块可选键，全部可复现）。
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildHelpFileData, renderHelpFileHtml, HELP_FILE_STEM, HELP_FILE_TITLE } from '../dist/index.js';
+import { buildHelpFileData, renderHelpFileHtml, HELP_FILE_STEM } from '../dist/index.js';
 import { WAKE_GROUPS, WAKE_ASSETS, SCENE_BY_ID, HELP_WAKE_WORDS } from '../dist/triggers/wake-assets.js';
 
 const NOW = new Date(2026, 8, 11, 14, 30, 15); // 本地时间 2026-09-11 14:30:15
@@ -31,7 +31,7 @@ describe('#145 饼干记账 HELP 渲染接线', () => {
   it('5 键取值照老实样；subtitle 由计数派生（不写死 7／77）', () => {
     const data = buildHelpFileData(NOW);
     assert.equal(data.skill_name, '饼干记账');
-    assert.equal(data.title, HELP_FILE_TITLE);
+    assert.equal(data.title, '饼干记账 · 使用手册(HELP)');
     assert.equal(data.subtitle, `${WAKE_GROUPS.length} 功能域 · ${WAKE_ASSETS.length} 场景 · 版本 2.0 · 更新于 2026-09-11 14:30`);
     assert.equal(data.subtitle, `7 功能域 · 77 场景 · 版本 2.0 · 更新于 2026-09-11 14:30`);
     assert.equal(data.contact.items.length, 3);

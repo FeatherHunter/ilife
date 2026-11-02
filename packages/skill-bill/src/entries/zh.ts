@@ -1685,6 +1685,7 @@ export const zh = {
   'skill-bill.analysis-template-bars.c029': "这一段没有记录",
   'skill-bill.analysis-template-bars.c030': "看完了",
   'skill-bill.analysis-template-bars.c031': "取到 {p0} 条记录",
+  'skill-bill.analysis-template-bars.c032': "日均",
   /* ── packages/skill-bill/src/analysis/template-charts.ts（#1208 迁入） ── */
   'skill-bill.analysis-template-charts.c001': "读数",
   'skill-bill.analysis-template-charts.c002': "这一段没有记录",
@@ -2612,6 +2613,7 @@ export const zh = {
   'skill-bill.goal-scene-saving.c042': "还差 {p0} 元",
   'skill-bill.goal-scene-saving.c043': "已超出 {p0} 元",
   'skill-bill.goal-scene-saving.c044': "月均净存 {p0} 元",
+  'skill-bill.goal-scene-saving.c045': "已完成",
   /* ── packages/skill-bill/src/goal/scene-set-budget.ts（#1213 迁入） ── */
   'skill-bill.goal-scene-set-budget.c001': "金额填好就可以写进去了。",
   'skill-bill.goal-scene-set-budget.c002': "缺 {p0} 项，详见下表。",
@@ -2913,6 +2915,7 @@ export const zh = {
   'skill-bill.setup-steps.c039': "先认下列映射再确认",
   'skill-bill.setup-steps.c040': "导入并出结果",
   'skill-bill.setup-steps.c041': "确认之后才写库；写之前会自动备份一次",
+  'skill-bill.setup-steps.c042': "已完成",
   /* ── packages/skill-bill/src/setup/template-list.ts（--files 迁入） ── */
   'skill-bill.setup-template-list.c001': " · 最新的一份 · 就是它",
   'skill-bill.setup-template-list.c002': " · 备份目录里这一份",
@@ -3509,6 +3512,8 @@ export const zh = {
   'skill-bill.help-helpFile.c005': "从「初始化」开始 — 自动检测环境、确认数据目录、建库、验证,全程零决策。完成初始化后,本区域将不再出现。",
   'skill-bill.help-helpFile.c006': "📋 复制初始化 prompt",
   'skill-bill.help-helpFile.c008': "邮箱",
+  'skill-bill.help-helpFile.c009': "饼干记账",
+  'skill-bill.help-helpFile.c010': "饼干记账 · 使用手册(HELP)",
   /* ── packages/skill-bill/src/help/lookup.ts（#1215 迁入） ── */
   'skill-bill.help-lookup.c001': "午饭",
   'skill-bill.help-lookup.c002': "餐饮/夜宵",

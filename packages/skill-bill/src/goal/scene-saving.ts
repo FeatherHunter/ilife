@@ -96,7 +96,7 @@ function savingKpi(input: GoalProgressInput): readonly KpiCardInput[] {
   return [
     { label: m('skill-bill.goal-scene-saving.c018'), value: String(p?.count ?? 0), unit: m('skill-bill.goal-scene-saving.c019'), detail: m('skill-bill.goal-scene-saving.c020') },
     {
-      label: '已完成', value: String(p?.done_count ?? 0), unit: m('skill-bill.goal-scene-saving.c021'),
+      label: m('skill-bill.goal-scene-saving.c045'), value: String(p?.done_count ?? 0), unit: m('skill-bill.goal-scene-saving.c021'),
       detail: (p?.done_count ?? 0) > 0 ? m('skill-bill.goal-scene-saving.c022') : m('skill-bill.goal-scene-saving.c023'),
       status: (p?.done_count ?? 0) > 0 ? 'ok' : 'empty',
       statusText: (p?.done_count ?? 0) > 0 ? m('skill-bill.goal-scene-saving.c024') : m('skill-bill.goal-scene-saving.c025'),
