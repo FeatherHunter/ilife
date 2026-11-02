@@ -21,6 +21,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { applyEdits, packageOfRel, planFile, segmentOf, TOOL_VERSION } from './i18n-migrate/rewrite.mjs';
+import { compileAllowlist, parseAllowlist } from './i18n-allowlist.mjs';
 import { appendSection, backupFile, parseTableText, readTable, renderTable, tablePath } from './i18n-migrate/table.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -147,13 +148,15 @@ function startIndexOf(root, files) {
 
 /** 数据位 allowlist：与 check-i18n-entries／check-i18n-keys 读同一份 tooling/i18n-scope.json。
  *  迁移器的「收口」读数要能到 migrated=0，就必须认同一份豁免，否则机械候选里那些数据值会永远挂在账上。
+ *  #1320 起 allowlist 是「文件路径＋字面量」记录（tooling/i18n-allowlist.mjs）：本函数返回**记录数组**，
+ *  真正喂给 planFile 的是按件过滤出的 Set（见 migrate() 的 allowedFor）——同一串在别的文件里照旧算候选。
  *  allowlist 缺失不算错（老夹具／临时仓根可能没有这份共享账本）。 */
 export function allowlistOf(root) {
   const path = join(root, 'tooling', 'i18n-scope.json');
-  if (!existsSync(path)) return new Set();
+  if (!existsSync(path)) return [];
   let data;
   try { data = JSON.parse(readFileSync(path, 'utf8')); } catch (e) { throw new Error('读不出 allowlist：' + path + ' → ' + e.message); }
-  return new Set(Array.isArray(data.allowlist) ? data.allowlist.filter((one) => typeof one === 'string') : []);
+  return parseAllowlist(Array.isArray(data.allowlist) ? data.allowlist : [], 'tooling/i18n-scope.json 的 allowlist');
 }
 /** 跑一批文件：算计划 → 写盘（--dry 时不写）→ 返回报告。 */
 export function migrate(options) {
@@ -162,8 +165,10 @@ export function migrate(options) {
   const files = options.files;
   const dry = options.dry === true;
   const starts = startIndexOf(root, files);
-  const allowlist = options.allowlist === undefined ? allowlistOf(root) : options.allowlist;
-  const plans = files.map((rel) => planFile(root, rel, { ticket, startIndex: starts.get(rel), allowlist }));
+  // options.allowlist 可以是「文件＋串」记录数组（缺省＝读共享账本），也可以直接是 Set（夹具逃生门，对所有件生效）。
+  const allowRecords = options.allowlist === undefined ? allowlistOf(root) : (Array.isArray(options.allowlist) ? parseAllowlist(options.allowlist, 'migrate 的 allowlist') : null);
+  const allow = allowRecords === null ? null : compileAllowlist(allowRecords);
+  const plans = files.map((rel) => planFile(root, rel, { ticket, startIndex: starts.get(rel), allowlist: allow === null ? options.allowlist : allow.textsFor(rel) }));
   const report = {
     tool: 'i18n-migrate',
     version: TOOL_VERSION,

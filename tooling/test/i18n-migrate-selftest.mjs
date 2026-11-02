@@ -296,7 +296,7 @@ export function runMigrateSelftest(api) {
     const REL18 = 'packages/demo-pkg/src/ui/fromscope.ts';
     const src18 = ['export function fromScope(): string {', "  return '派生';", '}', ''].join('\n');
     const root18 = mk({ [REL18]: src18 });
-    fsWrite(join(root18, 'tooling', 'i18n-scope.json'), JSON.stringify({ allowlist: ['派生'] }, null, 2) + '\n');
+    fsWrite(join(root18, 'tooling', 'i18n-scope.json'), JSON.stringify({ allowlist: [{ files: [REL18], texts: ['派生'], why: '夹具：派生件' }] }, null, 2) + '\n');
     const report18 = migrate({ root: root18, files: [REL18], ticket: 997, dry: false });
     check('缺省读 tooling/i18n-scope.json 的 allowlist', report18.files[0].status === 'skip' && readText(root18, REL18) === src18, report18.files[0].status + ' ' + readText(root18, REL18));
 
@@ -317,6 +317,16 @@ export function runMigrateSelftest(api) {
     check('同文件混入真文案的拼串照迁（1 条）', report19.totals.entries === 1 && report19.totals.migrated === 1, JSON.stringify(report19.totals));
     const text19 = readText(root19, REL19);
     check('数据拼串留源码、真文案换 m(...)', text19.indexOf("'演示备份_' + String(Date.now()) + '.json'") >= 0 && text19.indexOf("m('demo-pkg.data-backup.c001'") >= 0, text19);
+
+    // ⑳ 同串两用（#1320）：allowlist 按「文件＋串」生效——数据位那件整件跳过，另一件同一个串照迁、照补词条。
+    const REL20A = 'packages/demo-pkg/src/data/status.ts';
+    const REL20B = 'packages/demo-pkg/src/ui/status.ts';
+    const src20 = ['export function s(): string {', "  return '未做';", '}', ''].join('\n');
+    const root20 = mk({ [REL20A]: src20, [REL20B]: src20 });
+    const report20 = migrate({ root: root20, files: [REL20A, REL20B], ticket: 997, dry: false, allowlist: [{ files: [REL20A], texts: ['未做'], why: '夹具：数据位' }] });
+    check('同串两用：数据位那件整件跳过、界面位同串照迁', report20.files[0].status === 'skip' && report20.files[1].status !== 'skip' && readText(root20, REL20A) === src20, JSON.stringify(report20.files.map((f) => f.status)));
+    check('同串两用：界面位那件补出 1 条词条', report20.totals.entries === 1 && report20.totals.migrated === 1, JSON.stringify(report20.totals));
+    check('同串两用：界面位源码换成 m(...)、数据位一个字节不动', readText(root20, REL20B).indexOf("m('demo-pkg.ui-status.c001')") >= 0 && readText(root20, REL20A) === src20, readText(root20, REL20B));
   } finally {
     for (const root of roots) rmSync(root, { recursive: true, force: true });
   }

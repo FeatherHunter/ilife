@@ -11,7 +11,8 @@
  * 豁免三条（缺一即误判，逐条都有机器判据）：
  *   ① 注释行里的中文不算（注释是给读代码的人看的，不上屏）；
  *   ② 命令关键字冻结（`bill.record.add` 这类 key 串、`--params`／`--html` 这类开关、'base-entries' 这类模块名）；
- *   ③ 范围清单 allowlist 里的显式豁免（逐条带 why：用户数据位／派生件／错误码这类本就不该进词条的位）。
+ *   ③ 范围清单 allowlist 里的显式豁免：**逐「文件＋字面量」登记**（#1320 起；见 tooling/i18n-allowlist.mjs）。
+ *      一条豁免只放行它登记过的那件文件里的那一个字面量——同一串在别的文件（尤其界面位）出现照旧判红。
  *
  * 不许空转绿（#1199 票面硬要求）：范围 0 件时**显式**印
  *   EMPTY-SCOPE 范围 0 件：扫描面为空——缩面＝放宽，不许空转当绿（先登记范围清单）
@@ -32,6 +33,7 @@ import { fileURLToPath } from 'node:url';
 
 import { LANGUAGES, DEFAULT_LANGUAGE, EMPTY_SCOPE_VERDICT, registerOf } from './i18n-langs.mjs';
 import { loadScope, importsEntries, extractKeys } from './check-i18n-entries.mjs';
+import { allowlistPathProblems, compileAllowlist, parseAllowlist } from './i18n-allowlist.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..');
@@ -248,7 +250,7 @@ export function htmlHintOf(text, devTexts = new Set(), allow = new Set()) {
 
 /** 主判据：返回 {files, literals, residue:[{file,line,lang,why,text}], blind:[{file,why}]}。 */
 export function audit(scope, root = ROOT_DIR) {
-  const allow = new Set(scope.allowlist || []);
+  const allow = compileAllowlist(parseAllowlist(scope.allowlist || [], '范围清单的 allowlist'));
   const files = [];
   const blind = [];
   const residue = [];
@@ -264,8 +266,9 @@ export function audit(scope, root = ROOT_DIR) {
     }
     const lits = literalsOf(src);
     const found = [];
+    const allowed = allow.textsFor(rel);
     for (const l of lits) {
-      if (allow.has(l.text)) continue;
+      if (allowed.has(l.text)) continue;
       for (const lang of LANGUAGES) {
         const why = residueOf(l.text, lang, devTexts);
         if (why) found.push({ file: rel, line: l.line, lang, why, text: l.text.slice(0, 80) });
@@ -281,7 +284,7 @@ export function audit(scope, root = ROOT_DIR) {
 
 /** hints 读数：对已迁入的件再扫一遍「标签串里夹中文」的候选（只报数，不判红；见 htmlHintOf 注释）。 */
 export function hintsOf(scope, root = ROOT_DIR) {
-  const allow = new Set(scope.allowlist || []);
+  const allow = compileAllowlist(parseAllowlist(scope.allowlist || []));
   const out = [];
   let files = 0;
   for (const rel of scope.files) {
@@ -290,9 +293,10 @@ export function hintsOf(scope, root = ROOT_DIR) {
     const src = readFileSync(p, 'utf8');
     if (!importsEntries(src) || extractKeys(src).length === 0) continue;
     const devTexts = devMessageTexts(src);
+    const allowed = allow.textsFor(rel);
     files += 1;
     for (const l of literalsOf(src)) {
-      const vis = htmlHintOf(l.text, devTexts, allow);
+      const vis = htmlHintOf(l.text, devTexts, allowed);
       if (vis !== null) out.push({ file: rel, line: l.line, text: vis });
     }
   }
@@ -302,14 +306,24 @@ export function hintsOf(scope, root = ROOT_DIR) {
 function main() {
   let scope;
   try { scope = loadScope(); } catch (e) { console.error('FAIL: ' + e.message); process.exit(2); }
-  if (!Array.isArray(scope.allowlist)) { console.error('FAIL: 范围清单缺 allowlist 数组：' + SCOPE_PATH); process.exit(2); }
+  let allow;
+  try {
+    allow = compileAllowlist(parseAllowlist(scope.allowlist || [], SCOPE_PATH + ' 的 allowlist'));
+  } catch (e) { console.error('FAIL: ' + e.message); process.exit(2); }
   if (SELFTEST) return selftest(scope);
 
   const r = audit(scope);
   const empty = scope.files.length === 0;
   console.log('# #1199 key 残留门（语言列：' + LANGUAGES.join('／') + '；中文列判 CJK、英文列判多词句）');
-  console.log('SCOPE: ' + SCOPE_PATH + ' files=' + scope.files.length + ' allowlist=' + scope.allowlist.length);
+  console.log('SCOPE: ' + SCOPE_PATH + ' files=' + scope.files.length + ' allowlist=' + allow.records.length + '（文件·串对 ' + allow.pairs + '）');
   if (empty) console.log('EMPTY-SCOPE ' + EMPTY_SCOPE_VERDICT + '（清单：' + SCOPE_PATH + '）');
+  // allowlist 的路径落点必须可复核：登记了不在范围清单里的件／盖不住任何件的目录前缀＝红（#1320）。
+  const pathProblems = allowlistPathProblems(allow.records, scope.files, scope.files);
+  if (pathProblems.length > 0) {
+    for (const p of pathProblems) console.error('RED allowlist 落点不可复核：' + p.why);
+    console.error('FAIL: allowlist 落点不可复核（' + pathProblems.length + ' 条；登记的文件必须真在范围清单里）');
+    process.exit(1);
+  }
   if (LIST) {
     for (const f of r.files) console.log('FILE ' + f.file + ' literals=' + f.literals);
     for (const x of r.residue) console.log('RESIDUE ' + x.file + ':' + x.line + ' [' + x.lang + '] ' + x.why + ' ← ' + JSON.stringify(x.text));
@@ -410,9 +424,32 @@ function selftest(scope) {
       "export const allowed = '这句被显式放行';",
       "",
     ].join(String.fromCharCode(10)), 'utf8');
-    // 豁免：allowlist 里显式放行的那一句不算残留
-    const threeAllow = audit({ files: ['demo.ts'], allowlist: ['这句被显式放行'] }, tmp);
+    // 豁免：allowlist 里显式放行（文件＋字面量）的那一句不算残留
+    const threeAllow = audit({ files: ['demo.ts'], allowlist: [{ files: ['demo.ts'], texts: ['这句被显式放行'], why: '夹具：显式放行' }] }, tmp);
     want(threeAllow.residue.length === 0, '放行后仍应零残留（实得 ' + threeAllow.residue.length + '）');
+    // ⑫ 同串两用（#1320）：同一个串在数据位登记过，界面位再出现必须照旧判红——豁免按「文件＋字面量」，不按字面全局放行。
+    writeFileSync(join(tmp, 'data.ts'), [
+      "import { e } from 'base-entries';",
+      "export const a = e('demo.title');",
+      "export const key = 'CJK 占位';",
+      "\n",
+    ].join(String.fromCharCode(10)), 'utf8');
+    writeFileSync(join(tmp, 'ui.ts'), [
+      "import { e } from 'base-entries';",
+      "export const a = e('demo.title');",
+      "export const label = 'CJK 占位';",
+      "\n",
+    ].join(String.fromCharCode(10)), 'utf8');
+    const sameText = '数据位占位';
+    writeFileSync(join(tmp, 'data.ts'), readFileSync(join(tmp, 'data.ts'), 'utf8').replace('CJK 占位', sameText), 'utf8');
+    writeFileSync(join(tmp, 'ui.ts'), readFileSync(join(tmp, 'ui.ts'), 'utf8').replace('CJK 占位', sameText), 'utf8');
+    const twoUses = audit({ files: ['data.ts', 'ui.ts'], allowlist: [{ files: ['data.ts'], texts: [sameText], why: '夹具：数据位' }] }, tmp);
+    want(twoUses.residue.length === 1 && twoUses.residue[0].file === 'ui.ts', '同串两用必须只放行数据位那一件、界面位照红（实得 ' + JSON.stringify(twoUses.residue.map((x) => x.file + ':' + x.text)) + '）');
+    const wrongFile = audit({ files: ['data.ts', 'ui.ts'], allowlist: [{ files: ['ui.ts'], texts: [sameText], why: '夹具：登记错文件' }] }, tmp);
+    want(wrongFile.residue.some((x) => x.file === 'data.ts'), '豁免登记在另一件文件时必须不管用（实得 ' + JSON.stringify(wrongFile.residue.map((x) => x.file)) + '）');
+    const pathProblems = allowlistPathProblems([{ files: ['nope.ts'], texts: [sameText], why: '夹具：不存在的件' }], ['data.ts', 'ui.ts'], ['data.ts', 'ui.ts']);
+    want(pathProblems.length === 1, 'allowlist 登记了范围外/不存在的件必须报落点问题（实得 ' + pathProblems.length + '）');
+    console.log('SELFTEST 同串两用读数：数据位放行后 residue=' + twoUses.residue.length + '（界面位 ' + JSON.stringify(twoUses.residue.map((x) => x.file)) + '）／登记错文件 residue=' + wrongFile.residue.length);
     // 失明：没迁完的件必须报 blind，不许当绿
     writeFileSync(join(tmp, 'raw.ts'), "export const x = '中文但没有迁';", 'utf8');
     const fourRaw = audit({ files: ['raw.ts'], allowlist: [] }, tmp);
@@ -477,7 +514,7 @@ function selftest(scope) {
     rmSync(tmp, { recursive: true, force: true });
   }
   if (bad.length) { for (const b of bad) console.error('SELFTEST FAIL ' + b); process.exit(1); }
-  console.log('SELFTEST: 空范围显式报数／注释豁免／命令关键字豁免／中文残留必红／英文残留必红／开发者报文按调用点豁免／搬走必绿／没迁完报失明／内联脚本行豁免／SQL 语句豁免／标签串 hints —— 十一条自证 OK');
+  console.log('SELFTEST: 空范围显式报数／注释豁免／命令关键字豁免／中文残留必红／英文残留必红／开发者报文按调用点豁免／搬走必绿／没迁完报失明／内联脚本行豁免／SQL 语句豁免／标签串 hints／同串两用（数据位绿·界面位红） —— 十二条自证 OK');
 }
 
 /** 入口守卫（照 tooling/i18n-langs.mjs／skill-html-snapshot.mjs 的先例）：本件被别处 import 时**不跑** CLI，
