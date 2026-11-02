@@ -119,15 +119,15 @@ function renderFoodGrid(items: readonly ProductRow[], withUpdatedAt: boolean): s
   const cards = items.map((it) => {
     const macros = [
       { label: m('skill-calorie.diet-libraryDocs.c004'), value: m('skill-calorie.diet-libraryDocs.c005', { p0: String(fixed0(it.calories)) }) },
-      { label: '蛋白', value: fixed1(it.protein) + ' 克' },
-      { label: '脂肪', value: fixed1(it.fat) + ' 克' },
-      { label: '碳水', value: fixed1(it.carbohydrates) + ' 克' },
+      { label: m('skill-calorie.diet-libraryDocs.c074'), value: m('skill-calorie.diet-libraryDocs.c077', { p0: fixed1(it.protein) }) },
+      { label: m('skill-calorie.diet-libraryDocs.c075'), value: m('skill-calorie.diet-libraryDocs.c078', { p0: fixed1(it.fat) }) },
+      { label: m('skill-calorie.diet-libraryDocs.c076'), value: m('skill-calorie.diet-libraryDocs.c079', { p0: fixed1(it.carbohydrates) }) },
     ];
     /* #581 · 来源行去间隔号：一行一键值（来源一行、更新于另起一行）。#633 种子内部名「测试」屏上改印「内置食品」（缺值仍归「未知」）。
        #587 C项时间到分：屏上取到分（slice 0,16）；复制载荷机器时间保持秒级（copyLog 仍传完整）。 */
-    let source = '<div class="food-src">来源：' + escapeHtml(it.source === '测试' ? m('skill-calorie.diet-libraryDocs.c006') : (it.source || UNKNOWN_SOURCE())) + '</div>';
+    let source = '<div class="food-src">' + m('skill-calorie.diet-libraryDocs.c071', { p0: escapeHtml(it.source === '测试' ? m('skill-calorie.diet-libraryDocs.c006') : (it.source || UNKNOWN_SOURCE())) }) + '</div>';
     if (withUpdatedAt && it.updated_at) {
-      source += '<div class="food-src">更新于 ' + escapeHtml(String(it.updated_at).slice(0, 16)) + '</div>';
+      source += '<div class="food-src">' + m('skill-calorie.diet-libraryDocs.c072', { p0: escapeHtml(String(it.updated_at).slice(0, 16)) }) + '</div>';
     }
     const cat = it.category ? '<div class="food-cat">' + escapeHtml(it.category) + '</div>' : '';
     /* #511 · 品牌没填时原样印一个破折号占位，读者在食品名与四个宏量之间单读到一行「—」，
@@ -354,7 +354,7 @@ export function buildDedupeDoc(v: DedupeView, command: string): string {
     {
       id: 'sec-groups',
       label: m('skill-calorie.diet-libraryDocs.c048'),
-      html: '<h2 class="dedupe-h2">重复组列表</h2>' + renderDataTable({
+      html: '<h2 class="dedupe-h2">' + m('skill-calorie.diet-libraryDocs.c073') + '</h2>' + renderDataTable({
         columns: DEDUPE_COLUMNS(),
         rows: v.groups.slice(0, 50).map((g) => ({
           name: g.productName, brand: g.brand ?? DASH, count: g.ids.length, ids: g.ids.join(', '),
@@ -365,7 +365,7 @@ export function buildDedupeDoc(v: DedupeView, command: string): string {
     {
       id: 'sec-advice',
       label: m('skill-calorie.diet-libraryDocs.c050'),
-      html: '<h2 class="dedupe-h2">处理建议</h2>' + renderListRows({
+      html: '<h2 class="dedupe-h2">' + m('skill-calorie.diet-libraryDocs.c050') + '</h2>' + renderListRows({
         items: clean
           ? [{ main: m('skill-calorie.diet-libraryDocs.c051') }]
           : [

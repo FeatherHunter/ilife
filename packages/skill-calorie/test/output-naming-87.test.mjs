@@ -311,6 +311,13 @@ test('#87 ⑧ --html 覆盖：写显式路径、不改名、不碰 calorie_html�
   const bad = runCli(dir, [KEY, '--params', JSON.stringify(PARAMS), '--html']);
   assert.equal(bad.status, 2, '--html 缺值仍走用法错误');
   assert.match(String(bad.stderr), /未知参数：--html/, '缺值时下一个 token 缺失 ⇒ 报未知参数（含用法行）');
+
+  // #1197 收口：解析期报错按 argv 的 --language 取词（语言上下文尚未进入，--language 是调用方显式意图）。
+  const en = runCli(dir, [KEY, '--language', 'en', '--output', join(dir, 'legacy2.html')]);
+  assert.equal(en.status, 2, '--language en 下用法错仍 exit 2');
+  assert.match(String(en.stderr), /Unknown parameter: --output/, '--language en ⇒ 用法错是英文并含参数名');
+  assert.match(String(en.stderr), /Usage: cmd_read/, '英文用法行');
+  assert.equal(existsSync(join(dir, 'legacy2.html')), false, '带 `--output` 的调用不得落任何产物');
 });
 
 // ---------------------------------------------------------------- ⑨ 落点解析失败（返修 F4 / A2 S2-4）

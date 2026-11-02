@@ -38,6 +38,7 @@ export const zh = {
   'base-render.blocks.c009': '还差 {p1}{p2}',
   'base-render.blocks.c010': '要改：',
   'base-render.blocks.c011': '待开发',
+  'base-render.blocks.c012': '页内导航',
   /* ── contract.ts（渲染契约；#1232 迁入） ── */
   'base-render.contract.c001': '未安装[{p1}]，请补装后使用。',
   /* ── packages/base-render/src/components/bulk-bar/style-column.ts（#1226 迁入） ── */
@@ -1046,10 +1047,14 @@ export const zh = {
   'base-render.components-cash-waterline-render.c011': "出",
   'base-render.components-cash-waterline-render.c012': "余",
   'base-render.components-cash-waterline-render.c013': "日均",
+  'base-render.components-cash-waterline-render.c014': "跌破底线的日子 · {p0} 天",
+  'base-render.components-cash-waterline-render.c015': "那天花 {p0}",
+  'base-render.components-cash-waterline-render.c016': "余量 {p0}",
   /* ── packages/base-render/src/components/chart-placeholder/render.ts（#1226 迁入） ── */
   'base-render.components-chart-placeholder-render.c001': "本页只放占位，不重算口径",
   'base-render.components-chart-placeholder-render.c002': "真图回填前不做结论",
   'base-render.components-chart-placeholder-render.c003': "种类以基线复核为准",
+  'base-render.components-chart-placeholder-render.c004': "需真图",
   /* ── packages/base-render/src/components/command-palette/attrs.ts（#1226 迁入） ── */
   'base-render.components-command-palette-attrs.c001': "找页面 / 动作",
   'base-render.components-command-palette-attrs.c002': "页头这一枚就是入口，点它就行。",
@@ -1158,6 +1163,9 @@ export const zh = {
   'base-render.components-flow-ribbon-render.c001': "{p0} {p1}（占总额 {p2}）",
   'base-render.components-flow-ribbon-render.c002': "来源 · {p0} 股",
   'base-render.components-flow-ribbon-render.c003': "用途 · {p0} 类",
+  'base-render.components-flow-ribbon-render.c004': "装不进节点框的读数 · {p0} 条（那一股太细、或名字与金额比框宽——读数在这里一个不少）",
+  'base-render.components-flow-ribbon-render.c005': "来源 ＼ 用途",
+  'base-render.components-flow-ribbon-render.c006': "合计",
   /* ── packages/base-render/src/components/goal-stairs/attrs.ts（#1226 迁入） ── */
   'base-render.components-goal-stairs-attrs.c001': "已达成 ✓",
   'base-render.components-goal-stairs-attrs.c002': "进行中 ▶",
@@ -1209,6 +1217,8 @@ export const zh = {
   /* ── packages/base-render/src/components/lookup-index/render.ts（#1226 迁入） ── */
   'base-render.components-lookup-index-render.c001': "别名标黄、不混数",
   'base-render.components-lookup-index-render.c002': " · 共 {p0} 条",
+  'base-render.components-lookup-index-render.c003': "速查锚点",
+  'base-render.components-lookup-index-render.c004': "{p0} 行",
   /* ── packages/base-render/src/components/missing-badge/render.ts（#1226 迁入） ── */
   'base-render.components-missing-badge-render.c001': "缺",
   'base-render.components-missing-badge-render.c002': "待补",
@@ -1256,6 +1266,7 @@ export const zh = {
   'base-render.components-portion-gauge-model.c008': "口径：左边永远是菜谱写的单位（份，碗，把），右边永远是营养库认的单位（g）。中间是这一份菜的换算系数，系数变了要写明是哪一版菜谱改的，不悄悄改数。缺换算系数的食材整行不画，只在下面写还差几样没有换算。",
   /* ── packages/base-render/src/components/portion-gauge/render.ts（#1226 迁入） ── */
   'base-render.components-portion-gauge-render.c001': "还差 {p0} 样没有换算",
+  'base-render.components-portion-gauge-render.c002': "菜谱单位",
   /* ── packages/base-render/src/components/drag-sort/attrs.ts（#1226 迁入） ── */
   'base-render.components-drag-sort-attrs.c001': "点把手拿起一行。放下时点另一行。",
   'base-render.components-drag-sort-attrs.c002': "取消放回",
@@ -2451,12 +2462,20 @@ export const zh = {
   'base-render.components-radar-profile-fields.c005': "{p0} 本期 {p1}{p2}",
   /* ── packages/base-render/src/components/relation-picker/render.ts（#1227 迁入） ── */
   'base-render.components-relation-picker-render.c001': "{p0} 个",
+  'base-render.components-relation-picker-render.c002': "用过",
+  'base-render.components-relation-picker-render.c003': "点「换」重新选一个（字段行与这一行始终读的是同一个值）",
   /* ── packages/base-render/src/components/scatter-fit/render.ts（#1227 迁入） ── */
   'base-render.components-scatter-fit-render.c001': "{p0} 最强",
+  'base-render.components-scatter-fit-render.c002': "错开",
+  'base-render.components-scatter-fit-render.c003': "相关强度（中线往左右各半 ＝ ±1）",
+  'base-render.components-scatter-fit-render.c004': "系数",
   /* ── packages/base-render/src/components/search-field/render.ts（#1227 迁入） ── */
   'base-render.components-search-field-render.c001': "全部",
   'base-render.components-search-field-render.c002': "全部",
   'base-render.components-search-field-render.c003': "{noun}命中",
+  'base-render.components-search-field-render.c004': "搜索范围",
+  'base-render.components-search-field-render.c005': " · 范围 {p0}",
+  'base-render.components-search-field-render.c006': "第 {p0} {p1} / 共 {p2} {p3}",
   /* ── packages/base-render/src/components/slider-row/render.ts（#1227 迁入） ── */
   'base-render.components-slider-row-render.c001': "这条读数",
   'base-render.components-slider-row-render.c002': "减 {word}",
@@ -2464,6 +2483,8 @@ export const zh = {
   /* ── packages/base-render/src/components/timer-card/render.ts（#1227 迁入） ── */
   'base-render.components-timer-card-render.c001': "已用完",
   'base-render.components-timer-card-render.c002': "还剩",
+  'base-render.components-timer-card-render.c003': "已过",
+  'base-render.components-timer-card-render.c004': "总",
   /* ── packages/base-render/src/components/window-picker/render.ts（#1227 迁入） ── */
   'base-render.components-window-picker-render.c001': "起",
   'base-render.components-window-picker-render.c002': "止",

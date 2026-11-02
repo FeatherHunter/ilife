@@ -173,7 +173,7 @@ function progressStrips(h: WeightHistoryView, avg: number | null): string {
   const rate = perDayHuman(c.delta, c.spanDays);
   if (rate === null) return '';
   return '<div class="wui-strip">'
-    + '<span class="wui-fact"><span class="wui-fact-k">节奏</span>'
+    + '<span class="wui-fact"><span class="wui-fact-k">' + m('skill-calorie.render-html.c152') + '</span>'
     + '<span class="wui-fact-v">' + rate + '</span></span>'
     + '<span class="wui-pair"><span class="wui-pair-v">' + firstLastHuman(c, 'first') + '</span>'
     + '<span class="wui-pair-mid">→</span>'

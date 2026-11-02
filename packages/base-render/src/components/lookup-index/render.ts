@@ -146,7 +146,7 @@ export function renderLookupIndex(input: unknown): string {
   /* 折叠档在根上也挂一枚 `is-fold`：判地那一纸是**普通块流**（组间只靠 `.qgroup{margin-top:14px}`，
      没有常显档那 12px 栅格间距）⇒ 折叠档的根改 `display:block`，外边距与判地一样自己塌陷。 */
   const parts: string[] = ['<div class="' + LOOKUP_INDEX_CLASS + (model.form === 'fold' ? ' is-fold' : '') + extra + '">'];
-  parts.push('<nav class="' + lookupIndexSlot('nav') + '" aria-label="速查锚点">');
+  parts.push('<nav class="' + lookupIndexSlot('nav') + '" aria-label="' + esc(m('base-render.components-lookup-index-render.c003')) + '">');
   for (const a of model.anchors) {
     parts.push('<a class="' + lookupIndexSlot('anchor') + '" href="#' + esc(a.id) + '" ' + LOOKUP_INDEX_ANCHOR_ATTR + '="' + esc(a.id) + '">' + esc(a.label) + '</a>');
   }
@@ -160,7 +160,7 @@ export function renderLookupIndex(input: unknown): string {
          **同源同值** ⇒ 页内锚点（`href="#lookup-<组名>"`）与运行时照旧命中，不因折叠失效。 */
       parts.push('<details class="' + lookupIndexSlot('group') + ' is-fold" id="' + esc(gid) + '" ' + LOOKUP_INDEX_GROUP_ATTR + '="' + esc(gid) + '">');
       parts.push('<summary class="' + lookupIndexSlot('head') + '">' + esc(g.label)
-        + '<span class="' + lookupIndexSlot('count') + '">' + String(g.rows.length) + ' 行</span></summary>');
+        + '<span class="' + lookupIndexSlot('count') + '">' + esc(m('base-render.components-lookup-index-render.c004', { p0: String(g.rows.length) })) + '</span></summary>');
       parts.push('<ul class="' + lookupIndexSlot('rows') + '">');
       for (const r of g.rows) {
         parts.push('<li class="' + lookupIndexSlot('row') + (r.alias ? ' is-alias' : '') + '">'

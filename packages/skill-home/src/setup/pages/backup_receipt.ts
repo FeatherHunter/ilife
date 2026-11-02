@@ -14,6 +14,33 @@ function pageText() {
     k002: m('skill-home.setup-pages-backup-receipt.c002'),
     k003: (p0: string) => m('skill-home.setup-pages-backup-receipt.c003', { p0: String(p0) }),
     k004: m('skill-home.setup-pages-backup-receipt.c004'),
+    k005: m('skill-home.setup-pages-backup-receipt.c019'),
+    k006: m('skill-home.setup-pages-backup-receipt.c020'),
+    k007: m('skill-home.setup-pages-backup-receipt.c021'),
+    k008: m('skill-home.setup-pages-backup-receipt.c022'),
+    k009: m('skill-home.setup-pages-backup-receipt.c023'),
+    k010: m('skill-home.setup-pages-backup-receipt.c024'),
+    k011: m('skill-home.setup-pages-backup-receipt.c025'),
+    k012: m('skill-home.setup-pages-backup-receipt.c026'),
+    k013: m('skill-home.setup-pages-backup-receipt.c027'),
+    k014: m('skill-home.setup-pages-backup-receipt.c028'),
+    k015: m('skill-home.setup-pages-backup-receipt.c029'),
+    k016: m('skill-home.setup-pages-backup-receipt.c030'),
+    k017: m('skill-home.setup-pages-backup-receipt.c031'),
+    k018: m('skill-home.setup-pages-backup-receipt.c032'),
+    k019: m('skill-home.setup-pages-backup-receipt.c033'),
+    k020: m('skill-home.setup-pages-backup-receipt.c034'),
+    k021: m('skill-home.setup-pages-backup-receipt.c035'),
+    k022: m('skill-home.setup-pages-backup-receipt.c036'),
+    k023: m('skill-home.setup-pages-backup-receipt.c037'),
+    k024: m('skill-home.setup-pages-backup-receipt.c038'),
+    k025: m('skill-home.setup-pages-backup-receipt.c039'),
+    k026: m('skill-home.setup-pages-backup-receipt.c040'),
+    k027: m('skill-home.setup-pages-backup-receipt.c041'),
+    k028: m('skill-home.setup-pages-backup-receipt.c042'),
+    k029: m('skill-home.setup-pages-backup-receipt.c043'),
+    k030: m('skill-home.setup-pages-backup-receipt.c044'),
+    k031: m('skill-home.setup-pages-backup-receipt.c045'),
   };
 }
 
@@ -165,39 +192,39 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '}'
     + '</style>'
     + '<div class="su-wrap">'
-    + '<div class="su-hero"><div class="su-eyebrow">开始使用</div>'
+    + '<div class="su-hero"><div class="su-eyebrow">' + L.k005 + '</div>'
     + '<p class="su-lead">' + (isExport ? m('skill-home.setup-pages-backup-receipt.c005') : m('skill-home.setup-pages-backup-receipt.c006')) + '</p></div>'
     + '<section class="su-sec" data-block="fields">'
-    + '<h2 data-need="本次备份（路径/大小/时间）">本次结果</h2>'
+    + '<h2 data-need="本次备份（路径/大小/时间）">' + L.k006 + '</h2>'
     + '<div class="su-tablewrap"><table class="su-table su-kv">'
-    + '<tr><th>文件</th><td class="su-path">' + escapeHtml(file !== '' ? file : '—') + '</td></tr>'
-    + '<tr><th>大小</th><td>' + escapeHtml(size) + '</td></tr>'
-    + '<tr><th>时间</th><td>' + escapeHtml(nowStr()) + '</td></tr>'
+    + '<tr><th>' + L.k007 + '</th><td class="su-path">' + escapeHtml(file !== '' ? file : '—') + '</td></tr>'
+    + '<tr><th>' + L.k008 + '</th><td>' + escapeHtml(size) + '</td></tr>'
+    + '<tr><th>' + L.k009 + '</th><td>' + escapeHtml(nowStr()) + '</td></tr>'
     + '</table></div>'
-    + '<h2 data-need="备份历史（保留N份）">备份历史</h2>'
+    + '<h2 data-need="备份历史（保留N份）">' + L.k010 + '</h2>'
     + (hasRecord
       ? '<div class="su-tablewrap">' + '<table class="su-table">' + '<tr>' + '<th>' + L.k001 + '</th>' + '</tr>' + histRows + '</table>' + '</div>'
       : '<div class="su-tablewrap">' + '<table class="su-table">' + '<tr>' + '<th>' + L.k002 + '</th>' + '<td>' + '—' + '</td>' + '</tr>' + '</table>' + '</div>')
     + '<div class="su-grid">'
-    + '<div class="su-card"><b data-need="距上次备份天数">距上次备份</b><span>' + (hasRecord ? m('skill-home.setup-pages-backup-receipt.c007') : m('skill-home.setup-pages-backup-receipt.c008')) + '</span></div>'
+    + '<div class="su-card"><b data-need="距上次备份天数">' + L.k011 + '</b><span>' + (hasRecord ? m('skill-home.setup-pages-backup-receipt.c007') : m('skill-home.setup-pages-backup-receipt.c008')) + '</span></div>'
     + '</div>'
-    + '<h2 data-need="保留份数输入">保留份数</h2>'
-    + '<div class="su-frm"><label for="suKeep" data-need="保留份数默认值">保留几份旧备份</label>'
+    + '<h2 data-need="保留份数输入">' + L.k012 + '</h2>'
+    + '<div class="su-frm"><label for="suKeep" data-need="保留份数默认值">' + L.k013 + '</label>'
     + '<select id="suKeep" data-need="保留份数下拉">'
     + ['3', '5', '10'].map((n) => '<option value="' + n + '"' + (n === keep ? ' selected' : '') + '>' + L.k003(String(n)) + '</option>').join('')
     + '</select></div>'
     // #817 核对：下拉必定有选中值（`keepOf` 缺省 '5'，options 恰含 3／5／10，故必有一颗带 selected），
     // 页上同时印「该参数不能为空」＝自相矛盾；加 hidden 收起该句，data-need 标记留在原位（判据仍查得到）。
-    + '<p class="su-note" hidden data-need="空值拦截：该参数不能为空">该参数不能为空</p>'
+    + '<p class="su-note" hidden data-need="空值拦截：该参数不能为空">' + L.k014 + '</p>'
     + '</section>'
     + '<section class="su-sec" data-block="operations">'
-    + '<h2>可以做的操作</h2>'
+    + '<h2>' + L.k015 + '</h2>'
     + '<div class="su-actions">'
-    + '<button class="su-btn" data-need="确认备份" data-t="请帮我备份一次">确认备份</button>'
-    + '<button class="su-btn ghost" data-need="导出JSON" id="suExpJson">导出数据文件</button>'
-    + '<button class="su-btn ghost" data-need="导出CSV" id="suExpCsv">导出表格文件</button>'
-    + '<button class="su-btn danger" data-need="删除最旧备份" data-t="请帮我删除最旧的一份备份">删除最旧备份</button>'
-    + '<button class="su-btn ghost" data-need="知道了" id="suKnow">知道了</button>'
+    + '<button class="su-btn" data-need="确认备份" data-t="请帮我备份一次">' + L.k016 + '</button>'
+    + '<button class="su-btn ghost" data-need="导出JSON" id="suExpJson">' + L.k017 + '</button>'
+    + '<button class="su-btn ghost" data-need="导出CSV" id="suExpCsv">' + L.k018 + '</button>'
+    + '<button class="su-btn danger" data-need="删除最旧备份" data-t="请帮我删除最旧的一份备份">' + L.k019 + '</button>'
+    + '<button class="su-btn ghost" data-need="知道了" id="suKnow">' + L.k020 + '</button>'
     + '</div>'
     + '<span data-need="复制数据" hidden></span>'
     + '<span data-need="复制日志" hidden></span>'
@@ -205,23 +232,23 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
         data: { envelope: env },
         log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
       })
-    + '<div class="su-tablewrap"><table class="su-table su-fmt"><tr><th>导出格式</th><th>说明</th></tr>'
-    + '<tr><td>数据文件</td><td>全表可迁移，换机恢复用它</td></tr>'
-    + '<tr><td>表格文件</td><td>物品加位置便携表，表格软件直接打开</td></tr>'
+    + '<div class="su-tablewrap"><table class="su-table su-fmt"><tr><th>' + L.k021 + '</th><th>' + L.k022 + '</th></tr>'
+    + '<tr><td>' + L.k023 + '</td><td>' + L.k024 + '</td></tr>'
+    + '<tr><td>' + L.k025 + '</td><td>' + L.k026 + '</td></tr>'
     + '</table></div>'
     + '</section>'
     + '<section class="su-sec" data-block="empty">'
-    + '<h2>这种时候会怎样</h2>'
+    + '<h2>' + L.k027 + '</h2>'
     + (hasRecord
       ? '<p hidden data-need="空态：暂无备份记录">' + '</p>'
       : '<p data-need="空态：暂无备份记录">' + L.k004 + '</p>')
-    + '<p data-need="异常：数据解析失败／数据校验失败／备份失败">如果提示解析失败、校验失败或者备份失败，先确认库还在，再用确认备份重试一次。</p>'
+    + '<p data-need="异常：数据解析失败／数据校验失败／备份失败">' + L.k028 + '</p>'
     + '</section>'
     + '<section class="su-sec" data-block="status">'
-    + '<h2>口径说明</h2>'
-    + '<p>超出所选份数之后，更旧的那份会被自动清理，不用手动删。</p>'
+    + '<h2>' + L.k029 + '</h2>'
+    + '<p>' + L.k030 + '</p>'
     + '</section>'
-    + '<details hidden class="su-raw"><summary>原始回执</summary><pre>'
+    + '<details hidden class="su-raw"><summary>' + L.k031 + '</summary><pre>'
     + escapeHtml(JSON.stringify(env.data)) + '</pre></details>'
     + '</div>'
     + '<div class="su-toast" id="suToast" role="status"></div>'

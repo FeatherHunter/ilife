@@ -66,7 +66,7 @@ export const PICKER_INLINE_MAX_BYTES = 400 * 1024;
 function relTime(date: string, today: string): string {
   const days = Math.round((Date.parse(today + 'T12:00:00Z') - Date.parse(date + 'T12:00:00Z')) / 86400000);
   if (!Number.isFinite(days) || days < 0) return '';
-  if (days === 0) return '今天';
+  if (days === 0) return m('skill-calorie.photo-pickerDoc.c063');
   if (days === 1) return m('skill-calorie.photo-pickerDoc.c001');
   if (days < 30) return m('skill-calorie.photo-pickerDoc.c002', { p0: String(days) });
   if (days < 365) return m('skill-calorie.photo-pickerDoc.c003', { p0: String(Math.round(days / 30)) });
@@ -110,13 +110,13 @@ function candidateGridHtml(
       ? ' ' + renderStatusBadge({ status: 'danger', text: m('skill-calorie.photo-pickerDoc.c012') })
       : '';
     return '<figure class="phu-card" data-id="' + p.id + '">' + stage
-      + '<figcaption class="phu-cap"><div class="phu-cap-no">照片 ' + p.id + bad + '</div>'
+      + '<figcaption class="phu-cap"><div class="phu-cap-no">' + m('skill-calorie.photo-pickerDoc.c040', { p0: String(p.id) }) + bad + '</div>'
       + chipRow([...tags, shortDate(p.date), rel])
       // #474 口径保留：候选卡不抄文件名（编号／标签／日期／缩略图已够认人）——文件名的落点
       // 是快照那一段的键值行；这一张看不见图时，文件名由上面占位件的原因行点名。
       + '</figcaption></figure>';
   });
-  return '<h2 class="phu-sec" id="phu-candidates">候选照片</h2><div class="phu-grid">' + cards.join('') + '</div>';
+  return '<h2 class="phu-sec" id="phu-candidates">' + m('skill-calorie.photo-pickerDoc.c032') + '</h2><div class="phu-grid">' + cards.join('') + '</div>';
 }
 
 /** 单张快照（#527）：大图 ＋ **键值行**的明细（原来六列小表；只读：选中与复制在此页，删除走写命令）。
@@ -144,7 +144,7 @@ function snapshotHtml(sel: PhotoCard | null, e: PhotoEmbed | null, snapInlined: 
   return '<h2 class="phu-sec" id="phu-snapshot">' + m('skill-calorie.photo-pickerDoc.c061') + '</h2>'
     + '<figure class="phu-card" data-snapshot="' + sel.id + '">' + stage
     + '<figcaption class="phu-cap">'
-    + '<div class="phu-cap-no">快照 照片 ' + sel.id + '</div>'
+    + '<div class="phu-cap-no">' + m('skill-calorie.photo-pickerDoc.c062', { p0: String(sel.id) }) + '</div>'
     + factRows([
       { k: m('skill-calorie.photo-pickerDoc.c018'), v: sel.date + (sel.time === null ? '' : ' ' + sel.time) },
       { k: m('skill-calorie.photo-pickerDoc.c019'), v: rel === '' ? m('skill-calorie.photo-pickerDoc.c020') : rel },

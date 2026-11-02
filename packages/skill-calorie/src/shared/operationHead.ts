@@ -89,7 +89,7 @@ export function operationHead(input: OperationHeadInput): string {
     + '<span class="' + cls + '-icon" aria-hidden="true">' + escapeHtml(icon) + '</span>'
     + renderStatusBadge({ status: tone, text: label })
     + '<h2 class="' + cls + '-title">' + escapeHtml(title) + '</h2>'
-    + '<p class="' + cls + '-id">记录号 ' + (recordId === null ? m('skill-calorie.shared-operationHead.c001') : '#' + recordId) + '</p>'
+    + '<p class="' + cls + '-id">' + m('skill-calorie.shared-operationHead.c005', { p0: recordId === null ? m('skill-calorie.shared-operationHead.c001') : '#' + recordId }) + '</p>'
     + '<p class="' + cls + '-time">' + escapeHtml(source === undefined ? actionAt : actionAt + ' · ' + source) + '</p>'
     + '</div>';
 }

@@ -92,13 +92,13 @@ function axisHtml(model: CashWaterlineWaterlineModel): string {
 function lowListHtml(model: CashWaterlineWaterlineModel): string {
   if (model.lowCount === 0) return '';
   const parts: string[] = ['<div class="' + cashWaterlineSlot('lowlist') + '">',
-    '<p class="' + cashWaterlineSlot('low-title') + '">跌破底线的日子 · ' + esc(String(model.lowCount)) + ' 天</p>',
+    '<p class="' + cashWaterlineSlot('low-title') + '">' + esc(m('base-render.components-cash-waterline-render.c014', { p0: String(model.lowCount) })) + '</p>',
     '<ul class="' + cashWaterlineSlot('low-rows') + '">'];
   for (const row of model.lowRows) {
     parts.push('<li class="' + cashWaterlineSlot('low-row') + '">'
       + '<b class="' + cashWaterlineSlot('low-day') + '">' + esc(row.label) + '</b>'
-      + '<span class="' + cashWaterlineSlot('low-spend') + '">那天花 ' + esc(row.spendText) + '</span>'
-      + '<span class="' + cashWaterlineSlot('low-pct') + '">余量 ' + esc(row.pctText) + '</span></li>');
+      + '<span class="' + cashWaterlineSlot('low-spend') + '">' + esc(m('base-render.components-cash-waterline-render.c015', { p0: row.spendText })) + '</span>'
+      + '<span class="' + cashWaterlineSlot('low-pct') + '">' + esc(m('base-render.components-cash-waterline-render.c016', { p0: row.pctText })) + '</span></li>');
   }
   parts.push('</ul></div>');
   return parts.join('');
@@ -109,7 +109,7 @@ function renderWaterline(model: CashWaterlineWaterlineModel): string {
   const parts: string[] = [headHtml(model)];
   parts.push('<div class="' + cashWaterlineSlot('plot') + '" role="img" aria-label="' + esc(model.ariaLabel) + '">');
   parts.push('<span class="' + cashWaterlineSlot('thr') + '" aria-hidden="true">'
-    + '<b class="' + cashWaterlineSlot('thr-text') + '">底线 ' + esc(model.thresholdText) + '</b></span>');
+    + '<b class="' + cashWaterlineSlot('thr-text') + '">' + esc(m('base-render.components-cash-waterline-model.c009', { p0: model.thresholdText })) + '</b></span>');
   for (const day of model.days) {
     const cls = ' is-' + (day.low ? 'low' : 'keep') + (day.today ? ' is-today' : '');
     parts.push('<span class="' + cashWaterlineSlot('col') + cls + '" aria-hidden="true">'

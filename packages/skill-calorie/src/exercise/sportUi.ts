@@ -190,8 +190,8 @@ export function fieldsBlock(labels: readonly string[], filled?: number): string 
   const total = labels.length;
   const tail = filled === undefined || filled >= total
     ? ''
-    : '<p class="sui-fields-n">本次填了 ' + filled + ' 项，其余为空值</p>';
-  return '<p class="sui-fields-k">写入字段（共 ' + total + ' 项）</p>' + fieldGrid(chips, total) + tail;
+    : '<p class="sui-fields-n">' + m('skill-calorie.exercise-sportUi.c002', { p0: String(filled) }) + '</p>';
+  return '<p class="sui-fields-k">' + m('skill-calorie.exercise-sportUi.c003', { p0: String(total) }) + '</p>' + fieldGrid(chips, total) + tail;
 }
 
 /** 明细表要不要出的形状决定（#543 视觉复评 P1-B）：**删类两条记录起才出**——一条记录时上面的

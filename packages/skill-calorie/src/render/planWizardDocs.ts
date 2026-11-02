@@ -82,10 +82,10 @@ function moveRow(mv: WizardMovement): string {
 function sessionBlock(s: WizardSession, id: string): string {
   const head = '<div class="ilw-sess-head"><span class="ilw-sess-name">' + s.label + '</span>'
     + (s.time === '' ? '' : '<span class="ilw-sess-time">' + s.time + '</span>')
-    + '<span class="ilw-sess-count">' + s.moves.length + ' 个动作</span></div>';
+    + '<span class="ilw-sess-count">' + m('skill-calorie.render-planWizardDocs.c035', { p0: String(s.moves.length) }) + '</span></div>';
   if (s.rest) return '<div class="ilw-sess ilw-sess-rest">' + head + '</div>';
   const body = s.moves.length === 0
-    ? '<p class="ilw-gap">这个时段还没有动作——想加就说「加训练动作」</p>'
+    ? '<p class="ilw-gap">' + m('skill-calorie.render-planWizardDocs.c036') + '</p>'
     : '<ul class="ilw-moves">' + s.moves.map(moveRow).join('') + '</ul>';
   return '<div class="ilw-sess">' + head + body + tick(id, m('skill-calorie.render-planWizardDocs.c001')) + '</div>'
     + how(id, 3);
@@ -96,10 +96,10 @@ function dayBlock(d: WizardDay, weekId: string, dayIdx: number): string {
   const dow = dowOf(d.dow) ?? m('skill-calorie.render-planWizardDocs.c002', { p0: String(d.dow) });
   const id = weekId + '-d' + dayIdx;
   const body = d.sessions.length === 0
-    ? '<p class="ilw-gap">这天还没有安排——要排就说「定一周计划」，要标休息就说「定休息日」</p>'
+    ? '<p class="ilw-gap">' + m('skill-calorie.render-planWizardDocs.c038') + '</p>'
     : d.sessions.map((s, i) => sessionBlock(s, id + '-s' + i)).join('');
   return '<div class="ilw-day"><div class="ilw-day-head"><span class="ilw-day-name">' + dow + '</span>'
-    + '<span class="ilw-day-count">' + d.sessions.length + ' 个时段</span></div>'
+    + '<span class="ilw-day-count">' + m('skill-calorie.render-planWizardDocs.c037', { p0: String(d.sessions.length) }) + '</span></div>'
     + body + tick(id, m('skill-calorie.render-planWizardDocs.c003')) + '</div>' + how(id, 2);
 }
 
@@ -107,27 +107,27 @@ function dayBlock(d: WizardDay, weekId: string, dayIdx: number): string {
 function weekBlock(w: WizardWeek, idx: number): string {
   const id = 'w' + idx;
   const body = w.days.length === 0
-    ? '<p class="ilw-gap">这一周还没排——想排就说「定一周计划」</p>'
+    ? '<p class="ilw-gap">' + m('skill-calorie.render-planWizardDocs.c039') + '</p>'
     : w.days.map((d, i) => dayBlock(d, id, i)).join('');
   return '<section class="ilw-week"><div class="ilw-week-head">'
-    + '<span class="ilw-week-name">第 ' + w.week + ' 周</span>'
-    + '<span class="ilw-week-count">' + w.days.length + ' 天</span>'
+    + '<span class="ilw-week-name">' + m('skill-calorie.render-workoutPlanLook.c008', { p0: String(w.week) }) + '</span>'
+    + '<span class="ilw-week-count">' + m('skill-calorie.render-html.c009', { p0: String(w.days.length) }) + '</span>'
     + tick(id, m('skill-calorie.render-planWizardDocs.c004')) + '</div>' + body + how(id, 1) + '</section>';
 }
 
 /** 计划级（时间线的根）：名字、说明、起日、等级、器械 ＋ 改法。 */
 function planHead(t: WizardTree): string {
   const facts: string[] = [
-    t.startDate === '' ? '' : '<span class="ilw-fact"><b>起日</b>' + t.startDate + '</span>',
-    t.level === '' ? '' : '<span class="ilw-fact"><b>等级</b>' + t.level + '</span>',
-    t.equipment.length === 0 ? '' : '<span class="ilw-fact"><b>器械</b>' + listJoin(currentRenderLanguage(), t.equipment) + '</span>',
+    t.startDate === '' ? '' : '<span class="ilw-fact"><b>' + m('skill-calorie.render-planWizardDocs.c041') + '</b>' + t.startDate + '</span>',
+    t.level === '' ? '' : '<span class="ilw-fact"><b>' + m('skill-calorie.render-planWizardDocs.c042') + '</b>' + t.level + '</span>',
+    t.equipment.length === 0 ? '' : '<span class="ilw-fact"><b>' + m('skill-calorie.render-planWizardDocs.c043') + '</b>' + listJoin(currentRenderLanguage(), t.equipment) + '</span>',
   ].filter((x) => x !== '');
   return '<div class="ilw-plan"><div class="ilw-plan-head">'
     + '<span class="ilw-plan-name">' + t.title + '</span>'
     + '<span class="ilw-plan-count">'
-    + '<span class="ilw-stat">' + t.totals.weeks + ' 周</span>'
-    + '<span class="ilw-stat">' + t.totals.sessions + ' 个时段</span>'
-    + '<span class="ilw-stat">' + t.totals.movements + ' 个动作</span></span></div>'
+    + '<span class="ilw-stat">' + m('skill-calorie.render-planWizardDocs.c040', { p0: String(t.totals.weeks) }) + '</span>'
+    + '<span class="ilw-stat">' + m('skill-calorie.render-planWizardDocs.c037', { p0: String(t.totals.sessions) }) + '</span>'
+    + '<span class="ilw-stat">' + m('skill-calorie.render-planWizardDocs.c035', { p0: String(t.totals.movements) }) + '</span></span></div>'
     + (t.description === '' ? '' : '<p class="ilw-plan-desc">' + t.description + '</p>')
     + (facts.length === 0 ? '' : '<div class="ilw-facts">' + facts.join('') + '</div>')
     + tick('plan', m('skill-calorie.render-planWizardDocs.c005')) + how('plan', 0) + '</div>';
@@ -143,9 +143,9 @@ export function buildPlanWizardDoc(v: PlanWizardView, opts: {
   const parts: string[] = [
     '<div class="ilw-verdict' + (ok ? ' is-ok' : ' is-warn') + '">'
       + '<span class="ilw-verdict-word">' + (ok ? m('skill-calorie.render-planWizardDocs.c006') : m('skill-calorie.render-planWizardDocs.c007')) + '</span>'
-      + '<span class="ilw-verdict-num">错误 ' + v.errorCount + ' 项</span>'
-      + '<span class="ilw-verdict-num">警告 ' + v.warningCount + ' 项</span>'
-      + '<span class="ilw-verdict-num">已检查 ' + v.checkedSessions + ' 个训练场次</span>'
+      + '<span class="ilw-verdict-num">' + m('skill-calorie.render-planWizardDocs.c044', { p0: String(v.errorCount) }) + '</span>'
+      + '<span class="ilw-verdict-num">' + m('skill-calorie.render-planWizardDocs.c045', { p0: String(v.warningCount) }) + '</span>'
+      + '<span class="ilw-verdict-num">' + m('skill-calorie.render-planWizardDocs.c046', { p0: String(v.checkedSessions) }) + '</span>'
       + '</div>',
     // 「时间线怎么读」一句话（口径行），别让它变成一段说明书。
     renderCaliberLine(m('skill-calorie.render-planWizardDocs.c008')),
@@ -187,7 +187,7 @@ export function buildPlanWizardDoc(v: PlanWizardView, opts: {
     // 「你已改的内容 N」：CSS 计数器现算，元素排在全部勾选之后、用绝对定位钉到区块右上角
     // （计数器取的是**文档顺序上它之前**的累计值，排最后才数得全）。
     content: pageChromeCss(960) + planWizardCss() + '<div class="ilw-wiz">' + parts.join('')
-      + '<span class="ilw-count">你已改的内容 <b></b></span></div>',
+      + '<span class="ilw-count">' + m('skill-calorie.render-planWizardDocs.c047') + ' <b></b></span></div>',
     pageUi: true,
   });
 }

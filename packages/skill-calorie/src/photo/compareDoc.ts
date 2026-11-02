@@ -80,7 +80,7 @@ function fileKeyOf(photoPath: string): string {
  *  「今天」取自 `todayISO()`（唯一出处；#718 起「今天」由真实时钟给，钉钟走 `test/helpers/config-test.mjs` 的 `pinProcessClock`）。 */
 function relTime(date: string, today: string): string {
   const days = Math.round((Date.parse(today + 'T12:00:00Z') - Date.parse(date + 'T12:00:00Z')) / 86400000);
-  if (days <= 0) return '今天';
+  if (days <= 0) return m('skill-calorie.photo-compareDoc.c028');
   if (days === 1) return m('skill-calorie.photo-compareDoc.c001');
   if (days < 30) return m('skill-calorie.photo-compareDoc.c002', { p0: String(days) });
   if (days < 365) return m('skill-calorie.photo-compareDoc.c003', { p0: String(Math.round(days / 30)) });
@@ -160,11 +160,11 @@ function recordTable(c: CompareData, dropped: ReadonlySet<string>): string {
   const withStatus = rows.some((r) => r['status'] !== '');
   const columns = [
     { key: 'id', label: m('skill-calorie.photo-compareDoc.c018'), align: 'right' as const },
-    { key: 'date', label: '日期' },
+    { key: 'date', label: m('skill-calorie.photo-compareDoc.c029') },
     { key: 'tags', label: m('skill-calorie.photo-compareDoc.c019') },
-    ...(withStatus ? [{ key: 'status', label: '状态' }] : []),
+    ...(withStatus ? [{ key: 'status', label: m('skill-calorie.photo-compareDoc.c030') }] : []),
   ];
-  return '<section><h2 class="' + H2_CLASS + '">两张照片的原始记录</h2>'
+  return '<section><h2 class="' + H2_CLASS + '">' + m('skill-calorie.photo-compareDoc.c027') + '</h2>'
     + renderDataTable({ columns, rows, emptyText: m('skill-calorie.photo-compareDoc.c020') }) + '</section>';
 }
 

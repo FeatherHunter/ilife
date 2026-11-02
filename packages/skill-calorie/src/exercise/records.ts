@@ -256,7 +256,7 @@ function truncationText(v: RecordsView, shown: number): string | null {
 function windowCard(v: RecordsView): Card {
   return {
     id: 'sec-window',
-    label: '窗口',
+    label: m('skill-calorie.exercise-records.c055'),
     html: factStrip(v.start === v.end
       ? [{ k: m('skill-calorie.exercise-records.c045'), v: v.start }]
       : [{ k: m('skill-calorie.exercise-records.c018'), v: v.start }, { k: m('skill-calorie.exercise-records.c019'), v: v.end }]),
@@ -271,7 +271,7 @@ function figureCard(v: RecordsView): Card {
   return {
     id: 'sec-figures',
     label: m('skill-calorie.exercise-records.c020'),
-    html: '<h2 style="margin:0;font-size:15px;font-weight:700">指标</h2>' + renderKpiGrid([
+    html: '<h2 style="margin:0;font-size:15px;font-weight:700">' + m('skill-calorie.exercise-records.c020') + '</h2>' + renderKpiGrid([
       { label: m('skill-calorie.exercise-records.c021'), value: String(v.sessions), unit: m('skill-calorie.exercise-records.c022') },
       { label: m('skill-calorie.exercise-records.c023'), value: fmtNum(v.totalBurned), unit: m('skill-calorie.exercise-records.c024') },
       { label: m('skill-calorie.exercise-records.c025'), value: v.totalMinutes === null ? '—' : fmtNum(v.totalMinutes, 0), unit: m('skill-calorie.exercise-records.c054') },

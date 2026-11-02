@@ -210,8 +210,8 @@ export function buildCalorieTrendDoc(v: CalorieTrendView): string {
     }),
     /* #160 返工：图例只留目标值（图里橙虚线那位的名字）；空白日口径降级成一句图下小字，
      * 位置同在该图卡片之后（原来那句话一页出现两次：图题一次、图例一次）。 */
-    '<div class="legend"><span><i class="b"></i>目标' + s.target + '卡</span>'
-      + '<span>没记录的那天不按 0 算，只在有记录的两天之间连线</span></div>',
+    '<div class="legend"><span><i class="b"></i>' + m('skill-calorie.render-trendMiscPortDocs.c150', { p0: String(s.target) }) + '</span>'
+      + '<span>' + m('skill-calorie.render-trendMiscPortDocs.c151') + '</span></div>',
     dataCopyArea(m('skill-calorie.render-trendMiscPortDocs.c024'), {
       envelope: {
         version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.calorie-trend',
@@ -291,7 +291,7 @@ export function buildLongTrendDoc(v: LongTrendView): string {
         },
       },
     }),
-    '<div class="legend"><span>没记录的那天不按 0 算，只在有记录的两天之间连线</span></div>',
+    '<div class="legend"><span>' + m('skill-calorie.render-trendMiscPortDocs.c151') + '</span></div>',
   ];
   let charts = true;
   if (weighed.length > 0 && weightAxis !== null) {

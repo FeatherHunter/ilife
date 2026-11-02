@@ -162,7 +162,7 @@ export function buildPhotoLogWizardDoc(v: PhotoLogWizardView, command: string): 
     sectionHead(m('skill-calorie.photo-wizardPortDocs.c015')),
     chipRow([...PHOTO_LOG_TAGS]),
     // #474：段前一句引导——复制区里是给 AI 的英文命令，先说清「整段复制粘过去就行」。
-    '<p>下面这段是给 AI 的指令：整段复制粘过去就行，英文命令不用看懂。</p>',
+    '<p>' + m('skill-calorie.photo-wizardPortDocs.c099') + '</p>',
     promptCopyArea(v.prompt, m('skill-calorie.photo-wizardPortDocs.c016')),
     copyAreaOf(envelope, command, logSourceLog()),
   ].join('');
@@ -343,7 +343,7 @@ export function buildGifPlannerDoc(v: GifPlannerView, command: string): string {
     noticeBar(formNotice()),
     // #655 缺陷 3：表单说明原是一段 13px 灰字，与新提示条抢同一格 → 收成一条 12px 辅助行。
     //  `；` 是并列语义，拆成两句（`audit-separators.mjs` 的 R2 节点级判据：#527 起本仓不许拿它串行）。
-    '<p class="phu-note">下面每项都已填好常用值，点开哪一项就改哪一项。改完把下面那段指令复制给 AI。</p>',
+    '<p class="phu-note">' + m('skill-calorie.photo-wizardPortDocs.c100') + '</p>',
     gifForm(v),
     promptCopyArea(v.prompt, m('skill-calorie.photo-wizardPortDocs.c085')),
     copyAreaOf(envelope, command, logSourcePlanner()),

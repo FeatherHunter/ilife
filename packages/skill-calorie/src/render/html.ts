@@ -69,14 +69,14 @@ function fmt(n: number | null | undefined, suffix = ''): string {
 }
 
 function tagChips(tags: string[]): string {
-  if (tags.length === 0) return '<span style="color:' + token('muted') + '">无标签</span>';
+  if (tags.length === 0) return '<span style="color:' + token('muted') + '">' + m('skill-calorie.photo-photo.c015') + '</span>';
   return tags.map((t) => '<span class="' + cx('chip') + '" style="border:1px solid ' + token('border') + '">' + escapeHtml(t) + '</span>').join('');
 }
 
 function fileBadge(exists: boolean | null): string {
-  if (exists === null) return '<span style="color:' + token('muted') + '">文件未校验</span>';
-  if (exists) return '<span style="color:' + token('accent') + '">文件存在</span>';
-  return '<span style="color:' + token('danger') + '">文件缺失</span>';
+  if (exists === null) return '<span style="color:' + token('muted') + '">' + m('skill-calorie.render-html.c905') + '</span>';
+  if (exists) return '<span style="color:' + token('accent') + '">' + m('skill-calorie.render-html.c906') + '</span>';
+  return '<span style="color:' + token('danger') + '">' + m('skill-calorie.render-html.c907') + '</span>';
 }
 
 /** 照片卡：文件名引用 + 标签 + 日期 + 存在位（无二进制内嵌）。 */
@@ -94,7 +94,7 @@ export function renderPhotoReceiptHtml(r: CrudReceipt): string {
     ? r.items.map((it) => '<div class="' + cx('item') + '">#' + escapeHtml(String(it.id ?? '')) + ' ' +
       escapeHtml(it.file ?? it.photoPath ?? it.detail ?? '') + ' ' + escapeHtml(it.status) +
       (it.reason ? '（' + escapeHtml(it.reason) + '）' : '') + '</div>').join('')
-    : '<div style="color:' + token('muted') + '">无逐张明细</div>';
+    : '<div style="color:' + token('muted') + '">' + m('skill-calorie.render-html.c908') + '</div>';
   const diff = r.tagDiff
     ? '<div>' + m('skill-calorie.render-html.c901', {
       p0: escapeHtml(listJoin(currentRenderLanguage(), r.tagDiff.before) || '—'), p1: escapeHtml(listJoin(currentRenderLanguage(), r.tagDiff.after) || '—'),
@@ -104,7 +104,7 @@ export function renderPhotoReceiptHtml(r: CrudReceipt): string {
     ? '<div>' + m('skill-calorie.render-html.c902', { p0: escapeHtml(r.distance.tag), p1: String(r.distance.days) }) + '</div>'
     : '';
   const body = '<div class="' + cx('receipt') + '">' + escapeHtml(r.summary) + '</div>' +
-    (r.noChange ? '<div style="color:' + token('danger') + '">未产生实际变化</div>' : '') +
+    (r.noChange ? '<div style="color:' + token('danger') + '">' + m('skill-calorie.render-html.c909') + '</div>' : '') +
     diff + dist + items;
   return pageShell('calorie', 'ilife:calorie:photo:receipt', m('skill-calorie.render-html.c002', { p0: String(r.scene) }), body);
 }
@@ -115,7 +115,7 @@ export function renderGalleryHtml(g: GalleryData): string {
     kpi(m('skill-calorie.render-html.c004'), m('skill-calorie.render-html.c005', { p0: String(g.totalCount) }), g.filters.dateFrom + ' ~ ' + g.filters.dateTo) +
     kpi(m('skill-calorie.render-html.c006'), g.filters.tag || m('skill-calorie.render-html.c007')) +
     kpi(m('skill-calorie.render-html.c008'), g.daysSinceLast === null ? '—' : m('skill-calorie.render-html.c009', { p0: String(g.daysSinceLast) })) + '</div>' +
-    '<div class="' + cx('section') + '"><h2>标签计数</h2><div class="' + cx('grid') + '">' + counts + '</div></div>' +
+    '<div class="' + cx('section') + '"><h2>' + m('skill-calorie.render-html.c910') + '</h2><div class="' + cx('grid') + '">' + counts + '</div></div>' +
     '<div class="' + cx('grid') + '">' + g.photos.map(photoCardHtml).join('') + '</div>';
   return pageShell('calorie', 'ilife:calorie:photo:gallery', m('skill-calorie.render-html.c010', { p0: String(g.totalCount) }), body);
 }
@@ -124,8 +124,8 @@ export function renderCompareHtml(c: CompareData): string {
   const body = '<div class="' + cx('grid') + '">' +
     kpi(m('skill-calorie.render-html.c011'), m('skill-calorie.render-html.c012', { p0: String(c.intervalDays) }), c.orderByDate ? m('skill-calorie.render-html.c013') : m('skill-calorie.render-html.c014')) +
     (c.crossTagWarning
-      ? '<div style="color:' + token('danger') + '">跨标签对比警告：非同标签对比，可比性较弱</div>'
-      : '<div style="color:' + token('accent') + '">同标签对比</div>') + '</div>' +
+      ? '<div style="color:' + token('danger') + '">' + m('skill-calorie.render-html.c911') + '</div>'
+      : '<div style="color:' + token('accent') + '">' + m('skill-calorie.render-html.c912') + '</div>') + '</div>' +
     '<div class="' + cx('grid') + '">' + photoCardHtml(c.photo1) + photoCardHtml(c.photo2) + '</div>';
   return pageShell('calorie', 'ilife:calorie:photo:compare', m('skill-calorie.render-html.c015', { p0: String(c.intervalDays) }), body);
 }
@@ -198,8 +198,8 @@ export function renderGoalConfigHtml(g: GoalConfig): string {
     kpi(m('skill-calorie.render-html.c033'), g.paused ? m('skill-calorie.render-html.c034') : m('skill-calorie.render-html.c035'), g.pausedAt ?? '') +
     '</div>' +
     (g.consistent
-      ? '<div class="' + cx('ok') + '" style="color:' + token('accent') + '">宏量自洽（差 ' + g.diffKcal + ' 卡）</div>'
-      : '<div class="' + cx('warn') + '" style="color:' + token('danger') + '">宏量与热量差 ' + g.diffKcal + ' 卡，建议复核</div>');
+      ? '<div class="' + cx('ok') + '" style="color:' + token('accent') + '">' + m('skill-calorie.render-html.c913', { p0: String(g.diffKcal) }) + '</div>'
+      : '<div class="' + cx('warn') + '" style="color:' + token('danger') + '">' + m('skill-calorie.render-html.c914', { p0: String(g.diffKcal) }) + '</div>');
   return pageShell('calorie', 'ilife:calorie:goal-config', m('skill-calorie.render-html.c036'), body);
 }
 
@@ -216,7 +216,7 @@ export function renderGoalRecommendHtml(g: GoalRecommend): string {
     '</div>' +
     '<div style="color:' + token('muted') + '">' + r.planReasons.map((x) => escapeHtml(x)).join('<br>') + '</div>' +
     (r.missing.length > 0
-      ? '<div class="' + cx('warn') + '" style="color:' + token('danger') + '">缺项用默认补齐：' + escapeHtml(listJoin(currentRenderLanguage(), r.missing)) + '</div>'
+      ? '<div class="' + cx('warn') + '" style="color:' + token('danger') + '">' + m('skill-calorie.render-html.c915', { p0: escapeHtml(listJoin(currentRenderLanguage(), r.missing)) }) + '</div>'
       : '');
   return pageShell('calorie', 'ilife:calorie:goal-recommend', m('skill-calorie.render-html.c046', { p0: String(r.profileLabel) }), body);
 }
@@ -254,8 +254,8 @@ export function renderGoalStatusHtml(g: GoalStatus): string {
     kpi(m('skill-calorie.render-html.c069'), fmt(g.nutrition.water_goal, ' ml')) +
     '</div>' +
     (g.paused
-      ? '<div class="' + cx('warn') + '" style="color:' + token('danger') + '">记录照常，仅目标暂停</div>'
-      : '<div class="' + cx('ok') + '" style="color:' + token('accent') + '">目标进行中</div>');
+      ? '<div class="' + cx('warn') + '" style="color:' + token('danger') + '">' + m('skill-calorie.render-html.c916') + '</div>'
+      : '<div class="' + cx('ok') + '" style="color:' + token('accent') + '">' + m('skill-calorie.goal-resultDocs.c164') + '</div>');
   return pageShell('calorie', 'ilife:calorie:goal-status', m('skill-calorie.render-html.c070'), body);
 }
 
@@ -296,12 +296,12 @@ export function renderDietReviewHtml(r: DietReview): string {
     : '—';
   const meals = r.byMeal.map((s) => kpi(s.meal, m('skill-calorie.render-html.c095', { p0: String(s.totalCalories) }), m('skill-calorie.render-html.c096', { p0: String(s.days) }))).join('');
   const body =
-    '<div class="' + cx('section') + '"><h2>复盘 ' + escapeHtml(r.start) + ' ~ ' + escapeHtml(r.end) + '</h2>' +
+    '<div class="' + cx('section') + '"><h2>' + m('skill-calorie.render-html.c917', { p0: escapeHtml(r.start), p1: escapeHtml(r.end) }) + '</h2>' +
     '<div class="' + cx('grid') + '">' +
     kpi(m('skill-calorie.render-html.c097'), t, m('skill-calorie.render-html.c098', { p0: String(r.loggedDays) })) +
     kpi(m('skill-calorie.render-html.c099'), macroText) +
     '</div></div>' +
-    '<div class="' + cx('section') + '"><h2>按餐汇总（窗口跟 MEAL_WINDOWS，加餐=下午茶+夜宵）</h2>' +
+    '<div class="' + cx('section') + '"><h2>' + m('skill-calorie.render-html.c918') + '</h2>' +
     '<div class="' + cx('grid') + '">' + meals + '</div></div>';
   return pageShell('calorie', 'ilife:calorie:diet-review', m('skill-calorie.render-html.c100', { p0: String(r.start), p1: String(r.end) }), body);
 }
@@ -341,7 +341,7 @@ export function renderAllRankingsHtml(a: AllRankings): string {
     .join('');
   const body =
     '<div class="' + cx('grid') + '">' + parts + '</div>' +
-    '<div style="color:' + token('muted') + '">' + escapeHtml(a.start) + ' ~ ' + escapeHtml(a.end) + ' · ' + a.okCount + '/5 榜有数据</div>';
+    '<div style="color:' + token('muted') + '">' + m('skill-calorie.render-html.c919', { p0: escapeHtml(a.start), p1: escapeHtml(a.end), p2: String(a.okCount) }) + '</div>';
   return pageShell('calorie', 'ilife:calorie:ranking-all', m('skill-calorie.render-html.c120'), body);
 }
 

@@ -332,7 +332,7 @@ export function renderTocBlock(input: TocBlockInput): string {
     links.push('<a href="#' + esc(reqText(item.id, 'renderTocBlock: items[].id')) + '">'
       + esc(reqText(item.text, 'renderTocBlock: items[].text')) + '</a>');
   }
-  return '<nav class="' + pageLevelBlock('toc') + '" aria-label="页内导航">' + links.join('') + '</nav>';
+  return '<nav class="' + pageLevelBlock('toc') + '" aria-label="' + esc(m('base-render.blocks.c012')) + '">' + links.join('') + '</nav>';
 }
 
 /** 口径行的并列分隔符＝公共层那条**唯一**的并列分隔符（`PARALLEL_SEP`，定义见 B-01 区开头）。 */

@@ -116,7 +116,7 @@ function sheetRows(v: ProfileSettingView): SheetRow[] {
     if (f.camel === 'age') { row.unit = m('skill-calorie.profile-sheetDoc.c006'); row.kind = 'number'; }
     if (f.camel === 'gender') {
       row.kind = 'select';
-      row.options = [{ value: 'male', label: '男' }, { value: 'female', label: '女' }];
+      row.options = [{ value: 'male', label: m('skill-calorie.profile-sheetDoc.c056') }, { value: 'female', label: m('skill-calorie.profile-sheetDoc.c057') }];
       row.before = genderLabel(beforeRaw); row.after = genderLabel(afterRaw);
       row.note = beforeRaw === afterRaw ? m('skill-calorie.profile-sheetDoc.c007') : m('skill-calorie.profile-sheetDoc.c008');
     }
@@ -357,11 +357,11 @@ export function buildChangeSheetDoc(v: ProfileSettingView): string {
     SHEET_CSS,
     '<div class="cs">',
     '<div class="cs-head"><h2 class="cs-title">' + sheetTitle(wake) + '</h2>'
-      + '<span class="cs-badge">待确认</span></div>',
+      + '<span class="cs-badge">' + m('skill-calorie.profile-sheetDoc.c048') + '</span></div>',
     /* 单号行（用户 2026-09-24 裁定）：**去掉 `·` 分隔符、去掉重复事实**——「来源 基础信息／原话」眉标与页题
        已经写着，再抄一遍只让这一行变长；留下的两件＝单据身份 ＋ 唯一的操作提示，左右各一件，窄屏自然折行。 */
-    '<p class="cs-meta"><span>单号 ' + sheetNo(nowStamp()) + '</span>'
-      + '<span class="cs-meta-hint">点「将改为」即可改</span></p>',
+    '<p class="cs-meta"><span>' + m('skill-calorie.profile-sheetDoc.c058', { p0: String(sheetNo(nowStamp())) }) + '</span>'
+      + '<span class="cs-meta-hint">' + m('skill-calorie.profile-sheetDoc.c059') + '</span></p>',
     '<div class="cs-sum">' + renderFactStrip({
       items: [
         { label: m('skill-calorie.profile-sheetDoc.c015'), value: m('skill-calorie.profile-sheetDoc.c016', {
@@ -372,7 +372,7 @@ export function buildChangeSheetDoc(v: ProfileSettingView): string {
     }) + '</div>',
     '<table class="cs-diff">',
     '<colgroup><col style="width:92px"><col style="width:150px"><col><col style="width:176px"></colgroup>',
-    '<thead><tr><th>字段</th><th>当前</th><th>将改为</th><th>影响</th></tr></thead><tbody>',
+    '<thead><tr><th>' + m('skill-calorie.diet-receipt.c038') + '</th><th>' + m('skill-calorie.render-html.c212') + '</th><th>' + m('skill-calorie.profile-sheetDoc.c060') + '</th><th>' + m('skill-calorie.profile-sheetDoc.c017') + '</th></tr></thead><tbody>',
     rows.map((r) => '<tr data-row="' + r.key + '"><td>' + r.label + '</td>'
       + '<td><span class="cs-was" data-was="' + r.key + '">' + r.before + (r.unit === '' ? '' : ' ' + r.unit) + '</span></td>'
       + '<td>' + renderEditableValue({
@@ -390,7 +390,7 @@ export function buildChangeSheetDoc(v: ProfileSettingView): string {
       copyLog: { actionId: CALORIE_COPY_ACTION.actionId, label: m('skill-calorie.profile-sheetDoc.c019'), text: instruction },
       buttons: [{ label: m('skill-calorie.profile-sheetDoc.c020'), kind: 'ghost', actionId: SHEET_RESET_ACTION, disabled: true }],
     }),
-    '<p class="cs-foot-note">按下去＝把这句话交给 AI 执行：<b id="csSay">' + instruction + '</b></p>',
+    '<p class="cs-foot-note">' + m('skill-calorie.profile-sheetDoc.c061') + '<b id="csSay">' + instruction + '</b></p>',
     '</div>',
     '</div>',
     /* 卡片**下面**那一行：两颗复制按钮（与原型唯一可见差异＝多了这一行，用户 2026-09-24 红框指定）。 */

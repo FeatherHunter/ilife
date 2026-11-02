@@ -179,14 +179,14 @@ function goalCard(v: ExerciseView): Card | null {
   const gap = v.goalGap ?? null;
   const achieved = v.goalAchieved ?? null;
   if (daily === null || total === null || pct === null || gap === null || achieved === null) {
-    return card('sec-goal', m('skill-calorie.render-sportDocs.c016'), '<h2 style="margin:0;font-size:15px;font-weight:700">目标对照</h2>' + emptyGuide({
+    return card('sec-goal', m('skill-calorie.render-sportDocs.c016'), '<h2 style="margin:0;font-size:15px;font-weight:700">' + m('skill-calorie.render-sportDocs.c016') + '</h2>' + emptyGuide({
       icon: '🎯', text: m('skill-calorie.render-sportDocs.c017'),
       hint: m('skill-calorie.render-sportDocs.c018'),
     }));
   }
   const verdict = '<span class="' + part('verdict') + ' ' + (achieved ? 'ok' : 'no') + '">'
     + (achieved ? m('skill-calorie.render-sportDocs.c019') : m('skill-calorie.render-sportDocs.c020', { p0: String(fmtNum(Math.abs(gap), 0)) })) + '</span>';
-  return card('sec-goal', m('skill-calorie.render-sportDocs.c021'), '<h2 style="margin:0;font-size:15px;font-weight:700">目标对照</h2>'
+  return card('sec-goal', m('skill-calorie.render-sportDocs.c021'), '<h2 style="margin:0;font-size:15px;font-weight:700">' + m('skill-calorie.render-sportDocs.c016') + '</h2>'
     + renderKpiGrid([
       { label: m('skill-calorie.render-sportDocs.c022'), value: fmtNum(total, 0), unit: m('skill-calorie.render-sportDocs.c023') },
       { label: m('skill-calorie.render-sportDocs.c024'), value: fmtNum(v.review.totalBurned, 0), unit: m('skill-calorie.render-sportDocs.c025') },
@@ -268,7 +268,7 @@ function typeCard(v: ExerciseView): Card | null {
  *  四格 KPI ／ 目标对照 ／ 每日消耗折线 ／ 类型消耗分布 ／ 逐日明细 ／ 按类型明细 ／ 按分类汇总，逐块判空。 */
 function summaryCards(v: ExerciseView): Card[] {
   const r = v.review;
-  const cards: Card[] = [{ id: 'sec-kpi', label: m('skill-calorie.render-sportDocs.c049'), html: '<h2 style="margin:0;font-size:15px;font-weight:700">核心数字</h2>' + renderKpiGrid(summaryKpi(v)) }];
+  const cards: Card[] = [{ id: 'sec-kpi', label: m('skill-calorie.render-sportDocs.c049'), html: '<h2 style="margin:0;font-size:15px;font-weight:700">' + m('skill-calorie.render-sportDocs.c049') + '</h2>' + renderKpiGrid(summaryKpi(v)) }];
   const goal = goalCard(v);
   if (goal !== null) cards.push(goal);
   const logged = v.series.filter((d: DaySeries) => d.exerciseKcal !== null);
@@ -290,7 +290,7 @@ function summaryCards(v: ExerciseView): Card[] {
     const distNote = r.byType.length > DIST_TOP
       ? '<p class="sui-note">' + escapeHtml(m('skill-calorie.render-sportDocs.c053', { p0: String(DIST_TOP) })) + '</p>'
       : '';
-    cards.push(card('sec-dist', m('skill-calorie.render-sportDocs.c054'), '<h2 style="margin:0;font-size:15px;font-weight:700">类型消耗分布</h2>' + renderDistributionRows({
+    cards.push(card('sec-dist', m('skill-calorie.render-sportDocs.c054'), '<h2 style="margin:0;font-size:15px;font-weight:700">' + m('skill-calorie.render-sportDocs.c054') + '</h2>' + renderDistributionRows({
       rows: top.map((t) => ({
         label: t.type,
         value: m('skill-calorie.render-sportDocs.c055', { p0: String(fmtNum(t.burned, 0)) }),
@@ -474,7 +474,7 @@ export function buildExerciseGoalDoc(v: ExerciseGoalPageInput, cmd?: string): st
   const goalTotal = v.goalTotal;
   const cards: Card[] = [
     card('sec-ring', m('skill-calorie.render-sportDocs.c089'), ringCard(v, v.pct)),
-    card('sec-figures', m('skill-calorie.render-sportDocs.c090'), '<h2 style="margin:0;font-size:15px;font-weight:700">数值对照</h2>' + goalFigures(v, goalTotal)),
+    card('sec-figures', m('skill-calorie.render-sportDocs.c090'), '<h2 style="margin:0;font-size:15px;font-weight:700">' + m('skill-calorie.render-sportDocs.c090') + '</h2>' + goalFigures(v, goalTotal)),
   ];
   const source = footFacts(SOURCE_GOAL(), v.start, v.end, v.days);
   return assembleDocPage({

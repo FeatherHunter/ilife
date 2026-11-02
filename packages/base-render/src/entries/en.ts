@@ -30,6 +30,7 @@ export const en = {
   'base-render.blocks.c009': 'Short by {p1}{p2}',
   'base-render.blocks.c010': 'To fix: ',
   'base-render.blocks.c011': 'In development',
+  'base-render.blocks.c012': 'In-page navigation',
   /* ── contract.ts（渲染契约；#1232 迁入） ── */
   'base-render.contract.c001': 'Not installed [{p1}]. Please install it and try again.',
   /* ── packages/base-render/src/components/bulk-bar/style-column.ts（#1226 迁入） ── */
@@ -1038,10 +1039,14 @@ export const en = {
   'base-render.components-cash-waterline-render.c011': "Out",
   'base-render.components-cash-waterline-render.c012': "Left",
   'base-render.components-cash-waterline-render.c013': "Daily avg",
+  'base-render.components-cash-waterline-render.c014': "Days below the floor · {p0}",
+  'base-render.components-cash-waterline-render.c015': "Spent {p0} that day",
+  'base-render.components-cash-waterline-render.c016': "Headroom {p0}",
   /* ── packages/base-render/src/components/chart-placeholder/render.ts（#1226 迁入） ── */
   'base-render.components-chart-placeholder-render.c001': "This page only shows a placeholder; the rule is not recomputed",
   'base-render.components-chart-placeholder-render.c002': "No conclusion before the real chart is filled in",
   'base-render.components-chart-placeholder-render.c003': "Kinds are subject to the baseline review",
+  'base-render.components-chart-placeholder-render.c004': "Real chart needed",
   /* ── packages/base-render/src/components/command-palette/attrs.ts（#1226 迁入） ── */
   'base-render.components-command-palette-attrs.c001': "Find a page / action",
   'base-render.components-command-palette-attrs.c002': "The one in the page head is the entry point — just click it.",
@@ -1150,6 +1155,9 @@ export const en = {
   'base-render.components-flow-ribbon-render.c001': "{p0} {p1} ({p2} of total)",
   'base-render.components-flow-ribbon-render.c002': "Source · {p0} streams",
   'base-render.components-flow-ribbon-render.c003': "Use · {p0} kinds",
+  'base-render.components-flow-ribbon-render.c004': "Readouts that do not fit a node box · {p0} (that stream is too thin, or its name and amount are wider than the box — every readout is still listed here)",
+  'base-render.components-flow-ribbon-render.c005': "Source ＼ Use",
+  'base-render.components-flow-ribbon-render.c006': "Total",
   /* ── packages/base-render/src/components/goal-stairs/attrs.ts（#1226 迁入） ── */
   'base-render.components-goal-stairs-attrs.c001': "Reached ✓",
   'base-render.components-goal-stairs-attrs.c002': "In progress ▶",
@@ -1201,6 +1209,8 @@ export const en = {
   /* ── packages/base-render/src/components/lookup-index/render.ts（#1226 迁入） ── */
   'base-render.components-lookup-index-render.c001': "Aliases are marked in yellow and not mixed into counts",
   'base-render.components-lookup-index-render.c002': " · {p0} in total",
+  'base-render.components-lookup-index-render.c003': "Lookup anchors",
+  'base-render.components-lookup-index-render.c004': "{p0} rows",
   /* ── packages/base-render/src/components/missing-badge/render.ts（#1226 迁入） ── */
   'base-render.components-missing-badge-render.c001': "Missing",
   'base-render.components-missing-badge-render.c002': "To fill",
@@ -1248,6 +1258,7 @@ export const en = {
   'base-render.components-portion-gauge-model.c008': "Rule: the left column is always the unit the recipe uses (servings, bowls, bunches), the right is always the unit the nutrition database accepts (g). The middle is this dish's conversion factor; when the factor changes, say which recipe version changed it and never quietly change the number. An ingredient with no conversion factor is not drawn as a row at all — the note below only says how many are still unconverted.",
   /* ── packages/base-render/src/components/portion-gauge/render.ts（#1226 迁入） ── */
   'base-render.components-portion-gauge-render.c001': "{p0} ingredients still have no conversion",
+  'base-render.components-portion-gauge-render.c002': "Recipe unit",
   /* ── packages/base-render/src/components/drag-sort/attrs.ts（#1226 迁入） ── */
   'base-render.components-drag-sort-attrs.c001': "Click a handle to pick up a row. Click another row to drop it.",
   'base-render.components-drag-sort-attrs.c002': "Cancel and put back",
@@ -2443,12 +2454,20 @@ export const en = {
   'base-render.components-radar-profile-fields.c005': "{p0} this period {p1}{p2}",
   /* ── packages/base-render/src/components/relation-picker/render.ts（#1227 迁入） ── */
   'base-render.components-relation-picker-render.c001': "{p0} items",
+  'base-render.components-relation-picker-render.c002': "Used",
+  'base-render.components-relation-picker-render.c003': "Click \"Change\" to pick again (the field row and this row always read the same value)",
   /* ── packages/base-render/src/components/scatter-fit/render.ts（#1227 迁入） ── */
   'base-render.components-scatter-fit-render.c001': "strongest {p0}",
+  'base-render.components-scatter-fit-render.c002': "Lag",
+  'base-render.components-scatter-fit-render.c003': "Correlation strength (half to each side of the centre line = ±1)",
+  'base-render.components-scatter-fit-render.c004': "Coefficient",
   /* ── packages/base-render/src/components/search-field/render.ts（#1227 迁入） ── */
   'base-render.components-search-field-render.c001': "All",
   'base-render.components-search-field-render.c002': "All",
   'base-render.components-search-field-render.c003': "{noun} matches",
+  'base-render.components-search-field-render.c004': "Search scope",
+  'base-render.components-search-field-render.c005': " · Scope {p0}",
+  'base-render.components-search-field-render.c006': "{p0} {p1} of {p2} {p3}",
   /* ── packages/base-render/src/components/slider-row/render.ts（#1227 迁入） ── */
   'base-render.components-slider-row-render.c001': "this readout",
   'base-render.components-slider-row-render.c002': "Decrease {word}",
@@ -2456,6 +2475,8 @@ export const en = {
   /* ── packages/base-render/src/components/timer-card/render.ts（#1227 迁入） ── */
   'base-render.components-timer-card-render.c001': "used up",
   'base-render.components-timer-card-render.c002': "left",
+  'base-render.components-timer-card-render.c003': "Elapsed",
+  'base-render.components-timer-card-render.c004': "Total",
   /* ── packages/base-render/src/components/window-picker/render.ts（#1227 迁入） ── */
   'base-render.components-window-picker-render.c001': "from",
   'base-render.components-window-picker-render.c002': "to",

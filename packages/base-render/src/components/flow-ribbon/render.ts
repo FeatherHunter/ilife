@@ -116,8 +116,8 @@ function renderSankey(model: FlowRibbonSankeyModel): string {
   parts.push('</div>');
   if (model.readouts.length > 0) {
     parts.push('<div class="' + flowRibbonSlot('readout') + '">',
-      '<p class="' + flowRibbonSlot('readout-hd') + '">装不进节点框的读数 · '
-      + String(model.readouts.length) + ' 条（那一股太细、或名字与金额比框宽——读数在这里一个不少）</p>',
+      '<p class="' + flowRibbonSlot('readout-hd') + '">'
+      + esc(m('base-render.components-flow-ribbon-render.c004', { p0: String(model.readouts.length) })) + '</p>',
       model.readouts.map(readoutRowHtml).join(''), '</div>');
   }
   parts.push(legendHtml(model));
@@ -148,7 +148,7 @@ function renderMatrix(model: FlowRibbonMatrixModel): string {
   const parts: string[] = [headHtml(model),
     '<table class="' + flowRibbonSlot('matrix') + '" aria-label="' + esc(model.ariaLabel) + '">',
     '<thead class="' + flowRibbonSlot('mat-head') + '"><tr>',
-    '<th class="' + flowRibbonSlot('mat-rowhd') + '" scope="col">来源 ＼ 用途</th>'];
+    '<th class="' + flowRibbonSlot('mat-rowhd') + '" scope="col">' + esc(m('base-render.components-flow-ribbon-render.c005')) + '</th>'];
   for (const name of model.useNames) {
     parts.push('<th class="' + flowRibbonSlot('mat-cell') + '" scope="col" ' + FLOW_RIBBON_USE_ATTR + '="'
       + esc(name) + '">' + esc(name) + '</th>');
@@ -162,7 +162,7 @@ function renderMatrix(model: FlowRibbonMatrixModel): string {
     parts.push('</tr>');
   }
   parts.push('</tbody><tfoot class="' + flowRibbonSlot('mat-foot') + '"><tr class="' + flowRibbonSlot('mat-row')
-    + '"><th class="' + flowRibbonSlot('mat-rowhd') + '">合计</th>');
+    + '"><th class="' + flowRibbonSlot('mat-rowhd') + '">' + esc(m('base-render.components-flow-ribbon-render.c006')) + '</th>');
   for (const cell of model.foot) parts.push(matrixCellHtml(cell, 'mat-total'));
   parts.push('</tr></tfoot></table>');
   parts.push(noteHtml(model));

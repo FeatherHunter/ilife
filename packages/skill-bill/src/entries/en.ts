@@ -3547,6 +3547,7 @@ export const en = {
   'skill-bill.help-lookupPage.c019': "✂ cut line",
   'skill-bill.help-lookupPage.c020': "Aliases",
   'skill-bill.help-lookupPage.c021': "Capability index",
+  'skill-bill.help-lookupPage.c022': "{p0} groups are collapsed by default · click a group name to expand it, or a heading above to jump straight to that group.",
   /* ── packages/skill-bill/src/shared/copyArea.ts（#1215 迁入） ── */
   'skill-bill.shared-copyArea.c001': "Ledger data",
   'skill-bill.shared-copyArea.c002': "{p0} · version {p1}",

@@ -77,15 +77,15 @@ function legacyFmt(n: number | null | undefined, suffix = ''): string {
 export function renderHomeHtml(d: HomeData): string {
   const t = d.daily.totals;
   const overNote = d.daily.overCal
-    ? '<div class="' + cx('warn') + '" style="color:' + token('danger') + '">今日已超热量目标</div>'
-    : '<div class="' + cx('ok') + '" style="color:' + token('accent') + '">热量在目标内</div>';
+    ? '<div class="' + cx('warn') + '" style="color:' + token('danger') + '">' + m('skill-calorie.home-homeDocs.c029') + '</div>'
+    : '<div class="' + cx('ok') + '" style="color:' + token('accent') + '">' + m('skill-calorie.home-homeDocs.c030') + '</div>';
   // 目标那格原先借 legacyFmt 的第二参数塞单位：单位串留在实参里就成了「整句里嵌着一句文案」，
   // 迁移器拿不到整句，故先把「值 ＋ 单位」算成一句话（缺值仍是 '—'，不带单位）。
   const goalText = d.calorieGoal === null || d.calorieGoal === undefined ? '—' : m('skill-calorie.home-homeDocs.c002', { p0: String(d.calorieGoal) });
   const body =
     '<div class="' + cx('grid') + '">' +
     kpi(m('skill-calorie.home-homeDocs.c003'), legacyFmt(t.cal, m('skill-calorie.home-homeDocs.c004')), m('skill-calorie.home-homeDocs.c005', { p0: String(goalText) })) +
-    kpi('蛋白', legacyFmt(t.pro, ' g')) +
+    kpi(m('skill-calorie.home-homeDocs.c031'), legacyFmt(t.pro, ' g')) +
     kpi(m('skill-calorie.home-homeDocs.c006'), legacyFmt(d.daily.waterMl, ' ml'), m('skill-calorie.home-homeDocs.c007', { p0: String(legacyFmt(d.waterGoal, ' ml')) })) +
     kpi(m('skill-calorie.home-homeDocs.c008'), legacyFmt(d.deficitToday, m('skill-calorie.home-homeDocs.c009')), m('skill-calorie.home-homeDocs.c010')) +
     kpi(m('skill-calorie.home-homeDocs.c011'), m('skill-calorie.home-homeDocs.c012', { p0: String(d.streakDays) }), m('skill-calorie.home-homeDocs.c013', { p0: String(d.week.loggedDays) })) +

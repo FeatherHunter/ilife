@@ -85,7 +85,7 @@ function detailCommand(id: number): string {
  *  「今天」取自 `todayISO()`（唯一出处；#718 起「今天」由真实时钟给，钉钟走 `test/helpers/config-test.mjs` 的 `pinProcessClock`）。 */
 function relTime(date: string, today: string): string {
   const days = Math.round((Date.parse(today + 'T12:00:00Z') - Date.parse(date + 'T12:00:00Z')) / 86400000);
-  if (days <= 0) return '今天';
+  if (days <= 0) return m('skill-calorie.photo-viewerDoc.c038');
   if (days === 1) return m('skill-calorie.photo-viewerDoc.c001');
   if (days < 30) return m('skill-calorie.photo-viewerDoc.c002', { p0: String(days) });
   if (days < 365) return m('skill-calorie.photo-viewerDoc.c003', { p0: String(Math.round(days / 30)) });
@@ -115,11 +115,11 @@ const NAV_LINK_STYLE = 'min-height:44px;display:inline-flex;align-items:center';
 
 function navHtml(v: ViewerData): string {
   const prev = v.prevId === null
-    ? '<span aria-disabled="true">已是第一张</span>'
-    : '<a style="' + NAV_LINK_STYLE + '" href="#photo-' + v.prevId + '" data-command="' + escapeHtml(detailCommand(v.prevId)) + '">← 上一张<span class="phu-nav-id">编号 ' + v.prevId + '</span></a>';
+    ? '<span aria-disabled="true">' + m('skill-calorie.photo-viewerDoc.c033') + '</span>'
+    : '<a style="' + NAV_LINK_STYLE + '" href="#photo-' + v.prevId + '" data-command="' + escapeHtml(detailCommand(v.prevId)) + '">' + m('skill-calorie.photo-viewerDoc.c034') + '<span class="phu-nav-id">' + m('skill-calorie.photo-viewerDoc.c024', { p0: String(v.prevId) }) + '</span></a>';
   const next = v.nextId === null
-    ? '<span aria-disabled="true">已是最后一张</span>'
-    : '<a style="' + NAV_LINK_STYLE + '" href="#photo-' + v.nextId + '" data-command="' + escapeHtml(detailCommand(v.nextId)) + '"><span class="phu-nav-id">编号 ' + v.nextId + '</span>下一张 →</a>';
+    ? '<span aria-disabled="true">' + m('skill-calorie.photo-viewerDoc.c035') + '</span>'
+    : '<a style="' + NAV_LINK_STYLE + '" href="#photo-' + v.nextId + '" data-command="' + escapeHtml(detailCommand(v.nextId)) + '"><span class="phu-nav-id">' + m('skill-calorie.photo-viewerDoc.c024', { p0: String(v.nextId) }) + '</span>' + m('skill-calorie.photo-viewerDoc.c036') + '</a>';
   return '<div data-nav>' + prev + next + '</div>';
 }
 
@@ -180,7 +180,7 @@ function infoHtml(p: PhotoCard, e: PhotoEmbed, shown: boolean): string {
     { k: m('skill-calorie.photo-viewerDoc.c020'), v: shown ? sizeText(e.bytes) : '' },
     { k: m('skill-calorie.photo-viewerDoc.c021'), vHtml: p.note === null || p.note === '' ? '' : '<span class="phu-segs">' + noteSegments(p.note) + '</span>' },
   ];
-  return '<section><h2 class="' + H2_CLASS + '">这张照片的信息</h2>' + factRows(rows) + '</section>';
+  return '<section><h2 class="' + H2_CLASS + '">' + m('skill-calorie.photo-viewerDoc.c037') + '</h2>' + factRows(rows) + '</section>';
 }
 
 /** 删这张照片 ＋ 回画廊（#526）：两句人话 ＋ 一条动作行（两颗复制按钮，命令住 `data-t`，

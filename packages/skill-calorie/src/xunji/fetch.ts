@@ -112,7 +112,7 @@ export async function fetchTrains(dateStr: string, opts: FetchOptions = {}): Pro
       ok: false,
       failure: {
         error_type: 'auth',
-        message: '未配置训记 KEY（配置文件里的 xunji.key；用 key set <KEY> 写进去）',
+        message: m('skill-calorie.xunji-fetch.c003'),
         retry_after: null,
         raw_body: null,
         code: null,
