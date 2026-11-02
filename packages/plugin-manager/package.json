@@ -49,7 +49,9 @@
     "build:client": "tsdown",
     "prepublishOnly": "npm run build",
     "typecheck": "tsc -p tsconfig.client.json",
-    "test": "node --test test/*.test.mjs"
+    "test": "node --test test/*.test.mjs",
+    "verify:self-check": "dsh-verify self-check",
+    "verify:self-check:json": "dsh-verify self-check --json"
   },
   "dependencies": {
     "base-entries": "0.3.55",
@@ -57,7 +59,7 @@
   },
   "devDependencies": {
     "@types/react": "19.2.18",
-    "dsh-featherhunter-plugin-base": "0.1.5",
+    "dsh-featherhunter-plugin-base": "0.1.7",
     "react": "19.2.8",
     "tsdown": "0.22.14",
     "unrun": "0.3.1"

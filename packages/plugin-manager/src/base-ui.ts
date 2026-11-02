@@ -60,7 +60,7 @@ export function AuthorPlugins(props: { readonly title?: string } = {}): React.Re
  * （base 由它派生 Star 目标与 <repo>/issues 列表页）。
  *
  * 尺寸缺省 16：base 的页头默认档，与面板标题行同一视觉重量（14 紧凑／18 宽松留给别的场景）。 */
-export function ActionCluster(props: { readonly size?: 14 | 16 | 18 } = {}): React.ReactElement | null {
+export function ActionCluster(props: { readonly size?: 14 | 16 | 18 }): React.ReactElement | null {
   const ui = baseUI();
   if (ui === null) return null;
   ensureStylesOnce();
