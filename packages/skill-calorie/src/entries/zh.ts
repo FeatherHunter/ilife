@@ -7627,7 +7627,6 @@ export const zh = {
   'skill-calorie.profile-sheetDoc.c061': "按下去＝把这句话交给 AI 执行：",
   'skill-calorie.shared-operationHead.c005': "记录号 {p0}",
   'skill-calorie.xunji-fetch.c003': "未配置训记 KEY（配置文件里的 xunji.key；用 key set <KEY> 写进去）",
-  'skill-calorie.xunji-key.c012': "未配置，请在卡路里设置页里填「训记 KEY」，或用 key set <KEY> 写进配置文件",
   'skill-calorie.xunji-key.c013': "用法：key set <KEY 值>（KEY 值缺失；KEY 值不回显、不进仓）",
   'skill-calorie.render-html.c905': "文件未校验",
   'skill-calorie.render-html.c906': "文件存在",

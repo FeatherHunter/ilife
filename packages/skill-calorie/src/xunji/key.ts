@@ -51,7 +51,7 @@ export function keyStatus(): KeyStatus {
     active_key_preview: active === null ? null : previewKey(active),
     recommendation: active !== null
       ? 'OK'
-      : m('skill-calorie.xunji-key.c012'),
+      : '未配置，请在卡路里设置页里填「训记 KEY」，或用 key set <KEY> 写进配置文件',
   };
 }
 

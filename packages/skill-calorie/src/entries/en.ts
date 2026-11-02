@@ -7621,7 +7621,6 @@ export const en = {
   'skill-calorie.profile-sheetDoc.c061': "Pressing it hands this sentence to the AI: ",
   'skill-calorie.shared-operationHead.c005': "Record no. {p0}",
   'skill-calorie.xunji-fetch.c003': "Xunji KEY is not configured (xunji.key in the config file; write it with key set <KEY>)",
-  'skill-calorie.xunji-key.c012': "Not configured. Fill in “Xunji KEY” on the calorie settings page, or write it with key set <KEY> into the config file",
   'skill-calorie.xunji-key.c013': "Usage: key set <KEY value> (KEY value missing; the value is never echoed or committed)",
   'skill-calorie.render-html.c905': "File not verified",
   'skill-calorie.render-html.c906': "File exists",
