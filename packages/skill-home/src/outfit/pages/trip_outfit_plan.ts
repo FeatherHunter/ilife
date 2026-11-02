@@ -13,6 +13,31 @@
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, escapeHtml, latinFree, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { m } from '../../entries/index.js';
+
+/** 本页可见文案（渲染期取词：写成函数，模块加载时不取词）。 */
+function pageText() {
+  return {
+    k001: (p0: string) => m('skill-home.outfit-pages-trip-outfit-plan.c001', { p0: String(p0) }),
+    k002: (p0: string) => m('skill-home.outfit-pages-trip-outfit-plan.c002', { p0: String(p0) }),
+    k003: m('skill-home.outfit-pages-trip-outfit-plan.c003'),
+    k004: m('skill-home.outfit-pages-trip-outfit-plan.c004'),
+    k005: m('skill-home.outfit-pages-trip-outfit-plan.c005'),
+    k006: m('skill-home.outfit-pages-trip-outfit-plan.c006'),
+    k007: (p0: string, p1: string) => m('skill-home.outfit-pages-trip-outfit-plan.c007', { p0: String(p0), p1: String(p1) }),
+    k008: (p0: string) => m('skill-home.outfit-pages-trip-outfit-plan.c008', { p0: String(p0) }),
+    k009: m('skill-home.outfit-pages-trip-outfit-plan.c009'),
+    k010: m('skill-home.outfit-pages-trip-outfit-plan.c010'),
+    k011: m('skill-home.outfit-pages-trip-outfit-plan.c011'),
+    k012: m('skill-home.outfit-pages-trip-outfit-plan.c012'),
+    k013: m('skill-home.outfit-pages-trip-outfit-plan.c013'),
+    k014: '穿',
+    k015: m('skill-home.outfit-pages-trip-outfit-plan.c014'),
+    k016: m('skill-home.outfit-pages-trip-outfit-plan.c015'),
+    k017: m('skill-home.outfit-pages-trip-outfit-plan.c016'),
+  };
+}
+
 
 export const FAMILY = 'trip_outfit_plan' as const;
 
@@ -56,20 +81,26 @@ export const REQUIRED_BLOCKS = {
 };
 
 /** 块原文→可见文案（只改会被机审 ascii 门判红的 2 处，其余原文直出；映射见 scene-outfit.md）。 */
-const DISPLAY: Record<string, string> = {
-  '目的地/天数': '目的地天数',
-  '每日计划（第N天＋温度＋组合）': '每日计划（天数温度组合）',
+/** 本页可见文案（渲染期取词：写成函数，模块加载时不取词）。 */
+function displayText(): Record<string, string> {
+  return {
+  '目的地/天数': m('skill-home.outfit-pages-trip-outfit-plan.c042'),
+  '每日计划（第N天＋温度＋组合）': m('skill-home.outfit-pages-trip-outfit-plan.c043'),
 };
+}
 
 function sectionOf(group: 'fields' | 'operations' | 'empty' | 'status', title: string): string {
-  const items = REQUIRED_BLOCKS[group].map((b) => '<li data-need="' + escapeHtml(b) + '">' + escapeHtml(DISPLAY[b] ?? b) + '</li>').join('');
+  const items = REQUIRED_BLOCKS[group].map((b) => '<li data-need="' + escapeHtml(b) + '">' + escapeHtml(displayText()[b] ?? b) + '</li>').join('');
   return '<section hidden data-block="' + group + '"><h2>' + title + '</h2><ul>' + items + '</ul></section>';
 }
 
 type Card = { id: number; name: string };
 type Plan = { day: number; tempDesc: string; style: string; reason: string; slots: Partial<Record<string, Card>> };
 const SLOT_ORDER = ['outer', 'inner', 'bottom', 'shoes', 'hat', 'acce'];
-const SLOT_LABEL: Record<string, string> = { outer: '外套', inner: '内搭', bottom: '下装', shoes: '鞋', hat: '帽子', acce: '配饰' };
+/** 本页可见文案（渲染期取词：写成函数，模块加载时不取词）。 */
+function slotLabel(): Record<string, string> {
+  return { outer: m('skill-home.outfit-pages-trip-outfit-plan.c044'), inner: m('skill-home.outfit-pages-trip-outfit-plan.c045'), bottom: m('skill-home.outfit-pages-trip-outfit-plan.c046'), shoes: '鞋', hat: m('skill-home.outfit-pages-trip-outfit-plan.c047'), acce: m('skill-home.outfit-pages-trip-outfit-plan.c048') };
+}
 
 const arr = (v: unknown): Record<string, unknown>[] => (Array.isArray(v) ? v as Record<string, unknown>[] : []);
 const str = (v: unknown): string => (typeof v === 'string' ? v : '');
@@ -105,10 +136,35 @@ const CSS = '<style>'
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
 // 复制区走共用件（卡路里同款三格式＋六段日志）；`ctx.command` 由交付链供给（含 params），直调缺省按本族主 key。
 export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
+  const SX = {
+    k001: m('skill-home.outfit-pages-trip-outfit-plan.c022'),
+    k002: m('skill-home.outfit-pages-trip-outfit-plan.c023'),
+    k003: m('skill-home.outfit-pages-trip-outfit-plan.c024'),
+    k004: m('skill-home.outfit-pages-trip-outfit-plan.c025'),
+    k005: m('skill-home.outfit-pages-trip-outfit-plan.c026'),
+    k006: m('skill-home.outfit-pages-trip-outfit-plan.c027'),
+    k007: m('skill-home.outfit-pages-trip-outfit-plan.c028'),
+    k008: "鞋",
+    k009: m('skill-home.outfit-pages-trip-outfit-plan.c029'),
+    k010: m('skill-home.outfit-pages-trip-outfit-plan.c030'),
+    k011: m('skill-home.outfit-pages-trip-outfit-plan.c031'),
+    k012: m('skill-home.outfit-pages-trip-outfit-plan.c032'),
+    k013: m('skill-home.outfit-pages-trip-outfit-plan.c033'),
+    k014: m('skill-home.outfit-pages-trip-outfit-plan.c034'),
+    k015: m('skill-home.outfit-pages-trip-outfit-plan.c035'),
+    k016: "）",
+    k017: m('skill-home.outfit-pages-trip-outfit-plan.c036'),
+    k018: m('skill-home.outfit-pages-trip-outfit-plan.c037'),
+    k019: m('skill-home.outfit-pages-trip-outfit-plan.c038'),
+    k020: m('skill-home.outfit-pages-trip-outfit-plan.c039'),
+    k021: m('skill-home.outfit-pages-trip-outfit-plan.c040'),
+    k022: m('skill-home.outfit-pages-trip-outfit-plan.c041'),
+  };
+  const L = pageText();
   const template = readFileSync(new URL('../../../templates/outfit/trip_outfit_plan.html', import.meta.url), 'utf8');
   const data = (env.data ?? {}) as Record<string, unknown>;
   const p = (data.tripPlan ?? {}) as Record<string, unknown>;
-  const destination = str(p.destination) || '远行';
+  const destination = str(p.destination) || m('skill-home.outfit-pages-trip-outfit-plan.c017');
   const plans = arr(p.plans).map((x) => ({
     day: num(x.day), tempDesc: str(x.tempDesc),
     style: str(x.style) || '日常', reason: str(x.reason),
@@ -117,78 +173,63 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const conflicts = arr(p.conflicts).map((x) => str(x.hint)).filter(Boolean);
   const luggage = arr(p.luggage).map((x) => ({ id: num(x.id), name: str(x.name), days: num(x.days) || 1 }));
 
-  const metrics = '<div class="of-metrics">'
-    + '<span>' + escapeHtml(destination) + '</span>'
-    + '<span>共' + plans.length + '天</span>'
-    + '<span>行李' + luggage.length + '件</span>'
-    + '</div>';
+  const metrics = '<div class="of-metrics">' + '<span>' + escapeHtml(destination) + '</span>' + '<span>' + L.k001(String(plans.length)) + '</span>' + '<span>' + L.k002(String(luggage.length)) + '</span>' + '</div>';
 
-  let planHtml = '<div class="of-card"><h2>每日穿搭</h2>';
+  let planHtml = '<div class="of-card">' + '<h2>' + L.k003 + '</h2>';
   if (!plans.length) {
-    planHtml += '<div class="of-empty">没有可计划的衣物，先录入几件再来规划旅行穿搭</div>';
+    planHtml += '<div class="of-empty">' + L.k004 + '</div>';
   } else {
     const first = plans[0];
-    planHtml += '<div class="of-days">'
-      + plans.map((x, i) => '<button class="of-btn' + (i === 0 ? ' on' : '') + '" data-day="' + i + '">第' + x.day + '天</button>').join('')
-      + '</div><div id="ofDay">'
-      + '<div class="of-dayhead">第' + first.day + '天 ' + escapeHtml(first.style) + '</div>'
-      + '<div class="of-temp">温度' + escapeHtml(first.tempDesc || '—') + '</div>'
-      + '<table class="of-slots">'
-      + SLOT_ORDER.filter((k) => first.slots[k]).map((k) => '<tr><th class="of-part">'
-        + SLOT_LABEL[k] + '</th><td class="of-nm">' + escapeHtml((first.slots[k] as Card).name || '') + '</td></tr>').join('')
-      + (first.reason ? '<tr><td class="of-temp" colspan="2">' + escapeHtml(first.reason) + '</td></tr>' : '')
-      + '</table></div>'
-      + '<div class="of-actions"><button class="of-btn primary" id="ofAdopt">采纳这天</button></div>'
-      + homeCopyArea({
+    planHtml += '<div class="of-days">' + plans.map((x, i) => '<button class="of-btn' + (i === 0 ? ' on' : '') + '" data-day="' + i + L.k006 + x.day + L.k005 + '</button>').join('') + '</div>' + '<div id="ofDay">' + '<div class="of-dayhead">' + L.k007(String(first.day), String(escapeHtml(first.style))) + '</div>' + '<div class="of-temp">' + L.k008(String(escapeHtml(first.tempDesc || '—'))) + '</div>' + '<table class="of-slots">' + SLOT_ORDER.filter((k) => first.slots[k]).map((k) => '<tr><th class="of-part">'
+        + slotLabel()[k] + '</th><td class="of-nm">' + escapeHtml((first.slots[k] as Card).name || '') + '</td></tr>').join('') + (first.reason ? '<tr><td class="of-temp" colspan="2">' + escapeHtml(first.reason) + '</td></tr>' : '') + '</table>' + '</div>' + '<div class="of-actions">' + '<button class="of-btn primary" id="ofAdopt">' + L.k009 + '</button>' + '</div>' + homeCopyArea({
         data: { envelope: env },
         log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
       });
   }
   planHtml += '</div>';
 
-  let confHtml = '<div class="of-card"><h2>冲突提示</h2>';
+  let confHtml = '<div class="of-card">' + '<h2>' + L.k010 + '</h2>';
   confHtml += conflicts.length
     ? '<table class="of-confs">' + conflicts.map((h) => '<tr><td class="of-conf">' + escapeHtml(h) + '</td></tr>').join('') + '</table>'
-    : '<div class="of-empty">衣物数量充足，无重复冲突</div>';
+    : '<div class="of-empty">' + L.k011 + '</div>';
   confHtml += '</div>';
 
-  let lugHtml = '<div class="of-card"><h2>行李汇总</h2>';
+  let lugHtml = '<div class="of-card">' + '<h2>' + L.k012 + '</h2>';
   lugHtml += luggage.length
-    ? '<table class="of-lugs">' + luggage.map((x) => '<tr><td class="of-nm">' + escapeHtml(latinFree(x.name)) + '</td><td class="of-temp">穿' + x.days + '天</td></tr>').join('') + '</table>'
-      + '<div class="of-actions"><button class="of-btn" id="ofLug">生成行李清单</button></div>'
-    : '<div class="of-empty">暂无</div>';
+    ? '<table class="of-lugs">' + luggage.map((x) => '<tr><td class="of-nm">' + escapeHtml(latinFree(x.name)) + '</td>' + '<td class="of-temp">' + L.k014 + x.days + L.k013 + '</td>' + '</tr>').join('') + '</table>' + '<div class="of-actions">' + '<button class="of-btn" id="ofLug">' + L.k015 + '</button>' + '</div>'
+    : '<div class="of-empty">' + L.k016 + '</div>';
   lugHtml += '</div>';
 
   const payload = JSON.stringify({ destination, plans, conflicts, luggage }).replace(/</g, '\\u003c');
   const js = '<script>'
     + 'var TP=' + payload + ';var DAYI=0;'
     + 'function tpToast(m){var t=document.getElementById("tpToast");if(!t){t=document.createElement("div");t.style.cssText="position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#4a3d28;color:#fdfaf4;padding:9px 18px;border-radius:99px;font-size:13px;z-index:120";document.body.appendChild(t);}t.textContent=m;t.style.opacity="1";setTimeout(function(){t.style.opacity="0";},1600);}'
-    + 'function tpCopy(t){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){tpToast("已复制");}).catch(function(){tpToast("复制失败");});}else{var ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");tpToast("已复制");}catch(e){tpToast("复制失败");}ta.remove();}}'
-    + 'var PART={outer:"外套",inner:"内搭",bottom:"下装",shoes:"鞋",hat:"帽子",acce:"配饰"};'
+    + "function tpCopy(t){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){tpToast(\"" + SX.k001 + "\");}).catch(function(){tpToast(\"" + SX.k002 + "\");});}else{var ta=document.createElement(\"textarea\");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand(\"copy\");tpToast(\"" + SX.k003 + "\");}catch(e){tpToast(\"" + SX.k004 + "\");}ta.remove();}}"
+    + "var PART={outer:\"" + SX.k005 + "\",inner:\"" + SX.k006 + "\",bottom:\"" + SX.k007 + "\",shoes:\"" + SX.k008 + "\",hat:\"" + SX.k009 + "\",acce:\"" + SX.k010 + "\"};"
     + 'function tpEsc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}'
     + 'function tpShow(i){DAYI=(i+TP.plans.length)%TP.plans.length;var p=TP.plans[DAYI];var el=document.getElementById("ofDay");if(!el)return;'
-    + 'var h="<div class=\'of-dayhead\'>第"+p.day+"天 "+tpEsc(p.style)+"</div><div class=\'of-temp\'>温度"+(p.tempDesc?tpEsc(p.tempDesc):"—")+"</div>";'
+    + "var h=\"<div class='of-dayhead'>" + SX.k011 + "\"+p.day+\"" + SX.k012 + " \"+tpEsc(p.style)+\"</div><div class='of-temp'>" + SX.k013 + "\"+(p.tempDesc?tpEsc(p.tempDesc):\"—\")+\"</div>\";"
     + '["outer","inner","bottom","shoes","hat","acce"].forEach(function(k){var c=p.slots[k];if(c)h+="<div class=\'of-slot\'><span class=\'of-part\'>"+PART[k]+"</span><span class=\'of-nm\'>"+tpEsc(c.name)+"</span></div>";});'
     + 'if(p.reason)h+="<div class=\'of-temp\'>"+tpEsc(p.reason)+"</div>";el.innerHTML=h;'
     + 'var btns=document.querySelectorAll("[data-day]");for(var k=0;k<btns.length;k++){btns[k].className="of-btn"+(Number(btns[k].getAttribute("data-day"))===DAYI?" on":"");}}'
     + 'document.querySelectorAll("[data-day]").forEach(function(b){b.onclick=function(){tpShow(Number(b.getAttribute("data-day")));};});'
     + 'var ad=document.getElementById("ofAdopt");if(ad)ad.onclick=function(){var p=TP.plans[DAYI];if(!p)return;'
-    + 'var L=["旅行穿搭确认：采纳第"+p.day+"天（"+p.style+"）",""];'
-    + '["outer","inner","bottom","shoes","hat","acce"].forEach(function(k){var c=p.slots[k];if(c)L.push("穿搭："+c.name+"（标记使用）");});tpCopy(L.join("\\n"));}'
+    + "var L=[\"" + SX.k014 + "\"+p.day+\"" + SX.k015 + "\"+p.style+\"" + SX.k016 + "\",\"\"];"
+    + "[\"outer\",\"inner\",\"bottom\",\"shoes\",\"hat\",\"acce\"].forEach(function(k){var c=p.slots[k];if(c)L.push(\"" + SX.k017 + "\"+c.name+\"" + SX.k018 + "\");});tpCopy(L.join(\"\\n\"));}"
     // 上面这个 `}` 收的是 `function(){…}`；**必须**跟一个 `;`——整段脚本是一行拼出来的，
     // 没有换行，ASI 不会补分号，缺了它整段脚本不解析、页上按钮与勾选全死（同 travel_trip 那处）。
     + ';var cd=document.getElementById("ofCopyData");if(cd)cd.onclick=function(){tpCopy(JSON.stringify(TP.plans[DAYI]||{},null,2));};'
-    + 'var cl=document.getElementById("ofCopyLog");if(cl)cl.onclick=function(){tpCopy("旅行穿搭日志：第"+(TP.plans[DAYI]||{}).day+"天");};'
-    + 'var lg=document.getElementById("ofLug");if(lg)lg.onclick=function(){tpCopy("请生成出行行李清单，行程类型旅行天数"+TP.plans.length+"天。计划涉及衣物"+TP.luggage.map(function(x){return x.name;}).join(" "));};'
+    + "var cl=document.getElementById(\"ofCopyLog\");if(cl)cl.onclick=function(){tpCopy(\"" + SX.k019 + "\"+(TP.plans[DAYI]||{}).day+\"" + SX.k020 + "\");};"
+    + "var lg=document.getElementById(\"ofLug\");if(lg)lg.onclick=function(){tpCopy(\"" + SX.k021 + "\"+TP.plans.length+\"" + SX.k022 + "\"+TP.luggage.map(function(x){return x.name;}).join(\" \"));};"
     + '</script>';
 
-  const head = '<div class="of-eye">穿搭出行 旅行穿搭</div>';
+  const head = '<div class="of-eye">' + L.k017 + '</div>';
   const marker = '<div data-family="' + FAMILY + '" data-key="' + escapeHtml(PAGE_META.key) + '"></div>';
   const content = CSS + head + metrics + planHtml + confHtml + lugHtml + marker
     + js
-    + sectionOf('fields', '字段')
-    + sectionOf('operations', '操作')
-    + sectionOf('empty', '空态与异常')
-    + sectionOf('status', '状态词');
+    + sectionOf('fields', m('skill-home.outfit-pages-trip-outfit-plan.c018'))
+    + sectionOf('operations', m('skill-home.outfit-pages-trip-outfit-plan.c019'))
+    + sectionOf('empty', m('skill-home.outfit-pages-trip-outfit-plan.c020'))
+    + sectionOf('status', m('skill-home.outfit-pages-trip-outfit-plan.c021'));
   return fillTemplate(template, content);
 }

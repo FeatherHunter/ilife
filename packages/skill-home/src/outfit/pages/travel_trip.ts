@@ -13,6 +13,30 @@
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, escapeHtml, latinFree, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { m } from '../../entries/index.js';
+
+/** 本页可见文案（渲染期取词：写成函数，模块加载时不取词）。 */
+function pageText() {
+  return {
+    k001: (p0: string) => m('skill-home.outfit-pages-travel-trip.c001', { p0: String(p0) }),
+    k002: (p0: string) => m('skill-home.outfit-pages-travel-trip.c002', { p0: String(p0) }),
+    k003: m('skill-home.outfit-pages-travel-trip.c003'),
+    k004: m('skill-home.outfit-pages-travel-trip.c004'),
+    k005: (p0: string, p1: string) => m('skill-home.outfit-pages-travel-trip.c005', { p0: String(p0), p1: String(p1) }),
+    k006: m('skill-home.outfit-pages-travel-trip.c006'),
+    k007: m('skill-home.outfit-pages-travel-trip.c007'),
+    k008: m('skill-home.outfit-pages-travel-trip.c008'),
+    k009: m('skill-home.outfit-pages-travel-trip.c009'),
+    k010: m('skill-home.outfit-pages-travel-trip.c010'),
+    k011: m('skill-home.outfit-pages-travel-trip.c011'),
+    k012: '旅游中',
+    k013: m('skill-home.outfit-pages-travel-trip.c012'),
+    k014: m('skill-home.outfit-pages-travel-trip.c013'),
+    k015: m('skill-home.outfit-pages-travel-trip.c014'),
+    k016: m('skill-home.outfit-pages-travel-trip.c015'),
+  };
+}
+
 
 export const FAMILY = 'travel_trip' as const;
 
@@ -61,13 +85,16 @@ export const REQUIRED_BLOCKS = {
 };
 
 /** 块原文→可见文案（只改会被机审 ascii 门判红的 2 处，其余原文直出；映射见 scene-outfit.md）。 */
-const DISPLAY: Record<string, string> = {
-  '行程类型/天数/操作mode': '行程类型天数操作模式',
-  '清单物品卡片（名称/数量/位置/理由）': '清单物品卡片（名称数量位置理由）',
+/** 本页可见文案（渲染期取词：写成函数，模块加载时不取词）。 */
+function displayText(): Record<string, string> {
+  return {
+  '行程类型/天数/操作mode': m('skill-home.outfit-pages-travel-trip.c037'),
+  '清单物品卡片（名称/数量/位置/理由）': m('skill-home.outfit-pages-travel-trip.c038'),
 };
+}
 
 function sectionOf(group: 'fields' | 'operations' | 'empty' | 'status', title: string): string {
-  const items = REQUIRED_BLOCKS[group].map((b) => '<li data-need="' + escapeHtml(b) + '">' + escapeHtml(DISPLAY[b] ?? b) + '</li>').join('');
+  const items = REQUIRED_BLOCKS[group].map((b) => '<li data-need="' + escapeHtml(b) + '">' + escapeHtml(displayText()[b] ?? b) + '</li>').join('');
   return '<section hidden data-block="' + group + '"><h2>' + title + '</h2><ul>' + items + '</ul></section>';
 }
 
@@ -109,6 +136,28 @@ const CSS = '<style>'
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
 // 复制区走共用件（卡路里同款三格式＋六段日志）；`ctx.command` 由交付链供给（含 params），直调缺省按本族主 key。
 export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
+  const SX = {
+    k001: "旅游中",
+    k002: m('skill-home.outfit-pages-travel-trip.c021'),
+    k003: m('skill-home.outfit-pages-travel-trip.c022'),
+    k004: m('skill-home.outfit-pages-travel-trip.c023'),
+    k005: m('skill-home.outfit-pages-travel-trip.c024'),
+    k006: m('skill-home.outfit-pages-travel-trip.c025'),
+    k007: m('skill-home.outfit-pages-travel-trip.c026'),
+    k008: m('skill-home.outfit-pages-travel-trip.c027'),
+    k009: m('skill-home.outfit-pages-travel-trip.c028'),
+    k010: m('skill-home.outfit-pages-travel-trip.c029'),
+    k011: "）",
+    k012: m('skill-home.outfit-pages-travel-trip.c030'),
+    k013: m('skill-home.outfit-pages-travel-trip.c031'),
+    k014: m('skill-home.outfit-pages-travel-trip.c032'),
+    k015: m('skill-home.outfit-pages-travel-trip.c033'),
+    k016: m('skill-home.outfit-pages-travel-trip.c034'),
+    k017: m('skill-home.outfit-pages-travel-trip.c035'),
+    k018: m('skill-home.outfit-pages-travel-trip.c036'),
+  
+  k019: m('skill-home.outfit-pages-travel-trip.c039'),};
+  const L = pageText();
   const template = readFileSync(new URL('../../../templates/outfit/travel_trip.html', import.meta.url), 'utf8');
   const data = (env.data ?? {}) as Record<string, unknown>;
   const t = (data.trip ?? {}) as Record<string, unknown>;
@@ -128,7 +177,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const whyTail = (x: TripItem): string => {
     const r = x.reason;
     if (!r) return '';
-    const pre = x.name + '放在';
+    const pre = m('skill-home.outfit-pages-travel-trip.c016', { p0: String(x.name) });
     if (!r.startsWith(pre)) return r;
     const rest = r.slice(pre.length);
     const loc = (x.location || '').replace(/×\d+(\[[^\]]*\])?$/, '');
@@ -136,43 +185,38 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     return tail === '出发前核对' ? '' : tail;
   };
 
-  const metrics = '<div class="of-metrics">' + '<span>' + escapeHtml(tripType) + '</span><span>' + days + '天</span>'
-    + '<span>清单' + items.length + '件</span></div>';
+  const metrics = '<div class="of-metrics">' + '<span>' + escapeHtml(tripType) + '</span>' + '<span>' + L.k001(String(days)) + '</span>' + '<span>' + L.k002(String(items.length)) + '</span>' + '</div>';
 
-  let listHtml = '<div class="of-card"><h2>' + (mode === 'return' ? '归位确认' : '出发核对') + '</h2>'
-    + '<div id="ofProg">已装 ' + pre + '/' + items.length + ' 件</div>';
+  let listHtml = '<div class="of-card">' + '<h2>' + (mode === 'return' ? L.k004 : L.k003) + '</h2>' + '<div id="ofProg">' + L.k005(String(pre), String(items.length)) + '</div>';
   if (!items.length) {
     listHtml += '<div class="of-empty">' + (mode === 'return'
-      ? '没有旅游中的物品，暂无待归位'
-      : '清单为空，先从待选中挑选要带的衣物，或按行程规则生成后再来核对') + '</div>';
+      ? L.k007
+      : L.k006) + '</div>';
   } else {
     listHtml += items.map((x, i) => {
       const loc = x.location.replace(/×\d+(\[[^\]]*\])?$/, '');
       const why = whyTail(x);
-      return '<div class="of-line' + (x.status === '旅游中' ? ' on' : '') + '" data-pick="' + i + '"><span class="of-check"></span>'
+      return '<div class="of-line' + (x.status === L.k012 ? ' on' : '') + '" data-pick="' + i + '"><span class="of-check"></span>'
         + '<div class="of-body"><div class="of-nm">' + escapeHtml(latinFree(x.name)) + '</div>'
         + '<table class="of-m"><tr>'
-        + '<td class="of-slot">数量 ' + x.quantity + '</td>'
-        + (loc !== '' ? '<td class="of-slot">位置 ' + escapeHtml(loc) + '</td>' : '')
-        + (why !== '' ? '<td class="of-slot">理由 ' + escapeHtml(why) + '</td>' : '')
-        + '<td class="of-slot">状态 ' + escapeHtml(x.status !== '' ? x.status : '—') + '</td>'
+        + '<td class="of-slot">' + L.k011 + x.quantity + '</td>'
+        + (loc !== '' ? '<td class="of-slot">' + L.k010 + escapeHtml(loc) + '</td>' : '')
+        + (why !== '' ? '<td class="of-slot">' + L.k009 + escapeHtml(why) + '</td>' : '')
+        + '<td class="of-slot">' + L.k008 + escapeHtml(x.status !== '' ? x.status : '—') + '</td>'
         + '</tr></table></div></div>';
-    }).join('')
-      + '<div class="of-actions"><button class="of-btn primary" id="ofGo">'
-      + (mode === 'return' ? '确认归位' : '确认带出') + '</button></div>'
-      + homeCopyArea({
+    }).join('') + '<div class="of-actions">' + '<button class="of-btn primary" id="ofGo">' + (mode === 'return' ? L.k014 : L.k013) + '</button>' + '</div>' + homeCopyArea({
         data: { envelope: env },
         log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
       });
   }
   listHtml += '</div>';
-  if (message) listHtml += '<div class="of-card"><h2>汇总</h2><div class="of-why">' + escapeHtml(message) + '</div></div>';
+  if (message) listHtml += '<div class="of-card">' + '<h2>' + L.k015 + '</h2>' + '<div class="of-why">' + escapeHtml(message) + '</div>' + '</div>';
 
   const payload = JSON.stringify({ mode, tripType, days, items }).replace(/</g, '\\u003c');
   const js = '<script>'
-    + 'var TR=' + payload + ';var PICK={};TR.items.forEach(function(x,i){if(x.status==="旅游中")PICK[i]=1;});'
+    + 'var TR=' + payload + ";var PICK={};TR.items.forEach(function(x,i){if(x.status===\"" + SX.k001 + "\")PICK[i]=1;});"
     + 'function trToast(m){var t=document.getElementById("trToast");if(!t){t=document.createElement("div");t.style.cssText="position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#4a3d28;color:#fdfaf4;padding:9px 18px;border-radius:99px;font-size:13px;z-index:120";document.body.appendChild(t);}t.textContent=m;t.style.opacity="1";setTimeout(function(){t.style.opacity="0";},1600);}'
-    + 'function trCopy(t){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){trToast("已复制");}).catch(function(){trToast("复制失败");});}else{var ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");trToast("已复制");}catch(e){trToast("复制失败");}ta.remove();}}'
+    + "function trCopy(t){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){trToast(\"" + SX.k002 + "\");}).catch(function(){trToast(\"" + SX.k003 + "\");});}else{var ta=document.createElement(\"textarea\");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand(\"copy\");trToast(\"" + SX.k004 + "\");}catch(e){trToast(\"" + SX.k005 + "\");}ta.remove();}}"
     + 'function trPaint(){var el=document.getElementById("ofProg");if(!el)return;var n=TR.items.filter(function(_,i){return PICK[i];}).length;'
     + 'var pct=TR.items.length?Math.round(n*100/TR.items.length):0;'
     + 'var miss=TR.items.filter(function(_,i){return !PICK[i];})[0];'
@@ -181,20 +225,20 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + 'document.querySelectorAll(".of-line").forEach(function(el){el.onclick=function(){var i=el.getAttribute("data-pick");PICK[i]=!PICK[i];el.className="of-line"+(PICK[i]?" on":"");trPaint();};});'
     + 'trPaint();'
     + 'var go=document.getElementById("ofGo");if(go)go.onclick=function(){var p=TR.items.filter(function(_,i){return PICK[i];});'
-    + 'if(!p.length){trToast("请先勾选物品");return;}'
-    + 'if(TR.mode==="return"){var L=["归位确认：归位 "+p.length+"件恢复在家",""];p.forEach(function(x){L.push("归位："+x.name+"（放回"+(x.location||"原位")+"）");});trCopy(L.join("\\n"));return;}'
-    + 'var M=["带出确认：带出 "+p.length+"件标记旅游中",""];p.forEach(function(x){M.push("带出："+x.name+"（状态到旅游中）");});trCopy(M.join("\\n"));};'
+    + "if(!p.length){trToast(\"" + SX.k019 + "\");return;}"
+    + "if(TR.mode===\"return\"){var L=[\"" + SX.k006 + " \"+p.length+\"" + SX.k007 + "\",\"\"];p.forEach(function(x){L.push(\"" + SX.k008 + "\"+x.name+\"" + SX.k009 + "\"+(x.location||\"" + SX.k010 + "\")+\"" + SX.k011 + "\");});trCopy(L.join(\"\\n\"));return;}"
+    + "var M=[\"" + SX.k012 + " \"+p.length+\"" + SX.k013 + "\",\"\"];p.forEach(function(x){M.push(\"" + SX.k014 + "\"+x.name+\"" + SX.k015 + "\");});trCopy(M.join(\"\\n\"));};"
     + 'var cd=document.getElementById("ofCopyData");if(cd)cd.onclick=function(){trCopy(JSON.stringify(TR.items,null,2));};'
-    + 'var cl=document.getElementById("ofCopyLog");if(cl)cl.onclick=function(){trCopy("出行清单日志："+TR.tripType+TR.days+"天 "+TR.items.length+"件");};'
+    + "var cl=document.getElementById(\"ofCopyLog\");if(cl)cl.onclick=function(){trCopy(\"" + SX.k016 + "\"+TR.tripType+TR.days+\"" + SX.k017 + " \"+TR.items.length+\"" + SX.k018 + "\");};"
     + '</script>';
 
-  const head = '<div class="of-eye">穿搭出行 出行清单</div>';
+  const head = '<div class="of-eye">' + L.k016 + '</div>';
   const marker = '<div data-family="' + FAMILY + '" data-key="' + escapeHtml(PAGE_META.key) + '"></div>';
   const content = CSS + head + metrics + listHtml + marker
     + js
-    + sectionOf('fields', '字段')
-    + sectionOf('operations', '操作')
-    + sectionOf('empty', '空态与异常')
-    + sectionOf('status', '状态词');
+    + sectionOf('fields', m('skill-home.outfit-pages-travel-trip.c017'))
+    + sectionOf('operations', m('skill-home.outfit-pages-travel-trip.c018'))
+    + sectionOf('empty', m('skill-home.outfit-pages-travel-trip.c019'))
+    + sectionOf('status', m('skill-home.outfit-pages-travel-trip.c020'));
   return fillTemplate(template, content);
 }

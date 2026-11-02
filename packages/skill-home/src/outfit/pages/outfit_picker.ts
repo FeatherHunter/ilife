@@ -12,6 +12,41 @@
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, escapeHtml, latinFree, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { m } from '../../entries/index.js';
+
+/** 本页可见文案（渲染期取词：写成函数，模块加载时不取词）。 */
+function pageText() {
+  return {
+    k001: (p0: string) => m('skill-home.outfit-pages-outfit-picker.c001', { p0: String(p0) }),
+    k002: (p0: string) => m('skill-home.outfit-pages-outfit-picker.c002', { p0: String(p0) }),
+    k003: m('skill-home.outfit-pages-outfit-picker.c003'),
+    k004: m('skill-home.outfit-pages-outfit-picker.c004'),
+    k005: m('skill-home.outfit-pages-outfit-picker.c005'),
+    k006: m('skill-home.outfit-pages-outfit-picker.c006'),
+    k007: m('skill-home.outfit-pages-outfit-picker.c007'),
+    k008: m('skill-home.outfit-pages-outfit-picker.c008'),
+    k009: '自定义',
+    k010: '正式',
+    k011: '家居',
+    k012: '运动',
+    k013: '约会',
+    k014: '上班',
+    k015: m('skill-home.outfit-pages-outfit-picker.c009'),
+    k016: m('skill-home.outfit-pages-outfit-picker.c010'),
+    k017: m('skill-home.outfit-pages-outfit-picker.c011'),
+    k018: m('skill-home.outfit-pages-outfit-picker.c012'),
+    k019: m('skill-home.outfit-pages-outfit-picker.c013'),
+    k020: m('skill-home.outfit-pages-outfit-picker.c014'),
+    k021: m('skill-home.outfit-pages-outfit-picker.c015'),
+    k022: (p0: string) => m('skill-home.outfit-pages-outfit-picker.c016', { p0: String(p0) }),
+    k023: m('skill-home.outfit-pages-outfit-picker.c017'),
+    k024: m('skill-home.outfit-pages-outfit-picker.c018'),
+    k025: m('skill-home.outfit-pages-outfit-picker.c019'),
+    k026: m('skill-home.outfit-pages-outfit-picker.c020'),
+    k027: m('skill-home.outfit-pages-outfit-picker.c021'),
+  };
+}
+
 
 export const FAMILY = 'outfit_picker' as const;
 
@@ -60,19 +95,25 @@ export const REQUIRED_BLOCKS = {
 };
 
 /** 块原文→可见文案（只改会被机审 ascii 门判红的 1 处，其余原文直出；映射见 scene-outfit.md）。 */
-const DISPLAY: Record<string, string> = {
-  '多部位槽位（外层/内搭）': '多部位槽位（外层与内搭）',
+/** 本页可见文案（渲染期取词：写成函数，模块加载时不取词）。 */
+function displayText(): Record<string, string> {
+  return {
+  '多部位槽位（外层/内搭）': m('skill-home.outfit-pages-outfit-picker.c048'),
 };
+}
 
 function sectionOf(group: 'fields' | 'operations' | 'empty' | 'status', title: string): string {
-  const items = REQUIRED_BLOCKS[group].map((b) => '<li data-need="' + escapeHtml(b) + '">' + escapeHtml(DISPLAY[b] ?? b) + '</li>').join('');
+  const items = REQUIRED_BLOCKS[group].map((b) => '<li data-need="' + escapeHtml(b) + '">' + escapeHtml(displayText()[b] ?? b) + '</li>').join('');
   return '<section hidden data-block="' + group + '"><h2>' + title + '</h2><ul>' + items + '</ul></section>';
 }
 
 type Card = { id: number; name: string; location: string; quantity: number; status: string; category: string; tags: string };
 type OutfitSet = { style: string; reason: string; slots: Partial<Record<string, Card>> };
 const SLOT_ORDER = ['outer', 'inner', 'bottom', 'shoes', 'hat', 'acce'];
-const SLOT_LABEL: Record<string, string> = { outer: '外套', inner: '内搭', bottom: '下装', shoes: '鞋', hat: '帽子', acce: '配饰' };
+/** 本页可见文案（渲染期取词：写成函数，模块加载时不取词）。 */
+function slotLabel(): Record<string, string> {
+  return { outer: m('skill-home.outfit-pages-outfit-picker.c049'), inner: m('skill-home.outfit-pages-outfit-picker.c050'), bottom: m('skill-home.outfit-pages-outfit-picker.c051'), shoes: '鞋', hat: m('skill-home.outfit-pages-outfit-picker.c052'), acce: m('skill-home.outfit-pages-outfit-picker.c053') };
+}
 
 const arr = (v: unknown): Record<string, unknown>[] => (Array.isArray(v) ? v as Record<string, unknown>[] : []);
 const str = (v: unknown): string => (typeof v === 'string' ? v : '');
@@ -120,6 +161,33 @@ function setsOf(data: Record<string, unknown>): OutfitSet[] {
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
 // 复制区走共用件（卡路里同款三格式＋六段日志）；`ctx.command` 由交付链供给（含 params），直调缺省按本族主 key。
 export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
+  const SX = {
+    k001: m('skill-home.outfit-pages-outfit-picker.c026'),
+    k002: m('skill-home.outfit-pages-outfit-picker.c027'),
+    k003: m('skill-home.outfit-pages-outfit-picker.c028'),
+    k004: m('skill-home.outfit-pages-outfit-picker.c029'),
+    k005: m('skill-home.outfit-pages-outfit-picker.c030'),
+    k006: m('skill-home.outfit-pages-outfit-picker.c031'),
+    k007: m('skill-home.outfit-pages-outfit-picker.c032'),
+    k008: m('skill-home.outfit-pages-outfit-picker.c033'),
+    k009: m('skill-home.outfit-pages-outfit-picker.c034'),
+    k010: "鞋",
+    k011: m('skill-home.outfit-pages-outfit-picker.c035'),
+    k012: m('skill-home.outfit-pages-outfit-picker.c036'),
+    k013: m('skill-home.outfit-pages-outfit-picker.c037'),
+    k014: m('skill-home.outfit-pages-outfit-picker.c038'),
+    k015: m('skill-home.outfit-pages-outfit-picker.c039'),
+    k016: m('skill-home.outfit-pages-outfit-picker.c040'),
+    k017: m('skill-home.outfit-pages-outfit-picker.c041'),
+    k018: "）",
+    k019: m('skill-home.outfit-pages-outfit-picker.c042'),
+    k020: m('skill-home.outfit-pages-outfit-picker.c043'),
+    k021: m('skill-home.outfit-pages-outfit-picker.c044'),
+    k022: m('skill-home.outfit-pages-outfit-picker.c045'),
+    k023: m('skill-home.outfit-pages-outfit-picker.c046'),
+    k024: m('skill-home.outfit-pages-outfit-picker.c047'),
+  };
+  const L = pageText();
   const template = readFileSync(new URL('../../../templates/outfit/outfit_picker.html', import.meta.url), 'utf8');
   const data = (env.data ?? {}) as Record<string, unknown>;
   const items = arr(data.items) as unknown as Card[];
@@ -131,11 +199,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
 
   // #817 seq 34（②层级清）：顶部那颗「场合＋值」的胶囊与下行「场合」按钮行是同一个字段，两处同词；
   // 只留按钮行那一处（值由高亮按钮承担），顶部不再挂同名字段。
-  const metrics = '<div class="of-metrics">'
-    + '<span>候选' + items.length + '件</span>'
-    + '<span>搭配' + sets.length + '套</span>'
-    + (weather ? '<span>天气' + escapeHtml(weather) + '</span>' : '')
-    + '</div>';
+  const metrics = '<div class="of-metrics">' + '<span>' + L.k001(String(items.length)) + '</span>' + '<span>' + L.k002(String(sets.length)) + '</span>' + (weather ? '<span>' + L.k003 + escapeHtml(weather) + '</span>' : '') + '</div>';
 
   // #886：复制区提到「有没有搭配可选」的分支之外——数据位与日志位都不再随空态消失。
   // 原来两样都关在 `else` 里，空衣橱时这页连一条复制通道都没有（`scaffold.test.mjs` ⑥ 门实测点名）。
@@ -147,59 +211,44 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   });
   let designed = '';
   if (!sets.length) {
-    designed = '<div class="of-empty">衣橱还没有可搭配的衣物，先去录入几件再来挑选今日穿搭</div>'
-      + copyZone;
+    designed = '<div class="of-empty">' + L.k004 + '</div>' + copyZone;
   } else {
     const first = sets[0];
     const slotRows = SLOT_ORDER.filter((k) => first.slots[k]).map((k) => {
       const c = first.slots[k] as Card;
       const tags = c.tags ? c.tags.split(',').filter(Boolean).join(' ') : '';
       const sub = tags || c.location || '';
-      return '<div class="of-slot' + (k === 'outer' ? ' on' : '') + '"><span class="of-part">' + SLOT_LABEL[k] + '</span>'
+      return '<div class="of-slot' + (k === 'outer' ? ' on' : '') + '"><span class="of-part">' + slotLabel()[k] + '</span>'
         + '<div><div class="of-name">' + escapeHtml(latinFree(c.name)) + '</div>'
         + (sub ? '<div class="of-sub">' + escapeHtml(sub) + '</div>' : '') + '</div></div>';
     }).join('');
     const hasLayers = !!(first.slots.outer && first.slots.inner);
     // 槽位／风格／理由三处各留一个 id：档位按钮与「换一套」都靠 ofPaint() 重画这一块（不只是改高亮）。
     // #817 复评 seq 34：风格行原先那个「拼贴穿搭」是常量标签，删；理由句随所选场合走，场合≠风格时不再声称「X场合适配」。
-    designed = '<div class="of-card" id="ofNow"><h2>今日这一套</h2><div id="ofSlots">' + slotRows + '</div>'
-      + '<div class="of-styles" id="ofStyles"><span>' + escapeHtml(first.style) + '</span></div>'
-      + '<p class="of-reason" id="ofReason">' + escapeHtml((occasion !== '' && occasion !== first.style ? first.reason.split('场合适配').join('风格') : first.reason) || '—') + '</p>'
-      + '<div class="of-chips" id="ofOcc"><span class="of-chiplab">场合</span>'
-      + ['上班', '约会', '运动', '家居', '正式', '自定义'].map((x) => '<button class="of-btn' + (occasion === x ? ' on' : '') + '" data-occ="' + x + '">' + x + '</button>').join('')
-      + '</div>'
-      + (hasLayers ? '<div class="of-chips" id="ofLayer"><span class="of-chiplab">层次</span><button class="of-btn on" data-layer="outer">外层</button><button class="of-btn" data-layer="inner">内搭</button></div>' : '')
-      + '</div>'
-      + '<div class="of-card"><h2>备选组合</h2><div class="of-strip" id="ofStrip">'
-      + sets.map((s, i) => '<div class="of-mini' + (i === 0 ? ' on' : '') + '" data-set="' + i + '">第' + (i + 1) + '套 ' + escapeHtml(s.style) + '</div>').join('')
-      + '</div>'
-      + '<div class="of-pager"><button class="of-btn" id="ofPrev">上一套</button><span id="ofCount">第1套共' + sets.length + '套</span><button class="of-btn" id="ofNext">换一套</button></div>'
-      + '<div class="of-actions"><button class="of-btn primary" id="ofAdopt">今天穿这套</button></div>'
-      + copyZone + '</div>'
-      + (gap.length ? '<div class="of-gap">衣橱缺口：' + gap.map(escapeHtml).join(' ') + '暂无匹配</div>' : '');
+    designed = '<div class="of-card" id="ofNow">' + '<h2>' + L.k005 + '</h2>' + '<div id="ofSlots">' + slotRows + '</div>' + '<div class="of-styles" id="ofStyles">' + '<span>' + escapeHtml(first.style) + '</span>' + '</div>' + '<p class="of-reason" id="ofReason">' + escapeHtml((occasion !== '' && occasion !== first.style ? first.reason.split(L.k007).join(L.k006) : first.reason) || '—') + '</p>' + '<div class="of-chips" id="ofOcc">' + '<span class="of-chiplab">' + L.k008 + '</span>' + [L.k014, L.k013, L.k012, L.k011, L.k010, L.k009].map((x) => '<button class="of-btn' + (occasion === x ? ' on' : '') + '" data-occ="' + x + '">' + x + '</button>').join('') + '</div>' + (hasLayers ? '<div class="of-chips" id="ofLayer">' + '<span class="of-chiplab">' + L.k015 + '</span>' + '<button class="of-btn on" data-layer="outer">' + L.k016 + '</button>' + '<button class="of-btn" data-layer="inner">' + L.k017 + '</button>' + '</div>' : '') + '</div>' + '<div class="of-card">' + '<h2>' + L.k018 + '</h2>' + '<div class="of-strip" id="ofStrip">' + sets.map((s, i) => '<div class="of-mini' + (i === 0 ? ' on' : '') + '" data-set="' + i + L.k020 + (i + 1) + L.k019 + escapeHtml(s.style) + '</div>').join('') + '</div>' + '<div class="of-pager">' + '<button class="of-btn" id="ofPrev">' + L.k021 + '</button>' + '<span id="ofCount">' + L.k022(String(sets.length)) + '</span>' + '<button class="of-btn" id="ofNext">' + L.k023 + '</button>' + '</div>' + '<div class="of-actions">' + '<button class="of-btn primary" id="ofAdopt">' + L.k024 + '</button>' + '</div>' + copyZone + '</div>' + (gap.length ? '<div class="of-gap">' + L.k026 + gap.map(escapeHtml).join(' ') + L.k025 + '</div>' : '');
   }
 
   const payload = JSON.stringify({ sets, occasion, gap }).replace(/</g, '\\u003c');
   const js = '<script>'
     + 'var OF=' + payload + ';OF.occ=OF.occasion||"";OF.layer="outer";var OFI=0;'
     + 'function ofToast(m){var t=document.getElementById("ofToast");if(!t){t=document.createElement("div");t.id="ofToast";t.style.cssText="position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#4a3d28;color:#fdfaf4;padding:9px 18px;border-radius:99px;font-size:13px;z-index:120";document.body.appendChild(t);}t.textContent=m;t.style.opacity="1";setTimeout(function(){t.style.opacity="0";},1600);}'
-    + 'function ofCopy(t){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){ofToast("已复制");}).catch(function(){ofToast("复制失败");});}else{var ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");ofToast("已复制");}catch(e){ofToast("复制失败");}ta.remove();}}'
+    + "function ofCopy(t){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){ofToast(\"" + SX.k001 + "\");}).catch(function(){ofToast(\"" + SX.k002 + "\");});}else{var ta=document.createElement(\"textarea\");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand(\"copy\");ofToast(\"" + SX.k003 + "\");}catch(e){ofToast(\"" + SX.k004 + "\");}ta.remove();}}"
     + 'function ofPlain(s){return String(s==null?"":s).replace(/[A-Za-z]/g,function(c){return String.fromCharCode(c.charCodeAt(0)+0xFEE0);});}function ofTxt(s){return ofPlain(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}function ofMark(id,base,attr,val){var box=document.getElementById(id);if(!box)return;var els=box.children;for(var i=0;i<els.length;i++){var a=els[i].getAttribute(attr);if(a===null)continue;els[i].className=base+(a===val?" on":"");}}'
-    + 'function ofReason(){var s=OF.sets[OFI]||{};var o=OF.occ||"";var r=(o&&o!==s.style)?String(s.reason||"").split("场合适配").join("风格"):s.reason;return r||"—";}'
-    + 'function ofPaint(){var s=OF.sets[OFI];if(!s)return;var O=["outer","inner","bottom","shoes","hat","acce"];var L={outer:"外套",inner:"内搭",bottom:"下装",shoes:"鞋",hat:"帽子",acce:"配饰"};var h="";for(var k=0;k<O.length;k++){var c=s.slots[O[k]];if(!c)continue;var t=c.tags?c.tags.split(",").filter(Boolean).join(" "):(c.location||"");h+="<div class=\'of-slot"+(OF.layer===O[k]?" on":"")+"\'><span class=\'of-part\'>"+L[O[k]]+"</span><div><div class=\'of-name\'>"+ofTxt(c.name)+"</div>"+(t?"<div class=\'of-sub\'>"+ofTxt(t)+"</div>":"")+"</div></div>";}'
-    + 'var sl=document.getElementById("ofSlots");if(sl)sl.innerHTML=h;var sty=document.getElementById("ofStyles");if(sty)sty.innerHTML="<span>"+ofTxt(s.style||"—")+"</span>";var rs=document.getElementById("ofReason");if(rs)rs.textContent=ofPlain(ofReason());var cn=document.getElementById("ofCount");if(cn)cn.textContent="第"+(OFI+1)+"套共"+OF.sets.length+"套";ofMark("ofStrip","of-mini","data-set",String(OFI));ofMark("ofOcc","of-btn","data-occ",OF.occ);ofMark("ofLayer","of-btn","data-layer",OF.layer);}'
+    + "function ofReason(){var s=OF.sets[OFI]||{};var o=OF.occ||\"\";var r=(o&&o!==s.style)?String(s.reason||\"\").split(\"" + SX.k005 + "\").join(\"" + SX.k006 + "\"):s.reason;return r||\"—\";}"
+    + "function ofPaint(){var s=OF.sets[OFI];if(!s)return;var O=[\"outer\",\"inner\",\"bottom\",\"shoes\",\"hat\",\"acce\"];var L={outer:\"" + SX.k007 + "\",inner:\"" + SX.k008 + "\",bottom:\"" + SX.k009 + "\",shoes:\"" + SX.k010 + "\",hat:\"" + SX.k011 + "\",acce:\"" + SX.k012 + "\"};var h=\"\";for(var k=0;k<O.length;k++){var c=s.slots[O[k]];if(!c)continue;var t=c.tags?c.tags.split(\",\").filter(Boolean).join(\" \"):(c.location||\"\");h+=\"<div class='of-slot\"+(OF.layer===O[k]?\" on\":\"\")+\"'><span class='of-part'>\"+L[O[k]]+\"</span><div><div class='of-name'>\"+ofTxt(c.name)+\"</div>\"+(t?\"<div class='of-sub'>\"+ofTxt(t)+\"</div>\":\"\")+\"</div></div>\";}"
+    + "var sl=document.getElementById(\"ofSlots\");if(sl)sl.innerHTML=h;var sty=document.getElementById(\"ofStyles\");if(sty)sty.innerHTML=\"<span>\"+ofTxt(s.style||\"—\")+\"</span>\";var rs=document.getElementById(\"ofReason\");if(rs)rs.textContent=ofPlain(ofReason());var cn=document.getElementById(\"ofCount\");if(cn)cn.textContent=\"" + SX.k013 + "\"+(OFI+1)+\"" + SX.k014 + "\"+OF.sets.length+\"" + SX.k015 + "\";ofMark(\"ofStrip\",\"of-mini\",\"data-set\",String(OFI));ofMark(\"ofOcc\",\"of-btn\",\"data-occ\",OF.occ);ofMark(\"ofLayer\",\"of-btn\",\"data-layer\",OF.layer);}"
     + 'function ofShow(i){if(!OF.sets.length)return;OFI=(i+OF.sets.length)%OF.sets.length;ofPaint();}var pv=document.getElementById("ofPrev");if(pv)pv.onclick=function(){ofShow(OFI-1);};var nx=document.getElementById("ofNext");if(nx)nx.onclick=function(){ofShow(OFI+1);};'
-    + 'var st=document.getElementById("ofStrip");if(st)st.onclick=function(e){var t=e.target.closest("[data-set]");if(t)ofShow(Number(t.getAttribute("data-set")));};var ad=document.getElementById("ofAdopt");if(ad)ad.onclick=function(){var s=OF.sets[OFI];if(!s)return;var L=["穿搭确认：今天穿第"+(OFI+1)+"套（"+s.style+"）"+(OF.occ?"，场合"+OF.occ:""),""];["outer","inner","bottom","shoes","hat","acce"].forEach(function(k){var c=s.slots[k];if(c)L.push("穿搭："+c.name+"（今日穿这套）");});ofCopy(L.join("\\n"));};'
+    + "var st=document.getElementById(\"ofStrip\");if(st)st.onclick=function(e){var t=e.target.closest(\"[data-set]\");if(t)ofShow(Number(t.getAttribute(\"data-set\")));};var ad=document.getElementById(\"ofAdopt\");if(ad)ad.onclick=function(){var s=OF.sets[OFI];if(!s)return;var L=[\"" + SX.k016 + "\"+(OFI+1)+\"" + SX.k017 + "\"+s.style+\"" + SX.k018 + "\"+(OF.occ?\"" + SX.k019 + "\"+OF.occ:\"\"),\"\"];[\"outer\",\"inner\",\"bottom\",\"shoes\",\"hat\",\"acce\"].forEach(function(k){var c=s.slots[k];if(c)L.push(\"" + SX.k020 + "\"+c.name+\"" + SX.k021 + "\");});ofCopy(L.join(\"\\n\"));};"
     + 'var oc=document.getElementById("ofOcc");if(oc)oc.onclick=function(e){var b=e.target.closest("[data-occ]");if(!b)return;OF.occ=b.getAttribute("data-occ");ofPaint();};var ly=document.getElementById("ofLayer");if(ly)ly.onclick=function(e){var b=e.target.closest("[data-layer]");if(!b)return;OF.layer=b.getAttribute("data-layer");ofPaint();};'
-    + 'var cd=document.getElementById("ofCopyData");if(cd)cd.onclick=function(){var s=OF.sets[OFI]||{};ofCopy(JSON.stringify({style:s.style,reason:ofReason(),occasion:OF.occ||"",slots:s.slots},null,2));};var cl=document.getElementById("ofCopyLog");if(cl)cl.onclick=function(){ofCopy("穿搭日志：第"+(OFI+1)+"套 "+((OF.sets[OFI]||{}).style||"")+(OF.occ?"，场合"+OF.occ:""));};ofPaint();</script>';
+    + "var cd=document.getElementById(\"ofCopyData\");if(cd)cd.onclick=function(){var s=OF.sets[OFI]||{};ofCopy(JSON.stringify({style:s.style,reason:ofReason(),occasion:OF.occ||\"\",slots:s.slots},null,2));};var cl=document.getElementById(\"ofCopyLog\");if(cl)cl.onclick=function(){ofCopy(\"" + SX.k022 + "\"+(OFI+1)+\"" + SX.k023 + " \"+((OF.sets[OFI]||{}).style||\"\")+(OF.occ?\"" + SX.k024 + "\"+OF.occ:\"\"));};ofPaint();</script>";
 
-  const head = '<div class="of-eye">穿搭出行 穿什么</div>';
+  const head = '<div class="of-eye">' + L.k027 + '</div>';
   const marker = '<div data-family="' + FAMILY + '" data-key="' + escapeHtml(PAGE_META.key) + '"></div>';
   const content = CSS + head + metrics + designed + marker
     + js
-    + sectionOf('fields', '字段')
-    + sectionOf('operations', '操作')
-    + sectionOf('empty', '空态与异常')
-    + sectionOf('status', '状态词');
+    + sectionOf('fields', m('skill-home.outfit-pages-outfit-picker.c022'))
+    + sectionOf('operations', m('skill-home.outfit-pages-outfit-picker.c023'))
+    + sectionOf('empty', m('skill-home.outfit-pages-outfit-picker.c024'))
+    + sectionOf('status', m('skill-home.outfit-pages-outfit-picker.c025'));
   return fillTemplate(template, content);
 }

@@ -8,6 +8,49 @@
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { m } from '../../entries/index.js';
+
+/** 本页可见文案（渲染期取词：写成函数，模块加载时不取词）。 */
+function pageText() {
+  return {
+    k001: m('skill-home.stats-pages-expiring.c001'),
+    k002: m('skill-home.stats-pages-expiring.c002'),
+    k003: m('skill-home.stats-pages-expiring.c003'),
+    k004: m('skill-home.stats-pages-expiring.c004'),
+    k005: m('skill-home.stats-pages-expiring.c005'),
+    k006: m('skill-home.stats-pages-expiring.c006'),
+    k007: m('skill-home.stats-pages-expiring.c007'),
+    k008: m('skill-home.stats-pages-expiring.c008'),
+    k009: m('skill-home.stats-pages-expiring.c009'),
+    k010: m('skill-home.stats-pages-expiring.c010'),
+    k011: m('skill-home.stats-pages-expiring.c011'),
+    k012: m('skill-home.stats-pages-expiring.c012'),
+    k013: (p0: string) => m('skill-home.stats-pages-expiring.c013', { p0: String(p0) }),
+    k014: m('skill-home.stats-pages-expiring.c014'),
+    k015: (p0: string, p1: string) => m('skill-home.stats-pages-expiring.c015', { p0: String(p0), p1: String(p1) }),
+    k016: m('skill-home.stats-pages-expiring.c016'),
+    k017: m('skill-home.stats-pages-expiring.c017'),
+    k018: m('skill-home.stats-pages-expiring.c018'),
+    k019: m('skill-home.stats-pages-expiring.c019'),
+    k020: m('skill-home.stats-pages-expiring.c020'),
+    k021: m('skill-home.stats-pages-expiring.c021'),
+    k022: m('skill-home.stats-pages-expiring.c022'),
+    k023: m('skill-home.stats-pages-expiring.c023'),
+    k024: m('skill-home.stats-pages-expiring.c024'),
+    k025: m('skill-home.stats-pages-expiring.c025'),
+    k026: m('skill-home.stats-pages-expiring.c026'),
+    k027: m('skill-home.stats-pages-expiring.c027'),
+    k028: m('skill-home.stats-pages-expiring.c028'),
+    k029: m('skill-home.stats-pages-expiring.c029'),
+    k030: m('skill-home.stats-pages-expiring.c030'),
+    k031: m('skill-home.stats-pages-expiring.c031'),
+    k032: m('skill-home.stats-pages-expiring.c032'),
+    k033: m('skill-home.stats-pages-expiring.c033'),
+    k034: m('skill-home.stats-pages-expiring.c034'),
+    k035: m('skill-home.stats-pages-expiring.c035'),
+  };
+}
+
 
 export const FAMILY = 'expiring' as const;
 
@@ -59,15 +102,18 @@ export const REQUIRED_BLOCKS = {
 };
 
 // 可见转写（无拉丁字母；原文在 data-need 属性里一字未动）。
-const SHOWN: Record<string, string> = {
-  '空态：没有即将过期的物品＋已检查未来N天': '空态：没有即将过期的物品，已检查未来所选天数',
-  '拦截态：还没有勾选任何处理': '拦截态：还没有勾选任何处理',
-  '异常：数据解析失败／数据校验失败': '异常：数据解析失败，数据校验失败',
-  '已过期与未来N天预告（剩余天数）': '已过期与未来所选天数预告（剩余天数）',
-  '已过期N天': '已过期天数',
-  'N天后到期': '若干天后到期',
+/** 本页可见文案（渲染期取词：写成函数，模块加载时不取词）。 */
+function shownText(): Record<string, string> {
+  return {
+  '空态：没有即将过期的物品＋已检查未来N天': m('skill-home.stats-pages-expiring.c052'),
+  '拦截态：还没有勾选任何处理': m('skill-home.stats-pages-expiring.c053'),
+  '异常：数据解析失败／数据校验失败': m('skill-home.stats-pages-expiring.c054'),
+  '已过期与未来N天预告（剩余天数）': m('skill-home.stats-pages-expiring.c055'),
+  '已过期N天': m('skill-home.stats-pages-expiring.c056'),
+  'N天后到期': m('skill-home.stats-pages-expiring.c057'),
 };
-const showOf = (b: string): string => SHOWN[b] ?? b;
+}
+const showOf = (b: string): string => shownText()[b] ?? b;
 
 // 可见文本归一：半角拉丁字母转全角（机审只认半角为英文裸词；载荷原文不动）。
 function latinFree(s: string): string {
@@ -128,14 +174,31 @@ const CSS = '<style>'
   + '.st-actions .st-btn{flex:1 1 100%}.st-count{margin-left:0}}'
   + '</style>';
 
-const JS = '<script>(function(){var t=null;function toast(m){var e=document.getElementById("stToast");e.textContent=m;e.classList.add("show");clearTimeout(t);t=setTimeout(function(){e.classList.remove("show")},2000)}'
-  + 'function fb(s){var a=document.createElement("textarea");a.value=s;document.body.appendChild(a);a.select();try{document.execCommand("copy");toast("已复制")}catch(e){toast("复制失败，请长按手动复制")}a.remove()}'
-  + 'function cp(s){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(s).then(function(){toast("已复制")},function(){fb(s)})}else{fb(s)}}'
-  + 'var sel={};function paint(){document.querySelectorAll(".st-item").forEach(function(el){var id=el.getAttribute("data-id");var on=!!sel[id];el.classList.toggle("on",on);el.querySelectorAll("button[data-act]").forEach(function(b){b.classList.toggle("on",sel[id]===b.getAttribute("data-act"))})});var n=Object.keys(sel).length;var stop=document.getElementById("stStop");if(stop){stop.style.display=n?"none":"";}var c=document.getElementById("stConfirm");if(c){c.textContent=n?("确认处理（已选"+n+"件）"):"确认处理"}}'
+/** 内联脚本（渲染期取词：写成函数，模块加载时不取词）。 */
+function pageScript(): string {
+  const SX = {
+    k001: m('skill-home.stats-pages-expiring.c042'),
+    k002: m('skill-home.stats-pages-expiring.c043'),
+    k003: m('skill-home.stats-pages-expiring.c044'),
+    k004: m('skill-home.stats-pages-expiring.c045'),
+    k005: m('skill-home.stats-pages-expiring.c046'),
+    k006: m('skill-home.stats-pages-expiring.c047'),
+    k007: m('skill-home.stats-pages-expiring.c048'),
+    k008: m('skill-home.stats-pages-expiring.c049'),
+    k009: m('skill-home.stats-pages-expiring.c050'),
+    k010: "：",
+    k011: m('skill-home.stats-pages-expiring.c051'),
+    k012: "；",
+  };
+  return '<script>(function(){var t=null;function toast(m){var e=document.getElementById("stToast");e.textContent=m;e.classList.add("show");clearTimeout(t);t=setTimeout(function(){e.classList.remove("show")},2000)}'
+  + "function fb(s){var a=document.createElement(\"textarea\");a.value=s;document.body.appendChild(a);a.select();try{document.execCommand(\"copy\");toast(\"" + SX.k001 + "\")}catch(e){toast(\"" + SX.k002 + "\")}a.remove()}"
+  + "function cp(s){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(s).then(function(){toast(\"" + SX.k003 + "\")},function(){fb(s)})}else{fb(s)}}"
+  + "var sel={};function paint(){document.querySelectorAll(\".st-item\").forEach(function(el){var id=el.getAttribute(\"data-id\");var on=!!sel[id];el.classList.toggle(\"on\",on);el.querySelectorAll(\"button[data-act]\").forEach(function(b){b.classList.toggle(\"on\",sel[id]===b.getAttribute(\"data-act\"))})});var n=Object.keys(sel).length;var stop=document.getElementById(\"stStop\");if(stop){stop.style.display=n?\"none\":\"\";}var c=document.getElementById(\"stConfirm\");if(c){c.textContent=n?(\"" + SX.k004 + "\"+n+\"" + SX.k005 + "\"):\"" + SX.k006 + "\"}}"
   + 'document.querySelectorAll(".st-item button[data-act]").forEach(function(b){b.addEventListener("click",function(){var id=b.getAttribute("data-item");var act=b.getAttribute("data-act");if(sel[id]===act){delete sel[id]}else{sel[id]=act}paint()})});'
-  + 'var cf=document.getElementById("stCat");if(cf){cf.addEventListener("change",function(){var v=cf.value;var n=0;document.querySelectorAll(".st-item").forEach(function(el){var show=!v||el.getAttribute("data-cat")===v;el.style.display=show?"":"none";if(show){n++}});var cc=document.getElementById("stCount");if(cc){cc.textContent="共"+n+"件"}})}'
+  + "var cf=document.getElementById(\"stCat\");if(cf){cf.addEventListener(\"change\",function(){var v=cf.value;var n=0;document.querySelectorAll(\".st-item\").forEach(function(el){var show=!v||el.getAttribute(\"data-cat\")===v;el.style.display=show?\"\":\"none\";if(show){n++}});var cc=document.getElementById(\"stCount\");if(cc){cc.textContent=\"" + SX.k007 + "\"+n+\"" + SX.k008 + "\"}})}"
   + 'document.querySelectorAll("button[data-t]").forEach(function(b){b.addEventListener("click",function(){cp(b.getAttribute("data-t"))})});'
-  + 'var ok=document.getElementById("stConfirm");if(ok){ok.addEventListener("click",function(){var ids=Object.keys(sel);if(!ids.length){toast("还没有勾选任何处理");return}var lines=ids.map(function(id){var el=document.querySelector(".st-item[data-id=\\""+id+"\\"]");var nm=el?el.getAttribute("data-name"):"#"+id;return nm+"："+sel[id]});cp("请处理以下过期物品："+lines.join("；"))})}paint();})();</script>';
+  + "var ok=document.getElementById(\"stConfirm\");if(ok){ok.addEventListener(\"click\",function(){var ids=Object.keys(sel);if(!ids.length){toast(\"" + SX.k009 + "\");return}var lines=ids.map(function(id){var el=document.querySelector(\".st-item[data-id=\\\"\"+id+\"\\\"]\");var nm=el?el.getAttribute(\"data-name\"):\"#\"+id;return nm+\"" + SX.k010 + "\"+sel[id]});cp(\"" + SX.k011 + "\"+lines.join(\"" + SX.k012 + "\"))})}paint();})();</script>";
+}
 
 interface AlertItem {
   id: number; name: string; location: string; quantity: number; status: string; category: string; tags: string;
@@ -159,16 +222,17 @@ function daysLeft(exp: string, today: string): number | null {
   return Math.round((a.getTime() - b.getTime()) / 86400000);
 }
 function badgeOf(dl: number | null): { cls: string; text: string } {
-  if (dl === null) return { cls: 'st-warn', text: '到期日待补' };
-  if (dl < 0) return { cls: 'st-bad', text: '已过期' + (-dl) + '天' };
-  if (dl === 0) return { cls: 'st-warn', text: '今天到期' };
-  return { cls: 'st-info', text: dl + '天后到期' };
+  if (dl === null) return { cls: 'st-warn', text: m('skill-home.stats-pages-expiring.c036') };
+  if (dl < 0) return { cls: 'st-bad', text: m('skill-home.stats-pages-expiring.c037', { p0: String(-dl) }) };
+  if (dl === 0) return { cls: 'st-warn', text: m('skill-home.stats-pages-expiring.c038') };
+  return { cls: 'st-info', text: m('skill-home.stats-pages-expiring.c039', { p0: String(dl) }) };
 }
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
 // 复制区走共用件（卡路里同款三格式＋六段日志）；`ctx.command` 由交付链供给（含 params），直调缺省按本族主 key。
 export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
+  const L = pageText();
   const template = readFileSync(new URL('../../../templates/stats/expiring.html', import.meta.url), 'utf8');
   const d = (env.data ?? {}) as { items?: AlertItem[]; total?: number; days?: number; allowed?: number[] };
   const items = Array.isArray(d.items) ? d.items : [];
@@ -181,54 +245,30 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   });
   const expired = rows.filter((r) => r.dl !== null && r.dl < 0);
   const upcoming = rows.filter((r) => !(r.dl !== null && r.dl < 0));
-  const head = '<div class="fam-head"><span class="fam-name" data-family="expiring">统计总览</span>'
-    + '<span class="fam-key" data-key="' + escapeHtml(PAGE_META.key) + '">查过期</span></div>';
+  const head = '<div class="fam-head">' + '<span class="fam-name" data-family="expiring">' + L.k001 + '</span>' + '<span class="fam-key" data-key="' + escapeHtml(PAGE_META.key) + '">' + L.k002 + '</span>' + '</div>';
   // 页首写建议（两数已由下面卡片给出，页首再复述一遍是同一事实说两遍）。
   // #817 ⑤：胶囊原写「查过期」，与 h1（交付链回填的场景名）同名 40px 相邻；换成携带信息的词。
-  const hero = '<div class="st st-hero"><span class="st-wake">到期预警</span>'
-    + '<p class="st-lead">先处理已过期的那批，再看未来预告；拿不准的选忽略</p></div>';
-  const cards = '<div class="st st-cards">'
-    + '<div class="st-card"><b>已过期</b><span>' + expired.length + '</span><small>到期日在今天之前</small></div>'
-    + '<div class="st-card"><b>未来预告</b><span>' + upcoming.length + '</span><small>今天到期与未来到期</small></div>'
-    + '<div class="st-card"><b>预告范围</b><span>' + (typeof d.days === 'number' && d.days > 0 ? d.days + ' 天' : '—') + '</span><small>下单时指定</small></div></div>';
+  const hero = '<div class="st st-hero">' + '<span class="st-wake">' + L.k003 + '</span>' + '<p class="st-lead">' + L.k004 + '</p>' + '</div>';
+  const cards = '<div class="st st-cards">' + '<div class="st-card">' + '<b>' + L.k005 + '</b>' + '<span>' + expired.length + '</span>' + '<small>' + L.k006 + '</small>' + '</div>' + '<div class="st-card">' + '<b>' + L.k007 + '</b>' + '<span>' + upcoming.length + '</span>' + '<small>' + L.k008 + '</small>' + '</div>' + '<div class="st-card">' + '<b>' + L.k009 + '</b>' + '<span>' + (typeof d.days === 'number' && d.days > 0 ? d.days + L.k010 : '—') + '</span>' + '<small>' + L.k011 + '</small>' + '</div>' + '</div>';
   const cats = [...new Set(items.map((it) => it.category).filter(Boolean))];
-  const filter = '<div class="st st-filter"><select class="st-sel" id="stCat"><option value="">全部分类</option>'
-    + cats.map((c) => '<option value="' + escapeHtml(c) + '">' + escapeHtml(latinFree(c)) + '</option>').join('')
-    + '</select><span class="st-count" id="stCount">筛出' + items.length + '件</span></div>';
+  const filter = '<div class="st st-filter">' + '<select class="st-sel" id="stCat">' + '<option value="">' + L.k012 + '</option>' + cats.map((c) => '<option value="' + escapeHtml(c) + '">' + escapeHtml(latinFree(c)) + '</option>').join('') + '</select>' + '<span class="st-count" id="stCount">' + L.k013(String(items.length)) + '</span>' + '</div>';
   // #865：可调档位由回执 `allowed` 给（老 expiring.py ALLOWED_DAYS）；本次在用的那一档实心标出。
   const gears = Array.isArray(d.allowed) && d.allowed.length
     ? '<div class="st-chips">' + d.allowed.map((g) => '<span class="st-chip' + (g === d.days ? ' on' : '') + '">'
-      + escapeHtml(String(g)) + ' 天</span>').join('') + '</div>'
+      + escapeHtml(String(g)) + L.k014 + '</span>').join('') + '</div>'
     : '';
-  const card = (r: (typeof rows)[number]): string => '<div class="st-item" data-id="' + r.it.id
-    + '" data-name="' + escapeHtml(r.it.name) + '" data-cat="' + escapeHtml(r.it.category) + '">'
-    + '<div class="st-name">' + escapeHtml(latinFree(r.place || r.it.name)) + '（编号' + r.it.id + '）</div>'
-    + '<table class="st-sub"><tbody><tr>'
-    + '<th>到期</th><td>' + escapeHtml(r.it.expirationDate ?? r.it.location ?? '') + '</td>'
-    + (r.it.place ? '<th>放在</th><td>' + escapeHtml(r.it.place) + '</td>' : '')
-    + (typeof r.it.quantity === 'number' && r.it.quantity > 0 ? '<th>数量</th><td>' + r.it.quantity + '</td>' : '')
-    + '</tr></tbody></table>'
-    + '<span class="st-badge ' + r.badge.cls + '">' + r.badge.text + '</span>'
-    + '<div class="st-ops tight"><button class="st-btn" data-act="已用完" data-item="' + r.it.id + '">已用完</button>'
-    + '<button class="st-btn" data-act="废弃" data-item="' + r.it.id + '">废弃</button>'
-    + '<button class="st-btn soft" data-act="忽略" data-item="' + r.it.id + '">忽略</button></div></div>';
-  const group = (t: string, list: (typeof rows)): string => '<div class="st st-sec"><h2 class="st-sec-t">'
-    + t + '</h2>' + (list.length ? list.map(card).join('') : '<div class="st-empty"><b>这一组暂无物品</b></div>') + '</div>';
-  const list = items.length ? filter + group('已过期', expired) + group('未来预告', upcoming)
-    : '<div class="st st-empty"><b>没有即将过期的物品</b>已检查未来所选天数，档位可在下单时调整</div>';
-  const bar = '<div class="st-actions"><button class="st-btn pri" id="stConfirm">确认处理</button>'
-    + homeCopyArea({
+  const card = (r: (typeof rows)[number]): string => '<div class="st-item" data-id="' + r.it.id + '" data-name="' + escapeHtml(r.it.name) + '" data-cat="' + escapeHtml(r.it.category) + '">' + '<div class="st-name">' + L.k015(String(escapeHtml(latinFree(r.place || r.it.name))), String(r.it.id)) + '</div>' + '<table class="st-sub">' + '<tbody>' + '<tr>' + '<th>' + L.k016 + '</th>' + '<td>' + escapeHtml(r.it.expirationDate ?? r.it.location ?? '') + '</td>' + (r.it.place ? '<th>' + L.k017 + '</th>' + '<td>' + escapeHtml(r.it.place) + '</td>' : '') + (typeof r.it.quantity === 'number' && r.it.quantity > 0 ? '<th>' + L.k018 + '</th>' + '<td>' + r.it.quantity + '</td>' : '') + '</tr>' + '</tbody>' + '</table>' + '<span class="st-badge ' + r.badge.cls + '">' + r.badge.text + '</span>' + '<div class="st-ops tight">' + '<button class="st-btn" data-act="' + L.k019 + '" data-item="' + r.it.id + '">' + L.k020 + '</button>' + '<button class="st-btn" data-act="' + L.k021 + '" data-item="' + r.it.id + '">' + L.k022 + '</button>' + '<button class="st-btn soft" data-act="' + L.k023 + '" data-item="' + r.it.id + '">' + L.k024 + '</button>' + '</div>' + '</div>';
+  const group = (t: string, list: (typeof rows)): string => '<div class="st st-sec">' + '<h2 class="st-sec-t">' + t + '</h2>' + (list.length ? list.map(card).join('') : '<div class="st-empty">' + '<b>' + L.k025 + '</b>' + '</div>') + '</div>';
+  const list = items.length ? filter + group(m('skill-home.stats-pages-expiring.c040'), expired) + group(m('skill-home.stats-pages-expiring.c041'), upcoming)
+    : '<div class="st st-empty">' + '<b>' + L.k026 + '</b>' + L.k027 + '</div>';
+  const bar = '<div class="st-actions">' + '<button class="st-btn pri" id="stConfirm">' + L.k028 + '</button>' + homeCopyArea({
         data: { envelope: env },
         log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
-      }) + '</div>'
-    + '<p class="st-stop" id="stStop">还没有勾选任何处理</p>';
-  const raw = '<details hidden class="st st-raw"><summary>原始回执（给排查用）</summary><pre>'
-    + escapeHtml(JSON.stringify(env)) + '</pre></details>';
-  const blocks = '<details hidden class="st-blocks"><summary>必需块登记（契约对账用）</summary>'
-    + sectionOf('fields', '字段') + sectionOf('operations', '操作')
-    + sectionOf('empty', '空态与异常') + sectionOf('status', '状态词') + '</details>';
+      }) + '</div>' + '<p class="st-stop" id="stStop">' + L.k029 + '</p>';
+  const raw = '<details hidden class="st st-raw">' + '<summary>' + L.k030 + '</summary>' + '<pre>' + escapeHtml(JSON.stringify(env)) + '</pre>' + '</details>';
+  const blocks = '<details hidden class="st-blocks">' + '<summary>' + L.k031 + '</summary>' + sectionOf('fields', L.k032) + sectionOf('operations', L.k033) + sectionOf('empty', L.k034) + sectionOf('status', L.k035) + '</details>';
   const content = CSS + head + '<div class="fam-content st">' + hero + cards + gears + list + '</div>'
     + bar + raw + blocks
-    + '<div class="st-toast" id="stToast"></div>' + JS;
+    + '<div class="st-toast" id="stToast"></div>' + pageScript();
   return fillTemplate(template, content);
 }

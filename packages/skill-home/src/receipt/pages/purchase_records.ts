@@ -11,6 +11,40 @@
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, renderEnvelopeHtml, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { m } from '../../entries/index.js';
+
+/** 本页可见文案（渲染期取词：写成函数，模块加载时不取词）。 */
+function pageText() {
+  return {
+    k001: m('skill-home.receipt-pages-purchase-records.c001'),
+    k002: m('skill-home.receipt-pages-purchase-records.c002'),
+    k003: m('skill-home.receipt-pages-purchase-records.c003'),
+    k004: m('skill-home.receipt-pages-purchase-records.c004'),
+    k005: m('skill-home.receipt-pages-purchase-records.c005'),
+    k006: m('skill-home.receipt-pages-purchase-records.c006'),
+    k007: m('skill-home.receipt-pages-purchase-records.c007'),
+    k008: m('skill-home.receipt-pages-purchase-records.c008'),
+    k009: m('skill-home.receipt-pages-purchase-records.c009'),
+    k010: m('skill-home.receipt-pages-purchase-records.c010'),
+    k011: m('skill-home.receipt-pages-purchase-records.c011'),
+    k012: m('skill-home.receipt-pages-purchase-records.c012'),
+    k013: m('skill-home.receipt-pages-purchase-records.c013'),
+    k014: m('skill-home.receipt-pages-purchase-records.c014'),
+    k015: m('skill-home.receipt-pages-purchase-records.c015'),
+    k016: m('skill-home.receipt-pages-purchase-records.c016'),
+    k017: m('skill-home.receipt-pages-purchase-records.c017'),
+    k018: m('skill-home.receipt-pages-purchase-records.c018'),
+    k019: m('skill-home.receipt-pages-purchase-records.c019'),
+    k020: m('skill-home.receipt-pages-purchase-records.c020'),
+    k021: m('skill-home.receipt-pages-purchase-records.c021'),
+    k022: m('skill-home.receipt-pages-purchase-records.c022'),
+    k023: m('skill-home.receipt-pages-purchase-records.c023'),
+    k024: m('skill-home.receipt-pages-purchase-records.c024'),
+    k025: m('skill-home.receipt-pages-purchase-records.c025'),
+    k026: m('skill-home.receipt-pages-purchase-records.c026'),
+  };
+}
+
 
 export const FAMILY = 'purchase_records' as const;
 
@@ -56,10 +90,10 @@ export const REQUIRED_BLOCKS = {
 // 可见层中文转述（无拉丁字母、无版式位分隔符；原文在 data-need 属性里）。
 function visibleOf(block: string): string {
   const table: Record<string, string> = {
-    '购买记录（物品名/ID/购买日/价格/渠道/商家客服/退货窗口/退货截止）': '购买记录包含物品名编号购买日价格渠道商家客服退货窗口退货截止',
-    '分类统计（分类/笔数/金额）': '分类统计包含分类笔数金额',
-    '已过退货期N天': '已过退货期若干天',
-    '可退·剩N天': '可退剩余若干天',
+    '购买记录（物品名/ID/购买日/价格/渠道/商家客服/退货窗口/退货截止）': m('skill-home.receipt-pages-purchase-records.c027'),
+    '分类统计（分类/笔数/金额）': m('skill-home.receipt-pages-purchase-records.c028'),
+    '已过退货期N天': m('skill-home.receipt-pages-purchase-records.c029'),
+    '可退·剩N天': m('skill-home.receipt-pages-purchase-records.c030'),
   };
   return table[block] ?? block;
 }
@@ -81,15 +115,13 @@ function itemsOf(env: Envelope): Record<string, unknown>[] {
 
 /** 本次查询条件的回显行（#890）：命令层按物品查时把 `query` 带回；缺了返空串（旧信封不硬造）。 */
 function queryEchoOf(env: Envelope): string {
+  const L = pageText();
   const q = (env.data as { query?: unknown }).query;
   if (!q || typeof q !== 'object' || Array.isArray(q)) return '';
   const itemId = (q as { item_id?: unknown }).item_id;
   const name = String((q as { item_name?: unknown }).item_name ?? '');
   if (itemId === undefined && name === '') return '';
-  return '<div class="rc-meta">'
-    + metaRow('查询物品', name === '' ? '—' : name)
-    + metaRow('物品编号', itemId === undefined ? '—' : '编号 ' + String(itemId))
-    + '</div>';
+  return '<div class="rc-meta">' + metaRow(L.k001, name === '' ? '—' : name) + metaRow(L.k003, itemId === undefined ? '—' : L.k002 + String(itemId)) + '</div>';
 }
 
 /** 缺值一律如实写这个（#817 第二波：槽位齐全，值不给就空着，不编、不猜、不留白）。 */
@@ -98,16 +130,19 @@ const BLANK = '—';
 /** 逐笔行的字段清单＝判据那一行「物品名/ID/购买日/价格/渠道/商家客服/退货窗口/退货截止」。
  *  数据层今天只给 `{name:'购买2026-08-15', count:1}`，故除购买日（从 `name` 里取）外一律缺值→「—」；
  *  命令层哪天把同名字段补上，本表自动填值，页面不用再改（缺口登记见件头注释与回执）。 */
-const ROW_FIELDS: ReadonlyArray<readonly [head: string, keys: readonly string[], unit: string]> = [
-  ['物品名', ['item', 'item_name', 'itemName'], ''],
-  ['编号', ['item_id', 'itemId'], ''],
-  ['购买日', ['date', 'bought_at', 'boughtAt'], ''],
-  ['价格', ['price', 'amount'], ' 元'],
-  ['渠道', ['channel'], ''],
-  ['商家客服', ['merchant', 'seller', 'service'], ''],
-  ['退货窗口', ['return_days', 'returnDays'], ' 天'],
-  ['退货截止', ['return_until', 'returnUntil', 'returnDeadline'], ''],
+/** 本页可见文案（渲染期取词：写成函数，模块加载时不取词）。 */
+function rowFields(): ReadonlyArray<readonly [head: string, keys: readonly string[], unit: string]> {
+  return [
+  [m('skill-home.receipt-pages-purchase-records.c041'), ['item', 'item_name', 'itemName'], ''],
+  [m('skill-home.receipt-pages-purchase-records.c042'), ['item_id', 'itemId'], ''],
+  [m('skill-home.receipt-pages-purchase-records.c043'), ['date', 'bought_at', 'boughtAt'], ''],
+  [m('skill-home.receipt-pages-purchase-records.c044'), ['price', 'amount'], m('skill-home.receipt-pages-purchase-records.c045')],
+  [m('skill-home.receipt-pages-purchase-records.c046'), ['channel'], ''],
+  [m('skill-home.receipt-pages-purchase-records.c047'), ['merchant', 'seller', 'service'], ''],
+  [m('skill-home.receipt-pages-purchase-records.c048'), ['return_days', 'returnDays'], m('skill-home.receipt-pages-purchase-records.c049')],
+  [m('skill-home.receipt-pages-purchase-records.c050'), ['return_until', 'returnUntil', 'returnDeadline'], ''],
 ];
+}
 
 /** 逐笔行某一格的值：字段在场取值，缺值写「—」。 */
 function cellOf(it: Record<string, unknown>, keys: readonly string[], unit: string): string {
@@ -130,11 +165,10 @@ function dateOf(it: Record<string, unknown>): string {
  *  九列在 390 档排不下，故窄屏（≤560px）整表转成逐条「字段名：值」的竖排（页内样式块里那段媒体查询），
  *  桌面档仍是一张表——两档都不断字、不裁列。 */
 function rowsTable(items: Record<string, unknown>[]): string {
-  const head = '<tr><th>序号</th>' + ROW_FIELDS.map(([h]) => '<th>' + h + '</th>').join('') + '</tr>';
-  const body = items.map((it, i) => '<tr><td data-k="序号">' + (i + 1) + '</td>'
-    + ROW_FIELDS.map(([, keys, unit], j) => '<td data-k="' + ROW_FIELDS[j][0] + '">'
-      + escapeHtml(ROW_FIELDS[j][0] === '购买日' ? dateOf(it) : cellOf(it, keys, unit)) + '</td>').join('')
-    + '</tr>').join('');
+  const L = pageText();
+  const head = '<tr>' + '<th>' + L.k004 + '</th>' + rowFields().map(([h]) => '<th>' + h + '</th>').join('') + '</tr>';
+  const body = items.map((it, i) => '<tr>' + '<td data-k="' + L.k005 + '">' + (i + 1) + '</td>' + rowFields().map(([, keys, unit], j) => '<td data-k="' + rowFields()[j][0] + '">'
+      + escapeHtml(rowFields()[j][0] === L.k006 ? dateOf(it) : cellOf(it, keys, unit)) + '</td>').join('') + '</tr>').join('');
   return '<div class="rc-wrap"><table class="rc-table"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>';
 }
 
@@ -142,8 +176,11 @@ function rowsTable(items: Record<string, unknown>[]): string {
  *  购买日区间如实写出来（最早 至 最晚），一眼看得出这一页覆盖的是哪一段——不编月份、不猜参数。 */
 function rangeLine(items: Record<string, unknown>[]): string {
   const dates = items.map(dateOf).filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d)).sort();
-  const span = dates.length === 0 ? BLANK : (dates[0] === dates[dates.length - 1] ? dates[0] : dates[0] + ' 至 ' + dates[dates.length - 1]);
-  return metaRow('购买日范围', span) + metaRow('命中笔数', items.length + ' 笔');
+  const span = dates.length === 0 ? BLANK : (dates[0] === dates[dates.length - 1] ? dates[0] : m('skill-home.receipt-pages-purchase-records.c031', {
+    p0: String(dates[0]),
+    p1: String(dates[dates.length - 1]),
+  }));
+  return metaRow(m('skill-home.receipt-pages-purchase-records.c032'), span) + metaRow(m('skill-home.receipt-pages-purchase-records.c033'), m('skill-home.receipt-pages-purchase-records.c034', { p0: String(items.length) }));
 }
 
 function metaRow(k: string, v: string): string {
@@ -164,22 +201,20 @@ function categoriesOf(items: Record<string, unknown>[]): Record<string, unknown>
 }
 
 function categorySection(items: Record<string, unknown>[]): string {
+  const L = pageText();
   const rows = categoriesOf(items);
-  const head = '<div class="rc-sec"><h2 class="rc-sec-t">分类统计</h2>';
+  const head = '<div class="rc-sec">' + '<h2 class="rc-sec-t">' + L.k007 + '</h2>';
   if (rows.length === 0) {
-    return head + '<p class="rc-empty" data-block="empty">暂无分类统计，等有按分类汇总的记录再回来看这一块</p></div>';
+    return head + '<p class="rc-empty" data-block="empty">' + L.k008 + '</p>' + '</div>';
   }
-  const body = rows.map((r) => '<tr><td data-k="分类">' + escapeHtml(cellOf(r, ['category', 'name'], ''))
-    + '</td><td data-k="笔数">' + escapeHtml(cellOf(r, ['count', 'n'], ''))
-    + '</td><td data-k="金额">' + escapeHtml(cellOf(r, ['amount', 'total', 'price'], unitMoney(r))) + '</td></tr>').join('');
-  return head + '<div class="rc-wrap"><table class="rc-table"><thead><tr><th>分类</th><th>笔数</th><th>金额</th></tr></thead><tbody>'
-    + body + '</tbody></table></div></div>';
+  const body = rows.map((r) => '<tr>' + '<td data-k="' + L.k009 + '">' + escapeHtml(cellOf(r, ['category', 'name'], '')) + '</td>' + '<td data-k="' + L.k010 + '">' + escapeHtml(cellOf(r, ['count', 'n'], '')) + '</td>' + '<td data-k="' + L.k011 + '">' + escapeHtml(cellOf(r, ['amount', 'total', 'price'], unitMoney(r))) + '</td>' + '</tr>').join('');
+  return head + '<div class="rc-wrap">' + '<table class="rc-table">' + '<thead>' + '<tr>' + '<th>' + L.k012 + '</th>' + '<th>' + L.k013 + '</th>' + '<th>' + L.k014 + '</th>' + '</tr>' + '</thead>' + '<tbody>' + body + '</tbody>' + '</table>' + '</div>' + '</div>';
 }
 
 /** 金额那一格带单位（值本身是数字才加），非数字原样。 */
 function unitMoney(r: Record<string, unknown>): string {
   const v = r.amount ?? r.total ?? r.price;
-  return typeof v === 'number' ? ' 元' : '';
+  return typeof v === 'number' ? m('skill-home.receipt-pages-purchase-records.c035') : '';
 }
 
 /** 记录表：行值只从信封取。
@@ -192,18 +227,15 @@ function unitMoney(r: Record<string, unknown>): string {
  *  ③ 年度行只有总额（`src/receipt/ticket.ts:32` 只给 `{name:'年度花费', count: total}`）——年份槽只能写「—」；
  *     需命令层补字段：year。 */
 function purchaseTable(env: Envelope, items: Record<string, unknown>[]): string {
+  const L = pageText();
   if (env.shape === 'receipt' || !items.length) return '';
   const stats = categorySection(items);
   if (!isDatedRows(items)) {
-    const money = typeof items[0].count === 'number' ? String(items[0].count) + ' 元' : BLANK;
+    const money = typeof items[0].count === 'number' ? m('skill-home.receipt-pages-purchase-records.c036', { p0: String(String(items[0].count)) }) : BLANK;
     const year = cellOf(items[0], ['year'], '');
-    return '<div class="rc-sum"><span class="rc-sum-k">年度合计</span><span class="rc-sum-v">' + escapeHtml(money) + '</span></div>'
-      + '<div class="rc-meta">' + metaRow('统计年份', year === BLANK ? BLANK : year + ' 年') + '</div>'
-      + stats;
+    return '<div class="rc-sum">' + '<span class="rc-sum-k">' + L.k015 + '</span>' + '<span class="rc-sum-v">' + escapeHtml(money) + '</span>' + '</div>' + '<div class="rc-meta">' + metaRow(L.k017, year === BLANK ? BLANK : year + L.k016) + '</div>' + stats;
   }
-  return '<div class="rc-meta">' + rangeLine(items) + '</div>'
-    + '<div class="rc-sec"><h2 class="rc-sec-t">购买记录</h2>' + rowsTable(items) + '</div>'
-    + stats;
+  return '<div class="rc-meta">' + rangeLine(items) + '</div>' + '<div class="rc-sec">' + '<h2 class="rc-sec-t">' + L.k018 + '</h2>' + rowsTable(items) + '</div>' + stats;
 }
 
 /** 页内样式与操作行（#817 收口补）：本族此前零可点控件，44px 命中区也无从谈起；补一行入口后
@@ -236,16 +268,12 @@ const PAGE_CSS = '<style>button{min-height:44px;min-width:44px;padding:0 14px;bo
   + '</style>';
 
 function opsBlock(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
+  const L = pageText();
   // #817（⑤文案不冗余）：第三颗原标签与场景名（查退货窗口）逐字相同＝自指，换成动作说法；载荷 data-t 不动。
-  return '<div class="rc-ops">'
-    + '<button type="button" data-t="请查购买记录，按物品复核">按物品复核</button>'
-    + '<button type="button" data-t="请登记购买记录">新增记录</button>'
-    + '<button type="button" data-t="请查退货窗口">按物品查退货期</button>'
-    + homeCopyArea({
+  return '<div class="rc-ops">' + '<button type="button" data-t="' + L.k019 + '">' + L.k020 + '</button>' + '<button type="button" data-t="' + L.k021 + '">' + L.k022 + '</button>' + '<button type="button" data-t="' + L.k023 + '">' + L.k024 + '</button>' + homeCopyArea({
         data: { envelope: env },
         log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
-      })
-    + '</div>';
+      }) + '</div>';
 }
 
 /** 按钮绑定（#817 收口补）：操作区这 5 颗是 `data-t` 复制按钮，只渲染不绑点击＝点了没反应
@@ -258,11 +286,9 @@ const PAGE_SCRIPT = '<script>function copyText(t){if(navigator.clipboard){naviga
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
 // 复制区走共用件（卡路里同款三格式＋六段日志）；`ctx.command` 由交付链供给（含 params），直调缺省按本族主 key。
 export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
+  const L = pageText();
   const template = readFileSync(new URL('../../../templates/receipt/purchase_records.html', import.meta.url), 'utf8');
-  const head = '<div class="fam-head" data-family="' + FAMILY + '" data-key="' + escapeHtml(String((env as { key?: unknown }).key ?? PAGE_META.key)) + '">'
-    // #817（⑤文案不冗余）：抬头只留域标签——原本写族名「购买记录」，与场景名回填后的 h1（查购买记录／
-    // 查上月购买／登记购买记录…）相邻重复；交付链 `withSceneIdentity` 也只保留头一个 span。
-    + '<span>票据凭证</span></div>';
+  const head = '<div class="fam-head" data-family="' + FAMILY + '" data-key="' + escapeHtml(String((env as { key?: unknown }).key ?? PAGE_META.key)) + '">' + '<span>' + L.k025 + '</span>' + '</div>';
   const items = itemsOf(env);
   // 空态由内容位渲染：data-block 标记照旧在位。
   const main = env.shape === 'receipt'
@@ -271,8 +297,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
       ? purchaseTable(env, items)
       // #890：按物品查（退货窗口）0 命中时回显「这一次查的是谁」——原先只有一句「没有命中购买记录」，
       // 认不出查的是哪一件。`query` 由命令层带回（`buildTicketList` 的第二个入参），缺了照旧只写那一句。
-      : '<div class="fam-content" data-block="empty">' + queryEchoOf(env)
-        + '<p>本次查询没有命中购买记录，可先登记一条再回来复核</p></div>';
+      : '<div class="fam-content" data-block="empty">' + queryEchoOf(env) + '<p>' + L.k026 + '</p>' + '</div>';
   // #817（⑤文案不冗余）：摘掉摘要句（原为「本次清单共N行，按购买日排列（金额与渠道在物品详情）」）——
   // 行数表里数得出来、字段去处是取数说明；属实现说明当正文。
   const content = head
@@ -280,9 +305,9 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + PAGE_CSS
     + opsBlock(env, ctx)
     + PAGE_SCRIPT
-    + sectionOf('fields', '字段')
-    + sectionOf('operations', '操作')
-    + sectionOf('empty', '空态与异常')
-    + sectionOf('status', '状态词');
+    + sectionOf('fields', m('skill-home.receipt-pages-purchase-records.c037'))
+    + sectionOf('operations', m('skill-home.receipt-pages-purchase-records.c038'))
+    + sectionOf('empty', m('skill-home.receipt-pages-purchase-records.c039'))
+    + sectionOf('status', m('skill-home.receipt-pages-purchase-records.c040'));
   return fillTemplate(template, content);
 }

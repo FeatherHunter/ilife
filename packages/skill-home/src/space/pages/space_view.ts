@@ -8,6 +8,28 @@
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { m } from '../../entries/index.js';
+
+/** 本页可见文案（渲染期取词：写成函数，模块加载时不取词）。 */
+function pageText() {
+  return {
+    k001: (p0: string) => m('skill-home.space-pages-space-view.c001', { p0: String(p0) }),
+    k002: '全屋',
+    k003: m('skill-home.space-pages-space-view.c002'),
+    k004: m('skill-home.space-pages-space-view.c003'),
+    k005: (p0: string, p1: string) => m('skill-home.space-pages-space-view.c004', { p0: String(p0), p1: String(p1) }),
+    k006: m('skill-home.space-pages-space-view.c005'),
+    k007: m('skill-home.space-pages-space-view.c006'),
+    k008: m('skill-home.space-pages-space-view.c007'),
+    k009: m('skill-home.space-pages-space-view.c008'),
+    k010: m('skill-home.space-pages-space-view.c009'),
+    k011: m('skill-home.space-pages-space-view.c010'),
+    k012: m('skill-home.space-pages-space-view.c011'),
+    k013: m('skill-home.space-pages-space-view.c012'),
+    k014: m('skill-home.space-pages-space-view.c013'),
+  };
+}
+
 
 export const FAMILY = 'space_view' as const;
 
@@ -66,118 +88,100 @@ function attr(s: string): string {
 }
 
 function hero(view: SpaceView): string {
-  const at = view.path === '' ? '整个家的位置树，逐层逛下去' : '当前位置：' + view.path;
+  const L = pageText();
+  const at = view.path === '' ? m('skill-home.space-pages-space-view.c014') : m('skill-home.space-pages-space-view.c015', { p0: String(view.path) });
   // 当前层名只由面包屑承担（#817 复评 seq 33：原先那颗徽章与面包屑末段逐字重复）；
   // 标题已在模板 h1（空间视图），此处只放路径总数，不重复族名与层名。
-  return '<div class="hero" data-need="异常：数据解析失败／数据校验失败">'
-    + '<div class="eyebrow" data-need="当前层名/路径"><span class="chip" data-need="路径总数">共' + view.total + '个位置</span></div>'
-    + '<p class="lead">' + escapeHtml(at) + '</p></div>';
+  return '<div class="hero" data-need="异常：数据解析失败／数据校验失败">' + '<div class="eyebrow" data-need="当前层名/路径">' + '<span class="chip" data-need="路径总数">' + L.k001(String(view.total)) + '</span>' + '</div>' + '<p class="lead">' + escapeHtml(at) + '</p>' + '</div>';
 }
 
 function crumbs(view: SpaceView): string {
-  const homePrompt = '请加载「居家管家」技能，帮我浏览空间视图：\n位置：全屋'; // 按钮写「全屋」，载荷同写「全屋」（#817 复评 seq 33：原先载荷写「顶层」）。
-  let html = '<button class="crumb home" data-copy="' + attr(homePrompt) + '" data-need="下钻">全屋</button>';
+  const L = pageText();
+  const homePrompt = m('skill-home.space-pages-space-view.c016'); // 按钮写「全屋」，载荷同写「全屋」（#817 复评 seq 33：原先载荷写「顶层」）。
+  let html = '<button class="crumb home" data-copy="' + attr(homePrompt) + '" data-need="下钻">' + L.k002 + '</button>';
   for (const c of view.crumbs) {
-    const prompt = '请加载「居家管家」技能，帮我浏览空间视图：\n位置：「' + c.path + '」';
-    html += '<span class="arrow">›</span><button class="crumb" data-copy="' + attr(prompt)
-      + '" data-need="下钻">' + escapeHtml(c.name) + '</button>';
+    const prompt = m('skill-home.space-pages-space-view.c017', { p0: String(c.path) });
+    html += '<span class="arrow">' + '›' + '</span>' + '<button class="crumb" data-copy="' + attr(prompt) + '" data-need="下钻">' + escapeHtml(c.name) + '</button>';
   }
   return '<nav class="bread" data-block="fields" data-need="面包屑">' + html + '</nav>';
 }
 
 function kidsCard(view: SpaceView): string {
+  const L = pageText();
   if (view.children.length === 0) {
-    return '<div hidden><span data-need="子层"></span></div>';
+    return '<div hidden>' + '<span data-need="子层">' + '</span>' + '</div>';
   }
   const cards = view.children.map((c) => {
-    const prompt = '请加载「居家管家」技能，帮我浏览空间视图：\n位置：「' + c.path + '」';
+  const L = pageText();
+    const prompt = m('skill-home.space-pages-space-view.c018', { p0: String(c.path) });
     // 计数行保持短行；下钻 affordance 由标题 hint 与箭头表达，不挤进计数行。
-    const ct = c.empty ? '空位置' : c.count + '件';
-    return '<button class="loc' + (c.empty ? ' isempty' : '') + '" data-copy="' + attr(prompt)
-      + '" data-need="下钻"><span class="nm">' + escapeHtml(c.name) + '</span>'
-      + '<span class="ct">' + ct + '</span><span class="go">›</span></button>';
+    const ct = c.empty ? m('skill-home.space-pages-space-view.c019') : m('skill-home.space-pages-space-view.c020', { p0: String(c.count) });
+    return '<button class="loc' + (c.empty ? ' isempty' : '') + '" data-copy="' + attr(prompt) + '" data-need="下钻">' + '<span class="nm">' + escapeHtml(c.name) + '</span>' + '<span class="ct">' + ct + '</span>' + '<span class="go">' + '›' + '</span>' + '</button>';
   }).join('');
-  return '<section class="card" data-block="fields" data-need="子层">'
-    + '<h2>下一层 <span class="hint">点卡片下钻</span></h2>'
-    + '<div class="grid">' + cards + '</div></section>';
+  return '<section class="card" data-block="fields" data-need="子层">' + '<h2>' + L.k003 + '<span class="hint">' + L.k004 + '</span>' + '</h2>' + '<div class="grid">' + cards + '</div>' + '</section>';
 }
 
 function itemsCard(view: SpaceView): string {
+  const L = pageText();
   if (view.items.length === 0) {
     // 叶子空层：快捷操作无载体，块位以隐藏载体保留（顶层产物即此情形）。
-    return '<div hidden><span data-need="当前层物品（名称/数量/状态）"></span>'
-      + '<span data-need="位置状态（缺省在家）"></span>'
-      + '<span data-need="移"></span><span data-need="补"></span><span data-need="减"></span></div>';
+    return '<div hidden>' + '<span data-need="当前层物品（名称/数量/状态）">' + '</span>' + '<span data-need="位置状态（缺省在家）">' + '</span>' + '<span data-need="移">' + '</span>' + '<span data-need="补">' + '</span>' + '<span data-need="减">' + '</span>' + '</div>';
   }
   const cards = view.items.map((it) => {
-    const mv = '请加载「居家管家」技能，帮我移物品：\n物品：' + it.name + '（编号' + it.id + '）\n新位置：待填写';
-    const add = '请加载「居家管家」技能，帮我补物品：\n物品：' + it.name + '（编号' + it.id + '）\n数量：待填写';
-    const sub = '请加载「居家管家」技能，帮我减物品：\n物品：' + it.name + '（编号' + it.id + '）\n数量：待填写';
-    return '<div class="item" data-need="当前层物品（名称/数量/状态）">'
-      + '<div class="inf"><div class="n">' + escapeHtml(it.name) + '</div>'
-      + '<table class="s" data-need="位置状态（缺省在家）"><tr><td>共' + it.qty + '件，' + escapeHtml(it.status) + '</td></tr></table></div>'
-      + '<div class="qa" data-block="operations">'
-      + '<button class="qb" data-copy="' + attr(mv) + '" data-need="移">移</button>'
-      + '<button class="qb" data-copy="' + attr(add) + '" data-need="补">补</button>'
-      + '<button class="qb" data-copy="' + attr(sub) + '" data-need="减">减</button>'
-      + '</div></div>';
+  const L = pageText();
+    const mv = m('skill-home.space-pages-space-view.c021', { p0: String(it.name), p1: String(it.id) });
+    const add = m('skill-home.space-pages-space-view.c022', { p0: String(it.name), p1: String(it.id) });
+    const sub = m('skill-home.space-pages-space-view.c023', { p0: String(it.name), p1: String(it.id) });
+    return '<div class="item" data-need="当前层物品（名称/数量/状态）">' + '<div class="inf">' + '<div class="n">' + escapeHtml(it.name) + '</div>' + '<table class="s" data-need="位置状态（缺省在家）">' + '<tr>' + '<td>' + L.k005(String(it.qty), String(escapeHtml(it.status))) + '</td>' + '</tr>' + '</table>' + '</div>' + '<div class="qa" data-block="operations">' + '<button class="qb" data-copy="' + attr(mv) + '" data-need="移">' + L.k006 + '</button>' + '<button class="qb" data-copy="' + attr(add) + '" data-need="补">' + L.k007 + '</button>' + '<button class="qb" data-copy="' + attr(sub) + '" data-need="减">' + L.k008 + '</button>' + '</div>' + '</div>';
   }).join('');
-  return '<section class="card" data-block="fields">'
-    + '<h2>本层物品</h2>'
-    + '<div class="items">' + cards + '</div></section>';
+  return '<section class="card" data-block="fields">' + '<h2>' + L.k009 + '</h2>' + '<div class="items">' + cards + '</div>' + '</section>';
 }
 
 function hintsBar(view: SpaceView): string {
+  const L = pageText();
   if (view.hints.length === 0) {
-    return '<div data-block="fields" hidden><span data-need="分层空态提示"></span>'
-      + '<span data-need="复制收纳建议"></span></div>';
+    return '<div data-block="fields" hidden>' + '<span data-need="分层空态提示">' + '</span>' + '<span data-need="复制收纳建议">' + '</span>' + '</div>';
   }
   const chips = view.hints.map((h) => '<span class="hintpath">' + escapeHtml(h) + '</span>').join('');
-  const prompt = '请加载「居家管家」技能，帮我推荐收纳位置：\n位置：「' + view.hints[0] + '」'; // hints[0]＝卡上第一个空位置的全路径（#817 复评 seq 33：原先写死「顶层」）。
-  return '<div class="tip" data-block="fields" data-need="分层空态提示">空位置节点，可移入物品，或先收纳建议。'
-    + '<div class="hintpaths">' + chips + '</div>'
-    + '<button class="btn ghost" data-copy="' + attr(prompt) + '" data-need="复制收纳建议">复制收纳建议</button></div>';
+  const prompt = m('skill-home.space-pages-space-view.c024', { p0: String(view.hints[0]) }); // hints[0]＝卡上第一个空位置的全路径（#817 复评 seq 33：原先写死「顶层」）。
+  return '<div class="tip" data-block="fields" data-need="分层空态提示">' + L.k010 + '<div class="hintpaths">' + chips + '</div>' + '<button class="btn ghost" data-copy="' + attr(prompt) + '" data-need="复制收纳建议">' + L.k011 + '</button>' + '</div>';
 }
 
 function emptyState(view: SpaceView): string {
+  const L = pageText();
   const top = view.path === '';
-  const guide = top ? '还没有任何位置记录。录入物品时填位置，或先建位置体系。'
-    : '这个位置还没有物品，可先收纳建议或移入物品。';
+  const guide = top ? m('skill-home.space-pages-space-view.c025')
+    : m('skill-home.space-pages-space-view.c026');
   const prompt = top
-    ? '请加载「居家管家」技能，帮我新建位置：\n位置：待填写'
-    : '请加载「居家管家」技能，帮我推荐收纳位置：\n位置：「' + view.path + '」';
-  const btnLabel = top ? '复制建位置' : '复制收纳建议';
-  const need = top ? '复制建位置' : '复制收纳建议';
-  return '<div class="empty" data-block="fields" data-need="空态：这里还没有东西（全屋与单层两套文案）">'
-    + '<h2>这里还没有东西</h2>' + escapeHtml(guide)
-    + '<div class="actions"><button class="btn" data-copy="' + attr(prompt)
-    + '" data-need="' + need + '">' + btnLabel + '</button></div></div>';
+    ? m('skill-home.space-pages-space-view.c027')
+    : m('skill-home.space-pages-space-view.c028', { p0: String(view.path) });
+  const btnLabel = top ? m('skill-home.space-pages-space-view.c029') : m('skill-home.space-pages-space-view.c030');
+  const need = top ? m('skill-home.space-pages-space-view.c031') : m('skill-home.space-pages-space-view.c032');
+  return '<div class="empty" data-block="fields" data-need="空态：这里还没有东西（全屋与单层两套文案）">' + '<h2>' + L.k012 + '</h2>' + escapeHtml(guide) + '<div class="actions">' + '<button class="btn" data-copy="' + attr(prompt) + '" data-need="' + need + '">' + btnLabel + '</button>' + '</div>' + '</div>';
 }
 
 function actionsBar(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
+  const L = pageText();
   // 可视化标签与必需块登记逐字同写「复制建位置」（#817 复评 seq 33：原先写「建位置」，与空态那颗按钮两个名字）。
-  const buildPrompt = '请加载「居家管家」技能，帮我新建位置：\n位置：待填写';
-  return '<div class="actions" data-block="operations">'
-    + '<button class="btn" data-copy="' + attr(buildPrompt) + '" data-need="复制建位置">复制建位置</button>'
-    + '<span data-need="复制数据" hidden></span><span data-need="复制日志" hidden></span>'
-    + homeCopyArea({
+  const buildPrompt = m('skill-home.space-pages-space-view.c033');
+  return '<div class="actions" data-block="operations">' + '<button class="btn" data-copy="' + attr(buildPrompt) + '" data-need="复制建位置">' + L.k013 + '</button>' + '<span data-need="复制数据" hidden>' + '</span>' + '<span data-need="复制日志" hidden>' + '</span>' + homeCopyArea({
         data: { envelope: env },
         log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
-      })
-    + '</div>';
+      }) + '</div>';
 }
 
 function genericList(items: { name?: unknown }[]): string {
+  const L = pageText();
   const cards = items.map((it) => '<div class="item"><div class="inf"><div class="n">'
     + escapeHtml(String(it.name ?? '')) + '</div></div></div>').join('');
-  return '<section class="card" data-block="fields" data-need="当前层物品（名称/数量/状态）">'
-    + '<h2>查找结果</h2><div class="items">' + cards + '</div></section>';
+  return '<section class="card" data-block="fields" data-need="当前层物品（名称/数量/状态）">' + '<h2>' + L.k014 + '</h2>' + '<div class="items">' + cards + '</div>' + '</section>';
 }
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
 // 复制区走共用件（卡路里同款三格式＋六段日志）；`ctx.command` 由交付链供给（含 params），直调缺省按本族主 key。
 export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
+  const L = pageText();
   const template = readFileSync(new URL('../../../templates/space/space_view.html', import.meta.url), 'utf8');
   const data = (env.data ?? {}) as { items?: unknown[] };
   const first = Array.isArray(data.items) && data.items.length > 0
@@ -187,8 +191,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     const view = data.items?.[0] as SpaceView;
     const hasData = view.children.length > 0 || view.items.length > 0;
     // 空态索引（有数据时空态区不 render，机审仍读原文；空态真 render 由测试空库断言覆盖）。
-    const emptyIndex = hasData ? '<div hidden data-block="empty">'
-      + '<span data-need="空态：这里还没有东西（全屋与单层两套文案）"></span></div>' : '';
+    const emptyIndex = hasData ? '<div hidden data-block="empty">' + '<span data-need="空态：这里还没有东西（全屋与单层两套文案）">' + '</span>' + '</div>' : '';
     content = hero(view)
       + '<div data-block="empty" hidden></div><div data-block="status" hidden></div>' + emptyIndex
       + crumbs(view)
@@ -197,14 +200,10 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   } else {
     const items = Array.isArray(data.items) ? data.items as { name?: unknown }[] : [];
     const view: SpaceView = {
-      kind: 'space_view', path: '', name: '(全屋)', crumbs: [],
+      kind: 'space_view', path: '', name: m('skill-home.space-pages-space-view.c034'), crumbs: [],
       children: [], items: [], hints: [], total: 0,
     };
-    content = hero(view)
-      + '<div data-block="empty" hidden></div><div data-block="status" hidden></div>'
-      // 找位置信封是扁平结果列表，无子层结构（以空间浏览信封为准，此处置位标记）。
-      + '<div hidden><span data-need="子层"></span></div>'
-      + crumbs(view) + genericList(items) + hintsBar(view) + actionsBar(env, ctx);
+    content = hero(view) + '<div data-block="empty" hidden>' + '</div>' + '<div data-block="status" hidden>' + '</div>' + '<div hidden>' + '<span data-need="子层">' + '</span>' + '</div>' + crumbs(view) + genericList(items) + hintsBar(view) + actionsBar(env, ctx);
   }
   return fillTemplate(template, content);
 }

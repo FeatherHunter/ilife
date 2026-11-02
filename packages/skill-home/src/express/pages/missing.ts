@@ -8,6 +8,31 @@
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { m } from '../../entries/index.js';
+
+/** 本页可见文案（渲染期取词：写成函数，模块加载时不取词）。 */
+function pageText() {
+  return {
+    k001: m('skill-home.express-pages-missing.c001'),
+    k002: m('skill-home.express-pages-missing.c002'),
+    k003: m('skill-home.express-pages-missing.c003'),
+    k004: (p0: string) => m('skill-home.express-pages-missing.c004', { p0: String(p0) }),
+    k005: (p0: string) => m('skill-home.express-pages-missing.c005', { p0: String(p0) }),
+    k006: m('skill-home.express-pages-missing.c006'),
+    k007: m('skill-home.express-pages-missing.c007'),
+    k008: m('skill-home.express-pages-missing.c008'),
+    k009: m('skill-home.express-pages-missing.c009'),
+    k010: m('skill-home.express-pages-missing.c010'),
+    k011: m('skill-home.express-pages-missing.c011'),
+    k012: m('skill-home.express-pages-missing.c012'),
+    k013: m('skill-home.express-pages-missing.c013'),
+    k014: m('skill-home.express-pages-missing.c014'),
+    k015: m('skill-home.express-pages-missing.c015'),
+    k016: (p0: string) => m('skill-home.express-pages-missing.c016', { p0: String(p0) }),
+    k017: m('skill-home.express-pages-missing.c017'),
+  };
+}
+
 
 export const FAMILY = 'missing' as const;
 
@@ -76,7 +101,7 @@ function asMissing(env: Envelope): { items: MissingItem[]; scope: string } {
       name: String(o.name ?? ''),
       current: Number(o.current ?? 0),
       threshold: Number(o.threshold ?? 1),
-      threshold_source: String(o.threshold_source ?? '囤货设置'),
+      threshold_source: String(o.threshold_source ?? m('skill-home.express-pages-missing.c018')),
       status: String(o.status ?? ''),
       suggest: Number(o.suggest ?? 1),
       category_name: String(o.category_name ?? ''),
@@ -89,9 +114,16 @@ function asMissing(env: Envelope): { items: MissingItem[]; scope: string } {
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
 // 复制区走共用件（卡路里同款三格式＋六段日志）；`ctx.command` 由交付链供给（含 params），直调缺省按本族主 key。
 export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
+  const SX = {
+    k001: m('skill-home.express-pages-missing.c026'),
+    k002: m('skill-home.express-pages-missing.c027'),
+    k003: "、",
+  
+  k004: m('skill-home.express-pages-missing.c028'),
+  k005: m('skill-home.express-pages-missing.c029'),};
+  const L = pageText();
   const template = readFileSync(new URL('../../../templates/express/missing.html', import.meta.url), 'utf8');
-  const head = '<div class="fam-head"><span>快递购物</span>'
-    + '<span>缺货检测</span></div>';
+  const head = '<div class="fam-head">' + '<span>' + L.k001 + '</span>' + '<span>' + L.k002 + '</span>' + '</div>';
   const { items, scope } = asMissing(env);
 
   const style = '<style>'
@@ -114,37 +146,25 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '@media(max-width:820px){.x-row{align-items:center}.x-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.x-btn{width:100%}}'
     + '</style>';
 
-  const P_SCOPE = '请加载居家管家技能，帮我按范围检测缺货';
-  const P_TH = '请加载居家管家技能，帮我查看囤货并设置阈值';
+  const P_SCOPE = m('skill-home.express-pages-missing.c019');
+  const P_TH = m('skill-home.express-pages-missing.c020');
   // #890：「加入购物清单」的初始载荷（点后由页内 `onclick` 按当刻勾选改写 `data-t`）。
-  const P_LIST = '请加载居家管家技能，帮我将缺货物品加入购物清单';
+  const P_LIST = m('skill-home.express-pages-missing.c021');
 
   let body = style;
   // #817（③双端不塌）第二波：说明句压到 390 档一行放得下（20 字）——原来 25 字在 390 档折行后
   // 第二行只剩一个「出」孤字。
-  body += '<p class="x-lead">勾选后加入购物清单，建议买量按两倍阈值算</p>';
-  body += '<div class="x-metrics">'
-    + '<span class="x-pill">缺货 ' + items.length + ' 件</span>'
-    + '<span class="x-pill">检测范围 ' + escapeHtml(scope) + '</span>'
-    + '<span class="x-pill">阈值来源 囤货设置</span>'
-    + '</div>';
+  body += '<p class="x-lead">' + L.k003 + '</p>';
+  body += '<div class="x-metrics">' + '<span class="x-pill">' + L.k004(String(items.length)) + '</span>' + '<span class="x-pill">' + L.k005(String(escapeHtml(scope))) + '</span>' + '<span class="x-pill">' + L.k006 + '</span>' + '</div>';
 
   if (items.length) {
-    body += '<section><h2>缺货物品</h2><div id="x-list">'
-      + items.map((it) => '<div class="x-row"><input class="x-check" type="checkbox" data-id="' + it.id + '" data-name="' + escapeHtml(it.name) + '" data-suggest="' + it.suggest + '">'
+    body += '<section>' + '<h2>' + L.k007 + '</h2>' + '<div id="x-list">' + items.map((it) => '<div class="x-row"><input class="x-check" type="checkbox" data-id="' + it.id + '" data-name="' + escapeHtml(it.name) + '" data-suggest="' + it.suggest + '">'
         + '<div style="flex:1"><div class="x-name">' + escapeHtml(it.name)
-        + '<span class="x-state ' + (it.status === '空' ? 'empty' : 'low') + '">' + escapeHtml(it.status) + '</span></div>'
-        + '<div class="x-meta">' + escapeHtml(it.category_name) + ' 当前 ' + it.current + ' 阈值 ' + it.threshold + '</div></div>'
-        + '<span class="x-suggest">建议买 <b>' + it.suggest + '</b></span></div>').join('')
-      + '</div><div class="x-actions">'
-      + '<button class="x-btn" data-action-id="x-to-list" data-t="' + escapeHtml(P_LIST) + '" onclick="xToList(this)">加入购物清单</button>'
-      + '<button class="x-btn ghost" data-action-id="x-scope" data-t="' + escapeHtml(P_SCOPE) + '">按范围检测</button>'
-      + '<button class="x-btn ghost" data-action-id="x-th" data-t="' + escapeHtml(P_TH) + '">设置阈值</button>'
-      + '</div></section>';
+        + '<span class="x-state ' + (it.status === L.k011 ? 'empty' : 'low') + '">' + escapeHtml(it.status) + '</span></div>'
+        + '<div class="x-meta">' + escapeHtml(it.category_name) + L.k010 + it.current + L.k009 + it.threshold + '</div></div>'
+        + '<span class="x-suggest">' + L.k008 + '<b>' + it.suggest + '</b></span></div>').join('') + '</div>' + '<div class="x-actions">' + '<button class="x-btn" data-action-id="x-to-list" data-t="' + escapeHtml(P_LIST) + '" onclick="xToList(this)">' + L.k012 + '</button>' + '<button class="x-btn ghost" data-action-id="x-scope" data-t="' + escapeHtml(P_SCOPE) + '">' + L.k013 + '</button>' + '<button class="x-btn ghost" data-action-id="x-th" data-t="' + escapeHtml(P_TH) + '">' + L.k014 + '</button>' + '</div>' + '</section>';
   } else {
-    body += '<section><div class="x-empty">库存充足没有缺货<br>范围 ' + escapeHtml(scope) + '<div class="x-actions" style="justify-content:center">'
-      + '<button class="x-btn ghost" data-action-id="x-th" data-t="' + escapeHtml(P_TH) + '">设置阈值</button>'
-      + '</div></div></section>';
+    body += '<section>' + '<div class="x-empty">' + L.k015 + '<br>' + L.k016(String(escapeHtml(scope))) + '<div class="x-actions" style="justify-content:center">' + '<button class="x-btn ghost" data-action-id="x-th" data-t="' + escapeHtml(P_TH) + '">' + L.k017 + '</button>' + '</div>' + '</div>' + '</section>';
   }
 
   // #890：复制路径交给公共层共享运行时（`<!--SHARED-HELPERS-->` 槽的 `buildSharedHelpersJs`）——
@@ -153,9 +173,9 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   // `data-action-id` ＋ `data-t`；按当刻勾选现算的那一颗，用元素级 `onclick` 先把载荷写回自己的
   // `data-t`（目标阶段先于 document 冒泡），没勾选时置空并保留拦截提示。
   body += '<script>'
-    + 'function xToList(b){var s=[...document.querySelectorAll("#x-list input:checked")];if(!s.length){b.setAttribute("data-t","");alert("请先勾选缺货物品");return;}'
-    + 'var ids=s.map(function(c){return c.getAttribute("data-id");}).join(",");var names=s.map(function(c){return c.getAttribute("data-name")+"建议买"+c.getAttribute("data-suggest");}).join("、");'
-    + 'b.setAttribute("data-t","请加载居家管家技能，帮我将缺货物品加入购物清单："+names+" 编号["+ids+"]");}'
+    + "function xToList(b){var s=[...document.querySelectorAll(\"#x-list input:checked\")];if(!s.length){b.setAttribute(\"data-t\",\"\");alert(\"" + SX.k001 + "\");return;}"
+    + "var ids=s.map(function(c){return c.getAttribute(\"data-id\");}).join(\",\");var names=s.map(function(c){return c.getAttribute(\"data-name\")+\"" + SX.k002 + "\"+c.getAttribute(\"data-suggest\");}).join(\"" + SX.k003 + "\");"
+    + "b.setAttribute(\"data-t\",\"" + SX.k004 + "\"+names+\" " + SX.k005 + "[\"+ids+\"]\");}"
     + '</script>';
 
   // 主 operations 唯一复制区（envelope 投影；上下两分支旧按钮已删，只留这一处）。
@@ -166,9 +186,9 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
 
   const content = head
     + body
-    + sectionOf('fields', '字段')
-    + sectionOf('operations', '操作')
-    + sectionOf('empty', '空态与异常')
-    + sectionOf('status', '状态词');
+    + sectionOf('fields', m('skill-home.express-pages-missing.c022'))
+    + sectionOf('operations', m('skill-home.express-pages-missing.c023'))
+    + sectionOf('empty', m('skill-home.express-pages-missing.c024'))
+    + sectionOf('status', m('skill-home.express-pages-missing.c025'));
   return fillTemplate(template, content);
 }

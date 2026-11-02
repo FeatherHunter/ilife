@@ -8,6 +8,37 @@
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, escapeHtml, homeCompactCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { m } from '../../entries/index.js';
+
+/** 本页可见文案（渲染期取词：写成函数，模块加载时不取词）。 */
+function pageText() {
+  return {
+    k001: (p0: string) => m('skill-home.space-pages-location-manage.c001', { p0: String(p0) }),
+    k002: m('skill-home.space-pages-location-manage.c002'),
+    k003: m('skill-home.space-pages-location-manage.c003'),
+    k004: m('skill-home.space-pages-location-manage.c004'),
+    k005: m('skill-home.space-pages-location-manage.c005'),
+    k006: m('skill-home.space-pages-location-manage.c006'),
+    k007: m('skill-home.space-pages-location-manage.c007'),
+    k008: m('skill-home.space-pages-location-manage.c008'),
+    k009: m('skill-home.space-pages-location-manage.c009'),
+    k010: m('skill-home.space-pages-location-manage.c010'),
+    k011: m('skill-home.space-pages-location-manage.c011'),
+    k012: m('skill-home.space-pages-location-manage.c012'),
+    k013: (p0: string, p1: string) => m('skill-home.space-pages-location-manage.c013', { p0: String(p0), p1: String(p1) }),
+    k014: m('skill-home.space-pages-location-manage.c014'),
+    k015: m('skill-home.space-pages-location-manage.c015'),
+    k016: m('skill-home.space-pages-location-manage.c016'),
+    k017: m('skill-home.space-pages-location-manage.c017'),
+    k018: m('skill-home.space-pages-location-manage.c018'),
+    k019: m('skill-home.space-pages-location-manage.c019'),
+    k020: m('skill-home.space-pages-location-manage.c020'),
+    k021: m('skill-home.space-pages-location-manage.c021'),
+    k022: m('skill-home.space-pages-location-manage.c022'),
+    k023: (p0: string, p1: string, p2: string) => m('skill-home.space-pages-location-manage.c023', { p0: String(p0), p1: String(p1), p2: String(p2) }),
+  };
+}
+
 
 export const FAMILY = 'location_manage' as const;
 
@@ -78,12 +109,11 @@ function copyBtn(prompt: string, label: string, need: string, ghost: boolean): s
 }
 
 function hero(total: number): string {
+  const L = pageText();
   // 标题已在模板 h1（管位置），此处只放计数徽章，不重复族名。
   // #817 ⑤：说明句原写「位置树总览加相似位置检测，改名合并影响一目了然」——复述下面两个卡片的
   // 标题与行内按钮名（同一件事说两遍），换一句不复述版面的短句。
-  return '<div class="hero" data-need="异常：数据解析失败／数据校验失败">'
-    + '<div class="eyebrow"><span class="chip">共' + total + '个位置</span></div>'
-    + '<p class="lead">名字越规整，找东西越快</p></div>';
+  return '<div class="hero" data-need="异常：数据解析失败／数据校验失败">' + '<div class="eyebrow">' + '<span class="chip">' + L.k001(String(total)) + '</span>' + '</div>' + '<p class="lead">' + L.k002 + '</p>' + '</div>';
 }
 
 /** 位置树逐行产（#928 行级瘦身）：**路径一行只写一次**（`data-t`），两条提示词（「帮我改名位置／
@@ -92,83 +122,68 @@ function hero(total: number): string {
  *  `data-need="已有路径/改名/删除"` 是必需块追溯原文，逐行保留不动。 */
 function treeRows(nodes: LocNode[]): string[] {
   return nodes.map((n) => {
+  const L = pageText();
     const indent = (n.depth - 1) * 22;
     // 次行用面包屑式呈现（› 连接）；单段路径的主名与路径同串，只在多级（depth>1）时才印这一截。
     const crumb = n.path.split('/').join(' › ');
     const sub = n.depth > 1 ? '<span class="sub">' + escapeHtml(crumb) + '</span>' : '';
     const cell = '<span class="infc"><span class="nm' + (n.empty ? ' isempty' : '') + '">'
       + escapeHtml(n.name) + '</span>' + sub + '</span>';
-    const ct = '<span class="ct">' + (n.empty ? '空位置' : n.count + '件') + '</span>';
-    return '<div class="trow" data-need="已有路径" data-t="' + attr(n.path) + '">'
-      + '<span style="width:' + indent + 'px;flex:none"></span>'
-      + cell + ct + '<span class="ops">'
-      + '<button class="opb" data-copy-kind="rename" data-need="改名">改名</button>'
-      + '<button class="opb" data-copy-kind="delete" data-need="删除">删除</button>'
-      + '</span></div>';
+    const ct = '<span class="ct">' + (n.empty ? L.k004 : n.count + L.k003) + '</span>';
+    return '<div class="trow" data-need="已有路径" data-t="' + attr(n.path) + '">' + '<span style="width:' + indent + 'px;flex:none">' + '</span>' + cell + ct + '<span class="ops">' + '<button class="opb" data-copy-kind="rename" data-need="改名">' + L.k005 + '</button>' + '<button class="opb" data-copy-kind="delete" data-need="删除">' + L.k006 + '</button>' + '</span>' + '</div>';
   });
 }
 
 /** 位置树卡（#928 收口：不截行、不翻页，库有多少印多少）。 */
 function treeCard(rows: string[]): string {
+  const L = pageText();
   if (rows.length === 0) {
     // ③（#817 seq 30）：空态这句原是一长句，390 档折行后末字孤在第二行；断成两句短句，落行不再挂单字。
-    return '<div class="empty" data-block="fields" data-need="空态：还没有位置＋建第一个位置引导">'
-      + '<h2>还没有位置</h2>先建第一个位置，如客厅电视柜<br>录物品时也能顺手建</div>';
+    return '<div class="empty" data-block="fields" data-need="空态：还没有位置＋建第一个位置引导">' + '<h2>' + L.k007 + '</h2>' + L.k008 + '<br>' + L.k009 + '</div>';
   }
-  return '<section class="card" data-block="fields" data-need="位置树">'
-    + '<h2>位置树 <span class="hint">点行内按钮改名或删除</span></h2>'
-    + '<div class="tree" data-need="位置路径多级">' + rows.join('') + '</div></section>';
+  return '<section class="card" data-block="fields" data-need="位置树">' + '<h2>' + L.k010 + '<span class="hint">' + L.k011 + '</span>' + '</h2>' + '<div class="tree" data-need="位置路径多级">' + rows.join('') + '</div>' + '</section>';
 }
 
 function similarCard(groups: SimilarGroup[]): string {
+  const L = pageText();
   // 相似区恒 render：有组则逐组卡片，无组则暂无行（薄种子下块位仍齐）。
   const body = groups.length === 0
-    ? '<div class="sim" data-need="相似位置组"><div class="mig">暂无相似位置，位置命名很规范。</div></div>'
-      + '<div hidden><span data-need="目标"></span><span data-need="受影响物品"></span>'
-      + '<span data-need="确认合并"></span></div>'
+    ? '<div class="sim" data-need="相似位置组">' + '<div class="mig">' + L.k012 + '</div>' + '</div>' + '<div hidden>' + '<span data-need="目标">' + '</span>' + '<span data-need="受影响物品">' + '</span>' + '<span data-need="确认合并">' + '</span>' + '</div>'
     : groups.map((g) => {
+  const L = pageText();
     const paths = g.paths.map((p) => '<span class="pathchip">' + escapeHtml(p) + '</span>').join('');
-    const mergePrompt = '请加载「居家管家」技能，帮我合并位置：\n源位置：「'
-      + g.paths.filter((p) => p !== g.target).join('」「') + '」\n目标位置：「' + g.target + '」';
-    return '<div class="sim" data-need="相似位置组">'
-      + '<div class="paths" data-need="目标">' + paths + '</div>'
-      + '<div class="mig" data-need="受影响物品">涉及' + g.affected + '件物品，建议保留「' + escapeHtml(g.target) + '」</div>'
-      + '<button class="btn" data-copy="' + attr(mergePrompt) + '" data-need="确认合并">确认合并</button></div>';
+    const mergePrompt = m('skill-home.space-pages-location-manage.c024', {
+      p0: String(g.paths.filter((p) => p !== g.target).join('」「')),
+      p1: String(g.target),
+    });
+    return '<div class="sim" data-need="相似位置组">' + '<div class="paths" data-need="目标">' + paths + '</div>' + '<div class="mig" data-need="受影响物品">' + L.k013(String(g.affected), String(escapeHtml(g.target))) + '</div>' + '<button class="btn" data-copy="' + attr(mergePrompt) + '" data-need="确认合并">' + L.k014 + '</button>' + '</div>';
   }).join('');
-  return '<section class="card" data-block="fields"><h2>相似位置检测 <span class="hint">同位置两种写法，建议合并</span></h2>'
-    + body + '</section>';
+  return '<section class="card" data-block="fields">' + '<h2>' + L.k015 + '<span class="hint">' + L.k016 + '</span>' + '</h2>' + body + '</section>';
 }
 
 // 表单面板＝页面里与卡片同级的一块（h1→h2，故用 section.card ＋ h2）；「关闭」＝收起本面板（#817 复评 seq 30）。
 function formPanel(): string {
-  return '<section class="card" id="formPanel" data-mode="create" data-block="fields">'
-    + '<h2 data-need="新建位置">新建位置</h2>'
-    + '<div class="fp-row" data-need="源位置表单"><label>源位置</label>'
-    + '<input id="fpSrc" readonly placeholder="—"></div>'
-    + '<div class="fp-row" data-need="新位置路径表单"><label>新位置路径</label>'
-    + '<input id="fpMain" placeholder="如：客厅电视柜，支持多级"></div>'
-    + '<div class="fp-preview" id="fpPreview"></div>'
-    + '<div class="fp-actions" data-block="operations">'
-    + '<button class="btn" id="fpCopy" data-need="复制prompt">复制提示词</button>'
-    + '<button class="btn ghost" id="fpClose" data-need="关闭" onclick="var p=document.getElementById(&quot;formPanel&quot;);if(p)p.hidden=true">关闭</button>'
-    + '</div></section>';
+  const SX = {
+    k001: m('skill-home.space-pages-location-manage.c025'),
+  };
+  const L = pageText();
+  return '<section class="card" id="formPanel" data-mode="create" data-block="fields">' + '<h2 data-need="新建位置">' + L.k017 + '</h2>' + '<div class="fp-row" data-need="源位置表单">' + '<label>' + L.k018 + '</label>' + '<input id="fpSrc" readonly placeholder="—">' + '</div>' + '<div class="fp-row" data-need="新位置路径表单">' + '<label>' + L.k019 + '</label>' + '<input id="fpMain" placeholder="' + L.k020 + '">' + '</div>' + '<div class="fp-preview" id="fpPreview">' + '</div>' + '<div class="fp-actions" data-block="operations">' + '<button class="btn" id="fpCopy" data-need="复制prompt">' + L.k021 + '</button>' + "<button class=\"btn ghost\" id=\"fpClose\" data-need=\"" + SX.k001 + "\" onclick=\"var p=document.getElementById(&quot;formPanel&quot;);if(p)p.hidden=true\">" + L.k022 + '</button>' + '</div>' + '</section>';
 }
 
 function actionsBar(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
+  const L = pageText();
   // 底部复制区走紧凑件（#928：本族节点量大，标准块三份 data-t 必超；紧凑块同三格式＋同日志，一份 JSON 点取）。
-  return '<div class="actions" data-block="operations">'
-    + '<span data-need="复制数据" hidden></span><span data-need="复制日志" hidden></span>'
-    + homeCompactCopyArea({
+  return '<div class="actions" data-block="operations">' + '<span data-need="复制数据" hidden>' + '</span>' + '<span data-need="复制日志" hidden>' + '</span>' + homeCompactCopyArea({
         data: { envelope: env },
         log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
-      })
-    + '</div>';
+      }) + '</div>';
 }
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页。
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
 // 复制区走共用件（卡路里同款三格式＋六段日志）；`ctx.command` 由交付链供给（含 params），直调缺省按本族主 key。
 export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
+  const L = pageText();
   const template = readFileSync(new URL('../../../templates/space/location_manage.html', import.meta.url), 'utf8');
   const data = (env.data ?? {}) as { message?: unknown; items?: unknown[]; detail?: ManageDetail };
   let nodes: LocNode[] = [];
@@ -193,12 +208,10 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   // #928 收口：不设体积上限、不再截行（用户裁定「不限制 html 文件大小」）。
   // 只有调用方显式给了 `limit`（信封 total > 本页行数）时，才写明还有多少、怎么捞——那是用户自己要的小页。
   const pagingHtml = fullTotal > rows.length
-    ? '<div class="paging">共' + fullTotal + '个位置，本页按 limit 只印前' + rows.length + '个（按路径排序）。还有'
-      + (fullTotal - rows.length) + '个没显示：去掉 limit 即全量，或加 q 筛关键词。</div>'
+    ? '<div class="paging">' + L.k023(String(fullTotal), String(rows.length), String((fullTotal - rows.length))) + '</div>'
     : '';
   // 空态索引（有数据时空态区不 render，机审仍读原文；空态真 render 由测试空库断言覆盖）。
-  const emptyIndex = nodes.length === 0 ? '' : '<div hidden data-block="empty">'
-    + '<span data-need="空态：还没有位置＋建第一个位置引导"></span></div>';
+  const emptyIndex = nodes.length === 0 ? '' : '<div hidden data-block="empty">' + '<span data-need="空态：还没有位置＋建第一个位置引导">' + '</span>' + '</div>';
   const content = PAGE_CSS + hero(fullTotal) + pagingHtml + receiptHtml
     + '<div data-block="status" hidden></div>' + emptyIndex
     + treeCard(rows) + similarCard(groups) + formPanel() + actionsBar(env, ctx);

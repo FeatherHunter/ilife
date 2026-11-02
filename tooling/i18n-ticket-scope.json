@@ -9834,7 +9834,165 @@
     "1309": {
       "title": "迁移 payload 事实源层与契约事实源页：54 件（按语言懒构）",
       "state": "open（待开工；清单由 #1220 与各迁移票分离而来）",
-      "files": [
+      "files": [],
+      "migrated": [
+        {
+          "path": "packages/skill-home/src/items/pages/add_form.ts",
+          "literals": 66,
+          "byClass": {
+            "payload": 66
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/browse.ts",
+          "literals": 33,
+          "byClass": {
+            "payload": 33
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/detail.ts",
+          "literals": 69,
+          "byClass": {
+            "payload": 69
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/duplicates.ts",
+          "literals": 30,
+          "byClass": {
+            "payload": 30
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/locate.ts",
+          "literals": 34,
+          "byClass": {
+            "payload": 34
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/photos.ts",
+          "literals": 62,
+          "byClass": {
+            "payload": 62
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/search_list.ts",
+          "literals": 39,
+          "byClass": {
+            "payload": 39
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/category_manage.ts",
+          "literals": 43,
+          "byClass": {
+            "copy": 15,
+            "concat": 11,
+            "ident": 17
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/confirm.ts",
+          "literals": 34,
+          "byClass": {
+            "copy": 11,
+            "concat": 7,
+            "ident": 16
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/history.ts",
+          "literals": 66,
+          "byClass": {
+            "copy": 35,
+            "concat": 12,
+            "ident": 19
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/inventory_diff.ts",
+          "literals": 46,
+          "byClass": {
+            "copy": 25,
+            "concat": 10,
+            "ident": 11
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/inventory_records.ts",
+          "literals": 47,
+          "byClass": {
+            "copy": 25,
+            "concat": 4,
+            "ident": 18
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/inventory_round.ts",
+          "literals": 62,
+          "byClass": {
+            "copy": 30,
+            "concat": 4,
+            "ident": 28
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/move_checklist.ts",
+          "literals": 42,
+          "byClass": {
+            "copy": 21,
+            "concat": 1,
+            "ident": 20
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/photo_wall.ts",
+          "literals": 44,
+          "byClass": {
+            "copy": 21,
+            "concat": 8,
+            "ident": 15
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/receipt.ts",
+          "literals": 66,
+          "byClass": {
+            "copy": 27,
+            "concat": 10,
+            "ident": 29
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/relations.ts",
+          "literals": 37,
+          "byClass": {
+            "copy": 14,
+            "concat": 6,
+            "ident": 17
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/tag_manage.ts",
+          "literals": 78,
+          "byClass": {
+            "copy": 25,
+            "concat": 28,
+            "ident": 25
+          }
+        },
+        {
+          "path": "packages/skill-home/src/items/pages/undo_select.ts",
+          "literals": 33,
+          "byClass": {
+            "copy": 21,
+            "concat": 1,
+            "ident": 11
+          }
+        },
         {
           "path": "packages/skill-home/src/express/pages/express.ts",
           "literals": 48,
@@ -10004,165 +10162,6 @@
           }
         }
       ],
-      "migrated": [
-        {
-          "path": "packages/skill-home/src/items/pages/add_form.ts",
-          "literals": 66,
-          "byClass": {
-            "payload": 66
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/browse.ts",
-          "literals": 33,
-          "byClass": {
-            "payload": 33
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/detail.ts",
-          "literals": 69,
-          "byClass": {
-            "payload": 69
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/duplicates.ts",
-          "literals": 30,
-          "byClass": {
-            "payload": 30
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/locate.ts",
-          "literals": 34,
-          "byClass": {
-            "payload": 34
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/photos.ts",
-          "literals": 62,
-          "byClass": {
-            "payload": 62
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/search_list.ts",
-          "literals": 39,
-          "byClass": {
-            "payload": 39
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/category_manage.ts",
-          "literals": 43,
-          "byClass": {
-            "copy": 15,
-            "concat": 11,
-            "ident": 17
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/confirm.ts",
-          "literals": 34,
-          "byClass": {
-            "copy": 11,
-            "concat": 7,
-            "ident": 16
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/history.ts",
-          "literals": 66,
-          "byClass": {
-            "copy": 35,
-            "concat": 12,
-            "ident": 19
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/inventory_diff.ts",
-          "literals": 46,
-          "byClass": {
-            "copy": 25,
-            "concat": 10,
-            "ident": 11
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/inventory_records.ts",
-          "literals": 47,
-          "byClass": {
-            "copy": 25,
-            "concat": 4,
-            "ident": 18
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/inventory_round.ts",
-          "literals": 62,
-          "byClass": {
-            "copy": 30,
-            "concat": 4,
-            "ident": 28
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/move_checklist.ts",
-          "literals": 42,
-          "byClass": {
-            "copy": 21,
-            "concat": 1,
-            "ident": 20
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/photo_wall.ts",
-          "literals": 44,
-          "byClass": {
-            "copy": 21,
-            "concat": 8,
-            "ident": 15
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/receipt.ts",
-          "literals": 66,
-          "byClass": {
-            "copy": 27,
-            "concat": 10,
-            "ident": 29
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/relations.ts",
-          "literals": 37,
-          "byClass": {
-            "copy": 14,
-            "concat": 6,
-            "ident": 17
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/tag_manage.ts",
-          "literals": 78,
-          "byClass": {
-            "copy": 25,
-            "concat": 28,
-            "ident": 25
-          }
-        },
-        {
-          "path": "packages/skill-home/src/items/pages/undo_select.ts",
-          "literals": 33,
-          "byClass": {
-            "copy": 21,
-            "concat": 1,
-            "ident": 11
-          }
-        }
-      ],
       "excluded": [
         {
           "path": "packages/skill-calorie/src/triggers/wake-assets.ts",
@@ -10261,12 +10260,12 @@
   },
   "scopeSummary": {
     "ledgerFiles": 1226,
-    "migratedFiles": 713,
-    "pendingFiles": 209,
-    "pendingLiterals": 7212,
+    "migratedFiles": 737,
+    "pendingFiles": 185,
+    "pendingLiterals": 5762,
     "excludedFiles": 304,
     "excludedLiterals": 14776,
-    "migratedLiterals": 20760
+    "migratedLiterals": 22210
   },
   "workflow": [
     "开工：从本文件取本票 files，逐件登记进 tooling/i18n-scope.json 的 files（先跑两道门拿红读数＝范围已挂但还没迁）。",

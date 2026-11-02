@@ -12,6 +12,34 @@
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, escapeHtml, latinFree, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { m } from '../../entries/index.js';
+
+/** 本页可见文案（渲染期取词：写成函数，模块加载时不取词）。 */
+function pageText() {
+  return {
+    k001: m('skill-home.outfit-pages-wardrobe-analyze.c001'),
+    k002: m('skill-home.outfit-pages-wardrobe-analyze.c002'),
+    k003: m('skill-home.outfit-pages-wardrobe-analyze.c003'),
+    k004: m('skill-home.outfit-pages-wardrobe-analyze.c004'),
+    k005: m('skill-home.outfit-pages-wardrobe-analyze.c005'),
+    k006: m('skill-home.outfit-pages-wardrobe-analyze.c006'),
+    k007: m('skill-home.outfit-pages-wardrobe-analyze.c007'),
+    k008: m('skill-home.outfit-pages-wardrobe-analyze.c008'),
+    k009: m('skill-home.outfit-pages-wardrobe-analyze.c009'),
+    k010: m('skill-home.outfit-pages-wardrobe-analyze.c010'),
+    k011: m('skill-home.outfit-pages-wardrobe-analyze.c011'),
+    k012: m('skill-home.outfit-pages-wardrobe-analyze.c012'),
+    k013: m('skill-home.outfit-pages-wardrobe-analyze.c013'),
+    k014: m('skill-home.outfit-pages-wardrobe-analyze.c014'),
+    k015: m('skill-home.outfit-pages-wardrobe-analyze.c015'),
+    k016: m('skill-home.outfit-pages-wardrobe-analyze.c016'),
+    k017: m('skill-home.outfit-pages-wardrobe-analyze.c017'),
+    k018: m('skill-home.outfit-pages-wardrobe-analyze.c018'),
+    k019: m('skill-home.outfit-pages-wardrobe-analyze.c019'),
+    k020: m('skill-home.outfit-pages-wardrobe-analyze.c020'),
+  };
+}
+
 
 export const FAMILY = 'wardrobe_analyze' as const;
 
@@ -56,12 +84,15 @@ export const REQUIRED_BLOCKS = {
 };
 
 /** 块原文→可见文案（只改会被机审 ascii 门判红的 1 处，其余原文直出；映射见 scene-outfit.md）。 */
-const DISPLAY: Record<string, string> = {
-  'AI建议一句': '智能建议一句话',
+/** 本页可见文案（渲染期取词：写成函数，模块加载时不取词）。 */
+function displayText(): Record<string, string> {
+  return {
+  'AI建议一句': m('skill-home.outfit-pages-wardrobe-analyze.c046'),
 };
+}
 
 function sectionOf(group: 'fields' | 'operations' | 'empty' | 'status', title: string): string {
-  const items = REQUIRED_BLOCKS[group].map((b) => '<li data-need="' + escapeHtml(b) + '">' + escapeHtml(DISPLAY[b] ?? b) + '</li>').join('');
+  const items = REQUIRED_BLOCKS[group].map((b) => '<li data-need="' + escapeHtml(b) + '">' + escapeHtml(displayText()[b] ?? b) + '</li>').join('');
   return '<section hidden data-block="' + group + '"><h2>' + title + '</h2><ul>' + items + '</ul></section>';
 }
 
@@ -104,14 +135,39 @@ const CSS = '<style>'
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
 // 复制区走共用件（卡路里同款三格式＋六段日志）；`ctx.command` 由交付链供给（含 params），直调缺省按本族主 key。
 export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
+  const SX = {
+    k001: m('skill-home.outfit-pages-wardrobe-analyze.c027'),
+    k002: m('skill-home.outfit-pages-wardrobe-analyze.c028'),
+    k003: m('skill-home.outfit-pages-wardrobe-analyze.c029'),
+    k004: m('skill-home.outfit-pages-wardrobe-analyze.c030'),
+    k005: m('skill-home.outfit-pages-wardrobe-analyze.c031'),
+    k006: m('skill-home.outfit-pages-wardrobe-analyze.c032'),
+    k007: m('skill-home.outfit-pages-wardrobe-analyze.c033'),
+    k008: m('skill-home.outfit-pages-wardrobe-analyze.c034'),
+    k009: "（",
+    k010: m('skill-home.outfit-pages-wardrobe-analyze.c035'),
+    k011: m('skill-home.outfit-pages-wardrobe-analyze.c036'),
+    k012: m('skill-home.outfit-pages-wardrobe-analyze.c037'),
+    k013: m('skill-home.outfit-pages-wardrobe-analyze.c038'),
+    k014: m('skill-home.outfit-pages-wardrobe-analyze.c039'),
+    k015: "）",
+    k016: m('skill-home.outfit-pages-wardrobe-analyze.c040'),
+    k017: m('skill-home.outfit-pages-wardrobe-analyze.c041'),
+    k018: m('skill-home.outfit-pages-wardrobe-analyze.c042'),
+    k019: m('skill-home.outfit-pages-wardrobe-analyze.c043'),
+    k020: "」",
+    k021: m('skill-home.outfit-pages-wardrobe-analyze.c044'),
+    k022: m('skill-home.outfit-pages-wardrobe-analyze.c045'),
+  };
+  const L = pageText();
   const template = readFileSync(new URL('../../../templates/outfit/wardrobe_analyze.html', import.meta.url), 'utf8');
   const data = (env.data ?? {}) as Record<string, unknown>;
   const w = (data.wardrobe ?? {}) as Record<string, unknown>;
   const dist = arr(w.distribution).map((x) => ({ label: str(x.label), count: num(x.count), pct: num(x.pct) } as Dist));
   const dormant = arr(w.dormant).map((x) => ({
-    id: num(x.id), name: str(x.name), slot: str(x.slot) || '衣物',
+    id: num(x.id), name: str(x.name), slot: str(x.slot) || m('skill-home.outfit-pages-wardrobe-analyze.c021'),
     daysIdle: typeof x.daysIdle === 'number' ? x.daysIdle : null,
-    lastUsed: str(x.lastUsed) || '从未使用', location: str(x.location), estimated: x.estimated === true,
+    lastUsed: str(x.lastUsed) || m('skill-home.outfit-pages-wardrobe-analyze.c022'), location: str(x.location), estimated: x.estimated === true,
   } as Dormant));
   const advice = str(w.advice);
   const summary = arr(w.summary);
@@ -120,14 +176,12 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + summary.map((m) => '<span>' + escapeHtml(str(m.label)) + escapeHtml(str(m.value)) + '</span>').join('')
     + '</div>';
 
-  let distHtml = '<div class="of-card"><h2>衣橱构成</h2>';
-  if (!dist.length) distHtml += '<div class="of-empty">衣橱还没有在家衣物，先去录入第一批再来看构成</div>';
+  let distHtml = '<div class="of-card">' + '<h2>' + L.k001 + '</h2>';
+  if (!dist.length) distHtml += '<div class="of-empty">' + L.k002 + '</div>';
   else {
     const max = Math.max(1, ...dist.map((d) => d.count));
     // #817（⑥分隔符不懒政）：原来件数与占比贴成一个串（「外套 5件36%」）——占比移独立列、右对齐。
-    distHtml += dist.map((d) => '<div class="of-bar"><div class="of-row"><span class="of-lb">' + escapeHtml(d.label)
-      + '</span><span class="of-n">' + escapeHtml(d.count + '件') + '</span><span class="of-p">' + escapeHtml(d.pct + '%') + '</span></div>'
-      + '<div class="of-track"><div class="of-fill" style="width:' + Math.round((d.count * 100) / max) + '%"></div></div></div>').join('');
+    distHtml += dist.map((d) => '<div class="of-bar">' + '<div class="of-row">' + '<span class="of-lb">' + escapeHtml(d.label) + '</span>' + '<span class="of-n">' + escapeHtml(d.count + L.k003) + '</span>' + '<span class="of-p">' + escapeHtml(d.pct + '%') + '</span>' + '</div>' + '<div class="of-track">' + '<div class="of-fill" style="width:' + Math.round((d.count * 100) / max) + '%">' + '</div>' + '</div>' + '</div>').join('');
   }
   distHtml += '</div>';
 
@@ -138,8 +192,8 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     data: { envelope: env },
     log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
   });
-  let dormantHtml = '<div class="of-card"><h2>闲置清单</h2>';
-  if (!dormant.length) dormantHtml += '<div class="of-empty">衣橱状态良好，没有长期闲置衣物</div>';
+  let dormantHtml = '<div class="of-card">' + '<h2>' + L.k004 + '</h2>';
+  if (!dormant.length) dormantHtml += '<div class="of-empty">' + L.k005 + '</div>';
   else {
     // #817（⑥分隔符不懒政）：副文原来把类别／闲置／最后使用／位置用逗号＋斜杠挤成一行
     //  （「闲置许久，从未使用过，放在玄关/鞋柜」）——拆成字段列（一格一个事实、左标签右值）；
@@ -147,45 +201,42 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     //  位置值本身仍是「房间/容器」复合串，拆成两个字段要数据层给拆好的字段。
     dormantHtml += dormant.map((x, i) => '<div class="of-idle" data-pick="' + i + '"><span class="of-check"></span>'
       + '<div style="flex:1"><div class="of-nm">' + escapeHtml(latinFree(x.name))
-      + (x.estimated ? '<span class="of-est">估算</span>' : '') + '</div>'
+      + (x.estimated ? '<span class="of-est">' + L.k014 + '</span>' : '') + '</div>'
       + '<table class="of-m">'
-      + (x.name.includes(x.slot) ? '' : '<tr><td class="of-k">类别</td><td class="of-v">' + escapeHtml(x.slot) + '</td></tr>')
-      + '<tr><td class="of-k">闲置时长</td><td class="of-v">' + (x.daysIdle === null ? '许久' : x.daysIdle + ' 天') + '</td></tr>'
-      + '<tr><td class="of-k">最后使用</td><td class="of-v">' + (x.lastUsed === '从未使用' ? '从未使用' : escapeHtml(x.lastUsed)) + '</td></tr>'
-      + (x.location ? '<tr><td class="of-k">位置</td><td class="of-v">' + escapeHtml(x.location) + '</td></tr>' : '')
-      + '</table></div></div>').join('')
-      + '<div class="of-actions"><button class="of-btn primary" id="ofDrop">标记废弃</button>'
-      + '<button class="of-btn" id="ofGive">送人</button><button class="of-btn" id="ofHold">先不处理</button>'
-      + '<button class="of-btn" id="ofShop">加入购物清单</button></div>';
+      + (x.name.includes(x.slot) ? '' : '<tr>' + '<td class="of-k">' + L.k013 + '</td>' + '<td class="of-v">' + escapeHtml(x.slot) + '</td></tr>')
+      + '<tr>' + '<td class="of-k">' + L.k012 + '</td>' + '<td class="of-v">' + (x.daysIdle === null ? L.k011 : x.daysIdle + L.k010) + '</td></tr>'
+      + '<tr>' + '<td class="of-k">' + L.k009 + '</td>' + '<td class="of-v">' + (x.lastUsed === L.k008 ? L.k007 : escapeHtml(x.lastUsed)) + '</td></tr>'
+      + (x.location ? '<tr>' + '<td class="of-k">' + L.k006 + '</td>' + '<td class="of-v">' + escapeHtml(x.location) + '</td></tr>' : '')
+      + '</table></div></div>').join('') + '<div class="of-actions">' + '<button class="of-btn primary" id="ofDrop">' + L.k015 + '</button>' + '<button class="of-btn" id="ofGive">' + L.k016 + '</button>' + '<button class="of-btn" id="ofHold">' + L.k017 + '</button>' + '<button class="of-btn" id="ofShop">' + L.k018 + '</button>' + '</div>';
   }
   dormantHtml += copyZone + '</div>';
 
-  const adviceHtml = advice ? '<div class="of-card"><h2>智能建议</h2><div class="of-advice">' + escapeHtml(advice) + '</div></div>' : '';
+  const adviceHtml = advice ? '<div class="of-card">' + '<h2>' + L.k019 + '</h2>' + '<div class="of-advice">' + escapeHtml(advice) + '</div>' + '</div>' : '';
 
   const payload = JSON.stringify({ dormant, advice }).replace(/</g, '\\u003c');
   const js = '<script>'
     + 'var WD=' + payload + ';var PICK={};'
     + 'function wdToast(m){var t=document.getElementById("wdToast");if(!t){t=document.createElement("div");t.style.cssText="position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#4a3d28;color:#fdfaf4;padding:9px 18px;border-radius:99px;font-size:13px;z-index:120";document.body.appendChild(t);}t.textContent=m;t.style.opacity="1";setTimeout(function(){t.style.opacity="0";},1600);}'
-    + 'function wdCopy(t){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){wdToast("已复制");}).catch(function(){wdToast("复制失败");});}else{var ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");wdToast("已复制");}catch(e){wdToast("复制失败");}ta.remove();}}'
+    + "function wdCopy(t){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){wdToast(\"" + SX.k001 + "\");}).catch(function(){wdToast(\"" + SX.k002 + "\");});}else{var ta=document.createElement(\"textarea\");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand(\"copy\");wdToast(\"" + SX.k003 + "\");}catch(e){wdToast(\"" + SX.k004 + "\");}ta.remove();}}"
     + 'function wdPicked(){return Object.keys(PICK).filter(function(k){return PICK[k];}).map(function(k){return WD.dormant[Number(k)];}).filter(Boolean);}'
     + 'document.querySelectorAll(".of-idle").forEach(function(el){el.onclick=function(){var i=el.getAttribute("data-pick");PICK[i]=!PICK[i];el.className="of-idle"+(PICK[i]?" on":"");};});'
-    + 'function wdAct(kind){var p=wdPicked();if(!p.length){wdToast("请先勾选要处理的衣物");return;}'
-    + 'var L=["闲置处理："+kind+" "+p.length+"件",""];p.forEach(function(x){L.push("处理："+x.name+"（"+(kind==="送人"?"标记废弃加备注送人":kind==="标记废弃"?"标记废弃":"暂不处理")+"）");});wdCopy(L.join("\\n"));}'
-    + 'var dr=document.getElementById("ofDrop");if(dr)dr.onclick=function(){wdAct("标记废弃");};'
-    + 'var gv=document.getElementById("ofGive");if(gv)gv.onclick=function(){wdAct("送人");};'
-    + 'var hd=document.getElementById("ofHold");if(hd)hd.onclick=function(){wdAct("先不处理");};'
-    + 'var sh=document.getElementById("ofShop");if(sh)sh.onclick=function(){wdCopy("请加入购物清单：参考衣橱分析缺口建议「"+WD.advice+"」");};'
+    + "function wdAct(kind){var p=wdPicked();if(!p.length){wdToast(\"" + SX.k005 + "\");return;}"
+    + "var L=[\"" + SX.k006 + "\"+kind+\" \"+p.length+\"" + SX.k007 + "\",\"\"];p.forEach(function(x){L.push(\"" + SX.k008 + "\"+x.name+\"" + SX.k009 + "\"+(kind===\"" + SX.k010 + "\"?\"" + SX.k011 + "\":kind===\"" + SX.k012 + "\"?\"" + SX.k013 + "\":\"" + SX.k014 + "\")+\"" + SX.k015 + "\");});wdCopy(L.join(\"\\n\"));}"
+    + "var dr=document.getElementById(\"ofDrop\");if(dr)dr.onclick=function(){wdAct(\"" + SX.k016 + "\");};"
+    + "var gv=document.getElementById(\"ofGive\");if(gv)gv.onclick=function(){wdAct(\"" + SX.k017 + "\");};"
+    + "var hd=document.getElementById(\"ofHold\");if(hd)hd.onclick=function(){wdAct(\"" + SX.k018 + "\");};"
+    + "var sh=document.getElementById(\"ofShop\");if(sh)sh.onclick=function(){wdCopy(\"" + SX.k019 + "\"+WD.advice+\"" + SX.k020 + "\");};"
     + 'var cd=document.getElementById("ofCopyData");if(cd)cd.onclick=function(){wdCopy(JSON.stringify(WD.dormant,null,2));};'
-    + 'var cl=document.getElementById("ofCopyLog");if(cl)cl.onclick=function(){wdCopy("衣橱分析日志：闲置"+WD.dormant.length+"件");};'
+    + "var cl=document.getElementById(\"ofCopyLog\");if(cl)cl.onclick=function(){wdCopy(\"" + SX.k021 + "\"+WD.dormant.length+\"" + SX.k022 + "\");};"
     + '</script>';
 
-  const head = '<div class="of-eye">穿搭出行 衣橱分析</div>';
+  const head = '<div class="of-eye">' + L.k020 + '</div>';
   const marker = '<div data-family="' + FAMILY + '" data-key="' + escapeHtml(PAGE_META.key) + '"></div>';
   const content = CSS + head + metrics + distHtml + adviceHtml + dormantHtml + marker
     + js
-    + sectionOf('fields', '字段')
-    + sectionOf('operations', '操作')
-    + sectionOf('empty', '空态与异常')
-    + sectionOf('status', '状态词');
+    + sectionOf('fields', m('skill-home.outfit-pages-wardrobe-analyze.c023'))
+    + sectionOf('operations', m('skill-home.outfit-pages-wardrobe-analyze.c024'))
+    + sectionOf('empty', m('skill-home.outfit-pages-wardrobe-analyze.c025'))
+    + sectionOf('status', m('skill-home.outfit-pages-wardrobe-analyze.c026'));
   return fillTemplate(template, content);
 }
