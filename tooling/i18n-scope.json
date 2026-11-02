@@ -1588,6 +1588,20 @@
     "packages/base-render/src/components/wizard-shell/model.ts",
     "packages/base-render/src/components/wizard-shell/render.ts",
     "packages/base-render/src/components/wizard-shell/style-answer.ts",
-    "packages/base-render/src/components/wizard-shell/style.ts"
+    "packages/base-render/src/components/wizard-shell/style.ts",
+    "packages/skill-bill/src/query/ticket-day.ts",
+    "packages/skill-bill/src/query/ticket-empty.ts",
+    "packages/skill-bill/src/query/ticketAccount.ts",
+    "packages/skill-bill/src/query/ticketCategory.ts",
+    "packages/skill-bill/src/query/ticketDebt.ts",
+    "packages/skill-bill/src/query/ticketInstallment.ts",
+    "packages/skill-bill/src/query/ticketInterval.ts",
+    "packages/skill-bill/src/query/ticketLedger.ts",
+    "packages/skill-bill/src/query/ticketMonth.ts",
+    "packages/skill-bill/src/query/ticketRecent.ts",
+    "packages/skill-bill/src/query/ticketReimburse.ts",
+    "packages/skill-bill/src/query/ticketToday.ts",
+    "packages/skill-bill/src/query/ticketWeek.ts",
+    "packages/skill-bill/src/query/ticketYesterday.ts"
   ]
 }

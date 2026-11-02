@@ -950,7 +950,8 @@
     "1211": {
       "title": "迁移 skill-bill query 批次 2：14 件（520 条）",
       "state": "open（待开工；清单已回填 #1308）",
-      "files": [
+      "files": [],
+      "migrated": [
         {
           "path": "packages/skill-bill/src/query/ticket-day.ts",
           "literals": 36,
@@ -1077,11 +1078,11 @@
           }
         }
       ],
-      "migrated": [],
       "totals": {
         "files": 14,
         "literals": 520
-      }
+      },
+      "excluded": []
     },
     "1212": {
       "title": "迁移 skill-bill account 域：15 件（518 条）",
@@ -10260,12 +10261,12 @@
   },
   "scopeSummary": {
     "ledgerFiles": 1226,
-    "migratedFiles": 699,
-    "pendingFiles": 223,
-    "pendingLiterals": 7732,
+    "migratedFiles": 713,
+    "pendingFiles": 209,
+    "pendingLiterals": 7212,
     "excludedFiles": 304,
     "excludedLiterals": 14776,
-    "migratedLiterals": 20240
+    "migratedLiterals": 20760
   },
   "workflow": [
     "开工：从本文件取本票 files，逐件登记进 tooling/i18n-scope.json 的 files（先跑两道门拿红读数＝范围已挂但还没迁）。",
