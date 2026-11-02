@@ -12,6 +12,7 @@
  */
 import { skinVar } from '../skin/contract.js';
 import { stepFlowClass, stepFlowSlot, type StepFlowSlot } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -38,7 +39,7 @@ export function stepFlowCss(input?: { readonly prefix?: string }): string {
   const step = sc('step');
   const v = skinVar;
   return [
-    '/* step-flow（步骤条）：竖排带说明 —— 节点形状给三态，状态字带上，连线给"走到了哪"。 */',
+    m('base-render.components-step-flow-style.c001'),
     s + ' {',
     '  display: flex;',
     '  flex-direction: column;',
@@ -80,7 +81,7 @@ export function stepFlowCss(input?: { readonly prefix?: string }): string {
     '  min-width: 0;',
     '  padding: 10px 0;',
     '}',
-    '/* 连线：从左列中线往下连到下一步；走过的实线、没走的虚线（线型自己就是第二样信息）。 */',
+    m('base-render.components-step-flow-style.c002'),
     step + ':not(:last-child)::after {',
     '  content: "";',
     '  position: absolute;',
@@ -117,13 +118,13 @@ export function stepFlowCss(input?: { readonly prefix?: string }): string {
     '  line-height: 1;',
     '  font-variant-numeric: tabular-nums;',
     '}',
-    '/* 已完成：实心圆 ＋ ✓（**无文字的点**走主色实底；✓ 是主色底上的字色，见口径文件那四档）。 */',
+    m('base-render.components-step-flow-style.c003'),
     step + '.is-done ' + n('node') + ' {',
     '  border: 1.5px solid ' + v('accent') + ';',
     '  background: ' + v('accent') + ';',
     '  color: ' + v('accent-ink') + ';',
     '}',
-    '/* 当前：双环 ＋ 内点（形）＋ 强一圈的边。 */',
+    m('base-render.components-step-flow-style.c004'),
     step + '.is-now ' + n('node') + ' {',
     '  border: 1.5px solid ' + v('accent') + ';',
     '  background: ' + v('surface') + ';',
@@ -157,7 +158,7 @@ export function stepFlowCss(input?: { readonly prefix?: string }): string {
     '  overflow-wrap: anywhere;',
     '}',
     step + '.is-todo ' + n('name') + ' { color: ' + v('ink-2') + '; font-weight: 600; }',
-    '/* 状态字三档形状：底线／实底块／虚线框。 */',
+    m('base-render.components-step-flow-style.c005'),
     sc('state') + ' {',
     '  flex: 0 0 auto;',
     '  box-sizing: border-box;',
@@ -234,7 +235,7 @@ export function stepFlowCss(input?: { readonly prefix?: string }): string {
     '  color: ' + v('ink-2') + ';',
     '  font-size: ' + v('fs-xs') + ';',
     '}',
-    '/* 窄档：估时实耗另起一行（不挤压名称与状态字）。 */',
+    m('base-render.components-step-flow-style.c006'),
     '@container ' + STEP_FLOW_CONTAINER + ' (max-width: ' + STEP_FLOW_NARROW_MAX_PX + 'px) {',
     '  ' + sc('time') + ' { margin-left: 0; flex: 1 1 100%; }',
     '  ' + sc('count') + ' { margin-left: 0; }',

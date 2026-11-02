@@ -39,6 +39,7 @@ import {
   type SliderRowForm,
 } from './attrs.js';
 import { normalizeSliderRow, type SliderRowModel } from './model.js';
+import { m } from '../../entries/index.js';
 
 /** 千分位分组：`1800` → `1,800`（本仓读数一律分组）。 */
 function grouped(intPart: string): string {
@@ -65,11 +66,11 @@ function valueWord(value: number | null, unit: string | undefined, decimals: num
 }
 
 /** 状态字：更新中 → 未设置 → 已到下限／上限 → 不出。 */
-function stateWord(m: SliderRowModel): string {
-  if (m.loading) return SLIDER_ROW_LOADING;
-  if (m.value === null) return SLIDER_ROW_UNSET;
-  if (m.value <= m.min) return SLIDER_ROW_AT_MIN;
-  if (m.value >= m.max) return SLIDER_ROW_AT_MAX;
+function stateWord(model: SliderRowModel): string {
+  if (model.loading) return SLIDER_ROW_LOADING();
+  if (model.value === null) return SLIDER_ROW_UNSET();
+  if (model.value <= model.min) return SLIDER_ROW_AT_MIN();
+  if (model.value >= model.max) return SLIDER_ROW_AT_MAX();
   return '';
 }
 
@@ -79,18 +80,18 @@ function errorId(name: string): string {
 }
 
 /** 可点区的「不能按」口径（同 `number-stepper`：禁用是真禁用，更新中只挂 `aria-disabled`）。 */
-function hitState(m: SliderRowModel): string {
-  if (m.disabled) return ' disabled aria-disabled="true"';
-  if (m.loading) return ' aria-disabled="true" tabindex="-1"';
+function hitState(model: SliderRowModel): string {
+  if (model.disabled) return ' disabled aria-disabled="true"';
+  if (model.loading) return ' aria-disabled="true" tabindex="-1"';
   return '';
 }
 
 /** 第一行：标签 ＋ 状态字 ＋ 右侧的大数字（`margin-left:auto` 顶到右缘）。 */
-function headHtml(m: SliderRowModel): string {
-  const state = stateWord(m);
+function headHtml(model: SliderRowModel): string {
+  const state = stateWord(model);
   const parts: string[] = ['<div class="' + sliderRowSlot('head') + '">'];
-  if (m.label !== undefined) {
-    parts.push('<span class="' + sliderRowSlot('label') + '">' + esc(m.label) + '</span>');
+  if (model.label !== undefined) {
+    parts.push('<span class="' + sliderRowSlot('label') + '">' + esc(model.label) + '</span>');
   }
   if (state !== '') {
     parts.push('<span class="' + sliderRowSlot('state') + '" ' + SLIDER_ROW_STATE_ATTR + '="' + esc(state) + '">'
@@ -98,81 +99,81 @@ function headHtml(m: SliderRowModel): string {
   }
   parts.push('<output class="' + sliderRowSlot('value') + '" ' + SLIDER_ROW_OUT_ATTR + '="">'
     + '<b class="' + sliderRowSlot('number') + '">'
-    + esc(m.value === null ? SLIDER_ROW_MISSING : formatSliderValue(m.value, m.decimals)) + '</b>'
-    + (m.unit === undefined ? '' : '<small class="' + sliderRowSlot('unit') + '">' + esc(m.unit) + '</small>')
+    + esc(model.value === null ? SLIDER_ROW_MISSING : formatSliderValue(model.value, model.decimals)) + '</b>'
+    + (model.unit === undefined ? '' : '<small class="' + sliderRowSlot('unit') + '">' + esc(model.unit) + '</small>')
     + '</output>');
   parts.push('</div>');
   return parts.join('');
 }
 
 /** 轨道那一排：− 键 ＋ 轨道 ＋ ＋ 键。轨道底下两段（底／已填），上面压一枚原生 `range`。 */
-function rowHtml(m: SliderRowModel): string {
-  const stepWord = formatSliderValue(m.step, m.decimals);
-  const unit = m.unit === undefined ? '' : ' ' + m.unit;
-  const described = m.error === undefined && m.disabledReason === undefined
-    ? '' : ' aria-describedby="' + esc(errorId(m.name)) + '"';
-  const state = hitState(m);
-  const label = m.label === undefined ? '这条读数' : m.label;
+function rowHtml(model: SliderRowModel): string {
+  const stepWord = formatSliderValue(model.step, model.decimals);
+  const unit = model.unit === undefined ? '' : ' ' + model.unit;
+  const described = model.error === undefined && model.disabledReason === undefined
+    ? '' : ' aria-describedby="' + esc(errorId(model.name)) + '"';
+  const state = hitState(model);
+  const label = model.label === undefined ? m('base-render.components-slider-row-render.c001') : model.label;
 
   const parts: string[] = ['<div class="' + sliderRowSlot('row') + '">'];
   parts.push('<button type="button" class="' + sliderRowSlot('dec') + '"'
     + ' ' + SLIDER_ROW_HIT_ATTR + '="dec" ' + SLIDER_ROW_ACT_ATTR + '="dec"'
-    + ' aria-label="减 ' + esc(stepWord + unit) + '"' + described + state + '>−</button>');
+    + ' aria-label="' + esc(m('base-render.components-slider-row-render.c002', { word: stepWord + unit })) + '"' + described + state + '>−</button>');
   parts.push('<span class="' + sliderRowSlot('track') + '">'
     + '<span class="' + sliderRowSlot('base') + '" aria-hidden="true"></span>'
     + '<span class="' + sliderRowSlot('fill') + '" aria-hidden="true" style="width: '
-    + esc(fillPercent(m.fillPermille)) + '%"></span>'
+    + esc(fillPercent(model.fillPermille)) + '%"></span>'
     + '<input class="' + sliderRowSlot('input') + '" ' + SLIDER_ROW_INPUT_ATTR + '="" type="range"'
-    + ' min="' + esc(String(m.min)) + '" max="' + esc(String(m.max)) + '" step="' + esc(String(m.step)) + '"'
-    + ' value="' + esc(String(m.value === null ? m.min : m.value)) + '"'
+    + ' min="' + esc(String(model.min)) + '" max="' + esc(String(model.max)) + '" step="' + esc(String(model.step)) + '"'
+    + ' value="' + esc(String(model.value === null ? model.min : model.value)) + '"'
     + ' aria-label="' + esc(label) + '"'
-    + (m.value === null ? '' : ' aria-valuetext="' + esc(valueWord(m.value, m.unit, m.decimals)) + '"')
-    + (m.disabled ? ' disabled aria-disabled="true"' : '')
-    + (m.loading ? ' aria-disabled="true" tabindex="-1"' : '')
+    + (model.value === null ? '' : ' aria-valuetext="' + esc(valueWord(model.value, model.unit, model.decimals)) + '"')
+    + (model.disabled ? ' disabled aria-disabled="true"' : '')
+    + (model.loading ? ' aria-disabled="true" tabindex="-1"' : '')
     + '></span>');
   parts.push('<button type="button" class="' + sliderRowSlot('inc') + '"'
     + ' ' + SLIDER_ROW_HIT_ATTR + '="inc" ' + SLIDER_ROW_ACT_ATTR + '="inc"'
-    + ' aria-label="加 ' + esc(stepWord + unit) + '"' + described + state + '>＋</button>');
+    + ' aria-label="' + esc(m('base-render.components-slider-row-render.c003', { word: stepWord + unit })) + '"' + described + state + '>＋</button>');
   parts.push('</div>');
   return parts.join('');
 }
 
 /** 常用档那一排：当前值命中哪一枚，哪一枚 `aria-pressed="true"`（实心反白 ＋ 加粗）。 */
-function presetsHtml(m: SliderRowModel): string {
-  if (m.presets.length === 0) return '';
-  const state = hitState(m);
+function presetsHtml(model: SliderRowModel): string {
+  if (model.presets.length === 0) return '';
+  const state = hitState(model);
   const parts: string[] = ['<div class="' + sliderRowSlot('presets') + '">'];
-  for (const preset of m.presets) {
-    const pressed = m.value !== null && Math.abs(m.value - preset) < 1e-9;
+  for (const preset of model.presets) {
+    const pressed = model.value !== null && Math.abs(model.value - preset) < 1e-9;
     parts.push('<button type="button" class="' + sliderRowSlot('preset') + '"'
       + ' ' + SLIDER_ROW_HIT_ATTR + '="preset" ' + SLIDER_ROW_ACT_ATTR + '="preset"'
       + ' ' + SLIDER_ROW_PRESET_ATTR + '="' + esc(String(preset)) + '"'
       + ' aria-pressed="' + (pressed ? 'true' : 'false') + '"' + state
-      + '>' + esc(formatSliderValue(preset, m.decimals)) + '</button>');
+      + '>' + esc(formatSliderValue(preset, model.decimals)) + '</button>');
   }
   parts.push('</div>');
   return parts.join('');
 }
 
 /** 说明行：错误说明（`error`）与禁用原因（`disabledReason`）各占一行，都能被控件引用到。 */
-function notesHtml(m: SliderRowModel): string {
+function notesHtml(model: SliderRowModel): string {
   const parts: string[] = [];
-  if (m.error !== undefined) {
-    parts.push('<p class="' + sliderRowSlot('error') + '" id="' + esc(errorId(m.name)) + '" role="alert">'
-      + esc(m.error) + '</p>');
-  } else if (m.disabled && m.disabledReason !== undefined) {
-    parts.push('<p class="' + sliderRowSlot('error') + '" id="' + esc(errorId(m.name)) + '">'
-      + esc(m.disabledReason) + '</p>');
+  if (model.error !== undefined) {
+    parts.push('<p class="' + sliderRowSlot('error') + '" id="' + esc(errorId(model.name)) + '" role="alert">'
+      + esc(model.error) + '</p>');
+  } else if (model.disabled && model.disabledReason !== undefined) {
+    parts.push('<p class="' + sliderRowSlot('error') + '" id="' + esc(errorId(model.name)) + '">'
+      + esc(model.disabledReason) + '</p>');
   }
-  if (m.caliber !== undefined) {
-    parts.push('<p class="' + sliderRowSlot('caliber') + '">' + esc(m.caliber) + '</p>');
+  if (model.caliber !== undefined) {
+    parts.push('<p class="' + sliderRowSlot('caliber') + '">' + esc(model.caliber) + '</p>');
   }
   return parts.join('');
 }
 
 /** 形态 A 的骨架（本件只有一格；分派写在这里，加第二形态就是加一支）。 */
-function renderTrack(m: SliderRowModel): string {
-  return headHtml(m) + rowHtml(m) + presetsHtml(m) + notesHtml(m);
+function renderTrack(model: SliderRowModel): string {
+  return headHtml(model) + rowHtml(model) + presetsHtml(model) + notesHtml(model);
 }
 
 const SKELETONS: Readonly<Record<SliderRowForm, (m: SliderRowModel) => string>> = {

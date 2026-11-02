@@ -7,6 +7,7 @@
  *  **三态靠「字 ＋ 形 ＋ 色」三样一起给**：节点是实心圆带 ✓ ／ 双环带内点 ／ 虚线空圈带序号，
  *  状态字是底线／实底块／虚线框，连线是实线／虚线。色只是第三样。
  */
+import { m } from '../../entries/index.js';
 export const STEP_FLOW_CLASS = 'ilife-block-step-flow';
 
 /** 槽位闭集（数组里带注释 ⇒ 不会被当成"形态闭集"）。 */
@@ -50,11 +51,11 @@ export const STEP_STATES = ['done', 'now', 'todo'] as const;
 export type StepState = (typeof STEP_STATES)[number];
 
 /** 状态字（三态各有自己的形状，见 `style.ts`；要换说法就在 `steps[].stateWord` 上覆盖）。 */
-export const STEP_STATE_WORDS: Readonly<Record<StepState, string>> = Object.freeze({
-  done: '已完成',
-  now: '正在做',
-  todo: '未开始',
-});
+export const STEP_STATE_WORDS: Readonly<Record<StepState, string>> = {
+  get done(): string { return '已完成'; },
+  get now(): string { return m('base-render.components-step-flow-attrs.c001'); },
+  get todo(): string { return m('base-render.components-step-flow-attrs.c002'); },
+};
 
 /** 已完成那一步节点里的记号（字：它让"实心圆"这一形状带上了可读的语意）。 */
 export const STEP_FLOW_MARK_DONE = '✓';

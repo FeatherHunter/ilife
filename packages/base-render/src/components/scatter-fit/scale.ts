@@ -14,6 +14,7 @@
  *   2. 本件不认形态、不碰标记：输入是数，输出还是数（或数拼成的字形）。
  */
 import { SCATTER_FIT_AXIS_INSET, type ScatterFitPoint } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 概率带的半宽（z 值 × 残差标准差）：1.2816 是正态 80% 区间那一档。 */
 const BAND_Z = 1.2816;
@@ -68,11 +69,11 @@ export function signed(v: number): string {
 /** 「相关强度」那句话说**多强**、不说方向（方向由正负号给）：口径与原型墙同档（0.62 算中等）。 */
 export function strengthText(r: number): string {
   const a = Math.abs(r);
-  if (a < 0.2) return '几乎无关';
-  if (a < 0.4) return '弱相关';
-  if (a < 0.7) return '中等相关';
-  if (a < 0.85) return '较强相关';
-  return '强相关';
+  if (a < 0.2) return m('base-render.components-scatter-fit-scale.c001');
+  if (a < 0.4) return m('base-render.components-scatter-fit-scale.c002');
+  if (a < 0.7) return m('base-render.components-scatter-fit-scale.c003');
+  if (a < 0.85) return m('base-render.components-scatter-fit-scale.c004');
+  return m('base-render.components-scatter-fit-scale.c005');
 }
 
 /* ── 轴域与刻度 ───────────────────────────────────────────────────── */
@@ -193,7 +194,7 @@ export function fitOf(points: readonly ScatterFitPoint[]): FitResult {
     syy += dy * dy;
   }
   /* 两个方向都得有变化才谈得上"相关"：x 全相同（一条竖线）或 y 全相同（一条横线）时 r 无定义。 */
-  const why = n < 2 ? '只有一个点' : (sxx <= 0 ? '横轴读数的值全相同' : (syy <= 0 ? '纵轴读数的值全相同' : ''));
+  const why = n < 2 ? m('base-render.components-scatter-fit-scale.c006') : (sxx <= 0 ? m('base-render.components-scatter-fit-scale.c007') : (syy <= 0 ? m('base-render.components-scatter-fit-scale.c008') : ''));
   if (why !== '') return { slope: 0, intercept: my, half: 0, r: null, why };
   const slope = sxy / sxx;
   const intercept = my - slope * mx;

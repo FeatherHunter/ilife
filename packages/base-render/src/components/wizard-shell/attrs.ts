@@ -17,6 +17,7 @@
  */
 
 /** 本件的类名根：全部槽位类名都是 `WIZARD_SHELL_CLASS + '-' + 槽名`。 */
+import { m } from '../../entries/index.js';
 export const WIZARD_SHELL_CLASS = 'ilife-block-wizard-shell';
 
 /** 槽位闭集（标记契约的一部分：`render.ts`／`style.ts` 与判据都用这里的名字拼类名，不各抄一份字面量）。 */
@@ -145,17 +146,31 @@ export const WIZARD_SHELL_TOTAL_MIN = 2;
 export const WIZARD_SHELL_TOTAL_MAX = 12;
 
 /** 三枚键的缺省字。**上一问／跳过**恒是这个；主键走到最后一问换「完成」。 */
-export const WIZARD_SHELL_BACK_LABEL = '上一问';
-export const WIZARD_SHELL_SKIP_LABEL = '跳过';
-export const WIZARD_SHELL_NEXT_LABEL = '继续';
-export const WIZARD_SHELL_DONE_LABEL = '完成';
+export function WIZARD_SHELL_BACK_LABEL(): string {
+  return m('base-render.components-wizard-shell-attrs.c001');
+}
+export function WIZARD_SHELL_SKIP_LABEL(): string {
+  return m('base-render.components-wizard-shell-attrs.c002');
+}
+export function WIZARD_SHELL_NEXT_LABEL(): string {
+  return m('base-render.components-wizard-shell-attrs.c003');
+}
+export function WIZARD_SHELL_DONE_LABEL(): string {
+  return m('base-render.components-wizard-shell-attrs.c004');
+}
 
 /** 读数行次段的缺省写法：第 1 问上没有可回的（这句话同时是「上一问」按不动的原因）。 */
-export const WIZARD_SHELL_ASIDE_FIRST = '这是第 1 问，前面没有可回的';
+export function WIZARD_SHELL_ASIDE_FIRST(): string {
+  return m('base-render.components-wizard-shell-attrs.c005');
+}
 /** 推进中主键换上的那枚字（原字不撤，两枚叠在同一格 ⇒ 宽度锁住不跳版）。 */
-export const WIZARD_SHELL_LOADING_TEXT = '保存中';
+export function WIZARD_SHELL_LOADING_TEXT(): string {
+  return m('base-render.components-wizard-shell-attrs.c006');
+}
 /** 没有答法那一问的空态（**设计过的空态**，不是留白）。 */
-export const WIZARD_SHELL_CONFIRM_TEXT = '这一问不用填，读完按继续';
+export function WIZARD_SHELL_CONFIRM_TEXT(): string {
+  return m('base-render.components-wizard-shell-attrs.c007');
+}
 
 /* ── 尺寸事实（判据与两份样式段共用这一份；改这里就是改几何，别在样式里再抄一遍数） ───────── */
 

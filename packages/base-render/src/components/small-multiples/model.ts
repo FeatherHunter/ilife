@@ -22,6 +22,7 @@ import {
   type SmallMultiplesPeriod,
 } from './attrs.js';
 import { barPct, barRange, meanOf, meanShown, numText } from './scale.js';
+import { m } from '../../entries/index.js';
 
 /* ── 内部类型（`render.ts` 只吃这些：每个字段都已校验、已归一、已算好） ─────── */
 
@@ -76,7 +77,7 @@ function assertKeys(raw: Record<string, unknown>, allowed: readonly string[], fi
   for (const key of Object.getOwnPropertyNames(raw)) note(key);
   for (const key in raw) note(key);
   if (bad.length > 0) {
-    badInput(field + ' 里没有 `' + bad.join('`／`') + '` 这个键（入参表以外的键一律拒：'
+    badInput(field + ' 里没有「' + bad.join('」「') + '」这个键（入参表以外的键一律拒：'
       + '写错的键静默吞掉会让调用方以为自己设上了；继承来的与不可枚举的键同样算）');
   }
 }
@@ -117,8 +118,8 @@ function reqPeriods(value: unknown): readonly SmallMultiplesPeriod[] {
        `1e308` 是有限数，可两笔同量级的读数相加就溢出成 `Infinity`，柱高与底下那枚读数会写成
        `1e+308` 那种读不出来的数。`1e21` 那一档照旧合法（十进制写法与指数写法的分界，本层当读数写）。 */
     if (Math.abs(v) + Math.abs(v) > SMALL_MULTIPLES_MAGNITUDE_MAX) {
-      badInput(at + '.value 的量级太大：两笔同量级的读数相加就溢出成 `Infinity`'
-        + '（柱阵与读数会写成 `1e+308` 这类读不出来的数；读数至多到 `Number.MAX_VALUE ÷ 2` 那一档）');
+      badInput(at + '.value 的量级太大：两笔同量级的读数相加就溢出成「Infinity」'
+        + '（柱阵与读数会写成「1e+308」这类读不出来的数；读数至多到「Number.MAX_VALUE ÷ 2」那一档）');
     }
     let now = false;
     if (p.now !== undefined) {
@@ -145,7 +146,7 @@ function reqPeriods(value: unknown): readonly SmallMultiplesPeriod[] {
       + '请给每一期不同的期间名，或先把这两期合成一期）');
   }
   if (nowCount > 1) {
-    badInput('small-multiples: input.periods 里最多标一期 now（本期只有一期，标两期说不出"这一列"是哪一列）');
+    badInput('small-multiples: input.periods 里最多标一期 now（本期只有一期，标两期说不出「这一列」是哪一列）');
   }
   return out;
 }
@@ -175,23 +176,34 @@ function columnsModel(c: CommonFields, periods: readonly SmallMultiplesPeriod[])
   const unitPart = c.unit === undefined ? '' : ' ' + c.unit;
   const loText = numText(range.lo);
   const hiText = numText(range.hi);
-  const meanText = '均值 ' + numText(shown) + unitPart;
+  const meanText = m('base-render.components-small-multiples-model.c001', { p0: String(numText(shown)), p1: String(unitPart) });
   const hasNow = periods.some((p) => p.now === true);
   const labels = periods.map((p) => p.label).join('，');
+  /** 读数全平与有高低两种读法（同一句话的两支）。 */
+  const flatPart = range.flat
+    ? m('base-render.components-small-multiples-model.c002', { p0: String(loText), p1: String(unitPart) })
+    : m('base-render.components-small-multiples-model.c003', {
+      p0: String(loText),
+      p1: String(unitPart),
+      p2: String(hiText),
+      p3: String(unitPart),
+    });
+  const nowPart = hasNow ? m('base-render.components-small-multiples-model.c004', { p0: String(SMALL_MULTIPLES_NOW_LABEL()) }) : '';
 
   const note = c.noteIn ?? (range.flat
-    ? '口径：这几期的读数完全一样，柱高都画在中线（分不出高低）。每一期的读数写在它那根柱子下面。'
-      + '虚线是这 ' + String(n) + ' 期的均值，它跟每一根柱顶一样高。'
-    : '口径：柱高只在最低 ' + loText + ' 与最高 ' + hiText + ' 之间归一化（不做 0 起点，'
-      + '否则几根柱子看着一样高），所以拿它比相对高低，不比绝对量——每一期的读数写在它那根柱子下面。'
-      + '虚线是这 ' + String(n) + ' 期的均值。「均值」不是「目标」：要跟目标比请另给一个数。');
+    ? m('base-render.components-small-multiples-model.c005', { p0: String(String(n)) })
+    : m('base-render.components-small-multiples-model.c006', {
+      p0: String(loText),
+      p1: String(hiText),
+      p2: String(String(n)),
+    }));
 
   return {
     form: 'columns',
     title: c.title,
     stamp: c.stamp,
     /* 卡头那句是**从数据算出来**的（不是装饰）：它替读者把那条虚线认出来，不靠颜色。 */
-    tail: '虚线＝' + String(n) + ' 期均值',
+    tail: m('base-render.components-small-multiples-model.c007', { p0: String(String(n)) }),
     meanPct,
     /* 标注朝柱阵里那一侧长：线在**刻度中线**（下限与上限的中点，＝全平那一档的位置）之上时画到线下。
        线上／线下各占半个柱阵区 ⇒ 只要标注不超过半个区高，它就一定在柱阵框内（判据在真机上量四条边）。 */
@@ -200,12 +212,14 @@ function columnsModel(c: CommonFields, periods: readonly SmallMultiplesPeriod[])
     bars: periods.map((p) => ({ heightPct: barPct(p.value, range), now: p.now === true })),
     ticks: periods.map((p) => ({ label: p.label, value: numText(p.value), now: p.now === true })),
     note,
-    ariaLabel: '柱阵：' + String(n) + ' 期并排（' + labels + '），'
-      + (range.flat
-        ? '这几期的读数完全一样，都是 ' + loText + unitPart
-        : '最低 ' + loText + unitPart + '，最高 ' + hiText + unitPart)
-      + '，均值 ' + numText(shown) + unitPart + '。虚线是均值线。'
-      + (hasNow ? '轴上写着「' + SMALL_MULTIPLES_NOW_LABEL + '」的那一列是本期。' : ''),
+    ariaLabel: m('base-render.components-small-multiples-model.c008', {
+      p0: String(String(n)),
+      p1: String(labels),
+      p2: String(flatPart),
+      p3: String(numText(shown)),
+      p4: String(unitPart),
+      p5: String(nowPart),
+    }),
     extraClass: c.extraClass,
   };
 }

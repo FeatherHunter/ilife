@@ -13,6 +13,7 @@ import {
   relationPickerSlot,
   type RelationPickerSlot,
 } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -31,8 +32,8 @@ export function relationPickerFormsCss(input?: { readonly prefix?: string }): st
   const hover = '@media ' + RELATION_PICKER_HOVER_QUERY;
 
   return [
-    '/* relation-picker 形态段（`style-forms.ts`）：行内那一块、最近一排、「全部」组头、选完那一行。 */',
-    '/* 行内展开那一块：字段行下面推开的那一块（单列，窄档不并排）；选完收起时 `hidden`。 */',
+    m('base-render.components-relation-picker-style-forms.c001'),
+    m('base-render.components-relation-picker-style-forms.c002'),
     s('inline') + ' {',
     '  display: grid;',
     '  gap: 0;',
@@ -44,7 +45,7 @@ export function relationPickerFormsCss(input?: { readonly prefix?: string }): st
     '}',
     s('inline') + '[hidden] { display: none; }',
     s('inline') + ' > ' + sc('new') + ' { padding-left: 0; padding-right: 0; }',
-    '/* 最近一排：横排换行的那一排（窄档自动折成两行）；一枚一点就选中那一项。 */',
+    m('base-render.components-relation-picker-style-forms.c003'),
     s('quick') + ' {',
     '  display: flex;',
     '  flex-wrap: wrap;',
@@ -91,7 +92,7 @@ export function relationPickerFormsCss(input?: { readonly prefix?: string }): st
     '  font-weight: 600;',
     '  padding: 1px 5px;',
     '}',
-    '/* 「全部」组头：组名（一档字）＋ 几个（一档灰读数，等宽数字）。 */',
+    m('base-render.components-relation-picker-style-forms.c004'),
     s('gh') + ' {',
     '  display: flex;',
     '  flex-wrap: wrap;',
@@ -115,7 +116,7 @@ export function relationPickerFormsCss(input?: { readonly prefix?: string }): st
     '}',
     s('list') + ' { display: grid; gap: ' + String(RELATION_PICKER_GAP_PX) + 'px; margin-top: 2px; min-width: 0; }',
     s('list') + ' > ' + sc('row') + ' { padding-left: 0; padding-right: 0; }',
-    '/* 选完收成的那一行：✓ ＋ 选了什么 ＋ 一枚真按钮「换」（**看得见、点得到**，不是一行带下划线的字）。 */',
+    m('base-render.components-relation-picker-style-forms.c005'),
     s('chosen') + ' {',
     '  display: grid;',
     '  grid-template-columns: auto minmax(0, 1fr) auto;',
@@ -178,21 +179,23 @@ export function relationPickerFormsCss(input?: { readonly prefix?: string }): st
     '  transition: transform 80ms ease;',
     '}',
     s('change') + ':active { transform: scale(.98); }',
-    '/* 无障碍地板（形态段这两枚）：焦点是**增强**，不是通路。 */',
+    m('base-render.components-relation-picker-style-forms.c006'),
     s('chip') + ':focus-visible, ' + s('change') + ':focus-visible {',
     '  outline: 2px solid ' + skinVar('accent') + ';',
     '  outline-offset: 2px;',
     '}',
-    '/* 悬停只是增强（而且只在真有指针的设备上），点得到不靠它。 */',
+    m('base-render.components-relation-picker-style-forms.c007'),
     hover + ' {',
     '  ' + s('chip') + ':hover { border-color: ' + skinVar('accent') + '; }',
     '}',
-    '/* 减动效：按下那一档的缩放直接关掉。 */',
+    m('base-render.components-relation-picker-style-forms.c008'),
     '@media (prefers-reduced-motion: reduce) {',
     '  ' + s('chip') + ', ' + s('change') + ' { transition: none; }',
     '}',
-    '/* 窄档（**本件自己** < ' + String(RELATION_PICKER_NARROW_PX) + 'px）：行内那一块的左右内边距各收 2px',
-    '   （行那两道缝住 `style.ts`，同一道查询）。 */',
+    m('base-render.components-relation-picker-style-forms.c009', {
+      p0: String(String(RELATION_PICKER_NARROW_PX)),
+    }),
+    m('base-render.components-relation-picker-style-forms.c010'),
     '@container ' + RELATION_PICKER_CONTAINER + ' (max-width: ' + String(RELATION_PICKER_NARROW_PX) + 'px) {',
     '  ' + s('inline') + ' { padding: 8px 10px 10px; }',
     '}',

@@ -17,6 +17,7 @@
  */
 
 /** 本件的类名根：全部槽位类名都是 `RATING_ROW_CLASS + '-' + 槽名`。 */
+import { m } from '../../entries/index.js';
 export const RATING_ROW_CLASS = 'ilife-block-rating-row';
 
 /** 槽位闭集（标记契约的一部分：`render.ts`、`style.ts` 与判据都用这里的名字拼类名）。 */
@@ -94,9 +95,13 @@ export const RATING_ROW_MAX_MAX = 10;
 /** 缺值的写法：**缺值写成 `—`，不许写 0**（0 分与"没评过"是两件事）。 */
 export const RATING_ROW_MISSING = '—';
 /** 加载态那句话说什么是缺省的（**不带省略号**）。 */
-export const RATING_ROW_LOADING_TEXT = '正在读取';
+export function RATING_ROW_LOADING_TEXT(): string {
+  return m('base-render.components-rating-row-attrs.c001');
+}
 /** 一颗星的无障碍名字的后缀（`aria-label="4 分"`）。 */
-export const RATING_ROW_STAR_LABEL_SUFFIX = ' 分';
+export function RATING_ROW_STAR_LABEL_SUFFIX(): string {
+  return m('base-render.components-rating-row-attrs.c002');
+}
 
 /** 评分行入参。 */
 export interface RatingRowInput {

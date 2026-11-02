@@ -18,6 +18,7 @@ import { ledgerRowsCss } from '../ledger-rows/style.js';
 import { punchStripCss } from '../punch-strip/style.js';
 import { scaleBarCss } from '../scale-bar/style.js';
 import { summaryHeadCss } from '../summary-head/style.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义，与本层其余件同）。 */
 const LF = String.fromCharCode(10);
@@ -38,7 +39,7 @@ export function sheetFrameCss(input?: { readonly prefix?: string }): string {
   const shadow = skinVar('shadow');
   const ink3 = skinVar('ink-3');
   return [
-    '/* sheet-frame（纸面页框）：一整页的纸张层。素纸＝中性卡片纸，小票纸＝暖白＋纸边＋撕口＋裁切线。 */',
+    m('base-render.components-sheet-frame-style.c001'),
     s + ' {',
     '  position: relative;',
     '  box-sizing: border-box;',
@@ -51,7 +52,7 @@ export function sheetFrameCss(input?: { readonly prefix?: string }): string {
     '  box-shadow: ' + skinVar('shadow') + ';',
     '  padding: 18px 20px 16px;',
     '}',
-    '/* 小票纸：暖一档的纸面 ＋ 纸边 ＋ 更方的角（单据不是卡片）。色全走 token ⇒ 换皮时它自己跟着换。 */',
+    m('base-render.components-sheet-frame-style.c002'),
     s + '.is-receipt {',
     '  background: ' + surface2 + ';',
     '  border-color: ' + edge + ';',
@@ -78,7 +79,7 @@ export function sheetFrameCss(input?: { readonly prefix?: string }): string {
        但页面侧的皮肤覆写会给**纸身**再补一次内距 ⇒ 双内距（实测纸内文字 x 由 32 退到 60），
        结构搬家要页面侧同时撤那条覆写，而页面写在 `packages/skill-bill/src/**`（本票写集禁入）⇒ 退回原位，
        锯齿内缩那 28-6=22px 的差写进本票遗留出口（`docs/base/base-render/1114-票据纸保真证据.md` §5）。 */
-    '/* 贯穿齿边：圆心落在纸边线上的一列半圆，用**桌面色**挖出来（与打孔同一个读法）。 */',
+    m('base-render.components-sheet-frame-style.c003'),
     s + '.is-ticket .' + p + 'block-sheet-edge {',
     '  position: absolute;',
     '  top: 0;',
@@ -95,12 +96,12 @@ export function sheetFrameCss(input?: { readonly prefix?: string }): string {
        不抬这一层，锯齿会盖掉右缘底部 12px 的齿孔（实测 w09 差 104 px，全落在左右两条边缘带）。
        抬这一层恰好把判地的「左缘在下、右缘在上」照搬过来。 */
     s + '.is-ticket .' + p + 'block-sheet-edge.is-right { right: 0; transform: scaleX(-1); z-index: 1; }',
-    '/* 页尾锯齿边：两列 45° 斜切拼出齿形，纸面色画在纸面上（与原型逐条同值）。 */',
-    '/* #1113 几何对齐（判地 `.zigzag{margin:0 6px}` 是 `.sheet-frame` 的子元素，**不吃** `.sheet-inner` 的内距）：',
-    '   占位与作画拆开——占位仍是 12px（页高逐字节不变），齿形交给绝对定位的 ::before。',
-    '   绝对定位的包含块是纸身的 padding box（＝纸幅整框，与纸身内距无关）⇒ 判地那 6px 内缩在',
-    '   390（页内距覆写成 22px）与 1280（28px）两档都成立；旧写法 `margin:0 6px` 落在内距里，',
-    '   实测 x 差 22px、w 差 44px（未覆盖的 6px 内缩 ×2）。 */',
+    m('base-render.components-sheet-frame-style.c004'),
+    m('base-render.components-sheet-frame-style.c005'),
+    m('base-render.components-sheet-frame-style.c006'),
+    m('base-render.components-sheet-frame-style.c007'),
+    m('base-render.components-sheet-frame-style.c008'),
+    m('base-render.components-sheet-frame-style.c009'),
     s + '.is-ticket .' + p + 'block-sheet-zigzag {',
     '  display: block;',
     '  height: 12px;',
@@ -119,7 +120,7 @@ export function sheetFrameCss(input?: { readonly prefix?: string }): string {
     '    linear-gradient(-45deg, transparent 8px, ' + surface + ' 0) 0 0/16px 16px repeat-x,',
     '    linear-gradient(45deg, transparent 8px, ' + surface + ' 0) 8px 0/16px 16px repeat-x;',
     '}',
-    '/* 裁切线（带字那一格）：一条虚线穿中间那句话；与打孔版同一条选择器，只换它自己这一档的摆法。 */',
+    m('base-render.components-sheet-frame-style.c010'),
     s + '.is-ticket .' + p + 'block-sheet-cut {',
     '  display: flex;',
     '  align-items: center;',
@@ -145,7 +146,7 @@ export function sheetFrameCss(input?: { readonly prefix?: string }): string {
     s + '-body {',
     '  min-width: 0;',
     '}',
-    '/* 撕口：圆心落在纸边线上的两枚半圆，用**桌面色**（`ground`）挖出来 ⇒ 换页面底色它自己跟着走。 */',
+    m('base-render.components-sheet-frame-style.c011'),
     s + '-notch {',
     '  position: absolute;',
     '  top: 34px;',
@@ -157,7 +158,7 @@ export function sheetFrameCss(input?: { readonly prefix?: string }): string {
     '}',
     s + '-notch.is-left { left: -9px; }',
     s + '-notch.is-right { right: -9px; }',
-    '/* 裁切线：纸面宽度上的一条虚线，两端各一枚小孔（提示"沿这里撕"）。 */',
+    m('base-render.components-sheet-frame-style.c012'),
     s + '-cut {',
     '  position: relative;',
     '  margin: 14px -20px 0;',

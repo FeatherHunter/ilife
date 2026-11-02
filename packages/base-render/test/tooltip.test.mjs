@@ -71,7 +71,7 @@ describe('tooltip ① 渲染契约', () => {
   it('缺槽不出：`hint` 给空串就不出那一格；`badgeText` 可换说法', () => {
     const bare = renderTooltip({ ...REAL, hint: '' });
     assert.equal(bare.includes('-hint'), false, 'hint 给空串 ⇒ 不出');
-    assert.ok(renderTooltip(REAL).includes(TOOLTIP_HINT), '缺省出「' + TOOLTIP_HINT + '」');
+    assert.ok(renderTooltip(REAL).includes(TOOLTIP_HINT()), '缺省出「' + TOOLTIP_HINT() + '」');
     assert.ok(renderTooltip({ ...REAL, badge: 'field' }).includes('字段说明'), 'field 档取另一种现成话');
     assert.ok(renderTooltip({ ...REAL, badgeText: '这是怎么算的' }).includes('这是怎么算的'), '可换说法');
   });

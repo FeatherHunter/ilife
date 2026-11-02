@@ -122,7 +122,7 @@ export function normalizeToastCard(input: unknown): ToastCardModel {
     title,
     detail,
     action,
-    closeLabel: optText(raw.closeLabel, at('input.closeLabel')) ?? TOAST_CARD_CLOSE_LABEL,
+    closeLabel: optText(raw.closeLabel, at('input.closeLabel')) ?? TOAST_CARD_CLOSE_LABEL(),
     durationMs: durationModel(raw.durationMs),
     extraClass: optExtraClass(raw.extraClass, at('input.extraClass')),
   };

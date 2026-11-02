@@ -14,6 +14,7 @@ import {
   RANK_LIST_PODIUM_SIZE,
   type RankListForm,
 } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 显示串：千分位 ＋ 最多两位小数（尾零去掉）＋ 负号。本件所有数字只经它上屏。 */
 export function showNumber(value: number): string {
@@ -125,7 +126,7 @@ export function normalizeRankList(input: unknown): RankListModel {
     const rank = i + 1;
     return {
       rank,
-      rankText: rank <= RANK_LIST_PODIUM_SIZE ? '第 ' + String(rank) + ' 名' : String(rank),
+      rankText: rank <= RANK_LIST_PODIUM_SIZE ? m('base-render.components-rank-list-model.c001', { p0: String(String(rank)) }) : String(rank),
       name: r.name,
       ...(r.note === undefined ? {} : { note: r.note }),
       valueText: r.valueText,
@@ -138,7 +139,7 @@ export function normalizeRankList(input: unknown): RankListModel {
     form: form as RankListForm,
     podium: placed.slice(0, RANK_LIST_PODIUM_SIZE),
     rest: placed.slice(RANK_LIST_PODIUM_SIZE),
-    caliberLabel: RANK_LIST_CALIBER_LABEL,
+    caliberLabel: RANK_LIST_CALIBER_LABEL(),
     ...(unit === undefined ? {} : { unit }),
     ...(caliber === undefined ? {} : { caliber }),
     ...(extra === undefined ? {} : { extraClass: extra }),

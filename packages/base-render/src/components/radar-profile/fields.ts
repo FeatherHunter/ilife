@@ -25,6 +25,7 @@ import {
   radiusOfScore,
   round2,
 } from './scale.js';
+import { m } from '../../entries/index.js';
 
 /** 卡头／脚注那几段共有的事实。 */
 export interface RadarProfileCommon {
@@ -221,11 +222,20 @@ export function labelModel(axis: RadarProfileAxisModel, index: number, count: nu
   };
 }
 
+/** 一根轴那一句：本期读数 ＋（要时）上期读数；缺测照实说，不编 0。 */
+function axisSentence(a: RadarProfileAxisModel, withPast: boolean): string {
+  const nowPart = a.score === null ? m('base-render.components-radar-profile-fields.c001') : m('base-render.components-radar-profile-fields.c002', { p0: String(plainNum(a.score)) });
+  const pastPart = withPast ? (a.past === null ? m('base-render.components-radar-profile-fields.c003') : m('base-render.components-radar-profile-fields.c004', { p0: String(plainNum(a.past)) })) : '';
+  return m('base-render.components-radar-profile-fields.c005', {
+    p0: String(a.label),
+    p1: String(nowPart),
+    p2: String(pastPart),
+  });
+}
+
 /** 逐轴点名的句子（无障碍名用）：每根轴一句，句间用句号，不堆并列分隔符。 */
 export function axisSentences(axes: readonly RadarProfileAxisModel[], withPast: boolean): string {
-  return axes.map((a) => a.label + ' 本期 '
-    + (a.score === null ? '缺测' : plainNum(a.score) + ' 分')
-    + (withPast ? (a.past === null ? '，上期缺测' : '，上期 ' + plainNum(a.past) + ' 分') : '')).join('。');
+  return axes.map((a) => axisSentence(a, withPast)).join('。');
 }
 
 /** 半径基准（三个形态共用同一把尺子：满分 100 对应 `RADAR_PROFILE_RADIUS`）。 */

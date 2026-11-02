@@ -29,6 +29,7 @@ import {
   POPOVER_TRIGGER_ATTR, POPOVER_TRIGGER_CLASS, POPOVER_DEFAULT_SELECTORS, POPOVER_MEASURE_ATTR,
 } from '../popover/attrs.js';
 import type { PopoverFullTextCssInput } from '../popover/model.js';
+import { m } from '../../entries/index.js';
 
 /** 本组件的样式段。 */
 export function popoverFullTextCss(input?: PopoverFullTextCssInput): string {
@@ -47,8 +48,8 @@ export function popoverFullTextCss(input?: PopoverFullTextCssInput): string {
     throw new Error('popoverFullTextCss: prefix 暂不支持改名（作用域根类由 page-ui 件给）；去掉这个入参。');
   }
   return [
-    '/* popover（气泡卡片 · 承载长文本全文）：popover ＋ 原生 popovertarget；零 box-shadow。 */',
-    '/* 层次：粗边 ＋ 外圈晕 ＋ 顶层（' + card + ' 的顶层是浏览器给的，不靠任何投影）。 */',
+    m('base-render.components-style-popover.c001'),
+    m('base-render.components-style-popover.c002', { p0: String(card) }),
     /* 挂载点不生成盒子：把触发处包一层是为了挂卡片，版面一个字都不许挪。 */
     root + ' ' + wrap + '{display:contents}',
     /* 触发处按钮复位：只压浏览器默认样式，**不许**压各族给这一行定的字号/字重档

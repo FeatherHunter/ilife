@@ -19,6 +19,7 @@
  */
 import { skinVar } from '../skin/contract.js';
 import { taskListClass, taskListSlot, type TaskListSlot } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -53,7 +54,7 @@ export function taskListCss(input?: { readonly prefix?: string }): string {
   const label = cls('-label');
   const v = skinVar;
   return [
-    '/* task-list（勾选清单）：一条一行，整行是命中区；组头与表头给"勾了几样"。 */',
+    m('base-render.components-task-list-style.c001'),
     s + ' {',
     '  display: flex;',
     '  flex-direction: column;',
@@ -110,7 +111,7 @@ export function taskListCss(input?: { readonly prefix?: string }): string {
     '  flex-direction: column;',
     '  min-width: 0;',
     '}',
-    '/* 组头：字 ＋ 计数 ＋ 一条横线（分区靠线与字，不靠底色）。 */',
+    m('base-render.components-task-list-style.c002'),
     sc('group-title') + ' {',
     '  display: flex;',
     '  align-items: center;',
@@ -155,7 +156,7 @@ export function taskListCss(input?: { readonly prefix?: string }): string {
     '  cursor: pointer;',
     '  border-radius: ' + v('radius-sm') + ';',
     '}',
-    '/* 勾选框：真 input 隐身留在原地（可 Tab、可读屏），视觉走旁边的框形。 */',
+    m('base-render.components-task-list-style.c003'),
     check + ' {',
     '  position: absolute;',
     '  left: 0;',
@@ -178,9 +179,9 @@ export function taskListCss(input?: { readonly prefix?: string }): string {
     '  background: ' + v('surface') + ';',
     '  transition: transform 60ms linear;',
     '}',
-    '/* 勾上：框变实心 ＋ ✓（形 ＋ 字）；行名同划一道线（第二样信息）。 */',
-    '/* `+` 两侧的两个选择器都要是**裸**的：写成 `.page-ui .check + .page-ui .box` 时，',
-    '   那个 `.page-ui` 必须紧邻在勾选框后面，永远不成立（实拍踩过）。 */',
+    m('base-render.components-task-list-style.c004'),
+    m('base-render.components-task-list-style.c005'),
+    m('base-render.components-task-list-style.c006'),
     check + ':checked + ' + bareCls('-check-box') + ' {',
     '  border-color: ' + v('accent') + ';',
     '  background: ' + v('accent') + ';',
@@ -232,14 +233,14 @@ export function taskListCss(input?: { readonly prefix?: string }): string {
     '  font-weight: 700;',
     '  white-space: nowrap;',
     '}',
-    '/* 已勾：行名划线变灰（形态＋色两样），框变实心（第三样）。 */',
+    m('base-render.components-task-list-style.c007'),
     row + '.is-done ' + bareCls('-label') + ' {',
     '  color: ' + v('ink-3') + ';',
     '  text-decoration: line-through;',
     '}',
     row + '.is-done ' + bareCls('-label') + ' em { text-decoration: none; }',
     row + '.is-done ' + bare('amount') + ' { color: ' + v('ink-3') + '; }',
-    '/* 错态：写在勾选框旁边（不只染色），运行时读它的 id 挂 aria-describedby。 */',
+    m('base-render.components-task-list-style.c008'),
     sc('err') + ' {',
     '  margin: 0 0 8px ' + (TASK_LIST_CHECK_SIZE_PX + 10) + 'px;',
     '  padding-left: 8px;',
@@ -265,18 +266,18 @@ export function taskListCss(input?: { readonly prefix?: string }): string {
     '  color: ' + v('ink-2') + ';',
     '  font-size: ' + v('fs-xs') + ';',
     '}',
-    '/* 悬停：包在设备能力查询里，且**不是唯一通路**（勾选由 `change` 驱动，触屏没有悬停也照勾）。 */',
+    m('base-render.components-task-list-style.c009'),
     '@media (hover:hover) and (pointer:fine) {',
     '  ' + hit + ':hover { background: ' + v('surface-2') + '; }',
     '}',
-    '/* 按下：只动 transform，≤80ms。 */',
+    m('base-render.components-task-list-style.c010'),
     hit + ':active ' + bareCls('-check-box') + ' { transform: scale(.9); }',
-    '/* 减动效：过渡关掉，状态照落（不许有东西卡在半路）。 */',
+    m('base-render.components-task-list-style.c011'),
     '@media (prefers-reduced-motion:reduce) {',
     '  ' + check + '-box { transition: none; }',
     '  ' + sc('bar-fill') + ' { transition: none; }',
     '}',
-    '/* 窄档：右侧读数另起一行靠右，名称不被挤压。 */',
+    m('base-render.components-task-list-style.c012'),
     '@container ' + TASK_LIST_CONTAINER + ' (max-width: ' + TASK_LIST_NARROW_MAX_PX + 'px) {',
     '  ' + sc('amount') + ' { flex: 1 1 100%; text-align: right; }',
     '  ' + sc('progress') + ' { margin-left: 0; }',

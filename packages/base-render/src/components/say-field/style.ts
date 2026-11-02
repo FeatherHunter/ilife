@@ -12,6 +12,7 @@
  */
 import { skinVar } from '../skin/contract.js';
 import { sayFieldSlot, type SayFieldSlot } from './render.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -34,7 +35,7 @@ export function sayFieldCss(input?: { readonly prefix?: string }): string {
   const s = (slot: SayFieldSlot): string => root + ' .' + sayFieldSlot(slot, p);
 
   return [
-    '/* say-field（一句话表单的一格）：字段名 ・ 输入件；格里再加一行提示。 */',
+    m('base-render.components-say-field-style.c001'),
     s('form') + ' {',
     '  display: flex;',
     '  flex-direction: column;',
@@ -47,10 +48,10 @@ export function sayFieldCss(input?: { readonly prefix?: string }): string {
     '  align-items: center;',
     '  gap: 10px;',
     '  min-height: ' + SAY_FIELD_TOUCH_PX + 'px;',
-    '  /* 判地字面 · 授权照抄：#fbf7ec（一格的暖底） */',
+    m('base-render.components-say-field-style.c002'),
     '  background: #fbf7ec;',
     '  border: 1px solid ' + skinVar('line') + ';',
-    '  /* 判地字面 · 授权照抄：' + SAY_FIELD_RADIUS_PX + 'px（外框圆角；皮肤三档里没有这一档） */',
+    m('base-render.components-say-field-style.c003', { p0: String(SAY_FIELD_RADIUS_PX) }),
     '  border-radius: ' + SAY_FIELD_RADIUS_PX + 'px;',
     '  padding: 8px 12px;',
     '  font-size: 14px;',
@@ -71,11 +72,11 @@ export function sayFieldCss(input?: { readonly prefix?: string }): string {
     '  flex: 1 1 0;',
     '  min-width: 0;',
     '  min-height: ' + SAY_FIELD_TOUCH_PX + 'px;',
-    '  /* 判地字面 · 授权照抄：#ddd0b6（输入件的暖边） */',
+    m('base-render.components-say-field-style.c004'),
     '  border: 1.5px solid #ddd0b6;',
-    '  /* 判地字面 · 授权照抄：' + SAY_FIELD_CONTROL_RADIUS_PX + 'px（输入件圆角） */',
+    m('base-render.components-say-field-style.c005', { p0: String(SAY_FIELD_CONTROL_RADIUS_PX) }),
     '  border-radius: ' + SAY_FIELD_CONTROL_RADIUS_PX + 'px;',
-    '  /* 判地字面 · 授权照抄：#fff（输入件的白底） */',
+    m('base-render.components-say-field-style.c006'),
     '  background: #fff;',
     '  color: ' + skinVar('ink') + ';',
     '  font-size: 15px;',
@@ -93,12 +94,12 @@ export function sayFieldCss(input?: { readonly prefix?: string }): string {
     '  outline: 2px solid ' + skinVar('danger') + ';',
     '}',
     s('ctl') + ':disabled {',
-    '  /* 判地字面 · 授权照抄：#f4efe2（禁用态的底） */',
+    m('base-render.components-say-field-style.c007'),
     '  background: #f4efe2;',
-    '  /* 判地字面 · 授权照抄：#a39c8e（禁用态的字色） */',
+    m('base-render.components-say-field-style.c008'),
     '  color: #a39c8e;',
     '}',
-    '/* 提示行是本层新增的一格（判地那条 `.say-hint` 住在字段格之外）：弱文字，占满一整行。 */',
+    m('base-render.components-say-field-style.c009'),
     s('hint') + ' {',
     '  flex: 1 1 100%;',
     '  color: ' + skinVar('ink-3') + ';',

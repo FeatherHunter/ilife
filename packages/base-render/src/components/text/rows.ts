@@ -10,6 +10,7 @@ import { stringifyJson } from './formats.js';
 import { asRecord } from './input.js';
 import { CR, DataRows, LF, TextRow } from './shared.js';
 import { DataProjectionSpec, SENSITIVE_ROW_RULE, SerializableShape, TEXT_HEADER_TEMPLATE } from '../../spec/text.js';
+import { m } from '../../entries/index.js';
 
 /* ── 行文本渲染（一行 = 一个投影值） ─────────────────────────── */
 
@@ -24,7 +25,7 @@ function valueText(value: unknown, empty: string): string {
   if (value === null || value === undefined) return empty;
   if (typeof value === 'string') return value === '' ? empty : value;
   if (typeof value === 'object') {
-    const text = stringifyJson(value, '投影值');
+    const text = stringifyJson(value, m('base-render.components-text-rows.c001'));
     return text === undefined ? empty : text;
   }
   return String(value);

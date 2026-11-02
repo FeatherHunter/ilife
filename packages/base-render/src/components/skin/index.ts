@@ -11,6 +11,7 @@ import { BROADSHEET_NOTE, BROADSHEET_VALUES } from './skins/broadsheet.js';
 import { NEUTRAL_NOTE, NEUTRAL_VALUES } from './skins/neutral.js';
 import { INK_NOTE, INK_VALUES } from './skins/ink.js';
 import { TICKET_NOTE, TICKET_VALUES } from './skins/ticket.js';
+import { m } from '../../entries/index.js';
 
 export {
   SKIN_DEFAULT,
@@ -81,10 +82,12 @@ export function skinCss(input?: SkinCssInput): string {
   const want = input === undefined || input === null || input.skins === undefined
     ? SKIN_NAMES
     : input.skins;
-  const out: string[] = ['/* skin：' + SKIN_NAMES.length + ' 套语言的取值表（组件只读 token 名，值住这里）。 */'];
+  const out: string[] = [m('base-render.components-skin-index.c001', { p0: String(SKIN_NAMES.length) })];
   for (const name of want) {
     if (!(SKIN_NAMES as readonly string[]).includes(name)) {
-      const err = new Error('skin: 未知皮肤 `' + String(name) + '`，须是 ' + SKIN_NAMES.join('／') + ' 之一');
+      const err = new Error(m('base-render.components-skin-index.c003', {
+        p0: String(name), p1: SKIN_NAMES.join('／'),
+      }));
       err.name = 'BlocksError';
       throw err;
     }
@@ -94,7 +97,7 @@ export function skinCss(input?: SkinCssInput): string {
     for (const token of Object.keys(entry.values) as SkinTokenName[]) {
       out.push('  ' + skinTokenVar(token) + ': ' + entry.values[token] + ';');
     }
-    out.push('  /* 旧 token 名映射（作用域内）：让既有件与老页面跟着这套语言走，避免"部分换皮"。 */');
+    out.push(m('base-render.components-skin-index.c002'));
     for (const [legacy, token] of LEGACY_MAP) {
       out.push('  ' + legacy + ': var(' + skinTokenVar(token) + ');');
     }

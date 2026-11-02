@@ -213,8 +213,8 @@ function impactOf(value: unknown, field: string): UndoTimelineImpactModel {
     title: reqRealText(raw.title, field + '.title'),
     note: optRealText(raw.note, field + '.note'),
     rows,
-    sumNote: optRealText(raw.sumNote, field + '.sumNote') ?? UNDO_TIMELINE_SUM_NOTE,
-    cancelLabel: optRealText(raw.cancelLabel, field + '.cancelLabel') ?? UNDO_TIMELINE_CANCEL_TEXT,
+    sumNote: optRealText(raw.sumNote, field + '.sumNote') ?? UNDO_TIMELINE_SUM_NOTE(),
+    cancelLabel: optRealText(raw.cancelLabel, field + '.cancelLabel') ?? UNDO_TIMELINE_CANCEL_TEXT(),
     checkedCount,
   };
 }
@@ -281,12 +281,12 @@ export function normalizeUndoTimeline(input: unknown): UndoTimelineModel {
   const common: UndoTimelineModel = {
     form: form as UndoTimelineForm,
     name,
-    title: optRealText(raw.title, 'undo-timeline: input.title') ?? UNDO_TIMELINE_TITLE,
+    title: optRealText(raw.title, 'undo-timeline: input.title') ?? UNDO_TIMELINE_TITLE(),
     cap: optRealText(raw.cap, 'undo-timeline: input.cap'),
     entries: [],
     rollback: undefined,
     openKey: undefined,
-    emptyText: optRealText(raw.emptyText, 'undo-timeline: input.emptyText') ?? UNDO_TIMELINE_EMPTY_TEXT,
+    emptyText: optRealText(raw.emptyText, 'undo-timeline: input.emptyText') ?? UNDO_TIMELINE_EMPTY_TEXT(),
     hint: optRealText(raw.hint, 'undo-timeline: input.hint'),
     change: undefined,
     changeKey: optRealText(raw.changeKey, 'undo-timeline: input.changeKey') ?? UNDO_TIMELINE_CHANGE_KEY,
@@ -360,4 +360,4 @@ export {
 export type UndoTimelineInputShape = UndoTimelineInput;
 
 /** 缺省卡头标题（判据与 README 按同一个常量对账，不各抄一份字面量）。 */
-export const UNDO_TIMELINE_DEFAULT_TITLE = UNDO_TIMELINE_TITLE;
+export const UNDO_TIMELINE_DEFAULT_TITLE = UNDO_TIMELINE_TITLE();

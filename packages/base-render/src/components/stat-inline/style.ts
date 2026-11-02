@@ -12,6 +12,7 @@
  */
 import { skinVar } from '../skin/contract.js';
 import { STAT_INLINE_CLASS, statInlineSlot, type StatInlineSlot } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -25,8 +26,8 @@ export function statInlineCss(input?: { readonly prefix?: string }): string {
   const s = (slot: StatInlineSlot): string => root + ' .' + statInlineSlot(slot, p);
 
   return [
-    '/* stat-inline（行内读数 · 形态 A「分隔点行内串」）：一句话里嵌几个数。',
-    '   整行可折行，但**每一项恒不换行** —— 值与其标签不许分家（分家就会把数配错标签）。 */',
+    m('base-render.components-stat-inline-style.c001'),
+    m('base-render.components-stat-inline-style.c002'),
     box + ' {',
     '  display: flex;',
     '  flex-wrap: wrap;',
@@ -40,7 +41,7 @@ export function statInlineCss(input?: { readonly prefix?: string }): string {
     '  line-height: 1.7;',
     '  overflow-wrap: anywhere;',
     '}',
-    '/* 一项：标签 ＋ 值 ＋ 字尾挤在同一个不折行的单元里（`nowrap` 是本形态的保命符）。 */',
+    m('base-render.components-stat-inline-style.c003'),
     s('item') + ' {',
     '  display: inline-flex;',
     '  align-items: baseline;',
@@ -48,7 +49,7 @@ export function statInlineCss(input?: { readonly prefix?: string }): string {
     '  min-width: 0;',
     '  white-space: nowrap;',
     '}',
-    '/* 值：主角。主色 ＋ 等宽 ＋ `tabular-nums`（多行／多页之间数字右缘成列）。 */',
+    m('base-render.components-stat-inline-style.c004'),
     s('value') + ' {',
     '  color: ' + skinVar('ink') + ';',
     '  font-family: ' + skinVar('font-num') + ';',
@@ -58,12 +59,12 @@ export function statInlineCss(input?: { readonly prefix?: string }): string {
     '  letter-spacing: -.01em;',
     '  font-variant-numeric: tabular-nums;',
     '}',
-    '/* 标签与字尾：与小结行同档的小字（比正文小一号、比脚注深一档 —— 这一行是要读的）。 */',
+    m('base-render.components-stat-inline-style.c005'),
     s('label') + ' {',
     '  font-size: ' + skinVar('fs-xs') + ';',
     '  font-weight: 600;',
     '}',
-    '/* 分隔点：项与项之间那一枚（`aria-hidden`，读屏不读它）。 */',
+    m('base-render.components-stat-inline-style.c006'),
     s('sep') + ' {',
     '  flex: none;',
     '  color: ' + skinVar('ink-2') + ';',

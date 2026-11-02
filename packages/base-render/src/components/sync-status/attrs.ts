@@ -13,6 +13,7 @@
  */
 
 /** 本件的类名根：全部槽位类名都是 `<前缀>block-sync-status-<槽名>`。 */
+import { m } from '../../entries/index.js';
 export const SYNC_STATUS_CLASS = 'ilife-block-sync-status';
 
 /** 槽位闭集。 */
@@ -62,24 +63,36 @@ export const SYNC_STATUS_RESULTS = ['ok', 'failed', 'pending'] as const;
 export type SyncStatusResult = (typeof SYNC_STATUS_RESULTS)[number];
 
 /** 结果 → 屏上那句话（**记号在前、字在后**：色之外还有两样）。唯一出处，判据从这里取。 */
-export const SYNC_STATUS_RESULT_WORDS: Readonly<Record<SyncStatusResult, string>> = Object.freeze({
-  ok: '✓ 已同步',
-  failed: '✗ 失败',
-  pending: '○ 待运行',
-});
+export const SYNC_STATUS_RESULT_WORDS: Readonly<Record<SyncStatusResult, string>> = {
+  get ok(): string { return m('base-render.components-sync-status-attrs.c001'); },
+  get failed(): string { return m('base-render.components-sync-status-attrs.c002'); },
+  get pending(): string { return m('base-render.components-sync-status-attrs.c003'); },
+};
 
 /** 失败行两句的左端标签（「原因」／「怎么修」）：**只要出失败行就带它们**。 */
-export const SYNC_STATUS_REASON_LABEL = '原因';
-export const SYNC_STATUS_FIX_LABEL = '怎么修';
+export function SYNC_STATUS_REASON_LABEL(): string {
+  return m('base-render.components-sync-status-attrs.c004');
+}
+export function SYNC_STATUS_FIX_LABEL(): string {
+  return m('base-render.components-sync-status-attrs.c005');
+}
 
 /** 按钮缺省的字（两枚：静止 / 跑起来）。 */
-export const SYNC_STATUS_ACTION_LABEL = '同步一次';
-export const SYNC_STATUS_RUNNING_LABEL = '同步中…';
+export function SYNC_STATUS_ACTION_LABEL(): string {
+  return m('base-render.components-sync-status-attrs.c006');
+}
+export function SYNC_STATUS_RUNNING_LABEL(): string {
+  return m('base-render.components-sync-status-attrs.c007');
+}
 
 /** 到点没消息时错误行那句话（**不许卡在「同步中…」**）。 */
-export const SYNC_STATUS_TIMEOUT_TEXT = '没有收到回应：这一趟同步没跑完；可以再按一次「同步一次」，或者先看上面失败那一行的「怎么修」。';
+export function SYNC_STATUS_TIMEOUT_TEXT(): string {
+  return m('base-render.components-sync-status-attrs.c008');
+}
 /** 调用方回了失败但没带话时的兜底错误句。 */
-export const SYNC_STATUS_FAILED_TEXT = '这一趟同步没有成功；上面失败那一行的「怎么修」写了下一步。';
+export function SYNC_STATUS_FAILED_TEXT(): string {
+  return m('base-render.components-sync-status-attrs.c009');
+}
 
 /** 按钮进入「跑起来了」的等待上限（毫秒）。 */
 export const SYNC_STATUS_RUN_TIMEOUT_MS = 15000;

@@ -17,6 +17,7 @@
  */
 
 /** 本件的类名根（挂在包住「词 ＋ 气泡」的那层容器上）。 */
+import { m } from '../../entries/index.js';
 export const TOOLTIP_CLASS = 'ilife-block-tooltip';
 
 /** 类名根（带前缀）。 */
@@ -62,10 +63,10 @@ export const TOOLTIP_BADGES = ['caliber', 'field'] as const;
 export type TooltipBadge = (typeof TOOLTIP_BADGES)[number];
 
 /** 眉标上的字（闭集 → 字，一一对应；调用方要别的说法就自己给 `badgeText`）。 */
-export const TOOLTIP_BADGE_TEXT: Readonly<Record<TooltipBadge, string>> = Object.freeze({
-  caliber: '口径',
-  field: '字段说明',
-});
+export const TOOLTIP_BADGE_TEXT: Readonly<Record<TooltipBadge, string>> = {
+  get caliber(): string { return m('base-render.components-tooltip-attrs.c001'); },
+  get field(): string { return m('base-render.components-tooltip-attrs.c002'); },
+};
 
 /* ── `data-*` 名 ─────────────────────────────────────────────────── */
 
@@ -89,10 +90,10 @@ export const TOOLTIP_ANCHOR_PREFIX = '--tooltip-';
 /** 词后那枚问号（纯装饰；「这是个可以问一句的词」的记号）。 */
 export const TOOLTIP_MARK = '?';
 /** 「为什么重要」那一段的行首标签（形态 B 的识别特征：**这一段必须有**）。 */
-export const TOOLTIP_WHY_LABEL = '为什么重要';
+export function TOOLTIP_WHY_LABEL(): string { return m('base-render.components-tooltip-attrs.c003'); }
 /** 关掉的提示（写在气泡头右端）。**不写键盘键名**：法条是"控件同时在手机与电脑用、不存在方向键一类键盘相关的东西"——
  *  `Esc` 关掉浏览器仍然白送，但那是**增强**，不许摆到用户面前当唯一通路。 */
-export const TOOLTIP_HINT = '点别处关掉';
+export function TOOLTIP_HINT(): string { return m('base-render.components-tooltip-attrs.c004'); }
 
 /** 几何口径：气泡宽上限／离容器边至少留多少／与词之间那道缝／词的最小命中边长。 */
 export const TOOLTIP_WIDTH_PX = 560;

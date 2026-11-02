@@ -10,6 +10,7 @@ import { asRecord } from './input.js';
 import { isSensitive } from './rows.js';
 import { CR, DataRows, LF, TextError, fail } from './shared.js';
 import { CSV_DIALECT, DataProjectionSpec, SENSITIVE_ROW_RULE, TEXT_JSON_INDENT, TEXT_JSON_LT_RULE } from '../../spec/text.js';
+import { m } from '../../entries/index.js';
 
 /* ── 三种 format 的编码器 ───────────────────────────────────── */
 
@@ -17,9 +18,9 @@ import { CSV_DIALECT, DataProjectionSpec, SENSITIVE_ROW_RULE, TEXT_JSON_INDENT, 
  *  `BigInt` 与循环引用**不同因不同文**（FX-77-8：不得把 `BigInt` 误写成「循环引用」）。 */
 function jsonFailReason(error: unknown): string {
   const text = error instanceof Error ? error.message : String(error);
-  if (text.indexOf('circular') >= 0) return '循环引用';
-  if (text.indexOf('BigInt') >= 0) return 'BigInt 等非 JSON 值';
-  return '含非 JSON 值';
+  if (text.indexOf('circular') >= 0) return m('base-render.components-text-formats.c001');
+  if (text.indexOf('BigInt') >= 0) return m('base-render.components-text-formats.c002');
+  return m('base-render.components-text-formats.c003');
 }
 
 /** `JSON.stringify` 的统一包装（**三 format 共用**；`prefix` 只用于辨因文案）：
@@ -36,20 +37,20 @@ export function stringifyJson(value: unknown, prefix: string, indent?: number): 
   try {
     return JSON.stringify(value, (_key, item) => {
       if (typeof item === 'bigint') {
-        fail('structure-invalid', prefix + '不可 JSON 序列化（BigInt 等非 JSON 值）');
+        fail('structure-invalid', m('base-render.components-text-formats.c004', { p0: String(prefix) }));
       }
       return item === undefined ? null : item;
     }, indent);
   } catch (error) {
     if (error instanceof TextError) throw error;
-    fail('structure-invalid', prefix + '不可 JSON 序列化（' + jsonFailReason(error) + '）');
+    fail('structure-invalid', m('base-render.components-text-formats.c005', { p0: String(prefix), p1: String(jsonFailReason(error)) }));
   }
 }
 
 /** `json` 口径：缩进恒取 `TEXT_JSON_INDENT`，`<` 一律写成反斜杠 + `TEXT_JSON_LT_RULE`。 */
 export function jsonText(value: unknown): string {
-  const text = stringifyJson(value, '载荷', TEXT_JSON_INDENT);
-  if (text === undefined) fail('structure-invalid', '载荷不可 JSON 序列化');
+  const text = stringifyJson(value, m('base-render.components-text-formats.c006'), TEXT_JSON_INDENT);
+  if (text === undefined) fail('structure-invalid', m('base-render.components-text-formats.c007'));
   return text.split('<').join(String.fromCharCode(92) + TEXT_JSON_LT_RULE);
 }
 
@@ -96,7 +97,7 @@ function csvLineEnding(): string {
   const name: string = CSV_DIALECT.lineEnding;
   if (name === 'LF') return LF;
   if (name === 'CRLF') return CR + LF;
-  fail('structure-invalid', 'CSV_DIALECT.lineEnding 取值未定义：' + name);
+  fail('structure-invalid', m('base-render.components-text-formats.c008', { p0: String(name) }));
 }
 
 /** `csv` 口径：表头恒为 `CSV_DIALECT.header`，行尾恒取 `CSV_DIALECT.lineEnding`。 */

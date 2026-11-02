@@ -18,6 +18,7 @@
  */
 
 /** 本件的类名根（一条提示）：槽位类名都是 `<前缀>block-toast-card-<槽名>`。 */
+import { m } from '../../entries/index.js';
 export function toastCardName(prefix = 'ilife-'): string {
   return prefix + 'block-toast-card';
 }
@@ -60,18 +61,18 @@ export const TOAST_CARD_TONES = ['ok', 'warn', 'danger'] as const;
 export type ToastCardTone = (typeof TOAST_CARD_TONES)[number];
 
 /** 语气 → 屏上那两个字（**色之外的第二样**）。唯一出处，判据从这里取。 */
-export const TOAST_CARD_TONE_WORDS: Readonly<Record<ToastCardTone, string>> = Object.freeze({
-  ok: '已完成',
-  warn: '请注意',
-  danger: '没成功',
-});
+export const TOAST_CARD_TONE_WORDS: Readonly<Record<ToastCardTone, string>> = {
+  get ok(): string { return '已完成'; },
+  get warn(): string { return m('base-render.components-toast-card-attrs.c001'); },
+  get danger(): string { return m('base-render.components-toast-card-attrs.c002'); },
+};
 
 /** 语气 → 图标字形（**色之外的第三样**；图标位 `aria-hidden`，语义由语气字承担）。 */
-export const TOAST_CARD_TONE_GLYPHS: Readonly<Record<ToastCardTone, string>> = Object.freeze({
-  ok: '✓',
-  warn: '!',
-  danger: '✕',
-});
+export const TOAST_CARD_TONE_GLYPHS: Readonly<Record<ToastCardTone, string>> = {
+  get ok(): string { return '✓'; },
+  get warn(): string { return '!'; },
+  get danger(): string { return '✕'; },
+};
 
 /** 语气 → 左竖条的粗细（px）：**形状上的第二样**（把三档色压成同一个墨黑也分得开）。 */
 export const TOAST_CARD_TONE_RULES: Readonly<Record<ToastCardTone, number>> = Object.freeze({
@@ -81,22 +82,24 @@ export const TOAST_CARD_TONE_RULES: Readonly<Record<ToastCardTone, number>> = Ob
 });
 
 /** 语气 → `role`：普通两档 `status`，危险档 `alert`（**唯一出处**，渲染与 README 都读它）。 */
-export const TOAST_CARD_TONE_ROLES: Readonly<Record<ToastCardTone, string>> = Object.freeze({
-  ok: 'status',
-  warn: 'status',
-  danger: 'alert',
-});
+export const TOAST_CARD_TONE_ROLES: Readonly<Record<ToastCardTone, string>> = {
+  get ok(): string { return 'status'; },
+  get warn(): string { return 'status'; },
+  get danger(): string { return 'alert'; },
+};
 
 /** 语气 → `aria-live`：`role="status"` 隐含 polite、`role="alert"` 隐含 assertive；本件**显式写出来**，
  *  让「一条提示什么时候被念」在标记里看得见。 */
-export const TOAST_CARD_TONE_LIVE: Readonly<Record<ToastCardTone, string>> = Object.freeze({
-  ok: 'polite',
-  warn: 'polite',
-  danger: 'assertive',
-});
+export const TOAST_CARD_TONE_LIVE: Readonly<Record<ToastCardTone, string>> = {
+  get ok(): string { return 'polite'; },
+  get warn(): string { return 'polite'; },
+  get danger(): string { return 'assertive'; },
+};
 
 /** 关闭键的可读名字（缺省；调用方可用 `closeLabel` 覆盖）。 */
-export const TOAST_CARD_CLOSE_LABEL = '关闭这条提示';
+export function TOAST_CARD_CLOSE_LABEL(): string {
+  return m('base-render.components-toast-card-attrs.c003');
+}
 /** 关闭键上的字形（**装饰**：`aria-hidden`，名字由 `aria-label` 给）。 */
 export const TOAST_CARD_CLOSE_GLYPH = '×';
 

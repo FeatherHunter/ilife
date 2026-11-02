@@ -12,6 +12,7 @@
  */
 import { skinVar } from '../skin/contract.js';
 import { SUMMARY_HEAD_SIZES } from './render.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -47,7 +48,7 @@ export function summaryHeadCss(input?: { readonly prefix?: string }): string {
   const mix = (tone: string, percent: number): string =>
     'color-mix(in srgb, ' + tone + ' ' + String(percent) + '%, transparent)';
   const lines: string[] = [
-    '/* summary-head（主数字头）：eyebrow ＋ 主数字（＋单位）＋ 分母 ＋ 脚行（人话 ＋ 印章）。 */',
+    m('base-render.components-summary-head-style.c001'),
     s + ' {',
     '  display: flex;',
     '  flex-direction: column;',
@@ -55,7 +56,7 @@ export function summaryHeadCss(input?: { readonly prefix?: string }): string {
     '  min-width: 0;',
     '  container: ' + SUMMARY_HEAD_CONTAINER + ' / inline-size;',
     '}',
-    '/* eyebrow 与"账目/明细"两件的标题同一套字距语汇（同一族里只有一种小标题写法）。 */',
+    m('base-render.components-summary-head-style.c002'),
     s + '-eyebrow {',
     '  color: var(--fg3);',
     '  font-size: 12px;',
@@ -101,7 +102,7 @@ export function summaryHeadCss(input?: { readonly prefix?: string }): string {
     '  color: var(--fg2);',
     '  font-size: 12.5px;',
     '}',
-    '/* 印章：描边 ＋ 微斜（不填色——填色是"态徽标"的语汇，两者不许撞形）。 */',
+    m('base-render.components-summary-head-style.c003'),
     s + '-stamp {',
     '  padding: 2px 7px;',
     '  border: 1px solid var(--line);',
@@ -142,7 +143,7 @@ export function summaryHeadCss(input?: { readonly prefix?: string }): string {
   /* 票据纸版式（#993 原型 v5／v7）：上面那一版是"左对齐成栈"，这一版**整块居中**——
      眉标成药丸（底＋描边＋圆点）、主数字居中、脚行居中、印章**钉在整块的右上角**并微斜。
      DOM 一字不差（还是那五个槽），差别全在这几条规则里 ⇒ 调用方只多传一个 `layout: 'ticket'`。 */
-  lines.push('/* summary-head 票据纸版式：整块居中、眉标成药丸、印章钉右上角。 */');
+  lines.push(m('base-render.components-summary-head-style.c004'));
   /* 判地（w01 v2.1 `.summary-head`）：整块内距 6px 0 16px；眉标底与字是一对**一次性字面**
      （规格 §1 授权照抄：`--pill:#f3ecdc` 药丸底、眉标字色 `#7a6f5e`），字距 2px；圆点色 `#2f9e5f`
      （判地不在皮肤语义档里，照抄），外圈那一圈是它的 15% 同色环 `rgba(47,158,95,.15)`（同上授权照抄）；主数字字距 -1.5px（判地字面）。 */
@@ -178,10 +179,10 @@ export function summaryHeadCss(input?: { readonly prefix?: string }): string {
     lines.push(s + '.is-' + size + ' .' + p + 'block-summary-head-value { font-size: '
       + SUMMARY_HEAD_VALUE_PX[size] + 'px; }');
   }
-  lines.push('/* xl 的主数字不跟单位在同一行等宽：单位与分母同档放大（原型：`/ 1850 卡` 是 26px）。 */');
+  lines.push(m('base-render.components-summary-head-style.c005'));
   lines.push(s + '.is-xl .' + p + 'block-summary-head-value small { font-size: 26px; }');
   lines.push(s + '.is-xl .' + p + 'block-summary-head-denom { font-size: 26px; }');
-  lines.push('/* 衬线档：字重回到 400（衬线体加粗会糊），字距再收紧一档。 */');
+  lines.push(m('base-render.components-summary-head-style.c006'));
   lines.push(s + '.is-serif .' + p + 'block-summary-head-value {');
   lines.push('  font-family: ' + SERIF_STACK + ';');
   lines.push('  font-weight: 400;');

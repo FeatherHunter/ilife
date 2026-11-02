@@ -40,8 +40,8 @@ export function buildSwitchRowJs(): string {
     + '  var ATTR_INPUT=' + q(SWITCH_ROW_INPUT_ATTR) + ', ATTR_STATE=' + q(SWITCH_ROW_STATE_ATTR)
     + ', ATTR_DISABLED=' + q(SWITCH_ROW_DISABLED_ATTR) + ', ATTR_LOADING=' + q(SWITCH_ROW_LOADING_ATTR) + ';' + '\n'
     + '  var ATTR_BOUND=' + q(SWITCH_ROW_BOUND_ATTR) + ', EV_CHANGE=' + q(SWITCH_ROW_EVENT_CHANGE)
-    + ', WORD_ON=' + q(SWITCH_ROW_ON) + ', WORD_OFF=' + q(SWITCH_ROW_OFF)
-    + ', WORD_LOADING=' + q(SWITCH_ROW_LOADING) + ';' + '\n'
+    + ', WORD_ON=' + q(SWITCH_ROW_ON()) + ', WORD_OFF=' + q(SWITCH_ROW_OFF())
+    + ', WORD_LOADING=' + q(SWITCH_ROW_LOADING()) + ';' + '\n'
     + '  var CLS=' + q(SWITCH_ROW_CLASS) + ', CLS_STATE=' + q(switchRowSlot('state'))
     + ', CLASS_ON="is-on", CLASS_OFF="is-off";' + '\n'
     + '  var doc=document;' + '\n'

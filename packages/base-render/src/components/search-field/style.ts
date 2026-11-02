@@ -11,6 +11,7 @@
 import { PAGE_LIMITS, PAGE_UI_CLASS } from '../page-ui/index.js';
 import { skinVar } from '../skin/contract.js';
 import { SEARCH_CURRENT_ATTR, SEARCH_HIT_ATTR, SEARCH_ITEM_ATTR, SEARCH_LOADING_ATTR, SEARCH_ROOT_CLASS } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 宽档上限：1280 档下不让输入框拉成一条 1252px 的空带（390 档上限不生效，内容宽本就小于它）。 */
 export const SEARCH_MAX_WIDTH_PX = 680;
@@ -44,8 +45,8 @@ export function searchFieldCss(): string {
   const fsH2 = skinVar('fs-h2');
 
   return [
-    '/* searchField（搜索框 · 形态 B：范围分段 ＋ 下划线输入 ＋ 命中读数）。',
-    '   下划线走 `border-bottom`（印刷风）；读数里的数是运行时的真读数，渲染期写「—」。 */',
+    m('base-render.components-search-field-style.c001'),
+    m('base-render.components-search-field-style.c002'),
     R + '{display:grid;gap:8px;min-width:0;' + 'max-width:' + SEARCH_MAX_WIDTH_PX + 'px;',
     '  color:' + ink + ';font-family:' + font + ';font-size:' + fsBody + ';line-height:1.5}',
     /* 范围分段：换行不横滑 */

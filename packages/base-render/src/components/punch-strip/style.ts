@@ -14,6 +14,7 @@
  *  过不了文本地板 ⇒ 读数不许坐在实心强调底上）。件里零颜色字面量。
  */
 import { skinVar } from '../skin/contract.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -29,14 +30,14 @@ export function punchStripCss(input?: { readonly prefix?: string }): string {
   const root = '.' + p + 'page-ui';
   const s = root + ' .' + p + 'block-punch-strip';
   return [
-    '/* punch-strip（打孔格带）：一格一天，虚线"打孔"盒；有数格填主色软底＋主色字、选中套主色圈。 */',
+    m('base-render.components-punch-strip-style.c001'),
     s + ' {',
     '  display: flex;',
     '  flex-direction: column;',
     '  gap: 4px;',
     '  min-width: 0;',
     '}',
-    '/* 小标题与"账目/明细"两件的标题同一套字距语汇（同一族里只有一种小标题写法）。 */',
+    m('base-render.components-punch-strip-style.c002'),
     s + '-heading {',
     '  margin-bottom: 2px;',
     '  color: var(--fg3);',
@@ -79,8 +80,8 @@ export function punchStripCss(input?: { readonly prefix?: string }): string {
     '  color: var(--fg3);',
     '  overflow: hidden;',
     '}',
-    '/* 有数：底改主色软底、字取强调色的文本档、描边取主色（**面上有读数 ⇒ 走"有文字的选中面"那一档**；',
-    '   实心 accent 那一档只许放图形／勾／大写大字）。描边改实色、不删边框 ⇒ 与空心盒等高等宽、不跳版。 */',
+    m('base-render.components-punch-strip-style.c003'),
+    m('base-render.components-punch-strip-style.c004'),
     s + '-cell.is-on ' + '.' + p + 'block-punch-strip-box {',
     '  background: ' + skinVar('accent-soft') + ';',
     '  border-color: ' + skinVar('accent') + ';',
@@ -88,7 +89,7 @@ export function punchStripCss(input?: { readonly prefix?: string }): string {
     '  color: ' + skinVar('accent-text') + ';',
     '  font-weight: 700;',
     '}',
-    '/* 选中：一格主色描边（一页至多一格；只描边、不改字色 ⇒ 不写成反白）。 */',
+    m('base-render.components-punch-strip-style.c005'),
     s + '-cell.is-selected ' + '.' + p + 'block-punch-strip-box {',
     '  outline: 1.5px solid ' + skinVar('accent') + ';',
     '  outline-offset: 1px;',

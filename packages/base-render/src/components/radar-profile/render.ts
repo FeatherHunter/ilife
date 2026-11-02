@@ -40,24 +40,24 @@ const VIEW_BOX = '0 0 ' + String(RADAR_PROFILE_VIEW) + ' ' + String(RADAR_PROFIL
 /* ── 卡头与脚注 ───────────────────────────────────────────────────── */
 
 /** 卡头：标题 ＋ 时间窗 ＋ **从读数算出来**的那一句（平均分／达标几根轴／出带几根轴）。 */
-function headHtml(m: RadarProfileModel): string {
+function headHtml(model: RadarProfileModel): string {
   const parts: string[] = ['<div class="' + sc('hd') + '">'];
-  parts.push('<h4 class="' + sc('title') + '">' + esc(m.title) + '</h4>');
-  if (m.stamp !== undefined) parts.push('<span class="' + sc('stamp') + '">' + esc(m.stamp) + '</span>');
-  parts.push('<span class="' + sc('tail') + '">' + esc(m.tail) + '</span>');
+  parts.push('<h4 class="' + sc('title') + '">' + esc(model.title) + '</h4>');
+  if (model.stamp !== undefined) parts.push('<span class="' + sc('stamp') + '">' + esc(model.stamp) + '</span>');
+  parts.push('<span class="' + sc('tail') + '">' + esc(model.tail) + '</span>');
   parts.push('</div>');
   return parts.join('');
 }
 
 /** 脚注一句人话（不给就用本形态的口径句）。 */
-function noteHtml(m: RadarProfileModel): string {
-  return '<p class="' + sc('note') + '">' + esc(m.note) + '</p>';
+function noteHtml(model: RadarProfileModel): string {
+  return '<p class="' + sc('note') + '">' + esc(model.note) + '</p>';
 }
 
 /** 图例：每一项是「形 ＋ 字」——形由 `slot`／`kind` 给（线段／色块），字说清那是什么。 */
-function legendHtml(m: RadarProfileModel): string {
-  if (m.legend.length === 0) return '';
-  const items = m.legend.map((one) => '<li class="' + sc('legend-item') + '">'
+function legendHtml(model: RadarProfileModel): string {
+  if (model.legend.length === 0) return '';
+  const items = model.legend.map((one) => '<li class="' + sc('legend-item') + '">'
     + '<i class="' + sc(one.slot) + ' is-' + one.kind + '" aria-hidden="true"></i>'
     + esc(one.text)
     /* 达标那一项把**印出来的达标分**单独成元素：它是这一张图的刻度，读者与判据都从它读。 */
@@ -69,27 +69,27 @@ function legendHtml(m: RadarProfileModel): string {
 /* ── 图：网格 ＋ 数据（SVG 只画形状，字在 HTML 那一层） ─────────────── */
 
 /** 网格三圈（形态 `polygon`）：外圈最重、里两圈更轻——读者按刻度条上那三个数读格子。 */
-function ringsHtml(m: RadarProfileModel): string {
-  return m.rings.map((ring, i) => '<circle class="' + sc('ring') + (i === m.rings.length - 1 ? ' is-outer' : '')
+function ringsHtml(model: RadarProfileModel): string {
+  return model.rings.map((ring, i) => '<circle class="' + sc('ring') + (i === model.rings.length - 1 ? ' is-outer' : '')
     + '" cx="' + String(RADAR_PROFILE_CENTER) + '" cy="' + String(RADAR_PROFILE_CENTER)
     + '" r="' + String(ring.radius) + '"/>').join('');
 }
 
 /** 辐条：**只画有读数的轴**（缺测的轴整根不画，读图的人一眼看得出这里空了一根）。 */
-function spokesHtml(m: RadarProfileModel): string {
-  return m.spokes.map((s) => '<line class="' + sc('spoke') + '" x1="' + String(RADAR_PROFILE_CENTER)
+function spokesHtml(model: RadarProfileModel): string {
+  return model.spokes.map((s) => '<line class="' + sc('spoke') + '" x1="' + String(RADAR_PROFILE_CENTER)
     + '" y1="' + String(RADAR_PROFILE_CENTER) + '" x2="' + String(s.x2) + '" y2="' + String(s.y2) + '"/>').join('');
 }
 
 /** 顶点上的点（本期读数落在它那根轴上的位置）。 */
-function dotsHtml(m: RadarProfileModel): string {
-  return m.nowDots.map((p) => '<circle class="' + sc('dot') + '" cx="' + String(p.x) + '" cy="' + String(p.y)
+function dotsHtml(model: RadarProfileModel): string {
+  return model.nowDots.map((p) => '<circle class="' + sc('dot') + '" cx="' + String(p.x) + '" cy="' + String(p.y)
     + '" r="2.6"/>').join('');
 }
 
 /** 轴名那一块：名字一行、读数一行；位置与图上的顶点来自**同一个映射**（`left`／`top` 是百分比）。 */
-function labelsHtml(m: RadarProfileModel): string {
-  return m.labels.map((one) => '<span class="' + sc('axlabel') + ' is-' + one.anchor
+function labelsHtml(model: RadarProfileModel): string {
+  return model.labels.map((one) => '<span class="' + sc('axlabel') + ' is-' + one.anchor
     + (one.present ? '' : ' is-missing') + '" style="left: ' + String(one.left) + '%; top: ' + String(one.top) + '%">'
     + '<b class="' + sc('axname') + '">' + esc(one.label) + '</b>'
     + '<em class="' + sc('axvalue') + '">' + esc(one.valueText) + '</em>'
@@ -100,29 +100,29 @@ function labelsHtml(m: RadarProfileModel): string {
  *  **平均分那一块不进这一格**：图心是 0 分那一段刻度，小分数扇区的外沿弧就落在那儿——实底的盒子
  *  压上去，那一根的半径就没法读（真机量过：320／390 档连「25 分」那根的弧中点都被盖住）。
  *  它由 `renderWedge()` 摆在图下面一行，见 `hubHtml()`。 */
-function plotHtml(m: RadarProfileModel, inner: string): string {
-  return '<div class="' + sc('stage') + '"><div class="' + sc('plot') + '" role="img" aria-label="' + esc(m.ariaLabel) + '">'
+function plotHtml(model: RadarProfileModel, inner: string): string {
+  return '<div class="' + sc('stage') + '"><div class="' + sc('plot') + '" role="img" aria-label="' + esc(model.ariaLabel) + '">'
     + '<svg class="' + sc('svg') + '" viewBox="' + VIEW_BOX + '" aria-hidden="true" focusable="false">' + inner + '</svg>'
-    + labelsHtml(m)
+    + labelsHtml(model)
     + '</div></div>';
 }
 
 /** 印出来的刻度（形态 `polygon` 的三圈格子）：**网格半径与这三个数是同一份真值**。 */
-function scaleHtml(m: RadarProfileModel): string {
-  if (m.scaleItems.length === 0) return '';
+function scaleHtml(model: RadarProfileModel): string {
+  if (model.scaleItems.length === 0) return '';
   return '<p class="' + sc('scale') + '">'
-    + m.scaleItems.map((one) => '<span class="' + sc('scale-item') + '">' + esc(one) + '</span>').join('')
+    + model.scaleItems.map((one) => '<span class="' + sc('scale-item') + '">' + esc(one) + '</span>').join('')
     + '</p>';
 }
 
 /** 读数表（形态 `polygon`）：轴 ｜ 本期 ｜ 上期 ｜ 差——图上读形状，表里读数。 */
-function tableHtml(m: RadarProfileModel): string {
-  if (m.tableRows.length === 0) return '';
-  const head = m.tableHead.map((one, i) => '<span class="' + sc(i === 0 ? 'tname' : 'tnum') + '">' + esc(one) + '</span>').join('');
-  const rows = m.tableRows.map((row) => '<div class="' + sc('trow') + '">'
+function tableHtml(model: RadarProfileModel): string {
+  if (model.tableRows.length === 0) return '';
+  const head = model.tableHead.map((one, i) => '<span class="' + sc(i === 0 ? 'tname' : 'tnum') + '">' + esc(one) + '</span>').join('');
+  const rows = model.tableRows.map((row) => '<div class="' + sc('trow') + '">'
     + '<span class="' + sc('tname') + '">' + esc(row.name) + '</span>'
     + '<span class="' + sc('tnum') + '">' + esc(row.nowText) + '</span>'
-    + (m.tableHead.length === 4
+    + (model.tableHead.length === 4
       ? '<span class="' + sc('tnum') + '">' + esc(row.pastText) + '</span>'
         + '<span class="' + sc('tdelta') + ' is-' + row.dir + '">' + esc(row.deltaText) + '</span>'
       : '')
@@ -134,15 +134,15 @@ function tableHtml(m: RadarProfileModel): string {
 
 /** 平均分那一块：**是平均，不是总分**（把几根轴加起来没有意义）。它排在图下面一行，不压在图心上
  *  ——图心那一片正是小分数扇区的外沿弧所在（见 `plotHtml()`）。 */
-function hubHtml(m: RadarProfileModel): string {
-  return '<div class="' + sc('hub') + '"><b class="' + sc('hub-value') + '">' + esc(m.hubText) + '</b>'
+function hubHtml(model: RadarProfileModel): string {
+  return '<div class="' + sc('hub') + '"><b class="' + sc('hub-value') + '">' + esc(model.hubText) + '</b>'
     + '<em class="' + sc('hub-label') + '">平均分</em></div>';
 }
 
 /** 未达标那几根逐根点名（先给差得最多的那根）：**差多少分写成字**，不靠颜色。 */
-function gapsHtml(m: RadarProfileModel): string {
-  if (m.gaps.length === 0) return '';
-  return '<ul class="' + sc('gaps') + '">' + m.gaps.map((g) => '<li class="' + sc('gap') + '">'
+function gapsHtml(model: RadarProfileModel): string {
+  if (model.gaps.length === 0) return '';
+  return '<ul class="' + sc('gaps') + '">' + model.gaps.map((g) => '<li class="' + sc('gap') + '">'
     + '<span class="' + sc('gap-name') + '">' + esc(g.label) + '</span>'
     + '<span class="' + sc('gap-num') + '">' + esc(g.scoreText) + '</span>'
     + '<span class="' + sc('gap-diff') + '">' + esc(g.diffText) + '</span>'
@@ -152,9 +152,9 @@ function gapsHtml(m: RadarProfileModel): string {
 /* ── 形态 `rail` 的那一叠行 ──────────────────────────────────────── */
 
 /** 一行：轴名（＋说明）｜ 轨道（基线 ＋ 基准带 ＋ 当前位置 ＋ 读数）｜ 判定（＋带是多少）。 */
-function rowsHtml(m: RadarProfileModel): string {
-  if (m.rows.length === 0) return '';
-  const rows = m.rows.map((row) => {
+function rowsHtml(model: RadarProfileModel): string {
+  if (model.rows.length === 0) return '';
+  const rows = model.rows.map((row) => {
     /* 位置与基准带都由 `forms.ts` 算成百分比串，这里只把它们交给样式（**算数一个字不写**）。 */
     const vars: string[] = [];
     if (row.at !== undefined) vars.push(RADAR_PROFILE_AT_VAR + ': ' + row.at);
@@ -180,30 +180,30 @@ function rowsHtml(m: RadarProfileModel): string {
 /* ── 三个骨架 ─────────────────────────────────────────────────────── */
 
 /** 形态 `polygon`：图（网格三圈 ＋ 两条轮廓 ＋ 顶点）＋ 刻度条 ＋ 读数表 ＋ 图例。 */
-function renderPolygon(m: RadarProfileModel): string {
-  const inner = ringsHtml(m) + spokesHtml(m)
-    + (m.pastPoints === '' ? '' : '<polygon class="' + sc('past') + '" points="' + esc(m.pastPoints) + '"/>')
-    + '<polygon class="' + sc('now') + '" points="' + esc(m.nowPoints) + '"/>'
-    + dotsHtml(m);
-  return headHtml(m)
-    + '<div class="' + sc('body') + '">' + plotHtml(m, inner) + tableHtml(m) + '</div>'
-    + scaleHtml(m) + legendHtml(m) + noteHtml(m);
+function renderPolygon(model: RadarProfileModel): string {
+  const inner = ringsHtml(model) + spokesHtml(model)
+    + (model.pastPoints === '' ? '' : '<polygon class="' + sc('past') + '" points="' + esc(model.pastPoints) + '"/>')
+    + '<polygon class="' + sc('now') + '" points="' + esc(model.nowPoints) + '"/>'
+    + dotsHtml(model);
+  return headHtml(model)
+    + '<div class="' + sc('body') + '">' + plotHtml(model, inner) + tableHtml(model) + '</div>'
+    + scaleHtml(model) + legendHtml(model) + noteHtml(model);
 }
 
 /** 形态 `wedge`：图（辐条 ＋ 逐根扇区 ＋ 外沿弧 ＋ 达标环 ＋ 顶点）＋ 平均分 ＋ 图例 ＋ 未达标点名。 */
-function renderWedge(m: RadarProfileModel): string {
-  const inner = spokesHtml(m)
+function renderWedge(model: RadarProfileModel): string {
+  const inner = spokesHtml(model)
     + '<circle class="' + sc('goal') + '" cx="' + String(RADAR_PROFILE_CENTER) + '" cy="' + String(RADAR_PROFILE_CENTER)
-    + '" r="' + String(m.goalRadius) + '"/>'
-    + m.wedges.map((w) => '<path class="' + sc('wedge') + (w.ok ? ' is-ok' : ' is-warn') + '" d="' + esc(w.path) + '"/>'
+    + '" r="' + String(model.goalRadius) + '"/>'
+    + model.wedges.map((w) => '<path class="' + sc('wedge') + (w.ok ? ' is-ok' : ' is-warn') + '" d="' + esc(w.path) + '"/>'
       + '<path class="' + sc('warc') + (w.ok ? ' is-ok' : ' is-warn') + '" d="' + esc(w.arc) + '"/>').join('')
-    + dotsHtml(m);
-  return headHtml(m) + plotHtml(m, inner) + hubHtml(m) + legendHtml(m) + gapsHtml(m) + noteHtml(m);
+    + dotsHtml(model);
+  return headHtml(model) + plotHtml(model, inner) + hubHtml(model) + legendHtml(model) + gapsHtml(model) + noteHtml(model);
 }
 
 /** 形态 `rail`：几根轴摊平成一叠行 ＋ 脚注。 */
-function renderRail(m: RadarProfileModel): string {
-  return headHtml(m) + rowsHtml(m) + noteHtml(m);
+function renderRail(model: RadarProfileModel): string {
+  return headHtml(model) + rowsHtml(model) + noteHtml(model);
 }
 
 /** 形态 → 骨架（分派写在这里，加第四形态就是加一支）。 */

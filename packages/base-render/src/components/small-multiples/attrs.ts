@@ -21,6 +21,7 @@
  */
 
 /** 本件的类名根：全部槽位类名都是 `SMALL_MULTIPLES_CLASS + '-' + 槽名`。 */
+import { m } from '../../entries/index.js';
 export const SMALL_MULTIPLES_CLASS = 'ilife-block-small-multiples';
 
 /** 槽位闭集（`render.ts`、`style.ts` 与判据都从这里取名字，不各抄一份字面量）。 */
@@ -83,7 +84,9 @@ export const SMALL_MULTIPLES_BAR_FLOOR_PCT = 20;
 export const SMALL_MULTIPLES_BAR_CEIL_PCT = 84;
 
 /** 本期那一列轴上的那枚字：本期那一列**不靠颜色**（形＝贯穿柱阵的竖标，字＝这枚词，色＝强调色）。 */
-export const SMALL_MULTIPLES_NOW_LABEL = '本期';
+export function SMALL_MULTIPLES_NOW_LABEL(): string {
+  return m('base-render.components-small-multiples-attrs.c001');
+}
 
 /** 一个期间：期间名 ＋ 那一期的读数（＋ 是不是本期）。 */
 export interface SmallMultiplesPeriod {

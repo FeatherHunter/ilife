@@ -84,7 +84,7 @@ describe('rank-list ① 渲染契约（结构）', () => {
       '六名减领奖台三名 ＝ 逐行区三行');
     assert.equal((html.match(new RegExp(slot('bar') + '"', 'g')) || []).length, 6, '每一名都给条');
     assert.equal((html.match(new RegExp(slot('share') + '"', 'g')) || []).length, 6, '每一名都给占比');
-    assert.ok(html.includes('<p class="' + slot('caliber') + '"><b>' + RANK_LIST_CALIBER_LABEL + '</b>'), '口径行带标签');
+    assert.ok(html.includes('<p class="' + slot('caliber') + '"><b>' + RANK_LIST_CALIBER_LABEL() + '</b>'), '口径行带标签');
     assert.ok(!/<script/i.test(html), '不产脚本');
     assert.ok(!/\son[a-z]+=/i.test(html), '不产内联事件处理器');
     assert.equal(html.includes('<h1') || html.includes('<h2') || html.includes('<h3'), false, '榜单名归小节头，本件不写标题');

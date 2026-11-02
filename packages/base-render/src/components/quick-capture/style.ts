@@ -31,6 +31,7 @@ import {
 import { quickCaptureCellsCss } from './style-cells.js';
 import { quickCaptureChoicesCss } from './style-choices.js';
 import { quickCaptureDrawerCss } from './style-drawer.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -56,9 +57,9 @@ export function quickCaptureCss(input?: { readonly prefix?: string }): string {
   const still = TOUCH_SLOTS.map((slot) => s(slot)).join(', ');
 
   return [
-    '/* quick-capture（快速录入条 · 形态 oneline「一行式录入 ＋ 解析预览」）：写的那一行 ＋ 它认出来的几格，',
-    '   哪格认错了点哪格改；点某一格摊开的是**那一格自己的候选**（词表由调用方给）。',
-    '   屏上只有三层话：写的那一句话、认出来的几格、记过的那几条（旁白与口径句住 README 里）。 */',
+    m('base-render.components-quick-capture-style.c001'),
+    m('base-render.components-quick-capture-style.c002'),
+    m('base-render.components-quick-capture-style.c003'),
     s('host') + ' {',
     /* 宽度判据的落点：本件是**自己的容器**——嵌进侧栏／面板／卡片时照样按自己的宽度折。 */
     '  container-type: inline-size;',
@@ -77,7 +78,7 @@ export function quickCaptureCss(input?: { readonly prefix?: string }): string {
     /* 两处背景带（解析预览与「记过的」）的方角要跟着卡的圆角走。 */
     '  overflow: hidden;',
     '}',
-    '/* 写的那一行：行首小签 ＋ 输入框 ＋ 分开填 ＋ 存；窄档整行摊开（输入框先占满一行）。 */',
+    m('base-render.components-quick-capture-style.c004'),
     s('line') + ' {',
     '  display: flex;',
     '  flex-wrap: wrap;',
@@ -87,14 +88,14 @@ export function quickCaptureCss(input?: { readonly prefix?: string }): string {
     '  border-bottom: 1px solid ' + skinVar('line') + ';',
     '  min-width: 0;',
     '}',
-    '/* 行首那枚小签：只有三个字，弱文字档（它是这一行干什么的，不抢那句话）。 */',
+    m('base-render.components-quick-capture-style.c005'),
     s('lead') + ' {',
     '  flex: 0 0 auto;',
     '  color: ' + skinVar('ink-3') + ';',
     '  font-size: ' + skinVar('fs-xs') + ';',
     '  font-weight: 700;',
     '}',
-    '/* 那一句话：纸上的横线——线在输入下面，不在它四周。 */',
+    m('base-render.components-quick-capture-style.c006'),
     s('input') + ' {',
     '  flex: 1 1 auto;',
     '  min-width: 0;',
@@ -106,7 +107,7 @@ export function quickCaptureCss(input?: { readonly prefix?: string }): string {
     '  font-family: ' + skinVar('font') + ';',
     // 字号：见页族字号地板（#1001，`page-ui` 的 `textEntryFloorCss()`）。
     '}',
-    '/* 「分开填」＝第二颗看得见的按钮，但**降一档重量**（无底、发丝线、次字色）：主次靠重量分，不靠字号。 */',
+    m('base-render.components-quick-capture-style.c007'),
     s('more') + ' {',
     '  display: inline-flex;',
     '  align-items: center;',
@@ -124,7 +125,7 @@ export function quickCaptureCss(input?: { readonly prefix?: string }): string {
     '  cursor: pointer;',
     '  transition: transform 80ms ease;',
     '}',
-    '/* 「存」＝这一件的主按钮（实底 ＋ **强调色的文本档**做底：`accent-ink` 在它上面四套都过 4.5）。 */',
+    m('base-render.components-quick-capture-style.c008'),
     s('save') + ' {',
     '  display: inline-flex;',
     '  align-items: center;',
@@ -146,7 +147,7 @@ export function quickCaptureCss(input?: { readonly prefix?: string }): string {
     quickCaptureCellsCss({ prefix: p }),
     quickCaptureChoicesCss({ prefix: p }),
     quickCaptureDrawerCss({ prefix: p }),
-    '/* 真按下：缩一格（≤80ms 内回弹；只动 transform，不触发布局）。 */',
+    m('base-render.components-quick-capture-style.c009'),
     pressed + ' {',
     '  transform: scale(.98);',
     '}',
@@ -154,7 +155,7 @@ export function quickCaptureCss(input?: { readonly prefix?: string }): string {
     '  outline: 2px solid ' + skinVar('accent') + ';',
     '  outline-offset: 2px;',
     '}',
-    '/* 悬停只许是增强：沿加深一档（通路始终是点一下）。 */',
+    m('base-render.components-quick-capture-style.c010'),
     hover + ' {',
     '  ' + hovered + ' {',
     '    border-color: ' + skinVar('accent') + ';',
@@ -166,8 +167,8 @@ export function quickCaptureCss(input?: { readonly prefix?: string }): string {
     '    transform: none;',
     '  }',
     '}',
-    '/* 窄容器（本件自己窄于常量那一个宽度）：那一行摊开——输入框先占满一行，两颗按钮跟着走；',
-    '   格与候选照原样换行（读数与候选名永不截断）。 */',
+    m('base-render.components-quick-capture-style.c011'),
+    m('base-render.components-quick-capture-style.c012'),
     '@container ' + QUICK_CAPTURE_CONTAINER + ' (max-width: ' + String(QUICK_CAPTURE_NARROW_PX) + 'px) {',
     '  ' + s('line') + ' {',
     '    padding: 7px 10px;',

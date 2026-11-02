@@ -12,6 +12,7 @@ import {
   TOOLTIP_BADGES, TOOLTIP_BADGE_TEXT, TOOLTIP_FORMS, TOOLTIP_HINT,
   type TooltipBadge, type TooltipForm, type TooltipInput,
 } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** `id` 的字面口径（与同族其余件同一套；本件自足，不从别的件取）。 */
 const ID_RE = /^[A-Za-z0-9_\u00a0-\uffff][A-Za-z0-9_-\u00a0-\uffff]*$/;
@@ -53,11 +54,11 @@ export function normalizeTooltip(input: unknown): TooltipModel {
     word: reqText(raw.word, 'tooltip: input.word'),
     title: reqText(raw.title, 'tooltip: input.title'),
     text: reqText(raw.text, 'tooltip: input.text'),
-    why: reqText(raw.why, 'tooltip: input.why（形态 B 的识别特征就是这一段：省掉它，这条气泡只剩下词面意思）'),
+    why: reqText(raw.why, m('base-render.components-tooltip-model.c001')),
     badge: badge as TooltipBadge,
     badgeText: optText(raw.badgeText, 'tooltip: input.badgeText') ?? TOOLTIP_BADGE_TEXT[badge as TooltipBadge],
     /* `hint` 给了空串＝不出那一格（`optText` 把空串按「未给」处理 ⇒ 这里显式分辨「给了空串」）。 */
-    hint: typeof raw.hint === 'string' && raw.hint.trim() === '' ? '' : (optText(raw.hint, 'tooltip: input.hint') ?? TOOLTIP_HINT),
+    hint: typeof raw.hint === 'string' && raw.hint.trim() === '' ? '' : (optText(raw.hint, 'tooltip: input.hint') ?? TOOLTIP_HINT()),
     extraClass: optExtraClass(raw.extraClass, 'tooltip: input.extraClass'),
   };
 }

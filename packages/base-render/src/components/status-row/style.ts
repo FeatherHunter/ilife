@@ -17,6 +17,7 @@
  */
 import { skinVar } from '../skin/contract.js';
 import { statusRowClass, statusRowSlot, type StatusRowSlot } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -46,7 +47,7 @@ export function statusRowCss(input?: { readonly prefix?: string }): string {
   const sc = (slot: StatusRowSlot): string => root + ' ' + n(slot);
   const v = skinVar;
   return [
-    '/* status-row（状态台账行）：一笔一行 —— 轨道点（形）＋ 阶段徽标（字）＋ 金额；第二行补充与到期日。 */',
+    m('base-render.components-status-row-style.c001'),
     root + ' .' + statusRowClass(p) + ' {',
     '  display: flex;',
     '  flex-direction: column;',
@@ -90,7 +91,7 @@ export function statusRowCss(input?: { readonly prefix?: string }): string {
     '  min-height: ' + STATUS_ROW_ITEM_MIN_HEIGHT_PX + 'px;',
     '  padding: ' + ROW_PAD_Y + 'px 0;',
     '}',
-    '/* 从左轨中点往下连到下一行（最后一行不画）："走到哪了"的位置感由这条线承担。 */',
+    m('base-render.components-status-row-style.c002'),
     sc('item') + ':not(:last-child)::after {',
     '  content: "";',
     '  position: absolute;',
@@ -100,9 +101,9 @@ export function statusRowCss(input?: { readonly prefix?: string }): string {
     '  width: 1px;',
     '  background: ' + v('line') + ';',
     '}',
-    '/* 走完的那一段连线变实（不是靠变色：线型之分自己就是第二样信息）。色走**主色实底**——它是"无文字的条"，',
-    '   `docs/base/base-render/选中态与皮肤语言.md` 第三节法则表把"已完成连接线"逐字点在这一档；',
-    '   旧写法 `background: ink` 是拿正文墨色当面，纸面语言里没有对应语汇，`ink` 皮肤下只读成一道近黑印痕。 */',
+    m('base-render.components-status-row-style.c003'),
+    m('base-render.components-status-row-style.c004'),
+    m('base-render.components-status-row-style.c005'),
     sc('item') + '.is-ok + ' + n('item') + '::after { background: ' + v('accent') + '; }',
     sc('rail') + ' {',
     '  display: flex;',
@@ -121,7 +122,7 @@ export function statusRowCss(input?: { readonly prefix?: string }): string {
     '  border-radius: 50%;',
     '  background: ' + v('surface') + ';',
     '}',
-    '/* 五档形状（色只是第三样）：空心圆／双环实心／实心圆／空心方／双线菱。 */',
+    m('base-render.components-status-row-style.c006'),
     sc('item') + '.is-active ' + n('node') + ' { border-color: ' + v('accent') + '; }',
     sc('item') + '.is-active ' + n('node') + '::after {',
     '  content: "";',
@@ -130,8 +131,8 @@ export function statusRowCss(input?: { readonly prefix?: string }): string {
     '  border-radius: 50%;',
     '  background: ' + v('accent') + ';',
     '}',
-    '/* 「走完了」那一档：实心圆＝**无文字的点** ⇒ 主色实底（法则表第三节：无文字的点／格／条走 `accent`）；',
-    '   旧写法 `border-color: ink; background: ink` 是拿正文墨色当面，属第四节禁止项 1／4。 */',
+    m('base-render.components-status-row-style.c007'),
+    m('base-render.components-status-row-style.c008'),
     sc('item') + '.is-ok ' + n('node') + ' {',
     '  border-color: ' + v('accent') + ';',
     '  background: ' + v('accent') + ';',
@@ -181,7 +182,7 @@ export function statusRowCss(input?: { readonly prefix?: string }): string {
     '  line-height: 1.5;',
     '  white-space: nowrap;',
     '}',
-    '/* 徽标五档形状：无框底线／空心框／实底色块／框＋底块／双线框。 */',
+    m('base-render.components-status-row-style.c009'),
     sc('badge') + '.is-neutral {',
     '  padding: 0 0 1px;',
     '  border: 0;',
@@ -253,7 +254,7 @@ export function statusRowCss(input?: { readonly prefix?: string }): string {
     '  font-variant-numeric: tabular-nums;',
     '  white-space: nowrap;',
     '}',
-    '/* 到期日五档形状：无线／双线／细实线／点线／粗实线＋加粗。 */',
+    m('base-render.components-status-row-style.c010'),
     sc('due') + '.is-active { border-bottom: 3px double ' + v('accent') + '; color: ' + v('accent-text') + '; }',
     sc('due') + '.is-ok { border-bottom: 2px solid ' + v('ok') + '; }',
     sc('due') + '.is-warn { border-bottom: 2px dotted ' + v('warn') + '; color: ' + v('warn') + '; }',
@@ -283,7 +284,7 @@ export function statusRowCss(input?: { readonly prefix?: string }): string {
     '  color: ' + v('ink-2') + ';',
     '  font-size: ' + v('fs-xs') + ';',
     '}',
-    '/* 窄档：金额与到期日不再往右顶，各占一整行（右对齐）——听容器，不听视口。 */',
+    m('base-render.components-status-row-style.c011'),
     '@container ' + STATUS_ROW_CONTAINER + ' (max-width: ' + STATUS_ROW_NARROW_MAX_PX + 'px) {',
     '  ' + sc('amount') + ' { margin-left: 0; flex: 1 1 100%; }',
     '  ' + sc('due') + ' { margin-left: 0; }',

@@ -8,6 +8,7 @@
  */
 import { skinVar } from '../skin/contract.js';
 import { promptBoxSlot, type PromptBoxSlot } from './render.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -48,10 +49,10 @@ export function promptBoxCss(input?: { readonly prefix?: string }): string {
   '  margin: 0;',
   '  padding: 12px 13px 11px;',
   '  border: 1px solid ' + skinVar('line') + ';',
-  '  border-radius: 12px; /* 判地字面 · 授权照抄：12px（.prompt-box 圆角） */',
-  '  background: #fbf7ec; /* 判地字面 · 授权照抄：#fbf7ec（暖底） */',
-  '  color: #5f574a; /* 判地字面 · 授权照抄：#5f574a（正文色） */',
-  '  font-size: 13.5px; /* 判地字面 · 授权照抄：13.5px／行高 1.7 */',
+  m('base-render.components-prompt-box-style.c001'),
+  m('base-render.components-prompt-box-style.c002'),
+  m('base-render.components-prompt-box-style.c003'),
+  m('base-render.components-prompt-box-style.c004'),
   '  line-height: 1.7;',
   '  white-space: pre-wrap;',
   '  overflow-wrap: anywhere;',

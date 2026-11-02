@@ -8,6 +8,13 @@
  */
 
 /** 本件的类名根。 */
+import { m } from '../../entries/index.js';
+
+/** 模板原样返回（占位符由本件的运行时替换，求值端口不碰）：`{名}` 映射回它自己。 */
+const KEEP_PLACEHOLDERS: Readonly<Record<string, string>> = {
+  n: '{n}', date: '{date}',
+};
+
 export const WINDOW_ROOT_CLASS = 'ilife-block-window-picker';
 
 /** 形态闭集。 */
@@ -52,30 +59,32 @@ export const WINDOW_EVENT_LOADING = 'ilife:window-loading';
 /** `custom` 档的机器值（起止被手改时自动落到这一档；渲染期也用它找自定义档）。 */
 export const WINDOW_CUSTOM = 'custom';
 
-export const WINDOW_DEFAULTS = Object.freeze({
-  label: '窗口',
-  fromLabel: '窗口起始日',
-  toLabel: '窗口结束日',
+export const WINDOW_DEFAULTS = {
+  get label(): string { return m('base-render.components-window-picker-attrs.c013'); },
+  get fromLabel(): string { return m('base-render.components-window-picker-attrs.c014'); },
+  get toLabel(): string { return m('base-render.components-window-picker-attrs.c015'); },
   /** 起止之间的连接词（「至」）。 */
-  tillText: '至',
+  get tillText(): string { return m('base-render.components-window-picker-attrs.c016'); },
   /** 天数的写法（`{n}` 由运行时替换）。 */
-  daysText: '共 {n} 天',
+  get daysText(): string { return m('base-render.components-window-picker-attrs.c011', KEEP_PLACEHOLDERS); },
   /** 缺省档：说得出口的窗口（「近 30 天」不是「本月」——起止天天在变，标签必须诚实）。 */
-  presets: Object.freeze([
-    Object.freeze({ value: 'today', label: '今日', days: 1 }),
-    Object.freeze({ value: 'week', label: '本周', days: 7 }),
-    Object.freeze({ value: 'month', label: '近 30 天', days: 30 }),
-    Object.freeze({ value: WINDOW_CUSTOM, label: '自定义' }),
-  ]),
-  loadingText: '正在换…',
+  get presets(): readonly WindowPresetInput[] {
+    return Object.freeze([
+      Object.freeze({ value: 'today', label: m('base-render.components-window-picker-attrs.c017'), days: 1 }),
+      Object.freeze({ value: 'week', label: m('base-render.components-window-picker-attrs.c018'), days: 7 }),
+      Object.freeze({ value: 'month', label: m('base-render.components-window-picker-attrs.c019'), days: 30 }),
+      Object.freeze({ value: WINDOW_CUSTOM, label: '自定义' }),
+    ]);
+  },
+  get loadingText(): string { return m('base-render.components-window-picker-attrs.c020'); },
   /** 起止没定完时那句（空态）。 */
-  emptyText: '窗口未定：先选一段',
+  get emptyText(): string { return m('base-render.components-window-picker-attrs.c021'); },
   /** 结束日早于起始日（错态）。 */
-  badRangeText: '结束日早于起始日：窗口得从头到尾',
+  get badRangeText(): string { return m('base-render.components-window-picker-attrs.c022'); },
   /** 日期读不出来（错态；`{date}` 由运行时替换成读到的那个值）。 */
-  badDateText: '日期读不出来：起止必须是 YYYY-MM-DD（读到「{date}」）',
-  unset: '—',
-} as const);
+  get badDateText(): string { return m('base-render.components-window-picker-attrs.c012', KEEP_PLACEHOLDERS); },
+  get unset(): string { return '—'; },
+};
 
 export interface WindowPresetInput {
   /** 机器值（`aria-pressed` 的载荷；`custom` 是内置档，调用方不必再给）。 */

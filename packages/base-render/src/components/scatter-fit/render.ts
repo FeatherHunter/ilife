@@ -19,79 +19,80 @@
 import { esc } from '../shared/escape.js';
 import { SCATTER_FIT_CLASS, scatterFitSlot, type ScatterFitForm } from './attrs.js';
 import { normalizeScatterFit, type ScatterFitModel } from './model.js';
+import { m } from '../../entries/index.js';
 
 /** 卡头：标题 ＋ 口径那枚时间窗 ＋ **从数据算出来**的统计那句。 */
-function headHtml(m: ScatterFitModel): string {
+function headHtml(model: ScatterFitModel): string {
   const parts: string[] = ['<div class="' + scatterFitSlot('hd') + '">'];
-  parts.push('<h4 class="' + scatterFitSlot('title') + '">' + esc(m.title) + '</h4>');
-  if (m.stamp !== undefined) {
-    parts.push('<span class="' + scatterFitSlot('stamp') + '">' + esc(m.stamp) + '</span>');
+  parts.push('<h4 class="' + scatterFitSlot('title') + '">' + esc(model.title) + '</h4>');
+  if (model.stamp !== undefined) {
+    parts.push('<span class="' + scatterFitSlot('stamp') + '">' + esc(model.stamp) + '</span>');
   }
-  parts.push('<span class="' + scatterFitSlot('tail') + '">' + esc(m.tail) + '</span>');
+  parts.push('<span class="' + scatterFitSlot('tail') + '">' + esc(model.tail) + '</span>');
   parts.push('</div>');
   return parts.join('');
 }
 
 /** 纵轴刻度列（三档：与图区同高的上／中／下；只有第一枚带单位）。 */
-function yTicksHtml(m: ScatterFitModel): string {
+function yTicksHtml(model: ScatterFitModel): string {
   return '<div class="' + scatterFitSlot('yticks') + '">'
-    + m.yTicks.map((t) => '<span class="' + scatterFitSlot('ytick') + '">' + esc(t) + '</span>').join('')
+    + model.yTicks.map((t) => '<span class="' + scatterFitSlot('ytick') + '">' + esc(t) + '</span>').join('')
     + '</div>';
 }
 
 /** 图例：每一项是「形 ＋ 字」——形由 `is-*` 给，字说清那是什么。 */
-function legendHtml(m: ScatterFitModel): string {
-  if (m.legend.length === 0) return '';
+function legendHtml(model: ScatterFitModel): string {
+  if (model.legend.length === 0) return '';
   return '<ul class="' + scatterFitSlot('legend') + '">'
-    + m.legend.map((one) => '<li class="' + scatterFitSlot('legend-item') + '">'
+    + model.legend.map((one) => '<li class="' + scatterFitSlot('legend-item') + '">'
       + '<i class="' + scatterFitSlot('legend-mark') + ' is-' + one.kind + '" aria-hidden="true"></i>'
       + esc(one.text) + '</li>').join('')
     + '</ul>';
 }
 
 /** 脚注一句人话（不给就用本形态的口径句）。 */
-function noteHtml(m: ScatterFitModel): string {
-  return '<p class="' + scatterFitSlot('note') + '">' + esc(m.note) + '</p>';
+function noteHtml(model: ScatterFitModel): string {
+  return '<p class="' + scatterFitSlot('note') + '">' + esc(model.note) + '</p>';
 }
 
 /** 形态 A：坐标框（纵轴刻度列 ‖ 点阵区）＋ 横轴刻度行 → 图例 → 脚注。 */
-function renderScatter(m: ScatterFitModel): string {
-  const parts: string[] = [headHtml(m)];
+function renderScatter(model: ScatterFitModel): string {
+  const parts: string[] = [headHtml(model)];
   parts.push('<div class="' + scatterFitSlot('plotbox') + '">');
-  parts.push(yTicksHtml(m));
-  parts.push('<div class="' + scatterFitSlot('plot') + '" role="img" aria-label="' + esc(m.ariaLabel) + '">');
+  parts.push(yTicksHtml(model));
+  parts.push('<div class="' + scatterFitSlot('plot') + '" role="img" aria-label="' + esc(model.ariaLabel) + '">');
   /* **算不出拟合就一个多边形都不出**（`bandShape`／`fitShape` 为空串＝不画）：留一个空 `clip-path`
      会画出"一条常数线"，读者会当成趋势（判据断的是形，不只是字）。 */
-  if (m.bandShape !== '') {
+  if (model.bandShape !== '') {
     parts.push('<span class="' + scatterFitSlot('band') + '" aria-hidden="true" style="clip-path: '
-      + esc(m.bandShape) + '"></span>');
+      + esc(model.bandShape) + '"></span>');
   }
-  if (m.fitShape !== '') {
+  if (model.fitShape !== '') {
     parts.push('<span class="' + scatterFitSlot('fitline') + '" aria-hidden="true" style="clip-path: '
-      + esc(m.fitShape) + '"></span>');
+      + esc(model.fitShape) + '"></span>');
   }
-  for (const dot of m.dots) {
+  for (const dot of model.dots) {
     parts.push('<span class="' + scatterFitSlot('dot') + (dot.outlier ? ' is-outlier' : '')
       + '" style="left: ' + String(dot.leftPct) + '%; bottom: ' + String(dot.upPct) + '%" title="'
       + esc(dot.title) + '"></span>');
   }
   parts.push('</div>');
   parts.push('<div class="' + scatterFitSlot('xticks') + '">'
-    + m.xTicks.map((t) => '<span class="' + scatterFitSlot('xtick') + '">' + esc(t) + '</span>').join('')
+    + model.xTicks.map((t) => '<span class="' + scatterFitSlot('xtick') + '">' + esc(t) + '</span>').join('')
     + '</div>');
   parts.push('</div>');
-  parts.push(legendHtml(m));
-  parts.push(noteHtml(m));
+  parts.push(legendHtml(model));
+  parts.push(noteHtml(model));
   return parts.join('');
 }
 
 /** 形态 B：坐标框（纵轴刻度列 ‖ 分箱区）＋ 箱标签行 → 图例 → 脚注。 */
-function renderBin(m: ScatterFitModel): string {
-  const parts: string[] = [headHtml(m)];
+function renderBin(model: ScatterFitModel): string {
+  const parts: string[] = [headHtml(model)];
   parts.push('<div class="' + scatterFitSlot('plotbox') + '">');
-  parts.push(yTicksHtml(m));
-  parts.push('<div class="' + scatterFitSlot('bins') + '" role="img" aria-label="' + esc(m.ariaLabel) + '">');
-  for (const bin of m.bins) {
+  parts.push(yTicksHtml(model));
+  parts.push('<div class="' + scatterFitSlot('bins') + '" role="img" aria-label="' + esc(model.ariaLabel) + '">');
+  for (const bin of model.bins) {
     parts.push('<span class="' + scatterFitSlot('bincol') + '" title="' + esc(bin.title) + '">');
     parts.push('<i class="' + scatterFitSlot('bin-range') + '" aria-hidden="true" style="bottom: '
       + String(bin.bottomPct) + '%; height: ' + String(bin.heightPct) + '%"></i>');
@@ -101,21 +102,21 @@ function renderBin(m: ScatterFitModel): string {
   }
   parts.push('</div>');
   parts.push('<div class="' + scatterFitSlot('xticks') + '">'
-    + m.xTicks.map((t) => '<span class="' + scatterFitSlot('bintick') + '">' + esc(t) + '</span>').join('')
+    + model.xTicks.map((t) => '<span class="' + scatterFitSlot('bintick') + '">' + esc(t) + '</span>').join('')
     + '</div>');
   parts.push('</div>');
-  parts.push(legendHtml(m));
-  parts.push(noteHtml(m));
+  parts.push(legendHtml(model));
+  parts.push(noteHtml(model));
   return parts.join('');
 }
 
 /** 形态 C：表头一行（错开 ｜ 相关强度 ｜ 系数）＋ 逐档一行 → 脚注。 */
-function renderLag(m: ScatterFitModel): string {
-  const parts: string[] = [headHtml(m)];
+function renderLag(model: ScatterFitModel): string {
+  const parts: string[] = [headHtml(model)];
   parts.push('<div class="' + scatterFitSlot('laghead') + '"><span>错开</span>'
     + '<span>相关强度（中线往左右各半 ＝ ±1）</span><span>系数</span></div>');
-  parts.push('<div class="' + scatterFitSlot('lag') + '" role="img" aria-label="' + esc(m.ariaLabel) + '">');
-  for (const row of m.lags) {
+  parts.push('<div class="' + scatterFitSlot('lag') + '" role="img" aria-label="' + esc(model.ariaLabel) + '">');
+  for (const row of model.lags) {
     parts.push('<div class="' + scatterFitSlot('lagrow') + (row.negative ? ' is-negative' : '')
       + (row.strong ? ' is-strong' : '') + '">');
     parts.push('<span class="' + scatterFitSlot('lag-label') + '">' + esc(row.label) + '</span>');
@@ -123,12 +124,12 @@ function renderLag(m: ScatterFitModel): string {
       + scatterFitSlot('lag-bar') + '" aria-hidden="true" style="width: ' + String(row.widthPct)
       + '%"></i></span>');
     parts.push('<span class="' + scatterFitSlot('lag-value') + '">'
-      + (row.strong ? '<b class="' + scatterFitSlot('lag-strong') + '">' + esc(row.valueText + ' 最强') + '</b>'
+      + (row.strong ? '<b class="' + scatterFitSlot('lag-strong') + '">' + esc(m('base-render.components-scatter-fit-render.c001', { p0: String(row.valueText) })) + '</b>'
         : esc(row.valueText)) + '</span>');
     parts.push('</div>');
   }
   parts.push('</div>');
-  parts.push(noteHtml(m));
+  parts.push(noteHtml(model));
   return parts.join('');
 }
 

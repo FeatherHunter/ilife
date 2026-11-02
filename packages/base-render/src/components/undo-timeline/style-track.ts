@@ -19,6 +19,7 @@ import {
   undoTimelineSlot,
   type UndoTimelineSlot,
 } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -43,7 +44,7 @@ export function undoTimelineTrackCss(input?: { readonly prefix?: string }): stri
   const s = (slot: UndoTimelineSlot): string => root + ' ' + c(slot);
 
   return [
-    '/* ── 形态 track：一条轨（一列改动） ─────────────────────────────── */',
+    m('base-render.components-undo-timeline-style-track.c001'),
     /* 行与行之间**不留缝**：留白由行的内距承担，竖轨才是一根通的线。 */
     s('list') + ' {',
     '  display: grid;',
@@ -57,7 +58,7 @@ export function undoTimelineTrackCss(input?: { readonly prefix?: string }): stri
     '  gap: 0 10px;',
     '  align-items: start;',
     '  min-width: 0;',
-    '  /* **竖向内距不写在行上**：竖轨按网格区拉伸，行上的内距它够不到（见 `PAD_Y_PX` 的说明）。 */',
+    m('base-render.components-undo-timeline-style-track.c002'),
     '  padding: 0;',
     '}',
     /* 横线**只画在文字那两列上**（`body`／`act`）：画满整行会把左侧竖轨切成一节一节。 */
@@ -75,7 +76,7 @@ export function undoTimelineTrackCss(input?: { readonly prefix?: string }): stri
     '  line-height: 1.6;',
     '  overflow-wrap: anywhere;',
     '}',
-    '/* 竖轨：线是 `::before`，圆点才是每一行自己的标记；首行从圆点起、末行到圆点止。 */',
+    m('base-render.components-undo-timeline-style-track.c003'),
     s('rail') + ' {',
     '  position: relative;',
     '  align-self: stretch;',
@@ -155,7 +156,7 @@ export function undoTimelineTrackCss(input?: { readonly prefix?: string }): stri
     s('row') + '.is-locked ' + c('say') + ' {',
     '  color: ' + skinVar('ink-2') + ';',
     '}',
-    '/* 读数那一行：逐条一枚 `rdg`，**段间只靠列距**（标记里不写分隔符）。 */',
+    m('base-render.components-undo-timeline-style-track.c004'),
     s('eff') + ' {',
     '  display: flex;',
     '  flex-wrap: wrap;',
@@ -203,7 +204,7 @@ export function undoTimelineTrackCss(input?: { readonly prefix?: string }): stri
     '  line-height: 1.6;',
     '  overflow-wrap: anywhere;',
     '}',
-    '/* 状态片／影响片：警告那一档走**描边**不走实底（这一行的焦点只能是右边那枚按钮）。 */',
+    m('base-render.components-undo-timeline-style-track.c005'),
     s('tag') + ' {',
     '  justify-self: start;',
     '  max-width: 100%;',
@@ -237,7 +238,7 @@ export function undoTimelineTrackCss(input?: { readonly prefix?: string }): stri
     '  text-align: right;',
     '  overflow-wrap: anywhere;',
     '}',
-    '/* 空态：设计过的那一种（不是留白）。 */',
+    m('base-render.components-undo-timeline-style-track.c006'),
     s('empty') + ' {',
     '  margin: 0;',
     '  padding: 20px 0;',
@@ -246,7 +247,7 @@ export function undoTimelineTrackCss(input?: { readonly prefix?: string }): stri
     '  line-height: 1.6;',
     '  overflow-wrap: anywhere;',
     '}',
-    '/* 就地摊开的那块回滚单：跨满整行，收在自己的行里（它的长相归 `style-impact.ts`）。 */',
+    m('base-render.components-undo-timeline-style-track.c007'),
     s('pick') + ' {',
     '  display: grid;',
     '  grid-column: 1 / -1;',
@@ -256,14 +257,16 @@ export function undoTimelineTrackCss(input?: { readonly prefix?: string }): stri
     '  background: ' + skinVar('surface-2') + ';',
     '  overflow: hidden;',
     '}',
-    '/* `hidden` 必须显式重写：`display:grid` 的优先级高于浏览器默认那条 `[hidden]{display:none}`',
-    '   ⇒ 不写这一条，「收起」当场失效（块还在、还能勾）。 */',
+    m('base-render.components-undo-timeline-style-track.c008'),
+    m('base-render.components-undo-timeline-style-track.c009'),
     s('pick') + '[hidden] {',
     '  display: none;',
     '}',
-    '/* 窄容器（<' + String(UNDO_TIMELINE_NARROW_PX) + 'px）：时刻排到动作句上面、竖轨独占一列、',
-    '   按钮占满整行（手指好按）。判的是**本件自己的宽度**（`@container` 按本件声明的容器名），',
-    '   不是视口宽度——本件会被嵌进侧栏／面板／卡片。 */',
+    m('base-render.components-undo-timeline-style-track.c010', {
+      p0: String(String(UNDO_TIMELINE_NARROW_PX)),
+    }),
+    m('base-render.components-undo-timeline-style-track.c011'),
+    m('base-render.components-undo-timeline-style-track.c012'),
     '@container ' + UNDO_TIMELINE_CONTAINER + ' (max-width: ' + String(UNDO_TIMELINE_NARROW_PX) + 'px) {',
     '  ' + s('list') + ' {',
     '    padding: 0 10px;',

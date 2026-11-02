@@ -17,6 +17,7 @@
  */
 
 /** 本件的类名根：全部槽位类名都是 `RADIO_CARDS_CLASS + '-' + 槽名`。 */
+import { m } from '../../entries/index.js';
 export const RADIO_CARDS_CLASS = 'ilife-block-radio-cards';
 
 /** 槽位闭集（标记契约的一部分：`render.ts`、`style.ts` 与判据都用这里的名字拼类名，不各抄一份字面量）。 */
@@ -87,9 +88,13 @@ export const RADIO_CARDS_RUNTIME_ATTR = 'data-ilife-radio-runtime';
 export const RADIO_CARDS_EVENT_CHANGE = 'ilife:radio-change';
 
 /** 加载态那句话说什么是缺省的（**不带省略号**：`…` 在本仓只许表示「被截断」）。 */
-export const RADIO_CARDS_LOADING_TEXT = '正在读取';
+export function RADIO_CARDS_LOADING_TEXT(): string {
+  return m('base-render.components-radio-cards-attrs.c001');
+}
 /** 空态的缺省写法（设计过的空态，不是留白）。 */
-export const RADIO_CARDS_EMPTY_TEXT = '没有可选项';
+export function RADIO_CARDS_EMPTY_TEXT(): string {
+  return m('base-render.components-radio-cards-attrs.c002');
+}
 /** 图标位最长的字数（1–2 个汉字：它是记号位，不是第二个标题）。 */
 export const RADIO_CARDS_LEAD_MAX = 2;
 

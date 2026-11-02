@@ -14,6 +14,7 @@
  *  ⇒ 照抄不改值，冲突写进 #1113 证据与票面遗留出口（要改就是改判地＝另开原型票）。
  */
 import { skinVar } from '../skin/contract.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -32,7 +33,7 @@ export function ticketButtonCss(input?: { readonly prefix?: string }): string {
   const piece = '.' + p + 'block-ticket-button';
   const on = '.' + p + 'page-ui ' + piece;
   return [
-    '/* ticket-button（票据纸主按钮）：整行实心钮；末档是 **#1113 新增的禁用态公开形状位**。 */',
+    m('base-render.components-ticket-button-style.c001'),
     on + ' {',
     '  display: flex;',
     '  align-items: center;',
@@ -41,7 +42,7 @@ export function ticketButtonCss(input?: { readonly prefix?: string }): string {
     '  min-height: ' + String(TICKET_BUTTON_MIN_HEIGHT_PX) + 'px;',
     '  padding: 12px 14px;',
     '  border: 0;',
-    '  border-radius: ' + String(TICKET_BUTTON_RADIUS_PX) + 'px; /* 规格 §6 授权照抄：13px（主/次按钮同档） */',
+    m('base-render.components-ticket-button-style.c002', { p0: String(String(TICKET_BUTTON_RADIUS_PX)) }),
     '  font-family: ' + skinVar('font') + ';',
     '  font-size: ' + String(TICKET_BUTTON_FONT_PX) + 'px;',
     '  font-weight: 800;',
@@ -52,16 +53,16 @@ export function ticketButtonCss(input?: { readonly prefix?: string }): string {
     '  touch-action: manipulation;',
     '}',
     on + '.is-primary {',
-    '  background: linear-gradient(180deg, #d34a35, #b93222); /* 规格 §6 授权照抄：主按钮渐变 #d34a35→#b93222 */',
-    '  color: #fff; /* 判地字面 · 授权照抄：#fff（主按钮字色） */',
-    '  box-shadow: 0 8px 20px rgba(185,50,34,.28), inset 0 1px 0 rgba(255,255,255,.25); /* 规格 §6 授权照抄：0 8px 20px rgba(185,50,34,.28) ＋ 内高光 inset 0 1px 0 rgba(255,255,255,.25) */',
+    m('base-render.components-ticket-button-style.c003'),
+    m('base-render.components-ticket-button-style.c004'),
+    m('base-render.components-ticket-button-style.c005'),
     '}',
-    '/* **#1113 新增的公开形状位：禁用态**（判地 `.btn-primary:disabled` 五条逐条照抄）。',
-    '   页面侧要禁用就传 `renderTicketButton({disabled:true})`，不许自造这一档样式。 */',
+    m('base-render.components-ticket-button-style.c006'),
+    m('base-render.components-ticket-button-style.c007'),
     on + '[disabled],',
     on + ':disabled {',
-    '  background: #c9c2b4; /* 判地字面 · 授权照抄：#c9c2b4（主按钮禁用底） */',
-    '  color: #fff; /* 判地字面 · 授权照抄：#fff（禁用态字色） */',
+    m('base-render.components-ticket-button-style.c008'),
+    m('base-render.components-ticket-button-style.c009'),
     '  box-shadow: none;',
     '  opacity: .9;',
     '  cursor: not-allowed;',

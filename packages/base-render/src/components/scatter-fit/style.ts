@@ -16,6 +16,7 @@
 import { skinVar } from '../skin/contract.js';
 import { SCATTER_FIT_NARROW_PX, scatterFitSlot, type ScatterFitSlot } from './attrs.js';
 import { scatterFitFormsCss } from './style-forms.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -44,9 +45,9 @@ export function scatterFitCss(input?: { readonly prefix?: string }): string {
   const s = (slot: ScatterFitSlot): string => root + ' .' + scatterFitSlot(slot, p);
 
   return [
-    '/* scatter-fit（相关性散点 · 三个形态：散点／分箱／滞后）：两个读数放在一张图上，',
-    '   点是一片云、趋势是一条线、带子是大概率的范围。色一律从强调色系出',
-    '   （实底给无文字的条与点、淡洗给概率带）：换皮只换取值、不换结构；任何一档都不拿文字墨色当面。 */',
+    m('base-render.components-scatter-fit-style.c001'),
+    m('base-render.components-scatter-fit-style.c002'),
+    m('base-render.components-scatter-fit-style.c003'),
     box + ' {',
     /* 宽度判据的落点：本件是**自己的容器**——嵌进侧栏／面板／卡片时照样按自己的宽度排。 */
     '  container-type: inline-size;',
@@ -247,17 +248,17 @@ export function scatterFitCss(input?: { readonly prefix?: string }): string {
     '  line-height: 1.6;',
     '  overflow-wrap: anywhere;',
     '}',
-    '/* 本件自身不带可点元素。这一条是**地板**：调用方把某一点包成入口（点开那一天）时焦点必须看得见。 */',
+    m('base-render.components-scatter-fit-style.c004'),
     box + ' :focus-visible {',
     '  outline: 2px solid ' + skinVar('accent') + ';',
     '  outline-offset: 2px;',
     '}',
-    '/* 分箱段与滞后段（`style-forms.ts`）：同一份纪律、同一个前缀，插在这里——',
-    '   顺序即层叠顺序，改动前后产物逐字节相同。 */',
+    m('base-render.components-scatter-fit-style.c005'),
+    m('base-render.components-scatter-fit-style.c006'),
     scatterFitFormsCss({ prefix: p }),
-    '/* 窄容器（<' + String(SCATTER_FIT_NARROW_PX) + 'px，阈值住 `attrs.ts`，两份样式文件共用同一份）：',
-    '   图区矮一档、点小一档、刻度距收一档 —— **一列不减**；宽度靠 `minmax(0,1fr)`／`flex: 1 1 0` 自己变窄，',
-    '   不横滑、不藏横滑。 */',
+    m('base-render.components-scatter-fit-style.c007', { p0: String(String(SCATTER_FIT_NARROW_PX)) }),
+    m('base-render.components-scatter-fit-style.c008'),
+    m('base-render.components-scatter-fit-style.c009'),
     '@container (max-width: ' + String(SCATTER_FIT_NARROW_PX) + 'px) {',
     '  ' + s('plot') + ' {',
     '    height: ' + String(NARROW_PLOT_PX) + 'px;',

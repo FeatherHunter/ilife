@@ -12,6 +12,7 @@
  */
 import { skinVar } from '../skin/contract.js';
 import { progressRingSlot, type ProgressRingSlot } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -39,8 +40,8 @@ export function progressRingCss(input?: { readonly prefix?: string }): string {
   const c = (slot: ProgressRingSlot): string => '.' + progressRingSlot(slot, p);
 
   return [
-    '/* progress-ring（进度环 · 形态 A「半环 ＋ 环下大字 ＋ 右侧读数」）：一块「已完成／目标」的环。',
-    '   环是内联 SVG（弧长按 2πr 的一半算），大字是 HTML ⇒ 窄容器里读数不随 SVG 一起缩放。 */',
+    m('base-render.components-progress-ring-style.c001'),
+    m('base-render.components-progress-ring-style.c002'),
     box + ' {',
     /* 宽度判据的落点：本件是**自己的容器**——嵌进侧栏／面板／卡片时照样按自己的宽度折行。 */
     '  container-type: inline-size;',
@@ -106,11 +107,11 @@ export function progressRingCss(input?: { readonly prefix?: string }): string {
     '  margin: 0 auto;',
     '  overflow: visible;',
     '}',
-    '/* 底轨：主文字往卡面混一档（不是硬编码灰），换皮自动跟着走。 */',
+    m('base-render.components-progress-ring-style.c003'),
     s('trk') + ' {',
     '  stroke: color-mix(in srgb, ' + skinVar('ink') + ' 13%, ' + skinVar('surface') + ');',
     '}',
-    '/* 填充弧：强调色是**非文本**档，正好用在这里；超目标换危险色（形状不变：弧画满）。 */',
+    m('base-render.components-progress-ring-style.c004'),
     s('fil') + ' {',
     '  stroke: ' + skinVar('accent') + ';',
     '}',
@@ -142,7 +143,7 @@ export function progressRingCss(input?: { readonly prefix?: string }): string {
     '  font-size: ' + skinVar('fs-sm') + ';',
     '  font-weight: 600;',
     '}',
-    '/* 分母占满一整行（`flex-basis:100%`）：它再长也只把自己这行撑开，不把大字挤窄。 */',
+    m('base-render.components-progress-ring-style.c005'),
     s('denom') + ' {',
     '  flex: 1 0 100%;',
     '  color: ' + skinVar('ink-2') + ';',
@@ -152,7 +153,7 @@ export function progressRingCss(input?: { readonly prefix?: string }): string {
     '  text-align: center;',
     '  overflow-wrap: anywhere;',
     '}',
-    '/* 百分数：那条弧的读数。**数字永不换行、永不截断**（它是本件的第二识别特征）。 */',
+    m('base-render.components-progress-ring-style.c006'),
     s('pct') + ' {',
     '  flex: none;',
     '  padding: 1px 8px;',
@@ -214,13 +215,13 @@ export function progressRingCss(input?: { readonly prefix?: string }): string {
     '  color: ' + skinVar('danger') + ';',
     '  font-weight: 600;',
     '}',
-    '/* 本件自身不带可点元素。这一条是**地板**：调用方把环包成链接时，焦点必须看得见。 */',
+    m('base-render.components-progress-ring-style.c007'),
     box + ' :focus-visible {',
     '  outline: 2px solid ' + skinVar('accent') + ';',
     '  outline-offset: 2px;',
     '}',
-    '/* 窄容器（<' + String(NARROW_PX) + 'px）：大字与环各收一档——环占满整行、读数跟着缩，',
-    '   免得环下大字把自己撑出容器。判的是**本件自己的宽度**（本件会被嵌进侧栏／面板／卡片）。 */',
+    m('base-render.components-progress-ring-style.c008', { p0: String(String(NARROW_PX)) }),
+    m('base-render.components-progress-ring-style.c009'),
     '@container (max-width: ' + String(NARROW_PX) + 'px) {',
     '  ' + s('value') + ' {',
     '    font-size: ' + String(NARROW_VALUE_PX) + 'px;',

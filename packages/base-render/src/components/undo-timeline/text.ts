@@ -7,37 +7,64 @@
  *  用词纪律：这几句是本件**自己生成的可见文本**，不写 `·`／`｜` 这类并列分隔符（段间由版式承担）。
  */
 import type { UndoTimelineState } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 缺省卡头标题。 */
-export const UNDO_TIMELINE_TITLE = '改动记录';
+export function UNDO_TIMELINE_TITLE(): string {
+  return m('base-render.components-undo-timeline-text.c006');
+}
 /** 空态：这一段时间里一条改动都没有。 */
-export const UNDO_TIMELINE_EMPTY_TEXT = '这一段时间里没有改动';
+export function UNDO_TIMELINE_EMPTY_TEXT(): string {
+  return m('base-render.components-undo-timeline-text.c007');
+}
 /** 行里那枚主按钮的三档缺省字（按三态算；调用方可以换）。 */
-export const UNDO_TIMELINE_GO_TEXT: Readonly<Record<UndoTimelineState, string>> = Object.freeze({
-  undoable: '撤销这次改动',
-  undone: '恢复这笔',
-  locked: '已不可撤',
-});
+export const UNDO_TIMELINE_GO_TEXT: Readonly<Record<UndoTimelineState, string>> = {
+  get undoable(): string { return m('base-render.components-undo-timeline-text.c001'); },
+  get undone(): string { return m('base-render.components-undo-timeline-text.c002'); },
+  get locked(): string { return m('base-render.components-undo-timeline-text.c003'); },
+};
 /** 三态状态片的缺省字（`undoable` 缺省不出片，由调用方的 `tag` 承担「会连带重算…」）。 */
-export const UNDO_TIMELINE_STATE_TAG: Readonly<Record<UndoTimelineState, string>> = Object.freeze({
-  undoable: '',
-  undone: '已撤销，读数已还原',
-  locked: '不可撤',
-});
+export const UNDO_TIMELINE_STATE_TAG: Readonly<Record<UndoTimelineState, string>> = {
+  get undoable(): string { return ''; },
+  get undone(): string { return m('base-render.components-undo-timeline-text.c004'); },
+  get locked(): string { return m('base-render.components-undo-timeline-text.c005'); },
+};
 /** 不可撤那一档：片上除了「不可撤」还要写出**为什么**（孤零零一枚灰按钮是中间档）。 */
-export const UNDO_TIMELINE_LOCKED_SEP = '：';
+export function UNDO_TIMELINE_LOCKED_SEP(): string {
+  return '：';
+}
 /** 回滚单里"勾不动"那一行的片语。 */
-export const UNDO_TIMELINE_WHY_TEXT = '撤不了：';
+export function UNDO_TIMELINE_WHY_TEXT(): string {
+  return m('base-render.components-undo-timeline-text.c008');
+}
 /** 页脚那句结论的两段：前面按勾了几项现算，后面是调用方给的注（缺省「撤销后若要重做就得再走一次」）。 */
-export const UNDO_TIMELINE_SUM_PRE = '勾了 ';
-export const UNDO_TIMELINE_SUM_MID = ' 项，';
-export const UNDO_TIMELINE_SUM_ZERO = '一项都没勾，撤销得先勾一项。';
-export const UNDO_TIMELINE_SUM_NOTE = '撤销后若要重做就得再走一次';
+export function UNDO_TIMELINE_SUM_PRE(): string {
+  return m('base-render.components-undo-timeline-text.c009');
+}
+export function UNDO_TIMELINE_SUM_MID(): string {
+  return m('base-render.components-undo-timeline-text.c010');
+}
+export function UNDO_TIMELINE_SUM_ZERO(): string {
+  return m('base-render.components-undo-timeline-text.c011');
+}
+export function UNDO_TIMELINE_SUM_NOTE(): string {
+  return m('base-render.components-undo-timeline-text.c012');
+}
 /** 主按钮那枚字的缺省写法（按勾了几项算）。 */
-export const UNDO_TIMELINE_SUBMIT_PRE = '撤销这 ';
-export const UNDO_TIMELINE_SUBMIT_POST = ' 项';
-export const UNDO_TIMELINE_SUBMIT_ZERO = '一项都没勾';
+export function UNDO_TIMELINE_SUBMIT_PRE(): string {
+  return m('base-render.components-undo-timeline-text.c013');
+}
+export function UNDO_TIMELINE_SUBMIT_POST(): string {
+  return m('base-render.components-undo-timeline-text.c014');
+}
+export function UNDO_TIMELINE_SUBMIT_ZERO(): string {
+  return m('base-render.components-undo-timeline-text.c015');
+}
 /** 取消那枚的字。 */
-export const UNDO_TIMELINE_CANCEL_TEXT = '取消';
+export function UNDO_TIMELINE_CANCEL_TEXT(): string {
+  return m('base-render.components-undo-timeline-text.c016');
+}
 /** 忙碌那枚字的前缀（`正在` ＋ 按钮字，原地换）。 */
-export const UNDO_TIMELINE_BUSY_PRE = '正在';
+export function UNDO_TIMELINE_BUSY_PRE(): string {
+  return m('base-render.components-undo-timeline-text.c017');
+}

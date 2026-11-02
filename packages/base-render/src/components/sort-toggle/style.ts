@@ -9,6 +9,7 @@
 import { PAGE_LIMITS, PAGE_UI_CLASS } from '../page-ui/index.js';
 import { skinVar } from '../skin/contract.js';
 import { SORT_LOADING_ATTR, SORT_ROOT_CLASS } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 宽档上限（1280 档不让视图条铺满整页）。 */
 export const SORT_MAX_WIDTH_PX = 700;
@@ -41,7 +42,7 @@ export function sortToggleCss(): string {
   const LOADING_ON = '[' + SORT_LOADING_ATTR + '="1"]';
 
   return [
-    '/* sortToggle（排序切换 · 形态 C：并进「视图」条——筛选＋排序一套 ＋ 口径句）。',
+    m('base-render.components-sort-toggle-style.c001'),
     '   视图键是原生 <button> ＋ aria-pressed；口径句写在页上，不让用户自己拼「字段＋方向」。 */',
     R + '{display:grid;gap:8px;min-width:0;max-width:' + SORT_MAX_WIDTH_PX + 'px;',
     '  color:' + ink + ';font-family:' + font + ';font-size:' + fsBody + ';line-height:1.5}',

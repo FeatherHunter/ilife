@@ -18,6 +18,7 @@ import { toastSection } from './toast.js';
 import { STYLE_PREFIX, STYLE_VERSION, token } from './tokens.js';
 import { chartsCss } from '../../charts.js';
 import { BuildStyleSheet, CONTROL_STYLE_SECTIONS, CSS_VAR_TOKENS, ControlStyleSection, CssVarName, STYLE_FORBIDDEN_TOKENS, STYLE_SHEET_ID, StyleSheetInput } from '../../spec/style.js';
+import { m } from '../../entries/index.js';
 
 /** 各区 CSS 文本（闭集 `CONTROL_STYLE_SECTIONS` 的**唯一**实现处）。
  *  每区的类名逐条来自产出器实测（注释里给 `file:line`），**不许臆造未被使用的类名**。
@@ -104,7 +105,7 @@ function assertExtraCss(extraCss: string): void {
   }
   if (/\[\s*data-theme/i.test(code) || /prefers-color-scheme\s*:\s*dark/i.test(code)) {
     throw new StyleSheetExtraCssError('extra-css-dark-scheme',
-      'buildStyleSheet: extraCss 不得引入深色区选择器（命中 `[data-theme` 或 `prefers-color-scheme: dark`，契约 doc:292）');
+      'buildStyleSheet: extraCss 不得引入深色区选择器（命中「[data-theme」或「prefers-color-scheme: dark」，契约 doc:292）');
   }
 }
 
@@ -118,7 +119,7 @@ export const buildStyleSheet: BuildStyleSheet = (input) => {
   const extraCss = input === undefined || input === null || input.extraCss === undefined ? '' : String(input.extraCss);
   assertExtraCss(extraCss);
   const parts: string[] = [
-    '/* base-paint 共享样式资产 · ' + STYLE_SHEET_ID + ' · v' + STYLE_VERSION + ' */',
+    m('base-render.components-style-sheet.c001', { p0: String(STYLE_SHEET_ID), p1: String(STYLE_VERSION) }),
     rootBlock(),
   ];
   for (const section of CONTROL_STYLE_SECTIONS) {

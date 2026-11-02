@@ -79,7 +79,7 @@ describe('timer-card ① 渲染契约', () => {
     assert.ok(html.includes(slot('display-value').slice(1) + '" data-ilife-timer-display="1">' + TIMER_CARD_MISSING + '<'),
       '缺值写成 —（不写 0、不留空）');
     assert.equal((html.match(/disabled/g) || []).length >= 2, true, '两枚按钮都按不动');
-    assert.ok(html.includes(slot('absent').slice(1) + '">' + TIMER_CARD_EMPTY_LINE + '<'), '空态那一句');
+    assert.ok(html.includes(slot('absent').slice(1) + '">' + TIMER_CARD_EMPTY_LINE() + '<'), '空态那一句');
     const custom = renderTimerCard({ key: 'k', title: 't', totalSeconds: 0, absentLine: '这锅还没定时间' });
     assert.ok(custom.includes('这锅还没定时间'), '空态那句可覆盖');
   });
@@ -89,7 +89,7 @@ describe('timer-card ① 渲染契约', () => {
       key: 'k', title: 't', totalSeconds: 60, loading: true, error: '没连上：再试一次',
     });
     assert.ok(html.includes('data-ilife-timer-busy="1"') && html.includes('aria-busy="true"'), '整卡忙态可读');
-    assert.ok(html.includes('>' + TIMER_LOADING_LABEL + '<'), '主按钮原地换字');
+    assert.ok(html.includes('>' + TIMER_LOADING_LABEL() + '<'), '主按钮原地换字');
     assert.ok(html.includes(slot('error').slice(1) + '" id="ilife-timer-err-k" role="alert">没连上：再试一次<'), '错态写在按钮旁');
     assert.ok(html.includes('aria-describedby="ilife-timer-err-k"'), '错态挂上 aria-describedby');
     const off = renderTimerCard({ key: 'k', title: 't', totalSeconds: 60, disabled: true });
@@ -283,7 +283,7 @@ describe('timer-card ④ 真机（无头 Chrome）', () => {
         '按钮命中盒 ' + mainBtn.w + '×' + mainBtn.h + ' 小于 112×44');
       const loadingBtn = await p.hitRead(actSel('stir', 'toggle'));
       assert.equal(await p.ev('document.querySelector(' + JSON.stringify(actSel('stir', 'toggle')) + ').textContent'),
-        TIMER_LOADING_LABEL, '处理中：原地换字');
+        TIMER_LOADING_LABEL(), '处理中：原地换字');
       assert.equal(loadingBtn.w, mainBtn.w, '换字不跳版（同宽）：' + loadingBtn.w + ' vs ' + mainBtn.w);
 
       /* 空态：大数字写 —、按钮按不动、点了不落账。 */

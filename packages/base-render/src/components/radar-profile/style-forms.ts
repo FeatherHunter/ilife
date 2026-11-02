@@ -11,6 +11,7 @@
  */
 import { skinVar } from '../skin/contract.js';
 import { RADAR_PROFILE_AT_VAR, RADAR_PROFILE_B1_VAR, RADAR_PROFILE_B2_VAR, RADAR_PROFILE_NARROW_PX, radarProfileSlot, type RadarProfileSlot } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -32,8 +33,8 @@ export function radarProfileFormsCss(input?: { readonly prefix?: string }): stri
   const c = (slot: RadarProfileSlot): string => '.' + radarProfileSlot(slot, p);
 
   return [
-    '/* 极区扇图：一根扇区 ＝ 一条「圆心 → 左端点 → 外沿弧 → 右端点」的路径；',
-    '   面的深浅只说"这是哪一档"（达标 ok 淡洗／未达标 warn 淡洗），长短才是读数。 */',
+    m('base-render.components-radar-profile-style-forms.c001'),
+    m('base-render.components-radar-profile-style-forms.c002'),
     s('wedge') + ' {',
     '  stroke: none;',
     '}',
@@ -63,7 +64,7 @@ export function radarProfileFormsCss(input?: { readonly prefix?: string }): stri
     '  stroke-dasharray: 5 4;',
     '  vector-effect: non-scaling-stroke;',
     '}',
-    '/* 展平轴表：一行一根轴（轴名 ｜ 轨道 ｜ 判定）；窄档把轨道整条挪到第二行去，免得挤成一列孤字。 */',
+    m('base-render.components-radar-profile-style-forms.c003'),
     s('rows') + ' {',
     '  display: grid;',
     '  gap: 0;',

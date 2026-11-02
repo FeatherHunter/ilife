@@ -7813,7 +7813,8 @@
     "1227": {
       "title": "迁移 base-render 组件层后半：169 件（2,937 条）",
       "state": "open（待开工；清单已回填 #1308）",
-      "files": [
+      "files": [],
+      "migrated": [
         {
           "path": "packages/base-render/src/components/progress-list/style.ts",
           "literals": 15,
@@ -7829,13 +7830,6 @@
           "byClass": {
             "copy": 4,
             "concat": 13
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/progress-ring/render.ts",
-          "literals": 1,
-          "byClass": {
-            "concat": 1
           }
         },
         {
@@ -7862,14 +7856,6 @@
           }
         },
         {
-          "path": "packages/base-render/src/components/punch-strip/render.ts",
-          "literals": 4,
-          "byClass": {
-            "copy": 2,
-            "concat": 2
-          }
-        },
-        {
           "path": "packages/base-render/src/components/punch-strip/style.ts",
           "literals": 5,
           "byClass": {
@@ -7881,14 +7867,6 @@
           "literals": 10,
           "byClass": {
             "copy": 10
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/quick-capture/model.ts",
-          "literals": 33,
-          "byClass": {
-            "copy": 5,
-            "concat": 28
           }
         },
         {
@@ -7938,22 +7916,6 @@
           }
         },
         {
-          "path": "packages/base-render/src/components/radar-profile/model.ts",
-          "literals": 36,
-          "byClass": {
-            "copy": 5,
-            "concat": 31
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/radar-profile/render.ts",
-          "literals": 3,
-          "byClass": {
-            "concat": 1,
-            "ident": 2
-          }
-        },
-        {
           "path": "packages/base-render/src/components/radar-profile/scale.ts",
           "literals": 1,
           "byClass": {
@@ -7991,28 +7953,12 @@
           }
         },
         {
-          "path": "packages/base-render/src/components/radio-cards/model.ts",
-          "literals": 13,
-          "byClass": {
-            "copy": 4,
-            "concat": 9
-          }
-        },
-        {
           "path": "packages/base-render/src/components/radio-cards/style.ts",
           "literals": 24,
           "byClass": {
             "copy": 1,
             "concat": 1,
             "ident": 22
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/range-bar/model.ts",
-          "literals": 16,
-          "byClass": {
-            "copy": 6,
-            "concat": 10
           }
         },
         {
@@ -8060,13 +8006,6 @@
           "byClass": {
             "copy": 2,
             "concat": 13
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/rating-row/render.ts",
-          "literals": 1,
-          "byClass": {
-            "ident": 1
           }
         },
         {
@@ -8134,37 +8073,6 @@
           }
         },
         {
-          "path": "packages/base-render/src/components/reminder-setter/model-track.ts",
-          "literals": 16,
-          "byClass": {
-            "copy": 2,
-            "concat": 14
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/reminder-setter/model.ts",
-          "literals": 8,
-          "byClass": {
-            "copy": 2,
-            "concat": 6
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/reminder-setter/render.ts",
-          "literals": 14,
-          "byClass": {
-            "concat": 14
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/reminder-setter/rules.ts",
-          "literals": 22,
-          "byClass": {
-            "copy": 2,
-            "concat": 20
-          }
-        },
-        {
           "path": "packages/base-render/src/components/reminder-setter/style-track.ts",
           "literals": 16,
           "byClass": {
@@ -8187,26 +8095,10 @@
           }
         },
         {
-          "path": "packages/base-render/src/components/result-row/model.ts",
-          "literals": 6,
-          "byClass": {
-            "copy": 1,
-            "concat": 5
-          }
-        },
-        {
           "path": "packages/base-render/src/components/result-row/style.ts",
           "literals": 2,
           "byClass": {
             "ident": 2
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/say-field/render.ts",
-          "literals": 19,
-          "byClass": {
-            "copy": 3,
-            "concat": 16
           }
         },
         {
@@ -8217,27 +8109,10 @@
           }
         },
         {
-          "path": "packages/base-render/src/components/say-opt/render.ts",
-          "literals": 5,
-          "byClass": {
-            "copy": 1,
-            "concat": 3,
-            "ident": 1
-          }
-        },
-        {
           "path": "packages/base-render/src/components/say-opt/style.ts",
           "literals": 7,
           "byClass": {
             "ident": 7
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/scale-bar/render.ts",
-          "literals": 7,
-          "byClass": {
-            "copy": 1,
-            "concat": 6
           }
         },
         {
@@ -8253,14 +8128,6 @@
           "byClass": {
             "copy": 5,
             "concat": 66
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/scatter-fit/model.ts",
-          "literals": 33,
-          "byClass": {
-            "copy": 6,
-            "concat": 27
           }
         },
         {
@@ -8302,14 +8169,6 @@
           }
         },
         {
-          "path": "packages/base-render/src/components/search-field/model.ts",
-          "literals": 15,
-          "byClass": {
-            "copy": 6,
-            "concat": 9
-          }
-        },
-        {
           "path": "packages/base-render/src/components/search-field/render.ts",
           "literals": 7,
           "byClass": {
@@ -8319,32 +8178,10 @@
           }
         },
         {
-          "path": "packages/base-render/src/components/search-field/runtime.ts",
-          "literals": 3,
-          "byClass": {
-            "ident": 3
-          }
-        },
-        {
           "path": "packages/base-render/src/components/search-field/style.ts",
           "literals": 2,
           "byClass": {
             "ident": 2
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/section-head/attrs.ts",
-          "literals": 2,
-          "byClass": {
-            "copy": 2
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/section-head/model.ts",
-          "literals": 10,
-          "byClass": {
-            "copy": 3,
-            "concat": 7
           }
         },
         {
@@ -8357,22 +8194,6 @@
           }
         },
         {
-          "path": "packages/base-render/src/components/shared/validate.ts",
-          "literals": 10,
-          "byClass": {
-            "copy": 1,
-            "concat": 9
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/sheet-frame/render.ts",
-          "literals": 4,
-          "byClass": {
-            "copy": 1,
-            "concat": 3
-          }
-        },
-        {
           "path": "packages/base-render/src/components/sheet-frame/style.ts",
           "literals": 12,
           "byClass": {
@@ -8381,25 +8202,10 @@
           }
         },
         {
-          "path": "packages/base-render/src/components/sheet-head/render.ts",
-          "literals": 1,
-          "byClass": {
-            "concat": 1
-          }
-        },
-        {
           "path": "packages/base-render/src/components/sheet-head/style.ts",
           "literals": 1,
           "byClass": {
             "ident": 1
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/skeleton/model.ts",
-          "literals": 8,
-          "byClass": {
-            "copy": 2,
-            "concat": 6
           }
         },
         {
@@ -8411,15 +8217,6 @@
           }
         },
         {
-          "path": "packages/base-render/src/components/skin/contract.ts",
-          "literals": 43,
-          "byClass": {
-            "copy": 37,
-            "concat": 5,
-            "ident": 1
-          }
-        },
-        {
           "path": "packages/base-render/src/components/skin/index.ts",
           "literals": 7,
           "byClass": {
@@ -8428,53 +8225,10 @@
           }
         },
         {
-          "path": "packages/base-render/src/components/skin/skins/broadsheet.ts",
-          "literals": 1,
-          "byClass": {
-            "copy": 1
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/skin/skins/ink.ts",
-          "literals": 1,
-          "byClass": {
-            "copy": 1
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/skin/skins/neutral.ts",
-          "literals": 1,
-          "byClass": {
-            "copy": 1
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/skin/skins/paper.ts",
-          "literals": 1,
-          "byClass": {
-            "copy": 1
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/skin/skins/ticket.ts",
-          "literals": 1,
-          "byClass": {
-            "copy": 1
-          }
-        },
-        {
           "path": "packages/base-render/src/components/slider-row/attrs.ts",
           "literals": 4,
           "byClass": {
             "copy": 4
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/slider-row/model.ts",
-          "literals": 28,
-          "byClass": {
-            "copy": 4,
-            "concat": 24
           }
         },
         {
@@ -8526,29 +8280,6 @@
           }
         },
         {
-          "path": "packages/base-render/src/components/sort-toggle/model.ts",
-          "literals": 15,
-          "byClass": {
-            "copy": 3,
-            "concat": 12
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/sort-toggle/render.ts",
-          "literals": 2,
-          "byClass": {
-            "concat": 2
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/sort-toggle/runtime.ts",
-          "literals": 3,
-          "byClass": {
-            "concat": 1,
-            "ident": 2
-          }
-        },
-        {
           "path": "packages/base-render/src/components/sort-toggle/style.ts",
           "literals": 2,
           "byClass": {
@@ -8561,21 +8292,6 @@
           "byClass": {
             "copy": 10,
             "concat": 54
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/spread-dist/model.ts",
-          "literals": 55,
-          "byClass": {
-            "copy": 11,
-            "concat": 44
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/spread-dist/scale.ts",
-          "literals": 5,
-          "byClass": {
-            "copy": 5
           }
         },
         {
@@ -8594,14 +8310,6 @@
           }
         },
         {
-          "path": "packages/base-render/src/components/stacked-bar/model.ts",
-          "literals": 10,
-          "byClass": {
-            "copy": 2,
-            "concat": 8
-          }
-        },
-        {
           "path": "packages/base-render/src/components/stacked-bar/style.ts",
           "literals": 11,
           "byClass": {
@@ -8611,26 +8319,10 @@
           }
         },
         {
-          "path": "packages/base-render/src/components/stat-inline/model.ts",
-          "literals": 6,
-          "byClass": {
-            "copy": 3,
-            "concat": 3
-          }
-        },
-        {
           "path": "packages/base-render/src/components/stat-inline/style.ts",
           "literals": 6,
           "byClass": {
             "ident": 6
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/status-row/model.ts",
-          "literals": 9,
-          "byClass": {
-            "copy": 1,
-            "concat": 8
           }
         },
         {
@@ -8648,26 +8340,10 @@
           }
         },
         {
-          "path": "packages/base-render/src/components/step-flow/model.ts",
-          "literals": 12,
-          "byClass": {
-            "copy": 1,
-            "concat": 11
-          }
-        },
-        {
           "path": "packages/base-render/src/components/step-flow/style.ts",
           "literals": 6,
           "byClass": {
             "ident": 6
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/streak-badge/model.ts",
-          "literals": 7,
-          "byClass": {
-            "copy": 1,
-            "concat": 6
           }
         },
         {
@@ -8702,26 +8378,10 @@
           }
         },
         {
-          "path": "packages/base-render/src/components/style/ticket-family.ts",
-          "literals": 62,
-          "byClass": {
-            "copy": 3,
-            "ident": 59
-          }
-        },
-        {
           "path": "packages/base-render/src/components/sub-list/attrs.ts",
           "literals": 2,
           "byClass": {
             "copy": 2
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/sub-list/model.ts",
-          "literals": 8,
-          "byClass": {
-            "copy": 2,
-            "concat": 6
           }
         },
         {
@@ -8730,13 +8390,6 @@
           "byClass": {
             "concat": 1,
             "ident": 21
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/summary-head/render.ts",
-          "literals": 12,
-          "byClass": {
-            "concat": 12
           }
         },
         {
@@ -8778,36 +8431,12 @@
           }
         },
         {
-          "path": "packages/base-render/src/components/sync-status/model.ts",
-          "literals": 11,
-          "byClass": {
-            "copy": 2,
-            "concat": 9
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/sync-status/render.ts",
-          "literals": 5,
-          "byClass": {
-            "concat": 2,
-            "ident": 3
-          }
-        },
-        {
           "path": "packages/base-render/src/components/sync-status/style.ts",
           "literals": 21,
           "byClass": {
             "copy": 1,
             "concat": 1,
             "ident": 19
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/task-list/model.ts",
-          "literals": 9,
-          "byClass": {
-            "copy": 1,
-            "concat": 8
           }
         },
         {
@@ -8864,25 +8493,10 @@
           }
         },
         {
-          "path": "packages/base-render/src/components/ticket-button/render.ts",
-          "literals": 2,
-          "byClass": {
-            "copy": 1,
-            "concat": 1
-          }
-        },
-        {
           "path": "packages/base-render/src/components/ticket-button/style.ts",
           "literals": 9,
           "byClass": {
             "ident": 9
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/ticket-section/render.ts",
-          "literals": 4,
-          "byClass": {
-            "concat": 4
           }
         },
         {
@@ -8897,13 +8511,6 @@
           "literals": 11,
           "byClass": {
             "copy": 11
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/timer-card/model.ts",
-          "literals": 11,
-          "byClass": {
-            "concat": 11
           }
         },
         {
@@ -8926,14 +8533,6 @@
           "literals": 4,
           "byClass": {
             "copy": 4
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/toast-card/model.ts",
-          "literals": 19,
-          "byClass": {
-            "copy": 7,
-            "concat": 12
           }
         },
         {
@@ -8965,45 +8564,6 @@
           "literals": 2,
           "byClass": {
             "ident": 2
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/type-badge/render.ts",
-          "literals": 5,
-          "byClass": {
-            "copy": 1,
-            "concat": 4
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/type-badge/style.ts",
-          "literals": 3,
-          "byClass": {
-            "copy": 1,
-            "ident": 2
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/undo-timeline/keys.ts",
-          "literals": 4,
-          "byClass": {
-            "copy": 1,
-            "concat": 3
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/undo-timeline/model.ts",
-          "literals": 35,
-          "byClass": {
-            "copy": 8,
-            "concat": 27
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/undo-timeline/render.ts",
-          "literals": 1,
-          "byClass": {
-            "concat": 1
           }
         },
         {
@@ -9044,14 +8604,6 @@
           "literals": 13,
           "byClass": {
             "copy": 13
-          }
-        },
-        {
-          "path": "packages/base-render/src/components/window-picker/model.ts",
-          "literals": 23,
-          "byClass": {
-            "copy": 7,
-            "concat": 16
           }
         },
         {
@@ -9106,6 +8658,519 @@
             "concat": 1,
             "ident": 25
           }
+        }
+      ],
+      "totals": {
+        "files": 169,
+        "literals": 2937
+      },
+      "excluded": [
+        {
+          "path": "packages/base-render/src/components/progress-ring/render.ts",
+          "literals": 1,
+          "byClass": {
+            "concat": 1
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/punch-strip/render.ts",
+          "literals": 4,
+          "byClass": {
+            "copy": 2,
+            "concat": 2
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/quick-capture/model.ts",
+          "literals": 33,
+          "byClass": {
+            "copy": 5,
+            "concat": 28
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/radar-profile/model.ts",
+          "literals": 36,
+          "byClass": {
+            "copy": 5,
+            "concat": 31
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/radar-profile/render.ts",
+          "literals": 3,
+          "byClass": {
+            "concat": 1,
+            "ident": 2
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/radio-cards/model.ts",
+          "literals": 13,
+          "byClass": {
+            "copy": 4,
+            "concat": 9
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/range-bar/model.ts",
+          "literals": 16,
+          "byClass": {
+            "copy": 6,
+            "concat": 10
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/rating-row/render.ts",
+          "literals": 1,
+          "byClass": {
+            "ident": 1
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/reminder-setter/model-track.ts",
+          "literals": 16,
+          "byClass": {
+            "copy": 2,
+            "concat": 14
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/reminder-setter/model.ts",
+          "literals": 8,
+          "byClass": {
+            "copy": 2,
+            "concat": 6
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/reminder-setter/render.ts",
+          "literals": 14,
+          "byClass": {
+            "concat": 14
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/reminder-setter/rules.ts",
+          "literals": 22,
+          "byClass": {
+            "copy": 2,
+            "concat": 20
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/result-row/model.ts",
+          "literals": 6,
+          "byClass": {
+            "copy": 1,
+            "concat": 5
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/say-field/render.ts",
+          "literals": 19,
+          "byClass": {
+            "copy": 3,
+            "concat": 16
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/say-opt/render.ts",
+          "literals": 5,
+          "byClass": {
+            "copy": 1,
+            "concat": 3,
+            "ident": 1
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/scale-bar/render.ts",
+          "literals": 7,
+          "byClass": {
+            "copy": 1,
+            "concat": 6
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/scatter-fit/model.ts",
+          "literals": 33,
+          "byClass": {
+            "copy": 6,
+            "concat": 27
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/search-field/model.ts",
+          "literals": 15,
+          "byClass": {
+            "copy": 6,
+            "concat": 9
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/search-field/runtime.ts",
+          "literals": 3,
+          "byClass": {
+            "ident": 3
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/section-head/attrs.ts",
+          "literals": 2,
+          "byClass": {
+            "copy": 2
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/section-head/model.ts",
+          "literals": 10,
+          "byClass": {
+            "copy": 3,
+            "concat": 7
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/shared/validate.ts",
+          "literals": 10,
+          "byClass": {
+            "copy": 1,
+            "concat": 9
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/sheet-frame/render.ts",
+          "literals": 4,
+          "byClass": {
+            "copy": 1,
+            "concat": 3
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/sheet-head/render.ts",
+          "literals": 1,
+          "byClass": {
+            "concat": 1
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/skeleton/model.ts",
+          "literals": 8,
+          "byClass": {
+            "copy": 2,
+            "concat": 6
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/skin/contract.ts",
+          "literals": 43,
+          "byClass": {
+            "copy": 37,
+            "concat": 5,
+            "ident": 1
+          },
+          "reason": "CSS/token 说明类：中文只在样式注释/说明段（渲染期以 /* … */ 进样式文本，不是屏上文字），按迁移手册 §4.6 payload 不迁；CSS 名词层另票处理"
+        },
+        {
+          "path": "packages/base-render/src/components/skin/skins/broadsheet.ts",
+          "literals": 1,
+          "byClass": {
+            "copy": 1
+          },
+          "reason": "CSS/token 说明类：中文只在样式注释/说明段（渲染期以 /* … */ 进样式文本，不是屏上文字），按迁移手册 §4.6 payload 不迁；CSS 名词层另票处理"
+        },
+        {
+          "path": "packages/base-render/src/components/skin/skins/ink.ts",
+          "literals": 1,
+          "byClass": {
+            "copy": 1
+          },
+          "reason": "CSS/token 说明类：中文只在样式注释/说明段（渲染期以 /* … */ 进样式文本，不是屏上文字），按迁移手册 §4.6 payload 不迁；CSS 名词层另票处理"
+        },
+        {
+          "path": "packages/base-render/src/components/skin/skins/neutral.ts",
+          "literals": 1,
+          "byClass": {
+            "copy": 1
+          },
+          "reason": "CSS/token 说明类：中文只在样式注释/说明段（渲染期以 /* … */ 进样式文本，不是屏上文字），按迁移手册 §4.6 payload 不迁；CSS 名词层另票处理"
+        },
+        {
+          "path": "packages/base-render/src/components/skin/skins/paper.ts",
+          "literals": 1,
+          "byClass": {
+            "copy": 1
+          },
+          "reason": "CSS/token 说明类：中文只在样式注释/说明段（渲染期以 /* … */ 进样式文本，不是屏上文字），按迁移手册 §4.6 payload 不迁；CSS 名词层另票处理"
+        },
+        {
+          "path": "packages/base-render/src/components/skin/skins/ticket.ts",
+          "literals": 1,
+          "byClass": {
+            "copy": 1
+          },
+          "reason": "CSS/token 说明类：中文只在样式注释/说明段（渲染期以 /* … */ 进样式文本，不是屏上文字），按迁移手册 §4.6 payload 不迁；CSS 名词层另票处理"
+        },
+        {
+          "path": "packages/base-render/src/components/slider-row/model.ts",
+          "literals": 28,
+          "byClass": {
+            "copy": 4,
+            "concat": 24
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/sort-toggle/model.ts",
+          "literals": 15,
+          "byClass": {
+            "copy": 3,
+            "concat": 12
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/sort-toggle/render.ts",
+          "literals": 2,
+          "byClass": {
+            "concat": 2
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/sort-toggle/runtime.ts",
+          "literals": 3,
+          "byClass": {
+            "concat": 1,
+            "ident": 2
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/spread-dist/model.ts",
+          "literals": 55,
+          "byClass": {
+            "copy": 11,
+            "concat": 44
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/spread-dist/scale.ts",
+          "literals": 5,
+          "byClass": {
+            "copy": 5
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/stacked-bar/model.ts",
+          "literals": 10,
+          "byClass": {
+            "copy": 2,
+            "concat": 8
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/stat-inline/model.ts",
+          "literals": 6,
+          "byClass": {
+            "copy": 3,
+            "concat": 3
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/status-row/model.ts",
+          "literals": 9,
+          "byClass": {
+            "copy": 1,
+            "concat": 8
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/step-flow/model.ts",
+          "literals": 12,
+          "byClass": {
+            "copy": 1,
+            "concat": 11
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/streak-badge/model.ts",
+          "literals": 7,
+          "byClass": {
+            "copy": 1,
+            "concat": 6
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/style/ticket-family.ts",
+          "literals": 62,
+          "byClass": {
+            "copy": 3,
+            "ident": 59
+          },
+          "reason": "CSS/token 说明类：中文只在样式注释/说明段（渲染期以 /* … */ 进样式文本，不是屏上文字），按迁移手册 §4.6 payload 不迁；CSS 名词层另票处理"
+        },
+        {
+          "path": "packages/base-render/src/components/sub-list/model.ts",
+          "literals": 8,
+          "byClass": {
+            "copy": 2,
+            "concat": 6
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/summary-head/render.ts",
+          "literals": 12,
+          "byClass": {
+            "concat": 12
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/sync-status/model.ts",
+          "literals": 11,
+          "byClass": {
+            "copy": 2,
+            "concat": 9
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/sync-status/render.ts",
+          "literals": 5,
+          "byClass": {
+            "concat": 2,
+            "ident": 3
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/task-list/model.ts",
+          "literals": 9,
+          "byClass": {
+            "copy": 1,
+            "concat": 8
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/ticket-button/render.ts",
+          "literals": 2,
+          "byClass": {
+            "copy": 1,
+            "concat": 1
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/ticket-section/render.ts",
+          "literals": 4,
+          "byClass": {
+            "concat": 4
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/timer-card/model.ts",
+          "literals": 11,
+          "byClass": {
+            "concat": 11
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/toast-card/model.ts",
+          "literals": 19,
+          "byClass": {
+            "copy": 7,
+            "concat": 12
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/type-badge/render.ts",
+          "literals": 5,
+          "byClass": {
+            "copy": 1,
+            "concat": 4
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/type-badge/style.ts",
+          "literals": 3,
+          "byClass": {
+            "copy": 1,
+            "ident": 2
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/undo-timeline/keys.ts",
+          "literals": 4,
+          "byClass": {
+            "copy": 1,
+            "concat": 3
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/undo-timeline/model.ts",
+          "literals": 35,
+          "byClass": {
+            "copy": 8,
+            "concat": 27
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/undo-timeline/render.ts",
+          "literals": 1,
+          "byClass": {
+            "concat": 1
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
+        },
+        {
+          "path": "packages/base-render/src/components/window-picker/model.ts",
+          "literals": 23,
+          "byClass": {
+            "copy": 7,
+            "concat": 16
+          },
+          "reason": "无用户可见文案：整件只有开发者报文（badInput/fail/纯逻辑），或中文只在注释里，按 ADR-0004／手册 §4.5–§4.6 不迁"
         },
         {
           "path": "packages/base-render/src/components/清单.ts",
@@ -9114,14 +9179,10 @@
             "copy": 877,
             "ident": 23,
             "data": 11
-          }
+          },
+          "reason": "自动派生件：首行写明由 packages/base-render/scripts/gen-components.mjs 生成、勿手改；内文 911 条中文是件清单说明（不进屏），手改会被下一次 gen 覆盖——生成器侧另票处理"
         }
-      ],
-      "migrated": [],
-      "totals": {
-        "files": 169,
-        "literals": 2937
-      }
+      ]
     },
     "1228": {
       "title": "迁移 base-link-core 与 base-combos：10 件（294 条）",
@@ -10199,12 +10260,12 @@
   },
   "scopeSummary": {
     "ledgerFiles": 1226,
-    "migratedFiles": 589,
-    "pendingFiles": 392,
-    "pendingLiterals": 10669,
-    "excludedFiles": 245,
-    "excludedLiterals": 13161,
-    "migratedLiterals": 18918
+    "migratedFiles": 699,
+    "pendingFiles": 223,
+    "pendingLiterals": 7732,
+    "excludedFiles": 304,
+    "excludedLiterals": 14776,
+    "migratedLiterals": 20240
   },
   "workflow": [
     "开工：从本文件取本票 files，逐件登记进 tooling/i18n-scope.json 的 files（先跑两道门拿红读数＝范围已挂但还没迁）。",

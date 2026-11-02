@@ -9,6 +9,7 @@
  */
 
 /** 本件的类名根：全部槽位类名都是 `sliderRowSlot(槽名)` 拼出来的。 */
+import { m } from '../../entries/index.js';
 export const SLIDER_ROW_CLASS = 'ilife-block-slider-row';
 
 /** 形态闭集：本件只落地形态 A「滑块＋常用档＋加减」。 */
@@ -120,10 +121,10 @@ export const SLIDER_ROW_THUMB_PX = 26;
 export const SLIDER_ROW_MISSING = '—';
 
 /** 状态字四档。 */
-export const SLIDER_ROW_UNSET = '未设置';
-export const SLIDER_ROW_LOADING = '更新中';
-export const SLIDER_ROW_AT_MIN = '已到下限';
-export const SLIDER_ROW_AT_MAX = '已到上限';
+export function SLIDER_ROW_UNSET(): string { return m('base-render.components-slider-row-attrs.c001'); }
+export function SLIDER_ROW_LOADING(): string { return m('base-render.components-slider-row-attrs.c002'); }
+export function SLIDER_ROW_AT_MIN(): string { return m('base-render.components-slider-row-attrs.c003'); }
+export function SLIDER_ROW_AT_MAX(): string { return m('base-render.components-slider-row-attrs.c004'); }
 
 /** 一枚常用档：`number`（必须落在 `[min, max]` 的格子上）。 */
 export type SliderRowPreset = number;

@@ -12,6 +12,7 @@
  */
 import { skinVar } from '../skin/contract.js';
 import { streakBadgeClass, streakBadgeSlot, type StreakBadgeSlot } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -38,7 +39,7 @@ export function streakBadgeCss(input?: { readonly prefix?: string }): string {
   const badge = sc('badge');
   const v = skinVar;
   return [
-    '/* streak-badge（连记徽标）：强／中／弱三档 —— 实底／描边空心／无框底线。 */',
+    m('base-render.components-streak-badge-style.c001'),
     s + ' {',
     '  display: flex;',
     '  flex-direction: column;',
@@ -95,7 +96,7 @@ export function streakBadgeCss(input?: { readonly prefix?: string }): string {
     '  color: ' + v('ink-2') + ';',
     '  white-space: nowrap;',
     '}',
-    '/* 强档：实底（形）＋ 反白字 ＋ 最重一笔。 */',
+    m('base-render.components-streak-badge-style.c002'),
     badge + '.is-strong {',
     '  border: 0;',
     '  background: ' + v('accent') + ';',
@@ -104,7 +105,7 @@ export function streakBadgeCss(input?: { readonly prefix?: string }): string {
     '}',
     badge + '.is-strong ' + n('value') + ' { color: ' + v('accent-ink') + '; }',
     badge + '.is-strong ' + n('unit') + ' { color: ' + v('accent-ink') + '; }',
-    '/* 中档：描边空底（形）＋ 强调文字档。 */',
+    m('base-render.components-streak-badge-style.c003'),
     badge + '.is-mid {',
     '  border: 1px solid ' + v('accent') + ';',
     '  background: none;',
@@ -112,7 +113,7 @@ export function streakBadgeCss(input?: { readonly prefix?: string }): string {
     '  font-weight: 700;',
     '}',
     badge + '.is-mid ' + n('value') + ' { color: ' + v('accent-text') + '; }',
-    '/* 弱档：无框，只有一条底线（形）＋ 最轻一笔 —— 读起来是注脚，不是战绩。 */',
+    m('base-render.components-streak-badge-style.c004'),
     badge + '.is-weak {',
     '  padding: 4px 2px;',
     '  border: 0;',
@@ -128,7 +129,7 @@ export function streakBadgeCss(input?: { readonly prefix?: string }): string {
     '  color: ' + v('ink-3') + ';',
     '  font-size: ' + v('fs-sm') + ';',
     '}',
-    '/* 窄档：一个徽标一行（徽标自己撑满），读数照旧不截断。 */',
+    m('base-render.components-streak-badge-style.c005'),
     '@container ' + STREAK_BADGE_CONTAINER + ' (max-width: ' + STREAK_BADGE_NARROW_MAX_PX + 'px) {',
     '  ' + sc('list') + ' { flex-direction: column; align-items: stretch; }',
     '  ' + badge + ' { flex: 1 1 auto; }',

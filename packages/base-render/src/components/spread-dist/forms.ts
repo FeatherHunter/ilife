@@ -26,6 +26,7 @@ import {
   type SpreadDistForm,
   type SpreadDistStop,
 } from './attrs.js';import { niceAxis, plainText, rulerTicks, tickTexts, unitPart, upPct, type Axis } from './scale.js';
+import { m } from '../../entries/index.js';
 
 /* ── 内部类型（`render.ts` 只吃它们；`model.ts` 只把这些类型名再报一次给出口） ── */
 
@@ -132,7 +133,7 @@ export function percentileOf(name: string): number | null {
  *  档名不是 `P<数字>`（例如调用方自己写 `中位`）时不给说明句：本件不编。 */
 export function stopMeaning(name: string): string {
   const n = percentileOf(name);
-  return n === null ? '' : '不超过它的读数占 ' + String(n) + '%';
+  return n === null ? '' : m('base-render.components-spread-dist-forms.c001', { p0: String(String(n)) });
 }
 
 /** 一段读数的写法（数字 ＋ 单位）。 */
@@ -145,7 +146,7 @@ const afterVerb = (name: string): string => (/^[0-9A-Za-z]/.test(name) ? ' ' : '
 const beforeVerb = (name: string): string => (/[0-9A-Za-z]$/.test(name) ? ' ' : '');
 
 /** 两个名字之间的那个「到」：两边有任何一边是西文就留空格（`P75 到 P90`／`高位到顶`）。 */
-const rangeSep = (a: string, b: string): string => (/[0-9A-Za-z]$/.test(a) || /^[0-9A-Za-z]/.test(b) ? ' 到 ' : '到');
+const rangeSep = (a: string, b: string): string => (/[0-9A-Za-z]$/.test(a) || /^[0-9A-Za-z]/.test(b) ? m('base-render.components-spread-dist-forms.c002') : m('base-render.components-spread-dist-forms.c003'));
 
 /* ── B 档：逐日范围柱 ─────────────────────────────────────────────── */
 
@@ -158,9 +159,15 @@ export function rangeModel(c: SpreadDistCommon, days: readonly SpreadDistDay[]):
     bottomPct: upPct(d.low, axis),
     heightPct: Number((upPct(d.high, axis) - upPct(d.low, axis)).toFixed(2)),
     medianPct: d.median === undefined ? null : upPct(d.median, axis),
-    title: d.label + '：最低 ' + plainText(d.low) + unitPart(c.unit) + '，最高 ' + plainText(d.high)
-      + unitPart(c.unit) + '，中位数 ' + (d.median === undefined ? SPREAD_DIST_MISSING : plainText(d.median))
-      + (d.median === undefined ? '' : unitPart(c.unit)),
+    title: m('base-render.components-spread-dist-forms.c004', {
+      p0: String(d.label),
+      p1: String(plainText(d.low)),
+      p2: String(unitPart(c.unit)),
+      p3: String(plainText(d.high)),
+      p4: String(unitPart(c.unit)),
+      p5: String(d.median === undefined ? SPREAD_DIST_MISSING : plainText(d.median)),
+      p6: String(d.median === undefined ? '' : unitPart(c.unit)),
+    }),
   }));
   /* 卡头那句：**把最宽的那一天点出来**（原型那一档的读数就是「周三那一根特别长」）。
      每天一样宽时照实说一样宽，不编一个「最宽的」出来。 */
@@ -168,21 +175,28 @@ export function rangeModel(c: SpreadDistCommon, days: readonly SpreadDistDay[]):
   const widest = spans.indexOf(Math.max(...spans));
   const even = spans.every((s) => s === spans[0]);
   const tail = even
-    ? '每天区间一样宽'
-    : '区间最宽的是' + afterVerb(days[widest].label) + '（' + reading(days[widest].low, c.unit) + ' 到 '
-      + reading(days[widest].high, c.unit) + '）';
+    ? m('base-render.components-spread-dist-forms.c005')
+    : m('base-render.components-spread-dist-forms.c006', {
+      p0: String(afterVerb(days[widest].label)),
+      p1: String(reading(days[widest].low, c.unit)),
+      p2: String(reading(days[widest].high, c.unit)),
+    });
   const withMedian = days.filter((d) => d.median !== undefined).length;
   return {
     form: 'range',
     title: c.title,
     stamp: c.stamp,
     tail,
-    note: c.noteIn ?? '口径：竖条是当天最低到最高，中间的粗块是当天读数的中位数。'
-      + '有一天特别长，说明那天有一个读数特别高，不把那一个当异常删掉。'
-      + '某一天没给中位数时，那一格只画区间，中位数写 ' + SPREAD_DIST_MISSING + '，不拿最低或最高顶替。',
-    ariaLabel: '逐日范围柱：' + String(days.length) + ' 天（' + days.map((d) => d.label).join('，') + '），'
-      + '每天一根从最低到最高的竖条，中间的粗块是当天的中位数。纵轴最低 ' + plainText(axis.lo) + ' 到最高 '
-      + plainText(axis.hi) + unitPart(c.unit) + '。中位数齐的有 ' + String(withMedian) + ' 天。' + tail + '。',
+    note: c.noteIn ?? m('base-render.components-spread-dist-forms.c007', { p0: String(SPREAD_DIST_MISSING) }),
+    ariaLabel: m('base-render.components-spread-dist-forms.c008', {
+      p0: String(String(days.length)),
+      p1: String(days.map((d) => d.label).join('，')),
+      p2: String(plainText(axis.lo)),
+      p3: String(plainText(axis.hi)),
+      p4: String(unitPart(c.unit)),
+      p5: String(String(withMedian)),
+      p6: String(tail),
+    }),
     yTicks: tickTexts(axis, c.unit).map((text, i) => ({
       text,
       /* 刻度的位置与柱子的位置**出自同一个 `upPct`**，取的那个数也与刻度文字同一支量化
@@ -196,8 +210,8 @@ export function rangeModel(c: SpreadDistCommon, days: readonly SpreadDistDay[]):
     rulerTicks: [],
     lead: '',
     legend: [
-      { kind: 'range', text: '当天最低到最高' },
-      { kind: 'median', text: '当天读数的中位数' },
+      { kind: 'range', text: m('base-render.components-spread-dist-forms.c009') },
+      { kind: 'median', text: m('base-render.components-spread-dist-forms.c010') },
     ],
     extraClass: c.extraClass,
   };
@@ -208,6 +222,11 @@ export function rangeModel(c: SpreadDistCommon, days: readonly SpreadDistDay[]):
 /** 形态 `quantile`：**结论一句话在上、读数在下**；正中那一档（中位）带选中面。 */
 export function quantileModel(c: SpreadDistCommon, stops: readonly SpreadDistStop[]): SpreadDistModel {
   const mid = (stops.length - 1) / 2;
+  /** 一档的名字与读数（`P25 是 320 元`）。 */
+  const stopPart = (s: SpreadDistStop): string => m('base-render.components-spread-dist-forms.c011', {
+    p0: String(s.name),
+    p1: String(reading(s.value, c.unit)),
+  });
   const built = stops.map((s, i) => ({
     name: s.name,
     label: stopMeaning(s.name),
@@ -217,26 +236,35 @@ export function quantileModel(c: SpreadDistCommon, stops: readonly SpreadDistSto
   const half = stops[mid];
   const top = stops[stops.length - 1];
   /* 结论一句话：把「一半落在哪」与「最上面那一档在哪」先说出来（照原型定稿版的信息序）。 */
-  const lead = '一半的读数不超过 ' + reading(half.value, c.unit) + '，' + top.name + beforeVerb(top.name)
-    + '是 ' + reading(top.value, c.unit) + '。';
+  const lead = m('base-render.components-spread-dist-forms.c012', {
+    p0: String(reading(half.value, c.unit)),
+    p1: String(top.name),
+    p2: String(beforeVerb(top.name)),
+    p3: String(reading(top.value, c.unit)),
+  });
   /* 卡头那句：**两档之间拉得最开的是哪一段**（原型 A 档的读数就是「四组里「其他」拉得最长」）。 */
   const gaps = stops.slice(1).map((s, i) => s.value - stops[i].value);
   const widest = gaps.indexOf(Math.max(...gaps));
   const even = gaps.every((g) => g === gaps[0]);
   const tail = even
-    ? '每两档之间一样宽'
-    : '拉得最开的是' + afterVerb(stops[widest].name)
-      + rangeSep(stops[widest].name, stops[widest + 1].name) + stops[widest + 1].name + '（'
-      + reading(stops[widest].value, c.unit) + ' 到 ' + reading(stops[widest + 1].value, c.unit) + '）';
+    ? m('base-render.components-spread-dist-forms.c013')
+    : m('base-render.components-spread-dist-forms.c014', {
+      p0: String(afterVerb(stops[widest].name)),
+      p1: String(rangeSep(stops[widest].name, stops[widest + 1].name)),
+      p2: String(stops[widest + 1].name),
+      p3: String(reading(stops[widest].value, c.unit)),
+      p4: String(reading(stops[widest + 1].value, c.unit)),
+    });
   return {
     form: 'quantile',
     title: c.title,
     stamp: c.stamp,
     tail,
-    note: c.noteIn ?? '口径：每一档写的是不超过它的读数占多少，正中那一档就是中位。'
-      + '比最高那一档还大的读数本件不硬塞进读数里，极端值要另开一处点名，不靠把读数拉长。',
-    ariaLabel: '分位尺：' + String(stops.length) + ' 档（'
-      + stops.map((s) => s.name + ' 是 ' + reading(s.value, c.unit)).join('，') + '），正中那一档是中位。',
+    note: c.noteIn ?? m('base-render.components-spread-dist-forms.c015'),
+    ariaLabel: m('base-render.components-spread-dist-forms.c016', {
+      p0: String(String(stops.length)),
+      p1: String(stops.map(stopPart).join('，')),
+    }),
     yTicks: [],
     xLabels: [],
     days: [],
@@ -289,19 +317,32 @@ export function boxModel(c: SpreadDistCommon, boxes: readonly SpreadDistBox[]): 
       leftPct: upPct(five.low, axis),
       widthPct: Number((upPct(five.high, axis) - upPct(five.low, axis)).toFixed(2)),
     };
+    const outlierTail = outliers.length === 0 ? '' : m('base-render.components-spread-dist-forms.c017', {
+      p0: String(String(outliers.length)),
+      p1: String(outliers.map((o) => reading(o, c.unit)).join('，')),
+    });
     const title = five === null
-      ? b.label + '：' + String(b.count) + ' 笔，中位 ' + reading(b.median, c.unit) + '，样本不足 '
-        + String(SPREAD_DIST_BOX_MIN_COUNT) + ' 笔只把每一笔点在尺子上'
-      : b.label + '：' + String(b.count) + ' 笔，最低 ' + reading(five.low, c.unit) + '，P25 '
-        + reading(five.q1, c.unit) + '，中位 ' + reading(b.median, c.unit) + '，P75 ' + reading(five.q3, c.unit)
-        + '，最高 ' + reading(five.high, c.unit)
-        + (outliers.length === 0 ? '' : '，离群 ' + String(outliers.length) + ' 笔（'
-          + outliers.map((o) => reading(o, c.unit)).join('，') + '）');
+      ? m('base-render.components-spread-dist-forms.c018', {
+        p0: String(b.label),
+        p1: String(String(b.count)),
+        p2: String(reading(b.median, c.unit)),
+        p3: String(String(SPREAD_DIST_BOX_MIN_COUNT)),
+      })
+      : m('base-render.components-spread-dist-forms.c019', {
+        p0: String(b.label),
+        p1: String(String(b.count)),
+        p2: String(reading(five.low, c.unit)),
+        p3: String(reading(five.q1, c.unit)),
+        p4: String(reading(b.median, c.unit)),
+        p5: String(reading(five.q3, c.unit)),
+        p6: String(reading(five.high, c.unit)),
+        p7: String(outlierTail),
+      });
     return {
       label: b.label,
-      countText: String(b.count) + ' 笔',
+      countText: m('base-render.components-spread-dist-forms.c020', { p0: String(String(b.count)) }),
       /* 行头三样**同行同字号**：中位不另起一行、也不放大（那是原型砍文字砍掉的那一层）。 */
-      medianText: '中位 ' + plainText(b.median),
+      medianText: m('base-render.components-spread-dist-forms.c021', { p0: String(plainText(b.median)) }),
       title,
       boxPct,
       whiskerPct,
@@ -317,11 +358,13 @@ export function boxModel(c: SpreadDistCommon, boxes: readonly SpreadDistBox[]): 
     /* **单位只印一次**：这一档把它印在卡头右端（刻度值逐枚不带单位，行头里的中位也不带）。 */
     tail: c.unit,
     /* 脚注**只说图例与行头没说过的**那一件（样本量决定读法）——同屏重复的话留在原型里，这里不留。 */
-    note: c.noteIn ?? '口径：不到 ' + String(SPREAD_DIST_BOX_MIN_COUNT)
-      + ' 笔的组只把每一笔点在尺子上，不画箱（箱体是估计出来的形状）。',
-    ariaLabel: '箱线：' + String(boxes.length) + ' 组共用同一把尺子（'
-      + reading(axis.lo, c.unit) + ' 到 ' + reading(axis.hi, c.unit) + '）。'
-      + built.map((g) => g.title).join('。') + '。',
+    note: c.noteIn ?? m('base-render.components-spread-dist-forms.c022', { p0: String(String(SPREAD_DIST_BOX_MIN_COUNT)) }),
+    ariaLabel: m('base-render.components-spread-dist-forms.c023', {
+      p0: String(String(boxes.length)),
+      p1: String(reading(axis.lo, c.unit)),
+      p2: String(reading(axis.hi, c.unit)),
+      p3: String(built.map((g) => g.title).join('。')),
+    }),
     yTicks: [],
     xLabels: [],
     days: [],
@@ -332,8 +375,8 @@ export function boxModel(c: SpreadDistCommon, boxes: readonly SpreadDistBox[]): 
     /* 图例三项、**没有「中位数」那一条**：四个行头已各印一次「中位 NN」，同屏重复的删掉。 */
     legend: [
       { kind: 'box', text: 'P25–P75' },
-      { kind: 'outlier', text: '离群' },
-      { kind: 'point', text: '单笔' },
+      { kind: 'outlier', text: m('base-render.components-spread-dist-forms.c024') },
+      { kind: 'point', text: m('base-render.components-spread-dist-forms.c025') },
     ],
     extraClass: c.extraClass,
   };
