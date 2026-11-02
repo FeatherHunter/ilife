@@ -2,6 +2,7 @@
 import type { Envelope } from 'base-link-core';
 import { escapeHtml } from 'base-paint';
 import { BillRenderError } from './errors.js';
+import { m } from '../entries/index.js';
 
 // 交付体积硬门（字节）。用户 2026-10-13 裁定「不允许有240KB限制，允许有2.4MB这么大」（票 #1279）：
 // 由 256 KiB 抬到 2,400,000 字节；各页的自设预算（`PAGE_BYTE_BUDGET`）与它同源，不再因为装得下就换皮。
@@ -17,7 +18,7 @@ function billItemHtml(n: Record<string, unknown>): string {
 }
 
 function listHtml(items: unknown[]): string {
-  if (!items.length) return '<div class="hm-empty">暂无记录</div>';
+  if (!items.length) return '<div class="hm-empty">' + m('skill-bill.render-html.c001') + '</div>';
   return items.map((x) => billItemHtml(x as Record<string, unknown>)).join('');
 }
 

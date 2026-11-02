@@ -1155,7 +1155,27 @@
     "a22-看借贷-proto.html",
     "a23-看报销-proto.html",
     "a24-看分期-proto.html",
-    "a25-看退款-proto.html"
+    "a25-看退款-proto.html",
+    "/* t728：桌面端表格用满正文列（只 1200px 以上生效，手机端不动） */",
+    "/* t728 逐页审计实测：公共层配方 ⑧ 的「宽件满铺」那条写的是",
+    "   全部落回「中间 880 列」，1280 档两翼逐点扫描非背景像素 0 行（内容墨迹最外沿 x174–1105）。",
+    "   修法：让这层纯分组的包裹节从布局里退场（`display: contents`），宽件重新成为栅格项。",
+    "   它挂在**本包产出的选择器**上（`.ilife-write` 由 `src/shared/writeParts.ts` 出），",
+    "   所以按「样式随它的选择器」住本件，公共层不认这个类名。 */",
+    "/* t407-r3 B：黑底说明块（.ilife-toast）两栏等高＋行距 */",
+    "/* t403-P2：详情键值列表（桌面藏，移动端替表格） */",
+    "goals.file",
+    "help.lookup",
+    "bills.csv",
+    "饼干记账_HELP",
+    "饼干记账",
+    "饼干记账 · 使用手册(HELP)",
+    "/* 锚点胶囊：原型 .toc-chips a 的几何（圆角走皮肤闭集，边色取最近的一档 token）。 */",
+    "/* 组：原型 .qgroup 的暖底卡片（圆角照皮肤闭集）。 */",
+    "/* 组标题：原型 .qgroup-head 的高度与字重（计数由自律条统一声明，不逐组挂胶囊）。 */",
+    "/* 组内行：原型 .qrows li（44 触摸行 ＋ 点线分隔）。 */",
+    "/* 折叠档的说明行（原型 .fold-note：12px／行高 1.6／ink-3／上下 2px 8px）——#1122 起 8 组默认收起。 */",
+    "/* 自律条：原型 .check-mini 的浅绿卡（绿底＋一行字）。 */"
   ],
   "files": [
     "packages/base-render/src/components/progress-list/model.ts",
@@ -1900,6 +1920,18 @@
     "packages/skill-bill/src/analysis/commands.ts",
     "packages/skill-bill/src/analysis/copyTextAnalysis.ts",
     "packages/skill-bill/src/analysis/pageParts.ts",
-    "packages/skill-bill/src/analysis/scene-account.ts"
+    "packages/skill-bill/src/analysis/scene-account.ts",
+    "packages/skill-bill/src/cli/cmd_read.ts",
+    "packages/skill-bill/src/cli/config.ts",
+    "packages/skill-bill/src/health.ts",
+    "packages/skill-bill/src/help/copyTextHelp.ts",
+    "packages/skill-bill/src/help/helpFile.ts",
+    "packages/skill-bill/src/help/lookup.ts",
+    "packages/skill-bill/src/help/lookupPage.ts",
+    "packages/skill-bill/src/render/html.ts",
+    "packages/skill-bill/src/shared/copyArea.ts",
+    "packages/skill-bill/src/shared/docPage.ts",
+    "packages/skill-bill/src/shared/sourceLine.ts",
+    "packages/skill-bill/src/shared/票据纸页型.ts"
   ]
 }

@@ -5,7 +5,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { initSteps, restoreSteps, importSteps, stepStateText } from '../dist/setup/steps.js';
 import { buildSetupCopyText, buildSetupCopyJson, buildSetupCopyCsv, setupEmptyNext } from '../dist/setup/copyTextSetup.js';
-import { buildHelpCopyText, buildHelpCopyJson, buildHelpCopyCsv, HELP_EMPTY_NEXT } from '../dist/help/copyTextHelp.js';
+import { buildHelpCopyText, buildHelpCopyJson, buildHelpCopyCsv, helpEmptyNext } from '../dist/help/copyTextHelp.js';
 import { wizardDoc } from '../dist/setup/template-wizard.js';
 import { setupSceneFor } from '../dist/setup/scene.js';
 import { receiptEnvelopeOf } from '../dist/setup/pageParts.js';
@@ -156,7 +156,7 @@ describe('t1186 帮助三份可验（纯文本可读/JSON结构/CSV表）', () =
   it('帮助空态有下一步不硬凑行', () => {
     const text = buildHelpCopyText({ title: '能力速查', total: 0, groups: [] });
     assert.ok(text.includes('还没有') || text.includes('没有可查'));
-    assert.ok(text.includes(HELP_EMPTY_NEXT));
+    assert.ok(text.includes(helpEmptyNext()));
     const j = JSON.parse(buildHelpCopyJson({ title: '能力速查', total: 0, groups: [] }));
     assert.equal(j.data.total, 0);
     const csv = buildHelpCopyCsv({ title: '能力速查', total: 0, groups: [] });

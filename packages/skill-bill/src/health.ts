@@ -23,6 +23,7 @@ import { BILL_CONFIG_DEFAULTS, BILL_CONFIG_STEM } from './config.js';
 // #749：落点算式只有一处定义地（`src/fetch/paths.ts`）——体检报的就是那几个落点，两处不许走散。
 // 本件只调**纯算式**（`*Of` 一族，不读配置、不碰盘）：体检不许调 `loadBillConfig()`（文件不在即落一份默认件）。
 import { backupDirOf, dbDirOf, dbFileOf, goalsFileOf, htmlDirOf } from './fetch/paths.js';
+import { m } from './entries/index.js';
 
 /** 报告里的三档判据（与面板侧镜像同值）。 */
 export type HealthStatus = 'red' | 'yellow' | 'green';
@@ -74,7 +75,7 @@ export function readBillConfigReadOnly(): ConfigRead {
   try {
     text = readFileSync(file, 'utf8');
   } catch (e) {
-    return { kind: 'bad', message: '读配置文件失败：' + file + '（' + (e instanceof Error ? e.message : String(e)) + '）' };
+    return { kind: 'bad', message: m('skill-bill.health.c001', { p0: String(file), p1: String(e instanceof Error ? e.message : String(e)) }) };
   }
   const parsed = parseSubset(text, file);
   if (!parsed.ok) return { kind: 'bad', message: parsed.message };
@@ -109,10 +110,10 @@ function parseSubset(text: string, file: string):
   let openGroupLine = 0;
   /** 标量解析的失败口：`parseScalar` 把报文写进 `scalarError`，调用处读它即可（不抛，免得类型糊）。 */
   let scalarError = '';
-  const fail = (line: number, why: string) => ({ ok: false as const, message: '配置件第 ' + String(line) + ' 行：' + why + '（文件：' + file + '）' });
+  const fail = (line: number, why: string) => ({ ok: false as const, message: m('skill-bill.health.c002', { p0: String(String(line)), p1: String(why), p2: String(file) }) });
   const closeGroup = (): string | null => {
     if (openGroup !== null && Object.keys(values[openGroup] as Record<string, unknown>).length === 0) {
-      return fail(openGroupLine, '键「' + openGroup + '」冒号后没有值，也没有子项').message;
+      return fail(openGroupLine, m('skill-bill.health.c003', { p0: String(openGroup) })).message;
     }
     openGroup = null;
     return null;
@@ -124,20 +125,24 @@ function parseSubset(text: string, file: string):
     if (/^\s*#/.test(raw)) continue;
     const head = /^[ \t]*/.exec(raw)?.[0] ?? '';
     const body = raw.slice(head.length);
-    if (head.includes('\t')) return fail(lineNo, '缩进里有制表符：本子集只许空格，且嵌套缩进恰好 2 个空格');
-    if (body.startsWith('-')) return fail(lineNo, '本子集不支持列表（「-」开头的行）');
+    if (head.includes('\t')) return fail(lineNo, m('skill-bill.health.c004'));
+    if (body.startsWith('-')) return fail(lineNo, m('skill-bill.health.c005'));
     const matched = /^([A-Za-z_][A-Za-z0-9_.-]*)[ \t]*:[ \t]*(.*)$/.exec(body);
-    if (matched === null) return fail(lineNo, '不是「键: 值」形状：' + body.trim());
+    if (matched === null) return fail(lineNo, m('skill-bill.health.c006', { p0: String(body.trim()) }));
     const key = matched[1] as string;
     const rest = (matched[2] ?? '').trim();
     if (head.length > 0) {
-      if (head.length !== 2) return fail(lineNo, '缩进必须恰好 2 个空格（本子集只支持一层嵌套），实为 ' + String(head.length) + ' 个空格');
-      if (openGroup === null) return fail(lineNo, '缩进的子项「' + key + '」上面没有开着子的顶层键');
+      if (head.length !== 2) return fail(lineNo, m('skill-bill.health.c007', { p0: String(String(head.length)) }));
+      if (openGroup === null) return fail(lineNo, m('skill-bill.health.c008', { p0: String(key) }));
       const group = values[openGroup] as Record<string, unknown>;
       if (Object.prototype.hasOwnProperty.call(group, key)) {
-        return fail(lineNo, '键「' + openGroup + '.' + key + '」重复定义（第 ' + String(lineOf.get(openGroup + '.' + key)) + ' 行已定义）');
+        return fail(lineNo, m('skill-bill.health.c009', {
+          p0: String(openGroup),
+          p1: String(key),
+          p2: String(String(lineOf.get(openGroup + '.' + key))),
+        }));
       }
-      if (rest === '') return fail(lineNo, '键「' + openGroup + '.' + key + '」冒号后没有值');
+      if (rest === '') return fail(lineNo, m('skill-bill.health.c010', { p0: String(openGroup), p1: String(key) }));
       const scalar = parseScalar(rest, lineNo, fail, (message) => {
         scalarError = message;
       });
@@ -149,7 +154,7 @@ function parseSubset(text: string, file: string):
     const closedError = closeGroup();
     if (closedError !== null) return { ok: false, message: closedError };
     if (Object.prototype.hasOwnProperty.call(values, key)) {
-      return fail(lineNo, '键「' + key + '」重复定义（第 ' + String(lineOf.get(key)) + ' 行已定义）');
+      return fail(lineNo, m('skill-bill.health.c011', { p0: String(key), p1: String(String(lineOf.get(key))) }));
     }
     lineOf.set(key, lineNo);
     if (rest === '') {
@@ -202,7 +207,7 @@ function parseScalar(
       out += ch;
     }
     if (!closed) {
-      onError(fail(lineNo, '引号没有闭合：' + text).message);
+      onError(fail(lineNo, m('skill-bill.health.c012', { p0: String(text) })).message);
       return '';
     }
     return out;
@@ -216,7 +221,7 @@ function parseScalar(
   }
   const body = text.slice(0, cut).trim();
   if (body === '') {
-    onError(fail(lineNo, '冒号后没有值（只有注释）').message);
+    onError(fail(lineNo, m('skill-bill.health.c013')).message);
     return '';
   }
   if (body === 'true') return true;
@@ -253,7 +258,7 @@ function textOf(value: unknown): string {
 
 /** 「这个值从哪来」：真在文件里写了就是「配置文件」，否则按默认值（文件不存在则全按默认值）。 */
 function sourceOf(present: ReadonlySet<string>, key: string): string {
-  return present.has(key) ? '配置文件' : '默认值';
+  return present.has(key) ? m('skill-bill.health.c014') : m('skill-bill.health.c015');
 }
 
 /** 目录那一项的形状是**段串**（`biscuit_accountant_html`；大厨／作息是两段）。段数与算式住
@@ -293,7 +298,7 @@ function dirVerdict(dir: string): DirVerdict {
 function dirVerdictUncached(dir: string): DirVerdict {
   if (!existsSync(dir)) return { exists: false, writable: false, reason: '' };
   try {
-    if (!statSync(dir).isDirectory()) return { exists: false, writable: false, reason: '同名文件占了它的位置' };
+    if (!statSync(dir).isDirectory()) return { exists: false, writable: false, reason: m('skill-bill.health.c016') };
   } catch (e) {
     return { exists: false, writable: false, reason: e instanceof Error ? e.message : String(e) };
   }
@@ -331,24 +336,24 @@ export function buildBillHealthReport(): BillHealthReport {
   // ① 配置文件本身：能不能解析（只陈述，不评价）。
   if (read.kind === 'bad') {
     items.push({
-      id: 'config.file', title: '配置文件', status: 'red',
+      id: 'config.file', title: m('skill-bill.health.c017'), status: 'red',
       message: read.message,
-      action: '照报文指的行号改回「键: 值」的写法；改不动就删掉这个文件，让技能按默认值重落一份。',
-      source: '配置文件',
+      action: m('skill-bill.health.c018'),
+      source: m('skill-bill.health.c019'),
     });
   } else if (read.kind === 'missing') {
     items.push({
-      id: 'config.file', title: '配置文件', status: 'yellow',
-      message: '配置文件还不存在：' + p(paths.configFile) + '（现在跑的是默认值）。',
-      action: '在面板上保存一次即会落一份；也可点「重置为默认」。',
-      source: '默认值',
+      id: 'config.file', title: m('skill-bill.health.c020'), status: 'yellow',
+      message: m('skill-bill.health.c021', { p0: String(p(paths.configFile)) }),
+      action: m('skill-bill.health.c022'),
+      source: m('skill-bill.health.c023'),
     });
   } else {
     items.push({
-      id: 'config.file', title: '配置文件', status: 'green',
-      message: '能解析：' + p(paths.configFile) + '。',
+      id: 'config.file', title: m('skill-bill.health.c024'), status: 'green',
+      message: m('skill-bill.health.c025', { p0: String(p(paths.configFile)) }),
       action: '',
-      source: '配置文件',
+      source: m('skill-bill.health.c026'),
     });
   }
 
@@ -358,16 +363,19 @@ export function buildBillHealthReport(): BillHealthReport {
   const dataDirSource = sourceOf(present, 'db.dir');
   const dataDirVerdict = dirVerdict(dataDir);
   items.push({
-    id: 'db.dir', title: '数据目录',
+    id: 'db.dir', title: m('skill-bill.health.c027'),
     status: !dataDirVerdict.exists || !dataDirVerdict.writable ? 'red' : 'green',
     message: !dataDirVerdict.exists
-      ? '不在：' + p(dataDir) + (dataDirVerdict.reason !== '' ? '（' + dataDirVerdict.reason + '）' : '')
+      ? m('skill-bill.health.c028', {
+        p0: String(p(dataDir)),
+        p1: String(dataDirVerdict.reason !== '' ? '（' + dataDirVerdict.reason + '）' : ''),
+      })
       : dataDirVerdict.writable
-        ? '在且能写：' + p(dataDir) + '。'
-        : '在，但写不进去：' + p(dataDir) + '（' + dataDirVerdict.reason + '）。',
+        ? m('skill-bill.health.c029', { p0: String(p(dataDir)) })
+        : m('skill-bill.health.c030', { p0: String(p(dataDir)), p1: String(dataDirVerdict.reason) }),
     action: !dataDirVerdict.exists
-      ? '先建这个目录，或把配置里的「数据目录」改到一个已存在的位置。'
-      : dataDirVerdict.writable ? '' : '去掉这个目录的只读属性，或把「数据目录」改到别处。',
+      ? m('skill-bill.health.c031')
+      : dataDirVerdict.writable ? '' : m('skill-bill.health.c032'),
     source: dataDirSource,
   });
 
@@ -377,31 +385,35 @@ export function buildBillHealthReport(): BillHealthReport {
   const dbSource = sourceOf(present, 'db.name');
   if (!existsSync(dbFile)) {
     items.push({
-      id: 'db.file', title: '库文件', status: 'red',
-      message: '不在：' + p(dbFile) + '。',
-      action: '新装的话，跑一条会写库的命令即会建库；要换库文件名，编辑配置文件里的 db.name。',
+      id: 'db.file', title: m('skill-bill.health.c033'), status: 'red',
+      message: m('skill-bill.health.c034', { p0: String(p(dbFile)) }),
+      action: m('skill-bill.health.c035'),
       source: dbSource,
     });
   } else {
     const tables = tableCount(dbFile);
     if (!tables.ok) {
       items.push({
-        id: 'db.file', title: '库文件', status: 'red',
-        message: '在，但打不开：' + p(dbFile) + '（' + tables.reason + '）。',
-        action: '这个文件可能不是库文件或已损坏；先备份，再看要不要让技能重建一份。',
+        id: 'db.file', title: m('skill-bill.health.c036'), status: 'red',
+        message: m('skill-bill.health.c037', { p0: String(p(dbFile)), p1: String(tables.reason) }),
+        action: m('skill-bill.health.c038'),
         source: dbSource,
       });
     } else if (tables.count < DB_TABLE_THRESHOLD) {
       items.push({
-        id: 'db.file', title: '库文件', status: 'yellow',
-        message: '在，但表不全：' + p(dbFile) + '（' + String(tables.count) + ' / ' + String(DB_TABLE_THRESHOLD) + ' 张表）。',
-        action: '缺表会让对应的功能报错；跑一次会写库的命令让它补齐，或从备份恢复。',
+        id: 'db.file', title: m('skill-bill.health.c039'), status: 'yellow',
+        message: m('skill-bill.health.c040', {
+          p0: String(p(dbFile)),
+          p1: String(String(tables.count)),
+          p2: String(String(DB_TABLE_THRESHOLD)),
+        }),
+        action: m('skill-bill.health.c041'),
         source: dbSource,
       });
     } else {
       items.push({
-        id: 'db.file', title: '库文件', status: 'green',
-        message: '在，' + String(tables.count) + ' 张表齐：' + p(dbFile) + '。',
+        id: 'db.file', title: m('skill-bill.health.c042'), status: 'green',
+        message: m('skill-bill.health.c043', { p0: String(String(tables.count)), p1: String(p(dbFile)) }),
         action: '',
         source: dbSource,
       });
@@ -414,22 +426,24 @@ export function buildBillHealthReport(): BillHealthReport {
   const htmlVerdict = dirVerdict(htmlDir);
   const htmlSource = sourceOf(present, 'html.dir');
   items.push({
-    id: 'html.dir', title: '产物目录',
+    id: 'html.dir', title: m('skill-bill.health.c044'),
     status: !htmlVerdict.exists ? 'green' : htmlVerdict.writable ? 'green' : 'yellow',
     message: !htmlVerdict.exists
-      ? '还没建：' + p(htmlDir) + '（交付页面时才落这里，那时自动建）。'
+      ? m('skill-bill.health.c045', { p0: String(p(htmlDir)) })
       : htmlVerdict.writable
-        ? '在且能写：' + p(htmlDir) + '。'
-        : '在，但写不进去：' + p(htmlDir) + '（交付会转成内联回执，不再落盘）。',
-    action: !htmlVerdict.exists || htmlVerdict.writable ? '' : '去掉这个目录的只读属性；要换目录，编辑配置文件里的 html.dir。',
+        ? m('skill-bill.health.c046', { p0: String(p(htmlDir)) })
+        : m('skill-bill.health.c047', { p0: String(p(htmlDir)) }),
+    action: !htmlVerdict.exists || htmlVerdict.writable ? '' : m('skill-bill.health.c048'),
     source: htmlSource,
   });
 
   // ⑤ 这个值从哪来：只陈述数据目录与库文件名的来源，不判好坏（六家通用最后一条）。
+  const configMissing = read.kind === 'missing';
   items.push({
-    id: 'value.source', title: '这个值从哪来', status: 'green',
-    message: '数据目录走「' + dataDirSource + '」，库文件名走「' + dbSource + '」'
-      + (read.kind === 'missing' ? '（配置文件还不存在，落点全按默认值）。' : '。'),
+    id: 'value.source', title: m('skill-bill.health.c049'), status: 'green',
+    message: configMissing
+      ? m('skill-bill.health.c050', { p0: String(dataDirSource), p1: String(dbSource) })
+      : m('skill-bill.health.c051', { p0: String(dataDirSource), p1: String(dbSource) }),
     action: '', source: dataDirSource,
   });
 
@@ -438,8 +452,8 @@ export function buildBillHealthReport(): BillHealthReport {
   const goalsSource = sourceOf(present, 'db.goals');
   if (!existsSync(goalsFile)) {
     items.push({
-      id: 'goals.file', title: '第二份库 goals.json', status: 'green',
-      message: '还没建：' + p(goalsFile) + '（预算功能没在用）。',
+      id: 'goals.file', title: m('skill-bill.health.c052'), status: 'green',
+      message: m('skill-bill.health.c053', { p0: String(p(goalsFile)) }),
       action: '', source: goalsSource,
     });
   } else {
@@ -450,10 +464,10 @@ export function buildBillHealthReport(): BillHealthReport {
       broken = e instanceof Error ? e.message : String(e);
     }
     items.push({
-      id: 'goals.file', title: '第二份库 goals.json',
+      id: 'goals.file', title: m('skill-bill.health.c054'),
       status: broken === '' ? 'green' : 'red',
-      message: broken === '' ? '在，能解析：' + p(goalsFile) + '。' : '在，但坏了：' + p(goalsFile) + '（' + broken + '）。',
-      action: broken === '' ? '' : '预算与储蓄目标读不出来；从备份里拿回一份，或删掉它让预算功能从零开始（本技能不会自动重建）。',
+      message: broken === '' ? m('skill-bill.health.c055', { p0: String(p(goalsFile)) }) : m('skill-bill.health.c056', { p0: String(p(goalsFile)), p1: String(broken) }),
+      action: broken === '' ? '' : m('skill-bill.health.c057'),
       source: goalsSource,
     });
   }
@@ -463,16 +477,16 @@ export function buildBillHealthReport(): BillHealthReport {
   const backupDir = backupDirOf(dataDir, backupDirConfigured);
   const backupVerdict = dirVerdict(backupDir);
   items.push({
-    id: 'backup.dir', title: '备份目录',
+    id: 'backup.dir', title: m('skill-bill.health.c058'),
     status: backupVerdict.exists && backupVerdict.writable ? 'green' : 'yellow',
     message: !backupVerdict.exists
-      ? '还没建：' + p(backupDir) + '（备份功能没在用；本技能不自动建它）。'
+      ? m('skill-bill.health.c059', { p0: String(p(backupDir)) })
       : backupVerdict.writable
-        ? '在且能写：' + p(backupDir) + '。'
-        : '在，但写不进去：' + p(backupDir) + '（' + backupVerdict.reason + '）。',
+        ? m('skill-bill.health.c060', { p0: String(p(backupDir)) })
+        : m('skill-bill.health.c061', { p0: String(p(backupDir)), p1: String(backupVerdict.reason) }),
     action: !backupVerdict.exists
-      ? '要用备份就先把这个目录建出来；也可以用「备份」那条命令第一次跑时让它自己落这里。'
-      : backupVerdict.writable ? '' : '去掉这个目录的只读属性；要换目录，编辑配置文件里的 backup.dir。',
+      ? m('skill-bill.health.c062')
+      : backupVerdict.writable ? '' : m('skill-bill.health.c063'),
     source: sourceOf(present, 'backup.dir'),
   });
 

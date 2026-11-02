@@ -14,6 +14,7 @@ import type { ConfigRecord, EnvelopeShape } from 'base-link-core';
 import { loadBillConfig, resetBillConfig, saveBillConfig } from '../config.js';
 import { resolvedBillPaths } from '../fetch/paths.js';
 import { buildBillHealthReport } from '../health.js';
+import { m } from '../entries/index.js';
 
 /** 三个 key 的唯一定义地（插件侧镜像同值，见 `packages/plugin-bill-ilife/src/bridge.ts`）。 */
 export const CONFIG_KEYS = {
@@ -97,7 +98,7 @@ export function runConfigKey(key: string, params: Record<string, unknown>): stri
   if (key === CONFIG_KEYS.write) {
     const raw = params['values'];
     if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
-      console.error('ERR 2: 缺参数 values（须为对象）');
+      console.error(m('skill-bill.cli-config.c001'));
       process.exit(2);
     }
     const current = withHumanError(() => loadBillConfig()).values as unknown as ConfigRecord;

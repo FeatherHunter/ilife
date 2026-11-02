@@ -45,21 +45,22 @@ import { commandLine, writeSection } from '../shared/writeParts.js';
 import { queryStyleTag } from '../query/pageParts.js';
 import { buildHelpLookup } from './lookup.js';
 import { buildHelpItems } from './items.js';
-import { HELP_EMPTY_NEXT, buildHelpCopyCsv, buildHelpCopyJson, buildHelpCopyText } from './copyTextHelp.js';
+import { helpEmptyNext, buildHelpCopyCsv, buildHelpCopyJson, buildHelpCopyText } from './copyTextHelp.js';
 import type { HelpCopyFacts } from './copyTextHelp.js';
+import { m } from '../entries/index.js';
 
 /** 页内速查索引的根类名（本页自有样式只挂在它下面，他页零命中）。 */
 const H02_INDEX_CLASS = 'ilife-h02-index';
 /** 段的序号位（原型 .sec-heading .no 那一格）。 */
 const H02_SECTION_NO = '01';
-/** 裁切线那句（与其余票据纸页同字）。 */
-const CUT_LINE_TEXT = '✂ 裁切线';
-/** 别名组的组名（本页自有的一格，不是某个域）。 */
-const ALIAS_GROUP_LABEL = '别名';
+/** 裁切线那句（与其余票据纸页同字）的词条键（#1215）：`c019`。 */
+const CUT_LINE_KEY = 'skill-bill.help-lookupPage.c019';
+/** 别名组的组名（本页自有的一格，不是某个域）的词条键（#1215）：`c020`。 */
+const ALIAS_GROUP_KEY = 'skill-bill.help-lookupPage.c020';
 /** 折叠档说明行的类名（原型 `.fold-note` 那一句；#1122 起 8 组默认收起）。 */
 const H02_FOLD_NOTE_CLASS = 'ilife-h02-fold-note';
-/** 复制数据那份载荷的上屏标题（用户说法，不带命令名）。 */
-const COPY_TITLE = '能力速查';
+/** 复制数据那份载荷的上屏标题（用户说法，不带命令名）的词条键（#1215）：`c021`。 */
+const COPY_TITLE_KEY = 'skill-bill.help-lookupPage.c021';
 
 /** 本页自有样式：把 G2 的槽位摆成原型那一纸（取值全走皮肤 token，见件头第 3 条）。 */
 const H02_CSS = [
@@ -101,10 +102,13 @@ export function buildLookupGroups(): readonly LookupGroup[] {
   }));
   const aliases: readonly LookupRow[] = HELP_WAKE_WORDS.slice(1).map((w): LookupRow => ({
     wake: w,
-    goto: '帮助页 · ' + String(WAKE_GROUPS.length) + ' 域 ' + String(sceneTotal()) + ' 场景',
+    goto: m('skill-bill.help-lookupPage.c001', {
+      p0: String(String(WAKE_GROUPS.length)),
+      p1: String(String(sceneTotal())),
+    }),
     alias: true,
   }));
-  return [...groups, { label: ALIAS_GROUP_LABEL, rows: aliases }];
+  return [...groups, { label: m(ALIAS_GROUP_KEY), rows: aliases }];
 }
 
 /** 速查索引的入参（锚与组的 id 由公共层按组名拼，两处同源故逐字相同）。 */
@@ -117,7 +121,7 @@ export function buildLookupIndexInput(): LookupIndexInput {
     groups,
     total,
     countNote: counts.join('＋') + '＝' + String(total),
-    aliasMark: '别名行标黄，不与场景行混数',
+    aliasMark: m('skill-bill.help-lookupPage.c002'),
     extraClass: H02_INDEX_CLASS,
   };
 }
@@ -143,23 +147,23 @@ export function renderLookupPageHtml(): string {
   };
   const sceneRows = index.groups.slice(0, WAKE_GROUPS.length).reduce((n, g) => n + g.rows.length, 0);
   const empty = index.total === 0;
-  const facts: HelpCopyFacts = { title: COPY_TITLE, total: index.total, groups: index.groups };
+  const facts: HelpCopyFacts = { title: m(COPY_TITLE_KEY), total: index.total, groups: index.groups };
   const copyText = buildHelpCopyText(facts);
   const copyJson = buildHelpCopyJson(facts);
   const copyCsv = buildHelpCopyCsv(facts);
   const indexBlock = empty
-    ? renderEmptyBlock({ text: '还没有可查的唤醒词', hint: HELP_EMPTY_NEXT })
+    ? renderEmptyBlock({ text: m('skill-bill.help-lookupPage.c003'), hint: helpEmptyNext() })
     : foldNote() + renderLookupIndex({ ...index, form: 'fold' });
-  const paper = sheetHead(DOC_TITLE + ' · 能力速查', empty ? '还没有可查的唤醒词' : String(index.total) + ' 条唤醒词，一句话直达', '与 HELP 帮助页分名 · 照着唤醒词用')
+  const paper = sheetHead(m('skill-bill.help-lookupPage.c004', { p0: String(DOC_TITLE) }), empty ? m('skill-bill.help-lookupPage.c005') : m('skill-bill.help-lookupPage.c006', { p0: String(String(index.total)) }), m('skill-bill.help-lookupPage.c007'))
     + ticketSummary(
-      renderSummaryHead({ eyebrow: empty ? '还没有 · 空列表' : '速查可用 · LOOKUP OK', value: String(index.total), unit: '条', layout: 'ticket' }),
-      '<p class="ilife-ticket-summary-note">' + String(sceneRows) + ' 场景唤醒词 ＋ ' + String(index.total - sceneRows) + ' 别名行</p>',
+      renderSummaryHead({ eyebrow: empty ? m('skill-bill.help-lookupPage.c008') : m('skill-bill.help-lookupPage.c009'), value: String(index.total), unit: m('skill-bill.help-lookupPage.c010'), layout: 'ticket' }),
+      '<p class="ilife-ticket-summary-note">' + m('skill-bill.help-lookupPage.c018', { p0: String(sceneRows), p1: String(index.total - sceneRows) }) + '</p>',
     )
     + ticketRule()
-    + ticketSection({ title: '按域速查', tag: H02_SECTION_NO, content: indexBlock })
+    + ticketSection({ title: m('skill-bill.help-lookupPage.c011'), tag: H02_SECTION_NO, content: indexBlock })
     + ticketActions(copyArea({
-      hints: ['纯文本 自己看，发助手都行', 'JSON 以后查账用', 'CSV 表格打开看'],
-      data: { envelope, title: COPY_TITLE },
+      hints: [m('skill-bill.help-lookupPage.c012'), m('skill-bill.help-lookupPage.c013'), m('skill-bill.help-lookupPage.c014')],
+      data: { envelope, title: m(COPY_TITLE_KEY) },
       dataText: copyText,
       dataJson: copyJson,
       dataCsv: copyCsv,
@@ -167,8 +171,8 @@ export function renderLookupPageHtml(): string {
         envelope,
         copyLog: copyLog({
           command: commandLine('bill.help.lookup', { mode: 'lookup' }),
-          source: '本机记账库（只读）',
-          detail: String(index.total) + ' 条唤醒词',
+          source: m('skill-bill.help-lookupPage.c015'),
+          detail: m('skill-bill.help-lookupPage.c016', { p0: String(String(index.total)) }),
           actionAt: actionStamp(),
           version: DOC_VERSION,
         }),
@@ -177,9 +181,9 @@ export function renderLookupPageHtml(): string {
   // 速查索引件的样式段**不在** `blocksCss()` 的区块汇总里（与 entry-card 同一条口径）⇒ 本页显式拼；
   // 拼在 H02_CSS **之前**：同特指度的两条以本页那条为准（#1122 起折叠档那几条特指度更高，另算）。
   const content = queryStyleTag() + '<style>' + lookupIndexCss() + H02_CSS + '</style>'
-    + renderSheetFrame({ variant: 'ticket', cutLine: true, cutLineText: CUT_LINE_TEXT, content: paper });
+    + renderSheetFrame({ variant: 'ticket', cutLine: true, cutLineText: m(CUT_LINE_KEY), content: paper });
   return assembleSheetPage({
-    docTitle: DOC_TITLE + '·能力速查',
+    docTitle: m('skill-bill.help-lookupPage.c017', { p0: String(DOC_TITLE) }),
     bodyHtml: writeSection({ slot: 'list', page: 'list', shape: 'list', key: 'bill.help.lookup', content }),
     paper: 'detail',
     // #1124 第三步：本页不属于 §20／§21／§22 那些页面族 ⇒ 族样式段只注入 core，页面族块（约 30KB）不注入。

@@ -46,8 +46,8 @@ import { buildRecordReceipt } from '../write/index.js';
 import type { ViewOut, WriteOut } from '../shared/commandSpec.js';
 import type { BillRow } from '../fetch/db.js';
 import { runWithLanguage } from 'base-entries';
+import { m } from '../entries/index.js';
 const DEFAULT_TIMEOUT_MS = 30000;
-
 function toast(msg: string): void { console.error('TOAST: ' + msg); }
 function note(msg: string): void { console.error('NOTE: ' + msg); }
 
@@ -56,7 +56,7 @@ function note(msg: string): void { console.error('NOTE: ' + msg); }
  *  （跑在 `node --test` 里却要落到真实家目录即抛 `CONFIG_TEST_ISOLATION_MISSING`）。 */
 function preflight(): void {
   const v = process.versions.node.split('.').map(Number);
-  if (!(v[0] > 22 || (v[0] === 22 && v[1] >= 13))) fail(1, 'node 低于 22.13：' + process.versions.node);
+  if (!(v[0] > 22 || (v[0] === 22 && v[1] >= 13))) fail(1, m('skill-bill.cli-cmd-read.c001', { p0: String(process.versions.node) }));
 }
 
 /* 时间窗口（周／月／昨天）与日期归一不再是本文件的文件级函数：查询域搬迁（#411）时它们被
@@ -106,8 +106,8 @@ function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
   const now = new Date();
   const mode = params.mode === undefined ? undefined : String(params.mode);
   const q = params.q === undefined ? undefined : String(params.q);
-  if (mode !== undefined && q !== undefined) fail(2, '参数 q 与 mode 互斥：q＝现找，mode＝速查表产物');
-  if (mode !== undefined && mode !== 'lookup') fail(2, 'mode 非法（' + String(mode) + '）：本命令只认 lookup');
+  if (mode !== undefined && q !== undefined) fail(2, m('skill-bill.cli-cmd-read.c002'));
+  if (mode !== undefined && mode !== 'lookup') fail(2, m('skill-bill.cli-cmd-read.c003', { p0: String(String(mode)) }));
   if (q !== undefined) {
     const hits = buildHelpItems(buildHelpLookup(), q);
     return { data: { ...hits, mode: 'lookup', query: q } };
@@ -145,11 +145,11 @@ function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
  *  声明里本来就带着 `run`，第三个域进来时这一支一行不动——入口跟着声明走，域不需要在外壳上挂号。 */
 function runRegistered(key: string, params: Record<string, unknown>, language?: string): WriteOut | ViewOut {
   const spec = REGISTRY[key];
-  if (spec === undefined) fail(3, '未知 bill 命令：' + key);
+  if (spec === undefined) fail(3, m('skill-bill.cli-cmd-read.c004', { p0: String(key) }));
   const dbPath = resolveDbPath();
   const handle = openBillDb(dbPath);
   try {
-    if (handle.initialized) note('记账 DB 已初始化：' + dbPath);
+    if (handle.initialized) note(m('skill-bill.cli-cmd-read.c005', { p0: String(dbPath) }));
     return spec.run(params, handle, language);
   } finally {
     try { closeBillDb(handle); } catch { /* ignore */ }
@@ -162,30 +162,30 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
   const goalsPath = resolveGoalsPath();
   const handle = openBillDb(dbPath);
   try {
-    if (handle.initialized) note('记账 DB 已初始化：' + dbPath);
+    if (handle.initialized) note(m('skill-bill.cli-cmd-read.c006', { p0: String(dbPath) }));
     switch (key) {
       // #729：分析域三条读命令（`bill.analysis.overview`／`compare`／`trend`）已搬进 `src/analysis/`，
       // 出口只查注册表（`runRegistered`）再调命令声明里的 `run`——本分派层不再认这三条 key。
       case 'bill.link.submit': {
         const scene = params.scene === undefined ? 'purchase' : params.scene;
-        if (scene !== 'purchase' && scene !== 'meal') fail(2, 'scene 非法（期望 purchase/meal）');
+        if (scene !== 'purchase' && scene !== 'meal') fail(2, m('skill-bill.cli-cmd-read.c017'));
         const amount = params.amount;
         if (amount !== undefined) {
           const n = typeof amount === 'string' ? Number((amount as string).trim()) : amount;
-          if (typeof n !== 'number' || !Number.isFinite(n) || n >= 0) fail(2, '联动金额须为负数支出');
+          if (typeof n !== 'number' || !Number.isFinite(n) || n >= 0) fail(2, m('skill-bill.cli-cmd-read.c018'));
         }
         if (scene === 'purchase') {
           const item = typeof params.item === 'string' ? params.item : '';
-          return buildRecordReceipt(`已采单买东西${item ? '：' + item : ''}（主操作请先走 bill.record.add 记支出；同时录入居家管家请复制 prompt：请加载「居家管家」技能，帮我录入刚买的物品${item ? '：' + item : ''}）`);
+          return buildRecordReceipt(m('skill-bill.cli-cmd-read.c019', { p0: item === '' ? '' : '：' + item }));
         }
         const ate = typeof params.ate === 'string' ? params.ate : '';
-        return buildRecordReceipt(`已采单吃饭${ate ? '：' + ate : ''}（主操作请先走 bill.record.add 记支出；同时记卡路里请复制 prompt：请加载「卡路里」技能，帮我记一餐${ate ? '：' + ate : ''}）`);
+        return buildRecordReceipt(m('skill-bill.cli-cmd-read.c020', { p0: ate === '' ? '' : '：' + ate }));
       }
       case 'bill.help.lookup':
         // #144：本命令由 `dispatchHelp` 在**开库之前**处理（只读页不建库）；走到这里说明 main 的路由被改坏了。
-        fail(1, '内部错误：bill.help.lookup 须走 dispatchHelp（开库之前）');
+        fail(1, m('skill-bill.cli-cmd-read.c021'));
         return null;
-      default: fail(3, '未知 bill 命令：' + key); return null;
+      default: fail(3, m('skill-bill.cli-cmd-read.c007', { p0: String(key) })); return null;
     }
   } finally {
     try { closeBillDb(handle); } catch { /* ignore */ }
@@ -194,12 +194,12 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
 
 async function main() {
   const o = parseArgs(process.argv.slice(2));
-  if (!o.key) fail(2, '用法：bill-cmd-read <bill.key> [--params JSON对象] [--html 输出路径] [--timeout 毫秒] [--language zh|en]');
+  if (!o.key) fail(2, m('skill-bill.cli-cmd-read.c008'));
   const key = o.key;
   let params: Record<string, unknown> = {};
   if (o.params !== undefined) {
-    try { params = JSON.parse(o.params) as Record<string, unknown>; } catch (e) { fail(2, '--params 须为 JSON'); }
-    if (typeof params !== 'object' || params === null || Array.isArray(params)) fail(2, '--params 须为 JSON 对象');
+    try { params = JSON.parse(o.params) as Record<string, unknown>; } catch (e) { fail(2, m('skill-bill.cli-cmd-read.c009')); }
+    if (typeof params !== 'object' || params === null || Array.isArray(params)) fail(2, m('skill-bill.cli-cmd-read.c010'));
   }
   // #677：设置页的三个配置 key 在**预检与分派层之前**拦下——读写配置不该要求库目录已配，
   // 也不进形状表、不进 HELP 与唤醒词计数。用上唯一出口那条规矩：stdout 一行 envelope。
@@ -222,7 +222,7 @@ async function main() {
     let shape = null;
     try { shape = billShapeFor(key); } catch (e) { fail(3, (e as Error).message); }
     void shape;
-    const timer = setTimeout(() => { toast('cmd_read 超时 terminate（' + o.timeout + 'ms），已终止取数'); process.exit(4); }, o.timeout);
+    const timer = setTimeout(() => { toast(m('skill-bill.cli-cmd-read.c011', { p0: String(o.timeout) })); process.exit(4); }, o.timeout);
     timer.unref();
     let env = null;
     let delivery: HtmlDelivery | undefined;
@@ -246,16 +246,16 @@ async function main() {
         surface: REGISTRY[key]?.surface, sectionHtml,
       });
     } catch (e) {
-      if (e instanceof BillFetchError) fail(4, '取数失败：' + e.message);
-      if (e instanceof BillPolicyError) fail(2, '口径失败：' + e.message);
-      if (e instanceof BillRenderError) fail(5, '渲染失败：' + e.message);
+      if (e instanceof BillFetchError) fail(4, m('skill-bill.cli-cmd-read.c012', { p0: String(e.message) }));
+      if (e instanceof BillPolicyError) fail(2, m('skill-bill.cli-cmd-read.c013', { p0: String(e.message) }));
+      if (e instanceof BillRenderError) fail(5, m('skill-bill.cli-cmd-read.c014', { p0: String(e.message) }));
       if ((e as NodeJS.ErrnoException)?.code && /^E[A-Z]+$/.test(String((e as NodeJS.ErrnoException).code))) {
-        fail(5, '落盘失败：' + ((e as Error).message || String(e)));
+        fail(5, m('skill-bill.cli-cmd-read.c015', { p0: String((e as Error).message || String(e)) }));
       }
       // #726：配置面报错（测试缺隔离基座、配置文件读不出来）走「预检」那一档，与老线缺库目录同一档；
       // 按 `base-link-core` 的 `ConfigError.code`（`CONFIG_*`）认，不拿报文文本去猜。
       if (String((e as { code?: unknown }).code ?? '').startsWith('CONFIG_')) fail(1, (e as Error).message);
-      fail(4, '未知失败：' + ((e as Error).message || String(e)));
+      fail(4, m('skill-bill.cli-cmd-read.c016', { p0: String((e as Error).message || String(e)) }));
     } finally { clearTimeout(timer); }
     // #83 口径的顶层追加：`delivery{mode,path,bytes}` 只追加，既有五字段一字不改、序不变。
     process.stdout.write(JSON.stringify(delivery ? { ...env, delivery } : env) + '\n');

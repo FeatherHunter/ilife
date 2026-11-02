@@ -2,6 +2,8 @@
 import { WAKE_TABLE } from '../triggers/wakeTable.js';
 import type { BillKey } from '../triggers/routeSpec.js';
 import { BILL_KEY_SHAPES } from '../render/index.js';
+import { m } from '../entries/index.js';
+import type { SkillBillMessageId } from '../entries/index.js';
 
 export interface HelpHit { phrase: string; key: BillKey; shape: string; cli: string; desc: string; }
 
@@ -11,37 +13,38 @@ function exampleParams(key: BillKey, e: { readonly needs?: readonly string[]; re
   if (key === 'bill.record.add') {
     if (p.category === undefined) p.category = '餐饮';
     if (p.amount === undefined) p.amount = -35;
-    if (p.note === undefined) p.note = '午饭';
+    if (p.note === undefined) p.note = m('skill-bill.help-lookup.c001');
   }
   // #1280 第 5 步：合并分类的 `from`／`to` 是**分类串**（不是账户名——同在下面的 `from`／`to` 兜底
   // 给的是转账那一对账户），示例取值换成分类写法，否则速查表那一行照抄会被 `validateCategory` 拦下。
-  if (key === 'bill.category.merge') { p['from'] = '餐饮/夜宵'; p['to'] = '餐饮'; }
+  if (key === 'bill.category.merge') { p['from'] = m('skill-bill.help-lookup.c002'); p['to'] = '餐饮'; }
   // `carries` 与 `needs` 一样进示例：改记录／撤销／恢复的 `id` 不拦，但示例里要给出「这一格填哪」那一眼。
   for (const n of [...(e.needs || []), ...(e.carries || [])]) {
-    if (p[n] === undefined) p[n] = n === 'id' ? 1 : n === 'date' ? '2026-09-06' : n === 'start' || n === 'end' ? '2026-09-01' : n === 'month' ? '2026-09' : n === 'amount' ? 35 : n === 'q' ? '午饭' : n === 'tag' ? '旅行' : n === 'category' ? '餐饮' : n === 'account' ? '支付宝' : n === 'ledger' ? '生活' : n === 'name' ? '招行卡' : n === 'from' ? '支付宝' : n === 'to' ? '招行卡' : n === 'file' ? 'bills.csv' : '<值>';
+    if (p[n] === undefined) p[n] = n === 'id' ? 1 : n === 'date' ? '2026-09-06' : n === 'start' || n === 'end' ? '2026-09-01' : n === 'month' ? '2026-09' : n === 'amount' ? 35 : n === 'q' ? m('skill-bill.help-lookup.c003') : n === 'tag' ? '旅行' : n === 'category' ? '餐饮' : n === 'account' ? m('skill-bill.help-lookup.c004') : n === 'ledger' ? m('skill-bill.help-lookup.c005') : n === 'name' ? m('skill-bill.help-lookup.c006') : n === 'from' ? m('skill-bill.help-lookup.c007') : n === 'to' ? m('skill-bill.help-lookup.c008') : n === 'file' ? 'bills.csv' : m('skill-bill.help-lookup.c009');
   }
   const keys = Object.keys(p);
   return keys.length ? ' --params \'' + JSON.stringify(p) + '\'' : '';
 }
 
-const DESCS: Record<string, string> = {
-  'bill.record.add': '记一笔（须 category+amount，note 可选；含借贷/分期/退款/报销，拍账单图片识别以外置为准）',
-  'bill.record.update': '改/撤销（软删）/恢复（须 id）',
-  'bill.category.merge': '把两个分类并成一个（须 from+to；含已撤销的笔，可原样并回）',
-  'bill.record.today': '查今天/昨天/某天/最近',
-  'bill.record.range': '查周/月/区间/分类/账户/账本',
-  'bill.record.search': '搜备注/查标签/查欠款/查待报销/查分期',
-  'bill.record.detail': '看单条详情（须 id）',
-  'bill.analysis.overview': '看月度/年度/总览/周报/分类/账户/账本/结构/统计',
-  'bill.analysis.compare': '看对比/双区间/同比/分类对比',
-  'bill.analysis.trend': '看趋势/大额/高频/分布/活跃/洞察/异常/借贷/报销/分期/退款',
-  'bill.goal.write': '设定预算/目标（覆盖须 --force）',
-  'bill.goal.query': '看预算执行/目标进度',
-  'bill.account.write': '新增/改账户/转账（双笔 #转账）',
-  'bill.account.query': '看账户汇总（余额实算）',
-  'bill.link.submit': '买东西/吃饭联动（主操作复用记账，跨技能仅复制 prompt）',
-  'bill.setup.run': '初始化/备份/恢复/导入（列映射 dry-run 先行）',
-  'bill.help.lookup': '能力速查 HELP 现找',
+// 速查表每行的命令说明（`HelpHit.desc`）：表里只放词条键，取词发生在渲染期（模块级中文字面量会在 import 时定死语言）。
+const DESC_KEYS: Record<string, SkillBillMessageId> = {
+  'bill.record.add': 'skill-bill.help-lookup.c010',
+  'bill.record.update': 'skill-bill.help-lookup.c011',
+  'bill.category.merge': 'skill-bill.help-lookup.c012',
+  'bill.record.today': 'skill-bill.help-lookup.c013',
+  'bill.record.range': 'skill-bill.help-lookup.c014',
+  'bill.record.search': 'skill-bill.help-lookup.c015',
+  'bill.record.detail': 'skill-bill.help-lookup.c016',
+  'bill.analysis.overview': 'skill-bill.help-lookup.c017',
+  'bill.analysis.compare': 'skill-bill.help-lookup.c018',
+  'bill.analysis.trend': 'skill-bill.help-lookup.c019',
+  'bill.goal.write': 'skill-bill.help-lookup.c020',
+  'bill.goal.query': 'skill-bill.help-lookup.c021',
+  'bill.account.write': 'skill-bill.help-lookup.c022',
+  'bill.account.query': 'skill-bill.help-lookup.c023',
+  'bill.link.submit': 'skill-bill.help-lookup.c024',
+  'bill.setup.run': 'skill-bill.help-lookup.c025',
+  'bill.help.lookup': 'skill-bill.help-lookup.c026',
 };
 
 // 全量速查表（77 短语：72 功能 + 4 HELP + 1 补齐）。
@@ -51,7 +54,7 @@ export function buildHelpLookup(): HelpHit[] {
     key: e.key,
     shape: BILL_KEY_SHAPES[e.key] || '??',
     cli: 'bill-cmd-read ' + e.key + exampleParams(e.key, e),
-    desc: DESCS[e.key] || '',
+    desc: DESC_KEYS[e.key] === undefined ? '' : m(DESC_KEYS[e.key]),
   }));
 }
 

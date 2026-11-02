@@ -12,7 +12,8 @@
  * **#725 起「文档壳」那一圈（doctype／head 三槽位序／资产拼接）搬去公共层 `base-paint/docShell` 的
  *   `renderDocShell`**——本件只留自己的页头语义（下面五个字段）＋本包的三段补丁样式（走 `extraCss`），
  *   拼好正文后交给骨架件；五个字段与 `pageShell.ts` 的调用点一行未动。
- * 本文件不做取数、不装命令名与领域常量，只按参数拼页；零包内依赖（只 import `base-paint`）。
+ * 本文件不做取数、不装命令名与领域常量，只按参数拼页；包内依赖只 `entries` 词条层
+ * （#1215：主数字块的 `aria-label` 是用户可见文案，进词条表；公共层之外的别处一件不引）。
  *
  * **#728（写入域 32 页视觉整改）在本件改了三件事**：
  *   ① 打开公共层的**页面级配方** `pageUi`（#525）——安全区、44px 触摸区、≤640 单列与安全区内距、
@@ -24,6 +25,7 @@
 import { escapeHtml, pageUiCss } from 'base-paint';
 import { renderPageShell, renderSheetHead, renderTicketSection, sheetCss, skinClass, skinCss, ticketFamilyCss, ticketFurnitureCss } from 'base-paint/blocks';
 import { renderDocShell } from 'base-paint/docShell';
+import { m } from '../entries/index.js';
 
 /** 整页装配的入参。 */
 interface DocPageInput {
@@ -164,7 +166,7 @@ export function ticketSection(input: { readonly title: string; readonly tag: str
 
 /** 主数字块（原型 `.summary-head`）：公共层主数字头（票据纸版式）＋ 它下面那几行小字。 */
 export function ticketSummary(summaryHtml: string, extraHtml: string): string {
-  return '<section class="ilife-ticket-summary" aria-label="这一笔的金额">' + summaryHtml + extraHtml + '</section>';
+  return '<section class="ilife-ticket-summary" aria-label="' + escapeHtml(m('skill-bill.shared-docPage.c001')) + '">' + summaryHtml + extraHtml + '</section>';
 }
 
 /** 按钮区（原型 `.actions`）：主按钮／复制区整行堆叠。 */

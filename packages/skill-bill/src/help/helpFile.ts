@@ -29,6 +29,7 @@ import { BillRenderError } from '../render/errors.js';
 import { EMPTY_CANDIDATE_LISTS, type HelpCandidateLists } from './candidateLists.js';
 /* #1280 候选项附注那一步住在自己的件里（见 `fieldNotes.ts` 件头：超线条按能力拆的一刀）。 */
 import { fillNotes } from './fieldNotes.js';
+import { m } from '../entries/index.js';
 
 /** 「饼干记账help」交付文件的文件名主体：**代码常量**（#762 起配置项 `html.helpStem` 已退休——
  *  用户改的曾经是配置文件，现在没有可改处；对外也不接受调用方传入，照 #139 S3-3）。
@@ -91,11 +92,14 @@ export interface HelpContact {
  *  唯二例外是两个仓库地址：维护者 2026-09-27 定仓库已搬到 `ilife`，故 GitHub／Issues 两项的值改指
  *  `https://github.com/FeatherHunter/ilife`（＋`/issues`），标签与个数仍照老实样，邮箱不动）。 */
 export const HELP_CONTACT: HelpContact = Object.freeze({
-  items: Object.freeze([
-    Object.freeze({ label: '邮箱', value: '975559549@qq.com' }),
-    Object.freeze({ label: 'GitHub', value: 'https://github.com/FeatherHunter/ilife', url: true as const }),
-    Object.freeze({ label: 'Issues', value: 'https://github.com/FeatherHunter/ilife/issues', url: true as const }),
-  ]),
+  /** #1215：`items` 走 getter——模块级常量会在 import 时把词条定死成启动时的语言，这里改属性访问期取词。 */
+  get items(): readonly HelpContactItem[] {
+    return Object.freeze([
+      Object.freeze({ label: m('skill-bill.help-helpFile.c008'), value: '975559549@qq.com' }),
+      Object.freeze({ label: 'GitHub', value: 'https://github.com/FeatherHunter/ilife', url: true as const }),
+      Object.freeze({ label: 'Issues', value: 'https://github.com/FeatherHunter/ilife/issues', url: true as const }),
+    ]);
+  },
   copy_all: true as const,
 });
 
@@ -162,15 +166,19 @@ export function formatHelpMinute(now: Date): string {
 
 /** 老 `:194-195` 的 `summary_line`：计数与版本**派生**，不写死 7／74（改资产即跟变）。 */
 export function deriveSummaryLine(now: Date = new Date()): string {
-  return String(WAKE_GROUPS.length) + ' 功能域 · ' + String(WAKE_ASSETS.length)
-    + ' 场景 · 版本 ' + HELP_FILE_VERSION + ' · 更新于 ' + formatHelpMinute(now);
+  return m('skill-bill.help-helpFile.c001', {
+    p0: String(String(WAKE_GROUPS.length)),
+    p1: String(String(WAKE_ASSETS.length)),
+    p2: String(HELP_FILE_VERSION),
+    p3: String(formatHelpMinute(now)),
+  });
 }
 
 /** 两块 meta：HELP 汇总（＝summaryLine 同源）＋ HELP 唤醒词（＝口径层那 4 条派生）。 */
 export function buildMetaBlocks(summaryLine: string): readonly HelpMetaBlock[] {
   return [
-    { id: 'help_summary', title: 'HELP 汇总', html: '<p>' + summaryLine + '</p>' },
-    { id: 'help_wake_words', title: 'HELP 唤醒词', html: '<p>' + HELP_WAKE_WORDS.join(' / ') + '</p>' },
+    { id: 'help_summary', title: m('skill-bill.help-helpFile.c002'), html: '<p>' + summaryLine + '</p>' },
+    { id: 'help_wake_words', title: m('skill-bill.help-helpFile.c003'), html: '<p>' + HELP_WAKE_WORDS.join(' / ') + '</p>' },
   ];
 }
 
@@ -184,9 +192,9 @@ export function buildInitBanner(initialized: boolean): HelpInitBanner {
       'HELP 首次使用横幅缺 prompt：内容资产无场景 ' + HELP_INIT_SCENE_ID);
   }
   return {
-    title: '🚀 第一次用饼干记账?',
-    subtitle: '从「初始化」开始 — 自动检测环境、确认数据目录、建库、验证,全程零决策。完成初始化后,本区域将不再出现。',
-    button_text: '📋 复制初始化 prompt',
+    title: m('skill-bill.help-helpFile.c004'),
+    subtitle: m('skill-bill.help-helpFile.c005'),
+    button_text: m('skill-bill.help-helpFile.c006'),
     prompt,
     closable: true,
     hidden: initialized === true,

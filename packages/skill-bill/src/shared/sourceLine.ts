@@ -17,6 +17,7 @@
  *  窗口由参数解析处给、来源那句话由调用方按域给（照本包 `shared/` 既有件的分工：装配件不校验）。
  */
 import { renderCaliberLine } from 'base-paint/blocks';
+import { m } from '../entries/index.js';
 
 /** 来源脚注的三个事实（全部由调用方算好；空串来源＝不写来源那一段）。 */
 export interface SourceLineFacts {
@@ -40,10 +41,10 @@ function windowText(start: string, end: string): string {
   const s = start.trim();
   const e = end.trim();
   const blank = (v: string): boolean => v === '' || v === '—' || v === '-';
-  if (blank(s) && blank(e)) return '时间不限';
-  if (blank(e)) return '从 ' + s + ' 起';
-  if (blank(s)) return '到 ' + e + ' 止';
-  return s === e ? '时间 ' + s : '时间 ' + s + ' 到 ' + e;
+  if (blank(s) && blank(e)) return m('skill-bill.shared-sourceLine.c001');
+  if (blank(e)) return m('skill-bill.shared-sourceLine.c002', { p0: String(s) });
+  if (blank(s)) return m('skill-bill.shared-sourceLine.c003', { p0: String(e) });
+  return s === e ? m('skill-bill.shared-sourceLine.c004', { p0: String(s) }) : m('skill-bill.shared-sourceLine.c005', { p0: String(s), p1: String(e) });
 }
 
 /** 来源脚注：`数据来源 <来源> ｜ <窗口> ｜ 共 N 条`（分隔由版式出，字符不进可见文本）。
@@ -55,8 +56,8 @@ function windowText(start: string, end: string): string {
 export function sourceLine(facts: SourceLineFacts): string {
   const parts: string[] = [];
   const source = facts.source.trim();
-  if (source !== '') parts.push('数据来源 ' + source);
+  if (source !== '') parts.push(m('skill-bill.shared-sourceLine.c006', { p0: String(source) }));
   parts.push(windowText(facts.start, facts.end));
-  parts.push('共 ' + String(facts.count) + ' 条');
+  parts.push(m('skill-bill.shared-sourceLine.c007', { p0: String(String(facts.count)) }));
   return renderCaliberLine(parts.join(SEG));
 }

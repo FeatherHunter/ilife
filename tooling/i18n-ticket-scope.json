@@ -1535,7 +1535,8 @@
     "1215": {
       "title": "迁移 skill-bill 小域合并与 src 顶层件：34 件（393 条）",
       "state": "open（待开工；清单已回填 #1308）",
-      "files": [
+      "files": [],
+      "migrated": [
         {
           "path": "packages/skill-bill/src/cli/cmd_read.ts",
           "literals": 25,
@@ -1551,43 +1552,6 @@
           "byClass": {
             "copy": 1,
             "ident": 1
-          }
-        },
-        {
-          "path": "packages/skill-bill/src/cli/registry.ts",
-          "literals": 1,
-          "byClass": {
-            "derived": 1
-          }
-        },
-        {
-          "path": "packages/skill-bill/src/data/commands.ts",
-          "literals": 2,
-          "byClass": {
-            "copy": 2
-          }
-        },
-        {
-          "path": "packages/skill-bill/src/delivery/naming.ts",
-          "literals": 3,
-          "byClass": {
-            "copy": 3
-          }
-        },
-        {
-          "path": "packages/skill-bill/src/fetch/db.ts",
-          "literals": 24,
-          "byClass": {
-            "copy": 11,
-            "concat": 11,
-            "ident": 2
-          }
-        },
-        {
-          "path": "packages/skill-bill/src/fetch/paths.ts",
-          "literals": 1,
-          "byClass": {
-            "copy": 1
           }
         },
         {
@@ -1608,25 +1572,11 @@
           }
         },
         {
-          "path": "packages/skill-bill/src/help/declaration.ts",
-          "literals": 4,
-          "byClass": {
-            "copy": 4
-          }
-        },
-        {
           "path": "packages/skill-bill/src/help/helpFile.ts",
           "literals": 15,
           "byClass": {
             "copy": 8,
             "concat": 6,
-            "ident": 1
-          }
-        },
-        {
-          "path": "packages/skill-bill/src/help/helpPaths.ts",
-          "literals": 1,
-          "byClass": {
             "ident": 1
           }
         },
@@ -1648,40 +1598,10 @@
           }
         },
         {
-          "path": "packages/skill-bill/src/output.ts",
-          "literals": 1,
-          "byClass": {
-            "copy": 1
-          }
-        },
-        {
-          "path": "packages/skill-bill/src/render/envelope.ts",
-          "literals": 6,
-          "byClass": {
-            "concat": 6
-          }
-        },
-        {
           "path": "packages/skill-bill/src/render/html.ts",
           "literals": 4,
           "byClass": {
             "concat": 3,
-            "ident": 1
-          }
-        },
-        {
-          "path": "packages/skill-bill/src/render/templates.ts",
-          "literals": 3,
-          "byClass": {
-            "concat": 3
-          }
-        },
-        {
-          "path": "packages/skill-bill/src/shared/category.ts",
-          "literals": 30,
-          "byClass": {
-            "copy": 27,
-            "concat": 2,
             "ident": 1
           }
         },
@@ -1694,58 +1614,12 @@
           }
         },
         {
-          "path": "packages/skill-bill/src/shared/copyText.ts",
-          "literals": 3,
-          "byClass": {
-            "copy": 1,
-            "concat": 2
-          }
-        },
-        {
-          "path": "packages/skill-bill/src/shared/dateRange.ts",
-          "literals": 11,
-          "byClass": {
-            "copy": 5,
-            "concat": 5,
-            "ident": 1
-          }
-        },
-        {
-          "path": "packages/skill-bill/src/shared/direction.ts",
-          "literals": 3,
-          "byClass": {
-            "copy": 3
-          }
-        },
-        {
           "path": "packages/skill-bill/src/shared/docPage.ts",
           "literals": 12,
           "byClass": {
             "copy": 4,
             "concat": 1,
             "ident": 7
-          }
-        },
-        {
-          "path": "packages/skill-bill/src/shared/kpi.ts",
-          "literals": 2,
-          "byClass": {
-            "copy": 1,
-            "ident": 1
-          }
-        },
-        {
-          "path": "packages/skill-bill/src/shared/pageIdentity.ts",
-          "literals": 1,
-          "byClass": {
-            "copy": 1
-          }
-        },
-        {
-          "path": "packages/skill-bill/src/shared/params.ts",
-          "literals": 1,
-          "byClass": {
-            "copy": 1
           }
         },
         {
@@ -1757,25 +1631,177 @@
           }
         },
         {
-          "path": "packages/skill-bill/src/shared/writeParts.ts",
-          "literals": 1,
-          "byClass": {
-            "copy": 1
-          }
-        },
-        {
           "path": "packages/skill-bill/src/shared/票据纸页型.ts",
           "literals": 2,
           "byClass": {
             "copy": 2
           }
+        }
+      ],
+      "totals": {
+        "files": 32,
+        "literals": 368
+      },
+      "excluded": [
+        {
+          "path": "packages/skill-bill/src/cli/registry.ts",
+          "literals": 1,
+          "byClass": {
+            "derived": 1
+          },
+          "reason": "丢弃：生成物（scripts/gen-cli.mjs 输出，件头带勿手改印记）"
+        },
+        {
+          "path": "packages/skill-bill/src/data/commands.ts",
+          "literals": 2,
+          "byClass": {
+            "copy": 2
+          },
+          "reason": "A 数据：命令 title「数据目录」「数据查询」是程序面命令数据，不进 HELP"
+        },
+        {
+          "path": "packages/skill-bill/src/delivery/naming.ts",
+          "literals": 3,
+          "byClass": {
+            "copy": 3
+          },
+          "reason": "B 冻结标识：COLLECT_PAGE_WORD/RECEIPT_PAGE_WORD 是文件名主体（#1235）；其余是 dev throw"
+        },
+        {
+          "path": "packages/skill-bill/src/fetch/db.ts",
+          "literals": 24,
+          "byClass": {
+            "copy": 11,
+            "concat": 11,
+            "ident": 2
+          },
+          "reason": "A 数据：'建表'/'补列 deleted_at' 只进 envelope data；'生活'/'人民币' 是 SQL DEFAULT 值（写库初值）"
+        },
+        {
+          "path": "packages/skill-bill/src/fetch/paths.ts",
+          "literals": 1,
+          "byClass": {
+            "copy": 1
+          },
+          "reason": "A 数据：'<时间戳>' 是文件名占位符"
+        },
+        {
+          "path": "packages/skill-bill/src/help/declaration.ts",
+          "literals": 4,
+          "byClass": {
+            "copy": 4
+          },
+          "reason": "A 数据：4 条唤醒词＝命令声明数据，唤醒词一律不译（#1236 冻结）"
+        },
+        {
+          "path": "packages/skill-bill/src/help/helpPaths.ts",
+          "literals": 1,
+          "byClass": {
+            "ident": 1
+          },
+          "reason": "丢弃：空壳/无引用"
+        },
+        {
+          "path": "packages/skill-bill/src/output.ts",
+          "literals": 1,
+          "byClass": {
+            "copy": 1
+          },
+          "reason": "D 开发报文：命中的都是 throw new *Error(...) 实参（devMessageTexts 豁免）"
+        },
+        {
+          "path": "packages/skill-bill/src/render/envelope.ts",
+          "literals": 6,
+          "byClass": {
+            "concat": 6
+          },
+          "reason": "D 开发报文：throw new *Error(...) 实参"
+        },
+        {
+          "path": "packages/skill-bill/src/render/templates.ts",
+          "literals": 3,
+          "byClass": {
+            "concat": 3
+          },
+          "reason": "D 开发报文：throw new *Error(...) 实参"
+        },
+        {
+          "path": "packages/skill-bill/src/shared/category.ts",
+          "literals": 30,
+          "byClass": {
+            "copy": 27,
+            "concat": 2,
+            "ident": 1
+          },
+          "reason": "A 数据：as const 分类名＋SQL 默认值，库内分类值（等值比较用）"
+        },
+        {
+          "path": "packages/skill-bill/src/shared/copyText.ts",
+          "literals": 3,
+          "byClass": {
+            "copy": 1,
+            "concat": 2
+          },
+          "reason": "C 模块常量被写集外消费者钉住：MISSING='未给' 被 5 件写集外文件当值比较（显示词已迁 1 条）"
+        },
+        {
+          "path": "packages/skill-bill/src/shared/dateRange.ts",
+          "literals": 11,
+          "byClass": {
+            "copy": 5,
+            "concat": 5,
+            "ident": 1
+          },
+          "reason": "D 开发报文：throw new *Error(...) 实参"
+        },
+        {
+          "path": "packages/skill-bill/src/shared/direction.ts",
+          "literals": 3,
+          "byClass": {
+            "copy": 3
+          },
+          "reason": "C 模块常量被写集外消费者钉住：DIRECTION_WORDS 被 scene-distribution.ts:50-51 等值比较、summaryRow.ts:41-42 模块级读（显示词已迁 1 条）"
+        },
+        {
+          "path": "packages/skill-bill/src/shared/kpi.ts",
+          "literals": 2,
+          "byClass": {
+            "copy": 1,
+            "ident": 1
+          },
+          "reason": "A 数据：'转账' 是 isTransfer 判据（r.ledger === '转账'），值不是文案"
+        },
+        {
+          "path": "packages/skill-bill/src/shared/pageIdentity.ts",
+          "literals": 1,
+          "byClass": {
+            "copy": 1
+          },
+          "reason": "B 冻结标识：DOC_TITLE='饼干记账' 参与文件名主体（#1235）与全包页头/页脚"
+        },
+        {
+          "path": "packages/skill-bill/src/shared/params.ts",
+          "literals": 1,
+          "byClass": {
+            "copy": 1
+          },
+          "reason": "D 开发报文：throw new *Error(...) 实参"
+        },
+        {
+          "path": "packages/skill-bill/src/shared/writeParts.ts",
+          "literals": 1,
+          "byClass": {
+            "copy": 1
+          },
+          "reason": "B 冻结标识：RECEIPT_FORMAT 是死导出（t407 已删消费行），未上屏"
         },
         {
           "path": "packages/skill-bill/src/triggers/routeSpec.ts",
           "literals": 5,
           "byClass": {
             "copy": 5
-          }
+          },
+          "reason": "A 数据：联合类型里的值，类型位置不上屏"
         },
         {
           "path": "packages/skill-bill/src/triggers/wakeTable.ts",
@@ -1783,14 +1809,10 @@
           "byClass": {
             "copy": 1,
             "concat": 9
-          }
+          },
+          "reason": "D 开发报文：throw new *Error(...) 实参"
         }
-      ],
-      "migrated": [],
-      "totals": {
-        "files": 32,
-        "literals": 368
-      }
+      ]
     },
     "1216": {
       "title": "迁移 skill-calorie 触发器域（triggers）：15 件（7,060 条）",
@@ -10264,12 +10286,12 @@
   },
   "scopeSummary": {
     "ledgerFiles": 1226,
-    "migratedFiles": 743,
-    "pendingFiles": 177,
-    "pendingLiterals": 5652,
-    "excludedFiles": 306,
-    "excludedLiterals": 14783,
-    "migratedLiterals": 22313
+    "migratedFiles": 755,
+    "pendingFiles": 145,
+    "pendingLiterals": 5284,
+    "excludedFiles": 326,
+    "excludedLiterals": 14896,
+    "migratedLiterals": 22568
   },
   "workflow": [
     "开工：从本文件取本票 files，逐件登记进 tooling/i18n-scope.json 的 files（先跑两道门拿红读数＝范围已挂但还没迁）。",
