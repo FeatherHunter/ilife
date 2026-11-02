@@ -1176,7 +1176,18 @@
     "/* 组内行：原型 .qrows li（44 触摸行 ＋ 点线分隔）。 */",
     "/* 折叠档的说明行（原型 .fold-note：12px／行高 1.6／ink-3／上下 2px 8px）——#1122 起 8 组默认收起。 */",
     "/* 自律条：原型 .check-mini 的浅绿卡（绿底＋一行字）。 */",
-    "record.detail"
+    "record.detail",
+    "居住",
+    "医疗",
+    "工资",
+    "奖金",
+    "副业收入",
+    "其他收入",
+    "住宿",
+    "办公",
+    "分期/手机",
+    "分期/电脑",
+    "分期/家电"
   ],
   "files": [
     "packages/base-render/src/components/progress-list/model.ts",
@@ -1941,6 +1952,7 @@
     "packages/skill-bill/src/query/list-tag.ts",
     "packages/skill-bill/src/query/list.ts",
     "packages/skill-bill/src/query/pageParts.ts",
-    "packages/skill-bill/src/query/read.ts"
+    "packages/skill-bill/src/query/read.ts",
+    "packages/skill-bill/src/write/sayWords.ts"
   ]
 }

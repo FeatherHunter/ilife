@@ -19,7 +19,8 @@
     "1203": {
       "title": "迁移 skill-bill write 批次 1（sayWords 与写域声明两件）：2 件（638 条）",
       "state": "open（待开工；清单已回填 #1308）",
-      "files": [
+      "files": [],
+      "migrated": [
         {
           "path": "packages/skill-bill/src/write/sayWords.ts",
           "literals": 482,
@@ -29,11 +30,11 @@
           }
         }
       ],
-      "migrated": [],
       "totals": {
         "files": 1,
         "literals": 482
-      }
+      },
+      "excluded": []
     },
     "1204": {
       "title": "迁移 skill-bill write 批次 2：5 件（415 条）；另 3 件已迁",
@@ -10289,12 +10290,12 @@
   },
   "scopeSummary": {
     "ledgerFiles": 1226,
-    "migratedFiles": 763,
-    "pendingFiles": 136,
-    "pendingLiterals": 5023,
+    "migratedFiles": 764,
+    "pendingFiles": 135,
+    "pendingLiterals": 4541,
     "excludedFiles": 327,
     "excludedLiterals": 14897,
-    "migratedLiterals": 22828
+    "migratedLiterals": 23310
   },
   "workflow": [
     "开工：从本文件取本票 files，逐件登记进 tooling/i18n-scope.json 的 files（先跑两道门拿红读数＝范围已挂但还没迁）。",

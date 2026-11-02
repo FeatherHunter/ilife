@@ -17,7 +17,7 @@ import type { DataTextInput, LogTextInput } from "base-paint";
 import { assembleSheetPage, ticketCollectRuntime } from "../shared/docPage.js";
 import { WRITE_DECLARATION } from "./declaration.js";
 import { writeSection } from "../shared/writeParts.js";
-import { SAY_WORDS } from "./sayWords.js";
+import { sayWords } from "./sayWords.js";
 import { buildCollectCopyCsv, buildCollectCopyJson, buildCollectCopyText } from "./collectCopyText.js";
 import type { CollectCopyFacts, CollectExtra } from "./collectCopyText.js";
 
@@ -31,7 +31,7 @@ function sayTemplateOf(word: string): string {
   return "";
 }
 
-/** 把表里的 {word} 占位符换成投影出来的唤醒词（表里只有占位符，没有词面）。 */
+/** 把仍以裸占位符留下的 {word} 换成投影出来的唤醒词（带文案的模板已由 sayWords(word) 取词时填好）。 */
 function withWord(text: string, word: string): string {
   return text.split("{word}").join(word);
 }
@@ -260,7 +260,7 @@ export function sayCollectOut(input: {
   readonly data: DataTextInput;
   readonly log: LogTextInput;
 }): string | null {
-  const raw = SAY_WORDS[input.sayKey];
+  const raw = sayWords(input.word)[input.sayKey];
   if (raw === undefined) return null;
   const w = input.word;
   const spec: SayWordSpec = {
