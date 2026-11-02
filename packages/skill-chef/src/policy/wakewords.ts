@@ -2,7 +2,9 @@
 // HELP 速查唯一上游；改这里，SKILL.md 的说明面与快照（构建期）、HELP 页的卡状态（生成器）三处跟进。
 // 50 条 = 37 条原路由词（下标 1..37 不动）＋ 13 条本次接入词（下标 38..50，按域归组）。
 // 改这张表＝同时改三处登记面，判据见 `docs/skills/skill-chef/t841-登记面对账.mjs`。
+import { currentRenderLanguage } from 'base-entries';
 import { ChefPolicyError } from '../fetch/errors.js';
+import { WAKE_EN_ROUTES } from './routes.en.generated.js';
 
 export type ChefKey =
   | 'chef.recipe.view' | 'chef.recipe.search' | 'chef.recipe.write' | 'chef.cooking.run'
@@ -73,11 +75,32 @@ export const WAKE_TABLE: WakeEntry[] = [
   { phrase: '备份', key: 'chef.history.query', preset: { kind: 'backup' } },
 ];
 
+/** 英文唤醒词表（票 #1310）：来源 `wake-en.json`，键／槽位／预设照抄中文那条（生成期已校验）。 */
+const WAKE_TABLE_EN: readonly WakeEntry[] = WAKE_EN_ROUTES.map((e) => ({
+  phrase: e.phrase,
+  key: e.key as ChefKey,
+  ...(e.needs === undefined ? {} : { needs: [...e.needs] }),
+  ...(e.preset === undefined ? {} : { preset: { ...e.preset } }),
+}));
+
 const SORTED = [...WAKE_TABLE].sort((a, b) => b.phrase.length - a.phrase.length);
+
+/** 英文表同一条最长匹配规则（两张表各自排序，不同时参与匹配）。 */
+const SORTED_EN = [...WAKE_TABLE_EN].sort((a, b) => b.phrase.length - a.phrase.length);
+
+/** 渲染语言的主标签（`en`／`zh`；`en-US` 按 `en` 算）。 */
+function renderLanguage(): string {
+  return currentRenderLanguage().trim().toLowerCase().split('-')[0];
+}
+
+/** 按语言单选一张表：en 只查英文表，其余（含未设语言）只查中文表。 */
+function sortedFor(): readonly WakeEntry[] {
+  return renderLanguage() === 'en' ? SORTED_EN : SORTED;
+}
 
 export function routeWakeword(text: string, ctx: Record<string, unknown> = {}): WakeRoute {
   if (typeof text !== 'string' || text.length === 0) throw new ChefPolicyError('POLICY_NO_MATCH', '唤醒词为空');
-  const hit = SORTED.find((e) => text.includes(e.phrase));
+  const hit = sortedFor().find((e) => text.includes(e.phrase));
   if (!hit) throw new ChefPolicyError('POLICY_NO_MATCH', '无命中唤醒词：' + text);
   for (const s of hit.needs || []) {
     const v = (ctx as Record<string, unknown>)[s];

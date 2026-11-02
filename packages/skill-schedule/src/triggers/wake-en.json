@@ -1,0 +1,20 @@
+{
+  "entries": [
+    {
+      "zh": "作息管家 HELP",
+      "en": "schedule help"
+    },
+    {
+      "zh": "记作息",
+      "en": "log schedule"
+    },
+    {
+      "zh": "查作息",
+      "en": "check schedule"
+    },
+    {
+      "zh": "规划明天",
+      "en": "plan tomorrow"
+    }
+  ]
+}

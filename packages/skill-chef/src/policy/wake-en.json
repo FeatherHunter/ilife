@@ -1,0 +1,20 @@
+{
+  "entries": [
+    {
+      "zh": "私家大厨HELP",
+      "en": "chef help"
+    },
+    {
+      "zh": "搜菜",
+      "en": "search recipe"
+    },
+    {
+      "zh": "看菜谱",
+      "en": "view recipe"
+    },
+    {
+      "zh": "加菜",
+      "en": "add recipe"
+    }
+  ]
+}

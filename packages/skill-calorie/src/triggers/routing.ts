@@ -31,8 +31,10 @@
  * 零 py 命令引用（含本注释）：本文件不含任何 py 起头的命令，exec `cli` 一律 `calorie-cmd-read calorie.*` 形态；
  * 断言见 `test/calorie-routing-81.test.mjs`。
  */
-import type { ExecWakeRoute, NonExecWakeRoute, WakeRoute } from './routeSpec.js';
+import { currentRenderLanguage } from 'base-entries';
+import type { ExecWakeRoute, NonExecWakeRoute, RouteKey, SceneNo, WakeRoute } from './routeSpec.js';
 import { ALL_ROUTES, COVERAGE_REPAIR_ROUTES, NEW_KEY_ROUTES, WAKE_ROUTES } from './routes.generated.js';
+import { WAKE_EN_ROUTES } from './routes.en.generated.js';
 
 /** 记录与类型：`./routeSpec.js` 是**类型唯一处**（本文件只再导出，改名／改形都只动那一处）。 */
 export type { ExecWakeRoute, NonExecWakeRoute, NonExecBucket, RouteKey, SceneNo, WakeRoute } from './routeSpec.js';
@@ -232,9 +234,34 @@ export const EXEC_ROUTES: readonly ExecWakeRoute[] = WAKE_ROUTES.filter(
   (r): r is ExecWakeRoute => r.kind === 'exec',
 );
 
-/** 唤醒词 → 路由（查表；无命中返空数组，不返 null 冒充） */
+/** 英文唤醒词记录（票 #1310）：来源 `wake-en.json`，键／场景／CLI 照抄中文那条；只在渲染语言为 en 时参与路由。 */
+const EN_ROUTES: readonly ExecWakeRoute[] = WAKE_EN_ROUTES.map((e) => ({
+  wakeWord: e.wakeWord,
+  scene: (e.scene ?? '') as SceneNo,
+  kind: 'exec',
+  key: e.key as RouteKey,
+  cli: e.cli ?? '',
+}));
+
+/** 英文记录按唤醒词归并（与中文那张同形，两张表不同时参与匹配）。 */
+const EN_ROUTES_BY_WAKE_WORD: Readonly<Record<string, readonly WakeRoute[]>> = EN_ROUTES.reduce(
+  (acc, r) => {
+    (acc[r.wakeWord] ??= [] as ExecWakeRoute[]).push(r);
+    return acc;
+  },
+  {} as Record<string, ExecWakeRoute[]>,
+);
+
+/** 渲染语言的主标签（`en`／`zh`；`en-US` 按 `en` 算）。 */
+function renderLanguage(): string {
+  return currentRenderLanguage().trim().toLowerCase().split('-')[0];
+}
+
+/** 唤醒词 → 路由（查表；无命中返空数组，不返 null 冒充）。
+ *  按语言单选一张表：en 只查英文表，其余（含未设语言）只查中文表——两套不同时参与匹配。 */
 export function routesFor(wakeWord: string): readonly WakeRoute[] {
-  return ROUTES_BY_WAKE_WORD[String(wakeWord ?? '').trim()] ?? [];
+  const table = renderLanguage() === 'en' ? EN_ROUTES_BY_WAKE_WORD : ROUTES_BY_WAKE_WORD;
+  return table[String(wakeWord ?? '').trim()] ?? [];
 }
 
 /** calorie key → 可执行 cli（无入口返 null） */
