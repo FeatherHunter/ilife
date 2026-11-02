@@ -4302,7 +4302,7 @@
           "byClass": {
             "ident": 2
           },
-          "reason": "生成件（帮助登记表由生成器产出，禁手改）"
+          "reason": "手写常量（非生成件）：HELP／速查文件名主体（ident 2 条）与落点目录默认名；文件名主体按 #1235:8 冻结不译（docs/agents/多语言-文件名裁决.md:8），是产物文件名不是显示文案，故不迁"
         },
         {
           "path": "packages/skill-home/src/help/output.ts",
@@ -5689,7 +5689,7 @@
           "byClass": {
             "ident": 2
           },
-          "reason": "生成件（帮助登记表由生成器产出、禁手改），不迁"
+          "reason": "手写常量（非生成件）：HELP／速查文件名主体（ident 2 条）与落点目录默认名；文件名主体按 #1235:8 冻结不译（docs/agents/多语言-文件名裁决.md:8），是产物文件名不是显示文案，故不迁"
         },
         {
           "path": "packages/skill-chef/src/help/output.ts",
