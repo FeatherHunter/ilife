@@ -20,6 +20,15 @@ import { m } from '../../entries/index.js';
 /** 放大镜字形（公共层自产标记；`aria-hidden`，不参与朗读）。 */
 const ICON = '<span class="' + SEARCH_ROOT_CLASS + '-ico" aria-hidden="true">⌕</span>';
 
+/** 读数行里的 DOM 锚点占位：`m()` 的占位符只放纯文本，结构用哨兵取词后再换回来（手册 §4.6：结构留在源码里）。 */
+const SLOT_A = '\u0000';
+const SLOT_B = '\u0001';
+
+/** 把哨兵换回结构标记（替换串用函数形式，避免 `$` 被当成特殊语义）。 */
+function fillSlot(text: string, slot: string, markup: string): string {
+  return text.replace(slot, () => markup);
+}
+
 /** 错态行的 id（`aria-describedby` 复用；同一页两个搜索框按机器键区分）。 */
 export function searchErrorId(name: string): string {
   return 'ilife-search-err-' + name;
@@ -53,17 +62,22 @@ function readoutHtml(model: SearchFieldModel): string {
   const status = '<p class="' + c + '-status" role="status" ' + SEARCH_STATUS_ATTR + '="">'
     + '<span class="' + c + '-status-text"><b ' + SEARCH_COUNT_ATTR + '="">' + SEARCH_DEFAULTS.unset + '</b> '
     + esc(m('base-render.components-search-field-render.c003', { noun: model.noun }))
-    + (pickedLabel === '' ? '' : '<span class="' + c + '-dim">' + m('base-render.components-search-field-render.c005', {
-      p0: '<span ' + SEARCH_SCOPE_NAME_ATTR + '="">' + esc(pickedLabel) + '</span>' }) + '</span>')
+    + (pickedLabel === '' ? '' : '<span class="' + c + '-dim">' + fillSlot(
+      m('base-render.components-search-field-render.c005', { p0: SLOT_A }),
+      SLOT_A,
+      '<span ' + SEARCH_SCOPE_NAME_ATTR + '="">' + esc(pickedLabel) + '</span>') + '</span>')
     + '</span>'
     + '<span class="' + c + '-status-loading">' + esc(model.loadingText) + '</span>'
     + '</p>';
   const nav = '<span class="' + c + '-nav">'
     + '<button type="button" class="' + c + '-step" ' + SEARCH_PREV_ATTR + '="" aria-label="' + SEARCH_DEFAULTS.prevLabel + '"'
     + (model.disabled || model.loading ? ' disabled' : '') + '>‹</button>'
-    + '<span class="' + c + '-pos" ' + SEARCH_POS_ATTR + '="">' + m('base-render.components-search-field-render.c006', {
-      p0: '<b ' + SEARCH_AT_ATTR + '="">' + SEARCH_DEFAULTS.unset + '</b>', p1: esc(model.noun),
-      p2: '<b ' + SEARCH_COUNT_ATTR + '="">' + SEARCH_DEFAULTS.unset + '</b>', p3: esc(model.noun) }) + '</span>'
+    + '<span class="' + c + '-pos" ' + SEARCH_POS_ATTR + '="">'
+    + fillSlot(fillSlot(m('base-render.components-search-field-render.c006', {
+      p0: SLOT_A, p1: esc(model.noun), p2: SLOT_B, p3: esc(model.noun),
+    }), SLOT_A, '<b ' + SEARCH_AT_ATTR + '="">' + SEARCH_DEFAULTS.unset + '</b>'),
+    SLOT_B, '<b ' + SEARCH_COUNT_ATTR + '="">' + SEARCH_DEFAULTS.unset + '</b>')
+    + '</span>'
     + '<button type="button" class="' + c + '-step" ' + SEARCH_NEXT_ATTR + '="" aria-label="' + SEARCH_DEFAULTS.nextLabel + '"'
     + (model.disabled || model.loading ? ' disabled' : '') + '>›</button>'
     + '</span>';

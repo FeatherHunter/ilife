@@ -2,11 +2,12 @@
  *
  * 参数解析（`parseArgs`／`parseReadArgs`）＋ 启动预检（`preflight`：node 版本与库目录）＋
  * 超时提示（`toast`）。变化频率与交付装配不同，故与 `delivery.ts` 分件（结构标准：按变化频率分）。
- * 对外 4 件（铁律五）：`toast`／`preflight`／`parseReadArgs`／`USAGE`。
+ * 对外 4 件（铁律五）：`toast`／`preflight`／`parseReadArgs`／`usage()`。
  *
  * #676 · 库目录不再读环境变量：唯一真相是配置文件（`paths.ts:resolveDbDir`，见那里件头）。
  */
 import { isLanguageArg } from 'base-link-core';
+import { runWithLanguage } from 'base-entries';
 import { resolveDbDir } from '../paths.js';
 import { fail } from '../shared/params.js';
 import { m } from '../entries/index.js';
@@ -35,9 +36,21 @@ export interface ReadArgs {
   formatLanguage: string | undefined;
 }
 
-const USAGE = m('skill-calorie.cli-readArgs.c007');
+/** 解析期还没有语言上下文（语言选择链在配置 key 拦下之后才跑）：`--language` 显式给了就按它取词，否则 zh。 */
+function parseLanguage(a: string[]): string {
+  for (let i = 1; i + 1 < a.length; i++) {
+    if (a[i] === '--language') return a[i + 1] as string;
+  }
+  return '';
+}
+
+/** 用法提示：必须在执行期取词（模块顶层取词永远是 zh，手册 §4.8），故用函数不用常量。 */
+function usage(): string {
+  return m('skill-calorie.cli-readArgs.c007');
+}
 
 function parseArgs(a: string[]): ReadArgs {
+  const language = parseLanguage(a);
   const o: ReadArgs = {
     key: a[0], params: undefined, html: undefined, timeout: DEFAULT_TIMEOUT_MS, language: undefined, formatLanguage: undefined,
   };
@@ -50,8 +63,8 @@ function parseArgs(a: string[]): ReadArgs {
     }
     else if (a[i] === '--timeout' && i + 1 < a.length) {
       o.timeout = Number(a[++i]);
-      if (!Number.isFinite(o.timeout) || (o.timeout as number) <= 0) fail(2, m('skill-calorie.cli-readArgs.c002'));
-    } else fail(2, m('skill-calorie.cli-readArgs.c003', { p0: String(a[i]), p1: String(USAGE) }));
+      if (!Number.isFinite(o.timeout) || (o.timeout as number) <= 0) fail(2, runWithLanguage(language, () => m('skill-calorie.cli-readArgs.c002')));
+    } else fail(2, runWithLanguage(language, () => m('skill-calorie.cli-readArgs.c003', { p0: String(a[i]), p1: usage() })));
   }
   return o;
 }
@@ -83,4 +96,4 @@ function bodySceneFor(key: string | undefined): string | null {
   return null;
 }
 
-export { parseReadArgs, preflight, toast, USAGE, bodySceneFor };
+export { parseReadArgs, preflight, toast, usage, bodySceneFor };
