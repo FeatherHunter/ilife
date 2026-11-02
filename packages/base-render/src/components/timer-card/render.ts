@@ -100,10 +100,10 @@ export function renderTimerCard(input: TimerCardInput): string {
     + '<i class="' + slot('bar-fill') + '" ' + TIMER_BAR_ATTR + '="1" style="transform:scaleX('
     + ratio.toFixed(4) + ')"></i></div>';
   const readouts = '<div class="' + slot('readouts') + '">'
-    + '<span>已过 <b ' + TIMER_ELAPSED_ATTR + '="1">'
+    + '<span>' + esc(m('base-render.components-timer-card-render.c003')) + ' <b ' + TIMER_ELAPSED_ATTR + '="1">'
     + esc(timerClockText(model.totalSeconds - remaining)) + '</b></span>'
-    + '<span>总 <b>' + esc(timerClockText(model.totalSeconds)) + '</b></span>'
-    + '<span>还剩 <b ' + TIMER_REST_ATTR + '="1">' + esc(timerClockText(remaining)) + '</b></span>'
+    + '<span>' + esc(m('base-render.components-timer-card-render.c004')) + ' <b>' + esc(timerClockText(model.totalSeconds)) + '</b></span>'
+    + '<span>' + esc(m('base-render.components-timer-card-render.c002')) + ' <b ' + TIMER_REST_ATTR + '="1">' + esc(timerClockText(remaining)) + '</b></span>'
     + '</div>';
   const hint = model.hint === undefined
     ? ''

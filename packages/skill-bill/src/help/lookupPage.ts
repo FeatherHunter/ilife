@@ -132,7 +132,7 @@ export function buildLookupIndexInput(): LookupIndexInput {
  *  为什么在页面侧：这句话说的是「这一页怎么用」（点组名展开、点目录跳组），不是索引件本身的形状。 */
 function foldNote(): string {
   return '<p class="' + H02_FOLD_NOTE_CLASS + '">'
-    + String(buildLookupGroups().length) + '组默认收起 · 点组名展开，点上面目录可直接跳到那一组。</p>';
+    + m('skill-bill.help-lookupPage.c022', { p0: String(buildLookupGroups().length) }) + '</p>';
 }
 
 /** 速查表整页 HTML（mode 取 lookup 的落盘产物；复制三份走人话门，空态有下一步）。 */

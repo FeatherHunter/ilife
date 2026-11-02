@@ -133,7 +133,7 @@ function chipHtml(model: RelationPickerModel, r: RelationPickerRow): string {
     + (r.selected ? ' aria-current="true"' : '') + (r.hidden ? ' hidden' : '') + '>'
     + '<b class="' + relationPickerSlot('name') + '" ' + RELATION_PICKER_NAME_ATTR + '="1">'
     + highlightHtml(r.title, model.query.toLowerCase()) + '</b>'
-    + '<span class="' + relationPickerSlot('tag') + '">用过</span></button>';
+    + '<span class="' + relationPickerSlot('tag') + '">' + esc(m('base-render.components-relation-picker-render.c002')) + '</span></button>';
 }
 
 /** 一行选项：记号 ＋ 名字（命中词标出来）＋ 副语 ＋ 读数（＋ `inline` 下行尾那一枚「已选／选它」）。 */
@@ -252,7 +252,7 @@ function renderInline(model: RelationPickerModel): string {
       + '<span class="' + relationPickerSlot('tick') + '" aria-hidden="true">' + esc(T.tick) + '</span>'
       + '<span class="' + relationPickerSlot('tx') + '">'
       + '<b class="' + relationPickerSlot('result') + '">' + (s === undefined ? '' : esc(T.chosenPre) + ' ' + esc(result)) + '</b>'
-      + '<em class="' + relationPickerSlot('why') + '">点「换」重新选一个（字段行与这一行始终读的是同一个值）</em>'
+      + '<em class="' + relationPickerSlot('why') + '">' + esc(m('base-render.components-relation-picker-render.c003')) + '</em>'
       + '</span>'
       + '<button type="button" class="' + relationPickerSlot('change') + '"'
       + ' ' + RELATION_PICKER_CHANGE_ATTR + '="' + esc(model.id) + '"'

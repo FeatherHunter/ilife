@@ -97,7 +97,7 @@ export function renderChartPlaceholder(input: unknown): string {
   parts.push('<ul class="' + chartPlaceholderSlot('lines') + '">');
   for (const ln of model.lines) parts.push('<li class="' + chartPlaceholderSlot('line') + '">' + esc(ln) + '</li>');
   parts.push('</ul>');
-  if (model.needReal) parts.push('<p class="' + chartPlaceholderSlot('need') + '">需真图</p>');
+  if (model.needReal) parts.push('<p class="' + chartPlaceholderSlot('need') + '">' + esc(m('base-render.components-chart-placeholder-render.c004')) + '</p>');
   parts.push('</div>');
   return parts.join('');
 }
