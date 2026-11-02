@@ -15,6 +15,32 @@ function pageText() {
     k004: m('skill-home.setup-pages-import-restore.c004'),
     k005: m('skill-home.setup-pages-import-restore.c005'),
     k006: m('skill-home.setup-pages-import-restore.c006'),
+    k007: m('skill-home.setup-pages-import-restore.c019'),
+    k008: m('skill-home.setup-pages-import-restore.c020'),
+    k009: m('skill-home.setup-pages-import-restore.c021'),
+    k010: m('skill-home.setup-pages-import-restore.c022'),
+    k011: m('skill-home.setup-pages-import-restore.c023'),
+    k012: m('skill-home.setup-pages-import-restore.c024'),
+    k013: m('skill-home.setup-pages-import-restore.c025'),
+    k014: m('skill-home.setup-pages-import-restore.c026'),
+    k015: m('skill-home.setup-pages-import-restore.c027'),
+    k016: m('skill-home.setup-pages-import-restore.c028'),
+    k017: m('skill-home.setup-pages-import-restore.c029'),
+    k018: m('skill-home.setup-pages-import-restore.c030'),
+    k019: m('skill-home.setup-pages-import-restore.c031'),
+    k020: m('skill-home.setup-pages-import-restore.c032'),
+    k021: m('skill-home.setup-pages-import-restore.c033'),
+    k022: m('skill-home.setup-pages-import-restore.c034'),
+    k023: m('skill-home.setup-pages-import-restore.c035'),
+    k024: m('skill-home.setup-pages-import-restore.c036'),
+    k025: m('skill-home.setup-pages-import-restore.c037'),
+    k026: m('skill-home.setup-pages-import-restore.c038'),
+    k027: m('skill-home.setup-pages-import-restore.c039'),
+    k028: m('skill-home.setup-pages-import-restore.c040'),
+    k029: m('skill-home.setup-pages-import-restore.c041'),
+    k030: m('skill-home.setup-pages-import-restore.c042'),
+    k031: m('skill-home.setup-pages-import-restore.c009'),
+    k032: m('skill-home.setup-pages-import-restore.c012'),
   };
 }
 
@@ -142,27 +168,27 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '@media(max-width:820px){.su-step{min-width:100%}.su-btn{width:100%}}'
     + '</style>'
     + '<div class="su-wrap">'
-    + '<div class="su-hero"><div class="su-eyebrow">开始使用</div>'
-    + '<p class="su-lead">先选文件看预告，确认后再真正导入。</p></div>'
+    + '<div class="su-hero"><div class="su-eyebrow">' + L.k007 + '</div>'
+    + '<p class="su-lead">' + L.k008 + '</p></div>'
     + '<section class="su-sec" data-block="fields">'
-    + '<h2 data-need="四步（选择文件/校验结果/冲突预览/确认导入）">四个步骤</h2>'
+    + '<h2 data-need="四步（选择文件/校验结果/冲突预览/确认导入）">' + L.k009 + '</h2>'
     + '<div class="su-steps" data-need="done" data-extra="current">' + steps + '</div>'
-    + '<h2 data-need="校验项">校验结果</h2>'
+    + '<h2 data-need="校验项">' + L.k010 + '</h2>'
     + '<div class="su-tablewrap"><table class="su-table">'
-    + '<tr><th>备份中物品</th><td>' + (nums.backup === '—' ? '—' : m('skill-home.setup-pages-import-restore.c013', { p0: String(escapeHtml(nums.backup)) })) + '</td></tr>'
-    + '<tr><th>当前库物品</th><td>' + (nums.current === '—' ? '—' : m('skill-home.setup-pages-import-restore.c014', { p0: String(escapeHtml(nums.current)) })) + '</td></tr>'
+    + '<tr><th>' + L.k011 + '</th><td>' + (nums.backup === '—' ? '—' : m('skill-home.setup-pages-import-restore.c013', { p0: String(escapeHtml(nums.backup)) })) + '</td></tr>'
+    + '<tr><th>' + L.k012 + '</th><td>' + (nums.current === '—' ? '—' : m('skill-home.setup-pages-import-restore.c014', { p0: String(escapeHtml(nums.current)) })) + '</td></tr>'
     + (isDone ? '<tr>' + '<th>' + L.k001 + '</th>' + '<td>' + (nums.after === '—' ? '—' : escapeHtml(nums.after) + L.k002) + '</td>' + '</tr>' : '')
     + (safety !== '' ? '<tr>' + '<th>' + L.k003 + '</th>' + '<td>' + escapeHtml(safety) + '</td>' + '</tr>' : '')
     + '</table></div>'
-    + '<h2 data-need="冲突名单">冲突处理</h2>'
+    + '<h2 data-need="冲突名单">' + L.k013 + '</h2>'
     + '<div class="su-tablewrap" data-need="冲突处理下拉"><table class="su-table">'
-    + '<tr><th>处理模式</th><th>这一档怎么处理</th></tr>'
-    + '<tr><td data-need="跳过同名">跳过同名</td><td>整库覆盖</td></tr>'
-    + '<tr><td data-need="覆盖同名">覆盖同名</td><td>整库覆盖</td></tr>'
+    + '<tr><th>' + L.k014 + '</th><th>' + L.k015 + '</th></tr>'
+    + '<tr><td data-need="跳过同名">' + L.k016 + '</td><td>' + L.k017 + '</td></tr>'
+    + '<tr><td data-need="覆盖同名">' + L.k018 + '</td><td>' + L.k017 + '</td></tr>'
     + '</table></div>'
-    + '<p class="su-note">恢复不逐条比对同名；兜底是恢复前自动留的那份备份。</p>'
-    + '<p class="su-note" hidden data-need="冲突超10条折叠">只看前十条，其余只报总数。</p>'
-    + '<h2 data-need="导入结果">导入结果</h2>'
+    + '<p class="su-note">' + L.k019 + '</p>'
+    + '<p class="su-note" hidden data-need="冲突超10条折叠">' + L.k020 + '</p>'
+    + '<h2 data-need="导入结果">' + L.k021 + '</h2>'
     + (isDone
       ? '<p>' + L.k004 + '</p>'
       : isPreview
@@ -170,14 +196,14 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
         : '<p>' + L.k006 + '</p>')
     + '</section>'
     + '<section class="su-sec" data-block="operations">'
-    + '<h2>可以做的操作</h2>'
+    + '<h2>' + L.k022 + '</h2>'
     + '<div class="su-actions">'
-    + '<button class="su-btn" data-need="选择文件" data-t="我马上发一份备份文件，请进入等待状态">选择文件</button>'
+    + '<button class="su-btn" data-need="选择文件" data-t="我马上发一份备份文件，请进入等待状态">' + L.k031 + '</button>'
     // #817（④触控够大·主次可辨）：「确认导入」是整库覆盖的破坏性一步，不再与主操作「选择文件」同为实心蓝，
     // 降 ghost；「撤销导入」「知道了」原本就是 ghost，不动。载荷 data-t 与块登记的 data-need 一字不动。
-    + '<button class="su-btn ghost" data-need="确认导入" data-t="请确认导入，恢复前请先自动备份">确认导入</button>'
-    + '<button class="su-btn ghost" data-need="撤销导入" data-t="请用恢复前备份恢复，撤销上次导入">撤销导入</button>'
-    + '<button class="su-btn ghost" data-need="知道了" id="suKnow">知道了</button>'
+    + '<button class="su-btn ghost" data-need="确认导入" data-t="请确认导入，恢复前请先自动备份">' + L.k032 + '</button>'
+    + '<button class="su-btn ghost" data-need="撤销导入" data-t="请用恢复前备份恢复，撤销上次导入">' + L.k023 + '</button>'
+    + '<button class="su-btn ghost" data-need="知道了" id="suKnow">' + L.k024 + '</button>'
     + '</div>'
     + '<span data-need="复制数据" hidden></span>'
     + '<span data-need="复制日志" hidden></span>'
@@ -187,15 +213,15 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
       })
     + '</section>'
     + '<section class="su-sec" data-block="empty">'
-    + '<h2>这种时候会怎样</h2>'
-    + '<p data-need="承诺语：导入前自动备份＋失败回滚">导入前会自动备份现有数据，万一失败会自动回滚，现有数据不会丢。</p>'
-    + '<p data-need="异常：数据解析失败／数据校验失败／导入失败">如果提示解析失败、校验失败或者导入失败，先确认发过去的是备份文件，再走一次预告。</p>'
+    + '<h2>' + L.k025 + '</h2>'
+    + '<p data-need="承诺语：导入前自动备份＋失败回滚">' + L.k026 + '</p>'
+    + '<p data-need="异常：数据解析失败／数据校验失败／导入失败">' + L.k027 + '</p>'
     + '</section>'
     + '<section class="su-sec" data-block="status">'
-    + '<h2>状态说明</h2>'
-    + '<p>步骤状态分三种：已完成，进行中，待办。当前走到哪一步，卡片上看得出来。</p>'
+    + '<h2>' + L.k028 + '</h2>'
+    + '<p>' + L.k029 + '</p>'
     + '</section>'
-    + '<details hidden class="su-raw"><summary>原始回执</summary><pre>'
+    + '<details hidden class="su-raw"><summary>' + L.k030 + '</summary><pre>'
     + escapeHtml(JSON.stringify(env.data)) + '</pre></details>'
     + '</div>'
     + '<div class="su-toast" id="suToast" role="status"></div>'

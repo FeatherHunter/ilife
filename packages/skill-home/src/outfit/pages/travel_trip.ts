@@ -34,6 +34,7 @@ function pageText() {
     k014: m('skill-home.outfit-pages-travel-trip.c013'),
     k015: m('skill-home.outfit-pages-travel-trip.c014'),
     k016: m('skill-home.outfit-pages-travel-trip.c015'),
+    k017: (p0: string) => m('skill-home.outfit-pages-travel-trip.c040', { p0: String(p0) }),
   };
 }
 
@@ -218,10 +219,11 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + 'function trToast(m){var t=document.getElementById("trToast");if(!t){t=document.createElement("div");t.style.cssText="position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#4a3d28;color:#fdfaf4;padding:9px 18px;border-radius:99px;font-size:13px;z-index:120";document.body.appendChild(t);}t.textContent=m;t.style.opacity="1";setTimeout(function(){t.style.opacity="0";},1600);}'
     + "function trCopy(t){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){trToast(\"" + SX.k002 + "\");}).catch(function(){trToast(\"" + SX.k003 + "\");});}else{var ta=document.createElement(\"textarea\");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand(\"copy\");trToast(\"" + SX.k004 + "\");}catch(e){trToast(\"" + SX.k005 + "\");}ta.remove();}}"
     + 'function trPaint(){var el=document.getElementById("ofProg");if(!el)return;var n=TR.items.filter(function(_,i){return PICK[i];}).length;'
+    + 'var PT=' + JSON.stringify(L.k005('{p0}', '{p1}')) + ',MS=' + JSON.stringify(L.k017('{p0}')) + ';'
     + 'var pct=TR.items.length?Math.round(n*100/TR.items.length):0;'
     + 'var miss=TR.items.filter(function(_,i){return !PICK[i];})[0];'
     + 'el.innerHTML="<div class=\'of-prog\'><div class=\'of-progfill\' style=\'width:"+pct+"%\'></div></div>"'
-    + '+"<div class=\'of-progtxt\'>已装 "+n+"/"+TR.items.length+" 件"+(miss?" 遗漏提示："+miss.name+"没装":"")+"</div>";}'
+    + '+"<div class=\'of-progtxt\'>"+PT.split("{p0}").join(n).split("{p1}").join(TR.items.length)+(miss?MS.split("{p0}").join(miss.name):"")+"</div>";}'
     + 'document.querySelectorAll(".of-line").forEach(function(el){el.onclick=function(){var i=el.getAttribute("data-pick");PICK[i]=!PICK[i];el.className="of-line"+(PICK[i]?" on":"");trPaint();};});'
     + 'trPaint();'
     + 'var go=document.getElementById("ofGo");if(go)go.onclick=function(){var p=TR.items.filter(function(_,i){return PICK[i];});'
