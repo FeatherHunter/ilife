@@ -22,6 +22,21 @@ function pageText() {
     k011: m('skill-home.setup-pages-health-report.c011'),
     k012: m('skill-home.setup-pages-health-report.c012'),
     k013: m('skill-home.setup-pages-health-report.c013'),
+    k014: m('skill-home.setup-pages-health-report.c028'),
+    k015: m('skill-home.setup-pages-health-report.c029'),
+    k016: m('skill-home.setup-pages-health-report.c030'),
+    k017: m('skill-home.setup-pages-health-report.c031'),
+    k018: m('skill-home.setup-pages-health-report.c032'),
+    k019: m('skill-home.setup-pages-health-report.c033'),
+    k020: m('skill-home.setup-pages-health-report.c034'),
+    k021: m('skill-home.setup-pages-health-report.c035'),
+    k022: m('skill-home.setup-pages-health-report.c036'),
+    k023: m('skill-home.setup-pages-health-report.c037'),
+    k024: m('skill-home.setup-pages-health-report.c038'),
+    k025: m('skill-home.setup-pages-health-report.c039'),
+    k026: m('skill-home.setup-pages-health-report.c040'),
+    k027: m('skill-home.setup-pages-health-report.c041'),
+    k028: m('skill-home.setup-pages-health-report.c042'),
   };
 }
 
@@ -132,26 +147,26 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '@media(max-width:820px){.su-btn{width:100%}}'
     + '</style>'
     + '<div class="su-wrap">'
-    + '<div class="su-hero"><div class="su-eyebrow">开始使用</div>'
+    + '<div class="su-hero"><div class="su-eyebrow">' + L.k014 + '</div>'
     // #817：壳里的 h1 已是「查异常」，这里再挂同义的 h2「数据健康检查」＝同一事实两遍，删掉。
     + '<p class="su-lead">' + (healthy ? m('skill-home.setup-pages-health-report.c014') : m('skill-home.setup-pages-health-report.c015', { p0: String(total) })) + '</p></div>'
     + '<section class="su-sec" data-block="fields">'
-    + '<h2 data-need="环境信息">本次检查概况</h2>'
+    + '<h2 data-need="环境信息">' + L.k015 + '</h2>'
     + '<div class="su-grid">'
-    + '<div class="su-card"><b data-need="问题总数">问题总数</b><span class="' + (healthy ? 'su-ok' : 'su-bad') + '">' + total + '</span></div>'
-    + '<div class="su-card"><b>检查项数</b><span>' + real.length + '</span></div>'
-    + '<div class="su-card"><b data-need="健康标记">健康标记</b><span class="' + (healthy ? 'su-ok' : 'su-warn') + '" data-need="良好" data-extra="待处理">' + (healthy ? m('skill-home.setup-pages-health-report.c016') : m('skill-home.setup-pages-health-report.c017')) + '</span></div>'
+    + '<div class="su-card"><b data-need="问题总数">' + L.k016 + '</b><span class="' + (healthy ? 'su-ok' : 'su-bad') + '">' + total + '</span></div>'
+    + '<div class="su-card"><b>' + L.k017 + '</b><span>' + real.length + '</span></div>'
+    + '<div class="su-card"><b data-need="健康标记">' + L.k018 + '</b><span class="' + (healthy ? 'su-ok' : 'su-warn') + '" data-need="良好" data-extra="待处理">' + (healthy ? m('skill-home.setup-pages-health-report.c016') : m('skill-home.setup-pages-health-report.c017')) + '</span></div>'
     + '</div>'
-    + '<h2 data-need="检查项列表">检查项</h2>'
+    + '<h2 data-need="检查项列表">' + L.k019 + '</h2>'
     + (healthy
       ? '<p class="su-note">' + L.k006 + '</p>' + '<p hidden>' + '<span data-need="勾选">' + '</span>' + '<span data-need="动作列">' + '</span>' + '</p>'
       : '<div class="ilife-block-data-table">' + '<table class="ilife-block-data-table-table">' + '<thead>' + '<tr>' + '<th scope="col" class="ilife-block-data-table-cell-left" data-need="勾选">' + L.k007 + '</th>' + '<th scope="col" class="ilife-block-data-table-cell-left">' + L.k008 + '</th>' + '<th scope="col" class="ilife-block-data-table-cell-left">' + L.k009 + '</th>' + '<th scope="col" class="ilife-block-data-table-cell-left" data-need="动作列">' + L.k010 + '</th>' + '</tr>' + '</thead>' + '<tbody>' + rows + '</tbody>' + '</table>' + '</div>')
     + '</section>'
     + '<section class="su-sec" data-block="operations">'
-    + '<h2>可以做的操作</h2>'
+    + '<h2>' + L.k020 + '</h2>'
     + '<div class="su-actions">'
-    + '<button class="su-btn" data-need="复制选中修复引导" id="suCopyFix">复制选中修复引导</button>'
-    + '<button class="su-btn ghost" data-need="知道了" id="suKnow">知道了</button>'
+    + '<button class="su-btn" data-need="复制选中修复引导" id="suCopyFix">' + L.k021 + '</button>'
+    + '<button class="su-btn ghost" data-need="知道了" id="suKnow">' + L.k022 + '</button>'
     + '</div>'
     + '<span data-need="复制数据" hidden></span>'
     + '<span data-need="复制日志" hidden></span>'
@@ -161,18 +176,18 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
       })
     + '</section>'
     + '<section class="su-sec" data-block="empty">'
-    + '<h2>这种时候会怎样</h2>'
+    + '<h2>' + L.k023 + '</h2>'
     + (healthy
       ? '<p data-need="空态：数据健康良好＋未发现数据问题">' + L.k011 + '</p>'
       : '<p>' + L.k012 + '</p>' + '<p hidden data-need="空态：数据健康良好＋未发现数据问题">' + L.k013 + '</p>')
-    + '<p data-need="拦截态：请先勾选至少1个问题">点复制之前请先勾选至少一项，没有勾选就点复制会没有内容可复制。</p>'
-    + '<p data-need="异常：数据解析失败／数据校验失败">如果页面提示解析失败或者校验失败，说明这次检查没有跑起来，换个时间再查一次。</p>'
+    + '<p data-need="拦截态：请先勾选至少1个问题">' + L.k024 + '</p>'
+    + '<p data-need="异常：数据解析失败／数据校验失败">' + L.k025 + '</p>'
     + '</section>'
     + '<section class="su-sec" data-block="status">'
-    + '<h2>口径说明</h2>'
-    + '<p>健康标记只有两种：良好表示没有待处理项，待处理表示还有事项需要看。</p>'
+    + '<h2>' + L.k026 + '</h2>'
+    + '<p>' + L.k027 + '</p>'
     + '</section>'
-    + '<details hidden class="su-raw"><summary>原始回执</summary><pre>'
+    + '<details hidden class="su-raw"><summary>' + L.k028 + '</summary><pre>'
     + escapeHtml(JSON.stringify(env.data)) + '</pre></details>'
     + '</div>'
     + '<div class="su-toast" id="suToast" role="status"></div>'
