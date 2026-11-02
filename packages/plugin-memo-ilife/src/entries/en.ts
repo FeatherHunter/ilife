@@ -52,8 +52,6 @@ export const en = {
   'plugin-memo-ilife.skill-tool.c001': "Command (a memo.* key), e.g. memo.help.lookup",
   'plugin-memo-ilife.skill-tool.c002': "Optional params object, passed through to the skill exit (--params JSON)",
   'plugin-memo-ilife.skill-tool.c003': "The only exit for running the memo skill (argv+JSON+exit); returns envelope JSON. The only way to write or read memo data; no shell, no PATH. Example keys: memo.help.lookup (Memos HELP), memo.search (search notes). If a file path is included this time, hand the file to the user and quote its path; if not, answer in text only and never invent a file.",
-  /* ── packages/plugin-memo-ilife/src/bridge.ts（#1229 迁入） ── */
-  'plugin-memo-ilife.bridge.c001': "Manager is missing; install it: dsh plugin add dsh-life-pack dsh-memo-ilife (never uninstall the manager alone)",
   /* ── packages/plugin-memo-ilife/src/settings.ts（#1229 迁入） ── */
   'plugin-memo-ilife.settings.c001': "Data directory",
   'plugin-memo-ilife.settings.c002': "Root directory for the library file and outputs. Empty = use the default directory.",
@@ -63,12 +61,14 @@ export const en = {
   'plugin-memo-ilife.settings.c006': "Name of the subdirectory under the data directory for HELP pages.",
   'plugin-memo-ilife.settings.c007': "Attachment directory",
   'plugin-memo-ilife.settings.c008': "Root directory for attachments. Empty = media under the data directory (the directory must already exist; the skill will not create it).",
-  'plugin-memo-ilife.settings.c009': "Advanced",
-  /* ── packages/plugin-memo-ilife/src/slot.ts（#1229 迁入） ── */
-  'plugin-memo-ilife.slot.c001': "Memos",
   /* ── packages/plugin-memo-ilife/src/index.ts（#1229 迁入·协议报文） ── */
   'plugin-memo-ilife.index.c004': "body is not JSON",
   'plugin-memo-ilife.index.c005': "Invalid memo request.",
   /* ── packages/plugin-memo-ilife/src/client.ts（#1229 迁入·超时提示） ── */
   'plugin-memo-ilife.client.c038': "Fetch timed out ({p0}s): no reply from the host; check the host logs and DB environment first",
+  /* ══ #1231 共享词条：由 tooling/gen-shared-copy.mjs 自 tooling/shared-copy.json 生成，勿手改 ══ */
+  'plugin-memo-ilife.slot.c001': "Memos",
+  'plugin-memo-ilife.settings.c009': "Advanced",
+  'plugin-memo-ilife.bridge.c001': "Manager is missing; install it: dsh plugin add dsh-life-pack dsh-memo-ilife (never uninstall the manager alone)",
+  /* ══ #1231 共享词条生成段结束 ══ */
 } as const satisfies MessageTable;

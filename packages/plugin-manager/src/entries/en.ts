@@ -114,12 +114,6 @@ export const en = {
   'plugin-manager.health-fetch.c006': "Host connection missing: connection.rpc.call is unavailable",
   /* ── packages/plugin-manager/src/nav.ts（#1229 迁入） ── */
   'plugin-manager.nav.c001': "Not installed [{p0}]; install it before use: {p1}",
-  'plugin-manager.nav.c002': "Cookie Accounting",
-  'plugin-manager.nav.c003': "Calories",
-  'plugin-manager.nav.c004': "Memos",
-  'plugin-manager.nav.c005': "Schedule Keeper",
-  'plugin-manager.nav.c006': "Home Keeper",
-  'plugin-manager.nav.c007': "Private Chef",
   'plugin-manager.nav.c008': "User manual",
   'plugin-manager.nav.c009': "Open user manual",
   /* ── packages/plugin-manager/src/update-contract.ts（#1229 迁入） ── */
@@ -154,8 +148,6 @@ export const en = {
   'plugin-manager.health-view.c024': "(everything below works normally)",
   /* ── packages/plugin-manager/src/config-panel-value.ts（#1229 迁入·超时提示） ── */
   'plugin-manager.config-panel-value.c011': "Config request timed out ({p0}s): no reply from the host",
-  /* ── packages/plugin-manager/src/config-panel-contract.ts（#1229 迁入） ── */
-  'plugin-manager.config-panel-contract.c001': "Advanced",
   /* ── packages/plugin-manager/src/directory-browser-parts.ts（#1229 迁入） ── */
   'plugin-manager.directory-browser-parts.c001': "Fixed disk",
   'plugin-manager.directory-browser-parts.c002': "Network drive",
@@ -164,4 +156,13 @@ export const en = {
   'plugin-manager.directory-browser-parts.c005': "Disk",
   /* ── packages/plugin-manager/src/update-targets.ts（#1229 迁入） ── */
   'plugin-manager.update-targets.c001': "iLife",
+  /* ══ #1231 共享词条：由 tooling/gen-shared-copy.mjs 自 tooling/shared-copy.json 生成，勿手改 ══ */
+  'plugin-manager.config-panel-contract.c001': "Advanced",
+  'plugin-manager.nav.c002': "Cookie Accounting",
+  'plugin-manager.nav.c003': "Calories",
+  'plugin-manager.nav.c004': "Memos",
+  'plugin-manager.nav.c005': "Schedule Keeper",
+  'plugin-manager.nav.c006': "Home Keeper",
+  'plugin-manager.nav.c007': "Private Chef",
+  /* ══ #1231 共享词条生成段结束 ══ */
 } as const satisfies MessageTable;

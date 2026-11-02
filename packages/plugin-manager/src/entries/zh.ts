@@ -118,12 +118,6 @@ export const zh = {
   'plugin-manager.health-fetch.c006': "宿主连接缺席：connection.rpc.call 不可用",
   /* ── packages/plugin-manager/src/nav.ts（#1229 迁入） ── */
   'plugin-manager.nav.c001': "未安装[{p0}]，请补装后使用：{p1}",
-  'plugin-manager.nav.c002': "饼干记账",
-  'plugin-manager.nav.c003': "卡路里",
-  'plugin-manager.nav.c004': "备忘录",
-  'plugin-manager.nav.c005': "作息管家",
-  'plugin-manager.nav.c006': "居家管家",
-  'plugin-manager.nav.c007': "私家大厨",
   'plugin-manager.nav.c008': "使用手册",
   'plugin-manager.nav.c009': "打开使用手册",
   /* ── packages/plugin-manager/src/update-contract.ts（#1229 迁入） ── */
@@ -158,8 +152,6 @@ export const zh = {
   'plugin-manager.health-view.c024': "（下列各项都正常工作）",
   /* ── packages/plugin-manager/src/config-panel-value.ts（#1229 迁入·超时提示） ── */
   'plugin-manager.config-panel-value.c011': "配置请求超时（{p0}s）：宿主未回",
-  /* ── packages/plugin-manager/src/config-panel-contract.ts（#1229 迁入） ── */
-  'plugin-manager.config-panel-contract.c001': "高级",
   /* ── packages/plugin-manager/src/directory-browser-parts.ts（#1229 迁入） ── */
   'plugin-manager.directory-browser-parts.c001': "固定磁盘",
   'plugin-manager.directory-browser-parts.c002': "网络驱动器",
@@ -168,4 +160,13 @@ export const zh = {
   'plugin-manager.directory-browser-parts.c005': "磁盘",
   /* ── packages/plugin-manager/src/update-targets.ts（#1229 迁入） ── */
   'plugin-manager.update-targets.c001': "爱生活",
+  /* ══ #1231 共享词条：由 tooling/gen-shared-copy.mjs 自 tooling/shared-copy.json 生成，勿手改 ══ */
+  'plugin-manager.config-panel-contract.c001': "高级",
+  'plugin-manager.nav.c002': "饼干记账",
+  'plugin-manager.nav.c003': "卡路里",
+  'plugin-manager.nav.c004': "备忘录",
+  'plugin-manager.nav.c005': "作息管家",
+  'plugin-manager.nav.c006': "居家管家",
+  'plugin-manager.nav.c007': "私家大厨",
+  /* ══ #1231 共享词条生成段结束 ══ */
 } as const satisfies MessageTable;

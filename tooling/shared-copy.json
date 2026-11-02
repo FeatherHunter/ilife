@@ -1,0 +1,68 @@
+{
+  "generatedBy": "tooling/gen-shared-copy.mjs（#1231）",
+  "note": "跨包重复串的**唯一可编辑处**：改这里，再跑 `node tooling/gen-shared-copy.mjs` 生成七份词条表的生成段与七个 generated.ts（照 base-combos「唯一可编辑处 → 构建期生成多份」的形状）。生成物一律勿手改；`--check` 守漂移。",
+  "shared": {
+    "advancedGroupTitle": { "zh": "高级", "en": "Advanced" },
+    "missingManagerHint": { "zh": "总管缺席，请补装：dsh plugin add dsh-life-pack {plugin}（不许单卸总管）", "en": "Manager is missing; install it: dsh plugin add dsh-life-pack {plugin} (never uninstall the manager alone)" }
+  },
+  "manager": {
+    "dir": "plugin-manager",
+    "advancedKey": "plugin-manager.config-panel-contract.c001"
+  },
+  "plugins": [
+    {
+      "dir": "plugin-bill-ilife",
+      "plugin": "dsh-bill-ilife",
+      "skill": "bill",
+      "channel": "/ilife-bill-ilife",
+      "productName": { "zh": "饼干记账", "en": "Cookie Accounting" },
+      "entriesKeys": { "slot": "plugin-bill-ilife.slot.c001", "settings": "plugin-bill-ilife.settings.c013", "bridge": "plugin-bill-ilife.bridge.c001" },
+      "managerNavKey": "plugin-manager.nav.c002"
+    },
+    {
+      "dir": "plugin-calorie",
+      "plugin": "dsh-calorie",
+      "skill": "calorie",
+      "channel": "/ilife-calorie",
+      "productName": { "zh": "卡路里", "en": "Calories" },
+      "entriesKeys": { "slot": "plugin-calorie.slot.c001", "settings": "plugin-calorie.settings.c023", "bridge": "plugin-calorie.bridge.c001" },
+      "managerNavKey": "plugin-manager.nav.c003"
+    },
+    {
+      "dir": "plugin-memo-ilife",
+      "plugin": "dsh-memo-ilife",
+      "skill": "memo",
+      "channel": "/ilife-memo",
+      "productName": { "zh": "备忘录", "en": "Memos" },
+      "entriesKeys": { "slot": "plugin-memo-ilife.slot.c001", "settings": "plugin-memo-ilife.settings.c009", "bridge": "plugin-memo-ilife.bridge.c001" },
+      "managerNavKey": "plugin-manager.nav.c004"
+    },
+    {
+      "dir": "plugin-schedule-ilife",
+      "plugin": "dsh-schedule-ilife",
+      "skill": "schedule",
+      "channel": "/ilife-schedule-ilife",
+      "productName": { "zh": "作息管家", "en": "Schedule Keeper" },
+      "entriesKeys": { "slot": "plugin-schedule-ilife.slot.c001", "settings": "plugin-schedule-ilife.settings.c007", "bridge": "plugin-schedule-ilife.bridge.c001" },
+      "managerNavKey": "plugin-manager.nav.c005"
+    },
+    {
+      "dir": "plugin-home-ilife",
+      "plugin": "dsh-home-ilife",
+      "skill": "home",
+      "channel": "/ilife-home-ilife",
+      "productName": { "zh": "居家管家", "en": "Home Keeper" },
+      "entriesKeys": { "slot": "plugin-home-ilife.slot.c001", "settings": "plugin-home-ilife.settings.c011", "bridge": "plugin-home-ilife.bridge.c001" },
+      "managerNavKey": "plugin-manager.nav.c006"
+    },
+    {
+      "dir": "plugin-chef",
+      "plugin": "dsh-chef",
+      "skill": "chef",
+      "channel": "/ilife-chef",
+      "productName": { "zh": "私家大厨", "en": "Private Chef" },
+      "entriesKeys": { "slot": "plugin-chef.slot.c001", "settings": "plugin-chef.settings.c009", "bridge": "plugin-chef.bridge.c001" },
+      "managerNavKey": "plugin-manager.nav.c007"
+    }
+  ]
+}

@@ -19,8 +19,6 @@ export const zh = {
   'plugin-bill-ilife.skill-tool.c001': "命令（bill.* 键），例如 bill.help.lookup",
   'plugin-bill-ilife.skill-tool.c002': "可选参数对象，原样交技能出口（--params JSON）",
   'plugin-bill-ilife.skill-tool.c003': "运行记账技能的唯一出口（argv+JSON+exit），返回 envelope JSON。写完／看完记账数据的唯一途径；不经 shell、不依赖 PATH。key 例：bill.help.lookup（饼干记账HELP）、bill.record.add（记一笔）。如果这次带了个文件地址，就把文件交给用户，同时贴出地址；如果没带文件，就只回答文字，不要编造文件。",
-  /* ── packages/plugin-bill-ilife/src/bridge.ts（#1229 迁入） ── */
-  'plugin-bill-ilife.bridge.c001': "总管缺席，请补装：dsh plugin add dsh-life-pack dsh-bill-ilife（不许单卸总管）",
   /* ── packages/plugin-bill-ilife/src/settings.ts（#1229 迁入） ── */
   'plugin-bill-ilife.settings.c001': "数据目录",
   'plugin-bill-ilife.settings.c002': "库文件与备份的根目录。留空＝用默认目录。",
@@ -34,10 +32,12 @@ export const zh = {
   'plugin-bill-ilife.settings.c010': "备份与恢复的读写目录。",
   'plugin-bill-ilife.settings.c011': "备份文件名前缀",
   'plugin-bill-ilife.settings.c012': "备份文件名的前缀，后面自动加时间戳。",
-  'plugin-bill-ilife.settings.c013': "高级",
-  /* ── packages/plugin-bill-ilife/src/slot.ts（#1229 迁入） ── */
-  'plugin-bill-ilife.slot.c001': "饼干记账",
   /* ── packages/plugin-bill-ilife/src/index.ts（#1229 迁入·协议报文） ── */
   'plugin-bill-ilife.index.c005': "body is not JSON",
   'plugin-bill-ilife.index.c006': "Invalid bill request.",
+  /* ══ #1231 共享词条：由 tooling/gen-shared-copy.mjs 自 tooling/shared-copy.json 生成，勿手改 ══ */
+  'plugin-bill-ilife.slot.c001': "饼干记账",
+  'plugin-bill-ilife.settings.c013': "高级",
+  'plugin-bill-ilife.bridge.c001': "总管缺席，请补装：dsh plugin add dsh-life-pack dsh-bill-ilife（不许单卸总管）",
+  /* ══ #1231 共享词条生成段结束 ══ */
 } as const satisfies MessageTable;

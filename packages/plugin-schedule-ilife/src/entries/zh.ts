@@ -43,8 +43,6 @@ export const zh = {
   'plugin-schedule-ilife.skill-tool.c001': "命令（schedule.* 键），例如 schedule.help.lookup",
   'plugin-schedule-ilife.skill-tool.c002': "可选参数对象，原样交技能出口（--params JSON）",
   'plugin-schedule-ilife.skill-tool.c003': "运行作息技能的唯一出口（argv+JSON+exit），返回 envelope JSON。写完／看完作息数据的唯一途径；不经 shell、不依赖 PATH。key 例：schedule.help.lookup（作息管家HELP）、schedule.today.summary（今天总结）。如果这次带了个文件地址，就把文件交给用户，同时贴出地址；如果没带文件，就只回答文字，不要编造文件。",
-  /* ── packages/plugin-schedule-ilife/src/bridge.ts（#1229 迁入） ── */
-  'plugin-schedule-ilife.bridge.c001': "总管缺席，请补装：dsh plugin add dsh-life-pack dsh-schedule-ilife（不许单卸总管）",
   /* ── packages/plugin-schedule-ilife/src/settings.ts（#1229 迁入） ── */
   'plugin-schedule-ilife.settings.c001': "数据目录",
   'plugin-schedule-ilife.settings.c002': "库文件与产物的根目录。留空＝用默认目录。",
@@ -52,12 +50,14 @@ export const zh = {
   'plugin-schedule-ilife.settings.c004': "数据目录下的库文件。",
   'plugin-schedule-ilife.settings.c005': "HELP 产物目录",
   'plugin-schedule-ilife.settings.c006': "HELP 页面的存放目录。",
-  'plugin-schedule-ilife.settings.c007': "高级",
-  /* ── packages/plugin-schedule-ilife/src/slot.ts（#1229 迁入） ── */
-  'plugin-schedule-ilife.slot.c001': "作息管家",
   /* ── packages/plugin-schedule-ilife/src/index.ts（#1229 迁入·协议报文） ── */
   'plugin-schedule-ilife.index.c004': "body is not JSON",
   'plugin-schedule-ilife.index.c005': "Invalid schedule request.",
   /* ── packages/plugin-schedule-ilife/src/client.ts（#1229 迁入·飞书官网行） ── */
   'plugin-schedule-ilife.client.c025': "飞书CLI官网为：{p0}",
+  /* ══ #1231 共享词条：由 tooling/gen-shared-copy.mjs 自 tooling/shared-copy.json 生成，勿手改 ══ */
+  'plugin-schedule-ilife.slot.c001': "作息管家",
+  'plugin-schedule-ilife.settings.c007': "高级",
+  'plugin-schedule-ilife.bridge.c001': "总管缺席，请补装：dsh plugin add dsh-life-pack dsh-schedule-ilife（不许单卸总管）",
+  /* ══ #1231 共享词条生成段结束 ══ */
 } as const satisfies MessageTable;

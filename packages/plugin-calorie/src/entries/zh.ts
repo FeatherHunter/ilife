@@ -31,8 +31,6 @@ export const zh = {
   'plugin-calorie.skill-tool.c001': "命令（calorie.* 键），例如 calorie.help.center",
   'plugin-calorie.skill-tool.c002': "可选参数对象，原样交技能出口（--params JSON）",
   'plugin-calorie.skill-tool.c003': "运行卡路里技能的唯一出口（argv+JSON+exit），返回 envelope JSON。写完／看完卡路里数据的唯一途径；不经 shell、不依赖 PATH。key 例：calorie.help.center（卡路里HELP）、calorie.view.home（看今日主页）、calorie.diet.add（记一餐）。如果这次带了个文件地址，就把文件交给用户，同时贴出地址；如果没带文件，就只回答文字，不要编造文件。",
-  /* ── packages/plugin-calorie/src/bridge.ts（#1229 迁入） ── */
-  'plugin-calorie.bridge.c001': "总管缺席，请补装：dsh plugin add dsh-life-pack dsh-calorie（不许单卸总管）",
   /* ── packages/plugin-calorie/src/settings.ts（#1229 迁入） ── */
   'plugin-calorie.settings.c001': "数据目录",
   'plugin-calorie.settings.c002': "库文件与各类产物的根目录。留空＝用默认目录。",
@@ -56,12 +54,14 @@ export const zh = {
   'plugin-calorie.settings.c020': "调用训记的超时秒数。",
   'plugin-calorie.settings.c021': "落地调用限时（秒）",
   'plugin-calorie.settings.c022': "落地训练各步骤的超时秒数。",
-  'plugin-calorie.settings.c023': "高级",
-  /* ── packages/plugin-calorie/src/slot.ts（#1229 迁入） ── */
-  'plugin-calorie.slot.c001': "卡路里",
   /* ── packages/plugin-calorie/src/index.ts（#1229 迁入·协议报文） ── */
   'plugin-calorie.index.c004': "body is not JSON",
   'plugin-calorie.index.c005': "Invalid calorie request.",
   /* ── packages/plugin-calorie/src/client.ts（#1229 迁入·超时提示） ── */
   'plugin-calorie.client.c013': "取数超时（{p0}s）：宿主未回，先查宿主日志与 DB 环境",
+  /* ══ #1231 共享词条：由 tooling/gen-shared-copy.mjs 自 tooling/shared-copy.json 生成，勿手改 ══ */
+  'plugin-calorie.slot.c001': "卡路里",
+  'plugin-calorie.settings.c023': "高级",
+  'plugin-calorie.bridge.c001': "总管缺席，请补装：dsh plugin add dsh-life-pack dsh-calorie（不许单卸总管）",
+  /* ══ #1231 共享词条生成段结束 ══ */
 } as const satisfies MessageTable;

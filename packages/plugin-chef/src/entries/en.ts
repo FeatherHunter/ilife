@@ -14,8 +14,6 @@ export const en = {
   'plugin-chef.skill-tool.c001': "Command (a chef.* key), e.g. chef.help.lookup",
   'plugin-chef.skill-tool.c002': "Optional params object, passed through to the skill exit (--params JSON)",
   'plugin-chef.skill-tool.c003': "The only exit for running the chef skill (argv+JSON+exit); returns envelope JSON. The only way to write or read chef data; no shell, no PATH. Example keys: chef.help.lookup (Private Chef HELP), chef.recipe.view (view a recipe). If a file path is included this time, hand the file to the user and quote its path; if not, answer in text only and never invent a file.",
-  /* ── packages/plugin-chef/src/bridge.ts（#1229 迁入） ── */
-  'plugin-chef.bridge.c001': "Manager is missing; install it: dsh plugin add dsh-life-pack dsh-chef (never uninstall the manager alone)",
   /* ── packages/plugin-chef/src/settings.ts（#1229 迁入） ── */
   'plugin-chef.settings.c001': "Data directory",
   'plugin-chef.settings.c002': "Root directory for the library file and outputs. Empty = use the default directory.",
@@ -25,10 +23,12 @@ export const en = {
   'plugin-chef.settings.c006': "Directory for HELP files and quick-reference sheets.",
   'plugin-chef.settings.c007': "Scene output directory",
   'plugin-chef.settings.c008': "Directory for scene pages.",
-  'plugin-chef.settings.c009': "Advanced",
-  /* ── packages/plugin-chef/src/slot.ts（#1229 迁入） ── */
-  'plugin-chef.slot.c001': "Private Chef",
   /* ── packages/plugin-chef/src/index.ts（#1229 迁入·协议报文） ── */
   'plugin-chef.index.c004': "body is not JSON",
   'plugin-chef.index.c005': "Invalid chef request.",
+  /* ══ #1231 共享词条：由 tooling/gen-shared-copy.mjs 自 tooling/shared-copy.json 生成，勿手改 ══ */
+  'plugin-chef.slot.c001': "Private Chef",
+  'plugin-chef.settings.c009': "Advanced",
+  'plugin-chef.bridge.c001': "Manager is missing; install it: dsh plugin add dsh-life-pack dsh-chef (never uninstall the manager alone)",
+  /* ══ #1231 共享词条生成段结束 ══ */
 } as const satisfies MessageTable;

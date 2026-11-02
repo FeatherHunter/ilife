@@ -56,8 +56,6 @@ export const zh = {
   'plugin-memo-ilife.skill-tool.c001': "命令（memo.* 键），例如 memo.help.lookup",
   'plugin-memo-ilife.skill-tool.c002': "可选参数对象，原样交技能出口（--params JSON）",
   'plugin-memo-ilife.skill-tool.c003': "运行备忘录技能的唯一出口（argv+JSON+exit），返回 envelope JSON。写完／看完备忘录数据的唯一途径；不经 shell、不依赖 PATH。key 例：memo.help.lookup（备忘录HELP）、memo.search（搜笔记）。如果这次带了个文件地址，就把文件交给用户，同时贴出地址；如果没带文件，就只回答文字，不要编造文件。",
-  /* ── packages/plugin-memo-ilife/src/bridge.ts（#1229 迁入） ── */
-  'plugin-memo-ilife.bridge.c001': "总管缺席，请补装：dsh plugin add dsh-life-pack dsh-memo-ilife（不许单卸总管）",
   /* ── packages/plugin-memo-ilife/src/settings.ts（#1229 迁入） ── */
   'plugin-memo-ilife.settings.c001': "数据目录",
   'plugin-memo-ilife.settings.c002': "库文件与产物的根目录。留空＝用默认目录。",
@@ -67,12 +65,14 @@ export const zh = {
   'plugin-memo-ilife.settings.c006': "数据目录下存放 HELP 页面的子目录名。",
   'plugin-memo-ilife.settings.c007': "附件目录",
   'plugin-memo-ilife.settings.c008': "附件的存放根目录。留空＝数据目录下的 media（目录须已存在，技能不替你建）。",
-  'plugin-memo-ilife.settings.c009': "高级",
-  /* ── packages/plugin-memo-ilife/src/slot.ts（#1229 迁入） ── */
-  'plugin-memo-ilife.slot.c001': "备忘录",
   /* ── packages/plugin-memo-ilife/src/index.ts（#1229 迁入·协议报文） ── */
   'plugin-memo-ilife.index.c004': "body is not JSON",
   'plugin-memo-ilife.index.c005': "Invalid memo request.",
   /* ── packages/plugin-memo-ilife/src/client.ts（#1229 迁入·超时提示） ── */
   'plugin-memo-ilife.client.c038': "取数超时（{p0}s）：宿主未回，先查宿主日志与 DB 环境",
+  /* ══ #1231 共享词条：由 tooling/gen-shared-copy.mjs 自 tooling/shared-copy.json 生成，勿手改 ══ */
+  'plugin-memo-ilife.slot.c001': "备忘录",
+  'plugin-memo-ilife.settings.c009': "高级",
+  'plugin-memo-ilife.bridge.c001': "总管缺席，请补装：dsh plugin add dsh-life-pack dsh-memo-ilife（不许单卸总管）",
+  /* ══ #1231 共享词条生成段结束 ══ */
 } as const satisfies MessageTable;

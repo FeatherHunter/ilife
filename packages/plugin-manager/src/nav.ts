@@ -15,6 +15,7 @@
  */
 
 import { m } from './entries/index.js';
+import { PLUGIN_CHANNELS } from './shared-copy.generated.js';
 export interface ManagerTab {
   readonly skill: string;
   readonly slotId: string;
@@ -34,7 +35,11 @@ export interface ManagerTab {
    *  总管从账本上读到的那一格恒是空串。后果是六家恒被判成「没有体检出口」，
    *  面板的体检目标表恒为空，「体检一次」按下去毫无反应（第 1 版的实现就是这么哑掉的）。
    *  这份镜像由 `test/plugin-p10-boundaries.test.mjs` 逐家与各包契约件的常量对齐守着。
-   *  各家注册里那一格**留着不删**：上游哪天开始透传自定义选项，可以一行切回账本。 */
+   *  各家注册里那一格**留着不删**：上游哪天开始透传自定义选项，可以一行切回账本。
+   *
+   *  #1231 起这一格不再是手写副本：七份镜像（六家契约件＋本表）的唯一可编辑处是
+   *  `tooling/shared-copy.json`，本表取 `shared-copy.generated.ts` 的 `PLUGIN_CHANNELS`——
+   *  与各家契约件的 `RPC_CHANNEL` 同一份派生，改值只改那张表再跑 `node tooling/gen-shared-copy.mjs`。 */
   readonly channel: string;
 }
 
@@ -61,12 +66,12 @@ export function dualInstallCmd(singlePlugin: string): string {
 /** P3 定案 6 tab（order 升序即 + 号菜单顺序；已打开条不受 order 控制）。 */
 function buildManagerTabs(): readonly ManagerTab[] {
   return [
-    { skill: 'bill', slotId: 'ilife:cookie', order: 70, title: m('plugin-manager.nav.c002'), plugin: 'dsh-bill-ilife', channel: '/ilife-bill-ilife' },
-    { skill: 'calorie', slotId: 'ilife:calorie', order: 75, title: m('plugin-manager.nav.c003'), plugin: 'dsh-calorie', channel: '/ilife-calorie' },
-    { skill: 'memo', slotId: 'ilife:memo', order: 80, title: m('plugin-manager.nav.c004'), plugin: 'dsh-memo-ilife', channel: '/ilife-memo' },
-    { skill: 'schedule', slotId: 'ilife:schedule', order: 85, title: m('plugin-manager.nav.c005'), plugin: 'dsh-schedule-ilife', channel: '/ilife-schedule-ilife' },
-    { skill: 'home', slotId: 'ilife:home', order: 90, title: m('plugin-manager.nav.c006'), plugin: 'dsh-home-ilife', channel: '/ilife-home-ilife' },
-    { skill: 'chef', slotId: 'ilife:chef', order: 95, title: m('plugin-manager.nav.c007'), plugin: 'dsh-chef', channel: '/ilife-chef' },
+    { skill: 'bill', slotId: 'ilife:cookie', order: 70, title: m('plugin-manager.nav.c002'), plugin: 'dsh-bill-ilife', channel: PLUGIN_CHANNELS.bill },
+    { skill: 'calorie', slotId: 'ilife:calorie', order: 75, title: m('plugin-manager.nav.c003'), plugin: 'dsh-calorie', channel: PLUGIN_CHANNELS.calorie },
+    { skill: 'memo', slotId: 'ilife:memo', order: 80, title: m('plugin-manager.nav.c004'), plugin: 'dsh-memo-ilife', channel: PLUGIN_CHANNELS.memo },
+    { skill: 'schedule', slotId: 'ilife:schedule', order: 85, title: m('plugin-manager.nav.c005'), plugin: 'dsh-schedule-ilife', channel: PLUGIN_CHANNELS.schedule },
+    { skill: 'home', slotId: 'ilife:home', order: 90, title: m('plugin-manager.nav.c006'), plugin: 'dsh-home-ilife', channel: PLUGIN_CHANNELS.home },
+    { skill: 'chef', slotId: 'ilife:chef', order: 95, title: m('plugin-manager.nav.c007'), plugin: 'dsh-chef', channel: PLUGIN_CHANNELS.chef },
   ];
 }
 
