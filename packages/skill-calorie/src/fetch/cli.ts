@@ -76,7 +76,7 @@ async function cmdImport(file: string, dbFlag?: string): Promise<number> {
 
 function cmdValidate(file: string): number {
   if (!file) {
-    console.error('用法：validate <file> [--json-output path]');
+    console.error(m('skill-calorie.fetch-cli.c023'));
     return 1;
   }
   try {

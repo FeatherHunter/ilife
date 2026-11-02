@@ -230,7 +230,7 @@ export function buildPlanResultDoc(v: PlanView, opts: PlanDocOpts): string {
     + (opts.wakeWord === undefined || opts.wakeWord === ''
       ? '' : '<span class="ilw-chip ilw-chip-strong">' + escapeHtml(opts.wakeWord) + '</span>')
     + (v.startDate === null || v.startDate === '' ? ''
-      : '<span class="ilw-meta-k">起日</span><span class="ilw-meta-v">' + escapeHtml(v.startDate) + '</span>')
+      : '<span class="ilw-meta-k">' + m('skill-calorie.render-planWizardDocs.c041') + '</span><span class="ilw-meta-v">' + escapeHtml(v.startDate) + '</span>')
     + descHtml
     + '</div>';
   // #947 ②：三张卡一律读**计划全量**（`planSessions`／`planMovements`／`totalWeeks` 同源），

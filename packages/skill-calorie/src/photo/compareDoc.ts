@@ -164,7 +164,7 @@ function recordTable(c: CompareData, dropped: ReadonlySet<string>): string {
     { key: 'tags', label: m('skill-calorie.photo-compareDoc.c019') },
     ...(withStatus ? [{ key: 'status', label: '状态' }] : []),
   ];
-  return '<section><h2 class="' + H2_CLASS + '">两张照片的原始记录</h2>'
+  return '<section><h2 class="' + H2_CLASS + '">' + m('skill-calorie.photo-compareDoc.c027') + '</h2>'
     + renderDataTable({ columns, rows, emptyText: m('skill-calorie.photo-compareDoc.c020') }) + '</section>';
 }
 

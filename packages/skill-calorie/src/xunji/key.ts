@@ -110,7 +110,7 @@ export async function runKeyCommand(sub: XunjiSubcommand, values: Values): Promi
   }
   if (action === 'set') {
     const v = values['<KEY 值>'];
-    if (typeof v !== 'string') return refuse('用法：key set <KEY 值>（KEY 值缺失；KEY 值不回显、不进仓）', { usage: sub.usage });
+    if (typeof v !== 'string') return refuse(m('skill-calorie.xunji-key.c013'), { usage: sub.usage });
     const r = setKey(v);
     if (!r.ok) return { subcommand: 'key', code: XUNJI_EXIT_CODES.error, message: r.error, data: { error: r.error }, stderr: r.error };
     return {

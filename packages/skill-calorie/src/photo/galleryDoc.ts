@@ -219,7 +219,7 @@ function detailTable(g: GalleryData, skipReason: ReadonlyMap<string, string>): s
       : (skipReason.get(key) !== undefined ? m('skill-calorie.photo-galleryDoc.c036') : (p.fileExists === null ? m('skill-calorie.photo-galleryDoc.c037') : ''));
     return { id: p.id, date: p.date, tags: p.tagList.join(' '), status };
   });
-  return '<section><h2 class="' + H2_CLASS + '">照片清单</h2>'
+  return '<section><h2 class="' + H2_CLASS + '">' + m('skill-calorie.photo-galleryDoc.c050') + '</h2>'
     + renderDataTable({
       columns: [
         { key: 'id', label: m('skill-calorie.photo-galleryDoc.c038'), align: 'right' },
@@ -280,7 +280,7 @@ function contentOf(
     return figureHtml(p, byName.get(key), skipReason.get(key), today);
   }).join('') + '</div>');
   parts.push(detailTable(g, skipReason));
-  parts.push('<div class="phu-scroll-hint">表格宽，手机上按住左右滑可以看全</div>');
+  parts.push('<div class="phu-scroll-hint">' + m('skill-calorie.photo-galleryDoc.c051') + '</div>');
   parts.push(copyAreaOf(g, command));
   return parts.join('');
 }
