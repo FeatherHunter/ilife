@@ -4658,6 +4658,8 @@ export const en = {
   'skill-calorie.workout-write.c198': "Only the version changes; week counts and training content stay the same",
   'skill-calorie.workout-write.c199': "Only the description changes; week counts and training content stay the same",
   'skill-calorie.workout-write.c200': "Changing the start date affects the week calculation: dates derived from week numbers shift as a whole, and exercise records already logged stay put",
+  'skill-calorie.workout-write.c201': "Rest day",
+  'skill-calorie.workout-write.c202': "Rest",
   /* ── packages/skill-calorie/src/workout/xunjiKey.ts（#1218 迁入） ── */
   'skill-calorie.workout-xunjiKey.c001': "First run {p0} to check the status, then run {p1} to write, then retry",
   'skill-calorie.workout-xunjiKey.c002': "Xunji KEY",

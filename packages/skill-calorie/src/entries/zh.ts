@@ -4664,6 +4664,8 @@ export const zh = {
   'skill-calorie.workout-write.c198': "只改版本号，不影响周次与训练内容",
   'skill-calorie.workout-write.c199': "只改描述，不影响周次与训练内容",
   'skill-calorie.workout-write.c200': "改开始日期会影响周次计算：按周次推出的日期整体平移，已经记过的运动记录不动",
+  'skill-calorie.workout-write.c201': "休息日",
+  'skill-calorie.workout-write.c202': "休息",
   /* ── packages/skill-calorie/src/workout/xunjiKey.ts（#1218 迁入） ── */
   'skill-calorie.workout-xunjiKey.c001': "先跑 {p0} 查状态，再跑 {p1} 写入后重试",
   'skill-calorie.workout-xunjiKey.c002': "训记 KEY",
