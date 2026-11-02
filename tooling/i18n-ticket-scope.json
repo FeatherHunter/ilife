@@ -879,7 +879,8 @@
     "1210": {
       "title": "迁移 skill-bill analysis 批次 1：9 件（283 条）",
       "state": "open（待开工；清单已回填 #1308）",
-      "files": [
+      "files": [],
+      "migrated": [
         {
           "path": "packages/skill-bill/src/analysis/agg.ts",
           "literals": 1,
@@ -917,22 +918,6 @@
           }
         },
         {
-          "path": "packages/skill-bill/src/analysis/params.ts",
-          "literals": 6,
-          "byClass": {
-            "copy": 1,
-            "concat": 2,
-            "ident": 3
-          }
-        },
-        {
-          "path": "packages/skill-bill/src/analysis/read.ts",
-          "literals": 1,
-          "byClass": {
-            "copy": 1
-          }
-        },
-        {
           "path": "packages/skill-bill/src/analysis/scene-account.ts",
           "literals": 29,
           "byClass": {
@@ -941,11 +926,30 @@
           }
         }
       ],
-      "migrated": [],
       "totals": {
         "files": 8,
         "literals": 110
-      }
+      },
+      "excluded": [
+        {
+          "path": "packages/skill-bill/src/analysis/params.ts",
+          "literals": 6,
+          "byClass": {
+            "copy": 1,
+            "concat": 2,
+            "ident": 3
+          },
+          "reason": "不迁：唯一中文是 5 条 BillPolicyError 开发报文（L20/27/34/43/47），无用户可见文案"
+        },
+        {
+          "path": "packages/skill-bill/src/analysis/read.ts",
+          "literals": 1,
+          "byClass": {
+            "copy": 1
+          },
+          "reason": "不迁：唯一中文是 L99 BillFetchError('BILL_EMPTY_RANGE') 开发报文；L101 已接 currentRenderLanguage()"
+        }
+      ]
     },
     "1211": {
       "title": "迁移 skill-bill query 批次 2：14 件（520 条）",
@@ -10260,12 +10264,12 @@
   },
   "scopeSummary": {
     "ledgerFiles": 1226,
-    "migratedFiles": 737,
-    "pendingFiles": 185,
-    "pendingLiterals": 5762,
-    "excludedFiles": 304,
-    "excludedLiterals": 14776,
-    "migratedLiterals": 22210
+    "migratedFiles": 743,
+    "pendingFiles": 177,
+    "pendingLiterals": 5652,
+    "excludedFiles": 306,
+    "excludedLiterals": 14783,
+    "migratedLiterals": 22313
   },
   "workflow": [
     "开工：从本文件取本票 files，逐件登记进 tooling/i18n-scope.json 的 files（先跑两道门拿红读数＝范围已挂但还没迁）。",

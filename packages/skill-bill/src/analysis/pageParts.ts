@@ -29,13 +29,18 @@ import { pageShell } from '../shared/pageShell.js';
 import type { PageShellInput } from '../shared/pageShell.js';
 import { sourceLine } from '../shared/sourceLine.js';
 import { commandLine } from '../shared/writeParts.js';
+import { m } from '../entries/index.js';
 
 /** 分析域各页的眉标：**只在本域写一次**（共用位不持「域名→取值」表）。 */
-export const EYEBROW = '记账｜分析域';
+export function eyebrow(): string { return m('skill-bill.analysis-pageParts.c002'); }
+
+/** 眉标的 zh 快照（#1210 过渡别名：本票范围外的引用件仍按模块级常量取用；改成调 `eyebrow()`
+ *  由 owns 那些件的票做，见票面「接线点」）。 */
+export const EYEBROW = eyebrow();
 
 /** 本域各页统一走它：补上眉标再转共用位的 `pageShell`；调用点写法 `pageShell({…})` 不变。 */
 export function analysisPageShell(input: Omit<PageShellInput, 'eyebrow'>): string {
-  return pageShell({ ...input, eyebrow: EYEBROW });
+  return pageShell({ ...input, eyebrow: eyebrow() });
 }
 
 /** 本域页面文档标题的后缀（`DOC_TITLE` 是技能名，后缀是这一页是什么）。 */
@@ -145,15 +150,22 @@ export function copyZoneOf(input: {
 }
 
 /** 复制日志第 3 段那句**给机器看**的来源（可带载体名）；上屏的来源脚注另一句（只写人话，裁定 1）。 */
-export const SOURCE_READ = '记账库 · bills（只读：只取数与聚合，不改库）';
-export const SOURCE_READ_TEXT = '记账库（只读）';
+export function sourceRead(): string { return m('skill-bill.analysis-pageParts.c003'); }
+export function sourceReadText(): string { return m('skill-bill.analysis-pageParts.c004'); }
+
+/** 来源两句的 zh 快照（#1210 过渡别名，同 `EYEBROW`）。 */
+export const SOURCE_READ = sourceRead();
+export const SOURCE_READ_TEXT = sourceReadText();
 
 /** 没有时间窗的查法（看借贷／看分期／看活跃／做统计）在来源脚注起止位写的那两个字——留空会读成缺值。 */
-export const NO_WINDOW = '不限';
+export function noWindow(): string { return m('skill-bill.analysis-pageParts.c005'); }
+
+/** 「不限」的 zh 快照（#1210 过渡别名，同 `EYEBROW`；只给尚未换运行期取词的本包调用方读）。 */
+export const NO_WINDOW = noWindow();
 
 /** 一条窗口的时间范围写成人话：同一天不写两个端点。 */
 export function windowLabel(from: string, to: string): string {
-  if (from === '' || to === '') return NO_WINDOW;
+  if (from === '' || to === '') return noWindow();
   return from === to ? from : from + ' ~ ' + to;
 }
 
@@ -205,7 +217,7 @@ export function analysisDocOf(input: {
     navBlock(copyZoneOf({
       envelope: input.envelope, title: input.wakeWord, key: input.key, params: input.params,
       source: input.source, detail: input.detail, actionAt: input.actionAt,
-    }), 'sec-copy', '复制'),
+    }), 'sec-copy', m('skill-bill.analysis-pageParts.c001')),
   ];
   const content = badgeOf({
     word: input.wakeWord,
@@ -216,7 +228,7 @@ export function analysisDocOf(input: {
   }) + renderConclusionBar(input.conclusion)
     + pageNav(blocks) + pageBody(blocks)
     + sourceNoteOf({
-      sourceText: SOURCE_READ_TEXT, start: input.windowStart, end: input.windowEnd, count: input.count,
+      sourceText: sourceReadText(), start: input.windowStart, end: input.windowEnd, count: input.count,
     });
   return analysisPageShell({
     docTitle: input.docTitle,

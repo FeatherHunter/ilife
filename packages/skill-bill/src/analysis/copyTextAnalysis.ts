@@ -17,6 +17,7 @@
 import type { Kpi } from './agg.js';
 import { csvCell, oneLine } from '../shared/copyText.js';
 import { MISSING, money, pctText, signedMoney } from './pageParts.js';
+import { m } from '../entries/index.js';
 
 /** 单期事实（看月度；kpi 即场景给页面的同一份，top 即条卡头一名，无支出类即 null）。 */
 export interface PeriodCopyFacts {
@@ -90,7 +91,7 @@ export interface AnalysisCopy {
 
 /** 页身份行（饼干记账＋唤醒词；照 copyTextReceipt 页身份三段式，分析侧无回执尾段）。 */
 function pageLine(word: string): string {
-  return '饼干记账 ' + word;
+  return m('skill-bill.analysis-copyTextAnalysis.c001', { p0: String(word) });
 }
 
 
@@ -105,17 +106,28 @@ function pickLabel(s: string): string {
 
 /* ── 看月度（单期人话行） ─────────────────────────────── */
 
-/** 单期结论行（X月共N笔支出X收入X净额X，最多X类X元；无支出类即收尾句号）。 */
+/** 单期结论行（X月共N笔支出X收入X净额X，最多X类X元；无支出类即整句收尾）。
+ *  #1210：原先是「基础句 ＋ 另一条拼『；花得最多的是…』」的两段拼接、末句号还在源码里另拼，
+ *  英文那一列会落一个中文句号——故**整句化**：两条各自是完整句子（各自的句号住词条里）。 */
 function periodLine(f: PeriodCopyFacts): string {
-  const base = f.label + ' 共 ' + String(f.kpi.count) + ' 笔：支出 ' + money(f.kpi.expense)
-    + ' 元、收入 ' + money(f.kpi.income) + ' 元、净额 ' + money(f.kpi.net) + ' 元';
-  if (f.topKey === null) return base + '。';
-  return base + '；花得最多的是「' + pickLabel(f.topKey) + '」' + money(f.topValue) + ' 元。';
+  const params = {
+    p0: String(f.label),
+    p1: String(f.kpi.count),
+    p2: String(money(f.kpi.expense)),
+    p3: String(money(f.kpi.income)),
+    p4: String(money(f.kpi.net)),
+  };
+  if (f.topKey === null) return m('skill-bill.analysis-copyTextAnalysis.c002', params);
+  return m('skill-bill.analysis-copyTextAnalysis.c003', {
+    ...params,
+    p5: String(pickLabel(f.topKey)),
+    p6: String(money(f.topValue)),
+  });
 }
 
 function periodCopy(f: PeriodCopyFacts): AnalysisCopy {
   const lines = f.kpi.count === 0
-    ? [pageLine(f.word), f.label + ' 一笔都没有记。']
+    ? [pageLine(f.word), m('skill-bill.analysis-copyTextAnalysis.c004', { p0: String(f.label) })]
     : [pageLine(f.word), periodLine(f)];
   const text = lines.join('\n');
   const json = JSON.stringify({
@@ -127,10 +139,10 @@ function periodCopy(f: PeriodCopyFacts): AnalysisCopy {
     },
   }, null, 2);
   const rows: ReadonlyArray<readonly [string, string]> = [
-    ['结论', lines[1]], ['期间', f.label], ['笔数', String(f.kpi.count)],
-    ['支出', money(f.kpi.expense)], ['收入', money(f.kpi.income)], ['净额', money(f.kpi.net)],
-    ['最多分类', f.topKey === null ? MISSING : pickLabel(f.topKey)],
-    ['最多金额', f.topKey === null ? MISSING : money(f.topValue)],
+    [m('skill-bill.analysis-copyTextAnalysis.c026'), lines[1]], [m('skill-bill.analysis-copyTextAnalysis.c005'), f.label], [m('skill-bill.analysis-copyTextAnalysis.c006'), String(f.kpi.count)],
+    [m('skill-bill.analysis-copyTextAnalysis.c007'), money(f.kpi.expense)], [m('skill-bill.analysis-copyTextAnalysis.c008'), money(f.kpi.income)], [m('skill-bill.analysis-copyTextAnalysis.c009'), money(f.kpi.net)],
+    [m('skill-bill.analysis-copyTextAnalysis.c010'), f.topKey === null ? MISSING : pickLabel(f.topKey)],
+    [m('skill-bill.analysis-copyTextAnalysis.c011'), f.topKey === null ? MISSING : money(f.topValue)],
   ];
   const csv = ['field,value', ...rows.map(([k, v]) => csvCell(k) + ',' + csvCell(v))].join('\n');
   return { text, json, csv };
@@ -140,27 +152,48 @@ function periodCopy(f: PeriodCopyFacts): AnalysisCopy {
 
 /** 一侧正文（标签＋共N笔支出X收入X；字段名由调用方配，文本行自带「区间一／二」）。 */
 function sideBody(s: CopySide): string {
-  return s.label + '：共 ' + String(s.count) + ' 笔，支出 ' + money(s.expense) + ' 元、收入 ' + money(s.income) + ' 元';
+  return m('skill-bill.analysis-copyTextAnalysis.c012', {
+    p0: String(s.label),
+    p1: String(String(s.count)),
+    p2: String(money(s.expense)),
+    p3: String(money(s.income)),
+  });
 }
 
-/** 支出变化行（方向词＋绝对值＋百分比；持平即 0.0%，符号照差值方向）。 */
+/** 支出变化行（方向词＋绝对值＋百分比；持平即 0.0%，符号照差值方向）。
+ *  #1210：判据位改控制位——原先拿**显示文本** `change === '持平'` 判持平（中文列比中文字面量），
+ *  换语言就判歪；持平的控制位是 `diff === 0`，两支同值（`pctText(0)`＝`0.0%`）。 */
 function changeLine(change: string, diff: number, pct: number): string {
-  const pctTextOf = change === '持平' ? pctText(0) : (diff > 0 ? '+' : diff < 0 ? '-' : '') + pctText(Math.abs(pct));
-  return '支出变化：' + change + ' ' + money(Math.abs(diff)) + ' 元（' + pctTextOf + '）。';
+  const pctTextOf = diff === 0 ? pctText(0) : (diff > 0 ? '+' : diff < 0 ? '-' : '') + pctText(Math.abs(pct));
+  return m('skill-bill.analysis-copyTextAnalysis.c013', {
+    p0: String(change),
+    p1: String(money(Math.abs(diff))),
+    p2: String(pctTextOf),
+  });
+}
+
+/** CSV 行标签：分类名前面那一枚字段名（分类名是数据，只有这个前缀是文案）。 */
+function catRowLabel(r: RangeRowCopy): string {
+  return m('skill-bill.analysis-copyTextAnalysis.c027', { p0: String(pickLabel(r.key)) });
 }
 
 /** 分类差异一行（一类一行：两段读数＋带符号差＋两段笔数）。 */
 function catBody(r: RangeRowCopy): string {
-  return money(r.a) + ' → ' + money(r.b) + '，差 ' + signedMoney(r.diff)
-    + '（' + String(r.aCount) + ' 笔→' + String(r.bCount) + ' 笔）';
+  return m('skill-bill.analysis-copyTextAnalysis.c014', {
+    p0: String(money(r.a)),
+    p1: String(money(r.b)),
+    p2: String(signedMoney(r.diff)),
+    p3: String(String(r.aCount)),
+    p4: String(String(r.bCount)),
+  });
 }
 
 function rangeCopy(f: RangeCopyFacts): AnalysisCopy {
-  const lines = [pageLine(f.word), '区间一 ' + sideBody(f.a), '区间二 ' + sideBody(f.b), changeLine(f.change, f.diff, f.pct)];
+  const lines = [pageLine(f.word), m('skill-bill.analysis-copyTextAnalysis.c015', { p0: String(sideBody(f.a)) }), m('skill-bill.analysis-copyTextAnalysis.c016', { p0: String(sideBody(f.b)) }), changeLine(f.change, f.diff, f.pct)];
   if (f.rows.length === 0) {
-    lines.push('分类差异：两段都没有支出记录。');
+    lines.push(m('skill-bill.analysis-copyTextAnalysis.c017'));
   } else {
-    lines.push('分类差异（' + String(f.rows.length) + ' 类）：');
+    lines.push(m('skill-bill.analysis-copyTextAnalysis.c018', { p0: String(String(f.rows.length)) }));
     for (const r of f.rows) lines.push(pickLabel(r.key) + ' ' + catBody(r));
   }
   const text = lines.join('\n');
@@ -176,8 +209,8 @@ function rangeCopy(f: RangeCopyFacts): AnalysisCopy {
     },
   }, null, 2);
   const rows: ReadonlyArray<readonly [string, string]> = [
-    ['结论', changeLine(f.change, f.diff, f.pct)], ['区间一', sideBody(f.a)], ['区间二', sideBody(f.b)],
-    ...f.rows.map((r) => ['分类 ' + pickLabel(r.key), catBody(r)] as const),
+    [m('skill-bill.analysis-copyTextAnalysis.c026'), changeLine(f.change, f.diff, f.pct)], [m('skill-bill.analysis-copyTextAnalysis.c019'), sideBody(f.a)], [m('skill-bill.analysis-copyTextAnalysis.c020'), sideBody(f.b)],
+    ...f.rows.map((r) => [catRowLabel(r), catBody(r)] as const),
   ];
   const csv = ['field,value', ...rows.map(([k, v]) => csvCell(k) + ',' + csvCell(v))].join('\n');
   return { text, json, csv };
@@ -187,17 +220,27 @@ function rangeCopy(f: RangeCopyFacts): AnalysisCopy {
 
 /** 趋势总结行（近N个月共N笔…平均…最高…；空窗与零支出各一句，不硬造峰值）。 */
 function trendSummary(f: TrendCopyFacts): string {
-  if (f.kpi.count === 0) return '近 ' + String(f.months) + ' 个月还没有记录。';
+  if (f.kpi.count === 0) return m('skill-bill.analysis-copyTextAnalysis.c021', { p0: String(String(f.months)) });
   const peak = f.peak > 0
-    ? '，最高的是 ' + f.peakMonth + '（' + money(f.peak) + ' 元）。'
-    : '；窗口里一笔支出都没有。';
-  return '近 ' + String(f.months) + ' 个月共 ' + String(f.kpi.count) + ' 笔：支出 ' + money(f.kpi.expense)
-    + ' 元、收入 ' + money(f.kpi.income) + ' 元，平均每月支出 ' + money(f.avg) + ' 元' + peak;
+    ? m('skill-bill.analysis-copyTextAnalysis.c022', { p0: String(f.peakMonth), p1: String(money(f.peak)) })
+    : m('skill-bill.analysis-copyTextAnalysis.c023');
+  return m('skill-bill.analysis-copyTextAnalysis.c024', {
+    p0: String(String(f.months)),
+    p1: String(String(f.kpi.count)),
+    p2: String(money(f.kpi.expense)),
+    p3: String(money(f.kpi.income)),
+    p4: String(money(f.avg)),
+    p5: String(peak),
+  });
 }
 
 /** 一月一行（有记录的月才进，空月不出 0 笔行）。 */
 function monthBody(p: TrendPointCopy): string {
-  return '共 ' + String(p.count) + ' 笔：支出 ' + money(p.expense) + ' 元、收入 ' + money(p.income) + ' 元';
+  return m('skill-bill.analysis-copyTextAnalysis.c025', {
+    p0: String(String(p.count)),
+    p1: String(money(p.expense)),
+    p2: String(money(p.income)),
+  });
 }
 
 function trendCopy(f: TrendCopyFacts): AnalysisCopy {
@@ -214,7 +257,7 @@ function trendCopy(f: TrendCopyFacts): AnalysisCopy {
     },
   }, null, 2);
   const rows: ReadonlyArray<readonly [string, string]> = [
-    ['结论', trendSummary(f)],
+    [m('skill-bill.analysis-copyTextAnalysis.c026'), trendSummary(f)],
     ...f.points.map((p) => [p.month, monthBody(p)] as const),
   ];
   const csv = ['field,value', ...rows.map(([k, v]) => csvCell(k) + ',' + csvCell(v))].join('\n');

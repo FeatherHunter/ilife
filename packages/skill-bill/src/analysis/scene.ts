@@ -26,7 +26,7 @@ import type { BillDb } from '../fetch/db.js';
 import { BillPolicyError } from '../fetch/errors.js';
 import type { Kpi } from './agg.js';
 import type { AnalysisCopy } from './copyTextAnalysis.js';
-import { sceneAccount } from './scene-account.js';
+import { sceneAccount, sceneAccountFor } from './scene-account.js';
 import { sceneActivity, sceneActivityFor } from './scene-activity.js';
 import { sceneAnomaly, sceneAnomalyFor } from './scene-anomaly.js';
 import { sceneCatCompare, sceneCatCompareFor } from './scene-cat-compare.js';
@@ -259,9 +259,10 @@ export const ANALYSIS_SCENES: readonly AnalysisScene[] = [
  *  （`category` 这个 kind 三条命令各有一支：看分类／看分类对比／看分类趋势）。 */
 const BY_KEY_KIND = new Map<string, AnalysisScene>(ANALYSIS_SCENES.map((s) => [s.key + '|' + s.kind, s]));
 
-/** 已迁入词条层的 24 件（#1207 十八件＋#1208 六件）：按语言重建场景的工厂，键与落点表同一套 `命令名|kind`。
+/** 已迁入词条层的 25 件（#1207 十八件＋#1208 六件＋#1210 账户件）：按语言重建场景的工厂，键与落点表同一套 `命令名|kind`。
  *  没登记在这里的件还没迁词条，任何语言都走落点表里那份静态对象（中文原文）。 */
 const LOCALIZED = new Map<string, (language: string) => AnalysisScene>([
+  ['bill.analysis.overview|account', sceneAccountFor],
   ['bill.analysis.trend|activity', sceneActivityFor],
   ['bill.analysis.trend|anomaly', sceneAnomalyFor],
   ['bill.analysis.compare|category', sceneCatCompareFor],

@@ -1130,7 +1130,32 @@
     "全部合法物品状态",
     "位置分布",
     "摘要（件数/总价/价格覆盖率/近30天变动）",
-    "状态分布"
+    "状态分布",
+    "a01-看月度-proto.html",
+    "a02-看年度-proto.html",
+    "a03-看总览-proto.html",
+    "a04-看周报-proto.html",
+    "a05-看分类-proto.html",
+    "a06-看账户-proto.html",
+    "a07-看账本-proto.html",
+    "a08-看结构-proto.html",
+    "a09-做统计-proto.html",
+    "a10-看对比-proto.html",
+    "a11-看双区间-proto.html",
+    "a12-看同比-proto.html",
+    "a13-看分类对比-proto.html",
+    "a14-看趋势-proto.html",
+    "a15-看分类趋势-proto.html",
+    "a16-看大额-proto.html",
+    "a17-看高频-proto.html",
+    "a18-看分布-proto.html",
+    "a19-看活跃-proto.html",
+    "a20-看洞察-proto.html",
+    "a21-看异常-proto.html",
+    "a22-看借贷-proto.html",
+    "a23-看报销-proto.html",
+    "a24-看分期-proto.html",
+    "a25-看退款-proto.html"
   ],
   "files": [
     "packages/base-render/src/components/progress-list/model.ts",
@@ -1869,6 +1894,12 @@
     "packages/skill-home/src/stats/pages/expiring.ts",
     "packages/skill-home/src/stats/pages/idle.ts",
     "packages/skill-home/src/stats/pages/inventory_stat.ts",
-    "packages/skill-home/src/stats/pages/overview.ts"
+    "packages/skill-home/src/stats/pages/overview.ts",
+    "packages/skill-bill/src/analysis/agg.ts",
+    "packages/skill-bill/src/analysis/cards.ts",
+    "packages/skill-bill/src/analysis/commands.ts",
+    "packages/skill-bill/src/analysis/copyTextAnalysis.ts",
+    "packages/skill-bill/src/analysis/pageParts.ts",
+    "packages/skill-bill/src/analysis/scene-account.ts"
   ]
 }

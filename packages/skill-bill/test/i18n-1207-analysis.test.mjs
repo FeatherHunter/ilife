@@ -59,9 +59,9 @@ before(() => {
 after(() => { if (db !== null) closeBillDb(db); });
 
 describe('#1207 analysis 批次 2：词条＋语言链', () => {
-  it('键面：413 键（＋#1208 六个场景件补入 126 键，共 539 键）、18 个场景标题各一条、zh／en 同 key 且英文列无空串', () => {
+  it('键面：554 键（#1207 的 413 ＋ #1208 补入 126 ＋ #1210 账户件补入 15）、18 个场景标题各一条、zh／en 同 key 且英文列无空串', () => {
     const keys = ourKeys();
-    assert.equal(keys.length, 539);
+    assert.equal(keys.length, 554);
     assert.deepEqual(Object.keys(EN).filter((k) => k.startsWith(PREFIX)).sort(), keys.slice().sort());
     for (const [, , slug] of SCENES) assert.ok(keys.includes(PREFIX + slug + '.title'), '缺场景标题键：' + slug);
     for (const k of keys) assert.ok(EN[k].length > 0, '英文缺译：' + k);

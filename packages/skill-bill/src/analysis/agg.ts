@@ -17,7 +17,8 @@ import { l1Of } from '../shared/category.js';
 import { calcKpi, isTransfer } from '../shared/kpi.js';
 import { monthRange } from '../shared/dateRange.js';
 import { needMonth, needRange } from './params.js';
-import { NO_WINDOW, windowLabel } from './pageParts.js';
+import { noWindow, windowLabel } from './pageParts.js';
+import { m } from '../entries/index.js';
 
 /** 收支口径四件（与共用位 `calcKpi` 同一件事的两种说法：这里只给它一个域内名字）。 */
 export type Kpi = { readonly count: number; readonly expense: number; readonly income: number; readonly net: number };
@@ -65,6 +66,9 @@ export interface WindowSet {
 /** 参数里的时间窗（只有标签与起止，不含记录）。 */
 export interface WindowRead {
   readonly label: string;
+  /** 是否「全库」那一档（控制位）。**不要拿 from／to 的字面量当哨兵**：那是上屏文案，
+   *  换语言就变，比较会静默失真（#1210 修）。 */
+  readonly all: boolean;
   readonly from: string;
   readonly to: string;
 }
@@ -80,17 +84,19 @@ export function readWindow(
   const fallback = opts.fallback ?? 'this-month';
   if (params['start'] !== undefined || params['end'] !== undefined) {
     const { start, end } = needRange(params);
-    return { label: windowLabel(start, end), from: start, to: end };
+    return { label: windowLabel(start, end), all: false, from: start, to: end };
   }
   const raw = params['month'];
   if (raw === undefined || raw === null || raw === '') {
-    if (fallback === 'all-time') return { label: '全部时间', from: NO_WINDOW, to: NO_WINDOW };
+    if (fallback === 'all-time') {
+      return { label: m('skill-bill.analysis-agg.c001'), all: true, from: noWindow(), to: noWindow() };
+    }
     const { start, end } = monthRange(thisMonth());
-    return { label: thisMonth(), from: start, to: end };
+    return { label: thisMonth(), all: false, from: start, to: end };
   }
   const month = needMonth(params);
   const { start, end } = monthRange(month);
-  return { label: month, from: start, to: end };
+  return { label: month, all: false, from: start, to: end };
 }
 
 /** **读窗口并取数**（`readWindow` 那一支的「连记录一起拿」写法）：全时间那一档取全库，其余取闭区间。 */
@@ -100,7 +106,7 @@ export function windowWithRecords(
   opts: { readonly fallback?: 'this-month' | 'all-time' } = {},
 ): WindowRead & { readonly records: readonly BillRow[] } {
   const win = readWindow(params, opts);
-  return { ...win, records: win.from === NO_WINDOW ? allRecords(db) : windowRecords(db, win.from, win.to) };
+  return { ...win, records: win.all ? allRecords(db) : windowRecords(db, win.from, win.to) };
 }
 
 export function round2(n: number): number { return Math.round(n * 100) / 100; }
