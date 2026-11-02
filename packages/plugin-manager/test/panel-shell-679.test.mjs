@@ -26,8 +26,8 @@ const PKG = JSON.parse(readFileSync(join(HERE, '..', 'package.json'), 'utf8'));
 /** base 包版本：banner 里烙的那个版本号必须与声明的精确版本一致（漂了就是没重新内联）。 */
 const BASE_VERSION = PKG.devDependencies['dsh-featherhunter-plugin-base'];
 const BASE_BANNER = '/*! dsh-featherhunter-plugin-base v' + BASE_VERSION + ' */';
-/** 票 05：本仓内联的 base 版本必须正好是这次升级到的 0.1.7（升级没重建产物即变红）。 */
-const EXPECTED_BASE_VERSION = '0.1.7';
+/** 票 05：本仓内联的 base 版本必须正好是这次升级到的 0.1.8（升级没重建产物即变红）。 */
+const EXPECTED_BASE_VERSION = '0.1.8';
 
 /** base 页头动作簇（ActionCluster v2）：静默簇容器与按钮标记、三项 aria 标签、三句悬停文案与本仓地址。 */
 const REPO_URL = 'https://github.com/FeatherHunter/ilife';
