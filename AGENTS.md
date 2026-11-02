@@ -78,7 +78,7 @@ pwsh -NoProfile -File tooling\release.ps1 -Version 0.3.82 -Yes      # 全流程
 
 ### 并发纪律（一席一 worktree，硬规矩）
 
-多席各在自己的 worktree 里开发（主目录常年 `master`，只收 PR），**禁止**切分支（`git switch`／`git checkout <分支>`）、`git reset`、`git stash`、`git clean`、`git restore .`、`--amend`／`rebase`／`push --force*`——它们会把别席已提交或在途的产出孤儿化（2026-09-15 实测发生过两次）。**只许** `git add <自己声明的路径>` ＋ `git commit -m "<中文信息>" -- <路径>`，且提交前用 `git diff --cached --name-only` 复核暂存区只含自己的件；同分支推送先拉后推。编译入口写死 `node node_modules/typescript/bin/tsc -b <包>`（本机 `node_modules\.bin` 不存在，`npx tsc` 是假出口、不编译却可能出假绿）。细则见 `docs/subagent-concurrency-protocol.md` §2–§3。
+多席各在自己的 worktree 里开发（主目录常年 `master`，只收 PR），**禁止**切分支（`git switch`／`git checkout <分支>`）、`git reset`、`git stash`、`git clean`、`git restore .`、`--amend`／`rebase`／`push --force*`——它们会把别席已提交或在途的产出孤儿化（2026-09-15 实测发生过两次）。**只许** `git add <自己声明的路径>` ＋ `git commit -m "<中文信息>" -- <路径>`，且提交前用 `git diff --cached --name-only` 复核暂存区只含自己的件；同分支推送先拉后推。编译入口写死 `node node_modules/typescript/bin/tsc -b <包>`（本机 `node_modules\.bin` 不存在，`npx tsc` 是假出口、不编译却可能出假绿）。细则见 `docs/subagent-concurrency-protocol.md` §2–§3；建树、收回子工作树改动、逐件跑测试三条工具入口见 `docs/agents/多席位工具链.md`。
 
 ### 提交身份
 
