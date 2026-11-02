@@ -8,8 +8,13 @@ import { currentRenderLanguage, defineCatalog, resolve, type MessageId, type Mes
 import { zh } from './zh.js';
 import { en } from './en.js';
 
+/** 词条表集合的类型：**显式写出**，不靠 `defineCatalog` 推——本包 7600＋ 条 key，推出来的字面量
+ *  联合超过 TS 声明文件序列化上限（TS7056，实测 #1320 合并后触发）。写成 `typeof zh` 引用，
+ *  key 仍是逐字联合（拼错 key 照样编译期红），但声明文件只有这一行。 */
+type SkillCalorieCatalog = { readonly zh: typeof zh; readonly en: typeof en };
+
 /** 本包词条表集合。key 类型从 zh 那份派生：**拼错 key 编译期红**（TS2345）。 */
-export const SKILL_CALORIE_CATALOG = defineCatalog({ zh, en });
+export const SKILL_CALORIE_CATALOG: SkillCalorieCatalog = defineCatalog({ zh, en });
 
 /** 本包词条 key 的窄类型。 */
 export type SkillCalorieMessageId = MessageId<typeof SKILL_CALORIE_CATALOG>;

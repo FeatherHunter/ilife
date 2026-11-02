@@ -113,7 +113,7 @@ export function viewDietOverview(params: Record<string, unknown>, db: DatabaseSy
       return { data: { metrics: {} }, html: buildMealDistributionPage(mealView, command) };
     }
     const entryText = entry === ENTRY_OVERVIEW ? m('skill-calorie.home-today.c003') : m('skill-calorie.home-today.c004');
-    const dayWord = end === todayISO() ? '今天' : m('skill-calorie.home-today.c005');
+    const dayWord = end === todayISO() ? m('skill-calorie.home-today.c023') : m('skill-calorie.home-today.c005');
   const rangeWord = start === end ? dayWord : m('skill-calorie.home-today.c006');
     return {
       data: { metrics: {} },

@@ -237,7 +237,7 @@ const opBadge = (op: CrudReceipt['op'], backfill: boolean): Pick<KpiCardInput, '
  *  影响行数与「这次写进去的字段」进页尾对账区；记录编号是内部主键，整张撤（#537）。 */
 function kpiCards(key: string, receipt: CrudReceipt, row: Record<string, unknown> | null, backfill: boolean): KpiCardInput[] {
   const at = (c: string): unknown => (row === null ? undefined : row[c]);
-  const date: KpiCardInput = { label: '日期', value: cell(at('date')) };
+  const date: KpiCardInput = { label: m('skill-calorie.body-receipt.c042'), value: cell(at('date')) };
   const head: KpiCardInput = isMeasure(key)
     ? {
       label: receipt.op === 'delete' ? m('skill-calorie.body-receipt.c026') : m('skill-calorie.body-receipt.c027'),

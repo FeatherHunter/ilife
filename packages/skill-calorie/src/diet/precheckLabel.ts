@@ -75,9 +75,9 @@ export function buildLabelPrecheckDoc(v: LabelPrecheckView, backfill: boolean, c
       label: m('skill-calorie.diet-precheckLabel.c001'),
       html: renderKpiGrid([
         { label: m('skill-calorie.diet-precheckLabel.c002'), value: String(v.totalCalorie), unit: m('skill-calorie.diet-precheckLabel.c003') },
-        { label: m('skill-calorie.diet-precheckLabel.c004'), value: fieldValue(v, 'protein'), unit: '克' },
-        { label: '碳水', value: fieldValue(v, 'carbohydrates'), unit: '克' },
-        { label: '脂肪', value: fieldValue(v, 'fat'), unit: '克' },
+        { label: m('skill-calorie.diet-precheckLabel.c004'), value: fieldValue(v, 'protein'), unit: m('skill-calorie.diet-precheckLabel.c050') },
+        { label: m('skill-calorie.diet-precheckLabel.c048'), value: fieldValue(v, 'carbohydrates'), unit: m('skill-calorie.diet-precheckLabel.c050') },
+        { label: m('skill-calorie.diet-precheckLabel.c049'), value: fieldValue(v, 'fat'), unit: m('skill-calorie.diet-precheckLabel.c050') },
       ]),
     },
     {

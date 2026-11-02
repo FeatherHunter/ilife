@@ -609,17 +609,27 @@ export interface ScenarioCompareView {
  *     ⇒ 换成读者一看就懂的 `平台期第一天`／`今夏以来最低`／`今冬以来最低`。
  *  **`SCENARIO_LABELS` 的键与值一字不动**——键形连路由，值仍是冻结表原文（老实物同名）。
  *  别的键的 `N` 另有含义（`a5` 的「近 N 天」是参数名不是数字）⇒ 只认这几条，不写通用替换。 */
-/** 上屏要换掉的行话词（键＝情景键，值＝[冻结表原文里的那个词, 换成人话的词]）。 */
-const SPOKEN_WORDS: Record<string, readonly [string, string]> = {
-  b8: ['平台期首日', '平台期第一天'],
-  e5: ['入夏最低', '今夏以来最低'],
-  e6: ['入冬最低', '今冬以来最低'],
+/** 上屏要换掉的行话词（键＝情景键，值＝冻结表原文里的那个词）。 */
+const SPOKEN_WORDS: Record<string, string> = {
+  b8: '平台期首日',
+  e5: '入夏最低',
+  e6: '入冬最低',
 };
 
+/** 换上去的人话词（#1320：渲染期取词；词条是字面 key，故按情景分派）。 */
+function spokenWordOf(scenario: string): string | undefined {
+  if (scenario === 'b8') return m('skill-calorie.weight-compare.c064');
+  if (scenario === 'e5') return m('skill-calorie.weight-compare.c066');
+  if (scenario === 'e6') return m('skill-calorie.weight-compare.c067');
+  return undefined;
+}
+
 function onScreenLabel(scenario: string, rawLabel: string, deltaKg: number): string {
-  const pair = SPOKEN_WORDS[scenario];
-  let label = pair === undefined ? rawLabel : rawLabel.replace(pair[0], pair[1]);
-  if (scenario === 'e3') label = label.replace('减重 N kg 那天', '减重 ' + deltaKg + ' kg 那天');
+  const raw = SPOKEN_WORDS[scenario] as string | undefined;
+  const spoken = spokenWordOf(scenario);
+  let label = raw === undefined || spoken === undefined ? rawLabel : rawLabel.replace(raw, spoken);
+  /* #1320：整句成词条（带参），替换后的上屏句与原来逐字节相同。 */
+  if (scenario === 'e3') label = label.replace('减重 N kg 那天', m('skill-calorie.weight-compare.c065', { p0: String(deltaKg) }));
   return label;
 }
 

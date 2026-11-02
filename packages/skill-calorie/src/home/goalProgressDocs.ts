@@ -276,9 +276,9 @@ function kpiCards(f: Facts, historyDays: number): KpiCardInput[] {
  *  唤醒词句已按 #467 切片·用户逐字点名删除。 */
 function notCountedRows(f: Facts): ListRowInput[] {
   return [
-    { left: '蛋白', main: m('skill-calorie.home-goalProgressDocs.c030'), right: f.proteinGoal === null ? m('skill-calorie.home-goalProgressDocs.c031') : num(f.proteinGoal) + ' 克' },
+    { left: m('skill-calorie.home-goalProgressDocs.c070'), main: m('skill-calorie.home-goalProgressDocs.c030'), right: f.proteinGoal === null ? m('skill-calorie.home-goalProgressDocs.c031') : m('skill-calorie.home-goalProgressDocs.c071', { p0: String(num(f.proteinGoal)) }) },
     { left: m('skill-calorie.home-goalProgressDocs.c032'), main: m('skill-calorie.home-goalProgressDocs.c033'), right: f.waterGoal === null ? m('skill-calorie.home-goalProgressDocs.c034') : m('skill-calorie.home-goalProgressDocs.c035', { p0: String(num(f.waterGoal)) }) },
-    { left: '运动', main: m('skill-calorie.home-goalProgressDocs.c036'), right: f.exerciseGoal === null ? m('skill-calorie.home-goalProgressDocs.c037') : m('skill-calorie.home-goalProgressDocs.c038', { p0: String(num(f.exerciseGoal)) }) },
+    { left: m('skill-calorie.home-goalProgressDocs.c072'), main: m('skill-calorie.home-goalProgressDocs.c036'), right: f.exerciseGoal === null ? m('skill-calorie.home-goalProgressDocs.c037') : m('skill-calorie.home-goalProgressDocs.c038', { p0: String(num(f.exerciseGoal)) }) },
   ];
 }
 
@@ -307,7 +307,7 @@ function historyTable(g: GoalProgress, historyDays: number, day: (d: string) => 
   const truncated = all.length > HISTORY_ROWS ? m('skill-calorie.home-goalProgressDocs.c040', { p0: String(HISTORY_ROWS) }) : '';
   return renderDataTable({
     columns: [
-      { key: 'date', label: '日期' },
+      { key: 'date', label: m('skill-calorie.home-goalProgressDocs.c073') },
       { key: 'cal', label: m('skill-calorie.home-goalProgressDocs.c041'), align: 'right' },
       { key: 'pct', label: m('skill-calorie.home-goalProgressDocs.c042'), align: 'right' },
       { key: 'verdict', label: m('skill-calorie.home-goalProgressDocs.c043') },

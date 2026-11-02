@@ -92,16 +92,16 @@ function macroCards(d: HomeData): readonly KpiCardInput[] {
       detail: goalDetail(d.calorieGoal), ...barOf(d.caloriePct), ...progressBadge(d.caloriePct),
     },
     {
-      label: '蛋白', value: fmt(t.pro), unit: '克',
-      detail: goalDetail(d.proteinGoal), ...barOf(d.proteinPct), ...gapBadge(d.proteinGoal, t.pro, '克'),
+      label: m('skill-calorie.home-cards.c001'), value: fmt(t.pro), unit: m('skill-calorie.home-cards.c002'),
+      detail: goalDetail(d.proteinGoal), ...barOf(d.proteinPct), ...gapBadge(d.proteinGoal, t.pro, m('skill-calorie.home-cards.c002')),
     },
     {
-      label: '碳水', value: fmt(t.carbs), unit: '克',
-      detail: goalDetail(d.carbsGoal), ...barOf(d.carbsPct), ...gapBadge(d.carbsGoal, t.carbs, '克'),
+      label: m('skill-calorie.home-cards.c003'), value: fmt(t.carbs), unit: m('skill-calorie.home-cards.c002'),
+      detail: goalDetail(d.carbsGoal), ...barOf(d.carbsPct), ...gapBadge(d.carbsGoal, t.carbs, m('skill-calorie.home-cards.c002')),
     },
     {
-      label: '脂肪', value: fmt(t.fat), unit: '克',
-      detail: goalDetail(d.fatGoal), ...barOf(d.fatPct), ...gapBadge(d.fatGoal, t.fat, '克'),
+      label: m('skill-calorie.home-cards.c004'), value: fmt(t.fat), unit: m('skill-calorie.home-cards.c002'),
+      detail: goalDetail(d.fatGoal), ...barOf(d.fatPct), ...gapBadge(d.fatGoal, t.fat, m('skill-calorie.home-cards.c002')),
     },
     {
       label: m('skill-calorie.home-homeCards.c013'), value: fmt(d.daily.waterMl), unit: m('skill-calorie.home-homeCards.c014'),

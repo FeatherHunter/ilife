@@ -46,17 +46,22 @@ export function activityLabel(level: string | null | undefined): string {
   return ACTIVITY_LEVEL_LABELS[s] ?? s;
 }
 
-/** 两张正本表合成一张：一句话里出现哪个英文枚举就换成哪个中文说法（认不出的原样留着）。 */
-const ENUM_LABELS: Record<string, string> = { ...GENDER_LABELS, ...ACTIVITY_LEVEL_LABELS };
+/** 两张正本表合成一张：一句话里出现哪个英文枚举就换成哪个中文说法（认不出的原样留着）。
+ *  #1320：两张表的值是 getter，**只能在调用时展开**（模块加载期展开会把词取死在加载时的语言）。 */
+function enumLabels(): Record<string, string> {
+  return { ...GENDER_LABELS, ...ACTIVITY_LEVEL_LABELS };
+}
 
-/** 整句里的英文枚举 → 中文（长词在前，免得 `very_active` 被 `active` 咬掉半截）。 */
+/** 整句里的英文枚举 → 中文（长词在前，免得 `very_active` 被 `active` 咬掉半截）。
+ *  只读键名，不触发 getter，所以可以留在模块层。 */
 const ENUM_PATTERN = new RegExp(
-  Object.keys(ENUM_LABELS).sort((a, b) => b.length - a.length).join('|'),
+  [...Object.keys(GENDER_LABELS), ...Object.keys(ACTIVITY_LEVEL_LABELS)].sort((a, b) => b.length - a.length).join('|'),
   'g',
 );
 
 /** 把一句话里的库内英文枚举换成中文说法（摘要、逐字段对照那句用得上）。
  *  **只用于给人看的整句**：命令原文、复制载荷、stdout 的 JSON 一律不过这一道。 */
 export function localizeEnums(text: string): string {
-  return text.replace(ENUM_PATTERN, (hit) => ENUM_LABELS[hit] ?? hit);
+  const labels = enumLabels();
+  return text.replace(ENUM_PATTERN, (hit) => labels[hit] ?? hit);
 }

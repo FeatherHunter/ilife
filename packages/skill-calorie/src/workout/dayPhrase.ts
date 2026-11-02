@@ -9,9 +9,22 @@
 
 /** 星期名（`day_of_week` 1–7）：`第 1 周 周三` 里的那截。 */
 import { m } from '../entries/index.js';
-export const DOW_CN = ['', '一', '二', '三', '四', '五', '六', '日'];
+/* #1320 · 星期汉字是上屏文案：改渲染期取词（原模块级数组按位置索引，故用函数保「0 位空串／越界回原值」的语义）。 */
+function dowCnOf(dn: number): string | undefined {
+  switch (dn) {
+    case 0: return '';
+    case 1: return m('skill-calorie.workout-dayPhrase.c002');
+    case 2: return m('skill-calorie.workout-dayPhrase.c003');
+    case 3: return m('skill-calorie.workout-dayPhrase.c004');
+    case 4: return m('skill-calorie.workout-dayPhrase.c005');
+    case 5: return m('skill-calorie.workout-dayPhrase.c006');
+    case 6: return m('skill-calorie.workout-dayPhrase.c007');
+    case 7: return m('skill-calorie.workout-dayPhrase.c008');
+    default: return undefined;
+  }
+}
 
 /** 「第 1 周 周三」——周次与星期都带空格与「周」字，读得出是哪一周的哪一天。 */
 export function dayPhrase(wn: number, dn: number): string {
-  return m('skill-calorie.workout-dayPhrase.c001', { p0: String(wn), p1: String(DOW_CN[dn] ?? String(dn)) });
+  return m('skill-calorie.workout-dayPhrase.c001', { p0: String(wn), p1: String(dowCnOf(dn) ?? String(dn)) });
 }

@@ -292,16 +292,24 @@ export function analyzePair(series: DaySeries[], pair: string, db?: DatabaseSync
   const deficitBuckets: Array<{ label: string; days: number }> = [];
   if (pair === 'weight_deficit') {
     /* #160 文本返工：桶名换人话（`深缺口(>500卡)` 这种括号缩写读者要解码；分组阈值一个没动）。 */
-    const buckets: Record<string, number> = { '缺口大于 500 卡': 0, '缺口 100~500 卡': 0, '差不多持平': 0, '反而吃多了': 0 };
+    /* #1320：计数键改 ASCII（只当计数位），上屏名在渲染期取词、桶序不变。 */
+    const buckets = { over500: 0, mid100500: 0, flat: 0, over: 0 };
     for (const s of series) {
       const d = s.deficit;
       if (d === null || d === undefined) continue;
-      if (d > 500) buckets['缺口大于 500 卡'] = (buckets['缺口大于 500 卡'] as number) + 1;
-      else if (d > 100) buckets['缺口 100~500 卡'] = (buckets['缺口 100~500 卡'] as number) + 1;
-      else if (d >= -100) buckets['差不多持平'] = (buckets['差不多持平'] as number) + 1;
-      else buckets['反而吃多了'] = (buckets['反而吃多了'] as number) + 1;
+      if (d > 500) buckets.over500 += 1;
+      else if (d > 100) buckets.mid100500 += 1;
+      else if (d >= -100) buckets.flat += 1;
+      else buckets.over += 1;
     }
-    for (const [label, days] of Object.entries(buckets)) {
+    const bucketLabels: Array<[keyof typeof buckets, string]> = [
+      ['over500', m('skill-calorie.analysis-cross.c068')],
+      ['mid100500', m('skill-calorie.analysis-cross.c069')],
+      ['flat', m('skill-calorie.analysis-cross.c070')],
+      ['over', m('skill-calorie.analysis-cross.c071')],
+    ];
+    for (const [key, label] of bucketLabels) {
+      const days = buckets[key];
       if (days > 0) deficitBuckets.push({ label, days });
     }
   }

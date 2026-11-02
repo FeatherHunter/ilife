@@ -84,7 +84,7 @@ export function buildBodyCompositionDoc(v: BodyCompositionView): string {
     : anchor.date + (anchor.source === null ? '' : '（' + srcZh(anchor.source) + '）');
   // Δ 卡：原先是「距上次测量 1 天（…）· 体脂率 下降 0.5%」这一条 `·` 串——拆成人话一句；
   // 卡片槽吃纯文本（形状落不进来），上一次的来源因此另出一条卡外事实条（见下面 renderFactStrip）。
-  const dirWord = d === null || d.diffPct === 0 ? '' : (d.diffPct > 0 ? '上升' : m('skill-calorie.body-bodyDocs.c001'));
+  const dirWord = d === null || d.diffPct === 0 ? '' : (d.diffPct > 0 ? m('skill-calorie.body-bodyDocs.c073') : m('skill-calorie.body-bodyDocs.c001'));
   const dirText = (dirWord === '' ? m('skill-calorie.body-bodyDocs.c002') : dirWord);
   const deltaCard = {
     label: m('skill-calorie.body-bodyDocs.c003'),
@@ -268,7 +268,7 @@ export function buildBodyMeasureDoc(v: BodyMeasureView): string {
     const zh = MEASUREMENT_ZH[metric] ?? metric;
     recordsBlock = '<section id="records"><div class="bru-table">' + renderDataTable({
       columns: [
-        { key: 'date', label: '日期' },
+        { key: 'date', label: m('skill-calorie.body-bodyDocs.c074') },
         { key: 'val', label: m('skill-calorie.body-bodyDocs.c052', { p0: String(zh) }), align: 'right' },
         { key: 'note', label: m('skill-calorie.body-bodyDocs.c053') },
       ],

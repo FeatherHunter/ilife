@@ -226,7 +226,7 @@ export function scenarioB1(db: DatabaseSync, today: string): ScenarioResult {
     segB: singleSeg(m('skill-calorie.weight-weightCompare.c036'), (rows[rows.length - 1] as Row)[0], current),
     compare: { deltaKg: delta, direction, rateDiffG: null, speed: '—' },
     extraRows: [
-      { label: '已完成', value: pctDone !== null ? pctDone + '%' : '—' },
+      { label: m('skill-calorie.weight-weightCompare.c043'), value: pctDone !== null ? pctDone + '%' : '—' },
       { label: m('skill-calorie.weight-weightCompare.c037'), value: eta ?? '—' },
       { label: m('skill-calorie.weight-weightCompare.c038'), value: curBmi !== null ? String(curBmi) : '—' },
       { label: m('skill-calorie.weight-weightCompare.c039'), value: goalBmi !== null ? String(goalBmi) : '—' },

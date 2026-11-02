@@ -54,7 +54,7 @@ export const anchored = (c: Card): string => '<section id="' + c.id + '">' + c.h
  *  不许上屏（`t425` 裁定 1）。 */
 const FIELD_CN = (): Readonly<Record<string, string>> => Object.freeze({
   foodName: m('skill-calorie.diet-precheckParts.c006'), productName: m('skill-calorie.diet-precheckParts.c007'), brand: m('skill-calorie.diet-precheckParts.c008'), calories: m('skill-calorie.diet-precheckParts.c009'), protein: m('skill-calorie.diet-precheckParts.c010'),
-  carbs: '碳水', carbohydrates: '碳水', fat: '脂肪', saturatedFat: m('skill-calorie.diet-precheckParts.c011'), sugar: m('skill-calorie.diet-precheckParts.c012'),
+  carbs: m('skill-calorie.diet-precheckParts.c020'), carbohydrates: m('skill-calorie.diet-precheckParts.c020'), fat: m('skill-calorie.diet-precheckParts.c021'), saturatedFat: m('skill-calorie.diet-precheckParts.c011'), sugar: m('skill-calorie.diet-precheckParts.c012'),
   dietaryFiber: m('skill-calorie.diet-precheckParts.c013'), sodium: m('skill-calorie.diet-precheckParts.c014'), grams: m('skill-calorie.diet-precheckParts.c015'), note: m('skill-calorie.diet-precheckParts.c016'), date: m('skill-calorie.diet-precheckParts.c017'), time: m('skill-calorie.diet-precheckParts.c018'),
 });
 

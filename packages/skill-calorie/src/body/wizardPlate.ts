@@ -65,10 +65,15 @@ const MEASURE_LOWER = ['leftThighCm', 'rightThighCm', 'leftCalfCm', 'rightCalfCm
 const MEASURE_ARM = ['leftArmCm', 'rightArmCm', 'leftForearmCm', 'rightForearmCm'];
 const MEASURE_ALL = [...MEASURE_UPPER, ...MEASURE_LOWER, ...MEASURE_ARM];
 
+/* #1320 · 模块级取词违规（S1）修正：部位名是上屏标签，改 getter 在渲染期取词。 */
 export const WIZARD_CALIPER_LABELS: Record<string, string> = {
-  caliper_chest_mm: '胸', caliper_abdominal_mm: '腹', caliper_thigh_mm: '大腿',
-  caliper_tricep_mm: '三头肌', caliper_subscapular_mm: '肩胛下',
-  caliper_suprailiac_mm: '髂上', caliper_midaxillary_mm: '腋中线',
+  get caliper_chest_mm(): string { return m('skill-calorie.body-wizardPlate.c012'); },
+  get caliper_abdominal_mm(): string { return m('skill-calorie.body-wizardPlate.c013'); },
+  get caliper_thigh_mm(): string { return m('skill-calorie.body-wizardPlate.c014'); },
+  get caliper_tricep_mm(): string { return m('skill-calorie.body-wizardPlate.c015'); },
+  get caliper_subscapular_mm(): string { return m('skill-calorie.body-wizardPlate.c016'); },
+  get caliper_suprailiac_mm(): string { return m('skill-calorie.body-wizardPlate.c017'); },
+  get caliper_midaxillary_mm(): string { return m('skill-calorie.body-wizardPlate.c018'); },
 };
 
 /** 中文来源别名（cli/write.ts SOURCE_ALIASES 同值，测试钉死）。 */

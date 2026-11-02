@@ -17,7 +17,7 @@ import { join } from 'node:path';
 import { helpDataKeyOf } from 'base-paint/help-key';
 import { dataKeyLine } from 'base-paint/save-html';
 import { resolveDbDir } from '../paths.js';
-import { buildHelpSceneData } from './helpScene.js';
+import { buildHelpSceneData, helpGroupLabelOf } from './helpScene.js';
 import { HELP_FILE_STEM, buildHelpFileData, formatHelpMinute, renderHelpFileHtml } from './helpFile.js';
 import { HELP_HTML_DIR_NAME } from './helpPaths.js';
 import { fail, optStr } from '../shared/params.js';
@@ -44,7 +44,7 @@ function helpSceneIndex(data: ReturnType<typeof buildHelpSceneData>): {
     return {
       id: group.id,
       icon: typeof group.icon === 'string' ? group.icon : '',
-      label: group.label,
+      label: helpGroupLabelOf(group.id),
       subgroupCount: group.subgroups.length,
       sceneCount,
     };

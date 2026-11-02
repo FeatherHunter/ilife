@@ -59,7 +59,7 @@ export function buildBodyCompositionCompareDoc(v: BodyCompositionCompareView): s
   parts.push(renderDataTable({
     columns: [
       { key: 'period', label: m('skill-calorie.body-compareCompositionDoc.c011') },
-      { key: 'range', label: '日期' },
+      { key: 'range', label: m('skill-calorie.body-compareCompositionDoc.c027') },
       { key: 'avg', label: m('skill-calorie.body-compareCompositionDoc.c012'), align: 'right' },
       { key: 'n', label: m('skill-calorie.body-compareCompositionDoc.c013'), align: 'right' },
       { key: 'delta', label: m('skill-calorie.body-compareCompositionDoc.c014'), align: 'right' },

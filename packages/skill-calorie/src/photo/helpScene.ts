@@ -34,12 +34,36 @@ import { TRIGGERS } from '../triggers/index.js';
 import type { SceneTrigger, Trigger } from '../triggers/index.js';
 import { routesFor } from '../triggers/routing.js';
 import { m } from '../entries/index.js';
+import type { SkillCalorieMessageId } from '../entries/index.js';
 /** 换行（仓库口径：`String.fromCharCode(10)`，不写字面 `\n`）。 */
 const LF = String.fromCharCode(10);
 
 /** HELP 标题面（F3 `卡路里.html` payload 逐字：`skill_name`／`title`）。 */
 export const HELP_SKILL_NAME = '卡路里';
 export const HELP_TITLE = '唤醒词速查台';
+
+/** 分组显示名取词键（#1320）：`HELP_GROUPS.label` 仍是 SoT 分类键（数据位，用于匹配 `TRIGGERS.category`
+ *  与展示序），**屏上取词走这里**。速查台整支已于 2026-09-24 下线，本件唯一还在上屏的位是
+ *  `calorie.help.center` 信封里的 10 条分组索引（`photo/help.ts:helpSceneIndex` → `label`）。 */
+const HELP_GROUP_LABEL_KEYS: Readonly<Record<string, string>> = Object.freeze({
+  home: 'skill-calorie.photo-helpScene.c003',
+  diet: 'skill-calorie.photo-helpScene.c004',
+  weight: 'skill-calorie.photo-helpScene.c005',
+  exercise: 'skill-calorie.photo-helpScene.c006',
+  workout: 'skill-calorie.photo-helpScene.c007',
+  goal: 'skill-calorie.photo-helpScene.c008',
+  body_detail: 'skill-calorie.photo-helpScene.c009',
+  body_photo: 'skill-calorie.photo-helpScene.c010',
+  profile: 'skill-calorie.photo-helpScene.c011',
+  analysis: 'skill-calorie.photo-helpScene.c012',
+});
+
+/** 分组显示名（`HELP_GROUPS.label` 是数据键，不直接上屏）。 */
+export function helpGroupLabelOf(id: string): string {
+  const key = HELP_GROUP_LABEL_KEYS[id];
+  if (key !== undefined) return m(key as SkillCalorieMessageId);
+  return HELP_GROUPS.find((group) => group.id === id)?.label ?? id;
+}
 
 /** 10 分组（**F3 序 ＋ F3 逐字 label／图标**，`render_help_center.py:44-53`）。
  *

@@ -16,7 +16,23 @@ import { m } from '../entries/index.js';
 /** #359 · 7 点站点标签：**次序与 `CALIPER_FIELDS` 逐位对齐**；标签原文照老技能向导页
  *  `D:\2Study\StudyNotes\SKILLS\卡路里\templates\body_composition_wizard.html:515`
  *  「胸 ／ 腹 ／ 大腿 ／ 三头肌 ／ 肩胛下 ／ 髂上 ／ 腋中线」。本表只供页面认位，不含任何换算。 */
-export const CALIPER_SITE_LABELS = ['胸', '腹', '大腿', '三头肌', '肩胛下', '髂上', '腋中线'] as const;
+/* #1320 · 7 点站点标签是上屏文案：改成**带 getter 的只读数组**（S1：模块加载期不取词）。
+ *  形状仍是长度 7、按槽位序号取（与 `CALIPER_FIELDS` 逐位对齐）——测试要 `[...CALIPER_SITE_LABELS]`
+ *  逐位对账，所以不能改成普通对象。 */
+export const CALIPER_SITE_LABELS: readonly string[] = (() => {
+  const labels: string[] = [];
+  const slot = (i: number, read: () => string): void => {
+    Object.defineProperty(labels, i, { get: read, enumerable: true });
+  };
+  slot(0, () => m('skill-calorie.body-bodyPlate.c005'));
+  slot(1, () => m('skill-calorie.body-bodyPlate.c006'));
+  slot(2, () => m('skill-calorie.body-bodyPlate.c007'));
+  slot(3, () => m('skill-calorie.body-bodyPlate.c008'));
+  slot(4, () => m('skill-calorie.body-bodyPlate.c009'));
+  slot(5, () => m('skill-calorie.body-bodyPlate.c010'));
+  slot(6, () => m('skill-calorie.body-bodyPlate.c011'));
+  return Object.freeze(labels);
+})();
 
 /** 一条记录的 7 个皮褶槽（缺槽位如实给 `null`，不补默认值、不求和）。 */
 export interface CaliperEcho {

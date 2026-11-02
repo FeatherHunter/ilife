@@ -87,14 +87,14 @@ export function buildGoalWeightDoc(g: GoalWeight, command: string): string {
   parts.push(renderDataTable({
     columns: [
       { key: 'period', label: m('skill-calorie.goal-goalWeightDoc.c020') },
-      { key: 'range', label: '区间' },
+      { key: 'range', label: m('skill-calorie.goal-goalWeightDoc.c079') },
       { key: 'goal', label: m('skill-calorie.goal-goalWeightDoc.c021'), align: 'right' },
       { key: 'latest', label: m('skill-calorie.goal-goalWeightDoc.c022'), align: 'right' },
       { key: 'change', label: m('skill-calorie.goal-goalWeightDoc.c023'), align: 'right' },
       { key: 'days', label: m('skill-calorie.goal-goalWeightDoc.c024'), align: 'right' },
     ],
     rows: [{
-      period: '本期', range: g.start + ' ~ ' + g.end,
+      period: m('skill-calorie.goal-goalWeightDoc.c080'), range: g.start + ' ~ ' + g.end,
       goal: fmtKg(g.weightGoal), latest: fmtKg(g.latestKg),
       change: fmtSigned(g.deltaKg), days: m('skill-calorie.goal-goalWeightDoc.c025', { p0: String(g.loggedDays) }),
     }],
@@ -115,7 +115,7 @@ export function buildGoalWeightDoc(g: GoalWeight, command: string): string {
       copyLog: copyLog({ command, source: copySource(), actionAt: nowStamp(), version: DOC_VERSION }),
     },
   }));
-  parts.push(renderDisclosure({ title: '结论', contentHtml: '<p>' + goalWeightSummary(g) + '</p>', open: true }));
+  parts.push(renderDisclosure({ title: m('skill-calorie.goal-goalWeightDoc.c081'), contentHtml: '<p>' + goalWeightSummary(g) + '</p>', open: true }));
   return assembleDocPage({
     docTitle: m('skill-calorie.goal-goalWeightDoc.c076'),
     title: m('skill-calorie.goal-goalWeightDoc.c028'),

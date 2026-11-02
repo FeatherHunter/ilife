@@ -84,8 +84,8 @@ const RANK_METRIC = (): Record<string, RankMetric> => ({
   high_calorie: { label: m('skill-calorie.diet-rankingDocs.c065'), unit: m('skill-calorie.diet-rankingDocs.c066'), of: (it) => it.totalCal },
   low_calorie: { label: m('skill-calorie.diet-rankingDocs.c067'), unit: m('skill-calorie.diet-rankingDocs.c068'), of: (it) => it.totalCal },
   frequent: { label: m('skill-calorie.diet-rankingDocs.c069'), unit: m('skill-calorie.diet-rankingDocs.c070'), of: (it) => it.cnt },
-  high_carb: { label: m('skill-calorie.diet-rankingDocs.c071'), unit: '克', of: (it) => it.totalCarbs },
-  high_protein: { label: m('skill-calorie.diet-rankingDocs.c072'), unit: '克', of: (it) => it.totalProtein },
+  high_carb: { label: m('skill-calorie.diet-rankingDocs.c071'), unit: m('skill-calorie.diet-rankingDocs.c074'), of: (it) => it.totalCarbs },
+  high_protein: { label: m('skill-calorie.diet-rankingDocs.c072'), unit: m('skill-calorie.diet-rankingDocs.c074'), of: (it) => it.totalProtein },
 });
 
 const metricOf = (cat: string): RankMetric => RANK_METRIC()[cat] ?? RANK_METRIC().high_calorie;

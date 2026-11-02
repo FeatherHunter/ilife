@@ -109,7 +109,12 @@ export const NUTRI_PROFILES = {
   bulk: { calorieAdj: 400, proteinGPerKg: 1.8, waterMlPerKg: 30, fatPct: 0.25 },
 } as const;
 export type NutriProfile = keyof typeof NUTRI_PROFILES;
-export const NUTRI_PROFILE_LABELS: Record<NutriProfile, string> = { cut: '减脂', maintain: '维持', bulk: '增肌' };
+/* #1320 · 模块级取词违规（S1）修正：getter 在渲染期取词，键与导出形状不变。 */
+export const NUTRI_PROFILE_LABELS: Record<NutriProfile, string> = {
+  get cut(): string { return m('skill-calorie.goal-nutritionGoal.c025'); },
+  get maintain(): string { return m('skill-calorie.goal-nutritionGoal.c026'); },
+  get bulk(): string { return m('skill-calorie.goal-nutritionGoal.c027'); },
+};
 export const NUTRI_PROFILE_WEEKLY_RATE: Record<NutriProfile, number> = { cut: 0.5, maintain: 0.0, bulk: 0.4 };
 
 export interface RecommendInput {

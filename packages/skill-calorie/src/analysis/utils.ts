@@ -22,20 +22,21 @@ export const TDEE_ACTIVITY_FACTORS: Record<string, number> = {
   very_active: 1.9,
 };
 
+/* #1320 · 模块级取词违规（S1）修正：值是上屏文案，改 getter 在渲染期取词，导出形状不变。 */
 export const ACTIVITY_LEVEL_LABELS: Record<string, string> = {
-  sedentary: '久坐',
-  light: '轻度活动',
-  moderate: '中度活动',
-  active: '活跃',
-  very_active: '高度活跃',
+  get sedentary(): string { return m('skill-calorie.analysis-utils.c006'); },
+  get light(): string { return m('skill-calorie.analysis-utils.c007'); },
+  get moderate(): string { return m('skill-calorie.analysis-utils.c008'); },
+  get active(): string { return m('skill-calorie.analysis-utils.c009'); },
+  get very_active(): string { return m('skill-calorie.analysis-utils.c010'); },
 };
 
 /** #238 · 性别中文说法（唯一来源）：界面自己写「性别（男/女）」，出页就不该回 `male`／`female`。
  *  **只认库内两条归一值**；认不出的原样露出，不猜（写库那侧的归一正本是 `fetch/profile.normalizeGender`，
  *  本表只负责把它翻成人话）。页面层「男的显示值」同 `ACTIVITY_LEVEL_LABELS` 一样只此一处。 */
 export const GENDER_LABELS: Record<string, string> = {
-  male: '男',
-  female: '女',
+  get male(): string { return m('skill-calorie.analysis-utils.c011'); },
+  get female(): string { return m('skill-calorie.analysis-utils.c012'); },
 };
 
 export function getActivityFactor(level?: string | null): number {

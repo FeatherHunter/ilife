@@ -156,7 +156,7 @@ function dayRows(input: HomeViewInput, logged?: (s: DaySeries) => string): Reado
 }
 
 const DAY_COLS = [
-  { key: 'date', label: '日期' },
+  { key: 'date', label: m('skill-calorie.home-homeViewParts.c062') },
   { key: 'cal', label: m('skill-calorie.home-homeViewParts.c055'), align: 'right' as const },
 ];
 

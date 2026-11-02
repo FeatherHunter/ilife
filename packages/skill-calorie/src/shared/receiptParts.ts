@@ -21,7 +21,7 @@ import { m } from '../entries/index.js';
  *  承接原「无变化 否」那个双重否定，一页只出现这一处。 */
 export function statusCard(receipt: CrudReceipt, writtenDetail: string): KpiCardInput {
   return {
-    label: '状态',
+    label: m('skill-calorie.shared-receiptParts.c012'),
     value: receipt.noChange ? m('skill-calorie.shared-receiptParts.c001') : m('skill-calorie.shared-receiptParts.c002'),
     detail: receipt.noChange ? m('skill-calorie.shared-receiptParts.c003') : writtenDetail,
   };

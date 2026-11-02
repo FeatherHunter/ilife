@@ -152,7 +152,7 @@ function reviewBody(r: DietReview | null, top5: FoodRanking | null, extra: DietR
   parts.push(anchored('rv-kpi', renderKpiGrid([
     { label: m('skill-calorie.diet-reviewDocs.c010'), value: t ? String(t.totalCal) : '—', unit: m('skill-calorie.diet-reviewDocs.c011'), detail: m('skill-calorie.diet-reviewDocs.c012', { p0: String(r.loggedDays) }) },
     { label: m('skill-calorie.diet-reviewDocs.c013'), value: t ? String(t.avgCal) : '—', unit: m('skill-calorie.diet-reviewDocs.c014'), detail: m('skill-calorie.diet-reviewDocs.c015') },
-    { label: m('skill-calorie.diet-reviewDocs.c016'), value: String(protein.total), unit: '克', detail: m('skill-calorie.diet-reviewDocs.c017', { p0: String(r.loggedDays) }) },
+    { label: m('skill-calorie.diet-reviewDocs.c016'), value: String(protein.total), unit: m('skill-calorie.diet-reviewDocs.c085'), detail: m('skill-calorie.diet-reviewDocs.c017', { p0: String(r.loggedDays) }) },
     { label: m('skill-calorie.diet-reviewDocs.c018'), value: fmt(protein.avg), unit: m('skill-calorie.diet-reviewDocs.c019'), detail: m('skill-calorie.diet-reviewDocs.c020') },
   ])));
   if (t && t.daily.length >= 2) {
@@ -375,11 +375,11 @@ export function buildMealDistributionBlock(v: MealDistributionView, command?: st
         { key: 'food', label: m('skill-calorie.diet-reviewDocs.c073') },
         { key: 'grams', label: m('skill-calorie.diet-reviewDocs.c074'), align: 'right' },
         { key: 'cal', label: m('skill-calorie.diet-reviewDocs.c075'), align: 'right' },
-        { key: 'protein', label: '蛋白', align: 'right' },
+        { key: 'protein', label: m('skill-calorie.diet-reviewDocs.c086'), align: 'right' },
       ],
       rows: v.items.map((it) => ({
         date: it.date, time: it.time, meal: it.meal, food: it.food,
-        grams: it.grams + ' 克', cal: m('skill-calorie.diet-reviewDocs.c076', { p0: String(it.cal) }), protein: it.protein + ' 克',
+        grams: m('skill-calorie.diet-reviewDocs.c087', { p0: String(it.grams) }), cal: m('skill-calorie.diet-reviewDocs.c076', { p0: String(it.cal) }), protein: m('skill-calorie.diet-reviewDocs.c087', { p0: String(it.protein) }),
       })),
       caption: m('skill-calorie.diet-reviewDocs.c077', { p0: String(v.items.length) }),
       emptyText: m('skill-calorie.diet-reviewDocs.c078', { p0: String(v.mealLabel) }),

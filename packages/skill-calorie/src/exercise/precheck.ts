@@ -50,8 +50,8 @@ function currentTable(v: ExerciseGoalPrecheckView): string {
     columns: [{ key: 'k', label: m('skill-calorie.exercise-precheck.c001') }, { key: 'v', label: m('skill-calorie.exercise-precheck.c002') }],
     rows: [
       { k: m('skill-calorie.exercise-precheck.c003'), v: m('skill-calorie.exercise-precheck.c004') },
-      { k: '窗口', v: v.start === v.end ? v.start : v.start + ' ~ ' + v.end },
-      { k: '窗口天数', v: m('skill-calorie.exercise-precheck.c005', { p0: String(String(v.days)) }) },
+      { k: m('skill-calorie.exercise-precheck.c044'), v: v.start === v.end ? v.start : v.start + ' ~ ' + v.end },
+      { k: m('skill-calorie.exercise-precheck.c045'), v: m('skill-calorie.exercise-precheck.c005', { p0: String(String(v.days)) }) },
       ...(v.wakeWord === null ? [] : [{ k: m('skill-calorie.exercise-precheck.c006'), v: v.wakeWord }]),
     ],
     caption: m('skill-calorie.exercise-precheck.c007'),
