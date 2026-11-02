@@ -271,7 +271,7 @@ function sourceCard(receipt: CrudReceipt, dates: readonly string[], fallback: st
   const s = receiptSource(receipt.meta.source);
   const facts = [
     // #578：窗口走区间单源 `rangeText`——同日只写一日（不再展成 `A → A`），跨日写 `A → B`（`~` 不上屏）。
-    { k: '窗口', v: rangeText(window[0] ?? '', window[window.length - 1] ?? '') },
+    { k: m('skill-calorie.exercise-receipt.c083'), v: rangeText(window[0] ?? '', window[window.length - 1] ?? '') },
   ];
   return {
     id: 'sec-source',

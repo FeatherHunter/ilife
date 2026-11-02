@@ -119,9 +119,9 @@ function renderFoodGrid(items: readonly ProductRow[], withUpdatedAt: boolean): s
   const cards = items.map((it) => {
     const macros = [
       { label: m('skill-calorie.diet-libraryDocs.c004'), value: m('skill-calorie.diet-libraryDocs.c005', { p0: String(fixed0(it.calories)) }) },
-      { label: '蛋白', value: fixed1(it.protein) + ' 克' },
-      { label: '脂肪', value: fixed1(it.fat) + ' 克' },
-      { label: '碳水', value: fixed1(it.carbohydrates) + ' 克' },
+      { label: m('skill-calorie.diet-libraryDocs.c074'), value: m('skill-calorie.diet-libraryDocs.c077', { p0: fixed1(it.protein) }) },
+      { label: m('skill-calorie.diet-libraryDocs.c075'), value: m('skill-calorie.diet-libraryDocs.c078', { p0: fixed1(it.fat) }) },
+      { label: m('skill-calorie.diet-libraryDocs.c076'), value: m('skill-calorie.diet-libraryDocs.c079', { p0: fixed1(it.carbohydrates) }) },
     ];
     /* #581 · 来源行去间隔号：一行一键值（来源一行、更新于另起一行）。#633 种子内部名「测试」屏上改印「内置食品」（缺值仍归「未知」）。
        #587 C项时间到分：屏上取到分（slice 0,16）；复制载荷机器时间保持秒级（copyLog 仍传完整）。 */

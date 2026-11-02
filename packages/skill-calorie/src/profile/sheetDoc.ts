@@ -116,7 +116,7 @@ function sheetRows(v: ProfileSettingView): SheetRow[] {
     if (f.camel === 'age') { row.unit = m('skill-calorie.profile-sheetDoc.c006'); row.kind = 'number'; }
     if (f.camel === 'gender') {
       row.kind = 'select';
-      row.options = [{ value: 'male', label: '男' }, { value: 'female', label: '女' }];
+      row.options = [{ value: 'male', label: m('skill-calorie.profile-sheetDoc.c056') }, { value: 'female', label: m('skill-calorie.profile-sheetDoc.c057') }];
       row.before = genderLabel(beforeRaw); row.after = genderLabel(afterRaw);
       row.note = beforeRaw === afterRaw ? m('skill-calorie.profile-sheetDoc.c007') : m('skill-calorie.profile-sheetDoc.c008');
     }

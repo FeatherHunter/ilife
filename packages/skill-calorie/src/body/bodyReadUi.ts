@@ -90,7 +90,7 @@ export function recordsSection(
 ): string {
   const table = renderDataTable({
     columns: [
-      { key: 'date', label: '日期' },
+      { key: 'date', label: m('skill-calorie.body-bodyReadUi.c012') },
       { key: 'pct', label: m('skill-calorie.body-bodyReadUi.c001'), align: 'right' },
       { key: 'source', label: m('skill-calorie.body-bodyReadUi.c002') },
       { key: 'note', label: m('skill-calorie.body-bodyReadUi.c003') },
@@ -148,7 +148,7 @@ export function measureFullTable(
   const strOrEmpty = (x: unknown): string => (typeof x === 'string' ? x : '');
   const table = renderDataTable({
     columns: [
-      { key: 'date', label: '日期' },
+      { key: 'date', label: m('skill-calorie.body-bodyReadUi.c012') },
       ...MEASUREMENT_FIELDS.map((f) => ({ key: f, label: MEASUREMENT_ZH[f] ?? f, align: 'right' as const })),
       { key: 'note', label: m('skill-calorie.body-bodyReadUi.c009') },
     ],

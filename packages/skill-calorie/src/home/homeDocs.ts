@@ -85,7 +85,7 @@ export function renderHomeHtml(d: HomeData): string {
   const body =
     '<div class="' + cx('grid') + '">' +
     kpi(m('skill-calorie.home-homeDocs.c003'), legacyFmt(t.cal, m('skill-calorie.home-homeDocs.c004')), m('skill-calorie.home-homeDocs.c005', { p0: String(goalText) })) +
-    kpi('蛋白', legacyFmt(t.pro, ' g')) +
+    kpi(m('skill-calorie.home-homeDocs.c031'), legacyFmt(t.pro, ' g')) +
     kpi(m('skill-calorie.home-homeDocs.c006'), legacyFmt(d.daily.waterMl, ' ml'), m('skill-calorie.home-homeDocs.c007', { p0: String(legacyFmt(d.waterGoal, ' ml')) })) +
     kpi(m('skill-calorie.home-homeDocs.c008'), legacyFmt(d.deficitToday, m('skill-calorie.home-homeDocs.c009')), m('skill-calorie.home-homeDocs.c010')) +
     kpi(m('skill-calorie.home-homeDocs.c011'), m('skill-calorie.home-homeDocs.c012', { p0: String(d.streakDays) }), m('skill-calorie.home-homeDocs.c013', { p0: String(d.week.loggedDays) })) +
