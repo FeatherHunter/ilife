@@ -62,7 +62,7 @@ export type ToastCardTone = (typeof TOAST_CARD_TONES)[number];
 
 /** 语气 → 屏上那两个字（**色之外的第二样**）。唯一出处，判据从这里取。 */
 export const TOAST_CARD_TONE_WORDS: Readonly<Record<ToastCardTone, string>> = {
-  get ok(): string { return '已完成'; },
+  get ok(): string { return m('base-render.components-toast-card-attrs.c004'); },
   get warn(): string { return m('base-render.components-toast-card-attrs.c001'); },
   get danger(): string { return m('base-render.components-toast-card-attrs.c002'); },
 };

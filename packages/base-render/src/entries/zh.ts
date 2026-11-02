@@ -2240,6 +2240,7 @@ export const zh = {
   /* ── packages/base-render/src/components/step-flow/attrs.ts（#1227 迁入） ── */
   'base-render.components-step-flow-attrs.c001': "正在做",
   'base-render.components-step-flow-attrs.c002': "未开始",
+  'base-render.components-step-flow-attrs.c003': "已完成",
   /* ── packages/base-render/src/components/sync-status/attrs.ts（#1227 迁入） ── */
   'base-render.components-sync-status-attrs.c001': "✓ 已同步",
   'base-render.components-sync-status-attrs.c002': "✗ 失败",
@@ -2266,6 +2267,7 @@ export const zh = {
   'base-render.components-toast-card-attrs.c001': "请注意",
   'base-render.components-toast-card-attrs.c002': "没成功",
   'base-render.components-toast-card-attrs.c003': "关闭这条提示",
+  'base-render.components-toast-card-attrs.c004': "已完成",
   /* ── packages/base-render/src/components/undo-timeline/text.ts（#1227 迁入） ── */
   'base-render.components-undo-timeline-text.c001': "撤销这次改动",
   'base-render.components-undo-timeline-text.c002': "恢复这笔",
@@ -2297,6 +2299,7 @@ export const zh = {
   'base-render.components-window-picker-attrs.c020': "正在换…",
   'base-render.components-window-picker-attrs.c021': "窗口未定：先选一段",
   'base-render.components-window-picker-attrs.c022': "结束日早于起始日：窗口得从头到尾",
+  'base-render.components-window-picker-attrs.c023': "自定义",
   /* ── packages/base-render/src/components/sort-toggle/attrs.ts（#1227 迁入） ── */
   'base-render.components-sort-toggle-attrs.c001': "这个视图按「{field}」排，但条目上没有这个键（data-ilife-sort-{field}）",
   'base-render.components-sort-toggle-attrs.c002': "「{label}」",
@@ -2464,6 +2467,7 @@ export const zh = {
   'base-render.components-relation-picker-render.c001': "{p0} 个",
   'base-render.components-relation-picker-render.c002': "用过",
   'base-render.components-relation-picker-render.c003': "点「换」重新选一个（字段行与这一行始终读的是同一个值）",
+  'base-render.components-relation-picker-render.c004': "搜{p0}",
   /* ── packages/base-render/src/components/scatter-fit/render.ts（#1227 迁入） ── */
   'base-render.components-scatter-fit-render.c001': "{p0} 最强",
   'base-render.components-scatter-fit-render.c002': "错开",
