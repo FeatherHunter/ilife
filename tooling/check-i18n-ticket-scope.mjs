@@ -14,7 +14,7 @@
  * 本脚本是**咨询清单的判据**，不是门：不进门禁链、不判迁移做没做完（那归两道门）。
  * 用法：
  *   node tooling/check-i18n-ticket-scope.mjs            # 逐票清单 + 全局读数
- *   node tooling/check-i18n-ticket-scope.mjs --selftest # 变异自证（漏件／重叠／条数不符／不迁无理由必红）
+ *   node tooling/check-i18n-ticket-scope.mjs --selftest # 夹具变异自证（合成清单；漏件／重叠／条数不符／不迁无理由／未迁记成已迁必红）
  * 末行固定：RESULT: tickets=<n> files=<n> literals=<n> excluded=<n> problems=<n>
  * 依赖：零第三方；只读，不写任何文件。
  */
@@ -178,67 +178,104 @@ function main() {
     + ' 件，加已迁 ' + r.migratedFiles + ' 件 = ledger ' + r.ledgerFiles + ' 件；票间零重叠、盘上都在');
 }
 
-/** 自证：五处变异必红、还原必绿（清单是开工前置，判据本身也要能被判真假）。 */
-function selftest() {
+/**
+ * 自证夹具（#1318）：**不读仓内票面**。
+ *
+ * 旧自证把「仓里还有一张待迁票」当变异基；票全部收口后 files 全空，自证自己在
+ * 收口完成那一刻必红（exit 1「自证需要至少一张仍有待迁件的票」）——判据失效于它该被信任的时刻。
+ * 现改为合成清单：两张票／四处处置位（两件待迁、一件已迁、一件不迁），条数与分类由夹具 ledger 自定；
+ * 路径取仓内稳定存在的件（audit 会 existsSync 查盘），因此与真实票面进度零耦合。
+ * @returns {{ledger:object, scope:object, scopeJson:object, paths:object}} 每次调用都是新对象（可直接拿来变异）。
+ */
+export function fixture() {
+  const paths = {
+    pendingA: 'tooling/check-i18n-keys.mjs',
+    pendingB: 'tooling/check-i18n-entries.mjs',
+    migrated: 'package.json',
+    excluded: 'AGENTS.md',
+  };
+  /** 夹具件：条数全记在一个分类上（totals 的分类口径跟着一起动）。 */
+  const row = (path, literals, cls) => ({
+    path,
+    literals,
+    byClass: Object.fromEntries(CLASS_KEYS.map((c) => [c, c === cls ? literals : 0])),
+  });
+  const ledger = {
+    files: [
+      row(paths.pendingA, 10, 'copy'),
+      row(paths.pendingB, 7, 'copy'),
+      row(paths.migrated, 3, 'data'),
+      row(paths.excluded, 5, 'copy'),
+    ],
+  };
+  return {
+    ledger,
+    scope: { files: [paths.migrated] },
+    scopeJson: {
+      tickets: {
+        9101: {
+          files: [{ path: paths.pendingA, literals: 10 }],
+          migrated: [],
+          excluded: [],
+          totals: { files: 1, literals: 10, copy: 10 },
+        },
+        9102: {
+          files: [{ path: paths.pendingB, literals: 7 }],
+          migrated: [{ path: paths.migrated, literals: 3 }],
+          excluded: [{ path: paths.excluded, literals: 5, reason: '夹具：文档不迁' }],
+          totals: { files: 3, literals: 15, copy: 12, data: 3 },
+        },
+      },
+      scopeSummary: { ledgerFiles: 4, migratedFiles: 1, pendingFiles: 2, pendingLiterals: 17, excludedFiles: 1, excludedLiterals: 5 },
+    },
+    paths,
+  };
+}
+
+/** 自证：夹具零问题＋五处变异必红（清单是开工前置，判据本身也要能被判真假；#1318 起用合成清单）。 */
+function selftest(root = ROOT) {
   const bad = [];
   const want = (cond, msg) => { if (!cond) bad.push(msg); };
-  const data = load(ROOT);
-  const clean = audit(data, ROOT);
-  want(clean.problems.length === 0, '真清单必须零问题（实得 ' + clean.problems.length + '：' + clean.problems.slice(0, 3).join('；') + '）');
-
-  // 找一个仍有待迁件的票做变异基（#1205／#1232 迁移完就不再是基）。
-  const base = Object.entries(data.scopeJson.tickets).find(([, t]) => listOf(t.files).length > 0);
-  want(base !== undefined, '自证需要至少一张仍有待迁件的票');
-  if (base === undefined) {
-    for (const b of bad) console.error('SELFTEST FAIL ' + b);
-    process.exit(1);
-  }
-  const [baseKey] = base;
+  const clean = audit(fixture(), root);
+  want(clean.problems.length === 0, '夹具清单必须零问题（实得 ' + clean.problems.length + '：' + clean.problems.slice(0, 3).join('；') + '）');
+  want(clean.pendingFiles === 2, '夹具应有 2 件待迁（实得 ' + clean.pendingFiles + '）');
 
   // ① 漏件：从一张票的待迁里拿掉一件（totals 同步减）→ 必报「没归到任何票的三处之一」
-  const dropped = JSON.parse(JSON.stringify(data));
-  const victim = dropped.scopeJson.tickets[baseKey].files.shift();
-  dropped.scopeJson.tickets[baseKey].totals.files -= 1;
-  dropped.scopeJson.tickets[baseKey].totals.literals -= victim.literals;
-  const r1 = audit(dropped, ROOT);
+  const dropped = fixture();
+  dropped.scopeJson.tickets['9101'].files = [];
+  dropped.scopeJson.tickets['9101'].totals = { files: 0, literals: 0, copy: 0 };
+  const r1 = audit(dropped, root);
   want(r1.problems.some((p) => p.includes('没归到任何票的三处之一')), '漏件必须报「没归到任何票的三处之一」');
   want(r1.pendingFiles === clean.pendingFiles - 1, '漏件后全局待迁件数必须少 1（实得 ' + r1.pendingFiles + '）');
 
   // ② 重叠：把另一张票的一件改成基票已有的件 → 必报重复分配
-  const otherKey = Object.keys(data.scopeJson.tickets).find((k) => k !== baseKey
-    && listOf(data.scopeJson.tickets[k].files).length > 0);
-  want(otherKey !== undefined, '自证需要第二张仍有待迁件的票');
-  const dup = JSON.parse(JSON.stringify(data));
-  const first = dup.scopeJson.tickets[baseKey].files[0];
-  dup.scopeJson.tickets[otherKey].files[0] = { ...first };
-  const r2 = audit(dup, ROOT);
+  const dup = fixture();
+  dup.scopeJson.tickets['9102'].files[0] = { path: dup.paths.pendingA, literals: 10 };
+  const r2 = audit(dup, root);
   want(r2.problems.some((p) => p.includes('重复分配')), '票间重复分配必须报');
 
-  // ③ 条数不符：改高一件的 literals → 必报与 ledger 不符
-  const lie = JSON.parse(JSON.stringify(data));
-  const firstRow = lie.scopeJson.tickets[baseKey].files[0];
-  lie.scopeJson.tickets[baseKey].files.push({ ...firstRow, path: 'packages/base-render/src/blocks.ts', literals: (firstRow.literals ?? 0) + 1 });
-  const r3 = audit(lie, ROOT);
+  // ③ 条数不符：再登一件但把 literals 改高 → 必报与 ledger 不符
+  const lie = fixture();
+  lie.scopeJson.tickets['9101'].files.push({ path: lie.paths.pendingA, literals: 11 });
+  const r3 = audit(lie, root);
   want(r3.problems.some((p) => p.includes('条数与 ledger 不符')), '条数被改必须报与 ledger 不符');
 
-  // ④ 不迁件缺理由：把基票一件挪到 excluded 但不写 reason → 必报「没写理由」
-  const mute = JSON.parse(JSON.stringify(data));
-  const moved = mute.scopeJson.tickets[baseKey].files.shift();
-  mute.scopeJson.tickets[baseKey].excluded = listOf(mute.scopeJson.tickets[baseKey].excluded);
-  mute.scopeJson.tickets[baseKey].excluded.push({ ...moved });
-  const r4 = audit(mute, ROOT);
+  // ④ 不迁件缺理由：把一件待迁挪到 excluded 但不写 reason → 必报「没写理由」
+  const mute = fixture();
+  const moved = mute.scopeJson.tickets['9101'].files.shift();
+  mute.scopeJson.tickets['9101'].excluded.push({ path: moved.path, literals: moved.literals });
+  const r4 = audit(mute, root);
   want(r4.problems.some((p) => p.includes('没写理由')), '不迁件缺理由必须报');
 
-  // ⑤ 已迁件不在 scope：把基票一件记成 migrated 但它没登记 scope → 必报「把未迁件记成已迁」
-  const fake = JSON.parse(JSON.stringify(data));
-  const notMigrated = fake.scopeJson.tickets[baseKey].files.shift();
-  fake.scopeJson.tickets[baseKey].migrated = listOf(fake.scopeJson.tickets[baseKey].migrated);
-  fake.scopeJson.tickets[baseKey].migrated.push({ ...notMigrated });
-  const r5 = audit(fake, ROOT);
+  // ⑤ 已迁件不在 scope：把一件待迁记成 migrated 但它没登记 scope → 必报「把未迁件记成已迁」
+  const fake = fixture();
+  const notMigrated = fake.scopeJson.tickets['9102'].files.shift();
+  fake.scopeJson.tickets['9102'].migrated.push({ path: notMigrated.path, literals: notMigrated.literals });
+  const r5 = audit(fake, root);
   want(r5.problems.some((p) => p.includes('把未迁件记成已迁')), '未迁件记成已迁必须报');
 
   if (bad.length) { for (const b of bad) console.error('SELFTEST FAIL ' + b); process.exit(1); }
-  console.log('SELFTEST: 真清单零问题／漏件必红／票间重叠必红／条数不符必红／不迁无理由必红／未迁记成已迁必红 六条自证 OK');
+  console.log('SELFTEST: 夹具零问题／漏件必红／票间重叠必红／条数不符必红／不迁无理由必红／未迁记成已迁必红 六条自证 OK');
 }
 
 const isMain = process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
