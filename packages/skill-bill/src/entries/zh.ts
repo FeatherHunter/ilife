@@ -3558,6 +3558,7 @@ export const zh = {
   'skill-bill.help-lookupPage.c019': "✂ 裁切线",
   'skill-bill.help-lookupPage.c020': "别名",
   'skill-bill.help-lookupPage.c021': "能力速查",
+  'skill-bill.help-lookupPage.c022': "{p0}组默认收起 · 点组名展开，点上面目录可直接跳到那一组。",
   /* ── packages/skill-bill/src/shared/copyArea.ts（#1215 迁入） ── */
   'skill-bill.shared-copyArea.c001': "记账数据",
   'skill-bill.shared-copyArea.c002': "{p0} · 版本 {p1}",

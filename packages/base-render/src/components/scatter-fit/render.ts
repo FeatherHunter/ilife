@@ -113,8 +113,8 @@ function renderBin(model: ScatterFitModel): string {
 /** 形态 C：表头一行（错开 ｜ 相关强度 ｜ 系数）＋ 逐档一行 → 脚注。 */
 function renderLag(model: ScatterFitModel): string {
   const parts: string[] = [headHtml(model)];
-  parts.push('<div class="' + scatterFitSlot('laghead') + '"><span>错开</span>'
-    + '<span>相关强度（中线往左右各半 ＝ ±1）</span><span>系数</span></div>');
+  parts.push('<div class="' + scatterFitSlot('laghead') + '"><span>' + esc(m('base-render.components-scatter-fit-render.c002')) + '</span>'
+    + '<span>' + esc(m('base-render.components-scatter-fit-render.c003')) + '</span><span>' + esc(m('base-render.components-scatter-fit-render.c004')) + '</span></div>');
   parts.push('<div class="' + scatterFitSlot('lag') + '" role="img" aria-label="' + esc(model.ariaLabel) + '">');
   for (const row of model.lags) {
     parts.push('<div class="' + scatterFitSlot('lagrow') + (row.negative ? ' is-negative' : '')

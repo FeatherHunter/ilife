@@ -40,7 +40,7 @@ function scopeHtml(model: SearchFieldModel): string {
   };
   const parts = [button(SEARCH_DEFAULTS.scopeAll, m('base-render.components-search-field-render.c001'), undefined)];
   for (const s of model.scopes) parts.push(button(s.value, s.label, s.count));
-  return '<div class="' + c + '-scope" role="group" aria-label="搜索范围">' + parts.join('') + '</div>';
+  return '<div class="' + c + '-scope" role="group" aria-label="' + esc(m('base-render.components-search-field-render.c004')) + '">' + parts.join('') + '</div>';
 }
 
 /** 读数行：命中数（`—`，运行时写实）＋ 当前范围 ＋ 第几处／共几处 ＋ 前后跳。
@@ -53,16 +53,17 @@ function readoutHtml(model: SearchFieldModel): string {
   const status = '<p class="' + c + '-status" role="status" ' + SEARCH_STATUS_ATTR + '="">'
     + '<span class="' + c + '-status-text"><b ' + SEARCH_COUNT_ATTR + '="">' + SEARCH_DEFAULTS.unset + '</b> '
     + esc(m('base-render.components-search-field-render.c003', { noun: model.noun }))
-    + (pickedLabel === '' ? '' : '<span class="' + c + '-dim"> · 范围 <span ' + SEARCH_SCOPE_NAME_ATTR + '="">'
-      + esc(pickedLabel) + '</span></span>')
+    + (pickedLabel === '' ? '' : '<span class="' + c + '-dim">' + m('base-render.components-search-field-render.c005', {
+      p0: '<span ' + SEARCH_SCOPE_NAME_ATTR + '="">' + esc(pickedLabel) + '</span>' }) + '</span>')
     + '</span>'
     + '<span class="' + c + '-status-loading">' + esc(model.loadingText) + '</span>'
     + '</p>';
   const nav = '<span class="' + c + '-nav">'
     + '<button type="button" class="' + c + '-step" ' + SEARCH_PREV_ATTR + '="" aria-label="' + SEARCH_DEFAULTS.prevLabel + '"'
     + (model.disabled || model.loading ? ' disabled' : '') + '>‹</button>'
-    + '<span class="' + c + '-pos" ' + SEARCH_POS_ATTR + '="">第 <b ' + SEARCH_AT_ATTR + '="">' + SEARCH_DEFAULTS.unset
-    + '</b> ' + esc(model.noun) + ' / 共 <b ' + SEARCH_COUNT_ATTR + '="">' + SEARCH_DEFAULTS.unset + '</b> ' + esc(model.noun) + '</span>'
+    + '<span class="' + c + '-pos" ' + SEARCH_POS_ATTR + '="">' + m('base-render.components-search-field-render.c006', {
+      p0: '<b ' + SEARCH_AT_ATTR + '="">' + SEARCH_DEFAULTS.unset + '</b>', p1: esc(model.noun),
+      p2: '<b ' + SEARCH_COUNT_ATTR + '="">' + SEARCH_DEFAULTS.unset + '</b>', p3: esc(model.noun) }) + '</span>'
     + '<button type="button" class="' + c + '-step" ' + SEARCH_NEXT_ATTR + '="" aria-label="' + SEARCH_DEFAULTS.nextLabel + '"'
     + (model.disabled || model.loading ? ' disabled' : '') + '>›</button>'
     + '</span>';

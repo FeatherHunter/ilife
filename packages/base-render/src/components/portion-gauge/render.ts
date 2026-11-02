@@ -64,7 +64,7 @@ function rowHtml(r: PortionGaugeRowModel): string {
   parts.push('<span class="' + portionGaugeSlot('eq') + '">'
     + '<span class="' + portionGaugeSlot('side') + '">'
     + '<b class="' + portionGaugeSlot('side-value') + '">' + esc(r.recipeText) + '</b>'
-    + '<em class="' + portionGaugeSlot('side-label') + '">菜谱单位</em>'
+    + '<em class="' + portionGaugeSlot('side-label') + '">' + esc(m('base-render.components-portion-gauge-render.c002')) + '</em>'
     + '</span>'
     + '<span class="' + portionGaugeSlot('arrow') + '" aria-hidden="true">→</span>'
     + '<span class="' + portionGaugeSlot('side') + ' is-to">'
