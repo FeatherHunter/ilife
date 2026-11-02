@@ -86,3 +86,45 @@ test('--dry：只打印不落盘；目标非空与基线不存在都 exit 2', ()
     rmSync(base.parent, { recursive: true, force: true });
   }
 });
+
+test('S2-2 安装失败后重跑：不得洗成 PASS（重试安装，仍失败就 exit 1）', () => {
+  const repo = makeTempRepo({ 'package.json': '{"name": "broken", oops\n', 'README.md': '# demo\n' });
+  const base = tempBase();
+  const wt = base.child('wt');
+  try {
+    const first = runNode(SCRIPT, ['--root', repo.dir, '--path', wt, '--detach'], { cwd: repo.dir });
+    assert.equal(first.status, 1, first.stdout + first.stderr);
+    assert.match(first.stdout, /install=failed/);
+    assert.match(first.stdout, /RESULT: FAIL reason=install-failed/);
+    assert.ok(existsSync(join(wt, '.scratch', 'worktree-init-install.json')), '安装结果要落状态文件，供重跑判定');
+    const second = runNode(SCRIPT, ['--root', repo.dir, '--path', wt, '--detach'], { cwd: repo.dir });
+    assert.equal(second.status, 1, '上次安装失败，重跑必须重试并如实失败，不许报 PASS：' + second.stdout + second.stderr);
+    assert.match(second.stdout, /install=failed/);
+    assert.match(second.stdout, /RESULT: FAIL reason=install-failed/);
+  } finally {
+    removeRepo(repo.dir);
+    rmSync(base.parent, { recursive: true, force: true });
+  }
+});
+
+test('S3-7 --dry --json：dryRun=true、install=planned，也要落 JSON', () => {
+  const repo = makeTempRepo({ 'README.md': '# demo\n' });
+  const base = tempBase();
+  try {
+    const target = base.child('dry');
+    const json = join(base.parent, 'dry.json');
+    const r = runNode(SCRIPT, ['--root', repo.dir, '--path', target, '--detach', '--dry', '--json', json], { cwd: repo.dir });
+    assert.equal(r.status, 0, r.stderr + r.stdout);
+    assert.ok(existsSync(json), '--dry --json 必须落结构化读数');
+    const data = JSON.parse(readFileSync(json, 'utf8'));
+    assert.equal(data.dryRun, true);
+    assert.equal(data.install, 'planned');
+    assert.equal(data.existing, false);
+    assert.equal(data.verdict, 'PASS');
+    assert.equal(existsSync(target), false, '--dry 不得建目录');
+  } finally {
+    removeRepo(repo.dir);
+    rmSync(base.parent, { recursive: true, force: true });
+  }
+});
+

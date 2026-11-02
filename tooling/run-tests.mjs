@@ -10,13 +10,15 @@
  * 本件的判据：
  *   · 逐件隔离：每件测试一个 `node --test` 子进程，日志各落一份，互不干扰；
  *   · 有界并发：`--jobs` 缺省 1（一次一件）；要快可显式调大，但浏览器测试并行会互相拖慢，风险自担；
- *   · 每件墙钟：超过 `--timeout-ms` 未见 TAP 汇总即杀进程树，记 timeout，不无限等；
+ *   · 每件墙钟：超过 `--timeout-ms` 未见 TAP 汇总即杀进程树，记 timeout；杀完必进收尾，
+ *     再等 KILL_EXIT_WAIT_MS 仍无 close 就强制 finish（不把整个驱动挂死）；
  *   · 完成后退出守卫：TAP 已打出末行汇总（`# duration_ms`）后子进程仍存活超过 `--grace-ms`，
- *     说明结果已产完而进程不退出——快照、杀进程树、记 hung，测试结果照常采信；
+ *     说明结果已产完而进程不退出——快照、杀进程树、记 hung，测试结果照常采信；hung 计入 hung 列，
+ *     不影响 PASS 判定；
  *   · 机器摘要：每件一行 `# RESULT …`，末行 `RESULT: PASS|FAIL …`；`--json` 落结构化汇总。
  *
  * 用法：
- *   node tooling/run-tests.mjs --all                       # 全量清单（与 pnpm test 同一份 glob）
+ *   node tooling/run-tests.mjs --all                       # 全量清单（与 pnpm test 同源：test-suite.mjs 的 SUITE_GLOBS）
  *   node tooling/run-tests.mjs packages/base-render/test   # 目录＝该目录下 *.test.mjs
  *   node tooling/run-tests.mjs 'packages/skill-bill/test/i18n-*.test.mjs'
  *   node tooling/run-tests.mjs --list                      # 只列将要跑的文件
@@ -26,7 +28,7 @@
  *   --jobs <n>            并发件数（缺省 1）
  *   --timeout-ms <n>      每件墙钟上限（缺省 600000＝10 分钟；这是失控保险，不是性能预算）
  *   --grace-ms <n>        TAP 完成后允许残留的毫秒（缺省 5000；0＝不启用该守卫）
- *   --log-dir <dir>       每件日志目录（缺省 .scratch/test-logs）
+ *   --log-dir <dir>       每件日志目录（缺省 .scratch/test-logs；文件名 <路径折 __>-<hash8>.tap.log）
  *   --json <file>         汇总落点（缺省不写）
  *   --quiet               不回显失败件的日志尾（仍打印每件结果行）
  *   --verbose             把子进程 TAP 原样回显（调试用，全量会很大）
@@ -38,9 +40,13 @@
  *   # HUNG file=<路径> 已完成但 <n> 毫秒内未退出（已杀进程树；结果照常采信）
  *   # TAIL file=<路径> 失败件的日志尾（--quiet 时省略）
  *   RESULT: PASS|FAIL files=<n> pass=<n> fail=<n> timeout=<n> hung=<n> error=<n> ms=<n>
+ * 与 `pnpm test` 的分工：清单同源（`tooling/test-suite.mjs` 的 SUITE_GLOBS）；`pnpm test` 另有真实 home
+ * 快照隔离与「命令 exit 0」门禁（`tooling/check-real-home-untouched.mjs --run`），本驱动只负责逐件跑与结果判定。
+ * 二者不互相替代：收尾验收走 `pnpm test`，排查单件/分区用本驱动（包根 `pnpm test:suite` 就是本驱动 --all）。
  * 退出码：0＝全部 pass（含完成后被守卫杀掉的 hung）；1＝有 fail/timeout/error；2＝用法错误。
  */
 import { spawn, execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -134,21 +140,26 @@ export function parseTapSummary(lines) {
   return summary;
 }
 
-/** 判定一件测试的结局。纯函数，供测试逐格核对（不让守卫语义只活在实现里）。 */
+/** 判定一件测试的结局。纯函数，供测试逐格核对（不让守卫语义只活在实现里）。hung 是独立结局，不是 pass。 */
 export function classifyOutcome({ exitCode = null, summary = null, timedOut = false, killedAfterCompletion = false, spawnError = null } = {}) {
   if (spawnError) return 'error';
   if (timedOut) return 'timeout';
   const complete = Boolean(summary && summary.complete);
   const failed = Boolean(summary && Number(summary.fail) > 0);
-  if (killedAfterCompletion) return complete && !failed ? 'pass' : 'fail';
+  if (killedAfterCompletion) return complete && !failed ? 'hung' : 'fail';
   if (exitCode !== 0) return 'fail';
   if (!complete) return 'fail';
   return failed ? 'fail' : 'pass';
 }
 
-/** 日志文件名：路径分隔符折成 `__`，避免在 .scratch 里造目录树。 */
+/**
+ * 日志文件名：路径分隔符折成 `__`（避免在 .scratch 里造目录树），再拼 8 位路径哈希。
+ * 只折分隔符会撞名：`a/b.test.mjs` 与 `a__b.test.mjs` 折完都是 `a__b.test.mjs`，两份日志互相覆盖。
+ */
 export function logFileName(relPath) {
-  return relPath.split('/').join('__') + '.tap.log';
+  const readable = relPath.split('/').join('__');
+  const digest = createHash('sha256').update(relPath).digest('hex').slice(0, 8);
+  return readable + '-' + digest + '.tap.log';
 }
 
 /** 杀进程树：Windows 用 taskkill /T；POSIX 用进程组（子进程以 detached 起）。 */
@@ -167,8 +178,11 @@ function tailOf(lines, count) {
   return lines.slice(Math.max(0, lines.length - count));
 }
 
-/** 跑一件：返回 { path, status, exitCode, pass, fail, durationMs, hung, log }。 */
-function runOne(relPath, index, total, opts, logDirAbs) {
+/**
+ * 跑一件：返回 { path, status, exitCode, pass, fail, durationMs, hung, log }。
+ * deps 是测试注入点：spawnChild / killTree / killExitWaitMs（缺省用真实实现）。
+ */
+export function runOne(relPath, index, total, opts, logDirAbs, deps = {}) {
   // 外层若也是 node --test 起的（自证、CI 嵌套），NODE_TEST_CONTEXT 会让内层 reporter 以为「递归调用」而跳过文件；
   // 逐件驱动必须是全新的一轮测试，所以显式清掉。
   const abs = path.join(opts.root, relPath);
@@ -176,19 +190,22 @@ function runOne(relPath, index, total, opts, logDirAbs) {
   const logStream = fs.createWriteStream(logAbs, { flags: 'w' });
   const childArgs = ['--test', '--test-reporter=tap', abs];
   const startedAt = Date.now();
+  const kill = deps.killTree || killTree;
+  const killExitWaitMs = deps.killExitWaitMs ?? KILL_EXIT_WAIT_MS;
   return new Promise((resolve) => {
     if (!opts.quiet) console.log('# RUN [' + (index + 1) + '/' + total + '] file=' + relPath);
     const childEnv = { ...process.env, FORCE_COLOR: '0', NO_COLOR: '1' };
     delete childEnv.NODE_TEST_CONTEXT;
+    const spawnChild = deps.spawnChild || ((args) => spawn(process.execPath, args, {
+      cwd: opts.root,
+      env: childEnv,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      windowsHide: true,
+      detached: process.platform !== 'win32',
+    }));
     let child;
     try {
-      child = spawn(process.execPath, childArgs, {
-        cwd: opts.root,
-        env: childEnv,
-        stdio: ['ignore', 'pipe', 'pipe'],
-        windowsHide: true,
-        detached: process.platform !== 'win32',
-      });
+      child = spawnChild(childArgs);
     } catch (err) {
       logStream.end(String(err && err.message ? err.message : err));
       resolve({ path: relPath, status: 'error', exitCode: null, pass: null, fail: null, durationMs: Date.now() - startedAt, hung: false, log: path.relative(opts.root, logAbs).split(path.sep).join('/') });
@@ -207,7 +224,8 @@ function runOne(relPath, index, total, opts, logDirAbs) {
     const timeoutTimer = setTimeout(() => {
       if (exited) return;
       timedOut = true;
-      killTree(child.pid);
+      kill(child.pid);
+      finalize();
     }, opts.timeoutMs);
     const finalize = () => {
       if (exited) return;
@@ -218,7 +236,7 @@ function runOne(relPath, index, total, opts, logDirAbs) {
         try { child.stdout?.destroy(); } catch { /* 已关闭 */ }
         try { child.stderr?.destroy(); } catch { /* 已关闭 */ }
         finish();
-      }, KILL_EXIT_WAIT_MS);
+      }, killExitWaitMs);
       child.once('close', () => { clearTimeout(fallback); finish(); });
     };
     const finish = () => {
@@ -261,7 +279,7 @@ function runOne(relPath, index, total, opts, logDirAbs) {
               graceTimer = setTimeout(() => {
                 if (exited) return;
                 killedAfterCompletion = true;
-                killTree(child.pid);
+                kill(child.pid);
                 finalize();
               }, opts.graceMs);
             }
@@ -301,7 +319,7 @@ async function runAll(files, opts, logDirAbs) {
   return results;
 }
 
-function writeSummary(opts, results) {
+export function writeSummary(opts, results) {
   const totals = { files: results.length, pass: 0, fail: 0, timeout: 0, hung: 0, error: 0, durationMs: 0 };
   for (const result of results) {
     totals[result.status] += 1;

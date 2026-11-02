@@ -9,14 +9,15 @@
  *   ⑤ 用法错误：未知取值／找不到文件都 exit 2，不静默跑空套件。
  */
 import { strict as assert } from 'node:assert';
-import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { spawn, spawnSync } from 'node:child_process';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 
 import { classifyOutcome, parseTapSummary } from '../run-tests.mjs';
+import * as runTestsModule from '../run-tests.mjs';
 import { isAlive } from './helpers/temp-git-repo.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -120,7 +121,8 @@ test('parseTapSummary 只认顶层汇总，classifyOutcome 逐格判定', () => 
   assert.equal(classifyOutcome({ exitCode: 0, summary: { complete: true, fail: 0 } }), 'pass');
   assert.equal(classifyOutcome({ exitCode: 1, summary: { complete: true, fail: 1 } }), 'fail');
   assert.equal(classifyOutcome({ timedOut: true }), 'timeout');
-  assert.equal(classifyOutcome({ exitCode: 0, summary: { complete: true, fail: 0 }, killedAfterCompletion: true }), 'pass');
+  assert.equal(classifyOutcome({ exitCode: 0, summary: { complete: true, fail: 0 }, killedAfterCompletion: true }), 'hung',
+    'TAP 已完成但进程被守卫杀掉，结局是 hung 而不是 pass');
   assert.equal(classifyOutcome({ summary: { complete: true, fail: 1 }, killedAfterCompletion: true }), 'fail');
   assert.equal(classifyOutcome({ exitCode: 0, summary: { complete: false, fail: 0 } }), 'fail');
   assert.equal(classifyOutcome({ spawnError: new Error('spawn 失败') }), 'error');
@@ -139,3 +141,94 @@ test('用法错误：坏取值与找不到文件都 exit 2，不静默跑空套�
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+const TAP_THEN_LINGER = "process.stdout.write(['# tests 1', '# pass 1', '# fail 0', '# duration_ms 5', ''].join('\\n')); setInterval(() => {}, 1000);";
+
+function killPid(pid) {
+  if (!pid) return;
+  if (process.platform === 'win32') {
+    try { spawnSync('taskkill', ['/PID', String(pid), '/T', '/F'], { stdio: 'ignore' }); } catch { /* 已退出 */ }
+    return;
+  }
+  try { process.kill(pid, 'SIGKILL'); } catch { /* 已退出 */ }
+}
+
+test('S2-1 完成后赖着不退 ⇒ hung：classifyOutcome/writeSummary 读数一致', async () => {
+  const dir = fixture({ 'lingered.mjs': 'setInterval(() => {}, 1000);\n' });
+  const logs = join(dir, 'logs');
+  mkdirSync(logs, { recursive: true });
+  let childPid = 0;
+  try {
+    const result = await runTestsModule.runOne('lingered.mjs', 0, 1, { root: dir, quiet: true, timeoutMs: 2000, graceMs: 150 }, logs, {
+      spawnChild: () => {
+        const child = spawn(NODE, ['-e', TAP_THEN_LINGER], { stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
+        childPid = child.pid;
+        return child;
+      },
+      killExitWaitMs: 500,
+    });
+    assert.equal(result.hung, true, 'TAP 完成后未退出必须记 hung');
+    assert.equal(result.status, 'hung', '状态行要与 hung 计数一致');
+    const logged = [];
+    const originalLog = console.log;
+    let summary = null;
+    console.log = (...args) => logged.push(args.join(' '));
+    try {
+      summary = runTestsModule.writeSummary({ quiet: true }, [result]);
+    } finally {
+      console.log = originalLog;
+    }
+    assert.equal(summary.totals.hung, 1);
+    assert.equal(summary.totals.pass, 0);
+    assert.equal(summary.verdict, 'PASS', 'hung 件结果照常采信，不影响 PASS 判定');
+    assert.match(logged.join('\n'), /RESULT: PASS files=1 pass=0 fail=0 timeout=0 hung=1 error=0/);
+    let alive = childPid ? isAlive(childPid) : false;
+    for (let i = 0; i < 50 && alive; i += 1) {
+      await sleep(100);
+      alive = isAlive(childPid);
+    }
+    assert.equal(alive, false, 'hung 件必须被守卫杀掉');
+  } finally {
+    killPid(childPid);
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('S2-3 超时后杀进程失败：有界返回 timeout，不无限挂', async () => {
+  const dir = fixture({ 'hangforever.mjs': 'setInterval(() => {}, 1000);\n' });
+  const logs = join(dir, 'logs');
+  mkdirSync(logs, { recursive: true });
+  let childPid = 0;
+  try {
+    const startedAt = Date.now();
+    const raced = await Promise.race([
+      runTestsModule.runOne('hangforever.mjs', 0, 1, { root: dir, quiet: true, timeoutMs: 300, graceMs: 1000 }, logs, {
+        spawnChild: () => {
+          const child = spawn(NODE, ['-e', 'setInterval(() => {}, 1000);'], { stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
+          childPid = child.pid;
+          return child;
+        },
+        killTree: () => {},
+        killExitWaitMs: 250,
+      }),
+      sleep(4000).then(() => ({ status: 'NEVER_RESOLVED' })),
+    ]);
+    const elapsed = Date.now() - startedAt;
+    assert.ok(childPid > 0, 'DI 必须生效（旧实现没有注入点，无法模拟杀失败）');
+    assert.notEqual(raced.status, 'NEVER_RESOLVED', '超时后必须有兜底收尾，runOne 不得永不 resolve');
+    assert.equal(raced.status, 'timeout');
+    assert.ok(elapsed < 300 + 250 + 1500, '收尾必须在上界内完成：' + elapsed + 'ms');
+  } finally {
+    killPid(childPid);
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('S3-13 日志文件名不得撞名：a/b.test.mjs 与 a__b.test.mjs', () => {
+  const one = runTestsModule.logFileName('a/b.test.mjs');
+  const two = runTestsModule.logFileName('a__b.test.mjs');
+  assert.notEqual(one, two, '不同路径的日志名必须不同：' + one);
+  assert.match(one, /^a__b\.test\.mjs-[0-9a-f]{8}\.tap\.log$/);
+  assert.match(two, /^a__b\.test\.mjs-[0-9a-f]{8}\.tap\.log$/);
+});
+

@@ -2,7 +2,7 @@
 /**
  * tooling/worktree-init.mjs —— 一条命令把工作树准备到「可开工」（#1313 其一）。
  *
- * 用途：多席位／子代理并行开发时，新工作树的冷启动有固定几步——建 worktree、按锁文件离线装依赖、
+ * 用途：多席位／子代理并行开发时，新工作树（git worktree）的冷启动有固定几步——建 worktree、按锁文件离线装依赖、
  * 写 .scratch 脚手架、记住必读文档与验证命令。每一步都不难，但漏一步就要在子代理里重新摸索，
  * 历史读数：45 个子代理分布在 61 个工作树，首编辑 p50 11 分钟、p90 24 分钟，大半花在这几步上。
  *
@@ -16,13 +16,19 @@
  *   --detach           不建分支，detached HEAD 于 --base（缺省行为）
  *   --no-install       跳过 `pnpm install --offline --frozen-lockfile`（只建树）
  *   --no-scratch       不在树里写 .scratch/README.md
- *   --dry              只打印将要执行的 git／安装命令，不落盘
- *   --json <file>      结构化结果落点
+ *   --dry              只打印将要执行的 git／安装命令，不落盘（--json 仍写，dryRun=true、install=planned|skipped）
+ *   --json <file>      结构化结果落点（--dry 也写）
  *   --root <dir>       仓库根（缺省从当前目录向上找 git 根；测试夹具用）
  *
  * 读数（逐行，机读）：
- *   WORKTREE path=<abs> head=<短 sha> branch=<名|detached> base=<短 sha> install=<ok|skipped|failed> scratch=<相对路径|none> existing=<true|false> dry=<true|false> ms=<n>
+ *   WORKTREE path=<abs> head=<短 sha> branch=<名|detached> base=<短 sha> install=<ok|planned|skipped|failed> scratch=<相对路径|none> existing=<true|false> dry=<true|false> ms=<n>
  *   RESULT: PASS|FAIL reason=<无|git-add-failed|install-failed>
+ *
+ * 安装语义（防「失败后重跑洗绿」）：
+ *   · 新建树且要求安装：跑 pnpm install，结果写进 `<树>/.scratch/worktree-init-install.json`（ok|failed）；
+ *   · 已注册的树再次调用：只有状态文件记 ok 才跳过安装（install=skipped）；上次 failed 或没有记录，
+ *     就重试安装，仍失败则 install=failed、exit 1 —— 不把「上次没装成」当成功放过；
+ *   · --no-install 是显式跳过（install=skipped，不读写状态文件），依赖由调用方自己负责。
  * 退出码：0＝树就绪且（需要时）依赖装好；1＝树建了但依赖没装成；2＝用法／git 前置条件不满足。
  *
  * 纪律：本件不碰仓库源码、不切分支、不改 .git 配置；只在目标目录里建树与写脚手架。
@@ -46,6 +52,8 @@ const SCRATCH_README = [
   '工作文档不放这里：技能 docs/skills/<件名>/、插件 docs/plugins/<件名>/、公共层 docs/base/<件名>/、跨件 docs/agents/。',
   '',
 ].join('\n');
+
+const INSTALL_STATE_REL = ['.scratch', 'worktree-init-install.json'];
 
 export class UsageError extends Error {}
 
@@ -107,6 +115,33 @@ function installDependencies(dir) {
   return result.status === 0 ? 'ok' : 'failed';
 }
 
+/** 安装状态文件路径（目标树内；.scratch 被 gitignore，不污染仓库）。 */
+function installStatePath(target) {
+  return path.join(target, ...INSTALL_STATE_REL);
+}
+
+/** 读上一轮安装状态：只认 ok|failed；读不出或值不认识就当没记录（等于未装成）。 */
+function readInstallState(target) {
+  try {
+    const data = JSON.parse(fs.readFileSync(installStatePath(target), 'utf8'));
+    return data && (data.install === 'ok' || data.install === 'failed') ? data.install : '';
+  } catch {
+    return '';
+  }
+}
+
+/** 记这一轮安装结果，供下次重跑判断要不要重装（不写状态就分不清「没装过」和「装成了」）。 */
+function writeInstallState(target, install) {
+  const statePath = installStatePath(target);
+  fs.mkdirSync(path.dirname(statePath), { recursive: true });
+  fs.writeFileSync(statePath, JSON.stringify({ install, at: new Date().toISOString() }, null, 2) + '\n');
+}
+
+function writeJsonReport(jsonPath, data) {
+  fs.mkdirSync(path.dirname(path.resolve(jsonPath)), { recursive: true });
+  fs.writeFileSync(path.resolve(jsonPath), JSON.stringify(data, null, 2) + '\n');
+}
+
 function shortSha(root, ref) {
   const result = git(root, ['rev-parse', '--short', ref + '^{commit}']);
   return result.status === 0 ? result.stdout.trim() : '';
@@ -142,12 +177,20 @@ export function initWorktree(opts) {
   const plan = ['git -C ' + root + ' ' + addArgs.join(' ')];
   if (opts.install) plan.push('pnpm install --offline --frozen-lockfile（cwd=' + target + '）');
   if (opts.scratch) plan.push('写 ' + path.join(target, '.scratch', 'README.md'));
+  const installPlan = opts.install ? 'planned' : 'skipped';
   if (opts.dry) {
     for (const line of plan) console.log('DRY: ' + line);
+    const ms = Date.now() - startedAt;
     console.log('WORKTREE path=' + target + ' head=' + baseSha + ' branch=' + (branch || 'detached') + ' base=' + baseSha
-      + ' install=' + (opts.install ? 'planned' : 'skipped') + ' scratch=' + (opts.scratch ? '.scratch/README.md' : 'none')
-      + ' existing=' + existing + ' dry=true ms=' + (Date.now() - startedAt));
+      + ' install=' + installPlan + ' scratch=' + (opts.scratch ? '.scratch/README.md' : 'none')
+      + ' existing=' + existing + ' dry=true ms=' + ms);
     console.log('RESULT: PASS reason=-');
+    if (opts.json) {
+      writeJsonReport(opts.json, {
+        root, path: target, head: baseSha, branch: branch || '', base: baseSha, existing, added: false,
+        install: installPlan, scratch: opts.scratch ? '.scratch/README.md' : 'none', dryRun: true, durationMs: ms, verdict: 'PASS',
+      });
+    }
     return 0;
   }
   let added = false;
@@ -164,9 +207,15 @@ export function initWorktree(opts) {
   const head = shortSha(target, 'HEAD') || baseSha;
   let install = 'skipped';
   let scratch = 'none';
-  if (opts.install && !existing) {
-    console.log('# INSTALL cwd=' + target);
-    install = installDependencies(target);
+  if (opts.install) {
+    const previous = existing ? readInstallState(target) : '';
+    if (!existing || previous !== 'ok') {
+      console.log('# INSTALL cwd=' + target + (existing ? ' reason=retry' : ''));
+      install = installDependencies(target);
+      writeInstallState(target, install);
+    } else {
+      console.log('# INSTALL skipped（上一轮安装成功，状态文件 ' + path.relative(target, installStatePath(target)).split(path.sep).join('/') + '）');
+    }
   }
   if (opts.scratch) {
     const scratchDir = path.join(target, '.scratch');
@@ -181,10 +230,9 @@ export function initWorktree(opts) {
   const verdict = install === 'failed' ? 'FAIL' : 'PASS';
   console.log('RESULT: ' + verdict + ' reason=' + (install === 'failed' ? 'install-failed' : '-'));
   if (opts.json) {
-    fs.mkdirSync(path.dirname(path.resolve(opts.json)), { recursive: true });
-    fs.writeFileSync(path.resolve(opts.json), JSON.stringify({
+    writeJsonReport(opts.json, {
       root, path: target, head, branch: branch || '', base: baseSha, existing, added, install, scratch, dryRun: false, durationMs: ms, verdict,
-    }, null, 2) + '\n');
+    });
   }
   return install === 'failed' ? 1 : 0;
 }

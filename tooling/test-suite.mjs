@@ -93,9 +93,9 @@ function walk(dir, segments, index, out) {
 /**
  * 展开 glob 清单为文件路径。
  * 返回仓库相对 POSIX 路径，按字典序；同一文件被多条 glob 命中只算一次。
- * 注入 fsImpl 只供测试构造缺目录/符号链接等情形，正常调用不传。
+ * 缺目录/缺文件静默跳过（见 walk），不读 fsImpl 之类的注入参数。
  */
-export function expandGlobs(globs, { root = REPO_ROOT, fsImpl = fs } = {}) {
+export function expandGlobs(globs, { root = REPO_ROOT } = {}) {
   const absolute = new Set();
   for (const glob of globs) {
     const segments = glob.split('/').filter((part) => part !== '');
