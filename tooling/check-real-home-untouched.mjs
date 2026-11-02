@@ -10,8 +10,9 @@
  *   node tooling/check-real-home-untouched.mjs --write <文件>      只落一份基线快照（不动测试）
  *   node tooling/check-real-home-untouched.mjs --compare <文件>    拿当刻真实树与基线比（不跑测试）
  *   node tooling/check-real-home-untouched.mjs --run [选项] [-- 命令…]
- *       快照 → 跑命令 → 再快照 → 比对。不给命令即跑本件内置的全量测试表（与 `package.json` 的
- *       `test` 脚本同一份 glob，`SUITE_GLOBS`）。
+ *       快照 → 跑命令 → 再快照 → 比对。不给命令即跑 `node tooling/run-tests.mjs --all`
+ *       （逐件隔离、有界并发、每件墙钟；清单来自 `tooling/test-suite.mjs` 的 `SUITE_GLOBS`，
+ *       与 `pnpm test` 同一份）。
  *   node tooling/check-real-home-untouched.mjs --selftest
  *       自证：在一次性沙盒里造一棵假「真实配置目录」，跑三种情形（零写⇒绿／新增件⇒红／
  *       改内容⇒红），逐条核对判据真的会红会绿。**证明这道门不是摆设**。
@@ -31,7 +32,7 @@
  * 退出码：0＝快照逐字相同且（跑了命令时）命令 exit 0；1＝快照有差异或命令失败；2＝用法／守卫失败。
  *
  * 纪律：本件是**门禁**，不是测试件（不在 `test/*.test.mjs` 的 glob 内）；
- * 全量测试直接跑 `node tooling/check-real-home-untouched.mjs --run`。
+ * 全量测试直接跑 `node tooling/check-real-home-untouched.mjs --run`（内部驱动 `tooling/run-tests.mjs`）。
  */
 import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -41,34 +42,16 @@ import { fileURLToPath } from 'node:url';
 import {
   CONFIG_DIR_NAME, diffSnapshots, realConfigDir, realHomeDir, serializeSnapshot, snapshotFingerprint, snapshotTree,
 } from '../test/helpers/real-home-snapshot.mjs';
+import { SUITE_GLOBS } from './test-suite.mjs';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SCRIPT_REL = 'tooling/check-real-home-untouched.mjs';
 
-/** 全量测试表：与 `package.json` 的 `test` 脚本逐字同一份 glob（改这里＝改本门的判据面）。 */
-export const SUITE_GLOBS = [
-  'test/*.test.mjs',
-  // #1199 评审 S6：tooling/ 下的门自证件原先既不在这里也不在 CI ⇒「改坏必红」没人守。收进本套全局。
-  // ⚠ 收进来即暴露三条既有红（skill-html-snapshot.test.mjs 的覆盖集合／写读闭环／快照过期）：那是
-  //   #1199 登记的「中文账本陈旧＋89 处影响面标记」同一件事的两面，不是本行引入；见 ADR-0004 的既有红段。
-  'tooling/test/*.test.mjs',
-  'packages/base-entries/test/*.test.mjs',
-  'packages/base-render/test/*.test.mjs',
-  'packages/skill-calorie/test/*.test.mjs',
-  'packages/skill-memo-ilife/test/*.test.mjs',
-  'packages/skill-schedule/test/*.test.mjs',
-  'packages/skill-home/test/*.test.mjs',
-  'packages/skill-home/test/*/*.test.mjs',
-  'packages/skill-bill/test/*.test.mjs',
-  'packages/skill-chef/test/*.test.mjs',
-  'packages/plugin-manager/test/*.test.mjs',
-  'packages/plugin-calorie/test/*.test.mjs',
-  'packages/plugin-memo-ilife/test/*.test.mjs',
-  'packages/plugin-schedule-ilife/test/*.test.mjs',
-  'packages/plugin-home-ilife/test/*.test.mjs',
-  'packages/plugin-chef/test/*.test.mjs',
-  'packages/plugin-bill-ilife/test/*.test.mjs',
-];
+/**
+ * 全量测试清单的唯一事实源在 `tooling/test-suite.mjs`（`pnpm test`、本门、`run-tests.mjs --all` 三方共用）。
+ * 本件原先把 glob 复制在这里；两处清单漂移过，已改为 import + 再导出（保持既有 `SUITE_GLOBS` 引用面）。
+ */
+export { SUITE_GLOBS };
 
 const DEFAULT_BASELINE = '.scratch/t763/real-home-before.snapshot';
 const DEFAULT_AFTER = '.scratch/t763/real-home-after.snapshot';
@@ -255,7 +238,7 @@ async function main() {
 
   // --run：快照 → 跑命令 → 再快照 → 比对
   const before = writeSnapshot(opts.baseline, 'before', configRoot);
-  const command = opts.command.length > 0 ? opts.command : [process.execPath, '--test', ...SUITE_GLOBS];
+  const command = opts.command.length > 0 ? opts.command : [process.execPath, 'tooling/run-tests.mjs', '--all'];
   const run = await runCommand(command, opts.timeoutMs, { ...process.env, ILIFE_T763_CONFIG_ROOT: configRoot });
   console.log('RUN cmd=' + fieldValue(command.join(' ')) + ' exit=' + run.exit + ' ms=' + run.ms + (run.timedOut ? ' timeout=1' : ''));
   const after = writeSnapshot(opts.after, 'after', configRoot);

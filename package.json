@@ -13,6 +13,7 @@
     "gen:check": "node packages/skill-calorie/scripts/gen-cli.mjs --check && node packages/skill-bill/scripts/gen-cli.mjs --check && node packages/skill-chef/scripts/gen-cli.mjs --check && node packages/skill-schedule/scripts/gen-cli.mjs --check && node packages/skill-home/scripts/gen-cli.mjs --check && node packages/skill-memo-ilife/scripts/gen-cli.mjs --check && node tooling/skill-call-form.mjs --check && node tooling/wake-en.mjs --check && node tooling/gen-shared-copy.mjs --check && node tooling/check-data-absence.mjs --check",
     "test:types": "tsc -b",
     "test": "node tooling/check-real-home-untouched.mjs --run",
+    "test:suite": "node tooling/run-tests.mjs --all",
     "thanks:check": "node tooling/check-thanks-table.mjs",
     "readme:init": "node --preserve-symlinks-main node_modules/dsh-featherhunter-plugin-base/dist/node/cli.js readme:init --repo .",
     "readme:sync": "node --preserve-symlinks-main node_modules/dsh-featherhunter-plugin-base/dist/node/cli.js readme:sync --repo .",
