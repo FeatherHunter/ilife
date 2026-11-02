@@ -17,6 +17,7 @@
  *   // groups 为空即抛 HelpShellError（code 'missing-data'，不返空页）；
  *   // JSON 小于号转义防 script 破壳，parse 后逐字一致。
  */
+import { localizeHelpShellTemplate } from './help-shell-i18n.js';
 
 /** 5 键 HELP JSON（skill 侧 helpFile 契约的 base 侧结构投影；本模块只要求 groups 非空＋可 JSON 序列化）。 */
 export interface HelpShellData {
@@ -69,14 +70,19 @@ export function composeDocTitle(data: { readonly skill_name: unknown; readonly t
   return title.includes(skill) ? title : skill + ' · ' + title;
 }
 
-/** 5 键 JSON → 全壳 HTML（与老实物同壳；小于号转义防 script 破壳，parse 后逐字一致）。 */
+/** 5 键 JSON → 全壳 HTML（与老实物同壳；小于号转义防 script 破壳，parse 后逐字一致）。
+ *
+ * 模板段先过 `localizeHelpShellTemplate`（#1201）：当前语言非 zh 时换壳文案与文档 lang，
+ * zh／未进语言上下文时**原样返回**（中文产物逐字节不变）；注入的 JSON 是数据，不过这一层。 */
 export function renderHelpShellHtml(data: HelpShellData): string {
   if (!data || !Array.isArray(data.groups) || data.groups.length === 0) {
     throw new HelpShellError('HELP 渲染缺分组（不返空页）。');
   }
   const json = JSON.stringify(data).replace(/</g, '\\u003c');
   const title = escapeTitleText(composeDocTitle(data));
-  return HELP_SHELL_PREFIX.split(HELP_SHELL_TITLE_SLOT).join(title) + json + HELP_SHELL_SUFFIX;
+  const prefix = localizeHelpShellTemplate(HELP_SHELL_PREFIX);
+  const suffix = localizeHelpShellTemplate(HELP_SHELL_SUFFIX);
+  return prefix.split(HELP_SHELL_TITLE_SLOT).join(title) + json + suffix;
 }
 
 /** #136 标准出口（`renderHelpShellHtml` 同实现；skill 侧只传自家 HELP JSON 即接）。 */
