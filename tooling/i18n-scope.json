@@ -1175,7 +1175,8 @@
     "/* 组标题：原型 .qgroup-head 的高度与字重（计数由自律条统一声明，不逐组挂胶囊）。 */",
     "/* 组内行：原型 .qrows li（44 触摸行 ＋ 点线分隔）。 */",
     "/* 折叠档的说明行（原型 .fold-note：12px／行高 1.6／ink-3／上下 2px 8px）——#1122 起 8 组默认收起。 */",
-    "/* 自律条：原型 .check-mini 的浅绿卡（绿底＋一行字）。 */"
+    "/* 自律条：原型 .check-mini 的浅绿卡（绿底＋一行字）。 */",
+    "record.detail"
   ],
   "files": [
     "packages/base-render/src/components/progress-list/model.ts",
@@ -1932,6 +1933,14 @@
     "packages/skill-bill/src/shared/copyArea.ts",
     "packages/skill-bill/src/shared/docPage.ts",
     "packages/skill-bill/src/shared/sourceLine.ts",
-    "packages/skill-bill/src/shared/票据纸页型.ts"
+    "packages/skill-bill/src/shared/票据纸页型.ts",
+    "packages/skill-bill/src/query/commands.ts",
+    "packages/skill-bill/src/query/countLabel.ts",
+    "packages/skill-bill/src/query/detail.ts",
+    "packages/skill-bill/src/query/list-copy.ts",
+    "packages/skill-bill/src/query/list-tag.ts",
+    "packages/skill-bill/src/query/list.ts",
+    "packages/skill-bill/src/query/pageParts.ts",
+    "packages/skill-bill/src/query/read.ts"
   ]
 }

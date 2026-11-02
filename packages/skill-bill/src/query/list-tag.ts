@@ -37,6 +37,7 @@ import { commandLine, writeSection } from '../shared/writeParts.js';
 import { queryStyleTag } from './pageParts.js';
 import type { QueryListInput, QueryTableRow } from './list.js';
 import { checkListHtml, checkRowsOf } from '../shared/checkLine.js';
+import { m } from '../entries/index.js';
 
 /** 本页是不是查标签（`./list.ts` 分支判据，唯一定义地）。 */
 export function isTagList(input: { readonly key: string; readonly params: Record<string, unknown> }): boolean {
@@ -99,10 +100,10 @@ function ledgerHtml(input: QueryListInput): string {
   const currencies = currenciesOf(input.envelope);
   return renderLedgerRows({
     rows: [
-      { label: '收入', value: input.kpi.income.toFixed(2) },
-      { label: '净额', value: input.kpi.net.toFixed(2) },
-      { label: '落点账本', value: ledgers.length === 0 ? '—' : ledgers.join(' · ') },
-      { label: '币种', value: currencies.length === 0 ? 'CNY' : currencies.join(' · ') },
+      { label: m('skill-bill.query-list-tag.c001'), value: input.kpi.income.toFixed(2) },
+      { label: m('skill-bill.query-list-tag.c002'), value: input.kpi.net.toFixed(2) },
+      { label: m('skill-bill.query-list-tag.c003'), value: ledgers.length === 0 ? '—' : ledgers.join(' · ') },
+      { label: m('skill-bill.query-list-tag.c004'), value: currencies.length === 0 ? 'CNY' : currencies.join(' · ') },
     ],
     layout: 'ticket',
   });
@@ -110,19 +111,19 @@ function ledgerHtml(input: QueryListInput): string {
 
 /** 分类占比 SCALE（w13 无附加注记；类超 8 时跟一行口径，与 `./list.ts` 同句）。 */
 function scaleHtml(input: QueryListInput): string {
-  if (input.categories.length === 0) return '<p class="ilife-ticket-scale-note">本窗无支出，无占比。</p>';
+  if (input.categories.length === 0) return '<p class="ilife-ticket-scale-note">' + m('skill-bill.query-list-tag.c021') + '</p>';
   const shownCats = input.categories.slice(0, 8);
   const pcts = intPcts(shownCats.map((c) => c.pct));
-  const rows = shownCats.map((c, i) => ({ label: c.label, value: c.amount.toFixed(2) + ' 元', pct: pcts[i] }));
+  const rows = shownCats.map((c, i) => ({ label: c.label, value: m('skill-bill.query-list-tag.c005', { p0: String(c.amount.toFixed(2)) }), pct: pcts[i] }));
   const hidden = input.categories.length - shownCats.length;
   return renderDistributionRows({ rows })
-    + (hidden > 0 ? renderCaliberLine('这一页只列支出最多的前 8 类，还有 ' + hidden + ' 类没列') : '');
+    + (hidden > 0 ? renderCaliberLine(m('skill-bill.query-list-tag.c006', { p0: String(hidden) })) : '');
 }
 
 /** 明细行（原型 `备注 · 笔记` 主行＋`分类 · 账户 · 时刻 · #编号` 次行＋右对齐金额；序号由票据纸计数器出）。 */
 function detailRowHtml(r: QueryTableRow): string {
   const note = r.note.trim() === '' ? '—' : r.note.trim();
-  return '<li><span class="ilife-ticket-entry-text">' + escapeHtml('备注 · ' + note)
+  return '<li><span class="ilife-ticket-entry-text">' + escapeHtml(m('skill-bill.query-list-tag.c007', { p0: String(note) }))
     + '<span class="ilife-ticket-entry-sub">' + escapeHtml(r.category + ' · ' + r.account + ' · ')
     + '<span class="mono">' + escapeHtml(r.time) + '</span>' + escapeHtml(' · #' + r.id) + '</span></span>'
     + '<span class="ilife-ticket-entry-amt">' + escapeHtml(r.amount) + '</span></li>';
@@ -142,8 +143,8 @@ function detailHtml(args: TagTicketArgs): string {
 function checkHtml(input: QueryListInput): string {
   const ids = input.rows.map((r) => r.id);
   const rows = ids.length === 0
-    ? checkRowsOf({ countText: '0 笔' })
-    : checkRowsOf({ ids, countText: String(input.rows.length) + ' 笔' });
+    ? checkRowsOf({ countText: m('skill-bill.query-list-tag.c008') })
+    : checkRowsOf({ ids, countText: m('skill-bill.query-list-tag.c009', { p0: String(String(input.rows.length)) }) });
   return '<div class="check-mini"><span class="dot"></span>' + checkListHtml(rows) + '</div>';
 }
 
@@ -155,18 +156,18 @@ export function queryTagDoc(args: TagTicketArgs): string | null {
   if (!isTagList(input) || tag === '') return null;
   const total = input.rows.length;
   const expense = input.kpi.expense;
-  const head = sheetHead('饼干记账 · ' + input.wakeWord, escapeHtml('标签「' + tag + '」' + total + ' 笔，支出 ' + expense.toFixed(2) + ' 元'))
+  const head = sheetHead(m('skill-bill.query-list-tag.c010', { p0: String(input.wakeWord) }), escapeHtml(m('skill-bill.query-list-tag.c011', { p0: String(tag), p1: String(total), p2: String(expense.toFixed(2)) })))
     + '<p class="shop-sub">' + escapeHtml(input.window) + '</p>';
   const summary = ticketSummary(
-    renderSummaryHead({ eyebrow: '标签命中 · ' + tag, value: expense.toFixed(2), unit: '元', layout: 'ticket', size: 'l' }),
+    renderSummaryHead({ eyebrow: m('skill-bill.query-list-tag.c012', { p0: String(tag) }), value: expense.toFixed(2), unit: m('skill-bill.query-list-tag.c013'), layout: 'ticket', size: 'l' }),
     '<p class="ilife-ticket-summary-note">' + escapeHtml(args.conclusion) + '</p>',
   );
   const paper = queryStyleTag() + head
     + ticketRule() + summary
-    + ticketRule() + ticketSection({ title: '落点', tag: 'LEDGER', content: ledgerHtml(input) })
-    + ticketRule() + ticketSection({ title: '分类占比', tag: 'SCALE', content: scaleHtml(input) })
-    + ticketRule() + ticketSection({ title: '明细', tag: 'DETAIL', content: detailHtml(args) })
-    + ticketRule() + ticketSection({ title: '对账', tag: 'CHECK', content: checkHtml(input) })
+    + ticketRule() + ticketSection({ title: m('skill-bill.query-list-tag.c014'), tag: 'LEDGER', content: ledgerHtml(input) })
+    + ticketRule() + ticketSection({ title: m('skill-bill.query-list-tag.c015'), tag: 'SCALE', content: scaleHtml(input) })
+    + ticketRule() + ticketSection({ title: m('skill-bill.query-list-tag.c016'), tag: 'DETAIL', content: detailHtml(args) })
+    + ticketRule() + ticketSection({ title: m('skill-bill.query-list-tag.c017'), tag: 'CHECK', content: checkHtml(input) })
     + ticketRule() + ticketActions(copyArea({
       data: { envelope: args.envelope, title: input.wakeWord },
       dataText: buildListCopyText({ title: input.wakeWord, window: input.window, total: input.rows.length, shown: args.shown }),
@@ -177,7 +178,7 @@ export function queryTagDoc(args: TagTicketArgs): string | null {
         copyLog: copyLog({
           command: commandLine(input.key, input.params),
           source: input.source,
-          detail: '查到 ' + total + ' 笔',
+          detail: m('skill-bill.query-list-tag.c018', { p0: String(total) }),
           actionAt: input.actionAt,
           version: DOC_VERSION,
         }),
@@ -185,8 +186,8 @@ export function queryTagDoc(args: TagTicketArgs): string | null {
     }));
   const content = writeSection({
     slot: 'list', page: 'list', shape: input.shape, key: input.key,
-    content: renderSheetFrame({ variant: 'ticket', cutLine: true, cutLineText: '✂ 裁切线', extraClass: 'ilife-taglist', content: paper })
+    content: renderSheetFrame({ variant: 'ticket', cutLine: true, cutLineText: m('skill-bill.query-list-tag.c019'), extraClass: 'ilife-taglist', content: paper })
       + '<p class="ilife-ticket-foot">' + escapeHtml(DOC_TITLE + ' · ' + input.wakeWord) + '</p>',
   });
-  return assembleSheetPage({ docTitle: DOC_TITLE + '·查询', bodyHtml: content, paper: 'detail' });
+  return assembleSheetPage({ docTitle: m('skill-bill.query-list-tag.c020', { p0: String(DOC_TITLE) }), bodyHtml: content, paper: 'detail' });
 }

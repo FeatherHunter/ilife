@@ -796,7 +796,8 @@
     "1209": {
       "title": "迁移 skill-bill query 批次 1：10 件（379 条）",
       "state": "open（待开工；清单已回填 #1308）",
-      "files": [
+      "files": [],
+      "migrated": [
         {
           "path": "packages/skill-bill/src/query/commands.ts",
           "literals": 5,
@@ -818,13 +819,6 @@
             "copy": 30,
             "concat": 20,
             "ident": 2
-          }
-        },
-        {
-          "path": "packages/skill-bill/src/query/index.ts",
-          "literals": 1,
-          "byClass": {
-            "concat": 1
           }
         },
         {
@@ -870,11 +864,20 @@
           }
         }
       ],
-      "migrated": [],
       "totals": {
         "files": 9,
         "literals": 261
-      }
+      },
+      "excluded": [
+        {
+          "path": "packages/skill-bill/src/query/index.ts",
+          "literals": 1,
+          "byClass": {
+            "concat": 1
+          },
+          "reason": "不迁：域门只转出 QUERY_COMMANDS + runQueryRead 分派，唯一中文是 BillPolicyError 开发期报文，无用户可见文案"
+        }
+      ]
     },
     "1210": {
       "title": "迁移 skill-bill analysis 批次 1：9 件（283 条）",
@@ -10286,12 +10289,12 @@
   },
   "scopeSummary": {
     "ledgerFiles": 1226,
-    "migratedFiles": 755,
-    "pendingFiles": 145,
-    "pendingLiterals": 5284,
-    "excludedFiles": 326,
-    "excludedLiterals": 14896,
-    "migratedLiterals": 22568
+    "migratedFiles": 763,
+    "pendingFiles": 136,
+    "pendingLiterals": 5023,
+    "excludedFiles": 327,
+    "excludedLiterals": 14897,
+    "migratedLiterals": 22828
   },
   "workflow": [
     "开工：从本文件取本票 files，逐件登记进 tooling/i18n-scope.json 的 files（先跑两道门拿红读数＝范围已挂但还没迁）。",

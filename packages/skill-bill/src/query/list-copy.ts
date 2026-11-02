@@ -12,19 +12,33 @@
  * 列序与表头同源：本件的 `COLUMNS` 即表格列的唯一定义（`./list.js`  import 本件，不再各写一次）。
  * 键序 时间／分类／金额／账户／账本／备注／编号，文案同上。
  */
+import { currentRenderLanguage, resolve } from 'base-entries';
 import type { DataTableColumn } from 'base-paint/blocks';
+import { SKILL_BILL_CATALOG, m } from '../entries/index.js';
 import { EMPTY_CELL, csvCell, oneLine, truncate } from '../shared/copyText.js';
 
-/** 表格列（唯一定义地）：表头文本、列序；复制行标签与 CSV 表头同源于此。 */
-export const COLUMNS: readonly DataTableColumn[] = [
-  { key: 'time', label: '时间' },
-  { key: 'category', label: '分类' },
-  { key: 'amount', label: '金额', align: 'right' },
-  { key: 'account', label: '账户' },
-  { key: 'ledger', label: '账本' },
-  { key: 'note', label: '备注' },
-  { key: 'id', label: '编号' },
-];
+/** 表格列（唯一定义地）：表头文本、列序；复制行标签与 CSV 表头同源于此。
+ *  #1209：列标签住词条表（`query.list-copy.column-*`），按语言取值——`columnsFor(language)` 是唯一装配点，
+ *  渲染期走 `queryColumns()`（渲染语言），`COLUMNS` 仍是 `zh` 静态快照（结构消费者与测试读它，形状不变）。 */
+function columnsFor(language: string): readonly DataTableColumn[] {
+  return [
+    { key: 'time', label: resolve(SKILL_BILL_CATALOG, language, 'query.list-copy.column-time') },
+    { key: 'category', label: resolve(SKILL_BILL_CATALOG, language, 'query.list-copy.column-category') },
+    { key: 'amount', label: resolve(SKILL_BILL_CATALOG, language, 'query.list-copy.column-amount'), align: 'right' },
+    { key: 'account', label: resolve(SKILL_BILL_CATALOG, language, 'query.list-copy.column-account') },
+    { key: 'ledger', label: resolve(SKILL_BILL_CATALOG, language, 'query.list-copy.column-ledger') },
+    { key: 'note', label: resolve(SKILL_BILL_CATALOG, language, 'query.list-copy.column-note') },
+    { key: 'id', label: resolve(SKILL_BILL_CATALOG, language, 'query.list-copy.column-id') },
+  ];
+}
+
+/** 渲染期那一份列（标签随渲染语言）。 */
+export function queryColumns(): readonly DataTableColumn[] {
+  return columnsFor(currentRenderLanguage());
+}
+
+/** `zh` 静态快照（旧导出名；渲染一律走 `queryColumns()`）。 */
+export const COLUMNS: readonly DataTableColumn[] = columnsFor('zh');
 
 /** 备注截断上限（字数按 Array.from 计，CJK 一字一数；回执 200，列表一行须更紧，取 30）。 */
 export const NOTE_TRUNC_LIMIT = 30;
@@ -77,6 +91,11 @@ export function truncateNote(note: string): string {
   return truncate(t, NOTE_TRUNC_LIMIT, true);
 }
 
+/** 一笔一行（列标签与列序取 `queryColumns()`：与表头、CSV 表头同源）。 */
+function labelledLine(cells: readonly [string, string, string, string, string, string, string]): string {
+  return queryColumns().map((c, i) => String(c.label) + ' ' + cells[i]).join(' | ');
+}
+
 /** 一行的七格（固定列序，与 COLUMNS 同序；备注走截断，其余走 cell）。 */
 function rowCells(r: ListCopyRow): readonly [string, string, string, string, string, string, string] {
   return [cell(r.time), cell(r.category), cell(r.amount), cell(r.account), cell(r.ledger), truncateNote(r.note), cell(r.id)];
@@ -85,22 +104,25 @@ function rowCells(r: ListCopyRow): readonly [string, string, string, string, str
 /** 窗口元数据行（共N笔／全列或仅列前M笔／窗口原文；M＝已显示数）。 */
 function metaLine(window: string, total: number, shownCount: number): string {
   const w = oneLine(window) === '' ? EMPTY_CELL : oneLine(window);
-  if (shownCount >= total) return '共 ' + String(total) + ' 笔，已全列 · 窗口：' + w;
-  return '共 ' + String(total) + ' 笔，仅列前 ' + String(shownCount) + ' 笔 · 窗口：' + w;
+  if (shownCount >= total) return m('skill-bill.query-list-copy.c001', { p0: String(String(total)), p1: String(w) });
+  return m('skill-bill.query-list-copy.c002', {
+    p0: String(String(total)),
+    p1: String(String(shownCount)),
+    p2: String(w),
+  });
 }
 
 /** 标题行（唤醒词原文；空走记账数据）。 */
 function titleLine(title: string): string {
   const t = typeof title === 'string' ? title.trim() : '';
-  return t === '' ? '记账数据' : t;
+  return t === '' ? m('skill-bill.query-list-copy.c003') : t;
 }
 
 /** 纯文本：标题＋元数据＋一笔一行（固定列序带标签，` | ` 分隔；LF，无尾换行）。 */
 export function buildListCopyText(input: ListCopyInput): string {
   const lines = [titleLine(input.title), metaLine(input.window, input.total, input.shown.length)];
   for (const r of input.shown) {
-    const [time, category, amount, account, ledger, note, id] = rowCells(r);
-    lines.push('时间 ' + time + ' | 分类 ' + category + ' | 金额 ' + amount + ' | 账户 ' + account + ' | 账本 ' + ledger + ' | 备注 ' + note + ' | 编号 ' + id);
+    lines.push(labelledLine(rowCells(r)));
   }
   return lines.join('\n');
 }
@@ -124,7 +146,7 @@ export function buildListCopyJson(input: ListCopyInput): string {
 
 /** CSV：真表头列名行＋一笔一行（值与文本同源；LF，无尾换行）。 */
 export function buildListCopyCsv(input: ListCopyInput): string {
-  const lines = [COLUMNS.map((c) => String(c.label)).join(',')];
+  const lines = [queryColumns().map((c) => String(c.label)).join(',')];
   for (const r of input.shown) {
     lines.push(rowCells(r).map((v) => csvCell(v)).join(','));
   }

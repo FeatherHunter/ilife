@@ -18,6 +18,7 @@
  * 只有查询域在用 ⇒ 住本域目录 `src/query/`（归属律 2：写不出「哪两个能力在用」的不进共用位）。 */
 import type { BillRow } from '../fetch/index.js';
 import { isTransfer } from '../shared/kpi.js';
+import { m } from '../entries/index.js';
 
 /** 两处笔数片段与转账数 K（#1084 §三；K ＝ 0 时两个片段即裸笔数，字面与批准原型逐字节相同）。 */
 export interface CountNotes {
@@ -34,9 +35,16 @@ export interface CountNotes {
  * N 由调用方传入而不在本件重算：收支口径的判地是 `../shared/kpi.js` 的 `calcKpi`，本件不另算一份。 */
 export function countNotes(records: readonly BillRow[], kpiCount: number): CountNotes {
   const transfer = records.filter((r) => isTransfer(r)).length;
-  return {
-    transfer,
-    head: String(kpiCount) + ' 笔' + (transfer > 0 ? '（不含转账）' : ''),
-    check: String(records.length) + ' 笔' + (transfer > 0 ? '（含转账 ' + String(transfer) + '）' : ''),
-  };
+  /* 两个片段各自成整句（#1209）：注记只在含转账的窗口出现，K ＝ 0 时即裸笔数。 */
+  if (transfer > 0) {
+    return {
+      transfer,
+      head: m('skill-bill.query-countLabel.c001', { p0: String(String(kpiCount)) }),
+      check: m('skill-bill.query-countLabel.c002', {
+        p0: String(String(records.length)),
+        p1: String(String(transfer)),
+      }),
+    };
+  }
+  return { transfer, head: m('skill-bill.query-countLabel.c003', { p0: String(String(kpiCount)) }), check: m('skill-bill.query-countLabel.c004', { p0: String(String(records.length)) }) };
 }
