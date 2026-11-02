@@ -58,6 +58,14 @@ export const HEALTH_CHECK_KEY = 'config.check' as const;
 /** 面板第二段参数（与各家的端点名同值，和各家的 `RPC_CHANNEL` 配成一次调用）。 */
 export const HEALTH_ENDPOINT = 'config.check' as const;
 
+/** 「去哪修」那一行的前缀：技能侧交回的 action 可能自带它（老回执），面板渲染前剥一层。
+ *  协议值，不随界面语言变——它判的是回执的形状，不是屏上的文案。 */
+export const ACTION_PREFIX = '去哪修：' as const;
+
+/** 来源那一格「默认值」的取值：面板只在来源不是它时才印「· 来自…」。
+ *  协议值，不随界面语言变——它判的是回执的取值来源。 */
+export const SOURCE_DEFAULT = '默认值' as const;
+
 /** 三档排序：数字大的更严重（总览一行取**最严重**那档当那一家的灯）。 */
 const RANK: Readonly<Record<HealthStatus, number>> = { green: 0, yellow: 1, red: 2 };
 

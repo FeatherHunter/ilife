@@ -31,6 +31,7 @@ import type { StatusKind } from 'base-paint';
 import { renderCaliberLine, renderChipRow, renderTypeBadge } from 'base-paint/blocks';
 import { directionOf } from './summaryRow.js';
 import { statusNoteOf, wakeWordOf } from './userWording.js';
+import { m } from '../entries/index.js';
 
 export { wakeWordOf } from './userWording.js';
 export { nextStepOf } from './userWording.js';
@@ -56,9 +57,12 @@ export interface TypeBadgeInput {
  *  第 3 轮返工：型认得出时不再把方向词抄一遍（唤醒词那枚已经写了「记支出」），只留「金额取负数」这一半。 */
 function caliberOf(kind: string): string {
   const d = directionOf(kind);
-  if (d !== undefined) return '金额取' + (d.sign < 0 ? '负' : '正') + '数';
-  if (kind.trim() === '') return '方向按金额符号判';
-  return '分类按三级挂靠';
+  if (d !== undefined) {
+    const signWord = d.sign < 0 ? m('skill-bill.write-typeBadge.c001') : m('skill-bill.write-typeBadge.c002');
+    return m('skill-bill.write-typeBadge.c003', { p0: String(signWord) });
+  }
+  if (kind.trim() === '') return m('skill-bill.write-typeBadge.c004');
+  return m('skill-bill.write-typeBadge.c005');
 }
 
 /** 类型徽章：页型 ＋ 这一页的口径 ＋ 页面状态徽章 ＋ 下一步动作。四枚形状各自独立，不拼分隔符串。

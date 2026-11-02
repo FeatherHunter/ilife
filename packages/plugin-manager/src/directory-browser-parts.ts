@@ -10,6 +10,7 @@
 import * as React from 'react';
 import type { BrowseState } from './directory-browser-state.js';
 import type { DirectoryEntry, RootKind } from './directory-browser-contract.js';
+import { m } from './entries/index.js';
 
 /** 图上出现的每一句文案；调用方给（本件不自造口径）。 */
 export interface DirectoryBrowserLabels {
@@ -34,13 +35,17 @@ export interface DirectoryBrowserLabels {
 }
 
 /** 根的类型说明（悬停可见）：**本件自己的词汇**，与取数方无关。 */
-const ROOT_KIND_TEXT: Record<RootKind, string> = {
-  fixed: '固定磁盘',
-  network: '网络驱动器',
-  removable: '可移动磁盘',
-  optical: '光驱',
-  other: '磁盘',
-};
+/** 根的类型说明：渲染期现取（#1229）。 */
+function rootKindText(kind: RootKind): string {
+  const table: Record<RootKind, string> = {
+    fixed: m('plugin-manager.directory-browser-parts.c001'),
+    network: m('plugin-manager.directory-browser-parts.c002'),
+    removable: m('plugin-manager.directory-browser-parts.c003'),
+    optical: m('plugin-manager.directory-browser-parts.c004'),
+    other: m('plugin-manager.directory-browser-parts.c005'),
+  };
+  return table[kind] ?? table.other;
+}
 
 export const S = {
   scrim: {
@@ -192,7 +197,7 @@ export function rootsRow(state: BrowseState, onEnter: (path: string) => void): R
         key: root.path,
         type: 'button',
         style: { ...S.chromeButton, ...S.rootButton },
-        title: ROOT_KIND_TEXT[root.kind] ?? ROOT_KIND_TEXT.other,
+        title: rootKindText(root.kind),
         // #1164 T5：同上（根跳转与普通按钮同口径）。
         'data-ilife-press': 'dialog-root',
         'data-ilife-longpress': 'dialog-root',

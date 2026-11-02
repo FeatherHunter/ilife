@@ -414,8 +414,12 @@ describe('#696 备忘设置页 · 配置面', () => {
       // 这里咬共用件产物里那条回头路与那两句人话都还在（搬丢一句就等于行为被悄悄改掉）。
       const panel = readFileSync(join(HERE, '..', '..', 'plugin-manager', 'dist', 'config-panel.js'), 'utf8');
       assert.ok(panel.includes('writeThenReload'), '保存／重置后应重读整面');
-      assert.ok(panel.includes('已保存，立即生效'), '保存后给人话回执');
-      assert.ok(panel.includes('已重置为默认'), '重置后给人话回执');
+      // #1229 起两句人话搬进词条表：产物里只剩取词调用，人话本身在 dist/entries/zh.js。
+      assert.ok(panel.includes('plugin-manager.config-panel.c002'), '保存后给人话回执');
+      assert.ok(panel.includes('plugin-manager.config-panel.c003'), '重置后给人话回执');
+      const zh = readFileSync(join(HERE, '..', '..', 'plugin-manager', 'dist', 'entries', 'zh.js'), 'utf8');
+      assert.ok(zh.includes('已保存，立即生效'), '保存后的人话原文还在词条表里');
+      assert.ok(zh.includes('已重置为默认'), '重置后的人话原文还在词条表里');
     });
 
     it('高级项进默认收起的 details 组，常用项直画（本家高级组为空 ⇒ 屏上不该有那一组）', async () => {

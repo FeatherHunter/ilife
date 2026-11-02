@@ -10,9 +10,12 @@
  */
 import { pageShell } from '../shared/pageShell.js';
 import type { PageShellInput } from '../shared/pageShell.js';
+import { m } from '../entries/index.js';
 
-/** 查询域各页的眉标。 */
-export const QUERY_EYEBROW = '记账｜查询域';
+/** 查询域各页的眉标（#1209 起按语言取值：住词条表）。 */
+export function queryEyebrow(): string {
+  return m('skill-bill.query-pageParts.c001');
+}
 
 /** 1056 查询 v2.1 复制区新口径（块居中＋左缘对齐＋▾补位，查询域自家样式，不进共用位）。
  *
@@ -38,5 +41,5 @@ export function queryStyleTag(): string {
 
 /** 本域两张页型统一走它：补上眉标再转共用位的 `pageShell`；调用点写法 `pageShell({…})` 不变。 */
 export function queryPageShell(input: Omit<PageShellInput, 'eyebrow'>): string {
-  return pageShell({ ...input, eyebrow: QUERY_EYEBROW });
+  return pageShell({ ...input, eyebrow: queryEyebrow() });
 }

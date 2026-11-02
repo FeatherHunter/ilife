@@ -26,6 +26,7 @@ import {
   dragSortSlot,
   type DragSortSlot,
 } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -38,21 +39,24 @@ export function dragSortFormsCss(input?: { readonly prefix?: string }): string {
   /** 不带 scope 的槽类名：只用在**已经落进本件某条选择器内部**的位置（前缀由外层那条选择器给）。 */
   const c = (slot: DragSortSlot): string => '.' + dragSortSlot(slot, p);
   /** 本件根（第二形态）：`.is-buttons` 挂在根上，于是这一档的规则只在这一档命中，旧档零命中。 */
-  const bins = root + ' .' + p + 'block-drag-sort.is-buttons';
+  const bins = root + ' .' + p + 'block-drag-sort' + '.is-buttons';
   /** 第二形态下某个槽：`b('row')`＝`.…page-ui .…block-drag-sort.is-buttons .…block-drag-sort-row`。 */
   const b = (slot: DragSortSlot): string => bins + ' ' + c(slot);
 
   return [
-    '/* drag-sort 第二形态（`buttons` 按钮排序）：选中一行 → 两半控件（上移｜下移）挪一位，',
-    '   选中那一行站起来（投影＋强调描边，不只靠颜色），落点那一位上停一条贯穿行宽的虚线预告。 */',
-    '/* 把手降到**只有字形**：这一行里还有两半控件那样的硬按钮，把手再占一块软底就分不清主次了',
-    '   （命中盒仍是 ' + String(DRAG_SORT_TOUCH_PX) + '×' + String(DRAG_SORT_TOUCH_PX) + '，它仍是「拿」的入口）。 */',
+    m('base-render.components-drag-sort-style-forms.c001'),
+    m('base-render.components-drag-sort-style-forms.c002'),
+    m('base-render.components-drag-sort-style-forms.c003'),
+    m('base-render.components-drag-sort-style-forms.c004', {
+      p0: String(String(DRAG_SORT_TOUCH_PX)),
+      p1: String(String(DRAG_SORT_TOUCH_PX)),
+    }),
     b('handle') + ' {',
     '  border: 0;',
     '  background: none;',
     '  color: ' + skinVar('ink-2') + ';',
     '}',
-    '/* 选中那一行**站起来**：投影（形，不许只靠颜色）＋ 强调描边；身子不挪（按钮排序不动位置感）。 */',
+    m('base-render.components-drag-sort-style-forms.c005'),
     b('row') + '.is-picked {',
     '  position: relative;',
     '  z-index: 2;',
@@ -60,9 +64,9 @@ export function dragSortFormsCss(input?: { readonly prefix?: string }): string {
     '  border-color: ' + skinVar('accent') + ';',
     '  box-shadow: ' + skinVar('shadow') + ';',
     '}',
-    '/* 右端读数在这一档靠左站（`margin-left` 的余量留给行尾那颗两半控件）。 */',
+    m('base-render.components-drag-sort-style-forms.c006'),
     b('meta') + ' { margin-left: 0; }',
-    '/* 两半控件：**一颗**（一个外框两半）；两半之间留 8px 的缝——触屏上挨着的半边会误按。 */',
+    m('base-render.components-drag-sort-style-forms.c007'),
     b('move') + ' {',
     '  display: inline-flex;',
     '  flex: none;',
@@ -72,8 +76,10 @@ export function dragSortFormsCss(input?: { readonly prefix?: string }): string {
     '  border-radius: ' + skinVar('radius-sm') + ';',
     '  background: ' + skinVar('surface') + ';',
     '}',
-    '/* 两半：各 ' + String(DRAG_SORT_MOVE_MIN_PX) + '×' + String(DRAG_SORT_TOUCH_PX)
-      + ' 的真按钮，字是「上移」「下移」两个字（**不写方向箭头**：手机上箭头不是可依赖的东西）。 */',
+    m('base-render.components-drag-sort-style-forms.c008', {
+      p0: String(String(DRAG_SORT_MOVE_MIN_PX)),
+      p1: String(String(DRAG_SORT_TOUCH_PX)),
+    }),
     b('move-up') + ', ' + b('move-down') + ' {',
     '  display: inline-flex;',
     '  align-items: center;',
@@ -91,19 +97,19 @@ export function dragSortFormsCss(input?: { readonly prefix?: string }): string {
     '  cursor: pointer;',
     '  touch-action: manipulation;',
     '}',
-    '/* 选中那一行的控件走强调档（外框与字各一档，不是只把字染色）。 */',
+    m('base-render.components-drag-sort-style-forms.c009'),
     b('row') + '.is-picked ' + c('move') + ' { border-color: ' + skinVar('accent') + '; }',
     b('row') + '.is-picked ' + c('move-up') + ', ' + b('row') + '.is-picked ' + c('move-down') + ' {',
     '  color: ' + skinVar('accent-text') + ';',
     '}',
-    '/* 到头的那一半按不动：说出来（`disabled`）＋ 弱一档的字色，不是只把字调浅一点点。 */',
+    m('base-render.components-drag-sort-style-forms.c010'),
     b('move-up') + ':disabled, ' + b('move-down') + ':disabled {',
     '  color: ' + skinVar('ink-3') + ';',
     '  cursor: not-allowed;',
     '}',
     b('move-up') + ':active, ' + b('move-down') + ':active { background: ' + skinVar('accent-soft') + '; }',
-    '/* 虚线落点预告：那根线**贯穿行宽**（左沿＝右沿＝行沿），标签压在线上写出会落到第几位。',
-    '   虚线比「拖拽中」那档的 3px 实线轻一档（这一档还没发生挪动）。 */',
+    m('base-render.components-drag-sort-style-forms.c011'),
+    m('base-render.components-drag-sort-style-forms.c012'),
     b('drop') + ' {',
     '  position: relative;',
     '  display: flex;',
@@ -124,17 +130,17 @@ export function dragSortFormsCss(input?: { readonly prefix?: string }): string {
     '  background: ' + skinVar('surface') + ';',
     '  color: ' + skinVar('accent-text') + ';',
     '}',
-    '/* 无障碍地板：真实键盘用户的焦点必须看得见（焦点是**增强**，不是通路——两半都点得到）。 */',
+    m('base-render.components-drag-sort-style-forms.c013'),
     b('move-up') + ':focus-visible, ' + b('move-down') + ':focus-visible {',
     '  outline: 2px solid ' + skinVar('accent') + ';',
     '  outline-offset: 2px;',
     '}',
-    '/* 悬停只是增强（而且只在真有指针的设备上），点得到不靠它。 */',
+    m('base-render.components-drag-sort-style-forms.c014'),
     '@media ' + DRAG_SORT_HOVER_QUERY + ' {',
     '  ' + b('move-up') + ':hover, ' + b('move-down') + ':hover { color: ' + skinVar('accent-text') + '; }',
     '}',
-    '/* 窄档（**本件自己** < ' + String(DRAG_SORT_NARROW_PX) + 'px）：两半控件整颗折到下一行靠右，',
-    '   不压字、不横滑；名称与位置读数照旧换行，一个 `…` 都没有。 */',
+    m('base-render.components-drag-sort-style-forms.c015', { p0: String(String(DRAG_SORT_NARROW_PX)) }),
+    m('base-render.components-drag-sort-style-forms.c016'),
     '@container ' + DRAG_SORT_CONTAINER + ' (max-width: ' + String(DRAG_SORT_NARROW_PX) + 'px) {',
     '  ' + b('move') + ' {',
     '    flex: 1 1 100%;',

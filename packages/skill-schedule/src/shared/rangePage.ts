@@ -27,6 +27,7 @@ import { scheduleCopyArea, type ScheduleCopyAreaInput } from '../render/copyArea
 import { assembleDocPage, type PageHead } from './docPage.js';
 import { pageSections } from './pageNav.js';
 import { categoryColor } from './pageParts.js';
+import { m } from '../entries/index.js';
 
 /** 「区间汇总」一页要的全部东西（8 个字段）。 */
 export interface RangePageData {
@@ -54,16 +55,16 @@ export function renderRangePage(data: RangePageData): string {
     { html: renderConclusionBar(data.conclusion) },
     // 分类聚合这一段要有名字（老侧 f02 的必现块就叫「分类聚合」）：段名走 `heat-title` 这个公共层
     // 已有的段名类（今天总结页的「作息库现状」与周视图的矩阵段名都走它），不新造类名、不新添 CSS。
-    { navText: '分类聚合', html: '<h2 class="heat-title">分类聚合</h2>'
+    { navText: m('skill-schedule.shared-rangePage.c001'), html: '<h2 class="heat-title">' + m('skill-schedule.shared-rangePage.c001') + '</h2>'
       // 分布行按名上色（与色带／矩阵同一算式）：不给色就一律落 `--blue`，八行一样看不出分别。
       + renderDistributionRows({
         rows: data.distribution.map((row) => ({ ...row, color: categoryColor(row.label, data.order) })),
       }) },
-    { navText: '7 维趋势', html: renderChartBlock({ ...data.trend, title: '7 维趋势' }) },
+    { navText: m('skill-schedule.shared-rangePage.c002'), html: renderChartBlock({ ...data.trend, title: m('skill-schedule.shared-rangePage.c003') }) },
     { html: renderFactStrip({ items: data.sleep }) },
-    { html: renderListRows({ items: data.daily, emptyText: '这一区间没有记录' }) },
-    { navText: '复制与留档', html: scheduleCopyArea({
-      title: '复制与留档',
+    { html: renderListRows({ items: data.daily, emptyText: m('skill-schedule.shared-rangePage.c004') }) },
+    { navText: m('skill-schedule.shared-rangePage.c005'), html: scheduleCopyArea({
+      title: m('skill-schedule.shared-rangePage.c006'),
       dataActionId: 'ilife-sch-range-copy-data',
       logActionId: 'ilife-sch-range-copy-log',
       ...data.copy,

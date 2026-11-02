@@ -39,7 +39,7 @@ export function buildTimerCardJs(): string {
     + '  var A_TAG=' + q(TIMER_TAG_ATTR) + ', A_ELAPSED=' + q(TIMER_ELAPSED_ATTR) + ', A_REST=' + q(TIMER_REST_ATTR) + ';' + '\n'
     + '  var A_ACT=' + q(TIMER_ACT_ATTR) + ', A_DISABLED=' + q(TIMER_DISABLED_ATTR) + ', A_BUSY=' + q(TIMER_BUSY_ATTR) + ';' + '\n'
     + '  var A_BOUND=' + q(TIMER_BOUND_ATTR) + ', TAG_CLASS=' + q(timerCardSlot('tag')) + ', MISSING=' + q(TIMER_CARD_MISSING) + ';' + '\n'
-    + '  var WORDS=' + words + ', LABELS=' + labels + ', LOADING_LABEL=' + q(TIMER_LOADING_LABEL) + ';' + '\n'
+    + '  var WORDS=' + words + ', LABELS=' + labels + ', LOADING_LABEL=' + q(TIMER_LOADING_LABEL()) + ';' + '\n'
     + '  var EV_STATE=' + q(TIMER_EVENT_STATE) + ', EV_DONE=' + q(TIMER_EVENT_DONE) + ', TICK=' + TIMER_CARD_TICK_MS + ';' + '\n'
     + '  function pad2(n){ return (n<10?"0":"")+n; }' + '\n'
     /* 与渲染段同一口径：MM:SS，≥1 小时才出小时位 */

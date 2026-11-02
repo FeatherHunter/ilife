@@ -11,8 +11,9 @@
  */
 import { DOC_TITLE } from '../shared/pageIdentity.js';
 import { EMPTY_CELL, csvCell, oneLine } from '../shared/copyText.js';
-import { STEP_STATE_TEXT } from './steps.js';
+import { stepStateText } from './steps.js';
 import type { WizardStep } from './steps.js';
+import { m } from '../entries/index.js';
 
 /** 向导复制事实：op/标题/步骤（**不多于三个**）。 */
 export interface SetupCopyFacts {
@@ -29,13 +30,16 @@ export interface SetupCopy {
   readonly hints?: readonly string[];
 }
 
-/** 空态下一步（文本与JSON共用同一句，页面空态同源）。 */
-export const SETUP_EMPTY_NEXT = '换一条唤醒词再说一遍。';
+/** 空态下一步（文本与JSON共用同一句，页面空态同源）。
+ *  `#1214`：改成**函数**按语言取词（模块级常量会把语言固化成 zh）。 */
+export function setupEmptyNext(): string {
+  return m('skill-bill.setup-copyTextSetup.c001');
+}
 
 /** 页身份行：饼干记账 + 标题（标题已含页名，不另加尾段）。 */
 function pageLine(title: string): string {
   const t = typeof title === 'string' ? title.trim() : '';
-  return DOC_TITLE + ' ' + (t === '' ? '向导' : t);
+  return DOC_TITLE + ' ' + (t === '' ? m('skill-bill.setup-copyTextSetup.c002') : t);
 }
 
 
@@ -48,7 +52,12 @@ function pickDetail(v: string): string {
 
 /** 一步人话行：第N步 + 标题 + 状态 + 现状数（显示与复制同源）。 */
 function stepLine(s: WizardStep): string {
-  return '第 ' + String(s.no) + ' 步 ' + s.label + ' ' + STEP_STATE_TEXT[s.state] + '：' + pickDetail(s.detail);
+  return m('skill-bill.setup-copyTextSetup.c003', {
+    p0: String(String(s.no)),
+    p1: String(s.label),
+    p2: String(stepStateText(s.state)),
+    p3: String(pickDetail(s.detail)),
+  });
 }
 
 /** 纯文本（LF，无尾换行）：页身份/进度/每步一行；空steps出空态有下一步。 */
@@ -56,9 +65,9 @@ export function buildSetupCopyText(facts: SetupCopyFacts): string {
   const steps = facts.steps ?? [];
   const head = pageLine(facts.title);
   if (steps.length === 0) {
-    return head + '\n' + '这一页没有步骤可报，下一步：' + SETUP_EMPTY_NEXT;
+    return m('skill-bill.setup-copyTextSetup.c004', { p0: String(head), p1: String(setupEmptyNext()) });
   }
-  const lines = [head, '共 ' + String(steps.length) + ' 步'];
+  const lines = [head, m('skill-bill.setup-copyTextSetup.c005', { p0: String(String(steps.length)) })];
   for (const s of steps) lines.push(stepLine(s));
   return lines.join('\n');
 }
@@ -77,7 +86,7 @@ export function buildSetupCopyJson(facts: SetupCopyFacts): string {
       total: steps.length,
       steps: steps.map((s) => ({ no: s.no, label: s.label, state: s.state, detail: s.detail })),
       empty: steps.length === 0,
-      ...(steps.length === 0 ? { next: SETUP_EMPTY_NEXT } : {}),
+      ...(steps.length === 0 ? { next: setupEmptyNext() } : {}),
     },
   };
   return JSON.stringify(payload, null, 2);
@@ -90,8 +99,8 @@ export function buildSetupCopyCsv(facts: SetupCopyFacts): string {
   const steps = facts.steps ?? [];
   const lines = ['step,label,state,detail'];
   for (const s of steps) {
-    const step = '第 ' + String(s.no) + ' 步';
-    lines.push(csvCell(step, true) + ',' + csvCell(s.label, true) + ',' + csvCell(STEP_STATE_TEXT[s.state], true) + ',' + csvCell(s.detail, true));
+    const step = m('skill-bill.setup-copyTextSetup.c006', { p0: String(String(s.no)) });
+    lines.push(csvCell(step, true) + ',' + csvCell(s.label, true) + ',' + csvCell(stepStateText(s.state), true) + ',' + csvCell(s.detail, true));
   }
   return lines.join('\n');
 }

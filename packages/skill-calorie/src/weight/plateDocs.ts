@@ -18,16 +18,17 @@ import type { KpiCardInput } from 'base-paint/blocks';
 import type { CrudReceipt } from '../render/receipt.js';
 import { assembleDocPage } from '../shared/docPage.js';
 import { copyArea, copyLog } from '../shared/copyArea.js';
-import { fieldLabel } from '../shared/fieldLabel.js';
-import { WEIGHT_DOMAIN } from './fieldLabels.js';
+import { weightFieldLabel } from './fieldLabels.js';
 import { weightUiCss } from './weightUi.js';
+import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；测试钉死一致）。 */
 export const DOC_VERSION = '0.1.0';
 export const DOC_SKILL = 'calorie';
 
 /** 体重各页共用的 head 标题（整页模板住 `src/shared/docPage.ts`，标题走参数）。 */
-export const DOC_TITLE = '卡路里·体重';
+export const DOC_TITLE = (): string => m('skill-calorie.weight-plateDocs.c020');
 
 /* ── 回执页共用件（#337 融合：三个用法起共用） ── */
 
@@ -55,8 +56,8 @@ export const signed = (n: number): string => (n >= 0 ? '+' : '') + n + ' kg';
 /** 字段键 → 中文标签一行（走 `weight/fieldLabels.ts` 那张域表；缺项回退原键名，不编词）。
  *  #483 之前这里是 `receipt.writtenFields.join('、')`——把 `kg、note、date、time` 这类参数名直接摆上屏。 */
 export function fieldLabelList(keys: readonly string[]): string {
-  const labels = keys.map((k) => fieldLabel(WEIGHT_DOMAIN, k)).filter((s) => s !== '');
-  return labels.length === 0 ? '—' : labels.join('、');
+  const labels = keys.map((k) => weightFieldLabel(k)).filter((s) => s !== '');
+  return labels.length === 0 ? '—' : listJoin(currentRenderLanguage(), labels);
 }
 
 /** 状态卡（一页只此一处）：**三个槽各说一件事**——值槽＝本次动了几条（短数字＋单位），
@@ -71,16 +72,16 @@ export function stateCard(
   return {
     label: input.label,
     value: String(input.count),
-    unit: '条',
-    detail: noChange ? '这次没有写出任何改动' : input.detail,
-    status: kindOf(noChange ? '无改动' : input.word),
-    statusText: noChange ? '无改动' : input.word,
+    unit: m('skill-calorie.weight-plateDocs.c001'),
+    detail: noChange ? m('skill-calorie.weight-plateDocs.c002') : input.detail,
+    status: kindOf(noChange ? m('skill-calorie.weight-plateDocs.c003') : input.word),
+    statusText: noChange ? m('skill-calorie.weight-plateDocs.c004') : input.word,
   };
 }
 
 /** 一句话结论块：一页只许这一种形态（折叠区标题「结论」＋ 默认展开）；正文由取数层拼好，此处只转义。 */
 export function conclusionBlock(sentence: string): string {
-  return renderDisclosure({ title: '结论', contentHtml: '<p>' + escapeHtml(sentence) + '</p>', open: true });
+  return renderDisclosure({ title: m('skill-calorie.weight-plateDocs.c005'), contentHtml: '<p>' + escapeHtml(sentence) + '</p>', open: true });
 }
 
 /** 形状化结论块（#505）：与 `conclusionBlock` 同一个形态（同一个标题、同一个默认展开），
@@ -89,7 +90,7 @@ export function conclusionBlock(sentence: string): string {
  *  （#483 定稿，锁死一句话结论），形状化的页面要的是「正文已经是形状」——
  *  两件事混淆过一次的代价就是形状被当成字面量印上屏（本票实测）。入口分开，两边契约各自清楚。 */
 export function shapedConclusionBlock(bodyHtml: string): string {
-  return renderDisclosure({ title: '结论', contentHtml: bodyHtml, open: true });
+  return renderDisclosure({ title: m('skill-calorie.weight-plateDocs.c006'), contentHtml: bodyHtml, open: true });
 }
 
 /** 页尾「对账信息」折叠区（体重域口径，替换共用件 `reconcileDisclosure`）：只留跟进要用到、
@@ -103,12 +104,12 @@ export function shapedConclusionBlock(bodyHtml: string): string {
  *  #483 删掉的「回执格式 v1（写库回执）」是机器面契约号，读者零收益（登记见证据件）。 */
 export function reconcileBlock(receipt: CrudReceipt): string {
   return renderDisclosure({
-    title: '对账信息',
+    title: m('skill-calorie.weight-plateDocs.c007'),
     contentHtml: renderDataTable({
-      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+      columns: [{ key: 'k', label: m('skill-calorie.weight-plateDocs.c008') }, { key: 'v', label: m('skill-calorie.weight-plateDocs.c009') }],
       rows: [
-        { k: '记录编号', v: recordNoOf(receipt) },
-        { k: '落库时间', v: receipt.meta.actionAt },
+        { k: m('skill-calorie.weight-plateDocs.c010'), v: recordNoOf(receipt) },
+        { k: m('skill-calorie.weight-plateDocs.c011'), v: receipt.meta.actionAt },
       ],
     }),
   });
@@ -121,7 +122,7 @@ function recordNoOf(receipt: CrudReceipt): string {
   const ids = receipt.ids.length > 0
     ? receipt.ids
     : receipt.items.map((it) => it.id).filter((n): n is number => typeof n === 'number');
-  return ids.length === 0 ? '本次不适用' : ids.join('、');
+  return ids.length === 0 ? m('skill-calorie.weight-plateDocs.c012') : listJoin(currentRenderLanguage(), ids.map(String));
 }
 
 /** 复制载荷（写命令一律 receipt 形，`test/cmd-registry-294.test.mjs:262`）：`message` 取**本页结论句 ＋
@@ -152,7 +153,7 @@ export function deliveryBlocks(
         actionAt: receipt.meta.actionAt, version: DOC_VERSION,
       }),
     },
-  }) + renderCaliberLine('📊 数据来源：体重记录 ｜ ' + sourceText);
+  }) + renderCaliberLine(m('skill-calorie.weight-plateDocs.c013', { p0: String(sourceText) }));
 }
 
 /** 写后回执整页壳（标题三件套＋区块）：整页模板恒由 `assembleDocPage` 一处产出。
@@ -170,8 +171,8 @@ export function deliveryBlocks(
  *    故四种回执页都在这里带上形状词汇的样式（`logReceipt.ts`／`receipt.ts` 的正文都用它）。 */
 export function receiptPageOf(receipt: CrudReceipt, content: string, subtitle?: string): string {
   return assembleDocPage({
-    docTitle: '卡路里·体重回执',
-    title: receipt.scene + '回执',
+    docTitle: m('skill-calorie.weight-plateDocs.c014'),
+    title: m('skill-calorie.weight-plateDocs.c015', { p0: String(receipt.scene) }),
     eyebrow: '',
     subtitle: visualSubtitleOf(subtitle ?? receipt.summary),
     content: weightUiCss() + content,
@@ -197,8 +198,8 @@ function visualSubtitleOf(s: string): string {
  *  - 「上表左列」那句改成「表里「改前」那一列」——「上表」在本页有两张表（现值表 ＋ 对照表），
  *    靠方位词指表读者要自己猜；点名列头才是无歧义的写法。 */
 export function writtenDetailOf(key: string): string {
-  if (key === 'calorie.weight.update') return '已按新值写回体重记录。要改回去，照表里「改前」那一列的原值再改一次。';
-  if (key === 'calorie.weight.remove') return '删除的行已从体重记录里移除。本页没有撤销按钮。';
-  if (key === 'calorie.weight.batch') return '跳过与失败的行没写进库。改好日期或体重，可再补录一次。';
-  return '已存入体重记录。照「看今日体重」可复查。';
+  if (key === 'calorie.weight.update') return m('skill-calorie.weight-plateDocs.c016');
+  if (key === 'calorie.weight.remove') return m('skill-calorie.weight-plateDocs.c017');
+  if (key === 'calorie.weight.batch') return m('skill-calorie.weight-plateDocs.c018');
+  return m('skill-calorie.weight-plateDocs.c019');
 }

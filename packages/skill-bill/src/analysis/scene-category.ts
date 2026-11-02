@@ -16,6 +16,7 @@
  *      环形图圆心读数＝本期该方向的合计（老侧 donut 的 `centerValue`）；
  *   ⑤ 载荷照搬迁前那一支（`./views.js` 的 `buildOverview`），一字不改。
  */
+import { runWithLanguage } from 'base-entries';
 import { BillPolicyError } from '../fetch/errors.js';
 import { listRange } from '../fetch/index.js';
 import { aggByL1, filterOf, kpiOf, readWindow, round1, round2 } from './agg.js';
@@ -23,6 +24,7 @@ import type { Direction } from './agg.js';
 import { money, pctText } from './pageParts.js';
 import type { AnalysisScene } from './scene.js';
 import { buildOverview } from './views.js';
+import { m } from '../entries/index.js';
 
 
 /** 收支方向槽：缺＝支出；只认支出／收入两个方向，别的一律如实抛（本件不猜、不兜底）。 */
@@ -38,11 +40,12 @@ function readAccount(params: Record<string, unknown>): string {
   return typeof params.account === 'string' ? params.account.trim() : '';
 }
 
-export const sceneCategory: AnalysisScene = {
+function buildScene(): AnalysisScene {
+  return {
   id: 'category',
   key: 'bill.analysis.overview',
   kind: 'category',
-  title: '看分类',
+  title: m('skill-bill.analysis-scene-category.title'),
   family: 'bars',
   values: ({ params, db }) => {
     const win = readWindow(params);
@@ -51,57 +54,76 @@ export const sceneCategory: AnalysisScene = {
     const records = filterOf(listRange(db, win.from, win.to), { account, direction });
     const kpi = kpiOf(records);
     const cats = aggByL1(records, { direction });
-    const side = direction === 'income' ? '收入' : '支出';
+    const side = direction === 'income' ? m('skill-bill.analysis-scene-category.c002') : m('skill-bill.analysis-scene-category.c003');
     const total = direction === 'income' ? kpi.income : kpi.expense;
     const head = cats[0];
     const max = cats.length === 0 ? 0 : Math.max(...cats.map((c) => c.value));
+    const accountTail = account === '' ? '。' : m('skill-bill.analysis-scene-category.c004', { p0: String(account) });
     return {
-      title: '看分类',
+      title: m('skill-bill.analysis-scene-category.title'),
       label: win.label,
       from: win.from,
       to: win.to,
       count: records.length,
       conclusion: head === undefined
-        ? win.label + ' 这段时间一笔' + side + '都没有记。'
-        : win.label + ' 的' + side + '共 ' + money(total) + ' 元，分在 ' + String(cats.length) + ' 个一级分类里；'
-          + '最多的是「' + head.key + '」' + money(head.value) + ' 元，占 ' + pctText(head.pct) + '。',
-      caliber: '按一级分类归堆（全路径不并档），占比与环形图都按本期' + side + '合计算；条长按最大一类折算。'
-        + '转账不计入收支' + (account === '' ? '。' : '；本页只看账户「' + account + '」的记录。'),
+        ? m('skill-bill.analysis-scene-category.c006', { p0: String(win.label), p1: String(side) })
+        : m('skill-bill.analysis-scene-category.c007', {
+          p0: String(win.label),
+          p1: String(side),
+          p2: String(money(total)),
+          p3: String(String(cats.length)),
+          p4: String(head.key),
+          p5: String(money(head.value)),
+          p6: String(pctText(head.pct)),
+        }),
+      caliber: m('skill-bill.analysis-scene-category.c008', { p0: String(side), p1: String(accountTail) }),
       chips: [win.label],
       payload: buildOverview(win.label, [...records]),
       kpi,
       page: {
         kpis: [
-          { label: '总' + side, value: money(total), unit: '元' },
-          { label: '分类数', value: String(cats.length), unit: '类' },
-          { label: '期间', value: win.label },
+          { label: m('skill-bill.analysis-scene-category.c009', { p0: String(side) }), value: money(total), unit: m('skill-bill.analysis-scene-category.c010') },
+          { label: m('skill-bill.analysis-scene-category.c011'), value: String(cats.length), unit: m('skill-bill.analysis-scene-category.c012') },
+          { label: m('skill-bill.analysis-scene-category.c013'), value: win.label },
         ],
         chips: [win.label],
         charts: cats.length === 0 ? [] : [{
-          title: '分类占比',
+          title: m('skill-bill.analysis-scene-category.c014'),
           kind: 'donut',
           input: {
             items: cats.map((c) => ({ label: c.key, value: c.value })),
-            options: { centerLabel: '总' + side, centerValue: money(total) },
+            options: { centerLabel: m('skill-bill.analysis-scene-category.c015', { p0: String(side) }), centerValue: money(total) },
           },
         }],
         barGroups: [{
-          title: '占比明细（' + String(cats.length) + ' 类）',
+          title: m('skill-bill.analysis-scene-category.c016', { p0: String(String(cats.length)) }),
           rows: cats.map((c) => ({
             label: c.key,
-            text: money(c.value) + ' 元 · ' + String(c.count) + ' 笔 · ' + pctText(c.pct)
-              + ' · 均 ' + money(round2(c.value / c.count)),
+            text: m('skill-bill.analysis-scene-category.c017', {
+              p0: String(money(c.value)),
+              p1: String(String(c.count)),
+              p2: String(pctText(c.pct)),
+              p3: String(money(round2(c.value / c.count))),
+            }),
             pct: max === 0 ? 0 : round1((c.value / max) * 100),
           })),
-          emptyText: '这段时间还没有' + side + '记录',
+          emptyText: m('skill-bill.analysis-scene-category.c018', { p0: String(side) }),
         }],
         listCards: [],
         factCards: [],
         empty: {
-          text: win.label + ' 这段时间还没有记录。',
-          hint: '先说「记支出」或「记收入」记一笔，回来看这里就有数了。',
+          text: m('skill-bill.analysis-scene-category.c019', { p0: String(win.label) }),
+          hint: m('skill-bill.analysis-scene-category.c020'),
         },
       },
     };
   },
-};
+  };
+}
+
+export const sceneCategory: AnalysisScene = buildScene();
+
+/** 按语言重建本场景（#1197：文案经词条层，语言是运行期参数）。 */
+export function sceneCategoryFor(language: string): AnalysisScene {
+  return runWithLanguage(language, buildScene);
+}

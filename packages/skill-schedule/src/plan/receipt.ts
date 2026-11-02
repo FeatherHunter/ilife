@@ -5,6 +5,7 @@
 // 消费方按字段取会 KeyError。本实现**三格永在**，且「这一趟算不算达成」是显式字段（`achieved`），
 // 由出口映射成退出码（没达成 → 非 0，照裁定 A6②／用户故事 6；降级照老 A6①：远端不可用不拦住本地写）。
 import { scheduleCopyLog, scheduleNowStamp, type ScheduleCopyAreaInput } from '../render/copyArea.js';
+import { m } from '../entries/index.js';
 
 export const LOCAL_STATES = ['created', 'found', 'updated', 'deleted', 'upserted', 'unchanged', 'preview', 'reviewed', 'checked'] as const;
 export type LocalState = (typeof LOCAL_STATES)[number];
@@ -87,16 +88,20 @@ export function buildReceipt(input: ReceiptInput): PlanReceipt {
   return out;
 }
 
-/** 远端侧一句话（人读）：写在 message 里，机读看 `remote` 字段。 */
-export const REMOTE_LABEL: Record<RemoteState, string> = {
-  found_feishu: '远端已有（认出来了，未重复建）',
-  created_feishu: '远端已建',
-  updated_feishu: '远端已改',
-  deleted_feishu: '远端已删',
-  unavailable: '远端没成（远端不可用或写失败）',
-  skipped: '远端按参数跳过（只做本地）',
-  none: '本命令不碰远端',
-};
+/** 远端侧一句话（人读）：写在 message 里，机读看 `remote` 字段。
+ *  #1197：由模块级常量表改成函数——常量的初值会在模块加载期定死语言，`m()` 只在渲染期取词。 */
+export function remoteLabelOf(state: RemoteState): string {
+  const labels: Record<RemoteState, string> = {
+    found_feishu: m('skill-schedule.plan-receipt.c001'),
+    created_feishu: m('skill-schedule.plan-receipt.c002'),
+    updated_feishu: m('skill-schedule.plan-receipt.c003'),
+    deleted_feishu: m('skill-schedule.plan-receipt.c004'),
+    unavailable: m('skill-schedule.plan-receipt.c005'),
+    skipped: m('skill-schedule.plan-receipt.c006'),
+    none: m('skill-schedule.plan-receipt.c007'),
+  };
+  return labels[state];
+}
 
 /** 本域一张页的复制区载荷（#887）：`schedule.plan.write` 下的所有页共用**回执**这一种形状
  *  （`ok` ＋ `message`），数据位就是这一趟那句话；日志位＝这一趟的 2–6 段。

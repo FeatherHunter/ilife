@@ -16,6 +16,7 @@
  *     k1 走 `accent-ink`，k2…k6 走 `ink`；逐档 × 四套皮肤都算过 4.5:1 地板。 */
 import { skinVar } from '../skin/contract.js';
 import { stackedBarSlot, type StackedBarSlot } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -45,9 +46,9 @@ export function stackedBarCss(input?: { readonly prefix?: string }): string {
   const c = (slot: StackedBarSlot): string => '.' + stackedBarSlot(slot, p);
 
   return [
-    '/* stacked-bar（构成条 · 形态 A「100% 堆叠 ＋ 图例」）：一整块按占比切成几段，图例必带数值。',
-    '   六档数据色从强调色算出来（往强调色的文本档混＝深端、往卡面混＝浅端，第六档取中性档）：',
-    '   换皮只换取值，色序不写死、也不与文字墨色共用。 */',
+    m('base-render.components-stacked-bar-style.c001'),
+    m('base-render.components-stacked-bar-style.c002'),
+    m('base-render.components-stacked-bar-style.c003'),
     box + ' {',
     /* 宽度判据的落点：本件是**自己的容器**——嵌进侧栏／面板／卡片时照样按自己的宽度折行。 */
     '  container-type: inline-size;',
@@ -110,8 +111,8 @@ export function stackedBarCss(input?: { readonly prefix?: string }): string {
     s('seg') + '.is-k5, ' + s('swatch') + '.is-k5 {',
     '  background: ' + series(12, skinVar('surface')) + ';',
     '}',
-    '/* 第六档＝"其他/其余"那一档：不参加强调色的深浅序，取分隔线那一支中性色——',
-    '   与 k5 的极浅强调色一眼分得开，也不跟任何文字墨色撞（文字那三支都深得多）。 */',
+    m('base-render.components-stacked-bar-style.c004'),
+    m('base-render.components-stacked-bar-style.c005'),
     s('seg') + '.is-k6, ' + s('swatch') + '.is-k6 {',
     '  background: ' + skinVar('line') + ';',
     '}',
@@ -133,7 +134,7 @@ export function stackedBarCss(input?: { readonly prefix?: string }): string {
     '  min-width: 0;',
     '  overflow: hidden;',
     '}',
-    '/* 段与段之间那道缝：用卡面色画，等于"把条切开"（不写边框，免得相邻两段各画一条）。 */',
+    m('base-render.components-stacked-bar-style.c006'),
     s('seg') + ' + ' + c('seg') + ' {',
     '  border-left: 1px solid ' + skinVar('surface') + ';',
     '}',
@@ -155,7 +156,7 @@ export function stackedBarCss(input?: { readonly prefix?: string }): string {
     s('seg') + '.is-k1 ' + c('seg-text') + ' {',
     '  color: ' + skinVar('accent-ink') + ';',
     '}',
-    '/* 图例：色块 ｜ 名字 ｜ 百分数 ｜ 数量。名字列可换行，**两列数字右对齐、永不换行**。 */',
+    m('base-render.components-stacked-bar-style.c007'),
     s('legend') + ' {',
     '  list-style: none;',
     '  display: grid;',
@@ -212,13 +213,13 @@ export function stackedBarCss(input?: { readonly prefix?: string }): string {
     '  line-height: 1.6;',
     '  overflow-wrap: anywhere;',
     '}',
-    '/* 本件自身不带可点元素。这一条是**地板**：调用方把图例包成筛选入口时，焦点必须看得见。 */',
+    m('base-render.components-stacked-bar-style.c008'),
     box + ' :focus-visible {',
     '  outline: 2px solid ' + skinVar('accent') + ';',
     '  outline-offset: 2px;',
     '}',
-    '/* 窄容器（<' + String(NARROW_PX) + 'px）：条矮一档；「只写百分数」那批段的段内字**让位图例**',
-    '   ——14% 的段在更窄的容器里塞不下那两个字，硬塞就是压字或 `…`；数字在图例里一个字不少。 */',
+    m('base-render.components-stacked-bar-style.c009', { p0: String(String(NARROW_PX)) }),
+    m('base-render.components-stacked-bar-style.c010'),
     '@container (max-width: ' + String(NARROW_PX) + 'px) {',
     '  ' + s('bar') + ' {',
     '    height: ' + String(NARROW_HEIGHT_PX) + 'px;',

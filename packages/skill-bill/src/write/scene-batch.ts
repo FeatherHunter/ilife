@@ -7,7 +7,8 @@
  *
  *  #1206 首切件（多语言文本外置）：本件的用户可见文案不住这里，住 `../entries/zh.ts`（中文基准）
  *  与 `../entries/en.ts`（英文列）；`sceneBatch(language)` 按语言取值，`SCENE` 是 `zh`
- *  的那一份（不启用多语言时与改造前逐字节相同）。其中回执状态与读数行标签复用记分期那两个 key
+ *  的那一份（落点表的静态快照，只有 `zh` 请求会拿到它）。**语言必给**（#1307）：本件不兜 `zh`。
+ *  其中回执状态与读数行标签复用记分期那两个 key
  *  （同句只一处定义，见本件 `receiptState`／`receiptRowsLabel`）；表名 `batch` 是页内控件名前缀、
  *  眉标是唤醒词（命令关键字冻结），都不进词条表。
  */
@@ -22,7 +23,7 @@ const WORD: string = wakeWordOfKind('batch');
 const KEY = 'bill.record.add';
 
 /** 按语言取本件的差异声明（key 拼错编译期红：`SkillBillMessageId` 从 zh 表派生）。 */
-export function sceneBatch(language: string = 'zh'): Scene {
+export function sceneBatch(language: string): Scene {
   const t = (id: SkillBillMessageId): string => resolve(SKILL_BILL_CATALOG, language, id);
   return {
     id: 'batch',

@@ -9,24 +9,25 @@ import { addProduct, deprecateProduct, updateProduct } from './productStore.js';
 import { CalorieRenderError } from '../render/errors.js';
 import type { WriteOut } from '../shared/commandSpec.js';
 import { fail, needId, needNum, optNum, optStr } from '../shared/params.js';
-import { fieldLabel } from '../shared/fieldLabel.js';
-import { DIET_DOMAIN } from './fieldLabels.js';
+import { dietFieldLabel } from './fieldLabels.js';
 import { F, R, deleteStatus, out } from '../shared/writeParts.js';
+import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** 字段键 → 中文标签（走 `./fieldLabels.ts` 那张域表；缺项回退原键名，不编词）。 */
 function zhLabel(key: string): string {
-  return fieldLabel(DIET_DOMAIN, key);
+  return dietFieldLabel(key);
 }
 
 /** 被改字段串：库列名（`note`／`dietary_fiber`）换中文，逗号顿开。 */
 function changedText(cols: readonly string[]): string {
-  return cols.map(zhLabel).join('、');
+  return listJoin(currentRenderLanguage(), cols.map(zhLabel));
 }
 
 /** `calorie.product.add` · 存食品。 */
 export function writeProductAdd(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
   const productName = (optStr(params, 'productName') ?? optStr(params, 'product_name') ?? '');
-  if (!productName.trim()) fail(2, '缺参数 productName');
+  if (!productName.trim()) fail(2, m('skill-calorie.diet-products.c001'));
   const r = addProduct(db, {
     productName: productName.trim(), brand: optStr(params, 'brand'),
     calories: needNum(params, 'calories'), protein: needNum(params, 'protein'), fat: needNum(params, 'fat'),
@@ -34,9 +35,9 @@ export function writeProductAdd(params: Record<string, unknown>, db: DatabaseSyn
     sugar: optNum(params, 'sugar'), dietaryFiber: optNum(params, 'dietaryFiber'),
     sodium: needNum(params, 'sodium'), note: optStr(params, 'note'),
   });
-  return out(R('存食品', 'create', '已存食品：' + productName.trim(), '存食品', '食品库', {
+  return out(R(m('skill-calorie.diet-products.c002'), 'create', m('skill-calorie.diet-products.c003', { p0: String(productName.trim()) }), m('skill-calorie.diet-products.c004'), m('skill-calorie.diet-products.c005'), {
     recordId: r.id, ids: [r.id], writtenFields: [...F.product],
-    items: [{ id: r.id, status: '成功', reason: '', detail: productName.trim() }],
+    items: [{ id: r.id, status: m('skill-calorie.diet-products.c006'), reason: '', detail: productName.trim() }],
   }));
 }
 
@@ -53,15 +54,15 @@ export function writeProductUpdate(params: Record<string, unknown>, db: Database
     if (params[camel] !== undefined) fields[col] = params[camel] as string | number | null;
   }
   for (const k of Object.keys(params)) {
-    if (!(k in map) && k !== 'id' && k !== 'key') fail(2, '不支持字段: ' + k);
+    if (!(k in map) && k !== 'id' && k !== 'key') fail(2, m('skill-calorie.diet-products.c007', { p0: String(k) }));
   }
-  if (Object.keys(fields).length === 0) fail(2, '至少传 1 个待改字段');
+  if (Object.keys(fields).length === 0) fail(2, m('skill-calorie.diet-products.c008'));
   const r = updateProduct(db, id, fields);
   if (!r.updated) throw new CalorieRenderError('missing-data', '食品 #' + id + ' 不存在');
   /* #496 · 摘要原写「已更新食品 #1（note）」——库列名与编号上屏（审查件第 32 条同形）⇒ 字段换中文。 */
-  return out(R('改食品', 'update', '已改食品：' + changedText(Object.keys(fields)), '改食品', '食品库', {
+  return out(R(m('skill-calorie.diet-products.c009'), 'update', m('skill-calorie.diet-products.c010', { p0: String(changedText(Object.keys(fields))) }), m('skill-calorie.diet-products.c011'), m('skill-calorie.diet-products.c012'), {
     recordId: id, ids: [id], writtenFields: cliNamesOf(Object.keys(fields)),
-    items: [{ id, status: '已更新', reason: '' }],
+    items: [{ id, status: m('skill-calorie.diet-products.c013'), reason: '' }],
   }));
 }
 
@@ -83,13 +84,13 @@ export function writeProductDeprecate(params: Record<string, unknown>, db: Datab
   const r = deprecateProduct(db, id);
   if (!r.ok) {
     if (/not found/.test(String(r.error ?? ''))) throw new CalorieRenderError('missing-data', '食品 #' + id + ' 不存在');
-    fail(2, String(r.error ?? '废弃失败'));
+    fail(2, String(r.error ?? m('skill-calorie.diet-products.c014')));
   }
   /* #496 · 摘要原写「…（鸡胸肉 · 软删除：行保留，已从查询与统计中排除；暂无恢复入口）」——
      软删除那串是共用位 `SOFT_EXCLUDED_INNER`（库层措辞，审查件第 5 条点到）⇒ 本页改人话。
      共用位的常量一个字节不动：运动／身体／体重三域的摘要同用那一串，改它等于三域一起换文案，
      不在本票写集内（详见证据件「影响面」一节）。 */
-  return out(R('下架食品', 'update', '已下架：' + (r.name ?? '') + '（不再出现在搜索和统计里；暂时无法恢复）', '下架食品', '食品库', {
-    recordId: id, ids: [id], writtenFields: ['is_deprecated'], items: [{ id, status: deleteStatus('soft', '已下架'), reason: '' }],
+  return out(R(m('skill-calorie.diet-products.c015'), 'update', m('skill-calorie.diet-products.c016', { p0: String(r.name ?? '') }), m('skill-calorie.diet-products.c017'), m('skill-calorie.diet-products.c018'), {
+    recordId: id, ids: [id], writtenFields: ['is_deprecated'], items: [{ id, status: deleteStatus('soft', m('skill-calorie.diet-products.c019')), reason: '' }],
   }));
 }

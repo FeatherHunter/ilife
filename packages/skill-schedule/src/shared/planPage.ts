@@ -25,6 +25,7 @@ import { scheduleCopyArea, type ScheduleCopyAreaInput } from '../render/copyArea
 import { assembleDocPage, type PageHead } from './docPage.js';
 import { pageSections } from './pageNav.js';
 import { renderHourBand, type HourCell } from './pageParts.js';
+import { m } from '../entries/index.js';
 
 /** 「查日程」一页要的全部东西（字段数：`head`／`cells`／`order`／`kpis`／`conclusion`／`events`／
  *  `gaps`／`filters`／`copy`）。
@@ -56,15 +57,15 @@ export function renderPlanPage(data: PlanPageData): string {
     { html: renderKpiGrid(data.kpis) },
     { html: renderConclusionBar(data.conclusion) },
     // 段名是「24 小时覆盖」（图表块自己那颗 `<h2>`）；目录项逐字用它。
-    { navText: '24 小时覆盖', html: renderHourBand(data.cells, { order: data.order, title: '24 小时覆盖', height: 120 }) },
+    { navText: m('skill-schedule.shared-planPage.c001'), html: renderHourBand(data.cells, { order: data.order, title: m('skill-schedule.shared-planPage.c002'), height: 120 }) },
     { html: renderListRows(data.events) },
-    { html: renderDisclosure({ title: data.gaps.length > 0 ? '空档' : '空档（无）', contentHtml: renderListRows({ items: data.gaps, emptyText: '整天都被事件占满' }) }) },
+    { html: renderDisclosure({ title: data.gaps.length > 0 ? m('skill-schedule.shared-planPage.c003') : m('skill-schedule.shared-planPage.c004'), contentHtml: renderListRows({ items: data.gaps, emptyText: m('skill-schedule.shared-planPage.c005') }) }) },
     // 说明句不堆并列分隔符（`、` 是 #516 分隔符门点名的并列符号之一）：写成一句行文。
-    { html: renderParamForm({ description: '换一个日期，或者按分类与状态再收一收。', fields: data.filters }) },
+    { html: renderParamForm({ description: m('skill-schedule.shared-planPage.c006'), fields: data.filters }) },
     {
-      navText: '复制与留档',
+      navText: m('skill-schedule.shared-planPage.c007'),
       html: scheduleCopyArea({
-        title: '复制与留档',
+        title: m('skill-schedule.shared-planPage.c008'),
         dataActionId: 'ilife-sch-plan-copy-data',
         logActionId: 'ilife-sch-plan-copy-log',
         ...data.copy,

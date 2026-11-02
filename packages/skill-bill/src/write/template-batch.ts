@@ -51,6 +51,7 @@ import { collectSourceNote } from './sourceNote.js';
 import { receiptPaper } from './receiptPaper.js';
 import type { CollectInput, ReceiptInput, Scene } from './scene.js';
 import type { RecordSlot } from './slots.js';
+import { m } from '../entries/index.js';
 
 /** 场景给模板的**差异声明**：值、文案与「哪一块长什么样」，**不含任何块位拼装**。 */
 export interface BatchSpec {
@@ -145,11 +146,14 @@ function envelopeOf(key: string, ok: boolean, message: string): SerializableEnve
 
 /** 采集页复制 prompt 区那段话：一句说清单笔化与这一屏几行，再说还缺什么（口令原文只在阻断条那一处）。 */
 function promptOf(word: string, lines: number, blocked: readonly BlockedItem[]): string {
-  const head = '本批一次只落一笔，这一屏 ' + lines + ' 行。';
+  const head = m('skill-bill.write-template-batch.c001', { p0: String(lines) });
   const tail = blocked.length > 0
-    ? '还差 ' + blocked.length + ' 项：' + blocked.map((i) => i.label).join(String.fromCharCode(10))
-      + '。补齐后跟助手说一遍「' + word + '」。'
-    : '这一批照实说一遍「' + word + '」即落库。';
+    ? m('skill-bill.write-template-batch.c002', {
+      p0: String(blocked.length),
+      p1: String(blocked.map((i) => i.label).join(String.fromCharCode(10))),
+      p2: String(word),
+    })
+    : m('skill-bill.write-template-batch.c003', { p0: String(word) });
   return head + tail;
 }
 
@@ -157,8 +161,11 @@ function promptOf(word: string, lines: number, blocked: readonly BlockedItem[]):
 function defaultNotice(): string {
   return renderFeedbackBlock({
     toast: {
-      msg: '账本与币种留空按缺省落库',
-      detail: '账本「' + DEFAULTS.ledger + '」，币种「' + DEFAULTS.currency + '」。要记进别的账本就先给这一格。',
+      msg: m('skill-bill.write-template-batch.c004'),
+      detail: m('skill-bill.write-template-batch.c005', {
+        p0: String(DEFAULTS.ledger),
+        p1: String(DEFAULTS.currency),
+      }),
       icon: 'info',
     },
     staticNotice: true,
@@ -178,7 +185,7 @@ function collectPage(spec: BatchSpec, input: CollectInput): string {
     params: params,
     data: { envelope },
     log: { envelope, copyLog: copyLog({
-      command: commandLine(key, params), source: input.source, detail: '没写库（采集页）',
+      command: commandLine(key, params), source: input.source, detail: m('skill-bill.write-template-batch.c006'),
       actionAt: input.actionAt, version: DOC_VERSION,
     }) },
   });
@@ -189,9 +196,9 @@ function collectPage(spec: BatchSpec, input: CollectInput): string {
   const content = [
     typeBadge({
       kind: spec.kind,
-      pageKind: '采集页',
+      pageKind: m('skill-bill.write-template-batch.c007'),
       status: 'danger',
-      state: blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待补槽位 · 未写库',
+      state: blocked.length > 0 ? 'pending-blocked' : 'pending',
       next: '',
     }),
     collectProgress({ wakeWord: spec.word, missing: blocked.length }),
@@ -202,6 +209,7 @@ function collectPage(spec: BatchSpec, input: CollectInput): string {
       items: blocked,
       command: blockedCommand(key, params, blocked),
       note: spec.foldNote,
+      language: input.language,
     }),
     collectSectionTitle({ no: 2, title: spec.section2 }),
     rowEditorTable({
@@ -225,18 +233,18 @@ function collectPage(spec: BatchSpec, input: CollectInput): string {
         copyLog: copyLog({
           command: commandLine(key, params),
           source: input.source,
-          detail: '没写库（采集页）',
+          detail: m('skill-bill.write-template-batch.c008'),
           actionAt: input.actionAt,
           version: DOC_VERSION,
         }),
       },
     }),
-    collectSourceNote(textOf(params['time'])),
+    collectSourceNote(textOf(params['time']), input.language),
   ].join('');
   return pageShell({
-    docTitle: docTitleOf(spec.word + ' 采集页'),
+    docTitle: docTitleOf(m('skill-bill.write-template-batch.c009', { p0: String(spec.word) })),
     title: spec.word,
-    subtitle: blocked.length === 0 ? '这一页只采集，不写库。' : '缺的就是下面这几项。',
+    subtitle: blocked.length === 0 ? m('skill-bill.write-template-batch.c010') : m('skill-bill.write-template-batch.c011'),
     slot: 'collect',
     page: 'collect',
     shape: envelope.shape,
@@ -245,13 +253,10 @@ function collectPage(spec: BatchSpec, input: CollectInput): string {
   });
 }
 
-/** 回执页读数行里落值那几格：不再缀缺省说法（值已经落库，那句「不填就记到…」在回执页没有动作可做）。 */
+/** 回执页读数行里落值那几格：不再缀缺省说法（值已经落库，那句「不填就记到…」在回执页没有动作可做）。
+ *  判据走事实（`defaultHints: false`），**不拿本地化文本当判据**（#1197）。 */
 function receiptCardsOf(facts: SummaryFacts): ReturnType<typeof summaryCards> {
-  return summaryCards(facts).map((c) => (
-    c.value === '未给' || c.detail === undefined || !c.detail.startsWith('不填就记')
-      ? c
-      : { label: c.label, value: c.value }
-  ));
+  return summaryCards(facts, { defaultHints: false });
 }
 
 /** 结果型回执页：写库成功后出这一页（写库那一半在 `./write.ts`）。

@@ -6,11 +6,12 @@
  * 谁在用（一个调用点，指名）：`./template-tables.ts`——本族 3 页全在 B。
  */
 import { escapeHtml } from 'base-paint';
-import { detailOf, h2ForB, kpiValue, toTicketB } from './ticket-b.js';
+import { detailOf, h2ForB, kpiAt, toTicketB } from './ticket-b.js';
 import { chartFor } from './chartOf.js';
 import { NO_WINDOW, docTitleOf } from './pageParts.js';
 import { factCardHtml, tableCardHtml } from './cards.js';
 import type { DocInput, TablesPage } from './scene.js';
+import { m } from '../entries/index.js';
 
 /** B tables 3 页的落点行（PAGES 表 a22／a23／a24；空页走说明行）。 */
 export function ledgerRowsOfTablesB(
@@ -21,41 +22,53 @@ export function ledgerRowsOfTablesB(
   const p = r.page;
   const noDot = (s: string): string => s.endsWith('。') ? s.slice(0, -1) : s;
   if (sceneId === 'debt') {
-    if (r.count === 0) return [{ k: '说明', v: noDot(r.conclusion) }];
+    if (r.count === 0) return [{ k: m('skill-bill.analysis-ticket-b-tables.c001'), v: noDot(r.conclusion) }];
     const tables = p.tables[0];
     return [
-      { k: '借出未还', v: kpiValue(p.kpis, '借出未还') + ' 元' },
-      { k: '借入未还', v: kpiValue(p.kpis, '借入未还') + ' 元' },
-      { k: '未还对象', v: String(tables === undefined ? 0 : tables.rows.length) + ' 个' },
+      // 判据位按位置取。发射方正序：scene-debt.ts:114-119 kpis 固定 4 格
+      // （0 借出未还／1 借入未还／2 已还借出笔数／3 已还借入笔数）。
+      { k: m('skill-bill.analysis-ticket-b-tables.c002'), v: m('skill-bill.analysis-ticket-b-tables.c003', { p0: String(kpiAt(p.kpis, 0)) }) },
+      { k: m('skill-bill.analysis-ticket-b-tables.c004'), v: m('skill-bill.analysis-ticket-b-tables.c005', { p0: String(kpiAt(p.kpis, 1)) }) },
+      { k: m('skill-bill.analysis-ticket-b-tables.c006'), v: m('skill-bill.analysis-ticket-b-tables.c007', {
+        p0: String(String(tables === undefined ? 0 : tables.rows.length)),
+      }) },
     ];
   }
   if (sceneId === 'reimburse') {
-    if (r.count === 0) return [{ k: '说明', v: noDot(r.conclusion) }];
-    const pendingTotal = kpiValue(p.kpis, '待报销总额');
-    const pendingN = kpiValue(p.kpis, '待报销笔数');
-    const receivedTotal = kpiValue(p.kpis, '已到账总额');
-    const receivedN = kpiValue(p.kpis, '已到账笔数');
+    if (r.count === 0) return [{ k: m('skill-bill.analysis-ticket-b-tables.c008'), v: noDot(r.conclusion) }];
+    // 判据位按位置取。发射方正序：scene-reimburse.ts:92-97 kpis 固定 4 格
+    // （0 待报销总额／1 待报销笔数／2 已到账总额／3 已到账笔数）。
+    const pendingTotal = kpiAt(p.kpis, 0);
+    const pendingN = kpiAt(p.kpis, 1);
+    const receivedTotal = kpiAt(p.kpis, 2);
+    const receivedN = kpiAt(p.kpis, 3);
     const first = p.tables[0]?.rows[0] as unknown as
       | { readonly time: string; readonly amount: string; readonly status: string }
       | undefined;
     const out = [
-      { k: '待报销', v: pendingTotal + ' 元（' + pendingN + ' 笔）' },
-      { k: '已到账', v: receivedTotal + ' 元（' + receivedN + ' 笔）' },
+      { k: m('skill-bill.analysis-ticket-b-tables.c009'), v: m('skill-bill.analysis-ticket-b-tables.c010', { p0: String(pendingTotal), p1: String(pendingN) }) },
+      { k: m('skill-bill.analysis-ticket-b-tables.c011'), v: m('skill-bill.analysis-ticket-b-tables.c012', { p0: String(receivedTotal), p1: String(receivedN) }) },
     ];
     if (first !== undefined) {
       out.push({
-        k: '最近一笔',
-        v: first.time.split(' ')[0] + ' · ' + first.amount + ' 元（' + first.status + '）',
+        k: m('skill-bill.analysis-ticket-b-tables.c013'),
+        v: m('skill-bill.analysis-ticket-b-tables.c014', {
+          p0: String(first.time.split(' ')[0]),
+          p1: String(first.amount),
+          p2: String(first.status),
+        }),
       });
     }
     return out;
   }
   if (sceneId === 'installment') {
-    if (r.count === 0) return [{ k: '说明', v: noDot(r.conclusion) }];
+    if (r.count === 0) return [{ k: m('skill-bill.analysis-ticket-b-tables.c015'), v: noDot(r.conclusion) }];
     return [
-      { k: '进行中', v: kpiValue(p.kpis, '进行中项数') + ' 项' },
-      { k: '剩余期数', v: kpiValue(p.kpis, '剩余期数合计') + ' 期' },
-      { k: '剩余金额', v: kpiValue(p.kpis, '剩余金额合计') + ' 元' },
+      // 判据位按位置取。发射方正序：scene-installment.ts:174-178 kpis 固定 3 格
+      // （0 进行中项数／1 剩余期数合计／2 剩余金额合计）。
+      { k: m('skill-bill.analysis-ticket-b-tables.c016'), v: m('skill-bill.analysis-ticket-b-tables.c017', { p0: String(kpiAt(p.kpis, 0)) }) },
+      { k: m('skill-bill.analysis-ticket-b-tables.c018'), v: m('skill-bill.analysis-ticket-b-tables.c019', { p0: String(kpiAt(p.kpis, 1)) }) },
+      { k: m('skill-bill.analysis-ticket-b-tables.c020'), v: m('skill-bill.analysis-ticket-b-tables.c021', { p0: String(kpiAt(p.kpis, 2)) }) },
     ];
   }
   return [];
@@ -65,16 +78,14 @@ export function ledgerRowsOfTablesB(
 export function ticketTablesBDoc(input: DocInput<TablesPage>, sceneId: string): string {
   const r = input.result;
   const p = r.page;
-  const firstKpi = sceneId === 'debt'
-    ? '借出未还'
-    : sceneId === 'reimburse'
-      ? '待报销总额'
-      : '剩余金额合计';
+  // 主数字取哪一格：借贷与报销都是第 0 格（总额），分期是第 2 格（剩余金额合计）。
+  // 发射方正序见上面 `ledgerRowsOfTablesB` 三个分支的注释。
+  const firstKpiIndex = sceneId === 'installment' ? 2 : 0;
   const summaryNote = sceneId === 'debt'
-    ? '借出未还 · 明细与复制区与基线一致'
+    ? m('skill-bill.analysis-ticket-b-tables.c022')
     : sceneId === 'reimburse'
-      ? '待报销总额 · 明细与复制区与基线一致'
-      : '剩余金额合计 · 明细与复制区与基线一致';
+      ? m('skill-bill.analysis-ticket-b-tables.c023')
+      : m('skill-bill.analysis-ticket-b-tables.c024');
   const parts: string[] = [];
   for (const t of p.tables) {
     parts.push('<p>' + escapeHtml(t.title) + '</p>' + tableCardHtml(t));
@@ -89,8 +100,8 @@ export function ticketTablesBDoc(input: DocInput<TablesPage>, sceneId: string): 
     wakeWord: input.wakeWord,
     h2: h2ForB(sceneId, r.count),
     windowLabel: r.label,
-    summaryValue: kpiValue(p.kpis, firstKpi),
-    summaryUnit: '元',
+    summaryValue: kpiAt(p.kpis, firstKpiIndex),
+    summaryUnit: m('skill-bill.analysis-ticket-b-tables.c025'),
     summaryNote,
     ledgerRows: ledgerRowsOfTablesB(sceneId, input),
     sceneId,

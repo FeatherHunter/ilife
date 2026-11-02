@@ -14,6 +14,7 @@
  *   ③ 老侧那页把每条差异摆成 `↑ +金额 (a → b)` 一行事实——新侧改摆**条卡**（版式可全新设计，
  *      #681 偏好 3）：金额差、两段读数与两段笔数一件不少，只是换了摆法。
  */
+import { runWithLanguage } from 'base-entries';
 import { BillPolicyError } from '../fetch/errors.js';
 import { listRange } from '../fetch/index.js';
 import { normalizeDate } from '../shared/dateRange.js';
@@ -24,6 +25,7 @@ import { sideKpisOf } from './cards.js';
 import { money, pctText, signedMoney } from './pageParts.js';
 import type { AnalysisScene } from './scene.js';
 import { buildCompare } from './views.js';
+import { m } from '../entries/index.js';
 
 /** 一段对比窗口：期间标签 ＋ 起止日。 */
 interface Win {
@@ -68,11 +70,12 @@ function windowsOf(params: Record<string, unknown>): { readonly a: Win; readonly
   };
 }
 
-export const sceneRangeCompare: AnalysisScene = {
+function buildScene(): AnalysisScene {
+  return {
   id: 'range_compare',
   key: 'bill.analysis.compare',
   kind: 'range',
-  title: '看双区间',
+  title: m('skill-bill.analysis-scene-range-compare.title'),
   family: 'compare',
   values: ({ params, db }) => {
     const { a: winA, b: winB } = windowsOf(params);
@@ -82,7 +85,7 @@ export const sceneRangeCompare: AnalysisScene = {
     const diff = cmp.change.diff;
     const direction: 'up' | 'down' | 'flat' = diff > 0.01 ? 'up' : diff < -0.01 ? 'down' : 'flat';
     const arrow = direction === 'up' ? '↑' : direction === 'down' ? '↓' : '→';
-    const word = direction === 'up' ? '支出上涨' : direction === 'down' ? '支出下降' : '支出持平';
+    const word = direction === 'up' ? m('skill-bill.analysis-scene-range-compare.c002') : direction === 'down' ? m('skill-bill.analysis-scene-range-compare.c003') : m('skill-bill.analysis-scene-range-compare.c004');
     const pct = direction === 'up'
       ? '+' + pctText(Math.abs(cmp.change.pct))
       : direction === 'down' ? '-' + pctText(Math.abs(cmp.change.pct)) : pctText(0);
@@ -109,17 +112,25 @@ export const sceneRangeCompare: AnalysisScene = {
     const head = diffs[0];
     const total = ra.length + rb.length;
     return {
-      title: '看双区间',
-      label: winA.label + ' 与 ' + winB.label,
+      title: m('skill-bill.analysis-scene-range-compare.title'),
+      label: m('skill-bill.analysis-scene-range-compare.c006', { p0: String(winA.label), p1: String(winB.label) }),
       from: winA.start < winB.start ? winA.start : winB.start,
       to: winA.end > winB.end ? winA.end : winB.end,
       count: total,
       conclusion: head === undefined
-        ? winA.label + ' 与 ' + winB.label + ' 两段都没有支出记录。'
-        : winA.label + ' 支出 ' + money(cmp.a.expense) + ' 元，' + winB.label + ' 支出 ' + money(cmp.b.expense)
-          + ' 元：' + word + ' ' + money(Math.abs(diff)) + ' 元（' + pct + '）；两段差得最多的是「'
-          + head.key + '」' + signedMoney(head.diff) + ' 元。',
-      caliber: '两段各取自己那一段的整段记录，支出按绝对值累计；分类按一级归堆（两级／三级分类并到一级）；百分比以区间二为分母、区间二支出为 0 时记 0；转账不计入收支。',
+        ? m('skill-bill.analysis-scene-range-compare.c007', { p0: String(winA.label), p1: String(winB.label) })
+        : m('skill-bill.analysis-scene-range-compare.c008', {
+          p0: String(winA.label),
+          p1: String(money(cmp.a.expense)),
+          p2: String(winB.label),
+          p3: String(money(cmp.b.expense)),
+          p4: String(word),
+          p5: String(money(Math.abs(diff))),
+          p6: String(pct),
+          p7: String(head.key),
+          p8: String(signedMoney(head.diff)),
+        }),
+      caliber: m('skill-bill.analysis-scene-range-compare.c009'),
       chips: [winA.label, winB.label],
       payload: buildCompare({ labelA: winA.label, labelB: winB.label, a: [...ra], b: [...rb] }),
       kpi: kpiOf([...ra, ...rb]),
@@ -128,7 +139,7 @@ export const sceneRangeCompare: AnalysisScene = {
         a: { label: winA.label, count: cmp.a.count, expense: cmp.a.expense, income: cmp.a.income },
         b: { label: winB.label, count: cmp.b.count, expense: cmp.b.expense, income: cmp.b.income },
         diff, pct: cmp.change.pct,
-        change: direction === 'up' ? '上涨' : direction === 'down' ? '下降' : '持平',
+        change: direction === 'up' ? m('skill-bill.analysis-scene-range-compare.c010') : direction === 'down' ? m('skill-bill.analysis-scene-range-compare.c011') : m('skill-bill.analysis-scene-range-compare.c012'),
         rows: diffs.map((d) => ({
           key: d.key, a: d.a, b: d.b, diff: d.diff, aCount: d.aCount, bCount: d.bCount,
         })),
@@ -141,26 +152,50 @@ export const sceneRangeCompare: AnalysisScene = {
           { title: winB.label, kpis: sideKpisOf(winB.label, cmp.b, money) },
         ],
         change: {
-          text: '支出 ' + arrow + ' ' + money(Math.abs(diff)) + ' 元（' + pct + '）· ' + word,
-          detail: '区间一支出 ' + money(cmp.a.expense) + ' 元，区间二支出 ' + money(cmp.b.expense) + ' 元；两段各取自己那一段。',
+          text: m('skill-bill.analysis-scene-range-compare.c013', {
+            p0: String(arrow),
+            p1: String(money(Math.abs(diff))),
+            p2: String(pct),
+            p3: String(word),
+          }),
+          detail: m('skill-bill.analysis-scene-range-compare.c014', {
+            p0: String(money(cmp.a.expense)),
+            p1: String(money(cmp.b.expense)),
+          }),
           direction,
         },
         barGroups: [{
-          title: '分类差异 TOP（' + String(diffs.length) + ' 类）',
+          title: m('skill-bill.analysis-scene-range-compare.c015', { p0: String(String(diffs.length)) }),
           rows: diffs.map((d) => ({
             label: d.key,
-            text: money(d.a) + ' → ' + money(d.b) + ' · ' + signedMoney(d.diff)
-              + '（' + String(d.aCount) + '笔→' + String(d.bCount) + '笔）',
+            text: m('skill-bill.analysis-scene-range-compare.c016', {
+              p0: String(money(d.a)),
+              p1: String(money(d.b)),
+              p2: String(signedMoney(d.diff)),
+              p3: String(String(d.aCount)),
+              p4: String(String(d.bCount)),
+            }),
             pct: maxAbs === 0 ? 0 : round1((Math.abs(d.diff) / maxAbs) * 100),
           })),
-          emptyText: '两段都没有支出记录',
+          emptyText: m('skill-bill.analysis-scene-range-compare.c017'),
         }],
         factCards: [],
         empty: {
-          text: winA.label + ' 与 ' + winB.label + ' 两段都没有记录。',
-          hint: '先说「记支出」或「记收入」记一笔，回来看这里就有数了。',
+          text: m('skill-bill.analysis-scene-range-compare.c018', {
+            p0: String(winA.label),
+            p1: String(winB.label),
+          }),
+          hint: m('skill-bill.analysis-scene-range-compare.c019'),
         },
       },
     };
   },
-};
+  };
+}
+
+export const sceneRangeCompare: AnalysisScene = buildScene();
+
+/** 按语言重建本场景（#1197：文案经词条层，语言是运行期参数）。 */
+export function sceneRangeCompareFor(language: string): AnalysisScene {
+  return runWithLanguage(language, buildScene);
+}

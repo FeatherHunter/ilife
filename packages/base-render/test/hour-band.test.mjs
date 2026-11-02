@@ -133,9 +133,9 @@ describe('hour-band ① 渲染契约', () => {
     // 盖到 1180 分钟 ⇒ 空档 260 分钟 ＝ 4h20m
     assert.match(html, new RegExp(S('r') + ' is-nil">'));
     assert.match(html, new RegExp(S('t') + '">' + HOUR_BAND_MISSING + '<'));
-    assert.match(html, new RegExp(S('n') + '">' + HOUR_BAND_UNRECORDED_LABEL + '<'));
+    assert.match(html, new RegExp(S('n') + '">' + HOUR_BAND_UNRECORDED_LABEL() + '<'));
     assert.match(html, new RegExp(S('v') + '">4h20m<'));
-    assert.equal(HOUR_BAND_UNRECORDED_LABEL, '其余时间未记录');
+    assert.equal(HOUR_BAND_UNRECORDED_LABEL(), '其余时间未记录');
     // 盖满一整天 ⇒ 不出那一行
     const full = renderHourBand({ title: 'T', intervals: [{ from: 0, to: 1440, label: '一整天' }] });
     assert.equal(full.includes('is-nil'), false);

@@ -24,6 +24,7 @@
  */
 
 /** 本件的类名根：全部槽位类名都是 `FLOW_RIBBON_CLASS + '-' + 槽名`。 */
+import { m } from '../../entries/index.js';
 export const FLOW_RIBBON_CLASS = 'ilife-block-flow-ribbon';
 
 /** 槽位闭集（`render.ts`／`style.ts` 与判据都从这里取名字，不各抄一份字面量）。 */
@@ -130,7 +131,7 @@ export type FlowRibbonForm = (typeof FLOW_RIBBON_FORMS)[number];
 export const FLOW_RIBBON_MISSING = '—';
 
 /** 钱的缺省单位（不给 `unit` 时用它）。 */
-export const FLOW_RIBBON_DEFAULT_UNIT = '元';
+export function FLOW_RIBBON_DEFAULT_UNIT(): string { return m('base-render.components-flow-ribbon-attrs.c001'); }
 
 /** 节点之间那条缝（占画布高的百分比）：**只为分得开，不代表任何金额**（口径行照实写这一句）。 */
 export const FLOW_RIBBON_GAP_PCT = 2;

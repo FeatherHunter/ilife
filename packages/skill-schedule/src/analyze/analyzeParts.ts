@@ -18,6 +18,7 @@
  *  `CHART_PALETTE`，`px` 字面量一处也不写。断点只用仓内既有值 **820**（页内自造件那一档），不新造。
  */
 import { CHART_PALETTE } from 'base-paint';
+import { m } from '../entries/index.js';
 
 /* ─────────────────────────── 风格常量（本域 CSS 所有长度的出处） ─────────────────────────── */
 
@@ -69,7 +70,7 @@ const LF = String.fromCharCode(10);
 
 /** 五字符转义（与公共层 `blocks.ts` 同口径；本件不引区块层内部件）。 */
 function esc(value: string): string {
-  return value.replace(/[&<>"']/g, (ch) => {
+  return value.replace(/[&<>\u0022\u0027]/g, (ch) => {
     if (ch === '&') return '&amp;';
     if (ch === '<') return '&lt;';
     if (ch === '>') return '&gt;';
@@ -208,7 +209,7 @@ export function renderAnomalyFrames(items: readonly AnomalyFrameInput[], emptyTe
     const red = item.level === 'red';
     return '<div class="sch-an-frame ' + (red ? 'sch-an-frame-red' : 'sch-an-frame-yellow') + '">'
       + '<div class="sch-an-frame-head">'
-      + '<span class="sch-an-frame-badge">' + (red ? '红框' : '黄框') + '</span>'
+      + '<span class="sch-an-frame-badge">' + (red ? m('skill-schedule.analyze-analyzeParts.c001') : m('skill-schedule.analyze-analyzeParts.c002')) + '</span>'
       + '<span class="sch-an-frame-title">' + esc(item.headline) + '</span>'
       + '</div>'
       + '<div class="sch-an-frame-detail">' + esc(item.detail) + '</div>'
@@ -222,13 +223,13 @@ export function renderAnomalyFrames(items: readonly AnomalyFrameInput[], emptyTe
  *  颜色只取冻结 token 与 `CHART_PALETTE`；长度只取上面那组常量——本串里不出现 `px` 字面量。 */
 export function analyzePartsCss(): string {
   return [
-    '/* #789 分析与洞察域·族级件（断点只用仓内既有值 820） */',
+    m('skill-schedule.analyze-analyzeParts.c003'),
     '.sch-an-h2 { margin: 0 0 ' + px(GAP) + '; font-size: ' + px(FS_TITLE) + '; font-weight: 600; color: var(--fg); }',
     '.sch-an-note { margin: 0 0 ' + px(GAP) + '; color: var(--fg2); font-size: ' + px(FS_BODY) + '; line-height: 1.7; }',
     '.sch-an-empty { margin: 0; padding: ' + px(PAD_Y) + ' ' + px(PAD_X) + '; border: ' + px(HAIRLINE) + ' solid var(--line);',
     '  border-left: ' + px(RAIL) + ' solid var(--fg3); border-radius: ' + px(FRAME_RADIUS) + '; background: var(--soft);',
     '  color: var(--fg2); font-size: ' + px(FS_BODY) + '; line-height: 1.7; }',
-    '/* ① 7 维差异柱 */',
+    m('skill-schedule.analyze-analyzeParts.c004'),
     '.sch-an-diff { display: flex; flex-direction: column; gap: ' + px(ROW_GAP) + '; margin: 0 0 ' + px(GAP) + '; }',
     '.sch-an-diff-item { padding: ' + px(PAD_Y) + ' ' + px(PAD_X) + '; border: ' + px(HAIRLINE) + ' solid var(--line);',
     '  border-radius: ' + px(RADIUS) + '; background: var(--card); }',
@@ -248,7 +249,7 @@ export function analyzePartsCss(): string {
     '.sch-an-diff-fill-b { background: ' + COLOR_B + '; }',
     '.sch-an-diff-val { color: var(--fg2); font-size: ' + px(FS_TINY) + '; text-align: right;',
     '  font-variant-numeric: tabular-nums; white-space: nowrap; }',
-    '/* ② 7 维雷达 */',
+    m('skill-schedule.analyze-analyzeParts.c005'),
     // 宽度上限挂在**figure**上、不挂在 svg 上：公共层 `pageUi` 有一条 `.ilife-page-ui svg{max-width:100%}`
     // （类选择器＋类型选择器，比单个类名更具体），挂在 svg 上的上限会被它压掉——实测那一版雷达被拉成
     // 壳宽那么大（#789 目视抓出）。挂在容器上就不与它争：svg 只负责填满容器。
@@ -261,7 +262,7 @@ export function analyzePartsCss(): string {
     '.sch-an-radar-face-baseline { fill: var(--fg3); fill-opacity: ' + String(OPACITY_BASE) + '; stroke: var(--fg3); stroke-width: ' + String(STROKE_FILL) + '; }',
     '.sch-an-radar-face-current { fill: var(--blue); fill-opacity: ' + String(OPACITY_CURVE) + '; stroke: var(--blue); stroke-width: ' + String(STROKE_CURVE) + '; }',
     '.sch-an-radar-caption { margin: ' + px(GAP) + ' 0 0; color: var(--fg2); font-size: ' + px(FS_SMALL) + '; text-align: center; }',
-    '/* ③ 红框与黄框 */',
+    m('skill-schedule.analyze-analyzeParts.c006'),
     '.sch-an-frames { display: flex; flex-direction: column; gap: ' + px(GAP) + '; }',
     '.sch-an-frame { padding: ' + px(PAD_Y) + ' ' + px(PAD_X) + '; border: ' + px(HAIRLINE) + ' solid var(--line);',
     '  border-radius: ' + px(FRAME_RADIUS) + '; background: var(--soft); }',

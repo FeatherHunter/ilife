@@ -87,7 +87,7 @@ function rowHtml(t: string, n: string, v: string, meta?: string, nil?: boolean):
 function rowsHtml(m: HourBandModel): string {
   const rows = m.intervals.map((iv: HourBandIntervalModel) => rowHtml(iv.clock, iv.label, iv.duration, iv.meta));
   if (m.unrecordedMinutes > 0) {
-    rows.push(rowHtml(HOUR_BAND_MISSING, HOUR_BAND_UNRECORDED_LABEL, m.unrecordedText, undefined, true));
+    rows.push(rowHtml(HOUR_BAND_MISSING, HOUR_BAND_UNRECORDED_LABEL(), m.unrecordedText, undefined, true));
   }
   return '<div class="' + hourBandSlot('rows') + '">' + rows.join('') + '</div>';
 }

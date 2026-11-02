@@ -21,6 +21,7 @@ import { nowStamp } from '../render/receipt.js';
 import { commandLine } from '../shared/writeParts.js';
 import { ENTRY_VALIDATE, type ImportPrecheckView } from './precheckPort.js';
 import { DOC_VERSION, PRECHECK_BADGE, PRECHECK_CSS, anchored, stat, writeTargetBlock } from './precheckParts.js';
+import { m } from '../entries/index.js';
 
 /** 页头三处措辞由入口标记选，与 `#509`／`#511`／`#271` 同规矩（标记不上屏、不写库）。 */
 interface ImportEntryCopy {
@@ -29,26 +30,26 @@ interface ImportEntryCopy {
   readonly rowsTitle: string;
 }
 
-const IMPORT_COPY: Readonly<Record<string, ImportEntryCopy>> = Object.freeze({
-  [ENTRY_VALIDATE]: { metaLeft: '校验批量导入', title: '📥 批量导入校验', rowsTitle: '逐行校验结果（只校验，不写库）' },
-  precheck: { metaLeft: '批量导入食品', title: '📥 批量导入预览', rowsTitle: '逐条预览（仅预览，不写库）' },
-  default: { metaLeft: '看批量导入预览', title: '📥 批量导入预览', rowsTitle: '逐条预览（仅预览，不写库）' },
+const IMPORT_COPY = (): Readonly<Record<string, ImportEntryCopy>> => Object.freeze({
+  [ENTRY_VALIDATE]: { metaLeft: m('skill-calorie.diet-precheck.c073'), title: m('skill-calorie.diet-precheck.c074'), rowsTitle: m('skill-calorie.diet-precheck.c075') },
+  precheck: { metaLeft: m('skill-calorie.diet-precheck.c076'), title: m('skill-calorie.diet-precheck.c077'), rowsTitle: m('skill-calorie.diet-precheck.c078') },
+  default: { metaLeft: m('skill-calorie.diet-precheck.c079'), title: m('skill-calorie.diet-precheck.c080'), rowsTitle: m('skill-calorie.diet-precheck.c081') },
 });
 
 const copyFor = (entry: string | undefined): ImportEntryCopy =>
-  (entry !== undefined && IMPORT_COPY[entry] !== undefined
-    ? IMPORT_COPY[entry] : IMPORT_COPY['default']) as ImportEntryCopy;
+  (entry !== undefined && IMPORT_COPY()[entry] !== undefined
+    ? IMPORT_COPY()[entry] : IMPORT_COPY()['default']) as ImportEntryCopy;
 
 /** 结论句（`t425` §五 第 3 行，句内含本页读数）。#581 起副题只留结论一句——可新增／
  *  会跳过／会失败三个计数由「这次的处置」读数卡逐格说（照回执批量三格先例），副题不再顿号并列。 */
 function importSummary(v: ImportPrecheckView): string {
-  return '食品库对照＋合计试算：共 ' + v.total + ' 条，合计 ' + v.totalCalorie + ' 卡。';
+  return m('skill-calorie.diet-precheck.c001', { p0: String(v.total), p1: String(v.totalCalorie) });
 }
 
 /** 确认后能写进库的食品名（逐行，不含失败的行；无名行照页上口径标「无名」）。 */
 function passNames(v: ImportPrecheckView): string[] {
   return v.rows.filter((r) => r.status !== 'failed')
-    .map((r) => (r.productName === '' ? '（无名）' : r.productName));
+    .map((r) => (r.productName === '' ? m('skill-calorie.diet-precheck.c002') : r.productName));
 }
 
 /** `calorie.view.batch-import-preview` · 导入预检页。
@@ -65,37 +66,37 @@ export function buildImportPrecheckDoc(
   const cards = [
     {
       id: 'sec-read',
-      label: '读数',
+      label: m('skill-calorie.diet-precheck.c003'),
       html: renderKpiGrid(validate ? [
-        { label: '待导入', value: String(v.total), unit: '条' },
-        { label: '通过', value: String(v.passed), unit: '条', detail: '通过的行照原样写进食品库', status: 'ok' },
+        { label: m('skill-calorie.diet-precheck.c004'), value: String(v.total), unit: m('skill-calorie.diet-precheck.c005') },
+        { label: m('skill-calorie.diet-precheck.c006'), value: String(v.passed), unit: m('skill-calorie.diet-precheck.c007'), detail: m('skill-calorie.diet-precheck.c008'), status: 'ok' },
         {
-          label: '失败', value: String(v.failed), unit: '条',
-          detail: v.failed === 0 ? '没有失败的行' : '失败的行不会写进食品库',
+          label: m('skill-calorie.diet-precheck.c009'), value: String(v.failed), unit: m('skill-calorie.diet-precheck.c010'),
+          detail: v.failed === 0 ? m('skill-calorie.diet-precheck.c011') : m('skill-calorie.diet-precheck.c012'),
           status: v.failed === 0 ? 'ok' : 'warn',
         },
-        { label: '通过率', value: String(v.total === 0 ? 0 : Math.round((v.passed / v.total) * 100)), unit: '%' },
+        { label: m('skill-calorie.diet-precheck.c013'), value: String(v.total === 0 ? 0 : Math.round((v.passed / v.total) * 100)), unit: '%' },
       ] : [
-        { label: '待导入', value: String(v.total), unit: '条' },
-        { label: '食品库里有同名的', value: String(v.matched), unit: '条', detail: '可以直接导入' },
+        { label: m('skill-calorie.diet-precheck.c014'), value: String(v.total), unit: m('skill-calorie.diet-precheck.c015') },
+        { label: m('skill-calorie.diet-precheck.c016'), value: String(v.matched), unit: m('skill-calorie.diet-precheck.c017'), detail: m('skill-calorie.diet-precheck.c018') },
         {
-          label: '食品库里没有的', value: String(v.missing), unit: '种',
-          detail: v.missing === 0 ? '全部可入库' : '建议先「存食品」再导入',
+          label: m('skill-calorie.diet-precheck.c019'), value: String(v.missing), unit: m('skill-calorie.diet-precheck.c020'),
+          detail: v.missing === 0 ? m('skill-calorie.diet-precheck.c021') : m('skill-calorie.diet-precheck.c022'),
           status: v.missing === 0 ? 'ok' : 'warn',
         },
-        { label: '合计热量', value: String(v.totalCalorie), unit: '卡' },
+        { label: m('skill-calorie.diet-precheck.c023'), value: String(v.totalCalorie), unit: m('skill-calorie.diet-precheck.c024') },
       ]),
     },
   ];
   if (!validate) {
     cards.push({
       id: 'sec-plan',
-      label: '这次的处置',
+      label: m('skill-calorie.diet-precheck.c025'),
       html: renderKpiGrid([
-        { label: '会新增', value: String(v.added), unit: '条', detail: '食品库里还没有这些名字' },
-        { label: '会跳过', value: String(v.skipped), unit: '条', detail: '食品库里已有同名，不覆盖' },
+        { label: m('skill-calorie.diet-precheck.c026'), value: String(v.added), unit: m('skill-calorie.diet-precheck.c027'), detail: m('skill-calorie.diet-precheck.c028') },
+        { label: m('skill-calorie.diet-precheck.c029'), value: String(v.skipped), unit: m('skill-calorie.diet-precheck.c030'), detail: m('skill-calorie.diet-precheck.c031') },
         {
-          label: '会失败', value: String(v.failed), unit: '条', detail: '校验没过的行',
+          label: m('skill-calorie.diet-precheck.c032'), value: String(v.failed), unit: m('skill-calorie.diet-precheck.c033'), detail: m('skill-calorie.diet-precheck.c034'),
           status: v.failed === 0 ? 'ok' : 'warn',
         },
       ]),
@@ -103,41 +104,41 @@ export function buildImportPrecheckDoc(
   }
   cards.push({
     id: 'sec-rows',
-    label: '逐条结果',
+    label: m('skill-calorie.diet-precheck.c035'),
     html: renderDataTable({
       columns: [
-        { key: 'no', label: '第几条', align: 'right' },
-        { key: 'foodName', label: '食品' },
-        { key: 'calories', label: '这一条的热量（卡）', align: 'right' },
-        { key: 'lib', label: '食品库里的热量（卡）', align: 'right' },
-        { key: 'status', label: '是否已匹配' },
-        { key: 'result', label: '会不会进库' },
-        { key: 'reason', label: '原因' },
+        { key: 'no', label: m('skill-calorie.diet-precheck.c036'), align: 'right' },
+        { key: 'foodName', label: m('skill-calorie.diet-precheck.c037') },
+        { key: 'calories', label: m('skill-calorie.diet-precheck.c038'), align: 'right' },
+        { key: 'lib', label: m('skill-calorie.diet-precheck.c039'), align: 'right' },
+        { key: 'status', label: m('skill-calorie.diet-precheck.c040') },
+        { key: 'result', label: m('skill-calorie.diet-precheck.c041') },
+        { key: 'reason', label: m('skill-calorie.diet-precheck.c042') },
       ],
       rows: v.rows.map((r) => ({
         no: r.no,
-        foodName: r.productName === '' ? '（无名）' : r.productName,
-        calories: r.calories === null ? '没填' : r.calories,
-        lib: r.matched ? r.libCalories : '食品库中无此食物',
-        status: r.matched ? '已匹配' : '未匹配',
-        result: r.status === 'added' ? '会新增' : r.status === 'skipped' ? '会跳过' : '会失败',
-        reason: r.status === 'added' ? '照原样进库' : r.reason,
+        foodName: r.productName === '' ? m('skill-calorie.diet-precheck.c043') : r.productName,
+        calories: r.calories === null ? m('skill-calorie.diet-precheck.c044') : r.calories,
+        lib: r.matched ? r.libCalories : m('skill-calorie.diet-precheck.c045'),
+        status: r.matched ? m('skill-calorie.diet-precheck.c046') : m('skill-calorie.diet-precheck.c047'),
+        result: r.status === 'added' ? m('skill-calorie.diet-precheck.c048') : r.status === 'skipped' ? m('skill-calorie.diet-precheck.c049') : m('skill-calorie.diet-precheck.c050'),
+        reason: r.status === 'added' ? m('skill-calorie.diet-precheck.c051') : r.reason,
       })),
       caption: copy.rowsTitle,
-      emptyText: '这次一条待导入条目都没有',
+      emptyText: m('skill-calorie.diet-precheck.c052'),
     }),
   });
   if (v.missingNames.length > 0) {
     cards.push({
       id: 'sec-missing',
-      label: '食品库里没有的',
+      label: m('skill-calorie.diet-precheck.c053'),
       html: renderDisclosure({
-        title: '食品库里没有这些食物（共 ' + v.missingNames.length + ' 种）',
+        title: m('skill-calorie.diet-precheck.c054', { p0: String(v.missingNames.length) }),
         contentHtml: renderListRows({
           items: v.missingNames.map((name) => ({
             left: name,
-            main: '不在食品库里，本次预览用的是你给的热量',
-            right: '想收进库里就说「存食品 ' + name + '」',
+            main: m('skill-calorie.diet-precheck.c055'),
+            right: m('skill-calorie.diet-precheck.c056', { p0: String(name) }),
           })),
         }),
       }),
@@ -146,28 +147,26 @@ export function buildImportPrecheckDoc(
   if (v.passed === 0) {
     cards.push({
       id: 'sec-empty',
-      label: '这次进不了库',
+      label: m('skill-calorie.diet-precheck.c057'),
       html: renderEmptyBlock({
-        title: '这次一条都进不了食品库',
-        text: '这 ' + v.total + ' 条里没有一条能写进去（失败 ' + v.failed + ' 条）。'
-          + '把「原因」那一列点到的字段补齐，再说一次「批量导入食品」。'
-          + '想先建库，就先说「存食品」把要用的食物一条条收进库里。',
+        title: m('skill-calorie.diet-precheck.c058'),
+        text: m('skill-calorie.diet-precheck.c059', { p0: String(v.total), p1: String(v.failed) }),
       }),
     });
   }
   cards.push({
     id: 'sec-write',
-    label: '确认后操作',
+    label: m('skill-calorie.diet-precheck.c060'),
     html: writeTargetBlock(
-      '确认后操作（这一步不写库）',
-      '这一页会写进去的字段与取值（食品名与热量按你给的条目照抄）',
+      m('skill-calorie.diet-precheck.c061'),
+      m('skill-calorie.diet-precheck.c062'),
       [
         /* #581 · 确认后食品名不再顿号串成一格：可导入的行一行一名（公共层逐行形状），
            一行都进不了时仍保留原来那句空位说明。 */
         ...(passNames(v).length > 0
           ? passNames(v).map((name) => ({ field: 'productName', value: name }))
-          : [{ field: 'productName', value: '（本次没有可导入的行）' }]),
-        { field: 'calories', value: String(v.totalCalorie) + ' 卡（本次条目的热量合计）' },
+          : [{ field: 'productName', value: m('skill-calorie.diet-precheck.c063') }]),
+        { field: 'calories', value: m('skill-calorie.diet-precheck.c064', { p0: String(String(v.totalCalorie)) }) },
       ],
     ),
   });
@@ -179,36 +178,36 @@ export function buildImportPrecheckDoc(
     renderTocBlock({ items: cards.map((c) => ({ id: c.id, text: c.label })) }),
     cards.map(anchored).join(''),
     renderCaliberLine(validate
-      ? '「通过」＝照现在的规则能写进食品库的行。'
-      : '每条是会新增还是会跳过还是会失败，都是照现在的规则算出来的，不是已经写进去了。')
+      ? m('skill-calorie.diet-precheck.c065')
+      : m('skill-calorie.diet-precheck.c066'))
     + renderCaliberLine(validate
-      ? '这一页只校验，不写库。'
-      : '这一页只预览，不写库。'),
+      ? m('skill-calorie.diet-precheck.c067')
+      : m('skill-calorie.diet-precheck.c068')),
     copyArea({
       data: { envelope },
       log: {
         envelope,
         copyLog: copyLog({
           command,
-          source: DB_FILENAME + ' ｜ 食品库（在架食品）＋本次给的条目',
-          m5Line: '确认后执行 ' + writeCommand,
+          source: m('skill-calorie.diet-precheck.c069', { p0: String(DB_FILENAME) }),
+          m5Line: m('skill-calorie.diet-precheck.c070', { p0: String(writeCommand) }),
           actionAt: nowStamp(),
           version: DOC_VERSION,
         }),
       },
     }),
-    renderCaliberLine('📊 数据来源：本机食品库 · 本次 ' + v.total + ' 条条目逐条对照在架食品'),
+    renderCaliberLine(m('skill-calorie.diet-precheck.c071', { p0: String(v.total) })),
   ].join('');
   return assembleDocPage({
     /* #581 · 页题去间隔号：共用件 `precheckParts.ts` 的 `DOC_TITLE` 本票不碰（非写集），
        本页调用点改传无间隔号题名。 */
-    docTitle: '卡路里饮食',
+    docTitle: m('skill-calorie.diet-precheck.c072'),
     title: copy.title,
     pageUi: true,
     eyebrow: '',
     subtitle: null,
     metaLeft: copy.metaLeft,
-    badge: PRECHECK_BADGE,
+    badge: PRECHECK_BADGE(),
     summary: importSummary(v),
     content: body,
   });

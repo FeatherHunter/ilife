@@ -11,6 +11,7 @@
  * （`./../write/receiptPaper.js` 与 `./../write/template-update.js`）各持一份自己的画法，未并入。
  */
 import { escapeHtml } from 'base-paint';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** 超过这个数就不再逐号列全。 */
 export const CHECK_ID_LIMIT = 20;
@@ -21,8 +22,8 @@ export const CHECK_ID_HEAD = 8;
 /** 对账行的编号段：小集 `1、2、3`；大集 `1、…、8 等 4175 个`。 */
 export function checkIdText(ids: readonly (string | number)[]): string {
   const all = ids.map((id) => String(id));
-  if (all.length <= CHECK_ID_LIMIT) return all.join('、');
-  return all.slice(0, CHECK_ID_HEAD).join('、') + ' 等 ' + String(all.length) + ' 个';
+  if (all.length <= CHECK_ID_LIMIT) return listJoin(currentRenderLanguage(), all);
+  return listJoin(currentRenderLanguage(), all.slice(0, CHECK_ID_HEAD)) + ' 等 ' + String(all.length) + ' 个';
 }
 
 /** 对账卡的一行：`label` 左列、`value` 右列；`ok` 的值（「异常」那一行）走绿字。 */

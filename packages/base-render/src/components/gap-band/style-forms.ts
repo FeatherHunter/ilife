@@ -12,6 +12,7 @@
  */
 import { skinVar } from '../skin/contract.js';
 import { GAP_BAND_NARROW_PX, gapBandSlot, type GapBandSlot } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -37,8 +38,8 @@ export function gapBandDeviationCss(input?: { readonly prefix?: string }): strin
   const c = (slot: GapBandSlot): string => '.' + gapBandSlot(slot, p);
 
   return [
-    '/* deviation 档：偏差柱区（零位线横贯）＋ 横轴日子行。',
-    '   柱朝上＝超了目标，朝下＝还差：方向（形）＋ 柱上数字的符号（字）＋ 图例给字，三样同时在。 */',
+    m('base-render.components-gap-band-style-forms.c001'),
+    m('base-render.components-gap-band-style-forms.c002'),
     s('cols') + ' {',
     '  position: relative;',
     '  display: flex;',
@@ -227,7 +228,7 @@ export function gapBandDeviationCss(input?: { readonly prefix?: string }): strin
     '  line-height: 1.6;',
     '  overflow-wrap: anywhere;',
     '}',
-    '/* 本件自身不带可点元素。这一条是**地板**：调用方把某一天包成入口时焦点必须看得见。 */',
+    m('base-render.components-gap-band-style-forms.c003'),
     box + ' :focus-visible {',
     '  outline: 2px solid ' + skinVar('accent') + ';',
     '  outline-offset: 2px;',

@@ -37,6 +37,8 @@ import { nowStamp } from './receipt.js';
 import { pageChromeCss } from './pageChromeCss.js';
 import type { CombinedAnalysis } from './analysisPlate.js';
 import type { AnomalyView, ContraView } from './insightPlate.js';
+import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；测试钉死一致）。
  *  W1（#518）：下面六件是**两族共件**——缺口／预测族（姊妹件 `trendPredictDocs.ts`）从这里导入，
@@ -47,7 +49,9 @@ export const DOC_SKILL = 'calorie';
 /** 本文件各页共用的 head 标题（整页模板住 `src/shared/docPage.ts`，标题走参数）。
  *  #160 文本返工：三套旧标题（`卡路里·趋势分析`／`卡路里·趋势其他移植`／`卡路里·整体趋势`）
  *  并成一套；页型由各页 H1 承担，head 只留域。 */
-export const DOC_TITLE = '卡路里·趋势';
+export function DOC_TITLE() {
+  return m('skill-calorie.render-trendDocs.c125');
+}
 
 export function fmt(n: number | null | undefined): string {
   if (n === null || n === undefined) return '—';
@@ -64,32 +68,35 @@ function unitOf(label: string): string | undefined {
 function deltaHuman(d: number | null): string {
   if (d === null || d === undefined) return '';
   const abs = Math.abs(Math.round(d * 100) / 100);
-  if (abs === 0) return '和开头一样';
-  return '比开头' + (d > 0 ? '高' : '低') + ' ' + abs;
+  if (abs === 0) return m('skill-calorie.render-trendDocs.c001');
+  const dirWord = d > 0 ? m('skill-calorie.render-trendDocs.c002') : m('skill-calorie.render-trendDocs.c003');
+  return m('skill-calorie.render-trendDocs.c004', { p0: String(dirWord), p1: String(abs) });
 }
 
 /** 相关强度三档（**人话**，阈值与旧 combined_analysis 口径逐字同源：|r|≥0.5 明显／≥0.3 有一点／否则几乎没有）。
  *  #160 文本返工：旧名 `corrInterp` 出的是「强相关／中等相关／弱相关」三个统计词，故改名改词。 */
 function corrLevel(r: number | null | undefined): string {
-  if (r === null || r === undefined) return '还看不出';
+  if (r === null || r === undefined) return m('skill-calorie.render-trendDocs.c005');
   const a = Math.abs(r);
-  if (a >= 0.5) return '很明显';
-  if (a >= 0.3) return '有一点';
-  return '几乎没有';
+  if (a >= 0.5) return m('skill-calorie.render-trendDocs.c006');
+  if (a >= 0.3) return m('skill-calorie.render-trendDocs.c007');
+  return m('skill-calorie.render-trendDocs.c008');
 }
 
 /** 数据层文案的**上屏归一**（#160 回炉）：英文缩写换人话、半角标点换中文。
  *  数据层（`analysis/*`）的结论句是内部口径的原文写法，直接上屏会把缩写与半角标点带给读者；
  *  这里只换缩写与标点，**数字与单位一个不动**（千分位 `1,275` 先占位、换完再还原）。 */
-const TECH_WORD_ZH: ReadonlyArray<readonly [RegExp, string]> = [
-  [/KCAL_PER_KG/g, '每 7700 卡'],
-  [/TDEE/g, '日常消耗'],
-  [/BMR/g, '基础代谢'],
+function TECH_WORD_ZH() : ReadonlyArray<readonly [RegExp, string]> {
+  return [
+  [/KCAL_PER_KG/g, m('skill-calorie.render-trendDocs.c126')],
+  [/TDEE/g, m('skill-calorie.render-trendDocs.c127')],
+  [/BMR/g, m('skill-calorie.render-trendDocs.c128')],
 ];
+}
 
 export function humanText(s: string): string {
   let out = s;
-  for (const [re, zh] of TECH_WORD_ZH) out = out.replace(re, zh);
+  for (const [re, zh] of TECH_WORD_ZH()) out = out.replace(re, zh);
   return out
     .replace(/(\d),(\d{3})\b/g, '$1\u0001$2')
     .replace(/,/g, '，')
@@ -105,18 +112,23 @@ export function humanText(s: string): string {
 export function techNoteHtml(bits: readonly string[]): string {
   return '<!-- ' + bits.join(' ') + ' -->';
 }
+function SEV_ZH() : Record<string, string> {
 
-const SEV_ZH: Record<string, string> = { error: '错误', warn: '警告', info: '提示' };
-const CONTRA_STATUS_ZH: Record<string, string> = { ok: '通过', warn: '有警告', fail: '有错误' };
+  return { error: m('skill-calorie.render-trendDocs.c129'), warn: m('skill-calorie.render-trendDocs.c130'), info: m('skill-calorie.render-trendDocs.c131') };
+
+}
+function CONTRA_STATUS_ZH() : Record<string, string> {
+  return { ok: m('skill-calorie.render-trendDocs.c132'), warn: m('skill-calorie.render-trendDocs.c133'), fail: m('skill-calorie.render-trendDocs.c134') };
+}
 
 /* ── 组合分析（combined_analysis.html 对照：KPI＋双轴走势＋相关回归散点＋延迟相关＋分层对比＋insight） ── */
 
 export function buildCombinedDoc(c: CombinedAnalysis): string {
   const a = c.analysis;
   /* #160 文本返工：窗口词只留中文（旧实现把 `custom` 原样吐到页头，界面里冒英文参数值）。 */
-  const windowHuman = /^(\d+)d$/.test(c.window) ? '近' + c.window.slice(0, -1) + '天'
-    : (c.window === 'week_cur' ? '本周' : (c.window === 'month_cur' ? '本月'
-      : (c.window === 'custom' ? '自定义时间' : c.window)));
+  const windowHuman = /^(\d+)d$/.test(c.window) ? m('skill-calorie.render-trendDocs.c009', { p0: String(c.window.slice(0, -1)) })
+    : (c.window === 'week_cur' ? m('skill-calorie.render-trendDocs.c010') : (c.window === 'month_cur' ? m('skill-calorie.render-trendDocs.c011')
+      : (c.window === 'custom' ? m('skill-calorie.render-trendDocs.c012') : c.window)));
   const stripUnit = (s: string): string => s.replace(/\(.*?\)/g, '').replace(/（.*?）/g, '') || s;
   const aShort = stripUnit(a.labels.a);
   const bShort = stripUnit(a.labels.b);
@@ -125,17 +137,30 @@ export function buildCombinedDoc(c: CombinedAnalysis): string {
   /* #160 文本返工：技术口径不进可见正文（读者看不懂也用不上），一律折进这条 HTML 注释。
    *  注释里 `配对<key> 窗口<window>` 两段**逐字保留**——产物必须消费掉这两个入参（`pnpm test` 的
    *  真出口与本仓 e2e 都按这两个字面量查「参数真的落进页面了」）。 */
+  /* #1197 §4.7：条件分枝先落成局部变量，整句才好迁成 m(key, {...})。 */
+  const slopeText = a.regression === null ? m('skill-calorie.render-trendDocs.c013') : String(a.regression.slope);
+  const lagText = a.lag.length === 0
+    ? m('skill-calorie.render-trendDocs.c014')
+    : a.lag.map((l) => m('skill-calorie.render-trendDocs.c015', { p0: String(l.lag), p1: String(l.r === null ? '—' : l.r) })).join('/');
   const techBits = [
-    '配对' + c.pair, '窗口' + c.window,
-    '11配对白名单窗口', '非法窗exit2', '不静默回退', '数列唯一源buildSeries', '最小形态', '空窗阻断', '不编数',
-    '相关系数 r=' + (a.correlation.r === null ? '—' : a.correlation.r) + ' n=' + a.correlation.n,
-    '相关强度=|r|≥0.5明显 ≥0.3有一点 否则几乎没有',
-    '回归斜率=' + (a.regression === null ? '样本不足未拟合' : a.regression.slope) + ' n=' + (a.regression === null ? 0 : a.regression.n) + ' 散点横轴=' + a.labels.a + ' 纵轴=' + a.labels.b,
-    '日差r=' + (a.lag.length === 0 ? '无' : a.lag.map((l) => l.lag + '天' + (l.r === null ? '—' : l.r)).join('/')),
-    '均值=有记录那些天的平均 Δ=窗口内末尾−开头',
-    '明细空缺留空不按0算 全量见复制数据',
-    '分层备注=本组净变化减另一组净变化',
-    '超标日口径=单日摄入>目标×1.3',
+    m('skill-calorie.render-trendDocs.c016', { p0: String(c.pair) }), m('skill-calorie.render-trendDocs.c017', { p0: String(c.window) }),
+    m('skill-calorie.render-trendDocs.c018'), m('skill-calorie.render-trendDocs.c019'), m('skill-calorie.render-trendDocs.c020'), m('skill-calorie.render-trendDocs.c021'), m('skill-calorie.render-trendDocs.c022'), m('skill-calorie.render-trendDocs.c023'), m('skill-calorie.render-trendDocs.c024'),
+    m('skill-calorie.render-trendDocs.c025', {
+      p0: String(a.correlation.r === null ? '—' : a.correlation.r),
+      p1: String(a.correlation.n),
+    }),
+    m('skill-calorie.render-trendDocs.c026'),
+    m('skill-calorie.render-trendDocs.c027', {
+      p0: String(slopeText),
+      p1: String(a.regression === null ? 0 : a.regression.n),
+      p2: String(a.labels.a),
+      p3: String(a.labels.b),
+    }),
+    m('skill-calorie.render-trendDocs.c028', { p0: String(lagText) }),
+    m('skill-calorie.render-trendDocs.c029'),
+    m('skill-calorie.render-trendDocs.c030'),
+    m('skill-calorie.render-trendDocs.c031'),
+    m('skill-calorie.render-trendDocs.c032'),
   ];
   const techNote = '<!-- ' + techBits.join(' ') + ' -->';
   /* 页头只留「窗口 · 区间」：配对名在 H1、图例、表头里已各出现一次，meta 再写一遍是第四次；
@@ -145,28 +170,37 @@ export function buildCombinedDoc(c: CombinedAnalysis): string {
    *  改为**不摆空节**，把话说到摘要行里（用户反馈「表格也没什么数据」）。 */
   const alignedDays = a.correlation.n;
   const lowSample = alignedDays < 3;
-  const lowSampleNote = windowHuman + '里两项都齐全的只有 ' + alignedDays + ' 天（共 ' + a.days + ' 天有记录），'
-    + '样本太少、看不出关联，先攒几天数据再看。';
-  const summary = lowSample ? lowSampleNote : (a.insight !== '' ? a.insight : ('这 ' + a.days + ' 天里，两项的数字都摆出来了，先看图上的走势。'));
+  const lowSampleNote = m('skill-calorie.render-trendDocs.c033', {
+    p0: String(windowHuman),
+    p1: String(alignedDays),
+    p2: String(a.days),
+  });
+  const summary = lowSample ? lowSampleNote : (a.insight !== '' ? a.insight : m('skill-calorie.render-trendDocs.c034', { p0: String(a.days) }));
   const parts: string[] = [
     techNote,
     renderKpiGrid([
       /* #160 文本返工：`相关系数 r` 是统计词、r 数字读者用不上 → 标签改人话、值改档位、r 进注释。
        *  方向不放这张卡：摘要句已经说了「谁多的时候谁怎样」，同页说两遍就成冗余。 */
-      { label: '一起变的程度', value: corrLevel(a.correlation.r) },
+      { label: m('skill-calorie.render-trendDocs.c035'), value: corrLevel(a.correlation.r) },
       /* 均值＝**有记录那些天**的平均（不是窗口天数）；Δ＝窗口内末尾−开头。两者都写清，读者才能自己核。 */
       {
-        label: '平均' + aShort, value: fmt(a.aAvg),
+        label: m('skill-calorie.render-trendDocs.c036', { p0: String(aShort) }), value: fmt(a.aAvg),
         ...(aUnit === undefined ? {} : { unit: aUnit }),
-        detail: '有记录的 ' + a.aCount + ' 天' + (a.aDelta === null ? '' : '，' + deltaHuman(a.aDelta)),
+        detail: m('skill-calorie.render-trendDocs.c037', {
+          p0: String(a.aCount),
+          p1: String(a.aDelta === null ? '' : '，' + deltaHuman(a.aDelta)),
+        }),
       },
       {
-        label: '平均' + bShort, value: fmt(a.bAvg),
+        label: m('skill-calorie.render-trendDocs.c038', { p0: String(bShort) }), value: fmt(a.bAvg),
         ...(bUnit === undefined ? {} : { unit: bUnit }),
-        detail: '有记录的 ' + a.bCount + ' 天' + (a.bDelta === null ? '' : '，' + deltaHuman(a.bDelta)),
+        detail: m('skill-calorie.render-trendDocs.c039', {
+          p0: String(a.bCount),
+          p1: String(a.bDelta === null ? '' : '，' + deltaHuman(a.bDelta)),
+        }),
       },
       /* 主标签说清是谁的天数；旧副标「双侧有数据的天数」只是把主标签换个说法，同页第三遍 → 删。 */
-      { label: '两项都有记录的天数', value: String(a.correlation.n), unit: '天' },
+      { label: m('skill-calorie.render-trendDocs.c040'), value: String(a.correlation.n), unit: m('skill-calorie.render-trendDocs.c041') },
     ]),
   ];
   let charts = false;
@@ -203,7 +237,7 @@ export function buildCombinedDoc(c: CombinedAnalysis): string {
      *  HTML 注释，标题只留读者要的那件事。散点图公共层没有轴名能力，故标题自带单位（横轴 A／纵轴 B）。 */
     parts.push(renderChartBlock({
       kind: 'scatter',
-      title: a.labels.a + '和' + a.labels.b + '的关系',
+      title: m('skill-calorie.render-trendDocs.c042', { p0: String(a.labels.a), p1: String(a.labels.b) }),
       input: {
         items: a.scatter.map((p) => ({ x: p.x, y: p.y })),
         options: { regression: a.regression !== null },
@@ -219,21 +253,24 @@ export function buildCombinedDoc(c: CombinedAnalysis): string {
      *  一句话结论会说假话（并列最强时写「最明显」是编的）。 */
     parts.push(renderDataTable({
       columns: [
-        { key: 'pair', label: '哪两天比' },
-        { key: 'level', label: '对得上的程度' },
+        { key: 'pair', label: m('skill-calorie.render-trendDocs.c043') },
+        { key: 'level', label: m('skill-calorie.render-trendDocs.c044') },
       ],
       rows: a.lag.map((l) => ({
         /* `vs` 是英文简写、不上屏（#160）：改成中文的「对」，列名已说明这是在比哪两天。 */
-        pair: '往前 ' + l.lag + ' 天的' + bShort + ' 对当天的' + aShort,
+        pair: m('skill-calorie.render-trendDocs.c045', {
+          p0: String(l.lag),
+          p1: String(bShort),
+          p2: String(aShort),
+        }),
         level: corrLevel(l.r) + (l.r === null || l.r === undefined ? '' : '（' + Math.round(l.r * 100) / 100 + '）'),
       })),
       /* 表名不带「仅某某配对有此节」那句写给作者的话；r 的算法与样本数进 HTML 注释（techBits）。 */
-      caption: '往前推几天会不会更清楚',
-      emptyText: '这段时间还没有记录，先记一餐或称一次体重再来看',
+      caption: m('skill-calorie.render-trendDocs.c046'),
+      emptyText: m('skill-calorie.render-trendDocs.c047'),
     }));
     /* 括号怎么读：说清方向与强弱（越靠两头越对得上），读者据此排序三行。 */
-    parts.push(renderCaliberLine('括号里是两项对得上的程度，取值 -1 到 1：越靠近 1，前几天的' + bShort
-      + '越高、当天' + aShort + '也越高；越靠近 -1 则一个高、另一个反而低；越靠近 0 越没有关系。'));
+    parts.push(renderCaliberLine(m('skill-calorie.render-trendDocs.c048', { p0: String(bShort), p1: String(aShort) })));
   }
   if (a.strat.rows.length > 0 && !lowSample) {
     /* 表名按实际两组名生成（旧名「分层对比」读者不知道按什么分的）；旧标题尾巴
@@ -242,43 +279,43 @@ export function buildCombinedDoc(c: CombinedAnalysis): string {
     /* 这一节有两种形态：**两组比**（`工作日`／`周末` 这类分组名）与**两项并列**（`日均摄入`／`日均运动`——
      *  那是两个口径不同的数，不是两组，标题不能说「差多少」）。判据看行名，不写死配对键。 */
     const metricRows = srows.length > 0 && srows.every((r) => r.label.startsWith('日均'));
-    const stratTitle = metricRows ? '这两项各是多少'
-      : srows.length >= 2 ? srows[0].label + '和' + srows[1].label + '，差多少'
-        : '这两项平均各是多少';
+    const stratTitle = metricRows ? m('skill-calorie.render-trendDocs.c049')
+      : srows.length >= 2 ? m('skill-calorie.render-trendDocs.c050', { p0: String(srows[0].label), p1: String(srows[1].label) })
+        : m('skill-calorie.render-trendDocs.c051');
     /* #160 回炉：`备注` 列在 weight_deficit／weight_calorie 这些配对上**整列空白**（`analysis/cross.ts`
      *  的 `StratRow.note` 三处都给 ''），列头却照印——空列就是噪音。故**列定义按数据条件裁剪**：
      *  这组行里只要有一条真备注就出这一列，全空即整列不出（看数据，不写死配对键）。 */
     const hasNote = srows.some((r) => r.note !== undefined && String(r.note).trim() !== '');
     parts.push(renderDataTable({
       columns: [
-        { key: 'label', label: '哪一组' },
-        { key: 'days', label: '天数', align: 'right' },
-        { key: 'aDelta', label: aShort + '变化', align: 'right' },
-        { key: 'bAvg', label: '平均' + bShort, align: 'right' },
-        ...(hasNote ? [{ key: 'note', label: '备注' }] : []),
+        { key: 'label', label: m('skill-calorie.render-trendDocs.c052') },
+        { key: 'days', label: m('skill-calorie.render-trendDocs.c053'), align: 'right' },
+        { key: 'aDelta', label: m('skill-calorie.render-trendDocs.c054', { p0: String(aShort) }), align: 'right' },
+        { key: 'bAvg', label: m('skill-calorie.render-trendDocs.c055', { p0: String(bShort) }), align: 'right' },
+        ...(hasNote ? [{ key: 'note', label: m('skill-calorie.render-trendDocs.c056') }] : []),
       ],
       rows: srows.map((r) => ({
         label: r.label, days: r.days, aDelta: fmt(r.aDelta), bAvg: fmt(r.bAvg), note: r.note,
       })),
       caption: stratTitle,
-      emptyText: '这段时间还没有记录，先记一餐或称一次体重再来看',
+      emptyText: m('skill-calorie.render-trendDocs.c057'),
     }));
     if (a.strat.extra.length > 0) parts.push(renderCaliberLine(a.strat.extra.join('；')));
   }
   if (a.deficitBuckets.length > 0) {
     parts.push(renderDataTable({
       columns: [
-        { key: 'label', label: '缺口多大' },
-        { key: 'days', label: '天数', align: 'right' },
+        { key: 'label', label: m('skill-calorie.render-trendDocs.c058') },
+        { key: 'days', label: m('skill-calorie.render-trendDocs.c059'), align: 'right' },
       ],
       rows: a.deficitBuckets.map((b) => ({ label: b.label, days: b.days })),
-      caption: '按缺口大小分组：缺口越大，体重掉得越多吗',
-      emptyText: '这段时间还没有记录，先记一餐或称一次体重再来看',
+      caption: m('skill-calorie.render-trendDocs.c060'),
+      emptyText: m('skill-calorie.render-trendDocs.c061'),
     }));
   }
   if (a.overLimitDays.length > 0) {
     parts.push(renderDisclosure({
-      title: '吃得超目标的日子（每天超过目标的 1.3 倍，共 ' + a.overLimitDays.length + ' 天）',
+      title: m('skill-calorie.render-trendDocs.c062', { p0: String(a.overLimitDays.length) }),
       contentHtml: renderListRows({
         items: a.overLimitDays.map((d) => ({ main: d })),
       }),
@@ -286,21 +323,22 @@ export function buildCombinedDoc(c: CombinedAnalysis): string {
   }
   if (a.line.length > 0) {
     const shown = a.line.slice(0, 100);
+    const lineSuffix = a.line.length > 100 ? m('skill-calorie.render-trendDocs.c063', { p0: String(a.line.length) }) : '';
     parts.push(renderDisclosure({
       /* 折叠标题只说「这一块是什么」＋截断口径；窗口天数在页头说过，不在这里再报一遍。 */
-      title: '每天一行' + (a.line.length > 100 ? '（只列前 100 条，共 ' + a.line.length + ' 天）' : ''),
+      title: m('skill-calorie.render-trendDocs.c064', { p0: String(lineSuffix) }),
       contentHtml: renderDataTable({
         columns: [
-          { key: 'date', label: '日期' },
+          { key: 'date', label: m('skill-calorie.render-trendDocs.c065') },
           { key: 'av', label: a.labels.a, align: 'right' },
           { key: 'bv', label: a.labels.b, align: 'right' },
         ],
         rows: shown.map((p) => ({ date: p.date, av: fmt(p.a), bv: fmt(p.b) })),
-        emptyText: '这段时间还没有记录，先记一餐或称一次体重再来看',
+        emptyText: m('skill-calorie.render-trendDocs.c066'),
       }),
     }));
   }
-  parts.push(dataCopyArea('复制数据', {
+  parts.push(dataCopyArea(m('skill-calorie.render-trendDocs.c067'), {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.combined',
       data: {
@@ -314,8 +352,8 @@ export function buildCombinedDoc(c: CombinedAnalysis): string {
     },
   }));
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '看' + aShort + '与' + bShort,
+    docTitle: DOC_TITLE(),
+    title: m('skill-calorie.render-trendDocs.c068', { p0: String(aShort), p1: String(bShort) }),
     eyebrow: '',
     subtitle: null,
     metaLeft,
@@ -336,38 +374,37 @@ export function buildAnomalyDoc(v: AnomalyView): string {
   /* 被删的技术口径改住 HTML 注释（#160 回炉）：诊断清单、参数名与两个拒绝码原都在参数卡说明里（可见文本）。 */
   const noteBits = techNoteHtml([
     'kind=' + v.kind,
-    '23 种诊断（体重 6／饮食 4／运动 5／归因复盘 8）',
-    'kind 非法即 bad-input，证据不足即 missing-data，不编诊断',
+    m('skill-calorie.render-trendDocs.c069'),
+    m('skill-calorie.render-trendDocs.c070'),
   ]);
   const parts: string[] = [
     noteBits,
     renderParamForm({
       fields: [
-        { name: 'kind', label: '诊断', value: v.kind },
-        { name: 'start', label: '开始', value: v.start },
-        { name: 'end', label: '结束', value: v.end },
+        { name: 'kind', label: m('skill-calorie.render-trendDocs.c071'), value: v.kind },
+        { name: 'start', label: m('skill-calorie.render-trendDocs.c072'), value: v.start },
+        { name: 'end', label: m('skill-calorie.render-trendDocs.c073'), value: v.end },
       ],
-      description: '一共有 23 种诊断，分体重、饮食、运动、复盘四类；证据不够就直说数据不足，不编一个结论出来。',
+      description: m('skill-calorie.render-trendDocs.c074'),
     }),
     renderKpiGrid([
       /* 详情原印 `v.kind`（`diet_over` 这种内部键）——内部标识符不上屏，值那一格已经是中文诊断名。 */
-      { label: '诊断', value: dg.title || '这一类' },
-      { label: '窗口', value: v.start + ' ~ ' + v.end, detail: '有数据 ' + dg.days + ' 天' },
-      { label: '发现', value: String(v.findingCount), unit: '条' },
+      { label: m('skill-calorie.render-trendDocs.c075'), value: dg.title || m('skill-calorie.render-trendDocs.c076') },
+      { label: m('skill-calorie.render-trendDocs.c077'), value: v.start + ' ~ ' + v.end, detail: m('skill-calorie.render-trendDocs.c078', { p0: String(dg.days) }) },
+      { label: m('skill-calorie.render-trendDocs.c079'), value: String(v.findingCount), unit: m('skill-calorie.render-trendDocs.c080') },
     ]),
     renderListRows({
       /* 三槽都是数据层文案（`analysis/anomaly/*`）：`TDEE` 这类缩写与半角标点上屏前一律归一。
        *  `action` 空串的发现（`overall` 那几行数据层给的就是 ''）不再留一个悬空的「｜建议：」——
        *  标签后面什么都没有也是种碎片，没建议就不出这段。 */
-      items: dg.findings.map((f) => ({
-        left: humanText(f.cause),
-        main: '证据：' + humanText(f.evidence) + (f.action === '' ? '' : '｜建议：' + humanText(f.action)),
-        right: f.confidence,
-      })),
-      emptyText: '本窗没有发现异常，各项诊断都正常',
+      items: dg.findings.map((f) => {
+        const advise = f.action === '' ? '' : m('skill-calorie.render-trendDocs.c081', { p0: String(humanText(f.action)) });
+        return { left: humanText(f.cause), main: m('skill-calorie.render-trendDocs.c082', { p0: String(humanText(f.evidence)), p1: String(advise) }), right: f.confidence };
+      }),
+      emptyText: m('skill-calorie.render-trendDocs.c083'),
     }),
   ];
-  parts.push(dataCopyArea('复制数据', {
+  parts.push(dataCopyArea(m('skill-calorie.render-trendDocs.c084'), {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.anomaly',
       data: {
@@ -375,10 +412,11 @@ export function buildAnomalyDoc(v: AnomalyView): string {
       },
     },
   }));
+  const anomalyTitle = dg.title || m('skill-calorie.render-trendDocs.c085');
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '异常诊断 ' + (dg.title || '这一类'),
-    eyebrow: '异常诊断 · 趋势分析域',
+    docTitle: DOC_TITLE(),
+    title: m('skill-calorie.render-trendDocs.c086', { p0: String(anomalyTitle) }),
+    eyebrow: m('skill-calorie.render-trendDocs.c087'),
     subtitle: dg.insight ? humanText(dg.insight) : null,
     content: parts.join(''),
     charts: false, pageUi: true,
@@ -402,11 +440,11 @@ function contraCopyBlock(v: ContraView): string {
         }),
       },
     },
-    title: '【calorie 禁忌扫描】',
+    title: m('skill-calorie.render-trendDocs.c088'),
     format: 'text',
   };
   return renderCopyBlock({
-    title: '复制修改指令',
+    title: m('skill-calorie.render-trendDocs.c900'),
     dataText: buildDataText(data),
     logText: buildLogText({
       envelope: sceneEnvelope(data.envelope),
@@ -443,42 +481,43 @@ export function buildContraDoc(v: ContraView): string {
   const s = v.scan;
   /* 被删的技术口径改住 HTML 注释（#160 回炉）：参数取值与扫描范围口径原都在参数卡说明里。 */
   const noteBits = techNoteHtml([
-    'part=' + v.part + '（all/腰/膝/肩）',
-    '命中按动作×规则逐条列出，替代选择归宿主，已选清单不进静态页',
+    m('skill-calorie.render-trendDocs.c089', { p0: String(v.part) }),
+    m('skill-calorie.render-trendDocs.c090'),
   ]);
+  const partText = v.part === 'all' ? m('skill-calorie.render-trendDocs.c091') : v.part;
   const parts: string[] = [
     noteBits,
-    renderCaliberLine('想扫哪个部位就说腰、膝或肩。不说部位就全部扫一遍。'
-      + '命中的动作会逐条列出，并给出可以替换的动作。'),
+    renderCaliberLine(m('skill-calorie.render-trendDocs.c092')),
     renderKpiGrid([
-      { label: '扫描', value: CONTRA_STATUS_ZH[v.summaryStatus] ?? v.summaryStatus,
-        detail: '部位：' + (v.part === 'all' ? '全部' : v.part) },
-      { label: '训练场次', value: String(v.scannedSessions), unit: '个', detail: '动作 ' + v.scannedMovements + ' 个' },
-      { label: '错误', value: String(v.errorCount), unit: '个' },
-      { label: '警告', value: String(v.warnCount), unit: '个' },
-      { label: '提示', value: String(v.infoCount), unit: '个' },
-      { label: '安全变体跳过', value: String(s.safeSkipped), unit: '个' },
+      { label: m('skill-calorie.render-trendDocs.c093'), value: CONTRA_STATUS_ZH()[v.summaryStatus] ?? v.summaryStatus,
+        detail: m('skill-calorie.render-trendDocs.c094', { p0: String(partText) }) },
+      { label: m('skill-calorie.render-trendDocs.c095'), value: String(v.scannedSessions), unit: m('skill-calorie.render-trendDocs.c096'), detail: m('skill-calorie.render-trendDocs.c097', { p0: String(v.scannedMovements) }) },
+      { label: m('skill-calorie.render-trendDocs.c098'), value: String(v.errorCount), unit: m('skill-calorie.render-trendDocs.c099') },
+      { label: m('skill-calorie.render-trendDocs.c100'), value: String(v.warnCount), unit: m('skill-calorie.render-trendDocs.c101') },
+      { label: m('skill-calorie.render-trendDocs.c102'), value: String(v.infoCount), unit: m('skill-calorie.render-trendDocs.c103') },
+      { label: m('skill-calorie.render-trendDocs.c104'), value: String(s.safeSkipped), unit: m('skill-calorie.render-trendDocs.c105') },
     ]),
   ];
   {
     const shown = s.hits.slice(0, 100);
+    const hitsSuffix = s.hits.length > 100 ? m('skill-calorie.render-trendDocs.c106', { p0: String(s.hits.length) }) : m('skill-calorie.render-trendDocs.c107', { p0: String(s.hits.length) });
     // 窄屏让位（`.ilw-hit` 是给页内 CSS 挂钩子用的，见 `CONTRA_MOBILE_CSS`）：五列在 390 宽下挤成竖条，
     // 「部位」与「规则」两列让掉——部位已在动作格的括号里（`深蹲（第 1 周 周三（下肢））`）、
     // 规则名与原因句说的是同一件事。
     parts.push('<div class="ilw-hit">' + renderDataTable({
       columns: [
-        { key: 'movement', label: '动作' },
-        { key: 'part', label: '部位' },
-        { key: 'rule', label: '规则' },
-        { key: 'sev', label: '级别' },
-        { key: 'reason', label: '原因' },
+        { key: 'movement', label: m('skill-calorie.render-trendDocs.c108') },
+        { key: 'part', label: m('skill-calorie.render-trendDocs.c109') },
+        { key: 'rule', label: m('skill-calorie.render-trendDocs.c110') },
+        { key: 'sev', label: m('skill-calorie.render-trendDocs.c111') },
+        { key: 'reason', label: m('skill-calorie.render-trendDocs.c112') },
       ],
       rows: shown.map((h) => ({
-        movement: h.movementName + (h.usedIn.length > 0 ? '（' + h.usedIn.join('、') + '）' : ''),
-        part: h.part, rule: h.ruleName, sev: SEV_ZH[h.severity] ?? h.severity, reason: h.reason,
+        movement: h.movementName + (h.usedIn.length > 0 ? '（' + listJoin(currentRenderLanguage(), h.usedIn) + '）' : ''),
+        part: h.part, rule: h.ruleName, sev: SEV_ZH()[h.severity] ?? h.severity, reason: h.reason,
       })),
-      caption: '命中明细' + (s.hits.length > 100 ? '（仅列前 100 条，共 ' + s.hits.length + ' 条）' : '（共 ' + s.hits.length + ' 条）'),
-      emptyText: '无命中（计划动作均通过扫描）',
+      caption: m('skill-calorie.render-trendDocs.c113', { p0: String(hitsSuffix) }),
+      emptyText: m('skill-calorie.render-trendDocs.c114'),
     }) + '</div>');
   }
   if (s.suggestions.length > 0) {
@@ -487,24 +526,24 @@ export function buildContraDoc(v: ContraView): string {
     // 窄屏让「原因」列让位（`.ilw-alt`）：上一张表已逐条给过原因，这张窄屏只剩「动作｜可以换成」最好读。
     parts.push('<div class="ilw-alt">' + renderDataTable({
       columns: [
-        { key: 'movement', label: '动作' },
-        { key: 'reason', label: '原因' },
-        { key: 'replace', label: '可以换成' },
+        { key: 'movement', label: m('skill-calorie.render-trendDocs.c115') },
+        { key: 'reason', label: m('skill-calorie.render-trendDocs.c116') },
+        { key: 'replace', label: m('skill-calorie.render-trendDocs.c117') },
       ],
       rows: s.suggestions.map((g) => ({ movement: g.movement, reason: g.reason, replace: g.replace })),
-      caption: '替代建议',
-      emptyText: '无替代建议',
+      caption: m('skill-calorie.render-trendDocs.c118'),
+      emptyText: m('skill-calorie.render-trendDocs.c119'),
     }) + '</div>');
   }
   parts.push(contraCopyBlock(v));
   return assembleDocPage({
-    docTitle: DOC_TITLE,
+    docTitle: DOC_TITLE(),
     // T351-v10：标题里那个 `all` 是参数原值，读者看不懂（第 ④ 条）——扫全部部位时不缀括号。
-    title: v.part === 'all' ? '禁忌扫描' : '禁忌扫描（' + v.part + '）',
+    title: v.part === 'all' ? m('skill-calorie.render-trendDocs.c120') : m('skill-calorie.render-trendDocs.c121', { p0: String(v.part) }),
     // 眉标只留技能名：原来那句 `禁忌扫描 · 趋势分析域` 把标题又抄了一遍，后半截还是内部架构词
     // （「趋势分析域」是仓库里的域划分，用户不该看到）。
-    eyebrow: '健身计划',
-    subtitle: v.part === 'all' ? '全部部位' : '只看' + v.part,
+    eyebrow: m('skill-calorie.render-trendDocs.c122'),
+    subtitle: v.part === 'all' ? m('skill-calorie.render-trendDocs.c123') : m('skill-calorie.render-trendDocs.c124', { p0: String(v.part) }),
     content: pageChromeCss(960) + CONTRA_MOBILE_CSS + parts.join(''),
     charts: false, pageUi: true,
   });

@@ -29,7 +29,16 @@ export function styleSources(name) {
     .map((file) => ({ file, src: readFileSync(dir + file, 'utf8') }));
 }
 
+/** 词条表里属于本件样式段的那一段（#1226 起，样式里的注释串迁进词条表；
+ *  「授权照抄」的出处那句话随之住进 `entries/zh.ts`，按件读样式源码时要把这一段一起算进来，
+ *  否则 `authorizedLiterals()` 读不到出处，把授权字面判成硬编码）。 */
+function styleEntries(name) {
+  const zh = readFileSync(fileURLToPath(new URL('../src/entries/zh.ts', import.meta.url)), 'utf8');
+  const re = new RegExp('base-render\\.components-' + name + '-style(?:-|\\.)');
+  return zh.split(String.fromCharCode(10)).filter((line) => re.test(line)).join(String.fromCharCode(10));
+}
+
 /** 一件全部样式来源拼成的**合文本**（按文件名排序、LF 连接）：只在「整份一起看」的断言上用。 */
 export function styleSource(name) {
-  return styleSources(name).map((f) => f.src).join(String.fromCharCode(10));
+  return [styleSources(name).map((f) => f.src).join(String.fromCharCode(10)), styleEntries(name)].join(String.fromCharCode(10));
 }

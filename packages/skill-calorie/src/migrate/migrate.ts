@@ -27,6 +27,7 @@ import { dirname, resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { applyMigrations, initDb, TABLE_DDLS } from '../schema.js';
 import { assertWritablePath } from '../paths.js';
+import { m } from '../entries/index.js';
 
 const WATER_NAME = '💧水';
 
@@ -272,7 +273,7 @@ export function migrateCalorieDb(srcPath: string, dstPath: string, opts: Migrate
       const remapped: IdRemap[] = [];
       const uniqueConflicts: UniqueConflict[] = [];
       const warnings: string[] = [];
-      if (!readOnly) warnings.push('src 未能以 readOnly 打开（Node 选项缺失），本脚本仍只发 SELECT/PRAGMA，未写 src；详见报告 srcReadOnly=false');
+      if (!readOnly) warnings.push(m('skill-calorie.migrate-migrate.c001'));
 
       dst.exec('BEGIN IMMEDIATE');
       try {
@@ -398,10 +399,10 @@ export function migrateCalorieDb(srcPath: string, dstPath: string, opts: Migrate
         const wSrc = Math.round(srcWeight.sum * 100) / 100;
         const wDst = Math.round(dstWeight.sum * 100) / 100;
         const calibers = {
-          kcalExclWater: { label: '总热量(去水)', src: srcKcal, dst: dstKcalRow.s, ok: srcKcal === dstKcalRow.s },
-          weightCount: { label: '体重行数', src: srcWeight.n, dst: dstWeight.n, ok: srcWeight.n === dstWeight.n },
-          weightSum: { label: '体重合计kg(round2)', src: wSrc, dst: wDst, ok: wSrc === wDst },
-          photoCount: { label: '照片数', src: srcPhotos, dst: dstPhotosRow.n, ok: srcPhotos === dstPhotosRow.n },
+          kcalExclWater: { label: m('skill-calorie.migrate-migrate.c002'), src: srcKcal, dst: dstKcalRow.s, ok: srcKcal === dstKcalRow.s },
+          weightCount: { label: m('skill-calorie.migrate-migrate.c003'), src: srcWeight.n, dst: dstWeight.n, ok: srcWeight.n === dstWeight.n },
+          weightSum: { label: m('skill-calorie.migrate-migrate.c004'), src: wSrc, dst: wDst, ok: wSrc === wDst },
+          photoCount: { label: m('skill-calorie.migrate-migrate.c005'), src: srcPhotos, dst: dstPhotosRow.n, ok: srcPhotos === dstPhotosRow.n },
         };
         if (!calibers.kcalExclWater.ok || !calibers.weightCount.ok || !calibers.weightSum.ok || !calibers.photoCount.ok) {
           allOk = false;
@@ -428,7 +429,7 @@ export function migrateCalorieDb(srcPath: string, dstPath: string, opts: Migrate
         const stAfterCommit = statSync(srcAbs);
         report.srcStatAfter = { size: stAfterCommit.size, mtimeMs: stAfterCommit.mtimeMs };
         if (report.srcStatBefore.size !== report.srcStatAfter.size || report.srcStatBefore.mtimeMs !== report.srcStatAfter.mtimeMs) {
-          report.warnings.push('src 文件 stat 在迁移前后发生变化（本脚本未写 src，请核查是否有外部进程触碰复制件）');
+          report.warnings.push(m('skill-calorie.migrate-migrate.c006'));
           report.ok = false;
           throw new MigrateVerifyError('src 复制件在迁移期间被外部改动，已提交但标为失败（dst 已写，src 需重取复制件后重跑）', report);
         }
@@ -461,34 +462,34 @@ export function formatReportText(report: MigrateReport): string {
   const lines: string[] = [];
   lines.push('src: ' + report.src + ' (readOnly=' + String(report.srcReadOnly) + ')');
   lines.push('dst: ' + report.dst);
-  lines.push('表 行数对账（src收敛 → dst）：');
+  lines.push(m('skill-calorie.migrate-migrate.c007'));
   for (const t of report.tables) {
     const raw = Object.entries(t.srcRaw)
       .map(([k, v]) => k + '=' + String(v))
       .join(' ');
     lines.push(
       '  ' + t.table + ': ' + raw + ' => ' + String(t.srcConverged) + ' → ' + String(t.dst) + ' ' + (t.ok ? 'OK' : 'MISMATCH') +
-        (t.skippedUnique ? ' (UNIQUE去重' + String(t.skippedUnique) + ')' : ''),
+        (t.skippedUnique ? m('skill-calorie.migrate-migrate.c008', { p0: String(String(t.skippedUnique)) }) : ''),
     );
   }
-  lines.push('口径抽查（现行代码口径）：');
+  lines.push(m('skill-calorie.migrate-migrate.c009'));
   for (const c of [report.calibers.kcalExclWater, report.calibers.weightCount, report.calibers.weightSum, report.calibers.photoCount]) {
     lines.push('  ' + c.label + ': src=' + String(c.src) + ' dst=' + String(c.dst) + ' ' + (c.ok ? 'OK' : 'MISMATCH'));
   }
   if (report.remapped.length > 0) {
-    lines.push('跨世代同 id 重映射（多记不丢）' + String(report.remapped.length) + ' 行：');
+    lines.push(m('skill-calorie.migrate-migrate.c010', { p0: String(String(report.remapped.length)) }));
     for (const r of report.remapped.slice(0, 20)) {
       lines.push('  ' + r.table + ' ' + r.fromTable + ' id ' + String(r.oldId) + ' → ' + String(r.newId));
     }
-    if (report.remapped.length > 20) lines.push('  …另 ' + String(report.remapped.length - 20) + ' 行略');
+    if (report.remapped.length > 20) lines.push(m('skill-calorie.migrate-migrate.c011', { p0: String(String(report.remapped.length - 20)) }));
   }
   if (report.uniqueConflicts.length > 0) {
-    lines.push('UNIQUE 冲突去重（workout_plans 保留最小 id）' + String(report.uniqueConflicts.length) + ' 行，见回滚说明：');
+    lines.push(m('skill-calorie.migrate-migrate.c012', { p0: String(String(report.uniqueConflicts.length)) }));
     for (const u of report.uniqueConflicts.slice(0, 20)) {
       lines.push('  key ' + u.key + ' drop id ' + String(u.droppedId) + ' from ' + u.fromTable);
     }
   }
   for (const w of report.warnings) lines.push('WARN: ' + w);
-  lines.push(report.ok ? 'MIGRATE OK（幂等可重跑：同 src/dst 重跑行数一致）' : 'MIGRATE FAIL（已回滚，见 MIGRATE_ROLLBACK.md）');
+  lines.push(report.ok ? m('skill-calorie.migrate-migrate.c013') : m('skill-calorie.migrate-migrate.c014'));
   return lines.join('\n');
 }

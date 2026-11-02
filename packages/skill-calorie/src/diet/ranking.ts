@@ -17,13 +17,14 @@ import { buildAllRankings, buildFoodRankingPlate } from './rankingPlate.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { commandLine } from '../shared/writeParts.js';
 import { defaultRange, fail, nums, optNum, optStr } from '../shared/params.js';
+import { m } from '../entries/index.js';
 
 /** `calorie.view.ranking` · 食品排行。 */
 export function viewRanking(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
   const { start, end } = defaultRange(db, params);
   const category = optStr(params, 'category');
   const topN = optNum(params, 'topN') ?? 5;
-  if (!Number.isInteger(topN) || (topN as number) < 1 || (topN as number) > 50) fail(2, 'topN 须为 1..50 整数');
+  if (!Number.isInteger(topN) || (topN as number) < 1 || (topN as number) > 50) fail(2, m('skill-calorie.diet-ranking.c001'));
   const cmd = commandLine('calorie.view.ranking', params);
   if (category) {
     const one = buildFoodRankingPlate(db, start, end, category, topN as number);

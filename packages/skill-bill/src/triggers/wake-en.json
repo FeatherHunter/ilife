@@ -1,0 +1,20 @@
+{
+  "entries": [
+    {
+      "zh": "饼干记账 HELP",
+      "en": "bill help"
+    },
+    {
+      "zh": "记一笔",
+      "en": "log an expense"
+    },
+    {
+      "zh": "查今天",
+      "en": "today spending"
+    },
+    {
+      "zh": "查账本",
+      "en": "bills"
+    }
+  ]
+}

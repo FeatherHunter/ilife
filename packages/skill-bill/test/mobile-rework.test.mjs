@@ -23,7 +23,7 @@ describe('t407 移动端返工 · 回执引导句分行', () => {
   it('typeBadge 按句分行各出一行口径', async () => {
     const { typeBadge } = await import('../dist/write/typeBadge.js');
     const { nextStepOf } = await import('../dist/write/userWording.js');
-    const html = typeBadge({ kind: 'expense', status: 'ok', state: '写库成功', next: nextStepOf({ page: 'receipt', exit: true }) });
+    const html = typeBadge({ kind: 'expense', status: 'ok', state: 'saved', next: nextStepOf({ page: 'receipt', exit: true }) });
     const n = (html.match(/ilife-block-caliber/g) ?? []).length;
     assert.ok(n >= 2, '下一步动作须分行出两行口径，实得 ' + n);
   });

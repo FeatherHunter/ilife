@@ -17,6 +17,7 @@ import { dbFileOf, gifsDirOf, htmlDirOf, photosDirOf, resolveDbDir, resolveDbFil
 import { buildCalorieHealthReport } from '../health.js';
 import { XUNJI_CATALOG } from '../xunji/index.js';
 import { fail } from '../shared/params.js';
+import { m } from '../entries/index.js';
 
 /** 三个 key 的唯一定义地（插件侧镜像同值，见 `packages/plugin-calorie/src/bridge.ts`）。 */
 export const CONFIG_KEYS = {
@@ -137,7 +138,7 @@ export function runConfigKey(key: string, params: Record<string, unknown>): stri
   }
   if (key === CONFIG_KEYS.write) {
     const raw = params['values'];
-    if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) fail(2, '缺参数 values（须为对象）');
+    if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) fail(2, m('skill-calorie.cli-config.c001'));
     const current = withHumanError(() => loadCalorieConfig()).values as unknown as ConfigRecord;
     const merged = mergeValues(current, raw as ConfigRecord);
     const r = withHumanError(() => saveCalorieConfig(merged));

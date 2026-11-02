@@ -18,16 +18,17 @@ import { DB_FILENAME } from '../paths.js';
 import { nowStamp } from '../render/receipt.js';
 import type { DataTextInput } from 'base-paint';
 import type { SourceStatsView } from './nutritionPort.js';
+import { m } from '../entries/index.js';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；测试钉死一致）。 */
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
 
 /** head 标题（与 `diet/` 其余件的域口径一致）。 */
-const DOC_TITLE = '卡路里饮食';
+const DOC_TITLE = (): string => m('skill-calorie.diet-sourceStatsDocs.c024');
 
 /** 类型徽章（`t425` §五 第 1 行右槽）：本类四页同属食品库。 */
-const BADGE = '食品库';
+const BADGE = (): string => m('skill-calorie.diet-sourceStatsDocs.c025');
 
 /** 页内一张卡（`id` 即页内导航的锚点，导航项按同一份清单生成）。 */
 interface Card { readonly id: string; readonly label: string; readonly html: string }
@@ -42,11 +43,11 @@ export function buildSourceStatsDoc(v: SourceStatsView, command: string): string
   const cards: Card[] = [
     {
       id: 'sec-count',
-      label: '读数',
+      label: m('skill-calorie.diet-sourceStatsDocs.c001'),
       html: renderKpiGrid([
-        { label: '来源数', value: String(v.sources), unit: '个' },
+        { label: m('skill-calorie.diet-sourceStatsDocs.c002'), value: String(v.sources), unit: m('skill-calorie.diet-sourceStatsDocs.c003') },
         /* #496 · 原写 `nutrition_products（下架已排除）`——库表名上屏（审查件第 49 条）。 */
-        { label: '食品总数', value: String(v.total), unit: '条', detail: '数据范围：全部在架食品' },
+        { label: m('skill-calorie.diet-sourceStatsDocs.c004'), value: String(v.total), unit: m('skill-calorie.diet-sourceStatsDocs.c005'), detail: m('skill-calorie.diet-sourceStatsDocs.c006') },
       ]),
     },
   ];
@@ -54,10 +55,10 @@ export function buildSourceStatsDoc(v: SourceStatsView, command: string): string
   if (v.items.length > 0) {
     cards.push({
       id: 'sec-chart',
-      label: '按来源分组',
+      label: m('skill-calorie.diet-sourceStatsDocs.c007'),
       html: renderChartBlock({
         kind: 'bar',
-        title: '按来源分组',
+        title: m('skill-calorie.diet-sourceStatsDocs.c008'),
         input: { items: v.items.map((it) => ({ label: it.source, value: it.count })) },
       }),
     });
@@ -65,19 +66,19 @@ export function buildSourceStatsDoc(v: SourceStatsView, command: string): string
   }
   cards.push({
     id: 'sec-table',
-    label: '来源明细',
+    label: m('skill-calorie.diet-sourceStatsDocs.c009'),
     html: renderDataTable({
       columns: [
-        { key: 'source', label: '来源' },
-        { key: 'count', label: '条数', align: 'right' },
-        { key: 'pct', label: '占比%', align: 'right' },
+        { key: 'source', label: m('skill-calorie.diet-sourceStatsDocs.c010') },
+        { key: 'count', label: m('skill-calorie.diet-sourceStatsDocs.c011'), align: 'right' },
+        { key: 'pct', label: m('skill-calorie.diet-sourceStatsDocs.c012'), align: 'right' },
       ],
       rows: v.items.map((it) => ({ source: it.source, count: it.count, pct: it.pct })),
       /* #581 · 表题只留题名：下架口径与「未知」口径各走一条口径行（#496 原 caption 里的源码词早已改成人话）。 */
-      caption: '按来源分组统计',
-      emptyText: '库内无食品记录',
-    }) + renderCaliberLine('已下架的食品不算进这张表。')
-      + renderCaliberLine('没填来源的归到「未知」。'),
+      caption: m('skill-calorie.diet-sourceStatsDocs.c013'),
+      emptyText: m('skill-calorie.diet-sourceStatsDocs.c014'),
+    }) + renderCaliberLine(m('skill-calorie.diet-sourceStatsDocs.c015'))
+      + renderCaliberLine(m('skill-calorie.diet-sourceStatsDocs.c016')),
   });
   const envelope: DataTextInput['envelope'] = {
     version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.source-stats',
@@ -89,27 +90,27 @@ export function buildSourceStatsDoc(v: SourceStatsView, command: string): string
     renderTocBlock({ items: cards.map((c) => ({ id: c.id, text: c.label })) }),
     cards.map(shell).join(''),
     /* 口径说明行（§五 第 13 行）：占比怎么算的，页面上说清（表题的「按来源统计」不重复一遍）。 */
-    renderCaliberLine('占比是这一来源的条数 ÷ 在架食品总数，保留一位小数。'),
+    renderCaliberLine(m('skill-calorie.diet-sourceStatsDocs.c017')),
     copyArea({
       data: { envelope },
       log: {
         envelope,
         copyLog: copyLog({
-          command, source: DB_FILENAME + ' ｜ 食品库（在架食品）', actionAt: nowStamp(), version: DOC_VERSION,
+          command, source: m('skill-calorie.diet-sourceStatsDocs.c018', { p0: String(DB_FILENAME) }), actionAt: nowStamp(), version: DOC_VERSION,
         }),
       },
     }),
     /* 来源脚注一行（§五 第 15 行；裁定 2-补：走公共层普通小字行，不走 `notice` 深底块）。 */
-    renderCaliberLine('📊 数据来源：本机食品库 · 在架食品共 ' + v.total + ' 条'),
+    renderCaliberLine(m('skill-calorie.diet-sourceStatsDocs.c019', { p0: String(v.total) })),
   ].join('');
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '📦 食品来源统计',
+    docTitle: DOC_TITLE(),
+    title: m('skill-calorie.diet-sourceStatsDocs.c020'),
     pageUi: true,
     eyebrow: '',
     subtitle: null,
-    metaLeft: '看食品来源统计',
-    badge: BADGE,
+    metaLeft: m('skill-calorie.diet-sourceStatsDocs.c021'),
+    badge: BADGE(),
     summary: sourceStatsSummary(v),
     content: body,
     charts,
@@ -119,7 +120,12 @@ export function buildSourceStatsDoc(v: SourceStatsView, command: string): string
 /** 结论句（§五 第 3 行，句内含本页读数）：来源数与最多的一条各自报数。 */
 function sourceStatsSummary(v: SourceStatsView): string {
   const top = v.items[0];
-  const head = '食品库 ' + v.total + ' 条在架食品来自 ' + v.sources + ' 个来源';
+  const head = m('skill-calorie.diet-sourceStatsDocs.c022', { p0: String(v.total), p1: String(v.sources) });
   if (top === undefined) return head + '。';
-  return head + '，最多的是「' + top.source + '」（' + top.count + ' 条，' + top.pct + '%）。';
+  return m('skill-calorie.diet-sourceStatsDocs.c023', {
+    p0: String(head),
+    p1: String(top.source),
+    p2: String(top.count),
+    p3: String(top.pct),
+  });
 }

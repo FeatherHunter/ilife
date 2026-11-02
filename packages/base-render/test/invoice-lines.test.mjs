@@ -79,8 +79,8 @@ describe('invoice-lines ① 渲染契约（形态 A：逐行分解 ＋ 收口）
 
   it('**每行读得出「为什么」**：减项点「为什么减」、加项点「为什么加」；说不出原因一律拒', () => {
     const html = renderInvoiceLines(SAMPLE);
-    assert.ok(html.includes('<b>' + INVOICE_LINES_WHY_CUT + '</b>满 100 减 12，已达标'));
-    assert.ok(html.includes('<b>' + INVOICE_LINES_WHY_ADD + '</b>拆成两单发'));
+    assert.ok(html.includes('<b>' + INVOICE_LINES_WHY_CUT() + '</b>满 100 减 12，已达标'));
+    assert.ok(html.includes('<b>' + INVOICE_LINES_WHY_ADD() + '</b>拆成两单发'));
     const noWhy = { lines: [{ label: '原价', amount: 10, kind: 'base' }, { label: '券', amount: 2, kind: 'cut' }] };
     assert.equal(throwsBlocks(() => renderInvoiceLines(noWhy)), true);
   });

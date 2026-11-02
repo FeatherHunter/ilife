@@ -26,6 +26,7 @@ import { daysIn } from '../shared/params.js';
 import { NUTRITION_RANGE } from '../shared/nutritionRange.js';
 import type { NutritionRange } from '../shared/nutritionRange.js';
 import { CalorieRenderError } from '../render/errors.js';
+import { m } from '../entries/index.js';
 
 function assertRange(start: string, end: string): void {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(start) || !/^\d{4}-\d{2}-\d{2}$/.test(end)) {
@@ -157,7 +158,7 @@ export interface NutritionDetailView {
  *  #511 · 单位从 `g`／`mg` 改成「克」／「毫克」（`.scratch/t155o/text-review-P0.md` 第 53 条：
  *  营养素深度那张表整列是 `0g`／`540mg`／`77.1mg/天`，读者要认识英文缩写才读得懂）。
  *  单位是上屏字，取数侧跟着读侧一起改——`nutritionPortDocs` 直接拼 `it.unit`／`it.good`，不留两处口径。 */
-const DRI = [
+const dri = () => [
   { key: 'fiber', label: '膳食纤维', unit: '克', target: 25, good: '≥25 克/天' },
   { key: 'sodium', label: '钠', unit: '毫克', target: 2000, good: '≤2000 毫克/天' },
   { key: 'sugar', label: '糖', unit: '克', target: 50, good: '≤50 克/天' },
@@ -201,7 +202,7 @@ export function buildNutritionDetailView(db: DatabaseSync, start: string, end: s
   }
   const days = Math.max(1, daysIn({ start, end }));
   // 命中 0 亦渲染（缺数据盒明示，不编数）；连一餐都没有才 missing（上游已拦）。
-  const items: NutrientItem[] = DRI.map((spec) => {
+  const items: NutrientItem[] = dri().map((spec) => {
     const val = round1(totals[spec.key as keyof typeof totals]);
     const avg = round1(val / days);
     const pct = spec.target > 0 ? round1((avg / spec.target) * 100) : 0;
@@ -236,7 +237,7 @@ export function buildSourceStatsView(db: DatabaseSync): SourceStatsView {
   if (total === 0) throw new CalorieRenderError('missing-data', '食品库为空（无来源统计）');
   // 空串／NULL 来源归“未知”（沿旧 `src or '未知'`）；占比保留 1 位小数（沿旧 round(cnt/total*100, 1)）。
   const items = stats.map((s) => ({
-    source: s.source === null || s.source === undefined || String(s.source) === '' ? '未知' : String(s.source),
+    source: s.source === null || s.source === undefined || String(s.source) === '' ? m('skill-calorie.diet-nutritionPort.c001') : String(s.source),
     count: s.count,
     pct: total > 0 ? Math.round((s.count / total) * 1000) / 10 : 0,
   }));

@@ -20,6 +20,7 @@
  */
 
 /** 本件的类名根：全部槽位类名都是 `MULTI_CHECKS_CLASS + '-' + 槽名`。 */
+import { m } from '../../entries/index.js';
 export const MULTI_CHECKS_CLASS = 'ilife-block-multi-checks';
 
 /** 槽位闭集（标记契约的一部分：`render.ts`、`style.ts` 与判据都用这里的名字拼类名）。 */
@@ -119,13 +120,13 @@ export const MULTI_CHECKS_EVENT_CHANGE = 'ilife:checks-change';
 export const MULTI_CHECKS_EVENT_ACTION = 'ilife:checks-action';
 
 /** 全选那一枚的缺省字。 */
-export const MULTI_CHECKS_ALL_TEXT = '全选';
+export function MULTI_CHECKS_ALL_TEXT(): string { return m('base-render.components-multi-checks-attrs.c001'); }
 /** 加载态那句话说什么是缺省的（**不带省略号**）。 */
-export const MULTI_CHECKS_LOADING_TEXT = '正在读取';
+export function MULTI_CHECKS_LOADING_TEXT(): string { return m('base-render.components-multi-checks-attrs.c002'); }
 /** 空态的缺省写法（设计过的空态，不是留白）。 */
-export const MULTI_CHECKS_EMPTY_TEXT = '没有可挑的条目';
+export function MULTI_CHECKS_EMPTY_TEXT(): string { return m('base-render.components-multi-checks-attrs.c003'); }
 /** 一条都没勾时，底下那句读数（也是「按钮为什么按不动」的那句说明）。 */
-export const MULTI_CHECKS_NONE_TEXT = '一条都没勾';
+export function MULTI_CHECKS_NONE_TEXT(): string { return m('base-render.components-multi-checks-attrs.c004'); }
 
 /** 一行。`id`／`title` 必填：`id` 是机器键（同页唯一），`title` 是屏上主字。 */
 export interface MultiChecksRow {

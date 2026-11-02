@@ -34,15 +34,17 @@ import { buildDataText, buildLogText, renderActionBar } from 'base-paint';
 import type { CopyLogFields, DataTextInput, SerializableEnvelope } from 'base-paint';
 import { createEnvelope } from 'base-link-core';
 import { CHEF_CONFIG_DEFAULTS } from '../config.js';
+import { m } from '../entries/index.js';
 
 /** 技能名（包名即技能名；与 `render/envelope.ts` 的 `buildChefEnvelope` 同字面）。 */
 const CHEF_SKILL = 'chef';
-/** 日志第 2 段（AI 思考链）：本包页面一律由本地命令渲染（含产物驱动器），不落 `(未知)` 占位。 */
-const LOG_THINKING = '本页由本地命令渲染，无 AI 链';
+/** 日志第 2 段（AI 思考链）：本包页面一律由本地命令渲染（含产物驱动器），不落 `(未知)` 占位。
+ *  **按需构建**：`m()` 只能在函数体内调用，故不做模块级常量。 */
+function logThinking(): string { return m('skill-chef.render-copyArea.c003'); }
 /** 日志第 6 段（异常）：正常产出即「无」。 */
-const LOG_EXCEPTION = '无';
+function logException(): string { return m('skill-chef.render-copyArea.c004'); }
 /** 复制区空态缺省句（数据与日志两样全没给时出这一句、不出按钮）。 */
-const COPY_EMPTY_TEXT = '本页没有可复制的数据';
+function copyEmptyText(): string { return m('skill-chef.render-copyArea.c005'); }
 /** 三格式菜单里三项的用途提示：本技能一律留空（顺序＝`COPY_FORMATS`）。
  *
  * 传空串而非撤掉 `hints` 位：公共层的三格式菜单对空串不渲染那行小字
@@ -86,7 +88,7 @@ interface ChefCopyAreaInput {
   /** 复制日志的过程证据（第 2–6 段入参）。**不给也出「复制日志」**——退到 `{ command: data.key }`
    *  （见 `chefCopyArea` 头注）；给了就按给的填，未给的项照 `buildLogText` 的 `(未知)` 口径。 */
   readonly log?: ChefCopyLog;
-  /** 数据与日志两样全没给时的那句话（缺省也有一句，见 `COPY_EMPTY_TEXT`）。 */
+  /** 数据与日志两样全没给时的那句话（缺省也有一句，见 `copyEmptyText()`）。 */
   readonly emptyText?: string;
 }
 
@@ -171,7 +173,7 @@ export function chefCopyArea(input: ChefCopyAreaInput): string {
     });
   }
   return renderEmptyBlock({
-    text: input.emptyText ?? COPY_EMPTY_TEXT,
+    text: input.emptyText ?? copyEmptyText(),
   });
 }
 
@@ -182,10 +184,10 @@ export function chefCopyLog(input: ChefCopyLog): CopyLogFields {
   const actionAt = input.actionAt ?? '';
   const version = input.version ?? '';
   return {
-    thinking: LOG_THINKING,
+    thinking: logThinking(),
     dataStructure: DB_NAME + (input.source === undefined || input.source === '' ? '' : ' ｜ ' + input.source),
     callChain: m5Line === '' ? command : (command === '' ? m5Line : command + ' ｜ ' + m5Line),
-    timestamp: version === '' ? actionAt : (actionAt === '' ? '版本 ' + version : actionAt + ' · 版本 ' + version),
-    exception: LOG_EXCEPTION,
+    timestamp: version === '' ? actionAt : (actionAt === '' ? m('skill-chef.render-copyArea.c001', { p0: String(version) }) : m('skill-chef.render-copyArea.c002', { p0: String(actionAt), p1: String(version) })),
+    exception: logException(),
   };
 }

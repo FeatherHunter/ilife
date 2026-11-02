@@ -24,13 +24,14 @@ import { assembleDocPage } from '../shared/docPage.js';
 import { humanText } from '../render/trendDocs.js';
 import type { GoalRecommend } from './goalPlates.js';
 import { cardOf, section, tailOf } from './resultDocs.js';
+import { m } from '../entries/index.js';
 
 /** head 的 `<title>`：与目标域各页同值（`DOC_TITLE` 口径冻结对齐 `cli/keys.ts` 的域标题）。 */
-const DOC_TITLE = '卡路里·目标管理';
+
 /** 本页命令键：与路由层那条 exec 行逐字同键（复制日志第 4 段要能照抄重跑）。 */
 const CMD_KEY = 'calorie.view.goal-recommend';
 /** 数据来源（复制日志第 3 段后半）：本页只读这三处；#561 起正文不再出页脚来源行，日志里仍留得住。 */
-const COPY_SOURCE = '档案＋体重记录＋营养目标表';
+const copySource = (): string => m('skill-calorie.goal-goalRecommendDoc.c073');
 
 /** 自洽差值带符号（`+3`／`-3` 一眼看得出方向；差 0 不写符号）。 */
 function signed(v: number): string {
@@ -40,10 +41,17 @@ function signed(v: number): string {
 /** 结论句（§五 第 3 行）：句内只摆本页读得出来的数，不编新日期、不编比率。 */
 function recommendSummary(g: GoalRecommend): string {
   const r = g.recommend;
-  return '结论：' + r.profileLabel + '档按体重 ' + r.basis.weightKg + ' kg 算出每日热量目标 ' + r.calorieGoal
-    + ' 卡（蛋白 ' + r.proteinGoal + ' g／碳水 ' + r.carbsGoal + ' g／脂肪 ' + r.fatGoal + ' g），饮水推荐 '
-    + r.waterGoal + ' ml，宏量折算 ' + r.selfCheck.calculatedKcal + ' 卡、与热量目标差 '
-    + signed(r.selfCheck.diffKcal) + ' 卡。';
+  return m('skill-calorie.goal-goalRecommendDoc.c001', {
+    p0: String(r.profileLabel),
+    p1: String(r.basis.weightKg),
+    p2: String(r.calorieGoal),
+    p3: String(r.proteinGoal),
+    p4: String(r.carbsGoal),
+    p5: String(r.fatGoal),
+    p6: String(r.waterGoal),
+    p7: String(r.selfCheck.calculatedKcal),
+    p8: String(signed(r.selfCheck.diffKcal)),
+  });
 }
 
 /** 目标推荐整页：读数卡 ＋ 算法口径表 ＋ 计算依据（数据层原句归一后逐行）＋ 口径与复制尾。
@@ -55,55 +63,55 @@ export function buildGoalRecommendDoc(g: GoalRecommend, metrics: Record<string, 
   const consistent = Math.abs(sc.diffKcal) <= 50;
   const body = [
     renderTocBlock({ items: [
-      { id: 'sec-readings', text: '读数' },
-      { id: 'sec-calc', text: '算法口径' },
-      { id: 'sec-basis', text: '计算依据' },
+      { id: 'sec-readings', text: m('skill-calorie.goal-goalRecommendDoc.c002') },
+      { id: 'sec-calc', text: m('skill-calorie.goal-goalRecommendDoc.c003') },
+      { id: 'sec-basis', text: m('skill-calorie.goal-goalRecommendDoc.c004') },
     ] }),
     section('sec-readings', renderKpiGrid([
-      { label: '方案', value: r.profileLabel, detail: '按档案与目标方向算' },
-      cardOf('热量目标', r.calorieGoal, '卡', '每周 ' + r.weeklyRateKg + ' kg'),
-      cardOf('蛋白目标', r.proteinGoal, 'g'),
-      cardOf('碳水目标', r.carbsGoal, 'g'),
-      cardOf('脂肪目标', r.fatGoal, 'g'),
-      cardOf('饮水目标', r.waterGoal, 'ml', g.water.basis),
+      { label: m('skill-calorie.goal-goalRecommendDoc.c005'), value: r.profileLabel, detail: m('skill-calorie.goal-goalRecommendDoc.c006') },
+      cardOf(m('skill-calorie.goal-goalRecommendDoc.c007'), r.calorieGoal, m('skill-calorie.goal-goalRecommendDoc.c008'), m('skill-calorie.goal-goalRecommendDoc.c074', { p0: String(r.weeklyRateKg) })),
+      cardOf(m('skill-calorie.goal-goalRecommendDoc.c009'), r.proteinGoal, 'g'),
+      cardOf(m('skill-calorie.goal-goalRecommendDoc.c010'), r.carbsGoal, 'g'),
+      cardOf(m('skill-calorie.goal-goalRecommendDoc.c011'), r.fatGoal, 'g'),
+      cardOf(m('skill-calorie.goal-goalRecommendDoc.c012'), r.waterGoal, 'ml', g.water.basis),
     ])),
     section('sec-calc', renderDataTable({
       columns: [
-        { key: 'item', label: '项目' },
-        { key: 'reading', label: '读数', align: 'right' },
-        { key: 'note', label: '说明' },
+        { key: 'item', label: m('skill-calorie.goal-goalRecommendDoc.c013') },
+        { key: 'reading', label: m('skill-calorie.goal-goalRecommendDoc.c014'), align: 'right' },
+        { key: 'note', label: m('skill-calorie.goal-goalRecommendDoc.c015') },
       ],
       rows: [
-        { item: '基础代谢', reading: r.bmr + ' 卡', note: '按身高／体重／年龄／性别算' },
-        { item: '每日基准消耗', reading: r.tdee + ' 卡', note: '基础代谢 × 活动量系数' },
-        { item: '体重', reading: r.basis.weightKg + ' kg', note: '取最新一条体重记录' },
-        { item: '宏量折算热量', reading: sc.calculatedKcal + ' 卡', note: '蛋白×4 ＋ 碳水×4 ＋ 脂肪×9' },
-        { item: '与热量目标差', reading: signed(sc.diffKcal) + ' 卡', note: consistent ? '50 卡以内算自洽' : '超过 50 卡，建议复核' },
+        { item: m('skill-calorie.goal-goalRecommendDoc.c016'), reading: m('skill-calorie.goal-goalRecommendDoc.c017', { p0: String(r.bmr) }), note: m('skill-calorie.goal-goalRecommendDoc.c018') },
+        { item: m('skill-calorie.goal-goalRecommendDoc.c019'), reading: m('skill-calorie.goal-goalRecommendDoc.c020', { p0: String(r.tdee) }), note: m('skill-calorie.goal-goalRecommendDoc.c021') },
+        { item: m('skill-calorie.goal-goalRecommendDoc.c022'), reading: r.basis.weightKg + ' kg', note: m('skill-calorie.goal-goalRecommendDoc.c023') },
+        { item: m('skill-calorie.goal-goalRecommendDoc.c024'), reading: m('skill-calorie.goal-goalRecommendDoc.c025', { p0: String(sc.calculatedKcal) }), note: m('skill-calorie.goal-goalRecommendDoc.c026') },
+        { item: m('skill-calorie.goal-goalRecommendDoc.c027'), reading: m('skill-calorie.goal-goalRecommendDoc.c028', { p0: String(signed(sc.diffKcal)) }), note: consistent ? m('skill-calorie.goal-goalRecommendDoc.c029') : m('skill-calorie.goal-goalRecommendDoc.c030') },
       ],
-      caption: '这一版推荐是按什么算出来的',
-      emptyText: '暂无口径可印',
+      caption: m('skill-calorie.goal-goalRecommendDoc.c031'),
+      emptyText: m('skill-calorie.goal-goalRecommendDoc.c032'),
     })),
     /* 计算依据＝数据层 `planReasons` 原句，上屏归一（`humanText`：英文缩写换人话，见 #160）后逐行；
        同族先例＝`src/goal/receipt.ts:282`（`r.planReasons.map(renderCaliberLine)`）。 */
     section('sec-basis', renderDisclosure({
-      title: '计算依据',
+      title: m('skill-calorie.goal-goalRecommendDoc.c033'),
       contentHtml: r.planReasons.map((s) => renderCaliberLine(humanText(s))).join(''),
       open: true,
     })),
-    tailOf(CMD_KEY, metrics, command, COPY_SOURCE, [
-      '体重取最新一条记录，身高／年龄／性别取自档案；缺一样先补档案与体重记录，再看这一页。',
-      '这一页只算不写：采纳要走「定营养目标」「定饮水目标」这类写命令，写前还会出一张预检页。',
-      '宏量折算按蛋白 4 卡／碳水 4 卡／脂肪 9 卡，差值在 50 卡以内算自洽。',
+    tailOf(CMD_KEY, metrics, command, copySource(), [
+      m('skill-calorie.goal-goalRecommendDoc.c034'),
+      m('skill-calorie.goal-goalRecommendDoc.c035'),
+      m('skill-calorie.goal-goalRecommendDoc.c036'),
     ]),
   ].join('');
   return assembleDocPage({
-    docTitle: DOC_TITLE,
+    docTitle: m('skill-calorie.goal-goalRecommendDoc.c072'),
     /* #566 口径：H1 只留页面名；方案名在下面「方案」那张卡上，不在标题里复读。 */
-    title: '🎯 目标推荐',
+    title: m('skill-calorie.goal-goalRecommendDoc.c037'),
     eyebrow: '',
     subtitle: null,
-    metaLeft: '看目标推荐 · 目标管理',
-    badge: '目标推荐',
+    metaLeft: m('skill-calorie.goal-goalRecommendDoc.c038'),
+    badge: m('skill-calorie.goal-goalRecommendDoc.c039'),
     summary: recommendSummary(g),
     content: body,
     charts: false,

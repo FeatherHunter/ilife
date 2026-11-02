@@ -7,6 +7,7 @@
  */
 import { esc } from '../shared/escape.js';
 import { assertPlainObject, badInput, optExtraClass, optText, reqText } from '../shared/validate.js';
+import { m } from '../../entries/index.js';
 
 /** 本件的类名根（**常量只住这里**：样式与运行时都从这里取，不各写一份）。 */
 export const LOOKUP_INDEX_CLASS = 'ilife-block-lookup-index';
@@ -19,7 +20,7 @@ export const LOOKUP_INDEX_BOUND_ATTR = 'data-lookup-bound';
 /** 运行时标记（文档根上只绑一次）。 */
 export const LOOKUP_INDEX_RUNTIME_ATTR = 'data-lookup-runtime';
 /** 别名标黄规则（别名行标黄、且不混入总数）。 */
-export const LOOKUP_INDEX_ALIAS_MARK = '别名标黄、不混数';
+export function LOOKUP_INDEX_ALIAS_MARK(): string { return m('base-render.components-lookup-index-render.c001'); }
 /** 形态闭集（**#1122 追加**）：`flat`＝常显（既有默认档，形状一字不动）／`fold`＝折叠档（`<details>` 默认折叠，组头带计数胶囊与箭头）。 */
 export const LOOKUP_INDEX_FORMS = ['flat', 'fold'] as const;
 export type LookupIndexForm = (typeof LOOKUP_INDEX_FORMS)[number];
@@ -70,7 +71,7 @@ const GROUP_KEYS: readonly string[] = ['label', 'rows'];
 const ROW_KEYS: readonly string[] = ['wake', 'goto', 'alias'];
 
 /** 总数量级上限：判据是「两笔同量级的读数相加会不会溢出」——`1e308` 是有限数，
- *  可它与任何同量级的读数相加就成 `Infinity`，屏上写出 `1e+308` 这种读不出来的数。 */
+ *  可它与任何同量级的读数相加就成 `Infinity`，屏上写出 1e+308 这种读不出来的数。 */
 const LOOKUP_INDEX_MAGNITUDE_MAX = Number.MAX_VALUE;
 
 function assertKeys(value: object, allowed: readonly string[], field: string): void {
@@ -125,34 +126,34 @@ export function normalizeLookupIndex(input: unknown): LookupIndexModel {
   const total = raw.total;
   if (typeof total !== 'number' || !Number.isFinite(total) || total < 0) badInput('renderLookupIndex: input.total 必须是非负有限数');
   if (Math.abs(total) + Math.abs(total) > LOOKUP_INDEX_MAGNITUDE_MAX) {
-    badInput('renderLookupIndex: input.total 的量级太大：两笔同量级的读数相加就溢出成 `Infinity`'
-      + '（屏上会写出 `1e+308` 这类读不出来的数）');
+    badInput('renderLookupIndex: input.total 的量级太大：两笔同量级的读数相加就溢出成 Infinity'
+      + '（屏上会写出 1e+308 这类读不出来的数）');
   }
   return {
     anchors: reqAnchors(raw.anchors),
     groups: reqGroups(raw.groups),
     total,
     countNote: optText(raw.countNote, 'renderLookupIndex: input.countNote'),
-    aliasMark: optText(raw.aliasMark, 'renderLookupIndex: input.aliasMark') ?? LOOKUP_INDEX_ALIAS_MARK,
+    aliasMark: optText(raw.aliasMark, 'renderLookupIndex: input.aliasMark') ?? LOOKUP_INDEX_ALIAS_MARK(),
     form: reqForm(raw.form),
     extraClass: optExtraClass(raw.extraClass, 'renderLookupIndex: input.extraClass'),
   };
 }
 /** 渲染速查索引（纯函数：同样入参恒产同样字节；转义只经 `shared/escape.ts`）。 */
 export function renderLookupIndex(input: unknown): string {
-  const m = normalizeLookupIndex(input);
-  const extra = m.extraClass === undefined ? '' : ' ' + m.extraClass;
+  const model = normalizeLookupIndex(input);
+  const extra = model.extraClass === undefined ? '' : ' ' + model.extraClass;
   /* 折叠档在根上也挂一枚 `is-fold`：判地那一纸是**普通块流**（组间只靠 `.qgroup{margin-top:14px}`，
      没有常显档那 12px 栅格间距）⇒ 折叠档的根改 `display:block`，外边距与判地一样自己塌陷。 */
-  const parts: string[] = ['<div class="' + LOOKUP_INDEX_CLASS + (m.form === 'fold' ? ' is-fold' : '') + extra + '">'];
+  const parts: string[] = ['<div class="' + LOOKUP_INDEX_CLASS + (model.form === 'fold' ? ' is-fold' : '') + extra + '">'];
   parts.push('<nav class="' + lookupIndexSlot('nav') + '" aria-label="速查锚点">');
-  for (const a of m.anchors) {
+  for (const a of model.anchors) {
     parts.push('<a class="' + lookupIndexSlot('anchor') + '" href="#' + esc(a.id) + '" ' + LOOKUP_INDEX_ANCHOR_ATTR + '="' + esc(a.id) + '">' + esc(a.label) + '</a>');
   }
   parts.push('</nav>');
-  for (const g of m.groups) {
+  for (const g of model.groups) {
     const gid = 'lookup-' + g.label;
-    if (m.form === 'fold') {
+    if (model.form === 'fold') {
       /* **#1122 折叠档**（判地 `proto/setup-help/h02-速查表-v2.4.html` 的 `<details class="qgroup">`）：
          组＝`<details>`（**不写 `open`** ⇒ 默认折叠）；组头＝`<summary>`（计数胶囊那一格由 `count` 槽出，
          箭头是样式的 `::after`）；行装进 `<ul>`（判地 `.qrows`）。`id` 与 `data-lookup-group` 与常显档
@@ -178,8 +179,9 @@ export function renderLookupIndex(input: unknown): string {
     }
     parts.push('</section>');
   }
-  parts.push('<p class="' + lookupIndexSlot('note') + '">' + esc(m.aliasMark) + ' · 共 ' + String(m.total) + ' 条'
-    + (m.countNote === undefined ? '' : ' · ' + esc(m.countNote)) + '</p>');
+  const totalPart = m('base-render.components-lookup-index-render.c002', { p0: String(String(model.total)) });
+  parts.push('<p class="' + lookupIndexSlot('note') + '">' + esc(model.aliasMark) + totalPart
+    + (model.countNote === undefined ? '' : ' · ' + esc(model.countNote)) + '</p>');
   parts.push('</div>');
   return parts.join('');
 }

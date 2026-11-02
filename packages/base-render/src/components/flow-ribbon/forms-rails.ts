@@ -11,6 +11,8 @@
 import { FLOW_RIBBON_SEG_MIN_PCT } from './attrs.js';
 import { fmtAmount, fmtPct, type FlowRibbonReadout } from './fields.js';
 import type { FlowRibbonBase } from './forms.js';
+import { m } from '../../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** 构成轨里的一格。 */
 export interface FlowRibbonSeg {
@@ -75,13 +77,20 @@ export function railsModel(base: FlowRibbonBase, sources: readonly FlowRibbonRea
     sourceRows,
     useRows,
     /* 「进 ＝ 出」是结构事实（两边都是同一批流量的两种数法），所以这句是真算出来的，不是抄进来的。 */
-    hubEqText: '进 ' + fmtAmount(base.total) + ' ＝ 出 ' + fmtAmount(base.total) + ' ' + base.unit,
-    hubNetText: '净 +0 ' + base.unit,
-    sourceHead: '钱从哪来 · ' + String(sources.length) + ' 股',
-    useHead: '钱到哪去 · ' + String(uses.length) + ' 类',
+    hubEqText: m('base-render.components-flow-ribbon-forms-rails.c001', {
+      p0: String(fmtAmount(base.total)),
+      p1: String(fmtAmount(base.total)),
+      p2: String(base.unit),
+    }),
+    hubNetText: m('base-render.components-flow-ribbon-forms-rails.c002', { p0: String(base.unit) }),
+    sourceHead: m('base-render.components-flow-ribbon-forms-rails.c003', { p0: String(String(sources.length)) }),
+    useHead: m('base-render.components-flow-ribbon-forms-rails.c004', { p0: String(String(uses.length)) }),
     legend: [],
-    ariaLabel: '两条构成轨：上面是来源构成（' + sourceRows.map((s) => s.name + ' ' + s.shareText).join('、')
-      + '），下面是用途构成（' + useRows.map((u) => u.name + ' ' + u.shareText).join('、')
-      + '）；两条轨同一总额 ' + fmtAmount(base.total) + ' ' + base.unit + '（进 ＝ 出），故上下两轨的宽度可以横着比',
+    ariaLabel: m('base-render.components-flow-ribbon-forms-rails.c005', {
+      p0: String(listJoin(currentRenderLanguage(), sourceRows.map((s) => s.name + ' ' + s.shareText))),
+      p1: String(listJoin(currentRenderLanguage(), useRows.map((u) => u.name + ' ' + u.shareText))),
+      p2: String(fmtAmount(base.total)),
+      p3: String(base.unit),
+    }),
   };
 }

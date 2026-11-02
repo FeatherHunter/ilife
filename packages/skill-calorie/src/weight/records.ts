@@ -7,13 +7,14 @@ import type { DatabaseSync } from 'node:sqlite';
 import type { SQLInputValue } from '../fetch/db.js';
 import { FetchError } from '../fetch/errors.js';
 import { timeOfDayISO, todayISO } from '../shared/time.js';
+import { m } from '../entries/index.js';
 
 export const NOTE_TAGS = ['晨起空腹', '运动后', '睡前', '餐前', '餐后', '晨起', '空腹', '早起', '运动前', '生理期'];
 
 export function noteTag(note: string | null | undefined): string | null {
   if (!note) return null;
   for (const tag of NOTE_TAGS) if (note.includes(tag)) return tag;
-  return '其他';
+  return m('skill-calorie.weight-records.c001');
 }
 
 /* #717 批③·时钟归一：本件原先自己写着两份本地时钟（`todayStr`／`nowStr`）——现取共用位 `shared/time.js`。 */
@@ -107,7 +108,7 @@ export function getWeightHistory(db: DatabaseSync, opts: { days?: number; startD
     rows = db.prepare(
       'SELECT date, time, weight_kg, bmi, note FROM weight_log ORDER BY date DESC, time DESC LIMIT ?',
     ).all(days) as WeightHistory['rows'];
-    range = `最近${days}天`;
+    range = m('skill-calorie.weight-records.c002', { p0: String(days) });
   }
   if (!rows.length) throw new FetchError(`无体重记录（${range}）`);
   let change: WeightHistory['change'] = null;
@@ -211,17 +212,17 @@ export function batchLogWeight(db: DatabaseSync, items: BatchWeightItem[]): {
   for (const it of items) {
     const d = it.date;
     const kg = Number(it.kg);
-    if (!Number.isFinite(kg)) { failed++; out.push({ date: d, kg: it.kg, status: '失败', reason: '体重非数字' }); continue; }
-    if (kg <= 0) { failed++; out.push({ date: d, kg, status: '失败', reason: '体重必须为正数' }); continue; }
-    if (!d || Number.isNaN(Date.parse(d))) { failed++; out.push({ date: d, kg, status: '失败', reason: '日期格式错误' }); continue; }
+    if (!Number.isFinite(kg)) { failed++; out.push({ date: d, kg: it.kg, status: m('skill-calorie.weight-records.c003'), reason: m('skill-calorie.weight-records.c004') }); continue; }
+    if (kg <= 0) { failed++; out.push({ date: d, kg, status: m('skill-calorie.weight-records.c005'), reason: m('skill-calorie.weight-records.c006') }); continue; }
+    if (!d || Number.isNaN(Date.parse(d))) { failed++; out.push({ date: d, kg, status: m('skill-calorie.weight-records.c007'), reason: m('skill-calorie.weight-records.c008') }); continue; }
     const exist = db.prepare('SELECT weight_kg FROM weight_log WHERE date = ? ORDER BY time DESC LIMIT 1').get(d) as
       | { weight_kg: number } | undefined;
-    if (exist) { skipped++; out.push({ date: d, kg, status: '跳过', reason: `已有记录 ${exist.weight_kg}kg` }); continue; }
+    if (exist) { skipped++; out.push({ date: d, kg, status: m('skill-calorie.weight-records.c009'), reason: m('skill-calorie.weight-records.c010', { p0: String(exist.weight_kg) }) }); continue; }
     const bmi = heightCm ? bmiOf(kg, heightCm) : null;
     db.prepare('INSERT INTO weight_log (date, time, weight_kg, height_cm, bmi, note) VALUES (?, ?, ?, ?, ?, ?)').run(
       d, '08:00:00', kg, heightCm, bmi, '');
     wrote++;
-    out.push({ date: d, kg, status: '写入', reason: '' });
+    out.push({ date: d, kg, status: m('skill-calorie.weight-records.c011'), reason: '' });
   }
   return { wrote, skipped, failed, items: out };
 }

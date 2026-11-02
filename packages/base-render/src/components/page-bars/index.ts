@@ -24,11 +24,12 @@
  */
 
 /** 换行（仓库口径：不写字面换行转义，与 `blocks.ts`／`pageShapes.ts` 同）。 */
+import { m } from '../../entries/index.js';
 const LF = String.fromCharCode(10);
 
 /** 五字符转义表（与 `blocks.ts` 的 `esc` 逐字同口径，本件不引区块层内部件）。 */
 function esc(value: string): string {
-  return value.replace(/[&<>"']/g, (ch) => {
+  return value.replace(/[&<>\u0022\u0027]/g, (ch) => {
     if (ch === '&') return '&amp;';
     if (ch === '<') return '&lt;';
     if (ch === '>') return '&gt;';
@@ -190,8 +191,9 @@ export function renderEquationBar(input: EquationBarInput): string {
       + '<span class="ilife-block-equation-bar-label">' + esc(reqText(input.heading.label, 'renderEquationBar: input.heading.label')) + '</span>'
       + '<span class="ilife-block-equation-bar-value">' + esc(reqText(input.heading.value, 'renderEquationBar: input.heading.value')) + '</span>'
       + '</div>';
+  const totalWord = m('base-render.components-page-bars-index.c001');
   const totalCap = input.endLabels === true
-    ? '<span class="ilife-block-equation-bar-cap-item is-total">合计 ' + esc(String(total)) + '</span>'
+    ? '<span class="ilife-block-equation-bar-cap-item is-total">' + totalWord + esc(String(total)) + '</span>'
     : '';
   return '<div class="ilife-block-equation-bar' + (extra === undefined ? '' : ' ' + extra) + '">'
     + head

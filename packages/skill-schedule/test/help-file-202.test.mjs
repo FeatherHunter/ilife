@@ -45,7 +45,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { setupConfigTestBase } from '../../../test/helpers/config-test-base.mjs';
 import {
-  HELP_CONTACT, helpFileStem, HELP_FILE_TITLE, HELP_FILE_VERSION, HELP_INIT_SCENE_ID,
+  helpContact, helpFileStem, helpFileSkillName, helpFileTitle, HELP_FILE_VERSION, HELP_INIT_SCENE_ID,
   assertGroupsUsable, buildHelpFileData, renderHelpFileHtml,
 } from '../dist/help/helpFile.js';
 import { HELP_ASSETS, HELP_GROUPS } from '../dist/help/scenes/help-assets.js';
@@ -570,6 +570,11 @@ function runPage(html) {
     /* 模板的 Tab 点击处理里真会调 `window.scrollTo`／`pages.scrollTo`（点 Tab 才走到）：
        这里给个空实现，后来者点 Tab 时不会撞出一个与断言无关的 TypeError。 */
     scrollTo() {},
+    /* 共享壳（base-render HELP_SHELL_SUFFIX）在顶层给 ``window`` 挂了一个 scroll 监听
+       （#1272 起：弹层定位跟随滚动）。浏览器里 window 天生有它，桩里补上同形状的空实现；
+       缺了它整个运行时段会撞 ``TypeError: window.addEventListener is not a function`` 而全红。 */
+    addEventListener() {},
+    removeEventListener() {},
     setTimeout, clearTimeout, setInterval, clearInterval,
   };
   sandbox.window = sandbox;
@@ -627,7 +632,7 @@ describe('#202 作息管家 HELP 渲染接线', () => {
       assert.ok(html.includes('<meta name="viewport"'), '须带 viewport');
       assert.ok(html.includes('<style>') && html.includes('--blue:#007aff'), '须带样式（共享 CSS 已注入）');
       assert.ok(html.includes('</body>') && html.trimEnd().endsWith('</html>'), '须以 </html> 收');
-      assert.equal((html.match(/<title>([^<]*)<\/title>/) || [])[1], HELP_FILE_TITLE,
+      assert.equal((html.match(/<title>([^<]*)<\/title>/) || [])[1], helpFileTitle(),
         '文档标题＝title（已含技能名，不重复前缀）');
     });
 
@@ -638,7 +643,8 @@ describe('#202 作息管家 HELP 渲染接线', () => {
       assert.equal('meta_blocks' in back, false,
         '`meta_blocks` 整块不传（与其它技能 HELP 同构，不多自带功能模块）');
       assert.deepEqual(back.groups, HELP_GROUPS, 'groups 由内容资产直转（零改写）');
-      assert.deepEqual(back.contact, HELP_CONTACT);
+      assert.deepEqual(back.contact, helpContact());
+      assert.equal(back.skill_name, helpFileSkillName());
       assert.equal(back.version, HELP_FILE_VERSION);
       assert.equal(HELP_FILE_VERSION, '2.0', '技能数据世代（非 npm 包版本）');
       assert.equal(helpFileStem(), '作息管家_HELP', '文件名主体＝代码常量（#764 起 files.help 出配置表，落盘归 #203）');
@@ -736,7 +742,7 @@ describe('#202 作息管家 HELP 渲染接线', () => {
       for (const word of new Set(HELP_ASSETS.map((s) => s.wake_word))) {
         assert.ok(text.includes('<span class="chip">' + escHtml(word) + '</span>'), '缺唤醒词徽章：' + word);
       }
-      assert.ok(text.includes(HELP_FILE_TITLE), '顶部大标题应由载荷渲染');
+      assert.ok(text.includes(helpFileTitle()), '顶部大标题应由载荷渲染');
       assert.ok(text.includes(DERIVED.scenes + ' 场景'), '顶部计数应由载荷派生：' + DERIVED.scenes + ' 场景');
       assert.ok(text.includes('data-page="about"'), '关于页（联系作者／版本）应在页内');
     });

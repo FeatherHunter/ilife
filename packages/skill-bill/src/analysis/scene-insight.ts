@@ -14,6 +14,7 @@
  *      渲染、没有 AI 解读文本可切，解读那一段由页头**结论句**承载（把「这批数说明了什么」写进 `conclusion`）；
  *   ④ **载荷**照搬迁前那一支（`./views.js` 的 `buildTrend`），一字不改。
  */
+import { runWithLanguage } from 'base-entries';
 import { BillPolicyError } from '../fetch/errors.js';
 import { listRange } from '../fetch/index.js';
 import { monthRange } from '../shared/dateRange.js';
@@ -22,6 +23,7 @@ import type { MonthPoint } from './agg.js';
 import { money, pctText, signedMoney, windowLabel } from './pageParts.js';
 import type { AnalysisScene, ChartCard } from './scene.js';
 import { buildTrend } from './views.js';
+import { m } from '../entries/index.js';
 
 /** 窗口月数（缺省 6，与老侧 `args.months or 6` 同义）；形态不对即阻断。 */
 function monthsOf(params: Record<string, unknown>): number {
@@ -46,11 +48,12 @@ function devText(pct: number): string {
   return (pct >= 0 ? '+' : '') + pctText(pct);
 }
 
-export const sceneInsight: AnalysisScene = {
+function buildScene(): AnalysisScene {
+  return {
   id: 'insight',
   key: 'bill.analysis.trend',
   kind: 'insight',
-  title: '看洞察',
+  title: m('skill-bill.analysis-scene-insight.title'),
   family: 'insight',
   values: ({ params, db }) => {
     const months = monthsOf(params);
@@ -72,13 +75,17 @@ export const sceneInsight: AnalysisScene = {
     const tops = expenseTop(records, 10);
     const head = cats[0];
     const span = windowLabel(dayOf(firstTimeOf(records)), dayOf(lastTimeOf(records)));
-    const label = '近 ' + String(months) + ' 个月（' + startMonth + ' ~ ' + endMonth + '）';
+    const label = m('skill-bill.analysis-scene-insight.c002', {
+      p0: String(String(months)),
+      p1: String(startMonth),
+      p2: String(endMonth),
+    });
     /* 月度走势：支出／收入两条系列；**没有记录的月给 `null`**（图上断开、不按 0 画）。 */
     const points = (pick: (m: MonthPoint) => number): { readonly label: string; readonly value: number | null }[] =>
       series.map((m) => ({ label: m.month, value: m.count === 0 ? null : pick(m) }));
     const expenseItems = points((m) => m.expense);
     const chart: ChartCard = {
-      title: '月度走势（近 ' + String(months) + ' 个月）',
+      title: m('skill-bill.analysis-scene-insight.c003', { p0: String(String(months)) }),
       kind: 'line',
       input: {
         items: expenseItems,
@@ -88,67 +95,92 @@ export const sceneInsight: AnalysisScene = {
           legend: true,
           gapStyle: 'dashed',
           series: [
-            { name: '支出', items: expenseItems },
-            { name: '收入', items: points((m) => m.income) },
+            { name: m('skill-bill.analysis-scene-insight.c004'), items: expenseItems },
+            { name: m('skill-bill.analysis-scene-insight.c005'), items: points((m) => m.income) },
           ],
         },
       },
     };
+    const headTail = head === undefined
+      ? '。'
+      : m('skill-bill.analysis-scene-insight.c006', {
+        p0: String(head.key),
+        p1: String(money(head.value)),
+        p2: String(pctText(head.pct)),
+      });
+    const worstTail = worst === undefined ? '。' : m('skill-bill.analysis-scene-insight.c007', { p0: String(worst.month), p1: String(devText(worst.pct)) });
     return {
-      title: '看洞察',
+      title: m('skill-bill.analysis-scene-insight.title'),
       label,
       from: startMonth + '-01',
       to: monthRange(endMonth).end,
       count: records.length,
       conclusion: kpi.count === 0
-        ? label + ' 一条记录都没有。'
-        : label + ' 共 ' + String(kpi.count) + ' 笔：支出 ' + money(kpi.expense) + ' 元、收入 ' + money(kpi.income)
-          + ' 元、净额 ' + money(kpi.net) + ' 元'
-          + (head === undefined ? '。' : '；花得最多的是「' + head.key + '」' + money(head.value) + ' 元（占 ' + pctText(head.pct) + '）')
-          + (worst === undefined ? '。' : '；' + worst.month + ' 支出偏离月均 ' + devText(worst.pct) + '。'),
-      caliber: '区间按库里最后一条记录所在的月份往前数 ' + String(months) + ' 个月（不按今天）；分类按一级归堆（两级／三级分类并到一级），条长按最大一类折算；月度走势里没有记录的月不补 0、在图上断开；转账不计入收支。',
+        ? m('skill-bill.analysis-scene-insight.c009', { p0: String(label) })
+        : m('skill-bill.analysis-scene-insight.c010', {
+          p0: String(label),
+          p1: String(String(kpi.count)),
+          p2: String(money(kpi.expense)),
+          p3: String(money(kpi.income)),
+          p4: String(money(kpi.net)),
+          p5: String(headTail),
+          p6: String(worstTail),
+        }),
+      caliber: m('skill-bill.analysis-scene-insight.c011', { p0: String(String(months)) }),
       chips: [],
       payload: buildTrend('insight', [...records], { limit: 10 }),
       kpi,
       page: {
         kpis: [
-          { label: '区间支出', value: money(kpi.expense), unit: '元' },
-          { label: '区间收入', value: money(kpi.income), unit: '元' },
-          { label: '净额', value: money(kpi.net), unit: '元', detail: kpi.net >= 0 ? '收大于支' : '支大于收' },
-          { label: '笔数', value: String(kpi.count), unit: '笔' },
+          { label: m('skill-bill.analysis-scene-insight.c012'), value: money(kpi.expense), unit: m('skill-bill.analysis-scene-insight.c013') },
+          { label: m('skill-bill.analysis-scene-insight.c014'), value: money(kpi.income), unit: m('skill-bill.analysis-scene-insight.c015') },
+          { label: m('skill-bill.analysis-scene-insight.c016'), value: money(kpi.net), unit: m('skill-bill.analysis-scene-insight.c017'), detail: kpi.net >= 0 ? m('skill-bill.analysis-scene-insight.c018') : m('skill-bill.analysis-scene-insight.c019') },
+          { label: m('skill-bill.analysis-scene-insight.c020'), value: String(kpi.count), unit: m('skill-bill.analysis-scene-insight.c021') },
         ],
         factCards: [{
-          title: '这批数的事实',
+          title: m('skill-bill.analysis-scene-insight.c022'),
           rows: [
-            { k: '区间', v: span },
-            { k: '趋势均值', v: money(mean) + ' 元/月' },
-            { k: '最大偏离月', v: worst === undefined ? '' : worst.month + '（' + devText(worst.pct) + '）' },
+            { k: m('skill-bill.analysis-scene-insight.c023'), v: span },
+            { k: m('skill-bill.analysis-scene-insight.c024'), v: m('skill-bill.analysis-scene-insight.c025', { p0: String(money(mean)) }) },
+            { k: m('skill-bill.analysis-scene-insight.c026'), v: worst === undefined ? '' : worst.month + '（' + devText(worst.pct) + '）' },
           ],
         }],
         barGroups: [{
-          title: '消费习惯（分类分布，共 ' + String(cats.length) + ' 类）',
+          title: m('skill-bill.analysis-scene-insight.c027', { p0: String(String(cats.length)) }),
           rows: top.map((c) => ({
             label: c.key,
-            text: money(c.value) + ' 元 · ' + String(c.count) + ' 笔 · ' + pctText(c.pct),
+            text: m('skill-bill.analysis-scene-insight.c028', {
+              p0: String(money(c.value)),
+              p1: String(String(c.count)),
+              p2: String(pctText(c.pct)),
+            }),
             pct: max === 0 ? 0 : round1((c.value / max) * 100),
           })),
-          emptyText: '这一段还没有支出记录',
+          emptyText: m('skill-bill.analysis-scene-insight.c029'),
         }],
         charts: [chart],
         listCards: [{
-          title: '大额支出 TOP ' + String(tops.length),
+          title: m('skill-bill.analysis-scene-insight.c030', { p0: String(String(tops.length)) }),
           rows: tops.map((r) => ({
             left: dayOf(r.time),
             main: r.note === '' ? r.category : r.category + ' · ' + r.note,
             right: signedMoney(r.amount),
           })),
-          emptyText: '这一段还没有支出记录',
+          emptyText: m('skill-bill.analysis-scene-insight.c031'),
         }],
         empty: {
-          text: '这 ' + String(months) + ' 个月里一条记录都没有。',
-          hint: '先说「记支出」或「记收入」记一笔，回来看这里就有数了。',
+          text: m('skill-bill.analysis-scene-insight.c032', { p0: String(String(months)) }),
+          hint: m('skill-bill.analysis-scene-insight.c033'),
         },
       },
     };
   },
-};
+  };
+}
+
+export const sceneInsight: AnalysisScene = buildScene();
+
+/** 按语言重建本场景（#1197：文案经词条层，语言是运行期参数）。 */
+export function sceneInsightFor(language: string): AnalysisScene {
+  return runWithLanguage(language, buildScene);
+}

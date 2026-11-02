@@ -8,6 +8,7 @@
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { m } from '../../entries/index.js';
 
 export const FAMILY = 'undo_select' as const;
 
@@ -57,16 +58,16 @@ function msgOf(env: Envelope): string {
 // 事件英文名 → 可见中文（回执原文保留在复制载荷里，正文不出现英文裸词）。
 function eventCn(raw: string): string {
   const t = raw.trim().toLowerCase();
-  if (t === 'relate') return '物品关联';
-  if (t === 'add' || t === 'create') return '录入';
-  if (t === 'update') return '更新';
-  if (t === 'move') return '移动位置';
-  if (t === 'merge') return '合并';
-  if (t === 'backup') return '备份';
-  if (t === 'import') return '导入';
-  if (t === 'borrow') return '借用登记';
-  if (t === 'qty') return '数量变更';
-  return '其他操作';
+  if (t === 'relate') return m('skill-home.items-pages-undo-select.c001');
+  if (t === 'add' || t === 'create') return m('skill-home.items-pages-undo-select.c002');
+  if (t === 'update') return m('skill-home.items-pages-undo-select.c003');
+  if (t === 'move') return m('skill-home.items-pages-undo-select.c004');
+  if (t === 'merge') return m('skill-home.items-pages-undo-select.c005');
+  if (t === 'backup') return m('skill-home.items-pages-undo-select.c006');
+  if (t === 'import') return m('skill-home.items-pages-undo-select.c007');
+  if (t === 'borrow') return m('skill-home.items-pages-undo-select.c008');
+  if (t === 'qty') return m('skill-home.items-pages-undo-select.c009');
+  return m('skill-home.items-pages-undo-select.c010');
 }
 
 function needs(): string {
@@ -110,9 +111,9 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const key = String((env as { key?: unknown }).key ?? PAGE_META.key);
   // #817（⑤文案不冗余）：回执在事件名后还缀着一段括号说明，旧写法（`\S+`）把说明一并吞进事件名，
   // 于是任何一条都落到兜底的「其他操作」；条目名要写用户看得懂的词，故只取事件名本身。
-  const m = msg.match(/^最近操作：#(\d+)\s+([^\s（(]+)/);
-  const evId = m?.[1] ?? '';
-  const evRaw = m?.[2] ?? '';
+  const recent = msg.match(/^最近操作：#(\d+)\s+([^\s（(]+)/);
+  const evId = recent?.[1] ?? '';
+  const evRaw = recent?.[2] ?? '';
   const evName = evId ? eventCn(evRaw) : '';
 
   // #817（⑤文案不冗余）：条目名只写一次——旧版把事件名在粗体里与胶囊里各写一遍，还用「·」并两个判据标签。
@@ -120,10 +121,10 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     ? '<div class="fp-ev" data-ev="' + esc(evId) + '" onclick="this.classList.toggle(\'fp-ev-on\');var c=this.querySelector(\'input\');c.checked=!c.checked;">'
       + '<input type="checkbox" value="' + esc(evId) + '" onclick="event.stopPropagation();this.closest(\'.fp-ev\').classList.toggle(\'fp-ev-on\',this.checked);">'
       + '<div class="fp-ev-sum"><span class="fp-ev-name">' + esc(evName) + '</span>'
-      + '<div class="fp-ev-meta">第 ' + esc(evId) + ' 条记录</div></div></div>'
-      + '<div class="fp-warnbox">撤销录入会连带删除该物品的位置与标签记录，撤销只有一次机会</div>'
-      + '<p class="fp-warnbox" id="fp-undo-hint" hidden>请先勾选要撤销的操作</p><div class="fp-actions"><button type="button" class="fp-btn fp-btn-danger" onclick="copyUndoSelected()">确认撤销勾选项</button></div>'
-    : '<p class="fp-empty">暂无可撤销操作，先去做一次录入或者更新再来</p>';
+      + '<div class="fp-ev-meta">' + m('skill-home.items-pages-undo-select.c011', { p0: esc(evId) }) + '</div></div></div>'
+      + '<div class="fp-warnbox">' + m('skill-home.items-pages-undo-select.c012') + '</div>'
+      + '<p class="fp-warnbox" id="fp-undo-hint" hidden>' + m('skill-home.items-pages-undo-select.c013') + '</p><div class="fp-actions"><button type="button" class="fp-btn fp-btn-danger" onclick="copyUndoSelected()">' + m('skill-home.items-pages-undo-select.c014') + '</button></div>'
+    : '<p class="fp-empty">' + m('skill-home.items-pages-undo-select.c015') + '</p>';
 
   // #817（⑤文案不冗余）：删两处判据件术语——页型名徽章「选择页」，与复述验收判据的灰字（「没有勾选就点确认时…」）。
   // #817（②层级清／⑥分隔符不懒政）第二波：页头那枚小标（原「物品管理 · 撤销」）整块删掉——
@@ -131,15 +132,15 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   // 层级＝主标题＞区块标题＞条目名＞条目副行（`.fp-ev-name` 有类名，不再靠 `<b>` 顶层级）。
   const content = PAGE_CSS
     + '<div class="fp-page" data-family="' + FAMILY + '" data-key="' + esc(key) + '">'
-    + '<div class="fp-hero"><div class="fp-title">撤销最近操作</div></div>'
-    + '<section class="fp-sec"><h2 class="fp-sec-t">可撤销操作</h2>' + evBlock
+    + '<div class="fp-hero"><div class="fp-title">' + m('skill-home.items-pages-undo-select.c016') + '</div></div>'
+    + '<section class="fp-sec"><h2 class="fp-sec-t">' + m('skill-home.items-pages-undo-select.c017') + '</h2>' + evBlock
     + '</section>'
-    + '<section class="fp-sec"><h2 class="fp-sec-t">通用操作分组</h2>'
-    + '<div class="fp-groupline">录入更新类：录入、更新、移动位置、数量与状态变更</div>'
-    + '<div class="fp-groupline">关系类：物品关联、合并物品</div>'
-    + '<div class="fp-groupline">盘点照护类：盘点、借用登记、备份导入</div>'
+    + '<section class="fp-sec"><h2 class="fp-sec-t">' + m('skill-home.items-pages-undo-select.c018') + '</h2>'
+    + '<div class="fp-groupline">' + m('skill-home.items-pages-undo-select.c019') + '</div>'
+    + '<div class="fp-groupline">' + m('skill-home.items-pages-undo-select.c020') + '</div>'
+    + '<div class="fp-groupline">' + m('skill-home.items-pages-undo-select.c021') + '</div>'
     + '</section>'
-    + '<script>function copyUndoSelected(){var ids=[];document.querySelectorAll(\'.fp-ev-on\').forEach(function(x){ids.push(x.getAttribute(\'data-ev\'));});var hint=document.getElementById(\'fp-undo-hint\');if(!ids.length){if(hint){hint.hidden=false;}return;}if(hint){hint.hidden=true;}var t=\'请加载「居家管家」技能，帮我撤销最近操作（唤醒词：撤销操作）：\\n\\n  撤销：事件\'+ids.join(\'、\');if(navigator.clipboard){navigator.clipboard.writeText(t);}else{var ta=document.createElement(\'textarea\');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand(\'copy\');ta.remove();}}</script>'
+    + '<script>var U=' + JSON.stringify({ prompt: m('skill-home.items-pages-undo-select.c022', { p0: "{p0}" }), sep: m('skill-home.items-pages-undo-select.c023') }) + ';function copyUndoSelected(){var ids=[];document.querySelectorAll(\'.fp-ev-on\').forEach(function(x){ids.push(x.getAttribute(\'data-ev\'));});var hint=document.getElementById(\'fp-undo-hint\');if(!ids.length){if(hint){hint.hidden=false;}return;}if(hint){hint.hidden=true;}var t=U.prompt.replace("{p0}",ids.join(U.sep));if(navigator.clipboard){navigator.clipboard.writeText(t);}else{var ta=document.createElement(\'textarea\');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand(\'copy\');ta.remove();}}</script>'
     + homeCopyArea({
         data: { envelope: env },
         log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },

@@ -102,7 +102,7 @@ describe('due-row ① 渲染契约', () => {
     assert.ok(html.includes('disabled') && html.includes('aria-disabled="true"'), '禁用落 disabled ＋ aria-disabled');
     assert.ok(html.includes('这台已经设过提醒了'), '禁用为什么写在按钮旁');
     assert.ok(html.includes(DUE_LOADING_ATTR + '="1"') && html.includes('aria-busy="true"'), '处理中落标记');
-    assert.ok(html.includes('>' + DUE_LOADING_LABEL + '<'), '处理中：原地换字');
+    assert.ok(html.includes('>' + DUE_LOADING_LABEL() + '<'), '处理中：原地换字');
     assert.ok(html.includes(slot('err').slice(1) + '" id="ilife-due-err-card" role="alert">没连上：再试一次<'), '错态写在按钮旁');
     assert.ok(html.includes('aria-describedby="ilife-due-err-card"'), '错态挂在 aria-describedby 上');
   });
@@ -326,7 +326,7 @@ describe('due-row ④ 真机（无头 Chrome）', () => {
       /* 处理中（loading）：原地换字，宽度与常态一致（不跳版）。 */
       const loading = await p.hitRead(actSel('card'));
       assert.equal(await p.ev('document.querySelector(' + JSON.stringify(actSel('card'))
-        + ').textContent'), DUE_LOADING_LABEL, '处理中：原地换字');
+        + ').textContent'), DUE_LOADING_LABEL(), '处理中：原地换字');
       assert.equal(await p.ev('document.querySelector(' + JSON.stringify(actSel('card'))
         + ').getAttribute("aria-busy")'), 'true', '处理中：aria-busy');
       assert.equal(loading.w, btn.w, '换字不跳版（两颗按钮同宽）：' + loading.w + ' vs ' + btn.w);

@@ -103,7 +103,7 @@ export function normalizeSyncStatus(input: unknown): SyncStatusModel {
     targets,
     checkedAt: optText(raw.checkedAt, 'sync-status: input.checkedAt'),
     hint: optText(raw.hint, 'sync-status: input.hint'),
-    actionLabel: optText(raw.actionLabel, 'sync-status: input.actionLabel') ?? SYNC_STATUS_ACTION_LABEL,
+    actionLabel: optText(raw.actionLabel, 'sync-status: input.actionLabel') ?? SYNC_STATUS_ACTION_LABEL(),
     id,
     errorId: id === undefined ? 'ilife-block-sync-status-error' : id + '-error',
     failedCount: targets.filter((t) => t.result === 'failed').length,

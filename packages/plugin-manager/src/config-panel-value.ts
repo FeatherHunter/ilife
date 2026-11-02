@@ -23,6 +23,7 @@ import {
 } from './config-panel-contract.js';
 import type { ConfigItem, ConfigSurfaceReply } from './config-panel-contract.js';
 import type { RootsCall } from './directory-browser-roots.js';
+import { m } from './entries/index.js';
 
 /** 取数口取用器：每次取数时现取（连接后到也不永久缺席）。 */
 export type GetCall = () => unknown;
@@ -166,12 +167,12 @@ export function noFollowKeys(): readonly string[] {
  *  报文由技能侧给出（`base-link-core` 的 `ConfigError` 已带行号与文件名，技能 `cli/config.ts`
  *  原样交出，插件 bridge 原样带上），所以这里**不重写报文**，只按报错类补一句「接下来怎么办」。 */
 export function humanizeConfigFailure(code: string, message: string): string {
-  const text = message.trim().length > 0 ? message.trim() : `（${code}，宿主未给报文）`;
-  if (/解析|YAML|parse/i.test(text)) return `${text}\n改回「键: 值」的写法，或点「重置为默认」。`;
-  if (/不认识|未知键|UNKNOWN_KEY/i.test(text)) return `${text}\n删掉页面上没有的行，或点「重置为默认」。`;
-  if (/类型|TYPE_MISMATCH/i.test(text)) return `${text}\n按本页的控件形状填，或点「重置为默认」。`;
-  if (/缺席|missing-cli/i.test(text)) return `${text}\n技能出口没找到：先确认技能包已装好，再点「重新读取」。`;
-  return `${text}\n改不动就点「重置为默认」，或照上面那条路径手工改配置文件。`;
+  const text = message.trim().length > 0 ? message.trim() : m('plugin-manager.config-panel-value.c001', { p0: String(code) });
+  if (/解析|YAML|parse/i.test(text)) return m('plugin-manager.config-panel-value.c002', { p0: String(text) });
+  if (/不认识|未知键|UNKNOWN_KEY/i.test(text)) return m('plugin-manager.config-panel-value.c003', { p0: String(text) });
+  if (/类型|TYPE_MISMATCH/i.test(text)) return m('plugin-manager.config-panel-value.c004', { p0: String(text) });
+  if (/缺席|missing-cli/i.test(text)) return m('plugin-manager.config-panel-value.c005', { p0: String(text) });
+  return m('plugin-manager.config-panel-value.c006', { p0: String(text) });
 }
 
 /** 一次配置电话的结果（收整面／落字；永不抛）。 */
@@ -190,7 +191,7 @@ function withDeadline<T>(promise: Promise<T>, ms: number): Promise<T> {
     signal.addEventListener(
       'abort',
       () => {
-        const e = new Error(`配置请求超时（${Math.round(ms / 1000)}s）：宿主未回`);
+        const e = new Error(m('plugin-manager.config-panel-value.c011', { p0: String(Math.round(ms / 1000)) }));
         e.name = 'TimeoutError';
         reject(e);
       },
@@ -232,22 +233,28 @@ async function configRpcOnce(
   payload: Record<string, unknown>,
   timeoutMs: number = READ_TIMEOUT_MS,
 ): Promise<ConfigOutcome> {
-  if (typeof call !== 'function') return { ok: false, message: `宿主连接缺席：connection.rpc.call 不可用（通道 ${channel}），稍后重试` };
+  if (typeof call !== 'function') return { ok: false, message: m('plugin-manager.config-panel-value.c007', { p0: String(channel) }) };
   try {
     const raw: unknown = await withDeadline(
       (call as RootsCall)('/api', channel.replace(/^\//, ''), { method, payload }, AbortSignal.timeout(timeoutMs)),
       timeoutMs,
     );
-    if (!isRpcResult(raw)) return { ok: false, message: `回执信封异常（通道 ${channel}），点重试重新读取` };
+    if (!isRpcResult(raw)) return { ok: false, message: m('plugin-manager.config-panel-value.c008', { p0: String(channel) }) };
     if (!raw.ok) {
       return { ok: false, message: humanizeConfigFailure(raw.error?.code ?? 'unknown', raw.error?.message ?? '') };
     }
     return { ok: true, surface: raw.value as ConfigSurfaceReply };
   } catch (e) {
     if (e instanceof Error && (e.name === 'AbortError' || e.name === 'TimeoutError')) {
-      return { ok: false, message: `配置请求超时（${Math.round(timeoutMs / 1000)}s，通道 ${channel}）：宿主未回，点重试重新读取` };
+      return { ok: false, message: m('plugin-manager.config-panel-value.c009', {
+        p0: String(Math.round(timeoutMs / 1000)),
+        p1: String(channel),
+      }) };
     }
-    return { ok: false, message: `配置失败（通道 ${channel}）：${e instanceof Error ? e.message : String(e)}，点重试重新读取` };
+    return { ok: false, message: m('plugin-manager.config-panel-value.c010', {
+      p0: String(channel),
+      p1: String(e instanceof Error ? e.message : String(e)),
+    }) };
   }
 }
 

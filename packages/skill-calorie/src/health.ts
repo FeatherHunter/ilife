@@ -21,6 +21,7 @@ import { configPaths } from 'base-link-core';
 import { CALORIE_CONFIG_DEFAULTS, CALORIE_CONFIG_STEM } from './config.js';
 import { dbDirOf, gifsDirOf, htmlDirOf, photosDirOf, stateDirOf } from './paths.js';
 import { XUNJI_CATALOG } from './xunji/index.js';
+import { m } from './entries/index.js';
 
 /** 报告里的三档判据（与面板侧镜像同值）。 */
 export type HealthStatus = 'red' | 'yellow' | 'green';
@@ -77,7 +78,10 @@ export function readCalorieConfigReadOnly(): ConfigRead {
   try {
     text = readFileSync(file, 'utf8');
   } catch (e) {
-    return { kind: 'bad', message: '读配置文件失败：' + file + '（' + (e instanceof Error ? e.message : String(e)) + '）' };
+    return { kind: 'bad', message: m('skill-calorie.health.c001', {
+      p0: String(file),
+      p1: String(e instanceof Error ? e.message : String(e)),
+    }) };
   }
   const parsed = parseSubset(text, file);
   if (!parsed.ok) return { kind: 'bad', message: parsed.message };
@@ -112,10 +116,10 @@ function parseSubset(text: string, file: string):
   let openGroupLine = 0;
   /** 标量解析的失败口：`parseScalar` 把报文写进 `scalarError`，调用处读它即可（不抛，免得类型糊）。 */
   let scalarError = '';
-  const fail = (line: number, why: string) => ({ ok: false as const, message: '配置件第 ' + String(line) + ' 行：' + why + '（文件：' + file + '）' });
+  const fail = (line: number, why: string) => ({ ok: false as const, message: m('skill-calorie.health.c002', { p0: String(String(line)), p1: String(why), p2: String(file) }) });
   const closeGroup = (): string | null => {
     if (openGroup !== null && Object.keys(values[openGroup] as Record<string, unknown>).length === 0) {
-      return fail(openGroupLine, '键「' + openGroup + '」冒号后没有值，也没有子项').message;
+      return fail(openGroupLine, m('skill-calorie.health.c003', { p0: String(openGroup) })).message;
     }
     openGroup = null;
     return null;
@@ -127,20 +131,24 @@ function parseSubset(text: string, file: string):
     if (/^\s*#/.test(raw)) continue;
     const head = /^[ \t]*/.exec(raw)?.[0] ?? '';
     const body = raw.slice(head.length);
-    if (head.includes('\t')) return fail(lineNo, '缩进里有制表符：本子集只许空格，且嵌套缩进恰好 2 个空格');
-    if (body.startsWith('-')) return fail(lineNo, '本子集不支持列表（「-」开头的行）');
+    if (head.includes('\t')) return fail(lineNo, m('skill-calorie.health.c004'));
+    if (body.startsWith('-')) return fail(lineNo, m('skill-calorie.health.c005'));
     const matched = /^([A-Za-z_][A-Za-z0-9_.-]*)[ \t]*:[ \t]*(.*)$/.exec(body);
-    if (matched === null) return fail(lineNo, '不是「键: 值」形状：' + body.trim());
+    if (matched === null) return fail(lineNo, m('skill-calorie.health.c006', { p0: String(body.trim()) }));
     const key = matched[1] as string;
     const rest = (matched[2] ?? '').trim();
     if (head.length > 0) {
-      if (head.length !== 2) return fail(lineNo, '缩进必须恰好 2 个空格（本子集只支持一层嵌套），实为 ' + String(head.length) + ' 个空格');
-      if (openGroup === null) return fail(lineNo, '缩进的子项「' + key + '」上面没有开着子的顶层键');
+      if (head.length !== 2) return fail(lineNo, m('skill-calorie.health.c007', { p0: String(String(head.length)) }));
+      if (openGroup === null) return fail(lineNo, m('skill-calorie.health.c008', { p0: String(key) }));
       const group = values[openGroup] as Record<string, unknown>;
       if (Object.prototype.hasOwnProperty.call(group, key)) {
-        return fail(lineNo, '键「' + openGroup + '.' + key + '」重复定义（第 ' + String(lineOf.get(openGroup + '.' + key)) + ' 行已定义）');
+        return fail(lineNo, m('skill-calorie.health.c009', {
+          p0: String(openGroup),
+          p1: String(key),
+          p2: String(String(lineOf.get(openGroup + '.' + key))),
+        }));
       }
-      if (rest === '') return fail(lineNo, '键「' + openGroup + '.' + key + '」冒号后没有值');
+      if (rest === '') return fail(lineNo, m('skill-calorie.health.c010', { p0: String(openGroup), p1: String(key) }));
       const scalar = parseScalar(rest, lineNo, fail, (message) => {
         scalarError = message;
       });
@@ -152,7 +160,7 @@ function parseSubset(text: string, file: string):
     const closedError = closeGroup();
     if (closedError !== null) return { ok: false, message: closedError };
     if (Object.prototype.hasOwnProperty.call(values, key)) {
-      return fail(lineNo, '键「' + key + '」重复定义（第 ' + String(lineOf.get(key)) + ' 行已定义）');
+      return fail(lineNo, m('skill-calorie.health.c011', { p0: String(key), p1: String(String(lineOf.get(key))) }));
     }
     lineOf.set(key, lineNo);
     if (rest === '') {
@@ -205,7 +213,7 @@ function parseScalar(
       out += ch;
     }
     if (!closed) {
-      onError(fail(lineNo, '引号没有闭合：' + text).message);
+      onError(fail(lineNo, m('skill-calorie.health.c012', { p0: String(text) })).message);
       return '';
     }
     return out;
@@ -219,7 +227,7 @@ function parseScalar(
   }
   const body = text.slice(0, cut).trim();
   if (body === '') {
-    onError(fail(lineNo, '冒号后没有值（只有注释）').message);
+    onError(fail(lineNo, m('skill-calorie.health.c013')).message);
     return '';
   }
   if (body === 'true') return true;
@@ -256,7 +264,7 @@ function textOf(value: unknown): string {
 
 /** 「这个值从哪来」：真在文件里写了就是「配置文件」，否则按默认值（文件不存在则全按默认值）。 */
 function sourceOf(present: ReadonlySet<string>, key: string): string {
-  return present.has(key) ? '配置文件' : '默认值';
+  return present.has(key) ? m('skill-calorie.health.c014') : m('skill-calorie.health.c015');
 }
 
 /** 目录项：在不在 ＋ 能不能写。 */
@@ -292,7 +300,7 @@ function dirVerdict(dir: string): DirVerdict {
 function dirVerdictUncached(dir: string): DirVerdict {
   if (!existsSync(dir)) return { exists: false, writable: false, reason: '' };
   try {
-    if (!statSync(dir).isDirectory()) return { exists: false, writable: false, reason: '同名文件占了它的位置' };
+    if (!statSync(dir).isDirectory()) return { exists: false, writable: false, reason: m('skill-calorie.health.c016') };
   } catch (e) {
     return { exists: false, writable: false, reason: e instanceof Error ? e.message : String(e) };
   }
@@ -330,27 +338,27 @@ export function buildCalorieHealthReport(): CalorieHealthReport {
   // ① 配置文件本身：能不能解析；它落在默认位置还是别处（只陈述，不评价）。
   const defaultConfigFile = join(homedir(), '.ilife', CALORIE_CONFIG_STEM + '.yaml');
   const relocated = paths.configFile !== defaultConfigFile;
-  const where = relocated ? '位置与默认不同（见配置文件落点）' : '默认位置';
+  const where = relocated ? m('skill-calorie.health.c017') : m('skill-calorie.health.c018');
   if (read.kind === 'bad') {
     items.push({
-      id: 'config.file', title: '配置文件', status: 'red',
+      id: 'config.file', title: m('skill-calorie.health.c019'), status: 'red',
       message: read.message,
-      action: '照报文指的行号改回「键: 值」的写法；改不动就删掉这个文件，让技能按默认值重落一份。',
-      source: '配置文件',
+      action: m('skill-calorie.health.c020'),
+      source: m('skill-calorie.health.c021'),
     });
   } else if (read.kind === 'missing') {
     items.push({
-      id: 'config.file', title: '配置文件', status: 'yellow',
-      message: '配置文件还不存在：' + p(paths.configFile) + '（现在跑的是默认值）。',
-      action: '在面板上保存一次即会落一份；也可点「重置为默认」。',
-      source: '默认值',
+      id: 'config.file', title: m('skill-calorie.health.c022'), status: 'yellow',
+      message: m('skill-calorie.health.c023', { p0: String(p(paths.configFile)) }),
+      action: m('skill-calorie.health.c024'),
+      source: m('skill-calorie.health.c025'),
     });
   } else {
     items.push({
-      id: 'config.file', title: '配置文件', status: 'green',
-      message: '能解析：' + p(paths.configFile) + '（' + where + '）。',
+      id: 'config.file', title: m('skill-calorie.health.c026'), status: 'green',
+      message: m('skill-calorie.health.c027', { p0: String(p(paths.configFile)), p1: String(where) }),
       action: '',
-      source: '配置文件',
+      source: m('skill-calorie.health.c028'),
     });
   }
 
@@ -360,16 +368,19 @@ export function buildCalorieHealthReport(): CalorieHealthReport {
   const dataDirSource = sourceOf(present, 'db.dir');
   const dataDirVerdict = dirVerdict(dataDir);
   items.push({
-    id: 'db.dir', title: '数据目录',
+    id: 'db.dir', title: m('skill-calorie.health.c029'),
     status: !dataDirVerdict.exists || !dataDirVerdict.writable ? 'red' : 'green',
     message: !dataDirVerdict.exists
-      ? '不在：' + p(dataDir) + (dataDirVerdict.reason !== '' ? '（' + dataDirVerdict.reason + '）' : '')
+      ? m('skill-calorie.health.c030', {
+        p0: String(p(dataDir)),
+        p1: String(dataDirVerdict.reason !== '' ? '（' + dataDirVerdict.reason + '）' : ''),
+      })
       : dataDirVerdict.writable
-        ? '在且能写：' + p(dataDir) + '。'
-        : '在，但写不进去：' + p(dataDir) + '（' + dataDirVerdict.reason + '）。',
+        ? m('skill-calorie.health.c031', { p0: String(p(dataDir)) })
+        : m('skill-calorie.health.c032', { p0: String(p(dataDir)), p1: String(dataDirVerdict.reason) }),
     action: !dataDirVerdict.exists
-      ? '先建这个目录，或把配置里的「数据目录」改到一个已存在的位置。'
-      : dataDirVerdict.writable ? '' : '去掉这个目录的只读属性，或把「数据目录」改到别处。',
+      ? m('skill-calorie.health.c033')
+      : dataDirVerdict.writable ? '' : m('skill-calorie.health.c034'),
     source: dataDirSource,
   });
 
@@ -380,31 +391,35 @@ export function buildCalorieHealthReport(): CalorieHealthReport {
   const dbSource = sourceOf(present, 'db.name');
   if (!existsSync(dbFile)) {
     items.push({
-      id: 'db.file', title: '库文件', status: 'red',
-      message: '不在：' + p(dbFile) + '。',
-      action: '确认「数据目录」与「库文件名」对不对；新装的话，跑一条会写库的命令即会建库。',
+      id: 'db.file', title: m('skill-calorie.health.c035'), status: 'red',
+      message: m('skill-calorie.health.c036', { p0: String(p(dbFile)) }),
+      action: m('skill-calorie.health.c037'),
       source: dbSource,
     });
   } else {
     const tables = tableCount(dbFile);
     if (!tables.ok) {
       items.push({
-        id: 'db.file', title: '库文件', status: 'red',
-        message: '在，但打不开：' + p(dbFile) + '（' + tables.reason + '）。',
-        action: '这个文件可能不是库文件或已损坏；先备份，再看要不要让技能重建一份。',
+        id: 'db.file', title: m('skill-calorie.health.c038'), status: 'red',
+        message: m('skill-calorie.health.c039', { p0: String(p(dbFile)), p1: String(tables.reason) }),
+        action: m('skill-calorie.health.c040'),
         source: dbSource,
       });
     } else if (tables.count < DB_TABLE_THRESHOLD) {
       items.push({
-        id: 'db.file', title: '库文件', status: 'yellow',
-        message: '在，但表不全：' + p(dbFile) + '（' + String(tables.count) + ' / ' + String(DB_TABLE_THRESHOLD) + ' 张表）。',
-        action: '缺表会让对应的功能报错；跑一次会写库的命令让它补齐，或从备份恢复。',
+        id: 'db.file', title: m('skill-calorie.health.c041'), status: 'yellow',
+        message: m('skill-calorie.health.c042', {
+          p0: String(p(dbFile)),
+          p1: String(String(tables.count)),
+          p2: String(String(DB_TABLE_THRESHOLD)),
+        }),
+        action: m('skill-calorie.health.c043'),
         source: dbSource,
       });
     } else {
       items.push({
-        id: 'db.file', title: '库文件', status: 'green',
-        message: '在，' + String(tables.count) + ' 张表齐：' + p(dbFile) + '。',
+        id: 'db.file', title: m('skill-calorie.health.c044'), status: 'green',
+        message: m('skill-calorie.health.c045', { p0: String(String(tables.count)), p1: String(p(dbFile)) }),
         action: '',
         source: dbSource,
       });
@@ -417,22 +432,26 @@ export function buildCalorieHealthReport(): CalorieHealthReport {
   const htmlVerdict = dirVerdict(htmlDir);
   const htmlSource = sourceOf(present, 'html.dir');
   items.push({
-    id: 'html.dir', title: '产物目录',
+    id: 'html.dir', title: m('skill-calorie.health.c046'),
     status: !htmlVerdict.exists ? 'green' : htmlVerdict.writable ? 'green' : 'yellow',
     message: !htmlVerdict.exists
-      ? '还没建：' + p(htmlDir) + '（交付页面时才落这里，那时自动建）。'
+      ? m('skill-calorie.health.c047', { p0: String(p(htmlDir)) })
       : htmlVerdict.writable
-        ? '在且能写：' + p(htmlDir) + '。'
-        : '在，但写不进去：' + p(htmlDir) + '（交付会转成内联回执，不再落盘）。',
-    action: !htmlVerdict.exists || htmlVerdict.writable ? '' : '去掉这个目录的只读属性，或编辑配置文件改「HTML 产物目录名」。',
+        ? m('skill-calorie.health.c048', { p0: String(p(htmlDir)) })
+        : m('skill-calorie.health.c049', { p0: String(p(htmlDir)) }),
+    action: !htmlVerdict.exists || htmlVerdict.writable ? '' : m('skill-calorie.health.c050'),
     source: htmlSource,
   });
 
   // ⑤ 这个值从哪来：只陈述数据目录与库文件名的来源，不判好坏（六家通用最后一条）。
+  const missingNote = read.kind === 'missing' ? m('skill-calorie.health.c051') : '。';
   items.push({
-    id: 'value.source', title: '这个值从哪来', status: 'green',
-    message: '数据目录走「' + dataDirSource + '」，库文件名走「' + dbSource + '」'
-      + (read.kind === 'missing' ? '（配置文件还不存在，落点全按默认值）。' : '。'),
+    id: 'value.source', title: m('skill-calorie.health.c052'), status: 'green',
+    message: m('skill-calorie.health.c053', {
+      p0: String(dataDirSource),
+      p1: String(dbSource),
+      p2: String(missingNote),
+    }),
     action: '', source: dataDirSource,
   });
 
@@ -445,17 +464,17 @@ export function buildCalorieHealthReport(): CalorieHealthReport {
     ? photosVerdict.reason !== ''
     : !photosVerdict.writable;
   items.push({
-    id: 'photos.dir', title: '照片目录',
+    id: 'photos.dir', title: m('skill-calorie.health.c054'),
     status: photosBlocked ? 'red' : 'green',
     message: !photosVerdict.exists
       ? (photosVerdict.reason !== ''
-        ? '同名文件占了它的位置：' + p(photosDir) + '（' + photosVerdict.reason + '）。'
-        : '还没建：' + p(photosDir) + '（首次记身材照时自动建）。')
+        ? m('skill-calorie.health.c055', { p0: String(p(photosDir)), p1: String(photosVerdict.reason) })
+        : m('skill-calorie.health.c056', { p0: String(p(photosDir)) }))
       : photosVerdict.writable
-        ? '在且能写：' + p(photosDir) + '。'
-        : '在，但写不进去：' + p(photosDir) + '（' + photosVerdict.reason + '）。',
+        ? m('skill-calorie.health.c057', { p0: String(p(photosDir)) })
+        : m('skill-calorie.health.c058', { p0: String(p(photosDir)), p1: String(photosVerdict.reason) }),
     action: photosBlocked
-      ? '建出这个目录（或去掉只读），或在配置页把「照片目录」换一个位置。'
+      ? m('skill-calorie.health.c059')
       : '',
     source: sourceOf(present, 'photos.dir'),
   });
@@ -465,31 +484,31 @@ export function buildCalorieHealthReport(): CalorieHealthReport {
   const gifsDir = gifsDirOf(photosDir, gifsSub);
   const gifsExists = existsSync(gifsDir);
   items.push({
-    id: 'photos.gifs', title: '照片 GIF 子目录',
+    id: 'photos.gifs', title: m('skill-calorie.health.c060'),
     status: gifsExists ? 'green' : 'yellow',
-    message: gifsExists ? '在：' + p(gifsDir) + '。' : '还没建：' + p(gifsDir) + '（合成 GIF 时才落这里）。',
-    action: gifsExists ? '' : '第一次合成 GIF 时会自动建；想提前建也行。',
+    message: gifsExists ? m('skill-calorie.health.c061', { p0: String(p(gifsDir)) }) : m('skill-calorie.health.c062', { p0: String(p(gifsDir)) }),
+    action: gifsExists ? '' : m('skill-calorie.health.c063'),
     source: sourceOf(present, 'photos.gifs'),
   });
 
   // ⑧ 训记 KEY：只查「配了没有」，**绝不显示值**。
   const xunjiKey = textOf(readValue(values, 'xunji', 'key'));
   items.push({
-    id: 'xunji.key', title: '训记 KEY',
+    id: 'xunji.key', title: m('skill-calorie.health.c064'),
     status: 'green',
-    message: xunjiKey === '' ? '还没配（用训记功能需要它）。' : '已配（值不在这里显示）。',
-    action: xunjiKey === '' ? '要用训记就在配置页填上；不用就一直空着。' : '',
-    source: xunjiKey === '' ? '默认值' : '配置文件',
+    message: xunjiKey === '' ? m('skill-calorie.health.c065') : m('skill-calorie.health.c066'),
+    action: xunjiKey === '' ? m('skill-calorie.health.c067') : '',
+    source: xunjiKey === '' ? m('skill-calorie.health.c068') : m('skill-calorie.health.c069'),
   });
 
   // ⑨ 训记 CLI 入口：那个编译产物在不在（不在＝红）。
   const xunjiCli = join(packageRoot(), 'dist', 'xunji', 'cli.js');
   const xunjiCliExists = existsSync(xunjiCli);
   items.push({
-    id: 'xunji.cli', title: '训记 CLI 入口',
+    id: 'xunji.cli', title: m('skill-calorie.health.c070'),
     status: xunjiCliExists ? 'green' : 'red',
-    message: xunjiCliExists ? '在：' + p(xunjiCli) + '。' : '不在：' + p(xunjiCli) + '。',
-    action: xunjiCliExists ? '' : '技能包没构建完整：重装这个技能包，或跑一次它的构建。',
+    message: xunjiCliExists ? m('skill-calorie.health.c071', { p0: String(p(xunjiCli)) }) : m('skill-calorie.health.c072', { p0: String(p(xunjiCli)) }),
+    action: xunjiCliExists ? '' : m('skill-calorie.health.c073'),
   });
 
   // ⑩ 训记三份状态文件目录：`<数据目录>/xunji` 能不能写（不可写＝黄；算式＝`stateDirOf`，#757 起不再 `~/.mavis`）。
@@ -497,12 +516,12 @@ export function buildCalorieHealthReport(): CalorieHealthReport {
   const stateDir = stateDirOf(dataDir, stateDirConfigured);
   const stateVerdict = dirVerdict(stateDir);
   items.push({
-    id: 'xunji.stateDir', title: '训记状态文件目录',
+    id: 'xunji.stateDir', title: m('skill-calorie.health.c074'),
     status: !stateVerdict.exists || !stateVerdict.writable ? 'yellow' : 'green',
     message: !stateVerdict.exists
-      ? '还没建：' + p(stateDir) + '（限频与同步游标要记这里，第一次用时自动建）。'
-      : stateVerdict.writable ? '在且能写：' + p(stateDir) + '。' : '在，但写不进去：' + p(stateDir) + '。',
-    action: !stateVerdict.exists || stateVerdict.writable ? '' : '去掉只读，或编辑配置文件改「训记状态文件目录」。',
+      ? m('skill-calorie.health.c075', { p0: String(p(stateDir)) })
+      : stateVerdict.writable ? m('skill-calorie.health.c076', { p0: String(p(stateDir)) }) : m('skill-calorie.health.c077', { p0: String(p(stateDir)) }),
+    action: !stateVerdict.exists || stateVerdict.writable ? '' : m('skill-calorie.health.c078'),
     source: sourceOf(present, 'xunji.stateDir'),
   });
 
@@ -511,16 +530,16 @@ export function buildCalorieHealthReport(): CalorieHealthReport {
   const scheduleCli = join(siblingRoot, 'skill-schedule', 'dist', 'cli', 'cmd_read.js');
   const memoCli = join(siblingRoot, 'skill-memo-ilife', 'dist', 'cli', 'cmd_read.js');
   const missingLand: string[] = [];
-  if (!existsSync(scheduleCli)) missingLand.push('作息 ' + p(scheduleCli));
-  if (!existsSync(memoCli)) missingLand.push('备忘 ' + p(memoCli));
+  if (!existsSync(scheduleCli)) missingLand.push(m('skill-calorie.health.c079', { p0: String(p(scheduleCli)) }));
+  if (!existsSync(memoCli)) missingLand.push(m('skill-calorie.health.c089', { p0: p(memoCli) }));
   items.push({
-    id: 'land.cli', title: '跨技能出口（作息／备忘）',
+    id: 'land.cli', title: m('skill-calorie.health.c080'),
     status: missingLand.length === 0 ? 'green' : 'yellow',
     message: missingLand.length === 0
-      ? '两个出口都在。'
-      : '不在：' + missingLand.join('；') + '。',
-    action: missingLand.length === 0 ? '' : '只有「落地训练」会用到这两个出口；要用就先装上（或构建）那两家技能包。',
-    source: '默认值',
+      ? m('skill-calorie.health.c081')
+      : m('skill-calorie.health.c082', { p0: String(missingLand.join('；')) }),
+    action: missingLand.length === 0 ? '' : m('skill-calorie.health.c083'),
+    source: m('skill-calorie.health.c084'),
   });
 
   // ⑫ 训记动作库包内预置：包内数据件在不在（不在＝黄；路径唯一定义地＝`XUNJI_CATALOG.preset`）。
@@ -528,10 +547,10 @@ export function buildCalorieHealthReport(): CalorieHealthReport {
   const catalog = catalogConfigured !== '' ? catalogConfigured : XUNJI_CATALOG.preset;
   const catalogExists = existsSync(catalog);
   items.push({
-    id: 'xunji.catalog', title: '训记动作库包内预置',
+    id: 'xunji.catalog', title: m('skill-calorie.health.c085'),
     status: catalogExists ? 'green' : 'yellow',
-    message: catalogExists ? '在：' + p(catalog) + '。' : '不在：' + p(catalog) + '（动作名判不了）。',
-    action: catalogExists ? '' : '技能包装得不完整，或配置里指到了不存在的路径；重装技能包，或编辑配置文件改回包内预置那份。',
+    message: catalogExists ? m('skill-calorie.health.c086', { p0: String(p(catalog)) }) : m('skill-calorie.health.c087', { p0: String(p(catalog)) }),
+    action: catalogExists ? '' : m('skill-calorie.health.c088'),
     source: sourceOf(present, 'xunji.catalog'),
   });
 

@@ -20,6 +20,7 @@ import { needId } from '../shared/validators.js';
 import { toRows } from '../shared/rows.js';
 import { normalizeRemindAt, normalizeRepeatType, normalizeRepeatRule } from './policy.js';
 import { buildListPage, buildReceiptPage, querySnapshot, type ListPageScene } from '../render/index.js';
+import { m } from '../entries/index.js';
 
 /** 本条命令的**两格产物**（册子 seq 16／17）：一个视图，两种页。
  *  词随它服务的 HELP 场景住（#855 口径），故场景 id 由调用它的路由声明给；不带即「看提醒」那一格。 */
@@ -29,7 +30,7 @@ function sceneOf(params: Record<string, unknown>): ListPageScene {
   const s = params.scene;
   if (s === SCENE_COMPLETED) return SCENE_COMPLETED;
   if (s === undefined || s === '' || s === SCENE_REMINDERS_ACTIVE) return SCENE_REMINDERS_ACTIVE;
-  fail(2, 'scene 只认 ' + SCENE_REMINDERS_ACTIVE + '／' + SCENE_COMPLETED);
+  fail(2, m('skill-memo-ilife.remind-run.c001', { p0: String(SCENE_REMINDERS_ACTIVE), p1: String(SCENE_COMPLETED) }));
 }
 
 /** `memo.remind`：提醒四视图（到期／已完成／有效／已废弃）。 */
@@ -49,48 +50,51 @@ export function runRemind(params: Record<string, unknown>, db: MemoDb): CommandO
       exit: 0,
       deliver: buildListPage({
         scene: SCENE_COMPLETED,
-        title: '查已提醒备忘',
+        title: m('skill-memo-ilife.remind-run.c002'),
         subtitle: items.length === 0
-          ? '还没有「已触发并打了卡」的提醒'
-          : '已被打卡带回的提醒 ' + items.length + ' 条',
+          ? m('skill-memo-ilife.remind-run.c003')
+          : m('skill-memo-ilife.remind-run.c004', { p0: String(items.length) }),
         summary: snap.summary,
         sections: snap.sections,
         copyLog: {
-          thinking: '已触发提醒视图 · 提醒行经打卡笔记的 reminder_id 反查（老 completed_reminders 口径）',
-          data_structure: 'reminders 表 × notes 表（category=打卡）· reminder_content／checkin_content／checkin_at／period',
-          call_chain: 'memo.remind done:true → listCompletedReminders → querySnapshot → buildListPage(memo_query) → deliver 钩子落盘',
-          exception: '无',
+          thinking: m('skill-memo-ilife.remind-run.c005'),
+          data_structure: m('skill-memo-ilife.remind-run.c006'),
+          call_chain: m('skill-memo-ilife.remind-run.c007'),
+          exception: m('skill-memo-ilife.remind-run.c008'),
         },
         items,
       }),
     };
   }
   const status = params.status === undefined ? 'active' : String(params.status);
-  if (status !== 'active' && status !== 'dismissed') fail(2, 'status 只认 active/dismissed');
+  if (status !== 'active' && status !== 'dismissed') fail(2, m('skill-memo-ilife.remind-run.c009'));
   const items = listReminderRows(db, status);
   const snap = querySnapshot(toRows(items));
   const scene = sceneOf(params);
+  // #1225：链内条件分支抽成整句（迁移器不切链内分支）。
+  const emptyText = status === 'active' ? m('skill-memo-ilife.remind-run.c010') : m('skill-memo-ilife.remind-run.c011');
+  const countText = status === 'active' ? m('skill-memo-ilife.remind-run.c012', { p0: String(items.length) }) : m('skill-memo-ilife.remind-run.c013', { p0: String(items.length) });
+  const subtitle = items.length === 0 ? emptyText : countText;
+  const listThinking = status === 'active'
+    ? m('skill-memo-ilife.remind-run.c014')
+    : m('skill-memo-ilife.remind-run.c015');
   return {
     data: { items, total: items.length },
     exit: 0,
     deliver: buildListPage({
       scene,
-      title: '看提醒',
-      subtitle: items.length === 0
-        ? (status === 'active' ? '没有有效提醒' : '没有已废弃提醒')
-        : (status === 'active' ? '有效期内的提醒 ' : '已废弃的提醒 ') + items.length + ' 条',
+      title: m('skill-memo-ilife.remind-run.c016'),
+      subtitle: subtitle,
       summary: snap.summary,
       sections: snap.sections,
       copyLog: {
         // #858：看提醒页的状态说明补上**已废弃语义与废弃调用形**——「废弃提醒」这条唤醒词已退役
         // （#842 Q②），能力仍在 `memo.remove` 的 `mode:"abandon"` 支上，故调用形要在页内读得到，
         // 不必翻速查表。HELP 交付面写不了这句：那份资产的可见文案闸（`VISIBLE_FORBIDDEN`）禁 `memo.`／`--`。
-        thinking: '提醒列表视图 · ' + (status === 'active'
-          ? '只看有效（status=active）；已废弃＝撤下这条提醒、笔记保留，调用形 memo.remove --params \'{"mode":"abandon","id":<提醒 id>}\'（独立废弃支，不经删确认闸）'
-          : '只看已废弃（status=dismissed）；废弃＝提醒撤下、笔记保留，调用形 memo.remove --params \'{"mode":"abandon","id":<提醒 id>}\'（独立废弃支，不经删确认闸）'),
-        data_structure: 'reminders 表 · id／note_id／remind_at／repeat_type／repeat_rule／content／status／note_content',
-        call_chain: 'memo.remind → listReminderRows → querySnapshot → buildListPage(memo_query) → deliver 钩子落盘',
-        exception: '无',
+        thinking: listThinking,
+        data_structure: m('skill-memo-ilife.remind-run.c017'),
+        call_chain: m('skill-memo-ilife.remind-run.c018'),
+        exception: m('skill-memo-ilife.remind-run.c019'),
       },
       items,
     }),
@@ -103,19 +107,19 @@ export function runRemind(params: Record<string, unknown>, db: MemoDb): CommandO
 function reminderNoteIdOf(params: Record<string, unknown>): number | null {
   const v = params.note_id !== undefined ? params.note_id : params.noteId !== undefined ? params.noteId : undefined;
   if (v === undefined || v === null || v === '') return null;
-  return needId(v, '提醒关联笔记');
+  return needId(v, m('skill-memo-ilife.remind-run.c020'));
 }
 
 function reminderContentOf(params: Record<string, unknown>): string {
   const v = params.content !== undefined ? params.content : params.body !== undefined ? params.body : params.title;
-  if (typeof v !== 'string' || v.trim().length === 0) fail(2, '请填入提醒内容');
+  if (typeof v !== 'string' || v.trim().length === 0) fail(2, m('skill-memo-ilife.remind-run.c021'));
   return (v as string).trim();
 }
 
 function reminderAtOf(params: Record<string, unknown>): string | null {
   const v = params.remind_at !== undefined ? params.remind_at : params.remindAt !== undefined ? params.remindAt : params.at;
   if (v === undefined || v === null || v === '') return null;
-  if (typeof v !== 'string') fail(2, '提醒时间须为 YYYY-MM-DD HH:MM');
+  if (typeof v !== 'string') fail(2, m('skill-memo-ilife.remind-run.c022'));
   return normalizeRemindAt(v);
 }
 
@@ -124,7 +128,7 @@ function reminderTypeRuleOf(params: Record<string, unknown>, at: string | null):
   const type = normalizeRepeatType(rawType);
   const rawRule = params.repeat_rule !== undefined ? params.repeat_rule : params.repeatRule !== undefined ? params.repeatRule : params.rule;
   const rule = normalizeRepeatRule(type, rawRule, at);
-  if (type === '一次性' && !at) fail(2, '一次性提醒必须给提醒时间');
+  if (type === '一次性' && !at) fail(2, m('skill-memo-ilife.remind-run.c023'));
   return { type, rule };
 }
 
@@ -132,13 +136,19 @@ function reminderTypeRuleOf(params: Record<string, unknown>, at: string | null):
  *  印给用户看的要换成中文。两个中文说法取自本域既有的那一套（列表视图副标题写
  *  「有效期内的提醒 N 条」／「已废弃的提醒 N 条」，`src/help/scenes/remind.ts` 的参数说明写
  *  「有效(默认)／已废弃」），不去造第三套词。不认得的取值原样透出，不静默吞掉。 */
-const STATUS_LABEL: Record<string, string> = { active: '有效', dismissed: '已废弃' };
+function statusLabelOf(status: string): string {
+  const table: Readonly<Record<string, string>> = {
+    active: m('skill-memo-ilife.remind-run.c047'),
+    dismissed: m('skill-memo-ilife.remind-run.c048'),
+  };
+  return table[status] ?? status;
+}
 
 /** `memo.reminder`：给已有笔记加提醒（`note_id` 可选）或建一条独立提醒；只 INSERT，不建笔记。 */
 export function runReminder(params: Record<string, unknown>, db: MemoDb): CommandOut {
   const noteId = reminderNoteIdOf(params);
   if (noteId !== null) {
-    try { getNote(db, noteId); } catch { fail(4, '无此笔记：' + noteId); }
+    try { getNote(db, noteId); } catch { fail(4, m('skill-memo-ilife.remind-run.c024', { p0: String(noteId) })); }
   }
   const content = reminderContentOf(params);
   const at = reminderAtOf(params);
@@ -153,44 +163,49 @@ export function runReminder(params: Record<string, unknown>, db: MemoDb): Comman
   // #828 · 缺省落「设提醒」那一格（册子 seq 15，通用回执族）。关联笔记时对象行写那条笔记，
   // 独立提醒时写提醒自己——两种都从库里的行取（权威），不照抄入参。
   const note = noteId === null ? null : getNote(db, noteId);
+  // #1225：链内条件分支抽成局部变量（迁移器只切「整串字面量＋参数」）。
+  const scopeSuffix = noteId !== null ? m('skill-memo-ilife.remind-run.c025', { p0: String(noteId) }) : m('skill-memo-ilife.remind-run.c026');
+  const atText = at ?? m('skill-memo-ilife.remind-run.c027');
+  const ruleSuffix = rule === null ? '' : '（' + rule + '）';
+  const statusText = statusLabelOf(row.status);
   const deliver = buildReceiptPage({
     scene: 'memo_remind_existing',
-    title: '设提醒',
-    message: '提醒已设置' + (noteId !== null ? '（笔记 ' + noteId + '）' : '（独立提醒）'),
-    badges: { category: note === null ? '独立提醒' : note.category, sub: note === null ? null : note.sub_category },
+    title: m('skill-memo-ilife.remind-run.c028'),
+    message: m('skill-memo-ilife.remind-run.c029', { p0: String(scopeSuffix) }),
+    badges: { category: note === null ? m('skill-memo-ilife.remind-run.c030') : note.category, sub: note === null ? null : note.sub_category },
     summary: [
       // #820 收尾：四格一律「标签：值」；空值不再写「(未定)」这种括号注记，直接写「未定」。
       // #820 收尾：① 第一格改「笔记内容」（原写「对象」，而下面「处理结果」里也有一格「对象」，
       // 同页两个「对象」指两件事）；② 独立提醒不再写「（未关联笔记）」这种括号注记。
-      note === null ? '笔记内容：无（独立提醒）' : '笔记内容：' + note.content.slice(0, 40),
-      '提醒时间：' + (at ?? '未定'),
-      '重复：' + type + (rule === null ? '' : '（' + rule + '）'),
-      '提醒内容：' + content,
+      note === null ? m('skill-memo-ilife.remind-run.c031') : m('skill-memo-ilife.remind-run.c032', { p0: String(note.content.slice(0, 40)) }),
+      m('skill-memo-ilife.remind-run.c033', { p0: String(atText) }),
+      m('skill-memo-ilife.remind-run.c034', { p0: String(type), p1: String(ruleSuffix) }),
+      m('skill-memo-ilife.remind-run.c035', { p0: String(content) }),
     ],
     sections: [
       // #876 · 这三行原先是库行 dump（`提醒 ID：4`／`状态：active`）：`ID` 是**列名裸奔**、
       // `active` 是**后端取值上屏**。改成人话后同两样信息都还在，且 4 号那条提醒仍指代得清。
-      { heading: '这条提醒', rows: ['提醒编号：' + row.id, '状态：' + (STATUS_LABEL[row.status] ?? row.status), '写入时间：' + row.created_at] },
+      { heading: m('skill-memo-ilife.remind-run.c036'), rows: [m('skill-memo-ilife.remind-run.c037', { p0: String(row.id) }), m('skill-memo-ilife.remind-run.c038', { p0: String(statusText) }), m('skill-memo-ilife.remind-run.c039', { p0: String(row.created_at) })] },
     ],
     receipt: {
-      entityLabel: note === null ? '提醒' : note.category,
+      entityLabel: note === null ? m('skill-memo-ilife.remind-run.c040') : note.category,
       entityId: note === null ? row.id : note.id,
       local: 'created',
       remote: 'not-applicable',
       remoteId: null,
     },
     copyLog: {
-      thinking: '设提醒 · 只 INSERT 提醒行，不建笔记（老 `remind [note_id] --at --content` 口径）',
-      data_structure: 'reminders 表 · note_id／remind_at／repeat_type／repeat_rule／content／status',
-      call_chain: 'memo.reminder → addReminderRow → buildReceiptPage → fillMemoPage(receipt) → deliver 钩子落盘',
-      exception: '无',
+      thinking: m('skill-memo-ilife.remind-run.c041'),
+      data_structure: m('skill-memo-ilife.remind-run.c042'),
+      call_chain: m('skill-memo-ilife.remind-run.c043'),
+      exception: m('skill-memo-ilife.remind-run.c044'),
     },
-    retryPrompt: '若这条提醒不对，请把要改的提醒编号与要改成的样子发我，我废弃旧条重开一条：设提醒',
+    retryPrompt: m('skill-memo-ilife.remind-run.c045'),
   });
   return {
     data: {
       ok: true,
-      message: '提醒已设置' + (noteId !== null ? '（笔记 ' + noteId + '）' : '（独立提醒）') + '：' + row.id,
+      message: m('skill-memo-ilife.remind-run.c046', { p0: String(scopeSuffix), p1: String(row.id) }),
       id: row.id,
       note_id: row.note_id,
       remind_at: row.remind_at,

@@ -24,6 +24,7 @@ import {
   validateFolderName,
   visibleEntries,
 } from './directory-browser-contract.js';
+import { m } from './entries/index.js';
 
 /** 一层列举的三态：加载中／拿到了／这一层读不出来。 */
 export type BrowsePhase = 'idle' | 'loading' | 'ready' | 'failed';
@@ -96,7 +97,7 @@ export function createBrowseController(deps: {
   /** 可跳转的根从哪来；不给就是没有这一行（都是空清单，一样不画）。 */
   readonly rootsSource?: () => Promise<readonly RootRow[]>;
 }): BrowseController {
-  const label = deps.failureLabel ?? '浏览失败';
+  const label = deps.failureLabel ?? m('plugin-manager.directory-browser-state.c001');
   const listeners = new Set<BrowseListener>();
   let state: BrowseState = {
     phase: 'idle',
@@ -240,7 +241,7 @@ export function createBrowseController(deps: {
       }
       const base = state.selected ?? state.listing?.path ?? null;
       if (base === null) {
-        emit({ notice: '还没有打开任何目录，无法新建文件夹。' });
+        emit({ notice: m('plugin-manager.directory-browser-state.c002') });
         return;
       }
       try {
@@ -282,7 +283,10 @@ export function createBaseOf(state: BrowseState): string | null {
 export function describe(state: BrowseState): string {
   if (state.phase === 'failed') return `${state.failure?.code ?? 'browse-failed'} @ ${state.draft}`;
   if (state.listing === null) return `${state.phase}`;
-  return `${state.listing.path}（${rowsOf(state).length} 行）`;
+  return m('plugin-manager.directory-browser-state.c003', {
+    p0: String(state.listing.path),
+    p1: String(rowsOf(state).length),
+  });
 }
 
 /** 一行子目录的完整路径（图上点行时用）。 */

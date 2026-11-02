@@ -10,6 +10,7 @@
  */
 import { skinVar } from '../skin/contract.js';
 import { FLOW_RIBBON_NARROW_PX, FLOW_RIBBON_NODE_COL_PX, flowRibbonSlot, type FlowRibbonSlot } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -42,9 +43,7 @@ export function flowRibbonFormsCss(input?: { readonly prefix?: string }): string
   const colW = 'max(' + String(FLOW_RIBBON_NODE_COL_PX) + 'px, 28%)';
 
   return [
-    [`/* ── 桑基带：两列节点 ＋ 中间一条条带子 ────────────────────────────
-   节点的高、带子两端的上下沿**全是算出来的百分比**（model.ts 的一把尺子），
-   故这里只写位置与外观；带子的多边形由四个行内自定义属性给。 */`,
+    [m('base-render.components-flow-ribbon-style-forms.c001'),
     s('plot') + ' {',
     '  position: relative;',
     '  height: var(' + '--flow-ribbon-plot-h, ' + String(PLOT_FALLBACK_PX) + 'px);',
@@ -111,9 +110,7 @@ export function flowRibbonFormsCss(input?: { readonly prefix?: string }): string
     '  white-space: nowrap;',
     '}'].join(LF),
 
-    [`/* ── 交叉矩阵：行＝来源、列＝用途 ────────────────────────────────
-   格宽按占比画的那一条在矩阵里是「条长」：--flow-ribbon-w 是这一格 ÷ **全表最大格**
-   （不是本行最大——否则每行最深的那一格看起来一样重要）。 */`,
+    [m('base-render.components-flow-ribbon-style-forms.c002'),
     s('matrix') + ' {',
     '  width: 100%;',
     '  min-width: 0;',

@@ -101,7 +101,8 @@ function memoAlerts(): Record<string, { readonly code: string; readonly message:
   const verdict = withHumanError(() => dirVerdict(dataDir));
   if (verdict.exists && verdict.writable) return undefined;
   const message = withHumanError(() => dbDirMessage(dataDir, verdict));
-  const code = message.startsWith('不在') || message.startsWith('同名') ? 'DIR_MISSING' : 'DIR_UNWRITABLE';
+  // #1225：判据位不许用本地化文本（`dbDirMessage` 的说法会随语言变）；按结构位判。
+  const code = verdict.exists ? 'DIR_UNWRITABLE' : 'DIR_MISSING';
   return { 'db.dir': { code, message } };
 }
 

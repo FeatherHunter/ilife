@@ -6,9 +6,11 @@
 // 加法字段只给 travel_trip 页消费，`renderEnvelopeHtml` 原样忽略。
 
 import type { HomeDb } from '../fetch/db.js';
+import { STATUS_AT_HOME, STATUS_TRAVELING } from '../fetch/db.js';
 import { setLocationStatus, listLocationsByItem, listTagsByItem } from '../fetch/index.js';
 import { toItemCard, buildReceipt } from '../render/index.js';
 import { fail } from '../shared/fail.js';
+import { m } from '../entries/index.js';
 
 const TRIP_TYPES = ['健身', '出差', '旅行', '超市', '游泳', '爬山', '滑雪', '自定义'];
 
@@ -18,8 +20,10 @@ function tripDays(params: Record<string, unknown>): number {
 }
 
 function tripType(params: Record<string, unknown>): string {
-  const t = (params.trip_type as string | undefined) ?? (params['行程类型'] as string | undefined) ?? '旅行';
-  return TRIP_TYPES.includes(t) ? t : '旅行';
+  const raw = (params.trip_type as string | undefined) ?? (params['行程类型'] as string | undefined);
+  // 白名单判定只看用户给的数据值；默认值不在白名单里（译过的默认值会被判成非法），单独走显示兜底。
+  if (typeof raw === 'string' && TRIP_TYPES.includes(raw)) return raw;
+  return m('skill-home.outfit-trip.c002');
 }
 
 function tripCards(handle: HomeDb, status: '旅游中' | '在家', reason: (name: string, loc: string) => string): unknown[] {
@@ -36,29 +40,45 @@ function tripCards(handle: HomeDb, status: '旅游中' | '在家', reason: (name
 
 export function runTripManage(params: Record<string, unknown>, handle: HomeDb): unknown {
   const mode = (params.mode as string | undefined) ?? 'pack';
-  if (mode !== 'pack' && mode !== 'return') fail(2, 'mode 须为 pack 或 return');
+  if (mode !== 'pack' && mode !== 'return') fail(2, m('skill-home.outfit-trip.c003'));
   const days = tripDays(params);
   const type = tripType(params);
 
   if (mode === 'return') {
-    const pending = tripCards(handle, '旅游中', (name, loc) => name + '放在' + (loc || '行李中') + '恢复在家');
-    const rows = handle.db.prepare("SELECT item_id FROM item_locations WHERE location_status='旅游中'").all() as { item_id: number }[];
+    const hintBack = (name: string, loc: string): string => {
+      const place = loc || m('skill-home.outfit-trip.c004');
+      return m('skill-home.outfit-trip.c005', { p0: String(name), p1: String(place) });
+    };
+    const pending = tripCards(handle, STATUS_TRAVELING, hintBack);
+    const rows = handle.db.prepare(`SELECT item_id FROM item_locations WHERE location_status='${STATUS_TRAVELING}'`).all() as { item_id: number }[];
     let n = 0;
-    for (const r of rows) { setLocationStatus(handle, r.item_id, '在家'); n++; }
-    const message = n ? '已归位：' + n + ' 件（旅游中到在家）' : '无旅游中物品（真实无待归位）';
+    for (const r of rows) { setLocationStatus(handle, r.item_id, STATUS_AT_HOME); n++; }
+    const message = n ? m('skill-home.outfit-trip.c006', { p0: String(n) }) : m('skill-home.outfit-trip.c007');
     return { ...buildReceipt(message), trip: { mode, tripType: type, days, items: pending } };
   }
 
   const ids = Array.isArray(params.ids) ? (params.ids as unknown[]).filter((x) => Number.isInteger(x)) as number[] : [];
-  for (const id of ids) setLocationStatus(handle, id, '旅游中');
+  for (const id of ids) setLocationStatus(handle, id, STATUS_TRAVELING);
   // 汇总口径：本次带出「ids.length」件，库里处于旅游中的还有先前带出的；inTrip 取真条数，不拿截断行数当总数。
-  const inTrip = (handle.db.prepare("SELECT count(DISTINCT item_id) AS n FROM item_locations WHERE location_status='旅游中'").get() as { n: number }).n;
+  const inTrip = (handle.db.prepare(`SELECT count(DISTINCT item_id) AS n FROM item_locations WHERE location_status='${STATUS_TRAVELING}'`).get() as { n: number }).n;
   if (ids.length) {
-    const items = tripCards(handle, '旅游中', (name, loc) => name + '放在' + (loc || '行李中') + '出发前核对');
-    return { ...buildReceipt('已带出：' + ids.length + ' 件（已标旅游中）；旅游中共 ' + inTrip + ' 件'), trip: { mode, tripType: type, days, items } };
+    const hintPack = (name: string, loc: string): string => {
+      const place = loc || m('skill-home.outfit-trip.c008');
+      return m('skill-home.outfit-trip.c009', { p0: String(name), p1: String(place) });
+    };
+    const items = tripCards(handle, STATUS_TRAVELING, hintPack);
+    return { ...buildReceipt(m('skill-home.outfit-trip.c010', { p0: String(ids.length), p1: String(inTrip) })), trip: { mode, tripType: type, days, items } };
   }
-  const marked = tripCards(handle, '旅游中', (name, loc) => name + '放在' + (loc || '行李中') + '出发前核对');
-  const todo = marked.length ? [] : tripCards(handle, '在家', (name, loc) => name + '放在' + (loc || '家中') + '建议带上').slice(0, 8);
-  const message = marked.length ? '出行清单已生成（旅游中' + inTrip + '件待核对）' : '出行清单已生成（旅游中暂无衣物，下方为待选，请勾选后带出）';
+  const hintPack = (name: string, loc: string): string => {
+    const place = loc || m('skill-home.outfit-trip.c011');
+    return m('skill-home.outfit-trip.c012', { p0: String(name), p1: String(place) });
+  };
+  const hintTodo = (name: string, loc: string): string => {
+    const place = loc || m('skill-home.outfit-trip.c013');
+    return m('skill-home.outfit-trip.c014', { p0: String(name), p1: String(place) });
+  };
+  const marked = tripCards(handle, STATUS_TRAVELING, hintPack);
+  const todo = marked.length ? [] : tripCards(handle, STATUS_AT_HOME, hintTodo).slice(0, 8);
+  const message = marked.length ? m('skill-home.outfit-trip.c015', { p0: String(inTrip) }) : m('skill-home.outfit-trip.c016');
   return { ...buildReceipt(message), trip: { mode, tripType: type, days, items: [...marked, ...todo] } };
 }

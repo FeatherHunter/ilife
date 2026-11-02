@@ -20,6 +20,7 @@
  */
 import { skinVar } from '../skin/contract.js';
 import { SPREAD_DIST_TRACK_PX, spreadDistSlot, type SpreadDistSlot } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -36,8 +37,8 @@ export function spreadDistBoxCss(input?: { readonly prefix?: string }): string {
 
   return [
     /* ── A 档：箱线（一行一组，同一把尺子横着量） ── */
-    '/* A 档（`box`）：卡头 → 行区（贯穿的网格线 ＋ 一行一组：行头 ＋ 轨道）→ 尺子 → 图例 → 脚注。',
-    '   四种形把四种读数分开（不靠颜色）：箱体是面、中位是粗线、离群是空心圈、单笔是实心点。 */',
+    m('base-render.components-spread-dist-style-box.c001'),
+    m('base-render.components-spread-dist-style-box.c002'),
     s('groups') + ' {',
     '  position: relative;',
     '  display: grid;',

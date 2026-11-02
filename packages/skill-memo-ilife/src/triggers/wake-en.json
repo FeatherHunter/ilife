@@ -1,0 +1,16 @@
+{
+  "entries": [
+    {
+      "en": "memo help",
+      "key": "memo.help.lookup"
+    },
+    {
+      "zh": "记一条",
+      "en": "add a note"
+    },
+    {
+      "zh": "搜备忘",
+      "en": "search notes"
+    }
+  ]
+}

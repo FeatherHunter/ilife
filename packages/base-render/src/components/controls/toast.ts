@@ -10,6 +10,7 @@
 import { assertActionId, assertNoInlineHandler, assertPlainObject, badInput, esc } from './shared.js';
 import { ACTION_ID_ATTR, RenderToast, TOAST_DEFAULTS, ToastBadge, ToastController, ToastHostPort, ToastIcon, ToastInput } from '../../spec/index.js';
 import { STYLE_PREFIX } from '../../style.js';
+import { m } from '../../entries/index.js';
 
 /* ── toast（`renderToast` ＋ `createToastController`） ─────────────────── */
 
@@ -32,19 +33,19 @@ export const TOAST_ICON_GLYPHS: Readonly<Record<ToastIcon, string>> = Object.fre
  *  后果＝屏幕上那个词**不可选中、不可搜索、不可复制、屏读器读不到、打印与 PDF 取不到字**。
  *  改法＝词进 DOM：图标位里同时放字形与这枚标签，谁显谁隐交 CSS（见 `blocks.ts` 的 note 区 CSS
  *  与 `pageUi` ⑩）。不启用 `pageUi` 的页仍只显字形，外观与改前逐值相同。 */
-export const TOAST_ICON_LABELS: Readonly<Record<ToastIcon, string>> = Object.freeze({
-  copy: '已复制',
-  ok: '已完成',
-  warn: '注意',
-  danger: '未通过',
-  info: '提示',
-});
+export const TOAST_ICON_LABELS: Readonly<Record<ToastIcon, string>> = {
+  get copy() { return m('base-render.components-controls-toast.c001'); },
+  get ok() { return m('base-render.components-controls-toast.c002'); },
+  get warn() { return m('base-render.components-controls-toast.c003'); },
+  get danger() { return m('base-render.components-controls-toast.c004'); },
+  get info() { return m('base-render.components-controls-toast.c005'); },
+};
 
 /** 徽章类型允许清单：取冻结类型 `ToastBadge['type']` 的成员（非法值回落 `'ok'`，旧层口径）。 */
 const TOAST_BADGE_TYPES = ['ok', 'warn', 'danger'] as const satisfies readonly ToastBadge['type'][];
 
 /** 关闭按钮文案（文档无规定；沿用旧基线 `✓ 知道了`）。 */
-export const TOAST_CLOSE_LABEL = '✓ 知道了';
+export function TOAST_CLOSE_LABEL(): string { return m('base-render.components-controls-toast.c006'); }
 
 /** 关闭按钮的命名空间类（helpers JS 按 `prefix` 派生同名选择器，见 `buildSharedHelpersJs`）。 */
 export const TOAST_CLOSE_CLASS = 'toast-close';
@@ -115,7 +116,7 @@ export const renderToast: RenderToast = (input) => {
     '<div class="' + STYLE_PREFIX + 'toast" role="' + TOAST_DEFAULTS.role + '" aria-live="' + TOAST_DEFAULTS.ariaLive + '" data-max="' + maxStack + '">'
     + head.join('')
     + '<div class="' + STYLE_PREFIX + TOAST_BODY_CLASS + '">' + body.join('') + '</div>'
-    + '<button type="button" class="' + STYLE_PREFIX + TOAST_CLOSE_CLASS + '">' + TOAST_CLOSE_LABEL + '</button>'
+    + '<button type="button" class="' + STYLE_PREFIX + TOAST_CLOSE_CLASS + '">' + TOAST_CLOSE_LABEL() + '</button>'
     + '</div>'
   );
 };

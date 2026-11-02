@@ -23,9 +23,11 @@ import { collectEntryCard, collectSheetPage, receiptSheetPage } from '../shared/
 import type { TicketSheetRow } from '../shared/票据纸页型.js';
 import type { AccountRow } from './accounts.js';
 import type { AccountBlocked } from './params.js';
-import { ACCOUNT_SLOTS, CHANGE_SLOT, textOf } from './params.js';
-import { SOURCE_COLLECT, SOURCE_WRITE, accountHelpPrompt, accountHelpTemplate, changeTextOf, copyZoneOf, envelopeOf, money, slotFieldsOf, textOrDash, timeOf } from './pageParts.js';
+import { accountSlots, changeSlot, textOf } from './params.js';
+import { accountHelpPrompt, accountHelpTemplate, changeTextOf, copyZoneOf, envelopeOf, money, slotFieldsOf, sourceCollect, sourceWrite, textOrDash, timeOf } from './pageParts.js';
 import type { AccountCollectInput, AccountReceiptInput, AccountWriteScene } from './scene.js';
+import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** 场景给模板的**差异声明**：值、文案与「哪个可选块出不出」，**不含任何块位拼装**。
  *
@@ -63,10 +65,10 @@ export function bindAccountUpdatePages(spec: AccountUpdateSpec): Pick<AccountWri
 /** 这一段改动在账户那一行上改了什么（改前 → 改后；没改的不列）。 */
 export function changeRowsOf(before: AccountRow, after: AccountRow): readonly ChangeRowInput[] {
   const rows: ChangeRowInput[] = [];
-  if (before.name !== after.name) rows.push({ label: '账户名', before: before.name, after: after.name });
-  if (before.type !== after.type) rows.push({ label: '类型', before: textOrDash(before.type), after: textOrDash(after.type) });
+  if (before.name !== after.name) rows.push({ label: m('skill-bill.account-template-update.c001'), before: before.name, after: after.name });
+  if (before.type !== after.type) rows.push({ label: m('skill-bill.account-template-update.c002'), before: textOrDash(before.type), after: textOrDash(after.type) });
   if (before.disabled !== after.disabled) {
-    rows.push({ label: '状态', before: before.disabled ? '已停用' : '使用中', after: after.disabled ? '已停用' : '使用中' });
+    rows.push({ label: m('skill-bill.account-template-update.c003'), before: before.disabled ? m('skill-bill.account-template-update.c004') : m('skill-bill.account-template-update.c005'), after: after.disabled ? m('skill-bill.account-template-update.c006') : m('skill-bill.account-template-update.c007') });
   }
   return rows;
 }
@@ -79,19 +81,22 @@ function targetOf(input: AccountCollectInput): AccountRow | null {
 
 /** 确认页那一条载荷说明（envelope 的 `message`）。 */
 function messageOf(word: string, blocked: readonly AccountBlocked[]): string {
-  if (blocked.length === 0) return word + '：等你确认（这一页还没写库）';
-  return word + '还差 ' + String(blocked.length) + ' 项：' + blocked.map((b) => b.label).join('、')
-    + '（已出确认页，补齐之后跟助手说一遍）';
+  if (blocked.length === 0) return m('skill-bill.account-template-update.c008', { p0: String(word) });
+  return m('skill-bill.account-template-update.c009', {
+    p0: String(word),
+    p1: String(String(blocked.length)),
+    p2: String(listJoin(currentRenderLanguage(), blocked.map((b) => b.label))),
+  });
 }
 
 /** 确认页那几行落点账本。 */
 function confirmLedgerOf(input: AccountCollectInput, target: AccountRow | null, at: string): readonly TicketSheetRow[] {
   const name = textOf(input.params['name']);
   return [
-    { label: '账户', value: target !== null ? target.name : name !== '' ? name + '（认不出来）' : '—（待填）' },
-    { label: '账本', value: '账户和账本' },
-    { label: '时间', value: at },
-    { label: '编号', value: '—（还没记）' },
+    { label: m('skill-bill.account-template-update.c010'), value: target !== null ? target.name : name !== '' ? m('skill-bill.account-template-update.c011', { p0: String(name) }) : m('skill-bill.account-template-update.c012') },
+    { label: m('skill-bill.account-template-update.c013'), value: m('skill-bill.account-template-update.c014') },
+    { label: m('skill-bill.account-template-update.c015'), value: at },
+    { label: m('skill-bill.account-template-update.c016'), value: m('skill-bill.account-template-update.c017') },
   ];
 }
 
@@ -103,47 +108,51 @@ function confirmPage(spec: AccountUpdateSpec, input: AccountCollectInput): strin
   const at = timeOf(input.params, input.actionAt);
   const envelope = envelopeOf(input.key, false, messageOf(spec.word, blocked));
   const hint = missing > 0
-    ? '还差 ' + String(missing) + ' 项没填：' + blocked.map((b) => b.label).join('、') + '，填完才能复制。'
-    : '已填齐，点上面那句复制带数据的口令。';
+    ? m('skill-bill.account-template-update.c018', {
+      p0: String(String(missing)),
+      p1: String(listJoin(currentRenderLanguage(), blocked.map((b) => b.label))),
+    })
+    : m('skill-bill.account-template-update.c019');
   // A 路（严格按判地）：待填段只列判地那两行——「账户」「改成什么」。
-  // 「停用／启用」是本仓能力，命令侧照收（`ACCOUNT_SLOTS.update` 与 `./params.js` 一字未动），只是页上不再列出。
-  // 判地那两行＝「账户」与「改成什么」；槽位表里后者叫 `new-name`（`CHANGE_SLOT.name` 是 `change`，
-  // 它只在缺项探针里用）——这里按**槽位表的真名**过滤，别按 CHANGE_SLOT.name（#1118 收尾修正）。
-  const shown = ACCOUNT_SLOTS[input.op].filter((s) => s.name === 'name' || s.name === 'new-name');
+  // 「停用／启用」是本仓能力，命令侧照收（`accountSlots().update` 与 `./params.js` 一字未动），只是页上不再列出。
+  // 判地那两行＝「账户」与「改成什么」；槽位表里后者叫 `new-name`（`changeSlot().name` 是 `change`，
+  // 它只在缺项探针里用）——这里按**槽位表的真名**过滤，别按 changeSlot().name（#1118 收尾修正）。
+  const change = changeSlot();
+  const shown = accountSlots()[input.op].filter((s) => s.name === 'name' || s.name === 'new-name');
   /* #1130：待填区走共享件（编号 → 标签 → 右侧输入框 ＋ 每格一行灰提示），判地 b03 那两行逐字照抄。 */
   const entry = collectEntryCard(slotFieldsOf(input.params, shown.map((s) => (
-    s.name === CHANGE_SLOT.name
-      ? { name: 'new-name', label: CHANGE_SLOT.label, hint: CHANGE_SLOT.hint, note: CHANGE_SLOT.note, required: true }
+    s.name === change.name
+      ? { name: 'new-name', label: change.label, hint: change.hint, note: change.note, required: true }
       : { name: s.name, label: s.label, hint: s.hint, note: s.note, required: s.required }
   ))), { text: hint, ready: missing === 0 });
   return collectSheetPage({
-    docTitle: DOC_TITLE + '·改账户确认',
-    brand: '饼干记账 · ' + spec.word,
-    title: missing > 0 ? spec.word + '还差 ' + String(missing) + ' 项' : spec.word + '等你确认',
+    docTitle: m('skill-bill.account-template-update.c020', { p0: String(DOC_TITLE) }),
+    brand: m('skill-bill.account-template-update.c021', { p0: String(spec.word) }),
+    title: missing > 0 ? m('skill-bill.account-template-update.c022', { p0: String(spec.word), p1: String(String(missing)) }) : m('skill-bill.account-template-update.c023', { p0: String(spec.word) }),
     subtitle: spec.subtitle(input, target),
     summary: {
-      eyebrow: '待补槽位',
+      eyebrow: m('skill-bill.account-template-update.c024'),
       warn: true,
       value: String(missing),
-      unit: '项',
-      note: missing > 0 ? '缺：' + blocked.map((b) => b.label).join('、') : '值都齐了，看准了就复制下面那句。',
+      unit: m('skill-bill.account-template-update.c025'),
+      note: missing > 0 ? m('skill-bill.account-template-update.c026', { p0: String(listJoin(currentRenderLanguage(), blocked.map((b) => b.label))) }) : m('skill-bill.account-template-update.c027'),
     },
-    ledgerTitle: '账户落点',
+    ledgerTitle: m('skill-bill.account-template-update.c028'),
     ledger: confirmLedgerOf(input, target, at),
-    entryTitle: '待填',
+    entryTitle: m('skill-bill.account-template-update.c029'),
     entryTag: 'ENTRY',
     entryHtml: entry,
-    check: '还没记 ／ 共 0 条 ／ 没有异常',
+    check: m('skill-bill.account-template-update.c030'),
     actions: renderTicketButton({
-      label: '填好后复制这句话去跟助手说',
+      label: m('skill-bill.account-template-update.c031'),
       actionId: 'ilife-confirm-prompt',
       copyText: spec.prompt(input, target),
       disabled: missing > 0,
     }) + copyZoneOf({
       envelope, title: spec.word, key: input.key, params: input.params,
-      source: SOURCE_COLLECT, detail: '没写库（确认页）', actionAt: input.actionAt,
+      source: sourceCollect(), detail: m('skill-bill.account-template-update.c032'), actionAt: input.actionAt,
     }),
-    foot: '饼干记账 · ' + spec.word + '确认',
+    foot: m('skill-bill.account-template-update.c033', { p0: String(spec.word) }),
     styleHtml: '<style>' + ticketButtonCss() + '</style>',
     slot: 'collect', page: 'collect', shape: 'receipt', key: input.key, paper: 'receipt',
   }) + ticketCollectRuntime({
@@ -162,62 +171,63 @@ function receiptPage(spec: AccountUpdateSpec, input: AccountReceiptInput): strin
   const at = timeOf(input.params, receipt.actionAt);
   const envelope = envelopeOf(input.key, true, receipt.summary);
   const changes = receipt.before === null || receipt.after === null ? [] : changeRowsOf(receipt.before, receipt.after);
-  const renamed = changes.find((c) => c.label === '账户名');
+  const nameLabel = m('skill-bill.account-template-update.c001');
+  const renamed = changes.find((c) => c.label === nameLabel);
   // A 路（严格按判地 b04）：中段就是「原名／现名／历史流水」三行；其余口子（停用／启用）判地没有，
   // 但它们是真改动，照实出成一行（不是信息删减，是判地没覆盖到的那一支）。
   const rows: readonly EntryCardEntry[] = [
     ...(renamed === undefined ? [] : [
-      { title: '原名 ' + renamed.before, sub: '改之前的账户名' },
-      { title: '现名 ' + renamed.after, sub: '改之后的账户名' },
+      { title: m('skill-bill.account-template-update.c034', { p0: String(renamed.before) }), sub: m('skill-bill.account-template-update.c035') },
+      { title: m('skill-bill.account-template-update.c036', { p0: String(renamed.after) }), sub: m('skill-bill.account-template-update.c037') },
     ]),
-    ...changes.filter((c) => c.label !== '账户名').map((c) => ({ title: c.label + ' ' + c.after, sub: '改之前 ' + c.before })),
+    ...changes.filter((c) => c.label !== nameLabel).map((c) => ({ title: c.label + ' ' + c.after, sub: m('skill-bill.account-template-update.c038', { p0: String(c.before) }) })),
     ...(receipt.renamedRows > 0
-      ? [{ title: '历史流水 ' + String(receipt.renamedRows) + ' 笔跟着改名', sub: '记录上的旧名一起换过来' }]
+      ? [{ title: m('skill-bill.account-template-update.c039', { p0: String(String(receipt.renamedRows)) }), sub: m('skill-bill.account-template-update.c040') }]
       : []),
   ];
   const detailRows = rows.length === 0
-    ? [{ title: '这一次没有一处字段真的变了。', sub: '值与原值一致' }]
+    ? [{ title: m('skill-bill.account-template-update.c041'), sub: m('skill-bill.account-template-update.c042') }]
     : rows;
   const after = receipt.after;
   return receiptSheetPage({
-    docTitle: DOC_TITLE + '·写库回执',
-    brand: '饼干记账 · ' + spec.word,
+    docTitle: m('skill-bill.account-template-update.c043', { p0: String(DOC_TITLE) }),
+    brand: m('skill-bill.account-template-update.c044', { p0: String(spec.word) }),
     title: receipt.summary,
-    subtitle: spec.word + ' · 回执',
+    subtitle: m('skill-bill.account-template-update.c045', { p0: String(spec.word) }),
     summary: {
-      eyebrow: receipt.noChange ? '没改动' : '已记好',
+      eyebrow: receipt.noChange ? m('skill-bill.account-template-update.c046') : m('skill-bill.account-template-update.c047'),
       value: String(receipt.renamedRows > 0 ? receipt.renamedRows : receipt.affectedRows),
-      unit: receipt.renamedRows > 0 ? '笔' : '处',
+      unit: receipt.renamedRows > 0 ? m('skill-bill.account-template-update.c048') : m('skill-bill.account-template-update.c049'),
       note: spec.receiptNote(input),
-      ...(receipt.noChange ? {} : { stamp: '有效' }),
+      ...(receipt.noChange ? {} : { stamp: m('skill-bill.account-template-update.c050') }),
     },
-    ledgerTitle: '账户落点',
+    ledgerTitle: m('skill-bill.account-template-update.c051'),
     ledger: [
       {
-        label: '账户',
+        label: m('skill-bill.account-template-update.c052'),
         value: after === null
-          ? '账户表已更新'
-          : after.name + '（' + (after.type.trim() === '' ? '—' : after.type) + '·' + (after.disabled ? '已停用' : '使用中') + '）',
+          ? m('skill-bill.account-template-update.c053')
+          : after.name + '（' + (after.type.trim() === '' ? '—' : after.type) + '·' + (after.disabled ? m('skill-bill.account-template-update.c054') : m('skill-bill.account-template-update.c055')) + '）',
       },
-      { label: '账本', value: '账户和账本（已记好）' },
-      { label: '时间', value: at },
-      { label: '编号', value: receipt.renamedRows > 0 ? '—（连带 ' + String(receipt.renamedRows) + ' 笔流水改名）' : '—（账户域无小票编号）' },
+      { label: m('skill-bill.account-template-update.c056'), value: m('skill-bill.account-template-update.c057') },
+      { label: m('skill-bill.account-template-update.c058'), value: at },
+      { label: m('skill-bill.account-template-update.c059'), value: receipt.renamedRows > 0 ? m('skill-bill.account-template-update.c060', { p0: String(String(receipt.renamedRows)) }) : m('skill-bill.account-template-update.c061') },
     ],
-    detailTitle: '改了什么',
+    detailTitle: m('skill-bill.account-template-update.c062'),
     detailTag: 'DETAIL',
     detailHtml: renderEntryCard({ entries: detailRows }),
-    check: '已经记进账本 ／ 共 ' + String(receipt.affectedRows) + ' 条 ／ 没有异常',
+    check: m('skill-bill.account-template-update.c063', { p0: String(String(receipt.affectedRows)) }),
     actions: renderTicketButton({
-      label: '撤销这次改名（可恢复）',
+      label: m('skill-bill.account-template-update.c064'),
       actionId: 'ilife-undo-update',
       // #1136（返工）：同 template-form.ts 那一条（复制出去的纯文本走 HELP 句）。
       copyText: accountHelpPrompt('account_update', input.params, changeTextOf(input.params)),
     }) + copyZoneOf({
       envelope, title: spec.word, key: input.key, params: input.params,
-      source: SOURCE_WRITE, detail: spec.logDetail(input), actionAt: receipt.actionAt,
+      source: sourceWrite(), detail: spec.logDetail(input), actionAt: receipt.actionAt,
       copy: { text: accountHelpPrompt('account_update', input.params, changeTextOf(input.params)) },
     }),
-    foot: '饼干记账 · ' + spec.word + '回执',
+    foot: m('skill-bill.account-template-update.c065', { p0: String(spec.word) }),
     styleHtml: '<style>' + ticketButtonCss() + entryCardCss() + '</style>',
     slot: 'receipt', page: 'receipt', shape: 'receipt', key: input.key, paper: 'receipt',
   });
@@ -225,19 +235,21 @@ function receiptPage(spec: AccountUpdateSpec, input: AccountReceiptInput): strin
 
 /** 一张卡上「改完之后是什么样」的读数值（回执页读数行用）。 */
 export function afterCardOf(after: AccountRow): { readonly label: string; readonly value: string; readonly detail: string } {
+  // #1212 手工处置：链内两个条件各抽局部变量，中间的「／ 状态」才随整句进模板。
+  const typeText = after.type.trim() === '' ? m('skill-bill.account-template-update.c066') : m('skill-bill.account-template-update.c067', { p0: String(after.type) });
+  const stateText = after.disabled ? m('skill-bill.account-template-update.c068') : m('skill-bill.account-template-update.c069');
   return {
-    label: '改完之后',
+    label: m('skill-bill.account-template-update.c070'),
     value: after.name,
-    detail: (after.type.trim() === '' ? '类型 —' : '类型 ' + after.type)
-      + ' ／ 状态 ' + (after.disabled ? '已停用' : '使用中'),
+    detail: m('skill-bill.account-template-update.c071', { p0: String(typeText), p1: String(stateText) }),
   };
 }
 
 /** 一句「改了几笔历史流水」的读数值（改名那一路用；没改名写 0 笔）。 */
 export function renamedCardOf(renamed: number): { readonly label: string; readonly value: string; readonly detail: string } {
   return {
-    label: '历史流水跟着改名',
-    value: String(renamed) + ' 笔',
-    detail: renamed === 0 ? '这一次没改账户名' : '这些记录上的账户名一起换过来了',
+    label: m('skill-bill.account-template-update.c072'),
+    value: m('skill-bill.account-template-update.c073', { p0: String(String(renamed)) }),
+    detail: renamed === 0 ? m('skill-bill.account-template-update.c074') : m('skill-bill.account-template-update.c075'),
   };
 }

@@ -7,6 +7,7 @@ import type { HomeDb } from '../fetch/db.js';
 import { searchItems } from '../fetch/index.js';
 import { fail, note } from '../shared/fail.js';
 import { toItemCard, buildSearchList } from '../render/index.js';
+import { m } from '../entries/index.js';
 
 export function runItemSearch(params: Record<string, unknown>, handle: HomeDb): unknown {
   if (params.dupes === true) {
@@ -19,12 +20,12 @@ export function runItemSearch(params: Record<string, unknown>, handle: HomeDb): 
   if (params.tag !== undefined) f.tag = String(params.tag);
   const cid = params.category_id ?? params.categoryId;
   if (cid !== undefined) {
-    if (!Number.isInteger(cid)) fail(2, 'category_id 须为正整数');
+    if (!Number.isInteger(cid)) fail(2, m('skill-home.items-search.c001'));
     f.categoryId = cid as number;
   }
   if (params.status !== undefined) f.status = String(params.status);
   if (params.limit !== undefined) {
-    if (!Number.isInteger(params.limit)) fail(2, 'limit 须为正整数');
+    if (!Number.isInteger(params.limit)) fail(2, m('skill-home.items-search.c002'));
     f.limit = params.limit as number;
   }
   if (params.exact === true) f.exact = true;
@@ -35,6 +36,6 @@ export function runItemSearch(params: Record<string, unknown>, handle: HomeDb): 
     const it = hits.find((h) => h.item.id === c.id)?.item;
     return !!(it?.photo);
   });
-  if (!hits.length) note('库空或无命中：真实无记录（非故障）');
+  if (!hits.length) note(m('skill-home.items-search.c003'));
   return buildSearchList(cards);
 }

@@ -11,10 +11,13 @@
  *
  * 对外五件（铁律五「不多于五个」）：
  *   - `wakeWordOf`——内部型名 → 唤醒词（`expense` → 记支出）；
- *   - `statusNoteOf`——内部状态串 → 用户说法（`软删打标（deleted_at = now，不物理删）` → 已撤销，记录还在，随时可恢复）；
+ *   - `statusNoteOf`——内部**状态码** → 用户说法（`soft-deleted` → 已撤销，记录还在，随时可恢复）；
  *   - `fieldLabelOf`——库列名 → 中文列名（`deleted_at` → 撤销标记）；
  *   - `nextStepOf`——这一页现在该做什么（「下一步动作」那枚形状的取值）。
  *   - `badgeTextOf`——摆进徽标前把行内 `·` 换成全角空格（版式位收口，只做标点替换）。
+ *
+ * **状态码是判据位**（#1197）：内部状态一律写成 ASCII 码（`pending-blocked`／`soft-deleted`…），
+ *  用户说法只在词条层；不再拿中文状态串当键，也不再拿本地化文本做判据。
  *
  * **不进用户可见处**的两类（照上级裁定第 1 条）：命令名 `bill.record.add`／`bill.record.update` 与
  *  `data-t` 复制载荷里那一行「场景标识」——它们只活在复制给助手的载荷里，页面正文与徽章一个字都不印。
@@ -23,57 +26,65 @@
  *  ＋ `docs/skills/skill-bill/t407-机审读数.md` 第三节（英文裸词那一列逐行）。
  */
 import { wakeWordOfKind } from '../triggers/wakeTable.js';
+import { m } from '../entries/index.js';
 
-/** 内部标识符 → 用户说法。三张表都**只在这里定义一次**，别处不许再写第二份。 */
+/** 内部标识符 → 用户说法。三张表都**只在这里定义一次**，别处不许再写第二份。
+ *  表一律**按调用现建**（#1197：模块加载期不取词，否则语言会在模块加载时固化）。 */
 
 /** ① 库列名 → 中文列名（字段表、缺口清单、回执明细都读它）。 */
-const FIELD_LABELS: Readonly<Record<string, string>> = {
-  id: '记录编号',
-  category: '分类',
-  amount: '金额',
-  time: '时间',
-  account: '账户',
-  ledger: '账本',
-  currency: '币种',
-  note: '备注',
-  source_id: '原记录编号',
-  who: '往来对象',
-  total: '总额',
-  periods: '期数',
-  start_date: '首期日',
-  deleted_at: '撤销标记',
-  op: '这一步做什么',
-};
+function fieldLabels(): Readonly<Record<string, string>> {
+  return {
+    id: m('skill-bill.write-userWording.c001'),
+    category: m('skill-bill.write-userWording.c002'),
+    amount: m('skill-bill.write-userWording.c003'),
+    time: m('skill-bill.write-userWording.c004'),
+    account: m('skill-bill.write-userWording.c005'),
+    ledger: m('skill-bill.write-userWording.c006'),
+    currency: m('skill-bill.write-userWording.c007'),
+    note: m('skill-bill.write-userWording.c008'),
+    source_id: m('skill-bill.write-userWording.c009'),
+    who: m('skill-bill.write-userWording.c010'),
+    total: m('skill-bill.write-userWording.c011'),
+    periods: m('skill-bill.write-userWording.c012'),
+    start_date: m('skill-bill.write-userWording.c013'),
+    deleted_at: m('skill-bill.write-userWording.c014'),
+    op: m('skill-bill.write-userWording.c015'),
+  };
+}
 
 /** ② 内部型名 → 唤醒词（类型徽章第一枚形状、回执页页标题都读它）。
  *  **不在这里写词表**（#721）：那张表曾经是同一件事的第二处书写位（域声明一处、这里一处，
  *  改一处忘一处不会有机器报警）。现在一律从域声明算——`wakeWordOfKind` 走词条的 `preset.kind`，
  *  认不得的型名与空串退回写入域的通用词（`记一笔`），口径与 `src/write/scene.ts` 的兜底同一处。 */
 
-/** ③ 内部状态串 → 用户说法。表里的名字逐字取自页面现状（`docs/skills/skill-bill/t407-机审读数.md` 第三节的原文）。
- *  撤销／恢复两态照上级口径逐字：`deleted_at＝now` →「已撤销，记录还在，随时可恢复」、
- *  置 NULL →「已恢复」；「本仓尚未定额的型」→「分类按三级挂靠」（人话，不隐藏）。 */
-const STATUS_NOTES: Readonly<Record<string, string>> = {
-  '软删打标（deleted_at = now，不物理删）': '已撤销，记录还在，随时可恢复',
-  '软删打标（deleted_at = now，行还在）': '已撤销，记录还在，随时可恢复',
-  '置 NULL（deleted_at 清空）': '已恢复',
-  '三形态之一：缺记录编号 · 先挑一条': '先挑一条记录',
-  '落库回执': '这一笔已保存',
-  '批量·现单笔化': '一次只落一笔',
-  '本仓尚未定额的型': '分类按三级挂靠',
-  '按金额符号判支出／收入': '方向按金额符号判',
-  '待补槽位 · 未写库（已阻断）': '还没写库',
-  '待补槽位 · 未写库': '还没写库',
-  '待核对 · 未写库': '还没写库',
-  '写库成功': '这一笔已保存',
-  '写库成功（收入取正数）': '这一笔已保存',
-  '写库成功（方向按金额符号判）': '这一笔已保存',
-};
+/** ③ 内部状态码 → 用户说法。撤销／恢复两态照上级口径逐字：`deleted_at＝now` →「已撤销，记录还在，随时可恢复」、
+ *  置 NULL →「已恢复」；「本仓尚未定额的型」→「分类按三级挂靠」（人话，不隐藏）。
+ *  码表与生产者一一对上（#1197 判据位改造）：`pending-blocked`／`pending`／`review-pending`／`pick-first`／
+ *  `soft-deleted`／`restored`／`receipt-logged`／`batch-to-single`／`kind-unknown`／`sign-direction`／`saved`／
+ *  `saved-income`／`saved-sign`／`saved-photo`。 */
+function statusNotes(): Readonly<Record<string, string>> {
+  return {
+    'pending-blocked': m('skill-bill.write-userWording.c016'),
+    'pending': m('skill-bill.write-userWording.c017'),
+    'review-pending': m('skill-bill.write-userWording.c018'),
+    'pick-first': m('skill-bill.write-userWording.c019'),
+    'soft-deleted': m('skill-bill.write-userWording.c020'),
+    'restored': m('skill-bill.write-userWording.c021'),
+    'receipt-logged': m('skill-bill.write-userWording.c022'),
+    'batch-to-single': m('skill-bill.write-userWording.c023'),
+    'kind-unknown': m('skill-bill.write-userWording.c024'),
+    'sign-direction': m('skill-bill.write-userWording.c025'),
+    'saved': m('skill-bill.write-userWording.c026'),
+    'saved-income': m('skill-bill.write-userWording.c027'),
+    'saved-sign': m('skill-bill.write-userWording.c028'),
+    'saved-photo': m('skill-bill.write-userWording.c029'),
+  };
+}
 
-/** 内部状态串 → 用户说法；认不得的原样返回（**不猜、不静默抹掉**）。空串＝这一句不上屏。 */
+/** 内部状态码 → 用户说法；认不得的原样返回（**不猜、不静默抹掉**）。空串＝这一句不上屏。 */
 export function statusNoteOf(state: string): string {
   if (typeof state !== 'string') return '';
-  const hit = STATUS_NOTES[state.trim()];
+  const hit = statusNotes()[state.trim()];
   return hit === undefined ? state.trim() : hit;
 }
 
@@ -88,7 +99,7 @@ export function fieldLabelOf(name: string): string {
   if (typeof name !== 'string') return '';
   const k = name.trim();
   if (k === '') return '';
-  return FIELD_LABELS[k] ?? k;
+  return fieldLabels()[k] ?? k;
 }
 
 /** 一句要摆进**徽标**的话（候选依据、分段现状这类）：把行内那个 `·` 换成全角空格。
@@ -120,10 +131,10 @@ export function nextStepOf(input: {
 }): string {
   const n = input.missing ?? 0;
   if (n > 0) {
-    const word = input.wakeWord === undefined || input.wakeWord === '' ? '' : '，再说一遍「' + input.wakeWord + '」';
-    return '还差 ' + n + ' 项：补齐了' + word + '。';
+    const word = input.wakeWord === undefined || input.wakeWord === '' ? '' : m('skill-bill.write-userWording.c030', { p0: String(input.wakeWord) });
+    return m('skill-bill.write-userWording.c031', { p0: String(n), p1: String(word) });
   }
-  if (input.page === 'collect') return '这一页先不写库。看准了就照下面那句复制。';
-  if (input.exit === true) return '这一笔已经记下了，不用再做什么。要反悔就点下面的「撤销这一笔」。';
-  return '这一笔已经记下了，不用再做什么。';
+  if (input.page === 'collect') return m('skill-bill.write-userWording.c032');
+  if (input.exit === true) return m('skill-bill.write-userWording.c033');
+  return m('skill-bill.write-userWording.c034');
 }

@@ -10,6 +10,7 @@ import { ABOUT_TAB_ID, LF, TAB_GROUP_NAME, cls, tabRadioId } from './shared.js';
 import { escapeHtml } from '../../contract.js';
 import { ACTION_ID_ATTR, DEFAULT_DATA_ATTR } from '../../spec/controls.js';
 import { HELP_COPY_ACTIONS, HelpCopyTarget, SCENE_STATUS, SCENE_TYPE_FIELD, Scene, SceneContact, SceneContactItem, SceneData, SceneEditableField, SceneGroup, SceneInitBanner, SceneInitBannerStep, SceneMetaBlock, SceneRecommendation, SceneSubgroup, SceneTypeBadge } from '../../spec/help.js';
+import { m } from '../../entries/index.js';
 
 /* ── 4. 渲染小件 ────────────────────────────────────────────── */
 
@@ -68,7 +69,7 @@ export function renderHero(data: SceneData, sceneCount: number): string {
   if (typeof data.subtitle === 'string') {
     parts.push('<p class="' + cls('subtitle') + '">' + text(data.subtitle) + '</p>');
   }
-  parts.push('<p class="' + cls('lead') + '">' + text(String(sceneCount) + ' 场景 · 点场景卡看指令全文,一键复制指令') + '</p>');
+  parts.push('<p class="' + cls('lead') + '">' + text(m('base-render.components-help-render.c001', { p0: String(String(sceneCount)) })) + '</p>');
   parts.push('</header>');
   return parts.join(LF);
 }
@@ -112,8 +113,9 @@ export function renderTabBar(groups: readonly SceneGroup[]): string {
         : '')
       + text(group.label) + '</label>');
   });
-  labels.push('<label class="' + cls('tab') + '"' + attr('for', ABOUT_TAB_ID) + '>' + text('关于') + '</label>');
-  return '<nav class="' + cls('tab-bar') + '" aria-label="分组导航">' + labels.join('') + '</nav>';
+  labels.push('<label class="' + cls('tab') + '"' + attr('for', ABOUT_TAB_ID) + '>' + text(m('base-render.components-help-render.c002')) + '</label>');
+  const navLabel = m('base-render.components-help-render.c008');
+  return '<nav class="' + cls('tab-bar') + '" aria-label="' + navLabel + '">' + labels.join('') + '</nav>';
 }
 
 /** 类型徽章（`types` 元素：字符串走 CSS 默认配色；`{text,bg?,fg?}` 把配色写入内联 style）。 */
@@ -150,7 +152,7 @@ function renderFields(fields: readonly SceneEditableField[]): string {
       parts.push('<span class="' + cls('field-hint') + '">' + text(field.hint) + '</span>');
     }
     if (field.required === true) {
-      parts.push('<span class="' + cls('field-required') + '">' + text('必填') + '</span>');
+      parts.push('<span class="' + cls('field-required') + '">' + text(m('base-render.components-help-render.c003')) + '</span>');
     }
     parts.push('</li>');
     return parts.join('');
@@ -163,7 +165,7 @@ function renderSceneCard(data: SceneData, group: SceneGroup, scene: Scene): stri
   const cli = cliText(scene);
   const fields = scene.editable_fields ?? [];
   const sheet: string[] = ['<details class="' + cls('sheet') + '">'];
-  sheet.push('<summary class="' + cls('sheet-summary') + '">' + text('查看指令') + '</summary>');
+  sheet.push('<summary class="' + cls('sheet-summary') + '">' + text(m('base-render.components-help-render.c004')) + '</summary>');
   sheet.push('<div class="' + cls('sheet-body') + '">');
   sheet.push('<pre class="' + cls('prompt') + '">' + text(substitutedPrompt(scene)) + '</pre>');
   if (fields.length > 0) sheet.push(renderFields(fields));
@@ -226,7 +228,7 @@ export function renderAboutPage(data: SceneData, checked: boolean): string {
   const contact: SceneContact | undefined = data.contact;
   if (contact !== undefined && contact.items.length > 0) {
     parts.push('<section class="' + cls('about-sec') + '">');
-    parts.push('<h2 class="' + cls('about-head') + '">' + text('联系作者') + '</h2>');
+    parts.push('<h2 class="' + cls('about-head') + '">' + text(m('base-render.components-help-render.c005')) + '</h2>');
     parts.push('<ul class="' + cls('about-list') + '">' + contact.items.map((item) => (
       '<li class="' + cls('about-row') + '">'
       + '<span class="' + cls('about-label') + '">' + text(item.label) + '</span>'
@@ -240,7 +242,7 @@ export function renderAboutPage(data: SceneData, checked: boolean): string {
   }
 
   parts.push('<section class="' + cls('about-sec') + '">');
-  parts.push('<h2 class="' + cls('about-head') + '">' + text('版本') + '</h2>');
+  parts.push('<h2 class="' + cls('about-head') + '">' + text(m('base-render.components-help-render.c006')) + '</h2>');
   parts.push('<p class="' + cls('about-row') + '"><span class="' + cls('about-label') + '">' + text(data.skill_name) + '</span>'
     + (typeof data.version === 'string' && data.version !== ''
       ? '<span class="' + cls('about-value') + '">' + text('v' + data.version) + '</span>'
@@ -251,7 +253,7 @@ export function renderAboutPage(data: SceneData, checked: boolean): string {
   const recommendations: readonly SceneRecommendation[] = data.recommendations ?? [];
   if (recommendations.length > 0) {
     parts.push('<section class="' + cls('about-sec') + '">');
-    parts.push('<h2 class="' + cls('about-head') + '">' + text('其他技能') + '</h2>');
+    parts.push('<h2 class="' + cls('about-head') + '">' + text(m('base-render.components-help-render.c007')) + '</h2>');
     parts.push('<ul class="' + cls('about-list') + '">' + recommendations.map((item) => (
       '<li class="' + cls('about-row') + '">'
       + '<span class="' + cls('about-label') + '">' + text(item.name) + '</span>'

@@ -16,6 +16,7 @@
  */
 
 /** 本件的类名根。 */
+import { m } from '../../entries/index.js';
 export const SWITCH_ROW_CLASS = 'ilife-block-switch-row';
 
 /** 形态闭集：本件只落地形态「设置页的一行」（标签 ＋ 说明 ＋ 开关）。 */
@@ -94,9 +95,15 @@ export const SWITCH_ROW_THUMB_TRAVEL_PX =
   SWITCH_ROW_TRACK_W_PX - 2 - SWITCH_ROW_THUMB_PX - 2 * SWITCH_ROW_THUMB_INSET_PX;
 
 /** 状态字（**字**这一档：不依赖任何颜色）。 */
-export const SWITCH_ROW_ON = '已开';
-export const SWITCH_ROW_OFF = '已关';
-export const SWITCH_ROW_LOADING = '更新中';
+export function SWITCH_ROW_ON(): string {
+  return m('base-render.components-switch-row-attrs.c001');
+}
+export function SWITCH_ROW_OFF(): string {
+  return m('base-render.components-switch-row-attrs.c002');
+}
+export function SWITCH_ROW_LOADING(): string {
+  return m('base-render.components-switch-row-attrs.c003');
+}
 
 /** 开关行入参。`name`／`checked`／`label`／`note` 必填——
  *  **没有"打开会怎样"这句说明的开关不许上屏**（那正是原型墙这一件丢分的地方）。 */

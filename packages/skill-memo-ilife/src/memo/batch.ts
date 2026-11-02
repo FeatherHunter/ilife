@@ -3,6 +3,7 @@
 // 执行：逐条改顶层分类（子分类不动，老原文），找不到逐条记账。
 // 远端不碰（老原文两条路都不调飞书）。
 import { getNote, updateNote, type MemoDb } from '../db/readonly.js';
+import { m } from '../entries/index.js';
 
 export interface BatchItem {
   readonly id: number;
@@ -56,7 +57,7 @@ export function applyBatchCategory(db: MemoDb, ids: readonly number[], toCategor
       getNote(db, id);
     } catch {
       skipped += 1;
-      errors.push('id=' + id + '：没有这条笔记');
+      errors.push(m('skill-memo-ilife.memo-batch.c001', { p0: String(id) }));
       continue;
     }
     updateNote(db, id, { category: toCategory });

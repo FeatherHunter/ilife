@@ -19,6 +19,8 @@ import type { SetupScene } from './scene.js';
 import { importSteps, initSteps, restoreSteps } from './steps.js';
 import { wizardDoc } from './template-wizard.js';
 import type { ImportWizardInput, InitWizardInput, RestoreWizardInput } from './template-wizard.js';
+import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** 缺项那一路的向导页（整页 HTML）。 */
 export function blockedWizardDoc(input: {
@@ -30,8 +32,11 @@ export function blockedWizardDoc(input: {
   readonly actionAt: string;
 }): string {
   const word = projectWakeWord({ key: 'bill.setup.run', op: input.op });
-  const message = word + '还差 ' + String(input.blocked.length) + ' 项：'
-    + input.blocked.map((b) => b.label).join('、') + '（已出向导页，补齐之后跟助手说一遍）';
+  const message = m('skill-bill.setup-blocked.c001', {
+    p0: String(word),
+    p1: String(String(input.blocked.length)),
+    p2: String(listJoin(currentRenderLanguage(), input.blocked.map((b) => b.label))),
+  });
   const envelope = receiptEnvelopeOf(input.key, { ok: false, message, op: input.op, blocked: input.blocked });
   const common = {
     scene: input.scene,
@@ -41,7 +46,7 @@ export function blockedWizardDoc(input: {
     envelope,
     blocked: input.blocked,
     prompt: input.scene.promptOf(input.params),
-    promptLabel: '复制给助手：补齐之后照这句说一遍',
+    promptLabel: m('skill-bill.setup-blocked.c002'),
   };
   let wi: InitWizardInput | RestoreWizardInput | ImportWizardInput;
   if (input.op === 'init') {

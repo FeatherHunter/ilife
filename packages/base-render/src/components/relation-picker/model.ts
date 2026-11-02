@@ -22,6 +22,7 @@ import {
   RELATION_PICKER_TEXT,
   type RelationPickerForm,
 } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 机器键：非空、**只许标识符字符**（它要当 `id`／`popovertarget`／`data-*` 的值使）。 */
 function reqKey(value: unknown, field: string): string {
@@ -49,7 +50,7 @@ function optRealText(value: unknown, field: string): string | undefined {
 /** 只许入参表里写着的键：多给一个键（多半是打错名）＝拒，不静默吞掉。 */
 function assertKeys(raw: Record<string, unknown>, allowed: readonly string[], field: string): void {
   for (const key of Object.keys(raw)) {
-    if (!allowed.includes(key)) badInput(field + ' 里没有 `' + key + '` 这个键（入参表以外的键一律拒）');
+    if (!allowed.includes(key)) badInput(field + ' 里没有「' + key + '」这个键（入参表以外的键一律拒）');
   }
 }
 
@@ -256,7 +257,7 @@ export function normalizeRelationPicker(input: unknown): RelationPickerModel {
     rows,
     recents,
     all: rows,
-    allLabel: allLabelRaw === undefined ? '全部' + label : allLabelRaw,
+    allLabel: allLabelRaw === undefined ? m('base-render.components-relation-picker-model.c001', { p0: String(label) }) : allLabelRaw,
     readingLabel,
     selected,
     query,

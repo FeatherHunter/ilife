@@ -26,10 +26,11 @@ export interface GoalCopy {
   readonly csv?: string;
 }
 import { clampPct } from './pageParts.js';
+import { m } from '../entries/index.js';
 
 
 
-/** 单位（只一处定义）。 */
+/** 单位（只一处定义；单位词按数据值处理，不进词条表）。 */
 const UNIT = '元';
 
 
@@ -53,32 +54,50 @@ function pct1(n: number | null | undefined): string {
 
 /** 预算进度行（**唯一定义地**）：目标/已用/剩余/百分比一格一行、恒单行。 */
 export function budgetLineOf(b: BudgetItem): string {
-  return '目标 ' + pickName(b.category_cn) + ' ｜ 目标 ' + money2(b.amount) + ' ' + UNIT
-    + ' ｜ 已用 ' + money2(b.actual) + ' ' + UNIT
-    + ' ｜ 剩余 ' + money2(b.remaining) + ' ' + UNIT
-    + ' ｜ 进度 ' + pct1(b.pct);
+  return m('skill-bill.goal-copyTextGoal.c001', {
+    p0: String(pickName(b.category_cn)),
+    p1: String(money2(b.amount)),
+    p2: String(UNIT),
+    p3: String(money2(b.actual)),
+    p4: String(UNIT),
+    p5: String(money2(b.remaining)),
+    p6: String(UNIT),
+    p7: String(pct1(b.pct)),
+  });
 }
 
 /** 目标进度行（**唯一定义地**）：目标/已存/还差/百分比一格一行、恒单行。 */
 export function savingLineOf(s: SavingItem): string {
-  return '目标 ' + pickName(s.name) + ' ｜ 目标 ' + money2(s.amount) + ' ' + UNIT
-    + ' ｜ 已存 ' + money2(s.saved) + ' ' + UNIT
-    + ' ｜ 还差 ' + money2(s.remaining) + ' ' + UNIT
-    + ' ｜ 进度 ' + pct1(s.pct);
+  return m('skill-bill.goal-copyTextGoal.c002', {
+    p0: String(pickName(s.name)),
+    p1: String(money2(s.amount)),
+    p2: String(UNIT),
+    p3: String(money2(s.saved)),
+    p4: String(UNIT),
+    p5: String(money2(s.remaining)),
+    p6: String(UNIT),
+    p7: String(pct1(s.pct)),
+  });
 }
 
 /** 预算合计行（不导出：三 builder 共用；合计开头，与进度行不同式）。 */
 function budgetTotalLineOf(e: BudgetExecution): string {
-  return '合计 ｜ 预算 ' + money2(e.totals.budget) + ' ' + UNIT
-    + ' ｜ 实际 ' + money2(e.totals.actual) + ' ' + UNIT
-    + ' ｜ 流水 ' + String(e.records) + ' 笔';
+  return m('skill-bill.goal-copyTextGoal.c003', {
+    p0: String(money2(e.totals.budget)),
+    p1: String(UNIT),
+    p2: String(money2(e.totals.actual)),
+    p3: String(UNIT),
+    p4: String(String(e.records)),
+  });
 }
 
 /** 目标合计行（不导出：同上）。 */
 function savingTotalLineOf(p: SavingProgress): string {
-  return '合计 ｜ 目标 ' + String(p.count) + ' 个'
-    + ' ｜ 已完成 ' + String(p.done_count) + ' 个'
-    + ' ｜ 流水 ' + String(p.records) + ' 笔';
+  return m('skill-bill.goal-copyTextGoal.c004', {
+    p0: String(String(p.count)),
+    p1: String(String(p.done_count)),
+    p2: String(String(p.records)),
+  });
 }
 
 /** 页身份行：饼干记账 + 唤醒词（空走投影，不写第二处字面量；预算/目标两支各算各的代表词）。 */
@@ -91,12 +110,12 @@ function pageLine(wakeWord: string, fallback: string): string {
 export function buildGoalCopyText(wakeWord: string, budget: BudgetExecution | null, saving: SavingProgress | null): string {
   if (budget !== null) {
     const lines = budget.budgets.map((b) => budgetLineOf(b));
-    const conclusion = '已查到 ' + String(budget.budgets.length) + ' 条预算';
+    const conclusion = m('skill-bill.goal-copyTextGoal.c005', { p0: String(budget.budgets.length) });
     return [pageLine(wakeWord, projectWakeWord({ key: 'bill.goal.query', op: 'budget' })), conclusion, ...lines, budgetTotalLineOf(budget)].join('\n');
   }
   const p = saving as SavingProgress;
   const lines = p.savings.map((s) => savingLineOf(s));
-  const conclusion = '已查到 ' + String(p.savings.length) + ' 个目标';
+  const conclusion = m('skill-bill.goal-copyTextGoal.c006', { p0: String(p.savings.length) });
   return [pageLine(wakeWord, projectWakeWord({ key: 'bill.goal.query', op: 'saving' })), conclusion, ...lines, savingTotalLineOf(p)].join('\n');
 }
 
@@ -113,7 +132,10 @@ export function buildGoalCopyJson(wakeWord: string, budget: BudgetExecution | nu
         })),
         totals: budget.totals, records: budget.records,
         total_line: budgetTotalLineOf(budget),
-        message_derived: '已查到 ' + String(budget.budgets.length) + ' 条预算 ｜ ' + budgetTotalLineOf(budget),
+        message_derived: m('skill-bill.goal-copyTextGoal.c007', {
+          p0: String(String(budget.budgets.length)),
+          p1: String(budgetTotalLineOf(budget)),
+        }),
         wakeWord,
       },
     };
@@ -130,7 +152,10 @@ export function buildGoalCopyJson(wakeWord: string, budget: BudgetExecution | nu
       })),
       records: p.records,
       total_line: savingTotalLineOf(p),
-      message_derived: '已查到 ' + String(p.savings.length) + ' 个目标 ｜ ' + savingTotalLineOf(p),
+      message_derived: m('skill-bill.goal-copyTextGoal.c008', {
+        p0: String(String(p.savings.length)),
+        p1: String(savingTotalLineOf(p)),
+      }),
       wakeWord,
     },
   };
@@ -144,19 +169,19 @@ export function buildGoalCopyCsv(wakeWord: string, budget: BudgetExecution | nul
   void wakeWord;
   const lines = ['field,value'];
   if (budget !== null) {
-    lines.push(csvCell('结论') + ',' + csvCell('已查到 ' + String(budget.budgets.length) + ' 条预算'));
-    for (const b of budget.budgets) lines.push(csvCell('目标') + ',' + csvCell(budgetLineOf(b)));
-    lines.push(csvCell('合计') + ',' + csvCell(budgetTotalLineOf(budget)));
-    lines.push(csvCell('预算合计') + ',' + csvCell(money2(budget.totals.budget)));
-    lines.push(csvCell('流水笔数') + ',' + csvCell(String(budget.records)));
+    lines.push(csvCell(m('skill-bill.goal-copyTextGoal.c009')) + ',' + csvCell(m('skill-bill.goal-copyTextGoal.c010', { p0: String(String(budget.budgets.length)) })));
+    for (const b of budget.budgets) lines.push(csvCell(m('skill-bill.goal-copyTextGoal.c011')) + ',' + csvCell(budgetLineOf(b)));
+    lines.push(csvCell(m('skill-bill.goal-copyTextGoal.c012')) + ',' + csvCell(budgetTotalLineOf(budget)));
+    lines.push(csvCell(m('skill-bill.goal-copyTextGoal.c013')) + ',' + csvCell(money2(budget.totals.budget)));
+    lines.push(csvCell(m('skill-bill.goal-copyTextGoal.c014')) + ',' + csvCell(String(budget.records)));
     return lines.join('\n');
   }
   const p = saving as SavingProgress;
-  lines.push(csvCell('结论') + ',' + csvCell('已查到 ' + String(p.savings.length) + ' 个目标'));
-  for (const s of p.savings) lines.push(csvCell('目标') + ',' + csvCell(savingLineOf(s)));
-  lines.push(csvCell('合计') + ',' + csvCell(savingTotalLineOf(p)));
-  lines.push(csvCell('目标个数') + ',' + csvCell(String(p.count)));
-  lines.push(csvCell('流水笔数') + ',' + csvCell(String(p.records)));
+  lines.push(csvCell(m('skill-bill.goal-copyTextGoal.c015')) + ',' + csvCell(m('skill-bill.goal-copyTextGoal.c016', { p0: String(String(p.savings.length)) })));
+  for (const s of p.savings) lines.push(csvCell(m('skill-bill.goal-copyTextGoal.c017')) + ',' + csvCell(savingLineOf(s)));
+  lines.push(csvCell(m('skill-bill.goal-copyTextGoal.c018')) + ',' + csvCell(savingTotalLineOf(p)));
+  lines.push(csvCell(m('skill-bill.goal-copyTextGoal.c019')) + ',' + csvCell(String(p.count)));
+  lines.push(csvCell(m('skill-bill.goal-copyTextGoal.c020')) + ',' + csvCell(String(p.records)));
   return lines.join('\n');
 }
 

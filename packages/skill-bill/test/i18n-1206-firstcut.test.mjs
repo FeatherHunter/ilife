@@ -18,37 +18,36 @@ import { SCENE as batchScene, sceneBatch } from '../dist/write/scene-batch.js';
 import { sceneFor } from '../dist/write/scene.js';
 
 describe('#1206 首切 7 件：词条＋语言链', () => {
-  it('词条 zh／en 同 key（170 条＝124 既有＋42 首切＋回执核对两列净增 2＋#1280 合并分类两列 2）且英文列无空串', () => {
+  it('词条 zh／en 同 key（4114 条＝各迁移票合入后总键数，逐票增量见 tooling/i18n-ticket-scope.json）且英文列无空串', () => {
     const zhKeys = Object.keys(SKILL_BILL_CATALOG.zh).sort();
     const enKeys = Object.keys(SKILL_BILL_CATALOG.en).sort();
     assert.deepEqual(enKeys, zhKeys);
-    assert.equal(zhKeys.length, 170);
+    assert.equal(zhKeys.length, 4114);
     for (const k of enKeys) assert.ok(SKILL_BILL_CATALOG.en[k].length > 0, '英文缺译：' + k);
   });
 
-  it('sourceNote 按语言取值（不给＝zh，与改造前逐字相同）', () => {
-    assert.equal(receiptSourceNote('2026-09-14 12:00:00', 1), receiptSourceNote('2026-09-14 12:00:00', 1, 'zh'));
-    assert.ok(receiptSourceNote('2026-09-14 12:00:00', 1).includes('记账库（写入）'));
+  it('sourceNote 按语言取值（zh／en 各一；#1307 起语言必给，不再有缺省）', () => {
+    assert.ok(receiptSourceNote('2026-09-14 12:00:00', 1, 'zh').includes('记账库（写入）'));
     assert.ok(receiptSourceNote('2026-09-14 12:00:00', 1, 'en').includes('Accounting ledger (write)'));
-    assert.ok(collectSourceNote('2026-09-14 12:00:00').includes('记账库（只读）'));
+    assert.ok(collectSourceNote('2026-09-14 12:00:00', 'zh').includes('记账库（只读）'));
     assert.ok(collectSourceNote('2026-09-14 12:00:00', 'en').includes('Accounting ledger (read-only)'));
   });
 
   it('blockedFold 标题复用 installment.fold-title，中英各一', () => {
     const items = [{ name: 'category', label: '分类', why: '要选到最细那一级' }];
-    const zh = collectBlockedFold({ items, command: 'cmd' });
+    const zh = collectBlockedFold({ items, command: 'cmd', language: 'zh' });
     const en = collectBlockedFold({ items, command: 'cmd', language: 'en' });
     assert.ok(zh.includes('还缺什么，以及补齐后照抄的那条'));
     assert.ok(en.includes(SKILL_BILL_CATALOG.en['installment.fold-title']));
-    assert.equal(collectBlockedFold({ items: [], command: 'cmd' }), '');
+    assert.equal(collectBlockedFold({ items: [], command: 'cmd', language: 'zh' }), '');
   });
 
   it('errorReceipt 缺省 retryPrompt 复用，中英各一；空 message 照旧抛', () => {
-    const zh = errorReceipt({ message: '单元事由' });
+    const zh = errorReceipt({ message: '单元事由', language: 'zh' });
     const en = errorReceipt({ message: 'reason', language: 'en' });
     assert.ok(zh.includes('补齐后照这句跟助手说一遍'));
     assert.ok(en.includes(SKILL_BILL_CATALOG.en['installment.prompt-label-blocked']));
-    assert.throws(() => errorReceipt({ message: '  ' }), /message/);
+    assert.throws(() => errorReceipt({ message: '  ', language: 'zh' }), /message/);
   });
 
   it('commands 标题与例句按语言取值；例句 en 与 zh 同值；RECORD_COMMANDS＝recordCommands(zh)', () => {
@@ -67,10 +66,9 @@ describe('#1206 首切 7 件：词条＋语言链', () => {
     assert.equal(en[0].example, zh[0].example);
     assert.equal(en[1].example, zh[1].example);
     assert.deepEqual(RECORD_COMMANDS, recordCommands('zh'));
-    assert.deepEqual(RECORD_COMMANDS, recordCommands());
   });
 
-  it('receiptParts 状态卡与对账区按语言取值（不给＝zh）', () => {
+  it('receiptParts 状态卡与对账区按语言取值（zh／en 各一；语言必给）', () => {
     const receipt = { recordId: 7, actionAt: '2026-09-14 12:00:00', noChange: false };
     const zhCard = receiptStatusCard(receipt, '写进账单', 'zh');
     assert.equal(zhCard.label, '状态');
@@ -78,14 +76,14 @@ describe('#1206 首切 7 件：词条＋语言链', () => {
     const enCard = receiptStatusCard(receipt, 'written', 'en');
     assert.equal(enCard.label, 'Status');
     assert.equal(enCard.value, 'Changed');
-    const zhNone = receiptStatusCard({ recordId: null, actionAt: 't', noChange: true }, 'x');
+    const zhNone = receiptStatusCard({ recordId: null, actionAt: 't', noChange: true }, 'x', 'zh');
     assert.equal(zhNone.value, '无改动');
     assert.equal(zhNone.detail, '值与改前一致');
-    const zhHtml = reconcileDisclosure(receipt);
+    const zhHtml = reconcileDisclosure(receipt, 'zh');
     assert.ok(zhHtml.includes('对账信息') && zhHtml.includes('记录编号') && zhHtml.includes('写入时间'));
     const enHtml = reconcileDisclosure(receipt, 'en');
     assert.ok(enHtml.includes('Reconciliation') && enHtml.includes('Record ID') && enHtml.includes('Recorded at'));
-    assert.ok(reconcileDisclosure({ recordId: null, actionAt: 't', noChange: true }).includes('还没有'));
+    assert.ok(reconcileDisclosure({ recordId: null, actionAt: 't', noChange: true }, 'zh').includes('还没有'));
   });
 
   it('slots 提示句按语言取值；RECORD_SLOTS＝recordSlots(zh)', () => {
@@ -95,17 +93,15 @@ describe('#1206 首切 7 件：词条＋语言链', () => {
     assert.equal(en['bill.record.add'][0].hint, 'Pick the most specific level, e.g. "lunch"');
     assert.equal(zh['bill.record.update'][1].hint, '不填就改字段。撤销写 undo，恢复写 restore');
     assert.deepEqual(RECORD_SLOTS, recordSlots('zh'));
-    assert.deepEqual(RECORD_SLOTS, recordSlots());
   });
 
-  it('sceneBatch 工厂函数按语言取值；sceneFor batch/en 现算、缺省走静态件', () => {
+  it('sceneBatch 工厂函数按语言取值；sceneFor batch/zh 走静态件、batch/en 现算', () => {
     assert.equal(sceneBatch('zh').family, '批量与修正族');
     assert.equal(sceneBatch('en').family, 'Batch and correction');
-    assert.equal(sceneBatch().family, '批量与修正族');
     assert.equal(batchScene.family, '批量与修正族');
     assert.equal(typeof batchScene.collect, 'function');
     assert.equal(typeof batchScene.receipt, 'function');
-    assert.equal(sceneFor({ key: 'bill.record.add', kind: 'batch' }).family, '批量与修正族');
+    assert.equal(sceneFor({ key: 'bill.record.add', kind: 'batch' }, 'zh').family, '批量与修正族');
     assert.equal(sceneFor({ key: 'bill.record.add', kind: 'batch' }, 'en').family, 'Batch and correction');
   });
 });

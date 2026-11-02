@@ -33,13 +33,20 @@ import type { CopyLogFields, DataTextInput, LogTextInput, ToastIcon } from 'base
 import { DB_FILENAME } from '../paths.js';
 import { copyActionHtml } from '../render/copy.js';
 import { sceneEnvelope } from './sceneEnvelope.js';
+import { m } from '../entries/index.js';
 
 /** 日志第 2 段（AI 思考链）：本仓页面一律由本地 CLI 渲染，不落 `(未知)` 占位。 */
-const LOG_THINKING = '本页由本地 CLI 渲染，无 AI 链';
+function logThinking(): string {
+  return m('skill-calorie.shared-copyArea.c003');
+}
 /** 日志第 6 段（异常）：正常产出即「无」。 */
-const LOG_EXCEPTION = '无';
+function logException(): string {
+  return m('skill-calorie.shared-copyArea.c004');
+}
 /** 复制区空态缺省句（三样全没给时出这一句、不出按钮——点了没反应的死按钮就是问题）。 */
-const COPY_EMPTY_TEXT = '本页没有可复制的数据';
+function copyEmptyText(): string {
+  return m('skill-calorie.shared-copyArea.c005');
+}
 
 /** 三格式菜单里三项的用途提示：**本技能一律留空**（顺序＝`COPY_FORMATS`）。
  *
@@ -113,7 +120,7 @@ const COPY_TITLE_DUP_OF_BUTTON = '复制数据';
 /** ① 复制 prompt 区：prompt 预览（`renderPreBlock`）＋复制按钮（旧模板 prompt-box＋btn-copy 的同形）。
  *  第二参可选：不给 ＝ 老样子（小标题「复制 prompt（必走）」）；`null` ＝ 不出小标题；给字符串就用它。 */
 export function promptCopyArea(prompt: string, label?: string | null): string {
-  const heading = label === undefined ? '复制 prompt（必走）' : label;
+  const heading = label === undefined ? m('skill-calorie.shared-copyArea.c001') : label;
   const pre = heading === null
     ? renderPreBlock({ command: prompt })
     : renderPreBlock({ label: heading, command: prompt });
@@ -155,7 +162,7 @@ export function copyArea(input: CopyAreaInput): string {
   if (parts.length > 0) return parts.join('');
   return renderEmptyBlock({
     ...(title === undefined ? {} : { title }),
-    text: input.emptyText ?? COPY_EMPTY_TEXT,
+    text: input.emptyText ?? copyEmptyText(),
   });
 }
 
@@ -185,11 +192,11 @@ export function dataCopyArea(title: string, input: DataTextInput): string {
 /** ④ 复制日志的第 2–6 段入参：本页由哪条命令渲染、数据从哪来、写了多少行、什么时候。 */
 export function copyLog(input: CopyLogInput): CopyLogFields {
   return {
-    thinking: LOG_THINKING,
+    thinking: logThinking(),
     dataStructure: DB_FILENAME + (input.source === undefined || input.source === '' ? '' : ' ｜ ' + input.source),
     callChain: input.m5Line === undefined || input.m5Line === '' ? input.command : input.command + ' ｜ ' + input.m5Line,
-    timestamp: input.version === undefined || input.version === '' ? input.actionAt : input.actionAt + ' · 版本 ' + input.version,
-    exception: LOG_EXCEPTION,
+    timestamp: input.version === undefined || input.version === '' ? input.actionAt : m('skill-calorie.shared-copyArea.c002', { p0: String(input.actionAt), p1: String(input.version) }),
+    exception: logException(),
   };
 }
 

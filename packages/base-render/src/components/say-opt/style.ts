@@ -14,6 +14,7 @@
  */
 import { skinVar } from '../skin/contract.js';
 import { sayOptSlot, type SayOptSlot } from './render.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -34,14 +35,14 @@ export function sayOptCss(input?: { readonly prefix?: string }): string {
   const s = (slot: SayOptSlot): string => root + ' .' + sayOptSlot(slot, p);
 
   return [
-    '/* say-opt（选填组）：一行表头 ・ 组内表单 ・ 组尾提示行；折叠走原生 details。 */',
+    m('base-render.components-say-opt-style.c001'),
     box + ' {',
     '  margin: 10px 0 0;',
-    '  /* 判地字面 · 授权照抄：#ddd0b6（这一折的虚线暖边） */',
+    m('base-render.components-say-opt-style.c002'),
     '  border: 1px dashed #ddd0b6;',
-    '  /* 判地字面 · 授权照抄：' + SAY_OPT_RADIUS_PX + 'px（外框圆角；皮肤三档里没有这一档） */',
+    m('base-render.components-say-opt-style.c003', { p0: String(SAY_OPT_RADIUS_PX) }),
     '  border-radius: ' + SAY_OPT_RADIUS_PX + 'px;',
-    '  /* 判地字面 · 授权照抄：#fdfaf3（选填组的底色 —— 与必填格的暖底分得开） */',
+    m('base-render.components-say-opt-style.c004'),
     '  background: #fdfaf3;',
     '  overflow: hidden;',
     '}',
@@ -87,9 +88,9 @@ export function sayOptCss(input?: { readonly prefix?: string }): string {
     '  white-space: nowrap;',
     '}',
     box + '[open] > summary {',
-    '  /* 判地字面 · 授权照抄：#ddd0b6（展开时表头下的虚线分隔） */',
+    m('base-render.components-say-opt-style.c005'),
     '  border-bottom: 1px dashed #ddd0b6;',
-    '  /* 判地字面 · 授权照抄：#fbf7ec（展开时表头的暖底 —— 与组内那些格同一块底） */',
+    m('base-render.components-say-opt-style.c006'),
     '  background: #fbf7ec;',
     '}',
     s('form') + ' {',

@@ -26,8 +26,7 @@ import { shiftISODate } from '../analysis/utils.js';
 import { deltaLast, goalDiff } from './records.js';
 import type { WeightRow } from './records.js';
 import { FetchError } from '../fetch/errors.js';
-import { fieldLabel } from '../shared/fieldLabel.js';
-import { WEIGHT_DOMAIN } from './fieldLabels.js';
+import { weightFieldLabel } from './fieldLabels.js';
 import { getWeightGoalInfo, selectOrEdge, weightTrend } from './figures.js';
 import { weightCurvePlan } from './plate.js';
 import {
@@ -35,6 +34,7 @@ import {
   shapedConclusionBlock, signed, stateCard, writtenDetailOf,
 } from './plateDocs.js';
 import { bulletList, factStrip, verdict } from './weightUi.js';
+import { m } from '../entries/index.js';
 
 const round1 = (n: number): number => Math.round(n * 10) / 10;
 
@@ -113,51 +113,51 @@ export function buildLogReceiptDoc(
   }
   const rows = [
     {
-      k: '较上次差值',
-      v: delta === null ? (prevW === null ? '暂无上次记录' : '—') : signed(delta) + (prevW === null ? '' : '（上次 ' + prevW + ' kg）'),
+      k: m('skill-calorie.weight-logReceipt.c001'),
+      v: delta === null ? (prevW === null ? m('skill-calorie.weight-logReceipt.c002') : '—') : signed(delta) + (prevW === null ? '' : m('skill-calorie.weight-logReceipt.c003', { p0: String(prevW) })),
     },
     {
-      k: '距目标差',
+      k: m('skill-calorie.weight-logReceipt.c004'),
       v: gap === null
         // #505：这一格原写 `未设体重目标 · 说「定体重目标」后可看差距`——两件事用一个 `·` 串着。
         // 拆成两句人话（这一格是纯文本单元格，形状进不来；两句之间用逗号已是人话读法）。
-        ? (goal === null ? '未设体重目标，说「定体重目标」后可看差距' : '—')
-        : signed(gap) + '（目标 ' + goal + ' kg）',
+        ? (goal === null ? m('skill-calorie.weight-logReceipt.c005') : '—')
+        : m('skill-calorie.weight-logReceipt.c006', { p0: String(signed(gap)), p1: String(goal) }),
     },
-    { k: '近 30 天均值', v: avg === null ? '—' : avg + ' kg' + (two ? '' : '（只有一条记录）') },
+    { k: m('skill-calorie.weight-logReceipt.c007'), v: avg === null ? '—' : avg + ' kg' + (two ? '' : m('skill-calorie.weight-logReceipt.c008')) },
     // 缺陷 4：这一格原写「近 30 天趋势」，与下面图块标题「近 30 天趋势」同屏两处、看着像两块内容；
     // 表这一格只放「趋势」这个词，窗口（近 30 天）由图块标题与表格标题说。
-    { k: '趋势', v: trendCn === null ? '—' : trendCn + (two ? '' : '（只有一条记录）') },
-    { k: '备注', v: f.note ?? '—' },
+    { k: m('skill-calorie.weight-logReceipt.c009'), v: trendCn === null ? '—' : trendCn + (two ? '' : m('skill-calorie.weight-logReceipt.c010')) },
+    { k: m('skill-calorie.weight-logReceipt.c011'), v: f.note ?? '—' },
   ];
   /* #505 形状化（负责人第 5 条）：结论原是一句用 `；` 串起四件事的长句，现拆两件——
    * ① `outcome`＝**一句判语**（做了哪一笔，跨时间那两件对不上时才补说）；② `facts`＝几枚「标签 ＋ 值」，
    *    承载较上次／距目标／近 30 天两数，写成 `factStrip()`。两件都上屏（结论块里一上一下），
    *    故三句原来那四个事实一个不丢，只是各归各处。`；` 与 `、` 两只分隔符因此一并退出可见正文。 */
   const facts: { k: string; v: string }[] = [
-    { k: '较上次', v: delta === null ? '没有更早的记录可比' : signed(delta) },
-    { k: '距目标', v: gap === null ? '未设体重目标' : signed(gap) },
-    { k: '近 30 天', v: two ? '均值 ' + avg + ' kg，趋势' + trendCn : '只有一条记录，谈不上趋势' },
+    { k: m('skill-calorie.weight-logReceipt.c012'), v: delta === null ? m('skill-calorie.weight-logReceipt.c013') : signed(delta) },
+    { k: m('skill-calorie.weight-logReceipt.c014'), v: gap === null ? m('skill-calorie.weight-logReceipt.c015') : signed(gap) },
+    { k: m('skill-calorie.weight-logReceipt.c016'), v: two ? m('skill-calorie.weight-logReceipt.c017', { p0: String(avg), p1: String(trendCn) }) : m('skill-calorie.weight-logReceipt.c018') },
   ];
   /* #510 收敛（S2：关键数字三处）：判语原来把本次体重那个数**又写一遍**（`本次记 70.5 kg，时刻`），
    * 与副标题、KPI 卡·值槽同说一件事（一屏三处）⇒ 判语只说「记在哪一天哪一刻」——
    * 数字只住卡片值槽（＋副标题那一句机器面摘要），判语一个数也不复述。 */
-  const outcome = (f.kg === null ? '回执未带本次体重' : '本次记在 ' + f.date + ' ' + f.time)
+  const outcome = (f.kg === null ? m('skill-calorie.weight-logReceipt.c019') : m('skill-calorie.weight-logReceipt.c020', { p0: String(f.date), p1: String(f.time) }))
     + '。';
   // 复制载荷：机器面照旧「结论句 ＋ 表格逐行」，但原来那四行是把判语与事实重抄一遍 ⇒ 去掉重抄，
   // 只留页面表格里读不到的那一笔（写入时刻 ＋ 备注）。`｜` 是载荷自身的分隔符（允许项，不进正文）。
   const payload = [outcome];
-  if (f.kg !== null) payload.push('写入时刻 ' + f.date + ' ' + f.time);
-  if (f.note !== null) payload.push('备注 ' + f.note);
+  if (f.kg !== null) payload.push(m('skill-calorie.weight-logReceipt.c021', { p0: String(f.date), p1: String(f.time) }));
+  if (f.note !== null) payload.push(m('skill-calorie.weight-logReceipt.c022', { p0: String(f.note) }));
   const content = [
     renderKpiGrid([
       stateCard(receipt, {
-        label: '本次写入', word: '已写入', count: receipt.affectedRows,
+        label: m('skill-calorie.weight-logReceipt.c023'), word: m('skill-calorie.weight-logReceipt.c024'), count: receipt.affectedRows,
         detail: writtenDetailOf('calorie.weight.log'),
       }),
-      { label: '本次体重', value: f.kg === null ? '—' : String(f.kg), unit: 'kg' },
+      { label: m('skill-calorie.weight-logReceipt.c025'), value: f.kg === null ? '—' : String(f.kg), unit: 'kg' },
       ...(receipt.writtenFields.length === 0 ? [] : [{
-        label: '写入字段', value: receipt.writtenFields.length + ' 项',
+        label: m('skill-calorie.weight-logReceipt.c026'), value: m('skill-calorie.weight-logReceipt.c027', { p0: String(receipt.writtenFields.length) }),
         /* #510 收敛（S3：顿号漏网）：这一槽原印 `体重、备注、日期、时间`——四个字段名用 `、` 串起来，
          * 正是「枚举字段名」那一型。卡片副行**吃纯文本**（共享层 `blocks.ts:557` 转义），形状件进不来
          * ⇒ 照审查单的第二种改法**改写成一句话**（同 `weight/history.ts:487` 里程碑两档那处的先例），
@@ -166,14 +166,14 @@ export function buildLogReceiptDoc(
       }]),
     ]),
     renderDataTable({
-      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+      columns: [{ key: 'k', label: m('skill-calorie.weight-logReceipt.c028') }, { key: 'v', label: m('skill-calorie.weight-logReceipt.c029') }],
       rows,
-      caption: '写入后的现值',
+      caption: m('skill-calorie.weight-logReceipt.c030'),
     }),
     // 老实物 :71-86 的「近 30 天趋势」小图：0 点也出席位，改出空态句（不静默消失，§5.7①）。
     renderChartBlock({
       kind: 'line',
-      title: '近 30 天趋势',
+      title: m('skill-calorie.weight-logReceipt.c031'),
       input: {
         items: series,
         options: {
@@ -188,8 +188,8 @@ export function buildLogReceiptDoc(
           ...(plan.single ? { markPoint: true as const } : {}),
           ...(plan.markLine === undefined ? {} : { markLine: plan.markLine }),
           emptyText: fail === null
-            ? '近 30 天无体重记录（' + from + ' ~ ' + f.date + '）'
-            : '近 30 天数据没读出来：' + fail,
+            ? m('skill-calorie.weight-logReceipt.c032', { p0: String(from), p1: String(f.date) })
+            : m('skill-calorie.weight-logReceipt.c033', { p0: String(fail) }),
         },
       },
     }),
@@ -204,7 +204,7 @@ export function buildLogReceiptDoc(
     reconcileBlock(receipt),
     deliveryBlocks(
       envelopeOf(receipt, payload.join(' ｜ ')), receipt, command,
-      '本次记录 ' + f.date + ' ｜ 写入 1 条 ｜ 近 30 天 ' + from + ' ~ ' + f.date,
+      m('skill-calorie.weight-logReceipt.c034', { p0: String(f.date), p1: String(from), p2: String(f.date) }),
     ),
   ].join('');
   /* #505：副标题（可见）不再照抄回执摘要那句 `已记体重 70.5 kg（BMI 23 · 2026-09-15 08:43:23）`
@@ -219,10 +219,10 @@ export function buildLogReceiptDoc(
 export function buildBatchReceiptDoc(receipt: CrudReceipt, command: string): string {
   const items = receipt.items;
   const count = (word: string): number => items.filter((it) => it.status === word).length;
-  const wrote = count('写入');
-  const skipped = count('跳过');
-  const failed = count('失败');
-  const top = failed > 0 ? '失败' : skipped > 0 ? '跳过' : wrote > 0 ? '写入' : '无改动';
+  const wrote = count(m('skill-calorie.weight-logReceipt.c035'));
+  const skipped = count(m('skill-calorie.weight-logReceipt.c036'));
+  const failed = count(m('skill-calorie.weight-logReceipt.c037'));
+  const top = failed > 0 ? m('skill-calorie.weight-logReceipt.c038') : skipped > 0 ? m('skill-calorie.weight-logReceipt.c039') : wrote > 0 ? m('skill-calorie.weight-logReceipt.c040') : m('skill-calorie.weight-logReceipt.c041');
   /* #505 形状化：原来两句用 `；` 串起「三数」与「两条定义」，现拆两件——
    * ① 判语只说这一批怎么看；② 两条定义进 `bulletList()` **逐条成行**
    *    （「跳过＝…」「失败＝…」是两条独立规则，不该挤在一句里）。
@@ -230,10 +230,10 @@ export function buildBatchReceiptDoc(receipt: CrudReceipt, command: string): str
    * 四个数与值槽、表题、副标题摘要说的是同一件事（`1 条` 一屏三处）⇒ 判语一个数都不复述，
    * 只留「这张表怎么看」这一句；写入／跳过／失败三数由副标题摘要与逐条明细表给。
    * 这句里也不再用 `、` 枚举三个状态词（审查单 S3：形状槽零顿号）——改成人话的分句读法。 */
-  const outcome = '这一次批量的逐条结果都在下表里，有的写进去了，有的跳过了，有的失败，原因各有各的说法。';
+  const outcome = m('skill-calorie.weight-logReceipt.c042');
   const rules = [
-    '跳过＝那天已经记过（不覆盖旧记录）',
-    '失败＝日期格式或体重值不对（原因见下表）',
+    m('skill-calorie.weight-logReceipt.c043'),
+    m('skill-calorie.weight-logReceipt.c044'),
   ];
   const rows = items.map((it) => ({
     date: cell(it.date),
@@ -247,11 +247,11 @@ export function buildBatchReceiptDoc(receipt: CrudReceipt, command: string): str
       stateCard(receipt, {
         // 缺陷 9：值槽原叫「本次批量」＋值「1 条」与徽章「无改动」并列，一眼读成「成功 1 条」；
         // 改叫「投入」——这个数说的是**收到几条**，写成没写看徽章。
-        label: '投入', word: top, count: items.length,
+        label: m('skill-calorie.weight-logReceipt.c045'), word: top, count: items.length,
         detail: writtenDetailOf('calorie.weight.batch'),
       }),
       ...(receipt.writtenFields.length === 0 ? [] : [{
-        label: '写入字段', value: receipt.writtenFields.length + ' 项',
+        label: m('skill-calorie.weight-logReceipt.c046'), value: m('skill-calorie.weight-logReceipt.c047', { p0: String(receipt.writtenFields.length) }),
         // #510 收敛（S3）：同单条页那一处——四个字段名改写成一句话，不再用 `、` 枚举（副行吃纯文本）。
         detail: fieldLabelsSentence(receipt.writtenFields),
       }]),
@@ -260,28 +260,33 @@ export function buildBatchReceiptDoc(receipt: CrudReceipt, command: string): str
     // 三数要有形状上的家，故在这里加一条事实条（状态卡说「收到几条＋最重那一态」，这一条说三态各几条，
     // 与逐条明细表首尾相加一致）。判语仍一个数不复述（#510 收敛口径不变）。
     factStrip([
-      { k: '写入', v: wrote + ' 条' },
-      { k: '跳过', v: skipped + ' 条' },
-      { k: '失败', v: failed + ' 条' },
+      { k: m('skill-calorie.weight-logReceipt.c048'), v: m('skill-calorie.weight-logReceipt.c049', { p0: String(wrote) }) },
+      { k: m('skill-calorie.weight-logReceipt.c050'), v: m('skill-calorie.weight-logReceipt.c051', { p0: String(skipped) }) },
+      { k: m('skill-calorie.weight-logReceipt.c052'), v: m('skill-calorie.weight-logReceipt.c053', { p0: String(failed) }) },
     ]),
     // 老实物 weight_batch_receipt.html:67-73 的明细表（逐条状态与原因）。
     // #483 删掉上面那张「批量计数」表。#542：副标题也撤掉后，三数只住上面那条事实条（不再回表格）。
     renderDataTable({
       columns: [
-        { key: 'date', label: '日期' },
-        { key: 'kg', label: '体重', align: 'right' },
-        { key: 'status', label: '状态' },
-        { key: 'reason', label: '原因' },
+        { key: 'date', label: m('skill-calorie.weight-logReceipt.c054') },
+        { key: 'kg', label: m('skill-calorie.weight-logReceipt.c055'), align: 'right' },
+        { key: 'status', label: m('skill-calorie.weight-logReceipt.c056') },
+        { key: 'reason', label: m('skill-calorie.weight-logReceipt.c057') },
       ],
       rows,
-      caption: '逐条明细（共 ' + items.length + ' 条）',
-      emptyText: '这次没有逐条明细',
+      caption: m('skill-calorie.weight-logReceipt.c058', { p0: String(items.length) }),
+      emptyText: m('skill-calorie.weight-logReceipt.c059'),
     }),
     shapedConclusionBlock(verdict(outcome) + bulletList(rules)),
     reconcileBlock(receipt),
     deliveryBlocks(
       envelopeOf(receipt, payload.join(' ｜ ')), receipt, command,
-      '本次批量 ' + items.length + ' 条 ｜ 写入 ' + wrote + ' 条 ｜ 跳过 ' + skipped + ' 条 ｜ 失败 ' + failed + ' 条',
+      m('skill-calorie.weight-logReceipt.c060', {
+        p0: String(items.length),
+        p1: String(wrote),
+        p2: String(skipped),
+        p3: String(failed),
+      }),
     ),
   ].join('');
   // #542（#340 打回批）：可见副标题整行撤（传空串，整段省略，不回退到机器面摘要）。
@@ -294,8 +299,8 @@ export function buildBatchReceiptDoc(receipt: CrudReceipt, command: string): str
  *  改写成一句话（`体重 与 备注 与 日期 与 时间`），标签仍逐字取 `weight/fieldLabels.ts` 那一张域表
  *  （不另写第二份映射）；缺项仍按该表口径回退原键名，回退值也不丢在这一句里。 */
 function fieldLabelsSentence(keys: readonly string[]): string {
-  const labels = keys.map((k) => fieldLabel(WEIGHT_DOMAIN, k)).filter((s) => s !== '');
-  return labels.length === 0 ? '—' : labels.join(' 与 ');
+  const labels = keys.map((k) => weightFieldLabel(k)).filter((s) => s !== '');
+  return labels.length === 0 ? '—' : labels.join(m('skill-calorie.weight-logReceipt.c061'));
 }
 
 /** 原因串里数字与单位之间补一个空格（缺陷 6）：取数层给的是 `已有记录 70.4kg`，

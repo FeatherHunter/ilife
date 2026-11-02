@@ -11,6 +11,7 @@
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { m } from '../../entries/index.js';
 
 export const FAMILY = 'detail' as const;
 
@@ -128,49 +129,49 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const history = String((item as { history?: unknown }).history ?? '').trim();
   const main = found
     ? '<div class="wrap-x"><table class="kv">'
-      + row('编号', cell(item.id))
-      + row('名称', cell(item.name))
-      + row('分类', cell(item.category))
-      + row('位置', cell(locPath(item.location)))
-      + row('数量', cell(item.quantity))
-      + row('状态', cell(item.status))
-      + row('标签', cell(item.tags))
-      + row('价格', cell((item as { price?: unknown }).price))
-      + row('备注', cell((item as { note?: unknown }).note))
-      + row('最后使用', cell((item as { last_used?: unknown }).last_used))
-      + row('录入时间', cell((item as { created_at?: unknown }).created_at))
-      + row('照片', cell((item as { photo?: unknown }).photo))
+      + row(m('skill-home.items-pages-detail.c001'), cell(item.id))
+      + row(m('skill-home.items-pages-detail.c002'), cell(item.name))
+      + row(m('skill-home.items-pages-detail.c003'), cell(item.category))
+      + row(m('skill-home.items-pages-detail.c004'), cell(locPath(item.location)))
+      + row(m('skill-home.items-pages-detail.c005'), cell(item.quantity))
+      + row(m('skill-home.items-pages-detail.c006'), cell(item.status))
+      + row(m('skill-home.items-pages-detail.c007'), cell(item.tags))
+      + row(m('skill-home.items-pages-detail.c008'), cell((item as { price?: unknown }).price))
+      + row(m('skill-home.items-pages-detail.c009'), cell((item as { note?: unknown }).note))
+      + row(m('skill-home.items-pages-detail.c010'), cell((item as { last_used?: unknown }).last_used))
+      + row(m('skill-home.items-pages-detail.c011'), cell((item as { created_at?: unknown }).created_at))
+      + row(m('skill-home.items-pages-detail.c012'), cell((item as { photo?: unknown }).photo))
       + '</table></div>'
-    : '<div class="hm-empty">没有找到这件物品，核对编号再试一次吧。</div>';
+    : '<div class="hm-empty">' + m('skill-home.items-pages-detail.c040') + '</div>';
   const content = PAGE_CSS
     // #817 第二波（② 层级清）：导语原是版面说明书（「快捷操作都在表后面，历史在最下面」）；
     // 改说这一件上屏的是哪些事实，层级仍由下面四个小节标题承担。
-    + '<p class="greet">这一件的分类、位置、数量、价格与来去时间，都摊在这一页上。</p>'
-    + '<section class="sec" data-block="fields" data-need="' + needs('fields') + '"><h2>底细</h2>' + main + '</section>'
-    + '<section class="sec" data-block="empty" data-need="' + needs('empty') + '"><h2>关联与邻居</h2>'
+    + '<p class="greet">' + m('skill-home.items-pages-detail.c034') + '</p>'
+    + '<section class="sec" data-block="fields" data-need="' + needs('fields') + '"><h2>' + m('skill-home.items-pages-detail.c035') + '</h2>' + main + '</section>'
+    + '<section class="sec" data-block="empty" data-need="' + needs('empty') + '"><h2>' + m('skill-home.items-pages-detail.c036') + '</h2>'
     + '<div class="wrap-x"><table class="kv">'
-    + row('关联物品', '—')
-    + row('同位置邻居', '—')
-    + row('相似物品', '—')
+    + row(m('skill-home.items-pages-detail.c013'), '—')
+    + row(m('skill-home.items-pages-detail.c014'), '—')
+    + row(m('skill-home.items-pages-detail.c015'), '—')
     + '</table></div></section>'
-    + '<section class="sec" data-block="operations" data-need="' + needs('operations') + '"><h2>快捷操作</h2><div>'
-    + op('修改', '请加载居家管家技能，帮我改这件物品', false)
-    + op('移动', '请加载居家管家技能，帮我移这件物品', true)
-    + op('补录', '请加载居家管家技能，帮我补这件物品的数量', true)
-    + op('减量', '请加载居家管家技能，帮我减这件物品的数量', true)
-    + op('打标', '请加载居家管家技能，帮我标这件物品', true)
-    + op('废弃', '请加载居家管家技能，帮我废弃这件物品', true)
-    + op('标记使用', '请加载居家管家技能，帮我标记使用这件物品', true)
-    + op('查看完整历史', '请加载居家管家技能，帮我查看这件物品的完整历史', true)
-    + op('查看照片', '请加载居家管家技能，帮我查看这件物品的照片', true)
+    + '<section class="sec" data-block="operations" data-need="' + needs('operations') + '"><h2>' + m('skill-home.items-pages-detail.c037') + '</h2><div>'
+    + op(m('skill-home.items-pages-detail.c016'), m('skill-home.items-pages-detail.c017'), false)
+    + op(m('skill-home.items-pages-detail.c018'), m('skill-home.items-pages-detail.c019'), true)
+    + op(m('skill-home.items-pages-detail.c020'), m('skill-home.items-pages-detail.c021'), true)
+    + op(m('skill-home.items-pages-detail.c022'), m('skill-home.items-pages-detail.c023'), true)
+    + op(m('skill-home.items-pages-detail.c024'), m('skill-home.items-pages-detail.c025'), true)
+    + op(m('skill-home.items-pages-detail.c026'), m('skill-home.items-pages-detail.c027'), true)
+    + op(m('skill-home.items-pages-detail.c028'), m('skill-home.items-pages-detail.c029'), true)
+    + op(m('skill-home.items-pages-detail.c030'), m('skill-home.items-pages-detail.c031'), true)
+    + op(m('skill-home.items-pages-detail.c032'), m('skill-home.items-pages-detail.c033'), true)
     + '</div>'
     + homeCopyArea({
         data: { envelope: env },
         log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
       })
     + '</section>'
-    + '<section class="sec" data-block="status" data-need="' + needs('status') + '"><h2>状态与历史</h2>'
-    + (history === '' ? '<p>暂无记录</p>' : '<p>' + escapeHtml(history) + '</p>')
+    + '<section class="sec" data-block="status" data-need="' + needs('status') + '"><h2>' + m('skill-home.items-pages-detail.c038') + '</h2>'
+    + (history === '' ? '<p>' + m('skill-home.items-pages-detail.c039') + '</p>' : '<p>' + escapeHtml(history) + '</p>')
     + '</section>';
   return fillTemplate(template, content);
 }

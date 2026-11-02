@@ -22,6 +22,7 @@
 import { authOpenId, checkCalendar, findLarkCli, larkVersion } from '../fetch/index.js';
 import { receiptResult, type PlanOpCtx, type PlanOpResult } from './context.js';
 import { buildReceipt } from './receipt.js';
+import { m } from '../entries/index.js';
 
 /** 三档（老侧 `tier` 的三值）。 */
 export type FeishuTier = 'full' | 'partial' | 'missing';
@@ -47,7 +48,7 @@ export function probeTiers(): TierReport {
   if (cli === null) {
     return {
       tier: 'missing', cliPath: null, version: null, openId: null, authenticated: false, calendar: false,
-      why: '本机没找到飞书命令行，同步与探测都跑不了。装它需要你自己动手（本技能不代装）',
+      why: m('skill-schedule.plan-probe.c001'),
     };
   }
   const version = larkVersion(cli);
@@ -57,19 +58,19 @@ export function probeTiers(): TierReport {
   } catch {
     return {
       tier: 'partial', cliPath: cli, version, openId: null, authenticated: false, calendar: false,
-      why: '飞书命令行装了但没登录，先在终端里跑一次授权登录',
+      why: m('skill-schedule.plan-probe.c002'),
     };
   }
   const calendar = checkCalendar(cli);
   if (!calendar) {
     return {
       tier: 'partial', cliPath: cli, version, openId, authenticated: true, calendar: false,
-      why: '飞书命令行装了也登录了，但日历拉不动（多半是缺日历授权），补一次授权再探',
+      why: m('skill-schedule.plan-probe.c003'),
     };
   }
   return {
     tier: 'full', cliPath: cli, version, openId, authenticated: true, calendar: true,
-    why: '飞书命令行在场，授权与日历两道门都过了，可以同步',
+    why: m('skill-schedule.plan-probe.c004'),
   };
 }
 
@@ -77,7 +78,7 @@ export function probeTiers(): TierReport {
 export function runProbe(ctx: PlanOpCtx, report: TierReport): PlanOpResult {
   const date = ctx.params.date === undefined || ctx.params.date === null || ctx.params.date === ''
     ? null : String(ctx.params.date);
-  const message = '飞书探测：' + TIER_CN[report.tier] + '。' + report.why + '。这一趟只探，没有写任何对象';
+  const message = m('skill-schedule.plan-probe.c005', { p0: String(tierCnOf(report.tier)), p1: String(report.why) });
   return receiptResult(buildReceipt({
     op: 'sync',
     message,
@@ -92,7 +93,7 @@ export function runProbe(ctx: PlanOpCtx, report: TierReport): PlanOpResult {
     extra: {
       probe: true,
       tier: report.tier,
-      tierText: TIER_CN[report.tier],
+      tierText: tierCnOf(report.tier),
       tierWhy: report.why,
       cliPath: report.cliPath,
       cliVersion: report.version,
@@ -103,33 +104,43 @@ export function runProbe(ctx: PlanOpCtx, report: TierReport): PlanOpResult {
   }));
 }
 
-/** 三档在回执那一句话里的说法（一处定义）。 */
-export const TIER_CN: Record<FeishuTier, string> = {
-  full: '三档里的全通',
-  partial: '三档里的不完全',
-  missing: '三档里的没装',
-};
+/** 三档在回执那一句话里的说法（一处定义）。
+ *  #1197：由模块级常量表改成函数——常量的初值会在模块加载期定死语言，`m()` 只在渲染期取词。 */
+export function tierCnOf(tier: FeishuTier): string {
+  const table: Record<FeishuTier, string> = {
+    full: m('skill-schedule.plan-probe.c006'),
+    partial: m('skill-schedule.plan-probe.c007'),
+    missing: m('skill-schedule.plan-probe.c008'),
+  };
+  return table[tier];
+}
 
-/** 三档在页上读数卡里的短说法（一处定义）。 */
-export const TIER_VALUE: Record<FeishuTier, string> = {
-  full: '全通',
-  partial: '不完全',
-  missing: '没装',
-};
+/** 三档在页上读数卡里的短说法（一处定义）。同 `tierCnOf`：#1197 起改函数。 */
+export function tierValueOf(tier: FeishuTier): string {
+  const table: Record<FeishuTier, string> = {
+    full: m('skill-schedule.plan-probe.c009'),
+    partial: m('skill-schedule.plan-probe.c010'),
+    missing: m('skill-schedule.plan-probe.c011'),
+  };
+  return table[tier];
+}
 
-/** 三档各自下一步怎么走（页上那一段；只此一处）。 */
-export const TIER_NEXT: Record<FeishuTier, readonly string[]> = {
-  full: [
-    '要看这一天本地与飞书的差异，下一步就说「日程管家同步」，它会回填标识，补齐远端并清掉孤儿。',
-    '要动的是别的一天，把日期一并说清楚（比如「同步 2026-09-22 的日程」）。',
-  ],
-  partial: [
-    '先在终端里把飞书命令行的授权补上，再回来说一次「飞书探测」。',
-    '授权没过之前，「日程管家同步」会停在阻断那一档，本地照写，远端一行不动。',
-  ],
-  missing: [
-    '飞书命令行没装：装与不装由你定，本技能不代装也不代登。',
-    '不装也能用：本地那些事照跑（记作息，排计划，复盘），只是日程不会出现在飞书日历上。',
-    '要装的话，用你惯用的包管理器装一个全局命令行即可，装完回来说「飞书探测」。',
-  ],
-};
+/** 三档各自下一步怎么走（页上那一段；只此一处）。同 `tierCnOf`：#1197 起改函数。 */
+export function tierNextOf(tier: FeishuTier): readonly string[] {
+  const table: Record<FeishuTier, readonly string[]> = {
+    full: [
+      m('skill-schedule.plan-probe.c012'),
+      m('skill-schedule.plan-probe.c013'),
+    ],
+    partial: [
+      m('skill-schedule.plan-probe.c014'),
+      m('skill-schedule.plan-probe.c015'),
+    ],
+    missing: [
+      m('skill-schedule.plan-probe.c016'),
+      m('skill-schedule.plan-probe.c017'),
+      m('skill-schedule.plan-probe.c018'),
+    ],
+  };
+  return table[tier];
+}

@@ -27,6 +27,8 @@ import type { HealthPlate } from './healthPlate.js';
 import { buildSeries, seriesAvg, seriesCount } from './series.js';
 import type { DaySeries } from './series.js';
 import { ACTIVITY_LEVEL_LABELS, GENDER_LABELS, energyOf, shiftISODate } from './utils.js';
+import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** 8 个形态的 kind（逐字取自老侧 `--kind` 表；`full` 归既有 `calorie.view.health`，不在这里）。 */
 export type ReportKind =
@@ -40,20 +42,38 @@ export const REPORT_DEFAULT_WINDOW: Record<ReportKind, string> = {
 
 /** BMI 分级阈值（**唯一判据**；文案与阈值逐字照老侧 `health_report.html`：
  *  偏瘦<18.5 正常<24.9 超重<28 肥胖≥28）。渲染层只引用，不重写。 */
-export const BMI_BANDS: readonly { readonly label: string; readonly lo: number; readonly hi: number | null }[] = [
-  { label: '偏瘦', lo: 0, hi: 18.5 },
-  { label: '正常', lo: 18.5, hi: 24.9 },
-  { label: '超重', lo: 24.9, hi: 28 },
-  { label: '肥胖', lo: 28, hi: null },
+export const BMI_BANDS: readonly { readonly id: BmiBandId; readonly lo: number; readonly hi: number | null }[] = [
+  { id: 'under', lo: 0, hi: 18.5 },
+  { id: 'normal', lo: 18.5, hi: 24.9 },
+  { id: 'over', lo: 24.9, hi: 28 },
+  { id: 'obese', lo: 28, hi: null },
 ];
+
+/** 分级标记（判据位：比较只认它，译成英文也不变）。 */
+export type BmiBandId = 'under' | 'normal' | 'over' | 'obese';
+
+/** BMI 落在哪一档（**唯一判据**；只回标记，不出上屏的字）。 */
+export function bmiBandIdOf(bmi: number): BmiBandId | null {
+  for (const b of BMI_BANDS) {
+    if (bmi < b.lo) continue;
+    if (b.hi === null || bmi < b.hi) return b.id;
+  }
+  return null;
+}
+
+/** 分级标记 → 上屏的字（渲染期取词）。 */
+export function bmiBandLabel(id: string): string {
+  if (id === 'under') return m('skill-calorie.analysis-reportPlate.c022');
+  if (id === 'normal') return m('skill-calorie.analysis-reportPlate.c023');
+  if (id === 'over') return m('skill-calorie.analysis-reportPlate.c024');
+  if (id === 'obese') return m('skill-calorie.analysis-reportPlate.c025');
+  /* 认不出的档位（NaN 之类）照老侧回最后一档的字，不另造词。 */
+  return m('skill-calorie.analysis-reportPlate.c026');
+}
 
 /** BMI 分级（页面文案，非业务口径）。 */
 export function bmiBandOf(bmi: number): string {
-  for (const b of BMI_BANDS) {
-    if (bmi < b.lo) continue;
-    if (b.hi === null || bmi < b.hi) return b.label;
-  }
-  return '肥胖';
+  return bmiBandLabel(String(bmiBandIdOf(bmi) ?? 'unknown'));
 }
 
 const round1 = (n: number): number => Math.round(n * 10) / 10;
@@ -139,10 +159,10 @@ export function buildReportBase(db: DatabaseSync, kind: ReportKind, start: strin
       heightCm: prof.height_cm,
       age: prof.age,
       gender: prof.gender,
-      genderLabel: prof.gender === null ? '未设性别' : (GENDER_LABELS[prof.gender] ?? prof.gender),
+      genderLabel: prof.gender === null ? m('skill-calorie.analysis-reportPlate.c002') : (GENDER_LABELS[prof.gender] ?? prof.gender),
       activityLevel: prof.activity_level,
       activityLabel: prof.activity_level === null
-        ? '未设活动量'
+        ? m('skill-calorie.analysis-reportPlate.c003')
         : (ACTIVITY_LEVEL_LABELS[prof.activity_level] ?? prof.activity_level),
       activityFactor: e.factor,
       bmr: e.bmr,
@@ -213,6 +233,9 @@ export interface TrendSummary {
   readonly earlyAvg: number | null;
   readonly lateAvg: number | null;
   readonly turns: number;
+  /** 方向标记（判据位：比较只认它，译成英文也不变）。 */
+  readonly dirMark: 'up' | 'down' | 'flat';
+  /** 方向的上屏字（渲染期取词）。 */
   readonly direction: string;
 }
 
@@ -290,7 +313,7 @@ function bandOf(base: ReportBase): BandPoint[] {
 }
 
 function goalTracked(base: ReportBase, which: 'protein' | 'water'): Pick<ReportPlate, 'points' | 'target' | 'fourPiece'> {
-  const name = which === 'protein' ? '蛋白' : '饮水';
+  const name = which === 'protein' ? m('skill-calorie.analysis-reportPlate.c004') : m('skill-calorie.analysis-reportPlate.c005');
   const target = which === 'protein' ? base.goals.proteinG : base.goals.waterMl;
   const points = base.series.map((s) => ({
     date: s.date,
@@ -336,18 +359,20 @@ function scorePlate(db: DatabaseSync, base: ReportBase): Pick<ReportPlate, 'poin
     if ((b > a && b > c) || (b < a && b < c)) turns += 1;
   }
   const diff = earlyAvg === null || lateAvg === null ? 0 : lateAvg - earlyAvg;
-  const direction = diff > 1 ? '上升' : diff < -1 ? '下降' : '平稳';
+  const dirMark: 'up' | 'down' | 'flat' = diff > 1 ? 'up' : diff < -1 ? 'down' : 'flat';
+  const direction = dirMark === 'up' ? m('skill-calorie.analysis-reportPlate.c006')
+    : dirMark === 'down' ? m('skill-calorie.analysis-reportPlate.c007') : m('skill-calorie.analysis-reportPlate.c008');
   return {
     points: scores.map((d) => ({ date: d.date, value: d.score })),
     scores, items,
-    trend: { earlyAvg, lateAvg, turns, direction },
+    trend: { earlyAvg, lateAvg, turns, dirMark, direction },
   };
 }
 
 function bmrPlate(base: ReportBase): Pick<ReportPlate, 'points' | 'bmrDanger' | 'fourPiece'> {
   const bmr = base.profile.bmr;
   if (bmr === null) {
-    throw new CalorieRenderError('missing-data', '四要素不全算不了基础代谢（缺：' + base.profile.missing.join('、') + '）');
+    throw new CalorieRenderError('missing-data', '四要素不全算不了基础代谢（缺：' + listJoin(currentRenderLanguage(), base.profile.missing) + '）');
   }
   const points = base.series.map((s) => ({ date: s.date, value: s.calories }));
   const under = base.series
@@ -377,14 +402,14 @@ function comparePlate(db: DatabaseSync, base: ReportBase): Pick<ReportPlate, 'co
   // 日均总消耗两期同源：本期＝底座档案口径（窗口内末次体重），对比期＝同一算式套对比期窗口末次体重。
   // **不读 `prevSeries` 的 `tdee` 字段**——那是 70 kg parity 常量（见 `energyOfWindow` 说明）。
   const rows: CompareRow[] = [
-    row('日均摄入', seriesAvg(base.series, 'calories'), seriesAvg(prevSeries, 'calories'), '卡'),
-    row('日均总消耗', base.profile.tdee, energyOfWindow(loadProfile(db), prevSeries).tdee, '卡'),
-    row('日均缺口', seriesAvg(base.series, 'deficit'), seriesAvg(prevSeries, 'deficit'), '卡'),
-    row('日均体重', seriesAvg(base.series, 'weightKg'), seriesAvg(prevSeries, 'weightKg'), 'kg'),
-    row('日均蛋白', seriesAvg(base.series, 'protein'), seriesAvg(prevSeries, 'protein'), 'g'),
-    row('日均饮水', seriesAvg(base.series, 'waterMl'), seriesAvg(prevSeries, 'waterMl'), 'ml'),
-    row('日均运动', seriesAvg(base.series, 'exerciseKcal'), seriesAvg(prevSeries, 'exerciseKcal'), '卡'),
-    row('记录天数', seriesCount(base.series, 'calories'), seriesCount(prevSeries, 'calories'), '天'),
+    row(m('skill-calorie.analysis-reportPlate.c009'), seriesAvg(base.series, 'calories'), seriesAvg(prevSeries, 'calories'), m('skill-calorie.analysis-reportPlate.c010')),
+    row(m('skill-calorie.analysis-reportPlate.c011'), base.profile.tdee, energyOfWindow(loadProfile(db), prevSeries).tdee, m('skill-calorie.analysis-reportPlate.c012')),
+    row(m('skill-calorie.analysis-reportPlate.c013'), seriesAvg(base.series, 'deficit'), seriesAvg(prevSeries, 'deficit'), m('skill-calorie.analysis-reportPlate.c014')),
+    row(m('skill-calorie.analysis-reportPlate.c015'), seriesAvg(base.series, 'weightKg'), seriesAvg(prevSeries, 'weightKg'), 'kg'),
+    row(m('skill-calorie.analysis-reportPlate.c016'), seriesAvg(base.series, 'protein'), seriesAvg(prevSeries, 'protein'), 'g'),
+    row(m('skill-calorie.analysis-reportPlate.c017'), seriesAvg(base.series, 'waterMl'), seriesAvg(prevSeries, 'waterMl'), 'ml'),
+    row(m('skill-calorie.analysis-reportPlate.c018'), seriesAvg(base.series, 'exerciseKcal'), seriesAvg(prevSeries, 'exerciseKcal'), m('skill-calorie.analysis-reportPlate.c019')),
+    row(m('skill-calorie.analysis-reportPlate.c020'), seriesCount(base.series, 'calories'), seriesCount(prevSeries, 'calories'), m('skill-calorie.analysis-reportPlate.c021')),
   ];
   const top = rows
     .filter((r): r is CompareRow & { readonly delta: number } => r.delta !== null)

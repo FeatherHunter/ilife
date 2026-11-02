@@ -7,9 +7,10 @@ import {
 } from 'base-paint';
 import { blocksCss } from 'base-paint/blocks';
 import { HomeRenderError } from './errors.js';
+import { m } from '../entries/index.js';
 
 export function escapeHtml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').split('"').join('&quot;').split("'").join('&#39;');
 }
 
 /** 可见文本归一：半角拉丁字母转全角（判据件只把半角当「英文裸词」）。数字与日期原样保留。
@@ -31,7 +32,8 @@ function itemHtml(n: Record<string, unknown>): string {
 }
 
 function listHtml(items: unknown[]): string {
-  if (!items.length) return '<div class="hm-empty">暂无记录</div>';
+  const empty = m('skill-home.render-html.c001');
+  if (!items.length) return '<div class="hm-empty">' + escapeHtml(empty) + '</div>';
   return items.map((x) => itemHtml(x as Record<string, unknown>)).join('');
 }
 
@@ -52,6 +54,21 @@ function receiptFields(d: Record<string, unknown>): string {
 // 按形状渲染 envelope 为 section 页；未知形状 throw 不返空页。
 // #43 H2：analysis/fallback/resultset 经 HOME_KEY_SHAPES 不可达本函数（视图键仅 list/detail/receipt/stat；
 // 数据族 resultset 走出口层短路直回 envelope，不进 HTML 交付链），保留作显式降级与未来扩展直调分支，单测直构 envelope 覆盖。
+/** 看密码脱敏：回执里的明文只走对话 JSON，不进 HTML 快照。
+ *  判据不拿字面量：用同一条词条（receipt-ticket.c069 的「密码：{p0}（…）」）拼出标签前缀，
+ *  按结构认出这一条回执——换语言时前缀一起换，判据跟着走。
+ *  只认前缀不认尾注：尾注是给人看的补充，调用方（含旧报文）可能只带前半句；
+ *  脱敏宁可多盖一层（HTML 里盖成占位，JSON 真相不受影响），不能漏。 */
+function isPasswordReceipt(msg: string): boolean {
+  const probe = m('skill-home.receipt-ticket.c069', { p0: '\u0001' });
+  const prefix = probe.split('\u0001')[0] ?? '';
+  return prefix !== '' && msg.startsWith(prefix);
+}
+
+function passwordRedactedMessage(): string {
+  return m('skill-home.render-html.c002');
+}
+
 export function renderEnvelopeHtml(env: Envelope): string {
   const head = '<section data-skill="home" data-shape="' + env.shape + '" data-key="' + escapeHtml(env.key) + '">';
   const d = env.data as Record<string, unknown>;
@@ -61,7 +78,7 @@ export function renderEnvelopeHtml(env: Envelope): string {
     case 'receipt': {
       let msg = String((d as { message?: unknown }).message ?? '');
       // 看密码脱敏：HTML 快照不落明文（JSON 真相仍含明文，仅对话回显）。
-      if (env.key === 'home.ticket.write' && /密码/.test(msg)) msg = '密码已脱敏（仅对话 JSON 回显，不进 HTML）';
+      if (env.key === 'home.ticket.write' && isPasswordReceipt(msg)) msg = passwordRedactedMessage();
       // #890：写库回执可以带「本次写入字段」逐行（`detail.fields`，键名与值都由命令层给中文）。
       // 原先回执只印 message 一句（「已登记购买：#11」），写进去的价格／渠道／到期日全在页上看不见。
       // 这里统一渲染成两列字段位；没有 `detail` 的回执照旧只印那一句。

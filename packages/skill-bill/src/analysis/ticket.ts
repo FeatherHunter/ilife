@@ -24,11 +24,12 @@ import { renderChartBlock, renderLedgerRows, renderSheetFrame, renderSummaryHead
 import { escapeHtml } from 'base-paint';
 import { assembleSheetPage, sheetHead, ticketActions, ticketRule, ticketSection, ticketSummary } from '../shared/docPage.js';
 import { renderCaliberLine } from 'base-paint/blocks';
-import { copyZoneOf, docTitleOf, money, SOURCE_READ, SOURCE_READ_TEXT } from './pageParts.js';
+import { baselineFileOf, copyZoneOf, docTitleOf, money, SOURCE_READ, SOURCE_READ_TEXT } from './pageParts.js';
 import type { AnalysisCopy } from './copyTextAnalysis.js';
 import { barGroupHtml, compareSidesHtml, factCardHtml, listCardHtml } from './cards.js';
 import { chartFor } from './chartOf.js';
 import type { BarsPage, ComparePage, DocInput } from './scene.js';
+import { m } from '../entries/index.js';
 
 /** A 组 8 个场景 id（唯一定义地）：bars 4 ＋ compare 4。w09 不在此（查询域，1056）。 */
 export const A_TICKET_IDS = [
@@ -64,76 +65,57 @@ export function isCTicket(id: string): boolean {
 
 /** 店头品牌行（原型 `.shop-brand`）：饼干记账 · 唤醒词。 */
 function brandOf(wakeWord: string): string {
-  return '饼干记账 · ' + wakeWord;
+  return m('skill-bill.analysis-ticket.c001', { p0: String(wakeWord) });
 }
 
 /** H2 一句聚合（原型 v2.1 单行，不换行不断裂，CSS 由 TICKET_CSS 的单行类承担，此处只给文本）。 */
 export function h2For(id: string, count: number, barRows: number): string {
-  switch (id) {
-    case 'monthly': return '月度共记 ' + String(count) + ' 笔';
-    case 'yearly': return '年度共记 ' + String(count) + ' 笔';
-    case 'overview': return '总览共记 ' + String(count) + ' 笔';
-    case 'stats': return '全库共记 ' + String(count) + ' 笔';
-    case 'period_compare': return '对比共记 2 月';
-    case 'range_compare': return '双区间共记 2 段';
-    case 'yoy': return '同比共记 2 月';
-    case 'cat_compare': return '分类对比共记 ' + String(barRows) + ' 类';
-    case 'week': return '周报共记 ' + String(count) + ' 笔';
-    case 'category': return '分类共记 ' + String(barRows) + ' 类';
-    case 'account': return '账户共记 ' + String(barRows) + ' 个';
-    case 'ledger': return '账本共记 ' + String(barRows) + ' 个';
-    case 'structure': return '结构共记 ' + String(count) + ' 笔';
-    default: return '共记 ' + String(count) + ' 笔';
-  }
-}
-
-/** 基线文件名（落点 LEDGER 末行，原型逐字）：a01-a03 在 1031，a09-a13 在 1021。 */
-function baselineOf(id: string): string {
-  switch (id) {
-    case 'monthly': return 'a01-看月度-proto.html';
-    case 'yearly': return 'a02-看年度-proto.html';
-    case 'overview': return 'a03-看总览-proto.html';
-    case 'stats': return 'a09-做统计-proto.html';
-    case 'period_compare': return 'a10-看对比-proto.html';
-    case 'range_compare': return 'a11-看双区间-proto.html';
-    case 'yoy': return 'a12-看同比-proto.html';
-    case 'cat_compare': return 'a13-看分类对比-proto.html';
-    case 'week': return 'a04-看周报-proto.html';
-    case 'category': return 'a05-看分类-proto.html';
-    case 'account': return 'a06-看账户-proto.html';
-    case 'ledger': return 'a07-看账本-proto.html';
-    case 'structure': return 'a08-看结构-proto.html';
-    default: return '';
-  }
+  // 写成 if 链而不是 switch：迁移器只认 copy／concat 位置，switch 的分支标签会被判跳过（#1208）。
+  if (id === 'monthly') return m('skill-bill.analysis-ticket.c002', { p0: String(String(count)) });
+  if (id === 'yearly') return m('skill-bill.analysis-ticket.c003', { p0: String(String(count)) });
+  if (id === 'overview') return m('skill-bill.analysis-ticket.c004', { p0: String(String(count)) });
+  if (id === 'stats') return m('skill-bill.analysis-ticket.c005', { p0: String(String(count)) });
+  if (id === 'period_compare') return m('skill-bill.analysis-ticket.c006');
+  if (id === 'range_compare') return m('skill-bill.analysis-ticket.c007');
+  if (id === 'yoy') return m('skill-bill.analysis-ticket.c008');
+  if (id === 'cat_compare') return m('skill-bill.analysis-ticket.c009', { p0: String(String(barRows)) });
+  if (id === 'week') return m('skill-bill.analysis-ticket.c010', { p0: String(String(count)) });
+  if (id === 'category') return m('skill-bill.analysis-ticket.c011', { p0: String(String(barRows)) });
+  if (id === 'account') return m('skill-bill.analysis-ticket.c012', { p0: String(String(barRows)) });
+  if (id === 'ledger') return m('skill-bill.analysis-ticket.c013', { p0: String(String(barRows)) });
+  if (id === 'structure') return m('skill-bill.analysis-ticket.c014', { p0: String(String(count)) });
+  return m('skill-bill.analysis-ticket.c015', { p0: String(String(count)) });
 }
 
 /** 主数字（原型 summary-head：支出唯一，a09 笔数，a13 见明细；C 组 a04 本周支出／a05 总支出／a06-a08 见明细）。 */
 function summaryForBars(id: string, expense: number, count: number): { eyebrow: string; value: string; unit: string; note: string } {
   if (id === 'stats') {
-    return { eyebrow: '分析域 · 总览', value: String(count), unit: '笔', note: '总笔数 · 明细与复制区与基线一致' };
+    return { eyebrow: m('skill-bill.analysis-ticket.c016'), value: String(count), unit: m('skill-bill.analysis-ticket.c017'), note: m('skill-bill.analysis-ticket.c018') };
   }
   if (id === 'week') {
-    return { eyebrow: '分析域 · 总览', value: money(expense), unit: '元', note: '本周支出 · 明细与复制区与基线一致' };
+    return { eyebrow: m('skill-bill.analysis-ticket.c019'), value: money(expense), unit: m('skill-bill.analysis-ticket.c020'), note: m('skill-bill.analysis-ticket.c021') };
   }
   if (id === 'category') {
-    return { eyebrow: '分析域 · 总览', value: money(expense), unit: '元', note: '总支出 · 明细与复制区与基线一致' };
+    return { eyebrow: m('skill-bill.analysis-ticket.c022'), value: money(expense), unit: m('skill-bill.analysis-ticket.c023'), note: m('skill-bill.analysis-ticket.c024') };
   }
   if (id === 'yearly') {
-    return { eyebrow: '分析域 · 总览', value: money(expense), unit: '元', note: '全年支出 · 明细与复制区与基线一致' };
+    return { eyebrow: m('skill-bill.analysis-ticket.c025'), value: money(expense), unit: m('skill-bill.analysis-ticket.c026'), note: m('skill-bill.analysis-ticket.c027') };
   }
   if (id === 'account' || id === 'ledger' || id === 'structure') {
-    return { eyebrow: '分析域 · 总览', value: '见明细', unit: '', note: '结论 · 明细与复制区与基线一致' };
+    return { eyebrow: m('skill-bill.analysis-ticket.c028'), value: m('skill-bill.analysis-ticket.c029'), unit: '', note: m('skill-bill.analysis-ticket.c030') };
   }
-  return { eyebrow: '分析域 · 总览', value: money(expense), unit: '元', note: '支出 · ' + (id === 'overview' ? '落点' : '明细') + '与复制区与基线一致' };
+  // 链里的条件先抽成局部变量，外层 + 链只拼字面量与变量（迁移器才能整句化，手册 §4.7）。
+  const where = id === 'overview' ? m('skill-bill.analysis-ticket.c031') : m('skill-bill.analysis-ticket.c032');
+  return { eyebrow: m('skill-bill.analysis-ticket.c033'), value: money(expense), unit: m('skill-bill.analysis-ticket.c034'), note: m('skill-bill.analysis-ticket.c035', { p0: String(where) }) };
 }
 
 /** bars 落点账目（余数进落点，数字只搬家）：收入／净额／来源／基线，ovs 另加日均；stats 例外不加收入／净额（原型 v2.1 六行）。 */
 function ledgerBars(id: string, income: number, net: number, extra: readonly { k: string; v: string }[]): string {
   const rows = [
-    ...(id === 'stats' ? [] : [{ label: '收入', value: money(income) + ' 元' }, { label: '净额', value: money(net) + ' 元' }]),
+    ...(id === 'stats' ? [] : [{ label: m('skill-bill.analysis-ticket.c036'), value: m('skill-bill.analysis-ticket.c037', { p0: String(money(income)) }) }, { label: m('skill-bill.analysis-ticket.c038'), value: m('skill-bill.analysis-ticket.c039', { p0: String(money(net)) }) }]),
     ...extra.map((r) => ({ label: r.k, value: r.v })),
-    { label: '来源', value: SOURCE_READ_TEXT },
-    { label: '基线', value: baselineOf(id) },
+    { label: m('skill-bill.analysis-ticket.c040'), value: SOURCE_READ_TEXT },
+    { label: m('skill-bill.analysis-ticket.c041'), value: baselineFileOf(id) },
   ];
   return renderLedgerRows({ rows, layout: 'ticket' });
 }
@@ -142,8 +124,8 @@ function ledgerBars(id: string, income: number, net: number, extra: readonly { k
 function ledgerCompare(rows: readonly { k: string; v: string }[], id: string): string {
   const full = [
     ...rows.map((r) => ({ label: r.k, value: r.v })),
-    { label: '来源', value: '记账库' },
-    { label: '基线', value: baselineOf(id) },
+    { label: m('skill-bill.analysis-ticket.c042'), value: m('skill-bill.analysis-ticket.c043') },
+    { label: m('skill-bill.analysis-ticket.c044'), value: baselineFileOf(id) },
   ];
   return renderLedgerRows({ rows: full, layout: 'ticket' });
 }
@@ -169,12 +151,11 @@ const LINE_TAP_JS = '<' + 'script>(function(){'
 
 /** 图形占位那一句（判地两版，与 `caliberTagOf` 同一分界）：a01-a03 说「不重算口径」，a04 起说「不用它读数」。 */
 function chartNoteOf(id: string): string {
-  switch (id) {
-    case 'monthly':
-    case 'yearly':
-    case 'overview': return '图形仅示意排布，不重算口径，不断言数据对错。读数以明细卡与复制区为准。';
-    default: return '图形仅示意排布，不用它读数，不断言数据对错。读数以明细卡与复制区为准。';
+  // 写成 if 链而不是 switch：迁移器只认 copy／concat 位置，switch 的分支标签会被判跳过（#1208）。
+  if (id === 'monthly' || id === 'yearly' || id === 'overview') {
+    return m('skill-bill.analysis-ticket.c045');
   }
+  return m('skill-bill.analysis-ticket.c046');
 }
 
 /** 判地头三张（a01／a02／a03）没有纸外页脚，a04 起每页都有：`饼干记账 · <唤醒词>`。 */
@@ -182,7 +163,7 @@ const NO_FOOT_SCENES = ['monthly', 'yearly', 'overview'];
 
 /** 纸外页脚那一行（空串＝判地这一页不出脚注）。 */
 function footNoteOf(id: string, wakeWord: string): string {
-  return NO_FOOT_SCENES.includes(id) ? '' : '<p class="ilife-ticket-foot">' + escapeHtml('饼干记账 · ' + wakeWord) + '</p>';
+  return NO_FOOT_SCENES.includes(id) ? '' : '<p class="ilife-ticket-foot">' + escapeHtml(m('skill-bill.analysis-ticket.c047', { p0: String(wakeWord) })) + '</p>';
 }
 
 /** 票据纸装配（A／B／C 三组 25 页共用收口）：**块位序列逐块照判地**（`proto/analysis/a01…a25` v2.1）——
@@ -218,7 +199,7 @@ export function ticketDoc(input: {
     + ticketSummary(input.summaryHtml, '<p class="ilife-ticket-summary-note">' + escapeHtml(input.summaryNote) + '</p>')
     + ticketRule()
     + ticketSection({
-      title: '图形占位', tag: 'CHART',
+      title: m('skill-bill.analysis-ticket.c048'), tag: 'CHART',
       /* #1128：#1076 负责人判 5 格 no（a14／a15／a16／a17／a21 要真图）⇒ 有数据就出真图；
          撑不起图的页退回判地那句占位说明（判地本段只有占位文字，这是本票记在票面的判地变更）。 */
       content: input.chartHtml === ''
@@ -228,9 +209,9 @@ export function ticketDoc(input: {
     + ticketRule()
     + (input.detailHtml === ''
       ? ''
-      : ticketSection({ title: '明细卡', tag: 'DETAIL', content: '<div class="ilife-ticket-card">' + input.detailHtml + '</div>' }) + ticketRule())
+      : ticketSection({ title: m('skill-bill.analysis-ticket.c049'), tag: 'DETAIL', content: '<div class="ilife-ticket-card">' + input.detailHtml + '</div>' }) + ticketRule())
     + ticketSection({
-      title: '落点与口径', tag: 'CALIBER',
+      title: m('skill-bill.analysis-ticket.c050'), tag: 'CALIBER',
       content: input.ledgerHtml + renderCaliberLine(input.caliber),
     })
     + ticketRule()
@@ -246,7 +227,7 @@ export function ticketDoc(input: {
     }));
   return assembleSheetPage({
     docTitle: input.docTitle,
-    bodyHtml: renderSheetFrame({ variant: 'ticket', cutLine: true, cutLineText: '✂ 裁切线', content: paper })
+    bodyHtml: renderSheetFrame({ variant: 'ticket', cutLine: true, cutLineText: m('skill-bill.analysis-ticket.c051'), content: paper })
       + footNoteOf(input.sceneId, input.wakeWord),
     paper: 'receipt',
   });
@@ -261,7 +242,7 @@ export function ticketBarsDoc(input: DocInput<BarsPage>, sceneId: string, extraL
     eyebrow: s.eyebrow,
     value: s.value,
     unit: s.unit,
-    stamp: { text: '只读', tone: 'ok' as const },
+    stamp: { text: m('skill-bill.analysis-ticket.c052'), tone: 'ok' as const },
     layout: 'ticket',
     size: 'l',
   });
@@ -281,7 +262,11 @@ export function ticketBarsDoc(input: DocInput<BarsPage>, sceneId: string, extraL
     const html = factCardHtml(c, 0);
     if (html !== '') parts.push('<p>' + escapeHtml(c.title) + '</p>' + html);
   }
-  const detailHtml = parts.length === 0 ? (sceneId === 'overview' ? '' : '<p>暂无明细</p>') : parts.join('');
+  /* 手册 §4.6：上屏那句和 HTML 结构拆开——结构串只留标签（无中文，门不扫），中文那句单成一个字面量，
+     由词条层承载；两份拼起来与改前逐字节一致。 */
+  const noDetailText = m('skill-bill.analysis-ticket.c053');
+  const noDetailHtml = '<p>' + noDetailText + '</p>';
+  const detailHtml = parts.length === 0 ? (sceneId === 'overview' ? '' : noDetailHtml) : parts.join('');
   return ticketDoc({
     docTitle: docTitleOf(r.title),
     wakeWord: input.wakeWord,
@@ -298,7 +283,7 @@ export function ticketBarsDoc(input: DocInput<BarsPage>, sceneId: string, extraL
     params: input.params,
     envelope: input.envelope,
     source: SOURCE_READ,
-    detail: '取到 ' + String(r.count) + ' 条记录',
+    detail: m('skill-bill.analysis-ticket.c054', { p0: String(String(r.count)) }),
     actionAt: input.actionAt,
     ...(r.copy === undefined ? {} : { copy: r.copy }),
   });
@@ -306,15 +291,13 @@ export function ticketBarsDoc(input: DocInput<BarsPage>, sceneId: string, extraL
 
 /** compare 主数字：前段／本期那一侧的支出（原型 a10/a11 前段，a12 本期；只搬家不重算）。 */
 function firstSideExpense(p: ComparePage): number {
-  const side = p.sides[0];
-  if (side === undefined) return 0;
-  for (const kpi of side.kpis) {
-    if (kpi.label === '支出') {
-      const n = Number(String(kpi.value).replace(/,/g, ''));
-      return Number.isFinite(n) ? n : 0;
-    }
-  }
-  return 0;
+  // 判据位按位置取，不按显示标签挑读数（标签随语言变，位置不变）。
+  // 发射方正序：cards.ts:132-139 `sideKpisOf` 固定 4 格（0 笔数／1 支出／2 收入／3 净额），
+  // 四个 compare 场景（period_compare／range_compare／yoy／cat_compare 的空 sides）全用它。
+  const kpi = p.sides[0]?.kpis[1];
+  if (kpi === undefined) return 0;
+  const n = Number(String(kpi.value).replace(/,/g, ''));
+  return Number.isFinite(n) ? n : 0;
 }
 
 /** compare 族 4 页整族切票据纸（本族全在 A 组，无残留分支）。 */
@@ -326,16 +309,19 @@ export function ticketCompareDoc(
   const r = input.result;
   const p = r.page;
   const summary = renderSummaryHead({
-    eyebrow: '分析域 · 对比',
-    value: sceneId === 'cat_compare' ? '见明细' : money(firstSideExpense(p)),
-    unit: sceneId === 'cat_compare' ? '' : '元',
-    stamp: { text: '只读', tone: 'ok' as const },
+    eyebrow: m('skill-bill.analysis-ticket.c055'),
+    value: sceneId === 'cat_compare' ? m('skill-bill.analysis-ticket.c056') : money(firstSideExpense(p)),
+    unit: sceneId === 'cat_compare' ? '' : m('skill-bill.analysis-ticket.c057'),
+    stamp: { text: m('skill-bill.analysis-ticket.c058'), tone: 'ok' as const },
     layout: 'ticket',
     size: 'l',
   });
-  const parts: string[] = [...(sceneId === 'range_compare' && p.sides.length !== 0 ? ['<p>两段对比</p>' + compareSidesHtml(p.sides)] : [])];
+  /* 手册 §4.6：段标题那句与 HTML 结构拆开（结构串只有标签，中文单成一个字面量交给词条层）。 */
+  const bothSidesText = m('skill-bill.analysis-ticket.c059');
+  const bothSidesHtml = '<p>' + bothSidesText + '</p>';
+  const parts: string[] = [...(sceneId === 'range_compare' && p.sides.length !== 0 ? [bothSidesHtml + compareSidesHtml(p.sides)] : [])];
   /* a12 看同比：明细含两段对比双卡（8 数只搬家，与原型 ol 同数；range 行不动）。 */
-  if (sceneId === 'yoy' && p.sides.length !== 0) parts.push('<p>两段对比</p>' + compareSidesHtml(p.sides));
+  if (sceneId === 'yoy' && p.sides.length !== 0) parts.push(bothSidesHtml + compareSidesHtml(p.sides));
   // #1135（负责人 2026-10-05 改口径）：序号**每卡各自从 1 起**。
   for (const g of p.barGroups) {
     parts.push('<p>' + escapeHtml(g.title) + '</p>' + barGroupHtml(g, 0));
@@ -345,8 +331,11 @@ export function ticketCompareDoc(
     if (html !== '') { parts.push('<p>' + escapeHtml(c.title) + '</p>' + html); }
   }
   if (sceneId === 'cat_compare') {
-    const m = r.conclusion.match(/合计差 ([+-]?\d+\.\d+ 元)/);
-    if (m !== null) parts.push('<p>两段支出合计差 · ' + escapeHtml(m[1]) + '</p>');
+    // 局部名不叫 m：会遮住注入的取词函数 m()（手册 §4.5m）。
+    const mark = r.conclusion.match(/合计差 ([+-]?\d+\.\d+ 元)/);
+    /* 手册 §4.6：中文那句（含尾部间隔点）单成一个字面量，标签与取值留在结构里。 */
+    const diffLabel = m('skill-bill.analysis-ticket.c060');
+    if (mark !== null) parts.push('<p>' + diffLabel + escapeHtml(mark[1]) + '</p>');
   }
   const detailHtml = parts.length === 0 ? '<p>' + escapeHtml(r.conclusion) + '</p>' : parts.join('');
   return ticketDoc({
@@ -356,7 +345,7 @@ export function ticketCompareDoc(
     h2: h2For(sceneId, r.count, r.page.barGroups.length === 0 ? 0 : r.page.barGroups[0].rows.length),
     windowLabel: r.label,
     summaryHtml: summary,
-    summaryNote: sceneId === 'cat_compare' ? '结论 · 明细与复制区与基线一致' : '支出 · 明细与复制区与基线一致',
+    summaryNote: sceneId === 'cat_compare' ? m('skill-bill.analysis-ticket.c061') : m('skill-bill.analysis-ticket.c062'),
     ledgerHtml: ledgerCompare(ledgerRows, sceneId),
     detailHtml,
     chartHtml: chartFor(sceneId, p),
@@ -365,7 +354,7 @@ export function ticketCompareDoc(
     params: input.params,
     envelope: input.envelope,
     source: SOURCE_READ,
-    detail: '取到 ' + String(r.count) + ' 条记录',
+    detail: m('skill-bill.analysis-ticket.c063', { p0: String(String(r.count)) }),
     actionAt: input.actionAt,
     ...(r.copy === undefined ? {} : { copy: r.copy }),
   });

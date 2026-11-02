@@ -21,6 +21,7 @@ import {
   dateRangeSlot,
   type DateRangeSlot,
 } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -47,10 +48,10 @@ export function dateRangeCalendarCss(input?: { readonly prefix?: string }): stri
   const touch = String(DATE_RANGE_TOUCH_PX) + 'px';
 
   return [
-    '/* 日历块：软底块 ＋ 发丝线（零阴影下用它立边界）。',
-    '   **宽度上限 ' + String(CALENDAR_MAX_PX) + 'px**：一个月有自己的自然宽度——1000px 宽的格子里',
-    '   一格天铺成 170px、数字孤零零吊在中间，读起来不像日历（真机 1280 档亲眼看过才发现）。',
-    '   超过上限的宽度留在块外（其余几行照常占满），格宽稳在 ' + String(CELL_MIN_W_PX) + 'px 上下。 */',
+    m('base-render.components-date-range-style-calendar.c001'),
+    m('base-render.components-date-range-style-calendar.c002', { p0: String(String(CALENDAR_MAX_PX)) }),
+    m('base-render.components-date-range-style-calendar.c003'),
+    m('base-render.components-date-range-style-calendar.c004', { p0: String(String(CELL_MIN_W_PX)) }),
     s('calendar') + ' {',
     '  display: grid;',
     '  gap: ' + String(DATE_RANGE_GAP_PX) + 'px;',
@@ -115,12 +116,12 @@ export function dateRangeCalendarCss(input?: { readonly prefix?: string }): stri
     '  font-size: ' + skinVar('fs-xs') + ';',
     '  font-weight: 600;',
     '}',
-    '/* 每一格天：命中盒 ≥44×44（矩阵缝 0px：缝并进格子，见 `style.ts` 文件头）。',
-    '   四档形状：区间内＝纸面块，两端＝**强调面**（格里写着那一天的数字＝有文字 ⇒ 软底 `accent-soft`',
-    '   ＋ 主色字 `accent-text` ＋ 主色描边 `accent`，见 `docs/base/base-render/选中态与皮肤语言.md` 第三节），',
-    '   相邻月＝弱字，今天＝一圈发丝线。',
-    '   `is-adj` 带 `:not(.is-end)`：相邻月那一天**可以**是这一段的一端（`render.ts` 两件事各判各的）——',
-    '   那种格子上若让"弱字"盖掉选中面的 `accent-text`，选中的字色就掉回 `ink-3`（paper 下对软底只有 4.48:1）。 */',
+    m('base-render.components-date-range-style-calendar.c005'),
+    m('base-render.components-date-range-style-calendar.c006'),
+    m('base-render.components-date-range-style-calendar.c007'),
+    m('base-render.components-date-range-style-calendar.c008'),
+    m('base-render.components-date-range-style-calendar.c009'),
+    m('base-render.components-date-range-style-calendar.c010'),
     s('day') + ' {',
     '  display: inline-flex;',
     '  align-items: center;',
@@ -155,13 +156,17 @@ export function dateRangeCalendarCss(input?: { readonly prefix?: string }): stri
     s('day') + '.is-today {',
     '  border-color: ' + skinVar('ink-2') + ';',
     '}',
-    '/* 窄档**满幅**（full-bleed）：本件自己的内宽 ≤' + String(DATE_RANGE_FULL_BLEED_MAX_PX) + 'px 时，',
-    '   7 列 × 44px ＝ 308px 连「日历自己的左右内距 ＋ 块体左右内距」都付不起（320 档不补这一档，',
-    '   每格只有 34.8px、有效命中 34–36px < 44 地板）。把两边的内距并进格子：日历两边各外扩',
-    '   ' + String(DATE_RANGE_BOX_PAD_X_PX) + 'px（＝块体左右内距，**同一个常量**）、自己左右内距归零',
-    '   ⇒ 320 档每格 45.1px（有效命中 44–46px）。',
-    '   外扩量 ≤ 块体内距 ⇒ 日历始终落在块体边框内，任何档都不会横向溢出（判据四档都量）。',
-    '   判的是**本件自己的内宽**（容器查询），不是视口宽。 */',
+    m('base-render.components-date-range-style-calendar.c011', {
+      p0: String(String(DATE_RANGE_FULL_BLEED_MAX_PX)),
+    }),
+    m('base-render.components-date-range-style-calendar.c012'),
+    m('base-render.components-date-range-style-calendar.c013'),
+    m('base-render.components-date-range-style-calendar.c014', {
+      p0: String(String(DATE_RANGE_BOX_PAD_X_PX)),
+    }),
+    m('base-render.components-date-range-style-calendar.c015'),
+    m('base-render.components-date-range-style-calendar.c016'),
+    m('base-render.components-date-range-style-calendar.c017'),
     '@container (max-width: ' + String(DATE_RANGE_FULL_BLEED_MAX_PX) + 'px) {',
     '  ' + s('calendar') + ' {',
     '    margin-left: -' + String(DATE_RANGE_BOX_PAD_X_PX) + 'px;',

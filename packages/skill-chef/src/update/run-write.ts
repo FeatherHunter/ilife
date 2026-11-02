@@ -11,6 +11,7 @@ import type { ChefDb, IngredientRow, RecipeRow, StepRow } from '../fetch/db.js';
 import { canonicalRecipeName, getRecipeDetail, mustRecipe, now, qAll, qGet, qRun } from '../fetch/db.js';
 import { buildRecipeReceipt } from '../render/index.js';
 import { fail, pickStr, resolveNameOrId } from '../shared/slots.js';
+import { m } from '../entries/index.js';
 
 /** 跑 `chef.recipe.write` 的 update 系：`update`（含 patch 对象与 total_time 别名）／`discard`／`deprecate`。
  *
@@ -44,15 +45,15 @@ export function runRecipeWriteUpdate(handle: ChefDb, params: Record<string, unkn
         else if (['name', 'description', 'difficulty', 'servings', 'total_time_minutes', 'status', 'photo_url', 'source', 'source_url'].includes(k)) patch[k] = v;
       }
     }
-    if (!Object.keys(patch).length) fail(2, 'update 至少改一个字段（name/description/difficulty/servings/total_time_minutes/status/photo_url/source/source_url/patch）');
+    if (!Object.keys(patch).length) fail(2, m('skill-chef.update-run-write.c001'));
     const r = updateRecipe(handle, rid, patch);
-    return buildRecipeReceipt('已更新菜谱：' + r.name + '（id=' + r.id + '）');
+    return buildRecipeReceipt(m('skill-chef.update-run-write.c002', { p0: String(r.name), p1: String(r.id) }));
   }
   if (op === 'discard' || op === 'deprecate') {
     const id = params.id;
     const rid = typeof id === 'string' && id.trim() ? id.trim() : getRecipeDetail(handle, resolveNameOrId(params)).recipe.id;
     const r = deprecateRecipe(handle, rid);
-    return buildRecipeReceipt('已废弃菜谱：' + r.name + '（id=' + r.id + '，只增不删）');
+    return buildRecipeReceipt(m('skill-chef.update-run-write.c003', { p0: String(r.name), p1: String(r.id) }));
   }
   // 不可达：入口注册表已用 `parseWriteOpCompat` 同集合拦过非法 op（原分支尾的 fail 同语义，归口径错 exit 2）。
   throw new ChefPolicyError('POLICY_BAD_INPUT', 'recipe.write 只接受 op=add/update/discard/add-ingredient/add-step');
@@ -71,7 +72,7 @@ function runUpdateStepContent(handle: ChefDb, params: Record<string, unknown>): 
   const detail = getRecipeDetail(handle, resolveNameOrId(params));
   const rid = detail.recipe.id;
   const step = pickStep(detail.steps, params.step ?? params.sequence ?? params.step_id);
-  if (!step) fail(2, '改步骤须给 step（第 N 步数字，或步骤 id）');
+  if (!step) fail(2, m('skill-chef.update-run-write.c004'));
   const patch: Record<string, unknown> = {};
   const action = pickStr(params, 'action');
   if (action !== undefined && action.trim()) patch.action = action.trim();
@@ -84,7 +85,7 @@ function runUpdateStepContent(handle: ChefDb, params: Record<string, unknown>): 
     if (n === undefined) throw new ChefFetchError('CHEF_BAD_QUERY', '步骤须给数字时长 duration_minutes（老库 NOT NULL；缺时长请问用户补齐）');
     patch.duration_minutes = n;
   }
-  if (!Object.keys(patch).length) fail(2, '改步骤至少改一个字段（action/duration_minutes/heat_level/temperature/expected_result）');
+  if (!Object.keys(patch).length) fail(2, m('skill-chef.update-run-write.c005'));
   const sets: string[] = [];
   const args: unknown[] = [];
   for (const k of ['action', 'duration_minutes', 'heat_level', 'temperature', 'expected_result'] as const) {
@@ -99,7 +100,7 @@ function runUpdateStepContent(handle: ChefDb, params: Record<string, unknown>): 
   }
   const row = qGet<Record<string, unknown>>(handle, 'SELECT * FROM cooking_steps WHERE id = ?', [step.id]);
   if (!row) throw new ChefFetchError('CHEF_RECIPE_CORRUPT', '步骤写后读回失败：第' + step.sequence + '步');
-  return buildRecipeReceipt('已更新步骤：第' + step.sequence + '步（' + String(row.action ?? '') + '）');
+  return buildRecipeReceipt(m('skill-chef.update-run-write.c006', { p0: String(step.sequence), p1: String(String(row.action ?? '')) }));
 }
 
 /** #774 · 修改步骤之重排（`update_step_content` 的另一半）。
@@ -114,9 +115,9 @@ function runReorderSteps(handle: ChefDb, params: Record<string, unknown>): unkno
   const rid = detail.recipe.id;
   const from = toFiniteNumber(params.from);
   const to = toFiniteNumber(params.to);
-  if (from === undefined || !Number.isInteger(from) || from <= 0) fail(2, '重排须给 from（第 N 步，正整数）');
-  if (to === undefined || !Number.isInteger(to) || to <= 0) fail(2, '重排须给 to（第 N 步，正整数）');
-  if (from === to) fail(2, '重排 from 与 to 不能相同（第' + from + '步）');
+  if (from === undefined || !Number.isInteger(from) || from <= 0) fail(2, m('skill-chef.update-run-write.c007'));
+  if (to === undefined || !Number.isInteger(to) || to <= 0) fail(2, m('skill-chef.update-run-write.c008'));
+  if (from === to) fail(2, m('skill-chef.update-run-write.c009', { p0: String(from) }));
   const a = detail.steps.find((s) => s.sequence === from);
   const b = detail.steps.find((s) => s.sequence === to);
   if (!a) throw new ChefFetchError('CHEF_BAD_QUERY', '无第' + from + '步（本菜共' + detail.steps.length + '步）');
@@ -136,7 +137,7 @@ function runReorderSteps(handle: ChefDb, params: Record<string, unknown>): unkno
     if (e instanceof ChefFetchError) throw e;
     throw new ChefFetchError('CHEF_DB_UNREADABLE', '步骤重排失败：第' + from + '步↔第' + to + '步', { cause: e });
   }
-  return buildRecipeReceipt('已重排步骤：第' + from + '步↔第' + to + '步');
+  return buildRecipeReceipt(m('skill-chef.update-run-write.c010', { p0: String(from), p1: String(to) }));
 }
 
 /** #774 · 修改食材之改用量（`update_ingredient` 的写半）。
@@ -160,7 +161,7 @@ function runUpdateIngredient(handle: ChefDb, params: Record<string, unknown>): u
   }
   const key = params.ingredient ?? params.name ?? params.ingredient_id ?? params.id;
   const row = pickIngredient(detail.ingredients, key);
-  if (!row) fail(2, '改食材须给 ingredient（食材名，或食材 id）');
+  if (!row) fail(2, m('skill-chef.update-run-write.c011'));
   const patch: Record<string, unknown> = {};
   if (params.quantity !== undefined) {
     const n = toFiniteNumber(params.quantity);
@@ -178,7 +179,7 @@ function runUpdateIngredient(handle: ChefDb, params: Record<string, unknown>): u
     patch.name = (params.new_name as string).trim();
   }
   if (params.is_optional !== undefined) patch.is_optional = params.is_optional === true || params.is_optional === 1 ? 1 : 0;
-  if (!Object.keys(patch).length) fail(2, '改食材至少改一个字段（quantity/unit/quantity_text/category/is_optional/substitute/new_name；改用量须给数字 quantity）');
+  if (!Object.keys(patch).length) fail(2, m('skill-chef.update-run-write.c012'));
   const sets: string[] = [];
   const args: unknown[] = [];
   for (const k of ['name', 'category', 'quantity', 'unit', 'quantity_text', 'is_optional', 'substitute'] as const) {
@@ -193,7 +194,11 @@ function runUpdateIngredient(handle: ChefDb, params: Record<string, unknown>): u
   }
   const back = qGet<Record<string, unknown>>(handle, 'SELECT * FROM ingredients WHERE id = ?', [row.id]);
   if (!back) throw new ChefFetchError('CHEF_RECIPE_CORRUPT', '食材写后读回失败：' + row.name);
-  return buildRecipeReceipt('已更新食材：' + String(back.name ?? row.name) + '（用量' + String(back.quantity ?? '') + String(back.unit ?? '') + '）');
+  return buildRecipeReceipt(m('skill-chef.update-run-write.c013', {
+    p0: String(String(back.name ?? row.name)),
+    p1: String(String(back.quantity ?? '')),
+    p2: String(String(back.unit ?? '')),
+  }));
 }
 
 /** 在一道菜的步骤行里按「第 N 步数字／步骤 id」挑一行（跨菜 id 不认，只认本菜）。 */

@@ -37,17 +37,17 @@ function cellHtml(cell: HeatGridCellModel, rowLabel: string, weekday: string, un
 }
 
 /** 网格：左上角空位 ＋ 七枚列头，之后逐行「行标签 ＋ 七格」。 */
-function gridHtml(m: HeatGridModel): string {
+function gridHtml(model: HeatGridModel): string {
   const parts: string[] = ['<div class="' + heatGridSlot('grid') + '" role="img" aria-label="'
-    + esc(m.title + '：' + m.ariaLabel) + '">'];
+    + esc(model.title + '：' + model.ariaLabel) + '">'];
   parts.push('<span class="' + heatGridSlot('corner') + '"></span>');
-  for (const day of m.weekdays) {
+  for (const day of model.weekdays) {
     parts.push('<span class="' + heatGridSlot('col-head') + '">' + esc(day) + '</span>');
   }
-  for (const row of m.rows) {
+  for (const row of model.rows) {
     parts.push('<span class="' + heatGridSlot('row-label') + '">' + esc(row.label) + '</span>');
     row.cells.forEach((cell, c) => {
-      parts.push(cellHtml(cell, row.label, m.weekdays[c], m.unit));
+      parts.push(cellHtml(cell, row.label, model.weekdays[c], model.unit));
     });
   }
   parts.push('</div>');
@@ -55,10 +55,10 @@ function gridHtml(m: HeatGridModel): string {
 }
 
 /** 右侧读数：逐行「名字 ｜ 值（＋脚注另起一行）」。 */
-function factsHtml(m: HeatGridModel): string {
-  if (m.facts.length === 0) return '';
+function factsHtml(model: HeatGridModel): string {
+  if (model.facts.length === 0) return '';
   const parts: string[] = ['<ul class="' + heatGridSlot('rank') + '">'];
-  for (const fact of m.facts) {
+  for (const fact of model.facts) {
     parts.push('<li class="' + heatGridSlot('rank-item') + '">');
     parts.push('<span class="' + heatGridSlot('rank-label') + '">' + esc(fact.label) + '</span>');
     parts.push('<b class="' + heatGridSlot('rank-value') + '">' + esc(fact.value) + '</b>');
@@ -72,10 +72,10 @@ function factsHtml(m: HeatGridModel): string {
 }
 
 /** 色键（**必带**）：一档一枚色块 ＋ 它的数字区间；两端「少／多」点明深浅的方向。 */
-function keyHtml(m: HeatGridModel): string {
+function keyHtml(model: HeatGridModel): string {
   const parts: string[] = ['<ul class="' + heatGridSlot('key') + '">'];
   parts.push('<li><span class="' + heatGridSlot('key-end') + '">少</span></li>');
-  for (const item of m.keyItems) {
+  for (const item of model.keyItems) {
     parts.push('<li class="' + heatGridSlot('key-item') + '"><i class="' + heatGridSlot('swatch')
       + ' is-l' + String(item.level) + '" aria-hidden="true"></i>' + esc(item.text) + '</li>');
   }
@@ -85,18 +85,18 @@ function keyHtml(m: HeatGridModel): string {
 }
 
 /** 形态 A 的骨架：卡头 → （网格 ＋ 右侧读数）→ 色键 → 脚注。 */
-function renderMatrix(m: HeatGridModel): string {
+function renderMatrix(model: HeatGridModel): string {
   const parts: string[] = [];
   parts.push('<div class="' + heatGridSlot('hd') + '">');
-  parts.push('<h4 class="' + heatGridSlot('title') + '">' + esc(m.title) + '</h4>');
-  if (m.stamp !== undefined) {
-    parts.push('<span class="' + heatGridSlot('stamp') + '">' + esc(m.stamp) + '</span>');
+  parts.push('<h4 class="' + heatGridSlot('title') + '">' + esc(model.title) + '</h4>');
+  if (model.stamp !== undefined) {
+    parts.push('<span class="' + heatGridSlot('stamp') + '">' + esc(model.stamp) + '</span>');
   }
   parts.push('</div>');
-  parts.push('<div class="' + heatGridSlot('gridbox') + '">' + gridHtml(m) + factsHtml(m) + '</div>');
-  parts.push(keyHtml(m));
-  if (m.note !== undefined) {
-    parts.push('<p class="' + heatGridSlot('note') + '">' + esc(m.note) + '</p>');
+  parts.push('<div class="' + heatGridSlot('gridbox') + '">' + gridHtml(model) + factsHtml(model) + '</div>');
+  parts.push(keyHtml(model));
+  if (model.note !== undefined) {
+    parts.push('<p class="' + heatGridSlot('note') + '">' + esc(model.note) + '</p>');
   }
   return parts.join('');
 }
@@ -108,8 +108,8 @@ const SKELETONS: Readonly<Record<HeatGridForm, (m: HeatGridModel) => string>> = 
 
 /** 渲染热力格（纯函数：同样的入参恒产同样的字节；转义只经 `shared/escape.ts`）。 */
 export function renderHeatGrid(input: unknown): string {
-  const m = normalizeHeatGrid(input);
-  const extra = m.extraClass === undefined ? '' : ' ' + m.extraClass;
-  return '<div class="' + HEAT_GRID_CLASS + ' is-' + m.form + extra + '">'
-    + SKELETONS[m.form](m) + '</div>';
+  const model = normalizeHeatGrid(input);
+  const extra = model.extraClass === undefined ? '' : ' ' + model.extraClass;
+  return '<div class="' + HEAT_GRID_CLASS + ' is-' + model.form + extra + '">'
+    + SKELETONS[model.form](model) + '</div>';
 }

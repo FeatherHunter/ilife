@@ -61,8 +61,8 @@ describe('t731 · 场景件与域声明逐条对上（8 场景／3 片页型）'
     assert.notEqual(two[0].page, two[1].page, '两支各出一片页型');
   });
   it('取件：认得的 op 给件、认不得的即抛（不猜）', () => {
-    assert.equal(scene.setupSceneFor('restore').id, 'restore');
-    assert.throws(() => scene.setupSceneFor('nope'), /没有这一支操作/);
+    assert.equal(scene.setupSceneFor('restore', 'zh').id, 'restore');
+    assert.throws(() => scene.setupSceneFor('nope', 'zh'), /没有这一支操作/);
   });
   it('op 的读法：缺省＝初始化状态；非法即抛', () => {
     assert.equal(params.parseSetupOp({}), 'init-status');
@@ -118,7 +118,11 @@ describe('t731 · 三条向导的步骤条（D6 按状态算／D7 空数据只�
     assert.match(done[3].detail, /成功 3 行/);
   });
   it('状态四档的中文名只有一处定义', () => {
-    assert.deepEqual(Object.keys(steps.STEP_STATE_TEXT).sort(), ['blocked', 'current', 'done', 'todo']);
+    // #1214：常量改函数（渲染期取词），四档仍是四处唯一名字——断言改成「四档各有一句、两两不同」。
+    const states = ['done', 'current', 'todo', 'blocked'];
+    const texts = states.map((s) => steps.stepStateText(s));
+    assert.deepEqual(texts.map((t) => typeof t === 'string' && t.length > 0), [true, true, true, true]);
+    assert.equal(new Set(texts).size, 4, '四档名字两两不同');
   });
 });
 
@@ -283,7 +287,7 @@ describe('t731 · 缺项阻断与两枚域内件（裁定 9／步骤条两件）
   });
   it('八个 op 的槽位表：只有导入有一个必填格', () => {
     for (const op of params.SETUP_OPS) {
-      const required = params.SETUP_SLOTS[op].filter((s) => s.required).map((s) => s.name);
+      const required = params.setupSlotsOf(op).filter((s) => s.required).map((s) => s.name);
       assert.deepEqual(required, op === 'import' ? ['file'] : [], op + ' 的必填格不对');
     }
   });

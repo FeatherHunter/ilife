@@ -34,9 +34,12 @@ import { queryStyleTag } from './pageParts.js';
 import { assembleSheetPage, sheetHead, ticketActions, ticketRule, ticketSection, ticketSummary } from '../shared/docPage.js';
 import { commandLine, writeSection } from '../shared/writeParts.js';
 import { checkListHtml, checkRowsOf } from '../shared/checkLine.js';
+import { m } from '../entries/index.js';
 
 /** 本次数据来源（复制日志第 3 段，与 `./read.js` 的查询来源同字）。 */
-const SOURCE_QUERY = DB_FILENAME + '（查询结果：只读，不改库）';
+function sourceQuery(): string {
+  return DB_FILENAME + m('skill-bill.query-ticketDebt.c023');
+}
 
 /** 分类聚合卡的类数上限（与 `./list.js` 的 `CATEGORY_LIMIT` 同数，老页 `slice(0,8)` 同）。 */
 const CATEGORY_LIMIT = 8;
@@ -72,9 +75,12 @@ function dominantOf(values: readonly string[]): string {
 /** 结论标准句（与 `./list.js` 的 `conclusionOf` 同字：有支出取首类，无支出说清只有收入）。 */
 function conclusionOf(categories: readonly QueryCategoryRow[]): string {
   const top = categories[0];
-  if (top === undefined) return '本页只有收入，没有支出。';
-  return '主要花在「' + top.label + '」，' + sumText(top.amount) + ' 元，占本页支出 '
-    + String(Math.round(top.pct)) + '%。';
+  if (top === undefined) return m('skill-bill.query-ticketDebt.c001');
+  return m('skill-bill.query-ticketDebt.c002', {
+    p0: String(top.label),
+    p1: String(sumText(top.amount)),
+    p2: String(String(Math.round(top.pct))),
+  });
 }
 
 /** KPI 与分类聚合（与 `./list.js` 的 `listOut` 同源：支出取绝对值合计，占比＝分类支出÷本页支出）。 */
@@ -108,10 +114,10 @@ function categoriesOf(records: readonly BillRow[], expense: number): readonly Qu
 function ledgerHtml(kpi: { readonly income: number; readonly net: number }, records: readonly BillRow[]): string {
   return '<div class="ilife-block-ledger-rows is-ticket">' + renderLedgerRows({
     rows: [
-      { label: '收入', value: sumText(kpi.income) },
-      { label: '净额', value: sumText(kpi.net) },
-      { label: '落点账本', value: dominantOf(records.map((r) => r.ledger)) },
-      { label: '币种', value: dominantOf(records.map((r) => r.currency)) },
+      { label: m('skill-bill.query-ticketDebt.c003'), value: sumText(kpi.income) },
+      { label: m('skill-bill.query-ticketDebt.c004'), value: sumText(kpi.net) },
+      { label: m('skill-bill.query-ticketDebt.c005'), value: dominantOf(records.map((r) => r.ledger)) },
+      { label: m('skill-bill.query-ticketDebt.c006'), value: dominantOf(records.map((r) => r.currency)) },
     ],
     layout: 'ticket',
   }) + '</div>';
@@ -122,10 +128,10 @@ function scaleHtml(categories: readonly QueryCategoryRow[]): string {
   const shown = categories.slice(0, CATEGORY_LIMIT);
   const hidden = categories.length - shown.length;
   const rows = renderDistributionRows({
-    rows: shown.map((c) => ({ label: c.label, value: sumText(c.amount) + ' 元', pct: c.pct })),
+    rows: shown.map((c) => ({ label: c.label, value: m('skill-bill.query-ticketDebt.c007', { p0: String(sumText(c.amount)) }), pct: c.pct })),
   });
   return rows + (hidden > 0
-    ? renderCaliberLine('这一页只列支出最多的前 ' + String(CATEGORY_LIMIT) + ' 类，还有 ' + String(hidden) + ' 类没列')
+    ? renderCaliberLine(m('skill-bill.query-ticketDebt.c008', { p0: String(String(CATEGORY_LIMIT)), p1: String(String(hidden)) }))
     : '');
 }
 
@@ -135,7 +141,7 @@ function entriesHtml(records: readonly BillRow[]): string {
     const note = textOrDash(r.note);
     const sub = textOrDash(r.category) + ' · ' + textOrDash(r.account) + ' · '
       + '<span class="ilife-debt-mono">' + escapeHtml(r.time) + '</span> · #' + String(r.id);
-    return '<li><span class="ilife-ticket-entry-text">备注 · ' + escapeHtml(note)
+    return '<li><span class="ilife-ticket-entry-text">' + escapeHtml(m('skill-bill.query-ticketDebt.c024', { p0: textOrDash(r.note) }))
       + '<span class="ilife-debt-sub">' + sub + '</span></span>'
       + '<span class="ilife-debt-amt">' + escapeHtml(r.amount.toFixed(2)) + '</span></li>';
   }).join('') + '</ol></div>';
@@ -144,7 +150,7 @@ function entriesHtml(records: readonly BillRow[]): string {
 /** 对账 CHECK（两列三行：编号、笔数、异常；卡壳与状态点照本页原型）。 */
 function checkHtml(records: readonly BillRow[]): string {
   return '<div class="ilife-debt-check"><span class="ilife-debt-check-dot" aria-hidden="true"></span>'
-    + checkListHtml(checkRowsOf({ ids: records.map((r) => r.id), countText: String(records.length) + ' 笔' })) + '</div>';
+    + checkListHtml(checkRowsOf({ ids: records.map((r) => r.id), countText: m('skill-bill.query-ticketDebt.c009', { p0: String(String(records.length)) }) })) + '</div>';
 }
 
 /** 查欠款票据纸的入参（调用方 `./read.js` 的 debt 分支已按未还口径取好窗）。 */
@@ -167,7 +173,7 @@ export function queryDebtTicketDoc(input: DebtTicketInput): string {
   const kpi = kpiOf(records);
   const categories = categoriesOf(records, kpi.expense);
   const conclusion = records.length === 0
-    ? '本窗没有记录。下一步说「记一笔 午饭 35」即可记上。'
+    ? m('skill-bill.query-ticketDebt.c010')
     : conclusionOf(categories);
   const data: QueryListData = {
     items: records.map(toBillItem),
@@ -178,31 +184,39 @@ export function queryDebtTicketDoc(input: DebtTicketInput): string {
   const envelope = listEnvelope(input.key, data);
   const listCopy = ticketCopyOf(input.wakeWord, input.window, shownRows);
   const paper = queryStyleTag()
-    + sheetHead(DOC_TITLE + ' · ' + input.wakeWord, escapeHtml('还欠着 ' + String(records.length) + ' 笔，' + sumText(kpi.expense) + ' 元'))
+    + sheetHead(DOC_TITLE + ' · ' + input.wakeWord, escapeHtml(m('skill-bill.query-ticketDebt.c011', {
+      p0: String(String(records.length)),
+      p1: String(sumText(kpi.expense)),
+    })))
     + '<p class="ilife-debt-shop-sub">' + escapeHtml(input.window) + '</p>'
     + ticketRule()
     + ticketSummary(renderSummaryHead({
-      eyebrow: '待还欠款 · ' + String(records.length) + ' 笔',
+      eyebrow: m('skill-bill.query-ticketDebt.c012', { p0: String(String(records.length)) }),
       value: sumText(kpi.expense),
-      unit: '元',
+      unit: m('skill-bill.query-ticketDebt.c013'),
       layout: 'ticket',
     }), '<p class="ilife-ticket-summary-note">' + escapeHtml(conclusion) + '</p>')
     + ticketRule()
-    + ticketSection({ title: '落点', tag: 'LEDGER', content: ledgerHtml(kpi, records) })
+    + ticketSection({ title: m('skill-bill.query-ticketDebt.c014'), tag: 'LEDGER', content: ledgerHtml(kpi, records) })
     + ticketRule()
-    + ticketSection({ title: '分类占比', tag: 'SCALE', content: scaleHtml(categories) })
+    + ticketSection({ title: m('skill-bill.query-ticketDebt.c015'), tag: 'SCALE', content: scaleHtml(categories) })
     + ticketRule()
-    + ticketSection({ title: '明细', tag: 'DETAIL', content: entriesHtml(shownRows) })
+    + ticketSection({ title: m('skill-bill.query-ticketDebt.c016'), tag: 'DETAIL', content: entriesHtml(shownRows) })
     + (hidden > 0
       ? ticketRule() + ticketSection({
-        title: '还有 ' + String(hidden) + ' 条没显示（这一页画了前 ' + String(shownRows.length) + ' 条）',
+        title: m('skill-bill.query-ticketDebt.c017', {
+          p0: String(String(hidden)),
+          p1: String(String(shownRows.length)),
+        }),
         tag: 'MORE',
-        content: renderCaliberLine('结论、分类占比与落点都按本窗全部 ' + String(records.length) + ' 条算；'
-          + '本页的明细与复制区只带前面 ' + String(shownRows.length) + ' 条，要看其余的，把条件收窄一点再查一次'),
+        content: renderCaliberLine(m('skill-bill.query-ticketDebt.c018', {
+          p0: String(String(records.length)),
+          p1: String(String(shownRows.length)),
+        })),
       })
       : '')
     + ticketRule()
-    + ticketSection({ title: '对账', tag: 'CHECK', content: checkHtml(records) })
+    + ticketSection({ title: m('skill-bill.query-ticketDebt.c019'), tag: 'CHECK', content: checkHtml(records) })
     + ticketRule()
     + ticketActions(copyArea({
       data: { envelope, title: input.wakeWord },
@@ -213,8 +227,8 @@ export function queryDebtTicketDoc(input: DebtTicketInput): string {
         envelope,
         copyLog: copyLog({
           command: commandLine(input.key, input.params),
-          source: SOURCE_QUERY,
-          detail: '查到 ' + String(records.length) + ' 笔',
+          source: sourceQuery(),
+          detail: m('skill-bill.query-ticketDebt.c020', { p0: String(String(records.length)) }),
           actionAt: actionStamp(),
           version: DOC_VERSION,
         }),
@@ -222,11 +236,11 @@ export function queryDebtTicketDoc(input: DebtTicketInput): string {
     }));
   const content = writeSection({
     slot: 'list', page: 'list', shape: 'list', key: input.key,
-    content: renderSheetFrame({ variant: 'ticket', cutLine: true, cutLineText: '✂ 裁切线', content: paper })
+    content: renderSheetFrame({ variant: 'ticket', cutLine: true, cutLineText: m('skill-bill.query-ticketDebt.c021'), content: paper })
       + '<div class="ilife-debt-foot">' + escapeHtml(DOC_TITLE + ' · ' + input.wakeWord) + '</div>',
   });
   return assembleSheetPage({
-    docTitle: DOC_TITLE + '·查询',
+    docTitle: m('skill-bill.query-ticketDebt.c022', { p0: String(DOC_TITLE) }),
     bodyHtml: content,
     paper: 'detail',
   });

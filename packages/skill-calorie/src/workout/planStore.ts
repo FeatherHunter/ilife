@@ -10,6 +10,7 @@ import { dayPhrase } from './dayPhrase.js';
 import { typeZh } from './movementType.js';
 import { todayISO } from '../shared/time.js';
 import { isStrictCalendarDate } from '../shared/params.js';
+import { m } from '../entries/index.js';
 
 export const LEVEL_CONFIG: Record<string, { maxPerPartPerDay: number; maxPerPartPerWeek: number; restHours: number }> = {
   '新手': { maxPerPartPerDay: 6, maxPerPartPerWeek: 10, restHours: 72 },
@@ -105,16 +106,16 @@ export function validatePlan(plan: PlanInput, opts: { catalog?: Iterable<string>
   // `errorCount`）两条路都要走它，退出码不在这里定。消息形状与同层先例 `src/goal/goalStore.ts:106` 同形。
   const anchor = config.start_date;
   if (typeof anchor === 'string' && startDateInvalid(anchor)) {
-    errors.push('开始日期非法（须 YYYY-MM-DD）：' + anchor);
+    errors.push(m('skill-calorie.workout-planStore.c001', { p0: String(anchor) }));
   }
-  const level = config.user_level ?? '中手';
+  const level = config.user_level ?? m('skill-calorie.workout-planStore.c002');
   const availableEquip = config.available_equipment ?? [];
   const lvl = LEVEL_CONFIG[level] ?? LEVEL_CONFIG['中手'];
   const weeks = plan.weeks ?? [];
   if (weeks.length === 0) {
     // T351-v12：原来是 `weeks 为空`——英文键名直接印在页上（第 ④ 条）。改成短句「计划里一个周都没有」：
     // 页上空态块那句已经带了「先说『定一周计划』…」的下一步，这里再抄一遍就是同一句话说两遍。
-    errors.push('计划里一个周都没有');
+    errors.push(m('skill-calorie.workout-planStore.c003'));
     return { errors, warnings };
   }
   const partDates = new Map<string, Array<[number, number]>>();
@@ -127,16 +128,16 @@ export function validatePlan(plan: PlanInput, opts: { catalog?: Iterable<string>
       const dow = day.day_of_week ?? 0;
       for (const sess of day.sessions ?? []) {
         if (sess.is_rest_day) continue;
-        for (const m of sess.movements ?? []) {
-          const name = m.name ?? '';
-          const p = m.part ?? '';
-          if (catalog.size > 0 && !catalog.has(name)) errors.push('动作不在训记官方库：' + name);
+        for (const mv of sess.movements ?? []) {
+          const name = mv.name ?? '';
+          const p = mv.part ?? '';
+          if (catalog.size > 0 && !catalog.has(name)) errors.push(m('skill-calorie.workout-planStore.c004', { p0: String(name) }));
           const equip = inferEquipment(name);
-          if (equip && !availableEquip.includes(equip)) errors.push('缺少器材 ' + equip + '（动作：' + name + '）');
+          if (equip && !availableEquip.includes(equip)) errors.push(m('skill-calorie.workout-planStore.c005', { p0: String(equip), p1: String(name) }));
           const key = wn + ':' + dow;
           if (!partDaySets.has(key)) partDaySets.set(key, new Map());
           const per = partDaySets.get(key) as Map<string, number>;
-          per.set(p, (per.get(p) ?? 0) + (m.sets ?? []).length);
+          per.set(p, (per.get(p) ?? 0) + (mv.sets ?? []).length);
           // 同一部位**同一天只记一次**：这条规则问的是「两次练同一个部位之间歇够没有」，
           // 不是「同一天同一个部位出现了几个动作」。原来逐动作 push，一堂课里 3 个腿部动作
           // 就排出 3 条一模一样的 (周, 日)，自我比较得出「间隔仅 0 天（第 1 周 周一 → 第 1 周 周一）」
@@ -159,15 +160,24 @@ export function validatePlan(plan: PlanInput, opts: { catalog?: Iterable<string>
       const curr = occurrences[i] as [number, number];
       const gap = (curr[0] - prev[0]) * 7 + (curr[1] - prev[1]);
       // T351-v12：这三条报错／警告原来带 `第1周周3`（连写两个「周」）、`·` 与半角括号，都印在页上。
-      if (gap < minDays) errors.push('部位「' + p + '」间隔仅 ' + gap + ' 天，建议至少 ' + minDays
-        + ' 天（' + dayPhrase(prev[0], prev[1]) + ' → ' + dayPhrase(curr[0], curr[1]) + '）');
+      if (gap < minDays) errors.push(m('skill-calorie.workout-planStore.c006', {
+        p0: String(p),
+        p1: String(gap),
+        p2: String(minDays),
+        p3: String(dayPhrase(prev[0], prev[1])),
+        p4: String(dayPhrase(curr[0], curr[1])),
+      }));
     }
   }
   for (const [key, parts] of partDaySets) {
     const [wn, dow] = key.split(':');
     for (const [p, sets] of parts) {
-      if (sets > lvl.maxPerPartPerDay) warnings.push(dayPhrase(Number(wn), Number(dow))
-        + ' 的「' + p + '」排了 ' + sets + ' 组，建议不超过 ' + lvl.maxPerPartPerDay + ' 组');
+      if (sets > lvl.maxPerPartPerDay) warnings.push(m('skill-calorie.workout-planStore.c007', {
+        p0: String(dayPhrase(Number(wn), Number(dow))),
+        p1: String(p),
+        p2: String(sets),
+        p3: String(lvl.maxPerPartPerDay),
+      }));
     }
   }
   for (const week of weeks) {
@@ -186,8 +196,11 @@ export function validatePlan(plan: PlanInput, opts: { catalog?: Iterable<string>
       for (const [p, types] of dayParts) {
         if (types.length >= 2 && types.every((t) => t === types[0])) {
           // T351-v12：类型原值（`main`／`iso`）原来是原样印的，页上出英文；走类型中文名表。
-          warnings.push(dayPhrase(Number(wn), Number(dow)) + ' 的「' + p
-            + '」只练了一种类型（' + typeZh(types[0]) + '），建议换换角度');
+          warnings.push(m('skill-calorie.workout-planStore.c008', {
+            p0: String(dayPhrase(Number(wn), Number(dow))),
+            p1: String(p),
+            p2: String(typeZh(types[0])),
+          }));
         }
       }
     }
@@ -383,7 +396,8 @@ export function copyPlan(db: DatabaseSync, newTitle?: string): { newTitle: strin
     .prepare('SELECT title, version, description, total_weeks, start_date FROM workout_plan_config WHERE id = 1')
     .get() as (PlanConfigRow & { title: string | null }) | undefined;
   if (!cfg) return { newTitle: null, totalWeeks: 0, copiedRows: 0 };
-  const title = newTitle ?? ((cfg.title ?? '健身计划') + ' 副本');
+  const baseTitle = cfg.title ?? m('skill-calorie.workout-planStore.c009');
+  const title = newTitle ?? m('skill-calorie.workout-planStore.c010', { p0: String(baseTitle) });
   const rows = db
     .prepare(
       'SELECT week_number, day_of_week, session_index, session_label, time_start, time_end, is_rest_day, total_sets, movements' +

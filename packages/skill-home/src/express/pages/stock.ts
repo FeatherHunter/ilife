@@ -13,6 +13,33 @@ function latinFree(s: string): string {
 }
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { m } from '../../entries/index.js';
+
+/** 本页可见文案（渲染期取词：写成函数，模块加载时不取词）。 */
+function pageText() {
+  return {
+    k001: m('skill-home.express-pages-stock.c001'),
+    k002: m('skill-home.express-pages-stock.c002'),
+    k003: m('skill-home.express-pages-stock.c003'),
+    k004: (p0: string) => m('skill-home.express-pages-stock.c004', { p0: String(p0) }),
+    k005: (p0: string) => m('skill-home.express-pages-stock.c005', { p0: String(p0) }),
+    k006: (p0: string) => m('skill-home.express-pages-stock.c006', { p0: String(p0) }),
+    k007: m('skill-home.express-pages-stock.c007'),
+    k008: m('skill-home.express-pages-stock.c008'),
+    k009: m('skill-home.express-pages-stock.c009'),
+    k010: m('skill-home.express-pages-stock.c010'),
+    k011: m('skill-home.express-pages-stock.c011'),
+    k012: m('skill-home.express-pages-stock.c012'),
+    k013: m('skill-home.express-pages-stock.c013'),
+    k014: m('skill-home.express-pages-stock.c014'),
+    k015: m('skill-home.express-pages-stock.c015'),
+    k016: m('skill-home.express-pages-stock.c016'),
+    k017: m('skill-home.express-pages-stock.c017'),
+    k018: m('skill-home.express-pages-stock.c018'),
+    k019: m('skill-home.express-pages-stock.c019'),
+  };
+}
+
 
 export const FAMILY = 'stock' as const;
 
@@ -100,9 +127,21 @@ function asStock(env: Envelope): { items: StockItem[]; hints: StockHint[] } {
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
 // 复制区走共用件（卡路里同款三格式＋六段日志）；`ctx.command` 由交付链供给（含 params），直调缺省按本族主 key。
 export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
+  const SX = {
+    k001: m('skill-home.express-pages-stock.c027'),
+    k002: m('skill-home.express-pages-stock.c034'),
+    k003: m('skill-home.express-pages-stock.c030'),
+    k004: m('skill-home.express-pages-stock.c036'),
+    k005: m('skill-home.express-pages-stock.c028'),
+    k006: m('skill-home.express-pages-stock.c029'),
+    k007: m('skill-home.express-pages-stock.c031'),
+    k008: m('skill-home.express-pages-stock.c029'),
+    k009: m('skill-home.express-pages-stock.c030'),
+    k010: m('skill-home.express-pages-stock.c031'),
+  };;
+  const L = pageText();
   const template = readFileSync(new URL('../../../templates/express/stock.html', import.meta.url), 'utf8');
-  const head = '<div class="fam-head"><span>快递购物</span>'
-    + '<span>囤货盘点</span></div>';
+  const head = '<div class="fam-head">' + '<span>' + L.k001 + '</span>' + '<span>' + L.k002 + '</span>' + '</div>';
   const { items, hints } = asStock(env);
   const low = items.filter((x) => x.status === '低');
   const empty = items.filter((x) => x.status === '空');
@@ -132,45 +171,31 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '.x-actions>.x-btn{width:100%}.x-row>.x-btn{align-self:center}}'
     + '</style>';
 
-  const P_MISSING = '请加载居家管家技能，帮我检测缺货';
+  const P_MISSING = m('skill-home.express-pages-stock.c020');
   // #890：选择区两颗的初始载荷（点了以后由页内监听按当刻勾选改写 `data-t`，见件尾脚本）。
-  const P_FIX = '请加载居家管家技能，帮我修正物品实际数量';
-  const P_THR = '请加载居家管家技能，帮我设置囤货阈值';
+  const P_FIX = m('skill-home.express-pages-stock.c021');
+  const P_THR = m('skill-home.express-pages-stock.c022');
 
   let body = style;
-  body += '<p class="x-lead">阈值是缺货检测的提醒线，盘点时发现数量不对，勾选后修正</p>';
-  body += '<div class="x-metrics">'
-    + '<span class="x-pill">囤货 ' + items.length + ' 件</span>'
-    + '<span class="x-pill">偏低 ' + low.length + ' 件</span>'
-    + '<span class="x-pill">为空 ' + empty.length + ' 件</span>'
-    + '</div>';
+  body += '<p class="x-lead">' + L.k003 + '</p>';
+  body += '<div class="x-metrics">' + '<span class="x-pill">' + L.k004(String(items.length)) + '</span>' + '<span class="x-pill">' + L.k005(String(low.length)) + '</span>' + '<span class="x-pill">' + L.k006(String(empty.length)) + '</span>' + '</div>';
 
   if (items.length) {
-    body += '<section><h2>囤货物品</h2><div id="x-list">'
-      + items.map((it) => '<div class="x-row"><input class="x-check" type="checkbox" data-id="' + it.id + '" data-name="' + escapeHtml(it.name) + '">'
+    body += '<section>' + '<h2>' + L.k007 + '</h2>' + '<div id="x-list">' + items.map((it) => '<div class="x-row"><input class="x-check" type="checkbox" data-id="' + it.id + '" data-name="' + escapeHtml(it.name) + '">'
         + '<div style="flex:1"><div class="x-name">' + escapeHtml(latinFree(it.name))
-        + '<span class="x-state ' + (it.status === '充足' ? 'full' : it.status === '低' ? 'low' : 'empty') + '">' + escapeHtml(it.status) + '</span></div>'
-        + '<div class="x-meta">' + escapeHtml(it.category_name) + ' 阈值 ' + it.threshold + ' 当前 ' + it.current + '</div></div>'
-        + '</div>').join('')
-      + '</div><div class="x-actions">'
-      + '<button class="x-btn" data-action-id="x-fix" data-t="' + escapeHtml(P_FIX) + '" onclick="xFix(this)">修正实际数量</button>'
-      + '<button class="x-btn ghost" data-action-id="x-thr" data-t="' + escapeHtml(P_THR) + '" onclick="xThr(this)">设阈值</button>'
-      + '<button class="x-btn ghost" data-action-id="x-missing" data-t="' + escapeHtml(P_MISSING) + '">检测缺货</button>'
-      + '</div></section>';
+        + '<span class="x-state ' + (it.status === L.k011 ? 'full' : it.status === L.k010 ? 'low' : 'empty') + '">' + escapeHtml(it.status) + '</span></div>'
+        + '<div class="x-meta">' + escapeHtml(it.category_name) + L.k009 + it.threshold + L.k008 + it.current + '</div></div>'
+        + '</div>').join('') + '</div>' + '<div class="x-actions">' + '<button class="x-btn" data-action-id="x-fix" data-t="' + escapeHtml(P_FIX) + '" onclick="xFix(this)">' + L.k012 + '</button>' + '<button class="x-btn ghost" data-action-id="x-thr" data-t="' + escapeHtml(P_THR) + '" onclick="xThr(this)">' + L.k013 + '</button>' + '<button class="x-btn ghost" data-action-id="x-missing" data-t="' + escapeHtml(P_MISSING) + '">' + L.k014 + '</button>' + '</div>' + '</section>';
   } else {
-    body += '<section><div class="x-empty">还没有设阈值的物品<br>给常用消耗品设个阈值，缺货检测就能自动提醒<div class="x-actions" style="justify-content:center">'
-      + '<button class="x-btn ghost" data-action-id="x-missing" data-t="' + escapeHtml(P_MISSING) + '">检测缺货</button>'
-      + '</div></div></section>';
+    body += '<section>' + '<div class="x-empty">' + L.k015 + '<br>' + L.k016 + '<div class="x-actions" style="justify-content:center">' + '<button class="x-btn ghost" data-action-id="x-missing" data-t="' + escapeHtml(P_MISSING) + '">' + L.k017 + '</button>' + '</div>' + '</div>' + '</section>';
   }
 
   if (hints.length) {
     // 同名物品按名字去重（库里允许重名，但这一节是「还有哪些常用品没设阈值」，同名重复行只是噪声）。
     const seenHint = new Set<string>();
     const uniqHints = hints.filter((h) => (seenHint.has(h.name) ? false : seenHint.add(h.name)));
-    body += '<section><h2>常用品还没设阈值</h2><div>'
-      + uniqHints.map((h) => '<div class="x-row"><div class="x-name">' + escapeHtml(latinFree(h.name)) + '</div><div class="x-meta">' + escapeHtml(h.category_name) + '</div>'
-        + '<button class="x-btn ghost" data-action-id="x-one-thr" data-t="' + escapeHtml(P_THR) + '" data-id="' + h.id + '" data-name="' + escapeHtml(h.name) + '" onclick="xOneThr(this)">设阈值</button></div>').join('')
-      + '</div></section>';
+    body += '<section>' + '<h2>' + L.k018 + '</h2>' + '<div>' + uniqHints.map((h) => '<div class="x-row"><div class="x-name">' + escapeHtml(latinFree(h.name)) + '</div><div class="x-meta">' + escapeHtml(h.category_name) + '</div>'
+        + '<button class="x-btn ghost" data-action-id="x-one-thr" data-t="' + escapeHtml(P_THR) + '" data-id="' + h.id + '" data-name="' + escapeHtml(h.name) + L.k019 + '</button>' + '</div>').join('') + '</div>' + '</section>';
   }
 
   // #890：本页原先自带 `xCopy(t){if(navigator.clipboard){…}}`——无反馈、无 `catch`、无 `execCommand`
@@ -181,14 +206,28 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   // 选择区两颗要按当刻勾选现算载荷：元素级 `onclick` 在目标阶段先跑、把载荷写回自己的 `data-t`，
   // 随后才冒泡到 document 被复制；没勾选时把 `data-t` 置空（空串在共享运行时里短路、不出
   // 「已复制」的假反馈）并保留原来的拦截提示。
-  body += '<script>'
-    + 'function xFix(b){var s=[...document.querySelectorAll("#x-list input:checked")];if(!s.length){b.setAttribute("data-t","");alert("请先勾选要修正的物品");return;}'
-    + 'var ids=s.map(function(c){return c.getAttribute("data-id");}).join(",");var names=s.map(function(c){return c.getAttribute("data-name");}).join("、");'
-    + 'b.setAttribute("data-t","请加载居家管家技能，帮我修正物品实际数量："+names+" 编号["+ids+"] 修正后数量___");}'
-    + 'function xThr(b){var s=[...document.querySelectorAll("#x-list input:checked")];if(!s.length){b.setAttribute("data-t","");alert("请先勾选要设置阈值的物品");return;}'
-    + 'b.setAttribute("data-t","请加载居家管家技能，帮我设置囤货阈值："+s.map(function(c){return c.getAttribute("data-name");}).join("、")+" 阈值___");}'
-    + 'function xOneThr(b){b.setAttribute("data-t","请加载居家管家技能，帮我设置囤货阈值："+b.getAttribute("data-name")+" 编号["+b.getAttribute("data-id")+"] 阈值___");}'
-    + '</script>';
+  body +=
+    "<script>function xFix(b){var s=[...document.querySelectorAll(\"#x-list input:checked\")];if(!s.length){b.setAttribute(\"data-t\",\"\");alert(\""
+    + SX.k001
+    + "\");return;}var ids=s.map(function(c){return c.getAttribute(\"data-id\");}).join(\",\");var names=s.map(function(c){return c.getAttribute(\"data-name\");}).join(\"、\");b.setAttribute(\"data-t\",\""
+    + SX.k002
+    + "\"+names+\" "
+    + SX.k003
+    + "[\"+ids+\"] "
+    + SX.k004
+    + "___\");}function xThr(b){var s=[...document.querySelectorAll(\"#x-list input:checked\")];if(!s.length){b.setAttribute(\"data-t\",\"\");alert(\""
+    + SX.k005
+    + "\");return;}b.setAttribute(\"data-t\",\""
+    + SX.k006
+    + "\"+s.map(function(c){return c.getAttribute(\"data-name\");}).join(\"、\")+\" "
+    + SX.k007
+    + "___\");}function xOneThr(b){b.setAttribute(\"data-t\",\""
+    + SX.k008
+    + "\"+b.getAttribute(\"data-name\")+\" "
+    + SX.k009
+    + "[\"+b.getAttribute(\"data-id\")+\"] "
+    + SX.k010
+    + "___\");}</script>";
 
   // 主 operations 唯一复制区（envelope 投影；上下两分支旧按钮已删，只留这一处）。
   body += homeCopyArea({
@@ -198,9 +237,9 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
 
   const content = head
     + body
-    + sectionOf('fields', '字段')
-    + sectionOf('operations', '操作')
-    + sectionOf('empty', '空态与异常')
-    + sectionOf('status', '状态词');
+    + sectionOf('fields', m('skill-home.express-pages-stock.c023'))
+    + sectionOf('operations', m('skill-home.express-pages-stock.c024'))
+    + sectionOf('empty', m('skill-home.express-pages-stock.c025'))
+    + sectionOf('status', m('skill-home.express-pages-stock.c026'));
   return fillTemplate(template, content);
 }

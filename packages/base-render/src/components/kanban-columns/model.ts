@@ -27,6 +27,7 @@ import {
   kanbanStatusText,
   type KanbanColumnsForm,
 } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 归一化后的一张卡（`colKey` 是它现在住在哪一列；`badge` 是卡上那枚状态的字）。 */
 export interface KanbanCardRow {
@@ -142,7 +143,7 @@ function assertKeys(raw: Record<string, unknown>, allowed: readonly string[], fi
   for (const key of Object.getOwnPropertyNames(raw)) note(key);
   for (const key in raw) note(key);
   if (bad.length > 0) {
-    badInput(field + ' 里没有 `' + bad.join('`／`') + '` 这个键（入参表以外的键一律拒：'
+    badInput(field + ' 里没有 「' + bad.join('」「') + '」 这个键（入参表以外的键一律拒：'
       + '写错的键静默吞掉会让调用方以为自己设上了；继承来的与不可枚举的键同样算）'
       + (hint === undefined ? '' : hint));
   }
@@ -167,8 +168,8 @@ const GROUP_KEYS = ['name', 'items'] as const;
 const ITEM_KEYS = ['key', 'label', 'value'] as const;
 
 /** 给错形态的键时补的那半句：说清本档拿哪个键装东西。 */
-const STATUS_KEY_HINT = '｜本形态 `status` 的列拿 `cards` 装东西（`groups` 是 `grouped` 那一档的键）';
-const GROUPED_KEY_HINT = '｜本形态 `grouped` 的列拿 `groups` 装东西（`cards`／`purpose` 是 `status` 那一档的键）';
+function STATUS_KEY_HINT(): string { return m('base-render.components-kanban-columns-model.c001'); }
+function GROUPED_KEY_HINT(): string { return m('base-render.components-kanban-columns-model.c002'); }
 
 /** 一张卡 → 一行（逐字段校验；机器键整份看板内唯一）。 */
 function reqCard(value: unknown, at: string, colKey: string, colName: string, seen: Set<string>): KanbanCardRow {
@@ -227,7 +228,7 @@ function reqColumn(value: unknown, at: string, index: number, seen: Set<string>,
   assertPlainObject(value, at);
   const raw = value as Record<string, unknown>;
   const grouped = form === 'grouped';
-  assertKeys(raw, grouped ? GROUPED_COLUMN_KEYS : STATUS_COLUMN_KEYS, at, grouped ? GROUPED_KEY_HINT : STATUS_KEY_HINT);
+  assertKeys(raw, grouped ? GROUPED_COLUMN_KEYS : STATUS_COLUMN_KEYS, at, grouped ? GROUPED_KEY_HINT() : STATUS_KEY_HINT());
   const key = reqIdentifier(raw.key, at + '.key');
   if (seen.has(key)) badInput(at + '.key 与看板里前面某一列的 key 重了（每列的 key 看板内唯一）');
   seen.add(key);
@@ -238,10 +239,10 @@ function reqColumn(value: unknown, at: string, index: number, seen: Set<string>,
   if (grouped) {
     const groups = raw.groups;
     if (!Array.isArray(groups)) {
-      badInput(at + '.groups 必须是数组（`grouped` 档的列至少要有一组：那是这一列的格子）');
+      badInput(at + '.groups 必须是数组（grouped 档的列至少要有一组：那是这一列的格子）');
     }
     assertDenseArray(groups, at + '.groups');
-    if (groups.length === 0) badInput(at + '.groups 至少一组（一组都没有的列请用 `status` 那一档）');
+    if (groups.length === 0) badInput(at + '.groups 至少一组（一组都没有的列请用 status 那一档）');
     const rows = groups.map((one, i) => reqGroup(one, at + '.groups[' + String(i) + ']', key, unit, seen));
     const total = rows.reduce((n, g) => n + g.items.length, 0);
     if (total > KANBAN_COLUMNS_MAX_CARDS) {
@@ -277,7 +278,7 @@ export function normalizeKanbanColumns(input: unknown): KanbanColumnsModel {
   const form = raw.form === undefined ? KANBAN_COLUMNS_FORMS[0] : raw.form;
   if (!(KANBAN_COLUMNS_FORMS as readonly unknown[]).includes(form)) {
     badInput('kanban-columns: input.form 必须是 ' + KANBAN_COLUMNS_FORMS.join('／')
-      + ' 之一（本件落地两档骨架：`status` 按状态分列／`grouped` 按位置分列 ＋ 列内二级组）');
+      + ' 之一（本件落地两档骨架：status 按状态分列／grouped 按位置分列 ＋ 列内二级组）');
   }
 
   const id = reqIdentifier(raw.id, 'kanban-columns: input.id');

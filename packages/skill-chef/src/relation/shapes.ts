@@ -5,13 +5,14 @@
  */
 
 import { LF, relationTreeShapeCss, TONE, tint } from './treeShapes.js';
+import { m } from '../entries/index.js';
 
 /** 本域三页的页内形状样式唯一产出者（回执两页 ＋ 家族树）。恒返回非空 CSS 文本。 */
 export function relationShapeCss(): string {
   const root = '.ilife-page-ui ';
   const node = root + '.ilife-relation-node';
   return [
-    '/* #873 派生席 · 页内形状（关系对图 ＋ 三层家族树），只命中本域三页 */',
+    m('skill-chef.relation-shapes.c001'),
     /* 结论条与状态徽章配成一行：判定句与它的状态在同一格里。 */
     root + '.ilife-relation-verdict {',
     '  display: flex;',

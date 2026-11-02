@@ -8,6 +8,7 @@ import { pageBarsCss } from '../page-bars/index.js';
 import { factStripCss } from './fact-strip.js';
 import { mediaCss } from './media.js';
 import { timelineCss } from './timeline.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义，与 `blocks.ts` 同）。 */
 const LF = String.fromCharCode(10);
@@ -18,12 +19,12 @@ export function pageShapeCss(input?: { readonly prefix?: string }): string {
     && typeof input.prefix === 'string' && input.prefix !== '' ? input.prefix : 'ilife-';
   const root = '.' + p + 'page-ui';
   return [
-        '/* #525 页面级形状件三件 */',
+        m('base-render.components-page-style.c001'),
     ...factStripCss(p, root),
     ...mediaCss(p, root),
     ...timelineCss(p, root),
-      '/* ④ 导航族与横条族（#950）：样式住在各自的姊妹件里，出口经本函数汇总；',
-      '   顺序在页面级配方与形状件之后，同权重时按「后出现」取胜。 */',
+      m('base-render.components-page-style.c002'),
+      m('base-render.components-page-style.c003'),
       pageNavCss({ prefix: p }),
       pageBarsCss({ prefix: p }),
   ].join(LF);

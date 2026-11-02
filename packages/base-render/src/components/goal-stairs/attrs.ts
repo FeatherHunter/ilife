@@ -21,6 +21,7 @@
  */
 
 /** 本件的类名根：全部槽位类名都是 `GOAL_STAIRS_CLASS + '-' + 槽名`。 */
+import { m } from '../../entries/index.js';
 export const GOAL_STAIRS_CLASS = 'ilife-block-goal-stairs';
 
 /** 槽位闭集（`render.ts`／`style.ts` 与判据都用这里的名字拼类名，不各抄一份字面量）。 */
@@ -79,14 +80,14 @@ export type GoalStairsState = (typeof GOAL_STAIRS_STATES)[number];
 
 /** 三种状态上屏的字（**形与字都在这里**：✓ 已达成／▶ 进行中／○ 还没开始）。
  *  三枚形各不相同（色盲下也分得出），换皮只换颜色取值、不动这三枚字。 */
-export const GOAL_STAIRS_STATE_WORDS: Readonly<Record<GoalStairsState, string>> = Object.freeze({
-  done: '已达成 ✓',
-  now: '进行中 ▶',
-  plan: '还没开始 ○',
-});
+export const GOAL_STAIRS_STATE_WORDS: Readonly<Record<GoalStairsState, string>> = {
+  get done() { return m('base-render.components-goal-stairs-attrs.c001'); },
+  get now() { return m('base-render.components-goal-stairs-attrs.c002'); },
+  get plan() { return m('base-render.components-goal-stairs-attrs.c003'); },
+};
 
 /** 过期点名那枚字：窗口整段落在今天左边、这一段又没达成时，行里写它（**点名，不只靠颜色**）。 */
-export const GOAL_STAIRS_LATE_WORD = '来不及 ✕';
+export function GOAL_STAIRS_LATE_WORD(): string { return m('base-render.components-goal-stairs-attrs.c004'); }
 
 /** 段数上下限：一段读不出先后（也就没有「阶梯」），九段以上窄容器里每一段的窗口读不出位置。 */
 export const GOAL_STAIRS_MIN_STEPS = 2;
@@ -101,13 +102,13 @@ export const GOAL_STAIRS_MAX_STEPS = 8;
 export const GOAL_STAIRS_DUE_FLIP_PCT = 50;
 
 /** 卡头那枚段数的后缀（`四段` 的那个「段」）。 */
-export const GOAL_STAIRS_COUNT_UNIT = '段';
+export function GOAL_STAIRS_COUNT_UNIT(): string { return m('base-render.components-goal-stairs-attrs.c005'); }
 
 /** 卡头右端那两句的固定前缀（「竖线是哪一天」与「最晚动手日」：日期那一段才是调用方的）。 */
-export const GOAL_STAIRS_TODAY_LEAD = '竖线＝今天';
-export const GOAL_STAIRS_WINDOW_LEAD = '窗口';
-export const GOAL_STAIRS_WINDOW_TAIL = '起';
-export const GOAL_STAIRS_DUE_LEAD = '最晚';
+export function GOAL_STAIRS_TODAY_LEAD(): string { return m('base-render.components-goal-stairs-attrs.c006'); }
+export function GOAL_STAIRS_WINDOW_LEAD(): string { return m('base-render.components-goal-stairs-attrs.c007'); }
+export function GOAL_STAIRS_WINDOW_TAIL(): string { return m('base-render.components-goal-stairs-attrs.c008'); }
+export function GOAL_STAIRS_DUE_LEAD(): string { return m('base-render.components-goal-stairs-attrs.c009'); }
 
 /** 本件自己的行内自定义属性名（**不占 `--ilife-*`**：那是皮肤 token 的空间，名单住 `skin/contract.ts`）。
  *  先例 `photo-compare` 的 `--photo-compare-split`、`cash-waterline` 的 `--cash-waterline-h`。 */

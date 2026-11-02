@@ -12,6 +12,8 @@ import { listRecipes, qAll, toRecipe } from '../fetch/db.js';
 import type { RecipeItem } from '../render/views.js';
 import { toRecipeItem } from '../render/views.js';
 import { fail } from '../shared/slots.js';
+import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 // #43 F2 一期限制：FILTER 维度只读（recipe.search 透传过滤），本域独占（旧址 `cmd_read.ts`）。
 // #771：补 `ingredient`（按食材含）与 `ingredient_exclude`（排除食材 NOT 条件，老件 search-6），
@@ -109,7 +111,7 @@ export function runRecipeSearch(handle: ChefDb, params: Record<string, unknown>)
     kind = 'all';
   } else {
     const present = [...FILTER_KEYS, ...FILTER_ALIAS_KEYS].filter((k) => params[k] !== undefined && params[k] !== '');
-    if (!present.length) fail(2, 'search 须给 q、kind=all，或过滤条件（cuisine/season/method/flavor/tag/meal/cookware/difficulty/status/maxTime/filter/ingredient/ingredient_exclude，别名 time_max／time）');
+    if (!present.length) fail(2, m('skill-chef.search-run.c003'));
     const f: Record<string, unknown> = {};
     for (const k of ['cuisine', 'season', 'method', 'flavor', 'tag', 'meal', 'cookware', 'difficulty', 'status', 'maxTime', 'ingredient', 'ingredient_exclude'] as const) {
       const v = params[k];
@@ -122,8 +124,11 @@ export function runRecipeSearch(handle: ChefDb, params: Record<string, unknown>)
     if (f.maxTime === undefined && params.time !== undefined && params.time !== '') f.maxTime = params.time;
     if (f.ingredient_exclude === undefined && params.exclude_ingredient !== undefined && params.exclude_ingredient !== '') f.ingredient_exclude = params.exclude_ingredient;
     if (f.ingredient_exclude === undefined && params.exclude !== undefined && params.exclude !== '') f.ingredient_exclude = params.exclude;
-    if (!Object.keys(f).length) fail(2, 'search 过滤条件为空（须给 cuisine/season/method/flavor/tag/meal/cookware/difficulty/status/maxTime/filter/ingredient/ingredient_exclude 之一）');
-    if (Object.keys(f).length > 3) fail(2, '组合筛选至多 3 维（老件 search-4）：本次 ' + Object.keys(f).length + ' 维（' + Object.keys(f).sort().join('、') + '）');
+    if (!Object.keys(f).length) fail(2, m('skill-chef.search-run.c004'));
+    if (Object.keys(f).length > 3) fail(2, m('skill-chef.search-run.c005', {
+      p0: String(Object.keys(f).length),
+      p1: String(listJoin(currentRenderLanguage(), Object.keys(f).sort())),
+    }));
     rows = filterRecipes(handle, f);
     kind = 'filter:' + Object.keys(f).sort().join(',');
   }

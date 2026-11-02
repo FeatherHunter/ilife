@@ -23,6 +23,7 @@
  * 只加形状与间距，不改任何区块的标记结构；`content` 一律空串（词不许只活在样式里）。
  */
 import { CHART_PALETTE } from 'base-paint';
+import { m } from '../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义，与 `blocks.ts`／`skin.ts` 同）。 */
 const LF = String.fromCharCode(10);
@@ -64,7 +65,7 @@ export function viewPageCss(input?: ViewPageCssInput): string {
   const root = '.' + p + 'page-ui';
   const pv = root + ' .chef-view-';
   return [
-    '/* #873 查看域页内版式 · 每一条规则都挂在根类 ' + root + ' 之下 */',
+    m('skill-chef.view-pageCss.c001', { p0: String(root) }),
     /* ① 分区：标题行一条 hairline 收口，正文槽与标题分开——「一段接一段的无题正文」由这条销账。 */
     pv + 'sec {',
     '  margin: 20px 0 0;',

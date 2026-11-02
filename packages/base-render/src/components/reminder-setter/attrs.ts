@@ -28,6 +28,7 @@
  */
 
 /** 本件的类名根：全部槽位类名都是 `REMINDER_SETTER_CLASS + '-' + 槽名`。 */
+import { m } from '../../entries/index.js';
 export const REMINDER_SETTER_CLASS = 'ilife-block-reminder-setter';
 
 /** 槽位闭集（标记契约的一部分：`render.ts`／`style.ts`／`runtime.ts` 与判据都用这里的名字拼类名）。
@@ -203,25 +204,33 @@ export const REMINDER_SETTER_INC = '＋';
  *  **屏上只留一层话**：这一份里每一句都是「它是什么／这一行问什么／这一格是什么」，
  *  一句解释性的话都没有（「至少留一条」「可多选」这类口径由形与复述承担，不由句子承担）。 */
 
-export const REMINDER_SETTER_TEXT = Object.freeze({
+export const REMINDER_SETTER_TEXT = {
   /** 抬头的两半：`「记体重」的提醒`。 */
-  headPrefix: '「',
-  headSuffix: '」的提醒',
+  get headPrefix(): string { return '「'; },
+  get headSuffix(): string { return m('base-render.components-reminder-setter-attrs.c001'); },
   /** 三行各自问什么（一行只做一个决定）。 */
-  repeatLabel: '什么时候响',
-  leadLabel: '提前多久',
-  routeLabel: '走哪条通知',
+  get repeatLabel(): string { return m('base-render.components-reminder-setter-attrs.c002'); },
+  get leadLabel(): string { return m('base-render.components-reminder-setter-attrs.c003'); },
+  get routeLabel(): string { return m('base-render.components-reminder-setter-attrs.c004'); },
   /** 两个步进位的名字。 */
-  timeLabel: '时间',
-  startLabel: '第一次从',
+  get timeLabel(): string { return m('base-render.components-reminder-setter-attrs.c005'); },
+  get startLabel(): string { return m('base-render.components-reminder-setter-attrs.c006'); },
   /** 两枚步进键的无障碍名（步长从常量算，不写死数字）。 */
-  early: '早 ' + String(REMINDER_SETTER_TIME_STEP_MIN) + ' 分钟',
-  late: '晚 ' + String(REMINDER_SETTER_TIME_STEP_MIN) + ' 分钟',
-  prevDay: '前 ' + String(REMINDER_SETTER_DATE_STEP_DAYS) + ' 天',
-  nextDay: '后 ' + String(REMINDER_SETTER_DATE_STEP_DAYS) + ' 天',
+  get early(): string { return m('base-render.components-reminder-setter-attrs.c007', {
+    p0: String(String(REMINDER_SETTER_TIME_STEP_MIN)),
+  }); },
+  get late(): string { return m('base-render.components-reminder-setter-attrs.c008', {
+    p0: String(String(REMINDER_SETTER_TIME_STEP_MIN)),
+  }); },
+  get prevDay(): string { return m('base-render.components-reminder-setter-attrs.c009', {
+    p0: String(String(REMINDER_SETTER_DATE_STEP_DAYS)),
+  }); },
+  get nextDay(): string { return m('base-render.components-reminder-setter-attrs.c010', {
+    p0: String(String(REMINDER_SETTER_DATE_STEP_DAYS)),
+  }); },
   /** 一条通知都没勾时，唯一那行读数写的**状态**（不是旁白：它就是现在设的是多少）。 */
-  silent: '没有通知，不会响',
-} as const);
+  get silent(): string { return m('base-render.components-reminder-setter-attrs.c011'); },
+};
 
 /** 抬头那一行（`「记体重」的提醒`）。 */
 export function reminderSetterHead(title: string): string {

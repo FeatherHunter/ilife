@@ -3,7 +3,9 @@
 // #800 起路由记录面住派生件 `routes.generated.ts`（各能力 `routes.ts` 声明组装），
 // 本文件只做运行期适配（类型收窄＋最长匹配），不再手写词表：加词改它那个能力的
 // `routes.ts`，跑 `pnpm gen` 重生成。
+import { currentRenderLanguage } from 'base-entries';
 import { ROUTES_GENERATED } from './routes.generated.js';
+import { WAKE_EN_ROUTES } from './routes.en.generated.js';
 import { HomePolicyError } from '../fetch/errors.js';
 
 export type HomeKey =
@@ -32,11 +34,32 @@ export const WAKE_TABLE: WakeEntry[] = ROUTES_GENERATED.map((e) => ({
 // 废弃词（SM9 外联动 3 词，本技能不路由；combos 登记走后续票）。
 export const DEPRECATED_PHRASES = ['联动总览', '记到卡路里', '记到记账'];
 
+/** 英文唤醒词表（票 #1310）：来源 `wake-en.json`，键／槽位／预设照抄中文那条（生成期已校验）。 */
+const WAKE_TABLE_EN: WakeEntry[] = WAKE_EN_ROUTES.map((e) => ({
+  phrase: e.phrase,
+  key: e.key as HomeKey,
+  needs: e.needs ? [...e.needs] : undefined,
+  preset: e.preset ? { ...e.preset } : undefined,
+}));
+
 const SORTED = [...WAKE_TABLE].sort((a, b) => b.phrase.length - a.phrase.length);
+
+/** 英文表同一条最长匹配规则（两张表各自排序，不同时参与匹配）。 */
+const SORTED_EN = [...WAKE_TABLE_EN].sort((a, b) => b.phrase.length - a.phrase.length);
+
+/** 渲染语言的主标签（`en`／`zh`；`en-US` 按 `en` 算）。 */
+function renderLanguage(): string {
+  return currentRenderLanguage().trim().toLowerCase().split('-')[0];
+}
+
+/** 按语言单选一张表：en 只查英文表，其余（含未设语言）只查中文表。 */
+function sortedFor(): readonly WakeEntry[] {
+  return renderLanguage() === 'en' ? SORTED_EN : SORTED;
+}
 
 export function routeWakeword(text: string, ctx: Record<string, unknown> = {}): WakeRoute {
   if (typeof text !== 'string' || text.length === 0) throw new HomePolicyError('POLICY_NO_MATCH', '唤醒词为空');
-  const hit = SORTED.find((e) => text.includes(e.phrase));
+  const hit = sortedFor().find((e) => text.includes(e.phrase));
   if (!hit) {
     throw new HomePolicyError('POLICY_NO_MATCH', '无命中唤醒词：' + text + '（联动 3 词走后续票）');
   }

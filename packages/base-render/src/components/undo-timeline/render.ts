@@ -66,7 +66,7 @@ function buttonHtml(cls: string, text: string, busy: boolean): string {
   const parts: string[] = ['<span class="' + undoTimelineSlot('label') + '">' + esc(text)];
   if (busy) {
     parts.push('<span class="' + undoTimelineSlot('busy') + '" aria-hidden="true">'
-      + esc(UNDO_TIMELINE_BUSY_PRE + text) + '</span>');
+      + esc(UNDO_TIMELINE_BUSY_PRE() + text) + '</span>');
   }
   parts.push('</span>');
   return parts.join('');
@@ -90,7 +90,7 @@ function readingHtml(r: UndoTimelineEntryModel['readings'][number]): string {
  *  第三重是轨迹上那枚圆点的形。 */
 function tagOf(e: UndoTimelineEntryModel): { readonly text: string; readonly warn: boolean } | undefined {
   if (e.state === 'locked') {
-    return { text: (e.tag ?? UNDO_TIMELINE_STATE_TAG.locked) + UNDO_TIMELINE_LOCKED_SEP + (e.lockedReason ?? ''), warn: false };
+    return { text: (e.tag ?? UNDO_TIMELINE_STATE_TAG.locked) + UNDO_TIMELINE_LOCKED_SEP() + (e.lockedReason ?? ''), warn: false };
   }
   if (e.state === 'undone') return { text: e.tag ?? UNDO_TIMELINE_STATE_TAG.undone, warn: false };
   if (e.tag === undefined) return undefined;
@@ -110,7 +110,7 @@ function impactRowHtml(row: UndoTimelineImpactModel['rows'][number]): string {
   parts.push('<b class="' + undoTimelineSlot('ititle') + '">' + esc(row.title) + '</b>');
   if (row.note !== undefined) parts.push('<i class="' + undoTimelineSlot('inote') + '">' + esc(row.note) + '</i>');
   if (row.lockedReason !== undefined) {
-    parts.push('<i class="' + undoTimelineSlot('why') + '">' + esc(UNDO_TIMELINE_WHY_TEXT + row.lockedReason) + '</i>');
+    parts.push('<i class="' + undoTimelineSlot('why') + '">' + esc(UNDO_TIMELINE_WHY_TEXT() + row.lockedReason) + '</i>');
   }
   parts.push('</span>');
   if (row.count !== undefined) parts.push('<span class="' + undoTimelineSlot('count') + '">' + esc(row.count) + '</span>');
@@ -121,13 +121,13 @@ function impactRowHtml(row: UndoTimelineImpactModel['rows'][number]): string {
 /** 页脚那句结论的**文字**：前半段按勾了几项现算，后半段是调用方给的注（缺省那句）。
  *  运行时段按同一个口径重算（`data-ilife-undo-sum` 那枚元素的 `textContent` 归它改）。 */
 function sumText(checked: number, note: string): string {
-  if (checked === 0) return UNDO_TIMELINE_SUM_ZERO;
-  return UNDO_TIMELINE_SUM_PRE + String(checked) + UNDO_TIMELINE_SUM_MID + note;
+  if (checked === 0) return UNDO_TIMELINE_SUM_ZERO();
+  return UNDO_TIMELINE_SUM_PRE() + String(checked) + UNDO_TIMELINE_SUM_MID() + note;
 }
 
 /** 主按钮那枚字：按勾了几项算（一项都没勾时它按不动）。 */
 function submitText(checked: number): string {
-  return checked === 0 ? UNDO_TIMELINE_SUBMIT_ZERO : UNDO_TIMELINE_SUBMIT_PRE + String(checked) + UNDO_TIMELINE_SUBMIT_POST;
+  return checked === 0 ? UNDO_TIMELINE_SUBMIT_ZERO() : UNDO_TIMELINE_SUBMIT_PRE() + String(checked) + UNDO_TIMELINE_SUBMIT_POST();
 }
 
 /** 一张回滚单的三块：头 → 影响面清单 → 页脚。

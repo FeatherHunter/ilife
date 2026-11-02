@@ -39,7 +39,7 @@ export function buildSyncStatusJs(): string {
     + '  var EV_RUN=' + q(SYNC_STATUS_EVENT_RUN) + ', EV_DONE=' + q(SYNC_STATUS_EVENT_DONE) + ';' + '\n'
     + '  var ST_RUNNING=' + q(SYNC_STATUS_STATES[1]) + ', ST_IDLE=' + q(SYNC_STATUS_STATES[0]) + ';' + '\n'
     + '  var ST_FAILED=' + q(SYNC_STATUS_STATES[2]) + ', TIMEOUT=' + String(SYNC_STATUS_RUN_TIMEOUT_MS) + ';' + '\n'
-    + '  var TX_TIMEOUT=' + q(SYNC_STATUS_TIMEOUT_TEXT) + ', TX_FAILED=' + q(SYNC_STATUS_FAILED_TEXT) + ';' + '\n'
+    + '  var TX_TIMEOUT=' + q(SYNC_STATUS_TIMEOUT_TEXT()) + ', TX_FAILED=' + q(SYNC_STATUS_FAILED_TEXT()) + ';' + '\n'
     + '  var doc=document;' + '\n'
     + '  if (doc.documentElement.getAttribute("data-ilife-sync-runtime")==="1") return;' + '\n'
     + '  doc.documentElement.setAttribute("data-ilife-sync-runtime","1");' + '\n'

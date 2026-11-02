@@ -49,6 +49,7 @@ import { commandLine } from '../shared/writeParts.js';
 import { collectSourceNote } from './sourceNote.js';
 import { receiptPaper } from './receiptPaper.js';
 import type { CollectInput, ReceiptInput, Scene } from './scene.js';
+import { m } from '../entries/index.js';
 
 /** 场景给模板的**差异声明**：值、文案与「哪一块长什么样」，**不含任何块位拼装**。 */
 export interface InstallmentSpec {
@@ -148,11 +149,11 @@ function envelopeOf(key: string, ok: boolean, message: string): SerializableEnve
 
 /** 缺项阻断条整条收进折叠区：首屏只留缺项标签与一行副标题，口令原文不再常驻版面。
  *  内容与判定一字不动（仍是共用件 `blockedBar` 的产出），只换摆法；折叠与否那枚置灰按钮都点不动。 */
-function blockedFold(title: string, items: readonly BlockedItem[], command: string): string {
+function blockedFold(title: string, items: readonly BlockedItem[], command: string, language: string): string {
   if (items.length === 0) return '';
   return renderDisclosure({
     title,
-    contentHtml: blockedBar({ items, command }),
+    contentHtml: blockedBar({ items, command, language }),
   });
 }
 
@@ -190,9 +191,9 @@ function collectPage(spec: InstallmentSpec, input: CollectInput): string {
   }
   const blocked = [...base, ...extra];
   const message = blockedMessage(missing, base)
-    + (extra.length === 0 ? '' : '。本型另需 ' + extra.length + ' 项，见下面的缺项徽章');
+    + (extra.length === 0 ? '' : m('skill-bill.write-template-installment.c001', { p0: String(extra.length) }));
   /** 副标题只报计数（进度形状）；缺项明细在标签组与阻断表明细两处形状里。 */
-  const subtitle = spec.word + '还差 ' + blocked.length + ' 项';
+  const subtitle = m('skill-bill.write-template-installment.c002', { p0: String(spec.word), p1: String(blocked.length) });
   const envelope = envelopeOf(key, false, message);
   const sayOut = sayCollectOut({
     sayKey: spec.kind,
@@ -202,7 +203,7 @@ function collectPage(spec: InstallmentSpec, input: CollectInput): string {
     params: params,
     data: { envelope },
     log: { envelope, copyLog: copyLog({
-      command: commandLine(key, params), source: input.source, detail: '没写库（采集页）',
+      command: commandLine(key, params), source: input.source, detail: m('skill-bill.write-template-installment.c003'),
       actionAt: input.actionAt, version: DOC_VERSION,
     }) },
   });
@@ -220,26 +221,39 @@ function collectPage(spec: InstallmentSpec, input: CollectInput): string {
   const filled: Record<string, unknown> = { ...params };
   for (const b of blocked) filled[b.name] = '<' + b.label + '>';
   // 缺项逐项一行（一行一件事），不带库列名、不用顿号连写。
-  const lackLines = blocked.map((i) => i.label + '：' + (i.why === '没给' ? '没给' : i.why)).join('\n');
-  const prompt = (blocked.length === 0
-    ? '照下面这个口径记这一笔分期，每期金额与日期按预览表来。'
-    : '这一笔还差 ' + blocked.length + ' 项，逐项补齐：\n' + lackLines)
-    + '\n请加载「饼干记账」技能，帮我记一笔分期。\n唤醒词：' + spec.word + '\n'
-    + spec.totalLabel + '：' + (total || '<' + spec.totalLabel + '>') + '\n'
-    + spec.periodsLabel + '：' + (periods || '<' + spec.periodsLabel + '>') + '\n'
-    + spec.firstDateLabel + '：' + (first || '<' + spec.firstDateLabel + '>') + '\n'
-    + '分类：' + (facts.category || '<三级分类>') + '\n'
-    + '账户：' + (facts.account || '<账户>') + '\n'
-    + '账本：' + (facts.ledger || '<账本>') + '\n'
-    + (shares.length === 0 ? '分摊预览还没算出来，三样齐了才算。' : '分摊预览见上面那张表。')
-    + '\n每期按上面那张表逐期记，尾差归最后一期。';
+  const lackLines = blocked.map((i) => i.label + '：' + i.why).join('\n');
+  // 链接内不嵌条件式：先各自落成变量，再逐段拼（迁移器与门禁都按「一段一句话」认）。
+  const promptHead = blocked.length === 0
+    ? m('skill-bill.write-template-installment.c004')
+    : m('skill-bill.write-template-installment.c005', { p0: String(blocked.length), p1: String(lackLines) });
+  const totalShown = total === '' ? '<' + spec.totalLabel + '>' : total;
+  const periodsShown = periods === '' ? '<' + spec.periodsLabel + '>' : periods;
+  const firstShown = first === '' ? '<' + spec.firstDateLabel + '>' : first;
+  const categoryShown = facts.category === '' ? m('skill-bill.write-template-installment.c006') : facts.category;
+  const accountShown = facts.account === '' ? m('skill-bill.write-template-installment.c007') : facts.account;
+  const ledgerShown = facts.ledger === '' ? m('skill-bill.write-template-installment.c008') : facts.ledger;
+  const sharesNote = shares.length === 0 ? m('skill-bill.write-template-installment.c009') : m('skill-bill.write-template-installment.c010');
+  const prompt = m('skill-bill.write-template-installment.c011', {
+    p0: String(promptHead),
+    p1: String(spec.word),
+    p2: String(spec.totalLabel),
+    p3: String(totalShown),
+    p4: String(spec.periodsLabel),
+    p5: String(periodsShown),
+    p6: String(spec.firstDateLabel),
+    p7: String(firstShown),
+    p8: String(categoryShown),
+    p9: String(accountShown),
+    p10: String(ledgerShown),
+    p11: String(sharesNote),
+  });
     const collectFacts = { category: facts.category, amount: amount, time: facts.time, account: facts.account, ledger: facts.ledger, note: textOf(params.note), currency: textOf(params.currency), missing: blocked.map(function (b) { return b.label; }) };
   const content = [
     typeBadge({
       kind: spec.kind,
-      pageKind: '采集页',
+      pageKind: m('skill-bill.write-template-installment.c012'),
       status: blocked.length > 0 ? 'danger' : 'warn',
-      state: blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待核对 · 未写库',
+      state: blocked.length > 0 ? 'pending-blocked' : 'review-pending',
       next: '',
     }),
     blocked.length === 0 ? '' : collectSectionTitle({ no: 1, title: spec.section1 }),
@@ -260,8 +274,8 @@ function collectPage(spec: InstallmentSpec, input: CollectInput): string {
       ? ''
       : renderFeedbackBlock({
         toast: {
-          msg: '共 ' + shares.length + ' 期，已摊出来',
-          detail: shares.length > 24 ? '本页先显前 12 期，其余折在下面那一格里。' : '全列在下面那张表里。',
+          msg: m('skill-bill.write-template-installment.c013', { p0: String(shares.length) }),
+          detail: shares.length > 24 ? m('skill-bill.write-template-installment.c014') : m('skill-bill.write-template-installment.c015'),
           icon: 'info',
         },
         staticNotice: true,
@@ -270,7 +284,7 @@ function collectPage(spec: InstallmentSpec, input: CollectInput): string {
     preview.html === ''
       ? renderChips({ items: [{ text: spec.noSharesChip }] })
       : '',
-    blockedFold(spec.foldTitle, blocked, commandLine(key, filled)),
+    blockedFold(spec.foldTitle, blocked, commandLine(key, filled), input.language),
     copyArea({
       hints: COPY_HINTS.sayAcct,
       prompt: { text: prompt, label: blocked.length === 0 ? spec.promptLabel : spec.promptLabelBlocked },
@@ -283,16 +297,16 @@ function collectPage(spec: InstallmentSpec, input: CollectInput): string {
         copyLog: copyLog({
           command: commandLine(key, params),
           source: input.source,
-          detail: '没写库（采集页）',
+          detail: m('skill-bill.write-template-installment.c016'),
           actionAt: input.actionAt,
           version: DOC_VERSION,
         }),
       },
     }),
-    collectSourceNote(facts.time),
+    collectSourceNote(facts.time, input.language),
   ].join('');
   return pageShell({
-    docTitle: docTitleOf(spec.word + ' 采集页'), title: spec.word, subtitle,
+    docTitle: docTitleOf(m('skill-bill.write-template-installment.c017', { p0: String(spec.word) })), title: spec.word, subtitle,
     slot: 'collect', page: 'collect', shape: envelope.shape, key, content,
   });
 }

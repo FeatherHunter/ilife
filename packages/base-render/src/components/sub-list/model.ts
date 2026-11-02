@@ -88,13 +88,13 @@ function reqGroup(value: unknown, index: number): SubListGroupModel {
   return {
     label,
     items,
-    count: String(total) + ' ' + SUB_LIST_COUNT_UNIT,
+    count: String(total) + ' ' + SUB_LIST_COUNT_UNIT(),
     sum: optText(raw.sum, field + '.sum'),
     open: raw.open === true,
     /* 进度只在**这一组真的带备货标**时出：不给 `done` 的组（如按分类列的备忘录）不该凭空长出一条进度条。 */
     progress: progress && total > 0,
     doneTotal,
-    progressText: total > 0 ? String(doneTotal) + '/' + String(total) + ' ' + SUB_LIST_DONE_LABEL : '',
+    progressText: total > 0 ? String(doneTotal) + '/' + String(total) + ' ' + SUB_LIST_DONE_LABEL() : '',
     progressPercent: total > 0 ? Math.round((doneTotal / total) * 100) : 0,
   };
 }

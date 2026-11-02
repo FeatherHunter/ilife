@@ -62,6 +62,7 @@ import {
   factStrip as stripFactStrip, factStripCss,
   windowStrip as stripWindowStrip, windowStripCss,
 } from '../shared/pageStrips.js';
+import { m } from '../entries/index.js';
 
 const esc = (s: string): string => escapeHtml(s);
 
@@ -266,7 +267,7 @@ export function compareBlock(input: CompareBlockInput): string {
     + '<div class="wui-cmp-link">'
     + '<span class="wui-cmp-rule"></span>'
     + '<span class="wui-cmp-node">'
-    + '<span class="wui-cmp-pill">' + esc(link.label === undefined ? '对比' : link.label) + '</span>'
+    + '<span class="wui-cmp-pill">' + esc(link.label === undefined ? m('skill-calorie.weight-weightUi.c001') : link.label) + '</span>'
     + delta + direction
     + '</span>'
     + '<span class="wui-cmp-rule"></span>'

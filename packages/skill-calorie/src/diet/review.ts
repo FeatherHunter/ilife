@@ -29,6 +29,7 @@ import { CalorieRenderError } from '../render/errors.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { daysIn, defaultRange, nums, optStr } from '../shared/params.js';
 import { commandLine } from '../shared/writeParts.js';
+import { m } from '../entries/index.js';
 
 /** 一位小数（老脚本 `round(x, 1)` 的同款口径；只此一处，两侧视图都吃它）。 */
 function round1(n: number): number {
@@ -148,15 +149,24 @@ export function buildMealDistributionView(
       pct: round1((bucketCal[i] as number) / allCal * 100),
     }))
     : [];
-  const mealLabel = meal === 'all' ? '全部餐别' : meal;
+  const mealLabel = meal === 'all' ? m('skill-calorie.diet-review.c001') : meal;
   const top = dist.length > 0 ? dist.reduce((a, b) => (b.pct > a.pct ? b : a), dist[0] as MealDistributionSlice) : null;
   /* #591 · 门禁 R2：这一句原来把「几餐」与「谁占比最高」用 `；` 串成一行（`audit-separators.mjs` 判债），
      拆成两句（同一件事仍在一行副题里，事实一条不减）。 */
   const oneLine = meal === 'all'
     ? (selected.length === 0
-      ? '最近 ' + days + ' 天没有饮食记录。'
-      : '最近 ' + days + ' 天共 ' + selected.length + ' 餐。' + (top as MealDistributionSlice).label
-        + '热量占比最高（' + (top as MealDistributionSlice).pct + '%）。')
-    : '最近 ' + days + ' 天' + mealLabel + '：' + selected.length + ' 餐，日均 ' + avg + ' 卡。';
+      ? m('skill-calorie.diet-review.c002', { p0: String(days) })
+      : m('skill-calorie.diet-review.c003', {
+        p0: String(days),
+        p1: String(selected.length),
+        p2: String((top as MealDistributionSlice).label),
+        p3: String((top as MealDistributionSlice).pct),
+      }))
+    : m('skill-calorie.diet-review.c004', {
+      p0: String(days),
+      p1: String(mealLabel),
+      p2: String(selected.length),
+      p3: String(avg),
+    });
   return { start, end, days, meal, mealLabel, items: selected, total: selected.length, totalCal, avg, oneLine, dist };
 }

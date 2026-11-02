@@ -21,16 +21,31 @@ import {
 import { CALIPER_SITE_LABELS } from './bodyPlate.js';
 import { SOURCE_LABELS } from '../kcal.js';
 import type { SourceChoice } from '../kcal.js';
-import { OPERATION_LABELS } from '../shared/operationHead.js';
+import { operationLabel } from '../shared/operationHead.js';
+import { m } from '../entries/index.js';
 
 /** 非围度／非皮褶列的中文名（`is_deprecated` 照仓内软删口径给中文，不让库内列名直接上屏）。 */
-const COL_ZH: Record<string, string> = {
-  date: '日期', note: '备注', source: '来源', body_fat_pct: '体脂率', is_deprecated: '删除标志',
-};
+function colZh(key: string): string | undefined {
+  switch (key) {
+    case 'date': return m('skill-calorie.body-receiptData.c011');
+    case 'note': return m('skill-calorie.body-receiptData.c012');
+    case 'source': return m('skill-calorie.body-receiptData.c013');
+    case 'body_fat_pct': return m('skill-calorie.body-receiptData.c014');
+    case 'is_deprecated': return m('skill-calorie.body-receiptData.c015');
+    default: return undefined;
+  }
+}
 
 /** 写入字段摘要里那几个**不进库列**的 CLI 参数名（`bodyFatPct` 写进的是 `body_fat_pct`；
  *  `age`／`sex` 只喂 JP7 换算）——不换中文就会把参数名直接摆上屏。 */
-const CLI_ZH: Record<string, string> = { bodyFatPct: '体脂率', age: '年龄', sex: '性别' };
+function cliZh(key: string): string | undefined {
+  switch (key) {
+    case 'bodyFatPct': return m('skill-calorie.body-receiptData.c016');
+    case 'age': return m('skill-calorie.body-receiptData.c017');
+    case 'sex': return m('skill-calorie.body-receiptData.c018');
+    default: return undefined;
+  }
+}
 
 /** 逐字段中文标签（老正本 `:276-291` 那张表的本域等价物）：库列名与 CLI 参数名都收，
  *  一律查唯一来源（13 部位／7 点／来源／日期／备注），未命中回退原键名。 */
@@ -40,9 +55,15 @@ export function zhLabel(key: string): string {
   const camelCol = MEASUREMENT_FIELDS.find((f) => measureCamelName(f) === key);
   return MEASUREMENT_ZH[key]
     ?? (camelCol === undefined ? undefined : MEASUREMENT_ZH[camelCol])
-    ?? COL_ZH[key]
-    ?? CLI_ZH[key]
+    ?? colZh(key)
+    ?? cliZh(key)
     ?? key;
+}
+
+/** 身份字段（不是部位读数）的中文名：回执页据此把它们抬到组外（`.brc-meta`）。
+ *  判据与显示同源，不在别处再写一份中文标签。 */
+export function metaLabels(): ReadonlySet<string> {
+  return new Set([zhLabel('date'), zhLabel('note'), zhLabel('source'), zhLabel('body_fat_pct')]);
 }
 
 /** 记／补记／删三条路共用的实体词（页名、结论句与复制载荷的头用）。 */
@@ -56,7 +77,7 @@ function colsOf(key: string): readonly string[] {
 }
 
 /** 记／补记／删三条路共用的实体词。 */
-export const entityOf = (key: string): string => (isMeasure(key) ? '围度' : '体脂');
+export const entityOf = (key: string): string => (isMeasure(key) ? m('skill-calorie.body-receiptData.c001') : m('skill-calorie.body-receiptData.c002'));
 
 /** #364 的按 id 复取口：软删后行仍在 ⇒ 写后与删后都能回读同一行（页面现值与删前快照同源）。 */
 export function snapshotOf(db: DatabaseSync, key: string, id: number): Record<string, unknown> | null {
@@ -140,7 +161,10 @@ function payloadLines(db: DatabaseSync, key: string, id: number): string[] {
  *  冲突段与 `—` 占位，进载荷会违反裁定 2）。 */
 export function payloadMessage(db: DatabaseSync, key: string, receipt: CrudReceipt): string {
   const id = receipt.recordId;
-  const head = '本次' + OPERATION_LABELS[receipt.op] + entityOf(key) + '记录'
-    + (id === null ? '' : ' #' + id);
+  const head = m('skill-calorie.body-receiptData.c011', {
+    p0: String(operationLabel(receipt.op)),
+    p1: String(entityOf(key)),
+    p2: String(id === null ? '' : ' #' + id),
+  });
   return [head, ...(id === null ? [] : payloadLines(db, key, id))].join(' ｜ ');
 }

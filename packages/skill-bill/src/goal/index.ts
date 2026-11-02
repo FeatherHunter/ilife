@@ -15,4 +15,4 @@
  *
  * 形状照 `../account/index.ts` 与 `../write/index.ts`（同一包内四域同形）：门只收「命令声明」这一件。
  */
-export { GOAL_COMMANDS } from './commands.js';
+export { GOAL_COMMANDS, goalCommands } from './commands.js';

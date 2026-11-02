@@ -16,6 +16,7 @@
  */
 
 /** 本件的类名根：全部槽位类名都是 `SUB_LIST_CLASS + '-' + 槽名`。 */
+import { m } from '../../entries/index.js';
 export const SUB_LIST_CLASS = 'ilife-block-sub-list';
 
 /** 槽位闭集（标记契约的一部分：`render.ts` 与判据都用这里的名字拼类名，不各抄一份字面量）。 */
@@ -83,10 +84,14 @@ export const SUB_LIST_FORMS = ['fold'] as const;
 export type SubListForm = (typeof SUB_LIST_FORMS)[number];
 
 /** 组内项数的单位（如「6 项」）：由子项条数算出，不由调用方给——同一个事实不出两个来源。 */
-export const SUB_LIST_COUNT_UNIT = '项';
+export function SUB_LIST_COUNT_UNIT(): string {
+  return m('base-render.components-sub-list-attrs.c001');
+}
 
 /** 进度读数的单位（如「6/6 已备」）：**状态的文字通路**（色与勾是其余两路）。 */
-export const SUB_LIST_DONE_LABEL = '已备';
+export function SUB_LIST_DONE_LABEL(): string {
+  return m('base-render.components-sub-list-attrs.c002');
+}
 
 /** 一条子项。 */
 export interface SubListItemInput {

@@ -9,6 +9,7 @@
  *   · 行距与"明细行"同档（padding 6px 0）⇒ 两件混排时行高一致。
  */
 import { skinVar } from '../skin/contract.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -23,7 +24,7 @@ export function ledgerRowsCss(input?: { readonly prefix?: string }): string {
      否则会拼成 `.+page-ui .a + .+page-ui .a`，那条规则要求"件里再套一层 page-ui"，**永远命中不到**。 */
   const b = '.' + p + 'block-ledger-row';
   return [
-    '/* ledger-rows（账目行）：标签 →（点线）→ 值；值列右对齐、等宽数字。 */',
+    m('base-render.components-ledger-rows-style.c001'),
     root + ' .' + p + 'block-ledger-rows {',
     '  display: flex;',
     '  flex-direction: column;',
@@ -44,7 +45,7 @@ export function ledgerRowsCss(input?: { readonly prefix?: string }): string {
     '  min-width: 0;',
     '  font-size: 13.5px;',
     '}',
-    '/* 相邻行之间一条 hairline；首行不带（小标题已经把它和上文分开了）。 */',
+    m('base-render.components-ledger-rows-style.c002'),
     s + ' + ' + b + ' {',
     '  border-top: 1px solid var(--line);',
     '}',
@@ -76,7 +77,7 @@ export function ledgerRowsCss(input?: { readonly prefix?: string }): string {
     '  font-size: 11.5px;',
     '  font-weight: 600;',
     '}',
-    '/* 合计行：上面一条实线（比 hairline 重一档）、字加粗——"这一行是加出来的"。 */',
+    m('base-render.components-ledger-rows-style.c003'),
     s + '.is-total {',
     '  margin-top: 2px;',
     '  border-top: 1px solid var(--fg);',

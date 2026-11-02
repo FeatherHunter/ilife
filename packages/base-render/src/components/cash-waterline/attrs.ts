@@ -21,6 +21,7 @@
  */
 
 /** 本件的类名根：全部槽位类名都是 `CASH_WATERLINE_CLASS + '-' + 槽名`。 */
+import { m } from '../../entries/index.js';
 export const CASH_WATERLINE_CLASS = 'ilife-block-cash-waterline';
 
 /** 槽位闭集（`render.ts`、`style.ts` 与判据都从这里取名字，不各抄一份字面量）。 */
@@ -158,7 +159,7 @@ export const CASH_WATERLINE_MAX_LINES = 8;
 export const CASH_WATERLINE_MISSING = '—';
 
 /** 钱的缺省单位（不给 `unit` 时用它）。 */
-export const CASH_WATERLINE_DEFAULT_UNIT = '元';
+export function CASH_WATERLINE_DEFAULT_UNIT(): string { return m('base-render.components-cash-waterline-attrs.c001'); }
 
 /* ── 行内自定义属性（**本件自己的名字**，不占 `--ilife-*` 那个命名空间） ──────────
  *  为什么不用 `--ilife-*`：那是皮肤 token 的空间（名单住 `skin/contract.ts`），件里塞私有名

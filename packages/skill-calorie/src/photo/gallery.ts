@@ -11,6 +11,7 @@ import { dayField, fail } from '../shared/params.js';
 import { commandLine } from '../shared/writeParts.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { photoDir } from './dir.js';
+import { m } from '../entries/index.js';
 
 /** `calorie.photo.list` · 看身材照：标签／日期窗口／条数筛选，空库即抛（不返空数组冒充正常）。 */
 export function viewPhotoList(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
@@ -40,7 +41,7 @@ export function viewPhotoList(params: Record<string, unknown>, db: DatabaseSync)
  *（`html.ts` 只读，不碰）。 */
 export function viewPhotoDetail(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
   const id = params['id'];
-  if (typeof id !== 'number' || !Number.isInteger(id)) fail(2, '缺参数 id（整数照片 id）');
+  if (typeof id !== 'number' || !Number.isInteger(id)) fail(2, m('skill-calorie.photo-gallery.c001'));
   const dir = photoDir(params);
   const v = buildViewerData(db, id as number, dir ?? null);
   // #654：同上——复制日志第 4 段的命令原文（含本次 `--params`）由命令层派生。

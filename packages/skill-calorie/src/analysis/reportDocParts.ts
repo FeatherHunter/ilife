@@ -22,6 +22,7 @@ import type { DataTableInput } from 'base-paint/blocks';
 import { copyArea, copyLog } from '../shared/copyArea.js';
 import { DB_FILENAME } from '../paths.js';
 import type { ReportPlate } from './reportPlate.js';
+import { m } from '../entries/index.js';
 
 export const DOC_VERSION = '0.1.0' as const;
 export const DOC_SKILL = 'calorie' as const;
@@ -61,13 +62,16 @@ export function navOf(list: readonly ReportSection[]): string {
 /** 页头胶囊（#516 §3.2 D01／D02／D04）：归属词与页型**不拿 `·` 串进题名**，改走徽章件。
  *  同族先例＝`render/trendPredictDocs.ts:275` 的 `predictChips`（预测族与报告族共用同一套形状语言）。 */
 export function reportChips(topic: string): string {
-  return renderChips({ items: [{ text: '卡路里' }, { text: topic }, { text: '健康报告' }] });
+  return renderChips({ items: [{ text: m('skill-calorie.analysis-reportDocParts.c001') }, { text: topic }, { text: m('skill-calorie.analysis-reportDocParts.c002') }] });
 }
 
 /** 来源脚注（J9 第三条恒出；同族写法见缺口页与 `diet/sourceStatsDocs.ts`）：走普通小字行，不走深底块。
  *  区间写「至」（#516 判据 R6：`~` 顶替「至」判债）。 */
 export function sourceFootnoteOf(plate: ReportPlate): string {
-  return renderCaliberLine('📊 数据来源：本机 ' + plate.base.start + ' 至 ' + plate.base.end + ' 的体重与饮食记录');
+  return renderCaliberLine(m('skill-calorie.analysis-reportDocParts.c003', {
+    p0: String(plate.base.start),
+    p1: String(plate.base.end),
+  }));
 }
 
 export function fmt(v: number | null | undefined, unit = ''): string {
@@ -136,11 +140,13 @@ export function lineOf(
   const { points: pts, step } = thinOf(points);
   const items = pts.map((p) => ({ label: p.date.slice(5), value: p.value }));
   const target = opts.target === null || opts.target === undefined ? null : opts.target;
-  const shownTitle = step === 1 ? title : title.replace(/）$/, '，图上每 ' + String(step) + ' 天一点）');
+  /* 抽稀说明只替换标题末尾的括号：后缀自己是一句整话（有词条），标题仍由调用方给。 */
+  const thinSuffix = m('skill-calorie.analysis-reportDocParts.c016', { p0: String(String(step)) });
+  const shownTitle = step === 1 ? title : title.replace(/）$/, thinSuffix);
   if (items.every((i) => i.value === null)) {
     return renderDataTable({
-      columns: [{ key: 'note', label: '说明' }],
-      rows: [{ note: '这段时间还没有可画的数据' }],
+      columns: [{ key: 'note', label: m('skill-calorie.analysis-reportDocParts.c004') }],
+      rows: [{ note: m('skill-calorie.analysis-reportDocParts.c005') }],
       caption: title,
     });
   }
@@ -171,7 +177,7 @@ export function lineOf(
         connectNulls: true,
         highlightLast: true,
         ...(opts.format === undefined ? {} : { format: opts.format }),
-        ...(target === null ? {} : { markLine: { value: target, label: '目标' } }),
+        ...(target === null ? {} : { markLine: { value: target, label: m('skill-calorie.analysis-reportDocParts.c006') } }),
       },
     },
   });
@@ -186,7 +192,7 @@ export function tableOf(
   extra?: readonly { readonly label: string; readonly values: readonly (string | number | null)[] }[],
 ): string {
   const columns = [
-    { key: 'date', label: '日期' },
+    { key: 'date', label: m('skill-calorie.analysis-reportDocParts.c007') },
     { key: 'value', label: valueLabel, align: 'right' as const },
     /* #625 B团（28-3）：附加列是中文状态词（达标／未达标），不是数值——不定右对齐，
      * 不套等宽数字（右对齐＋等宽下左缘参差）。 */
@@ -197,7 +203,7 @@ export function tableOf(
     for (const e of extra ?? []) row[e.label] = e.values[i] ?? null;
     return row;
   });
-  return foldedTable({ columns, rows, caption, emptyText: '这段时间还没有逐日记录' });
+  return foldedTable({ columns, rows, caption, emptyText: m('skill-calorie.analysis-reportDocParts.c008') });
 }
 
 /** 长表折叠（#620 增量2）：逐日明细类长表在 390 档卡片化后逐行重复列标签
@@ -221,11 +227,14 @@ export function foldedTable(input: DataTableInput): string {
   });
   const tail = renderDataTable({
     columns: input.columns, rows: rows.slice(FOLD_HEAD),
-    caption: input.caption === undefined ? '续表' : input.caption + '（续）',
+    caption: input.caption === undefined ? m('skill-calorie.analysis-reportDocParts.c009') : m('skill-calorie.analysis-reportDocParts.c010', { p0: String(input.caption) }),
     emptyText: input.emptyText, cellHtml: input.cellHtml,
   });
   return head + renderDisclosure({
-    title: '其余 ' + String(rest) + ' 行（共 ' + String(rows.length) + ' 行）',
+    title: m('skill-calorie.analysis-reportDocParts.c011', {
+      p0: String(String(rest)),
+      p1: String(String(rows.length)),
+    }),
     contentHtml: tail,
   });
 }
@@ -236,7 +245,7 @@ export function foldedTable(input: DataTableInput): string {
  *  的写法（#516 判据 R3：≥3 段并列）改由**多行**承担，调用方逐条给行，本件不再合并。 */
 export function kvTable(caption: string, rows: readonly { readonly k: string; readonly v: string | number | null }[]): string {
   return renderDataTable({
-    columns: [{ key: 'k', label: '项' }, { key: 'v', label: '取值' }],
+    columns: [{ key: 'k', label: m('skill-calorie.analysis-reportDocParts.c012') }, { key: 'v', label: m('skill-calorie.analysis-reportDocParts.c013') }],
     rows: rows.map((r) => ({ k: r.k, v: r.v })),
     caption,
   });
@@ -267,7 +276,7 @@ export function footerOf(plate: ReportPlate, kindLabel: string, command = ''): s
       envelope,
       copyLog: copyLog({
         command: command === '' ? 'calorie-cmd-read calorie.report.' + plate.base.kind : command,
-        source: DB_FILENAME + ' ｜ 报告子形态 ' + kindLabel,
+        source: m('skill-calorie.analysis-reportDocParts.c014', { p0: String(DB_FILENAME), p1: String(kindLabel) }),
         actionAt: plate.base.end,
         version: DOC_VERSION,
       }),
@@ -277,5 +286,9 @@ export function footerOf(plate: ReportPlate, kindLabel: string, command = ''): s
 
 /** 页头左格：区间与天数。区间写「至」（#516 判据 R6）、天数进全角括号（判据 R1 的 `·` 串撤掉）。 */
 export function metaLeftOf(plate: ReportPlate): string {
-  return plate.base.start + ' 至 ' + plate.base.end + '（共 ' + plate.base.days + ' 天）';
+  return m('skill-calorie.analysis-reportDocParts.c015', {
+    p0: String(plate.base.start),
+    p1: String(plate.base.end),
+    p2: String(plate.base.days),
+  });
 }

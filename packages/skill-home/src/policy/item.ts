@@ -2,6 +2,7 @@
 // add 须 name+category_id+location；update 须 id；数量/状态/移动各守卫；坏输入阻断不返空。
 import { HomePolicyError } from '../fetch/errors.js';
 import { normalizeLocation, normalizeStatus } from './category.js';
+import { m } from '../entries/index.js';
 
 export function validateAddInput(p: Record<string, unknown>): {
   name: string; category_id: number; location: string; owner: string;
@@ -16,7 +17,7 @@ export function validateAddInput(p: Record<string, unknown>): {
   const location = normalizeLocation(p.location);
   const quantity = p.quantity === undefined ? 1 : p.quantity;
   if (!Number.isInteger(quantity) || (quantity as number) <= 0) throw new HomePolicyError('POLICY_BAD_INPUT', 'quantity 须为正整数');
-  const status = p.location_status === undefined || p.location_status === null ? '在家' : normalizeStatus(p.location_status);
+  const status = p.location_status === undefined || p.location_status === null ? m('skill-home.policy-item.c001') : normalizeStatus(p.location_status);
   let price: number | null = null;
   if (p.price !== undefined && p.price !== null) {
     if (typeof p.price !== 'number' || !(p.price as number >= 0)) throw new HomePolicyError('POLICY_BAD_INPUT', 'price 须为非负数');
@@ -37,7 +38,7 @@ export function validateAddInput(p: Record<string, unknown>): {
     for (const t of (p.tags as string).split(',')) { const s = t.trim(); if (s) tags.push(s); }
   }
   return {
-    name, category_id: cid as number, location, owner: typeof p.owner === 'string' && p.owner ? p.owner : '使用者',
+    name, category_id: cid as number, location, owner: typeof p.owner === 'string' && p.owner ? p.owner : m('skill-home.policy-item.c002'),
     purchase_price: price, remark: typeof p.remark === 'string' ? p.remark : null,
     photo: typeof p.photo === 'string' ? p.photo : null, quantity: quantity as number, location_status: status,
     purchase_date: (p.purchase_date ?? p.purchaseDate ?? null) as string | null,

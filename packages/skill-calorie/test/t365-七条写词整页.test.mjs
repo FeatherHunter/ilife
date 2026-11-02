@@ -43,7 +43,7 @@ import { CALIPER_SITE_LABELS } from '../dist/body/bodyPlate.js';
 import { BODY_COMMANDS } from '../dist/body/commands.js';
 import { CALORIE_WRITE_COMBOS } from '../dist/cli/keys.js';
 import { bodyReceiptDoc } from '../dist/body/index.js';
-import { OPERATION_ICONS, OPERATION_LABELS, OPERATION_TONES } from '../dist/shared/operationHead.js';
+import { OPERATION_ICONS, OPERATION_TONES, operationLabel } from '../dist/shared/operationHead.js';
 import { buildCrudReceipt, withM5 } from '../dist/render/receipt.js';
 import { calorieConfigDir, configTestBase } from './helpers/config-test.mjs';
 import { homeEnvOf } from '../../../test/helpers/home-test-base.mjs';
@@ -391,7 +391,7 @@ test('#365 id 卡三态：图标＋三态词＋色档三样都由 op 驱动（�
   const del = runWrite(dir, KEY_M_RM, { id: rowsOf(dir, "SELECT id FROM body_measurements WHERE date='2026-09-06'")[0].id });
   for (const [name, r, op] of [['记围度', add, 'create'], ['删围度', del, 'delete']]) {
     assert.equal(r.env.data.receipt.op, op, name + ' 回执 op');
-    const word = OPERATION_LABELS[op];
+    const word = operationLabel(op);
     const icon = OPERATION_ICONS[op];
     // 三样都查（老正本 `:192-197` 的标签／色档／图标三张表）：色档落在公共层徽章档名上。
     const re = new RegExp('class="ilife-status-badge ilife-status-badge-' + OPERATION_TONES[op] + '">([^<]*)<', 'g');
@@ -402,8 +402,8 @@ test('#365 id 卡三态：图标＋三态词＋色档三样都由 op 驱动（�
     assert.ok(texts[0].includes(word),
       name + ' 徽章须带三态词「' + word + '」（老 `:192` 的 opLabels），实测「' + texts[0] + '」');
   }
-  console.log('T365-IDCARD 记围度=' + OPERATION_ICONS.create + ' ' + OPERATION_LABELS.create
-    + ' 删围度=' + OPERATION_ICONS.delete + ' ' + OPERATION_LABELS.delete);
+  console.log('T365-IDCARD 记围度=' + OPERATION_ICONS.create + ' ' + operationLabel('create')
+    + ' 删围度=' + OPERATION_ICONS.delete + ' ' + operationLabel('delete'));
 });
 
 test('#365 补记徽章：落库日期早于写入日时徽章写「补记」（J6 规则回归）', () => {

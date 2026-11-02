@@ -14,8 +14,9 @@
  *  随票删除；那个装配体里只剩这一个函数还有用，故搬到件名说了它是什么的本件。
  *
  *  #1206 首切件（多语言文本外置）：折叠标题不住这里，复用 `installment.fold-title`
- *  （同句只一处定义，见 `../entries/zh.ts` 头注第三批）；`input.language` 按语言取值
- *  （不给＝`zh`，与改造前逐字节相同）。
+ *  （同句只一处定义，见 `../entries/zh.ts` 头注第三批）；`input.language` 按语言取值。
+ *  **语言必给**（#1307）：本件不再兜 `zh`，也不再顺手把 `zh` 递下去——折叠标题与阻断条
+ *  必须同一门语言，两处各兜一次就会一边中文一边英文。
  */
 import { resolve } from 'base-entries';
 import { SKILL_BILL_CATALOG } from '../entries/index.js';
@@ -30,15 +31,16 @@ export function collectBlockedFold(input: {
   readonly command: string;
   /** 补齐之后会发生什么（不给＝走共用件那句缺省口径）。 */
   readonly note?: string;
-  /** 本块的文本语言（BCP 47；不给＝`zh`，与改造前逐字节相同）。 */
-  readonly language?: string;
+  /** 本块的文本语言（BCP 47）。**必给**（#1307）：调用方从 `input.language` 递进来。 */
+  readonly language: string;
 }): string {
   if (input.items.length === 0) return '';
   return renderDisclosure({
-    title: resolve(SKILL_BILL_CATALOG, input.language ?? 'zh', 'installment.fold-title'),
+    title: resolve(SKILL_BILL_CATALOG, input.language, 'installment.fold-title'),
     contentHtml: blockedBar({
       items: input.items,
       command: input.command,
+      language: input.language,
       ...(input.note === undefined ? {} : { note: input.note }),
     }),
   });

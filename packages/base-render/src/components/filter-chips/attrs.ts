@@ -11,6 +11,12 @@
  */
 
 /** 本件的类名根。 */
+import { m } from '../../entries/index.js';
+/** 模板原样返回（占位符由本件的运行时替换，求值端口不碰）：`{名}` 映射回它自己。 */
+const KEEP_PLACEHOLDERS: Readonly<Record<string, string>> = {
+  n: '{n}', from: '{from}', to: '{to}', label: '{label}', p: '{p}', why: '{why}',
+};
+
 export const CHIPS_ROOT_CLASS = 'ilife-block-filter-chips';
 
 /** 形态闭集：本件只落裁定胜出的那一档。 */
@@ -66,29 +72,29 @@ export const CHIPS_EVENT_CHANGE = 'ilife:filter-change';
 /** 载入态开关（页面派发）：`detail = { name, on }`。 */
 export const CHIPS_EVENT_LOADING = 'ilife:chips-loading';
 
-export const CHIPS_DEFAULTS = Object.freeze({
-  label: '筛选',
-  commonLabel: '常用',
-  moreLabel: '更多',
-  clearLabel: '清除',
+export const CHIPS_DEFAULTS = {
+  get label() { return m('base-render.components-filter-chips-attrs.c001'); },
+  get commonLabel() { return m('base-render.components-filter-chips-attrs.c002'); },
+  get moreLabel() { return m('base-render.components-filter-chips-attrs.c003'); },
+  get clearLabel() { return m('base-render.components-filter-chips-attrs.c004'); },
   /** 状态行的量词：档数用「类」，记录数用「笔」。 */
-  pickedUnit: '类',
-  rowsUnit: '笔',
+  get pickedUnit() { return m('base-render.components-filter-chips-attrs.c005'); },
+  get rowsUnit() { return m('base-render.components-filter-chips-attrs.c006'); },
   /** 状态行的两个接头词（「已选 N 类 · 共 M 笔 · ¥X」）。 */
-  pickedBefore: '已选',
-  rowsBefore: '共',
+  get pickedBefore() { return m('base-render.components-filter-chips-attrs.c007'); },
+  get rowsBefore() { return m('base-render.components-filter-chips-attrs.c008'); },
   /** 没选中任何档时的说法（＝不筛，全部记录）。 */
-  allText: '全部',
-  emptyText: '这里还没有可筛的档',
-  noRowsText: '这组筛选没有命中记录',
-  /** 金额读不出来时的点名句（错态；`{n}` 由运行时替换成条数）。 */
-  badValueText: '有 {n} 条的金额读不出来，合计只算了能读的那些',
+  get allText() { return m('base-render.components-filter-chips-attrs.c009'); },
+  get emptyText() { return m('base-render.components-filter-chips-attrs.c010'); },
+  get noRowsText() { return m('base-render.components-filter-chips-attrs.c011'); },
+  /** 金额读不出来时的点名句（错态；`«n»` 由运行时替换成条数）。 */
+  get badValueText() { return m('base-render.components-filter-chips-attrs.c012', KEEP_PLACEHOLDERS); },
   /** 记录区没接上时那句（错态）。 */
-  unwiredText: '这组筛选没接上记录区：页面上找不到可筛的记录',
-  loadingText: '正在筛…',
+  get unwiredText() { return m('base-render.components-filter-chips-attrs.c013'); },
+  get loadingText() { return m('base-render.components-filter-chips-attrs.c014'); },
   /** 缺值写法（工艺书：缺值写成 `—`）。 */
-  unset: '—',
-} as const);
+  get unset() { return '—'; },
+};
 
 export interface FilterChipOption {
   /** 机器值（`aria-pressed` 的载荷与记录的 `data-ilife-chip-tags` 按它对号）。 */

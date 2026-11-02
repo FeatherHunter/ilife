@@ -13,6 +13,7 @@
 //
 // 域序 fail-closed：8 份声明的 `order` 必须是连续的 0..n-1，缺号／重号即抛（不用中央名单、
 // 也不用目录扫描——扫描出的是字母序，与实物的域序七处全不同）。
+import { currentRenderLanguage } from 'base-entries';
 import { BillPolicyError } from '../fetch/errors.js';
 import { ACCOUNT_DECLARATION } from '../account/declaration.js';
 import { ANALYSIS_DECLARATION } from '../analysis/declaration.js';
@@ -23,6 +24,7 @@ import { QUERY_DECLARATION } from '../query/declaration.js';
 import { SETUP_DECLARATION } from '../setup/declaration.js';
 import { WRITE_DECLARATION } from '../write/declaration.js';
 import type { BillKey, DomainDeclaration, WakeEntry, WakeEntryDecl, WakeRoute, WakeScope } from './routeSpec.js';
+import { WAKE_EN_ROUTES } from './routes.en.generated.js';
 
 /** 8 份域声明（每份一件，恰好一个导出）。**声明的清单只有这一处**——目录投影件也从这里取。 */
 export const DECLARATIONS: readonly DomainDeclaration[] = [
@@ -71,13 +73,35 @@ for (const e of ALL_ENTRIES) {
   if (typeof k === 'string' && k !== '' && !BY_KIND.has(k)) BY_KIND.set(k, e);
 }
 
+/** 英文唤醒词表（票 #1310）：来源 `wake-en.json`，键／槽位／预设照抄中文那条（生成期已校验）。 */
+const WAKE_TABLE_EN: readonly WakeEntry[] = WAKE_EN_ROUTES.map((e) => ({
+  phrase: e.phrase,
+  key: e.key as BillKey,
+  ...(e.preset === undefined ? {} : { preset: { ...e.preset } }),
+  ...(e.needs === undefined ? {} : { needs: [...e.needs] }),
+  ...(e.carries === undefined ? {} : { carries: [...e.carries] }),
+}));
+
 /** 最长匹配优先（“看分类对比”不落入“看分类”，“初始化状态”不落入“初始化”，“报销到账”不落入“记报销”）。 */
 const SORTED = [...WAKE_TABLE].sort((a, b) => b.phrase.length - a.phrase.length);
+
+/** 英文表同一条最长匹配规则（两张表各自排序，不同时参与匹配）。 */
+const SORTED_EN = [...WAKE_TABLE_EN].sort((a, b) => b.phrase.length - a.phrase.length);
+
+/** 渲染语言的主标签（`en`／`zh`；`en-US` 按 `en` 算）。 */
+function renderLanguage(): string {
+  return currentRenderLanguage().trim().toLowerCase().split('-')[0];
+}
+
+/** 按语言单选一张表：en 只查英文表，其余（含未设语言）只查中文表。 */
+function sortedFor(): readonly WakeEntry[] {
+  return renderLanguage() === 'en' ? SORTED_EN : SORTED;
+}
 
 /** 自然语言 → 命令名 ＋ 槽位；无命中／缺槽位即抛。 */
 export function routeWakeword(text: string, ctx: Record<string, unknown> = {}): WakeRoute {
   if (typeof text !== 'string' || text.length === 0) throw new BillPolicyError('POLICY_NO_MATCH', '唤醒词为空');
-  const hit = SORTED.find((e) => text.includes(e.phrase));
+  const hit = sortedFor().find((e) => text.includes(e.phrase));
   if (!hit) throw new BillPolicyError('POLICY_NO_MATCH', '无命中唤醒词：' + text);
   for (const s of hit.needs || []) {
     if (ctx[s] === undefined || ctx[s] === null || ctx[s] === '') {

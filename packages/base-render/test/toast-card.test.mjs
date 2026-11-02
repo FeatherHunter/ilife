@@ -115,7 +115,7 @@ describe('toast-card ① 渲染契约', () => {
     assert.ok(html.includes(TOAST_CARD_ACTION_ATTR + '="undo"'), '动作名进锚');
     assert.match(html, new RegExp('<button class="' + toastCardSlot('action') + '"[^>]*>撤销</button>'));
     assert.ok(html.includes(TOAST_CARD_CLOSE_ATTR + '=""'), '关闭键的锚');
-    assert.ok(html.includes('aria-label="' + TOAST_CARD_CLOSE_LABEL + '"'), '关闭键要有可读名字');
+    assert.ok(html.includes('aria-label="' + TOAST_CARD_CLOSE_LABEL() + '"'), '关闭键要有可读名字');
     assert.equal(/<script/i.test(html), false);
     assert.equal(/\son[a-z]+=/i.test(html), false, '零内联事件处理器');
   });

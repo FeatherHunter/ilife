@@ -11,6 +11,26 @@
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, escapeHtml, latinFree, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { m } from '../../entries/index.js';
+
+/** 本页可见文案（渲染期取词：写成函数，模块加载时不取词）。 */
+function pageText() {
+  return {
+    k001: (p0: string, p1: string) => m('skill-home.outfit-pages-wardrobe-season.c001', { p0: String(p0 + p1) }),
+    k002: (p0: string) => m('skill-home.outfit-pages-wardrobe-season.c002', { p0: String(p0) }),
+    k003: m('skill-home.outfit-pages-wardrobe-season.c003'),
+    k004: m('skill-home.outfit-pages-wardrobe-season.c004'),
+    k005: m('skill-home.outfit-pages-wardrobe-season.c005'),
+    k006: (p0: string) => m('skill-home.outfit-pages-wardrobe-season.c006', { p0: String(p0) }),
+    k007: (p0: string) => m('skill-home.outfit-pages-wardrobe-season.c007', { p0: String(p0) }),
+    k008: m('skill-home.outfit-pages-wardrobe-season.c008'),
+    k009: m('skill-home.outfit-pages-wardrobe-season.c009'),
+    k010: m('skill-home.outfit-pages-wardrobe-season.c010'),
+    k011: (p0: string) => m('skill-home.outfit-pages-wardrobe-season.c011', { p0: String(p0) }),
+    k012: m('skill-home.outfit-pages-wardrobe-season.c012'),
+  };
+}
+
 
 export const FAMILY = 'wardrobe_season' as const;
 
@@ -68,7 +88,7 @@ const str = (v: unknown): string => (typeof v === 'string' ? v : '');
 /** 类别／标签各自成一枚徽章（不拿空格把多个标签拼成一行）。类别名缺位时退回标签，再缺位写「衣物」。 */
 function catBadges(x: SeasonItem): string {
   const bits = x.categoryName !== '' ? [x.categoryName] : x.tags;
-  const use = bits.length > 0 ? bits : ['衣物'];
+  const use = bits.length > 0 ? bits : [m('skill-home.outfit-pages-wardrobe-season.c013')];
   return use.map((t) => '<span class="of-tag">' + escapeHtml(latinFree(t)) + '</span>').join('');
 }
 
@@ -113,6 +133,27 @@ const CSS = '<style>'
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
 // 复制区走共用件（卡路里同款三格式＋六段日志）；`ctx.command` 由交付链供给（含 params），直调缺省按本族主 key。
 export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
+  const SX = {
+    k001: m('skill-home.outfit-pages-wardrobe-season.c018'),
+    k002: m('skill-home.outfit-pages-wardrobe-season.c019'),
+    k003: m('skill-home.outfit-pages-wardrobe-season.c018'),
+    k004: m('skill-home.outfit-pages-wardrobe-season.c019'),
+    k005: m('skill-home.outfit-pages-wardrobe-season.c022'),
+    k006: m('skill-home.outfit-pages-wardrobe-season.c023'),
+    k007: m('skill-home.outfit-pages-wardrobe-season.c024'),
+    k008: m('skill-home.outfit-pages-wardrobe-season.c025'),
+    k009: m('skill-home.outfit-pages-wardrobe-season.c035'),
+    k010: m('skill-home.outfit-pages-wardrobe-season.c029'),
+    k011: m('skill-home.outfit-pages-wardrobe-season.c030'),
+    k012: m('skill-home.outfit-pages-wardrobe-season.c031'),
+    k013: m('skill-home.outfit-pages-wardrobe-season.c032'),
+    k014: m('skill-home.outfit-pages-wardrobe-season.c033'),
+    k015: m('skill-home.outfit-pages-wardrobe-season.c034'),
+    k016: m('skill-home.outfit-pages-wardrobe-season.c026'),
+    k017: m('skill-home.outfit-pages-wardrobe-season.c024'),
+    k018: m('skill-home.outfit-pages-wardrobe-season.c025'),
+  };;;;
+  const L = pageText();
   const template = readFileSync(new URL('../../../templates/outfit/wardrobe_season.html', import.meta.url), 'utf8');
   const data = (env.data ?? {}) as Record<string, unknown>;
   const s = (data.season ?? {}) as Record<string, unknown>;
@@ -125,16 +166,9 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   } as SeasonItem));
   const places = arr(s.places).map(String).filter(Boolean);
 
-  const metrics = '<div class="of-metrics">'
-    + '<span>' + escapeHtml(season) + '</span>'
-    + '<span>' + action + items.length + '件</span>'
-    + '<span>候选位置' + places.length + '处</span>'
-    + '</div>';
+  const metrics = '<div class="of-metrics">' + '<span>' + escapeHtml(season) + '</span>' + '<span>' + L.k001(String(action), String(items.length)) + '</span>' + '<span>' + L.k002(String(places.length)) + '</span>' + '</div>';
 
-  let placeHtml = '<div class="of-card"><h2>目标位置</h2><div class="of-opt"><span>收纳位置</span><select id="ofPlace">'
-    + places.map((p) => '<option>' + escapeHtml(p) + '</option>').join('')
-    + (places.length ? '' : '<option>自定义（复制回执时填）</option>')
-    + '</select></div></div>';
+  let placeHtml = '<div class="of-card">' + '<h2>' + L.k003 + '</h2>' + '<div class="of-opt">' + '<span>' + L.k004 + '</span>' + '<select id="ofPlace">' + places.map((p) => '<option>' + escapeHtml(p) + '</option>').join('') + (places.length ? '' : '<option>' + L.k005 + '</option>') + '</select>' + '</div>' + '</div>';
 
   // #886：复制区提到「这一季有没有衣物」的分支之外（口径同同批 45 族：复制区不跟着内容多少开合）。
   // 原来两样都关在 `else` 里，空清单这页一条复制通道都没有（`scaffold.test.mjs` ⑥ 门实测点名三族）。
@@ -142,46 +176,71 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     data: { envelope: env },
     log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
   });
-  let listHtml = '<div class="of-card"><h2>' + escapeHtml(season) + '衣物清单</h2>';
+  let listHtml = '<div class="of-card">' + '<h2>' + L.k006(String(escapeHtml(season))) + '</h2>';
   if (!items.length) {
-    listHtml += '<div class="of-empty">没有带「' + escapeHtml(season) + '」标签的在家衣物，建议先给衣物打季节标签再来换季</div>';
+    listHtml += '<div class="of-empty">' + L.k007(String(escapeHtml(season))) + '</div>';
   } else {
     listHtml += items.map((x, i) => '<div class="of-line" data-pick="' + i + '"><span class="of-check"></span>'
       + '<div class="of-body"><div class="of-nm">' + escapeHtml(latinFree(x.name)) + '</div>'
       + '<div class="of-sub">' + catBadges(x) + '</div>'
-      + '<div class="of-loc"><span class="of-lb">位置</span>'
-      + (x.location !== '' ? locSegs(x.location) : '<span class="of-seg">未记</span>') + '</div></div></div>').join('')
-      + '<div class="of-actions"><button class="of-btn" id="ofAll">全选切换</button>'
-      + '<button class="of-btn primary" id="ofGo">确认' + action + '</button></div>';
+      + '<div class="of-loc">' + '<span class="of-lb">' + L.k009 + '</span>'
+      + (x.location !== '' ? locSegs(x.location) : '<span class="of-seg">' + L.k008 + '</span>') + '</div></div></div>').join('') + '<div class="of-actions">' + '<button class="of-btn" id="ofAll">' + L.k010 + '</button>' + '<button class="of-btn primary" id="ofGo">' + L.k011(String(action)) + '</button>' + '</div>';
   }
   listHtml += copyZone + '</div>';
 
   const payload = JSON.stringify({ season, action, items }).replace(/</g, '\\u003c');
-  const js = '<script>'
-    + 'var SN=' + payload + ';var PICK={};'
-    + 'function snToast(m){var t=document.getElementById("snToast");if(!t){t=document.createElement("div");t.style.cssText="position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#4a3d28;color:#fdfaf4;padding:9px 18px;border-radius:99px;font-size:13px;z-index:120";document.body.appendChild(t);}t.textContent=m;t.style.opacity="1";setTimeout(function(){t.style.opacity="0";},1600);}'
-    + 'function snCopy(t){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){snToast("已复制");}).catch(function(){snToast("复制失败");});}else{var ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");snToast("已复制");}catch(e){snToast("复制失败");}ta.remove();}}'
-    + 'document.querySelectorAll(".of-line").forEach(function(el){el.onclick=function(){var i=el.getAttribute("data-pick");PICK[i]=!PICK[i];el.className="of-line"+(PICK[i]?" on":"");};});'
-    + 'var al=document.getElementById("ofAll");if(al)al.onclick=function(){var any=SN.items.some(function(_,i){return !PICK[i];});'
-    + 'SN.items.forEach(function(_,i){PICK[i]=any;});document.querySelectorAll(".of-line").forEach(function(el){var i=el.getAttribute("data-pick");el.className="of-line"+(PICK[i]?" on":"");});};'
-    + 'var go=document.getElementById("ofGo");if(go)go.onclick=function(){var p=SN.items.filter(function(_,i){return PICK[i];});'
-    + 'if(!p.length){snToast("请先勾选衣物");return;}var sel=document.getElementById("ofPlace");var place=sel?sel.value:"";'
-    + 'var L=[SN.action+"确认："+SN.season+"季 "+p.length+"件",""];'
-    + 'if(SN.action==="收纳"&&place)L.push("目标位置："+place);'
-    + 'p.forEach(function(x){if(SN.action==="收纳")L.push("收纳："+x.name+"（移入"+(place||"收纳位")+"加已收纳标）");else L.push("拿出："+x.name+"（恢复在家去已收纳标）");});snCopy(L.join("\\n"));}'
-    // 上面这个 `}` 收的是 `function(){…}`；**必须**跟一个 `;`——整段脚本是一行拼出来的，
-    // 没有换行，ASI 不会补分号，缺了它整段脚本不解析、页上按钮与勾选全死（同 travel_trip 那处）。
-    + ';var cd=document.getElementById("ofCopyData");if(cd)cd.onclick=function(){snCopy(JSON.stringify(SN.items,null,2));};'
-    + 'var cl=document.getElementById("ofCopyLog");if(cl)cl.onclick=function(){snCopy("换季日志："+SN.season+"季"+SN.action+SN.items.length+"件");};'
-    + '</script>';
+  const js =
+    "<script>var SN="
+    + payload
+    + ";var PICK={};function snToast(m){var t=document.getElementById(\"snToast\");if(!t){t=document.createElement(\"div\");t.style.cssText=\"position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#4a3d28;color:#fdfaf4;padding:9px 18px;border-radius:99px;font-size:13px;z-index:120\";document.body.appendChild(t);}t.textContent=m;t.style.opacity=\"1\";setTimeout(function(){t.style.opacity=\"0\";},1600);}function snCopy(t){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){snToast(\""
+    + SX.k001
+    + "\");}).catch(function(){snToast(\""
+    + SX.k002
+    + "\");});}else{var ta=document.createElement(\"textarea\");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand(\"copy\");snToast(\""
+    + SX.k003
+    + "\");}catch(e){snToast(\""
+    + SX.k004
+    + "\");}ta.remove();}}document.querySelectorAll(\".of-line\").forEach(function(el){el.onclick=function(){var i=el.getAttribute(\"data-pick\");PICK[i]=!PICK[i];el.className=\"of-line\"+(PICK[i]?\" on\":\"\");};});var al=document.getElementById(\"ofAll\");if(al)al.onclick=function(){var any=SN.items.some(function(_,i){return !PICK[i];});SN.items.forEach(function(_,i){PICK[i]=any;});document.querySelectorAll(\".of-line\").forEach(function(el){var i=el.getAttribute(\"data-pick\");el.className=\"of-line\"+(PICK[i]?\" on\":\"\");});};var go=document.getElementById(\"ofGo\");if(go)go.onclick=function(){var p=SN.items.filter(function(_,i){return PICK[i];});if(!p.length){snToast(\""
+    + SX.k005
+    + "\");return;}var sel=document.getElementById(\"ofPlace\");var place=sel?sel.value:\"\";var L=[SN.action+\""
+    + SX.k006
+    + "\"+SN.season+\""
+    + SX.k007
+    + " \"+p.length+\""
+    + SX.k008
+    + "\",\"\"];if(SN.action===\""
+    + "收纳"
+    + "\"&&place)L.push(\""
+    + SX.k009
+    + "\"+place);p.forEach(function(x){if(SN.action===\""
+    + "收纳"
+    + "\")L.push(\""
+    + SX.k010
+    + "\"+x.name+\""
+    + SX.k011
+    + "\"+(place||\""
+    + SX.k012
+    + "\")+\""
+    + SX.k013
+    + "\");else L.push(\""
+    + SX.k014
+    + "\"+x.name+\""
+    + SX.k015
+    + "\");});snCopy(L.join(\"\\n\"));};var cd=document.getElementById(\"ofCopyData\");if(cd)cd.onclick=function(){snCopy(JSON.stringify(SN.items,null,2));};var cl=document.getElementById(\"ofCopyLog\");if(cl)cl.onclick=function(){snCopy(\""
+    + SX.k016
+    + "\"+SN.season+\""
+    + SX.k017
+    + "\"+SN.action+SN.items.length+\""
+    + SX.k018
+    + "\");};</script>";;;
 
-  const head = '<div class="of-eye">穿搭出行 换季</div>';
+  const head = '<div class="of-eye">' + L.k012 + '</div>';
   const marker = '<div data-family="' + FAMILY + '" data-key="' + escapeHtml(PAGE_META.key) + '"></div>';
   const content = CSS + head + metrics + placeHtml + listHtml + marker
     + js
-    + sectionOf('fields', '字段')
-    + sectionOf('operations', '操作')
-    + sectionOf('empty', '空态与异常')
-    + sectionOf('status', '状态词');
+    + sectionOf('fields', m('skill-home.outfit-pages-wardrobe-season.c014'))
+    + sectionOf('operations', m('skill-home.outfit-pages-wardrobe-season.c015'))
+    + sectionOf('empty', m('skill-home.outfit-pages-wardrobe-season.c016'))
+    + sectionOf('status', m('skill-home.outfit-pages-wardrobe-season.c017'));
   return fillTemplate(template, content);
 }

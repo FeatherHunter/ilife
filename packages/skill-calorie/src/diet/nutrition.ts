@@ -24,6 +24,7 @@ import { CalorieRenderError } from '../render/errors.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { defaultRange, nums, optStr } from '../shared/params.js';
 import { commandLine } from '../shared/writeParts.js';
+import { m } from '../entries/index.js';
 
 /** 窗口为空那一态的分辨：取数层抛的是缺失阻断，**抛出来的有没有底由这里判**——库里别处还有记录
  *  ⇒ 这是「这段没记」而不是「没得取」，出完整空态页；连底都没有 ⇒ 原样抛出去走 exit 4。 */
@@ -46,17 +47,17 @@ export function viewNutritionRatio(params: Record<string, unknown>, db: Database
       data: { metrics: {} },
       html: buildEmptyWindowDoc({
         key: 'calorie.view.nutrition-ratio',
-        metaLeft: '查营养配比（饮食）',
-        title: '🥗 营养配比',
-        blockTitle: '配比读数',
+        metaLeft: m('skill-calorie.diet-nutrition.c001'),
+        title: m('skill-calorie.diet-nutrition.c002'),
+        blockTitle: m('skill-calorie.diet-nutrition.c003'),
         /* 空态句（2026-09-25 用户裁定「从第一性原理出发、以用户的视角，不能有废话」）：本页页题是
            「🥗 营养配比」、页头不带窗口，**区间在这一页只有这里说**（页脚那条来源行在最底下），
            故区间保留，其余三处删文同 `home/today.ts` 那一处——「一条…也没有」改直说、
            「配比算不出来」是机器的处境（用户要的是「这页为什么空」＝没有记录）、「（不编数）」是政策注。 */
-        emptyText: '这一段时间（' + start + ' ~ ' + end + '）没有饮食记录。',
+        emptyText: m('skill-calorie.diet-nutrition.c004', { p0: String(start), p1: String(end) }),
         /* 引导句＝下一句该说什么，两句并列；「要让它有内容」「再来看配比」都是垫字，删。 */
-        guide: '说「记一餐」记下吃的；补以前的日期说「补记饮食」。',
-        footnote: '📊 数据来源 · 饮食记录 · ' + start + ' → ' + end + '（按营养素折算）',
+        guide: m('skill-calorie.diet-nutrition.c005'),
+        footnote: m('skill-calorie.diet-nutrition.c006', { p0: String(start), p1: String(end) }),
         command,
       }),
     };
@@ -83,19 +84,20 @@ export function viewNutritionDetail(params: Record<string, unknown>, db: Databas
   } catch (e) {
     if (!isWindowEmpty(e, db)) throw e;
     const detail = entry === 'detail';
+    const metaName = detail ? m('skill-calorie.diet-nutrition.c007') : m('skill-calorie.diet-nutrition.c008');
     return {
       data: { metrics: {} },
       html: buildEmptyWindowDoc({
         key: 'calorie.view.nutrition-detail',
-        metaLeft: (detail ? '看营养素明细' : '看营养素深度') + '（饮食）',
-        title: detail ? '🧪 营养素明细' : '🧪 营养素深度',
-        blockTitle: '逐项明细',
+        metaLeft: m('skill-calorie.diet-nutrition.c009', { p0: String(metaName) }),
+        title: detail ? m('skill-calorie.diet-nutrition.c010') : m('skill-calorie.diet-nutrition.c011'),
+        blockTitle: m('skill-calorie.diet-nutrition.c012'),
         /* 空态句与引导句同配比页那一处（本页页题「🧪 营养素深度／明细」也不带窗口，区间只在这里说）。 */
-        emptyText: '这一段时间（' + start + ' ~ ' + end + '）没有饮食记录。',
+        emptyText: m('skill-calorie.diet-nutrition.c013', { p0: String(start), p1: String(end) }),
         /* 原第二句「食品库里查不到营养值的食物，用『存食品』补上营养值」删——那是**窗内有记录、
            食品缺营养值**那一态的下一句；这一态连一条记录都没有，先说要记什么。 */
-        guide: '说「记一餐」记下吃的；补以前的日期说「补记饮食」。',
-        footnote: '📊 数据来源 · 饮食记录 × 食品库 · ' + start + ' → ' + end + '（按食物名折算）',
+        guide: m('skill-calorie.diet-nutrition.c014'),
+        footnote: m('skill-calorie.diet-nutrition.c015', { p0: String(start), p1: String(end) }),
         command,
       }),
     };

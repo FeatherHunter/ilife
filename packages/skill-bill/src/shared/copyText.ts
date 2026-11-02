@@ -20,6 +20,7 @@
  * （`oneLine`／`csvCell`／`MISSING`／截断动词 `truncate` 取自 `truncateNote`），不自造。
  * 本件对外给五个（铁律五上限内）：`MISSING`／`EMPTY_CELL`／`oneLine`／`csvCell`／`truncate`。
  */
+import { m } from '../entries/index.js';
 export const MISSING = '未给';
 export const EMPTY_CELL = '—';
 /** 单行化（CR／LF 压成空格，前后去空；复制每行恒单行）。 */
@@ -42,5 +43,5 @@ export function truncate(s: string, limit: number, withOmission = false): string
   if (chars.length <= limit) return flat;
   const cut = chars.slice(0, limit).join('');
   if (!withOmission) return cut;
-  return cut + '…（省略' + String(chars.length - limit) + '字）';
+  return m('skill-bill.shared-copyText.c001', { p0: String(cut), p1: String(String(chars.length - limit)) });
 }

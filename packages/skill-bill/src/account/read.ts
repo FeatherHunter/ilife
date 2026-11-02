@@ -20,12 +20,16 @@ import type { ViewOut } from '../shared/commandSpec.js';
 import { actionStamp } from '../shared/copyArea.js';
 import { projectWakeWord } from '../triggers/wakeTable.js';
 import { accountSummary } from './accounts.js';
-import { SOURCE_READ } from './pageParts.js';
+import { sourceRead } from './pageParts.js';
 import { accountSummaryDoc } from './template-summary.js';
 import type { AccountSummaryData } from './template-summary.js';
+import { m } from '../entries/index.js';
 
-/** 没有流水的库在来源脚注的窗口起止位写这两个字（留空会读成缺值）。 */
-const NO_WINDOW = '不限';
+/** 没有流水的库在来源脚注的窗口起止位写这两个字（留空会读成缺值）。
+ *  #1212：按需取词，故由常量改成函数。 */
+function noWindow(): string {
+  return m('skill-bill.account-read.c001');
+}
 
 /** `bill.account.query`：看账户汇总（账户表 ＋ 账本聚合，只读）。 */
 export function viewAccountSummary(params: Record<string, unknown>, db: BillDb): ViewOut {
@@ -40,7 +44,10 @@ export function viewAccountSummary(params: Record<string, unknown>, db: BillDb):
     flow_count: summary.flow_count,
     records: summary.records,
   };
-  const window = String(summary.accounts.length) + ' 个账户 · 最近 ' + String(summary.flow_count) + ' 笔流水';
+  const window = m('skill-bill.account-read.c002', {
+    p0: String(String(summary.accounts.length)),
+    p1: String(String(summary.flow_count)),
+  });
   return {
     data,
     page: { wakeWord, kind: 'single' },
@@ -51,12 +58,12 @@ export function viewAccountSummary(params: Record<string, unknown>, db: BillDb):
       window,
       summary,
       data,
-      windowStart: summary.first_time === '' ? NO_WINDOW : summary.first_time,
-      windowEnd: summary.last_time === '' ? NO_WINDOW : summary.last_time,
+      windowStart: summary.first_time === '' ? noWindow() : summary.first_time,
+      windowEnd: summary.last_time === '' ? noWindow() : summary.last_time,
       actionAt: actionStamp(),
     }),
   };
 }
 
 /** 本次数据来源（复制日志第 3 段）；页面上的来源脚注那句人话住 `./pageParts.js`。 */
-export { SOURCE_READ as accountReadSource };
+export { sourceRead as accountReadSource };

@@ -33,13 +33,16 @@ import type {
   ReviewTemplateView,
   SixFactorsView,
 } from './trendMiscPort.js';
+import { m } from '../entries/index.js';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；测试钉死一致）。 */
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
 
 /** 本文件各页共用的 head 标题（整页模板住 `src/shared/docPage.ts`，标题走参数）。 */
-const DOC_TITLE = '卡路里·趋势';
+function DOC_TITLE() {
+  return m('skill-calorie.render-trendMiscPortDocs.c145');
+}
 
 function fmt(n: number | null | undefined): string {
   if (n === null || n === undefined) return '—';
@@ -49,8 +52,8 @@ function fmt(n: number | null | undefined): string {
 function windowForm(start: string, end: string, extra: string): string {
   return renderParamForm({
     fields: [
-      { name: 'start', label: '开始', value: start },
-      { name: 'end', label: '结束', value: end },
+      { name: 'start', label: m('skill-calorie.render-trendMiscPortDocs.c001'), value: start },
+      { name: 'end', label: m('skill-calorie.render-trendMiscPortDocs.c002'), value: end },
     ],
     description: extra,
   });
@@ -116,7 +119,7 @@ function calorieAxisOf(peak: number | null): {
   readonly format: (value: number) => string;
 } | null {
   if (peak === null || !Number.isFinite(peak) || peak <= 0) return null;
-  return axisOf(0, niceCeil(peak), '卡');
+  return axisOf(0, niceCeil(peak), m('skill-calorie.render-trendMiscPortDocs.c003'));
 }
 
 /* ── 热量趋势（calorie_trend：T7 口径日序列＋达标统计） ── */
@@ -129,23 +132,28 @@ export function buildCalorieTrendDoc(v: CalorieTrendView): string {
    * 天数 n（把没记录的天当 0 卡算成达标），被删口径已逐字搬进下面的 techNote。 */
   const loggedDays = v.data.series.filter((d) => d.calorie !== null).length;
   const dLabel = dateLabelOf(v.start, v.end);
-  const trendHuman = s.trend === 'down' ? '呈下降' : (s.trend === 'up' ? '呈上升' : '基本平稳');
+  const trendHuman = s.trend === 'down' ? m('skill-calorie.render-trendMiscPortDocs.c004') : (s.trend === 'up' ? m('skill-calorie.render-trendMiscPortDocs.c005') : m('skill-calorie.render-trendMiscPortDocs.c006'));
   /* #160 收口：达标分母与被删口径都落在这条注释里（e2e 认 `calorie.view.calorie-trend`／`window` 两个
    * 字面量，前缀逐字未动）；原「达标天数写【全部<窗口天数>天里 M 天达标】、分母＝窗口天数、没记录的
    * 天按 0 卡计入达标」与「图上把没记录的天补成 0 卡落点」两条老口径即在此留档。 */
-  const techNote = '<!-- calorie.view.calorie-trend window ' + v.start + ' ' + v.end
-    + ' T5 buildSeries 唯一源（水已排除） 达标＝单日≤目标×1.05 达标分母＝有记录的天' + loggedDays
-    + '（没记录的天不参与达标统计、也不按 0 卡算） 最小形态 空窗阻断 不编数'
-    + ' 被删口径（#160 收口前）：达标天数写「全部 ' + n + ' 天里 ' + s.compliantDays
-    + ' 天达标」——分母＝窗口天数、没记录的天按 0 卡计入达标；图上没记录的天补 0 卡落点（与图例打架） -->';
+  const techNote = m('skill-calorie.render-trendMiscPortDocs.c007', {
+    p0: String(v.start),
+    p1: String(v.end),
+    p2: String(loggedDays),
+    p3: String(n),
+    p4: String(s.compliantDays),
+  });
   /* #160 返工：原 meta 行的「默认组」（自造分组名，读者既不懂也选不了）与「对照目标值」
    *  （页上唯一的对照就是图里那条目标线，图例已写）一律删；窗口天数与区间留可见面。 */
-  const metaLeft = '近' + n + '天 · ' + v.start + '~' + v.end;
+  const metaLeft = m('skill-calorie.render-trendMiscPortDocs.c008', { p0: String(n), p1: String(v.start), p2: String(v.end) });
   /* #160 返工③：摘要（页头副标题）只留卡片里没有的那句——**窗口天数怎么分成工作日／周末**
    *  （第 4 张卡只给两边的均值，没说各有几天）。旧句「日均493.5卡（目标1800卡）· 呈下降 ·
    *  达标11天，占全部 90 天」与「日均」「趋势」「达标天数」三张卡逐项同值，
    *  「目标1800卡」还在卡副标与图例各印一遍（一页三处）。 */
-  const summary = '其中工作日 ' + v.data.meta.weekdayCount + ' 天、周末 ' + v.data.meta.weekendCount + ' 天';
+  const summary = m('skill-calorie.render-trendMiscPortDocs.c009', {
+    p0: String(v.data.meta.weekdayCount),
+    p1: String(v.data.meta.weekendCount),
+  });
   // #424：目标值并入纵轴量程（目标线不越界），上界收到整齐数，刻度 3 条带单位「卡」。
   let peak: number | null = s.target;
   for (const d of v.data.series) {
@@ -154,33 +162,40 @@ export function buildCalorieTrendDoc(v: CalorieTrendView): string {
       if (peak === null || c > peak) peak = c;
     }
   }
-  const calorieAxis = calorieAxisOf(peak) ?? axisOf(0, 1, '卡');
+  const calorieAxis = calorieAxisOf(peak) ?? axisOf(0, 1, m('skill-calorie.render-trendMiscPortDocs.c010'));
   const parts: string[] = [
     techNote,
     renderKpiGrid([
       /* #497：日均分母＝有记录的天（取数层 `analysis/trend.ts` 已改）；副文案点名分母（判据③），
        * 读数与逐日明细里有记录那几天的合计对得上。老文案只写「目标 N 卡」，分母不明。 */
-      { label: '日均', value: String(s.avg), unit: '卡', detail: '有记录的 ' + loggedDays + ' 天平均 · 目标 ' + s.target + '卡' },
+      { label: m('skill-calorie.render-trendMiscPortDocs.c011'), value: String(s.avg), unit: m('skill-calorie.render-trendMiscPortDocs.c012'), detail: m('skill-calorie.render-trendMiscPortDocs.c013', { p0: String(loggedDays), p1: String(s.target) }) },
       /* #497：首末值取有记录的第一天／最后一天（窗边空白日不再读 0），副文案点名。 */
-      { label: '趋势', value: trendHuman, detail: '从有记录的第一天 ' + s.startAvg + ' 到最后一天 ' + s.endAvg + '（差 ' + s.trendValue + '）' },
+      { label: m('skill-calorie.render-trendMiscPortDocs.c014'), value: trendHuman, detail: m('skill-calorie.render-trendMiscPortDocs.c015', {
+        p0: String(s.startAvg),
+        p1: String(s.endAvg),
+        p2: String(s.trendValue),
+      }) },
       /* #160 收口（本票第一件）：分子与分母一次说清，且分母＝**有记录的天**（与图例同一口径）——
        * 「有记录的 N 天里 M 天达标」。老文案「全部 N 天里 M 天达标」的 N 是窗口天数、没记录的天
        * 被当 0 卡算成达标（7d 窗只记 5 天却报 7 天达标），与图例当场打架；被删口径见 techNote。 */
-      { label: '达标天数', value: String(s.compliantDays), unit: '天',
-        detail: '有记录的 ' + loggedDays + ' 天里 ' + s.compliantDays + ' 天达标（每天不超过目标的 105%）' },
+      { label: m('skill-calorie.render-trendMiscPortDocs.c016'), value: String(s.compliantDays), unit: m('skill-calorie.render-trendMiscPortDocs.c017'),
+        detail: m('skill-calorie.render-trendMiscPortDocs.c018', {
+          p0: String(loggedDays),
+          p1: String(s.compliantDays),
+        }) },
       /* #497：工作日／周末均值分母同样＝有记录的天（各组内空白日不进分母），副文案点名（判据③）。 */
-      { label: '周末比工作日', value: String(s.weekendDiff), unit: '卡', detail: '工作日 ' + s.weekdayAvg + '／周末 ' + s.weekendAvg + '（只算记了吃多少的天）' },
+      { label: m('skill-calorie.render-trendMiscPortDocs.c019'), value: String(s.weekendDiff), unit: m('skill-calorie.render-trendMiscPortDocs.c020'), detail: m('skill-calorie.render-trendMiscPortDocs.c021', { p0: String(s.weekdayAvg), p1: String(s.weekendAvg) }) },
     ]),
     renderChartBlock({
       kind: 'line',
       /* #160 返工：图题只留「画的是什么」——原「没记录的日子不算 0、只连线」是画法说明，
        * 图下那行图例已逐字说过一遍（100% 冗余），整段删。 */
-      title: '每日热量',
+      title: m('skill-calorie.render-trendMiscPortDocs.c022'),
       input: {
         items: v.data.series.map((d) => ({ label: dLabel(d.date), value: d.calorie })),
         /* #424：纵轴刻度 3 条（与公共层 GRID_LINES=3 叠合）、标签带单位、横轴首＋峰＋尾。 */
         options: {
-          markLine: { value: s.target, label: '目标' },
+          markLine: { value: s.target, label: m('skill-calorie.render-trendMiscPortDocs.c023') },
           yTicks: 3,
           labels: 'select',
           format: calorieAxis.format,
@@ -197,7 +212,7 @@ export function buildCalorieTrendDoc(v: CalorieTrendView): string {
      * 位置同在该图卡片之后（原来那句话一页出现两次：图题一次、图例一次）。 */
     '<div class="legend"><span><i class="b"></i>目标' + s.target + '卡</span>'
       + '<span>没记录的那天不按 0 算，只在有记录的两天之间连线</span></div>',
-    dataCopyArea('复制数据', {
+    dataCopyArea(m('skill-calorie.render-trendMiscPortDocs.c024'), {
       envelope: {
         version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.calorie-trend',
         data: {
@@ -212,9 +227,9 @@ export function buildCalorieTrendDoc(v: CalorieTrendView): string {
     }),
   ];
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '热量趋势',
-    eyebrow: '卡路里 · 趋势',
+    docTitle: DOC_TITLE(),
+    title: m('skill-calorie.render-trendMiscPortDocs.c025'),
+    eyebrow: m('skill-calorie.render-trendMiscPortDocs.c026'),
     subtitle: null,
     metaLeft,
     /* #160 返工②：徽章不传（空串＝`shared/docPage.ts` 整颗不渲染）——本页 H1 逐字就是「热量趋势」，
@@ -237,27 +252,31 @@ export function buildLongTrendDoc(v: LongTrendView): string {
   const calorieAxis = calorieAxisOf(v.days.reduce((peak, d) => (
     typeof d.calorie === 'number' && Number.isFinite(d.calorie) && d.calorie > peak ? d.calorie : peak
   ), 0))
-    ?? axisOf(0, 1, '卡');
+    ?? axisOf(0, 1, m('skill-calorie.render-trendMiscPortDocs.c027'));
   const weighed = v.days.filter((d) => d.weightKg !== null);
   const weightAxis = weightAxisOf(weighed.map((d) => d.weightKg as number));
   const parts: string[] = [
     renderKpiGrid([
       /* #497：avg 分母＝记了吃多少的天（取数层已改，卡副文案早写对）；窗内无热量记录即 —。 */
-      { label: '日均热量', value: fmt(v.avgCalorie), unit: '卡', detail: '按记了吃多少的天算' },
+      { label: m('skill-calorie.render-trendMiscPortDocs.c028'), value: fmt(v.avgCalorie), unit: m('skill-calorie.render-trendMiscPortDocs.c029'), detail: m('skill-calorie.render-trendMiscPortDocs.c030') },
       {
-        label: '体重变化', value: fmt(v.weightChange), unit: v.weightChange === null ? '' : 'kg',
-        detail: v.weightChange === null ? '这段时间只称了 1 次，比不出变化' : '从第一天到最后一天',
+        label: m('skill-calorie.render-trendMiscPortDocs.c031'), value: fmt(v.weightChange), unit: v.weightChange === null ? '' : 'kg',
+        detail: v.weightChange === null ? m('skill-calorie.render-trendMiscPortDocs.c032') : m('skill-calorie.render-trendMiscPortDocs.c033'),
         status: v.weightChange === null ? undefined : (v.weightChange < 0 ? 'ok' : (v.weightChange > 0 ? 'warn' : undefined)),
       },
       /* #497：卡值＝有热量记录的天数（旧口径值＝窗口天数，与副文案「有记录的天」打架；
        * 30 天窗读 9）。副文案点名「记了吃多少」——纯称重日不计，与日均卡同口径。 */
-      { label: '数据天数', value: String(v.loggedDays), unit: '天', detail: '记了吃多少 ' + v.loggedDays + ' 天 · ' + v.start + ' ~ ' + v.end },
+      { label: m('skill-calorie.render-trendMiscPortDocs.c034'), value: String(v.loggedDays), unit: m('skill-calorie.render-trendMiscPortDocs.c035'), detail: m('skill-calorie.render-trendMiscPortDocs.c036', {
+        p0: String(v.loggedDays),
+        p1: String(v.start),
+        p2: String(v.end),
+      }) },
     ]),
     renderChartBlock({
       kind: 'line',
       /* #160 返工：图题只留「画的是什么」——窗口天数meta 行与「数据天数」卡已各说一次，
        * 画法说明（不算 0／只连线）图下那句小字已说，图题不再复述图例。 */
-      title: '每日热量',
+      title: m('skill-calorie.render-trendMiscPortDocs.c037'),
       input: {
         items: v.days.map((d) => ({ label: dLabel(d.date), value: d.calorie })),
         /* #424：纵轴刻度 3 条（与公共层 GRID_LINES=3 叠合）、标签带单位、横轴首＋峰＋尾。 */
@@ -278,7 +297,10 @@ export function buildLongTrendDoc(v: LongTrendView): string {
   if (weighed.length > 0 && weightAxis !== null) {
     parts.push(renderChartBlock({
       kind: 'line',
-      title: '体重轨迹（' + v.windowDays + ' 天里称了 ' + weighed.length + ' 次）',
+      title: m('skill-calorie.render-trendMiscPortDocs.c038', {
+        p0: String(v.windowDays),
+        p1: String(weighed.length),
+      }),
       input: {
         items: weighed.map((d) => ({ label: dLabel(d.date), value: d.weightKg })),
         options: {
@@ -293,7 +315,7 @@ export function buildLongTrendDoc(v: LongTrendView): string {
           legend: true,
           ...(weighed.length >= 2 ? { avgLine: 7 } : {}),
           series: [
-            { name: '每次称重', items: weighed.map((d) => ({ label: dLabel(d.date), value: d.weightKg })) },
+            { name: m('skill-calorie.render-trendMiscPortDocs.c039'), items: weighed.map((d) => ({ label: dLabel(d.date), value: d.weightKg })) },
           ],
         },
       },
@@ -301,16 +323,16 @@ export function buildLongTrendDoc(v: LongTrendView): string {
   }
   parts.push(renderDataTable({
     columns: [
-      { key: 'date', label: '日期' },
-      { key: 'calorie', label: '热量(卡)', align: 'right' },
-      { key: 'weight', label: '体重(kg)', align: 'right' },
+      { key: 'date', label: m('skill-calorie.render-trendMiscPortDocs.c040') },
+      { key: 'calorie', label: m('skill-calorie.render-trendMiscPortDocs.c041'), align: 'right' },
+      { key: 'weight', label: m('skill-calorie.render-trendMiscPortDocs.c042'), align: 'right' },
     ],
     rows: v.days.map((d) => ({ date: d.date, calorie: fmt(d.calorie), weight: fmt(d.weightKg) })),
     /* #160 返工：表名只说「这是什么表」——区间同页 meta 行与「数据天数」卡已出现两次，删。 */
-    caption: '逐日明细',
-    emptyText: '这段时间还没有逐日记录，先记一餐或称一次体重再来看',
+    caption: m('skill-calorie.render-trendMiscPortDocs.c043'),
+    emptyText: m('skill-calorie.render-trendMiscPortDocs.c044'),
   }));
-  parts.push(dataCopyArea('复制数据', {
+  parts.push(dataCopyArea(m('skill-calorie.render-trendMiscPortDocs.c045'), {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.long-trend',
       data: {
@@ -319,15 +341,19 @@ export function buildLongTrendDoc(v: LongTrendView): string {
     },
   }));
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '近' + v.windowDays + '天整体趋势',
+    docTitle: DOC_TITLE(),
+    title: m('skill-calorie.render-trendMiscPortDocs.c046', { p0: String(v.windowDays) }),
     /* #160 返工：原眉标「calorie.view.long-trend · 趋势其他移植域」是命令键＋内部黑话
      * （snake_case 与「移植域」直接印在用户页最顶一行），换成读者看得懂的分域名；
      * 原副标「体重＋热量双序列（称重不足 2 次则体重变化明示缺失）」是工程词解释实现，
      * 换成一句「这页有什么」；体重缺失的口径已在「体重变化」卡的详例里说清，不再另说一次。 */
-    eyebrow: '卡路里 · 趋势',
-    subtitle: '这页只有两本账：吃了多少看热量曲线，称了多少看体重曲线',
-    metaLeft: '近' + v.windowDays + '天 · ' + v.start + '~' + v.end,
+    eyebrow: m('skill-calorie.render-trendMiscPortDocs.c047'),
+    subtitle: m('skill-calorie.render-trendMiscPortDocs.c048'),
+    metaLeft: m('skill-calorie.render-trendMiscPortDocs.c049', {
+      p0: String(v.windowDays),
+      p1: String(v.start),
+      p2: String(v.end),
+    }),
     /* #160 返工②（同一条规则的第三处）：徽章不传——本页 H1 是「近30天整体趋势」，逐字包含「整体趋势」，
      *  徽章再印一遍是同页同词两遍。 */
     badge: '',
@@ -343,66 +369,66 @@ export function buildNutritionAnalysisDoc(v: NutritionAnalysisView): string {
   const parts: string[] = [
     /* #616 · 日期退出 H1（`shared/docPage.ts` 的 B 线口径＝人话短标题、不带日期）：窗口区间搬进正文首件窗口条
        （`dietUi.windowStrip()`）；原窗口表单 `description` 槽的换算说明（#496：裸公式＋「宏量」「微量」「vs」三个内部叫法，审查件第 16 条改成人话）改住口径行，文字一字未删。 */
-    windowStrip(v.start, v.end, v.days + ' 天'),
-    renderCaliberLine('蛋白和碳水每克 4 千卡，脂肪每克 9 千卡，除以总热量得到占比。下面是每天平均摄入和每天推荐量的对比'),
+    windowStrip(v.start, v.end, m('skill-calorie.render-trendMiscPortDocs.c050', { p0: String(v.days) })),
+    renderCaliberLine(m('skill-calorie.render-trendMiscPortDocs.c051')),
     renderKpiGrid([
-      { label: '蛋白', value: String(v.proteinG), unit: 'g', detail: v.proteinPct + '%（建议 10% 至 20%）' },
-      { label: '碳水', value: String(v.carbG), unit: 'g', detail: v.carbPct + '%（建议 45% 至 65%）' },
-      { label: '脂肪', value: String(v.fatG), unit: 'g', detail: v.fatPct + '%（建议 20% 至 35%）' },
-      { label: '总摄入', value: String(v.totalCalorie), unit: '卡', detail: v.days + ' 天' },
+      { label: m('skill-calorie.render-trendMiscPortDocs.c052'), value: String(v.proteinG), unit: 'g', detail: m('skill-calorie.render-trendMiscPortDocs.c053', { p0: String(v.proteinPct) }) },
+      { label: m('skill-calorie.render-trendMiscPortDocs.c054'), value: String(v.carbG), unit: 'g', detail: m('skill-calorie.render-trendMiscPortDocs.c055', { p0: String(v.carbPct) }) },
+      { label: m('skill-calorie.render-trendMiscPortDocs.c056'), value: String(v.fatG), unit: 'g', detail: m('skill-calorie.render-trendMiscPortDocs.c057', { p0: String(v.fatPct) }) },
+      { label: m('skill-calorie.render-trendMiscPortDocs.c058'), value: String(v.totalCalorie), unit: m('skill-calorie.render-trendMiscPortDocs.c059'), detail: m('skill-calorie.render-trendMiscPortDocs.c060', { p0: String(v.days) }) },
     ]),
     renderDataTable({
       columns: [
-        { key: 'label', label: '微量' },
-        { key: 'avg', label: '日均', align: 'right' },
-        { key: 'good', label: '推荐' },
-        { key: 'status', label: '状态' },
+        { key: 'label', label: m('skill-calorie.render-trendMiscPortDocs.c061') },
+        { key: 'avg', label: m('skill-calorie.render-trendMiscPortDocs.c062'), align: 'right' },
+        { key: 'good', label: m('skill-calorie.render-trendMiscPortDocs.c063') },
+        { key: 'status', label: m('skill-calorie.render-trendMiscPortDocs.c064') },
       ],
       rows: [
         {
-          label: '膳食纤维', avg: v.fiberAvg + 'g', good: '≥25g/天',
-          status: v.fiberAvg >= 25 ? '✓' : '↓ 不足',
+          label: m('skill-calorie.render-trendMiscPortDocs.c065'), avg: v.fiberAvg + 'g', good: m('skill-calorie.render-trendMiscPortDocs.c066'),
+          status: v.fiberAvg >= 25 ? '✓' : m('skill-calorie.render-trendMiscPortDocs.c067'),
         },
         {
-          label: '钠', avg: v.sodiumAvg + 'mg', good: '≤2000mg/天',
-          status: v.sodiumAvg <= 2000 ? '✓' : '↑ 超标',
+          label: m('skill-calorie.render-trendMiscPortDocs.c068'), avg: v.sodiumAvg + 'mg', good: m('skill-calorie.render-trendMiscPortDocs.c069'),
+          status: v.sodiumAvg <= 2000 ? '✓' : m('skill-calorie.render-trendMiscPortDocs.c070'),
         },
         {
-          label: '糖', avg: v.sugarAvg + 'g', good: '≤50g/天',
-          status: v.sugarAvg <= 50 ? '✓' : '↑ 超标',
+          label: m('skill-calorie.render-trendMiscPortDocs.c071'), avg: v.sugarAvg + 'g', good: m('skill-calorie.render-trendMiscPortDocs.c072'),
+          status: v.sugarAvg <= 50 ? '✓' : m('skill-calorie.render-trendMiscPortDocs.c073'),
         },
       ],
-      caption: '微量营养素 vs 推荐',
-      emptyText: '本窗无微量数据',
+      caption: m('skill-calorie.render-trendMiscPortDocs.c074'),
+      emptyText: m('skill-calorie.render-trendMiscPortDocs.c075'),
     }),
   ];
   let charts = false;
   if (v.totalCalorie > 0) {
     parts.push(renderChartBlock({
       kind: 'donut',
-      title: '热量来源占比',
+      title: m('skill-calorie.render-trendMiscPortDocs.c076'),
       input: {
         items: [
-          { label: '蛋白（千卡）', value: v.proteinG * 4 },
-          { label: '碳水（千卡）', value: v.carbG * 4 },
-          { label: '脂肪（千卡）', value: v.fatG * 9 },
+          { label: m('skill-calorie.render-trendMiscPortDocs.c077'), value: v.proteinG * 4 },
+          { label: m('skill-calorie.render-trendMiscPortDocs.c078'), value: v.carbG * 4 },
+          { label: m('skill-calorie.render-trendMiscPortDocs.c079'), value: v.fatG * 9 },
         ],
         /* #496 · 中心原本不给标签，只印三数之和，与上方「总摄入」并排互相矛盾（审查件第 83 条）；中心标明这是**折算**出来的合计，图下再说一句为什么两处对不上。 */
         options: {
-          showPercent: true, centerLabel: '折算合计（千卡）', centerValue: String(Math.round(folded)),
+          showPercent: true, centerLabel: m('skill-calorie.render-trendMiscPortDocs.c080'), centerValue: String(Math.round(folded)),
         },
       },
     }));
-    parts.push(renderCaliberLine('环上的数＝蛋白与碳水每克 4 千卡，脂肪每克 9 千卡，折算出的热量合计。它与上方「总摄入」（按每条记录的热量合计）不是同一个数——记录里的热量是各条自己报的值。'));
+    parts.push(renderCaliberLine(m('skill-calorie.render-trendMiscPortDocs.c081')));
     charts = true;
   }
   parts.push(renderDisclosure({
-    title: '分析建议（共 ' + v.advice.length + ' 条，由窗内数据规则派生）',
+    title: m('skill-calorie.render-trendMiscPortDocs.c082', { p0: String(v.advice.length) }),
     contentHtml: renderListRows({
       items: v.advice.map((a, i) => ({ left: String(i + 1), main: a, right: '' })),
     }),
   }));
-  parts.push(dataCopyArea('复制数据', {
+  parts.push(dataCopyArea(m('skill-calorie.render-trendMiscPortDocs.c083'), {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.nutrition-analysis',
       data: {
@@ -417,11 +443,11 @@ export function buildNutritionAnalysisDoc(v: NutritionAnalysisView): string {
     },
   }));
   return assembleDocPage({
-    docTitle: '卡路里 趋势',
-    title: '营养分析', /* #616 · 日期搬正文首件窗口条（上一处），H1 只留人话短名。 */
-    eyebrow: '趋势分析', /* #591 · 裁定1 页级覆盖：标题两行去 `·`、副题 `、` 串改逗号分句；模块常量 `DOC_TITLE` 与别页一字不碰。 */
+    docTitle: m('skill-calorie.render-trendMiscPortDocs.c084'),
+    title: m('skill-calorie.render-trendMiscPortDocs.c085'), /* #616 · 日期搬正文首件窗口条（上一处），H1 只留人话短名。 */
+    eyebrow: m('skill-calorie.render-trendMiscPortDocs.c086'), /* #591 · 裁定1 页级覆盖：标题两行去 `·`、副题 `、` 串改逗号分句；模块常量 `DOC_TITLE()` 与别页一字不碰。 */
     /* #511 · 原副题「配比＋微量＋规则建议（建议阈值见数据层注释，不编造结论）」——「配比／微量／规则建议」是内部叫法，括号里那半句还是开发过程说明（审查件第 82 条）⇒ 换成一句「这页有什么」。 */
-    subtitle: '三大营养素比例与其他营养素摄入，以及据此给出的建议',
+    subtitle: m('skill-calorie.render-trendMiscPortDocs.c087'),
     content: dietUiCss() + parts.join(''),
     charts, pageUi: true,
   });
@@ -438,15 +464,17 @@ export function buildNutritionAnalysisDoc(v: NutritionAnalysisView): string {
  *    · `无X目标（先设目标）` → 一句说明「为什么判不了达标 ＋ 要设该说哪条唤醒词」（原句是祈使句，
  *      读者不知道去哪里设）。
  *  表里没有的取值原样透传（有目标时那几句「当日摄入 / 目标」不动）。 */
-const HUMAN_TEXT: Record<string, string> = {
-  热量达标: '热量（千卡）达标',
-  '无热量目标（先设目标）': '没有设热量目标，所以判不了达标。要设请说“定营养目标”',
-  '无蛋白目标（先设目标）': '没有设蛋白目标，所以判不了达标。要设请说“定营养目标”',
-  '无饮水目标（先设目标）': '没有设饮水目标，所以判不了达标。要设请说“定饮水目标”',
+function HUMAN_TEXT() : Record<string, string> {
+  return {
+  热量达标: m('skill-calorie.render-trendMiscPortDocs.c146'),
+  '无热量目标（先设目标）': m('skill-calorie.render-trendMiscPortDocs.c147'),
+  '无蛋白目标（先设目标）': m('skill-calorie.render-trendMiscPortDocs.c148'),
+  '无饮水目标（先设目标）': m('skill-calorie.render-trendMiscPortDocs.c149'),
 };
+}
 
 function humanText(s: string): string {
-  return HUMAN_TEXT[s] ?? s;
+  return HUMAN_TEXT()[s] ?? s;
 }
 
 export function buildSixFactorsDoc(v: SixFactorsView): string {
@@ -457,15 +485,15 @@ export function buildSixFactorsDoc(v: SixFactorsView): string {
     }))),
     renderDataTable({
       columns: [
-        { key: 'label', label: '因素' },
-        { key: 'ok', label: '达标' },
-        { key: 'detail', label: '依据' },
+        { key: 'label', label: m('skill-calorie.render-trendMiscPortDocs.c088') },
+        { key: 'ok', label: m('skill-calorie.render-trendMiscPortDocs.c089') },
+        { key: 'detail', label: m('skill-calorie.render-trendMiscPortDocs.c090') },
       ],
       rows: v.factors.map((f) => ({ label: humanText(f.label), ok: f.ok ? '✓' : '✗', detail: humanText(f.detail) })),
-      caption: '六因素明细（' + v.date + '，得分 ' + v.score + '/6）',
-      emptyText: '当日无因素数据',
+      caption: m('skill-calorie.render-trendMiscPortDocs.c091', { p0: String(v.date), p1: String(v.score) }),
+      emptyText: m('skill-calorie.render-trendMiscPortDocs.c092'),
     }),
-    dataCopyArea('复制数据', {
+    dataCopyArea(m('skill-calorie.render-trendMiscPortDocs.c093'), {
       envelope: {
         version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.six-factors',
         data: {
@@ -483,13 +511,13 @@ export function buildSixFactorsDoc(v: SixFactorsView): string {
     }),
   ];
   return assembleDocPage({
-    docTitle: '卡路里 趋势',
-    title: '每日六因素', /* #616 · 日期搬正文首件窗口条（见 `content` 那一行），H1 只留人话短名。 */
-    eyebrow: '趋势分析', /* #591 · 裁定1 页级覆盖：标题两行去 `·`；副题 `、` 枚举撤——模块常量 DOC_TITLE 与别页一字不碰。 */
+    docTitle: m('skill-calorie.render-trendMiscPortDocs.c094'),
+    title: m('skill-calorie.render-trendMiscPortDocs.c095'), /* #616 · 日期搬正文首件窗口条（见 `content` 那一行），H1 只留人话短名。 */
+    eyebrow: m('skill-calorie.render-trendMiscPortDocs.c096'), /* #591 · 裁定1 页级覆盖：标题两行去 `·`；副题 `、` 枚举撤——模块常量 DOC_TITLE() 与别页一字不碰。 */
     /* #511 · 这一句是 #496 补的「六因素是哪六项」（审查件第 85 条），本票只在它后面补一句单位口径（第 86 条：
        全页没有一处说清热量的单位是千卡）。**不往枚举里塞「（千卡）」**：那句话是 #496 的交付物、被 `test/t496-文案统一.test.mjs`
        逐字钉住（该测试件不在本票声明路径内），单位改由**条目名**（`热量（千卡）达标`）与句末这句口径承载（#591：`、` 枚举撤）。 */
-    subtitle: '这 6 项达标了几项（热量按千卡计）',
+    subtitle: m('skill-calorie.render-trendMiscPortDocs.c097'),
     /* #616 · 日期退出 H1：搬进正文首件窗口条——单日窗退化成**一枚日期块**（`diet/dietUi.ts` 现成件，页内样式随件带入）。 */
     content: dietUiCss() + windowStrip(v.date, v.date) + parts.join(''),
     charts: false, pageUi: true,
@@ -502,22 +530,22 @@ export function buildLintHealthDoc(v: LintHealthView): string {
   const parts: string[] = [
     renderKpiGrid([
       {
-        label: '问题总数', value: String(v.issueCount), unit: '项',
-        detail: v.issueCount === 0 ? '数据健康' : '见下表明细',
+        label: m('skill-calorie.render-trendMiscPortDocs.c098'), value: String(v.issueCount), unit: m('skill-calorie.render-trendMiscPortDocs.c099'),
+        detail: v.issueCount === 0 ? m('skill-calorie.render-trendMiscPortDocs.c100') : m('skill-calorie.render-trendMiscPortDocs.c101'),
         status: v.issueCount === 0 ? 'ok' : 'warn',
       },
     ]),
     renderDataTable({
       columns: [
-        { key: 'label', label: '检查项' },
-        { key: 'count', label: '数量', align: 'right' },
-        { key: 'detail', label: '明细' },
+        { key: 'label', label: m('skill-calorie.render-trendMiscPortDocs.c102') },
+        { key: 'count', label: m('skill-calorie.render-trendMiscPortDocs.c103'), align: 'right' },
+        { key: 'detail', label: m('skill-calorie.render-trendMiscPortDocs.c104') },
       ],
       rows: v.checks.map((c) => ({ label: c.label, count: c.count, detail: c.detail })),
-      caption: '健康检查明细（只读体检，不写库）',
-      emptyText: '无检查项',
+      caption: m('skill-calorie.render-trendMiscPortDocs.c105'),
+      emptyText: m('skill-calorie.render-trendMiscPortDocs.c106'),
     }),
-    dataCopyArea('复制数据', {
+    dataCopyArea(m('skill-calorie.render-trendMiscPortDocs.c107'), {
       envelope: {
         version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.lint-health',
         data: {
@@ -533,10 +561,10 @@ export function buildLintHealthDoc(v: LintHealthView): string {
     }),
   ];
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '数据健康检查',
-    eyebrow: '卡路里 · 趋势',
-    subtitle: '未匹配库/零负热量/未来日期/疑似重复（只读，不写库）',
+    docTitle: DOC_TITLE(),
+    title: m('skill-calorie.render-trendMiscPortDocs.c108'),
+    eyebrow: m('skill-calorie.render-trendMiscPortDocs.c109'),
+    subtitle: m('skill-calorie.render-trendMiscPortDocs.c110'),
     content: parts.join(''),
     charts: false, pageUi: true,
   });
@@ -547,12 +575,12 @@ export function buildLintHealthDoc(v: LintHealthView): string {
 export function buildProcessProgressDoc(v: ProcessProgressView): string {
   const parts: string[] = [
     renderKpiGrid([
-      { label: '训练计划', value: v.hasPlan ? '有' : '无', detail: v.title ?? '未配置计划' },
-      { label: '计划训练日', value: String(v.plannedDays), unit: '天', detail: v.totalWeeks === null ? '' : '共 ' + v.totalWeeks + ' 周' },
-      { label: '近7天运动', value: String(v.sessions7d), unit: '次', detail: v.start + ' ~ ' + v.end },
-      { label: '近7天时长', value: String(v.minutes7d), unit: '分钟' },
+      { label: m('skill-calorie.render-trendMiscPortDocs.c111'), value: v.hasPlan ? m('skill-calorie.render-trendMiscPortDocs.c112') : m('skill-calorie.render-trendMiscPortDocs.c113'), detail: v.title ?? m('skill-calorie.render-trendMiscPortDocs.c114') },
+      { label: m('skill-calorie.render-trendMiscPortDocs.c115'), value: String(v.plannedDays), unit: m('skill-calorie.render-trendMiscPortDocs.c116'), detail: v.totalWeeks === null ? '' : m('skill-calorie.render-trendMiscPortDocs.c117', { p0: String(v.totalWeeks) }) },
+      { label: m('skill-calorie.render-trendMiscPortDocs.c118'), value: String(v.sessions7d), unit: m('skill-calorie.render-trendMiscPortDocs.c119'), detail: v.start + ' ~ ' + v.end },
+      { label: m('skill-calorie.render-trendMiscPortDocs.c120'), value: String(v.minutes7d), unit: m('skill-calorie.render-trendMiscPortDocs.c121') },
     ]),
-    dataCopyArea('复制数据', {
+    dataCopyArea(m('skill-calorie.render-trendMiscPortDocs.c122'), {
       envelope: {
         version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.process-progress',
         data: {
@@ -565,10 +593,10 @@ export function buildProcessProgressDoc(v: ProcessProgressView): string {
     }),
   ];
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '落地训练进度',
-    eyebrow: '卡路里 · 趋势',
-    subtitle: '计划配置＋近 7 天执行（无计划且无执行即阻断）',
+    docTitle: DOC_TITLE(),
+    title: m('skill-calorie.render-trendMiscPortDocs.c123'),
+    eyebrow: m('skill-calorie.render-trendMiscPortDocs.c124'),
+    subtitle: m('skill-calorie.render-trendMiscPortDocs.c125'),
     content: parts.join(''),
     charts: false, pageUi: true,
   });
@@ -578,23 +606,23 @@ export function buildProcessProgressDoc(v: ProcessProgressView): string {
 
 export function buildReviewTemplateDoc(v: ReviewTemplateView): string {
   const parts: string[] = [
-    windowForm(v.start, v.end, '饮食/运动/体重三面小结；记餐偏疏时结论明示仅供参考'),
+    windowForm(v.start, v.end, m('skill-calorie.render-trendMiscPortDocs.c126')),
     renderKpiGrid([
-      { label: '记餐', value: String(v.meals), unit: '餐', detail: v.days + ' 天' },
-      { label: '日均热量', value: String(v.avgCalorie), unit: '卡', detail: v.goalCalorie === null ? '无目标' : '目标 ' + v.goalCalorie + '卡' },
-      { label: '运动', value: String(v.sessions), unit: '次', detail: v.minutes + ' 分钟' },
+      { label: m('skill-calorie.render-trendMiscPortDocs.c127'), value: String(v.meals), unit: m('skill-calorie.render-trendMiscPortDocs.c128'), detail: m('skill-calorie.render-trendMiscPortDocs.c129', { p0: String(v.days) }) },
+      { label: m('skill-calorie.render-trendMiscPortDocs.c130'), value: String(v.avgCalorie), unit: m('skill-calorie.render-trendMiscPortDocs.c131'), detail: v.goalCalorie === null ? m('skill-calorie.render-trendMiscPortDocs.c132') : m('skill-calorie.render-trendMiscPortDocs.c133', { p0: String(v.goalCalorie) }) },
+      { label: m('skill-calorie.render-trendMiscPortDocs.c134'), value: String(v.sessions), unit: m('skill-calorie.render-trendMiscPortDocs.c135'), detail: m('skill-calorie.render-trendMiscPortDocs.c136', { p0: String(v.minutes) }) },
       {
-        label: '体重变化', value: fmt(v.weightChange), unit: v.weightChange === null ? '' : 'kg',
-        detail: v.weightChange === null ? '称重不足 2 次' : '窗首→窗尾',
+        label: m('skill-calorie.render-trendMiscPortDocs.c137'), value: fmt(v.weightChange), unit: v.weightChange === null ? '' : 'kg',
+        detail: v.weightChange === null ? m('skill-calorie.render-trendMiscPortDocs.c138') : m('skill-calorie.render-trendMiscPortDocs.c139'),
       },
     ]),
     renderDisclosure({
-      title: '复盘要点（共 ' + v.points.length + ' 条，由窗内数据派生）',
+      title: m('skill-calorie.render-trendMiscPortDocs.c140', { p0: String(v.points.length) }),
       contentHtml: renderListRows({
         items: v.points.map((p, i) => ({ left: String(i + 1), main: p, right: '' })),
       }),
     }),
-    dataCopyArea('复制数据', {
+    dataCopyArea(m('skill-calorie.render-trendMiscPortDocs.c141'), {
       envelope: {
         version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.review-template',
         data: {
@@ -608,10 +636,10 @@ export function buildReviewTemplateDoc(v: ReviewTemplateView): string {
     }),
   ];
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '复盘报告 ' + v.start + ' ~ ' + v.end,
-    eyebrow: '卡路里 · 趋势',
-    subtitle: '三面小结＋派生要点（要点为规则输出，非 AI 建议）',
+    docTitle: DOC_TITLE(),
+    title: m('skill-calorie.render-trendMiscPortDocs.c142', { p0: String(v.start), p1: String(v.end) }),
+    eyebrow: m('skill-calorie.render-trendMiscPortDocs.c143'),
+    subtitle: m('skill-calorie.render-trendMiscPortDocs.c144'),
     content: parts.join(''),
     charts: false, pageUi: true,
   });

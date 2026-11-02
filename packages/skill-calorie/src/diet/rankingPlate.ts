@@ -21,6 +21,7 @@ import type { FoodRanking } from './dietEngine.js';
 import { hasAnyDietRow } from './nutritionPort.js';
 import { FetchError } from '../fetch/errors.js';
 import { CalorieRenderError } from '../render/errors.js';
+import { m } from '../entries/index.js';
 
 export const RANK_CATEGORIES = ['high_calorie', 'low_calorie', 'frequent', 'high_carb', 'high_protein'] as const;
 export type RankCategory = (typeof RANK_CATEGORIES)[number];
@@ -55,7 +56,7 @@ function dietRowsInWindow(db: DatabaseSync, start: string, end: string): number 
 
 /** 空窗那一态的盘：零条目，窗口与类别照本次参数原样带回（装配层按它出整页空态）。 */
 function emptyRankingPlate(start: string, end: string, category: string): FoodRanking {
-  return { category, title: '本窗没有可上榜的食物（' + start + ' ~ ' + end + '）', start, end, topN: 0, items: [] };
+  return { category, title: m('skill-calorie.diet-rankingPlate.c001', { p0: String(start), p1: String(end) }), start, end, topN: 0, items: [] };
 }
 
 /** 单榜（food_ranking 某 category）取数与**两态判定**（裁定 4 的 2026-09-15 澄清）：

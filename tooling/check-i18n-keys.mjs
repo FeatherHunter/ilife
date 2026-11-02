@@ -44,6 +44,7 @@ const flag = (name, dflt) => {
 };
 const LIST = argv.includes('--list');
 const SELFTEST = argv.includes('--selftest');
+const HINTS = argv.includes('--hints');
 const SCOPE_PATH = flag('--scope', DEFAULT_SCOPE);
 const ROOT_DIR = flag('--root', ROOT);
 
@@ -55,6 +56,11 @@ const FROZEN = [
   /^[A-Z][A-Z0-9_]*$/,                          // 常量名
   /^[\w./@-]+$/,                                // 路径／包名
 ];
+
+/** SQL 语句（#1220）：大写关键字开头、以参数占位符结尾的串是数据库代码，不是给读者看的话。
+ *  只在**非基准语言**列生效（中文列照旧严格判 CJK；SQL 里不会有中文可见文案）。
+ *  判据只看字面形状（大写 SQL 关键字），不按具体文案放行；--selftest 钉住「SQL 放行、普通句子照红」。 */
+const SQL_HEAD = /^(?:SELECT|INSERT|UPDATE|DELETE|CREATE|DROP|ALTER|PRAGMA|WITH|REPLACE)\b/;
 
 /** 把源码切成「非注释的字面量」：返回 [{line, text, kind}]。kind ∈ 'str'|'tpl'。
  *  注释整段跳过（豁免①的机器判据：不看注释里的字面量）。 */
@@ -170,6 +176,11 @@ export function devMessageTexts(source) {
  *   基准语言 zh：出现 CJK 即残留；
  *   非基准语言：只判**成句的散文**——首词小写 ＋ ≥4 词 ＋ 出现功能词，或句末标点 ＋ ≥3 词；
  *     这样「代码形状的英文」（键、字段路径、标识）不误报，真句子的英文照样红。
+ *   ⑤ 内联脚本行（#1205）：非基准语言列里，**同时出现花括号与分号／等号**（或箭头函数）的串是随页内联的
+ *      JS 代码，不是给读者看的句子——中文列照旧严格判 CJK（代码里的中文也得上屏，不能漏）；英文列放行，
+ *      否则 var on = 0; 这种行会被功能词、逐词判据误报成散文。
+ *   ⑥ SQL 语句（#1220）：大写关键字开头（SELECT／INSERT／UPDATE／DELETE…）的串是数据库代码，英文列放行；
+ *      判据只看形状，普通英文句子（哪怕以 Update 开头）照旧判红。
  *   注：`/\s+/` 那一处曾误写成 `/s+/`（少一个反斜杠）⇒ 英文列一句都判不出来而门全绿；
  *   本件 `--selftest` 因此同时钉一句中文与一句英文的变异／还原两行。 */
 export function residueOf(text, lang, devTexts = new Set()) {
@@ -182,6 +193,10 @@ export function residueOf(text, lang, devTexts = new Set()) {
   if (lang === DEFAULT_LANGUAGE) {
     return new RegExp(reg.scriptRe).test(t) ? "含中文（该进 " + lang + " 词条表）" : null;
   }
+  // ⑤ 内联脚本行（#1205）：花括号 ＋ 分号/等号，或箭头函数——代码，不是句子。中文列不走这条分支。
+  if ((/[{}]/.test(t) && /[;=]/.test(t)) || /=>/.test(t)) return null;
+  // ⑥ SQL 语句（#1220）：大写关键字开头的是数据库代码，不是句子（中文列已在上面的分支判过）。
+  if (SQL_HEAD.test(t.trim())) return null;
   const words = t.trim().split(/\s+/).filter((w) => /[A-Za-z]/.test(w));
   if (words.length < 3) return null;
   const startsLower = /^[a-z]/.test(words[0]);
@@ -190,6 +205,45 @@ export function residueOf(text, lang, devTexts = new Set()) {
   const endsSentence = /[.!?]['"]?$/.test(t.trim());
   const prose = (startsLower && words.length >= 4 && hasFunc) || (endsSentence && words.length >= 3);
   return prose ? "多词句子（该进 " + lang + " 词条表）" : null;
+}
+
+/** 用户可见的属性名（这些属性值会被读屏／悬停看到，属可见文案；class／data-* 不算）。 */
+const VISIBLE_ATTR = /^(?:aria-label|aria-description|title|placeholder|alt|content)$/i;
+
+/** 一段含 HTML 标签的字面量里，把标签剥掉、只留可见文本（含可见属性值），用来找「标签串里夹着的文案」。
+ *  这是 hints 读数的判据（**不参与红绿**）：本门主判据对含 '<'／'>' 的字面量整条豁免，
+ *  于是「结构串里夹一句中文」的迁移遗漏看不见——hints 把这批候选逐条点出来供人判定。 */
+export function visibleTextOf(literal) {
+  let t = String(literal);
+  t = t.replace(/<!--[\s\S]*?-->/g, ' ');
+  t = t.replace(/\/\*[\s\S]*?\*\//g, ' ');
+  t = t.replace(/<([a-zA-Z][^>]*?)>/g, (_m, inner) => {
+    const vals = [];
+    for (const am of inner.matchAll(/([a-zA-Z-]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g)) {
+      if (VISIBLE_ATTR.test(am[1])) vals.push(am[2] !== undefined ? am[2] : am[3]);
+    }
+    return ' ' + vals.join(' ') + ' ';
+  });
+  return t.replace(/\s+/g, ' ').trim();
+}
+
+/** hints 判据：含标签的字面量里是否还残留中文可见文本（主判据豁免①漏掉的那一类）。
+ *
+ *  三道过滤，都是「这不是漏迁」的机器判据：
+ *   ① 不含标签 → 归主判据管，不算 hint；
+ *   ② 像内联代码／文档注释的串（含模板插值标记、箭头函数、function／return／throw 等）→ 不是可见文本；
+ *   ③ 剥掉标签与注释后没有中文 → 没有可见中文。
+ *  命中即「疑似漏迁」，**只报数不判红**：这一类的可见性需人判定（契约属性、注释、数据位各有例外），
+ *  把它变成红会逼着人往 allowlist 里塞假豁免，反而把门弄松。 */
+export function htmlHintOf(text, devTexts = new Set(), allow = new Set()) {
+  const t = String(text);
+  if (!t.includes('<') && !t.includes('>')) return null;
+  if (devTexts.has(t) || allow.has(t)) return null;
+  if (/\$\{|=>|\b(?:function|return|throw|const|let|var|typeof|import|export)\b/.test(t)) return null;
+  const vis = visibleTextOf(t);
+  if (!vis) return null;
+  if (!/[\u4e00-\u9fff]/.test(vis)) return null;
+  return vis.slice(0, 120);
 }
 
 /** 主判据：返回 {files, literals, residue:[{file,line,lang,why,text}], blind:[{file,why}]}。 */
@@ -225,6 +279,26 @@ export function audit(scope, root = ROOT_DIR) {
   return { files, literals: literalCount, residue, blind };
 }
 
+/** hints 读数：对已迁入的件再扫一遍「标签串里夹中文」的候选（只报数，不判红；见 htmlHintOf 注释）。 */
+export function hintsOf(scope, root = ROOT_DIR) {
+  const allow = new Set(scope.allowlist || []);
+  const out = [];
+  let files = 0;
+  for (const rel of scope.files) {
+    const p = join(root, rel);
+    if (!existsSync(p)) continue;
+    const src = readFileSync(p, 'utf8');
+    if (!importsEntries(src) || extractKeys(src).length === 0) continue;
+    const devTexts = devMessageTexts(src);
+    files += 1;
+    for (const l of literalsOf(src)) {
+      const vis = htmlHintOf(l.text, devTexts, allow);
+      if (vis !== null) out.push({ file: rel, line: l.line, text: vis });
+    }
+  }
+  return { files, hints: out };
+}
+
 function main() {
   let scope;
   try { scope = loadScope(); } catch (e) { console.error('FAIL: ' + e.message); process.exit(2); }
@@ -241,6 +315,11 @@ function main() {
     for (const x of r.residue) console.log('RESIDUE ' + x.file + ':' + x.line + ' [' + x.lang + '] ' + x.why + ' ← ' + JSON.stringify(x.text));
     console.log('RESULT: files=' + r.files.length + ' literals=' + r.literals + ' residue=' + r.residue.length);
     return;
+  }
+  if (HINTS) {
+    const h = hintsOf(scope);
+    for (const x of h.hints) console.error('HINT ' + x.file + ':' + x.line + ' ← ' + JSON.stringify(x.text));
+    console.log('HINTS: files=' + h.files + ' candidates=' + h.hints.length + '（只报数不判红：标签串里夹中文的疑似漏迁，逐条人判）');
   }
   let bad = 0;
   for (const b of r.blind) { console.error('RED 抽不出/没迁完：' + b.file + ' → ' + b.why); bad += 1; }
@@ -338,11 +417,67 @@ function selftest(scope) {
     writeFileSync(join(tmp, 'raw.ts'), "export const x = '中文但没有迁';", 'utf8');
     const fourRaw = audit({ files: ['raw.ts'], allowlist: [] }, tmp);
     want(fourRaw.blind.length === 1 && fourRaw.residue.length === 0, '没迁完的件必须报 blind 而不是 residue');
+    // ⑤ 内联脚本行（#1205）：随页内联的 JS 代码不是句子，英文列放行；同一行里的中文照旧判红。
+    writeFileSync(fixture, [
+      "import { e } from 'base-entries';",
+      "export const a = e('demo.title');",
+      "export const runtime = 'var on = 0; (C.slots || []).forEach(function(s){ if(s.opt) on++; });';",
+    ].join(String.fromCharCode(10)), 'utf8');
+    const codeOnly = audit({ files: ['demo.ts'], allowlist: [] }, tmp);
+    want(codeOnly.residue.length === 0, '内联脚本行不带中文时英文列必须放行（实得 residue=' + codeOnly.residue.length + '）');
+    writeFileSync(fixture, [
+      "import { e } from 'base-entries';",
+      "export const a = e('demo.title');",
+      "export const mark = 'var c = \"未给\";';",
+    ].join(String.fromCharCode(10)), 'utf8');
+    const codeZh = audit({ files: ['demo.ts'], allowlist: [] }, tmp);
+    want(codeZh.residue.some((x) => x.lang === 'zh'), '内联脚本行里的中文必须照旧判红（实得 ' + JSON.stringify(codeZh.residue.map((x) => x.lang)) + '）');
+    want(!codeZh.residue.some((x) => x.lang === 'en'), '同一行英文列仍须放行（实得 ' + JSON.stringify(codeZh.residue.map((x) => x.lang)) + '）');
+    console.log('SELFTEST 内联脚本行读数：无中文 residue=' + codeOnly.residue.length + '／含中文 residue=' + codeZh.residue.length);
+    // ⑥ SQL 语句（#1220）：大写关键字开头的数据库代码不是文案，英文列放行；普通英文句子（哪怕以 Update 开头）照旧红。
+    writeFileSync(fixture, [
+      "import { e } from 'base-entries';",
+      "export const a = e('demo.title');",
+      "export const sql = db.prepare('SELECT count(*) AS c FROM item_locations WHERE location LIKE ?');",
+    ].join(String.fromCharCode(10)), 'utf8');
+    const sqlOnly = audit({ files: ['demo.ts'], allowlist: [] }, tmp);
+    want(sqlOnly.residue.length === 0, 'SQL 语句必须放行（实得 ' + JSON.stringify(sqlOnly.residue.map((x) => x.lang + ':' + x.text)) + '）');
+    writeFileSync(fixture, [
+      "import { e } from 'base-entries';",
+      "export const a = e('demo.title');",
+      "export const leak2 = 'Update the record to continue.';",
+    ].join(String.fromCharCode(10)), 'utf8');
+    const notSql = audit({ files: ['demo.ts'], allowlist: [] }, tmp);
+    want(notSql.residue.some((x) => x.lang === 'en'), '以 Update 开头的普通英文句子仍须判红（实得 ' + JSON.stringify(notSql.residue.map((x) => x.lang)) + '）');
+    console.log('SELFTEST SQL 豁免读数：SQL residue=' + sqlOnly.residue.length + '／普通句子 residue=' + notSql.residue.length);
+    // ⑪ 标签串里夹中文（主判据豁免①的盲区）：hints 必须点出来；剥不到可见中文／注释不算。
+    writeFileSync(fixture, [
+      "import { e } from 'base-entries';",
+      "export const a = e('demo.title');",
+      "export const cell = '<td class=\"x\">无标签</td>';",
+    ].join(String.fromCharCode(10)), 'utf8');
+    const hintOne = hintsOf({ files: ['demo.ts'], allowlist: [] }, tmp);
+    want(hintOne.hints.length === 1 && hintOne.hints[0].text.includes('无标签'), '标签串里的中文必须进 hints（实得 ' + JSON.stringify(hintOne.hints) + '）');
+    writeFileSync(fixture, [
+      "import { e } from 'base-entries';",
+      "export const a = e('demo.title');",
+      "export const cell = '<td class=\"x\">' + e('demo.clean') + '</td>';",
+    ].join(String.fromCharCode(10)), 'utf8');
+    const hintMoved = hintsOf({ files: ['demo.ts'], allowlist: [] }, tmp);
+    want(hintMoved.hints.length === 0, '搬进词条表后 hints 必须清零（实得 ' + hintMoved.hints.length + '）');
+    writeFileSync(fixture, [
+      "import { e } from 'base-entries';",
+      "export const a = e('demo.title');",
+      "export const style = '<style>/* 仅注释里的中文 */ .x{color:#fff}</style>';",
+    ].join(String.fromCharCode(10)), 'utf8');
+    const hintComment = hintsOf({ files: ['demo.ts'], allowlist: [] }, tmp);
+    want(hintComment.hints.length === 0, '注释里的中文不算 hints（实得 ' + hintComment.hints.length + '）');
+    console.log('SELFTEST 标签串 hints 读数：含中文 ' + hintOne.hints.length + '／搬走 ' + hintMoved.hints.length + '/／仅注释 ' + hintComment.hints.length);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
   if (bad.length) { for (const b of bad) console.error('SELFTEST FAIL ' + b); process.exit(1); }
-  console.log('SELFTEST: 空范围显式报数／注释豁免／命令关键字豁免／中文残留必红／英文残留必红／开发者报文按调用点豁免／搬走必绿／没迁完报失明 —— 八条自证 OK');
+  console.log('SELFTEST: 空范围显式报数／注释豁免／命令关键字豁免／中文残留必红／英文残留必红／开发者报文按调用点豁免／搬走必绿／没迁完报失明／内联脚本行豁免／SQL 语句豁免／标签串 hints —— 十一条自证 OK');
 }
 
 /** 入口守卫（照 tooling/i18n-langs.mjs／skill-html-snapshot.mjs 的先例）：本件被别处 import 时**不跑** CLI，

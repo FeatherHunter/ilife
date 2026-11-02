@@ -26,31 +26,31 @@ import type { BillDb } from '../fetch/db.js';
 import { BillPolicyError } from '../fetch/errors.js';
 import type { Kpi } from './agg.js';
 import type { AnalysisCopy } from './copyTextAnalysis.js';
-import { sceneAccount } from './scene-account.js';
-import { sceneActivity } from './scene-activity.js';
-import { sceneAnomaly } from './scene-anomaly.js';
-import { sceneCatCompare } from './scene-cat-compare.js';
-import { sceneCatTrend } from './scene-cat-trend.js';
-import { sceneCategory } from './scene-category.js';
-import { sceneDebt } from './scene-debt.js';
-import { sceneDistribution } from './scene-distribution.js';
-import { sceneInsight } from './scene-insight.js';
-import { sceneInstallment } from './scene-installment.js';
-import { sceneLedger } from './scene-ledger.js';
-import { sceneMonthly } from './scene-monthly.js';
-import { sceneOverview } from './scene-overview.js';
-import { scenePeriodCompare } from './scene-period-compare.js';
-import { sceneRangeCompare } from './scene-range-compare.js';
-import { sceneRefund } from './scene-refund.js';
-import { sceneReimburse } from './scene-reimburse.js';
-import { sceneStats } from './scene-stats.js';
-import { sceneStructure } from './scene-structure.js';
-import { sceneTop } from './scene-top.js';
-import { sceneTopFreq } from './scene-top-freq.js';
-import { sceneTrend } from './scene-trend.js';
-import { sceneWeek } from './scene-week.js';
-import { sceneYearly } from './scene-yearly.js';
-import { sceneYoy } from './scene-yoy.js';
+import { sceneAccount, sceneAccountFor } from './scene-account.js';
+import { sceneActivity, sceneActivityFor } from './scene-activity.js';
+import { sceneAnomaly, sceneAnomalyFor } from './scene-anomaly.js';
+import { sceneCatCompare, sceneCatCompareFor } from './scene-cat-compare.js';
+import { sceneCatTrend, sceneCatTrendFor } from './scene-cat-trend.js';
+import { sceneCategory, sceneCategoryFor } from './scene-category.js';
+import { sceneDebt, sceneDebtFor } from './scene-debt.js';
+import { sceneDistribution, sceneDistributionFor } from './scene-distribution.js';
+import { sceneInsight, sceneInsightFor } from './scene-insight.js';
+import { sceneInstallment, sceneInstallmentFor } from './scene-installment.js';
+import { sceneLedger, sceneLedgerFor } from './scene-ledger.js';
+import { sceneMonthly, sceneMonthlyFor } from './scene-monthly.js';
+import { sceneOverview, sceneOverviewFor } from './scene-overview.js';
+import { scenePeriodCompare, scenePeriodCompareFor } from './scene-period-compare.js';
+import { sceneRangeCompare, sceneRangeCompareFor } from './scene-range-compare.js';
+import { sceneRefund, sceneRefundFor } from './scene-refund.js';
+import { sceneReimburse, sceneReimburseFor } from './scene-reimburse.js';
+import { sceneStats, sceneStatsFor } from './scene-stats.js';
+import { sceneStructure, sceneStructureFor } from './scene-structure.js';
+import { sceneTop, sceneTopFor } from './scene-top.js';
+import { sceneTopFreq, sceneTopFreqFor } from './scene-top-freq.js';
+import { sceneTrend, sceneTrendFor } from './scene-trend.js';
+import { sceneWeek, sceneWeekFor } from './scene-week.js';
+import { sceneYearly, sceneYearlyFor } from './scene-yearly.js';
+import { sceneYoy, sceneYoyFor } from './scene-yoy.js';
 
 /** 本域三条命令名（跨技能契约，冻结不动）。 */
 export type AnalysisKey = 'bill.analysis.overview' | 'bill.analysis.compare' | 'bill.analysis.trend';
@@ -259,12 +259,48 @@ export const ANALYSIS_SCENES: readonly AnalysisScene[] = [
  *  （`category` 这个 kind 三条命令各有一支：看分类／看分类对比／看分类趋势）。 */
 const BY_KEY_KIND = new Map<string, AnalysisScene>(ANALYSIS_SCENES.map((s) => [s.key + '|' + s.kind, s]));
 
+/** 已迁入词条层的 25 件（#1207 十八件＋#1208 六件＋#1210 账户件）：按语言重建场景的工厂，键与落点表同一套 `命令名|kind`。
+ *  没登记在这里的件还没迁词条，任何语言都走落点表里那份静态对象（中文原文）。 */
+const LOCALIZED = new Map<string, (language: string) => AnalysisScene>([
+  ['bill.analysis.overview|account', sceneAccountFor],
+  ['bill.analysis.trend|activity', sceneActivityFor],
+  ['bill.analysis.trend|anomaly', sceneAnomalyFor],
+  ['bill.analysis.compare|category', sceneCatCompareFor],
+  ['bill.analysis.trend|category', sceneCatTrendFor],
+  ['bill.analysis.overview|category', sceneCategoryFor],
+  ['bill.analysis.trend|debt', sceneDebtFor],
+  ['bill.analysis.trend|distribution', sceneDistributionFor],
+  ['bill.analysis.trend|insight', sceneInsightFor],
+  ['bill.analysis.trend|installment', sceneInstallmentFor],
+  ['bill.analysis.overview|ledger', sceneLedgerFor],
+  ['bill.analysis.overview|monthly', sceneMonthlyFor],
+  ['bill.analysis.overview|overview', sceneOverviewFor],
+  ['bill.analysis.compare|period', scenePeriodCompareFor],
+  ['bill.analysis.compare|range', sceneRangeCompareFor],
+  ['bill.analysis.trend|refund', sceneRefundFor],
+  ['bill.analysis.trend|reimburse', sceneReimburseFor],
+  ['bill.analysis.overview|stats', sceneStatsFor],
+  ['bill.analysis.overview|structure', sceneStructureFor],
+  ['bill.analysis.overview|week', sceneWeekFor],
+  ['bill.analysis.overview|yearly', sceneYearlyFor],
+  ['bill.analysis.compare|yoy', sceneYoyFor],
+  ['bill.analysis.trend|top', sceneTopFor],
+  ['bill.analysis.trend|frequent', sceneTopFreqFor],
+  ['bill.analysis.trend|trend', sceneTrendFor],
+]);
+
 /** 取件：按 `命令名 + kind` 认。认不得即抛——**不猜、不兜底**（kind 已在 `./params.js` 拦过一道，
- *  走到这里还认不得就是落点表与 kind 词表走散了，属代码缺陷）。 */
-export function sceneFor(key: AnalysisKey, kind: string): AnalysisScene {
-  const hit = BY_KEY_KIND.get(key + '|' + kind);
+ *  走到这里还认不得就是落点表与 kind 词表走散了，属代码缺陷）。
+ *  给了非基准语言且这件已迁词条，就按语言重建一份（`runWithLanguage` 内取词）；否则回中文静态件。 */
+export function sceneFor(key: AnalysisKey, kind: string, language: string): AnalysisScene {
+  const id = key + '|' + kind;
+  const hit = BY_KEY_KIND.get(id);
   if (hit === undefined) {
     throw new BillPolicyError('POLICY_BAD_INPUT', '分析域没有这一支场景：' + key + ' / ' + kind);
+  }
+  if (language !== 'zh') {
+    const factory = LOCALIZED.get(id);
+    if (factory !== undefined) return factory(language);
   }
   return hit;
 }

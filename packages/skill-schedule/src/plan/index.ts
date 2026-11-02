@@ -18,6 +18,7 @@ import { runUpdate, runDeactivate } from './single.js';
 import { runSync } from './sync.js';
 import { runCheck } from './check.js';
 import { dayWindow, replayWindowOf } from './replayDocs.js';
+import { m } from '../entries/index.js';
 
 export type { PlanOpCtx, PlanOpResult } from './context.js';
 export { buildPlanOverview } from './overview.js';
@@ -40,8 +41,13 @@ function runReview(ctx: PlanOpCtx): PlanOpResult {
   for (const e of events) counts[e.completion || '未复盘'] = (counts[e.completion || '未复盘'] || 0) + 1;
   const parts = VALID_COMPLETIONS.filter((k) => counts[k]).map((k) => k + counts[k]);
   const message = events.length
-    ? '已复盘 ' + win.start + ' 至 ' + win.end + '：' + events.length + ' 个事件（' + parts.join('，') + '）'
-    : '复盘空：' + win.start + ' 至 ' + win.end + ' 没有日程事件（不是故障，是这一段没排）';
+    ? m('skill-schedule.plan-index.c001', {
+      p0: String(win.start),
+      p1: String(win.end),
+      p2: String(events.length),
+      p3: String(parts.join('，')),
+    })
+    : m('skill-schedule.plan-index.c002', { p0: String(win.start), p1: String(win.end) });
   return receiptResult(buildReceipt({
     op: 'review', message, local: 'reviewed', remote: 'none', remoteId: null,
     errors: [], date: win.start, dates: [win.start, win.end], counts: { events: events.length },

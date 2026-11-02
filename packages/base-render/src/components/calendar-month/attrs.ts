@@ -15,6 +15,7 @@
  */
 
 /** 本件的类名根：全部槽位类名都是 `CALENDAR_MONTH_CLASS + '-' + 槽名`。 */
+import { m } from '../../entries/index.js';
 export const CALENDAR_MONTH_CLASS = 'ilife-block-calendar-month';
 
 /** 槽位闭集（标记契约的一部分：`render.ts` 与判据都用这里的名字拼类名，不各抄一份字面量）。 */
@@ -73,7 +74,7 @@ export type CalendarMonthForm = (typeof CALENDAR_MONTH_FORMS)[number];
 export const CALENDAR_MONTH_MISSING = '\u2014';
 
 /** 今天那一格上的「今」字（今天是**形＋字**两路可认，色不是唯一信息）。 */
-export const CALENDAR_MONTH_TODAY_MARK = '今';
+export function CALENDAR_MONTH_TODAY_MARK(): string { return m('base-render.components-calendar-month-attrs.c001'); }
 
 /** 一周七格。 */
 export const CALENDAR_MONTH_WEEK_LENGTH = 7;
@@ -82,7 +83,7 @@ export const CALENDAR_MONTH_WEEK_LENGTH = 7;
 export const CALENDAR_MONTH_MAX_WEEKS = 6;
 
 /** 缺省星期表头（周一起首列，与原型一致）。 */
-export const CALENDAR_MONTH_WEEKDAYS: readonly string[] = ['一', '二', '三', '四', '五', '六', '日'];
+export function CALENDAR_MONTH_WEEKDAYS(): readonly string[] { return [m('base-render.components-calendar-month-attrs.c002'), m('base-render.components-calendar-month-attrs.c003'), m('base-render.components-calendar-month-attrs.c004'), m('base-render.components-calendar-month-attrs.c005'), m('base-render.components-calendar-month-attrs.c006'), m('base-render.components-calendar-month-attrs.c007'), m('base-render.components-calendar-month-attrs.c008')]; }
 
 /** 深浅档闭集：0＝没有量（空档），4＝最多。5 档是"格内还能读出字"的上限。 */
 export const CALENDAR_MONTH_LEVELS = [0, 1, 2, 3, 4] as const;

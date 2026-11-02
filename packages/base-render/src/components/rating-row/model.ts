@@ -14,6 +14,7 @@ import {
   RATING_ROW_MISSING,
   type RatingRowForm,
 } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 内部类型（`render.ts` 只吃它，不再自己碰 `any`）。 */
 export interface RatingRowModel {
@@ -87,7 +88,7 @@ export function normalizeRatingRow(input: unknown): RatingRowModel {
   const disabled = optBool(raw.disabled, 'rating-row: input.disabled') === true;
   const disabledReason = optText(raw.disabledReason, 'rating-row: input.disabledReason');
   if (disabledReason !== undefined && !disabled) {
-    badInput('rating-row: input.disabledReason 只在 disabled=true 时给（否则这句"为什么不能评"说不清）');
+    badInput('rating-row: input.disabledReason 只在 disabled=true 时给（否则这句「为什么不能评」说不清）');
   }
   const loading = optBool(raw.loading, 'rating-row: input.loading') === true;
   const loadingText = optText(raw.loadingText, 'rating-row: input.loadingText');
@@ -105,7 +106,7 @@ export function normalizeRatingRow(input: unknown): RatingRowModel {
     disabled,
     disabledReason,
     loading,
-    loadingText: loadingText === undefined ? RATING_ROW_LOADING_TEXT : loadingText,
+    loadingText: loadingText === undefined ? RATING_ROW_LOADING_TEXT() : loadingText,
     error: optText(raw.error, 'rating-row: input.error'),
     extraClass: optExtraClass(raw.extraClass, 'rating-row: input.extraClass'),
   };
@@ -118,7 +119,7 @@ export function ratingRowValueText(value: number | null): string {
 
 /** 一颗星的无障碍名字（`aria-label="4 分"`）。 */
 export function ratingRowStarLabel(star: number): string {
-  return String(star) + ' 分';
+  return m('base-render.components-rating-row-model.c001', { p0: String(String(star)) });
 }
 
 /** 错态那一句挂的 `id`（`aria-describedby` 指它）：机器键里不合法 id 的字符一律换成 `-`。 */

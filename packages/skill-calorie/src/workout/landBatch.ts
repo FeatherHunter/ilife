@@ -35,6 +35,7 @@ import { getPlan } from './planStore.js';
 import { landNoSegmentWhy, landNothing, landPlanGate, landSessionsOf } from './land.js';
 import { buildLandBatchProcessPage, buildLandBatchResultPage } from './landBatchPages.js';
 import { buildLandNothingPage } from './landPages.js';
+import { m } from '../entries/index.js';
 
 export const LAND_WEEKEND_KEY = 'calorie.workout.land-weekend';
 export const LAND_MONTH_KEY = 'calorie.workout.land-monthend';
@@ -45,10 +46,10 @@ const LAND_MONTH_WAKE = '落地到本月底';
 export type LandBatchScope = 'weekend' | 'monthend';
 
 /** 范围人话名（失败点名与页上标题用；唯一定义地）。 */
-export const LAND_BATCH_SCOPE_LABEL: Record<LandBatchScope, string> = {
-  weekend: '本周末',
-  monthend: '本月底',
-};
+export const LAND_BATCH_SCOPE_LABEL = (): Record<LandBatchScope, string> => ({
+  weekend: m('skill-calorie.workout-landBatch.c019'),
+  monthend: m('skill-calorie.workout-landBatch.c020'),
+});
 
 /** 单日链子进程限时**默认值**毫秒（单日实跑可能走远端，与 `xunjiRunner.ts` 同档；超了即 exit 4）。
  *  真值见 `landDayTimeoutMs()`（配置 `land.xunjiSeconds`）。 */
@@ -134,7 +135,7 @@ export function batchDates(anchorISO: string, scope: LandBatchScope): string[] {
 function landCliPath(): string {
   const here = dirname(fileURLToPath(import.meta.url));
   const cli = join(here, '..', 'cli', 'cmd_read.js');
-  if (!existsSync(cli)) fail(4, '命令出口不在（' + cli + '）：先跑对应包的构建再调本命令');
+  if (!existsSync(cli)) fail(4, m('skill-calorie.workout-landBatch.c001', { p0: String(cli) }));
   return cli as string;
 }
 
@@ -156,7 +157,11 @@ export function invokeLandDay(date: string, step: string): LandDayCall {
   const err = (r as { error?: unknown }).error;
   if (err !== undefined && err !== null) {
     const msg = err instanceof Error ? err.message : String(err);
-    fail(4, step + '调起失败（含超时 ' + Math.round(timeoutMs / 1000) + ' 秒）：' + msg);
+    fail(4, m('skill-calorie.workout-landBatch.c002', {
+      p0: String(step),
+      p1: String(Math.round(timeoutMs / 1000)),
+      p2: String(msg),
+    }));
   }
   const code = typeof r.status === 'number' ? r.status : 1;
   const tail = stderrTail(r);
@@ -184,7 +189,7 @@ export function runLandBatchDays(
   let backfillDays = 0;
   for (let i = 0; i < dates.length; i++) {
     const date = dates[i] as string;
-    const call = runDay(date, '落地第 ' + (i + 1) + ' 天');
+    const call = runDay(date, m('skill-calorie.workout-landBatch.c003', { p0: String(i + 1) }));
     const read: LandBatchDayRead = {
       index: i + 1, date, code: call.code, ok: call.code === 0,
       message: call.message, stubbed: call.stubbed, tail: call.stderr,
@@ -204,14 +209,19 @@ export function runLandBatchDays(
 function readDryRun(params: Record<string, unknown>): boolean {
   const v = params['dryRun'];
   if (v === undefined || v === null) return false;
-  if (typeof v !== 'boolean') fail(2, '参数 dryRun 须为布尔值');
+  if (typeof v !== 'boolean') fail(2, m('skill-calorie.workout-landBatch.c004'));
   return v as boolean;
 }
 
 function failBatch(wake: string, read: LandBatchDayRead): never {
   const code = read.code === 2 ? 2 : read.code === 3 ? 3 : 4;
-  const why = read.tail !== '' ? read.tail : read.message !== '' ? read.message : '单日链没过';
-  fail(code, '批量' + wake + '失败在第 ' + read.index + ' 天 ' + read.date + '：' + why);
+  const why = read.tail !== '' ? read.tail : read.message !== '' ? read.message : m('skill-calorie.workout-landBatch.c005');
+  fail(code, m('skill-calorie.workout-landBatch.c006', {
+    p0: String(wake),
+    p1: String(read.index),
+    p2: String(read.date),
+    p3: String(why),
+  }));
 }
 
 /** 批量宿主编排（两条写命令共用；`scope` 定天数口径与文案，页装配走 `landBatchPages.ts`）。
@@ -231,7 +241,7 @@ function writeLandBatch(
   } catch (e) {
     fail(2, e instanceof Error ? e.message : String(e));
   }
-  const scopeLabel = LAND_BATCH_SCOPE_LABEL[scope];
+  const scopeLabel = LAND_BATCH_SCOPE_LABEL()[scope];
   const plan = getPlan(db);
   landPlanGate(plan); // 结构性缺失（库／计划行不在、缺开始日期）才阻断，exit 4
   const perDay = dates.map((date) => ({ date, sessions: landSessionsOf(plan, date) }));
@@ -239,21 +249,26 @@ function writeLandBatch(
   const runDays = perDay.filter((d) => d.sessions.length > 0).map((d) => d.date);
   const first = dates[0] as string;
   const last = dates[dates.length - 1] as string;
-  const scopeLine = first + ' 至 ' + last + ' 共 ' + dates.length + ' 天';
+  const scopeLine = m('skill-calorie.workout-landBatch.c007', { p0: String(first), p1: String(last), p2: String(dates.length) });
   if (segs === 0) {
     // 整段范围没有安排：「无事可做」页（#943 第三选项）——一天都不跑，外部一个不调。
-    const why = landNoSegmentWhy(plan, first) ?? '这一整段里一天都没排训练段';
+    const why = landNoSegmentWhy(plan, first) ?? m('skill-calorie.workout-landBatch.c008');
     return landNothing(wake, params, why, scopeLine, (receipt) =>
       buildLandNothingPage({
         key, params, wake, scope: scopeLine, why, receipt,
-        unitLabel: '可落地段', stepLabel: '四步', whyLabel: '为什么没得落地',
+        unitLabel: m('skill-calorie.workout-landBatch.c009'), stepLabel: m('skill-calorie.workout-landBatch.c010'), whyLabel: m('skill-calorie.workout-landBatch.c011'),
       }));
   }
   if (dryRun) {
-    const message = '预演：' + anchor + ' 至' + scopeLabel + ' ' + dates.length + ' 天 ' + segs + ' 段待落地（远端未调用）';
-    const receipt = R(wake, 'create', message, wake, '训练计划（workout_plans）＋ 批量预演', {
+    const message = m('skill-calorie.workout-landBatch.c012', {
+      p0: String(anchor),
+      p1: String(scopeLabel),
+      p2: String(dates.length),
+      p3: String(segs),
+    });
+    const receipt = R(wake, 'create', message, wake, m('skill-calorie.workout-landBatch.c013'), {
       recordId: null, ids: [], idSource: 'condition', writtenFields: provided(params, ['date', 'dryRun']),
-      items: [{ status: '成功', reason: '', detail: message }],
+      items: [{ status: m('skill-calorie.workout-landBatch.c014'), reason: '', detail: message }],
     });
     return {
       data: { ok: true, message, receipt },
@@ -269,12 +284,20 @@ function writeLandBatch(
   };
   if (summary.failed !== null) failBatch(wake, summary.failed);
   const skipped = dates.length - runDays.length;
-  const message = '已批量' + wake + ' ' + first + ' 至 ' + last + '：共 ' + dates.length + ' 天里 '
-    + runDays.length + ' 天有训练段' + (skipped === 0 ? '' : '（' + skipped + ' 天空天跳过）')
-    + ' 推送 ' + summary.pushDays + ' 天 回写 ' + summary.backfillDays + ' 天';
-  const receipt = R(wake, 'create', message, wake, '训练计划（workout_plans）＋ 批量读数', {
+  const skippedPhrase = skipped === 0 ? '' : m('skill-calorie.workout-landBatch.c015', { p0: String(skipped) });
+  const message = m('skill-calorie.workout-landBatch.c016', {
+    p0: String(wake),
+    p1: String(first),
+    p2: String(last),
+    p3: String(dates.length),
+    p4: String(runDays.length),
+    p5: String(skippedPhrase),
+    p6: String(summary.pushDays),
+    p7: String(summary.backfillDays),
+  });
+  const receipt = R(wake, 'create', message, wake, m('skill-calorie.workout-landBatch.c017'), {
     recordId: null, ids: [], idSource: 'condition', writtenFields: provided(params, ['date', 'dryRun']),
-    items: [{ status: '成功', reason: '', detail: message }],
+    items: [{ status: m('skill-calorie.workout-landBatch.c018'), reason: '', detail: message }],
   });
   return {
     data: { ok: true, message, receipt },

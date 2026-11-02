@@ -7,6 +7,7 @@
  */
 
 import { esc, reqText, optText } from './shared.js';
+import { m } from '../../entries/index.js';
 /* ══════════════════════════════════════════════════════════════
  * ③ 时间轴条：左侧轴线 ＋ 圆点，时间与正文分两槽
  * ══════════════════════════════════════════════════════════════ */
@@ -50,7 +51,7 @@ export function renderTimelineRows(input: TimelineRowsInput): string {
 /** 本件样式段（族组装器 `pageShapeCss()` 按原顺序拼回）。 */
 export function timelineCss(p: string, root: string): string[] {
   return [
-      '/* ③ 时间轴条：一条轴线 ＋ 逐条圆点；时间与正文分两槽（不用 · 串）。 */',
+      m('base-render.components-page-timeline.c001'),
       root + ' .' + p + 'block-timeline {',
       '  margin: 16px 0;',
       '  padding: 4px 0 4px 18px;',

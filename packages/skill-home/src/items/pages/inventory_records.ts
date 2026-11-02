@@ -7,6 +7,7 @@
 // 必需块原文＝契约附录：历史盘点（N）含拉丁字符，只进 data-need 属性。
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
+import { m } from '../../entries/index.js';
 import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
 
 export const FAMILY = 'inventory_records' as const;
@@ -90,13 +91,15 @@ const CSS = '.hero{background:linear-gradient(180deg,#fff,#f8fbff);border-radius
 + 'pre{white-space:pre-wrap;word-break:break-all;background:#f8f9fb;border-radius:10px;padding:10px;font-size:12px}'
 + '@media(max-width:820px){.hero{padding:18px 14px}.sec{padding:14px}.btnrow{grid-template-columns:1fr}}';
 
-const JS = 'function copyText(t){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t);}else{var ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");}catch(e){}document.body.removeChild(ta);}}'
+function pageScript(): string {
+  return 'function copyText(t){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t);}else{var ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");}catch(e){}document.body.removeChild(ta);}}'
 + 'function toggleDetail(btn){var d=btn.parentNode.previousElementSibling;if(d&&d.classList.contains("detail"))d.style.display=(d.style.display==="block")?"none":"block";}'
 + 'function recCmd(btn,kind){var id=btn.dataset.r||"";var sc=btn.dataset.sc||"全屋";'
-+ 'if(kind==="diff")copyText("请加载「居家管家」技能,帮我处理盘点差异(唤醒词:差异处理):\\n\\n  记  录: 记录"+id+"(先查看该记录缺多异清单,再逐项处理)");'
-+ 'else if(kind==="re")copyText("请加载「居家管家」技能,帮我盘点(唤醒词:盘点):\\n\\n  范  围: "+sc+"\\n  重点: 上次盘点记录"+id+"缺的件,请重点核对是否找到");'
-+ 'else if(kind==="start")copyText("请加载「居家管家」技能,帮我盘点(唤醒词:盘点):\\n\\n  范  围: ______");}'
-+ 'function recLog(){var d=new Date();function p(n){return (n<10?"0":"")+n;}var xs=[];document.querySelectorAll(".rec").forEach(function(r){var nm=r.querySelector(".nm");var pill=r.querySelector(".pill");xs.push((nm?nm.textContent:"")+(pill?"("+pill.textContent+")":""));});copyText("盘点记录｜"+d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes())+":"+p(d.getSeconds())+"｜共"+xs.length+"条"+(xs.length?"｜"+xs.join("、"):""));}';
++ 'if(kind==="diff")copyText(F.diff.replace("{p0}",id));'
++ 'else if(kind==="re")copyText(F.re.replace("{p0}",sc).replace("{p1}",id));'
++ 'else if(kind==="start")copyText(F.start);}'
++ 'function recLog(){var d=new Date();function p(n){return (n<10?"0":"")+n;}var xs=[];document.querySelectorAll(".rec").forEach(function(r){var nm=r.querySelector(".nm");var pill=r.querySelector(".pill");xs.push((nm?nm.textContent:"")+(pill?"("+pill.textContent+")":""));});var ts=d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes())+":"+p(d.getSeconds());var t=F.log.replace("{p0}",ts).replace("{p1}",String(xs.length));if(xs.length)t+=F.logTail.replace("{p0}",xs.join(F.sep));copyText(t);}';
+}
 
 interface RecRow {
   id: string;
@@ -109,11 +112,11 @@ function str(v: unknown): string { return typeof v === 'string' ? v : ''; }
 // 信封条目形如“盘点#1 全屋”＋count＝规模：解析记录号、范围与规模。
 // 范围词中文化（all→全屋，location→按位置；机审英文裸词行零容忍，原文只进数据原文）。
 function parseRow(name: string, count: unknown): RecRow {
-  const m = str(name).match(/盘点#(\d+)\s*(.*)/);
-  const raw = m ? m[2].trim() : '';
+  const parsed = str(name).match(/盘点#(\d+)\s*(.*)/);
+  const raw = parsed ? parsed[2].trim() : '';
   const scope = raw === '' || raw === 'all' ? '全屋' : raw === 'location' ? '按位置' : raw;
   return {
-    id: m ? m[1] : '—',
+    id: parsed ? parsed[1] : '—',
     scope,
     total: typeof count === 'number' ? count : 0,
   };
@@ -129,37 +132,37 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
 
   // 发生时间／记录状态需数据：信封只带记录号、范围与规模（时间与差异计数由命令侧增补），两格保持「—」。
   const cards = rows.map((r) =>
-    '<div class="rec"><div class="top"><span class="nm">记录' + escapeHtml(r.id) + '</span>'
+    '<div class="rec"><div class="top"><span class="nm">' + m('skill-home.items-pages-inventory-records.c001', { p0: escapeHtml(r.id) }) + '</span>'
     + '<span class="pill">' + escapeHtml(r.scope) + '</span>'
-    + '<span class="pill">规模' + r.total + '条</span></div>'
-    + '<dl class="kv"><dt>发生时间</dt><dd>—</dd>'
-    + '<dt>记录状态</dt><dd>—</dd></dl>'
+    + '<span class="pill">' + m('skill-home.items-pages-inventory-records.c002', { p0: String(r.total) }) + '</span></div>'
+    + '<dl class="kv"><dt>' + m('skill-home.items-pages-inventory-records.c003') + '</dt><dd>—</dd>'
+    + '<dt>' + m('skill-home.items-pages-inventory-records.c004') + '</dt><dd>—</dd></dl>'
     // #890（⑥分隔符不懒政）：折叠区里原先是「记录4缺— 多— 异— 待确认—」——四段标签＋空值靠
     // 空格与破折号挤成一行正文。DIFF_SLOTS 与 `.counts`／`.cnt` 这套四格字段位本页早就有了
     // （见下面「差异计数」那一段），这里改成同一套，折叠区与汇总区同一个形状。
     + '<div class="detail"><div class="counts">'
     + DIFF_SLOTS.map((k) => '<div class="cnt"><b>' + k + '</b><span>—</span></div>').join('')
     + '</div></div>'
-    + '<div class="btnrow"><button class="btn ghost" onclick="toggleDetail(this)">展开详情</button>'
-    + '<button class="btn ghost" data-r="' + escapeHtml(r.id) + '" onclick="recCmd(this,\'diff\')">处理差异</button>'
-    + '<button class="btn ghost" data-r="' + escapeHtml(r.id) + '" data-sc="' + escapeHtml(r.scope) + '" onclick="recCmd(this,\'re\')">复查</button>'
+    + '<div class="btnrow"><button class="btn ghost" onclick="toggleDetail(this)">' + m('skill-home.items-pages-inventory-records.c005') + '</button>'
+    + '<button class="btn ghost" data-r="' + escapeHtml(r.id) + '" onclick="recCmd(this,\'diff\')">' + m('skill-home.items-pages-inventory-records.c006') + '</button>'
+    + '<button class="btn ghost" data-r="' + escapeHtml(r.id) + '" data-sc="' + escapeHtml(r.scope) + '" onclick="recCmd(this,\'re\')">' + m('skill-home.items-pages-inventory-records.c007') + '</button>'
     + '</div></div>',
   ).join('');
 
-  const body = rows.length > 0 ? cards : '<div class="empty">还没有盘点记录</div>';
+  const body = rows.length > 0 ? cards : '<div class="empty">' + m('skill-home.items-pages-inventory-records.c008') + '</div>';
 
-  const content = '<div class="hero"><p class="eyebrow">查看</p><p class="lead">留痕与复查闭环，缺件下次置顶</p></div>'
-    + '<section class="sec" data-block="fields" data-need="' + NEED.fields + '"><h2>历史盘点共' + (typeof data.total === 'number' ? data.total : rows.length) + '条</h2>'
+  const content = '<div class="hero"><p class="eyebrow">' + m('skill-home.items-pages-inventory-records.c009') + '</p><p class="lead">' + m('skill-home.items-pages-inventory-records.c010') + '</p></div>'
+    + '<section class="sec" data-block="fields" data-need="' + NEED.fields + '"><h2>' + m('skill-home.items-pages-inventory-records.c011', { p0: String(typeof data.total === 'number' ? data.total : rows.length) }) + '</h2>'
     + body
-    + '<h2>差异计数</h2><div class="counts">'
+    + '<h2>' + m('skill-home.items-pages-inventory-records.c012') + '</h2><div class="counts">'
     + DIFF_SLOTS.map((k) => '<div class="cnt"><b>' + k + '</b><span>—</span></div>').join('')
     + '</div></section>'
     // #817（②层级清）：原来把判据件的状态枚举「进行中／已完成／已处理／已复查」当正文摆在页尾；记录状态
     // 值位由命令侧增补，当刻四张卡的状态全写「—」，枚举上屏既无值可筛也无值可对，故收进判据槽（`hidden`，
     // `data-block`／`data-need` 原样在位）。改真筛选控件要数据层先给每条记录的状态。
     + '<section class="sec" data-block="status" data-need="' + NEED.status + '" hidden></section>'
-    + '<section class="sec" data-block="operations" data-need="' + NEED.operations + '"><h2>动作</h2>'
-    + '<div class="btnrow two"><button class="btn ghost" onclick="recCmd(this,\'start\')">开始盘点</button>'
+    + '<section class="sec" data-block="operations" data-need="' + NEED.operations + '"><h2>' + m('skill-home.items-pages-inventory-records.c013') + '</h2>'
+    + '<div class="btnrow two"><button class="btn ghost" onclick="recCmd(this,\'start\')">' + m('skill-home.items-pages-inventory-records.c014') + '</button>'
     + '</div>'
     + homeCopyArea({
         data: { envelope: env },
@@ -167,7 +170,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
       })
     + '</section>'
     + '<section class="sec" data-block="empty" data-need="' + NEED.empty + '" hidden></section>'
-    + '<details><summary>数据原文</summary><pre class="pre-block-code" id="raw">' + escapeHtml(JSON.stringify(env.data ?? {})) + '</pre></details>'
-    + '<style>' + CSS + '</style><script>' + JS + '</script>';
+    + '<details><summary>' + m('skill-home.items-pages-inventory-records.c015') + '</summary><pre class="pre-block-code" id="raw">' + escapeHtml(JSON.stringify(env.data ?? {})) + '</pre></details>'
+    + '<style>' + CSS + '</style><script>var F=' + JSON.stringify({ diff: m('skill-home.items-pages-inventory-records.c016', { p0: "{p0}" }), re: m('skill-home.items-pages-inventory-records.c017', { p0: "{p0}", p1: "{p1}" }), start: m('skill-home.items-pages-inventory-records.c018'), log: m('skill-home.items-pages-inventory-records.c019', { p0: "{p0}", p1: "{p1}" }), logTail: m('skill-home.items-pages-inventory-records.c020', { p0: "{p0}" }), sep: m('skill-home.items-pages-inventory-records.c021') }) + ';' + pageScript() + '</script>';
   return fillTemplate(template, content);
 }

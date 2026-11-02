@@ -14,6 +14,7 @@
 import { ScheduleFetchError } from '../fetch/errors.js';
 import { larkAgenda, larkSearchEvents, larkGetEvent, type LarkEvent } from '../fetch/feishu.js';
 import { dayStartISO, dayEndISO, shardWindows, remoteSlotOf } from './iso.js';
+import { m } from '../entries/index.js';
 
 export interface RemoteEvent extends LarkEvent {
   /** 本地口径的时间槽（跨日 00:00 已换成本地 23:59）。 */
@@ -47,7 +48,7 @@ export function pullFeishuDate(cli: string, date: string): PullResult {
     agenda = larkAgenda(cli, dayStartISO(date), dayEndISO(date));
   } catch (e) {
     agendaFailed = true;
-    errors.push('议程拉取失败：' + msg(e));
+    errors.push(m('skill-schedule.plan-pull.c001', { p0: String(msg(e)) }));
   }
 
   // 阶段 1 乙路：分片检索（每片独立成败；失败只记账，游标照推）
@@ -60,7 +61,7 @@ export function pullFeishuDate(cli: string, date: string): PullResult {
       found.push(...larkSearchEvents(cli, w.start, w.end));
     } catch (e) {
       shardFailed++;
-      errors.push('分片检索失败（' + w.start + '~' + w.end + '）：' + msg(e));
+      errors.push(m('skill-schedule.plan-pull.c002', { p0: String(w.start), p1: String(w.end), p2: String(msg(e)) }));
     }
   }
   if (agendaFailed && shardFailed === shards.length) {

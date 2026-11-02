@@ -135,9 +135,9 @@ describe('switchRow ① 渲染契约', () => {
   });
 
   it('**字**这一档：状态字固定一枚（已开／已关／更新中），不靠样式生成、不只在 hover 出现', () => {
-    assert.match(renderSwitchRow(SYNC), new RegExp('-' + 'state" ' + SWITCH_ROW_STATE_ATTR + '="">' + SWITCH_ROW_ON + '<'));
-    assert.match(renderSwitchRow({ ...SYNC, checked: false }), new RegExp('>' + SWITCH_ROW_OFF + '<'));
-    assert.match(renderSwitchRow({ ...SYNC, loading: true }), new RegExp('>' + SWITCH_ROW_LOADING + '<'));
+    assert.match(renderSwitchRow(SYNC), new RegExp('-' + 'state" ' + SWITCH_ROW_STATE_ATTR + '="">' + SWITCH_ROW_ON() + '<'));
+    assert.match(renderSwitchRow({ ...SYNC, checked: false }), new RegExp('>' + SWITCH_ROW_OFF() + '<'));
+    assert.match(renderSwitchRow({ ...SYNC, loading: true }), new RegExp('>' + SWITCH_ROW_LOADING() + '<'));
     assert.equal(renderSwitchRow(SYNC).includes('::before'), false, '状态字不许靠 CSS 生成内容');
     assert.match(renderSwitchRow({ ...SYNC, checked: false }), /is-row is-off/, '关态也带自己的类（形：空心轨道）');
   });
@@ -177,7 +177,7 @@ describe('switchRow ① 渲染契约', () => {
 
   it('更新中：状态字换「更新中」，输入不落原生 disabled（由运行时段回弹，防一次会被丢弃的改动）', () => {
     const load = renderSwitchRow({ ...SYNC, loading: true });
-    assert.ok(load.includes(SWITCH_ROW_LOADING));
+    assert.ok(load.includes(SWITCH_ROW_LOADING()));
     assert.ok(load.includes('aria-disabled="true"'));
     assert.equal(load.includes(' disabled'), false, '更新中不落原生 disabled');
   });
@@ -422,7 +422,7 @@ describe('switchRow ⑤ 皮肤矩阵 ＋ 三档形态差异（重做件的核心
       '滑块行程写的是常量，不是皮肤 token');
     assert.equal(/-thumb \{[^}]*translateX\(var\(/.test(css), false, '滑块行程不许随皮肤走');
     for (const name of SKIN_NAMES) {
-      assert.equal(renderSwitchRow(SYNC).includes(SWITCH_ROW_ON), true, name + '：状态字在标记里');
+      assert.equal(renderSwitchRow(SYNC).includes(SWITCH_ROW_ON()), true, name + '：状态字在标记里');
     }
   });
 });
@@ -515,7 +515,7 @@ describe('switchRow ④ 真机两档（390／1280 容器；视口恒 1440）', (
       await sleep(80);
       const afterOff = await p.ev('(function(){var r=document.querySelector(' + sel('feishuSync') + ');return ' + ROW_JS + '(r);}())');
       assert.equal(afterOff.checked, '0', '机器读数翻成 0');
-      assert.equal(afterOff.state, SWITCH_ROW_OFF, '状态字翻成「已关」（字这一档）');
+      assert.equal(afterOff.state, SWITCH_ROW_OFF(), '状态字翻成「已关」（字这一档）');
       assert.ok(afterOff.gapLeft < afterOff.gapRight, '滑块翻到左边（形这一档）');
       const hits = await p.events(SWITCH_ROW_EVENT_CHANGE);
       assert.equal(hits.length, 1, '真翻一次派发一条');
@@ -524,7 +524,7 @@ describe('switchRow ④ 真机两档（390／1280 容器；视口恒 1440）', (
       await p.ev(clickSwitch);
       await sleep(80);
       const afterOn = await p.ev('(function(){var r=document.querySelector(' + sel('feishuSync') + ');return ' + ROW_JS + '(r);}())');
-      assert.equal(afterOn.state, SWITCH_ROW_ON);
+      assert.equal(afterOn.state, SWITCH_ROW_ON());
       assert.ok(afterOn.gapLeft > afterOn.gapRight, '滑块翻回右边');
       assert.equal((await p.events(SWITCH_ROW_EVENT_CHANGE)).length, 2, '翻回来再派发一条');
 
@@ -585,8 +585,8 @@ describe('switchRow ④ 真机两档（390／1280 容器；视口恒 1440）', (
       assert.ok(new Set(radii).size >= 2, '各皮肤间的轨道圆角必须真的不同：' + radii.join('／'));
       for (const name of SKIN_NAMES) {
         const off = before[name][0], on = before[name][1];
-        assert.equal(off.state, SWITCH_ROW_OFF, name + '：关态状态字');
-        assert.equal(on.state, SWITCH_ROW_ON, name + '：开态状态字');
+        assert.equal(off.state, SWITCH_ROW_OFF(), name + '：关态状态字');
+        assert.equal(on.state, SWITCH_ROW_ON(), name + '：开态状态字');
         assert.ok(off.gapLeft < off.gapRight, name + '：关态滑块贴左（' + off.gapLeft + ' / ' + off.gapRight + '）');
         assert.ok(on.gapLeft > on.gapRight, name + '：开态滑块贴右（' + on.gapLeft + ' / ' + on.gapRight + '）');
       }
@@ -606,8 +606,8 @@ describe('switchRow ④ 真机两档（390／1280 容器；视口恒 1440）', (
       const flat = await p.ev(read);
       for (const name of SKIN_NAMES) {
         const off = flat[name][0], on = flat[name][1];
-        assert.equal(off.state, SWITCH_ROW_OFF, name + '：压平颜色后关态状态字还在');
-        assert.equal(on.state, SWITCH_ROW_ON, name + '：压平颜色后开态状态字还在');
+        assert.equal(off.state, SWITCH_ROW_OFF(), name + '：压平颜色后关态状态字还在');
+        assert.equal(on.state, SWITCH_ROW_ON(), name + '：压平颜色后开态状态字还在');
         assert.ok(off.gapLeft < off.gapRight,
           name + '：压平颜色后关态仍读得出（滑块贴左 ' + off.gapLeft + ' / ' + off.gapRight + '）');
         assert.ok(on.gapLeft > on.gapRight,

@@ -19,6 +19,7 @@ import { charts } from './dispatch.js';
 const BAR_TICK_FONT_UNITS = 9.5;
 import { STYLE_PREFIX } from '../../style.js';
 import { BarChartInput, BarChartOptions, CHART_BREAKPOINTS, CHART_PALETTE, ChartItem, ChartOutput } from '../../spec/index.js';
+import { m } from '../../entries/index.js';
 
 /* ── bar ──────────────────────────────────────────────────────────────── */
 
@@ -53,15 +54,19 @@ export function renderBar(raw: BarChartInput): ChartOutput {
   if (multi) {
     segCount = (items[0].values as readonly number[]).length;
     items.forEach((item, i) => {
-      if (item.values === undefined) badStructure('charts.bar: stacked/grouped 模式下 items[' + i + '] 必须含 values 数组');
+      if (item.values === undefined) badStructure(m('base-render.components-charts-bar.c001', { p0: String(i) }));
       if (item.values.length !== segCount) {
-        badStructure('charts.bar: 各 item values 长度必须一致 (' + segCount + '), items[' + i + ']=' + item.values.length);
+        badStructure(m('base-render.components-charts-bar.c002', {
+          p0: String(segCount),
+          p1: String(i),
+          p2: String(item.values.length),
+        }));
       }
     });
   }
   const segNames = opts !== undefined && Array.isArray(opts.segNames)
-    ? opts.segNames.map((name, i) => (typeof name === 'string' && name !== '' ? name : '段' + (i + 1)))
-    : Array.from({ length: segCount }, (_, i) => '段' + (i + 1));
+    ? opts.segNames.map((name, i) => (typeof name === 'string' && name !== '' ? name : m('base-render.components-charts-bar.c003', { p0: String(i + 1) })))
+    : Array.from({ length: segCount }, (_, i) => m('base-render.components-charts-bar.c004', { p0: String(i + 1) }));
   /** 全局最大合计（`stackMode: 'absolute'` 的分母）；仅多值模式读 `values`。 */
   const maxTotal = multi
     ? items.reduce((best, item) => {

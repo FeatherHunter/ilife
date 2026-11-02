@@ -1699,9 +1699,9 @@ describe('H 常量与规则', () => {
     assert.ok(lineHtml({ actionId: 'open-detail' }).includes('data-action-id="open-detail"'));
   });
 
-  it('H.空态文案与图标：EMPTY_HINT 逐字 ＋ 📊 图标（8 接口共用）', () => {
+  it('H.空态文案与图标：EMPTY_HINT() 逐字 ＋ 📊 图标（8 接口共用）', () => {
     /* FX-78-V3-08 / W5：`A.emptyText`／`H.CHART_STRUCTURE_RULE` 只断 CSS 类名锚点，
-     * 改 `EMPTY_HINT`（`charts.ts:151`）或 `EMPTY_ICON` 文案仍绿。 */
+     * 改 `EMPTY_HINT()`（`charts.ts:151`）或 `EMPTY_ICON()` 文案仍绿。 */
     const empty = charts.bar({ items: [] });
     assert.equal(countOf(empty.html, '有记录后自动生成图表'), 1, '空态提示文案逐字');
     assert.equal(countOf(empty.html, '📊'), 1, '空态图标逐字');

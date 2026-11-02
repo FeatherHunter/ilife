@@ -235,7 +235,8 @@ test('#449 ③b 缺项回退原键名（页面端到端）', () => {
 
 test('#449 ④ 标签单源：运动域标签表与域登记都只有一处', () => {
   const colKeys = PARAM_NAMES.filter((n) => n.includes('_'));
-  const bind = new RegExp('(^|[^A-Za-z0-9_])(' + colKeys.join('|') + ')["\']?\\s*:\\s*["\'][^"\']*[\\u4e00-\\u9fff]');
+  // #1219：标签值改为按需取词（`m()`），表里不再有中文面量——单源判据改成「表定义处」本身。
+  const bind = /export function EXERCISE_FIELD_LABELS\s*\(/;
   const tableFiles = [];
   const registerFiles = [];
   for (const pkg of readdirSync(join(ROOT, 'packages'))) {
@@ -257,7 +258,7 @@ test('#449 ④ 标签单源：运动域标签表与域登记都只有一处', ()
 
 test('#449 ⑤ 标签表覆盖本票 13 条写词印出的全部字段键（无沉默回退）', async () => {
   const mod = await import(pathToFileURL(join(HERE, '..', 'dist', 'exercise', 'fieldLabels.js')).href);
-  const table = mod.EXERCISE_FIELD_LABELS;
+  const table = mod.EXERCISE_FIELD_LABELS();
   // 冻结面：① 三种写命令回执 `writtenFields` 报的键（`F.exercise` 16 键 ＋ 删类的 `is_deleted`）；
   // ② 字段变更卡按行键摆的库列名（`SNAPSHOT_COLS` 那批）。
   const frozen = ['type', 'calories', 'minutes', 'date', 'time', 'note', 'reps', 'category', 'difficulty', 'distance',

@@ -6,6 +6,7 @@
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { m } from '../../entries/index.js';
 
 export const FAMILY = 'relations' as const;
 
@@ -103,10 +104,10 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const template = readFileSync(new URL('../../../templates/items/relations.html', import.meta.url), 'utf8');
   const msg = msgOf(env);
   const key = String((env as { key?: unknown }).key ?? PAGE_META.key);
-  const m = msg.match(/^已(关联|解除关联)：(.+)×(.+)$/);
-  const verb = m?.[1] ?? '';
-  const mainId = (m?.[2] ?? '').trim();
-  const peerId = (m?.[3] ?? '').trim();
+  const linked = msg.match(/^已(关联|解除关联)：(.+)×(.+)$/);
+  const verb = linked?.[1] ?? '';
+  const mainId = (linked?.[2] ?? '').trim();
+  const peerId = (linked?.[3] ?? '').trim();
   const unlinked = verb === '解除关联';
   // #864 加厚：detail.relation 与 detail.peer.name 写真类型与对方名称。
   const det = detailOf(env);
@@ -116,38 +117,36 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const mainRec = det.main && typeof det.main === 'object' && !Array.isArray(det.main) ? det.main as Record<string, unknown> : null;
   const mainName = mainRec && typeof mainRec.name === 'string' && mainRec.name !== '' ? mainRec.name : '';
 
-  const linkPrompt = '请加载「居家管家」技能，帮我设置物品关联（唤醒词：物品关联）：\n\n  主物品：编号'
-    + (mainId || '___') + '\n  关联物品：___\n  关系（配件、配套、替代、同捆、常用搭配）：___';
-  const unlinkPrompt = '请加载「居家管家」技能，帮我解除物品关联（唤醒词：物品关联）：\n\n  主物品：编号'
-    + (mainId || '___') + '\n  关联物品：编号' + (peerId || '___');
+  const linkPrompt = m('skill-home.items-pages-relations.c001', { p0: String(mainId || '___') });
+  const unlinkPrompt = m('skill-home.items-pages-relations.c002', { p0: String(mainId || '___'), p1: String(peerId || '___') });
 
   const listBlock = mainId && peerId
     ? '<div class="fp-rel">'
-      + '<div class="fp-row"><div class="fp-k">对方物品</div><div class="fp-v">' + esc(peerName !== '' ? peerName : '—') + '</div></div>'
-      + '<div class="fp-row"><div class="fp-k">物品编号</div><div class="fp-v">' + esc(peerId) + '</div></div>'
-      + '<div class="fp-row"><div class="fp-k">关系类型</div><div class="fp-v"><span class="fp-pill">' + esc(relation !== '' ? relation : '—') + '</span></div></div>'
-      + '<div class="fp-actions"><button type="button" class="fp-btn fp-btn-ghost" onclick="copyItem(\'fp-rel-unlink\')">解除</button></div>'
+      + '<div class="fp-row"><div class="fp-k">' + m('skill-home.items-pages-relations.c005') + '</div><div class="fp-v">' + esc(peerName !== '' ? peerName : '—') + '</div></div>'
+      + '<div class="fp-row"><div class="fp-k">' + m('skill-home.items-pages-relations.c006') + '</div><div class="fp-v">' + esc(peerId) + '</div></div>'
+      + '<div class="fp-row"><div class="fp-k">' + m('skill-home.items-pages-relations.c007') + '</div><div class="fp-v"><span class="fp-pill">' + esc(relation !== '' ? relation : '—') + '</span></div></div>'
+      + '<div class="fp-actions"><button type="button" class="fp-btn fp-btn-ghost" onclick="copyItem(\'fp-rel-unlink\')">' + m('skill-home.items-pages-relations.c008') + '</button></div>'
       + '</div>'
-    : '<p class="fp-empty">暂无关联，配件与配套关系可以在这里建立</p>';
+    : '<p class="fp-empty">' + m('skill-home.items-pages-relations.c009') + '</p>';
 
   const content = PAGE_CSS
     + '<div class="fp-page" data-family="' + FAMILY + '" data-key="' + esc(key) + '">'
-    + '<div class="fp-hero"><div class="fp-title">' + (unlinked ? '已经解除' : '已建立关联') + '</div>'
+    + '<div class="fp-hero"><div class="fp-title">' + (unlinked ? m('skill-home.items-pages-relations.c003') : m('skill-home.items-pages-relations.c004')) + '</div>'
     + '<p class="fp-lead">' + esc(msg) + '</p></div>'
-    + '<section class="fp-sec"><h2 class="fp-sec-t">主物品</h2>'
-    + '<div class="fp-row"><div class="fp-k">物品编号</div><div class="fp-v">' + esc(mainId || '—') + '</div></div>'
-    + '<div class="fp-row"><div class="fp-k">完整档案</div><div class="fp-v">' + esc(mainName !== '' ? mainName : '—') + '</div></div>'
+    + '<section class="fp-sec"><h2 class="fp-sec-t">' + m('skill-home.items-pages-relations.c010') + '</h2>'
+    + '<div class="fp-row"><div class="fp-k">' + m('skill-home.items-pages-relations.c006') + '</div><div class="fp-v">' + esc(mainId || '—') + '</div></div>'
+    + '<div class="fp-row"><div class="fp-k">' + m('skill-home.items-pages-relations.c011') + '</div><div class="fp-v">' + esc(mainName !== '' ? mainName : '—') + '</div></div>'
     + '</section>'
-    + '<section class="fp-sec"><h2 class="fp-sec-t">关联列表</h2>' + listBlock + '</section>'
-    + '<section class="fp-sec"><h2 class="fp-sec-t">建立新关联</h2>'
-    + '<p class="fp-empty">告诉我关联关系，例如这个充电器是那台手机的配件</p>'
+    + '<section class="fp-sec"><h2 class="fp-sec-t">' + m('skill-home.items-pages-relations.c012') + '</h2>' + listBlock + '</section>'
+    + '<section class="fp-sec"><h2 class="fp-sec-t">' + m('skill-home.items-pages-relations.c013') + '</h2>'
+    + '<p class="fp-empty">' + m('skill-home.items-pages-relations.c014') + '</p>'
     + '<div class="fp-actions">'
-    + '<button type="button" class="fp-btn fp-btn-primary" onclick="copyItem(\'fp-rel-link\')">设置关联</button>'
+    + '<button type="button" class="fp-btn fp-btn-primary" onclick="copyItem(\'fp-rel-link\')">' + m('skill-home.items-pages-relations.c015') + '</button>'
     + '</div></section>'
-    + '<section class="fp-sec"><h2 class="fp-sec-t">关系类型</h2>'
+    + '<section class="fp-sec"><h2 class="fp-sec-t">' + m('skill-home.items-pages-relations.c007') + '</h2>'
     + '<div><span class="fp-pill">配件</span><span class="fp-pill">配套</span><span class="fp-pill">替代</span>'
     + '<span class="fp-pill">同捆</span><span class="fp-pill">常用搭配</span></div>'
-    + '<p class="fp-note">五种关系里选一种，替代适合新旧交替，同捆适合成套收纳</p></section>'
+    + '<p class="fp-note">' + m('skill-home.items-pages-relations.c016') + '</p></section>'
     + homeCopyArea({
         data: { envelope: env },
         log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },

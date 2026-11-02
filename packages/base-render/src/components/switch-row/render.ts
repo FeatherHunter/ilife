@@ -48,8 +48,8 @@ function errorId(name: string): string {
 
 /** 状态字：**字**这一档（更新中 → 已开／已关）。它永远在，不是 hover 才出现。 */
 function stateWord(m: SwitchRowModel): string {
-  if (m.loading) return SWITCH_ROW_LOADING;
-  return m.checked ? SWITCH_ROW_ON : SWITCH_ROW_OFF;
+  if (m.loading) return SWITCH_ROW_LOADING();
+  return m.checked ? SWITCH_ROW_ON() : SWITCH_ROW_OFF();
 }
 
 /** 开关本体：`.sw`（命中盒）＞ `.track`（轨道）＞ `.thumb`（滑块）。 */

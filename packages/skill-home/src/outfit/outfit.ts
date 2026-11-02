@@ -7,34 +7,65 @@
 // 空库不抛：候选为 0 即 note ＋ 空场景（页面走空态，见各页族模板）。
 
 import type { HomeDb, HomeItem } from '../fetch/db.js';
+import { STATUS_AT_HOME } from '../fetch/db.js';
+
+/** 衣物判据里的单字（**数据**：分类名／品名里的布料与品类字，不译）。 */
+const FABRIC_CLOTH = '衣';
+const FABRIC_SHOE = '鞋';
+const FABRIC_WEAR = '穿';
+const FABRIC_HAT = '帽';
+/** 衣物筛选的 LIKE 模式（**数据**：分类／品名里的字，不译）。 */
+const LIKE_CLOTH = '%衣%';
+const LIKE_WEAR = '%穿%';
+const LIKE_SHOES = '%鞋%';
 import {
   listLocationsByItem, listTagsByItem, idleItems, listLocationNodes, getItemById,
 } from '../fetch/index.js';
 import { fail, note } from '../shared/fail.js';
 import { toItemCard, buildOutfitList } from '../render/index.js';
 import type { ItemCard } from '../render/index.js';
+import { m } from '../entries/index.js';
 
 type SlotKey = 'outer' | 'inner' | 'bottom' | 'shoes' | 'hat' | 'acce';
 
-const SLOT_NAMES: Record<SlotKey, string> = {
-  outer: '外套', inner: '内搭', bottom: '下装', shoes: '鞋', hat: '帽子', acce: '配饰',
-};
+/** 槽位显示名（渲染期取词：模块级常量表会把语言固化在加载时，故改成函数）。 */
+function slotLabels(): Record<SlotKey, string> {
+  return {
+    outer: m('skill-home.outfit-outfit.c027'),
+    inner: m('skill-home.outfit-outfit.c028'),
+    bottom: m('skill-home.outfit-outfit.c029'),
+    shoes: m('skill-home.outfit-outfit.c030'),
+    hat: m('skill-home.outfit-outfit.c031'),
+    acce: m('skill-home.outfit-outfit.c032'),
+  };
+}
+
+function slotLabel(k: SlotKey | 'other'): string {
+  if (k === 'other') return m('skill-home.outfit-outfit.c026');
+  return slotLabels()[k];
+}
 const SLOT_ORDER: SlotKey[] = ['outer', 'inner', 'bottom', 'shoes', 'hat', 'acce'];
 const OCCASIONS = ['上班', '约会', '运动', '家居', '正式', '自定义'];
 const SEASONS = ['夏季', '冬季', '春秋'];
+/** 收纳态标签（**数据**：物品标签取值，不译；判据位只认它）。 */
+const STORED_TAG = '已收纳';
+/** 季节清单的动作名（**数据**：与页面/命令词汇一致，不译；判据位只认它）。 */
+const ACTION_TAKE_OUT = '拿出';
+const ACTION_STORE = '收纳';
 
 function isClothing(it: HomeItem): boolean {
   // #927：老库无 items.category 列时 it.category 为空，分类名以 category_id 为准的调用方已在 clothingRows 里回填；
   // 这里仍只做内存判断（名里带衣/鞋等即算），不碰 SQL。
   const s = (it.category ?? '') + ' ' + it.name;
-  return s.includes('衣') || s.includes('鞋') || s.includes('穿') || s.includes('帽');
+  // 判据位只认**数据**里的字（分类名／品名里的布料与品类字），不拿译文当判据。
+  return s.includes(FABRIC_CLOTH) || s.includes(FABRIC_SHOE) || s.includes(FABRIC_WEAR) || s.includes(FABRIC_HAT);
 }
 
 function clothingRows(handle: HomeDb, limit: number): HomeItem[] {
   // #927：衣物筛选走 categories JOIN（老库无 i.category 列）；返回行把 JOIN 到的分类名回填到 category，
   // 保证下游 isClothing/slot 在新老库上口径一致。
   const rows = handle.db.prepare(
-    "SELECT i.*, c.name AS _joined_category FROM items i LEFT JOIN categories c ON c.id=i.category_id WHERE (c.name LIKE '%衣%' OR c.name LIKE '%穿%' OR i.name LIKE '%衣%' OR i.name LIKE '%鞋%') ORDER BY i.access_count DESC LIMIT ?",
+    `SELECT i.*, c.name AS _joined_category FROM items i LEFT JOIN categories c ON c.id=i.category_id WHERE (c.name LIKE '${LIKE_CLOTH}' OR c.name LIKE '${LIKE_WEAR}' OR i.name LIKE '${LIKE_CLOTH}' OR i.name LIKE '${LIKE_SHOES}') ORDER BY i.access_count DESC LIMIT ?`,
   ).all(limit) as unknown as (HomeItem & { _joined_category?: string | null })[];
   return rows.map((r) => ({ ...r, category: (r._joined_category ?? r.category ?? null) as string | null }));
 }
@@ -62,7 +93,7 @@ function pickSets(handle: HomeDb, cards: ItemCard[], rows: HomeItem[]): {
     if (cards[i]) list.push(cards[i]);
     bySlot.set(slot, list);
   });
-  const gap = SLOT_ORDER.filter((k) => (bySlot.get(k) ?? []).length === 0).map((k) => SLOT_NAMES[k]);
+  const gap = SLOT_ORDER.filter((k) => (bySlot.get(k) ?? []).length === 0).map((k) => slotLabel(k));
   const n = Math.max(0, ...[...bySlot.values()].map((l) => l.length));
   const sets = [];
   for (let i = 0; i < Math.min(3, n); i++) {
@@ -72,8 +103,8 @@ function pickSets(handle: HomeDb, cards: ItemCard[], rows: HomeItem[]): {
       if (list.length) slots[k] = list[i % list.length];
     }
     const tags = Object.values(slots).flatMap((c) => String(c?.tags ?? '').split(',').filter(Boolean));
-    const style = tags.includes('正式') ? '正式' : tags.includes('运动') ? '运动' : '日常';
-    sets.push({ style, reason: style + '场合适配，色系相近好搭', slots }); // 理由不列部件名：上面槽位行已逐件写过名字。
+    const style = tags.includes('正式') ? m('skill-home.outfit-outfit.c001') : tags.includes('运动') ? m('skill-home.outfit-outfit.c002') : m('skill-home.outfit-outfit.c003');
+    sets.push({ style, reason: m('skill-home.outfit-outfit.c004', { p0: String(style) }), slots }); // 理由不列部件名：上面槽位行已逐件写过名字。
   }
   return { sets, gap };
 }
@@ -82,11 +113,11 @@ export function runOutfitPick(params: Record<string, unknown>, handle: HomeDb): 
   const kind = (params.kind as string | undefined) ?? 'pick';
   // 候选池取满上限 20（与接口约束一致）：只取前 5 件时，排在访问次数榜外的内搭／鞋会整档缺位。
   const limit = params.limit !== undefined ? Number(params.limit) : 20;
-  if (!Number.isInteger(limit) || limit <= 0 || limit > 20) fail(2, 'limit 须为 1~20 正整数');
+  if (!Number.isInteger(limit) || limit <= 0 || limit > 20) fail(2, m('skill-home.outfit-outfit.c005'));
   const rows = clothingRows(handle, limit);
   const cards = rows.map((it) => toItemCard(it, listLocationsByItem(handle, it.id), listTagsByItem(handle, it.id)));
   const base = buildOutfitList(cards, kind);
-  if (!cards.length) note('衣橱空：真实无候选（非故障）');
+  if (!cards.length) note(m('skill-home.outfit-outfit.c006'));
 
   if (kind === 'wardrobe') return { ...base, wardrobe: buildWardrobe(handle, rows, cards) };
   if (kind === 'season') return { ...base, season: buildSeason(handle, params, rows) };
@@ -97,15 +128,15 @@ export function runOutfitPick(params: Record<string, unknown>, handle: HomeDb): 
 }
 
 function buildWardrobe(handle: HomeDb, rows: HomeItem[], cards: ItemCard[]): unknown {
-  const counts = new Map<string, number>();
+  const counts = new Map<SlotKey | 'other', number>(); // 按槽位**码**计数（判据位不取译文）；显示名在出页时才取。
   rows.forEach((row, i) => {
     const slot = slotOf(row.name, listTagsByItem(handle, row.id));
-    const label = slot ? SLOT_NAMES[slot] : '其他';
-    counts.set(label, (counts.get(label) ?? 0) + (cards[i]?.quantity || 1));
+    const key: SlotKey | 'other' = slot ?? 'other';
+    counts.set(key, (counts.get(key) ?? 0) + (cards[i]?.quantity || 1));
   });
   const pieces = [...counts.values()].reduce((a, b) => a + b, 0); const total = Math.max(1, pieces); // 汇总与构成同按件数。
-  const distribution = [...counts.entries()].map(([label, count]) => ({
-    label, count, pct: Math.round((count * 100) / total),
+  const distribution = [...counts.entries()].map(([key, count]) => ({
+    label: slotLabel(key), count, pct: Math.round((count * 100) / total),
   }));
   const dormant = idleItems(handle, 90)
     .map((r) => { try { return getItemById(handle, r.id); } catch { return null; } })
@@ -117,47 +148,52 @@ function buildWardrobe(handle: HomeDb, rows: HomeItem[], cards: ItemCard[]): unk
       const daysIdle = it.last_accessed_at
         ? Math.max(0, Math.floor((Date.now() - Date.parse(it.last_accessed_at)) / 86400000)) : null;
       return {
-        id: it.id, name: it.name, slot: SLOT_NAMES[slotOf(it.name, tags) ?? 'acce'] ?? '衣物',
-        daysIdle, lastUsed: it.last_accessed_at ? it.last_accessed_at.slice(0, 10) : '从未使用',
+        id: it.id, name: it.name, slot: slotOf(it.name, tags) ? slotLabel(slotOf(it.name, tags) as SlotKey) : m('skill-home.outfit-outfit.c008'),
+        daysIdle, lastUsed: it.last_accessed_at ? it.last_accessed_at.slice(0, 10) : m('skill-home.outfit-outfit.c009'),
         location: locs[0]?.location ?? '', estimated: it.last_accessed_at === null,
       };
     });
-  const scarcest = [...counts.entries()].filter(([label]) => label !== '其他').sort((a, b) => a[1] - b[1])[0]; // 「其他」是兜底桶，不是部位。
-  const advice = (scarcest ? '衣橱里' + scarcest[0] + '最少（' + scarcest[1] + '件），可优先补充。' : '衣橱暂无可分析衣物，先录入几件。')
-    + (dormant.length ? '有' + dormant.length + '件久未穿，先处理再买新衣。' : '件件常穿，继续保持。');
+  const scarcest = [...counts.entries()].filter(([key]) => key !== 'other').sort((a, b) => a[1] - b[1])[0]; // 「other」是兜底桶，不是部位。
+  const advice = (scarcest ? m('skill-home.outfit-outfit.c010', { p0: slotLabel(scarcest[0]), p1: String(scarcest[1]) }) : m('skill-home.outfit-outfit.c011'))
+    + (dormant.length ? m('skill-home.outfit-outfit.c012', { p0: String(dormant.length) }) : m('skill-home.outfit-outfit.c013'));
   return {
     distribution, dormant, advice,
     summary: [
-      { label: '在穿衣物', value: String(pieces) },
-      { label: '闲置', value: String(dormant.length) },
-      { label: '部位最缺', value: scarcest ? scarcest[0] : '待录入' },
+      { label: m('skill-home.outfit-outfit.c014'), value: String(pieces) },
+      { label: m('skill-home.outfit-outfit.c015'), value: String(dormant.length) },
+      { label: m('skill-home.outfit-outfit.c016'), value: scarcest ? slotLabel(scarcest[0]) : m('skill-home.outfit-outfit.c017') },
     ],
   };
 }
 
 function buildSeason(handle: HomeDb, params: Record<string, unknown>, rows: HomeItem[]): unknown {
-  const season = typeof params.season === 'string' && SEASONS.includes(params.season) ? params.season : '冬季';
-  const action = params.action === '拿出' ? '拿出' : '收纳';
+  // 判据位用**码**（用户数据值），显示名另取：season/action 进筛选条件，不能拿译文去比。
+  const seasonGiven = typeof params.season === 'string' && SEASONS.includes(params.season);
+  const seasonCode = seasonGiven ? (params.season as string) : SEASONS[1];
+  const takeOut = params.action === ACTION_TAKE_OUT;
+  const actionCode = takeOut ? ACTION_TAKE_OUT : ACTION_STORE;
   const items = rows
     .map((it) => ({ it, tags: listTagsByItem(handle, it.id), locs: listLocationsByItem(handle, it.id) }))
     .filter(({ it, tags, locs }) => {
-      const home = (locs[0]?.location_status ?? '') === '在家';
-      return action === '收纳' ? home && tags.includes(season) : tags.includes('已收纳') && (tags.includes(season) || it.name.includes(season));
+      const home = (locs[0]?.location_status ?? '') === STATUS_AT_HOME;
+      return actionCode === ACTION_STORE
+        ? home && tags.includes(seasonCode)
+        : tags.includes(STORED_TAG) && (tags.includes(seasonCode) || it.name.includes(seasonCode));
     })
     .map(({ it, tags, locs }) => ({
       id: it.id, name: it.name, categoryName: it.category ?? '',
       tags, location: locs[0]?.location ?? '',
     }));
   const places = [...new Set(listLocationNodes(handle).map((p) => String(p).split('/')[0]).filter(Boolean))]; // 不截断：截了「阳台」这类真位置就选不到，「候选位置 N 处」也会报截断数。
-  return { season, action, items, places };
+  return { season: seasonGiven ? seasonCode : m('skill-home.outfit-outfit.c018'), action: takeOut ? m('skill-home.outfit-outfit.c019') : m('skill-home.outfit-outfit.c020'), items, places };
 }
 
 function buildTripPlan(handle: HomeDb, params: Record<string, unknown>, rows: HomeItem[], cards: ItemCard[]): unknown {
   const days = Number.isInteger(Number(params.days)) ? Math.min(7, Math.max(1, Number(params.days))) : 3;
   const destination = typeof params.destination === 'string' && params.destination.trim()
-    ? params.destination.trim().slice(0, 20) : '远行';
+    ? params.destination.trim().slice(0, 20) : m('skill-home.outfit-outfit.c021');
   const { sets } = pickSets(handle, cards, rows);
-  const base = sets.length ? sets : [{ style: '日常', reason: '衣橱暂无候选，先录入再计划', slots: {} }];
+  const base = sets.length ? sets : [{ style: m('skill-home.outfit-outfit.c022'), reason: m('skill-home.outfit-outfit.c023'), slots: {} }];
   const plans = Array.from({ length: days }, (_, d) => {
     const set = base[d % base.length];
     return { day: d + 1, style: set.style, reason: set.reason, slots: set.slots }; // 温度无外部来源：不给占位说明句，页上温度位留「—」。
@@ -169,7 +205,11 @@ function buildTripPlan(handle: HomeDb, params: Record<string, unknown>, rows: Ho
   }));
   const conflicts = [...seen.entries()]
     .filter(([, ds]) => ds.length > 1)
-    .map(([id, ds]) => ({ hint: cards.find((c) => c.id === id)?.name + '在第' + ds.join('天与第') + '天重复' }));
+    .map(([id, ds]) => {
+      const name = cards.find((c) => c.id === id)?.name;
+      const sep = m('skill-home.outfit-outfit.c024');
+      return { hint: m('skill-home.outfit-outfit.c025', { p0: String(name), p1: String(ds.join(sep)) }) };
+    });
   const luggageMap = new Map<number, { name: string; days: number }>();
   plans.forEach((p) => Object.values(p.slots).forEach((c) => {
     if (!c) return;

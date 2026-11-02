@@ -3,10 +3,11 @@
 // 被 items（合并／关联）／express（阈值）／receipt（证件／账号）等能力共用，故住共用位。
 
 import { fail } from './fail.js';
+import { m } from '../entries/index.js';
 
 export function asInt(v: unknown, field: string): number | undefined {
   if (v === undefined) return undefined;
-  if (!Number.isInteger(v) || (v as number) <= 0) fail(2, field + ' 须为正整数');
+  if (!Number.isInteger(v) || (v as number) <= 0) fail(2, m('skill-home.shared-params.c001', { p0: String(field) }));
   return v as number;
 }
 
@@ -15,14 +16,14 @@ export function asInt(v: unknown, field: string): number | undefined {
 export function asLimit(v: unknown, field: string, min: number, max: number): number | undefined {
   if (v === undefined) return undefined;
   const n = typeof v === 'string' && v.trim() !== '' ? Number(v) : v;
-  if (!Number.isInteger(n) || (n as number) < min || (n as number) > max) fail(2, field + ' 须为 ' + min + '~' + max + ' 正整数');
+  if (!Number.isInteger(n) || (n as number) < min || (n as number) > max) fail(2, m('skill-home.shared-params.c002', { p0: String(field), p1: String(min), p2: String(max) }));
   return n as number;
 }
 
 // 列表过滤关键词（#928）：与 HELP 现找 q 同形（非空字符串才算给）。
 export function asQueryString(v: unknown, field: string): string | undefined {
   if (v === undefined) return undefined;
-  if (typeof v !== 'string') fail(2, field + ' 须为字符串');
+  if (typeof v !== 'string') fail(2, m('skill-home.shared-params.c003', { p0: String(field) }));
   const s = (v as string).trim();
   return s === '' ? undefined : s;
 }

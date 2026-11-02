@@ -17,12 +17,14 @@
  *      本件不自己看金额正负；
  *   ⑥ 载荷照搬迁前那一支（`./views.js` 的 `buildOverview`），一字不改。
  */
+import { runWithLanguage } from 'base-entries';
 import type { BillRow } from '../fetch/db.js';
 import { listRange } from '../fetch/index.js';
 import { aggBy, kpiOf, readWindow, round1, round2 } from './agg.js';
 import { money } from './pageParts.js';
 import type { AnalysisScene } from './scene.js';
 import { buildOverview } from './views.js';
+import { m } from '../entries/index.js';
 
 /** 一个账本的收支归堆行（老侧 `cmd_ledger` 的 `items` 四样同数：支出／收入／净额／笔数）。 */
 interface LedgerRow {
@@ -33,13 +35,16 @@ interface LedgerRow {
   readonly count: number;
 }
 
-/** 账本名空着时记的名字（老侧 `r.get("ledger") or "未分账本"` 那一句的同义词）。 */
-const UNNAMED = '未分账本';
+/** 账本名空着时记的名字（老侧 `r.get("ledger") or "未分账本"` 那一句的同义词）。
+ *  按需取词：语言在渲染期才定，模块级常量会把语言固化在加载时。 */
+function unnamedLabel(): string {
+  return m('skill-bill.analysis-scene-ledger.c012');
+}
 
 /** 按账本归堆：支出侧与收入侧各走一次 `aggBy` 再合并（转账由 `aggBy` 剔，本件不自己看金额正负），
  *  支出多的在前、同额按名字排。空账本名在这里补成「未分账本」（`aggBy` 会跳过空键，故先补再聚合）。 */
 function byLedger(records: readonly BillRow[]): LedgerRow[] {
-  const keyOf = (r: BillRow): string => (r.ledger.trim() === '' ? UNNAMED : r.ledger);
+  const keyOf = (r: BillRow): string => (r.ledger.trim() === '' ? unnamedLabel() : r.ledger);
   const merged = new Map<string, { expense: number; income: number; count: number }>();
   for (const row of aggBy(records, keyOf)) {
     merged.set(row.key, { expense: row.value, income: 0, count: row.count });
@@ -57,11 +62,12 @@ function byLedger(records: readonly BillRow[]): LedgerRow[] {
   return rows;
 }
 
-export const sceneLedger: AnalysisScene = {
+function buildScene(): AnalysisScene {
+  return {
   id: 'ledger',
   key: 'bill.analysis.overview',
   kind: 'ledger',
-  title: '看账本',
+  title: m('skill-bill.analysis-scene-ledger.title'),
   family: 'bars',
   values: ({ params, db }) => {
     const win = readWindow(params);
@@ -70,19 +76,26 @@ export const sceneLedger: AnalysisScene = {
     const rows = byLedger(records);
     const head = rows[0];
     const max = rows.length === 0 ? 0 : Math.max(...rows.map((x) => x.expense));
+    const headTail = head === undefined
+      ? '。'
+      : m('skill-bill.analysis-scene-ledger.c002', { p0: String(head.name), p1: String(money(head.expense)) });
     return {
-      title: '看账本',
+      title: m('skill-bill.analysis-scene-ledger.title'),
       label: win.label,
       from: win.from,
       to: win.to,
       count: records.length,
       conclusion: rows.length === 0
-        ? win.label + ' 这段时间一笔都没有记。'
-        : win.label + ' 记了 ' + String(kpi.count) + ' 笔，分在 ' + String(rows.length) + ' 个账本里：支出 '
-          + money(kpi.expense) + ' 元、收入 ' + money(kpi.income) + ' 元'
-          + (head === undefined ? '。' : '；支出最多的是「' + head.name + '」' + money(head.expense) + ' 元。'),
-      caliber: '按账本归堆，空账本名记作「未分账本」，笔数＝该账本参与收支的记录条数；'
-        + '条长按支出最多的那个账本折算；转账不计入收支，也不占账本行。',
+        ? m('skill-bill.analysis-scene-ledger.c004', { p0: String(win.label) })
+        : m('skill-bill.analysis-scene-ledger.c005', {
+          p0: String(win.label),
+          p1: String(String(kpi.count)),
+          p2: String(String(rows.length)),
+          p3: String(money(kpi.expense)),
+          p4: String(money(kpi.income)),
+          p5: String(headTail),
+        }),
+      caliber: m('skill-bill.analysis-scene-ledger.c006'),
       chips: [win.label],
       payload: buildOverview(win.label, [...records]),
       kpi,
@@ -91,22 +104,34 @@ export const sceneLedger: AnalysisScene = {
         chips: [win.label],
         charts: [],
         barGroups: [{
-          title: '各账本汇总（' + String(rows.length) + ' 个账本）',
+          title: m('skill-bill.analysis-scene-ledger.c007', { p0: String(String(rows.length)) }),
           rows: rows.map((x) => ({
             label: x.name,
-            text: '支出 ' + money(x.expense) + ' 元 · 收入 ' + money(x.income) + ' 元 · 净额 ' + money(x.net)
-              + ' 元 · ' + String(x.count) + ' 笔',
+            text: m('skill-bill.analysis-scene-ledger.c008', {
+              p0: String(money(x.expense)),
+              p1: String(money(x.income)),
+              p2: String(money(x.net)),
+              p3: String(String(x.count)),
+            }),
             pct: max === 0 ? 0 : round1((x.expense / max) * 100),
           })),
-          emptyText: '这段时间还没有账本记录',
+          emptyText: m('skill-bill.analysis-scene-ledger.c009'),
         }],
         listCards: [],
         factCards: [],
         empty: {
-          text: win.label + ' 这段时间还没有记录。',
-          hint: '先说「记支出」或「记收入」记一笔，回来看这里就有数了。',
+          text: m('skill-bill.analysis-scene-ledger.c010', { p0: String(win.label) }),
+          hint: m('skill-bill.analysis-scene-ledger.c011'),
         },
       },
     };
   },
-};
+  };
+}
+
+export const sceneLedger: AnalysisScene = buildScene();
+
+/** 按语言重建本场景（#1197：文案经词条层，语言是运行期参数）。 */
+export function sceneLedgerFor(language: string): AnalysisScene {
+  return runWithLanguage(language, buildScene);
+}

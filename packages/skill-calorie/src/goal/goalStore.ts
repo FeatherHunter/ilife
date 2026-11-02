@@ -6,6 +6,7 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { FetchError } from '../fetch/errors.js';
+import { m } from '../entries/index.js';
 
 export interface PausedState {
   paused: boolean;
@@ -56,8 +57,8 @@ export function pauseAllGoals(db: DatabaseSync): PauseResult {
     updatedAt: row.updated_at,
     rowsAffected: Number(upd.changes),
     paused: true,
-    note: '记录照常，仅目标暂停（完成度显示不计入暂停期）',
-    restoreHint: '说「重启所有目标」即可恢复',
+    note: m('skill-calorie.goal-goalStore.c001'),
+    restoreHint: m('skill-calorie.goal-goalStore.c002'),
   };
 }
 
@@ -160,7 +161,7 @@ export function resumeAllGoals(db: DatabaseSync): ResumeResult {
     id: row.id,
     updatedAt: row.updated_at,
     rowsAffected: Number(upd.changes),
-    resumeState: '正常（未暂停）',
+    resumeState: m('skill-calorie.goal-goalStore.c003'),
     resumedAt: row.updated_at,
   };
 }

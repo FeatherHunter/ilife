@@ -89,12 +89,12 @@ describe('sub-list ① 渲染契约', () => {
 
   it('**计数是算出来的**：组内几项＝子项条数（调用方给不了）', () => {
     const html = renderSubList(demoInput());
-    assert.match(html, new RegExp('class="' + S('count') + '">6 ' + SUB_LIST_COUNT_UNIT + '<'));
-    assert.match(html, new RegExp('class="' + S('count') + '">4 ' + SUB_LIST_COUNT_UNIT + '<'));
+    assert.match(html, new RegExp('class="' + S('count') + '">6 ' + SUB_LIST_COUNT_UNIT() + '<'));
+    assert.match(html, new RegExp('class="' + S('count') + '">4 ' + SUB_LIST_COUNT_UNIT() + '<'));
     assert.equal((html.match(new RegExp(S('count') + '">', 'g')) || []).length, 4);
     // 0 项也出折页头（读数「0 项」），但没有子项区
     const one = renderSubList({ groups: [{ label: '空组', items: [] }] });
-    assert.match(one, new RegExp(S('count') + '">0 ' + SUB_LIST_COUNT_UNIT + '<'));
+    assert.match(one, new RegExp(S('count') + '">0 ' + SUB_LIST_COUNT_UNIT() + '<'));
     assert.equal(one.includes(S('body')), false);
   });
 
@@ -105,7 +105,7 @@ describe('sub-list ① 渲染契约', () => {
     assert.match(html, new RegExp(S('pg-fill') + '" style="width:50%"'), '肉蛋 2/4');
     assert.match(html, new RegExp(S('pg-fill') + '" style="width:20%"'), '干货 1/5');
     assert.match(html, new RegExp(S('pg-fill') + '" style="width:0%"'), '调味 0/3');
-    assert.match(html, new RegExp('class="' + S('st') + '">2/4 ' + SUB_LIST_DONE_LABEL + '<'));
+    assert.match(html, new RegExp('class="' + S('st') + '">2/4 ' + SUB_LIST_DONE_LABEL() + '<'));
     // 一组里没有任何 `done` 标 ⇒ 这一组不长进度条
     const noFlag = renderSubList({ groups: [{ label: '按分类', items: [{ label: 'a', value: '1' }, { label: 'b', value: '2' }] }] });
     assert.equal(noFlag.includes(S('pg')), false, '不带备货标的组不该凭空长出进度条');

@@ -32,7 +32,7 @@ export function assertKeys(raw: object, allowed: readonly string[], field: strin
   for (const key of Object.getOwnPropertyNames(raw)) note(key);
   for (const key in raw) note(key);
   if (bad.length > 0) {
-    badInput(field + ' 里没有 `' + bad.join('`／`') + '` 这个键（入参表以外的键一律拒：'
+    badInput(field + ' 里没有 「' + bad.join('」「') + '」 这个键（入参表以外的键一律拒：'
       + '写错的键静默吞掉会让调用方以为自己设上了；继承来的与不可枚举的键同样算）');
   }
 }

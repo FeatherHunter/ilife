@@ -17,6 +17,7 @@
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, renderEnvelopeHtml, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { m } from '../../entries/index.js';
 
 export const FAMILY = 'family_borrow' as const;
 
@@ -104,11 +105,18 @@ const CSS = [
   '@media(max-width:720px){.bw-copy2{grid-template-columns:1fr 1fr}}',
 ].join('\n');
 
+type BorrowStatus = 'borrowing' | 'returned' | 'overdue' | 'dueToday';
+/** 方向码（数据，不译）：记录里的取值就是「借出／借入」，上屏文案走 L.dirOut/L.dirIn。 */
+const DIR_OUT = '借出';
+const DIR_IN = '借入';
 interface BorrowRec {
   id: string;
   objectName: string;
   direction: string;
-  status: string; due: string;
+  directionCode: '借出' | '借入';
+  status: string;
+  statusCode: BorrowStatus;
+  due: string;
   itemName: string;
   dateLabel: string;
   borrowed: string;
@@ -131,69 +139,133 @@ function todayStr(): string {
 function toRec(item: Record<string, unknown>, idx: number): BorrowRec {
   const op = str(item.op) || str(item.direction) || str(item.action);
   const name = str(item.name);
-  const objectName = name.startsWith('借用') && name.length > 2 ? name.slice(2) : (str(item.member) || str(item.object_name) || name || '未留对象');
-  const itemName = str(item.item_name) || (typeof item.item_id === 'number' ? '库内物品' : '');
+  const objectName = name.startsWith('借用') && name.length > 2 ? name.slice(2) : (str(item.member) || str(item.object_name) || name || m('skill-home.family-pages-family-borrow.c001'));
+  const itemName = str(item.item_name) || (typeof item.item_id === 'number' ? m('skill-home.family-pages-family-borrow.c002') : '');
   const borrowed = str(item.borrowed_at) || str(item.date);
   const due = str(item.due_date) || str(item.due);
   const returnedAt = str(item.returned_at);
   const days = str(item.days_borrowed) || (/^\d+$/.test(str(item.days)) ? str(item.days) : '');
   const remark = str(item.remark);
   const returned = op === '归还' || op === 'return' || returnedAt !== '';
-  const direction = op === '借入' ? '借入' : '借出';
-  let status = '借用中';
-  if (returned) status = '已归还';
+  // 判据位一律用**码**：direction/status 的译文只用于显示，分支与筛选不许拿译文比。
+  const directionCode: '借出' | '借入' = op === DIR_IN ? DIR_IN : DIR_OUT;
+  const direction = directionCode === DIR_IN ? m('skill-home.family-pages-family-borrow.c003') : m('skill-home.family-pages-family-borrow.c004');
+  let statusCode: BorrowStatus = 'borrowing';
+  if (returned) statusCode = 'returned';
   else if (due) {
     const t = todayStr();
-    if (due < t) status = '已超期';
-    else if (due === t) status = '今日到期';
+    if (due < t) statusCode = 'overdue';
+    else if (due === t) statusCode = 'dueToday';
   }
+  const status = statusCode === 'returned' ? m('skill-home.family-pages-family-borrow.c006')
+    : statusCode === 'overdue' ? m('skill-home.family-pages-family-borrow.c007')
+      : statusCode === 'dueToday' ? m('skill-home.family-pages-family-borrow.c008')
+        : m('skill-home.family-pages-family-borrow.c005');
   const id = str(item.id) || String(idx + 1);
-  const shownItem = itemName || '未登记';
+  const shownItem = itemName || m('skill-home.family-pages-family-borrow.c009');
   // 对象名已在卡头，明细行不再重复；物品名与三个日期位各占一组「标签＋值」，无值的位写「—」。
-  const dateLabel = returned ? '归还' : direction === '借入' ? '借入' : '借出';
-  const returnPrompt = '【确认归还】请帮我在居家管家确认归还一笔借用。\n借用记录：' + id + '\n物品：' + shownItem + '\n借用对象：' + objectName;
-  const remindBase = objectName + '，之前借的' + shownItem;
+  const dateLabel = returned ? m('skill-home.family-pages-family-borrow.c010') : directionCode === DIR_IN ? m('skill-home.family-pages-family-borrow.c011') : m('skill-home.family-pages-family-borrow.c012');
+  const returnPrompt = m('skill-home.family-pages-family-borrow.c013', {
+    p0: String(id),
+    p1: String(shownItem),
+    p2: String(objectName),
+  });
+  const remindBase = m('skill-home.family-pages-family-borrow.c014', { p0: String(objectName), p1: String(shownItem) });
   const remindPrompt = returned
-    ? '感谢' + remindBase + '已还清'
-    : status === '今日到期'
-      ? remindBase + '今天到归还日了，记得还哦'
-      : direction === '借出'
-        ? remindBase + '记得还哦'
-        : remindBase + '我记着呢';
-  return { id, objectName, direction, status, due, itemName: shownItem, dateLabel, borrowed, days, remark, returnPrompt, remindPrompt, returned };
+    ? m('skill-home.family-pages-family-borrow.c015', { p0: String(remindBase) })
+    : statusCode === 'dueToday'
+      ? m('skill-home.family-pages-family-borrow.c016', { p0: String(remindBase) })
+      : directionCode === DIR_OUT
+        ? m('skill-home.family-pages-family-borrow.c017', { p0: String(remindBase) })
+        : m('skill-home.family-pages-family-borrow.c018', { p0: String(remindBase) });
+  return { id, objectName, direction, directionCode, status, statusCode, due, itemName: shownItem, dateLabel, borrowed, days, remark, returnPrompt, remindPrompt, returned };
 }
 
 /** 明细四组「标签＋值」（有备注时五组）：一格一事实，窄屏按 `auto-fit` 折成两列或一列，
  *  不再把五段事实逗号串一行（#817 第二波 ⑥）。 */
 function detailFields(r: BorrowRec): string {
   const pairs: [string, string][] = [
-    ['物品', r.itemName],
+    [m('skill-home.family-pages-family-borrow.c019'), r.itemName],
     [r.dateLabel, r.borrowed || '—'],
-    ['约定归还', r.due || '—'],
-    ['已借天数', r.days || '—'],
+    [m('skill-home.family-pages-family-borrow.c020'), r.due || '—'],
+    [m('skill-home.family-pages-family-borrow.c021'), r.days || '—'],
   ];
-  if (r.remark !== '') pairs.push(['备注', r.remark]);
+  if (r.remark !== '') pairs.push([m('skill-home.family-pages-family-borrow.c022'), r.remark]);
   return '<dl class="bw-fields">' + pairs.map(([k, v]) =>
     '<div><dt>' + escapeHtml(k) + '</dt><dd>' + escapeHtml(v) + '</dd></div>').join('') + '</dl>';
 }
 
-function pill(status: string): string {
-  if (status.startsWith('已超期')) return '<span class="bw-pill bad">' + escapeHtml(status) + '</span>';
-  if (status === '今日到期') return '<span class="bw-pill warn">今日到期</span>';
-  if (status === '已归还') return '<span class="bw-pill mute">已归还</span>';
-  return '<span class="bw-pill">借用中</span>';
+/** 页内文案（渲染期取词：写成函数，模块加载时不取词）。 */
+function pageLabels() {
+  return {
+    statusOverdue: m('skill-home.family-pages-family-borrow.c032'),
+    returnedHint: m('skill-home.family-pages-family-borrow.c033'),
+    btnReturn: m('skill-home.family-pages-family-borrow.c034'),
+    btnRemind: m('skill-home.family-pages-family-borrow.c035'),
+    emptyRows: m('skill-home.family-pages-family-borrow.c036'),
+    rowLine: (n: number) => m('skill-home.family-pages-family-borrow.c037', { p0: String(n) }),
+    bannerNone: m('skill-home.family-pages-family-borrow.c038'),
+    bannerOverdue: (n: number) => m('skill-home.family-pages-family-borrow.c039', { p0: String(n) }),
+    bannerNoDue: m('skill-home.family-pages-family-borrow.c040'),
+    emptyNote: m('skill-home.family-pages-family-borrow.c041'),
+    thinNote: m('skill-home.family-pages-family-borrow.c042'),
+    receiptTitle: m('skill-home.family-pages-family-borrow.c043'),
+    lead: m('skill-home.family-pages-family-borrow.c044'),
+    metricOut: m('skill-home.family-pages-family-borrow.c045'),
+    metricIn: m('skill-home.family-pages-family-borrow.c046'),
+    metricOverdue: m('skill-home.family-pages-family-borrow.c047'),
+    sectionOut: m('skill-home.family-pages-family-borrow.c048'),
+    sectionIn: m('skill-home.family-pages-family-borrow.c049'),
+    sectionForm: m('skill-home.family-pages-family-borrow.c050'),
+    sectionSnapshot: m('skill-home.family-pages-family-borrow.c051'),
+    outEmpty: m('skill-home.family-pages-family-borrow.c052'),
+    inEmpty: m('skill-home.family-pages-family-borrow.c053'),
+    dir: m('skill-home.family-pages-family-borrow.c054'),
+    dirOut: m('skill-home.family-pages-family-borrow.c055'),
+    dirIn: m('skill-home.family-pages-family-borrow.c056'),
+    obj: m('skill-home.family-pages-family-borrow.c057'),
+    objPick: m('skill-home.family-pages-family-borrow.c058'),
+    objFree: m('skill-home.family-pages-family-borrow.c059'),
+    objFreePh: m('skill-home.family-pages-family-borrow.c060'),
+    itemName: m('skill-home.family-pages-family-borrow.c061'),
+    itemNamePh: m('skill-home.family-pages-family-borrow.c062'),
+    borrowedAt: m('skill-home.family-pages-family-borrow.c063'),
+    dueAt: m('skill-home.family-pages-family-borrow.c064'),
+    btnReg: m('skill-home.family-pages-family-borrow.c065'),
+    legend: m('skill-home.family-pages-family-borrow.c066'),
+    noscript: m('skill-home.family-pages-family-borrow.c067'),
+  };
+}
+
+/** 「登记借用」按钮复制出去的提示词片段（内联脚本只做拼接，文案在 TS 侧取词）。 */
+function regPromptLabels() {
+  return {
+    head: m('skill-home.family-pages-family-borrow.c068'),
+    dir: m('skill-home.family-pages-family-borrow.c069'),
+    item: m('skill-home.family-pages-family-borrow.c070'),
+    obj: m('skill-home.family-pages-family-borrow.c071'),
+    bd: m('skill-home.family-pages-family-borrow.c072'),
+    due: m('skill-home.family-pages-family-borrow.c073'),
+  };
+}
+
+function pill(code: BorrowStatus): string {
+  const label = code === 'overdue' ? m('skill-home.family-pages-family-borrow.c074') : code === 'dueToday' ? m('skill-home.family-pages-family-borrow.c075') : code === 'returned' ? m('skill-home.family-pages-family-borrow.c076') : m('skill-home.family-pages-family-borrow.c077');
+  const cls = code === 'overdue' ? ' bad' : code === 'dueToday' ? ' warn' : code === 'returned' ? ' mute' : '';
+  return '<span class="bw-pill' + cls + '">' + escapeHtml(label) + '</span>';
 }
 
 // 同分区内编号（行自带字段相同时仍逐行可区分，不合并、不虚构）。
 function recCard(r: BorrowRec, seq: string): string {
+  const L = pageLabels();
   const thumb = '<span class="bw-thumb">' + escapeHtml((r.objectName || '?').slice(0, 1)) + '</span>';
   const btns = r.returned
-    ? '<span class="bw-hint">已还清</span>'
+    ? '<span class="bw-hint">' + escapeHtml(L.returnedHint) + '</span>'
     : '<div class="bw-actions"><button class="bw-btn primary" data-t="' + escapeHtml(r.returnPrompt)
-      + '" onclick="copyText(this.dataset.t)">确认归还</button><button class="bw-btn" data-t="'
-      + escapeHtml(r.remindPrompt) + '" onclick="copyText(this.dataset.t)">复制催还文案</button></div>';
+      + '" onclick="copyText(this.dataset.t)">' + escapeHtml(L.btnReturn) + '</button><button class="bw-btn" data-t="'
+      + escapeHtml(r.remindPrompt) + '" onclick="copyText(this.dataset.t)">' + escapeHtml(L.btnRemind) + '</button></div>';
   return '<div class="bw-rec' + (r.returned ? ' done' : '') + '"><div class="bw-top">' + thumb
-    + '<span class="bw-name">' + escapeHtml(r.objectName) + '</span>' + pill(r.status)
+    + '<span class="bw-name">' + escapeHtml(r.objectName) + '</span>' + pill(r.statusCode)
     + '<span class="bw-seq">' + escapeHtml(seq) + '</span></div>'
     + detailFields(r) + btns + '</div>';
 }
@@ -202,9 +274,10 @@ function recCard(r: BorrowRec, seq: string): string {
 // 不再渲染成相同可见句）。回执形直接走共用渲染。
 function snapshotHtml(env: Envelope, rows: Record<string, unknown>[]): string {
   if (env.shape === 'receipt') return renderEnvelopeHtml(env);
-  if (rows.length === 0) return '<div class="bw-meta">暂无记录</div>';
+  const L = pageLabels();
+  if (rows.length === 0) return '<div class="bw-meta">' + escapeHtml(L.emptyRows) + '</div>';
   return '<ol class="bw-rows">' + rows.map((it, i) =>
-    '<li>第' + (i + 1) + '行：' + escapeHtml(str(it.name) || '未命名行')).join('') + '</ol>';
+    '<li>' + escapeHtml(L.rowLine(i + 1)) + escapeHtml(str(it.name) || m('skill-home.family-pages-family-borrow.c023'))).join('') + '</ol>';
 }
 
 function needList(group: 'fields' | 'operations' | 'empty' | 'status', title: string): string {
@@ -216,30 +289,31 @@ function needList(group: 'fields' | 'operations' | 'empty' | 'status', title: st
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
 // 复制区走共用件（卡路里同款三格式＋六段日志）；`ctx.command` 由交付链供给（含 params），直调缺省按本族主 key。
 export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
+  const L = pageLabels();
   const template = readFileSync(new URL('../../../templates/family/family_borrow.html', import.meta.url), 'utf8');
   const d = env.data as Record<string, unknown>;
   const isReceipt = env.shape === 'receipt';
   const rows = !isReceipt && Array.isArray(d.items) ? (d.items as Record<string, unknown>[]) : [];
   const recs = rows.map((it, i) => toRec(it, i));
-  const out = recs.filter((r) => r.direction === '借出');
-  const inn = recs.filter((r) => r.direction === '借入');
-  const overdue = recs.filter((r) => r.status.startsWith('已超期')).length;
+  const out = recs.filter((r) => r.directionCode === DIR_OUT);
+  const inn = recs.filter((r) => r.directionCode === DIR_IN);
+  const overdue = recs.filter((r) => r.statusCode === 'overdue').length;
   const hasDue = recs.some((r) => r.due !== ''); // 约定归还日一个都没有 → 超期算不出来，值位写「—」
   const receiptMsg = isReceipt ? str((d as { message?: unknown }).message) : '';
 
   const banner = recs.length === 0 || (hasDue && overdue === 0)
-    ? '<div class="bw-calm">超期提醒：当前没有超期记录</div>'
+    ? '<div class="bw-calm">' + escapeHtml(L.bannerNone) + '</div>'
     : hasDue
-      ? '<div class="bw-warn">超期提醒：有' + overdue + '件超期未还，记得催一下</div>'
-      : '<div class="bw-calm">超期提醒：约定归还日未记录，暂时算不出超期</div>';
+      ? '<div class="bw-warn">' + escapeHtml(L.bannerOverdue(overdue)) + '</div>'
+      : '<div class="bw-calm">' + escapeHtml(L.bannerNoDue) + '</div>';
   const emptyNote = recs.length === 0
-    ? '<div class="bw-sec"><div class="bw-meta">还没有借用记录，先在下面登记第一笔吧</div></div>'
+    ? '<div class="bw-sec"><div class="bw-meta">' + escapeHtml(L.emptyNote) + '</div></div>'
     : '';
   const thinNote = recs.length > 0 && rows.every((it) => !str(it.borrowed_at) && !str(it.due_date) && !str(it.item_name))
-    ? '<p class="bw-hint">清单行当前只带成员名，物品与日期明细待数据补齐后自动列出</p>'
+    ? '<p class="bw-hint">' + escapeHtml(L.thinNote) + '</p>'
     : '';
   const receiptBanner = receiptMsg !== ''
-    ? '<div class="bw-sec"><div class="bw-meta">写操作回执</div><div>' + escapeHtml(receiptMsg) + '</div></div>'
+    ? '<div class="bw-sec"><div class="bw-meta">' + escapeHtml(L.receiptTitle) + '</div><div>' + escapeHtml(receiptMsg) + '</div></div>'
     : '';
 
   const memberOpts = Array.from(new Set(recs.map((r) => r.objectName).filter(Boolean)))
@@ -247,42 +321,42 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
 
   const content = '<style>' + CSS + '</style>'
     // #817：导语原说「超期自动提醒」，与下面那条「约定归还日未记录，暂时算不出超期」两种口径；导语改成口径本身。
-    + '<p class="bw-lead">借出与借入分开记，超期按约定归还日算</p>'
+    + '<p class="bw-lead">' + escapeHtml(L.lead) + '</p>'
     + '<div class="bw-metrics">'
-    + '<div class="bw-num"><b>借出中</b><span>' + out.filter((r) => !r.returned).length + '</span></div>'
-    + '<div class="bw-num"><b>借入中</b><span>' + inn.filter((r) => !r.returned).length + '</span></div>'
-    + '<div class="bw-num"><b>超期件数</b><span>' + (hasDue ? String(overdue) : recs.length === 0 ? '0' : '—') + '</span></div>'
+    + '<div class="bw-num"><b>' + escapeHtml(L.metricOut) + '</b><span>' + out.filter((r) => !r.returned).length + '</span></div>'
+    + '<div class="bw-num"><b>' + escapeHtml(L.metricIn) + '</b><span>' + inn.filter((r) => !r.returned).length + '</span></div>'
+    + '<div class="bw-num"><b>' + escapeHtml(L.metricOverdue) + '</b><span>' + (hasDue ? String(overdue) : recs.length === 0 ? '0' : '—') + '</span></div>'
     + '</div>'
     + banner + receiptBanner + emptyNote + thinNote
-    + '<section class="bw-sec"><h2>借出区</h2>'
-    + (out.length > 0 ? out.map((r, i) => recCard(r, '借出第' + (i + 1) + '笔')).join('') : '<p class="bw-hint">借出区暂无记录</p>')
+    + '<section class="bw-sec"><h2>' + escapeHtml(L.sectionOut) + '</h2>'
+    + (out.length > 0 ? out.map((r, i) => recCard(r, m('skill-home.family-pages-family-borrow.c024', { p0: String(i + 1) }))).join('') : '<p class="bw-hint">' + escapeHtml(L.outEmpty) + '</p>')
     + '</section>'
-    + '<section class="bw-sec"><h2>借入区</h2>'
-    + (inn.length > 0 ? inn.map((r, i) => recCard(r, '借入第' + (i + 1) + '笔')).join('') : '<p class="bw-hint">借入区暂无记录，有借入登记会自动列在这里</p>')
+    + '<section class="bw-sec"><h2>' + escapeHtml(L.sectionIn) + '</h2>'
+    + (inn.length > 0 ? inn.map((r, i) => recCard(r, m('skill-home.family-pages-family-borrow.c025', { p0: String(i + 1) }))).join('') : '<p class="bw-hint">' + escapeHtml(L.inEmpty) + '</p>')
     + '</section>'
-    + '<section class="bw-sec"><h2>登记表单</h2>'
+    + '<section class="bw-sec"><h2>' + escapeHtml(L.sectionForm) + '</h2>'
     + '<div class="bw-fgrid">'
-    + '<label>方向<select id="fDir"><option value="借出">借出</option><option value="借入">借入</option></select></label>'
-    + '<label>对象（家人）<select id="fObj"><option value="">请选择</option>' + memberOpts + '</select></label>'
-    + '<label>对象自由输入<input id="fObjName" placeholder="外部联系人"></label>'
+    + '<label>' + escapeHtml(L.dir) + '<select id="fDir"><option value="借出">' + escapeHtml(L.dirOut) + '</option><option value="借入">' + escapeHtml(L.dirIn) + '</option></select></label>'
+    + '<label>' + escapeHtml(L.obj) + '<select id="fObj"><option value="">' + escapeHtml(L.objPick) + '</option>' + memberOpts + '</select></label>'
+    + '<label>' + escapeHtml(L.objFree) + '<input id="fObjName" placeholder="' + escapeHtml(L.objFreePh) + '"></label>'
     // #817：方向下拉默认「借出」，标签写「库外物品名」会把借出方向的人带偏；按中性的「物品名」写。
-    + '<label>物品名<input id="fItemName" placeholder="借入时填这里"></label>'
-    + '<label>借出日期<input id="fBorrowed" type="date"></label>'
-    + '<label>约定归还日<input id="fDue" type="date"></label>'
+    + '<label>' + escapeHtml(L.itemName) + '<input id="fItemName" placeholder="' + escapeHtml(L.itemNamePh) + '"></label>'
+    + '<label>' + escapeHtml(L.borrowedAt) + '<input id="fBorrowed" type="date"></label>'
+    + '<label>' + escapeHtml(L.dueAt) + '<input id="fDue" type="date"></label>'
     + '</div>'
-    + '<button class="bw-btn primary" id="btnReg">确认登记</button>'
-    + '<p class="bw-legend">状态分四种：已超期，今日到期，已归还，借用中</p>'
+    + '<button class="bw-btn primary" id="btnReg">' + escapeHtml(L.btnReg) + '</button>'
+    + '<p class="bw-legend">' + escapeHtml(L.legend) + '</p>'
     + '</section>'
-    + '<section hidden class="bw-sec"><h2>数据快照</h2>' + snapshotHtml(env, rows)
+    + '<section hidden class="bw-sec"><h2>' + escapeHtml(L.sectionSnapshot) + '</h2>' + snapshotHtml(env, rows)
     + '<div class="bw-copy2">' + homeCopyArea({
         data: { envelope: env },
         log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
       }) + '</div></section>'
-    + needList('fields', '必需块对照（字段）')
-    + needList('operations', '必需块对照（操作）')
-    + needList('empty', '必需块对照（空态与异常）')
-    + needList('status', '必需块对照（状态词）')
-    + '<noscript><p class="bw-hint">当前为静态产物页，登记与复制按钮需要脚本支持</p></noscript>'
+    + needList('fields', m('skill-home.family-pages-family-borrow.c026'))
+    + needList('operations', m('skill-home.family-pages-family-borrow.c027'))
+    + needList('empty', m('skill-home.family-pages-family-borrow.c028'))
+    + needList('status', m('skill-home.family-pages-family-borrow.c029'))
+    + '<noscript><p class="bw-hint">' + escapeHtml(L.noscript) + '</p></noscript>'
     + '<script>function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;")}'
     + 'function copyText(t){if(navigator.clipboard){navigator.clipboard.writeText(t)}}'
     + 'var b=document.getElementById("btnReg");if(b){b.onclick=function(){'
@@ -291,6 +365,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + 'var item=document.getElementById("fItemName").value.trim()||"___";'
     + 'var bd=document.getElementById("fBorrowed").value||"___";'
     + 'var due=document.getElementById("fDue").value||"___";'
-    + 'copyText("【登记借用】请帮我在居家管家登记一笔借用。\\n方向: "+dir+"\\n物品: "+item+"\\n借用对象: "+obj+"\\n借出日期: "+bd+"\\n约定归还日: "+due);};}</script>';
+    + 'var T=' + JSON.stringify(regPromptLabels()) + ';'
+    + 'copyText(T.head+"\\n"+T.dir+dir+"\\n"+T.item+item+"\\n"+T.obj+obj+"\\n"+T.bd+bd+"\\n"+T.due+due);};}</script>';
   return fillTemplate(template, content);
 }

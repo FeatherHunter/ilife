@@ -1,5 +1,6 @@
 /** T6 #25 · 批量导入校验：与老家 batch_import.validate_record 同规则（只读对照）。 */
 
+import { m } from '../entries/index.js';
 export const REQUIRED_FIELDS = [
   'product_name',
   'calories',
@@ -38,22 +39,22 @@ export interface ValidationResult {
 /** 单条校验，返回 (是否通过, 错误信息)。规则与老家逐条一致。 */
 export function validateRecord(record: unknown): ValidationResult {
   if (typeof record !== 'object' || record === null || Array.isArray(record)) {
-    return { ok: false, error: '记录必须是对象' };
+    return { ok: false, error: m('skill-calorie.fetch-validate.c001') };
   }
   const rec = record as Record<string, unknown>;
   for (const field of REQUIRED_FIELDS) {
     if (!(field in rec) || rec[field] === null || rec[field] === undefined) {
-      return { ok: false, error: `缺少必填字段: ${field}` };
+      return { ok: false, error: m('skill-calorie.fetch-validate.c002', { p0: String(field) }) };
     }
     // source 必须如实标注、非空；未知就写“未知”，不许空着
     if (field === 'source') {
       if (typeof rec[field] !== 'string' || (rec[field] as string).trim() === '') {
-        return { ok: false, error: 'source 必须是非空字符串(如实记录数据来源，可以是“未知”)' };
+        return { ok: false, error: m('skill-calorie.fetch-validate.c003') };
       }
     }
     if (field === 'product_name') {
       if (typeof rec[field] !== 'string' || (rec[field] as string).trim() === '') {
-        return { ok: false, error: 'product_name 必须是非空字符串' };
+        return { ok: false, error: m('skill-calorie.fetch-validate.c004') };
       }
     }
   }
@@ -61,10 +62,10 @@ export function validateRecord(record: unknown): ValidationResult {
     if (field in rec && rec[field] !== null && rec[field] !== undefined) {
       const v = rec[field];
       if (typeof v !== 'number' || Number.isNaN(v)) {
-        return { ok: false, error: `${field} 必须是数字` };
+        return { ok: false, error: m('skill-calorie.fetch-validate.c005', { p0: String(field) }) };
       }
       if (v < 0) {
-        return { ok: false, error: `${field} 必须 >= 0,当前: ${v}` };
+        return { ok: false, error: m('skill-calorie.fetch-validate.c006', { p0: String(field), p1: String(v) }) };
       }
     }
   }

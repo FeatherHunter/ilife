@@ -15,6 +15,8 @@ import { F, R, commandLine, out } from '../shared/writeParts.js';
 import { ENTRY_PRECHECK } from './precheckPort.js';
 import { buildLabelPrecheckDoc } from './precheckLabel.js';
 import { buildLabelPrecheckView } from './precheckPort.js';
+import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** `calorie.diet.add` · 记一餐（唤醒词 记一餐）。 */
 export function writeDietAdd(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
@@ -25,27 +27,27 @@ export function writeDietAdd(params: Record<string, unknown>, db: DatabaseSync):
   if (optStr(params, 'entry') === ENTRY_PRECHECK) {
     const v = buildLabelPrecheckView(params);
     const page = buildLabelPrecheckDoc(v, v.date !== '', commandLine('calorie.diet.add', params));
-    return { data: out(R('拍营养表确认', 'create', '这一页只做确认、不写库；确认后再跑同一条命令去掉入口标记即写入', '拍营养表确认', 'food_log (写前确认页)', {
+    return { data: out(R(m('skill-calorie.diet-log.c001'), 'create', m('skill-calorie.diet-log.c002'), m('skill-calorie.diet-log.c003'), m('skill-calorie.diet-log.c004'), {
       recordId: null, noChange: true, ids: [], idSource: 'none', writtenFields: [],
     })).data, html: page };
   }
   const foodName = (optStr(params, 'foodName') ?? optStr(params, 'food_name') ?? '');
-  if (!foodName.trim()) fail(2, '缺参数 foodName');
+  if (!foodName.trim()) fail(2, m('skill-calorie.diet-log.c005'));
   const calories = needNum(params, 'calories');
   const protein = needNum(params, 'protein');
   for (const [k, v] of [['calories', calories], ['protein', protein]] as const) {
-    if (v < 0) fail(2, k + ' 不能为负');
+    if (v < 0) fail(2, m('skill-calorie.diet-log.c006', { p0: String(k) }));
   }
   for (const k of ['carbs', 'fat'] as const) {
     const v = optNum(params, k);
-    if (v !== undefined && v < 0) fail(2, k + ' 不能为负');
+    if (v !== undefined && v < 0) fail(2, m('skill-calorie.diet-log.c007', { p0: String(k) }));
   }
   const grams0 = optNum(params, 'grams');
-  if (grams0 !== undefined && grams0 <= 0) fail(2, 'grams 必须为正');
+  if (grams0 !== undefined && grams0 <= 0) fail(2, m('skill-calorie.diet-log.c008'));
   const date = wday(params, 'date');
   if (date) assertISO(date, 'date');
   const meal = optStr(params, 'meal') ?? optStr(params, 'mealOverride');
-  if (meal !== undefined && !(MEALS as readonly string[]).includes(meal)) fail(2, '--meal 须为 ' + MEALS.join('、'));
+  if (meal !== undefined && !(MEALS as readonly string[]).includes(meal)) fail(2, m('skill-calorie.diet-log.c009', { p0: String(listJoin(currentRenderLanguage(), MEALS)) }));
   const r = addMeal(db, {
     foodName: foodName.trim(), calories, protein,
     carbs: optNum(params, 'carbs') ?? 0, fat: optNum(params, 'fat') ?? 0,
@@ -67,32 +69,32 @@ export function writeDietAdd(params: Record<string, unknown>, db: DatabaseSync):
      参数名不上屏、不写库、不进 `writtenFields`；不给这个参数时行为与从前一字不差。 */
   const photo = optStr(params, 'source') === 'photo';
   const scene = backfill
-    ? (photo ? '拍照补记一餐' : '补记饮食')
-    : (photo ? '拍照记一餐' : (hasNote ? '记一餐（含备注）' : '记一餐'));
-  const said = (backfill ? '已补记：' : '已记一餐：') + r.food_name + ' ' + r.date + ' ' + r.time + '（' + r.meal + '）';
+    ? (photo ? m('skill-calorie.diet-log.c010') : m('skill-calorie.diet-log.c011'))
+    : (photo ? m('skill-calorie.diet-log.c012') : (hasNote ? m('skill-calorie.diet-log.c013') : m('skill-calorie.diet-log.c014')));
+  const said = (backfill ? m('skill-calorie.diet-log.c015') : m('skill-calorie.diet-log.c016')) + r.food_name + ' ' + r.date + ' ' + r.time + '（' + r.meal + '）';
   if (r.duplicate) {
-    return out(R(scene, 'create', String(r.message ?? '重复记录已跳过'), scene, 'food_log (写库回执)', {
+    return out(R(scene, 'create', String(r.message ?? m('skill-calorie.diet-log.c017')), scene, m('skill-calorie.diet-log.c018'), {
       recordId: r.dupId ?? null, noChange: true,
       ids: r.dupId ? [r.dupId] : [], idSource: r.dupId ? 'record' : 'none', writtenFields: [],
     }));
   }
-  const remain = r.remainingCal === null || r.remainingCal === undefined ? '' : ' · 今日剩 ' + r.remainingCal + ' 卡';
+  const remain = r.remainingCal === null || r.remainingCal === undefined ? '' : m('skill-calorie.diet-log.c019', { p0: String(r.remainingCal) });
   /* #496 · 副题把备注原文带上（审查件第 21、27 条：「含备注」那一页与普通记一餐逐字节相同，
      读者看不出备注记到了哪里）。 */
-  const noteText = hasNote ? ' · 备注：' + String(note) : '';
+  const noteText = hasNote ? m('skill-calorie.diet-log.c020', { p0: String(String(note)) }) : '';
   /* #509 · 拍照入口的两页（05 拍营养表记一餐／06 拍营养表补记一餐）另带一行来源：
      读者点两个入口看到的是两张一样的页——这一行就是「同一顿、这次是照着包装营养表记的」那处差异。 */
-  const sourceText = photo ? ' · 来源：营养表照片' : '';
-  return out(R(scene, 'create', said + sourceText + noteText + remain, scene, 'food_log (写库回执)', {
+  const sourceText = photo ? m('skill-calorie.diet-log.c021') : '';
+  return out(R(scene, 'create', said + sourceText + noteText + remain, scene, m('skill-calorie.diet-log.c022'), {
     recordId: r.id, ids: r.id === null ? [] : [r.id], writtenFields: [...F.diet],
-    items: [{ id: r.id ?? undefined, date: r.date, status: '成功', reason: '', detail: r.food_name }],
+    items: [{ id: r.id ?? undefined, date: r.date, status: m('skill-calorie.diet-log.c023'), reason: '', detail: r.food_name }],
   }));
 }
 
 /** `calorie.diet.batch` · 批量补记饮食。 */
 export function writeDietBatch(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
   const items = needArr(params, 'items');
-  if (items.length > 200) fail(2, 'items 至多 200 条');
+  if (items.length > 200) fail(2, m('skill-calorie.diet-log.c024'));
   const r = addMealsBatch(db, items.map((e) => {
     const o = (e ?? {}) as Record<string, unknown>;
     const food = o['foodName'] ?? o['food_name'];
@@ -105,10 +107,10 @@ export function writeDietBatch(params: Record<string, unknown>, db: DatabaseSync
       fat: o['fat'] as number | undefined, note: o['note'] === undefined ? undefined : String(o['note']),
     };
   }));
-  return out(R('批量补记饮食', 'create', '批量记饮食：新增 ' + r.added + '，跳过 ' + r.skipped + '，失败 ' + r.failed, '批量补记饮食', 'food_log (写库回执)', {
+  return out(R(m('skill-calorie.diet-log.c025'), 'create', m('skill-calorie.diet-log.c026', { p0: String(r.added), p1: String(r.skipped), p2: String(r.failed) }), m('skill-calorie.diet-log.c027'), m('skill-calorie.diet-log.c028'), {
     noChange: r.added === 0, ids: [], idSource: 'condition',
     writtenFields: r.added > 0 ? [...F.diet] : [],
-    items: r.failures.slice(0, 20).map(([idx, reason]) => ({ status: '失败', reason, detail: '第' + idx + '条' })),
+    items: r.failures.slice(0, 20).map(([idx, reason]) => ({ status: m('skill-calorie.diet-log.c029'), reason, detail: m('skill-calorie.diet-log.c030', { p0: String(idx) }) })),
   }));
 }
 
@@ -121,7 +123,12 @@ export function writeDietCopy(params: Record<string, unknown>, db: DatabaseSync)
   assertISO(to, 'to');
   const r = copyMeals(db, from, to);
   if (r.copied + r.skipped === 0) throw new CalorieRenderError('missing-data', '来源无饮食记录（' + from + '）');
-  return out(R('复制昨日饮食', 'create', '已复制饮食 ' + from + '→' + to + '：复制 ' + r.copied + '，跳过 ' + r.skipped, '复制昨日饮食', 'food_log (写库回执)', {
+  return out(R(m('skill-calorie.diet-log.c031'), 'create', m('skill-calorie.diet-log.c032', {
+    p0: String(from),
+    p1: String(to),
+    p2: String(r.copied),
+    p3: String(r.skipped),
+  }), m('skill-calorie.diet-log.c033'), m('skill-calorie.diet-log.c034'), {
     noChange: r.copied === 0, ids: [], idSource: 'condition',
     writtenFields: r.copied > 0 ? [...F.diet] : [],
   }));
@@ -130,7 +137,7 @@ export function writeDietCopy(params: Record<string, unknown>, db: DatabaseSync)
 /** `calorie.water.log` · 记喝水。 */
 export function writeWaterLog(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
   const ml = needNum(params, 'ml');
-  if (!(ml > 0) || ml > 10000) fail(2, 'ml 须为 0..10000 毫升');
+  if (!(ml > 0) || ml > 10000) fail(2, m('skill-calorie.diet-log.c035'));
   const date = wday(params, 'date');
   if (date) assertISO(date, 'date');
   const r = addMeal(db, {
@@ -140,15 +147,15 @@ export function writeWaterLog(params: Record<string, unknown>, db: DatabaseSync)
   if (r.duplicate) {
     // 与 `calorie.diet.add` 同口径（§3.3 `record`）：重复跳过的原 id 由 fetch 回传（`fetch/diet.ts:96`），
     // 拿得到就报 `record`＋`ids=[dupId]`，拿不到才退 `none`（返修 R-3／蓝队 D-3 统一）。
-    return out(R('记喝水', 'create', String(r.message ?? '重复记录已跳过'), '记喝水', 'food_log (写库回执)', {
+    return out(R(m('skill-calorie.diet-log.c036'), 'create', String(r.message ?? m('skill-calorie.diet-log.c037')), m('skill-calorie.diet-log.c038'), m('skill-calorie.diet-log.c039'), {
       recordId: r.dupId ?? null, noChange: true,
       ids: r.dupId ? [r.dupId] : [], idSource: r.dupId ? 'record' : 'none', writtenFields: [],
     }));
   }
   const day = date ?? todayISO();
   const sum = getDailySummary(db, day);
-  return out(R('记喝水', 'create', '已记喝水 ' + ml + ' ml（' + day + ' 累计 ' + sum.waterMl + ' ml）', '记喝水', 'food_log (写库回执)', {
+  return out(R(m('skill-calorie.diet-log.c040'), 'create', m('skill-calorie.diet-log.c041', { p0: String(ml), p1: String(day), p2: String(sum.waterMl) }), m('skill-calorie.diet-log.c042'), m('skill-calorie.diet-log.c043'), {
     recordId: r.id, ids: r.id === null ? [] : [r.id], writtenFields: [...F.water],
-    items: [{ id: r.id ?? undefined, date: r.date, status: '成功', reason: '', detail: ml + 'ml' }],
+    items: [{ id: r.id ?? undefined, date: r.date, status: m('skill-calorie.diet-log.c044'), reason: '', detail: ml + 'ml' }],
   }));
 }

@@ -36,25 +36,32 @@ import { renderHelpShellHtml } from 'base-paint/help-shell';
 import type { HelpShellData } from 'base-paint/help-shell';
 import { MEMO_HELP_GROUPS, buildHelpSceneIndex } from './sceneData.js';
 import { MemoRenderError } from '../render/errors.js';
+import { m } from '../entries/index.js';
 
 /** 5 键头（老 `memo_render.py` 逐字）。`title` **不含**技能名 ⇒ 文档标题由共享层拼成 `备忘录 · 使用手册`。
  *  两个常量**不对外开出口**（票 5 §2.2：本件「运行时 3 个 ＋ 类型 0 个」；要用它们的是出口层，不是别人）。 */
-const MEMO_HELP_SKILL_NAME = '备忘录' as const;
-const MEMO_HELP_TITLE = '使用手册' as const;
+function memoHelpSkillName(): string {
+  return m('skill-memo-ilife.help-helpFile.c009');
+}
+function memoHelpTitle(): string {
+  return m('skill-memo-ilife.help-helpFile.c010');
+}
 
 /** 首次使用横幅的 `prompt` 取自该场景的 `prompt_template`（单源，不抄第二份文案）。 */
 const HELP_INIT_SCENE_ID = 'memo_init_setup' as const;
 /** 老 `init_banner.steps` 的 6 步（`memo_render.py` 的 `_init_banner` 逐字，**是 `{title,desc}` 对象数组**）。
  *  取对象形而非 schema 要的 `string[]`：模板读 `st.title`／`st.desc`（锚点 `INIT_BANNER.steps.map`），
  *  传字符串会渲染成 6 个**有序号、无文案**的空格子＝用户看得见的缺陷 ⇒ 裁决 20「取页面正确那一边」。 */
-const HELP_INIT_STEPS: readonly { readonly title: string; readonly desc: string }[] = Object.freeze([
-  Object.freeze({ title: '检查并配置 Python', desc: '版本与依赖检测' }),
-  Object.freeze({ title: '数据存储', desc: 'SQLite + FTS5 全文搜索' }),
-  Object.freeze({ title: '飞书 CLI', desc: '安装并授权(核心联动)' }),
-  Object.freeze({ title: '环境变量', desc: 'SKILLS_DB_PATH / MEMO_MEDIA_DIR' }),
-  Object.freeze({ title: '初始化数据库', desc: '建表 + 提醒调度' }),
-  Object.freeze({ title: '生成报告', desc: '初始化报告页' }),
-]);
+function helpInitSteps(): readonly { readonly title: string; readonly desc: string }[] {
+  return [
+    { title: m('skill-memo-ilife.help-helpFile.c011'), desc: m('skill-memo-ilife.help-helpFile.c012') },
+    { title: m('skill-memo-ilife.help-helpFile.c013'), desc: m('skill-memo-ilife.help-helpFile.c014') },
+    { title: m('skill-memo-ilife.help-helpFile.c015'), desc: m('skill-memo-ilife.help-helpFile.c016') },
+    { title: m('skill-memo-ilife.help-helpFile.c017'), desc: 'SKILLS_DB_PATH / MEMO_MEDIA_DIR' },
+    { title: m('skill-memo-ilife.help-helpFile.c018'), desc: m('skill-memo-ilife.help-helpFile.c019') },
+    { title: m('skill-memo-ilife.help-helpFile.c020'), desc: m('skill-memo-ilife.help-helpFile.c021') },
+  ];
+}
 /** 老两项（`memo_render.py` 的 `contact.items`，标签与个数照老样）；**不带 `url`**（共享 schema 的
  *  `contact.items[]` 是闭集，带了会判 `schema-invalid`，见件头裁决 20 那张表）——链接以明文 `value` 呈现。
  *  #974 用户裁定（2026-09-27）：地址指向本仓 `FeatherHunter/ilife`（老地址 `FeatherHunter/SKILLS` 是搬家前的仓）。 */
@@ -145,7 +152,7 @@ interface MemoHelpFileOptions {
 /** 老 `%Y-%m-%d %H:%M` 等价物（本地时区、零填充；非法 Date 即坏参，不返空串）。 */
 export function formatHelpMinute(now: Date): string {
   if (!(now instanceof Date) || Number.isNaN(now.getTime())) {
-    return fail('HELP 更新时间须为有效 Date（缺失阻断，不返空串）。');
+    return fail(m('skill-memo-ilife.help-helpFile.c001'));
   }
   const p = (n: number): string => String(n).padStart(2, '0');
   return String(now.getFullYear()) + '-' + p(now.getMonth() + 1) + '-' + p(now.getDate())
@@ -174,9 +181,9 @@ export function buildMemoHelpFileData(now: Date, opts: MemoHelpFileOptions = {})
   };
 } {
   const groups = MEMO_HELP_GROUPS as unknown as readonly GroupAsset[];
-  if (groups.length === 0) fail('HELP 内容资产为空（MEMO_HELP_GROUPS）。');
+  if (groups.length === 0) fail(m('skill-memo-ilife.help-helpFile.c002'));
   const scenes = groups.reduce((n, g) => n + g.subgroups.reduce((m, sg) => m + sg.scenes.length, 0), 0);
-  if (scenes === 0) fail('HELP 内容资产没有任何场景（MEMO_HELP_GROUPS 二级组为空）。');
+  if (scenes === 0) fail(m('skill-memo-ilife.help-helpFile.c003'));
 
   // 技能数据世代取自资产件：`sceneData.ts` 有意**不**另开 `version` 导出（它自述「本文件只给 2 个导出」），
   // 世代值随域级索引载荷出去 ⇒ 这里从**它的公开导出**取，而不是在本模块写第四份副本（裁决 9 的同一理）。
@@ -185,28 +192,32 @@ export function buildMemoHelpFileData(now: Date, opts: MemoHelpFileOptions = {})
   const setup = findScene(groups, HELP_INIT_SCENE_ID);
   const prompt = setup?.prompt_template;
   if (typeof prompt !== 'string' || prompt.length === 0) {
-    fail('HELP 首次使用横幅缺 prompt：内容资产无场景 ' + HELP_INIT_SCENE_ID + '。');
+    fail(m('skill-memo-ilife.help-helpFile.c004', { p0: String(HELP_INIT_SCENE_ID) }));
   }
 
   // `now` 非法时在这里就炸，不把坏时间带进载荷（载荷本身不吃时间：A 路模板不吃时间、不吃环境变量）。
   formatHelpMinute(now);
   // 老口径 `subtitle`（票 3 逐字）：`N 个分类 · M 个场景 · K 可用 · 版本 <世代>`；计数**派生**、版本取资产。
-  const subtitle = String(groups.length) + ' 个分类 · ' + String(scenes) + ' 个场景 · '
-    + String(scenes) + ' 可用 · 版本 ' + version;
+  const subtitle = m('skill-memo-ilife.help-helpFile.c005', {
+    p0: String(String(groups.length)),
+    p1: String(String(scenes)),
+    p2: String(String(scenes)),
+    p3: String(version),
+  });
 
   return Object.freeze({
-    skill_name: MEMO_HELP_SKILL_NAME,
-    title: MEMO_HELP_TITLE,
+    skill_name: memoHelpSkillName(),
+    title: memoHelpTitle(),
     subtitle,
     contact: HELP_CONTACT,
     groups: toGroupsPayload(groups),
     version,
     init_banner: Object.freeze({
-      title: '🚀 第一次用备忘录?',
-      subtitle: '从零搭建环境:检测 → 安装/配置 → 初始化数据库 → 生成报告,全程引导。',
-      button_text: '📋 复制',
+      title: m('skill-memo-ilife.help-helpFile.c006'),
+      subtitle: m('skill-memo-ilife.help-helpFile.c007'),
+      button_text: m('skill-memo-ilife.help-helpFile.c008'),
       prompt,
-      steps: HELP_INIT_STEPS,
+      steps: helpInitSteps(),
       hidden: opts.initialized === true,
     }),
   });

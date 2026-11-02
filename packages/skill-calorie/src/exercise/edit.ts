@@ -20,11 +20,13 @@ import { withM5 } from '../render/receipt.js';
 import type { CrudReceipt } from '../render/receipt.js';
 import { CalorieRenderError } from '../render/errors.js';
 import { assertISO, fail, optNum, optStr, wday } from '../shared/params.js';
-import { R, SOFT_EXCLUDED, cliNames, commandLine, deleteStatus, totalChanges } from '../shared/writeParts.js';
+import { R, cliNames, commandLine, deleteStatus, softExcluded, totalChanges } from '../shared/writeParts.js';
 import type { WriteOut } from '../shared/commandSpec.js';
 import { buildExerciseReceiptDoc } from './receipt.js';
 /* #717 批③·谓词归一：软删存活谓词正本住共用位 `shared/alive.ts`（本件原先内联同一句话）。 */
 import { EX_ALIVE } from '../shared/alive.js';
+import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 const EX_CAMEL: Record<string, string> = {
   type: 'exercise_type', exerciseType: 'exercise_type', calories: 'calories_burned', caloriesBurned: 'calories_burned',
@@ -49,7 +51,7 @@ function readId(params: Record<string, unknown>): number | undefined {
   const v = params['id'];
   if (v === undefined || v === null) return undefined;
   const id = coerceId(v);
-  if (id === undefined) fail(2, typeof v === 'number' ? 'id 须为正整数' : 'id 须为正整数（可给数字或数字串）');
+  if (id === undefined) fail(2, typeof v === 'number' ? m('skill-calorie.exercise-edit.c001') : m('skill-calorie.exercise-edit.c002'));
   return id;
 }
 
@@ -78,25 +80,25 @@ export function writeExerciseUpdate(params: Record<string, unknown>, db: Databas
   }
   const t = optStr(params, 'type') ?? optStr(params, 'exerciseType');
   if (t !== undefined) {
-    if (!t.trim()) fail(2, 'type 不得为空');
+    if (!t.trim()) fail(2, m('skill-calorie.exercise-edit.c003'));
     fields['exercise_type'] = t.trim();
   }
   const cal = optNum(params, 'calories') ?? optNum(params, 'caloriesBurned');
   if (cal !== undefined) {
-    if (cal < 0) fail(2, 'calories 不得为负');
+    if (cal < 0) fail(2, m('skill-calorie.exercise-edit.c004'));
     fields['calories_burned'] = cal;
   }
   for (const k of Object.keys(params)) {
-    if (!(k in EX_CAMEL) && k !== 'id' && k !== 'key') fail(2, '不支持字段: ' + k);
+    if (!(k in EX_CAMEL) && k !== 'id' && k !== 'key') fail(2, m('skill-calorie.exercise-edit.c005', { p0: String(k) }));
   }
-  if (Object.keys(fields).length === 0) fail(2, '至少传 1 个待改字段');
+  if (Object.keys(fields).length === 0) fail(2, m('skill-calorie.exercise-edit.c006'));
   if (typeof fields['date'] === 'string') assertISO(fields['date'] as string, 'date');
   if (id !== undefined) {
-    if (!Number.isInteger(id) || id <= 0) fail(2, 'id 须为正整数');
+    if (!Number.isInteger(id) || id <= 0) fail(2, m('skill-calorie.exercise-edit.c007'));
     const pair = updateRecord(db, id, fields);
-    const base = R('改运动记录', 'update', '已更新运动 #' + id + '（' + Object.keys(fields).join('、') + '）', '改运动记录', 'exercise_log (写库回执)', {
+    const base = R(m('skill-calorie.exercise-edit.c008'), 'update', m('skill-calorie.exercise-edit.c009', { p0: String(id), p1: String(listJoin(currentRenderLanguage(), Object.keys(fields))) }), m('skill-calorie.exercise-edit.c010'), m('skill-calorie.exercise-edit.c011'), {
       recordId: id, ids: [id], writtenFields: cliNames(Object.keys(fields)),
-      items: [{ id, status: '已更新', reason: '' }],
+      items: [{ id, status: m('skill-calorie.exercise-edit.c012'), reason: '' }],
     });
     const receipt = withM5(base, { affectedRows: totalChanges(db) - before });
     return done(db, key, command, receipt, { pairs: [pair] });
@@ -105,13 +107,13 @@ export function writeExerciseUpdate(params: Record<string, unknown>, db: Databas
     assertISO(date, 'date');
     const r = updateDay(db, date, fields);
     if (r.matched === 0) throw new CalorieRenderError('missing-data', '无运动记录（' + date + '）');
-    const base = R('改某日运动', 'update', '已更新 ' + date + ' 运动 ' + r.matched + ' 条', '改某日运动', 'exercise_log (写库回执)', {
+    const base = R(m('skill-calorie.exercise-edit.c013'), 'update', m('skill-calorie.exercise-edit.c014', { p0: String(date), p1: String(r.matched) }), m('skill-calorie.exercise-edit.c015'), m('skill-calorie.exercise-edit.c016'), {
       ids: [], idSource: 'condition', writtenFields: cliNames(Object.keys(fields)),
     });
     const receipt = withM5(base, { affectedRows: totalChanges(db) - before });
     return done(db, key, command, receipt, { pairs: r.pairs });
   }
-  fail(2, '缺参数 id 或 date（二选一）');
+  fail(2, m('skill-calorie.exercise-edit.c017'));
   throw new Error('unreachable');
 }
 
@@ -125,9 +127,9 @@ export function writeExerciseRemove(params: Record<string, unknown>, db: Databas
   const from = wday(params, 'from');
   const to = wday(params, 'to');
   if (id !== undefined) {
-    if (!Number.isInteger(id) || id <= 0) fail(2, 'id 须为正整数');
+    if (!Number.isInteger(id) || id <= 0) fail(2, m('skill-calorie.exercise-edit.c018'));
     const snapshot = deleteRecord(db, id);
-    const base = R('删运动记录', 'delete', '已删除运动 #' + id + SOFT_EXCLUDED, '删运动记录', 'exercise_log (写库回执)', {
+    const base = R(m('skill-calorie.exercise-edit.c019'), 'delete', m('skill-calorie.exercise-edit.c020', { p0: String(id), p1: softExcluded() }), m('skill-calorie.exercise-edit.c021'), m('skill-calorie.exercise-edit.c022'), {
       recordId: id, ids: [id], writtenFields: ['is_deleted'], items: [{ id, status: deleteStatus('soft'), reason: '' }],
     });
     const receipt = withM5(base, { affectedRows: totalChanges(db) - before });
@@ -138,22 +140,27 @@ export function writeExerciseRemove(params: Record<string, unknown>, db: Databas
     const snapshot = db.prepare('SELECT * FROM exercise_log WHERE date = ? AND ' + EX_ALIVE + '').all(date) as ExerciseRow[];
     const n = deleteDay(db, date);
     if (n === 0) throw new CalorieRenderError('missing-data', '无运动记录（' + date + '）');
-    const base = R('删某日运动', 'delete', '已删除 ' + date + ' 运动 ' + n + ' 条' + SOFT_EXCLUDED, '删某日运动', 'exercise_log (写库回执)', { ids: [], idSource: 'condition', writtenFields: ['is_deleted'] });
+    const base = R(m('skill-calorie.exercise-edit.c023'), 'delete', m('skill-calorie.exercise-edit.c024', { p0: String(date), p1: String(n), p2: softExcluded() }), m('skill-calorie.exercise-edit.c025'), m('skill-calorie.exercise-edit.c026'), { ids: [], idSource: 'condition', writtenFields: ['is_deleted'] });
     const receipt = withM5(base, { affectedRows: totalChanges(db) - before });
     return done(db, key, command, receipt, { rows: snapshot });
   }
   if (from !== undefined || to !== undefined) {
-    if (from === undefined || to === undefined) fail(2, '按范围删须同时传 from/to');
+    if (from === undefined || to === undefined) fail(2, m('skill-calorie.exercise-edit.c027'));
     assertISO(from as string, 'from');
     assertISO(to as string, 'to');
-    if ((from as string) > (to as string)) fail(2, 'from 不得晚于 to');
+    if ((from as string) > (to as string)) fail(2, m('skill-calorie.exercise-edit.c028'));
     const snapshot = db.prepare('SELECT * FROM exercise_log WHERE date BETWEEN ? AND ? AND ' + EX_ALIVE + ' ORDER BY date, time').all(from as string, to as string) as ExerciseRow[];
     const n = deleteRange(db, from as string, to as string);
     if (n === 0) throw new CalorieRenderError('missing-data', '无运动记录（' + from + '~' + to + '）');
-    const base = R('批量删运动', 'delete', '已删除 ' + from + '~' + to + ' 运动 ' + n + ' 条' + SOFT_EXCLUDED, '批量删运动', 'exercise_log (写库回执)', { ids: [], idSource: 'condition', writtenFields: ['is_deleted'] });
+    const base = R(m('skill-calorie.exercise-edit.c029'), 'delete', m('skill-calorie.exercise-edit.c030', {
+      p0: String(from),
+      p1: String(to),
+      p2: String(n),
+      p3: softExcluded(),
+    }), m('skill-calorie.exercise-edit.c031'), m('skill-calorie.exercise-edit.c032'), { ids: [], idSource: 'condition', writtenFields: ['is_deleted'] });
     const receipt = withM5(base, { affectedRows: totalChanges(db) - before });
     return done(db, key, command, receipt, { rows: snapshot });
   }
-  fail(2, '缺参数 id/date/from+to（三选一）');
+  fail(2, m('skill-calorie.exercise-edit.c033'));
   throw new Error('unreachable');
 }

@@ -11,6 +11,7 @@
  */
 import { DOC_TITLE } from '../shared/pageIdentity.js';
 import { EMPTY_CELL, csvCell, oneLine } from '../shared/copyText.js';
+import { m } from '../entries/index.js';
 
 /** 帮助复制事实：标题/总数/分组（**三个**）。 */
 export interface HelpCopyFacts {
@@ -31,13 +32,16 @@ interface HelpCopyRow {
   readonly goto: string;
 }
 
-/** 空态下一步（文本与JSON共用，页面空态同源）。 */
-export const HELP_EMPTY_NEXT = '下一步：跟助手说一遍「饼干记账HELP」，看看能做什么。';
+/** 空态下一步（文本与JSON共用，页面空态同源）。词条 `c005`（#1215：模块级常量会在 import 时
+ *  把文案定死成启动时的语言，改成渲染期函数——调用方与测试读 `helpEmptyNext()`）。 */
+export function helpEmptyNext(): string {
+  return m('skill-bill.help-copyTextHelp.c005');
+}
 
 /** 页身份行：饼干记账 + 标题。 */
 function pageLine(title: string): string {
   const t = typeof title === 'string' ? title.trim() : '';
-  return DOC_TITLE + ' ' + (t === '' ? '能力速查' : t);
+  return DOC_TITLE + ' ' + (t === '' ? m('skill-bill.help-copyTextHelp.c001') : t);
 }
 
 
@@ -46,7 +50,10 @@ function pageLine(title: string): string {
 function rowLine(r: HelpCopyRow): string {
   const w = typeof r.wake === 'string' ? oneLine(r.wake) : '';
   const g = typeof r.goto === 'string' ? oneLine(r.goto) : '';
-  return '唤醒词 ' + (w === '' ? EMPTY_CELL : w) + ' ｜ 去向 ' + (g === '' ? EMPTY_CELL : g);
+  return m('skill-bill.help-copyTextHelp.c002', {
+    p0: String(w === '' ? EMPTY_CELL : w),
+    p1: String(g === '' ? EMPTY_CELL : g),
+  });
 }
 
 /** 纯文本（LF，无尾换行）：页身份/总数/每行一条；空出空态有下一步。 */
@@ -55,9 +62,9 @@ export function buildHelpCopyText(facts: HelpCopyFacts): string {
   const rows: HelpCopyRow[] = [];
   for (const g of facts.groups ?? []) for (const r of g.rows ?? []) rows.push(r);
   if (rows.length === 0) {
-    return head + '\n' + '还没有可查的唤醒词，' + HELP_EMPTY_NEXT;
+    return m('skill-bill.help-copyTextHelp.c003', { p0: String(head), p1: helpEmptyNext() });
   }
-  const lines = [head, '共 ' + String(facts.total) + ' 条唤醒词'];
+  const lines = [head, m('skill-bill.help-copyTextHelp.c004', { p0: String(String(facts.total)) })];
   for (const r of rows) lines.push(rowLine(r));
   return lines.join('\n');
 }
@@ -78,7 +85,7 @@ export function buildHelpCopyJson(facts: HelpCopyFacts): string {
       total: facts.total,
       groups,
       empty: groups.reduce((n, g) => n + g.rows.length, 0) === 0,
-      ...(groups.reduce((n, g) => n + g.rows.length, 0) === 0 ? { next: HELP_EMPTY_NEXT } : {}),
+      ...(groups.reduce((n, g) => n + g.rows.length, 0) === 0 ? { next: helpEmptyNext() } : {}),
     },
   };
   return JSON.stringify(payload, null, 2);

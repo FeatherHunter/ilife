@@ -12,6 +12,7 @@
  */
 
 /** 本件的类名根：全部槽位类名都是 `RANK_LIST_CLASS + '-' + 槽名`。 */
+import { m } from '../../entries/index.js';
 export const RANK_LIST_CLASS = 'ilife-block-rank-list';
 
 /** 槽位闭集（`render.ts` 与判据都用这里的名字拼类名，不各抄一份字面量）。 */
@@ -67,7 +68,9 @@ export function rankListPlaceClass(rank: number): string {
 }
 
 /** 口径行左端的标签（与页头／其余件同一条写法）。 */
-export const RANK_LIST_CALIBER_LABEL = '口径';
+export function RANK_LIST_CALIBER_LABEL(): string {
+  return m('base-render.components-rank-list-attrs.c001');
+}
 
 /** 一名：名称 ＋ 值 ＋ 占比（值给数不给串：条长与数字必须同源）。 */
 export interface RankListRow {

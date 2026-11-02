@@ -43,6 +43,8 @@ import { runHistoryRecord, runHistoryQuery } from '../history/index.js';
 import { runChefDataQuery, runDataBatch, runDataQuery, runDataSchema } from '../data/index.js';
 import { parseRelationOp, runRelationQuery, runRelationWrite } from '../relation/index.js';
 import { runSetupInit } from '../setup/index.js';
+import { runWithLanguage } from 'base-entries';
+import { m } from '../entries/index.js';
 
 const DEFAULT_TIMEOUT_MS = 30000;
 
@@ -50,7 +52,7 @@ function toast(msg: string): void { console.error('TOAST: ' + msg); }
 
 function preflight(): void {
   const v = process.versions.node.split('.').map(Number);
-  if (!(v[0] > 22 || (v[0] === 22 && v[1] >= 13))) fail(1, 'node 低于 22.13：' + process.versions.node);
+  if (!(v[0] > 22 || (v[0] === 22 && v[1] >= 13))) fail(1, m('skill-chef.cli-cmd-read.c001', { p0: String(process.versions.node) }));
 }
 
 // 槽位与参数原语（todayStr／needServings／resolveNameOrId／resolveRecipeId／pickStr／pickNum）
@@ -98,8 +100,8 @@ function dispatchHelp(params: Record<string, unknown>): HelpDispatch {
   const dbPath = join(resolve(resolveDbDir()), dbFilename());
   const mode = params.mode === undefined ? undefined : String(params.mode);
   const q = params.q === undefined ? undefined : String(params.q);
-  if (mode !== undefined && q !== undefined) fail(2, '参数 q 与 mode 互斥：q＝现找，mode＝速查表产物');
-  if (mode !== undefined && mode !== 'lookup') fail(2, 'mode 非法（' + String(mode) + '）：本键只认 lookup');
+  if (mode !== undefined && q !== undefined) fail(2, m('skill-chef.cli-cmd-read.c002'));
+  if (mode !== undefined && mode !== 'lookup') fail(2, m('skill-chef.cli-cmd-read.c003', { p0: String(String(mode)) }));
   const reuseMs = helpWindowOrFail(params);
   if (q !== undefined) return { data: { ...buildHelpItems(buildHelpLookup(), q), mode: 'lookup', query: q } };
   if (mode === 'lookup') {
@@ -122,7 +124,7 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
   const dbPath = resolveDbPath();
   const handle: ChefDb = openChefDb(dbPath);
   try {
-    if (handle.initialized) note('大厨 DB 已初始化：' + dbPath);
+    if (handle.initialized) note(m('skill-chef.cli-cmd-read.c004', { p0: String(dbPath) }));
     switch (key) {
       case 'chef.recipe.view': {
         return runRecipeView(handle, params);
@@ -151,7 +153,7 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
         const kind = typeof rawKind === 'string' && rawKind ? rawKind : (params.name !== undefined ? 'timeline' : 'stats');
         if (kind === 'timeline' || kind === 'stats') return runHistoryQuery(handle, params, kind);
         if (kind === 'quality' || kind === 'backup') return runDataQuery(handle, params, kind);
-        fail(2, 'history.query 只接受 kind=timeline/stats/quality/backup');
+        fail(2, m('skill-chef.cli-cmd-read.c019'));
         return null;
       }
       case 'chef.relation.write': {
@@ -176,9 +178,9 @@ function dispatch(key: string, params: Record<string, unknown>): unknown {
       }
       case 'chef.help.lookup':
         // #215：本键由 `dispatchHelp` 在**开库之前**处理（只读页不建库）；走到这里说明 main 的路由被改坏了。
-        fail(1, '内部错误：chef.help.lookup 须走 dispatchHelp（开库之前）');
+        fail(1, m('skill-chef.cli-cmd-read.c020'));
         return null;
-      default: fail(3, '未知 chef key：' + key); return null;
+      default: fail(3, m('skill-chef.cli-cmd-read.c005', { p0: String(key) })); return null;
     }
   } finally {
     try { closeChefDb(handle); } catch { /* ignore */ }
@@ -196,20 +198,21 @@ function parseArgs(a: string[]): { key: string | undefined; params: string | und
     }
     else if (a[i] === '--timeout' && i + 1 < a.length) {
       o.timeout = Number(a[++i]);
-      if (!Number.isFinite(o.timeout) || o.timeout <= 0) fail(2, '--timeout 须为正数毫秒');
+      if (!Number.isFinite(o.timeout) || o.timeout <= 0) fail(2, m('skill-chef.cli-cmd-read.c006'));
     }
-    else fail(2, '未知参数：' + a[i]);
+    else fail(2, m('skill-chef.cli-cmd-read.c007', { p0: String(a[i]) }));
   }
   return o;
 }
 
 async function main() {
   const o = parseArgs(process.argv.slice(2));
-  if (!o.key) fail(2, '用法：chef-cmd-read <chef.key> [--params JSON对象] [--html 输出路径] [--timeout 毫秒] [--language zh|en]');
+  if (!o.key) fail(2, m('skill-chef.cli-cmd-read.c008'));
+  const key = o.key;
   let params: Record<string, unknown> = {};
   if (o.params !== undefined) {
-    try { params = JSON.parse(o.params) as Record<string, unknown>; } catch (e) { fail(2, '--params 须为 JSON'); }
-    if (typeof params !== 'object' || params === null || Array.isArray(params)) fail(2, '--params 须为 JSON 对象');
+    try { params = JSON.parse(o.params) as Record<string, unknown>; } catch (e) { fail(2, m('skill-chef.cli-cmd-read.c009')); }
+    if (typeof params !== 'object' || params === null || Array.isArray(params)) fail(2, m('skill-chef.cli-cmd-read.c010'));
   }
   // #695：三个配置 key（`chef.config.read/write/reset`）在库目录预检与形状表之前拦下——
   // 读写配置不该要求库已配，它们也不进 `CHEF_KEY_SHAPES`（不是唤醒词命令，见 `src/cli/config.ts`）。
@@ -221,81 +224,82 @@ async function main() {
   // 本轮只接线与校验：不设语言时行为与产物逐字节不变（渲染消费方随词条层 #1200 落地后接）。
   // 位置：**配置 key 拦下之后**——配置面那几条命令（含首次落配置文件）不该被语言解析拦在前头。
   const language = resolveLanguageOrFail(process.argv.slice(2));
-  void language;
-  // #706 · 配置体检（`chef.config.check`）：同样是设置页专用的只读命令，同样在预检之前拦下——
-  // 它要报的正是「库在哪、通不通」，不能先要求库目录已配。只读：不建目录、不写文件、不落默认配置。
-  if (isHealthCheckKey(o.key)) {
-    process.stdout.write(runHealthCheckKey(o.key) + '\n');
-    return;
-  }
-  preflight();
-  let shape = null;
-  try { shape = chefShapeFor(o.key as string); } catch (e) { fail(3, (e as Error).message); }
-  void shape;
-  const timer = setTimeout(() => { toast('cmd_read 超时 terminate（' + o.timeout + 'ms），已终止取数'); process.exit(4); }, o.timeout);
-  timer.unref();
-  let env = null;
-  let delivery: ChefHtmlDelivery | undefined;
-  try {
-    // #215：HELP 在开库之前分派（只读页不建库）；其余七键照旧走 dispatch（内部开库）。
-    const help = o.key === 'chef.help.lookup' ? dispatchHelp(params) : null;
-    env = buildChefEnvelope(o.key as string, help ? help.data : dispatch(o.key as string, params));
-    if (help?.deliver !== undefined) {
-      // 本键的产物：缺省＝HELP 全页（自带 html）；`mode:"lookup"`＝速查表页（由信封走本技能模板渲染）。
-      const html = help.deliver.html ?? fillTemplate(loadTemplate(templateFor(o.key as string)), renderEnvelopeHtml(env));
-      assertHtmlSize(html);
-      delivery = deliverChefHelp({
-        explicit: o.html,
-        target: help.deliver.target,
-        html,
-        ...(help.deliver.reuseMs === undefined ? {} : { reuseMs: help.deliver.reuseMs }),
-        ...(help.deliver.dataKey === undefined ? {} : { dataKey: help.deliver.dataKey }),
-      });
-    } else if (o.key === 'chef.help.lookup') {
-      // HELP 现找（q）：只回命中，不缺省落页（既有语义）；给了 --html 才逐字覆盖写 section，不回 delivery。
-      if (o.html) {
-        const html = renderEnvelopeHtml(env);
-        assertHtmlSize(html);
-        try { writeFileSync(o.html, html, 'utf8'); }
-        catch (e) { fail(5, 'HTML 写盘失败：' + o.html); }
-      }
-    } else if ((env as { shape?: string }).shape === 'resultset') {
-      // 程序面（`chef.data.schema`／`chef.data.query`，无唤醒词）：不缺省落页、不回 delivery（照饼干 #953）。
-      // 显式 --html 也不接（resultset 无整页形态，落了也是错页）。
-    } else {
-      // #985 · 非 HELP 缺省落整页（照饼干 #905 形状）：同一份 html，两路只差落点；
-      // `--html` 退化成显式覆盖写。有专壳走专壳（`templates/<key>.html`），无专壳的键
-      // （relation/setup/data 系）走最小整页壳过渡，落点 root＝sceneDir＋域中文名。
-      const section = renderEnvelopeHtml(env);
-      let html: string;
-      try {
-        html = fillTemplate(loadTemplate(templateFor(o.key as string)), section);
-      } catch {
-        html = '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>私家大厨</title></head><body><div class="page"><p class="cmd">chef-cmd-read ' + o.key + '</p>' + section + '</div></body></html>';
-      }
-      assertHtmlSize(html);
-      const page = chefPageFor(o.key as string, params);
-      delivery = deliverChefHelp({
-        explicit: o.html,
-        target: { dir: join(resolveSceneDir(), page.domain), stem: pageStemFor(page) },
-        html,
-      });
+  return runWithLanguage(language.text, async () => { // 语言上下文：整段执行体按同一个渲染语言取词（不设语言＝zh，产物逐字节不变）。
+    // #706 · 配置体检（`chef.config.check`）：同样是设置页专用的只读命令，同样在预检之前拦下——
+    // 它要报的正是「库在哪、通不通」，不能先要求库目录已配。只读：不建目录、不写文件、不落默认配置。
+    if (isHealthCheckKey(key)) {
+      process.stdout.write(runHealthCheckKey(key) + '\n');
+      return;
     }
-  } catch (e) {
-    if (e instanceof ChefFetchError) fail(4, '取数失败：' + e.message);
-    if (e instanceof ChefPolicyError) fail(2, '口径失败：' + e.message);
-    if (e instanceof ChefRenderError) fail(5, '渲染失败：' + e.message);
-    // 落盘失败：共用件 `saveHtmlFile` 的 code（`EEXIST`／`EINVAL`／`EIO`）原样穿过，落到 exit 5。
-    if (/^E[A-Z]+$/.test(String((e as NodeJS.ErrnoException)?.code))) fail(5, '落盘失败：' + ((e as Error).message || String(e)));
-    // 配置件（`base-link-core`）的报错本身就是人话（带行号与文件名）：归「预检」那一档原样交回。
-    if (/(配置文件|配置项|测试缺隔离)/.test((e as Error).message ?? '')) fail(1, (e as Error).message);
-    // #215：help 支一步取数都没有（只渲染 ＋ 落盘），未知错只可能出在渲染（共享模板抛的普通 Error
-    // 没有 code）或落盘 ⇒ 归 exit 5，不落到「未知失败 4」。其余七键保持原样（取数面宽，无法这样归类）。
-    if (o.key === 'chef.help.lookup') fail(5, '渲染/落盘失败：' + ((e as Error).message || String(e)));
-    fail(4, '未知失败：' + ((e as Error).message || String(e)));
-  } finally { clearTimeout(timer); }
-  // #83 口径的顶层追加：`delivery{mode,path,bytes}` 只追加，既有五字段一字不改、序不变。
-  process.stdout.write(JSON.stringify(delivery ? { ...env, delivery } : env) + '\n');
+    preflight();
+    let shape = null;
+    try { shape = chefShapeFor(key); } catch (e) { fail(3, (e as Error).message); }
+    void shape;
+    const timer = setTimeout(() => { toast(m('skill-chef.cli-cmd-read.c011', { p0: String(o.timeout) })); process.exit(4); }, o.timeout);
+    timer.unref();
+    let env = null;
+    let delivery: ChefHtmlDelivery | undefined;
+    try {
+      // #215：HELP 在开库之前分派（只读页不建库）；其余七键照旧走 dispatch（内部开库）。
+      const help = key === 'chef.help.lookup' ? dispatchHelp(params) : null;
+      env = buildChefEnvelope(key, help ? help.data : dispatch(key, params));
+      if (help?.deliver !== undefined) {
+        // 本键的产物：缺省＝HELP 全页（自带 html）；`mode:"lookup"`＝速查表页（由信封走本技能模板渲染）。
+        const html = help.deliver.html ?? fillTemplate(loadTemplate(templateFor(key)), renderEnvelopeHtml(env));
+        assertHtmlSize(html);
+        delivery = deliverChefHelp({
+          explicit: o.html,
+          target: help.deliver.target,
+          html,
+          ...(help.deliver.reuseMs === undefined ? {} : { reuseMs: help.deliver.reuseMs }),
+          ...(help.deliver.dataKey === undefined ? {} : { dataKey: help.deliver.dataKey }),
+        });
+      } else if (key === 'chef.help.lookup') {
+        // HELP 现找（q）：只回命中，不缺省落页（既有语义）；给了 --html 才逐字覆盖写 section，不回 delivery。
+        if (o.html) {
+          const html = renderEnvelopeHtml(env);
+          assertHtmlSize(html);
+          try { writeFileSync(o.html, html, 'utf8'); }
+          catch (e) { fail(5, m('skill-chef.cli-cmd-read.c012', { p0: String(o.html) })); }
+        }
+      } else if ((env as { shape?: string }).shape === 'resultset') {
+        // 程序面（`chef.data.schema`／`chef.data.query`，无唤醒词）：不缺省落页、不回 delivery（照饼干 #953）。
+        // 显式 --html 也不接（resultset 无整页形态，落了也是错页）。
+      } else {
+        // #985 · 非 HELP 缺省落整页（照饼干 #905 形状）：同一份 html，两路只差落点；
+        // `--html` 退化成显式覆盖写。有专壳走专壳（`templates/<key>.html`），无专壳的键
+        // （relation/setup/data 系）走最小整页壳过渡，落点 root＝sceneDir＋域中文名。
+        const section = renderEnvelopeHtml(env);
+        let html: string;
+        try {
+          html = fillTemplate(loadTemplate(templateFor(key)), section);
+        } catch {
+          html = '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>' + m('skill-chef.cli-cmd-read.c021') + '</title></head><body><div class="page"><p class="cmd">chef-cmd-read ' + key + '</p>' + section + '</div></body></html>';
+        }
+        assertHtmlSize(html);
+        const page = chefPageFor(key, params);
+        delivery = deliverChefHelp({
+          explicit: o.html,
+          target: { dir: join(resolveSceneDir(), page.domain), stem: pageStemFor(page) },
+          html,
+        });
+      }
+    } catch (e) {
+      if (e instanceof ChefFetchError) fail(4, m('skill-chef.cli-cmd-read.c013', { p0: String(e.message) }));
+      if (e instanceof ChefPolicyError) fail(2, m('skill-chef.cli-cmd-read.c014', { p0: String(e.message) }));
+      if (e instanceof ChefRenderError) fail(5, m('skill-chef.cli-cmd-read.c015', { p0: String(e.message) }));
+      // 落盘失败：共用件 `saveHtmlFile` 的 code（`EEXIST`／`EINVAL`／`EIO`）原样穿过，落到 exit 5。
+      if (/^E[A-Z]+$/.test(String((e as NodeJS.ErrnoException)?.code))) fail(5, m('skill-chef.cli-cmd-read.c016', { p0: String((e as Error).message || String(e)) }));
+      // 配置件（`base-link-core`）的报错本身就是人话（带行号与文件名）：归「预检」那一档原样交回。
+      if (/(配置文件|配置项|测试缺隔离)/.test((e as Error).message ?? '')) fail(1, (e as Error).message);
+      // #215：help 支一步取数都没有（只渲染 ＋ 落盘），未知错只可能出在渲染（共享模板抛的普通 Error
+      // 没有 code）或落盘 ⇒ 归 exit 5，不落到「未知失败 4」。其余七键保持原样（取数面宽，无法这样归类）。
+      if (key === 'chef.help.lookup') fail(5, m('skill-chef.cli-cmd-read.c017', { p0: String((e as Error).message || String(e)) }));
+      fail(4, m('skill-chef.cli-cmd-read.c018', { p0: String((e as Error).message || String(e)) }));
+    } finally { clearTimeout(timer); }
+    // #83 口径的顶层追加：`delivery{mode,path,bytes}` 只追加，既有五字段一字不改、序不变。
+    process.stdout.write(JSON.stringify(delivery ? { ...env, delivery } : env) + '\n');
+  });
 }
 
 await main();

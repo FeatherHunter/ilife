@@ -7,6 +7,7 @@
  */
 
 import { LOG_SECTION_SOURCES, TextErrorCode } from '../../spec/text.js';
+import { m } from '../../entries/index.js';
 
 export class TextError extends Error {
   /** 逐字对齐 `TextErrorShape.name`。 */
@@ -27,7 +28,7 @@ export function fail(code: TextErrorCode, message: string): never {
 export const LF = String.fromCharCode(10);
 export const CR = String.fromCharCode(13);
 /** 时间行前缀（契约未规定文案；沿用旧基线 `base.js:254` 的 `'时间: '`，见 §3.4 行为补遗）。 */
-export const TIME_LABEL = '时间: ';
+export function TIME_LABEL(): string { return m('base-render.components-text-shared.c001'); }
 /** `csv` 口径的空值（`contract:610`：机器可读，写空字符串、不写占位符）。 */
 export const CSV_EMPTY = '';
 /** 「由 envelope 派生」的段源哨兵：恒读冻结常量 `LOG_SECTION_SOURCES.scene`，不写第二份字面量。 */

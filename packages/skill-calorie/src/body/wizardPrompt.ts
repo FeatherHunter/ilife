@@ -15,6 +15,7 @@ import { SOURCE_CHOICES, SOURCE_LABELS } from '../kcal.js';
 import { GENDER_LABELS } from '../analysis/utils.js';
 import { commandLine } from '../shared/writeParts.js';
 import { BF_INPUT, CALIPER_INPUT, CALIPER_SOURCE, isCaliperMode } from './wizardPlate.js';
+import { m } from '../entries/index.js';
 
 /** 写命令 camel 口径镜像（围度 13 项；唯一来源＝`fetch/body.ts` 的列名与中文名表）。 */
 export const WIZARD_MEASURE_CAMEL: Record<string, string> = Object.fromEntries(
@@ -42,7 +43,7 @@ const MEASURE_ALL = [...MEASURE_UPPER, ...MEASURE_LOWER, ...MEASURE_ARM];
 export const WIZARD_WRITE_KEYS = { measure: 'calorie.body.measure-add', composition: 'calorie.body.composition-add' } as const;
 
 /** 两页预览块里那句介绍：一句话说清「这段是给谁看的」。 */
-const PREVIEW_HEAD = '请帮我记录到卡路里';
+const previewHead = (): string => m('skill-calorie.body-wizardPrompt.c017');
 
 export type MeasureFilled = { camel: string; snake: string; label: string; value: number }[];
 
@@ -62,15 +63,20 @@ export function buildMeasureWizardPreview(date: string, filled: MeasureFilled, n
     if (items.length === 0) return '';
     return '\n- ' + label + ':\n' + checkLines(items.map((f) => f.label + ' ' + f.value + 'cm'));
   };
-  const groups = [byGroup(MEASURE_UPPER, '上身'), byGroup(MEASURE_LOWER, '下身'), byGroup(MEASURE_ARM, '手臂')].join('');
-  return PREVIEW_HEAD + '\n\n参数:\n' + line('日期', date)
-    + '\n- 围度（共 ' + filled.length + ' 项，全部 13 项里）：' + groups
-    + '\n' + line('备注', note ?? '—');
+  const groups = [byGroup(MEASURE_UPPER, m('skill-calorie.body-wizardPrompt.c001')), byGroup(MEASURE_LOWER, m('skill-calorie.body-wizardPrompt.c002')), byGroup(MEASURE_ARM, m('skill-calorie.body-wizardPrompt.c003'))].join('');
+  // 逐条标签直接写进句子（原先经 line() 拼：标签作为实参进了调用，整句就断成了两截）。
+  return m('skill-calorie.body-wizardPrompt.c004', {
+    p0: previewHead(),
+    p1: String(date),
+    p2: String(filled.length),
+    p3: String(groups),
+    p4: String(note ?? '—'),
+  });
 }
 
 /** 复制区那一段（围度）：填了至少 1 项 → 一条能直接执行的写命令；一项没填 → 缺项清单句。 */
 export function buildMeasureWizardPrompt(date: string, filled: MeasureFilled, note: string | null): string {
-  if (filled.length === 0) return '// 还没量任何一项。请至少填 1 项围度（共 13 项分 3 组）';
+  if (filled.length === 0) return m('skill-calorie.body-wizardPrompt.c005');
   const params: Record<string, unknown> = { date };
   for (const camel of MEASURE_ALL) {
     const hit = filled.find((f) => f.camel === camel);
@@ -87,32 +93,46 @@ function compositionChecklist(v: {
   calipers: { field: string; value: number }[];
 }): string {
   if (!v.sourceGiven) {
-    return '// 请先选来源。本页按默认的「' + SOURCE_LABELS[CALIPER_SOURCE] + '」打开。\n'
-      + '// 可选的来源：\n' + checkLines(SOURCE_CHOICES.map((s) => SOURCE_LABELS[s]));
+    return m('skill-calorie.body-wizardPrompt.c006', {
+      p0: String(SOURCE_LABELS[CALIPER_SOURCE]),
+      p1: String(checkLines(SOURCE_CHOICES.map((s) => SOURCE_LABELS[s]))),
+    });
   }
   const bad = v.calipers.filter((c) => !(c.value > CALIPER_INPUT.min && c.value < CALIPER_INPUT.max));
   if (isCaliperMode(v.source)) {
     const missing = CALIPER_FIELDS.filter((f) => !v.calipers.some((c) => c.field === f));
     if (missing.length > 0) {
-      return '// 还差 ' + missing.length + ' 处皮褶要量：\n'
-        + checkLines(missing.map((f) => WIZARD_CALIPER_LABELS[f] ?? f));
+      return m('skill-calorie.body-wizardPrompt.c007', {
+        p0: String(missing.length),
+        p1: String(checkLines(missing.map((f) => WIZARD_CALIPER_LABELS[f] ?? f))),
+      });
     }
     if (bad.length > 0) {
-      return '// 这几处皮褶读数超出 ' + CALIPER_INPUT.min + ' 到 ' + CALIPER_INPUT.max + ' 毫米，请核对：\n'
-        + checkLines(bad.map((c) => WIZARD_CALIPER_LABELS[c.field] ?? c.field));
+      return m('skill-calorie.body-wizardPrompt.c008', {
+        p0: String(CALIPER_INPUT.min),
+        p1: String(CALIPER_INPUT.max),
+        p2: String(checkLines(bad.map((c) => WIZARD_CALIPER_LABELS[c.field] ?? c.field))),
+      });
     }
     if (v.age === null || !v.sex) {
-      return '// 换算体脂率要用年龄和性别，先把这两格问清楚（别猜默认值）：\n'
-        + checkLines(['年龄', '性别']);
+      // 这两条提示项是文案（不是数据）：写进句子，别再过 checkLines 的实参。
+      return m('skill-calorie.body-wizardPrompt.c009');
     }
     return '';
   }
-  if (v.bodyFatPct === null) return '// 请填体脂率（外部设备的读数）';
+  if (v.bodyFatPct === null) return m('skill-calorie.body-wizardPrompt.c010');
   if (!(v.bodyFatPct > BF_INPUT.min && v.bodyFatPct < BF_INPUT.max)) {
-    return '// 体脂率要在 ' + BF_INPUT.min + ' 到 ' + BF_INPUT.max + ' 之间，当前填的是 ' + v.bodyFatPct + '%，请核对';
+    return m('skill-calorie.body-wizardPrompt.c011', {
+      p0: String(BF_INPUT.min),
+      p1: String(BF_INPUT.max),
+      p2: String(v.bodyFatPct),
+    });
   }  if (bad.length > 0) {
-    return '// 这几处皮褶读数超出 ' + CALIPER_INPUT.min + ' 到 ' + CALIPER_INPUT.max + ' 毫米，请核对：\n'
-      + checkLines(bad.map((c) => WIZARD_CALIPER_LABELS[c.field] ?? c.field));
+    return m('skill-calorie.body-wizardPrompt.c012', {
+      p0: String(CALIPER_INPUT.min),
+      p1: String(CALIPER_INPUT.max),
+      p2: String(checkLines(bad.map((c) => WIZARD_CALIPER_LABELS[c.field] ?? c.field))),
+    });
   }
   return '';
 }
@@ -130,16 +150,22 @@ export function buildCompositionWizardPreview(v: {
     const by = (f: string): number => (v.calipers.find((c) => c.field === f) as { value: number }).value;
     const sum7 = CALIPER_FIELDS.reduce((s, f) => s + by(f), 0);
     // 7 处一条一行（中文冒号，不用半角 `:`）；总和另起一条。
-    textBody = '\n- 7 处皮褶（毫米）：\n'
-      + checkLines(CALIPER_FIELDS.map((f) => (WIZARD_CALIPER_LABELS[f] as string) + ' ' + by(f)))
-      + '\n- 7 处总和：' + (Math.round(sum7 * 10) / 10) + ' 毫米\n';
+    textBody = m('skill-calorie.body-wizardPrompt.c013', {
+      p0: String(checkLines(CALIPER_FIELDS.map((f) => (WIZARD_CALIPER_LABELS[f] as string) + ' ' + by(f)))),
+      p1: String(Math.round(sum7 * 10) / 10),
+    });
   }
-  return PREVIEW_HEAD + (isCaliper ? '（皮褶钳测）' : '（外部测量）') + '\n\n参数:\n'
-    + line('日期', v.date) + '\n' + line('来源', srcLabel)
-    + '\n' + line('年龄', v.age === null ? '—' : String(v.age))
-    + '\n' + line('性别', v.sex ? (GENDER_LABELS[v.sex] ?? v.sex) : '—') + '\n' + textBody
-    + '\n' + line('体脂率', v.bodyFatPct === null ? '—' : v.bodyFatPct + '%')
-    + '\n' + line('备注', v.note ?? '—');
+  const modeWord = (isCaliper ? m('skill-calorie.body-wizardPrompt.c014') : m('skill-calorie.body-wizardPrompt.c015'));
+  return m('skill-calorie.body-wizardPrompt.c016', {
+    p0: previewHead() + modeWord,
+    p1: String(v.date),
+    p2: String(srcLabel),
+    p3: String(v.age === null ? '—' : String(v.age)),
+    p4: String(v.sex ? (GENDER_LABELS[v.sex] ?? v.sex) : '—'),
+    p5: String(textBody),
+    p6: String(v.bodyFatPct === null ? '—' : v.bodyFatPct + '%'),
+    p7: String(v.note ?? '—'),
+  });
 }
 
 /** 复制区那一段（体脂）：全合规 → 一条能直接执行的写命令；否则 → 缺项／越界清单。

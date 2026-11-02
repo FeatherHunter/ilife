@@ -10,6 +10,7 @@
  */
 import { skinVar } from '../skin/contract.js';
 import { progressListSlot, type ProgressListSlot } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -33,8 +34,8 @@ export function progressListCss(input?: { readonly prefix?: string }): string {
   const s = (slot: ProgressListSlot): string => root + ' ' + slotSel(slot);
 
   return [
-    '/* progress-list（多目标进度 · 形态 A「四行清单」）：每行＝目标名＋状态字／当前 / 目标／条／还差多少。',
-    '   层次不靠阴影与大圆角（小票纸零阴影、大字报刊零圆角）：靠发丝线、条轨底色与字重 ⇒ 换皮只换取值。 */',
+    m('base-render.components-progress-list-style.c001'),
+    m('base-render.components-progress-list-style.c002'),
     box + ' {',
     /* 宽度判据的落点：本件是**自己的容器**——嵌进侧栏／面板／卡片时照样按自己的宽度折行。 */
     '  container-type: inline-size;',
@@ -55,7 +56,7 @@ export function progressListCss(input?: { readonly prefix?: string }): string {
     '  letter-spacing: .02em;',
     '  overflow-wrap: anywhere;',
     '}',
-    '/* 清单：一行一个目标，行间一条发丝线（零阴影下靠它分家）。 */',
+    m('base-render.components-progress-list-style.c003'),
     s('list') + ' {',
     '  display: grid;',
     '  gap: 0;',
@@ -75,7 +76,7 @@ export function progressListCss(input?: { readonly prefix?: string }): string {
     '  border-top: 0;',
     '  padding-top: 0;',
     '}',
-    '/* 行首：目标名 ＋ 状态字（**色不是唯一信息**：这一枚状态字就是第二样）。 */',
+    m('base-render.components-progress-list-style.c004'),
     s('top') + ' {',
     '  display: flex;',
     '  flex-wrap: wrap;',
@@ -105,7 +106,7 @@ export function progressListCss(input?: { readonly prefix?: string }): string {
     '  letter-spacing: .02em;',
     '  overflow-wrap: anywhere;',
     '}',
-    '/* 当前 / 目标 ＋ 单位：值走大字档（**等宽数字**，多行读数上下对齐）。 */',
+    m('base-render.components-progress-list-style.c005'),
     s('meta') + ' {',
     '  display: flex;',
     '  flex-wrap: wrap;',
@@ -136,8 +137,8 @@ export function progressListCss(input?: { readonly prefix?: string }): string {
     '  font-weight: 600;',
     '  overflow-wrap: anywhere;',
     '}',
-    '/* 条：轨走软底 ＋ 一圈发丝线（**零阴影下的边界**），填充走实色。',
-    '   未记录那行宽度是 0，读者看到的是空轨——这就是"还没记"的形状。 */',
+    m('base-render.components-progress-list-style.c006'),
+    m('base-render.components-progress-list-style.c007'),
     s('track') + ' {',
     '  display: block;',
     '  min-width: 0;',
@@ -154,7 +155,7 @@ export function progressListCss(input?: { readonly prefix?: string }): string {
     '  border-radius: ' + skinVar('radius-pill') + ';',
     '  background: ' + skinVar('accent') + ';',
     '}',
-    '/* 语气只改**取值**：达标走 ok、超了走 warn、危险档走 danger（状态字与条的形状都不变）。 */',
+    m('base-render.components-progress-list-style.c008'),
     s('row') + '.is-ok ' + slotSel('fill') + ' { background: ' + skinVar('ok') + '; }',
     s('row') + '.is-warn ' + slotSel('fill') + ' { background: ' + skinVar('warn') + '; }',
     s('row') + '.is-danger ' + slotSel('fill') + ' { background: ' + skinVar('danger') + '; }',
@@ -162,7 +163,7 @@ export function progressListCss(input?: { readonly prefix?: string }): string {
     s('row') + '.is-warn ' + slotSel('state') + ' { color: ' + skinVar('warn') + '; border-color: ' + skinVar('warn') + '; }',
     s('row') + '.is-danger ' + slotSel('state') + ' { color: ' + skinVar('danger') + '; border-color: ' + skinVar('danger') + '; }',
     s('row') + '.is-blank ' + slotSel('value') + ' { color: ' + skinVar('ink-2') + '; }',
-    '/* 「还差多少」那一句：本形态的第四段，永远整行独占，不跟条抢宽度。 */',
+    m('base-render.components-progress-list-style.c009'),
     s('remain') + ' {',
     '  margin: 0;',
     '  min-width: 0;',
@@ -172,7 +173,7 @@ export function progressListCss(input?: { readonly prefix?: string }): string {
     '  font-variant-numeric: tabular-nums;',
     '  overflow-wrap: anywhere;',
     '}',
-    '/* 口径行：这批目标怎么算的（弱文字档，可很长、必须能换行；段间一条发丝线，标记里不写分隔符）。 */',
+    m('base-render.components-progress-list-style.c010'),
     s('note') + ' {',
     '  display: flex;',
     '  flex-wrap: wrap;',
@@ -190,14 +191,14 @@ export function progressListCss(input?: { readonly prefix?: string }): string {
     '  border-left: 1px solid ' + skinVar('line') + ';',
     '  overflow-wrap: anywhere;',
     '}',
-    '/* 本件自身不带可点元素。这一条是**地板**：调用方若把行包成链接或按钮，焦点必须看得见。 */',
+    m('base-render.components-progress-list-style.c011'),
     box + ' :focus-visible {',
     '  outline: 2px solid ' + skinVar('accent') + ';',
     '  outline-offset: 2px;',
     '}',
-    '/* 窄容器（<' + String(PROGRESS_LIST_NARROW_PX) + 'px）：目标名与状态字改走上下两行，',
-    '   长目标名不再被那枚状态字挤成一列孤字。判的是**本件自己的宽度**（本件会被嵌进侧栏／面板／卡片，',
-    '   视口宽 ≠ 组件宽，所以这里不写 `@media`）。 */',
+    m('base-render.components-progress-list-style.c012', { p0: String(String(PROGRESS_LIST_NARROW_PX)) }),
+    m('base-render.components-progress-list-style.c013'),
+    m('base-render.components-progress-list-style.c014'),
     '@container (max-width: ' + String(PROGRESS_LIST_NARROW_PX) + 'px) {',
     '  ' + s('top') + ' {',
     '    display: grid;',

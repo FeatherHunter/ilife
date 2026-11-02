@@ -72,7 +72,10 @@ export const RPC_ENDPOINT_CONFIG_RESET = 'config.reset' as const;
  *
  * #934：原先还有一条副文案 `ADVANCED_GROUP_NOTE`（「不常改。留空＝用默认值。」），
  * 维护者裁定**整条删除、删后不另找地方说**——理由：三家高级项全是只读行、不参与保存、根本没有"留空"，
- * 而"留空会怎样"这条口径本就逐行住在每条的 `hint` 里（见本件 `ConfigItem.hint` 的契约）。 */
+ * 而"留空会怎样"这条口径本就逐行住在每条的 `hint` 里（见本件 `ConfigItem.hint` 的契约）。
+ *
+ * **本件不引词条层**：契约件只放形状与常量；`seal-scroll`／`seal-stamp` 两个测试按单件内存编译本件，
+ * 任何相对 import 都会让它们在 require 阶段炸。渲染期取词住 `config-panel-view.ts` 的 `advancedGroupTitle()`。 */
 export const ADVANCED_GROUP_TITLE = '高级' as const;
 
 /** 面板读整面（config.get）的请求超时毫秒：界面永不无限转圈。

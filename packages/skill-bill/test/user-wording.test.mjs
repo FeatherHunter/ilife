@@ -56,24 +56,25 @@ describe('t407 整改（一）· 用户语言映射只此一处', () => {
     void buildDataText;
   });
 
-  it('内部状态串给用户说法；工程话里的那几个标识一个都不许留下', () => {
-    assert.equal(statusNoteOf('待补槽位 · 未写库（已阻断）'), '还没写库');
-    assert.equal(statusNoteOf('写库成功'), '这一笔已保存');
-    assert.equal(statusNoteOf('软删打标（deleted_at = now，不物理删）'), '已撤销，记录还在，随时可恢复');
-    assert.equal(statusNoteOf('置 NULL（deleted_at 清空）'), '已恢复');
-    assert.equal(statusNoteOf('本仓尚未定额的型'), '分类按三级挂靠', '这一句给人话，不隐藏');
-    // 认不得的状态串照实返回（不猜、不静默抹掉）——这条与上一条一起，锁住「映射」与「兜底」两岔。
-    assert.equal(statusNoteOf('半生不熟的态'), '半生不熟的态');
-    // 「工程话不许留在用户说法里」只对**映射得出**的那些说：拿一对认得的原串与用户说法比。
+  it('内部状态码给用户说法；工程话里的那几个标识一个都不许留下', () => {
+    // #1197 判据位改造：状态一律写成 ASCII 码，中文内部话只留在词条层（不再拿本地化文本当键）。
+    assert.equal(statusNoteOf('pending-blocked'), '还没写库');
+    assert.equal(statusNoteOf('saved'), '这一笔已保存');
+    assert.equal(statusNoteOf('soft-deleted'), '已撤销，记录还在，随时可恢复');
+    assert.equal(statusNoteOf('restored'), '已恢复');
+    assert.equal(statusNoteOf('kind-unknown'), '分类按三级挂靠', '这一句给人话，不隐藏');
+    // 认不得的状态码照实返回（不猜、不静默抹掉）——这条与上一条一起，锁住「映射」与「兜底」两岔。
+    assert.equal(statusNoteOf('half-baked'), 'half-baked');
+    // 「工程话不许留在用户说法里」只对**映射得出**的那些说：拿一对认得的码与用户说法比。
     const PAIRS = [
-      ['软删打标（deleted_at = now，不物理删）', '已撤销，记录还在，随时可恢复'],
-      ['置 NULL（deleted_at 清空）', '已恢复'],
-      ['三形态之一：缺记录编号 · 先挑一条', '先挑一条记录'],
-      ['批量·现单笔化', '一次只落一笔'],
-      ['写库成功', '这一笔已保存'],
+      ['soft-deleted', '已撤销，记录还在，随时可恢复'],
+      ['restored', '已恢复'],
+      ['pick-first', '先挑一条记录'],
+      ['batch-to-single', '一次只落一笔'],
+      ['saved', '这一笔已保存'],
     ];
-    for (const [raw, user] of PAIRS) {
-      assert.equal(statusNoteOf(raw), user, raw + ' 的用户说法对不上');
+    for (const [code, user] of PAIRS) {
+      assert.equal(statusNoteOf(code), user, code + ' 的用户说法对不上');
       for (const word of ['deleted_at', 'NULL', 'restore', 'prompt', 'bill.record', '软删', 'rebuild', '.ts']) {
         assert.ok(!user.includes(word), '内部词不得留在用户说法里：' + word + '（' + user + '）');
       }
@@ -96,7 +97,7 @@ describe('t407 整改（一）· 用户语言映射只此一处', () => {
 describe('t407 整改（一）· 徽章改成若干枚独立形状', () => {
   const html = typeBadge({
     kind: 'expense', status: 'danger',
-    state: '待补槽位 · 未写库（已阻断）',
+    state: 'pending-blocked',
     next: nextStepOf({ page: 'collect', missing: 1, wakeWord: '记支出' }),
   });
 
@@ -104,7 +105,7 @@ describe('t407 整改（一）· 徽章改成若干枚独立形状', () => {
   // （用户逐字要求 4）。页型那一枚在页壳上，本件只有传了 `pageKind` 才出。
   const withKind = typeBadge({
     kind: 'expense', status: 'danger', pageKind: '采集页',
-    state: '待补槽位 · 未写库（已阻断）',
+    state: 'pending-blocked',
     next: nextStepOf({ page: 'collect', missing: 1, wakeWord: '记支出' }),
   });
 
@@ -146,7 +147,7 @@ describe('t407 整改（一）· 徽章改成若干枚独立形状', () => {
 
   it('认不得的型不印内部话：给「分类按三级挂靠」而不是「本仓尚未定额的型」', () => {
     const other = typeBadge({
-      kind: '没这个型', status: 'danger', state: '待补槽位 · 未写库',
+      kind: '没这个型', status: 'danger', state: 'pending-blocked',
       next: nextStepOf({ page: 'collect', missing: 1, wakeWord: '记一笔' }),
     });
     assert.ok(other.includes('分类按三级挂靠'), '认不得的型给用户能懂的口径');

@@ -12,6 +12,7 @@ import { ok, rejection } from '../analysis/result.js';
 import type { AnalysisResult } from '../analysis/result.js';
 /* #717 批④：1 公斤的热量当量正本住共用位（本处原写裸字面 7700）。 */
 import { KCAL_PER_KG } from '../shared/kcalPerKg.js';
+import { m } from '../entries/index.js';
 
 const round = (n: number): number => Math.round(n);
 const round1 = (n: number): number => Math.round(n * 10) / 10;
@@ -42,7 +43,7 @@ export function dietCalorieTrend(db: DatabaseSync, startDate: string, endDate?: 
     'SELECT date, SUM(calories) AS c, SUM(protein) AS p, SUM(carbs) AS cb, SUM(fat) AS f FROM food_log WHERE date >= ? AND date <= ? GROUP BY date ORDER BY date ASC',
   ).all(start, end) as unknown as Array<{ date: string; c: number | null; p: number | null; cb: number | null; f: number | null }>;
   const rows: Array<[string, number | null, number | null, number | null, number | null]> = raw.map((r) => [r.date, r.c, r.p, r.cb, r.f]);
-  if (rows.length === 0) return rejection('无饮食记录（' + start + ' ~ ' + end + '）');
+  if (rows.length === 0) return rejection(m('skill-calorie.diet-dietEngine.c001', { p0: String(start), p1: String(end) }));
   const totalCal = rows.reduce((a, r) => a + (r[1] ?? 0), 0);
   const avgCal = totalCal / rows.length;
   const goal = db.prepare('SELECT calorie_goal FROM daily_goal WHERE id = 1').get() as { calorie_goal: number | null } | undefined;
@@ -60,7 +61,7 @@ export function dietCalorieTrend(db: DatabaseSync, startDate: string, endDate?: 
   const wdAvg = wdCount > 0 ? weekdayCal / wdCount : 0;
   const weAvg = weCount > 0 ? weekendCal / weCount : 0;
   const daily: TrendDay[] = rows.map((r) => ({ date: r[0], totalCal: r[1] ?? 0, totalProtein: r[2] ?? 0, totalCarbs: r[3] ?? 0, totalFat: r[4] ?? 0 }));
-  return ok({ daysCount: rows.length, totalCal: round(totalCal), avgCal: round(avgCal), calGoal, complianceDays: onTarget, weekdayAvg: round(wdAvg), weekendAvg: round(weAvg), daily }, '热量趋势 ' + rows.length + ' 天，日均 ' + round(avgCal) + ' 卡');
+  return ok({ daysCount: rows.length, totalCal: round(totalCal), avgCal: round(avgCal), calGoal, complianceDays: onTarget, weekdayAvg: round(wdAvg), weekendAvg: round(weAvg), daily }, m('skill-calorie.diet-dietEngine.c002', { p0: String(rows.length), p1: String(round(avgCal)) }));
 }
 
 export type MacroStatus = 'high' | 'low' | 'ok';
@@ -83,7 +84,7 @@ export function dietMacroRatio(db: DatabaseSync, startDate: string, endDate?: st
     'SELECT SUM(protein)*4 AS p, SUM(carbs)*4 AS c, SUM(fat)*9 AS f FROM food_log WHERE date >= ? AND date <= ?',
   ).get(start, end) as unknown as { p: number | null; c: number | null; f: number | null } | undefined;
   const parts = [row?.p ?? 0, row?.c ?? 0, row?.f ?? 0];
-  if (!row || parts[0] + parts[1] + parts[2] === 0) return rejection('无饮食记录（' + start + ' ~ ' + end + '）');
+  if (!row || parts[0] + parts[1] + parts[2] === 0) return rejection(m('skill-calorie.diet-dietEngine.c003', { p0: String(start), p1: String(end) }));
   const total = (parts[0] as number) + (parts[1] as number) + (parts[2] as number);
   const denom = total === 0 ? 1 : total;
   const pctPro = ((parts[0] as number) / denom) * 100;
@@ -95,7 +96,11 @@ export function dietMacroRatio(db: DatabaseSync, startDate: string, endDate?: st
   const g = goal ?? undefined;
   return ok(
     { protein: evalMacro(pctPro, 'protein', g), carb: evalMacro(pctCarb, 'carb', g), fat: evalMacro(pctFat, 'fat', g) },
-    '营养配比 蛋白/碳水/脂肪 = ' + round(pctPro) + '/' + round(pctCarb) + '/' + round(pctFat),
+    m('skill-calorie.diet-dietEngine.c004', {
+      p0: String(round(pctPro)),
+      p1: String(round(pctCarb)),
+      p2: String(round(pctFat)),
+    }),
   );
 }
 
@@ -103,20 +108,20 @@ export type FoodRankCategory = 'high_calorie' | 'low_calorie' | 'frequent' | 'hi
 export interface RankItem { rank: number; foodName: string; totalCal: number; totalGrams: number; totalProtein: number; totalCarbs: number; totalFat: number; cnt: number; avgCalPerMeal: number }
 export interface FoodRanking { category: string; title: string; start: string; end: string; topN: number; items: RankItem[] }
 
-const RANK_TITLES: Record<string, string> = {
-  high_calorie: '🔥 热量炸弹榜',
-  low_calorie: '🥬 低热量健康榜',
+const rankTitles = (): Record<string, string> => ({
+  high_calorie: m('skill-calorie.diet-dietEngine.c015'),
+  low_calorie: m('skill-calorie.diet-dietEngine.c016'),
   /* #511 · 原写「📅 频繁吃榜」，与榜单卡／页题的「常吃」不是同一个名字（审查件第 59 条），
      三处统一成「常吃榜」（另两处在 `diet/rankingDocs.ts` 的 `RANK_ZH`）。 */
-  frequent: '📅 常吃榜',
-  high_carb: '🍚 高碳水榜',
-  high_protein: '💪 高蛋白榜',
-};
+  frequent: m('skill-calorie.diet-dietEngine.c017'),
+  high_carb: m('skill-calorie.diet-dietEngine.c018'),
+  high_protein: m('skill-calorie.diet-dietEngine.c019'),
+});
 
 /** 表题短名（去日期）：页题用 `rankingDocs.ts` 的 `RANK_ZH`，表题用这份引擎名。
  *  两处名字各有归属（`RANK_TITLES` 的统一见 #511），本函数只去掉日期区间，不改名。 */
 export function rankShortName(category: string): string {
-  return RANK_TITLES[category] ?? '📋 食物榜';
+  return rankTitles()[category] ?? m('skill-calorie.diet-dietEngine.c005');
 }
 
 function isWaterFood(name: string): boolean {
@@ -130,9 +135,9 @@ export function dietFoodRanking(db: DatabaseSync, startDate: string, endDate?: s
     'SELECT food_name AS n, SUM(calories) AS c, SUM(grams) AS g, SUM(protein) AS p, SUM(carbs) AS cb, SUM(fat) AS f, COUNT(*) AS cnt FROM food_log WHERE date >= ? AND date <= ? GROUP BY food_name',
   ).all(start, end) as unknown as Array<{ n: string; c: number | null; g: number | null; p: number | null; cb: number | null; f: number | null; cnt: number }>;
   const rows: Array<[string, number | null, number | null, number | null, number | null, number | null, number]> = raw.map((r) => [r.n, r.c, r.g, r.p, r.cb, r.f, r.cnt]);
-  if (rows.length === 0) return rejection('无饮食记录（' + start + ' ~ ' + end + '）');
+  if (rows.length === 0) return rejection(m('skill-calorie.diet-dietEngine.c006', { p0: String(start), p1: String(end) }));
   const filtered = category === 'low_calorie' || category === 'frequent' ? rows.filter((r) => !isWaterFood(r[0])) : rows;
-  if (filtered.length === 0) return rejection('过滤后无记录（' + category + '）');
+  if (filtered.length === 0) return rejection(m('skill-calorie.diet-dietEngine.c007', { p0: String(category) }));
   const byCal = (x: (typeof filtered)[number]): number => x[1] ?? 0;
   const sorted = [...filtered].sort((a, b) => {
     if (category === 'low_calorie') {
@@ -145,7 +150,7 @@ export function dietFoodRanking(db: DatabaseSync, startDate: string, endDate?: s
     if (category === 'high_protein') return (b[3] ?? 0) - (a[3] ?? 0);
     return byCal(b) - byCal(a);
   }).slice(0, topN);
-  const title = (RANK_TITLES[category] ?? '📋 食物榜') + '（' + start + ' ~ ' + end + '）';
+  const title = (rankTitles()[category] ?? m('skill-calorie.diet-dietEngine.c008')) + '（' + start + ' ~ ' + end + '）';
   const items: RankItem[] = sorted.map((r, i) => ({
     rank: i + 1,
     foodName: r[0],
@@ -157,7 +162,7 @@ export function dietFoodRanking(db: DatabaseSync, startDate: string, endDate?: s
     cnt: r[6],
     avgCalPerMeal: Math.floor((r[1] ?? 0) / Math.max(r[6], 1)),
   }));
-  return ok({ category, title, start, end, topN: items.length, items }, category + ' 榜单 TOP ' + items.length);
+  return ok({ category, title, start, end, topN: items.length, items }, m('skill-calorie.diet-dietEngine.c009', { p0: String(category), p1: String(items.length) }));
 }
 
 export interface DeficitAnalysis { daysCount: number; avgIntake: number; bmr: number; currentWeight: number; avgExerciseBurn: number; avgDeficit: number; totalDeficit: number; kgEquivalent: number; sizeLabel: string; dietContribPct: number; exerciseContribPct: number }
@@ -172,7 +177,7 @@ export function dietDeficitAnalysis(db: DatabaseSync, startDate: string, endDate
     'SELECT date, SUM(calories_burned) AS v FROM exercise_log WHERE date >= ? AND date <= ? AND ' + EX_ALIVE + ' GROUP BY date ORDER BY date ASC',
   ).all(start, end) as unknown as Array<{ date: string; v: number | null }>;
   const exRows: Array<[string, number | null]> = exRaw.map((r) => [r.date, r.v]);
-  if (dietRows.length === 0) return rejection('无记录（' + start + ' ~ ' + end + '）');
+  if (dietRows.length === 0) return rejection(m('skill-calorie.diet-dietEngine.c010', { p0: String(start), p1: String(end) }));
   const dietMap = new Map(dietRows.map((r) => [r[0], r[1] ?? 0]));
   const exMap = new Map(exRows.map((r) => [r[0], r[1] ?? 0]));
   const days = dietMap.size;
@@ -187,7 +192,7 @@ export function dietDeficitAnalysis(db: DatabaseSync, startDate: string, endDate
   const kgEquivalent = totalDeficit / KCAL_PER_KG;
   const dietContrib = totalDeficit !== 0 ? (Math.abs(totalDeficit - totalEx * days) / Math.abs(totalDeficit)) * 100 : 0;
   const exContrib = totalDeficit !== 0 ? (totalEx / Math.abs(totalDeficit)) * 100 : 0;
-  const sizeLabel = avgDeficit > 0 && avgDeficit < 300 ? '偏小' : avgDeficit > 700 ? '过大' : '正常';
+  const sizeLabel = avgDeficit > 0 && avgDeficit < 300 ? m('skill-calorie.diet-dietEngine.c011') : avgDeficit > 700 ? m('skill-calorie.diet-dietEngine.c012') : m('skill-calorie.diet-dietEngine.c013');
   return ok({
     daysCount: days,
     avgIntake: round(avgIntake),
@@ -200,5 +205,5 @@ export function dietDeficitAnalysis(db: DatabaseSync, startDate: string, endDate
     sizeLabel,
     dietContribPct: round(dietContrib),
     exerciseContribPct: round(exContrib),
-  }, '日均缺口 ' + round(avgDeficit) + ' 卡（' + sizeLabel + '）');
+  }, m('skill-calorie.diet-dietEngine.c014', { p0: String(round(avgDeficit)), p1: String(sizeLabel) }));
 }

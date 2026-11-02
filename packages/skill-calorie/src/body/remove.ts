@@ -17,9 +17,11 @@ import { CALIPER_FIELDS, MEASUREMENT_FIELDS, MEASUREMENT_ZH, deleteComposition, 
 import { CALIPER_SITE_LABELS } from './bodyPlate.js';
 import { SOURCE_LABELS } from '../kcal.js';
 import type { SourceChoice } from '../kcal.js';
-import { R, SOFT_EXCLUDED, deleteStatus, out } from '../shared/writeParts.js';
+import { R, deleteStatus, out, softExcluded } from '../shared/writeParts.js';
 import { needId } from '../shared/params.js';
 import type { WriteOut } from '../shared/commandSpec.js';
+import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** 缺值占位（裁定 2 的可见文本那一半；取数层与库内不给这个字）。 */
 const MISSING = '—';
@@ -36,7 +38,7 @@ function numLine(v: unknown, unit: string): string {
 
 /** 一条记录的**逐字段**删前值文本（`标签 值`，项间「、」；标签里无空格，值里可以有）。 */
 function fieldsLine(pairs: readonly (readonly [string, unknown])[]): string {
-  return pairs.map(([label, v]) => label + ' ' + cell(v)).join('、');
+  return listJoin(currentRenderLanguage(), pairs.map(([label, v]) => label + ' ' + cell(v)));
 }
 
 /** 体成分快照：逐字段（日期／来源／体脂率／7 点皮褶／备注），标签全部取自唯一来源。 */
@@ -44,10 +46,10 @@ function compositionFields(snap: Record<string, unknown>): string {
   const src = String(snap['source'] ?? '');
   return fieldsLine([
     ['日期', snap['date']],
-    ['来源', SOURCE_LABELS[src as SourceChoice] ?? src],
-    ['体脂率', snap['body_fat_pct']],
+    [m('skill-calorie.body-remove.c001'), SOURCE_LABELS[src as SourceChoice] ?? src],
+    [m('skill-calorie.body-remove.c002'), snap['body_fat_pct']],
     ...CALIPER_FIELDS.map((f, i): [string, unknown] => [CALIPER_SITE_LABELS[i] ?? f, snap[f]]),
-    ['备注', snap['note']],
+    [m('skill-calorie.body-remove.c003'), snap['note']],
   ]);
 }
 
@@ -56,7 +58,7 @@ function measureFields(snap: Record<string, unknown>): string {
   return fieldsLine([
     ['日期', snap['date']],
     ...MEASUREMENT_FIELDS.map((f): [string, unknown] => [MEASUREMENT_ZH[f], snap[f]]),
-    ['备注', snap['note']],
+    [m('skill-calorie.body-remove.c004'), snap['note']],
   ]);
 }
 
@@ -64,10 +66,15 @@ function measureFields(snap: Record<string, unknown>): string {
 function compositionSummary(id: number, snap: Record<string, unknown>): string {
   const src = String(snap['source'] ?? '');
   const note = cell(snap['note']);
-  return '已删除体脂记录 #' + id + '（日期 ' + cell(snap['date'])
-    + ' · 体脂率 ' + numLine(snap['body_fat_pct'], '%')
-    + ' · 来源 ' + (SOURCE_LABELS[src as SourceChoice] ?? (src === '' ? MISSING : src))
-    + (note === MISSING ? '' : ' · 备注 ' + note) + '）' + SOFT_EXCLUDED;
+  const noteTail = (note === MISSING ? '' : m('skill-calorie.body-remove.c005', { p0: String(note) }));
+  return m('skill-calorie.body-remove.c006', {
+    p0: String(id),
+    p1: String(cell(snap['date'])),
+    p2: String(numLine(snap['body_fat_pct'], '%')),
+    p3: String(SOURCE_LABELS[src as SourceChoice] ?? (src === '' ? MISSING : src)),
+    p4: String(noteTail),
+    p5: softExcluded(),
+  });
 }
 
 /** 围度快照摘要：日期 ＋ **已填各项**（部位名 ＋ 值cm，缺项不摆——13 项全空不成记录）。 */
@@ -76,9 +83,15 @@ function measureSummary(id: number, snap: Record<string, unknown>): string {
     .filter((f) => snap[f] !== null && snap[f] !== undefined)
     .map((f) => MEASUREMENT_ZH[f] + ' ' + String(snap[f]) + 'cm');
   const note = cell(snap['note']);
-  return '已删除围度记录 #' + id + '（日期 ' + cell(snap['date'])
-    + ' · ' + (filled.length > 0 ? filled.join('、') : '无围度')
-    + (note === MISSING ? '' : ' · 备注 ' + note) + '）' + SOFT_EXCLUDED;
+  const filledText = (filled.length > 0 ? listJoin(currentRenderLanguage(), filled) : m('skill-calorie.body-remove.c007'));
+  const noteTail = (note === MISSING ? '' : m('skill-calorie.body-remove.c008', { p0: String(note) }));
+  return m('skill-calorie.body-remove.c009', {
+    p0: String(id),
+    p1: String(cell(snap['date'])),
+    p2: String(filledText),
+    p3: String(noteTail),
+    p4: softExcluded(),
+  });
 }
 
 /** `calorie.body.composition-remove` · 删体脂（软删：置 `is_deprecated`；删前快照带回执）。 */
@@ -86,7 +99,7 @@ export function writeCompositionRemove(params: Record<string, unknown>, db: Data
   const id = needId(params);
   const r = deleteComposition(db, id);
   const snap = r.snapshot;
-  return out(R('删体脂', 'delete', compositionSummary(id, snap), '删体脂', 'body_composition (写库回执)', {
+  return out(R(m('skill-calorie.body-remove.c010'), 'delete', compositionSummary(id, snap), m('skill-calorie.body-remove.c011'), m('skill-calorie.body-remove.c012'), {
     recordId: id, ids: [id], writtenFields: ['is_deprecated'],
     items: [{ id, date: cell(snap['date']), status: deleteStatus('soft'), reason: '', detail: compositionFields(snap) }],
   }));
@@ -97,7 +110,7 @@ export function writeMeasureRemove(params: Record<string, unknown>, db: Database
   const id = needId(params);
   const r = deleteMeasurement(db, id);
   const snap = r.snapshot;
-  return out(R('删围度', 'delete', measureSummary(id, snap), '删围度', 'body_measurements (写库回执)', {
+  return out(R(m('skill-calorie.body-remove.c013'), 'delete', measureSummary(id, snap), m('skill-calorie.body-remove.c014'), m('skill-calorie.body-remove.c015'), {
     recordId: id, ids: [id], writtenFields: ['is_deprecated'],
     items: [{ id, date: cell(snap['date']), status: deleteStatus('soft'), reason: '', detail: measureFields(snap) }],
   }));

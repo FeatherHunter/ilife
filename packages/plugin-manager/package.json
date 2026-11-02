@@ -52,6 +52,7 @@
     "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
+    "base-entries": "0.3.55",
     "dsh-plugin-update": "^0.18.39"
   },
   "devDependencies": {

@@ -19,6 +19,7 @@
  */
 
 /** 本件的类名根：全部槽位类名都是 `RELATION_PICKER_CLASS + '-' + 槽名`。 */
+import { m } from '../../entries/index.js';
 export const RELATION_PICKER_CLASS = 'ilife-block-relation-picker';
 
 /** 槽位闭集（标记契约的一部分：`render.ts`／`style.ts`／`runtime.ts` 与判据都用这里的名字拼类名）。 */
@@ -203,54 +204,54 @@ export const RELATION_PICKER_ANCHOR_PREFIX = '--ilife-relation-picker-';
 /* ── 文案（缺省的那几句；调用方可以换，但语义别换） ─────────────────── */
 
 /** 缺省文案与状态句（渲染期与运行时段**读同一份**，免得两处各写一句）。 */
-export const RELATION_PICKER_TEXT = Object.freeze({
+export const RELATION_PICKER_TEXT = {
   /** 还没选中时触发键里读的那一句。 */
-  unpicked: '还没选',
+  get unpicked(): string { return m('base-render.components-relation-picker-attrs.c001'); },
   /** 字段标签后面那句状态：正在选／已选。**选中一变这一句也要跟着换**——字段行读的是同一份事实
    *  （运行时段里它跟值那一格一起重写；不然「已选的那一项」旁边还写着「正在选」）。 */
-  stateLead: '— ',
-  picking: '正在选',
-  picked: '已选',
+  get stateLead(): string { return '— '; },
+  get picking(): string { return m('base-render.components-relation-picker-attrs.c002'); },
+  get picked(): string { return m('base-render.components-relation-picker-attrs.c003'); },
   /** 分组标题两枚。 */
-  recentGroup: '最近用过',
-  allGroup: '全部',
+  get recentGroup(): string { return m('base-render.components-relation-picker-attrs.c004'); },
+  get allGroup(): string { return m('base-render.components-relation-picker-attrs.c005'); },
   /** 行尾那一枚：选中的写「已选」、其余写「选它」。 */
-  pickedTag: '已选',
-  pickTag: '选它',
+  get pickedTag(): string { return m('base-render.components-relation-picker-attrs.c006'); },
+  get pickTag(): string { return m('base-render.components-relation-picker-attrs.c007'); },
   /** 触发键右端那枚记号。 */
-  caret: '▾',
+  get caret(): string { return '▾'; },
   /** 选中记号：✓ 选中／○ 没选。
    *  未选态原来写中点 `·`（U+00B7）——那正是仓库分隔符门的 R1 命中（可见文本零豁免），
    *  与 README 契约 13 自己写的「不出现 `·`」矛盾（2026-09 对抗审查读出：overlay 节点级 4 处／
    *  inline 2 处，`separator-probe` exit=1）。改成空圆环 `○`：与 `radio-cards`／`wizard-shell` 的
    *  「空圆环（未选）」、`goal-stairs` 的「还没开始 ○」同一套形语汇，且不是分隔符。 */
-  tick: '✓',
-  dot: '○',
+  get tick(): string { return '✓'; },
+  get dot(): string { return '○'; },
   /** 清空搜索那枚键的无障碍名（键上写的是 ✕）。 */
-  clear: '清空搜索',
+  get clear(): string { return m('base-render.components-relation-picker-attrs.c008'); },
   /** 末行新建排前面那句。 */
-  newPrefix: '没找到？',
+  get newPrefix(): string { return m('base-render.components-relation-picker-attrs.c009'); },
   /** 新建那枚键的字（中间夹着当前搜索词；搜索词为空时退成下一句）。 */
-  createPre: '新建「',
-  createPost: '」',
-  createEmpty: '新建一个',
+  get createPre(): string { return m('base-render.components-relation-picker-attrs.c010'); },
+  get createPost(): string { return '」'; },
+  get createEmpty(): string { return m('base-render.components-relation-picker-attrs.c011'); },
   /** 「换」那枚键的字。 */
-  change: '换',
+  get change(): string { return m('base-render.components-relation-picker-attrs.c012'); },
   /** 选完那一行结果的前缀（运行时重写结果行时带上它，不丢「选好了」三字）。 */
-  chosenPre: '选好了',
+  get chosenPre(): string { return m('base-render.components-relation-picker-attrs.c013'); },
   /** 空态：没有一条命中时写的那句话（中间夹着用户打的词）。 */
-  emptyPre: '没有找到与「',
-  emptyPost: '」相关的，去末行新建一个。',
+  get emptyPre(): string { return m('base-render.components-relation-picker-attrs.c014'); },
+  get emptyPost(): string { return m('base-render.components-relation-picker-attrs.c015'); },
   /** 脚注三档：空输入列常用去处／命中几条／一条没中。 */
-  footIdle: '「最近用过」排最前，点任意一行就选好。',
+  get footIdle(): string { return m('base-render.components-relation-picker-attrs.c016'); },
   /** 没有 `recentKeys`（屏上没有「最近用过」这一组）时，空输入那一档的脚注。
    *  **脚注跟着实际分区走**：缺了这一组还写「排最前」，就是一句屏上兑不出来的空许诺
    *  （2026-09 对抗审查读出：无 `recentKeys` 的实例脚注仍写「「最近用过」排最前」，而分组只有 `all`）。 */
-  footIdlePlain: '全部都在下面，点任意一行就选好。',
-  footHitPre: '命中 ',
-  footHitPost: ' 条，点任意一行就选好。',
-  footNone: '换个短一点的词试试，搜不到就去末行新建。',
-} as const);
+  get footIdlePlain(): string { return m('base-render.components-relation-picker-attrs.c017'); },
+  get footHitPre(): string { return m('base-render.components-relation-picker-attrs.c018'); },
+  get footHitPost(): string { return m('base-render.components-relation-picker-attrs.c019'); },
+  get footNone(): string { return m('base-render.components-relation-picker-attrs.c020'); },
+};
 
 /* ── 入参类型 ───────────────────────────────────────────────────── */
 

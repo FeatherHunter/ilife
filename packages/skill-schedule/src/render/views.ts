@@ -3,6 +3,8 @@ import type { ScheduleRecord, PlanEvent } from '../fetch/db.js';
 import {
   l1Of, fmtDur, fmtPct, computeHealthScore, detectAnomalies, getEmojiPrefix,
 } from '../policy/category.js';
+import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 export interface RecordItem {
   id: number; date: string; time: string; activity: string; category: string;
@@ -91,7 +93,16 @@ export function buildRecordCompare(args: {
   const sA = computeHealthScore(A.byL1).score;
   const sB = computeHealthScore(B.byL1).score;
   const lines: string[] = [];
-  lines.push(args.labelA + ' vs ' + args.labelB + '：块数 ' + args.a.length + '→' + args.b.length + '，时长 ' + fmtDur(A.total) + '→' + fmtDur(B.total) + '，健康分 ' + sA + '→' + sB + '。');
+  lines.push(m('skill-schedule.render-views.c001', {
+    p0: String(args.labelA),
+    p1: String(args.labelB),
+    p2: String(args.a.length),
+    p3: String(args.b.length),
+    p4: String(fmtDur(A.total)),
+    p5: String(fmtDur(B.total)),
+    p6: String(sA),
+    p7: String(sB),
+  }));
   const dims = new Set([...Object.keys(A.byL1), ...Object.keys(B.byL1)].sort());
   for (const d of dims) {
     const c = B.byL1[d] || 0;
@@ -101,7 +112,9 @@ export function buildRecordCompare(args: {
     lines.push(d + '：' + fmtDur(p) + '→' + fmtDur(c) + '（' + (dp >= 0 ? '+' : '') + dp + '%）。');
   }
   const reds = detectAnomalies(B.byL1, A.byL1).filter((a) => a.level === 'red');
-  if (reds.length) lines.push('显著变化：' + reds.map((a) => a.dim + (a.deltaPct >= 0 ? '+' : '') + a.deltaPct + '%').join('、') + '。');
+  if (reds.length) lines.push(m('skill-schedule.render-views.c002', {
+    p0: String(listJoin(currentRenderLanguage(), reds.map((a) => a.dim + (a.deltaPct >= 0 ? '+' : '') + a.deltaPct + '%'))),
+  }));
   return { summary: lines.join('\n') };
 }
 
@@ -111,10 +124,17 @@ export function buildCategoryDeep(start: string, end: string, category: string, 
   const hit = records.filter((r) => r.category === category || l1Of(r.category) === category);
   const hm = hit.reduce((a, r) => a + (r.duration_minutes || 0), 0);
   const lines = [
-    start + '~' + end + ' 类别深挖 ' + category + '：' + hit.length + ' 块，共 ' + fmtDur(hm) + '（占区间 ' + fmtPct(hm, total) + '%）。',
+    m('skill-schedule.render-views.c003', {
+      p0: String(start),
+      p1: String(end),
+      p2: String(category),
+      p3: String(hit.length),
+      p4: String(fmtDur(hm)),
+      p5: String(fmtPct(hm, total)),
+    }),
     ...hit.slice(0, 20).map((r) => r.date + ' ' + r.time_start + '~' + r.time_end + ' ' + r.activity),
   ];
-  if (hit.length > 20) lines.push('……等共 ' + hit.length + ' 块。');
+  if (hit.length > 20) lines.push(m('skill-schedule.render-views.c004', { p0: String(hit.length) }));
   return { summary: lines.join('\n') };
 }
 
@@ -125,16 +145,16 @@ export function buildAnomaly(end: string, windowDays: number, daily: { date: str
     for (const [k, v] of Object.entries(d.byL1)) mean[k] = (mean[k] || 0) + v;
   }
   for (const k of Object.keys(mean)) mean[k] = Math.round(mean[k] / Math.max(daily.length, 1));
-  const lines = ['截止 ' + end + ' 近 ' + windowDays + ' 天异常检测（vs 日均）：'];
+  const lines = [m('skill-schedule.render-views.c005', { p0: String(end), p1: String(windowDays) })];
   let any = false;
   for (const d of daily) {
     const reds = detectAnomalies(d.byL1, mean).filter((a) => a.level !== null);
     if (reds.length) {
       any = true;
-      lines.push(d.date + '：' + reds.map((a) => a.dim + (a.deltaPct >= 0 ? '+' : '') + a.deltaPct + '%').join('、') + '。');
+      lines.push(d.date + '：' + listJoin(currentRenderLanguage(), reds.map((a) => a.dim + (a.deltaPct >= 0 ? '+' : '') + a.deltaPct + '%')) + '。');
     }
   }
-  if (!any) lines.push('无显著异常。');
+  if (!any) lines.push(m('skill-schedule.render-views.c006'));
   return { summary: lines.join('\n') };
 }
 
@@ -162,10 +182,11 @@ export function buildPlanReceipt(message: string): { ok: boolean; message: strin
 // #43 S2：total=0 时显式 out-of-scope 指引（定时/早睡以外置为准），hint 随 envelope 透出（list 形允许多余字段）。
 export interface HelpItem { phrase: string; key: string; shape: string; cli: string; desc: string; }
 
-export const HELP_EMPTY_HINT = '无命中：定时任务/早睡提醒等出 scope，以外置为准（HELP q 为空看全表，或换唤醒词如“查作息/查日程”）';
+/** HELP 无命中时那句指引（#1197：取词在渲染期，故写成函数）。 */
+export function helpEmptyHint(): string { return m('skill-schedule.render-views.c007'); }
 
 export function buildHelpItems(all: HelpItem[], q?: string): { items: HelpItem[]; total: number; hint?: string } {
   const items = !q || !q.trim() ? all : all.filter((h) => q.includes(h.phrase) || h.phrase.includes(q.trim()));
-  if (!items.length) return { items, total: 0, hint: HELP_EMPTY_HINT };
+  if (!items.length) return { items, total: 0, hint: helpEmptyHint() };
   return { items, total: items.length };
 }

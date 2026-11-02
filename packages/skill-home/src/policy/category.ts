@@ -1,6 +1,7 @@
 // 口径层·分类/位置/状态（老家 references/categories.md + statuses.md 对应）。
 // 8 顶级统一不带前缀；位置须两级路径；11 状态机；食品判定关键词（seed_key 落库前启发式）。
 import { HomePolicyError } from '../fetch/errors.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 export const HOME_TOPS = [
   '食物与饮品', '衣物与穿戴', '家居与陈设', '工具与器材',
@@ -24,7 +25,7 @@ export function normalizeLocation(loc: unknown): string {
 
 export function normalizeStatus(st: unknown): string {
   if (typeof st !== 'string' || !(HOME_STATUSES as readonly string[]).includes(st)) {
-    throw new HomePolicyError('POLICY_BAD_STATUS', '非法状态：' + String(st) + '（11 态：' + HOME_STATUSES.join('、') + '）');
+    throw new HomePolicyError('POLICY_BAD_STATUS', '非法状态：' + String(st) + '（11 态：' + listJoin(currentRenderLanguage(), HOME_STATUSES) + '）');
   }
   return st;
 }

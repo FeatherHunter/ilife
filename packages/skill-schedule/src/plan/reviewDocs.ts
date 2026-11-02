@@ -28,11 +28,13 @@ import { pageSections } from '../shared/pageNav.js';
 import { minutesOfDayEnd } from './planDocs.js';
 import { planPartsCss, renderSectionTitle } from './planParts.js';
 import { planCopyArea } from './receipt.js';
+import { m } from '../entries/index.js';
 
-const EYEBROW = '作息管家 日程与计划';
+/** 页眉（品牌＋域）。#1197：改成函数——`m()` 只在渲染期取词，模块级常量的初值会定死语言。 */
+const eyebrowOf = (): string => m('skill-schedule.plan-reviewDocs.c001');
 
 const stateOf = (p: PlanEvent): string => {
-  const raw = p.completion === null || p.completion === '' ? '未复盘' : p.completion;
+  const raw = p.completion === null || p.completion === '' ? m('skill-schedule.plan-reviewDocs.c002') : p.completion;
   return completionLabelOf(raw);
 };
 
@@ -40,7 +42,7 @@ const stateOf = (p: PlanEvent): string => {
 export function reviewPage(handle: ScheduleDb, date: string): string {
   const events = listPlanEvents(handle, date);
   const rows: DataTableRow[] = events.map((p) => ({
-    time: p.time_start + ' 至 ' + p.time_end,
+    time: m('skill-schedule.plan-reviewDocs.c003', { p0: String(p.time_start), p1: String(p.time_end) }),
     title: p.title,
     category: l1Of(p.category ?? ''),
     state: stateOf(p),
@@ -55,80 +57,98 @@ export function reviewPage(handle: ScheduleDb, date: string): string {
   }));
   const all = events.length > 0 && marked === events.length;
   const head: PageHead = {
-    docTitle: '作息管家 复盘',
-    eyebrow: EYEBROW,
-    title: '复盘',
+    docTitle: m('skill-schedule.plan-reviewDocs.c004'),
+    eyebrow: eyebrowOf(),
+    title: m('skill-schedule.plan-reviewDocs.c005'),
     subtitle: events.length === 0
-      ? date + ' 这一天没有活跃的计划，这一页是空态。'
-      : date + ' 这一天排了 ' + String(events.length) + ' 条计划，其中 ' + String(marked) + ' 条已经标过完成状态。',
+      ? m('skill-schedule.plan-reviewDocs.c006', { p0: String(date) })
+      : m('skill-schedule.plan-reviewDocs.c007', {
+        p0: String(date),
+        p1: String(String(events.length)),
+        p2: String(String(marked)),
+      }),
   };
+  // §4.7 · 三元里那一支嵌了条件，先抽局部变量再拼。
+  const restNote = all ? m('skill-schedule.plan-reviewDocs.c008') : m('skill-schedule.plan-reviewDocs.c009', { p0: String(String(events.length - marked)) });
   const conclusion = events.length === 0
-    ? date + ' 这一天没有活跃的计划，所以没有可逐条复盘的对象。要复盘计划执行，先把这一天的计划排出来。'
-    : date + ' 排了 ' + String(events.length) + ' 条计划，共 ' + fmtDurShort(planned) + '，已标 ' + String(marked)
-      + ' 条，其中「已完成」' + String(done) + ' 条。'
-      + (all ? '这一天的计划全都标过了，接下来是就着这些状态聊下一步。' : '还有 ' + String(events.length - marked) + ' 条没标状态。');
+    ? m('skill-schedule.plan-reviewDocs.c010', { p0: String(date) })
+    : m('skill-schedule.plan-reviewDocs.c011', {
+      p0: String(date),
+      p1: String(String(events.length)),
+      p2: String(fmtDurShort(planned)),
+      p3: String(String(marked)),
+      p4: String(String(done)),
+      p5: String(restNote),
+    });
   const kpis: readonly KpiCardInput[] = [
-    { label: '计划条数', value: String(events.length), unit: '条', detail: date },
+    { label: m('skill-schedule.plan-reviewDocs.c012'), value: String(events.length), unit: m('skill-schedule.plan-reviewDocs.c013'), detail: date },
     {
-      label: '已标记', value: String(marked), unit: '条',
-      detail: '还有 ' + String(events.length - marked) + ' 条待标',
+      label: m('skill-schedule.plan-reviewDocs.c014'), value: String(marked), unit: m('skill-schedule.plan-reviewDocs.c015'),
+      detail: m('skill-schedule.plan-reviewDocs.c016', { p0: String(String(events.length - marked)) }),
       bar: { pct: events.length === 0 ? 0 : Math.round((marked / events.length) * 100) },
     },
-    { label: '计划时长', value: fmtDurShort(planned), detail: '这一天排的时段合计' },
+    { label: m('skill-schedule.plan-reviewDocs.c017'), value: fmtDurShort(planned), detail: m('skill-schedule.plan-reviewDocs.c018') },
     {
-      label: '已完成', value: String(done), unit: '条',
-      detail: done === 0 ? '还没有标成已完成的' : '占已标记的 ' + String(marked === 0 ? 0 : Math.round((done / marked) * 100)) + '%',
+      label: m('skill-schedule.plan-reviewDocs.c019'), value: String(done), unit: m('skill-schedule.plan-reviewDocs.c020'),
+      detail: done === 0 ? m('skill-schedule.plan-reviewDocs.c021') : m('skill-schedule.plan-reviewDocs.c022', {
+        p0: String(String(marked === 0 ? 0 : Math.round((done / marked) * 100))),
+      }),
     },
   ];
   const discussion = [
-    '① 逐条看状态：下面每一条计划都印着它现在的完成状态。状态是这六种之一：'
-      + VALID_COMPLETIONS.map((v) => completionLabelOf(v)).join('，') + '。',
-    '② 没做成的写原因：状态不是「已完成」的那几条，把原因写清楚，比如加班，比如推延到明天，比如下雨取消。这句会连着状态一起落进库里。',
-    '③ 把标记交给 AI 落库：把下面那一句复制给 AI，它按你标的状态与原因逐条写回，写完再回这一页看。',
-    '④ 收尾看结论：落库之后这一页的完成率与状态分布会跟着更新，那就是这一天的复盘结论。',
+    m('skill-schedule.plan-reviewDocs.c023', {
+      p0: String(VALID_COMPLETIONS.map((v) => completionLabelOf(v)).join('，')),
+    }),
+    m('skill-schedule.plan-reviewDocs.c024'),
+    m('skill-schedule.plan-reviewDocs.c025'),
+    m('skill-schedule.plan-reviewDocs.c026'),
   ];
   const { toc, body } = pageSections([
-    { navText: '这一天的复盘进度', html: renderKpiGrid(kpis, { title: '这一天的复盘进度' }) },
+    { navText: m('skill-schedule.plan-reviewDocs.c027'), html: renderKpiGrid(kpis, { title: m('skill-schedule.plan-reviewDocs.c028') }) },
     { html: renderConclusionBar(conclusion) },
-    { navText: '逐条复盘', html: renderSectionTitle('逐条复盘')
-      + '<p class="sch-pl-note">每条计划的完成状态与原因逐条列出，状态取的是库里现在那一串，一个字都没有折算。</p>'
+    { navText: m('skill-schedule.plan-reviewDocs.c029'), html: renderSectionTitle(m('skill-schedule.plan-reviewDocs.c030'))
+      + '<p class="sch-pl-note">' + m('skill-schedule.plan-reviewDocs.c050') + '</p>'
       + renderDataTable({
         columns: [
-          { key: 'time', label: '时段' },
-          { key: 'title', label: '计划' },
-          { key: 'category', label: '分类' },
-          { key: 'state', label: '完成状态' },
-          { key: 'note', label: '原因' },
+          { key: 'time', label: m('skill-schedule.plan-reviewDocs.c031') },
+          { key: 'title', label: m('skill-schedule.plan-reviewDocs.c032') },
+          { key: 'category', label: m('skill-schedule.plan-reviewDocs.c033') },
+          { key: 'state', label: m('skill-schedule.plan-reviewDocs.c034') },
+          { key: 'note', label: m('skill-schedule.plan-reviewDocs.c035') },
         ],
         rows,
-        emptyText: '这一天没有活跃的计划',
+        emptyText: m('skill-schedule.plan-reviewDocs.c036'),
       })
       + renderFactStrip({
-        items: counts.map((c) => ({ label: c.state, value: String(c.count) + ' 条' })),
+        items: counts.map((c) => ({ label: c.state, value: m('skill-schedule.plan-reviewDocs.c037', { p0: String(String(c.count)) }) })),
       }) },
-    { navText: '讨论区', html: renderSectionTitle('讨论区')
+    { navText: m('skill-schedule.plan-reviewDocs.c038'), html: renderSectionTitle(m('skill-schedule.plan-reviewDocs.c039'))
       + renderListRows({
         items: discussion.map((text) => ({ main: text })),
-        emptyText: '这一天没有可讨论的对象',
+        emptyText: m('skill-schedule.plan-reviewDocs.c040'),
       }) },
     { html: renderPreBlock({
-      label: events.length === 0 ? '先排这一天的计划就说这一句' : '把标记交回 AI 就说这一句',
+      label: events.length === 0 ? m('skill-schedule.plan-reviewDocs.c041') : m('skill-schedule.plan-reviewDocs.c042'),
       command: events.length === 0
-        ? '商量一下 ' + date + ' 这一天的计划'
-        : '按这一页标好的状态与原因，把 ' + date + ' 这天的计划逐条写回库里',
+        ? m('skill-schedule.plan-reviewDocs.c043', { p0: String(date) })
+        : m('skill-schedule.plan-reviewDocs.c044', { p0: String(date) }),
       actionId: 'ilife-sch-review-copy-next',
-      copyLabel: '复制这句话',
+      copyLabel: m('skill-schedule.plan-reviewDocs.c045'),
     }) },
-    { navText: '复制与留档', html: scheduleCopyArea({
-      title: '复制与留档',
+    { navText: m('skill-schedule.plan-reviewDocs.c046'), html: scheduleCopyArea({
+      title: m('skill-schedule.plan-reviewDocs.c047'),
       dataActionId: 'ilife-sch-review-copy-data',
       logActionId: 'ilife-sch-review-copy-log',
       ...planCopyArea({
-        message: '复盘：日期 ' + date + '，计划 ' + String(events.length) + ' 条，已标 ' + String(marked)
-          + ' 条，已完成 ' + String(done) + ' 条',
+        message: m('skill-schedule.plan-reviewDocs.c048', {
+          p0: String(date),
+          p1: String(String(events.length)),
+          p2: String(String(marked)),
+          p3: String(String(done)),
+        }),
         command: 'schedule-cmd-read schedule.plan.write --params {"op":"review","granularity":"day","date":"'
           + date + '"}',
-        source: '日程计划表（' + String(events.length) + ' 行）',
+        source: m('skill-schedule.plan-reviewDocs.c049', { p0: String(String(events.length)) }),
       }),
     }) },
   ]);

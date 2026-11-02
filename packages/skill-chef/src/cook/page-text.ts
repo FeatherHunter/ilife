@@ -12,6 +12,7 @@
  *  ③ 上屏文字不带工单黑话与实现语（`t778-终审扫描.mjs` 的三类字样命中 0）。
  */
 import { escapeHtml } from 'base-paint';
+import { m } from '../entries/index.js';
 
 /** 结论条那一句：这道菜**做过几次**（读数来自库里 `historyStats`；一次都没做过就说第一次）。
  *
@@ -21,7 +22,7 @@ import { escapeHtml } from 'base-paint';
  *  再讲一遍备料确实不添信息。改成**做过几次**：这一条在别处都没有（第 2 格那张「上次经验」
  *  卡说的是最近一次，不是总次数），既不复述、也不编数据。 */
 export function cookCountNote(count: number): string {
-  return count > 0 ? '这道菜做过 ' + count + ' 次' : '第一次做这道菜';
+  return count > 0 ? m('skill-chef.cook-page-text.c001', { p0: String(count) }) : m('skill-chef.cook-page-text.c002');
 }
 
 /** 命令回执里的份量说明（给**读信封的调用方**看的那一面）。
@@ -30,19 +31,19 @@ export function cookCountNote(count: number): string {
  *  而页面已经把那两个数摆在读者眼前了。两面各有一处定义，不互相复述。 */
 export function servingsNoteReceipt(servings: number, base: number, factor: number): string {
   return servings === base
-    ? '份量照原谱（' + base + ' 人份），无需换算'
-    : '用量是原谱（' + base + ' 人份）的 ' + factor + ' 倍（' + servings + ' 人份），照这份清单备料就行。';
+    ? m('skill-chef.cook-page-text.c003', { p0: String(base) })
+    : m('skill-chef.cook-page-text.c004', { p0: String(base), p1: String(factor), p2: String(servings) });
 }
 
 /** 用量文本：库里没登记数字用量时说「适量」（不猜数）。 */
 export function qtyText(q: number | null, unit: string): string {
-  if (q === null) return '适量';
+  if (q === null) return m('skill-chef.cook-page-text.c005');
   return (String(q) + ' ' + unit).trim();
 }
 
 /** 本步用料一枚胶囊的文本（可选料缀「（可选）」）。 */
 export function usageChip(name: string, q: number | null, unit: string, optional: boolean): string {
-  return name + ' ' + qtyText(q, unit) + (optional ? '（可选）' : '');
+  return name + ' ' + qtyText(q, unit) + (optional ? m('skill-chef.cook-page-text.c006') : '');
 }
 
 /** 步骤状态（`run.ts` 按当前步算出来，标题与卡面形状共用同一个值）。 */
@@ -52,7 +53,8 @@ export type StepState = 'done' | 'current' | 'todo';
  *  标题再写一遍「（正在做）」就是同一件事说两遍（第二轮同尺复评第 1 格的原文摘点到了这一处）。
  *  当前步改由**形状**承担：卡左缘主色加粗、卡面自上而下由浅底回到白、标题位一枚主色圆点。 */
 export function stepTitle(seq: number, state: StepState): string {
-  return '第 ' + seq + ' 步' + (state === 'done' ? '（已做）' : '');
+  const doneMark = state === 'done' ? m('skill-chef.cook-page-text.c007') : '';
+  return m('skill-chef.cook-page-text.c008', { p0: String(seq), p1: String(doneMark) });
 }
 
 /** 步骤正文按**已有标点**分行：读起来有句读，行尾也不再一路顶到卡片右沿。

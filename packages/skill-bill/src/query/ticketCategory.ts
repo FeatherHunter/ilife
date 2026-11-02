@@ -54,9 +54,12 @@ import { queryStyleTag } from './pageParts.js';
 import { assembleSheetPage, sheetHead, ticketActions, ticketRule, ticketSection, ticketSummary } from '../shared/docPage.js';
 import { commandLine, writeSection } from '../shared/writeParts.js';
 import { checkListHtml, checkRowsOf } from '../shared/checkLine.js';
+import { m } from '../entries/index.js';
 
 /** 本次数据来源（复制日志第 3 段，与 `./read.js` 的查询来源同字）。 */
-const SOURCE_QUERY = DB_FILENAME + '（查询结果：只读，不改库）';
+function sourceQuery(): string {
+  return DB_FILENAME + m('skill-bill.query-ticketCategory.c024');
+}
 
 /** 占比段的类数上限（与 `./list.js` 的 `CATEGORY_LIMIT` 同数，老页 `slice(0,8)` 同）。 */
 const CATEGORY_LIMIT = 8;
@@ -64,8 +67,19 @@ const CATEGORY_LIMIT = 8;
 /** 空值占位（落点行永不缺席，无值即此符）。 */
 const EMPTY_CELL = '—';
 
-/** 主数字小字的计数词（原型逐字 `四笔分类均餐饮开头` 的 `四`）：1–10 取中文数字，更大的数照数写。 */
-const COUNT_WORDS: readonly string[] = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+/** 主数字小字的计数词（原型逐字 `四笔分类均餐饮开头` 的 `四`）：1–10 取本语言数字词，更大的数照数写。 */
+const COUNT_WORD_KEYS = [
+  'skill-bill.query-ticketCategory.c025',
+  'skill-bill.query-ticketCategory.c026',
+  'skill-bill.query-ticketCategory.c027',
+  'skill-bill.query-ticketCategory.c028',
+  'skill-bill.query-ticketCategory.c029',
+  'skill-bill.query-ticketCategory.c030',
+  'skill-bill.query-ticketCategory.c031',
+  'skill-bill.query-ticketCategory.c032',
+  'skill-bill.query-ticketCategory.c033',
+  'skill-bill.query-ticketCategory.c034',
+] as const;
 
 
 
@@ -94,7 +108,7 @@ function distinct(values: readonly string[]): string[] {
 
 /** 计数词（原型 `四笔分类均餐饮开头`）：1–10 取中文数字，更大的数照数写。 */
 function countWord(n: number): string {
-  return n >= 1 && n <= COUNT_WORDS.length ? COUNT_WORDS[n - 1] : String(n);
+  return n >= 1 && n <= COUNT_WORD_KEYS.length ? m(COUNT_WORD_KEYS[n - 1]) : String(n);
 }
 
 /** 载荷行自带的币种（`./items.ts` 的 `toBillItem` 形状；读不到即空，由落点兜 `CNY`）。 */
@@ -121,8 +135,8 @@ function modelOf(records: readonly BillRow[]): {
 
 /** 主数字下面那句小字（原型逐字：`四笔分类均餐饮开头`——本窗的行都是这个分类开头，这是取数条件的必然）。 */
 function noteOf(count: number, category: string): string {
-  if (count === 0) return '这一窗没有记录。';
-  return countWord(count) + '笔分类均' + category + '开头';
+  if (count === 0) return m('skill-bill.query-ticketCategory.c001');
+  return m('skill-bill.query-ticketCategory.c002', { p0: String(countWord(count)), p1: String(category) });
 }
 
 /** 落点 LEDGER 六行（原型逐字：收入／净额／落点账本／币种／花得最多／占比；金额裸数不带单位）。 */
@@ -135,12 +149,12 @@ function ledgerHtml(
   const currencies = currenciesOf(records);
   return '<div class="ilife-block-ledger-rows is-ticket">' + renderLedgerRows({
     rows: [
-      { label: '收入', value: sumText(kpi.income) },
-      { label: '净额', value: sumText(kpi.net) },
-      { label: '落点账本', value: ledgers.length === 0 ? EMPTY_CELL : ledgers.join(' · ') },
-      { label: '币种', value: currencies.length === 0 ? 'CNY' : currencies.join(' · ') },
-      { label: '花得最多', value: top === undefined ? EMPTY_CELL : top.label + ' ' + sumText(top.amount) + ' 元' },
-      { label: '占比', value: top === undefined ? EMPTY_CELL : '占本页支出 ' + String(Math.round(top.pct)) + '%' },
+      { label: m('skill-bill.query-ticketCategory.c003'), value: sumText(kpi.income) },
+      { label: m('skill-bill.query-ticketCategory.c004'), value: sumText(kpi.net) },
+      { label: m('skill-bill.query-ticketCategory.c005'), value: ledgers.length === 0 ? EMPTY_CELL : ledgers.join(' · ') },
+      { label: m('skill-bill.query-ticketCategory.c006'), value: currencies.length === 0 ? 'CNY' : currencies.join(' · ') },
+      { label: m('skill-bill.query-ticketCategory.c007'), value: top === undefined ? EMPTY_CELL : m('skill-bill.query-ticketCategory.c008', { p0: String(top.label), p1: String(sumText(top.amount)) }) },
+      { label: m('skill-bill.query-ticketCategory.c009'), value: top === undefined ? EMPTY_CELL : m('skill-bill.query-ticketCategory.c010', { p0: String(String(Math.round(top.pct))) }) },
     ],
     layout: 'ticket',
   }) + '</div>';
@@ -149,7 +163,7 @@ function ledgerHtml(
 /** 占比条（原型 `.entry-text .bar`）：轨＋按原值撑宽的填充；条宽不取整（原型即 `275÷333` 的浮点原样）。 */
 function barHtml(pct: number): string {
   const width = Number.isFinite(pct) ? Math.min(100, Math.max(0, pct)) : 0;
-  return '<span class="ilife-category-bar" role="img" aria-label="占本页支出 ' + String(Math.round(width)) + '%">'
+  return '<span class="ilife-category-bar" role="img" aria-label="' + m('skill-bill.query-ticketCategory.c010', { p0: String(Math.round(width)) }) + '">'
     + '<i style="width:' + String(width) + '%"></i></span>';
 }
 
@@ -157,20 +171,26 @@ function barHtml(pct: number): string {
 function shareHtml(categories: readonly QueryCategoryRow[]): string {
   const shown = categories.slice(0, CATEGORY_LIMIT);
   const hidden = categories.length - shown.length;
-  const items = shown.map((c) => '<li><span class="ilife-ticket-entry-text">' + escapeHtml(c.label)
-    + ' · ' + sumText(c.amount) + ' 元 · ' + String(c.count) + ' 笔 · 均 '
-    + sumText(c.count === 0 ? 0 : c.amount / c.count) + barHtml(c.pct) + '</span></li>').join('');
+  const items = shown.map((c) => '<li><span class="ilife-ticket-entry-text">' + m('skill-bill.query-ticketCategory.c035', {
+    p0: escapeHtml(c.label),
+    p1: sumText(c.amount),
+    p2: String(c.count),
+    p3: sumText(c.count === 0 ? 0 : c.amount / c.count),
+  }) + barHtml(c.pct) + '</span></li>').join('');
   const card = '<div class="ilife-ticket-card"><ol class="ilife-ticket-entries">'
-    + (items === '' ? '<li><span class="ilife-ticket-entry-text">本窗无支出，无占比。</span></li>' : items)
+    + (items === '' ? '<li><span class="ilife-ticket-entry-text">' + m('skill-bill.query-ticketCategory.c036') + '</span></li>' : items)
     + '</ol></div>';
   return card + (hidden > 0
-    ? renderCaliberLine('这一页只列支出最多的前 ' + String(CATEGORY_LIMIT) + ' 类，还有 ' + String(hidden) + ' 类没列')
+    ? renderCaliberLine(m('skill-bill.query-ticketCategory.c011', {
+      p0: String(String(CATEGORY_LIMIT)),
+      p1: String(String(hidden)),
+    }))
     : '');
 }
 
 /** 备注 NOTES（原型：逐笔一行、**无金额**；编号接占比行续排，故第二张卡的计数器起值＝占比行数）。 */
 function notesHtml(records: readonly BillRow[], start: number): string {
-  const items = records.map((r) => '<li><span class="ilife-ticket-entry-text">备注 · ' + escapeHtml(textOrDash(r.note))
+  const items = records.map((r) => '<li><span class="ilife-ticket-entry-text">' + escapeHtml(m('skill-bill.query-ticketCategory.c037', { p0: textOrDash(r.note) }))
     + ' ' + escapeHtml(textOrDash(r.category)) + ' · ' + escapeHtml(textOrDash(r.account))
     + ' · ' + escapeHtml(r.time) + '</span></li>').join('');
   return '<div class="ilife-ticket-card"><ol class="ilife-ticket-entries"'
@@ -210,32 +230,37 @@ export function queryCategoryTicketDoc(input: CategoryTicketInput): string {
   const paper = queryStyleTag()
     + sheetHead(
       DOC_TITLE + ' · ' + input.wakeWord,
-      escapeHtml(input.wakeWord + '共记 ' + notes.head),
+      escapeHtml(m('skill-bill.query-ticketCategory.c012', { p0: String(input.wakeWord), p1: String(notes.head) })),
       input.window,
     )
     + ticketRule()
     + ticketSummary(renderSummaryHead({
-      eyebrow: '分类支出 · ' + input.category,
+      eyebrow: m('skill-bill.query-ticketCategory.c013', { p0: String(input.category) }),
       value: sumText(kpi.expense),
-      unit: '元',
+      unit: m('skill-bill.query-ticketCategory.c014'),
       layout: 'ticket',
     }), '<p class="ilife-ticket-summary-note">' + escapeHtml(noteOf(kpi.count, input.category)) + '</p>')
     + ticketRule()
-    + ticketSection({ title: '落点', tag: 'LEDGER', content: ledgerHtml(kpi, input.records, categories[0]) })
+    + ticketSection({ title: m('skill-bill.query-ticketCategory.c015'), tag: 'LEDGER', content: ledgerHtml(kpi, input.records, categories[0]) })
     + ticketRule()
-    + ticketSection({ title: '占比', tag: 'SHARE', content: shareHtml(categories) })
+    + ticketSection({ title: m('skill-bill.query-ticketCategory.c016'), tag: 'SHARE', content: shareHtml(categories) })
     + ticketRule()
-    + ticketSection({ title: '备注', tag: 'NOTES', content: notesHtml(shownRows, shown.length) })
+    + ticketSection({ title: m('skill-bill.query-ticketCategory.c017'), tag: 'NOTES', content: notesHtml(shownRows, shown.length) })
     + (hidden > 0
       ? ticketRule() + ticketSection({
-        title: '还有 ' + String(hidden) + ' 条没显示（这一页画了前 ' + String(shownRows.length) + ' 条）',
+        title: m('skill-bill.query-ticketCategory.c018', {
+          p0: String(String(hidden)),
+          p1: String(String(shownRows.length)),
+        }),
         tag: 'MORE',
-        content: renderCaliberLine('结论、分类占比与落点都按本窗全部 ' + String(input.records.length) + ' 条算；'
-          + '本页的明细与复制区只带前面 ' + String(shownRows.length) + ' 条，要看其余的，把条件收窄一点再查一次'),
+        content: renderCaliberLine(m('skill-bill.query-ticketCategory.c019', {
+          p0: String(String(input.records.length)),
+          p1: String(String(shownRows.length)),
+        })),
       })
       : '')
     + ticketRule()
-    + ticketSection({ title: '对账', tag: 'CHECK', content: checkHtml(input.records, notes.check) })
+    + ticketSection({ title: m('skill-bill.query-ticketCategory.c020'), tag: 'CHECK', content: checkHtml(input.records, notes.check) })
     + ticketRule()
     + ticketActions(copyArea({
       data: { envelope, title: input.wakeWord },
@@ -246,8 +271,8 @@ export function queryCategoryTicketDoc(input: CategoryTicketInput): string {
         envelope,
         copyLog: copyLog({
           command: commandLine(input.key, input.params),
-          source: SOURCE_QUERY,
-          detail: '查到 ' + String(input.records.length) + ' 笔',
+          source: sourceQuery(),
+          detail: m('skill-bill.query-ticketCategory.c021', { p0: String(String(input.records.length)) }),
           actionAt: actionStamp(),
           version: DOC_VERSION,
         }),
@@ -255,10 +280,10 @@ export function queryCategoryTicketDoc(input: CategoryTicketInput): string {
     }));
   const content = writeSection({
     slot: 'list', page: 'list', shape: 'list', key: input.key,
-    content: renderSheetFrame({ variant: 'ticket', cutLine: true, cutLineText: '✂ 裁切线', content: paper })
+    content: renderSheetFrame({ variant: 'ticket', cutLine: true, cutLineText: m('skill-bill.query-ticketCategory.c022'), content: paper })
       + '<div class="ilife-category-foot">' + escapeHtml(DOC_TITLE + ' · ' + input.wakeWord) + '</div>',
   });
-  return assembleSheetPage({ docTitle: DOC_TITLE + '·查询', bodyHtml: content, paper: 'detail' });
+  return assembleSheetPage({ docTitle: m('skill-bill.query-ticketCategory.c023', { p0: String(DOC_TITLE) }), bodyHtml: content, paper: 'detail' });
 }
 
 /** category 单条件分支的出口：载荷与 `./list.js` 条件分支同形，页走本件票据纸。

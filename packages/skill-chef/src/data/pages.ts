@@ -32,6 +32,8 @@ import {
 } from 'base-paint/blocks';
 import { chefCopyArea } from '../render/copyArea.js';
 import { renderSceneShell } from '../render/sceneShell.js';
+import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** 换行（仓库口径：不写字面换行转义，与 `blocks.ts`／`skin.ts` 同）。 */
 const LF = String.fromCharCode(10);
@@ -175,30 +177,34 @@ export function dataQualityPage(input: { items: QualityItem[] }): string {
     // 结论条只说「先动哪儿」，不再复述第一张卡上已经写着的菜名与分数
     // （判官两轮点名的「标语与缺失说明语义重复」：卡片标题＋完整度条已经把名与分说全了）。
     renderConclusionBar(
-      worst ? '从下面第一道开始补。' : '还没有菜谱可以体检。',
+      worst ? m('skill-chef.data-pages.c001') : m('skill-chef.data-pages.c002'),
     ),
     renderFactStrip({
       items: [
-        { label: '菜数', value: String(input.items.length) + '道' },
-        { label: '达标', value: String(full) + '道', tone: full > 0 ? 'ok' : 'warn' },
+        { label: m('skill-chef.data-pages.c003'), value: m('skill-chef.data-pages.c004', { p0: String(String(input.items.length)) }) },
+        { label: m('skill-chef.data-pages.c005'), value: m('skill-chef.data-pages.c006', { p0: String(String(full)) }), tone: full > 0 ? 'ok' : 'warn' },
         // 达标＝够 80 分，「待补」就是差在这一档上的菜数（与结论条点名的同一批）。
-        { label: '待补', value: String(todo) + '道', tone: todo > 0 ? 'warn' : 'ok' },
-        { label: '达标线', value: '80 分' },
+        { label: m('skill-chef.data-pages.c007'), value: m('skill-chef.data-pages.c008', { p0: String(String(todo)) }), tone: todo > 0 ? 'warn' : 'ok' },
+        { label: m('skill-chef.data-pages.c009'), value: m('skill-chef.data-pages.c010') },
       ],
     }),
     // 页头已有族级装饰带（结果族：碗／椒／放大镜／盘），页内不再摆第二条带。
     // 逐菜一张卡（默认展开）：抬头是完整度条（条长＝得分，0–100 取数侧的五项公式），
     // 下面接五项读数与缺口。一处读数只画一遍——不再另出与它同源的读数卡或第二名册。
     // 默认全展开（#873 复评实测：只开最差那道时其余两张卡只剩一行菜名，两视口都被读成留白，总分反而低 5 分）。
-    ...input.items.map((it) =>
-      renderDisclosure({
+    ...input.items.map((it) => {
+      const backgroundMark = it.has_background ? m('skill-chef.data-pages.c011') : m('skill-chef.data-pages.c012');
+      const gapLine = it.missing.length
+        ? m('skill-chef.data-pages.c013', { p0: String(it.name), p1: String(listJoin(currentRenderLanguage(), it.missing)) })
+        : m('skill-chef.data-pages.c014');
+      return renderDisclosure({
         title: it.name,
         open: true,
         contentHtml:
           renderDistributionRows({
             rows: [{
-              label: '完整度',
-              value: it.score + ' 分',
+              label: m('skill-chef.data-pages.c015'),
+              value: m('skill-chef.data-pages.c016', { p0: String(it.score) }),
               pct: it.score,
               color: it.score >= 80 ? BAR_DONE : BAR_SHORT,
             }],
@@ -207,25 +213,23 @@ export function dataQualityPage(input: { items: QualityItem[] }): string {
           // ≤640 会逐格折成「列名一行＋值一行」，五行读数被摊成十行，正是「列名与正文同号」那一类病）。
           renderChipRow({
             items: [
-              { text: '食材 ' + String(it.ingredients_count) + ' 味' },
-              { text: '步骤 ' + String(it.steps_count) + ' 步' },
-              { text: '贴士 ' + String(it.tips_count) + ' 条' },
-              { text: '技法 ' + String(it.techniques_count) + ' 个' },
-              { text: '背景 ' + (it.has_background ? '有' : '无') },
+              { text: m('skill-chef.data-pages.c017', { p0: String(String(it.ingredients_count)) }) },
+              { text: m('skill-chef.data-pages.c018', { p0: String(String(it.steps_count)) }) },
+              { text: m('skill-chef.data-pages.c019', { p0: String(String(it.tips_count)) }) },
+              { text: m('skill-chef.data-pages.c020', { p0: String(String(it.techniques_count)) }) },
+              { text: m('skill-chef.data-pages.c021', { p0: String(backgroundMark) }) },
             ],
           }) +
           // 缺口逐条并成一行（各条原本各占一句、句首都挂同一菜名，读起来是同一个词重复五遍）。
           // 菜名带着走：同一道菜的缺口句在页里唯一，不会与别的菜的同类句撞成重复行。
-          (it.missing.length
-            ? renderProseBlock({ text: it.name + '还缺：' + it.missing.join('、') + '。' })
-            : renderProseBlock({ text: '五项齐全。' })),
-      }),
-    ),
-    renderCaliberLine('评分只看完整度，口碑不计入。'),
+          renderProseBlock({ text: gapLine }),
+      });
+    }),
+    renderCaliberLine(m('skill-chef.data-pages.c022')),
     renderActionBar({
       buttons: [
-        { label: '补最差那道菜', kind: 'primary', actionId: 'quality-fix' },
-        { label: '导出一份备份', kind: 'ghost', actionId: 'quality-backup' },
+        { label: m('skill-chef.data-pages.c023'), kind: 'primary', actionId: 'quality-fix' },
+        { label: m('skill-chef.data-pages.c024'), kind: 'ghost', actionId: 'quality-backup' },
       ],
     }),
     // 2026-09-22 用户口径「每张页都要有复制日志」：本页原**整块复制区都缺**
@@ -234,32 +238,37 @@ export function dataQualityPage(input: { items: QualityItem[] }): string {
       dataActionId: 'quality-copy',
       data: {
         key: 'chef.history.query', shape: 'list',
-        items: input.items.map((it) => ({ 菜名: it.name, 完整度: it.score, 缺口: it.missing.join('、') })),
+        items: input.items.map((it) => ({ 菜名: it.name, 完整度: it.score, 缺口: listJoin(currentRenderLanguage(), it.missing) })),
         total: input.items.length,
       },
       log: {
         command: 'chef.history.query',
-        source: '体检（kind=quality）',
-        m5Line: '体检 ' + String(input.items.length) + ' 道（达标 ' + String(full) + ' 道／待补 ' + String(todo) + ' 道）',
+        source: m('skill-chef.data-pages.c025'),
+        m5Line: m('skill-chef.data-pages.c026', {
+          p0: String(String(input.items.length)),
+          p1: String(String(full)),
+          p2: String(String(todo)),
+        }),
       },
     }),
   ];
-  return shell('数据质量报告', '私家大厨 ｜ 数据管理', blocks, { page: 'quality', family: 'result' });
+  return shell(m('skill-chef.data-pages.c027'), m('skill-chef.data-pages.c028'), blocks, { page: 'quality', family: 'result' });
 }
 
 /** 批量改页（过程型目标形态：改前对比＋回执）。 */
 export function dataBatchPage(input: { name: string; diffs: { field: string; before: string; after: string }[] }): string {
+  const diffText = input.diffs.map((d) => m('skill-chef.data-pages.c029', { p0: String(d.field + d.before), p1: String(d.after) })).join('；');
   const blocks = [
     // 结论条一句话交代这一页的两件事（改的边界 ＋ 已核对），不再另起一行说同一件事。
-    renderConclusionBar('只改已经有的食材与步骤，改前改后已对上。'),
+    renderConclusionBar(m('skill-chef.data-pages.c030')),
     renderFactStrip({
       items: [
-        { label: '菜名', value: input.name },
-        { label: '改动', value: String(input.diffs.length) + '处' },
+        { label: m('skill-chef.data-pages.c031'), value: input.name },
+        { label: m('skill-chef.data-pages.c032'), value: m('skill-chef.data-pages.c033', { p0: String(String(input.diffs.length)) }) },
       ],
     }),
     renderChangeRows({
-      rows: input.diffs.map((d) => ({ label: d.field, before: d.before || '无', after: d.after || '无' })),
+      rows: input.diffs.map((d) => ({ label: d.field, before: d.before || m('skill-chef.data-pages.c034'), after: d.after || m('skill-chef.data-pages.c035') })),
     }),
     // 删掉「用量与时长要写数字」那一行：它是**输入那一刻**的规矩，本页是改完之后的回执，
     // 页上没有输入位 ⇒ 留着只让我方多说一句（判官三轮点名的「文案叠说」之一）。
@@ -267,37 +276,41 @@ export function dataBatchPage(input: { name: string; diffs: { field: string; bef
       buttons: [
         // 只留这一颗：「复制改动」那颗主按钮在产物里**没有 `data-t`（点了不复制）**，
         // 与复制区那颗真按钮同说一件事 ⇒ 删掉，复制入口只留复制区一处。
-        { label: '再看一遍菜谱', kind: 'ghost', actionId: 'batch-view' },
+        { label: m('skill-chef.data-pages.c036'), kind: 'ghost', actionId: 'batch-view' },
       ],
     }),
     chefCopyArea({
       dataActionId: 'batch-copy-data',
       data: {
         key: 'chef.data.batch', shape: 'receipt', ok: true,
-        message: input.name + '改' + input.diffs.length + '处：' + input.diffs.map((d) => d.field + d.before + '到' + d.after).join('；'),
+        message: m('skill-chef.data-pages.c037', {
+          p0: String(input.name),
+          p1: String(input.diffs.length),
+          p2: String(diffText),
+        }),
       },
     }),
   ];
-  return shell('批量改回执', '私家大厨 ｜ 数据管理', blocks, { page: 'batch', family: 'receipt' });
+  return shell(m('skill-chef.data-pages.c038'), m('skill-chef.data-pages.c039'), blocks, { page: 'batch', family: 'receipt' });
 }
 
 /** 备份回执页（回执型）。 */
 export function dataBackupPage(input: { recipeCount: number; tableCount: number; bytes: number }): string {
   const blocks = [
-    renderConclusionBar('备份已经落盘，一次导出全部数据。'),
+    renderConclusionBar(m('skill-chef.data-pages.c040')),
     renderFactStrip({
       items: [
-        { label: '菜数', value: String(input.recipeCount) + '道' },
-        { label: '表数', value: String(input.tableCount) + '张' },
-        { label: '大小', value: String(input.bytes) + '字节' },
+        { label: m('skill-chef.data-pages.c041'), value: m('skill-chef.data-pages.c042', { p0: String(String(input.recipeCount)) }) },
+        { label: m('skill-chef.data-pages.c043'), value: m('skill-chef.data-pages.c044', { p0: String(String(input.tableCount)) }) },
+        { label: m('skill-chef.data-pages.c045'), value: m('skill-chef.data-pages.c046', { p0: String(String(input.bytes)) }) },
       ],
     }),
     // 只留一句旁注，且改成一口读得懂的短句（原来那句「默认不含已废弃的菜」被复评读成病句）。
-    renderCaliberLine('已废弃的菜不在这一份里。'),
+    renderCaliberLine(m('skill-chef.data-pages.c047')),
     renderActionBar({
       buttons: [
-        { label: '看看全部菜谱', kind: 'primary', actionId: 'backup-list' },
-        { label: '再备一份', kind: 'ghost', actionId: 'backup-again' },
+        { label: m('skill-chef.data-pages.c048'), kind: 'primary', actionId: 'backup-list' },
+        { label: m('skill-chef.data-pages.c049'), kind: 'ghost', actionId: 'backup-again' },
       ],
     }),
     chefCopyArea({
@@ -311,5 +324,5 @@ export function dataBackupPage(input: { recipeCount: number; tableCount: number;
       },
     }),
   ];
-  return shell('备份回执', '私家大厨 ｜ 数据管理', blocks, { page: 'backup', family: 'receipt' });
+  return shell(m('skill-chef.data-pages.c050'), m('skill-chef.data-pages.c051'), blocks, { page: 'backup', family: 'receipt' });
 }

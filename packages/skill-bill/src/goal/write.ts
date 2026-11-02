@@ -20,6 +20,7 @@
  *  ③ 回执文案用规范词：空分类写「全月总预算」（老侧 CLI 那句写「总」、页面写「总预算」——**同域两套**，
  *     新侧取一处；见仓规 `用词纪律`）。
  */
+import { currentRenderLanguage, listJoin } from 'base-entries';
 import { loadGoals, resolveGoalsPath, saveGoals } from '../fetch/index.js';
 import type { BillGoals } from '../fetch/index.js';
 import type { WriteOut } from '../shared/commandSpec.js';
@@ -29,14 +30,17 @@ import { projectWakeWord } from '../triggers/wakeTable.js';
 import type { BillKey } from '../triggers/routeSpec.js';
 import { appendBudget, appendSaving, budgetsOf, findBudget, savingsOf } from './goalData.js';
 import type { GoalBudgetRow } from './goalData.js';
-import { SOURCE_COLLECT, SOURCE_WRITE, money } from './pageParts.js';
-import { FORCE_SLOT, goalBlocked, localMonth, parseGoalWriteOp, textOf, validateSetBudget, validateSetSaving } from './params.js';
+import { money, sourceCollect, sourceWrite } from './pageParts.js';
+import { forceSlot, goalBlocked, localMonth, parseGoalWriteOp, textOf, validateSetBudget, validateSetSaving } from './params.js';
 import type { GoalBlocked, GoalWriteOp } from './params.js';
 import { writeSceneFor } from './scene.js';
 import type { GoalReceipt, GoalWriteScene } from './scene.js';
+import { m } from '../entries/index.js';
 
 /** 空分类在上屏时的规范说法（一处定义：回执、页面、日志都读它）。 */
-const ALL_CATEGORY_CN = '全月总预算';
+function allCategoryCn(): string {
+  return m('skill-bill.goal-write.c016');
+}
 
 /** 目标表那一层的阻断：同月同类预算已经有一条，而用户没给「确认覆盖」（老侧 `cli.py:143-147` 那条路）。
  *  **本件只吃参数与预算表**，判定与文案都在这里一处（缺项那半住 `./params.js`）。 */
@@ -49,18 +53,26 @@ function conflictBlockedOf(
   const category = textOf(params['category']);
   const hit = findBudget(budgets, month, category);
   if (hit === null) return [];
+  const force = forceSlot();
   return [{
-    name: FORCE_SLOT.name,
-    label: FORCE_SLOT.label,
-    why: '「' + month + ' · ' + (category === '' ? ALL_CATEGORY_CN : category) + '」已经有一条 '
-      + money(hit.amount) + ' 元的预算；要覆盖它就把「' + FORCE_SLOT.label + '」给上',
+    name: force.name,
+    label: force.label,
+    why: m('skill-bill.goal-write.c001', {
+      p0: String(month),
+      p1: String(category === '' ? allCategoryCn() : category),
+      p2: String(money(hit.amount)),
+      p3: String(force.label),
+    }),
   }];
 }
 
 /** 有阻断项时那句载荷说明（envelope 的 `message`；也是 stdout 上那句 `data.message`）。 */
 function blockedMessageOf(word: string, blocked: readonly GoalBlocked[]): string {
-  return word + '还差 ' + String(blocked.length) + ' 项：' + blocked.map((b) => b.label).join('、')
-    + '（已出采集页，补齐之后跟助手说一遍）';
+  return m('skill-bill.goal-write.c002', {
+    p0: String(word),
+    p1: String(blocked.length),
+    p2: String(listJoin(currentRenderLanguage(), blocked.map((b) => b.label))),
+  });
 }
 
 /** 两支写操作共用的收口：回执事实 ＋ 回执整页。`at` 由调用方取一次（同一次调用只有一个写入时刻）。 */
@@ -82,7 +94,7 @@ function finish(input: {
      *  故**自报**——一条预算／一个目标就是一处（与账户域的账户表那一半同一处置与同一理由）。 */
     affectedRows: 1,
     actionAt: input.at,
-    source: SOURCE_WRITE,
+    source: sourceWrite(),
     overwritten: input.overwritten,
     budgetCount: input.goals.budgets.length,
     savingCount: input.goals.savings.length,
@@ -100,7 +112,7 @@ function finish(input: {
 export function writeGoal(params: Record<string, unknown>): WriteOut {
   const key = 'bill.goal.write';
   const op = parseGoalWriteOp(params);
-  const scene = writeSceneFor(op);
+  const scene = writeSceneFor(op, currentRenderLanguage());
   const goalsPath = resolveGoalsPath();
   const goals = loadGoals(goalsPath);
   const budgets = budgetsOf(goals);
@@ -112,7 +124,7 @@ export function writeGoal(params: Record<string, unknown>): WriteOut {
       page: { wakeWord: word, kind: 'collect' },
       html: scene.collect({
         key, op, params, blocked, budgets, savings: savingsOf(goals),
-        source: SOURCE_COLLECT, actionAt: actionStamp(),
+        source: sourceCollect(), actionAt: actionStamp(),
       }),
     };
   }
@@ -122,17 +134,17 @@ export function writeGoal(params: Record<string, unknown>): WriteOut {
     const before = findBudget(budgets, month, category);
     appendBudget(goals, { month, category, amount, createdAt: at });
     saveGoals(goalsPath, goals);
-    const label = category === '' ? ALL_CATEGORY_CN : category;
+    const label = category === '' ? allCategoryCn() : category;
     return finish({
       key, op, params, scene, goals, at,
       /* #1131：判地店头那一行是**固定句**「已设定 <月> <分类>」；金额在主数字段（3000.00 元）、
          覆盖那件事在明细的「原来的金额」行与复制日志里，都不丢。 */
-      summary: '已设定 ' + month + ' ' + label,
+      summary: m('skill-bill.goal-write.c003', { p0: String(month), p1: String(label) }),
       detail: [
-        { k: '月份', v: month },
-        { k: '分类', v: label },
-        { k: '金额', v: money(amount) + ' 元' },
-        { k: '记下的时间', v: at },
+        { k: m('skill-bill.goal-write.c004'), v: month },
+        { k: m('skill-bill.goal-write.c005'), v: label },
+        { k: m('skill-bill.goal-write.c006'), v: m('skill-bill.goal-write.c007', { p0: String(money(amount)) }) },
+        { k: m('skill-bill.goal-write.c008'), v: at },
       ],
       overwritten: before === null ? null : { month, category, amount: before.amount },
     });
@@ -143,12 +155,12 @@ export function writeGoal(params: Record<string, unknown>): WriteOut {
   return finish({
     key, op, params, scene, goals, at,
     /* #1131：判地店头那一行只留目标名；金额在主数字段、截止日在明细行，都不丢。 */
-    summary: '已设定目标「' + name + '」',
+    summary: m('skill-bill.goal-write.c009', { p0: String(name) }),
     detail: [
-      { k: '目标', v: name },
-      { k: '目标金额', v: money(amount) + ' 元' },
-      { k: '截止日期', v: deadline === null ? '不限' : deadline },
-      { k: '记下的时间', v: at },
+      { k: m('skill-bill.goal-write.c010'), v: name },
+      { k: m('skill-bill.goal-write.c011'), v: m('skill-bill.goal-write.c012', { p0: String(money(amount)) }) },
+      { k: m('skill-bill.goal-write.c013'), v: deadline === null ? m('skill-bill.goal-write.c014') : deadline },
+      { k: m('skill-bill.goal-write.c015'), v: at },
     ],
     overwritten: null,
   });

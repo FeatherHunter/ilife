@@ -20,6 +20,7 @@ import { isBTicket } from './ticket-b.js';
 import { ticketChartsBDoc } from './ticket-b-charts.js';
 import type { ChartsPage, DocInput } from './scene.js';
 import type { PageBlock } from '../shared/pageSections.js';
+import { m } from '../entries/index.js';
 
 /** charts kind 到场景 id（本族 4 页全在 B 组 1066，无残留分支；按 params.kind，不写唤醒词字面）。 */
 function sceneIdOfCharts(kind: unknown): string {
@@ -43,7 +44,7 @@ export function chartsDoc(input: DocInput<ChartsPage>): string {
   const nothing = p.kpis.length === 0 && p.charts.length === 0
     && p.listCards.every((c) => c.rows.length === 0) && p.factCards.every((c) => c.rows.length === 0);
   const blocks: readonly PageBlock[] = [
-    ...(p.kpis.length === 0 ? [] : [cardBlock(kpiGridHtml(p.kpis), 'sec-kpi', '读数')]),
+    ...(p.kpis.length === 0 ? [] : [cardBlock(kpiGridHtml(p.kpis), 'sec-kpi', m('skill-bill.analysis-template-charts.c001'))]),
     ...(p.chips.length === 0 && r.chips.length === 0 ? [] : [{ html: mergedChips(p.chips, r.chips) }]),
     ...(p.charts.length === 0 ? [] : p.charts.map((c, i) => cardBlock(
       chartCardHtml(c), 'sec-chart-' + String(i + 1), c.title,
@@ -65,14 +66,14 @@ export function chartsDoc(input: DocInput<ChartsPage>): string {
     shape: input.envelope.shape,
     wordCaliber: '',
     status: nothing ? 'empty' : 'ok',
-    statusText: nothing ? '这一段没有记录' : '看完了',
+    statusText: nothing ? m('skill-bill.analysis-template-charts.c002') : m('skill-bill.analysis-template-charts.c003'),
     next: nothing ? p.empty.hint : '',
     conclusion: r.conclusion,
     caliber: r.caliber,
     blocks,
     envelope: input.envelope,
     source: SOURCE_READ,
-    detail: '取到 ' + String(r.count) + ' 条记录',
+    detail: m('skill-bill.analysis-template-charts.c004', { p0: String(String(r.count)) }),
     actionAt: input.actionAt,
     windowStart: r.from === '' ? NO_WINDOW : r.from,
     windowEnd: r.to === '' ? NO_WINDOW : r.to,

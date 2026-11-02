@@ -5,11 +5,13 @@
  *   候选**只列带 `#未还` 的借出记录**——已还的不列，一眼看出这个人手上还有没有没还的。
  *   期限那一格只在借贷两型出（施工图第四节点名要修老侧 `#deadlineWrap` 的无条件建点）。
  */
+import { runWithLanguage } from 'base-entries';
 import { money2 } from './summaryRow.js';
 import type { BlockedItem } from './blockedSlots.js';
 import { wakeWordOf } from './typeBadge.js';
 import type { Scene } from './scene.js';
 import { bindFlowPages, candidatesFrom, crumbOf, promptButton, promptHead, textOf } from './template-flow.js';
+import { m } from '../entries/index.js';
 
 const KIND = 'lend';
 const KEY = 'bill.record.add';
@@ -19,19 +21,23 @@ const CATEGORY = '借贷/借出';
 const LEDGER = '借贷';
 /** 这一型自己多要的两格：借给谁 ＋ 期限。 */
 const WHO_NAME = 'who';
-const WHO_LABEL = '借给谁';
 const DUE_NAME = 'due';
-const DUE_LABEL = '期限';
-/** 借贷标签两件套（本件唯一写一次）。 */
+/** 借贷标签三件套（本件唯一写一次）：本型标签、未还、已还。 */
 const TAG_LEND = '#借出';
 const TAG_UNPAID = '#未还';
+const TAG_PAID = '#已还';
 
-export const SCENE: Scene = {
+/** 显示文案按语言取词（#1197：模块加载期不取词，构建场景时才取）。 */
+const whoLabel = () => m('skill-bill.write-scene-lend.c001');
+const dueLabel = () => m('skill-bill.write-scene-lend.c002');
+
+function buildScene(): Scene {
+  return {
   id: 'lend',
   key: KEY,
   kind: KIND,
   op: '',
-  family: '特殊收支族',
+  family: m('skill-bill.write-scene-lend.c003'),
   ...bindFlowPages({
     word: WORD,
     kind: KIND,
@@ -40,13 +46,13 @@ export const SCENE: Scene = {
     extraBlocked: (values) => {
       const extra: BlockedItem[] = [];
       if (textOf(values.params[WHO_NAME]) === '') {
-        extra.push({ name: WHO_NAME, label: WHO_LABEL, why: '没给：借给谁不许空着（这一族靠对象认人）' });
+        extra.push({ name: WHO_NAME, label: whoLabel(), why: m('skill-bill.write-scene-lend.c004') });
       }
       if (values.amount !== null && values.amount > 0) {
         extra.push({
           name: 'amount',
-          label: '金额',
-          why: '方向和这一型对不上：借出是钱出去，写负数，给的是 ' + money2(values.amount),
+          label: m('skill-bill.write-scene-lend.c005'),
+          why: m('skill-bill.write-scene-lend.c006', { p0: String(money2(values.amount)) }),
         });
       }
       return extra;
@@ -55,40 +61,45 @@ export const SCENE: Scene = {
       recent: values.input.recent,
       keep: (r) => r.note.includes(TAG_LEND) && r.note.includes(TAG_UNPAID),
       same: () => false,
-      why: () => '还带 ' + TAG_UNPAID + '，这一笔还没还回来（已还过的不列在这里）',
+      why: () => m('skill-bill.write-scene-lend.c007', { p0: String(TAG_UNPAID) }),
     }),
-    caliber: () => '标签流转：这一笔写「' + TAG_LEND + ' #借给（对象） ' + TAG_UNPAID
-      + '」，还回来时把 ' + TAG_UNPAID + ' 换成 #已还，金额不动。',
+    caliber: () => m('skill-bill.write-scene-lend.c008', {
+      p0: String(TAG_LEND),
+      p1: String(TAG_UNPAID),
+      p2: String(TAG_UNPAID),
+      p3: String(TAG_PAID),
+    }),
     cards: (ctx) => {
       const who = textOf(ctx.params[WHO_NAME]);
       const due = textOf(ctx.params[DUE_NAME]);
       const unpaid = ctx.candidates.length;
       return [
-        { label: '借出金额', value: money2(ctx.amount), detail: '支出记负数，归在「' + crumbOf(CATEGORY) + '」下面' },
-        { label: '借给谁', value: who === '' ? '未给' : who, detail: due === '' ? '期限还没给，可后补' : '期限 ' + due },
+        { label: m('skill-bill.write-scene-lend.c009'), value: money2(ctx.amount), detail: m('skill-bill.write-scene-lend.c010', { p0: String(crumbOf(CATEGORY)) }) },
+        { label: m('skill-bill.write-scene-lend.c011'), value: who === '' ? m('skill-bill.write-scene-lend.c012') : who, detail: due === '' ? m('skill-bill.write-scene-lend.c013') : m('skill-bill.write-scene-lend.c014', { p0: String(due) }) },
         {
-          label: '同人未还',
-          value: unpaid + ' 笔',
-          detail: unpaid === 0 ? '这个人名下没有还没还的借出' : '只列带 ' + TAG_UNPAID + ' 的借出记录',
+          label: m('skill-bill.write-scene-lend.c015'),
+          value: m('skill-bill.write-scene-lend.c016', { p0: String(unpaid) }),
+          detail: unpaid === 0 ? m('skill-bill.write-scene-lend.c017') : m('skill-bill.write-scene-lend.c018', { p0: String(TAG_UNPAID) }),
         },
       ];
     },
     note: (ctx) => ({
       msg: ctx.candidates.length === 0
-        ? '同一个人名下没有还没还的借出'
-        : '同一个人名下还有 ' + ctx.candidates.length + ' 笔没还',
-      detail: '「查欠款」与「看借贷」按 ' + TAG_LEND + ' 与 ' + TAG_UNPAID + ' 数，不按金额猜。',
+        ? m('skill-bill.write-scene-lend.c019')
+        : m('skill-bill.write-scene-lend.c020', { p0: String(ctx.candidates.length) }),
+      detail: m('skill-bill.write-scene-lend.c021', { p0: String(TAG_LEND), p1: String(TAG_UNPAID) }),
       icon: 'info',
     }),
     flow: {
       first: {
-        title: '借给谁',
-        note: '对象必填，期限可后补。',
+        title: m('skill-bill.write-scene-lend.c022'),
+        note: m('skill-bill.write-scene-lend.c023'),
         done: (ctx) => textOf(ctx.params[WHO_NAME]) !== '',
         state: (ctx) => {
           const who = textOf(ctx.params[WHO_NAME]);
           const due = textOf(ctx.params[DUE_NAME]);
-          return who === '' ? '未给对象' : '借给 ' + who + (due === '' ? '' : '，期限 ' + due);
+          const tail = due === '' ? '' : m('skill-bill.write-scene-lend.c024', { p0: String(due) });
+          return who === '' ? m('skill-bill.write-scene-lend.c025') : m('skill-bill.write-scene-lend.c026', { p0: String(who), p1: String(tail) });
         },
         fields: (ctx) => {
           const who = textOf(ctx.params[WHO_NAME]);
@@ -96,29 +107,29 @@ export const SCENE: Scene = {
           return [
             {
               name: WHO_NAME,
-              label: WHO_LABEL,
-              hint: '实名的写称呼也行，如 小王',
+              label: whoLabel(),
+              hint: m('skill-bill.write-scene-lend.c027'),
               required: true,
               ...(who === '' ? {} : { value: who }),
             },
             {
               name: DUE_NAME,
-              label: DUE_LABEL,
-              hint: '说好什么时候还，如 2026-12-31 或 下月底',
+              label: dueLabel(),
+              hint: m('skill-bill.write-scene-lend.c028'),
               ...(due === '' ? {} : { value: due }),
             },
           ];
         },
       },
       second: {
-        title: '借出这一步',
-        note: '借出记负数。账本固定「' + LEDGER + '」。',
+        title: m('skill-bill.write-scene-lend.c029'),
+        note: m('skill-bill.write-scene-lend.c030', { p0: String(LEDGER) }),
         field: (slot, ctx) => ({
           name: slot.name,
-          label: slot.name === 'amount' ? '借出金额' : slot.name === 'category' ? '分类' : slot.label,
-          hint: slot.name === 'amount' ? '负数＝钱从账户出去'
-            : slot.name === 'category' ? '固定为 ' + crumbOf(CATEGORY)
-              : slot.name === 'ledger' ? '账本固定「' + LEDGER + '」，跨账本要在备注里说明' : slot.hint,
+          label: slot.name === 'amount' ? m('skill-bill.write-scene-lend.c031') : slot.name === 'category' ? m('skill-bill.write-scene-lend.c032') : slot.label,
+          hint: slot.name === 'amount' ? m('skill-bill.write-scene-lend.c033')
+            : slot.name === 'category' ? m('skill-bill.write-scene-lend.c034', { p0: String(crumbOf(CATEGORY)) })
+              : slot.name === 'ledger' ? m('skill-bill.write-scene-lend.c035', { p0: String(LEDGER) }) : slot.hint,
           ...(slot.required ? { required: true } : {}),
           value: slot.name === 'category' && textOf(ctx.params['category']) === ''
             ? CATEGORY
@@ -126,44 +137,72 @@ export const SCENE: Scene = {
         }),
       },
       third: {
-        title: '结果',
+        title: m('skill-bill.write-scene-lend.c036'),
         note: (ctx) => {
           const who = textOf(ctx.params[WHO_NAME]);
-          return '备注写「' + TAG_LEND + ' 借给' + (who === '' ? '对象' : who) + ' ' + TAG_UNPAID + '」。'
-            + '还回来的时候走「记收回」，把 ' + TAG_UNPAID + ' 换成 #已还，金额不动。';
+          const whoName = who === '' ? m('skill-bill.write-scene-lend.c037') : who;
+          return m('skill-bill.write-scene-lend.c038', {
+            p0: String(TAG_LEND),
+            p1: String(whoName),
+            p2: String(TAG_UNPAID),
+            p3: String(TAG_UNPAID),
+            p4: String(TAG_PAID),
+          });
         },
       },
     },
     prompt: (ctx) => {
       const who = textOf(ctx.params[WHO_NAME]);
       const due = textOf(ctx.params[DUE_NAME]);
+      const head = promptHead(m('skill-bill.write-scene-lend.c039'), ctx.blocked);
+      const whoShown = who || m('skill-bill.write-scene-lend.c040');
+      const dueShown = due || m('skill-bill.write-scene-lend.c041');
+      const accountShown = ctx.facts.account || m('skill-bill.write-scene-lend.c042');
+      const whoName = who || m('skill-bill.write-scene-lend.c043');
       return {
-        text: promptHead('照下面这个口径记这一笔借出，并留意同一人名下还没还的那几笔。', ctx.blocked)
-          + '\n请加载「饼干记账」技能，帮我记一笔借出。\n唤醒词：记借出\n'
-          + '借给谁：' + (who || '<借给谁>') + '\n'
-          + '期限：' + (due || '<期限>') + '\n'
-          + '借出金额：' + money2(ctx.amount) + '　负数＝钱出去\n'
-          + '分类：' + CATEGORY + '\n'
-          + '账户：' + (ctx.facts.account || '<哪张卡出去>') + '\n'
-          + '账本：' + LEDGER + '\n'
-          + '备注请写：「' + TAG_LEND + ' 借给' + (who || '对象') + ' ' + TAG_UNPAID + '」\n'
-          + '还回来的时候走「记收回」，把 ' + TAG_UNPAID + ' 换成 #已还',
-        label: promptButton(ctx.blocked, '照这个口径记一笔，点这颗复制'),
+        text: m('skill-bill.write-scene-lend.c044', {
+          p0: String(head),
+          p1: String(WORD),
+          p2: String(whoShown),
+          p3: String(dueShown),
+          p4: String(money2(ctx.amount)),
+          p5: String(CATEGORY),
+          p6: String(accountShown),
+          p7: String(LEDGER),
+          p8: String(TAG_LEND),
+          p9: String(whoName),
+          p10: String(TAG_UNPAID),
+          p11: String(TAG_UNPAID),
+          p12: String(TAG_PAID),
+        }),
+        label: promptButton(ctx.blocked, m('skill-bill.write-scene-lend.c045')),
       };
     },
     receiptTail: (input) => [
-      { label: '记了几笔', value: input.receipt.affectedRows + ' 笔', detail: '按库里的改动算' },
-      { label: '标签', value: TAG_LEND + '　' + TAG_UNPAID, detail: '标签见备注，助手按它找这笔借贷' },
+      { label: m('skill-bill.write-scene-lend.c046'), value: m('skill-bill.write-scene-lend.c047', { p0: String(input.receipt.affectedRows) }), detail: m('skill-bill.write-scene-lend.c048') },
+      { label: m('skill-bill.write-scene-lend.c049'), value: TAG_LEND + '　' + TAG_UNPAID, detail: m('skill-bill.write-scene-lend.c050') },
     ],
     receiptNote: (input) => {
       const who = textOf(input.params[WHO_NAME]);
+      const whoTail = who === '' ? m('skill-bill.write-scene-lend.c051') : m('skill-bill.write-scene-lend.c052', { p0: String(who) });
       return {
-        msg: '这一笔打 ' + TAG_LEND + ' 与 ' + TAG_UNPAID
-          + (who === '' ? '，对象这次没给到' : '，对象 #借给' + who),
-        detail: '还回来走「记收回」把 ' + TAG_UNPAID + ' 换成 #已还。撤销见下方按钮。',
+        msg: m('skill-bill.write-scene-lend.c053', {
+          p0: String(TAG_LEND),
+          p1: String(TAG_UNPAID),
+          p2: String(whoTail),
+        }),
+        detail: m('skill-bill.write-scene-lend.c054', { p0: String(TAG_UNPAID), p1: String(TAG_PAID) }),
         icon: 'ok',
       };
     },
     receiptEyebrow: WORD,
   }),
-};
+  };
+}
+
+export const SCENE: Scene = buildScene();
+
+/** 按语言重建本场景（#1197：文案经词条层，语言是运行期参数）。 */
+export function sceneLend(language: string): Scene {
+  return runWithLanguage(language, buildScene);
+}

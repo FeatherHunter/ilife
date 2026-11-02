@@ -4,6 +4,27 @@
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { m } from '../../entries/index.js';
+
+/** 本页可见文案（渲染期取词：写成函数，模块加载时不取词）。 */
+function pageText() {
+  return {
+    k001: m('skill-home.setup-pages-health-report.c001'),
+    k002: (p0: string) => m('skill-home.setup-pages-health-report.c002', { p0: String(p0) }),
+    k003: m('skill-home.setup-pages-health-report.c003'),
+    k004: m('skill-home.setup-pages-health-report.c004'),
+    k005: m('skill-home.setup-pages-health-report.c005'),
+    k006: m('skill-home.setup-pages-health-report.c006'),
+    k007: m('skill-home.setup-pages-health-report.c007'),
+    k008: m('skill-home.setup-pages-health-report.c008'),
+    k009: m('skill-home.setup-pages-health-report.c009'),
+    k010: m('skill-home.setup-pages-health-report.c010'),
+    k011: m('skill-home.setup-pages-health-report.c011'),
+    k012: m('skill-home.setup-pages-health-report.c012'),
+    k013: m('skill-home.setup-pages-health-report.c013'),
+  };
+}
+
 
 export const FAMILY = 'health_report' as const;
 
@@ -50,8 +71,11 @@ export const REQUIRED_BLOCKS = {
 interface Issue { name: string; count: number }
 
 /** 逐项动作：动作列说的是这一项该做什么（新链没有逐项动作的项写「—」，不三行同一句）。 */
-const ACTIONS: Record<string, string> = { '无标签物品': '补标签', '无照片物品': '补照片', '单级位置': '补成两级位置' };
-const actionOf = (name: string): string => ACTIONS[name] ?? '—';
+/** 本页可见文案（渲染期取词：写成函数，模块加载时不取词）。 */
+function actionsText(): Record<string, string> {
+  return { '无标签物品': m('skill-home.setup-pages-health-report.c022'), '无照片物品': m('skill-home.setup-pages-health-report.c023'), '单级位置': m('skill-home.setup-pages-health-report.c024') };
+}
+const actionOf = (name: string): string => actionsText()[name] ?? '—';
 
 function issuesOf(env: Envelope): Issue[] {
   const d = env.data as Record<string, unknown>;
@@ -64,17 +88,22 @@ function issuesOf(env: Envelope): Issue[] {
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页；fail-closed：模板缺失／标记异常即抛，不返空页。
 // 复制区走共用件（envelope 投影，三格式恒开）；`ctx.command` 由交付链供给，直调缺省按本族主 key。
 export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
+  const SX = {
+    k001: m('skill-home.setup-pages-health-report.c018'),
+    k002: m('skill-home.setup-pages-health-report.c019'),
+    k003: m('skill-home.setup-pages-health-report.c020'),
+    k004: m('skill-home.setup-pages-health-report.c021'),
+  
+  k005: m('skill-home.setup-pages-health-report.c025'),
+  k006: m('skill-home.setup-pages-health-report.c026'),
+  k007: m('skill-home.setup-pages-health-report.c027'),};
+  const L = pageText();
   const template = readFileSync(new URL('../../../templates/setup/health_report.html', import.meta.url), 'utf8');
   const issues = issuesOf(env);
   const real = issues.filter((x) => !x.name.startsWith('健康'));
   const total = real.reduce((a, x) => a + (Number.isFinite(x.count) ? x.count as number : 0), 0);
   const healthy = real.length === 0;
-  const rows = real.map((x, i) => '<tr>'
-    + '<td class="ilife-block-data-table-cell-left" data-label="勾选"><input type="checkbox" class="su-check" data-idx="' + i
-    + '" aria-label="勾选第' + (i + 1) + '项"></td>'
-    + '<td class="ilife-block-data-table-cell-left" data-label="检查项">' + escapeHtml(x.name) + '</td>'
-    + '<td class="ilife-block-data-table-cell-left" data-label="数量">' + escapeHtml(String(x.count)) + '</td>'
-    + '<td class="ilife-block-data-table-cell-left" data-label="动作">' + escapeHtml(actionOf(x.name)) + '</td></tr>').join('');
+  const rows = real.map((x, i) => '<tr>' + '<td class="ilife-block-data-table-cell-left" data-label="' + L.k001 + '">' + '<input type="checkbox" class="su-check" data-idx="' + i + '" aria-label="' + L.k002(String((i + 1))) + '">' + '</td>' + '<td class="ilife-block-data-table-cell-left" data-label="' + L.k003 + '">' + escapeHtml(x.name) + '</td>' + '<td class="ilife-block-data-table-cell-left" data-label="' + L.k004 + '">' + escapeHtml(String(x.count)) + '</td>' + '<td class="ilife-block-data-table-cell-left" data-label="' + L.k005 + '">' + escapeHtml(actionOf(x.name)) + '</td>' + '</tr>').join('');
   const content = '<style>'
     + '.su-wrap{max-width:960px;margin:0 auto;padding:0 0 24px}'
     + '.su-hero{background:linear-gradient(180deg,#fff,#f8fbff);border:1px solid #e3e3e8;border-radius:20px;padding:24px;margin:0 0 16px}'
@@ -105,23 +134,18 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '<div class="su-wrap">'
     + '<div class="su-hero"><div class="su-eyebrow">开始使用</div>'
     // #817：壳里的 h1 已是「查异常」，这里再挂同义的 h2「数据健康检查」＝同一事实两遍，删掉。
-    + '<p class="su-lead">' + (healthy ? '目前没有发现数据问题，继续保持。' : '发现 ' + total + ' 个待处理项，勾选后复制修复引导发给助手。') + '</p></div>'
+    + '<p class="su-lead">' + (healthy ? m('skill-home.setup-pages-health-report.c014') : m('skill-home.setup-pages-health-report.c015', { p0: String(total) })) + '</p></div>'
     + '<section class="su-sec" data-block="fields">'
     + '<h2 data-need="环境信息">本次检查概况</h2>'
     + '<div class="su-grid">'
     + '<div class="su-card"><b data-need="问题总数">问题总数</b><span class="' + (healthy ? 'su-ok' : 'su-bad') + '">' + total + '</span></div>'
     + '<div class="su-card"><b>检查项数</b><span>' + real.length + '</span></div>'
-    + '<div class="su-card"><b data-need="健康标记">健康标记</b><span class="' + (healthy ? 'su-ok' : 'su-warn') + '" data-need="良好" data-extra="待处理">' + (healthy ? '良好' : '待处理') + '</span></div>'
+    + '<div class="su-card"><b data-need="健康标记">健康标记</b><span class="' + (healthy ? 'su-ok' : 'su-warn') + '" data-need="良好" data-extra="待处理">' + (healthy ? m('skill-home.setup-pages-health-report.c016') : m('skill-home.setup-pages-health-report.c017')) + '</span></div>'
     + '</div>'
     + '<h2 data-need="检查项列表">检查项</h2>'
     + (healthy
-      ? '<p class="su-note">当前没有待处理项，继续保持即可。</p><p hidden><span data-need="勾选"></span><span data-need="动作列"></span></p>'
-      : '<div class="ilife-block-data-table"><table class="ilife-block-data-table-table">'
-        + '<thead><tr><th scope="col" class="ilife-block-data-table-cell-left" data-need="勾选">勾选</th>'
-        + '<th scope="col" class="ilife-block-data-table-cell-left">检查项</th>'
-        + '<th scope="col" class="ilife-block-data-table-cell-left">数量</th>'
-        + '<th scope="col" class="ilife-block-data-table-cell-left" data-need="动作列">动作</th></tr></thead>'
-        + '<tbody>' + rows + '</tbody></table></div>')
+      ? '<p class="su-note">' + L.k006 + '</p>' + '<p hidden>' + '<span data-need="勾选">' + '</span>' + '<span data-need="动作列">' + '</span>' + '</p>'
+      : '<div class="ilife-block-data-table">' + '<table class="ilife-block-data-table-table">' + '<thead>' + '<tr>' + '<th scope="col" class="ilife-block-data-table-cell-left" data-need="勾选">' + L.k007 + '</th>' + '<th scope="col" class="ilife-block-data-table-cell-left">' + L.k008 + '</th>' + '<th scope="col" class="ilife-block-data-table-cell-left">' + L.k009 + '</th>' + '<th scope="col" class="ilife-block-data-table-cell-left" data-need="动作列">' + L.k010 + '</th>' + '</tr>' + '</thead>' + '<tbody>' + rows + '</tbody>' + '</table>' + '</div>')
     + '</section>'
     + '<section class="su-sec" data-block="operations">'
     + '<h2>可以做的操作</h2>'
@@ -139,8 +163,8 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '<section class="su-sec" data-block="empty">'
     + '<h2>这种时候会怎样</h2>'
     + (healthy
-      ? '<p data-need="空态：数据健康良好＋未发现数据问题">数据健康良好，没有发现数据问题。</p>'
-      : '<p>待处理项一条条列在上面，处理完再查一次，数字就会跟着降。</p><p hidden data-need="空态：数据健康良好＋未发现数据问题">数据健康良好，没有发现数据问题。</p>')
+      ? '<p data-need="空态：数据健康良好＋未发现数据问题">' + L.k011 + '</p>'
+      : '<p>' + L.k012 + '</p>' + '<p hidden data-need="空态：数据健康良好＋未发现数据问题">' + L.k013 + '</p>')
     + '<p data-need="拦截态：请先勾选至少1个问题">点复制之前请先勾选至少一项，没有勾选就点复制会没有内容可复制。</p>'
     + '<p data-need="异常：数据解析失败／数据校验失败">如果页面提示解析失败或者校验失败，说明这次检查没有跑起来，换个时间再查一次。</p>'
     + '</section>'
@@ -156,10 +180,10 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + 'var ISSUES=' + JSON.stringify(real.map((x) => x.name)) + ';'
     + 'function suToast(t){var el=document.getElementById("suToast");if(!el)return;el.textContent=t;el.classList.add("show");setTimeout(function(){el.classList.remove("show")},3500)}'
     + 'function suCopy(text,ok){function fb(){try{var ta=document.createElement("textarea");ta.value=text;document.body.appendChild(ta);ta.select();var ok=false;try{ok=document.execCommand("copy")}catch(e){}document.body.removeChild(ta);return ok}catch(e){return false}}'
-    + 'if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(function(){suToast(ok)}).catch(function(){suToast(fb()?ok:"复制失败，请长按手动复制")})}else{suToast(fb()?ok:"复制失败，请长按手动复制")}}'
-    + 'var fix=document.getElementById("suCopyFix");if(fix)fix.addEventListener("click",function(){var picked=[];document.querySelectorAll(".su-check").forEach(function(c,i){if(c.checked&&ISSUES[i])picked.push("修复项："+ISSUES[i])});'
-    + 'if(!picked.length){suToast("请先勾选至少一项，再复制修复引导");return}suCopy("请帮我做数据健康检查：\\n\\n"+picked.join("\\n"),"修复引导已复制")});'
-    + 'var kd=document.getElementById("suKnow");if(kd)kd.addEventListener("click",function(){suToast("收到")});'
+    + "if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(function(){suToast(ok)}).catch(function(){suToast(fb()?ok:\"" + SX.k001 + "\")})}else{suToast(fb()?ok:\"" + SX.k002 + "\")}}"
+    + "var fix=document.getElementById(\"suCopyFix\");if(fix)fix.addEventListener(\"click\",function(){var picked=[];document.querySelectorAll(\".su-check\").forEach(function(c,i){if(c.checked&&ISSUES[i])picked.push(\"" + SX.k003 + "\"+ISSUES[i])});"
+    + "if(!picked.length){suToast(\"" + SX.k005 + "\");return}suCopy(\"" + SX.k006 + "\\n\\n\"+picked.join(\"\\n\"),\"" + SX.k007 + "\")});"
+    + "var kd=document.getElementById(\"suKnow\");if(kd)kd.addEventListener(\"click\",function(){suToast(\"" + SX.k004 + "\")});"
     + '</script>';
   return fillTemplate(template, content);
 }

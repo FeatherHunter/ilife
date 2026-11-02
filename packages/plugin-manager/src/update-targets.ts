@@ -4,7 +4,8 @@
  * 七个 phonePrefix 必须互不相同，否则串台。
  */
 import { MANAGER_PACKAGE } from './install.js';
-import { MANAGER_TABS } from './nav.js';
+import { managerTabs } from './nav.js';
+import { m } from './entries/index.js';
 
 export interface UpdateTarget {
   readonly key: string;
@@ -18,16 +19,27 @@ export const MANAGER_TARGET_KEY = 'life-pack' as const;
 /** 批量电话前缀：宿主与面板共用，唯一定义地（面板 mount 参数与宿主登记同源）。 */
 export const BATCH_PREFIX = 'life' as const;
 
-export const UPDATE_TARGETS: readonly UpdateTarget[] = [
-  { key: MANAGER_TARGET_KEY, title: '爱生活', packageName: MANAGER_PACKAGE, phonePrefix: 'ilife-life-pack' },
-  ...MANAGER_TABS.map((tab) => ({
-    key: tab.skill,
-    title: tab.title,
-    packageName: tab.plugin,
-    phonePrefix: 'ilife-' + tab.skill,
-  })),
-];
+/** 七行更新目标（渲染期现取：标题随语言走）。 */
+function buildUpdateTargets(): readonly UpdateTarget[] {
+  return [
+    { key: MANAGER_TARGET_KEY, title: m('plugin-manager.update-targets.c001'), packageName: MANAGER_PACKAGE, phonePrefix: 'ilife-life-pack' },
+    ...managerTabs().map((tab) => ({
+      key: tab.skill,
+      title: tab.title,
+      packageName: tab.plugin,
+      phonePrefix: 'ilife-' + tab.skill,
+    })),
+  ];
+}
+
+/** 渲染期现取。 */
+export function updateTargets(): readonly UpdateTarget[] {
+  return buildUpdateTargets();
+}
+
+/** 兼容镜像：模块加载期取一次（update-batch 按常量读）；渲染路径用 updateTargets()。 */
+export const UPDATE_TARGETS: readonly UpdateTarget[] = buildUpdateTargets();
 
 export function targetFor(packageName: string): UpdateTarget | undefined {
-  return UPDATE_TARGETS.find((target) => target.packageName === packageName);
+  return updateTargets().find((target) => target.packageName === packageName);
 }

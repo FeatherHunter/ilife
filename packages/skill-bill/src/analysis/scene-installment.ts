@@ -22,11 +22,13 @@
  *    ⑦ 载荷走 `./views.js` 的 `buildTrend('installment', …)`；
  *    ⑧ 老侧 `_calc_kpi` 把转账也计进收支，新侧走 `./agg.js` 的 `kpiOf`（转账不算收支，#691 口径）。
  */
+import { runWithLanguage } from 'base-entries';
 import type { BillRow } from '../fetch/db.js';
 import { allRecords, dayOf, kpiOf, round2, tagRecords, today } from './agg.js';
 import { NO_WINDOW, money, textOrDash } from './pageParts.js';
 import type { AnalysisScene } from './scene.js';
 import { buildTrend } from './views.js';
+import { m } from '../entries/index.js';
 
 /** 一家分期在库里攒出来的那份账（老侧 `cmd_installment_summary` 里 `groups` 字典的一格）。 */
 interface InstallmentGroup {
@@ -83,7 +85,7 @@ function eachAmountOf(amounts: readonly number[]): number {
 /** 按月分组**之前**的那一步：一条记录落进它那个名目的账里（老侧 `:886-901` 的循环体同义）。 */
 function addRecord(groups: Map<string, InstallmentGroup>, r: BillRow, todayStr: string): void {
   const parsed = parseInstallmentNote(r.note);
-  const name = parsed === null || parsed.name === '' ? '未命名分期' : parsed.name;
+  const name = parsed === null || parsed.name === '' ? m('skill-bill.analysis-scene-installment.c001') : parsed.name;
   const g = groups.get(name) ?? {
     name,
     total: 0,
@@ -120,11 +122,12 @@ function cardOf(g: InstallmentGroup): InstallmentCard {
   };
 }
 
-export const sceneInstallment: AnalysisScene = {
+function buildScene(): AnalysisScene {
+  return {
   id: 'installment',
   key: 'bill.analysis.trend',
   kind: 'installment',
-  title: '看分期',
+  title: m('skill-bill.analysis-scene-installment.title'),
   family: 'tables',
   values: ({ db }) => {
     const records = tagRecords(allRecords(db), '分期');
@@ -141,75 +144,91 @@ export const sceneInstallment: AnalysisScene = {
     const remainingPeriods = active.reduce((sum, c) => sum + c.remaining, 0);
     const remainingAmount = round2(active.reduce((sum, c) => sum + c.remainingAmount, 0));
     const head = active.at(0);
+    const headTail = head === undefined
+      ? '。'
+      : m('skill-bill.analysis-scene-installment.c004', {
+        p0: String(head.name),
+        p1: String(money(head.total)),
+      });
     return {
-      title: '看分期',
-      label: '全部时间',
+      title: m('skill-bill.analysis-scene-installment.title'),
+      label: m('skill-bill.analysis-scene-installment.c006'),
       from: NO_WINDOW,
       to: NO_WINDOW,
       count: records.length,
       conclusion: records.length === 0
-        ? '全库还没有带 #分期 的记录。'
-        : '分期一共 ' + String(cards.length) + ' 项：进行中 ' + String(active.length) + ' 项、剩余 '
-          + String(remainingPeriods) + ' 期共 ' + money(remainingAmount) + ' 元、已还清 ' + String(done.length) + ' 项'
-          + (head === undefined ? '。' : '；还着的里面最大一笔是「' + head.name + '」' + money(head.total) + ' 元。'),
-      caliber: '分期按备注里的 #分期 标签取记录，备注形态是「#分期 名目 第X期/N」；'
-        + '已还期数按记录日期不晚于今天算，剩余期数＝总期数 − 已还期数，'
-        + '剩余金额＝日期还没到的那些期的金额合计（还没记上的期不算在里面）；'
-        + '每期金额取出现两次以上的众数金额，没有出现两次的取最小额；转账不计入收支。',
-      chips: ['进行中 ' + String(active.length) + ' 项', '已还清 ' + String(done.length) + ' 项'],
+        ? m('skill-bill.analysis-scene-installment.c007')
+        : m('skill-bill.analysis-scene-installment.c008', {
+          p0: String(String(cards.length)),
+          p1: String(String(active.length)),
+          p2: String(String(remainingPeriods)),
+          p3: String(money(remainingAmount)),
+          p4: String(String(done.length)),
+          p5: String(headTail),
+        }),
+      caliber: m('skill-bill.analysis-scene-installment.c009'),
+      chips: [m('skill-bill.analysis-scene-installment.c010', { p0: String(String(active.length)) }), m('skill-bill.analysis-scene-installment.c011', { p0: String(String(done.length)) })],
       payload: buildTrend('installment', [...records]),
       kpi: kpiOf(records),
       page: {
         kpis: [
-          { label: '进行中项数', value: String(active.length), unit: '项' },
-          { label: '剩余期数合计', value: String(remainingPeriods), unit: '期' },
-          { label: '剩余金额合计', value: money(remainingAmount), unit: '元' },
+          { label: m('skill-bill.analysis-scene-installment.c012'), value: String(active.length), unit: m('skill-bill.analysis-scene-installment.c013') },
+          { label: m('skill-bill.analysis-scene-installment.c014'), value: String(remainingPeriods), unit: m('skill-bill.analysis-scene-installment.c015') },
+          { label: m('skill-bill.analysis-scene-installment.c016'), value: money(remainingAmount), unit: m('skill-bill.analysis-scene-installment.c017') },
         ],
-        chips: ['进行中 ' + String(active.length) + ' 项', '已还清 ' + String(done.length) + ' 项'],
+        chips: [m('skill-bill.analysis-scene-installment.c018', { p0: String(String(active.length)) }), m('skill-bill.analysis-scene-installment.c019', { p0: String(String(done.length)) })],
         tables: [
           {
-            title: '进行中（' + String(active.length) + ' 项）',
+            title: m('skill-bill.analysis-scene-installment.c020', { p0: String(String(active.length)) }),
             columns: [
-              { key: 'name', label: '名目' },
-              { key: 'total', label: '总额', align: 'right' },
-              { key: 'each', label: '每期', align: 'right' },
-              { key: 'paid', label: '已还', align: 'right' },
-              { key: 'remaining', label: '剩余', align: 'right' },
-              { key: 'remainingAmount', label: '剩余金额', align: 'right' },
+              { key: 'name', label: m('skill-bill.analysis-scene-installment.c021') },
+              { key: 'total', label: m('skill-bill.analysis-scene-installment.c022'), align: 'right' },
+              { key: 'each', label: m('skill-bill.analysis-scene-installment.c023'), align: 'right' },
+              { key: 'paid', label: m('skill-bill.analysis-scene-installment.c024'), align: 'right' },
+              { key: 'remaining', label: m('skill-bill.analysis-scene-installment.c025'), align: 'right' },
+              { key: 'remainingAmount', label: m('skill-bill.analysis-scene-installment.c026'), align: 'right' },
             ],
             rows: active.map((c) => ({
               name: textOrDash(c.name),
-              total: money(c.total) + ' 元',
-              each: money(c.each) + ' 元',
-              paid: String(c.paid) + ' 期',
-              remaining: String(c.remaining) + ' 期',
-              remainingAmount: money(c.remainingAmount) + ' 元',
+              total: m('skill-bill.analysis-scene-installment.c027', { p0: String(money(c.total)) }),
+              each: m('skill-bill.analysis-scene-installment.c028', { p0: String(money(c.each)) }),
+              paid: m('skill-bill.analysis-scene-installment.c029', { p0: String(String(c.paid)) }),
+              remaining: m('skill-bill.analysis-scene-installment.c030', { p0: String(String(c.remaining)) }),
+              remainingAmount: m('skill-bill.analysis-scene-installment.c031', { p0: String(money(c.remainingAmount)) }),
             })),
-            emptyText: '没有进行中的分期',
+            emptyText: m('skill-bill.analysis-scene-installment.c032'),
           },
           {
-            title: '已还清（' + String(done.length) + ' 项）',
+            title: m('skill-bill.analysis-scene-installment.c033', { p0: String(String(done.length)) }),
             columns: [
-              { key: 'name', label: '名目' },
-              { key: 'total', label: '总额', align: 'right' },
-              { key: 'periods', label: '期数', align: 'right' },
-              { key: 'firstDate', label: '首期', align: 'right' },
+              { key: 'name', label: m('skill-bill.analysis-scene-installment.c034') },
+              { key: 'total', label: m('skill-bill.analysis-scene-installment.c035'), align: 'right' },
+              { key: 'periods', label: m('skill-bill.analysis-scene-installment.c036'), align: 'right' },
+              { key: 'firstDate', label: m('skill-bill.analysis-scene-installment.c037'), align: 'right' },
             ],
             rows: done.map((c) => ({
               name: textOrDash(c.name),
-              total: money(c.total) + ' 元',
+              total: m('skill-bill.analysis-scene-installment.c038', { p0: String(money(c.total)) }),
               periods: String(c.periods),
               firstDate: textOrDash(c.firstDate),
             })),
-            emptyText: '还没有还清的分期',
+            emptyText: m('skill-bill.analysis-scene-installment.c039'),
           },
         ],
         factCards: [],
         empty: {
-          text: '全库还没有分期记录。',
-          hint: '先说「记分期」记一笔，备注里带上 #分期 名目 第X期/N，回来看这里就有数了。',
+          text: m('skill-bill.analysis-scene-installment.c040'),
+          hint: m('skill-bill.analysis-scene-installment.c041'),
         },
       },
     };
   },
-};
+  };
+}
+
+export const sceneInstallment: AnalysisScene = buildScene();
+
+/** 按语言重建本场景（#1197：文案经词条层，语言是运行期参数）。 */
+export function sceneInstallmentFor(language: string): AnalysisScene {
+  return runWithLanguage(language, buildScene);
+}

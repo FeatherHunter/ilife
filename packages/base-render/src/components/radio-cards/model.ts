@@ -129,9 +129,9 @@ export function normalizeRadioCards(input: unknown): RadioCardsModel {
     value,
     required: optBool(raw.required, 'radio-cards: input.required') === true,
     loading,
-    loadingText: loadingText === undefined ? RADIO_CARDS_LOADING_TEXT : loadingText,
+    loadingText: loadingText === undefined ? RADIO_CARDS_LOADING_TEXT() : loadingText,
     error: optText(raw.error, 'radio-cards: input.error'),
-    emptyText: emptyText === undefined ? RADIO_CARDS_EMPTY_TEXT : emptyText,
+    emptyText: emptyText === undefined ? RADIO_CARDS_EMPTY_TEXT() : emptyText,
     extraClass: optExtraClass(raw.extraClass, 'radio-cards: input.extraClass'),
   };
 }

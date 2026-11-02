@@ -77,7 +77,7 @@ describe('confirm-strip ① 渲染契约', () => {
     assert.ok(html.startsWith('<div class="' + CONFIRM_STRIP_CLASS + ' is-list"'), '根用类名根打头：' + html.slice(0, 80));
     assert.ok(html.includes(CONFIRM_STRIP_FORM_ATTR + '="list"'), '形态落属性');
     assert.ok(html.includes(CONFIRM_STRIP_COUNT_ATTR + '="3"'), '条数落机器属性');
-    assert.ok(html.includes(CONFIRM_STRIP_UNIT_ATTR + '="' + CONFIRM_STRIP_UNIT_DEFAULT + '"'), '量词落机器属性');
+    assert.ok(html.includes(CONFIRM_STRIP_UNIT_ATTR + '="' + CONFIRM_STRIP_UNIT_DEFAULT() + '"'), '量词落机器属性');
     assert.ok(html.includes('要删掉这 3 条吗？'), '题面点名条数');
     for (const item of base().items) assert.ok(html.includes('>' + item.name + '<'), '这一条要被点名：' + item.name);
     assert.ok(html.includes('09-25 早餐'), '旁证上屏');
@@ -88,11 +88,11 @@ describe('confirm-strip ① 渲染契约', () => {
   it('危险按钮**写动词 ＋ 条数**（不是「确定」），安全按钮在左、危险在右', () => {
     const html = renderConfirmStrip(base());
     assert.ok(html.includes('>删掉这 3 条<'), '危险按钮＝动词＋条数');
-    assert.ok(html.includes('>' + CONFIRM_STRIP_KEEP_DEFAULT + '<'), '安全按钮用缺省字');
+    assert.ok(html.includes('>' + CONFIRM_STRIP_KEEP_DEFAULT() + '<'), '安全按钮用缺省字');
     assert.ok(html.indexOf('"' + KEEP + '"') < html.indexOf('"' + DANGER + '"'), '标记顺序：先安全后危险');
     assert.ok(!/<script/i.test(html), '不产脚本');
     assert.ok(!/\son[a-z]+=/i.test(html), '不产内联事件处理器');
-    for (const word of CONFIRM_STRIP_BARE_WORDS) {
+    for (const word of CONFIRM_STRIP_BARE_WORDS()) {
       assert.equal(html.includes('>' + word + '<'), false, '按钮上不许出现空词：' + word);
     }
   });
@@ -107,7 +107,7 @@ describe('confirm-strip ① 渲染契约', () => {
     const no = renderConfirmStrip(base({ undoable: false, undoHint: undefined }));
     assert.ok(no.includes('>不可撤销<'), '不可撤销档的徽标');
     assert.ok(no.includes('<b>不能撤销</b>'), '后果话前半句写「不能撤销」');
-    assert.ok(no.includes(CONFIRM_STRIP_LOSS_DEFAULT), '缺省后果话上屏');
+    assert.ok(no.includes(CONFIRM_STRIP_LOSS_DEFAULT()), '缺省后果话上屏');
     assert.ok(no.includes(CONFIRM_STRIP_IRREVERSIBLE_ATTR + '="1"'), '机器属性标不可撤销');
     assert.ok(!no.includes('可以撤销'), '不可撤销档不得出现「可以撤销」');
     assert.ok(renderConfirmStrip(base({ undoable: false, undoHint: undefined, loss: '这条删了就没了。' }))
@@ -160,7 +160,7 @@ describe('confirm-strip ① 渲染契约', () => {
     assert.equal(throwsBlocks(() => renderConfirmStrip(base({ form: 'stack' }))), true, '形态闭集外');
     assert.equal(throwsBlocks(() => renderConfirmStrip(base({ state: 'loading' }))), true, '状态闭集外');
     assert.equal(throwsBlocks(() => renderConfirmStrip(base({ dangerVerb: '' }))), true, '动词空');
-    for (const word of CONFIRM_STRIP_BARE_WORDS) {
+    for (const word of CONFIRM_STRIP_BARE_WORDS()) {
       assert.equal(throwsBlocks(() => renderConfirmStrip(base({ dangerVerb: word }))), true, '空词：' + word);
     }
     assert.equal(throwsBlocks(() => renderConfirmStrip(base({ dangerVerb: '删 掉' }))), true, '动词带空白');
@@ -600,7 +600,7 @@ describe('confirm-strip ⑥ 运行时（委派 ＋ 幂等 ＋ 按不动就不派
       await sleep(60);
       assert.equal((await p.hits()).length, 1, '两份运行时也只派发一条（幂等）');
       assert.deepEqual((await p.hits())[0], {
-        action: 'danger', count: 3, unit: CONFIRM_STRIP_UNIT_DEFAULT, irreversible: false, backup: true,
+        action: 'danger', count: 3, unit: CONFIRM_STRIP_UNIT_DEFAULT(), irreversible: false, backup: true,
       }, '事件载荷（备份项缺省勾上）');
       await p.ev(click(0, 'keep'));
       await sleep(60);

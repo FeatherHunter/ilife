@@ -8,8 +8,9 @@ import { renderFactStrip } from 'base-paint';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { dataCopyArea } from '../shared/copyArea.js';
 import { compareUiCss } from './compareUi.js';
-import { BADGE, DOC_SKILL, DOC_TITLE, DOC_VERSION, PAGE_UI } from './compare.js';
+import { badge, docTitle, DOC_SKILL, DOC_VERSION, PAGE_UI } from './compare.js';
 import type { BodyMeasureCompareView } from './compare.js';
+import { m } from '../entries/index.js';
 
 /** 全角减号（U+2212）＋ 单位尾缀：负值不写半角 `-`。 */
 const signed = (n: number | null, unit: string): string =>
@@ -24,8 +25,8 @@ export function buildBodyMeasureCompareDoc(v: BodyMeasureCompareView): string {
   const maxAbs = Math.max(...v.rows.map((r) => (r.delta === null ? 0 : Math.abs(r.delta))), 0);
   /** 结论条：一句判语（部位口径只说这一处，事实条不再抄一遍）。 */
   const verdict = nonZero === 0
-    ? '两个日期的围度一个部位都没变'
-    : '两个日期之间有 ' + nonZero + ' 个部位的围度变了';
+    ? m('skill-calorie.body-compareMeasureDoc.c001')
+    : m('skill-calorie.body-compareMeasureDoc.c002', { p0: String(nonZero) });
   const bar = maxAbs === 0
     ? ''
     : renderDistributionRows({
@@ -44,20 +45,20 @@ export function buildBodyMeasureCompareDoc(v: BodyMeasureCompareView): string {
     // #539 收口：`围度变了 N` 与 `两个日期都比过 N` 两格同值并列（终审指控同义反复，成立），
     // 撤掉后者——eligibility（两个日期都有记录才比）已由下面那条口径行说一处，不在这里说第二遍。
     items: [
-      { label: '围度变了', value: String(nonZero) + ' 个部位' },
-      { label: '前一次记录', value: v.date1 },
-      { label: '后一次记录', value: v.date2 },
+      { label: m('skill-calorie.body-compareMeasureDoc.c003'), value: m('skill-calorie.body-compareMeasureDoc.c004', { p0: String(String(nonZero)) }) },
+      { label: m('skill-calorie.body-compareMeasureDoc.c005'), value: v.date1 },
+      { label: m('skill-calorie.body-compareMeasureDoc.c006'), value: v.date2 },
     ],
   }));
   parts.push(bar);
-  parts.push(renderConclusionBar(verdict + '，后一次记录是 ' + v.date2 + '。'));
+  parts.push(renderConclusionBar(m('skill-calorie.body-compareMeasureDoc.c007', { p0: String(verdict), p1: String(v.date2) })));
   parts.push(renderDataTable({
     columns: [
-      { key: 'part', label: '部位' },
-      { key: 'before', label: '前一次(cm)', align: 'right' },
-      { key: 'after', label: '后一次(cm)', align: 'right' },
-      { key: 'delta', label: '差值(cm)', align: 'right' },
-      { key: 'rate', label: '变化率', align: 'right' },
+      { key: 'part', label: m('skill-calorie.body-compareMeasureDoc.c008') },
+      { key: 'before', label: m('skill-calorie.body-compareMeasureDoc.c009'), align: 'right' },
+      { key: 'after', label: m('skill-calorie.body-compareMeasureDoc.c010'), align: 'right' },
+      { key: 'delta', label: m('skill-calorie.body-compareMeasureDoc.c011'), align: 'right' },
+      { key: 'rate', label: m('skill-calorie.body-compareMeasureDoc.c012'), align: 'right' },
     ],
     rows: v.rows.map((r) => ({
       part: r.zh,
@@ -66,12 +67,12 @@ export function buildBodyMeasureCompareDoc(v: BodyMeasureCompareView): string {
       delta: signed(r.delta, ''),
       rate: signed(r.ratePct, '%'),
     })),
-    caption: '前一次记录是基准，差值与变化率都以后一次减前一次算。',
-    emptyText: '两期无可比部位',
+    caption: m('skill-calorie.body-compareMeasureDoc.c013'),
+    emptyText: m('skill-calorie.body-compareMeasureDoc.c014'),
   }));
   // 口径行只补表格读法（部位名单已在表内逐行，不在这里再列一遍——同一事实一页一处）。
   parts.push(renderCaliberLine(
-    '只有两个日期都有记录的部位才比。差值与变化率都是后一次减前一次，单位厘米。',
+    m('skill-calorie.body-compareMeasureDoc.c015'),
   ));
   parts.push(dataCopyArea('复制数据', {
     envelope: {
@@ -82,14 +83,14 @@ export function buildBodyMeasureCompareDoc(v: BodyMeasureCompareView): string {
     },
   }));
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '对比围度',
-    eyebrow: '身体细节 · 两期对比',
-    badge: BADGE,
-    summary: '把两个日期的围度记录摆在一起，逐部位看变了多少。',
+    docTitle: docTitle(),
+    title: m('skill-calorie.body-compareMeasureDoc.c016'),
+    eyebrow: m('skill-calorie.body-compareMeasureDoc.c017'),
+    badge: badge(),
+    summary: m('skill-calorie.body-compareMeasureDoc.c018'),
     // 同上：B 线路的结论行走 `summary`，A 线的 `subtitle` 位不写。
     subtitle: null,
-    metaLeft: '围度两期对比',
+    metaLeft: m('skill-calorie.body-compareMeasureDoc.c019'),
     content: parts.join(''),
     charts: false,
     pageUi: PAGE_UI,

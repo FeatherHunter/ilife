@@ -23,10 +23,12 @@ import { DOC_TITLE } from '../shared/pageIdentity.js';
 import { collectEntryCard, collectSheetPage, receiptSheetPage } from '../shared/票据纸页型.js';
 import type { TicketSheetRow } from '../shared/票据纸页型.js';
 import type { AccountBlocked } from './params.js';
-import { ACCOUNT_SLOTS } from './params.js';
-import { SOURCE_COLLECT, SOURCE_WRITE, accountHelpPrompt, accountHelpTemplate, copyZoneOf, envelopeOf, money, slotFieldsOf, textOrDash, timeOf } from './pageParts.js';
+import { accountSlots } from './params.js';
+import { accountHelpPrompt, accountHelpTemplate, copyZoneOf, envelopeOf, money, slotFieldsOf, sourceCollect, sourceWrite, textOrDash, timeOf } from './pageParts.js';
 import { textOf } from '../shared/params.js';
 import type { AccountCollectInput, AccountReceipt, AccountReceiptInput, AccountWriteScene } from './scene.js';
+import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** 场景给模板的**差异声明**：值、文案与「哪个可选块出不出」，**不含任何块位拼装**。
  *
@@ -79,7 +81,7 @@ export function bindAccountFormPages(spec: AccountFormSpec): Pick<AccountWriteSc
 /** 采集页字段卡的格子：槽位表的每一格加候选（`from`／`to` 拿账户表当候选项，同一份数据两处用）。 */
 function fieldsOf(input: AccountCollectInput): ReturnType<typeof slotFieldsOf> {
   const names = input.accounts.map((a) => a.name);
-  return slotFieldsOf(input.params, ACCOUNT_SLOTS[input.op].map((s) => ({
+  return slotFieldsOf(input.params, accountSlots()[input.op].map((s) => ({
     name: s.name, label: s.label, hint: s.hint, note: s.note, required: s.required,
     ...((s.name === 'from' || s.name === 'to') && names.length > 0 ? { options: names } : {}),
   })));
@@ -87,9 +89,12 @@ function fieldsOf(input: AccountCollectInput): ReturnType<typeof slotFieldsOf> {
 
 /** 采集页那一条载荷说明（envelope 的 `message`）：说清缺什么、还没写库。 */
 function blockedMessageOf(word: string, blocked: readonly AccountBlocked[]): string {
-  if (blocked.length === 0) return word + '：等你确认（这一页还没写库）';
-  return word + '还差 ' + String(blocked.length) + ' 项：' + blocked.map((b) => b.label).join('、')
-    + '（已出采集页，补齐之后跟助手说一遍）';
+  if (blocked.length === 0) return m('skill-bill.account-template-form.c001', { p0: String(word) });
+  return m('skill-bill.account-template-form.c002', {
+    p0: String(word),
+    p1: String(String(blocked.length)),
+    p2: String(listJoin(currentRenderLanguage(), blocked.map((b) => b.label))),
+  });
 }
 
 /** 一个参数值的上屏文本（空白串＝空；待填的格由落点行自己说清）。 */
@@ -103,18 +108,18 @@ function collectLedgerOf(input: AccountCollectInput, at: string): readonly Ticke
   const to = strOf(input.params['to']);
   if (input.op === 'transfer') {
     return [
-      { label: '分类', value: '—（转账不计收支）' },
-      { label: '账户', value: from !== '' || to !== '' ? [from, to].filter((s) => s !== '').join(' → ') : '—（待填从／到）' },
-      { label: '账本', value: '转账（记成转账）' },
-      { label: '时间', value: strOf(input.params['time']) === '' ? '—（待填）' : strOf(input.params['time']) },
-      { label: '编号', value: '—（还没记）' },
+      { label: m('skill-bill.account-template-form.c003'), value: m('skill-bill.account-template-form.c004') },
+      { label: m('skill-bill.account-template-form.c005'), value: from !== '' || to !== '' ? [from, to].filter((s) => s !== '').join(' → ') : m('skill-bill.account-template-form.c006') },
+      { label: m('skill-bill.account-template-form.c007'), value: m('skill-bill.account-template-form.c008') },
+      { label: m('skill-bill.account-template-form.c009'), value: strOf(input.params['time']) === '' ? m('skill-bill.account-template-form.c010') : strOf(input.params['time']) },
+      { label: m('skill-bill.account-template-form.c011'), value: m('skill-bill.account-template-form.c012') },
     ];
   }
   return [
-    { label: '账户', value: strOf(input.params['name']) === '' ? '—（待填账户名）' : strOf(input.params['name']) },
-    { label: '账本', value: '账户和账本' },
-    { label: '时间', value: at },
-    { label: '编号', value: '—（还没记）' },
+    { label: m('skill-bill.account-template-form.c013'), value: strOf(input.params['name']) === '' ? m('skill-bill.account-template-form.c014') : strOf(input.params['name']) },
+    { label: m('skill-bill.account-template-form.c015'), value: m('skill-bill.account-template-form.c016') },
+    { label: m('skill-bill.account-template-form.c017'), value: at },
+    { label: m('skill-bill.account-template-form.c018'), value: m('skill-bill.account-template-form.c019') },
   ];
 }
 
@@ -123,21 +128,21 @@ function receiptLedgerOf(input: AccountReceiptInput, at: string): readonly Ticke
   const r = input.receipt;
   if (r.op === 'transfer') {
     return [
-      { label: '分类', value: '—（转账不计收支）' },
-      { label: '账户', value: textOrDash(input.params['from']) + ' → ' + textOrDash(input.params['to']) },
-      { label: '账本', value: '转账' },
-      { label: '时间', value: strOf(input.params['time']) === '' ? at : strOf(input.params['time']) },
-      { label: '编号', value: '—（转出／转入各 1 笔，共 2 条）' },
+      { label: m('skill-bill.account-template-form.c020'), value: m('skill-bill.account-template-form.c021') },
+      { label: m('skill-bill.account-template-form.c022'), value: textOrDash(input.params['from']) + ' → ' + textOrDash(input.params['to']) },
+      { label: m('skill-bill.account-template-form.c023'), value: m('skill-bill.account-template-form.c024') },
+      { label: m('skill-bill.account-template-form.c025'), value: strOf(input.params['time']) === '' ? at : strOf(input.params['time']) },
+      { label: m('skill-bill.account-template-form.c026'), value: m('skill-bill.account-template-form.c027') },
     ];
   }
   const after = r.after;
   const name = after !== null ? after.name : textOrDash(input.params['name']);
   const type = after !== null ? textOrDash(after.type) : textOrDash(input.params['type']);
   return [
-    { label: '账户', value: name + '（' + type + '）' },
-    { label: '账本', value: '账户和账本（已记好）' },
-    { label: '时间', value: at },
-    { label: '编号', value: '—（账户域无小票编号）' },
+    { label: m('skill-bill.account-template-form.c028'), value: name + '（' + type + '）' },
+    { label: m('skill-bill.account-template-form.c029'), value: m('skill-bill.account-template-form.c030') },
+    { label: m('skill-bill.account-template-form.c031'), value: at },
+    { label: m('skill-bill.account-template-form.c032'), value: m('skill-bill.account-template-form.c033') },
   ];
 }
 
@@ -145,14 +150,14 @@ function receiptLedgerOf(input: AccountReceiptInput, at: string): readonly Ticke
 function receiptRowsOf(input: AccountReceiptInput): readonly EntryCardEntry[] {
   if (input.receipt.op === 'transfer') {
     return [
-      { title: '转出 · ' + textOrDash(input.params['from']), sub: '记负数（金额见主数字）' },
-      { title: '转入 · ' + textOrDash(input.params['to']), sub: '记正数（金额见主数字）' },
+      { title: m('skill-bill.account-template-form.c034', { p0: String(textOrDash(input.params['from'])) }), sub: m('skill-bill.account-template-form.c035') },
+      { title: m('skill-bill.account-template-form.c036', { p0: String(textOrDash(input.params['to'])) }), sub: m('skill-bill.account-template-form.c037') },
     ];
   }
   return [
-    { title: '账户名 ' + textOrDash(input.params['name']), sub: '刚登记进来的' },
-    { title: '类型 ' + textOrDash(input.params['type']), sub: '随时可以改' },
-    { title: '状态 使用中', sub: '已可记账' },
+    { title: m('skill-bill.account-template-form.c038', { p0: String(textOrDash(input.params['name'])) }), sub: m('skill-bill.account-template-form.c039') },
+    { title: m('skill-bill.account-template-form.c040', { p0: String(textOrDash(input.params['type'])) }), sub: m('skill-bill.account-template-form.c041') },
+    { title: m('skill-bill.account-template-form.c042'), sub: m('skill-bill.account-template-form.c043') },
   ];
 }
 
@@ -163,38 +168,41 @@ function collectPage(spec: AccountFormSpec, input: AccountCollectInput): string 
   const at = timeOf(input.params, input.actionAt);
   const envelope = envelopeOf(input.key, false, blockedMessageOf(spec.word, blocked));
   const hint = missing > 0
-    ? '还差 ' + String(missing) + ' 项没填：' + blocked.map((b) => b.label).join('、') + '，填完才能复制。'
-    : '已填齐，点上面那句复制带数据的口令。';
+    ? m('skill-bill.account-template-form.c044', {
+      p0: String(String(missing)),
+      p1: String(listJoin(currentRenderLanguage(), blocked.map((b) => b.label))),
+    })
+    : m('skill-bill.account-template-form.c045');
   /* #1130：待填区按判地做成「编号 → 标签 → 右侧输入框」的横向行 ＋ 每格下面一行灰提示（共享件一处实现）。 */
   const entry = collectEntryCard(fieldsOf(input), { text: hint, ready: missing === 0 });
   return collectSheetPage({
-    docTitle: DOC_TITLE + '·采集页',
-    brand: '饼干记账 · ' + spec.word,
-    title: missing > 0 ? spec.word + '还差 ' + String(missing) + ' 项' : spec.word + '等你确认',
+    docTitle: m('skill-bill.account-template-form.c046', { p0: String(DOC_TITLE) }),
+    brand: m('skill-bill.account-template-form.c047', { p0: String(spec.word) }),
+    title: missing > 0 ? m('skill-bill.account-template-form.c048', { p0: String(spec.word), p1: String(String(missing)) }) : m('skill-bill.account-template-form.c049', { p0: String(spec.word) }),
     subtitle: spec.subtitle(input),
     summary: {
-      eyebrow: '待补槽位',
+      eyebrow: m('skill-bill.account-template-form.c050'),
       warn: true,
       value: String(missing),
-      unit: '项',
-      note: missing > 0 ? '缺：' + blocked.map((b) => b.label).join('、') : '值都齐了，看准了就复制下面那句。',
+      unit: m('skill-bill.account-template-form.c051'),
+      note: missing > 0 ? m('skill-bill.account-template-form.c052', { p0: String(listJoin(currentRenderLanguage(), blocked.map((b) => b.label))) }) : m('skill-bill.account-template-form.c053'),
     },
-    ledgerTitle: '账户落点',
+    ledgerTitle: m('skill-bill.account-template-form.c054'),
     ledger: collectLedgerOf(input, at),
-    entryTitle: '待填',
+    entryTitle: m('skill-bill.account-template-form.c055'),
     entryTag: 'ENTRY',
     entryHtml: entry,
-    check: '还没记 ／ 共 0 条 ／ 没有异常',
+    check: m('skill-bill.account-template-form.c056'),
     actions: renderTicketButton({
-      label: '填好后复制这句话去跟助手说',
+      label: m('skill-bill.account-template-form.c057'),
       actionId: 'ilife-collect-prompt',
       copyText: spec.prompt(input),
       disabled: missing > 0,
     }) + copyZoneOf({
       envelope, title: spec.word, key: input.key, params: input.params,
-      source: SOURCE_COLLECT, detail: '没写库（采集页）', actionAt: input.actionAt,
+      source: sourceCollect(), detail: m('skill-bill.account-template-form.c058'), actionAt: input.actionAt,
     }),
-    foot: '饼干记账 · ' + spec.word + '采集',
+    foot: m('skill-bill.account-template-form.c059', { p0: String(spec.word) }),
     styleHtml: '<style>' + ticketButtonCss() + '</style>',
     slot: 'collect', page: 'collect', shape: 'receipt', key: input.key, paper: 'receipt',
   }) + ticketCollectRuntime({
@@ -224,11 +232,11 @@ function collectPage(spec: AccountFormSpec, input: AccountCollectInput): string 
  *  - `transfer`：`已转账 <转出> → <转入>`；金额在主数字段、口径句在载荷 `message`；
  *  - 其余 op（含 `update` 已收的改名句）与加这一支之前**逐字节相同**：原样用 `receipt.summary`。 */
 function receiptHeadline(receipt: AccountReceipt, params: Record<string, unknown>): string {
-  if (receipt.op === 'add' && receipt.after !== null) return '已新增账户「' + receipt.after.name + '」';
+  if (receipt.op === 'add' && receipt.after !== null) return m('skill-bill.account-template-form.c060', { p0: String(receipt.after.name) });
   if (receipt.op === 'transfer') {
     const from = textOf(params['from']);
     const to = textOf(params['to']);
-    if (from !== '' && to !== '') return '已转账 ' + from + ' → ' + to;
+    if (from !== '' && to !== '') return m('skill-bill.account-template-form.c061', { p0: String(from), p1: String(to) });
   }
   return receipt.summary;
 }
@@ -240,35 +248,35 @@ function receiptPage(spec: AccountFormSpec, input: AccountReceiptInput): string 
   const envelope = envelopeOf(input.key, true, receipt.summary);
   const isTransfer = receipt.op === 'transfer';
   return receiptSheetPage({
-    docTitle: DOC_TITLE + '·写库回执',
-    brand: '饼干记账 · ' + spec.word,
+    docTitle: m('skill-bill.account-template-form.c062', { p0: String(DOC_TITLE) }),
+    brand: m('skill-bill.account-template-form.c063', { p0: String(spec.word) }),
     title: receiptHeadline(receipt, input.params),
-    subtitle: spec.word + ' · 回执',
+    subtitle: m('skill-bill.account-template-form.c064', { p0: String(spec.word) }),
     summary: {
-      eyebrow: receipt.noChange ? '没改动' : '已记好',
+      eyebrow: receipt.noChange ? m('skill-bill.account-template-form.c065') : m('skill-bill.account-template-form.c066'),
       value: isTransfer ? money(Number(input.params['amount'])) : String(receipt.affectedRows),
-      unit: isTransfer ? '元' : '处',
+      unit: isTransfer ? m('skill-bill.account-template-form.c067') : m('skill-bill.account-template-form.c068'),
       note: spec.receiptNote(input),
-      ...(receipt.noChange ? {} : { stamp: '有效' }),
+      ...(receipt.noChange ? {} : { stamp: m('skill-bill.account-template-form.c069') }),
     },
-    ledgerTitle: '账户落点',
+    ledgerTitle: m('skill-bill.account-template-form.c070'),
     ledger: receiptLedgerOf(input, at),
-    detailTitle: isTransfer ? '两笔分录' : '明细',
+    detailTitle: isTransfer ? m('skill-bill.account-template-form.c071') : m('skill-bill.account-template-form.c072'),
     detailTag: 'DETAIL',
     detailHtml: renderEntryCard({ entries: receiptRowsOf(input) }),
-    check: '已经记进账本 ／ 共 ' + String(receipt.affectedRows) + ' 条 ／ 没有异常',
+    check: m('skill-bill.account-template-form.c073', { p0: String(String(receipt.affectedRows)) }),
     actions: renderTicketButton({
-      label: isTransfer ? '撤销这次转账（可恢复）' : '撤销这次新增（可恢复）',
+      label: isTransfer ? m('skill-bill.account-template-form.c074') : m('skill-bill.account-template-form.c075'),
       actionId: 'ilife-undo-' + receipt.op,
       // #1136（返工）：复制出去的纯文本走 HELP 句（与采集页 `spec.prompt` 同一句话，填本次实参），
       // 不再是裸 envelope 行。JSON／CSV／日志不动；页上不增块。本模板只服务 add／transfer 两支，op 即判据。
       copyText: accountHelpPrompt(receipt.op === 'transfer' ? 'account_transfer' : 'account_add', input.params),
     }) + copyZoneOf({
       envelope, title: spec.word, key: input.key, params: input.params,
-      source: SOURCE_WRITE, detail: spec.logDetail(input), actionAt: receipt.actionAt,
+      source: sourceWrite(), detail: spec.logDetail(input), actionAt: receipt.actionAt,
       copy: { text: accountHelpPrompt(receipt.op === 'transfer' ? 'account_transfer' : 'account_add', input.params) },
     }),
-    foot: '饼干记账 · ' + spec.word + '回执',
+    foot: m('skill-bill.account-template-form.c076', { p0: String(spec.word) }),
     styleHtml: '<style>' + ticketButtonCss() + entryCardCss() + '</style>',
     slot: 'receipt', page: 'receipt', shape: 'receipt', key: input.key, paper: 'receipt',
   });

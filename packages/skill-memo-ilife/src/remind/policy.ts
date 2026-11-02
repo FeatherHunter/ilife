@@ -8,6 +8,8 @@ export const REMIND_AT_RE = /^(\d{4})-(\d{2})-(\d{2}) (\d{1,2}):(\d{2})$/;
 
 export const REMIND_REPEAT_TYPES = ['一次性', '每天', '每周', '每月', '每年'] as const;
 export type RemindRepeatType = (typeof REMIND_REPEAT_TYPES)[number];
+/** 缺省重复类型（数据：`reminders.repeat_type` 列里存的就是这个中文字面值，不是文案）。 */
+const DEFAULT_REPEAT_TYPE: RemindRepeatType = '一次性';
 
 /** 提醒时间须 `YYYY-MM-DD HH:MM` 且为真日期时间（老 `_validate_remind_at`）。 */
 export function normalizeRemindAt(v: unknown): string {
@@ -22,7 +24,7 @@ export function normalizeRemindAt(v: unknown): string {
 }
 
 export function normalizeRepeatType(v: unknown): RemindRepeatType {
-  if (v === undefined || v === null || v === '') return '一次性';
+  if (v === undefined || v === null || v === '') return DEFAULT_REPEAT_TYPE;
   if (typeof v !== 'string' || !REMIND_REPEAT_TYPES.includes(v as RemindRepeatType)) {
     throw new MemoPolicyError('POLICY_BAD_REMINDER', '重复类型须为 一次性/每天/每周/每月/每年，当前：' + String(v));
   }

@@ -20,6 +20,7 @@ import type { WeightCompare, WeightMilestone, WeightTrend } from './figures.js';
 import type { WeightHistory } from './records.js';
 import type { BaselineMode, VolatilityV2 } from './volatility.js';
 import { CalorieRenderError } from '../render/errors.js';
+import { m } from '../entries/index.js';
 
 /** 日期断言（`YYYY-MM-DD` 且可解析）：5 个视图模型共用，唯一定义地。 */
 export function assertDate(s: string): void {
@@ -126,7 +127,7 @@ export function weightCurvePlan(values: readonly number[], goal: number | null):
     targetInRange,
     single,
     ...(targetInRange && goal !== null
-      ? { markLine: { value: goal, label: '目标 ' + goal + 'kg' } }
+      ? { markLine: { value: goal, label: m('skill-calorie.weight-plate.c001', { p0: String(goal) }) } }
       : {}),
   };
 }

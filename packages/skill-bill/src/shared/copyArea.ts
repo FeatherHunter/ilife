@@ -22,13 +22,12 @@ import { renderStatusBadge } from 'base-paint';
 import { renderCaliberLine, renderCopyBlock, renderEmptyBlock, renderPreBlock } from 'base-paint/blocks';
 import { buildDataText, buildLogText } from 'base-paint';
 import type { CopyLogFields, DataTextInput, LogTextInput } from 'base-paint';
+import { m } from '../entries/index.js';
 
-/** 日志第 2 段（助手思考链）：本仓页面一律由本地 CLI 渲染，不落 `(未知)` 占位。 */
-const LOG_THINKING = '本页由本地渲染，无助手链';
-/** 日志第 6 段（异常）：正常产出即「无」。 */
-const LOG_EXCEPTION = '无';
-/** 复制区空态缺省句（三样全没给时出这一句、不出按钮——点了没反应的死按钮就是问题）。 */
-const COPY_EMPTY_TEXT = '本页没有可复制的数据';
+/** 日志第 2 段（助手思考链）：本仓页面一律由本地 CLI 渲染，不落 `(未知)` 占位。
+ *  词条 `c004`（#1215：模块级常量会在 import 时把词条定死成启动时的语言，改在渲染期取）。 */
+/** 日志第 6 段（异常）：正常产出即「无」。词条 `c005`。 */
+/** 复制区空态缺省句（三样全没给时出这一句、不出按钮——点了没反应的死按钮就是问题）。词条 `c006`。 */
 
 /** 本次执行时刻串（页面入参 `actionAt`／回执事实 `actionAt` 的**唯一定义地**）：本地时钟 `YYYY-MM-DD HH:MM:SS`。
  *  写域与查询域两张页都读它——搬迁前它分别是 `src/write/write.ts` 的文件级函数与查询域现取的钟，
@@ -43,13 +42,19 @@ export function actionStamp(): string {
  *  写法与既有约定一致：`<格式名> <判地那一句 small 文案>`（格式名保留——它是数据格式本来的样子，不是内部标识）。 */
 export const COPY_HINTS = {
   /** 组 A：write-receipt v2 判地。 */
-  receipt: ['纯文本 自己看或发给助手', 'JSON 存档用', 'CSV 表格用'],
+  get receipt(): readonly string[] {
+    return [m('skill-bill.shared-copyArea.c007'), m('skill-bill.shared-copyArea.c008'), m('skill-bill.shared-copyArea.c009')];
+  },
   /** 组 B：say-collect v2.3 ＋ acct-goal v2.2 判地。 */
-  sayAcct: ['纯文本 粘贴给助手或自己看', 'JSON 结构化存档', 'CSV 表格导入'],
+  get sayAcct(): readonly string[] {
+    return [m('skill-bill.shared-copyArea.c010'), m('skill-bill.shared-copyArea.c011'), m('skill-bill.shared-copyArea.c012')];
+  },
   /** 组 C：query v2.1 ＋ analysis v2.1 判地。**默认档**——不传 `hints` 就用这一组，
    *  与 #1125 之前逐字节相同（零回归）。 */
-  queryAnalysis: ['纯文本 自己看，发助手都行', 'JSON 以后查账用', 'CSV 表格打开看'],
-} as const;
+  get queryAnalysis(): readonly string[] {
+    return [m('skill-bill.shared-copyArea.c013'), m('skill-bill.shared-copyArea.c014'), m('skill-bill.shared-copyArea.c015')];
+  },
+};
 
 /** `copyArea` 的可填位：给了什么出什么，0–3 颗按钮。 */
 interface CopyAreaInput {
@@ -92,7 +97,8 @@ interface CopyLogInput {
  *  小标题缺省那句 `复制 prompt（必走）` 里的 `prompt` 不上屏（本轮整改）——改「复制给助手：这一句可以直接复制」
  *  （总则②：写清这块复制走给谁；仍含老字串，护栏不断言全等只认包含）。 */
 const PROMPT_COPY_ACTION = 'ilife-copy-prompt';
-const PROMPT_COPY_HINT = '复制给助手：这一句可以直接复制';
+/** 小标题与复制钮文案的词条键（#1215：同一条文案两处用，键复用）。 */
+const PROMPT_COPY_HINT_KEY = 'skill-bill.shared-copyArea.c016';
 
 /** 页上那一行可见文本（#728 第二轮）。**prompt 原文不再摊在页面上。**
  *
@@ -102,7 +108,8 @@ const PROMPT_COPY_HINT = '复制给助手：这一句可以直接复制';
  *  占位符／「逐项补齐」都是**给助手看的实现词汇**，本不该上用户的屏（本仓「区外内部话」那条）。
  *  改法：页上只留一句人话；**原文一字不改地走 `copyText` 进复制载荷**——
  *  复制得到的还是原来那一整段，载荷文本没动。 */
-const PROMPT_PREVIEW = '点右边的按钮复制，发给助手就行。';
+/** 页上那一行可见文本的词条键（#1215）：`c017`。 */
+const PROMPT_PREVIEW_KEY = 'skill-bill.shared-copyArea.c017';
 
 /** ① 复制 prompt 区：prompt 预览（`renderPreBlock`）＋ 它自带的复制按钮。
  *  **`actionId` 必给**：公共层的 `renderPreBlock` 只在给了 `actionId` 时才渲染复制按钮
@@ -110,13 +117,13 @@ const PROMPT_PREVIEW = '点右边的按钮复制，发给助手就行。';
  *  有标签没按钮位——那正是本票线上实测发现的一处，本件补齐。
  *  第二参可选：不给＝小标题「复制给助手：这一句可以直接复制」；`null`＝不出小标题；给字符串就用它。 */
 export function promptCopyArea(prompt: string, label?: string | null): string {
-  const heading = label === undefined ? PROMPT_COPY_HINT : label;
+  const heading = label === undefined ? m(PROMPT_COPY_HINT_KEY) : label;
   return renderPreBlock({
     ...(heading === null ? {} : { label: heading }),
-    command: PROMPT_PREVIEW,
+    command: m(PROMPT_PREVIEW_KEY),
     actionId: PROMPT_COPY_ACTION,
     copyText: prompt,
-    copyLabel: PROMPT_COPY_HINT,
+    copyLabel: m(PROMPT_COPY_HINT_KEY),
   });
 }
 
@@ -137,7 +144,7 @@ export function copyArea(input: CopyAreaInput): string {
     return parts.join('');
   }
   if (parts.length > 0) return parts.join('');
-  return renderEmptyBlock({ text: input.emptyText ?? COPY_EMPTY_TEXT });
+  return renderEmptyBlock({ text: input.emptyText ?? m('skill-bill.shared-copyArea.c006') });
 }
 
 /** 数据位的那份数据 → 三种格式各算一份 ＋ 菜单提示（`buildDataText` 是本仓复制文本的唯一出口）。
@@ -152,7 +159,7 @@ function formatsOf(data: DataTextInput, hints?: readonly string[], textOverride?
   const title = typeof (data as { title?: unknown }).title === 'string'
     && ((data as { title?: string }).title ?? '').trim() !== ''
     ? (data as { title: string }).title
-    : '记账数据';
+    : m('skill-bill.shared-copyArea.c001');
   return {
     text: textOverride ?? buildDataText({ ...data, format: 'text', title }),
     json: jsonOverride ?? buildDataText({ ...data, format: 'json' }),
@@ -164,11 +171,11 @@ function formatsOf(data: DataTextInput, hints?: readonly string[], textOverride?
 /** ③ 复制日志的第 2–6 段入参：本页由哪条命令渲染、数据从哪来、写了多少行、什么时候。 */
 export function copyLog(input: CopyLogInput): CopyLogFields {
   return {
-    thinking: LOG_THINKING,
-    dataStructure: input.source === undefined || input.source === '' ? COPY_EMPTY_TEXT : input.source,
+    thinking: m('skill-bill.shared-copyArea.c004'),
+    dataStructure: input.source === undefined || input.source === '' ? m('skill-bill.shared-copyArea.c006') : input.source,
     callChain: input.detail === undefined || input.detail === '' ? input.command : input.command + ' ｜ ' + input.detail,
-    timestamp: input.version === undefined || input.version === '' ? input.actionAt : input.actionAt + ' · 版本 ' + input.version,
-    exception: LOG_EXCEPTION,
+    timestamp: input.version === undefined || input.version === '' ? input.actionAt : m('skill-bill.shared-copyArea.c002', { p0: String(input.actionAt), p1: String(input.version) }),
+    exception: m('skill-bill.shared-copyArea.c005'),
   };
 }
 
@@ -177,8 +184,9 @@ const EXIT_MARK_ACTION = 'ilife-exit-undo';
 /** 退出口的标题与说明（本轮整改：`危险色出口` 是设计自指词，`restore` 是内部词，都不上屏）。
  *  t728：两句之间的 `；` 换成句号——分号在这里不是并列，是把两件事挤进一句的排版手法
  *  （用户逐字要求 5 点名的那类）；拆成两句之后读法仍是「怎么做」＋「撤销之后会怎样」。 */
-const EXIT_TITLE = '想反悔（撤销这一笔）';
-const EXIT_NOTE = '要撤销这一笔，点下面那颗「复制数据」，里面带着一句撤销的话。撤销之后记录还在，随时可以恢复。';
+/** 退出口标题与说明的词条键（#1215）：`c018`／`c019`。 */
+const EXIT_TITLE_KEY = 'skill-bill.shared-copyArea.c018';
+const EXIT_NOTE_KEY = 'skill-bill.shared-copyArea.c019';
 
 /** ④ 回执页退出口：**一枚非交互的 danger 标记 ＋ 一句指路**（#733 改）。
  *
@@ -195,6 +203,6 @@ const EXIT_NOTE = '要撤销这一笔，点下面那颗「复制数据」，里�
  * 为什么不做成「真能点」：本页下面复制区那颗「复制数据」的载荷里**已经带着**可重跑的撤销指令，
  *  退出口再给一颗同样功能的按钮，就是同一件事两颗按钮（t410 拆掉过一次，不该拆回去）。 */
 export function undoExit(recordId: number): string {
-  return renderStatusBadge({ status: 'danger', text: EXIT_TITLE })
-    + renderCaliberLine(EXIT_NOTE + '（记录编号 ' + recordId + '）');
+  return renderStatusBadge({ status: 'danger', text: m(EXIT_TITLE_KEY) })
+    + renderCaliberLine(m('skill-bill.shared-copyArea.c003', { p0: m(EXIT_NOTE_KEY), p1: String(recordId) }));
 }

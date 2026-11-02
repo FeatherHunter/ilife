@@ -9,6 +9,7 @@
  */
 
 /** 本件的类名根。 */
+import { m } from '../../entries/index.js';
 export const NOTE_BLOCK_CLASS = 'ilife-block-note-block';
 
 /** 槽位闭集。 */
@@ -59,10 +60,10 @@ export const NOTE_BLOCK_PEEK_CHARS = 24;
 export const NOTE_BLOCK_ELLIPSIS = '…';
 
 /** 字数那一格的说法（「412 字」）。 */
-export const NOTE_BLOCK_LEN_SUFFIX = ' 字';
+export function NOTE_BLOCK_LEN_SUFFIX(): string { return m('base-render.components-note-block-attrs.c001'); }
 
 /** 归属行中间那个前导号（样式画，不由标记写；这里只记它是什么）。 */
-export const NOTE_BLOCK_ATT_PREFIX = '附着于';
+export function NOTE_BLOCK_ATT_PREFIX(): string { return m('base-render.components-note-block-attrs.c002'); }
 
 /** 备注块的入参。`text` 必填——没有正文的「备注块」是一个空壳。 */
 export interface NoteBlockInput {

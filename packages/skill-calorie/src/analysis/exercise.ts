@@ -11,6 +11,7 @@ import { FetchError } from '../fetch/errors.js';
 import { EX_ALIVE, getActivityFactor, parseDate, shiftISODate } from './utils.js';
 import { ok, rejection } from './result.js';
 import type { AnalysisResult } from './result.js';
+import { m } from '../entries/index.js';
 
 const round = (n: number): number => Math.round(n);
 
@@ -45,7 +46,7 @@ export function exerciseTrend(db: DatabaseSync, startDate: string, endDate?: str
     'SELECT date AS d, exercise_type AS t, duration_minutes AS dur, calories_burned AS k FROM exercise_log WHERE date >= ? AND date <= ? AND ' + EX_ALIVE + ' ORDER BY date ASC',
   ).all(start, end) as unknown as Array<{ d: string; t: string; dur: number | null; k: number | null }>;
   const rows: Array<[string, string, number | null, number | null]> = raw.map((r) => [r.d, r.t, r.dur, r.k]);
-  if (rows.length === 0) return rejection('无运动记录（' + start + ' ~ ' + end + '）');
+  if (rows.length === 0) return rejection(m('skill-calorie.analysis-exercise.c001', { p0: String(start), p1: String(end) }));
   const span = daysBetween(start, end) + 1;
   const dates = [...new Set(rows.map((r) => r[0]))].sort();
   const totalCal = rows.reduce((a, r) => a + (r[3] ?? 0), 0);
@@ -72,9 +73,13 @@ export function exerciseTrend(db: DatabaseSync, startDate: string, endDate?: str
     avgMinutesPerDay: durationMissing ? null : round(totalDur / span),
     longestStreakDays: longestStreak,
     longestRestDays: maxGap,
-    alert: maxGap >= 7 ? '建议动起来' : null,
+    alert: maxGap >= 7 ? m('skill-calorie.analysis-exercise.c002') : null,
     durationMissing,
-  }, '运动 ' + dates.length + '/' + span + ' 天，总消耗 ' + totalCal + ' 卡');
+  }, m('skill-calorie.analysis-exercise.c003', {
+    p0: String(dates.length),
+    p1: String(span),
+    p2: String(totalCal),
+  }));
 }
 
 export interface ExerciseTypeStat { type: string; calories: number; count: number; minutes: number; calPct: number; countPct: number; minutesPct: number }
@@ -86,7 +91,7 @@ export function exerciseTypeBreakdown(db: DatabaseSync, startDate: string, endDa
     'SELECT exercise_type AS t, SUM(calories_burned) AS k, COUNT(*) AS n, SUM(duration_minutes) AS dur FROM exercise_log WHERE date >= ? AND date <= ? AND ' + EX_ALIVE + ' GROUP BY exercise_type ORDER BY SUM(calories_burned) DESC',
   ).all(start, end) as unknown as Array<{ t: string; k: number | null; n: number; dur: number | null }>;
   const rows: Array<[string, number | null, number, number | null]> = raw.map((r) => [r.t, r.k, r.n, r.dur]);
-  if (rows.length === 0) return rejection('无运动记录（' + start + ' ~ ' + end + '）');
+  if (rows.length === 0) return rejection(m('skill-calorie.analysis-exercise.c004', { p0: String(start), p1: String(end) }));
   const totalCal = rows.reduce((a, r) => a + (r[1] ?? 0), 0);
   const totalCnt = rows.reduce((a, r) => a + r[2], 0);
   const totalDur = rows.reduce((a, r) => a + (r[3] ?? 0), 0);
@@ -99,7 +104,7 @@ export function exerciseTypeBreakdown(db: DatabaseSync, startDate: string, endDa
     countPct: totalCnt === 0 ? 0 : round((r[2] / totalCnt) * 100),
     minutesPct: totalDur === 0 ? 0 : round(((r[3] ?? 0) / totalDur) * 100),
   }));
-  return ok({ totalCalories: totalCal, totalCount: totalCnt, totalMinutes: totalDur, types }, types.length + ' 种运动类型');
+  return ok({ totalCalories: totalCal, totalCount: totalCnt, totalMinutes: totalDur, types }, m('skill-calorie.analysis-exercise.c005', { p0: String(types.length) }));
 }
 
 export interface DeficitContribution { dietDeficit: number; dietContribPct: number; exerciseDeficit: number; exerciseContribPct: number; evaluation: string; bmr: number; currentWeight: number }
@@ -119,7 +124,7 @@ export function exerciseDeficitContribution(db: DatabaseSync, startDate: string,
   let exPct: number;
   if (totalDeficit === 0) { dietPct = 50; exPct = 50; }
   else { dietPct = (Math.abs(dietDeficit) / Math.abs(totalDeficit)) * 100; exPct = (totalEx / Math.abs(totalDeficit)) * 100; }
-  const evaluation = exPct < 15 ? '运动贡献偏低，建议增加运动比例' : exPct > 25 ? '运动贡献较高' : '运动贡献适中';
+  const evaluation = exPct < 15 ? m('skill-calorie.analysis-exercise.c006') : exPct > 25 ? m('skill-calorie.analysis-exercise.c007') : m('skill-calorie.analysis-exercise.c008');
   return ok({
     dietDeficit: round(dietDeficit),
     dietContribPct: round(dietPct),
@@ -128,7 +133,7 @@ export function exerciseDeficitContribution(db: DatabaseSync, startDate: string,
     evaluation,
     bmr: round(bmr),
     currentWeight: Math.round(currentWeight * 10) / 10,
-  }, '运动贡献 ' + round(exPct) + '% — ' + evaluation);
+  }, m('skill-calorie.analysis-exercise.c009', { p0: String(round(exPct)), p1: String(evaluation) }));
 }
 
 export interface ReviewAnomaly { type: 'low_completion' | 'over_completion' | 'no_actual' | 'rest_but_done'; msg: string }
@@ -251,20 +256,30 @@ export function exerciseReview(db: DatabaseSync, startDate: string, endDate?: st
     let note: string | null = null;
     let completionRate: number | null = null;
     if (plan.unstarted) {
-      note = '计划尚未开始(起始 ' + (plan.config as { start_date: string }).start_date + ')';
+      note = m('skill-calorie.analysis-exercise.c010', {
+        p0: String((plan.config as { start_date: string }).start_date),
+      });
     } else if (planTotalSets === 0 && actualTotalSets === 0) {
-      note = '休息日 / 无计划无实绩';
+      note = m('skill-calorie.analysis-exercise.c011');
     } else if (planTotalSets === 0 && actualTotalSets > 0) {
-      note = '计划休息但实做了 ' + actualTotalSets + ' 组';
+      note = m('skill-calorie.analysis-exercise.c012', { p0: String(actualTotalSets) });
       anomalies.push({ type: 'rest_but_done', msg: '⚠️ ' + note });
     } else if (planTotalSets > 0 && actualTotalSets === 0) {
-      note = '计划有训练但完全未做';
+      note = m('skill-calorie.analysis-exercise.c013');
       completionRate = 0.0;
       anomalies.push({ type: 'no_actual', msg: '❌ ' + note });
     } else {
       completionRate = (actualTotalSets / planTotalSets) * 100;
-      if (completionRate < 50) anomalies.push({ type: 'low_completion', msg: '⚠️ 完成率仅 ' + Math.round(completionRate) + '%（实做 ' + actualTotalSets + '/' + planTotalSets + ' 组数）' });
-      else if (completionRate > 130) anomalies.push({ type: 'over_completion', msg: '⚠️ 超额完成 (' + Math.round(completionRate) + '%)（' + actualTotalSets + '/' + planTotalSets + ' 组数）' });
+      if (completionRate < 50) anomalies.push({ type: 'low_completion', msg: m('skill-calorie.analysis-exercise.c014', {
+        p0: String(Math.round(completionRate)),
+        p1: String(actualTotalSets),
+        p2: String(planTotalSets),
+      }) });
+      else if (completionRate > 130) anomalies.push({ type: 'over_completion', msg: m('skill-calorie.analysis-exercise.c015', {
+        p0: String(Math.round(completionRate)),
+        p1: String(actualTotalSets),
+        p2: String(planTotalSets),
+      }) });
     }
     results.set(d, {
       date: d,
@@ -308,5 +323,5 @@ export function exerciseReview(db: DatabaseSync, startDate: string, endDate?: st
     totalCalories: days.reduce((a, r) => a + (r.caloriesBurned ?? 0), 0),
     volume: { weeks: volumeWeeks, movements: volumeMovements, totalPlan: round([...volPlanWeek.values()].reduce((a, b) => a + b, 0)), totalActual: round(totalActualTon), hasActual: totalActualTon > 0 },
   };
-  return ok(data, '训练复盘 ' + days.length + ' 天');
+  return ok(data, m('skill-calorie.analysis-exercise.c016', { p0: String(days.length) }));
 }

@@ -10,6 +10,7 @@ import { seriesAvg, seriesDelta } from '../series.js';
 import { EX_ALIVE } from '../utils.js';
 import { mealBucketOf } from '../../shared/meal.js';
 import type { DaySeries } from '../series.js';
+import { m } from '../../entries/index.js';
 
 export const MIN_DAYS = 7;
 export const PRED_MIN = 14;
@@ -41,7 +42,7 @@ export function daysBetween(d1: string, d2: string): number {
 
 export function base(series: DaySeries[], kind: string, title: string): Diagnosis {
   return {
-    kind, title, window: '自定义',
+    kind, title, window: m('skill-calorie.analysis-anomaly-common.c001'),
     start: series.length > 0 ? (series[0] as DaySeries).date : null,
     end: series.length > 0 ? (series[series.length - 1] as DaySeries).date : null,
     days: series.length, findings: [], degraded: false, degradeMsg: '', insight: '',
@@ -60,7 +61,7 @@ export function topFoods(db: DatabaseSync, start: string, end: string, col = 'ca
   if (!allowed.includes(col)) throw new FetchError('TOP 列非法: ' + col);
   const raw = db.prepare(
     'SELECT food_name AS n, SUM(' + col + ') AS total, COUNT(*) AS times FROM food_log WHERE date BETWEEN ? AND ? AND food_name != ? GROUP BY food_name ORDER BY total DESC LIMIT ?',
-  ).all(start, end, '💧水', limit) as unknown as Array<{ n: string; total: number | null; times: number }>;
+  ).all(start, end, m('skill-calorie.analysis-anomaly-common.c002'), limit) as unknown as Array<{ n: string; total: number | null; times: number }>;
   return raw.map((r) => ({ food: r.n, total: round1(r.total ?? 0), times: r.times }));
 }
 
@@ -71,13 +72,13 @@ export function topFoods(db: DatabaseSync, start: string, end: string, col = 'ca
  *  同一批行——两个页面对同一天给出同样的餐次统计。 */
 export function mealStructure(db: DatabaseSync, start: string, end: string): Record<string, { times: number; share: number }> {
   const raw = db.prepare(
-    "SELECT time AS t FROM food_log WHERE date BETWEEN ? AND ? AND food_name != '💧水'",
+    m('skill-calorie.analysis-anomaly-common.c003'),
   ).all(start, end) as unknown as Array<{ t: string | null }>;
   const buckets: Record<string, number> = { '早餐': 0, '午餐': 0, '晚餐': 0, '加餐/夜宵': 0 };
   for (const r of raw) {
     const b = mealBucketOf(r.t);
     if (b === null) continue;
-    const key = b === '加餐' ? '加餐/夜宵' : b;
+    const key = b === '加餐' ? m('skill-calorie.analysis-anomaly-common.c004') : b;
     buckets[key] = (buckets[key] as number) + 1;
   }
   const total = Object.values(buckets).reduce((a, b) => a + b, 0) || 1;

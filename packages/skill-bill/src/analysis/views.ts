@@ -13,13 +13,15 @@
 import type { BillRow } from '../fetch/db.js';
 import { l1Of } from '../shared/category.js';
 import { calcKpi, isTransfer } from '../shared/kpi.js';
+import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 // 分类聚合（支出侧绝对值降序，转账除外）。
 export function calcCategories(records: BillRow[]): { category: string; total: number; count: number }[] {
   const agg = new Map<string, { category: string; total: number; count: number }>();
   for (const r of records) {
     if (r.amount >= 0 || isTransfer(r)) continue;
-    const cat = r.category || '其他';
+    const cat = r.category || m('skill-bill.analysis-views.c001');
     const it = agg.get(cat) ?? { category: cat, total: 0, count: 0 };
     it.total += Math.abs(r.amount);
     it.count += 1;
@@ -52,10 +54,21 @@ export function buildCompare(args: { labelA: string; labelB: string; a: BillRow[
   const ka = calcKpi(args.a); const kb = calcKpi(args.b);
   const fmt = (n: number): string => String(n);
   const lines = [
-    `${args.labelA} vs ${args.labelB}：笔数 ${ka.count}→${kb.count}，支出 ${fmt(ka.expense)}→${fmt(kb.expense)}，收入 ${fmt(ka.income)}→${fmt(kb.income)}，净额 ${fmt(ka.net)}→${fmt(kb.net)}。`,
+    m('skill-bill.analysis-views.c002', {
+      p0: String(args.labelA),
+      p1: String(args.labelB),
+      p2: String(ka.count),
+      p3: String(kb.count),
+      p4: String(fmt(ka.expense)),
+      p5: String(fmt(kb.expense)),
+      p6: String(fmt(ka.income)),
+      p7: String(fmt(kb.income)),
+      p8: String(fmt(ka.net)),
+      p9: String(fmt(kb.net)),
+    }),
   ];
   const d = Math.round((kb.expense - ka.expense) * 100) / 100;
-  lines.push('支出变化：' + (d >= 0 ? '+' : '') + d + '。');
+  lines.push(m('skill-bill.analysis-views.c003', { p0: String(d >= 0 ? '+' : ''), p1: String(d) }));
   return { summary: lines.join('\n') };
 }
 
@@ -69,15 +82,19 @@ export function buildTrend(kind: string, records: BillRow[], opts: { limit?: num
     byMonth.set(m, Math.round(((byMonth.get(m) || 0) + Math.abs(r.amount)) * 100) / 100);
   }
   const months = [...byMonth.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-  const lines = [`${kind}：共 ${records.length} 笔，` + months.map(([m, v]) => `${m} ${v}`).join('、') + '。'];
+  const lines = [m('skill-bill.analysis-views.c004', {
+    p0: String(kind),
+    p1: String(records.length),
+    p2: String(listJoin(currentRenderLanguage(), months.map(([m, v]) => `${m} ${v}`))),
+  })];
   if (kind === 'top' || kind === 'trend') {
     const top = [...records].filter((r) => r.amount < 0 && !isTransfer(r)).sort((a, b) => a.amount - b.amount).slice(0, limit);
     for (const r of top) lines.push(`${r.time.slice(0, 10)} ${r.category} ${r.amount} ${r.note}`.trim());
   }
   if (kind === 'insight' || kind === 'anomaly') {
     const cats = calcCategories(records).slice(0, 3);
-    if (cats.length) lines.push('主要支出：' + cats.map((c) => `${c.category} ${c.total}`).join('、') + '。');
-    else lines.push('样本不足，无显著异常。');
+    if (cats.length) lines.push(m('skill-bill.analysis-views.c005', { p0: String(listJoin(currentRenderLanguage(), cats.map((c) => `${c.category} ${c.total}`))) }));
+    else lines.push(m('skill-bill.analysis-views.c006'));
   }
   return { summary: lines.join('\n') };
 }

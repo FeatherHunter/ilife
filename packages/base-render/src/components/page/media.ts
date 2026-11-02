@@ -7,6 +7,7 @@
  */
 
 import { esc, reqText, optText } from './shared.js';
+import { m } from '../../entries/index.js';
 /* ══════════════════════════════════════════════════════════════
  * ② 图片与 GIF 容器：明确宽高比 ＋ max-width ＋ object-fit
  * ══════════════════════════════════════════════════════════════ */
@@ -148,7 +149,7 @@ export function renderMediaPlaceholder(input: MediaPlaceholderInput): string {
 /** 本件样式段（族组装器 `pageShapeCss()` 按原顺序拼回）。 */
 export function mediaCss(p: string, root: string): string[] {
   return [
-      '/* ② 图片／GIF 容器：比例写在容器上，图按 object-fit 摆；没有图时是人话占位，不出黑底条。 */',
+      m('base-render.components-page-media.c001'),
       root + ' .' + p + 'block-media {',
       '  margin: 16px 0;',
       '}',
@@ -211,8 +212,8 @@ export function mediaCss(p: string, root: string): string[] {
       '  line-height: 1.6;',
       '  overflow-wrap: anywhere;',
       '}',
-      '/* ②b 占位件（`renderMediaPlaceholder`）：框体走上面 ② 的同一套规则（同比例／同圆角／同外边距），',
-      '   这里只补框内那两句人话的槽位；只用既有语义词，不新增颜色。 */',
+      m('base-render.components-page-media.c002'),
+      m('base-render.components-page-media.c003'),
       root + ' .' + p + 'block-media-empty {',
       '  display: flex;',
       '  flex-direction: column;',

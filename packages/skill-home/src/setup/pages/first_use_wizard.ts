@@ -8,6 +8,7 @@ import { readFileSync } from 'node:fs';
 import { platform, arch } from 'node:os';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { m } from '../../entries/index.js';
 
 export const FAMILY = 'first_use_wizard' as const;
 
@@ -53,7 +54,71 @@ export const REQUIRED_BLOCKS = {
   readonly status: readonly string[];
 };
 
-const STEPS = ['环境检测', '路径确认', '建库', '建分类', '引导录入', '完成回执'] as const;
+/** 六个步骤的标题（渲染期取词：模块加载时取词会把语言固化）。 */
+function stepLabels(): readonly string[] {
+  return [m('skill-home.setup-pages-first-use-wizard.c041'), m('skill-home.setup-pages-first-use-wizard.c042'), m('skill-home.setup-pages-first-use-wizard.c043'), m('skill-home.setup-pages-first-use-wizard.c044'), m('skill-home.setup-pages-first-use-wizard.c045'), m('skill-home.setup-pages-first-use-wizard.c046')];
+}
+
+/** 幂等回执的判据：用同一条词条（care.c016「已初始化：home.db 幂等（{p0} 件）」）拼出前缀，
+ *  按结构认「已初始化」这一条回执——换语言时前缀一起换，判据跟着走，不拿字面量当判据。 */
+function initializedReceiptPrefix(): string {
+  const probe = m('skill-home.family-care.c016', { p0: '\u0001' });
+  return probe.split('\u0001')[0] ?? '';
+}
+
+/** 页面审计契约里「开始录入第一批」这个块名（属性取值要逐字等于契约原文）。 */
+const NEED_GUIDE = '开始录入第一批';
+
+/** 页内文案（渲染期取词：写成函数，模块加载时不取词）。 */
+function pageLabels() {
+  return {
+    eyebrow: m('skill-home.setup-pages-first-use-wizard.c008'),
+    lead: m('skill-home.setup-pages-first-use-wizard.c009'),
+    hSteps: m('skill-home.setup-pages-first-use-wizard.c010'),
+    hEnv: m('skill-home.setup-pages-first-use-wizard.c011'),
+    thOs: m('skill-home.setup-pages-first-use-wizard.c012'),
+    thRuntime: m('skill-home.setup-pages-first-use-wizard.c013'),
+    thDb: m('skill-home.setup-pages-first-use-wizard.c014'),
+    hDbResult: m('skill-home.setup-pages-first-use-wizard.c015'),
+    cardItems: m('skill-home.setup-pages-first-use-wizard.c016'),
+    itemsSuffix: m('skill-home.setup-pages-first-use-wizard.c017'),
+    cardState: m('skill-home.setup-pages-first-use-wizard.c018'),
+    noteDone: m('skill-home.setup-pages-first-use-wizard.c019'),
+    noteTodo: m('skill-home.setup-pages-first-use-wizard.c020'),
+    hNext: m('skill-home.setup-pages-first-use-wizard.c021'),
+    nextBody: m('skill-home.setup-pages-first-use-wizard.c022'),
+    hOps: m('skill-home.setup-pages-first-use-wizard.c023'),
+    btnInit: m('skill-home.setup-pages-first-use-wizard.c024'),
+    btnGuide: m('skill-home.setup-pages-first-use-wizard.c025'),
+    btnEnv: m('skill-home.setup-pages-first-use-wizard.c026'),
+    btnRetry: m('skill-home.setup-pages-first-use-wizard.c027'),
+    btnKnow: m('skill-home.setup-pages-first-use-wizard.c028'),
+    hEmpty: m('skill-home.setup-pages-first-use-wizard.c029'),
+    emptyBody: m('skill-home.setup-pages-first-use-wizard.c030'),
+    hStatus: m('skill-home.setup-pages-first-use-wizard.c031'),
+    statusBody: m('skill-home.setup-pages-first-use-wizard.c032'),
+    rawSummary: m('skill-home.setup-pages-first-use-wizard.c033'),
+  };
+}
+
+/** 按钮上「复制给助手」的指令文案。 */
+function promptLabels() {
+  return {
+    btnInitPrompt: m('skill-home.setup-pages-first-use-wizard.c034'),
+    btnGuidePrompt: m('skill-home.setup-pages-first-use-wizard.c035'),
+    btnEnvPrompt: m('skill-home.setup-pages-first-use-wizard.c036'),
+    btnRetryPrompt: m('skill-home.setup-pages-first-use-wizard.c037'),
+  };
+}
+
+/** 页内脚本的提示语（内联脚本只做拼接，文案在 TS 侧取词）。 */
+function toastLabels() {
+  return {
+    copyFail: m('skill-home.setup-pages-first-use-wizard.c038'),
+    copied: m('skill-home.setup-pages-first-use-wizard.c039'),
+    got: m('skill-home.setup-pages-first-use-wizard.c040'),
+  };
+}
 
 function msgOf(env: Envelope): string {
   const d = env.data as Record<string, unknown>;
@@ -69,21 +134,27 @@ function countOf(msg: string): string {
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
 // 复制区走共用件（envelope 投影，三格式恒开；receipt 形 data={ok,message} 同走 buildDataText）；`ctx.command` 由交付链供给，直调缺省按本族主 key。
 export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
+  const L = pageLabels();
+  const PT = promptLabels();
+  const T = toastLabels();
   const template = readFileSync(new URL('../../../templates/setup/first_use_wizard.html', import.meta.url), 'utf8');
   const msg = msgOf(env);
-  const done = msg.includes('已初始化');
+  const done = msg.startsWith(initializedReceiptPrefix());
   const count = countOf(msg);
-  const steps = STEPS.map((t, i) => {
+  const steps = stepLabels().map((t, i) => {
     const st = done ? 'done' : i === 0 ? 'current' : 'pending';
-    const label = done ? '已完成' : i === 0 ? '进行中' : '待办';
+    const label = done ? m('skill-home.setup-pages-first-use-wizard.c001') : i === 0 ? m('skill-home.setup-pages-first-use-wizard.c002') : m('skill-home.setup-pages-first-use-wizard.c003');
     return '<div class="su-step" data-status="' + st + '"><b>' + (i + 1) + '</b>'
       + escapeHtml(t) + '<i>' + label + '</i></div>';
   }).join('');
   // #817 ④：实心只留「开始录入第一批」（页内「下一步」指向它），「开始初始化」降 ghost（只在完成后那支渲染）。
-  const opInit = '<button class="su-btn ghost" data-need="开始初始化" data-t="请帮我完成首次使用初始化">开始初始化</button>';
-  const opGuide = '<button class="su-btn' + (done ? '' : ' alt') + '" data-need="开始录入第一批" data-t="请帮我录入第一批物品">开始录入第一批</button>';
+  const opInit = '<button class="su-btn ghost" data-need="开始初始化" data-t="' + escapeHtml(PT.btnInitPrompt)
+    + '">' + escapeHtml(L.btnInit) + '</button>';
+  const opGuide = '<button class="su-btn' + (done ? '' : ' alt') + '" data-need="' + NEED_GUIDE + '" data-t="'
+    + escapeHtml(PT.btnGuidePrompt) + '">' + escapeHtml(L.btnGuide) + '</button>';
   const opFirst = done ? opGuide + opInit
-    : '<button class="su-btn" data-need="开始初始化" data-t="请帮我完成首次使用初始化">开始初始化</button>' + opGuide;
+    : '<button class="su-btn" data-need="开始初始化" data-t="' + escapeHtml(PT.btnInitPrompt)
+      + '">' + escapeHtml(L.btnInit) + '</button>' + opGuide;
   const content = '<style>'
     + '.su-wrap{max-width:960px;margin:0 auto;padding:0 0 24px}'
     + '.su-hero{background:linear-gradient(180deg,#fff,#f8fbff);border:1px solid #e3e3e8;border-radius:20px;padding:24px;margin:0 0 16px}'
@@ -119,35 +190,35 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '@media(max-width:820px){.su-steps{grid-template-columns:repeat(2,minmax(0,1fr))}.su-btn{width:100%}}'
     + '</style>'
     + '<div class="su-wrap">'
-    + '<div class="su-hero"><div class="su-eyebrow">开始使用</div>'
-    + '<p class="su-lead">跟着六个步骤完成初始化，随时可以重进本页确认状态。</p></div>'
+    + '<div class="su-hero"><div class="su-eyebrow">' + escapeHtml(L.eyebrow) + '</div>'
+    + '<p class="su-lead">' + escapeHtml(L.lead) + '</p></div>'
     + '<section class="su-sec" data-block="fields">'
-    + '<h2 data-need="6步步骤条">六个步骤</h2>'
+    + '<h2 data-need="6步步骤条">' + escapeHtml(L.hSteps) + '</h2>'
     + '<div class="su-steps" data-need="done" data-extra="current fail pending">' + steps + '</div>'
-    + '<h2 data-need="环境信息">环境信息</h2>'
+    + '<h2 data-need="环境信息">' + escapeHtml(L.hEnv) + '</h2>'
     + '<div class="su-tablewrap"><table class="su-table">'
-    + '<tr><th>操作系统</th><td>' + escapeHtml(platform()) + ' ' + escapeHtml(arch()) + '</td></tr>'
-    + '<tr><th>运行环境</th><td>' + escapeHtml(process.version) + '</td></tr>'
-    + '<tr><th>库状态</th><td>' + escapeHtml(done ? '已初始化' : msg === '' ? '尚未初始化' : msg) + '</td></tr>'
+    + '<tr><th>' + escapeHtml(L.thOs) + '</th><td>' + escapeHtml(platform()) + ' ' + escapeHtml(arch()) + '</td></tr>'
+    + '<tr><th>' + escapeHtml(L.thRuntime) + '</th><td>' + escapeHtml(process.version) + '</td></tr>'
+    + '<tr><th>' + escapeHtml(L.thDb) + '</th><td>' + escapeHtml(done ? m('skill-home.setup-pages-first-use-wizard.c004') : msg === '' ? m('skill-home.setup-pages-first-use-wizard.c005') : msg) + '</td></tr>'
     + '</table></div>'
-    + '<h2 data-need="建库结果">建库结果</h2>'
+    + '<h2 data-need="建库结果">' + escapeHtml(L.hDbResult) + '</h2>'
     + '<div class="su-grid">'
-    + '<div class="su-card"><b>已有物品</b><span>' + escapeHtml(count) + ' 件</span></div>'
-    + '<div class="su-card"><b>初始化状态</b><span class="' + (done ? 'su-ok' : 'su-warn') + '">' + (done ? '已完成' : '待初始化') + '</span></div>'
+    + '<div class="su-card"><b>' + escapeHtml(L.cardItems) + '</b><span>' + escapeHtml(count) + escapeHtml(L.itemsSuffix) + '</span></div>'
+    + '<div class="su-card"><b>' + escapeHtml(L.cardState) + '</b><span class="' + (done ? 'su-ok' : 'su-warn') + '">' + (done ? m('skill-home.setup-pages-first-use-wizard.c006') : m('skill-home.setup-pages-first-use-wizard.c007')) + '</span></div>'
     + '</div>'
     + (done
-      ? '<p class="su-note" data-need="幂等提示：已初始化">已经初始化过了，直接使用即可，重复进入不会重复建库。</p>'
-      : '<p class="su-note" data-need="幂等提示：已初始化">还没有初始化，完成后重复进入会看到幂等提示：已初始化，不会重复建库。</p>')
-    + '<h2 data-need="下一步">下一步</h2>'
-    + '<p>初始化完成后，建议先去查一次异常，确认数据健康，再开始录入第一批物品。</p>'
+      ? '<p class="su-note" data-need="幂等提示：已初始化">' + escapeHtml(L.noteDone) + '</p>'
+      : '<p class="su-note" data-need="幂等提示：已初始化">' + escapeHtml(L.noteTodo) + '</p>')
+    + '<h2 data-need="下一步">' + escapeHtml(L.hNext) + '</h2>'
+    + '<p>' + escapeHtml(L.nextBody) + '</p>'
     + '</section>'
     + '<section class="su-sec" data-block="operations">'
-    + '<h2>可以做的操作</h2>'
+    + '<h2>' + escapeHtml(L.hOps) + '</h2>'
     + '<div class="su-actions">'
     + opFirst
-    + '<button class="su-btn ghost" data-need="先配置环境变量" data-t="请帮我配置数据存储环境">先配置环境变量</button>'
-    + '<button class="su-btn ghost" data-need="一键重试" data-t="初始化失败请重试">一键重试</button>'
-    + '<button class="su-btn ghost" data-need="知道了" id="suKnow">知道了</button>'
+    + '<button class="su-btn ghost" data-need="先配置环境变量" data-t="' + escapeHtml(PT.btnEnvPrompt) + '">' + escapeHtml(L.btnEnv) + '</button>'
+    + '<button class="su-btn ghost" data-need="一键重试" data-t="' + escapeHtml(PT.btnRetryPrompt) + '">' + escapeHtml(L.btnRetry) + '</button>'
+    + '<button class="su-btn ghost" data-need="知道了" id="suKnow">' + escapeHtml(L.btnKnow) + '</button>'
     + '</div>'
     + '<span data-need="复制数据" hidden></span>'
     + '<span data-need="复制日志" hidden></span>'
@@ -157,24 +228,25 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
       })
     + '</section>'
     + '<section class="su-sec" data-block="empty">'
-    + '<h2>这种时候会怎样</h2>'
+    + '<h2>' + escapeHtml(L.hEmpty) + '</h2>'
     // #817：一键重试在「可以做的操作」区，那一段在本段之前，方位词写「上面」。
-    + '<p data-need="异常：数据解析失败／数据校验失败／初始化失败">如果页面提示解析失败、校验失败或者初始化失败，用上面的一键重试再走一次，大多数情况一次就能过。</p>'
+    + '<p data-need="异常：数据解析失败／数据校验失败／初始化失败">' + escapeHtml(L.emptyBody) + '</p>'
     + '</section>'
     + '<section class="su-sec" data-block="status">'
-    + '<h2>口径说明</h2>'
-    + '<p>步骤有四种状态：已完成，进行中，失败，待办。当前状态也标在每个步骤卡片上。</p>'
+    + '<h2>' + escapeHtml(L.hStatus) + '</h2>'
+    + '<p>' + escapeHtml(L.statusBody) + '</p>'
     + '</section>'
-    + '<details hidden class="su-raw"><summary>原始回执</summary><pre>'
+    + '<details hidden class="su-raw"><summary>' + escapeHtml(L.rawSummary) + '</summary><pre>'
     + escapeHtml(JSON.stringify(env.data)) + '</pre></details>'
     + '</div>'
     + '<div class="su-toast" id="suToast" role="status"></div>'
     + '<script>'
+    + 'var T=' + JSON.stringify(T) + ';'
     + 'function suToast(t){var el=document.getElementById("suToast");if(!el)return;el.textContent=t;el.classList.add("show");setTimeout(function(){el.classList.remove("show")},3000)}'
     + 'function suCopy(text,ok){function fb(){try{var ta=document.createElement("textarea");ta.value=text;document.body.appendChild(ta);ta.select();var ok=false;try{ok=document.execCommand("copy")}catch(e){}document.body.removeChild(ta);return ok}catch(e){return false}}'
-    + 'if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(function(){suToast(ok)}).catch(function(){suToast(fb()?ok:"复制失败，请长按手动复制")})}else{suToast(fb()?ok:"复制失败，请长按手动复制")}}'
-    + 'document.querySelectorAll("[data-t]").forEach(function(b){b.addEventListener("click",function(){suCopy(b.getAttribute("data-t"),"指令已复制，发给助手即可执行")})});'
-    + 'var kd=document.getElementById("suKnow");if(kd)kd.addEventListener("click",function(){suToast("收到")});'
+    + 'if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(function(){suToast(ok)}).catch(function(){suToast(fb()?ok:T.copyFail)})}else{suToast(fb()?ok:T.copyFail)}}'
+    + 'document.querySelectorAll("[data-t]").forEach(function(b){b.addEventListener("click",function(){suCopy(b.getAttribute("data-t"),T.copied)})});'
+    + 'var kd=document.getElementById("suKnow");if(kd)kd.addEventListener("click",function(){suToast(T.got)});'
     + '</script>'
     + '';
   return fillTemplate(template, content);

@@ -4,7 +4,12 @@
  * 适配器（调用 RPC）共用同一份定义；单测与 loader 回路以此为准。
  * 通道命名遵守宿主约束：单段且不等于 /api（见 cookbook「RPC 通道」）。
  */
-export const RPC_CHANNEL = '/ilife-calorie' as const;
+/** 通道名的唯一可编辑处是 `tooling/shared-copy.json`（#1231）：本行只是再导出。
+ *
+ *  为什么不在本文件写值：这条串在六家契约件与总管导航表里各有一份镜像（共七份），
+ *  手写副本漂开一次，面板就取不到这家的配置体检（#735 的恒空回执）。生成物见
+ *  `shared-copy.generated.ts`；改值只改那张表，再跑 `node tooling/gen-shared-copy.mjs`。 */
+export { RPC_CHANNEL } from './shared-copy.generated.js';
 export const RPC_ENDPOINT_READ = 'read' as const;
 
 /** #676 配置端点：读设置页整面、保存一份取值、重置为默认。同走一条通道，靠端点名分发。 */

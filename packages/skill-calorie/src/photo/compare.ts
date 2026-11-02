@@ -14,6 +14,7 @@ import { dayField, fail, needStr, optNum, optStr } from '../shared/params.js';
 import { commandLine } from '../shared/writeParts.js';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { photoDir } from './dir.js';
+import { m } from '../entries/index.js';
 
 /** `calorie.photo.compare` · 对比两张照片：`id1`／`id2` 都须为整数。
  *
@@ -23,8 +24,8 @@ import { photoDir } from './dir.js';
 export function viewPhotoCompare(params: Record<string, unknown>, db: DatabaseSync): ViewOut {
   const id1 = params['id1'];
   const id2 = params['id2'];
-  if (typeof id1 !== 'number' || !Number.isInteger(id1)) fail(2, '缺参数 id1（整数）');
-  if (typeof id2 !== 'number' || !Number.isInteger(id2)) fail(2, '缺参数 id2（整数）');
+  if (typeof id1 !== 'number' || !Number.isInteger(id1)) fail(2, m('skill-calorie.photo-compare.c001'));
+  if (typeof id2 !== 'number' || !Number.isInteger(id2)) fail(2, m('skill-calorie.photo-compare.c002'));
   const dir = photoDir(params);
   const c = buildCompareData(db, id1 as number, id2 as number, dir ?? null);
   const items = [c.photo1, c.photo2].map((p) => ({ id: p.id, date: p.date, photoPath: p.photoPath, tagList: p.tagList }));

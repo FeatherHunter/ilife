@@ -29,6 +29,7 @@ import {
   type WizardShellForm,
   type WizardShellOption,
 } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 只许入参表里写着的键：多给一个键（多半是打错名）＝拒，不静默吞掉。
  *
@@ -46,7 +47,7 @@ function assertKeys(raw: object, allowed: readonly string[], field: string): voi
   for (const key of Object.getOwnPropertyNames(raw)) note(key);
   for (const key in raw) note(key);
   if (bad.length > 0) {
-    badInput(field + ' 里没有 `' + bad.join('`／`') + '` 这个键（入参表以外的键一律拒：'
+    badInput(field + ' 里没有「' + bad.join('」「') + '」这个键（入参表以外的键一律拒：'
       + '写错的键静默吞掉会让调用方以为自己设上了；继承来的与不可枚举的键同样算）');
   }
 }
@@ -127,7 +128,7 @@ function optInstanceId(value: unknown): string | undefined {
   const s = optText(value, 'wizard-shell: input.id');
   if (s === undefined) return undefined;
   if (!/^[A-Za-z0-9_-]+$/.test(s)) {
-    badInput('wizard-shell: input.id 只许用字母／数字／`-`／`_`（它直接进件内 id 与单选组名：含糊的写法会与另一份撞名，撞了就是静默互踢）');
+    badInput('wizard-shell: input.id 只许用字母／数字／「-」／「_」（它直接进件内 id 与单选组名：含糊的写法会与另一份撞名，撞了就是静默互踢）');
   }
   return s;
 }
@@ -206,11 +207,11 @@ export function normalizeWizardShell(input: unknown): WizardShellModel {
   }
   if (total < WIZARD_SHELL_TOTAL_MIN || total > WIZARD_SHELL_TOTAL_MAX) {
     badInput('wizard-shell: input.total 必须落在 ' + String(WIZARD_SHELL_TOTAL_MIN) + '…'
-      + String(WIZARD_SHELL_TOTAL_MAX) + ' 之间（一问不成"分步"，十几问该拆成几趟）');
+      + String(WIZARD_SHELL_TOTAL_MAX) + ' 之间（一问不成「分步」，十几问该拆成几趟）');
   }
 
-  const optionsRaw = listOf(raw.options, 'wizard-shell: input.options', '每个元素是一条选项');
-  const fieldsRaw = listOf(raw.fields, 'wizard-shell: input.fields', '每个元素是一格填空');
+  const optionsRaw = listOf(raw.options, 'wizard-shell: input.options', m('base-render.components-wizard-shell-model.c001'));
+  const fieldsRaw = listOf(raw.fields, 'wizard-shell: input.fields', m('base-render.components-wizard-shell-model.c002'));
   if (optionsRaw.length > 0 && fieldsRaw.length > 0) {
     badInput('wizard-shell: input.options 与 input.fields 恰好给一个（选择问给前者，填空问给后者）');
   }
@@ -257,11 +258,11 @@ export function normalizeWizardShell(input: unknown): WizardShellModel {
     badInput('wizard-shell: disabled=true 时必须给 disabledReason（说不出为什么不能动＝读者只能猜）');
   }
   if (disabledReason !== undefined && !disabled) {
-    badInput('wizard-shell: input.disabledReason 只在 disabled=true 时给（否则这句"为什么不能动"说不清）');
+    badInput('wizard-shell: input.disabledReason 只在 disabled=true 时给（否则这句「为什么不能动」说不清）');
   }
   const error = optText(raw.error, 'wizard-shell: input.error');
   if (error !== undefined && disabled) {
-    badInput('wizard-shell: input.error 与 disabled=true 不同时给（一行里两个"为什么"会互相盖住）');
+    badInput('wizard-shell: input.error 与 disabled=true 不同时给（一行里两个「为什么」会互相盖住）');
   }
 
   const givenAside = optText(raw.aside, 'wizard-shell: input.aside');
@@ -283,19 +284,19 @@ export function normalizeWizardShell(input: unknown): WizardShellModel {
     value,
     why: optText(raw.why, 'wizard-shell: input.why'),
     aside: givenAside === undefined
-      ? (index === 0 ? WIZARD_SHELL_ASIDE_FIRST : '前面 ' + String(index) + ' 问走过，随时能回')
+      ? (index === 0 ? WIZARD_SHELL_ASIDE_FIRST() : m('base-render.components-wizard-shell-model.c003', { p0: String(String(index)) }))
       : givenAside,
     hint: optText(raw.hint, 'wizard-shell: input.hint'),
     nextLabel: givenNext === undefined
-      ? (index === total - 1 ? WIZARD_SHELL_DONE_LABEL : WIZARD_SHELL_NEXT_LABEL)
+      ? (index === total - 1 ? WIZARD_SHELL_DONE_LABEL() : WIZARD_SHELL_NEXT_LABEL())
       : givenNext,
     skippable: optBool(raw.skippable, 'wizard-shell: input.skippable') !== false,
     loading,
-    loadingText: loadingText === undefined ? WIZARD_SHELL_LOADING_TEXT : loadingText,
+    loadingText: loadingText === undefined ? WIZARD_SHELL_LOADING_TEXT() : loadingText,
     disabled,
     disabledReason,
     error,
-    confirmText: confirmText === undefined ? WIZARD_SHELL_CONFIRM_TEXT : confirmText,
+    confirmText: confirmText === undefined ? WIZARD_SHELL_CONFIRM_TEXT() : confirmText,
     extraClass: optExtraClass(raw.extraClass, 'wizard-shell: input.extraClass'),
   };
 }

@@ -84,8 +84,11 @@ export const BOOKLET_FAMILIES: readonly { readonly name: BookletFamily; readonly
 /** 1 共用件：复制区按钮排加说明行（一处定义，34 格复用；实现归 #849／#851）。 */
 export const BOOKLET_SHARED_PIECE = { name: '复制区按钮排加说明行', scope: '34 格复用' } as const;
 
+/** 缺省页型（数据：与 `BOOKLET_ROWS` 的 `kind` 判别值同字面，不是文案；模块级常量，不进词条表）。 */
+const DEFAULT_BOOKLET_KIND: '结果页' | '过程页' = '结果页';
+
 /** 按场景取文件名主体（结果页缺省；过程页须显式传）。 */
-export function bookletFileStem(sceneId: string, kind: '结果页' | '过程页' = '结果页'): string {
+export function bookletFileStem(sceneId: string, kind: '结果页' | '过程页' = DEFAULT_BOOKLET_KIND): string {
   const hit = BOOKLET_ROWS.find((r) => r.sceneId === sceneId && r.kind === kind);
   if (hit === undefined) throw new Error('[memo] 册子无此格：' + sceneId + '／' + kind);
   return hit.file;

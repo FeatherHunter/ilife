@@ -9,6 +9,7 @@
 import { text } from './render.js';
 import { fail } from './shared.js';
 import { SCENE_DATA_SCHEMA, SCENE_STATUS, SCENE_TYPE_FIELD, SceneData } from '../../spec/help.js';
+import { m } from '../../entries/index.js';
 
 /* ── 2. 零依赖 draft-07 子集校验器（禁 ajv／禁第三方，裁定 R6） ──── */
 
@@ -62,22 +63,22 @@ function firstViolation(schema: unknown, value: unknown, path: string): Violatio
 
   const type = schema.type;
   if (typeof type === 'string' && !typeMatches(type, value)) {
-    return { path, message: '类型不符：期望 ' + type + '，实际 ' + describe(value) };
+    return { path, message: m('base-render.components-help-schema.c001', { p0: String(type), p1: String(describe(value)) }) };
   }
 
   const allowed = schema.enum;
   if (Array.isArray(allowed) && !allowed.some((member) => member === value)) {
-    return { path, message: '不在 enum 允许清单：' + describe(value) };
+    return { path, message: m('base-render.components-help-schema.c002', { p0: String(describe(value)) }) };
   }
 
   const minLength = schema.minLength;
   if (typeof minLength === 'number' && typeof value === 'string' && value.length < minLength) {
-    return { path, message: '长度不足：minLength=' + minLength + '，实际 ' + value.length };
+    return { path, message: m('base-render.components-help-schema.c003', { p0: String(minLength), p1: String(value.length) }) };
   }
 
   const minItems = schema.minItems;
   if (typeof minItems === 'number' && Array.isArray(value) && value.length < minItems) {
-    return { path, message: '元素不足：minItems=' + minItems + '，实际 ' + value.length };
+    return { path, message: m('base-render.components-help-schema.c004', { p0: String(minItems), p1: String(value.length) }) };
   }
 
   if (Array.isArray(value)) {
@@ -95,7 +96,7 @@ function firstViolation(schema: unknown, value: unknown, path: string): Violatio
     if (Array.isArray(required)) {
       for (const key of required) {
         if (typeof key === 'string' && !hasOwn(value, key)) {
-          return { path: childPath(path, key), message: '缺必填字段：' + key };
+          return { path: childPath(path, key), message: m('base-render.components-help-schema.c005', { p0: String(key) }) };
         }
       }
     }
@@ -103,7 +104,7 @@ function firstViolation(schema: unknown, value: unknown, path: string): Violatio
     if (schema.additionalProperties === false) {
       for (const key of Object.keys(value)) {
         if (properties === null || !hasOwn(properties, key)) {
-          return { path: childPath(path, key), message: '多余字段（additionalProperties:false）：' + key };
+          return { path: childPath(path, key), message: m('base-render.components-help-schema.c006', { p0: String(key) }) };
         }
       }
     }
@@ -123,7 +124,7 @@ function firstViolation(schema: unknown, value: unknown, path: string): Violatio
       if (firstViolation(branch, value, path) === null) hits += 1;
     }
     if (hits !== 1) {
-      return { path, message: 'oneOf 命中 ' + hits + ' 个分支（须恰 1）' };
+      return { path, message: m('base-render.components-help-schema.c007', { p0: String(hits) }) };
     }
   }
 
@@ -168,7 +169,7 @@ function findDuplicateId(sites: readonly SceneSite[]): Violation | null {
     const id = site.scene.id;
     if (typeof id !== 'string') continue;
     if (seen.has(id)) {
-      return { path: childPath(site.path, 'id'), message: 'scene.id 重复：' + id };
+      return { path: childPath(site.path, 'id'), message: m('base-render.components-help-schema.c008', { p0: String(id) }) };
     }
     seen.add(id);
   }
@@ -182,7 +183,7 @@ function findStatusViolation(sites: readonly SceneSite[]): Violation | null {
     if (!hasOwn(site.scene, 'status')) continue;
     const status = site.scene.status;
     if (!allowed.includes(status)) {
-      return { path: childPath(site.path, 'status'), message: 'status 不在 SCENE_STATUS：' + describe(status) };
+      return { path: childPath(site.path, 'status'), message: m('base-render.components-help-schema.c009', { p0: String(describe(status)) }) };
     }
   }
   return null;
@@ -201,7 +202,7 @@ function findTypesViolation(sites: readonly SceneSite[]): Violation | null {
       if (!ok) {
         return {
           path: childPath(childPath(site.path, SCENE_TYPE_FIELD), i),
-          message: 'types 元素须为字符串或 {text}：' + describe(element),
+          message: m('base-render.components-help-schema.c010', { p0: String(describe(element)) }),
         };
       }
     }

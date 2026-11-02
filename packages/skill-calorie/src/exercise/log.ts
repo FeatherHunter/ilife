@@ -17,26 +17,27 @@ import { assertISO, fail, needArr, wday } from '../shared/params.js';
 import { F, R, commandLine, totalChanges } from '../shared/writeParts.js';
 import type { WriteOut } from '../shared/commandSpec.js';
 import { buildExerciseReceiptDoc } from './receipt.js';
+import { m } from '../entries/index.js';
 
 /** 一条运动输入：类型／热量必填，其余按库里那几列可选；`date` 缺省今天。 */
 function oneExercise(item: Record<string, unknown>, i: string): ExerciseRecordInput {
   const g = (k: string): unknown => item[k];
   const type = g('type') ?? g('exerciseType');
-  if (typeof type !== 'string' || !type.trim()) fail(2, '运动 type 必填' + i);
+  if (typeof type !== 'string' || !type.trim()) fail(2, m('skill-calorie.exercise-log.c001', { p0: String(i) }));
   const cal = g('calories') ?? g('caloriesBurned');
-  if (typeof cal !== 'number' || !Number.isFinite(cal) || cal < 0) fail(2, '运动 calories 必填（≥0 number）' + i);
+  if (typeof cal !== 'number' || !Number.isFinite(cal) || cal < 0) fail(2, m('skill-calorie.exercise-log.c002', { p0: String(i) }));
   const date = (g('date') as string | undefined) ?? todayISO();
   assertISO(date, 'date');
   const numOrNull = (k: string): number | null | undefined => {
     const v = g(k);
     if (v === undefined || v === null) return undefined;
-    if (typeof v !== 'number' || !Number.isFinite(v)) fail(2, '运动参数 ' + k + ' 须为 number' + i);
+    if (typeof v !== 'number' || !Number.isFinite(v)) fail(2, m('skill-calorie.exercise-log.c003', { p0: String(k), p1: String(i) }));
     return v as number;
   };
   const strOrUndef = (k: string): string | undefined => {
     const v = g(k);
     if (v === undefined || v === null) return undefined;
-    if (typeof v !== 'string') fail(2, '运动参数 ' + k + ' 须为字符串' + i);
+    if (typeof v !== 'string') fail(2, m('skill-calorie.exercise-log.c004', { p0: String(k), p1: String(i) }));
     return v as string;
   };
   return {
@@ -63,12 +64,12 @@ export function writeExerciseLog(params: Record<string, unknown>, db: DatabaseSy
   const command = commandLine(key, params);
   const before = totalChanges(db);
   if (params['copyFrom'] !== undefined) {
-    if (params['copyFrom'] !== 'yesterday') fail(2, 'copyFrom 只支持 yesterday');
+    if (params['copyFrom'] !== 'yesterday') fail(2, m('skill-calorie.exercise-log.c005'));
     const target = wday(params, 'date') ?? wday(params, 'targetDate') ?? todayISO();
     assertISO(target, 'date');
     const r = copyYesterday(db, target);
     if (r.copied + r.skipped === 0) throw new CalorieRenderError('missing-data', '昨日无运动记录可复制');
-    const base = R('复制昨日运动', 'create', '已复制昨日运动→' + target + '：复制 ' + r.copied + '，跳过 ' + r.skipped, '复制昨日运动', 'exercise_log (写库回执)', {
+    const base = R(m('skill-calorie.exercise-log.c006'), 'create', m('skill-calorie.exercise-log.c007', { p0: String(target), p1: String(r.copied), p2: String(r.skipped) }), m('skill-calorie.exercise-log.c008'), m('skill-calorie.exercise-log.c009'), {
       noChange: r.copied === 0, ids: [], idSource: 'condition',
       writtenFields: r.copied > 0 ? [...F.exercise] : [],
     });
@@ -77,10 +78,10 @@ export function writeExerciseLog(params: Record<string, unknown>, db: DatabaseSy
   }
   if (params['items'] !== undefined) {
     const items = needArr(params, 'items');
-    if (items.length > 200) fail(2, 'items 至多 200 条');
-    const r = batchAdd(db, items.map((e, i) => oneExercise((e ?? {}) as Record<string, unknown>, '（第' + i + '条）')));
+    if (items.length > 200) fail(2, m('skill-calorie.exercise-log.c010'));
+    const r = batchAdd(db, items.map((e, i) => oneExercise((e ?? {}) as Record<string, unknown>, m('skill-calorie.exercise-log.c011', { p0: String(i) }))));
     const rows = r.ids.map((id) => db.prepare('SELECT * FROM exercise_log WHERE id = ?').get(id) as ExerciseRow);
-    const base = R('记运动', 'create', '批量记运动：新增 ' + r.added + ' 条', '批量补记运动', 'exercise_log (写库回执)', {
+    const base = R(m('skill-calorie.exercise-log.c012'), 'create', m('skill-calorie.exercise-log.c013', { p0: String(r.added) }), m('skill-calorie.exercise-log.c014'), m('skill-calorie.exercise-log.c015'), {
       recordId: r.ids[0] ?? null, ids: r.ids, idSource: r.ids.length > 0 ? 'record' : 'condition',
       writtenFields: r.added > 0 ? [...F.exercise] : [],
     });
@@ -90,9 +91,15 @@ export function writeExerciseLog(params: Record<string, unknown>, db: DatabaseSy
   const input = oneExercise(params, '');
   const r = addRecord(db, input);
   const row = db.prepare('SELECT * FROM exercise_log WHERE id = ?').get(r.id) as ExerciseRow;
-  const base = R('记运动', 'create', '已记运动：' + input.exerciseType + ' ' + input.caloriesBurned + ' 卡' + (input.minutes ? ' · ' + input.minutes + ' 分钟' : '') + '（' + input.date + '）', '记运动', 'exercise_log (写库回执)', {
+  const minuteNote = (input.minutes ? m('skill-calorie.exercise-log.c021', { p0: String(input.minutes) }) : '');
+  const base = R(m('skill-calorie.exercise-log.c016'), 'create', m('skill-calorie.exercise-log.c017', {
+    p0: String(input.exerciseType),
+    p1: String(input.caloriesBurned),
+    p2: String(minuteNote),
+    p3: String(input.date),
+  }), m('skill-calorie.exercise-log.c018'), m('skill-calorie.exercise-log.c019'), {
     recordId: r.id, ids: [r.id], writtenFields: [...F.exercise],
-    items: [{ id: r.id, date: input.date, status: '成功', reason: '', detail: input.exerciseType }],
+    items: [{ id: r.id, date: input.date, status: m('skill-calorie.exercise-log.c020'), reason: '', detail: input.exerciseType }],
   });
   const receipt = withM5(base, { affectedRows: totalChanges(db) - before });
   return done(db, key, command, receipt, { rows: [row], targetDate: input.date });

@@ -6,10 +6,11 @@
  * 判据与文案**全部来自各家技能的报告**，本件一个字都不重写——只按三档上色、按状态挑文案。
  */
 import * as React from 'react';
-import { countByStatus, worstStatus } from './health-contract.js';
+import { ACTION_PREFIX, SOURCE_DEFAULT, countByStatus, worstStatus } from './health-contract.js';
 import type { HealthItem, HealthReport, HealthStatus } from './health-contract.js';
 import { TitleBlock } from './title-seal.js';
 import { interactionCss } from './config-panel-view.js';
+import { m } from './entries/index.js';
 
 /** 三档的配色（绿走主题别名；红黄用实色，理由见下）。
  *
@@ -40,7 +41,16 @@ export const STATUS_TEXT: Readonly<Record<HealthStatus, string>> = {
   green: 'var(--dsw-alias-state-success-primary, #4ec9a0)',
 };
 
-const STATUS_LABEL: Readonly<Record<HealthStatus, string>> = { red: '红', yellow: '黄', green: '绿' };
+const STATUS_LABEL_KEY = {
+  red: 'plugin-manager.health-view.c001',
+  yellow: 'plugin-manager.health-view.c002',
+  green: 'plugin-manager.health-view.c003',
+} as const satisfies Readonly<Record<HealthStatus, string>>;
+
+/** 档位词（渲染期取词：模块级只留 key，不把词固定成加载期那一种语言）。 */
+export function statusLabel(status: HealthStatus): string {
+  return m(STATUS_LABEL_KEY[status]);
+}
 
 /** 档位的**形状**标记：颜色之外的第二条读数（灰度截图、色弱视角下也分得开谁要处理）。 */
 const STATUS_MARK: Readonly<Record<HealthStatus, string>> = { red: '✕', yellow: '!', green: '✓' };
@@ -93,7 +103,7 @@ function isAttention(status: HealthStatus): boolean {
  *  面板已经带了这个前缀，两边都写就会印成「去哪修：去哪修：…」。只剥开头那一次，别的一字不动。 */
 export function actionText(action: string): string {
   const trimmed = action.trim();
-  return trimmed.startsWith('去哪修：') ? trimmed.slice(4).trim() : trimmed;
+  return trimmed.startsWith(ACTION_PREFIX) ? trimmed.slice(ACTION_PREFIX.length).trim() : trimmed;
 }
 
 /** 报文里能扫出来的每一段路径（盘符绝对路径；非 Windows 形状的退回 `/` 打头那一支）。 */
@@ -246,16 +256,16 @@ export const COUNT_CAPSULE_STYLE: React.CSSProperties = {
 function overallText(lights: readonly HealthLightRow[]): React.ReactElement {
   const pending = lights.filter((light) => !light.hasChannel).length;
   const withChannel = lights.filter((light) => light.hasChannel);
-  const tail = pending > 0 ? ' · ' + String(pending) + ' 家没有体检出口' : '';
+  const tail = pending > 0 ? ' · ' + m('plugin-manager.health-view.c004', { p0: String(pending) }) : '';
   if (withChannel.length === 0) {
     const what = lights.length === 0
-      ? '还没有任何一家登记体检出口'
-      : String(lights.length) + ' 家都没有体检出口（通道名没登记上）';
-    return React.createElement('span', { style: { color: STATUS_TEXT.red, fontWeight: 700 } }, '没有可体检的家：' + what);
+      ? m('plugin-manager.health-view.c005')
+      : m('plugin-manager.health-view.c006', { p0: String(lights.length) });
+    return React.createElement('span', { style: { color: STATUS_TEXT.red, fontWeight: 700 } }, m('plugin-manager.health-view.c007', { p0: what }));
   }
   const allGreen = withChannel.every((light) => light.status === 'green');
   if (allGreen && pending === 0) {
-    return React.createElement('span', { style: { color: STATUS_COLOR.green, fontWeight: 700 } }, '六家正常');
+    return React.createElement('span', { style: { color: STATUS_COLOR.green, fontWeight: 700 } }, m('plugin-manager.health-view.c008'));
   }
   const parts: React.ReactElement[] = [];
   for (const status of ['red', 'yellow'] as const) {
@@ -273,9 +283,9 @@ function overallText(lights: readonly HealthLightRow[]): React.ReactElement {
   }
   if (parts.length === 0) {
     // 一份报告都没跑过；有出口的已经全绿、只是还有没出口的家时，不许把「还没体检」安到它们头上。
-    return React.createElement('span', { style: { color: INK_DIM } }, (allGreen ? '有出口的都正常' : '还没体检') + tail);
+    return React.createElement('span', { style: { color: INK_DIM } }, (allGreen ? m('plugin-manager.health-view.c009') : m('plugin-manager.health-view.c010')) + tail);
   }
-  parts.push(React.createElement('span', { key: 'todo', style: { color: INK } }, ' 要处理' + tail));
+  parts.push(React.createElement('span', { key: 'todo', style: { color: INK } }, ' ' + m('plugin-manager.health-view.c011', { p0: tail })));
   return React.createElement('span', null, parts);
 }
 
@@ -329,7 +339,7 @@ export function HealthSummaryLine(props: {
   return React.createElement(
     'div',
     { style: HEALTH_STYLE.summaryRow, 'data-ilife-health': 'summary' },
-    React.createElement('div', { style: HEALTH_STYLE.head }, '配置体检'),
+    React.createElement('div', { style: HEALTH_STYLE.head }, m('plugin-manager.health-view.c012')),
     React.createElement(
       'div',
       { style: HEALTH_STYLE.summaryText },
@@ -345,13 +355,13 @@ export function HealthSummaryLine(props: {
         onClick: props.onRun,
        // 「只看不改」那三条口径从屏上撤下来了（它原先和两排圆点的图例挤在一行），
         // 但它**仍然要说出口**：按钮悬停是它能待的地方（票 #732；测试按产物里的字符串守着）。
-        title: '对六家各跑一次配置体检（只看不改：不建目录、不改配置、不自动重置）',
+        title: m('plugin-manager.health-view.c013'),
         // #1163 T4：体检按钮复用共享交互缝（按压＋悬停＋焦点＋禁用＋长按纯视觉环），tokens 只引共享层。
         // 长按纯视觉：CSS 驱动 0→100%（0.5s），零回调零状态，不进状态机分支；折叠／复制／提示／液态本面不适用。
         'data-ilife-press': 'health-run',
         'data-ilife-longpress': 'health-run',
       },
-      props.running ? '体检中…' : '体检',
+      props.running ? m('plugin-manager.health-view.c014') : m('plugin-manager.health-view.c015'),
     ),
     // #1163 T4：同一生成处 interactionCss()，一枚 style 罩本行内两类属性；更新面无渲染点（见票内豁免证据）。
     React.createElement('style', { 'data-ilife-interaction': 't1' }, interactionCss()),
@@ -391,19 +401,25 @@ export function HealthTable(props: {
 }): React.ReactElement {
   const { report } = props;
   const prefixes: readonly string[] = report ? dirPrefixesOf(report) : [];
+  const configNote = report !== null && report.configPath !== ''
+    ? m('plugin-manager.health-view.c020', { p0: report.configPath })
+    : '';
+  const dataDirLine = report !== null && report.dataDir !== ''
+    ? m('plugin-manager.health-view.c019', { p0: report.dataDir + configNote })
+    : null;
   return React.createElement(
     'div',
     { style: HEALTH_STYLE.box, 'data-ilife-health': 'table' },
     React.createElement(
       'div',
       { style: HEALTH_STYLE.headRow },
-      React.createElement(TitleBlock, { product: props.title, purpose: '体检' }),
+      React.createElement(TitleBlock, { product: props.title, purpose: m('plugin-manager.health-view.c016') }),
       report ? headerCounts(report) : null,
     ),
     props.phase === 'idle'
-      ? React.createElement('div', { style: HEALTH_STYLE.meta }, '还没体检：点标题行那个「体检」。')
+      ? React.createElement('div', { style: HEALTH_STYLE.meta }, m('plugin-manager.health-view.c017'))
       : null,
-    props.phase === 'running' ? React.createElement('div', { style: HEALTH_STYLE.meta }, '正在体检…') : null,
+    props.phase === 'running' ? React.createElement('div', { style: HEALTH_STYLE.meta }, m('plugin-manager.health-view.c018')) : null,
     props.error !== null ? React.createElement('div', { style: HEALTH_STYLE.error }, props.error) : null,
     report
       ? React.createElement(
@@ -413,10 +429,8 @@ export function HealthTable(props: {
           // 就得把**它到底在哪儿**说清楚（出图复评五份里两份点名「照屏修不了」）。
           // 措辞有讲究：不能写成「下面行内的「…/」都接在这里」——行里本来就有个「…/data」，
           // 接上基目录会拼成「…/data/data」，自相矛盾（复评原话）。故只**点明缩写代表哪一层**。
-          report.dataDir !== ''
-            ? React.createElement('div', { style: { color: INK_DIM, fontSize: 11.5, marginTop: 2 } },
-              '落点根目录：' + report.dataDir
-              + (report.configPath !== '' ? '（配置文件 ' + report.configPath + '）' : ''))
+          dataDirLine !== null
+            ? React.createElement('div', { style: { color: INK_DIM, fontSize: 11.5, marginTop: 2 } }, dataDirLine)
             : null,
           report.items.filter(isAttentionItem).map((item) =>
             React.createElement(
@@ -450,16 +464,16 @@ export function HealthTable(props: {
                 React.createElement('span', { style: { fontWeight: 650, color: INK } }, item.title),
                 React.createElement('span', {
                   style: { color: STATUS_TEXT[item.status], fontWeight: 700 },
-                }, STATUS_LABEL[item.status]),
+                }, statusLabel(item.status)),
                 // 来源那一格**只在它不只是「默认值」时印**：四行全印「来自默认值」等于零区分度，
                 // 而且「值从哪来」这件事正文里已经写全了（复评原话：「这四个字零区分度」）。
-                item.source && item.source !== '默认值'
-                  ? React.createElement('span', { style: { color: INK_DIM } }, '· 来自' + item.source)
+                item.source && item.source !== SOURCE_DEFAULT
+                  ? React.createElement('span', { style: { color: INK_DIM } }, m('plugin-manager.health-view.c021', { p0: item.source }))
                   : null,
               ),
               React.createElement('div', { style: { color: INK }, title: item.message }, shortenPathsIn(item.message, prefixes)),
               item.action.length > 0
-                ? React.createElement('div', { style: { color: INK_DIM } }, '去哪修：' + actionText(item.action))
+                ? React.createElement('div', { style: { color: INK_DIM } }, m('plugin-manager.health-view.c022', { p0: actionText(item.action) }))
                 : null,
             ),
           ),
@@ -489,8 +503,8 @@ export function HealthTable(props: {
                   },
                   'aria-hidden': 'true',
                 }),
-                React.createElement('span', { style: { fontWeight: 650, color: INK } }, '正常 ' + String(countByStatus(report.items).green) + ' 条'),
-                React.createElement('span', { style: { color: INK_DIM } }, '（下列各项都正常工作）'),
+                React.createElement('span', { style: { fontWeight: 650, color: INK } }, m('plugin-manager.health-view.c023', { p0: String(countByStatus(report.items).green) })),
+                React.createElement('span', { style: { color: INK_DIM } }, m('plugin-manager.health-view.c024')),
                 report.items.filter((item) => !isAttentionItem(item)).map((item) =>
                   React.createElement('span', { key: item.id, 'data-ilife-health': 'ok-item' }, '· ' + item.title),
                 ),

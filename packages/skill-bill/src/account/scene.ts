@@ -18,9 +18,9 @@
 import { BillPolicyError } from '../fetch/errors.js';
 import type { AccountRow } from './accounts.js';
 import type { AccountBlocked, AccountOp } from './params.js';
-import { SCENE as sceneAdd } from './scene-add.js';
-import { SCENE as sceneTransfer } from './scene-transfer.js';
-import { SCENE as sceneUpdate } from './scene-update.js';
+import { SCENE as sceneAdd, sceneAdd as buildAddScene } from './scene-add.js';
+import { SCENE as sceneTransfer, sceneTransfer as buildTransferScene } from './scene-transfer.js';
+import { SCENE as sceneUpdate, sceneUpdate as buildUpdateScene } from './scene-update.js';
 
 /** 采集页入参：这一页是谁 ＋ 缺什么 ＋ 账户表现状 ＋ 复制日志与脚注的取数。 */
 export interface AccountCollectInput {
@@ -95,7 +95,13 @@ const BY_OP = new Map<AccountOp, AccountWriteScene>(ACCOUNT_WRITE_SCENES.map((s)
 
 /** 取件：按 `op` 认（账户写命令的三支操作各一件）。认不得的 op 即抛——**不猜、不兜底**
  *  （`op` 已在 `./params.js` 的 `parseAccountOp` 拦过一道，走到这里还认不得即是代码缺陷）。 */
-export function writeSceneFor(op: AccountOp): AccountWriteScene {
+export function writeSceneFor(op: AccountOp, language: string): AccountWriteScene {
+  // #1212：语言非 zh 时按语言重建那一支（模块加载期的 SCENE 只是 zh 快照）。
+  if (language !== 'zh') {
+    if (op === 'add') return buildAddScene(language);
+    if (op === 'update') return buildUpdateScene(language);
+    if (op === 'transfer') return buildTransferScene(language);
+  }
   const hit = BY_OP.get(op);
   if (hit === undefined) {
     throw new BillPolicyError('POLICY_BAD_INPUT', '账户写命令没有这一支操作：' + String(op));

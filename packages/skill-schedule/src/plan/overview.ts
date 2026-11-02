@@ -9,6 +9,7 @@
 import { listPlanEvents, getPlanTimestamps } from '../fetch/index.js';
 import type { ScheduleDb } from '../fetch/index.js';
 import { hourLabel } from './iso.js';
+import { m } from '../entries/index.js';
 
 export interface PlanHourRow { hour: number; label: string; text: string }
 export interface PlanDayRow {
@@ -28,11 +29,11 @@ export interface PlanOverviewPayload {
   note: string;
 }
 
-const NOTE = '这是 24h 聚合视图：同小时内的多条事件用 + 合并，丢 notes／飞书同步状态／ID；要看全字段请用「查日程」。';
-
 export function buildPlanOverview(handle: ScheduleDb, dates: string[]): PlanOverviewPayload {
   const items = dates.map((date) => buildDay(handle, date));
-  return { items, total: items.length, dates, view: 'aggregate', note: NOTE };
+  // #1197：这句话跟着视图一起回给调用方，放进函数体内取词（模块级常量会在模块加载期定死语言）。
+  const note = m('skill-schedule.plan-overview.c001');
+  return { items, total: items.length, dates, view: 'aggregate', note };
 }
 
 function buildDay(handle: ScheduleDb, date: string): PlanDayRow {
@@ -45,7 +46,7 @@ function buildDay(handle: ScheduleDb, date: string): PlanDayRow {
   const hours: PlanHourRow[] = bucket.map((titles, h) => ({
     hour: h,
     label: hourLabel(h),
-    text: titles.length ? titles.join('+') : '未规划',
+    text: titles.length ? titles.join('+') : m('skill-schedule.plan-overview.c002'),
   }));
   const ts = getPlanTimestamps(handle, date);
   return {

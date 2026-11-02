@@ -16,6 +16,45 @@ import type { Envelope } from 'base-link-core';
 import { fillTemplate, renderEnvelopeHtml, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
 // #890：证件号码脱敏的唯一一处规则住取数层（旧信封回退也读它，不再在页里自留一份）。
 import { maskCertNumber } from '../../fetch/index.js';
+import { m } from '../../entries/index.js';
+
+/** 本页可见文案（渲染期取词：写成函数，模块加载时不取词）。 */
+function pageText() {
+  return {
+    k001: m('skill-home.receipt-pages-certificates.c001'),
+    k002: m('skill-home.receipt-pages-certificates.c002'),
+    k003: m('skill-home.receipt-pages-certificates.c003'),
+    k004: m('skill-home.receipt-pages-certificates.c004'),
+    k005: m('skill-home.receipt-pages-certificates.c005'),
+    k006: m('skill-home.receipt-pages-certificates.c006'),
+    k007: m('skill-home.receipt-pages-certificates.c007'),
+    k008: m('skill-home.receipt-pages-certificates.c008'),
+    k009: m('skill-home.receipt-pages-certificates.c009'),
+    k010: m('skill-home.receipt-pages-certificates.c010'),
+    k011: (p0: string) => m('skill-home.receipt-pages-certificates.c011', { p0: String(p0) }),
+    k012: m('skill-home.receipt-pages-certificates.c012'),
+    k013: m('skill-home.receipt-pages-certificates.c013'),
+    k014: m('skill-home.receipt-pages-certificates.c014'),
+    k015: m('skill-home.receipt-pages-certificates.c015'),
+    k016: m('skill-home.receipt-pages-certificates.c016'),
+    k017: m('skill-home.receipt-pages-certificates.c017'),
+    k018: m('skill-home.receipt-pages-certificates.c018'),
+    k019: m('skill-home.receipt-pages-certificates.c019'),
+    k020: m('skill-home.receipt-pages-certificates.c020'),
+    k021: m('skill-home.receipt-pages-certificates.c021'),
+    k022: m('skill-home.receipt-pages-certificates.c022'),
+    k023: m('skill-home.receipt-pages-certificates.c023'),
+    k024: m('skill-home.receipt-pages-certificates.c024'),
+    k025: m('skill-home.receipt-pages-certificates.c025'),
+    k026: m('skill-home.receipt-pages-certificates.c026'),
+    k027: m('skill-home.receipt-pages-certificates.c027'),
+    k028: m('skill-home.receipt-pages-certificates.c028'),
+    k029: m('skill-home.receipt-pages-certificates.c029'),
+    k030: m('skill-home.receipt-pages-certificates.c030'),
+    k031: m('skill-home.receipt-pages-certificates.c031'),
+  };
+}
+
 
 export const FAMILY = 'certificates' as const;
 
@@ -63,9 +102,9 @@ export const REQUIRED_BLOCKS = {
 // 可见层中文转述（无拉丁字母、无版式位分隔符；原文在 data-need 属性里）。
 function visibleOf(block: string): string {
   const table: Record<string, string> = {
-    '证件清单（类型/持有人/ID/到期日/剩余天数/证件状态/脱敏号码/备注）': '证件清单包含类型持有人编号到期日剩余天数证件状态脱敏号码备注',
-    '已过期N天': '已过期若干天',
-    'N天后到期': '若干天后到期',
+    '证件清单（类型/持有人/ID/到期日/剩余天数/证件状态/脱敏号码/备注）': m('skill-home.receipt-pages-certificates.c032'),
+    '已过期N天': m('skill-home.receipt-pages-certificates.c033'),
+    'N天后到期': m('skill-home.receipt-pages-certificates.c034'),
   };
   return table[block] ?? block;
 }
@@ -90,10 +129,10 @@ function daysLeftOf(expires: string): number | null {
 }
 
 function statusOf(days: number | null): string {
-  if (days === null) return '有效';
-  if (days < 0) return '已过期';
-  if (days <= 30) return '即将到期';
-  return '有效';
+  if (days === null) return m('skill-home.receipt-pages-certificates.c035');
+  if (days < 0) return m('skill-home.receipt-pages-certificates.c036');
+  if (days <= 30) return m('skill-home.receipt-pages-certificates.c037');
+  return m('skill-home.receipt-pages-certificates.c038');
 }
 
 function parseThinName(name: string): { certType: string; expires: string } {
@@ -118,22 +157,22 @@ function rowFromThin(item: Record<string, unknown>): CertRow {
   const parsed = parseThinName(name);
   const days = parsed.expires !== '' ? daysLeftOf(parsed.expires) : null;
   return {
-    certType: parsed.certType === '' ? '待补' : parsed.certType,
-    holder: '待补',
-    idText: '待补',
-    expires: parsed.expires === '' ? '待补' : parsed.expires,
+    certType: parsed.certType === '' ? m('skill-home.receipt-pages-certificates.c039') : parsed.certType,
+    holder: m('skill-home.receipt-pages-certificates.c040'),
+    idText: m('skill-home.receipt-pages-certificates.c041'),
+    expires: parsed.expires === '' ? m('skill-home.receipt-pages-certificates.c042') : parsed.expires,
     days,
     status: statusOf(days),
-    masked: '未登记',
-    note: '待补',
+    masked: m('skill-home.receipt-pages-certificates.c043'),
+    note: m('skill-home.receipt-pages-certificates.c044'),
   };
 }
 
 function rowFromRich(item: Record<string, unknown>): CertRow {
-  const certType = String((item as { cert_type?: unknown }).cert_type ?? (item as { type?: unknown }).type ?? '待补');
-  const holder = String((item as { holder?: unknown }).holder ?? '待补');
-  const idText = (item as { id?: unknown }).id !== undefined ? String((item as { id?: unknown }).id) : '待补';
-  const expires = String((item as { expires_at?: unknown }).expires_at ?? (item as { expires?: unknown }).expires ?? '待补');
+  const certType = String((item as { cert_type?: unknown }).cert_type ?? (item as { type?: unknown }).type ?? m('skill-home.receipt-pages-certificates.c045'));
+  const holder = String((item as { holder?: unknown }).holder ?? m('skill-home.receipt-pages-certificates.c046'));
+  const idText = (item as { id?: unknown }).id !== undefined ? String((item as { id?: unknown }).id) : m('skill-home.receipt-pages-certificates.c047');
+  const expires = String((item as { expires_at?: unknown }).expires_at ?? (item as { expires?: unknown }).expires ?? m('skill-home.receipt-pages-certificates.c048'));
   const days = /^(\d{4})-(\d{2})-(\d{2})$/.test(expires) ? daysLeftOf(expires) : null;
   const status = typeof (item as { cert_status?: unknown }).cert_status === 'string'
     ? String((item as { cert_status?: unknown }).cert_status)
@@ -141,7 +180,7 @@ function rowFromRich(item: Record<string, unknown>): CertRow {
   const masked = typeof (item as { number_masked?: unknown }).number_masked === 'string'
     ? String((item as { number_masked?: unknown }).number_masked)
     : maskDisplay((item as { number?: unknown }).number);
-  const note = String((item as { note?: unknown }).note ?? '待补');
+  const note = String((item as { note?: unknown }).note ?? m('skill-home.receipt-pages-certificates.c049'));
   return { certType, holder, idText, expires, days, status, masked, note };
 }
 
@@ -153,12 +192,13 @@ function isRich(item: Record<string, unknown>): boolean {
 }
 
 function listTable(env: Envelope): string {
+  const L = pageText();
   const data = env.data as Record<string, unknown>;
   const items = Array.isArray((data as { items?: unknown }).items)
     ? (data as { items: Record<string, unknown>[] }).items
     : [];
   if (!items.length) {
-    return '<div><p>暂无登记，可新增一张证件后回来按到期复核</p></div>';
+    return '<div>' + '<p>' + L.k001 + '</p>' + '</div>';
   }
   const rows = items.map((it) => (isRich(it) ? rowFromRich(it) : rowFromThin(it)));
   rows.sort((a, b) => {
@@ -170,45 +210,27 @@ function listTable(env: Envelope): string {
   // 该列也不在必需块的证件清单字段里（类型/持有人/ID/到期日/剩余天数/证件状态/脱敏号码/备注）。
   // #817（③双端不塌）：每个值位带 `data-th`（列名）；≤760 档由页内样式把每一行排成卡片、标签印在值左边，
   // 8 列在 390 档一次看全——此前 `min-width:560px`＋`nowrap` 只露得出前 6 列，右侧三列看不见也没提示。
-  const body = rows.map((r) => '<tr>'
-    + '<td data-th="类型">' + escapeHtml(r.certType) + '</td>'
-    + '<td data-th="持有人">' + escapeHtml(r.holder) + '</td>'
-    + '<td data-th="编号">' + escapeHtml(r.idText) + '</td>'
-    + '<td data-th="到期日">' + escapeHtml(r.expires) + '</td>'
-    + '<td data-th="剩余天数">' + (r.days === null ? '待补' : String(r.days)) + '</td>'
-    + '<td data-th="证件状态">' + escapeHtml(r.status) + '</td>'
-    + '<td data-th="脱敏号码">' + escapeHtml(r.masked) + '</td>'
-    + '<td data-th="备注">' + escapeHtml(r.note) + '</td>'
-    + '</tr>').join('');
-  return '<div><p>共' + rows.length + '本证件，按到期先后排列</p>'
-    + '<div class="rc-scroll"><table><thead><tr><th>类型</th><th>持有人</th><th>编号</th><th>到期日</th>'
-    + '<th>剩余天数</th><th>证件状态</th><th>脱敏号码</th><th>备注</th></tr></thead>'
-    + '<tbody>' + body + '</tbody></table></div>'
-    + '<p>号码只显后四位，复制文本不含完整号码</p></div>';
+  const body = rows.map((r) => '<tr>' + '<td data-th="' + L.k002 + '">' + escapeHtml(r.certType) + '</td>' + '<td data-th="' + L.k003 + '">' + escapeHtml(r.holder) + '</td>' + '<td data-th="' + L.k004 + '">' + escapeHtml(r.idText) + '</td>' + '<td data-th="' + L.k005 + '">' + escapeHtml(r.expires) + '</td>' + '<td data-th="' + L.k006 + '">' + (r.days === null ? L.k007 : String(r.days)) + '</td>' + '<td data-th="' + L.k008 + '">' + escapeHtml(r.status) + '</td>' + '<td data-th="' + L.k009 + '">' + escapeHtml(r.masked) + '</td>' + '<td data-th="' + L.k010 + '">' + escapeHtml(r.note) + '</td>' + '</tr>').join('');
+  return '<div>' + '<p>' + L.k011(String(rows.length)) + '</p>' + '<div class="rc-scroll">' + '<table>' + '<thead>' + '<tr>' + '<th>' + L.k012 + '</th>' + '<th>' + L.k013 + '</th>' + '<th>' + L.k014 + '</th>' + '<th>' + L.k015 + '</th>' + '<th>' + L.k016 + '</th>' + '<th>' + L.k017 + '</th>' + '<th>' + L.k018 + '</th>' + '<th>' + L.k019 + '</th>' + '</tr>' + '</thead>' + '<tbody>' + body + '</tbody>' + '</table>' + '</div>' + '<p>' + L.k020 + '</p>' + '</div>';
 }
 
 function receiptNote(env: Envelope): string {
+  const L = pageText();
   // 每条写操作说清它自己那件事：消息文本带动作词，页面据此补一句本操作独有的语义。
   const msg = String((env.data as { message?: unknown }).message ?? '');
-  const byOp = /归档/.test(msg) ? '<p>照片已关联到这张证件</p>'
-    : /更新/.test(msg) ? '<p>只填要改的字段，其余留空即保持原值</p>' : '';
-  return '<div>' + byOp
-    + '<p>写操作已受理，可在查证件到期中按到期复核</p>'
-    + '<p>号码脱敏存储，复制文本不含完整号码</p></div>';
+  const byOp = /归档/.test(msg) ? '<p>' + L.k021 + '</p>'
+    : /更新/.test(msg) ? '<p>' + L.k022 + '</p>' : '';
+  return '<div>' + byOp + '<p>' + L.k023 + '</p>' + '<p>' + L.k024 + '</p>' + '</div>';
 }
 
 function opsBlock(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
+  const L = pageText();
   // 全量 envelope 投影（取数层已脱敏：`listCerts` 只取编号/类型/到期日/持有人四字段，
   // 信封里没有完整号码，故复制文本天然不含证件号，敏感口径依然成立）。
-  return '<div>'
-    + '<button type="button" data-t="请更新证件，只填要改的">更新</button>'
-    + '<button type="button" data-t="请补证件照片">补照片</button>'
-    + '<button type="button" data-t="请新增证件">新增证件</button>'
-    + homeCopyArea({
+  return '<div>' + '<button type="button" data-t="' + L.k025 + '">' + L.k026 + '</button>' + '<button type="button" data-t="' + L.k027 + '">' + L.k028 + '</button>' + '<button type="button" data-t="' + L.k029 + '">' + L.k030 + '</button>' + homeCopyArea({
         data: { envelope: env },
         log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
-      })
-    + '</div>';
+      }) + '</div>';
 }
 
 /** 按钮绑定（#817 收口补）：操作区这 5 颗是 `data-t` 复制按钮，只渲染不绑点击＝点了没反应
@@ -238,9 +260,9 @@ const PAGE_CSS = '<style>button{min-height:44px;min-width:44px;padding:0 14px;bo
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
 // 复制区走共用件（卡路里同款三格式＋六段日志）；`ctx.command` 由交付链供给（含 params），直调缺省按本族主 key。
 export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
+  const L = pageText();
   const template = readFileSync(new URL('../../../templates/receipt/certificates.html', import.meta.url), 'utf8');
-  const head = '<div class="fam-head" data-family="' + FAMILY + '" data-key="' + escapeHtml(String((env as { key?: unknown }).key ?? PAGE_META.key)) + '">'
-    + '<span>证件管理</span></div>';
+  const head = '<div class="fam-head" data-family="' + FAMILY + '" data-key="' + escapeHtml(String((env as { key?: unknown }).key ?? PAGE_META.key)) + '">' + '<span>' + L.k031 + '</span>' + '</div>';
   // 清单页已由本族的九列表承载；这里只嵌回执卡，别再嵌一份平铺清单（那是重复数据）。
   const main = env.shape === 'receipt'
     ? receiptNote(env) + '<div class="fam-content">' + renderEnvelopeHtml(env) + '</div>'
@@ -249,9 +271,9 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + main
     + opsBlock(env, ctx)
     + PAGE_SCRIPT
-    + sectionOf('fields', '字段')
-    + sectionOf('operations', '操作')
-    + sectionOf('empty', '空态与异常')
-    + sectionOf('status', '状态词');
+    + sectionOf('fields', m('skill-home.receipt-pages-certificates.c050'))
+    + sectionOf('operations', m('skill-home.receipt-pages-certificates.c051'))
+    + sectionOf('empty', m('skill-home.receipt-pages-certificates.c052'))
+    + sectionOf('status', m('skill-home.receipt-pages-certificates.c053'));
   return fillTemplate(template, content);
 }

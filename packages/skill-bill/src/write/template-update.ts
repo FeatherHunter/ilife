@@ -44,6 +44,8 @@ import { collectSourceNote } from './sourceNote.js';
 import type { BillReceipt } from '../shared/writeParts.js';
 import type { BillRow } from '../fetch/db.js';
 import type { CollectInput, ReceiptInput, Scene } from './scene.js';
+import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** 采集页文案函数读到的那一份事实（形态判定只在本件做一次）。 */
 interface UpdatePage {
@@ -113,12 +115,12 @@ export function bindUpdatePages(spec: UpdateSpec): Pick<Scene, 'collect' | 'rece
 
 /** 撤销／恢复两件共用的徽章状态（缺项就报「已阻断」，不缺报「待核对」；改记录那一件另有三种形态的说法）。 */
 export function blockedStateOf(page: UpdatePage): string {
-  return page.blocked.length > 0 ? '待补槽位 · 未写库（已阻断）' : '待核对 · 未写库';
+  return page.blocked.length > 0 ? 'pending-blocked' : 'review-pending';
 }
 
 /** 撤销／恢复两件共用的「这个编号读不到」那句（编号照实写；库报错那句收尾由本件缀在话后）。 */
 export function missingRowText(page: UpdatePage): string {
-  return '记录编号 ' + page.id + ' 在库里读不到。';
+  return m('skill-bill.write-template-update.c001', { p0: String(page.id) });
 }
 
 /** 一个值的字符串形态（数字写十进制串，其余形态按空串用）。 */
@@ -155,9 +157,9 @@ function blockedCommand(key: string, params: Record<string, unknown>, blocked: r
 }
 
 /** 缺项阻断条整条收进折叠区（判定与文案一字不动，仍是共用件 `blockedBar` 的产出，只换摆法）。 */
-function blockedFold(items: readonly BlockedItem[], command: string): string {
+function blockedFold(items: readonly BlockedItem[], command: string, language: string): string {
   if (items.length === 0) return '';
-  return renderDisclosure({ title: '还缺什么，以及补齐后照抄的那条', contentHtml: blockedBar({ items, command }) });
+  return renderDisclosure({ title: m('skill-bill.write-template-update.c002'), contentHtml: blockedBar({ items, command, language }) });
 }
 
 /** 页面内置 envelope（采集页 `ok:false`、回执页 `ok:true`；两页同一形状）。 */
@@ -195,7 +197,7 @@ function middleBlock(spec: MiddleSpec, page: UpdatePage, row: BillRow | null, in
   if (row === null) {
     return emptyNote({
       title: spec.noRowTitle, text: spec.noRowText(page) + page.readFailure,
-      next: '核一下编号，或先说清是哪一笔。',
+      next: m('skill-bill.write-template-update.c003'),
     });
   }
   if (page.deleted) return snapshotTable(row, spec.markedCaption(page)) + extraBlock(spec.marked, page, row, input);
@@ -223,24 +225,24 @@ function collectPage(spec: UpdateSpec, input: CollectInput): string {
     params: input.params,
     data: { envelope },
     log: { envelope, copyLog: copyLog({
-      command: commandLine(spec.key, input.params), source: input.source, detail: '没写库（采集页）',
+      command: commandLine(spec.key, input.params), source: input.source, detail: m('skill-bill.write-template-update.c004'),
       actionAt: input.actionAt, version: DOC_VERSION,
     }) },
   });
   if (sayOut !== null) return sayOut;
   /** 副标题只报缺哪一项（不重复「已出采集页，补齐之后跟助手说一遍」那句）。 */
-  const subtitle = page.blocked.length === 0 ? '' : '还差 ' + page.blocked.length + ' 项必需项';
+  const subtitle = page.blocked.length === 0 ? '' : m('skill-bill.write-template-update.c005', { p0: String(page.blocked.length) });
     const collectFacts = { category: facts.category, amount: facts.amount, time: facts.time, account: facts.account, ledger: facts.ledger, note: textOf(input.params.note), currency: textOf(input.params.currency), missing: page.blocked.map(function (b) { return b.label; }) };
   const content = [
-    typeBadge({ kind: '', status: 'danger', state: spec.collectState(page), pageKind: page.id === null ? '挑一条记录' : '核对这一条', next: '' }),
-    page.blocked.length === 0 ? '' : collectSectionTitle({ no: 1, title: '先看这一笔缺什么' }),
+    typeBadge({ kind: '', status: 'danger', state: spec.collectState(page), pageKind: page.id === null ? m('skill-bill.write-template-update.c006') : m('skill-bill.write-template-update.c007'), next: '' }),
+    page.blocked.length === 0 ? '' : collectSectionTitle({ no: 1, title: m('skill-bill.write-template-update.c008') }),
     collectMissingTags({ labels: page.blocked.map((i) => i.label) }),
     summaryRow(facts),
     spec.caliber === '' ? '' : renderCaliberLine(spec.caliber),
-    collectSectionTitle({ no: 2, title: page.id === null ? '先挑一条记录' : '核对这一条' }),
-    blockedFold(page.blocked, blockedCommand(spec.key, input.params, page.blocked)),
+    collectSectionTitle({ no: 2, title: page.id === null ? m('skill-bill.write-template-update.c009') : m('skill-bill.write-template-update.c010') }),
+    blockedFold(page.blocked, blockedCommand(spec.key, input.params, page.blocked), input.language),
     middleBlock(spec.middle, page, row, input),
-    promptCopyArea(spec.prompt(page), '挑好记录后照这句跟助手说一遍'),
+    promptCopyArea(spec.prompt(page), m('skill-bill.write-template-update.c011')),
     copyArea({
       hints: COPY_HINTS.sayAcct,
       data: { envelope },
@@ -250,15 +252,15 @@ function collectPage(spec: UpdateSpec, input: CollectInput): string {
       log: {
         envelope,
         copyLog: copyLog({
-          command: commandLine(spec.key, input.params), source: input.source, detail: '没写库（采集页）',
+          command: commandLine(spec.key, input.params), source: input.source, detail: m('skill-bill.write-template-update.c012'),
           actionAt: input.actionAt, version: DOC_VERSION,
         }),
       },
     }),
-    collectSourceNote(facts.time),
+    collectSourceNote(facts.time, input.language),
   ].join('');
   return pageShell({
-    docTitle: docTitleOf(spec.wake + ' 补齐槽位'),
+    docTitle: docTitleOf(m('skill-bill.write-template-update.c013', { p0: String(spec.wake) })),
     title: spec.wake,
     subtitle, slot: 'collect', page: 'collect', shape: envelope.shape, key: spec.key, content,
   });
@@ -271,51 +273,70 @@ function collectPage(spec: UpdateSpec, input: CollectInput): string {
 
 /** 回执纸头标题、印章、落点账目、退出口真按钮见 `./receiptSheet.js`。 */
 
-/** 纸头标题（判地 `h1`）：三支都是**固定句**（x28「改好了」／x30「已撤销」／x32「已恢复」）；「已撤销记录 2」式混写不要，**记录编号归核对段**（判地核对段就印「编号」那一行，两列）。 */
-const TITLE_OK: Readonly<Record<string, string>> = { none: '改好了', undo: '已撤销', restore: '已恢复' };   // 逐字取判地
+/** 纸头标题（判地 `h1`）：三支都是**固定句**（x28「改好了」／x30「已撤销」／x32「已恢复」）；「已撤销记录 2」式混写不要，**记录编号归核对段**（判地核对段就印「编号」那一行，两列）。按调用现取词，语言在模块加载后才定。 */
+function titleOkOf(result: string): string {
+  if (result === 'undo') return m('skill-bill.write-template-update.c014');
+  if (result === 'restore') return m('skill-bill.write-template-update.c015');
+  return m('skill-bill.write-template-update.c016');   // 逐字取判地
+}
 
 /** 店头副句（判地 `.shop-sub`）：三支各一句，**逐字取判地原型**（x28「已经改好，不用再操作。」／x30「已经撤销，不用再操作。」／x32「已经恢复，不用再操作。」）。 */
-const SUB_OK: Readonly<Record<string, string>> = {
-  none: '已经改好，不用再操作。',
-  undo: '已经撤销，不用再操作。',
-  restore: '已经恢复，不用再操作。',
-};
+function subOkOf(result: string): string {
+  if (result === 'undo') return m('skill-bill.write-template-update.c017');
+  if (result === 'restore') return m('skill-bill.write-template-update.c018');
+  if (result === 'none') return m('skill-bill.write-template-update.c019');
+  return '';
+}
 
 /** 摘要头那一句状态（判地 `.summary-note`）：撤销／恢复两支各一句，**逐字取判地原型**（x30「撤销标记已打上，记录保留、随时可恢复」／x32「撤销标记已清除，记录回到正常状态」）；改记录支判地没有这一句。 */
-const RESULT_NOTE: Readonly<Record<string, string>> = {
-  undo: '撤销标记已打上，记录保留、随时可恢复',
-  restore: '撤销标记已清除，记录回到正常状态',
-};
+function resultNoteOf(result: string): string {
+  if (result === 'undo') return m('skill-bill.write-template-update.c020');
+  if (result === 'restore') return m('skill-bill.write-template-update.c021');
+  return '';
+}
+
+/** 店头品牌行：场景给了就用场景那一句，没给就拼通用域品牌行（语言在调用期才定，故不在模块级算）。 */
+function brandOf(spec: UpdateSpec): string {
+  return spec.receiptBrand === undefined ? EYEBROW + ' · ' + spec.wake : spec.receiptBrand;
+}
+
+/** 复制区日志那一行（改了 N 笔、写进去哪几项；一项都没改到时写明）。 */
+function changedDetailOf(receipt: BillReceipt): string {
+  const fields = listJoin(currentRenderLanguage(), receipt.writtenFields.map((f) => fieldLabelOf(f)));
+  const tail = fields === '' ? m('skill-bill.write-template-update.c022') : fields;
+  return m('skill-bill.write-template-update.c023', { p0: String(receipt.affectedRows), p1: String(tail) });
+}
 
 /** 主数字头（判地 `.summary-head`）：**改记录支**判地是「改后落点 · <改的字段>／<改动笔数> 笔」（x28「改后落点 · 备注／1／笔」）；**撤销／恢复两支**判地是「<方向> · <分类>／金额 元」（x30「收入 · 工资／+8000.00／元」）。 */
 function summaryHeadOf(spec: UpdateSpec, input: ReceiptInput, receipt: BillReceipt) {
-  const fields = receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') || '没改到任何一项';
+  const fields = listJoin(currentRenderLanguage(), receipt.writtenFields.map((f) => fieldLabelOf(f))) || m('skill-bill.write-template-update.c024');
   if (spec.receiptResult === 'none') {
-    return { eyebrow: '改后落点 · ' + fields, value: String(receipt.affectedRows), unit: '笔', stamp: receiptStamp(spec.receiptResult, receipt), layout: 'ticket' as const };
+    return { eyebrow: m('skill-bill.write-template-update.c025', { p0: String(fields) }), value: String(receipt.affectedRows), unit: m('skill-bill.write-template-update.c026'), stamp: receiptStamp(spec.receiptResult, receipt), layout: 'ticket' as const };
   }
-  const category = input.facts.category.trim() === '' ? '未给' : input.facts.category;
-  return { eyebrow: directionWord(input.facts.amount) + ' · ' + category, value: money2(input.facts.amount), unit: '元', stamp: receiptStamp(spec.receiptResult, receipt), layout: 'ticket' as const };
+  const category = input.facts.category.trim() === '' ? m('skill-bill.write-template-update.c027') : input.facts.category;
+  return { eyebrow: directionWord(input.facts.amount) + ' · ' + category, value: money2(input.facts.amount), unit: m('skill-bill.write-template-update.c028'), stamp: receiptStamp(spec.receiptResult, receipt), layout: 'ticket' as const };
 }
 
 /** 摘要头下面那句小字：改记录支判地是「<改的字段>已更新为最新内容，其余字段未动」（x28 逐字）；撤销／恢复支看法 `RESULT_NOTE`。 */
 function summaryNoteOf(spec: UpdateSpec, receipt: BillReceipt): string {
-  if (spec.receiptResult !== 'none') return RESULT_NOTE[spec.receiptResult] ?? '';
-  const fields = receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') || '没改到任何一项';
-  return fields + '已更新为最新内容，其余字段未动';
+  if (spec.receiptResult !== 'none') return resultNoteOf(spec.receiptResult);
+  const fields = listJoin(currentRenderLanguage(), receipt.writtenFields.map((f) => fieldLabelOf(f))) || m('skill-bill.write-template-update.c029');
+  return m('skill-bill.write-template-update.c030', { p0: String(fields) });
 }
 
 /** 落点账目行：**判地撤销／恢复两支不出「分类」行**（x30／x32 逐字只有账户／账本／时间），改记录支出（x28 分类在）；其余三行照 `./receiptSheet.js` 的 landedRows。 */
 function landedRowsOf(spec: UpdateSpec, input: ReceiptInput) {
   const rows = landedRows(input.facts);
-  return spec.receiptResult === 'none' ? rows : rows.filter((r) => r.label !== '分类');
+  /** 判定按**位置**（`./receiptSheet.js` 的 landedRows 恒为 分类／账户／账本／时间 四行）：不拿本地化标签当判据。 */
+  return spec.receiptResult === 'none' ? rows : rows.slice(1);
 }
 
 /** 核对那一行（原型 `.check-mini`）：编号 ＋ 异常走「标签→值」两列，形状照 `./receiptPaper.js` 的 `checkHtml`（本仓这一块各页型各持一份 markup，合并出口是后续票的事）。 */
 function checkHtml(recordId: number | null): string {
   return '<div class="ilife-ticket-check"><span class="ilife-ticket-check-dot" aria-hidden="true"></span>'
     + checkListHtml([
-      { label: '编号', value: recordId === null ? '还没有' : String(recordId) },
-      { label: '异常', value: '无', ok: true },
+      { label: m('skill-bill.write-template-update.c031'), value: recordId === null ? m('skill-bill.write-template-update.c032') : String(recordId) },
+      { label: m('skill-bill.write-template-update.c033'), value: m('skill-bill.write-template-update.c034'), ok: true },
     ]) + '</div>';
 }
 
@@ -325,13 +346,14 @@ function receiptPage(spec: UpdateSpec, input: ReceiptInput): string {
   const envelope = envelopeOf(spec.key, true, receipt.summary);
   const exit = exitCopyOf(spec.receiptExit, receipt.recordId);
   const note = summaryNoteOf(spec, receipt);
-  const paper = sheetHead(spec.receiptBrand ?? EYEBROW + ' · ' + spec.wake, TITLE_OK[spec.receiptResult] ?? '改好了', SUB_OK[spec.receiptResult] ?? '')
+  const brand = brandOf(spec);
+  const paper = sheetHead(brand, titleOkOf(spec.receiptResult), subOkOf(spec.receiptResult))
     + ticketRule()
     + ticketSummary(renderSummaryHead(summaryHeadOf(spec, input, receipt)), note === '' ? '' : '<p class="ilife-ticket-summary-note">' + escapeHtml(note) + '</p>')
     + ticketRule()
-    + ticketSection({ title: '记到哪里', tag: '', content: renderLedgerRows({ rows: landedRowsOf(spec, input), layout: 'ticket' }) })
+    + ticketSection({ title: m('skill-bill.write-template-update.c035'), tag: '', content: renderLedgerRows({ rows: landedRowsOf(spec, input), layout: 'ticket' }) })
     + ticketRule()
-    + ticketSection({ title: '核对', tag: '', content: checkHtml(receipt.recordId) })
+    + ticketSection({ title: m('skill-bill.write-template-update.c036'), tag: '', content: checkHtml(receipt.recordId) })
     + ticketRule()
     + ticketActions((exit === null ? '' : ticketPrimaryButton(exit))
       + copyArea({
@@ -341,18 +363,17 @@ function receiptPage(spec: UpdateSpec, input: ReceiptInput): string {
           envelope,
           copyLog: copyLog({
             command: commandLine(spec.key, input.params), source: receipt.source,
-            detail: '改了 ' + receipt.affectedRows + ' 笔，写进去 '
-              + (receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') || '没改到任何一项'),
+            detail: changedDetailOf(receipt),
             actionAt: receipt.actionAt, version: DOC_VERSION,
           }),
         },
       }));
   const content = writeSection({
     slot: 'receipt', page: 'receipt', shape: envelope.shape, key: spec.key,
-    content: renderSheetFrame({ variant: 'ticket', cutLine: true, cutLineText: '✂ 裁切线', content: paper }) + '<p class="ilife-ticket-foot">' + escapeHtml((spec.receiptBrand ?? EYEBROW + ' · ' + spec.wake) + '回执') + '</p>',
+    content: renderSheetFrame({ variant: 'ticket', cutLine: true, cutLineText: m('skill-bill.write-template-update.c037'), content: paper }) + '<p class="ilife-ticket-foot">' + escapeHtml(m('skill-bill.write-template-update.c038', { p0: String(brand) })) + '</p>',
   });
   return assembleSheetPage({
-    docTitle: docTitleOf(spec.wake + ' 回执'),
+    docTitle: docTitleOf(m('skill-bill.write-template-update.c039', { p0: String(spec.wake) })),
     bodyHtml: content,
     paper: 'receipt',
   });

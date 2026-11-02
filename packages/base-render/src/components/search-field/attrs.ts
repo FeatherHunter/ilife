@@ -10,6 +10,7 @@
  */
 
 /** 本件的类名根（`ilife-block-<件名>`）。所有槽位类名都由它派生出 `-<槽>`。 */
+import { m } from '../../entries/index.js';
 export const SEARCH_ROOT_CLASS = 'ilife-block-search-field';
 
 /** 形态闭集：本件只落裁定胜出的那一档（闭集外的值 → `bad-input`，不静默降级）。 */
@@ -83,27 +84,27 @@ export const SEARCH_EVENT_JUMP = 'ilife:search-jump';
 export const SEARCH_EVENT_LOADING = 'ilife:search-loading';
 
 /** 缺省文案与量词（渲染与运行时共用这一份，判据也从这里取，不抄字面量）。 */
-export const SEARCH_DEFAULTS = Object.freeze({
+export const SEARCH_DEFAULTS = {
   /** 输入框的 `aria-label`（没给字段名时的兜底）。 */
-  label: '搜索',
-  clearLabel: '清空',
-  prevLabel: '上一处',
-  nextLabel: '下一处',
+  get label(): string { return m('base-render.components-search-field-attrs.c001'); },
+  get clearLabel(): string { return m('base-render.components-search-field-attrs.c002'); },
+  get prevLabel(): string { return m('base-render.components-search-field-attrs.c003'); },
+  get nextLabel(): string { return m('base-render.components-search-field-attrs.c004'); },
   /** 空态句：命中 0 处时写在读数下面（**设计过的空态**，不是一片空白）。 */
-  emptyText: '没有命中，换个词或放宽范围',
+  get emptyText(): string { return m('base-render.components-search-field-attrs.c005'); },
   /** 载入态原地换的那句。 */
-  loadingText: '正在找…',
+  get loadingText(): string { return m('base-render.components-search-field-attrs.c006'); },
   /** 没接上结果区时那句（错态，写在控件旁边）。 */
-  unwiredText: '这个搜索框没接上结果区：页面上找不到可搜的条目',
+  get unwiredText(): string { return m('base-render.components-search-field-attrs.c007'); },
   /** 「全部」档的机器值（范围分段里代表不过滤）。 */
-  scopeAll: 'all',
+  get scopeAll(): string { return 'all'; },
   /** 命中数的量词：「N 处命中」的「处」。 */
-  noun: '处',
+  get noun(): string { return m('base-render.components-search-field-attrs.c008'); },
   /** 缺值写法（工艺书：缺值写成 `—`）。 */
-  unset: '—',
+  get unset(): string { return '—'; },
   /** 结果区条目一个字都没有时的报错文案。 */
-  emptyRegionText: '结果区里没有可搜的条目',
-} as const);
+  get emptyRegionText(): string { return m('base-render.components-search-field-attrs.c009'); },
+};
 
 /** 范围分段的一档。 */
 export interface SearchScopeInput {

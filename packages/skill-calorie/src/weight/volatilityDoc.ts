@@ -45,10 +45,11 @@ import type { VolatilityView } from './plate.js';
 import { anomalyReason, baselineDeltaText, deviationText, volatilitySummary } from './volatility.js';
 import type { VolatilityV2, VolatilityViewMode, VolLevel } from './volatility.js';
 import { bulletList, factStrip, note, verdict, weightUiCss, windowStrip } from './weightUi.js';
+import { m } from '../entries/index.js';
 
 const CMD_KEY = 'calorie.view.volatility';
 /** 复制日志第 3 段后半（哪张库／哪个窗口）。 */
-const COPY_SOURCE = DB_FILENAME + ' ｜ 体重记录（本窗体重波动）';
+const COPY_SOURCE = (): string => m('skill-calorie.weight-volatilityDoc.c051', { p0: String(DB_FILENAME) });
 
 /** 渲染本页的命令原文（复制日志第 3 段）：照抄可重跑。 */
 export function volatilityCommandOf(params: Record<string, unknown>): string {
@@ -60,11 +61,11 @@ export function volatilityCommandOf(params: Record<string, unknown>): string {
 const MISSING = '—';
 /** 档位词：数据层的 `normal`／`yellow`／`red` 不动，只在显示层翻成这一套词（全页同一套）。
  *  #485：颜色词（黄／红）换成线的名字——与卡副说明、表列、结论句同词，读者不用在两种记法间翻译。 */
-const LEVEL_WORD: Readonly<Record<VolLevel, string>> = { normal: '正常', yellow: '注意', red: '警戒' };
+const LEVEL_WORD = (): Readonly<Record<VolLevel, string>> => ({ normal: m('skill-calorie.weight-volatilityDoc.c052'), yellow: m('skill-calorie.weight-volatilityDoc.c053'), red: m('skill-calorie.weight-volatilityDoc.c054') });
 /** σ 要有像样的对照至少要 3 个点（与 `volatility.ts` 的 `rollingSigma7d`／`fullDetrendedSigma` 门槛同值）。 */
 const SAMPLE_MIN = 3;
 
-const levelWord = (l: VolLevel): string => LEVEL_WORD[l] ?? MISSING;
+const levelWord = (l: VolLevel): string => LEVEL_WORD()[l] ?? MISSING;
 
 /** 结论句（唯一形态：`renderDisclosure({title:'结论'})` 的正文）。
  *  不含「结论：」前缀——折叠区标题已经是「结论」。
@@ -83,7 +84,7 @@ function volatilityConclusion(o: VolatilityV2, only = false): string {
   const s = volatilitySummary(o);
   if (only || o.points.length === 1) return verdict(s + '。');
   const level = o.earlyWarning.level;
-  const tail = level === 'red' ? '，超过警戒线' : level === 'yellow' ? '，超过注意线' : '，在正常范围内';
+  const tail = level === 'red' ? m('skill-calorie.weight-volatilityDoc.c001') : level === 'yellow' ? m('skill-calorie.weight-volatilityDoc.c002') : m('skill-calorie.weight-volatilityDoc.c003');
   const todayText = o.earlyWarning.date + ' ' + o.earlyWarning.kg + ' kg '
     + baselineDeltaText(o.earlyWarning.deviationKg) + tail + '。';
   return verdict(s + '。') + note(todayText);
@@ -108,7 +109,7 @@ function volatilityCopyPayload(o: VolatilityV2): SerializableEnvelope {
     '预警日': o.earlyWarning.date,
     '结论': volatilityConclusion(o),
     '异常明细': o.recentAnomalies.length === 0
-      ? '无'
+      ? m('skill-calorie.weight-volatilityDoc.c004')
       : o.recentAnomalies.map((p) => [p.date, String(p.kg) + ' kg', deviationText(p.deviationKg) + ' kg',
         levelWord(p.level), anomalyReason(p)].join(' ｜ ')).join('；'),
   };
@@ -118,19 +119,19 @@ function volatilityCopyPayload(o: VolatilityV2): SerializableEnvelope {
 }
 
 /** 表列口径一处定义（整图面与只看异常点面共用一张表，不各抄一份）。 */
-const ANOMALY_COLUMNS: DataTableColumn[] = [
-  { key: 'date', label: '日期' },
-  { key: 'kg', label: '体重', align: 'right' },
-  { key: 'dev', label: '偏离平均线', align: 'right' },
-  { key: 'level', label: '级别' },
-  { key: 'reason', label: '原因' },
+const ANOMALY_COLUMNS = (): DataTableColumn[] => [
+  { key: 'date', label: m('skill-calorie.weight-volatilityDoc.c055') },
+  { key: 'kg', label: m('skill-calorie.weight-volatilityDoc.c056'), align: 'right' },
+  { key: 'dev', label: m('skill-calorie.weight-volatilityDoc.c057'), align: 'right' },
+  { key: 'level', label: m('skill-calorie.weight-volatilityDoc.c058') },
+  { key: 'reason', label: m('skill-calorie.weight-volatilityDoc.c059') },
 ];
 
 /** 异常表（两面同一份：标题与空态句随读法变，列与行不变）。 */
 function anomalyTable(o: VolatilityV2, view: VolatilityViewMode): string {
   const only = view === 'anomalies-only';
   return renderDataTable({
-    columns: ANOMALY_COLUMNS,
+    columns: ANOMALY_COLUMNS(),
     rows: o.recentAnomalies.map((p) => ({
       date: p.date, kg: String(p.kg) + ' kg', dev: deviationText(p.deviationKg) + ' kg',
       level: levelWord(p.level), reason: anomalyReason(p),
@@ -138,9 +139,9 @@ function anomalyTable(o: VolatilityV2, view: VolatilityViewMode): string {
     /* #510：表题不再写「近 7 天」（审查席 S2 第三类：那个 `7 天` 与「近期异常」卡副说明、结论判语
      * 同屏三处）——这一张表列的就是近 7 天的异常点，卡副说明已经写着「近 7 天越线的天数」。 */
     caption: only
-      ? '波动异常点（共 ' + o.recentAnomalies.length + ' 个）'
-      : '异常点（共 ' + o.recentAnomalies.length + ' 个，超过波动带的点）',
-    emptyText: '近期没有异常点（平均线 ' + o.baselineValue + ' kg）',
+      ? m('skill-calorie.weight-volatilityDoc.c005', { p0: String(o.recentAnomalies.length) })
+      : m('skill-calorie.weight-volatilityDoc.c006', { p0: String(o.recentAnomalies.length) }),
+    emptyText: m('skill-calorie.weight-volatilityDoc.c007', { p0: String(o.baselineValue) }),
   });
 }
 
@@ -163,17 +164,22 @@ function kpiCards(o: VolatilityV2): KpiCardInput[] {
   const level = o.earlyWarning.level;
   const yellowN = o.recentAnomalies.filter((a) => a.level === 'yellow').length;
   const redN = o.recentAnomalies.filter((a) => a.level === 'red').length;
+  const gapPhrase = gap > 0 ? m('skill-calorie.weight-volatilityDoc.c008', { p0: String(gap) }) : '';
   return [
     {
-      label: o.baselineMode === 'goal' ? '目标体重' : '平均线', value: String(o.baselineValue), unit: 'kg',
+      label: o.baselineMode === 'goal' ? m('skill-calorie.weight-volatilityDoc.c009') : m('skill-calorie.weight-volatilityDoc.c010'), value: String(o.baselineValue), unit: 'kg',
       /* #510：满窗时原写「7/7 天有记录」——那个 `7 天` 与副标题（「以近 7 天平均体重为参照」）、
        * 「近期异常」卡副说明（「近 7 天越线的天数」）同屏三处（审查席实测的 ★ 条数项）。
        * 每天都有记录时不报这个数（读数就是全窗天数，副标题已有），有缺口时照实报「N/M 天（缺 K 天）」。 */
       detail: o.warnDays >= o.days
-        ? '每天都有记录'
-        : o.warnDays + '/' + o.days + ' 天有记录' + (gap > 0 ? '（缺 ' + gap + ' 天）' : ''),
+        ? m('skill-calorie.weight-volatilityDoc.c011')
+        : m('skill-calorie.weight-volatilityDoc.c012', {
+          p0: String(o.warnDays),
+          p1: String(o.days),
+          p2: String(gapPhrase),
+        }),
       status: single ? 'empty' : gap > 0 ? 'warn' : 'ok',
-      statusText: single ? '只有一天' : gap > 0 ? '记录不齐' : '没有漏记',
+      statusText: single ? m('skill-calorie.weight-volatilityDoc.c013') : gap > 0 ? m('skill-calorie.weight-volatilityDoc.c014') : m('skill-calorie.weight-volatilityDoc.c015'),
     },
     {
       /* #504 形状化（本族的样板处）：这一条副说明原来是**三件事串一行**
@@ -188,15 +194,15 @@ function kpiCards(o: VolatilityV2): KpiCardInput[] {
        * #510（审查席 S3）：那一句原来是**指路牌**（「两条线各是多少，看这张卡下面那条」）——
        * 事实已被移出卡、再叫读者去别处看 ⇒ 撤掉整条副说明，这张卡改成**无副行的纯指标卡**
        * （值槽 ＋ 徽章 ＋ 卡下那条条子，各说一件事）。 */
-      label: '波动带', value: '±' + o.thresholds.red, unit: 'kg',
+      label: m('skill-calorie.weight-volatilityDoc.c016'), value: '±' + o.thresholds.red, unit: 'kg',
       /* 只有 1 个点、或点数不到门槛时，波动幅度取兜底值 0.5，两条线不是从本窗数据推出来的——徽章要如实说。
        * #510：徽章原来是 11 字的句子（「这两条线按本窗数据算」，审查席 S3：胶囊只装 2～4 字状态词）
        * ⇒ 收到 4 字状态词；「按本窗数据算」这层意思由这一个词承担，不再另起一句。 */
       status: single || o.sigmaTrend.length === 0 ? 'warn' : 'ok',
-      statusText: single || o.sigmaTrend.length === 0 ? '兜底值' : '本窗算出',
+      statusText: single || o.sigmaTrend.length === 0 ? m('skill-calorie.weight-volatilityDoc.c017') : m('skill-calorie.weight-volatilityDoc.c018'),
     },
     {
-      label: '今日偏离', value: deviationText(o.earlyWarning.deviationKg), unit: 'kg',
+      label: m('skill-calorie.weight-volatilityDoc.c019'), value: deviationText(o.earlyWarning.deviationKg), unit: 'kg',
       detail: o.earlyWarning.message,
       status: level === 'red' ? 'danger' : level === 'yellow' ? 'warn' : 'ok',
       statusText: levelWord(level),
@@ -208,10 +214,10 @@ function kpiCards(o: VolatilityV2): KpiCardInput[] {
        * （`近 7 天：超过注意线 0 天 · 超过警戒线 5 天`）——两条事实各自落卡下那条条子
        * （`wui-strip` 的「标签 ＋ 值」，与 `阈值` 那条同形）；卡内这一格只说「这一格数的是什么」。
        * `近 7 天` 收进标签里说全（原来靠行首那一句管住整行，拆条之后每条得自己说全）。 */
-      label: '近期异常', value: String(o.recentAnomalies.length), unit: '个',
-      detail: '近 7 天越线的天数',
+      label: m('skill-calorie.weight-volatilityDoc.c020'), value: String(o.recentAnomalies.length), unit: m('skill-calorie.weight-volatilityDoc.c021'),
+      detail: m('skill-calorie.weight-volatilityDoc.c022'),
       status: o.recentAnomalies.length === 0 ? 'ok' : redN > 0 ? 'danger' : 'warn',
-      statusText: o.recentAnomalies.length === 0 ? '没越线' : '有异常点',
+      statusText: o.recentAnomalies.length === 0 ? m('skill-calorie.weight-volatilityDoc.c023') : m('skill-calorie.weight-volatilityDoc.c024'),
     },
   ];
 }
@@ -227,9 +233,9 @@ function kpiCards(o: VolatilityV2): KpiCardInput[] {
  *  一屏同一事实只留一处（口径 §三 第 2 条），故卡内不再重印这三个数。 */
 function thresholdStrip(o: VolatilityV2): string {
   return factStrip([
-    { k: '波动幅度', v: o.baselineSigma + ' kg' },
-    { k: '注意线', v: '±' + o.thresholds.yellow + ' kg' },
-    { k: '警戒线', v: '±' + o.thresholds.red + ' kg' },
+    { k: m('skill-calorie.weight-volatilityDoc.c025'), v: o.baselineSigma + ' kg' },
+    { k: m('skill-calorie.weight-volatilityDoc.c026'), v: '±' + o.thresholds.yellow + ' kg' },
+    { k: m('skill-calorie.weight-volatilityDoc.c027'), v: '±' + o.thresholds.red + ' kg' },
   ]);
 }
 
@@ -241,7 +247,7 @@ function deviationChart(o: VolatilityV2): string {
   const plan = weightCurvePlan(o.points.map((p) => p.deviationKg), budget);
   return renderChartBlock({
     kind: 'line',
-    title: '每天离平均线多远',
+    title: m('skill-calorie.weight-volatilityDoc.c028'),
     input: {
       items: o.points.map((p) => ({
         label: p.date.slice(5), value: p.deviationKg, anomaly: p.level !== 'normal',
@@ -257,9 +263,9 @@ function deviationChart(o: VolatilityV2): string {
         height: 180,
         markLine: {
           value: o.thresholds.red, color: '#ff3b30',
-          label: '警戒线 ±' + o.thresholds.red + ' kg',
+          label: m('skill-calorie.weight-volatilityDoc.c029', { p0: String(o.thresholds.red) }),
         },
-        emptyText: '本窗无体重记录',
+        emptyText: m('skill-calorie.weight-volatilityDoc.c030'),
       },
     },
   });
@@ -273,7 +279,7 @@ function sigmaChart(o: VolatilityV2): string {
   const plan = weightCurvePlan(o.sigmaTrend.map((s) => s.sigmaKg), null);
   return renderChartBlock({
     kind: 'line',
-    title: '去掉涨跌后的波动',
+    title: m('skill-calorie.weight-volatilityDoc.c031'),
     input: {
       items: o.sigmaTrend.map((s) => ({ label: s.dateStart.slice(5), value: s.sigmaKg })),
       options: {
@@ -285,7 +291,7 @@ function sigmaChart(o: VolatilityV2): string {
         format: (n: number): string => n.toFixed(2) + ' kg',
         showDots: true,
         height: 180,
-        emptyText: '记录太少，画不出这张波动曲线（每段时间至少 ' + SAMPLE_MIN + ' 条记录才看得出差别）',
+        emptyText: m('skill-calorie.weight-volatilityDoc.c032', { p0: String(SAMPLE_MIN) }),
       },
     },
   });
@@ -300,9 +306,13 @@ function sourceLine(o: VolatilityV2, start: string, end: string): string {
   const gap = o.days - o.warnDays;
   // #485 对抗审查整改（裁定 F）：页脚只留人话来源——库表名（`calorie_data.db`／`weight_log`）退出可见面，
   // 机器面照旧住复制日志第 4 段（`COPY_SOURCE`，那两句是两处字符串，别合并）。
-  return renderCaliberLine('📊 数据来源：体重记录 ｜ 窗口 ' + start + ' ~ ' + end
-    + ' ｜ 共 ' + o.warnDays + ' 天有记录'
-    + (gap > 0 ? ' ｜ 缺 ' + gap + ' 天没记' : ''));
+  const gapPhrase = gap > 0 ? m('skill-calorie.weight-volatilityDoc.c033', { p0: String(gap) }) : '';
+  return renderCaliberLine(m('skill-calorie.weight-volatilityDoc.c034', {
+    p0: String(start),
+    p1: String(end),
+    p2: String(o.warnDays),
+    p3: String(gapPhrase),
+  }));
 }
 
 /** 页顶前提提示（§5.6：记录太少不拒绝渲染，走 `warn` 写清「几条／门槛几条／为什么仍可看」）。
@@ -313,16 +323,14 @@ function premiseNotice(o: VolatilityV2): string | null {
   if (o.points.length === 0) return null;
   if (o.points.length === 1) {
     return notice({
-      title: '记录太少', icon: 'warn',
-      msg: '本窗只有 1 条体重记录：平均线就是这一条读数，离平均线的距离必然是 0；波动与两条线取兜底值 '
-        + '0.5 kg 档，照常出页，但一天看不出趋势。',
+      title: m('skill-calorie.weight-volatilityDoc.c035'), icon: 'warn',
+      msg: m('skill-calorie.weight-volatilityDoc.c036'),
     });
   }
   if (o.sigmaTrend.length === 0) {
     return notice({
-      title: '记录太少', icon: 'warn',
-      msg: '本窗只有 ' + o.warnDays + ' 天有记录，少于 ' + SAMPLE_MIN
-        + ' 天：曲线与异常表照常给，但这张波动曲线画不出来，两条线用兜底值读，当参考值看。',
+      title: m('skill-calorie.weight-volatilityDoc.c037'), icon: 'warn',
+      msg: m('skill-calorie.weight-volatilityDoc.c038', { p0: String(o.warnDays), p1: String(SAMPLE_MIN) }),
     });
   }
   return null;
@@ -338,21 +346,21 @@ export function buildVolatilityPage(v: VolatilityView, view: VolatilityViewMode,
   // （只看异常点读法原来那句「本读法只列越阈异常点…」与页顶提示同字，删掉，读法说明只留页顶一处。）
   // #542（#340 打回批）：窗口退出页题（H1），改住正文首件 `windowStrip()`（两枚日期块 ＋ 条数胶囊），
   // 与页脚来源行各一处；副标题只留参照句。
-  const subtitle = '以' + o.baselineToggleLabel + '为参照';
+  const subtitle = m('skill-calorie.weight-volatilityDoc.c039', { p0: String(o.baselineToggleLabel) });
   /* `weightUiCss()` 恒为正文第一项（口径 §二：形状词汇的样式住 `weightUi.ts` 一处，
    *  `assembleDocPage` 没有页内 CSS 入口，故由整页装配把它带进来）。空态那一页同样先带它。 */
   const parts: string[] = [weightUiCss()];
   if (o.points.length > 0) {
-    parts.push(windowStrip(v.start, v.end, '共 ' + o.warnDays + ' 天有记录'));
+    parts.push(windowStrip(v.start, v.end, m('skill-calorie.weight-volatilityDoc.c040', { p0: String(o.warnDays) })));
   }
   if (o.points.length === 0) {
     // 数据型空态（§5.6）：页照常是一张完整的页——标题、空态句、页脚来源行、复制区都在。
-    parts.push(notice({ title: '本窗无体重记录', icon: 'warn', msg: '窗口 ' + v.start + ' ~ ' + v.end + ' 内没有体重记录，出不了平均线与波动带。' }));
+    parts.push(notice({ title: m('skill-calorie.weight-volatilityDoc.c041'), icon: 'warn', msg: m('skill-calorie.weight-volatilityDoc.c042', { p0: String(v.start), p1: String(v.end) }) }));
     parts.push(sourceLine(o, v.start, v.end));
     parts.push(copySection(volatilityCopyPayload(o), command));
     return assembleDocPage({
-      docTitle: DOC_TITLE,
-      title: '波动分析',
+      docTitle: DOC_TITLE(),
+      title: m('skill-calorie.weight-volatilityDoc.c043'),
       eyebrow: '',
       subtitle,
       content: parts.join(''),
@@ -365,12 +373,12 @@ export function buildVolatilityPage(v: VolatilityView, view: VolatilityViewMode,
      * 一个 `；` 把「这一页有什么」与「要看整图怎么办」两件事串成一句。现在：提示块只报这一页列了点什么，
      * 两条后续说明落 `bulletList()` 逐条成行（本族与复盘族同一个搭法）。 */
     parts.push(notice({
-      title: '这一页只看异常点', icon: 'info',
-      msg: '这一页只列超过波动带的点（共 ' + o.recentAnomalies.length + ' 个）。',
+      title: m('skill-calorie.weight-volatilityDoc.c044'), icon: 'info',
+      msg: m('skill-calorie.weight-volatilityDoc.c045', { p0: String(o.recentAnomalies.length) }),
     }));
     parts.push(bulletList([
-      '这一页不出两张曲线图',
-      '要看整图，请说「看体重稳不稳（增强版）」',
+      m('skill-calorie.weight-volatilityDoc.c046'),
+      m('skill-calorie.weight-volatilityDoc.c047'),
     ]));
   }
   const premise = premiseNotice(o);
@@ -388,12 +396,12 @@ export function buildVolatilityPage(v: VolatilityView, view: VolatilityViewMode,
   parts.push(anomalyTable(o, view));
   /* 结论块（§5.3）：正文由 `verdict()` ＋ `note()` 两件块级元素组成，
    * 故这里**不再套 `<p>`**（`<p>` 里塞不下块级件，浏览器会把套的这层拆开、产出坏结构）。 */
-  parts.push(renderDisclosure({ title: '结论', contentHtml: volatilityConclusion(o, only), open: true }));
+  parts.push(renderDisclosure({ title: m('skill-calorie.weight-volatilityDoc.c048'), contentHtml: volatilityConclusion(o, only), open: true }));
   parts.push(sourceLine(o, v.start, v.end));
   parts.push(copySection(volatilityCopyPayload(o), command));
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: only ? '看波动异常点' : '波动分析',
+    docTitle: DOC_TITLE(),
+    title: only ? m('skill-calorie.weight-volatilityDoc.c049') : m('skill-calorie.weight-volatilityDoc.c050'),
     eyebrow: '',
     subtitle,
     content: parts.join(''),
@@ -406,7 +414,7 @@ export function buildVolatilityPage(v: VolatilityView, view: VolatilityViewMode,
 function copySection(envelope: SerializableEnvelope, command: string): string {
   return copyArea({
     data: { envelope },
-    log: { envelope, copyLog: copyLog({ command, source: COPY_SOURCE, actionAt: nowStamp(), version: DOC_VERSION }) },
+    log: { envelope, copyLog: copyLog({ command, source: COPY_SOURCE(), actionAt: nowStamp(), version: DOC_VERSION }) },
   });
 }
 

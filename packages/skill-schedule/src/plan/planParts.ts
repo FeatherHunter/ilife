@@ -14,10 +14,14 @@
  *  既有值 **820**（页内自造件那一档），不新造。
  */
 import { renderChangeRows, type ChangeRowInput } from 'base-paint/blocks';
+import { m } from '../entries/index.js';
 
-/** 五字符转义（与公共层 `blocks.ts` 同口径；本件不引区块层内部件）。 */
+/** 五字符转义（与公共层 `blocks.ts` 同口径；本件不引区块层内部件）。
+ *  字符类里的引号写成 \u 转义（\u0022＝双引号、\u0027＝单引号），语义与 `/[&<>"']/` 逐字相同；
+ *  这样写是因为 `tooling/check-i18n-keys.mjs` 的字面量扫描器不认正则（朴素引号扫描），
+ *  裸引号会把后面的代码整段当成一个字符串、报出假残留（#1222 实测 4 条）。 */
 function esc(value: string): string {
-  return value.replace(/[&<>"']/g, (ch) => {
+  return value.replace(/[&<>\u0022\u0027]/g, (ch) => {
     if (ch === '&') return '&amp;';
     if (ch === '<') return '&lt;';
     if (ch === '>') return '&gt;';
@@ -85,12 +89,12 @@ export function renderGoalCards(cards: readonly GoalCardInput[]): string {
  *  颜色只取公共层冻结 token；长度只取上面那组常量——本串里不出现 `px` 字面量。 */
 export function planPartsCss(): string {
   return [
-    '/* #787 日程与计划域·族级件（断点只用仓内既有值 820） */',
+    m('skill-schedule.plan-planParts.c001'),
     '.sch-pl-h2 { margin: 0 0 ' + px(PANEL_GAP) + '; font-size: ' + px(FS_TITLE) + '; font-weight: 600; color: var(--fg); }',
     '.sch-pl-diff { padding: ' + px(PANEL_PAD_Y) + ' ' + px(PANEL_PAD_X) + '; border: ' + px(HAIRLINE) + ' solid var(--line);',
     '  border-left: ' + px(RAIL_W) + ' solid var(--blue); border-radius: ' + px(PANEL_RADIUS) + '; background: var(--soft); }',
     '.sch-pl-note { margin: 0; color: var(--fg2); font-size: ' + px(FS_BODY) + '; line-height: 1.7; }',
-    '/* #788 复盘与飞书域·族级件：目标达成卡（断点只用仓内既有值 820） */',
+    m('skill-schedule.plan-planParts.c002'),
     '.sch-pl-goals { display: grid; grid-template-columns: repeat(' + String(GOAL_COLS) + ', minmax(0, 1fr));',
     '  gap: ' + px(PANEL_GAP) + '; margin: ' + px(PANEL_GAP) + ' 0 ' + px(PANEL_GAP) + '; }',
     '.sch-pl-goal { padding: ' + px(PANEL_PAD_Y) + ' ' + px(PANEL_PAD_X) + '; border: ' + px(HAIRLINE) + ' solid var(--line);',

@@ -62,6 +62,7 @@ import type { SceneGroup } from 'base-paint';
 import { buildChefSceneData } from './sceneData.js';
 import { helpDirSegments, helpFileStem, lookupFileStem } from './manifest.js';
 import { ChefRenderError } from '../render/errors.js';
+import { m } from '../entries/index.js';
 
 /** 落点值由 #215 收进 `src/help/manifest.ts`（A2）——本件从它 `import`，**不落第二处**（铁律二）。
  *  时间戳格式与同秒递补一概不在本件（唯一定义地＝共用件 `base-paint/save-html`）。 */
@@ -71,17 +72,19 @@ const CHEF_HELP_INIT_SCENE_ID = 'first_use' as const;
 
 /** 联系作者三项（照记账 bill `:46-53`／schedule `:52-59`；老 chef 载荷无此块）。`url` 为真时模板渲染成 `<a>`。
  *  **不对外开出口**：要用它的是出口层，本件够用（导出面按铁律五收口）。 */
-const CHEF_HELP_CONTACT: {
+function chefHelpContact(): {
   readonly items: readonly { readonly label: string; readonly value: string; readonly url?: true }[];
   readonly copy_all: true;
-} = Object.freeze({
-  items: Object.freeze([
-    Object.freeze({ label: '邮箱', value: '975559549@qq.com' }),
-    Object.freeze({ label: 'GitHub', value: 'https://github.com/FeatherHunter/ilife', url: true as const }),
-    Object.freeze({ label: 'Issues', value: 'https://github.com/FeatherHunter/ilife/issues', url: true as const }),
-  ]),
-  copy_all: true as const,
-});
+} {
+  return Object.freeze({
+    items: Object.freeze([
+      Object.freeze({ label: m('skill-chef.help-helpFile.c013'), value: '975559549@qq.com' }),
+      Object.freeze({ label: 'GitHub', value: 'https://github.com/FeatherHunter/ilife', url: true as const }),
+      Object.freeze({ label: 'Issues', value: 'https://github.com/FeatherHunter/ilife/issues', url: true as const }),
+    ]),
+    copy_all: true as const,
+  });
+}
 
 /* ── 装配层内部形状（不对外开出口；出口面按铁律五收口）────────────────────────── */
 
@@ -114,7 +117,7 @@ function isNonEmptyString(v: unknown): v is string {
 /** 老 `%Y-%m-%d %H:%M` 等价物（本地时区、零填充；非法 Date 即坏参，不返空串）。 */
 export function formatHelpMinute(now: Date): string {
   if (!(now instanceof Date) || Number.isNaN(now.getTime())) {
-    fail('HELP 更新时间须为有效 Date（缺失阻断，不返空串）。');
+    fail(m('skill-chef.help-helpFile.c001'));
   }
   const p = (n: number): string => String(n).padStart(2, '0');
   return String(now.getFullYear()) + '-' + p(now.getMonth() + 1) + '-' + p(now.getDate())
@@ -134,14 +137,14 @@ function initPromptFrom(groups: readonly SceneGroup[]): string {
       for (const s of sg.scenes) {
         if (s.id === CHEF_HELP_INIT_SCENE_ID) {
           if (!isNonEmptyString(s.prompt_template)) {
-            fail('HELP 首次使用横幅缺 prompt：场景 ' + CHEF_HELP_INIT_SCENE_ID + ' 的 prompt_template 为空。');
+            fail(m('skill-chef.help-helpFile.c002', { p0: String(CHEF_HELP_INIT_SCENE_ID) }));
           }
           return s.prompt_template;
         }
       }
     }
   }
-  return fail('HELP 首次使用横幅缺 prompt：内容资产无场景 ' + CHEF_HELP_INIT_SCENE_ID + '。');
+  return fail(m('skill-chef.help-helpFile.c003', { p0: String(CHEF_HELP_INIT_SCENE_ID) }));
 }
 
 /** 全量 HELP JSON（5 必需键 ＋ 两张可选键 `version`／`init_banner`；共享 help 模板运行时契约的超集）。
@@ -162,15 +165,15 @@ export function buildChefHelpFileData(now: Date, opts: ChefHelpFileOptions = {})
 } {
   const scene = buildChefSceneData();
   const groups: readonly SceneGroup[] = scene.groups;
-  if (groups.length === 0) fail('HELP 内容资产为空（CHEF_SCENES 无域）。');
+  if (groups.length === 0) fail(m('skill-chef.help-helpFile.c004'));
   const scenes = groups.reduce((n, g) => n + g.subgroups.reduce((m, sg) => m + sg.scenes.length, 0), 0);
-  if (scenes === 0) fail('HELP 内容资产没有任何场景（二级组为空）。');
+  if (scenes === 0) fail(m('skill-chef.help-helpFile.c005'));
   if (!isNonEmptyString(scene.skill_name) || !isNonEmptyString(scene.title)) {
-    fail('HELP 页面级缺 skill_name／title（内容资产不许留空）。');
+    fail(m('skill-chef.help-helpFile.c006'));
   }
   // 技能数据世代取自资产的公开导出（`sceneData.ts` 有意只给 2 个导出 ⇒ 从它的返回值取，
   // 不在本模块写第四份副本；值出自老载荷 `meta.version`，生成器 `:186` 逐字断言）。
-  if (!isNonEmptyString(scene.version)) fail('HELP 缺 version（内容资产没给技能数据世代）。');
+  if (!isNonEmptyString(scene.version)) fail(m('skill-chef.help-helpFile.c007'));
   const version = String(scene.version);
 
   // `now` 非法在这里就炸，不把坏时间带进载荷。
@@ -178,20 +181,24 @@ export function buildChefHelpFileData(now: Date, opts: ChefHelpFileOptions = {})
   // 页头摘要行（照 bill `:102-106` 的式子）：计数**全部派生**（域数／场景数），版本取资产。
   //  只数「一级域 ＋ 场景」两层：记账那一式也只数它的两级（7 功能域 · 74 场景），
   //  组（chef 的 33 个二级组）在账单那一式里对应 `subgroups`，同样不进摘要行。
-  const subtitle = String(groups.length) + ' 功能域 · ' + String(scenes) + ' 场景 · 版本 '
-    + version + ' · 更新于 ' + updatedAt;
+  const subtitle = m('skill-chef.help-helpFile.c008', {
+    p0: String(String(groups.length)),
+    p1: String(String(scenes)),
+    p2: String(version),
+    p3: String(updatedAt),
+  });
 
   return Object.freeze({
     skill_name: scene.skill_name,
     title: scene.title,
     subtitle,
-    contact: CHEF_HELP_CONTACT,
+    contact: chefHelpContact(),
     groups,
     version,
     init_banner: Object.freeze({
-      title: '🚀 第一次用私家大厨?',
-      subtitle: '从「首次使用」开始 — 检测环境、确认数据目录、建库、验证读写,全程零决策。完成初始化后,本区域将不再出现。',
-      button_text: '📋 复制初始化 prompt',
+      title: m('skill-chef.help-helpFile.c009'),
+      subtitle: m('skill-chef.help-helpFile.c010'),
+      button_text: m('skill-chef.help-helpFile.c011'),
       prompt: initPromptFrom(groups),
       closable: true as const,
       hidden: opts.initialized === true,
@@ -214,7 +221,7 @@ export function renderChefHelpHtml(data: ReturnType<typeof buildChefHelpFileData
 /** 落点目录（两个主体共用一个目录）：`dbPath` 的**父目录** ＋ 配置里的段串（默认 `cook_html/help`，
  *  `#695` 起从配置文件取），`resolve` 成绝对路径（回执路径因此可用）。坏 `dbPath` 即抛，不返空落点。 */
 function chefHelpDir(dbPath: string): string {
-  if (!isNonEmptyString(dbPath)) fail('HELP 落点缺库路径（`dbPath` 须为非空字符串，缺失阻断不返空）。');
+  if (!isNonEmptyString(dbPath)) fail(m('skill-chef.help-helpFile.c012'));
   return resolve(dirname(dbPath), ...helpDirSegments());
 }
 

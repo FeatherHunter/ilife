@@ -25,6 +25,7 @@ import { CalorieRenderError } from '../render/errors.js';
 import { commandLine } from '../shared/writeParts.js';
 import { jp7BodyFatPct } from './log.js';
 import * as prompt from './wizardPrompt.js';
+import { m } from '../entries/index.js';
 
 const ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -209,24 +210,32 @@ function compositionChecklist(v: {
   calipers: { field: string; value: number }[];
 }): string {
   if (!v.sourceGiven) {
-    return '// 请选来源（本页按默认「' + SOURCE_LABELS[CALIPER_SOURCE] + '」打开；可给：'
-      + SOURCE_CHOICES.map((s) => SOURCE_LABELS[s]).join('／') + '）';
+    return m('skill-calorie.body-wizardPlate.c001', {
+      p0: String(SOURCE_LABELS[CALIPER_SOURCE]),
+      p1: String(SOURCE_CHOICES.map((s) => SOURCE_LABELS[s]).join('／')),
+    });
   }
   const bad = v.calipers.filter((c) => !(c.value > CALIPER_INPUT.min && c.value < CALIPER_INPUT.max));
   if (isCaliperMode(v.source)) {
     const missing = CALIPER_FIELDS.filter((f) => !v.calipers.some((c) => c.field === f));
-    if (missing.length > 0) return '// 还差 ' + missing.length + ' 项皮褶:' + missing.join(', ');
-    if (bad.length > 0) return '// 皮褶值需在 ' + caliperRangeText() + ' 之间:' + bad.map((c) => c.field).join(', ') + ' 当前异常';
+    if (missing.length > 0) return m('skill-calorie.body-wizardPlate.c002', { p0: String(missing.length), p1: String(missing.join(', ')) });
+    if (bad.length > 0) return m('skill-calorie.body-wizardPlate.c003', {
+      p0: String(caliperRangeText()),
+      p1: String(bad.map((c) => c.field).join(', ')),
+    });
     if (v.age === null || !v.sex) {
-      return '// 皮褶→体脂换算要用年龄和性别：先问用户补齐（上方第 1 步的 年龄／性别，不许猜默认值）';
+      return m('skill-calorie.body-wizardPlate.c004');
     }
     return '';
   }
-  if (v.bodyFatPct === null) return '// 请填体脂率（上方第 3 步；外部设备读数直传）';
+  if (v.bodyFatPct === null) return m('skill-calorie.body-wizardPlate.c005');
   if (!(v.bodyFatPct > BF_INPUT.min && v.bodyFatPct < BF_INPUT.max)) {
-    return '// 体脂率需在 ' + bfRangeText() + ' 之间，当前 ' + v.bodyFatPct + '% 异常';
+    return m('skill-calorie.body-wizardPlate.c006', { p0: String(bfRangeText()), p1: String(v.bodyFatPct) });
   }
-  if (bad.length > 0) return '// 皮褶值需在 ' + caliperRangeText() + ' 之间:' + bad.map((c) => c.field).join(', ') + ' 当前异常';
+  if (bad.length > 0) return m('skill-calorie.body-wizardPlate.c007', {
+    p0: String(caliperRangeText()),
+    p1: String(bad.map((c) => c.field).join(', ')),
+  });
   return '';
 }
 
@@ -241,15 +250,28 @@ export function buildCompositionWizardPreview(v: {
   if (isCaliper && v.calipers.length === CALIPER_FIELDS.length) {
     const by = (f: string): number => (v.calipers.find((c) => c.field === f) as { value: number }).value;
     const sum7 = CALIPER_FIELDS.reduce((s, f) => s + by(f), 0);
-    textBody = '- 7 处皮褶(mm):胸 ' + by('caliper_chest_mm') + ' / 腹 ' + by('caliper_abdominal_mm') +
-      ' / 大腿 ' + by('caliper_thigh_mm') + ' / 三头肌 ' + by('caliper_tricep_mm') +
-      ' / 肩胛下 ' + by('caliper_subscapular_mm') + ' / 髂上 ' + by('caliper_suprailiac_mm') +
-      ' / 腋中线 ' + by('caliper_midaxillary_mm') + '\n- 7 处总和:' + (Math.round(sum7 * 10) / 10) + ' mm\n';
+    textBody = m('skill-calorie.body-wizardPlate.c008', {
+      p0: String(by('caliper_chest_mm')),
+      p1: String(by('caliper_abdominal_mm')),
+      p2: String(by('caliper_thigh_mm')),
+      p3: String(by('caliper_tricep_mm')),
+      p4: String(by('caliper_subscapular_mm')),
+      p5: String(by('caliper_suprailiac_mm')),
+      p6: String(by('caliper_midaxillary_mm')),
+      p7: String(Math.round(sum7 * 10) / 10),
+    });
   }
-  return '请帮我记一条' + (isCaliper ? '体脂钳测' : '外部测量') + '结果到卡路里\n\n参数:\n- 日期:' + v.date +
-    '\n- 来源:' + (v.source ?? '—') + '\n- 年龄:' + (v.age === null ? '—' : v.age) +
-    '\n- 性别:' + (v.sex ? (GENDER_LABELS[v.sex] ?? v.sex) : '—') + '\n' + textBody +
-    '- 体脂率:' + (v.bodyFatPct === null ? '—' : v.bodyFatPct + '%') + '\n- 备注:' + (v.note ?? '—');
+  const modeWord = (isCaliper ? m('skill-calorie.body-wizardPlate.c009') : m('skill-calorie.body-wizardPlate.c010'));
+  return m('skill-calorie.body-wizardPlate.c011', {
+    p0: String(modeWord),
+    p1: String(v.date),
+    p2: String(v.source ?? '—'),
+    p3: String(v.age === null ? '—' : v.age),
+    p4: String(v.sex ? (GENDER_LABELS[v.sex] ?? v.sex) : '—'),
+    p5: String(textBody),
+    p6: String(v.bodyFatPct === null ? '—' : v.bodyFatPct + '%'),
+    p7: String(v.note ?? '—'),
+  });
 }
 
 /** 复制区那一段（#366）：全合规 → **一条能直接执行的写命令**；否则 → 缺项／越界清单注释串。

@@ -7,6 +7,7 @@ import { addNote, getNote, removeNote, removeReminderRowsOfNote, type MemoDb } f
 import { larkSetupOf, openGate } from './gate.js';
 import { completeRemoteWish } from './taskSync.js';
 import type { WishReceipt, WishWriteResult } from './ensure.js';
+import { m } from '../entries/index.js';
 
 const WISH_TOP = '心愿';
 
@@ -25,7 +26,7 @@ export function completeWish(db: MemoDb, input: CompleteWishInput): WishWriteRes
   const wish = getNote(db, input.id);
   if (wish.category !== WISH_TOP) {
     return {
-      receipt: { ok: false, message: '非心愿，完不成：' + input.id, local: 'unchanged', remote: 'not-applicable', remoteId: wish.feishu_task_guid },
+      receipt: { ok: false, message: m('skill-memo-ilife.wish-complete.c001', { p0: String(input.id) }), local: 'unchanged', remote: 'not-applicable', remoteId: wish.feishu_task_guid },
       exit: 4,
     };
   }
@@ -38,7 +39,7 @@ export function completeWish(db: MemoDb, input: CompleteWishInput): WishWriteRes
   try {
     removeReminderRowsOfNote(db, wish.id);
     removeNote(db, wish.id, true);
-    checkinId = addNote(db, { content: checkinContent, category: '打卡' }).id;
+    checkinId = addNote(db, { content: checkinContent, category: m('skill-memo-ilife.wish-complete.c002') }).id;
     db.conn.exec('COMMIT');
   } catch (e) {
     try {
@@ -47,13 +48,13 @@ export function completeWish(db: MemoDb, input: CompleteWishInput): WishWriteRes
       // 回滚失败已无更好退路，如实报错。
     }
     return {
-      receipt: { ok: false, message: '完成失败已回滚：' + textOf(e), local: 'unchanged', remote: 'not-applicable', remoteId: guid },
+      receipt: { ok: false, message: m('skill-memo-ilife.wish-complete.c003', { p0: String(textOf(e)) }), local: 'unchanged', remote: 'not-applicable', remoteId: guid },
       exit: 4,
     };
   }
   const done: WishReceipt = {
     ok: true,
-    message: '心愿 #' + wish.id + ' 已完成，打卡 #' + checkinId + ' 已记录',
+    message: m('skill-memo-ilife.wish-complete.c004', { p0: String(wish.id), p1: String(checkinId) }),
     local: 'updated',
     remote: 'not-applicable',
     remoteId: guid,
@@ -62,7 +63,7 @@ export function completeWish(db: MemoDb, input: CompleteWishInput): WishWriteRes
   const gate = openGate();
   if (!gate.open) {
     return {
-      receipt: { ...done, ok: false, message: done.message + '；远端没成（' + gate.why + '）', remote: 'unavailable', larkSetup: larkSetupOf(gate) },
+      receipt: { ...done, ok: false, message: m('skill-memo-ilife.wish-complete.c005', { p0: String(done.message), p1: String(gate.why) }), remote: 'unavailable', larkSetup: larkSetupOf(gate) },
       exit: 4,
     };
   }
@@ -71,7 +72,7 @@ export function completeWish(db: MemoDb, input: CompleteWishInput): WishWriteRes
     return { receipt: { ...done, remote: 'synced' }, exit: 0 };
   } catch (e) {
     return {
-      receipt: { ...done, ok: false, message: done.message + '；远端没成（' + textOf(e) + '）', remote: 'failed' },
+      receipt: { ...done, ok: false, message: m('skill-memo-ilife.wish-complete.c006', { p0: String(done.message), p1: String(textOf(e)) }), remote: 'failed' },
       exit: 4,
     };
   }

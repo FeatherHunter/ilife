@@ -27,24 +27,33 @@ import { nowStamp } from './receipt.js';
 import type {
   PlanWizardView, WizardDay, WizardMovement, WizardSession, WizardTree, WizardWeek,
 } from './planPlate.js';
+import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
-const DOC_TITLE = '卡路里·健身计划';
+function DOC_TITLE() {
+  return m('skill-calorie.render-planWizardDocs.c019');
+}
 const DASH = '—';
 
-/** 星期名（`day_of_week` 1–7）。 */
-const DOW = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+/** 星期名（`day_of_week` 1–7）。按需取词：模块级数组会把语言在加载时固化，故收进函数。 */
+function dowOf(i: number): string | undefined {
+  const names = ['', m('skill-calorie.render-planWizardDocs.c020'), m('skill-calorie.render-planWizardDocs.c021'), m('skill-calorie.render-planWizardDocs.c022'), m('skill-calorie.render-planWizardDocs.c023'), m('skill-calorie.render-planWizardDocs.c024'), m('skill-calorie.render-planWizardDocs.c025'), m('skill-calorie.render-planWizardDocs.c026')];
+  return names[i];
+}
 
 /** 每一层「改它要说哪句话」。**一句一条**（原来写成 `编排某一周：说「定一周计划」；把整周复制…` 那种
  *  `；` 串，正是负责人 2026-09-15 第 ⑤ 条点名的「拿符号顶替设计」）——现在逐条排成胶囊。 */
-const LEVEL_GUIDE: readonly { readonly acts: readonly string[] }[] = [
-  { acts: ['改训练计划'] },
-  { acts: ['定一周计划', '复制训练计划'] },
-  { acts: ['改某天训练', '删某天训练', '定休息日'] },
-  { acts: ['加训练动作'] },
-  { acts: ['改动作'] },
-];
+function levelGuide(): readonly { readonly acts: readonly string[] }[] {
+  return [
+    { acts: [m('skill-calorie.render-planWizardDocs.c027')] },
+    { acts: [m('skill-calorie.render-planWizardDocs.c028'), m('skill-calorie.render-planWizardDocs.c029')] },
+    { acts: [m('skill-calorie.render-planWizardDocs.c030'), m('skill-calorie.render-planWizardDocs.c031'), m('skill-calorie.render-planWizardDocs.c032')] },
+    { acts: [m('skill-calorie.render-planWizardDocs.c033')] },
+    { acts: [m('skill-calorie.render-planWizardDocs.c034')] },
+  ];
+}
 
 /** 一层一条：勾上它在原地展开这一层的改法。`id` 要唯一（勾选与展开都挂在它上面）。 */
 function tick(id: string, text: string): string {
@@ -54,19 +63,19 @@ function tick(id: string, text: string): string {
 
 /** 某一层的「说哪句话能改它」小块（默认收起，勾上才展开）：逐条一颗胶囊，不串成一句。 */
 function how(id: string, level: number): string {
-  const acts = LEVEL_GUIDE[level].acts
+  const acts = (levelGuide()[level] ?? { acts: [] }).acts
     .map((a) => '<span class="ilw-act">' + a + '</span>').join('');
   return '<p class="ilw-how" data-for="' + id + '">' + acts + '</p>';
 }
 
 /** 动作行（第 6 级「组」的内容挤在这行的右半边，因为它就是「几组几次多重」）。
  *  部位与类型各一颗小标签（原来 `胸 · 力量` 用 `·` 串，第 ⑤ 条）。 */
-function moveRow(m: WizardMovement): string {
-  const meta = [m.part, m.type].filter((t) => t !== '')
+function moveRow(mv: WizardMovement): string {
+  const meta = [mv.part, mv.type].filter((t) => t !== '')
     .map((t) => '<span class="ilw-tag">' + t + '</span>').join('');
-  return '<li class="ilw-move"><span class="ilw-move-name">' + m.name + '</span>'
+  return '<li class="ilw-move"><span class="ilw-move-name">' + mv.name + '</span>'
     + (meta === '' ? '' : '<span class="ilw-move-meta">' + meta + '</span>')
-    + '<span class="ilw-move-sets">' + m.sets + '</span></li>';
+    + '<span class="ilw-move-sets">' + mv.sets + '</span></li>';
 }
 
 /** 时段块（时间线里最深的一层带内容的）。 */
@@ -78,20 +87,20 @@ function sessionBlock(s: WizardSession, id: string): string {
   const body = s.moves.length === 0
     ? '<p class="ilw-gap">这个时段还没有动作——想加就说「加训练动作」</p>'
     : '<ul class="ilw-moves">' + s.moves.map(moveRow).join('') + '</ul>';
-  return '<div class="ilw-sess">' + head + body + tick(id, '改这个时段的动作') + '</div>'
+  return '<div class="ilw-sess">' + head + body + tick(id, m('skill-calorie.render-planWizardDocs.c001')) + '</div>'
     + how(id, 3);
 }
 
 /** 一天块。 */
 function dayBlock(d: WizardDay, weekId: string, dayIdx: number): string {
-  const dow = DOW[d.dow] ?? '周' + d.dow;
+  const dow = dowOf(d.dow) ?? m('skill-calorie.render-planWizardDocs.c002', { p0: String(d.dow) });
   const id = weekId + '-d' + dayIdx;
   const body = d.sessions.length === 0
     ? '<p class="ilw-gap">这天还没有安排——要排就说「定一周计划」，要标休息就说「定休息日」</p>'
     : d.sessions.map((s, i) => sessionBlock(s, id + '-s' + i)).join('');
   return '<div class="ilw-day"><div class="ilw-day-head"><span class="ilw-day-name">' + dow + '</span>'
     + '<span class="ilw-day-count">' + d.sessions.length + ' 个时段</span></div>'
-    + body + tick(id, '改这一天') + '</div>' + how(id, 2);
+    + body + tick(id, m('skill-calorie.render-planWizardDocs.c003')) + '</div>' + how(id, 2);
 }
 
 /** 一周块。 */
@@ -103,7 +112,7 @@ function weekBlock(w: WizardWeek, idx: number): string {
   return '<section class="ilw-week"><div class="ilw-week-head">'
     + '<span class="ilw-week-name">第 ' + w.week + ' 周</span>'
     + '<span class="ilw-week-count">' + w.days.length + ' 天</span>'
-    + tick(id, '改这一周') + '</div>' + body + how(id, 1) + '</section>';
+    + tick(id, m('skill-calorie.render-planWizardDocs.c004')) + '</div>' + body + how(id, 1) + '</section>';
 }
 
 /** 计划级（时间线的根）：名字、说明、起日、等级、器械 ＋ 改法。 */
@@ -111,7 +120,7 @@ function planHead(t: WizardTree): string {
   const facts: string[] = [
     t.startDate === '' ? '' : '<span class="ilw-fact"><b>起日</b>' + t.startDate + '</span>',
     t.level === '' ? '' : '<span class="ilw-fact"><b>等级</b>' + t.level + '</span>',
-    t.equipment.length === 0 ? '' : '<span class="ilw-fact"><b>器械</b>' + t.equipment.join('、') + '</span>',
+    t.equipment.length === 0 ? '' : '<span class="ilw-fact"><b>器械</b>' + listJoin(currentRenderLanguage(), t.equipment) + '</span>',
   ].filter((x) => x !== '');
   return '<div class="ilw-plan"><div class="ilw-plan-head">'
     + '<span class="ilw-plan-name">' + t.title + '</span>'
@@ -121,7 +130,7 @@ function planHead(t: WizardTree): string {
     + '<span class="ilw-stat">' + t.totals.movements + ' 个动作</span></span></div>'
     + (t.description === '' ? '' : '<p class="ilw-plan-desc">' + t.description + '</p>')
     + (facts.length === 0 ? '' : '<div class="ilw-facts">' + facts.join('') + '</div>')
-    + tick('plan', '改计划本身') + how('plan', 0) + '</div>';
+    + tick('plan', m('skill-calorie.render-planWizardDocs.c005')) + how('plan', 0) + '</div>';
 }
 
 /** 构建向导整页。 */
@@ -133,25 +142,24 @@ export function buildPlanWizardDoc(v: PlanWizardView, opts: {
   // 校验结论排在最前：它是「现在能不能落地」的正据；下面才是计划本身的结构。
   const parts: string[] = [
     '<div class="ilw-verdict' + (ok ? ' is-ok' : ' is-warn') + '">'
-      + '<span class="ilw-verdict-word">' + (ok ? '这份计划可以落地' : '先改掉硬止再确认') + '</span>'
+      + '<span class="ilw-verdict-word">' + (ok ? m('skill-calorie.render-planWizardDocs.c006') : m('skill-calorie.render-planWizardDocs.c007')) + '</span>'
       + '<span class="ilw-verdict-num">错误 ' + v.errorCount + ' 项</span>'
       + '<span class="ilw-verdict-num">警告 ' + v.warningCount + ' 项</span>'
       + '<span class="ilw-verdict-num">已检查 ' + v.checkedSessions + ' 个训练场次</span>'
       + '</div>',
     // 「时间线怎么读」一句话（口径行），别让它变成一段说明书。
-    renderCaliberLine('这份计划按 计划 → 周 → 日 → 时段 → 动作 五层摊开。想改哪一层，就勾哪一层的「改」，'
-      + '右上角数得出来你打算改几处。'),
+    renderCaliberLine(m('skill-calorie.render-planWizardDocs.c008')),
     planHead(t),
     t.weeks.length === 0
-      ? renderEmptyBlock({ title: '计划结构', text: '这份计划一个周都还没有——先说「定一周计划」把第一周排出来' })
+      ? renderEmptyBlock({ title: m('skill-calorie.render-planWizardDocs.c009'), text: m('skill-calorie.render-planWizardDocs.c010') })
       : '<div class="ilw-timeline">' + t.weeks.map(weekBlock).join('') + '</div>',
     ...(v.errors.length === 0 ? [] : [renderDisclosure({
-      title: '硬止错误（' + v.errors.length + ' 条）', open: true,
-      contentHtml: renderListRows({ items: v.errors.map((e, i) => ({ left: '错误' + (i + 1), main: e, right: '' })) }),
+      title: m('skill-calorie.render-planWizardDocs.c011', { p0: String(v.errors.length) }), open: true,
+      contentHtml: renderListRows({ items: v.errors.map((e, i) => ({ left: m('skill-calorie.render-planWizardDocs.c012', { p0: String(i + 1) }), main: e, right: '' })) }),
     })]),
     ...(v.warnings.length === 0 ? [] : [renderDisclosure({
-      title: '警告（' + v.warningCount + ' 条）',
-      contentHtml: renderListRows({ items: v.warnings.map((w, i) => ({ left: '警告' + (i + 1), main: w, right: '' })) }),
+      title: m('skill-calorie.render-planWizardDocs.c013', { p0: String(v.warningCount) }),
+      contentHtml: renderListRows({ items: v.warnings.map((w, i) => ({ left: m('skill-calorie.render-planWizardDocs.c014', { p0: String(i + 1) }), main: w, right: '' })) }),
     })]),
     planCopyBlock({
       envelope: {
@@ -163,18 +171,18 @@ export function buildPlanWizardDoc(v: PlanWizardView, opts: {
           }),
         },
       } satisfies SerializableEnvelope,
-      dataTitle: '【calorie 构建向导】',
+      dataTitle: m('skill-calorie.render-planWizardDocs.c015'),
       prompt: opts.prompt ?? '',
       log: copyLog({
-        command: opts.command, source: 'planStore 校验（构建向导，纯校验）',
+        command: opts.command, source: m('skill-calorie.render-planWizardDocs.c016'),
         actionAt: nowStamp(), version: DOC_VERSION,
       }),
     }),
   ];
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '构建向导',
-    eyebrow: '健身计划',
+    docTitle: DOC_TITLE(),
+    title: m('skill-calorie.render-planWizardDocs.c017'),
+    eyebrow: m('skill-calorie.render-planWizardDocs.c018'),
     subtitle: null,
     // 「你已改的内容 N」：CSS 计数器现算，元素排在全部勾选之后、用绝对定位钉到区块右上角
     // （计数器取的是**文档顺序上它之前**的累计值，排最后才数得全）。

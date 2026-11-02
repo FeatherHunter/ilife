@@ -27,6 +27,7 @@ import {
   type ScatterFitPoint,
 } from './attrs.js';
 import { LINE_HALF_PCT, bandPolygon, fitOf, niceAxis, plainText, round2, signed, strengthText, tickTexts, upPct } from './scale.js';
+import { m } from '../../entries/index.js';
 
 /* ── 内部类型（`render.ts` 只吃它们；`model.ts` 只把这些类型名再报一次给出口） ── */
 
@@ -110,22 +111,37 @@ export function scatterModel(c: CommonFields, points: readonly ScatterFitPoint[]
   const fit = fitOf(points);
   /* 带子的半宽要换算成**同一套坐标**里的百分比：轴域被映射到 3%…97%，故乘 94 而不是 100。 */
   const halfUp = (fit.half / (axisY.hi - axisY.lo)) * (100 - 2 * SCATTER_FIT_AXIS_INSET);
-  const dots = points.map((p) => ({
-    upPct: upPct(p.y, axisY),
-    leftPct: upPct(p.x, axisX),
-    title: (p.label === undefined ? '' : p.label + '：') + c.xName + ' ' + plainText(p.x) + unitPart(c.xUnit)
-      + '，' + c.yName + ' ' + plainText(p.y) + unitPart(c.yUnit)
-      + (p.outlier === undefined ? '' : '（' + p.outlier + '）'),
-    outlier: p.outlier !== undefined,
-  }));
+  const dots = points.map((p) => {
+    const labelPrefix = p.label === undefined ? '' : p.label + '：';
+    const outlierSuffix = p.outlier === undefined ? '' : '（' + p.outlier + '）';
+    return {
+      upPct: upPct(p.y, axisY),
+      leftPct: upPct(p.x, axisX),
+      title: labelPrefix + c.xName + ' ' + plainText(p.x) + unitPart(c.xUnit)
+        + '，' + c.yName + ' ' + plainText(p.y) + unitPart(c.yUnit) + outlierSuffix,
+      outlier: p.outlier !== undefined,
+    };
+  });
   const named = points.filter((p) => p.outlier !== undefined);
-  const legend: ScatterFitLegendItem[] = [{ kind: 'dot', text: '一次' + c.yName + '记录' }];
-  for (const p of named) legend.push({ kind: 'ring', text: '离群点（' + String(p.outlier) + '）' });
-  const head = '散点图：横轴 ' + c.xName + ' ' + plainText(axisX.lo) + ' 到 ' + plainText(axisX.hi) + unitPart(c.xUnit)
-    + '，纵轴 ' + c.yName + ' ' + plainText(axisY.lo) + ' 到 ' + plainText(axisY.hi) + unitPart(c.yUnit);
+  const namedPart = named.length === 0 ? '' : m('base-render.components-scatter-fit-forms.c001', { p0: String(String(named.length)) });
+  const legend: ScatterFitLegendItem[] = [{ kind: 'dot', text: m('base-render.components-scatter-fit-forms.c002', { p0: String(c.yName) }) }];
+  for (const p of named) legend.push({ kind: 'ring', text: m('base-render.components-scatter-fit-forms.c003', { p0: String(String(p.outlier)) }) });
+  const head = m('base-render.components-scatter-fit-forms.c004', {
+    p0: String(c.xName),
+    p1: String(plainText(axisX.lo)),
+    p2: String(plainText(axisX.hi)),
+    p3: String(unitPart(c.xUnit)),
+    p4: String(c.yName),
+    p5: String(plainText(axisY.lo)),
+    p6: String(plainText(axisY.hi)),
+    p7: String(unitPart(c.yUnit)),
+  });
   const about = fit.r === null
-    ? '相关系数算不出（' + fit.why + '），所以没有趋势线'
-    : '相关系数 ' + signed(fit.r) + '（' + strengthText(fit.r) + '）';
+    ? m('base-render.components-scatter-fit-forms.c005', { p0: String(fit.why) })
+    : m('base-render.components-scatter-fit-forms.c006', {
+      p0: String(signed(fit.r)),
+      p1: String(strengthText(fit.r)),
+    });
   /* **算不出拟合就不画线与带**：r 无定义时那条"最小二乘线"是常数（一条横线或竖线），画出来会被当成趋势；
      脚注也跟着换口径——不能一边不画线、一边说"线是最小二乘拟合"。 */
   const drawFit = fit.r !== null;
@@ -137,17 +153,24 @@ export function scatterModel(c: CommonFields, points: readonly ScatterFitPoint[]
     stamp: c.stamp,
     /* 相关系数算不出时写缺值符号 ＋ 原因：**不编一个 0 出来**（那会读成"没有关系"）。 */
     tail: fit.r === null
-      ? '相关系数 ' + SCATTER_FIT_MISSING + '，' + fit.why
-      : '相关系数 ' + signed(fit.r) + '，' + strengthText(fit.r),
+      ? m('base-render.components-scatter-fit-forms.c007', {
+        p0: String(SCATTER_FIT_MISSING),
+        p1: String(fit.why),
+      })
+      : m('base-render.components-scatter-fit-forms.c008', {
+        p0: String(signed(fit.r)),
+        p1: String(strengthText(fit.r)),
+      }),
     note: c.noteIn ?? (drawFit
-      ? '口径：线是最小二乘拟合，浅带是 80% 概率带。相关系数只说明线性相关的强弱，不说明因果。'
-        + '离群点单独点名（圈出并写清原因），不静默丢掉。'
-      : '口径：这些点连不成一条趋势线（' + fit.why + '），所以只画点、不画线。'
-        + '要让趋势线画得出来，两边的读数都得有变化。'),
+      ? m('base-render.components-scatter-fit-forms.c009')
+      : m('base-render.components-scatter-fit-forms.c010', { p0: String(fit.why) })),
     legend,
-    ariaLabel: head + '；' + String(points.length) + ' 个点'
-      + (named.length === 0 ? '' : '，其中 ' + String(named.length) + ' 个离群点')
-      + '。' + about + '。',
+    ariaLabel: m('base-render.components-scatter-fit-forms.c011', {
+      p0: String(head),
+      p1: String(String(points.length)),
+      p2: String(namedPart),
+      p3: String(about),
+    }),
     xTicks: tickTexts(axisX, SCATTER_FIT_X_TICKS, c.xUnit, false),
     yTicks: tickTexts(axisY, SCATTER_FIT_Y_TICKS, c.yUnit, true),
     dots,
@@ -167,8 +190,15 @@ export function binModel(c: CommonFields, bins: readonly ScatterFitBin[]): Scatt
     bottomPct: upPct(b.low, axisY),
     heightPct: round2(upPct(b.high, axisY) - upPct(b.low, axisY)),
     medianPct: upPct(b.median, axisY),
-    title: b.label + '：中位数 ' + plainText(b.median) + unitPart(c.yUnit) + '，下四分位到上四分位 '
-      + plainText(b.low) + ' 到 ' + plainText(b.high) + unitPart(c.yUnit) + '，' + String(b.count) + ' 个样本',
+    title: m('base-render.components-scatter-fit-forms.c012', {
+      p0: String(b.label),
+      p1: String(plainText(b.median)),
+      p2: String(unitPart(c.yUnit)),
+      p3: String(plainText(b.low)),
+      p4: String(plainText(b.high)),
+      p5: String(unitPart(c.yUnit)),
+      p6: String(String(b.count)),
+    }),
   }));
   return {
     form: 'bin',
@@ -176,14 +206,24 @@ export function binModel(c: CommonFields, bins: readonly ScatterFitBin[]): Scatt
     xName: c.xName,
     yName: c.yName,
     stamp: c.stamp,
-    tail: '按' + c.xName + '分 ' + String(bins.length) + ' 箱',
-    note: c.noteIn ?? '口径：按' + c.xName + '分箱，每箱至少 ' + String(SCATTER_FIT_BIN_MIN_SAMPLE)
-      + ' 个样本才画。箱内的粗线是中位数，竖条是下四分位到上四分位。区间重叠说明这一箱里多半也这样，'
-      + '不重叠才敢说两箱不一样。',
-    legend: [{ kind: 'median', text: '中位数' }, { kind: 'range', text: '下四分位到上四分位' }],
-    ariaLabel: '分箱趋势带：横轴按 ' + c.xName + ' 分 ' + String(bins.length) + ' 箱（'
-      + bins.map((b) => b.label).join('，') + '），纵轴 ' + c.yName + ' ' + plainText(axisY.lo) + ' 到 '
-      + plainText(axisY.hi) + unitPart(c.yUnit) + '。每箱一根竖条是下四分位到上四分位，中间的粗线是中位数。',
+    tail: m('base-render.components-scatter-fit-forms.c013', {
+      p0: String(c.xName),
+      p1: String(String(bins.length)),
+    }),
+    note: c.noteIn ?? m('base-render.components-scatter-fit-forms.c014', {
+      p0: String(c.xName),
+      p1: String(String(SCATTER_FIT_BIN_MIN_SAMPLE)),
+    }),
+    legend: [{ kind: 'median', text: m('base-render.components-scatter-fit-forms.c015') }, { kind: 'range', text: m('base-render.components-scatter-fit-forms.c016') }],
+    ariaLabel: m('base-render.components-scatter-fit-forms.c017', {
+      p0: String(c.xName),
+      p1: String(String(bins.length)),
+      p2: String(bins.map((b) => b.label).join('，')),
+      p3: String(c.yName),
+      p4: String(plainText(axisY.lo)),
+      p5: String(plainText(axisY.hi)),
+      p6: String(unitPart(c.yUnit)),
+    }),
     xTicks: bins.map((b) => b.label),
     yTicks: tickTexts(axisY, SCATTER_FIT_Y_TICKS, c.yUnit, true),
     dots: [],
@@ -200,27 +240,32 @@ export function lagModel(c: CommonFields, lags: readonly ScatterFitLag[]): Scatt
   let strongAt = 0;
   lags.forEach((g, i) => { if (Math.abs(g.r) > Math.abs(lags[strongAt].r)) strongAt = i; });
   const built = lags.map((g, i) => ({
-    label: g.step === 0 ? '当天' : '错 ' + String(g.step) + ' 天',
+    label: g.step === 0 ? m('base-render.components-scatter-fit-forms.c018') : m('base-render.components-scatter-fit-forms.c019', { p0: String(String(g.step)) }),
     widthPct: round2(Math.abs(g.r) * 50),
     negative: g.r < 0,
     valueText: signed(g.r),
     strong: i === strongAt,
   }));
   const strong = lags[strongAt];
-  const at = strong.step === 0 ? '当天' : '错开 ' + String(strong.step) + ' 天';
+  const at = strong.step === 0 ? m('base-render.components-scatter-fit-forms.c020') : m('base-render.components-scatter-fit-forms.c021', { p0: String(String(strong.step)) });
+  /** 一档的字：当天，或错开几天。 */
+  const lagWord = (step: number): string => (step === 0 ? m('base-render.components-scatter-fit-forms.c022') : m('base-render.components-scatter-fit-forms.c023', { p0: String(String(step)) }));
   return {
     form: 'lag',
     title: c.title,
     xName: c.xName,
     yName: c.yName,
     stamp: c.stamp,
-    tail: '最强在' + at,
-    note: c.noteIn ?? '口径：负号＝方向相反，条从中线往左画。「最强」那一档再写一遍字，不靠颜色。'
-      + '错开超过 ' + String(SCATTER_FIT_MAX_LAG_DAYS) + ' 天不画，样本会薄到说明不了任何事。',
+    tail: m('base-render.components-scatter-fit-forms.c024', { p0: String(at) }),
+    note: c.noteIn ?? m('base-render.components-scatter-fit-forms.c025', { p0: String(String(SCATTER_FIT_MAX_LAG_DAYS)) }),
     legend: [],
-    ariaLabel: '滞后相关：' + c.xName + ' 到 ' + c.yName + '，逐档相关系数 '
-      + lags.map((g) => (g.step === 0 ? '当天 ' : '错 ' + String(g.step) + ' 天 ') + signed(g.r)).join('，')
-      + '。最强在' + at + '（' + signed(strong.r) + '）。负号＝方向相反，条从中线往左画。',
+    ariaLabel: m('base-render.components-scatter-fit-forms.c026', {
+      p0: String(c.xName),
+      p1: String(c.yName),
+      p2: String(lags.map((g) => lagWord(g.step) + ' ' + signed(g.r)).join('，')),
+      p3: String(at),
+      p4: String(signed(strong.r)),
+    }),
     xTicks: [],
     yTicks: [],
     dots: [],

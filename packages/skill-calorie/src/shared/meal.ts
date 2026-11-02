@@ -77,8 +77,8 @@ export function inferMealType(timeStr: string): MealName | '其他' {
 /** 时间串 → 餐别桶（四桶）。下午茶与夜宵并入「加餐」；认不出回 `null`（调用方各自决定怎么显示缺值）。 */
 export function mealBucketOf(time: string | null | undefined): MealBucket | null {
   if (!time) return null;
-  const m = inferMealType(time);
-  if (m === '早餐' || m === '午餐' || m === '晚餐') return m;
-  if (m === '下午茶' || m === '夜宵') return '加餐';
+  const meal = inferMealType(time);
+  if (meal === '早餐' || meal === '午餐' || meal === '晚餐') return meal;
+  if (meal === '下午茶' || meal === '夜宵') return '加餐';
   return null;
 }

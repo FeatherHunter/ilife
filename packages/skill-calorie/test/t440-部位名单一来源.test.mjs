@@ -196,13 +196,14 @@ test('#440 判据③④：src 里旧词零命中；13 名的定义只在 fetch/b
 });
 
 test('#440 展示层四件＋写侧映射一件：不再自持第二份中文名表', () => {
-  // 冻结读数：五件的部位名命中数。`cross.ts` 的 1 处是 `PAIRS` 里**既有**的单点图例「腰围(cm)」
-  // （#440 之前就在，不是 13 名表的一部分，本票不碰它）。
+  // 冻结读数：五件的部位名命中数。`cross.ts` 原 1 处是 `PAIRS` 里**既有**的单点图例「腰围(cm)」
+  // （#440 之前就在，不是 13 名表的一部分）；#1217 已把它迁进词条层（`analysis-cross` 键、
+  // 渲染期 `axisLabelsOf()` 取词），故现读数 0——13 名仍只允许在 `fetch/body.ts` 定义一处。
   const expected = {
     'body/bodyDocs.ts': 0,
     'body/compare.ts': 0,
     'body/wizardPlate.ts': 0,
-    'analysis/cross.ts': 1,
+    'analysis/cross.ts': 0,
     'body/log.ts': 0,
   };
   const actual = {};

@@ -11,6 +11,7 @@ import {
   DRAWER_DONE_TEMPLATE, DRAWER_EDGES, DRAWER_FORMS, DRAWER_MISSING,
   type DrawerEdge, type DrawerForm, type DrawerOption, type DrawerSheetInput,
 } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** `id` 的字面口径（与同族 `dialog` 同一套：标识符字符，首字符不是标点）——**本件自足**，
  *  不从别的件取（件与件只在真的要用对方的**行为**时才互相引用，一条五行的校验规则不值一条依赖）。 */
@@ -40,7 +41,7 @@ export interface DrawerModel {
 }
 
 /** 一项都没有时的那句现成话（调用方不给 `emptyLine` 时用它）。 */
-export const DRAWER_EMPTY_LINE = '这里还没有可选项';
+export function DRAWER_EMPTY_LINE(): string { return m('base-render.components-drawer-sheet-model.c001'); }
 
 /** 完成键模板里那个可变处（渲染与运行时共用一个记号）。 */
 export const DRAWER_COUNT_SLOT = '{n}';
@@ -107,7 +108,7 @@ export function normalizeDrawerSheet(input: unknown): DrawerModel {
     badInput('drawer-sheet: input.open 必须是布尔值');
   }
   const doneLabel = raw.doneLabel === undefined
-    ? DRAWER_DONE_TEMPLATE : reqText(raw.doneLabel, 'drawer-sheet: input.doneLabel');
+    ? DRAWER_DONE_TEMPLATE() : reqText(raw.doneLabel, 'drawer-sheet: input.doneLabel');
   if (doneLabel.indexOf(DRAWER_COUNT_SLOT) < 0) {
     /* 模板里没有 `{n}` 时，脚条上的计数与键上的字会各说各话 ⇒ 要么带上记号，要么别给这一项。 */
     badInput('drawer-sheet: input.doneLabel 必须含 ' + DRAWER_COUNT_SLOT + ' 记号（完成键上的数是活的）');
@@ -121,7 +122,7 @@ export function normalizeDrawerSheet(input: unknown): DrawerModel {
     sub: optText(raw.sub, 'drawer-sheet: input.sub'),
     options: reqOptions(raw.options),
     emptyLine: raw.emptyLine === undefined
-      ? DRAWER_EMPTY_LINE : reqText(raw.emptyLine, 'drawer-sheet: input.emptyLine'),
+      ? DRAWER_EMPTY_LINE() : reqText(raw.emptyLine, 'drawer-sheet: input.emptyLine'),
     hint: optText(raw.hint, 'drawer-sheet: input.hint'),
     summary: optText(raw.summary, 'drawer-sheet: input.summary'),
     doneLabel,

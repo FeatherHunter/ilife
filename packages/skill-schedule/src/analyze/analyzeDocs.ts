@@ -49,9 +49,10 @@ import {
   analyzePartsCss, renderAnomalyFrames, renderDiffBars, renderRadar, renderSectionTitle,
   type AnomalyFrameInput, type DiffBarInput,
 } from './analyzeParts.js';
+import { m } from '../entries/index.js';
 
-/** 页眉那一行域词（三张页同一句）。 */
-const EYEBROW = '作息管家 分析与洞察';
+/** 页眉那一行域词（三张页同一句）。#1197：取词在渲染期，故写成函数（模块级常量只会在加载期取到 zh）。 */
+function eyebrow(): string { return m('skill-schedule.analyze-analyzeDocs.c107'); }
 
 /** 七个维度＝健康分那张表（老侧 `HEALTH_DIMS` 同一组：创作不参评）。 */
 const DIMS: readonly string[] = Object.keys(HEALTH_TARGETS);
@@ -66,7 +67,8 @@ const HEAT_ROWS_MAX = 31;
  *  本页把维度读数换成日均之后按同一量级重定：两小时／半小时／一小时）。 */
 const BIG_CHANGE_MINUTES = 2 * 60;
 
-const WEEKDAY = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+/** 七天的上屏写法（与 query 域同口径；#1197：取词在渲染期，故写成函数）。 */
+function weekdayLabels(): readonly string[] { return [m('skill-schedule.analyze-analyzeDocs.c108'), m('skill-schedule.analyze-analyzeDocs.c109'), m('skill-schedule.analyze-analyzeDocs.c110'), m('skill-schedule.analyze-analyzeDocs.c111'), m('skill-schedule.analyze-analyzeDocs.c112'), m('skill-schedule.analyze-analyzeDocs.c113'), m('skill-schedule.analyze-analyzeDocs.c114')]; }
 
 /* ─────────────────────────── 小工具（日期与读数） ─────────────────────────── */
 
@@ -117,7 +119,7 @@ function signedShort(mins: number): string {
   const n = Math.round(mins);
   if (n > 0) return '+' + fmtDurShort(n);
   if (n < 0) return '-' + fmtDurShort(-n);
-  return '0分钟';
+  return m('skill-schedule.analyze-analyzeDocs.c001');
 }
 
 /** 带正负号的长时长（成句的地方用）。 */
@@ -125,7 +127,7 @@ function signedDur(mins: number): string {
   const n = Math.round(mins);
   if (n > 0) return '+' + fmtDur(n);
   if (n < 0) return '-' + fmtDur(-n);
-  return '0分钟';
+  return m('skill-schedule.analyze-analyzeDocs.c002');
 }
 
 /** 带正负号的百分数（一位小数）。 */
@@ -143,7 +145,7 @@ function spansOf(records: readonly ScheduleRecord[], key: string): { start: numb
 }
 
 /** 时段写法（页上只用「至」，不用波浪号）。 */
-const spanText = (r: ScheduleRecord): string => r.time_start + ' 至 ' + r.time_end;
+const spanText = (r: ScheduleRecord): string => m('skill-schedule.analyze-analyzeDocs.c003', { p0: String(r.time_start), p1: String(r.time_end) });
 
 /* ─────────────────────────── ① 作息对比（老侧 f03） ─────────────────────────── */
 
@@ -171,19 +173,23 @@ function compareQuestions(rows: readonly CompareRow[], labelA: string, labelB: s
   const big = rows.filter((row) => Math.abs(row.deltaMinutes) > BIG_CHANGE_MINUTES);
   if (big.length > 0) {
     const top = big[0];
-    qs.push(labelA + ' 与 ' + labelB + ' 在「' + top.label + '」这一维的日均差了 ' + signedDur(top.deltaMinutes)
-      + '，这一段变化的主因你想从哪里说起？');
+    qs.push(m('skill-schedule.analyze-analyzeDocs.c004', {
+      p0: String(labelA),
+      p1: String(labelB),
+      p2: String(top.label),
+      p3: String(signedDur(top.deltaMinutes)),
+    }));
   }
   const keep = rows.find((row) => row.label === '维持');
   if (keep !== undefined && Math.abs(keep.deltaMinutes) > 30) {
-    qs.push('「维持」那一维的日均差 ' + signedDur(keep.deltaMinutes) + '，这一段是你主动调整还是被事情推着走的？');
+    qs.push(m('skill-schedule.analyze-analyzeDocs.c005', { p0: String(signedDur(keep.deltaMinutes)) }));
   }
   const work = rows.find((row) => row.label === '工作');
   if (work !== undefined && work.deltaMinutes > 60) {
-    qs.push('「工作」那一维的日均多出 ' + signedDur(work.deltaMinutes) + '，多出来的时间是从哪一处挪过来的？');
+    qs.push(m('skill-schedule.analyze-analyzeDocs.c006', { p0: String(signedDur(work.deltaMinutes)) }));
   }
   if (qs.length === 0) {
-    qs.push('两段的日均整体接近，有没有哪一处细小的差别其实更要紧？');
+    qs.push(m('skill-schedule.analyze-analyzeDocs.c007'));
   }
   return qs;
 }
@@ -230,41 +236,69 @@ export function renderComparePage(input: ComparePageInput): string {
   });
   const cards: readonly KpiCardInput[] = [
     {
-      label: '区间 A', value: input.labelA,
-      detail: input.startA + ' 至 ' + input.endA + '，共 ' + String(datesA.length) + ' 天，其中 ' + String(activeA) + ' 天有记录',
+      label: m('skill-schedule.analyze-analyzeDocs.c008'), value: input.labelA,
+      detail: m('skill-schedule.analyze-analyzeDocs.c009', {
+        p0: String(input.startA),
+        p1: String(input.endA),
+        p2: String(String(datesA.length)),
+        p3: String(String(activeA)),
+      }),
     },
     {
-      label: '区间 B', value: input.labelB,
-      detail: input.startB + ' 至 ' + input.endB + '，共 ' + String(datesB.length) + ' 天，其中 ' + String(activeB) + ' 天有记录',
+      label: m('skill-schedule.analyze-analyzeDocs.c010'), value: input.labelB,
+      detail: m('skill-schedule.analyze-analyzeDocs.c011', {
+        p0: String(input.startB),
+        p1: String(input.endB),
+        p2: String(String(datesB.length)),
+        p3: String(String(activeB)),
+      }),
     },
-    { label: '总时长差', value: signedShort(totalB - totalA), detail: 'B 减 A 的净变化' },
-    { label: '日均差', value: signedShort(avgB - avgA), detail: '按有记录的天数摊平到每一天' },
+    { label: m('skill-schedule.analyze-analyzeDocs.c012'), value: signedShort(totalB - totalA), detail: m('skill-schedule.analyze-analyzeDocs.c013') },
+    { label: m('skill-schedule.analyze-analyzeDocs.c014'), value: signedShort(avgB - avgA), detail: m('skill-schedule.analyze-analyzeDocs.c015') },
   ];
   const head: PageHead = {
-    docTitle: '作息管家 作息对比',
-    eyebrow: EYEBROW,
-    title: '作息对比',
-    subtitle: input.labelA + '（' + input.startA + ' 至 ' + input.endA + '）与 ' + input.labelB
-      + '（' + input.startB + ' 至 ' + input.endB + '）逐维对照。',
+    docTitle: m('skill-schedule.analyze-analyzeDocs.c016'),
+    eyebrow: eyebrow(),
+    title: m('skill-schedule.analyze-analyzeDocs.c017'),
+    subtitle: m('skill-schedule.analyze-analyzeDocs.c018', {
+      p0: String(input.labelA),
+      p1: String(input.startA),
+      p2: String(input.endA),
+      p3: String(input.labelB),
+      p4: String(input.startB),
+      p5: String(input.endB),
+    }),
   };
-  const conclusion = input.labelA + ' 与 ' + input.labelB + '：总时长从 ' + fmtDur(totalA) + ' 到 ' + fmtDur(totalB)
-    + '。按有记录的天数摊平，日均从 ' + fmtDur(Math.round(avgA)) + ' 到 ' + fmtDur(Math.round(avgB))
-    + '。七个维度里有 ' + String(changed.length) + ' 个的日均变化过了一成。';
+  const conclusion = m('skill-schedule.analyze-analyzeDocs.c019', {
+    p0: String(input.labelA),
+    p1: String(input.labelB),
+    p2: String(fmtDur(totalA)),
+    p3: String(fmtDur(totalB)),
+    p4: String(fmtDur(Math.round(avgA))),
+    p5: String(fmtDur(Math.round(avgB))),
+    p6: String(String(changed.length)),
+  });
   const { toc, body } = pageSections([
-    { navText: '四卡对照', html: renderKpiGrid(cards, { title: '四卡对照' }) },
+    { navText: m('skill-schedule.analyze-analyzeDocs.c020'), html: renderKpiGrid(cards, { title: m('skill-schedule.analyze-analyzeDocs.c021') }) },
     { html: renderConclusionBar(conclusion) },
-    { navText: '7 维差异', html: renderSectionTitle('7 维差异')
-      + renderCaliberLine('A 段＝' + input.labelA + '，' + input.startA + ' 至 ' + input.endA
-        + ' ｜ B 段＝' + input.labelB + '，' + input.startB + ' 至 ' + input.endB)
-      + renderCaliberLine('柱长按这一维里两段的较大者比 ｜ 差值是 B 减 A，涨绿降红 ｜ 七维按一级分类合计，创作不参评')
+    { navText: m('skill-schedule.analyze-analyzeDocs.c022'), html: renderSectionTitle(m('skill-schedule.analyze-analyzeDocs.c023'))
+      + renderCaliberLine(m('skill-schedule.analyze-analyzeDocs.c024', {
+        p0: String(input.labelA),
+        p1: String(input.startA),
+        p2: String(input.endA),
+        p3: String(input.labelB),
+        p4: String(input.startB),
+        p5: String(input.endB),
+      }))
+      + renderCaliberLine(m('skill-schedule.analyze-analyzeDocs.c025'))
       + renderDiffBars(rows) },
-    { navText: 'AI 思考钩子', html: renderSectionTitle('AI 思考钩子')
-      + renderCaliberLine('这一节是留给 AI 的入口：把下面任意一句复制给 AI，它就着这两个区间往下聊')
+    { navText: m('skill-schedule.analyze-analyzeDocs.c026'), html: renderSectionTitle(m('skill-schedule.analyze-analyzeDocs.c027'))
+      + renderCaliberLine(m('skill-schedule.analyze-analyzeDocs.c028'))
       // 逐句一段正文（**不用列表行**：那一件是「一行一格、超出裁掉」的形状，窄屏上问题会被省略号吃掉——
       //  #789 的响应式读数在 390 档实测裁掉过四成，见证据件第四节）。
       + compareQuestions(rows, input.labelA, input.labelB).map((text) => renderProseBlock({ text })).join('') },
-    { navText: '复制与留档', html: scheduleCopyArea({
-      title: '复制与留档',
+    { navText: m('skill-schedule.analyze-analyzeDocs.c029'), html: scheduleCopyArea({
+      title: m('skill-schedule.analyze-analyzeDocs.c030'),
       dataActionId: 'ilife-sch-compare-copy-data',
       logActionId: 'ilife-sch-compare-copy-log',
       key: 'schedule.record.compare',
@@ -273,7 +307,7 @@ export function renderComparePage(input: ComparePageInput): string {
         command: 'schedule-cmd-read schedule.record.compare --params {"kind":"ranges","labelA":"' + input.labelA
           + '","startA":"' + input.startA + '","endA":"' + input.endA + '","labelB":"' + input.labelB
           + '","startB":"' + input.startB + '","endB":"' + input.endB + '"}',
-        source: '作息记录表（' + String(input.a.length + input.b.length) + ' 行）',
+        source: m('skill-schedule.analyze-analyzeDocs.c031', { p0: String(String(input.a.length + input.b.length)) }),
         actionAt: scheduleNowStamp(),
       }),
     }) },
@@ -303,7 +337,7 @@ export function renderCategoryPage(input: CategoryPageInput): string {
     const day = hits.filter((r) => r.date === date);
     const cells = hourCellsOf(spansOf(day, input.level1));
     return {
-      label: WEEKDAY[new Date(date + 'T00:00:00').getDay()],
+      label: weekdayLabels()[new Date(date + 'T00:00:00').getDay()],
       date,
       cells,
       sum: fmtDurShort(minutesOf(day)),
@@ -317,13 +351,16 @@ export function renderCategoryPage(input: CategoryPageInput): string {
   const bySecond = new Map<string, number>();
   for (const r of hits) {
     const parsed = parseCategory(r.category);
-    const key = parsed.level2 === null ? '未分二级' : parsed.level2;
+    const key = parsed.level2 === null ? m('skill-schedule.analyze-analyzeDocs.c032') : parsed.level2;
     bySecond.set(key, (bySecond.get(key) ?? 0) + (r.duration_minutes ?? 0));
   }
   const secondKeys = [...bySecond.keys()].sort((x, y) => (bySecond.get(y) ?? 0) - (bySecond.get(x) ?? 0));
   const secondRows = secondKeys.map((key) => ({
     label: key,
-    value: fmtDur(bySecond.get(key) ?? 0) + '，占 ' + String(fmtPct(bySecond.get(key) ?? 0, total)) + '%',
+    value: m('skill-schedule.analyze-analyzeDocs.c033', {
+      p0: String(fmtDur(bySecond.get(key) ?? 0)),
+      p1: String(String(fmtPct(bySecond.get(key) ?? 0, total))),
+    }),
     pct: total > 0 ? Math.round(((bySecond.get(key) ?? 0) / total) * 100) : 0,
     color: categoryColor(key, secondKeys),
   }));
@@ -340,26 +377,31 @@ export function renderCategoryPage(input: CategoryPageInput): string {
 
   const cards: readonly KpiCardInput[] = [
     {
-      label: '深挖类别', value: input.level1,
-      detail: input.requested === input.level1 ? '你问的就是这一维' : '「' + input.requested + '」按一级分类归到这一维',
+      label: m('skill-schedule.analyze-analyzeDocs.c034'), value: input.level1,
+      detail: input.requested === input.level1 ? m('skill-schedule.analyze-analyzeDocs.c035') : m('skill-schedule.analyze-analyzeDocs.c036', { p0: String(input.requested) }),
     },
-    { label: '总时长', value: fmtDur(total), detail: '这一段里这一维的时长合计' },
-    { label: '活跃天数', value: String(active), unit: '天', detail: '窗里一共 ' + String(dates.length) + ' 天' },
-    { label: '日均', value: fmtDur(Math.round(dailyAvg)), detail: '按有记录的那几天摊平' },
+    { label: m('skill-schedule.analyze-analyzeDocs.c037'), value: fmtDur(total), detail: m('skill-schedule.analyze-analyzeDocs.c038') },
+    { label: m('skill-schedule.analyze-analyzeDocs.c039'), value: String(active), unit: m('skill-schedule.analyze-analyzeDocs.c040'), detail: m('skill-schedule.analyze-analyzeDocs.c041', { p0: String(String(dates.length)) }) },
+    { label: '日均', value: fmtDur(Math.round(dailyAvg)), detail: m('skill-schedule.analyze-analyzeDocs.c042') },
   ];
   const head: PageHead = {
-    docTitle: '作息管家 类别深挖',
-    eyebrow: EYEBROW,
-    title: '类别深挖',
-    subtitle: '「' + input.level1 + '」在 ' + input.start + ' 至 ' + input.end + ' 的读数：'
-      + String(active) + ' 天里有记录，共 ' + fmtDur(total) + '。',
+    docTitle: m('skill-schedule.analyze-analyzeDocs.c043'),
+    eyebrow: eyebrow(),
+    title: m('skill-schedule.analyze-analyzeDocs.c044'),
+    subtitle: m('skill-schedule.analyze-analyzeDocs.c045', {
+      p0: String(input.level1),
+      p1: String(input.start),
+      p2: String(input.end),
+      p3: String(String(active)),
+      p4: String(fmtDur(total)),
+    }),
   };
   const caliber = input.requested === input.level1
-    ? '这一维按一级分类算 ｜ 热力一格是一小时 ｜ 没有记录的小时也占格'
-    : '「' + input.requested + '」按一级分类归到「' + input.level1 + '」 ｜ 热力一格是一小时 ｜ 没有记录的小时也占格';
-  const heatTitle = '24h × ' + String(dates.length) + ' 天热力图';
+    ? m('skill-schedule.analyze-analyzeDocs.c046')
+    : m('skill-schedule.analyze-analyzeDocs.c047', { p0: String(input.requested), p1: String(input.level1) });
+  const heatTitle = m('skill-schedule.analyze-analyzeDocs.c048', { p0: String(String(dates.length)) });
   const { toc, body } = pageSections([
-    { navText: '这一段的读数', html: renderKpiGrid(cards, { title: '这一段的读数' }) },
+    { navText: m('skill-schedule.analyze-analyzeDocs.c049'), html: renderKpiGrid(cards, { title: m('skill-schedule.analyze-analyzeDocs.c050') }) },
     { html: renderCaliberLine(caliber) },
     // 段名是「24h × N 天热力图」（N 随这一段的天数变）；目录项与它逐字同源（同一个常量写两处拼接）。
     { navText: heatTitle, html: renderHeatMatrix(capped, {
@@ -372,24 +414,27 @@ export function renderCategoryPage(input: CategoryPageInput): string {
     }) },
     { html: capped.length === rows.length
       ? ''
-      : renderCaliberLine('这一段跨了 ' + String(rows.length) + ' 天，热力图只印最近 ' + String(capped.length) + ' 天') },
-    { navText: '分类总览', html: renderSectionTitle('分类总览')
-      + renderCaliberLine('这一维下面各二级分类的时长与占比 ｜ 只有一级分类的记录归在「未分二级」')
+      : renderCaliberLine(m('skill-schedule.analyze-analyzeDocs.c051', {
+        p0: String(String(rows.length)),
+        p1: String(String(capped.length)),
+      })) },
+    { navText: m('skill-schedule.analyze-analyzeDocs.c052'), html: renderSectionTitle(m('skill-schedule.analyze-analyzeDocs.c053'))
+      + renderCaliberLine(m('skill-schedule.analyze-analyzeDocs.c054'))
       + renderDistributionRows({ rows: secondRows }) },
-    { navText: '记录明细', html: renderSectionTitle('记录明细')
+    { navText: m('skill-schedule.analyze-analyzeDocs.c055'), html: renderSectionTitle(m('skill-schedule.analyze-analyzeDocs.c056'))
       + renderDataTable({
         columns: [
-          { key: 'date', label: '日期' },
-          { key: 'time', label: '时段' },
-          { key: 'activity', label: '活动' },
-          { key: 'category', label: '分类' },
-          { key: 'duration', label: '时长', align: 'right' },
+          { key: 'date', label: m('skill-schedule.analyze-analyzeDocs.c057') },
+          { key: 'time', label: m('skill-schedule.analyze-analyzeDocs.c058') },
+          { key: 'activity', label: m('skill-schedule.analyze-analyzeDocs.c059') },
+          { key: 'category', label: m('skill-schedule.analyze-analyzeDocs.c060') },
+          { key: 'duration', label: m('skill-schedule.analyze-analyzeDocs.c061'), align: 'right' },
         ],
         rows: detailRows,
-        emptyText: '这一段里这一维没有记录',
+        emptyText: m('skill-schedule.analyze-analyzeDocs.c062'),
       }) },
-    { navText: '复制与留档', html: scheduleCopyArea({
-      title: '复制与留档',
+    { navText: m('skill-schedule.analyze-analyzeDocs.c063'), html: scheduleCopyArea({
+      title: m('skill-schedule.analyze-analyzeDocs.c064'),
       dataActionId: 'ilife-sch-category-copy-data',
       logActionId: 'ilife-sch-category-copy-log',
       key: 'schedule.record.compare',
@@ -397,7 +442,7 @@ export function renderCategoryPage(input: CategoryPageInput): string {
       log: scheduleCopyLog({
         command: 'schedule-cmd-read schedule.record.compare --params {"kind":"category","category":"'
           + input.level1 + '","start":"' + input.start + '","end":"' + input.end + '"}',
-        source: '作息记录表（' + String(hits.length) + ' 行）',
+        source: m('skill-schedule.analyze-analyzeDocs.c065', { p0: String(String(hits.length)) }),
         actionAt: scheduleNowStamp(),
       }),
     }) },
@@ -436,31 +481,39 @@ export function renderAnomalyPage(input: AnomalyPageInput): string {
     .sort((x, y) => (x.level === y.level ? Math.abs(y.deltaPct) - Math.abs(x.deltaPct) : (x.level === 'red' ? -1 : 1)));
   const frames: AnomalyFrameInput[] = found.map((a) => ({
     level: a.level === 'red' ? 'red' : 'yellow',
-    headline: a.dim + (a.deltaPct > 0 ? '涨 ' : '降 ') + String(Math.abs(a.deltaPct)) + '%',
-    detail: '这一段日均 ' + fmtDur(Math.round(a.cur)) + '，基线日均 ' + fmtDur(Math.round(a.prev))
-      + '，两段差了 ' + signedDur(a.cur - a.prev) + '。',
+    headline: a.dim + (a.deltaPct > 0 ? m('skill-schedule.analyze-analyzeDocs.c066') : m('skill-schedule.analyze-analyzeDocs.c067')) + String(Math.abs(a.deltaPct)) + '%',
+    detail: m('skill-schedule.analyze-analyzeDocs.c068', {
+      p0: String(fmtDur(Math.round(a.cur))),
+      p1: String(fmtDur(Math.round(a.prev))),
+      p2: String(signedDur(a.cur - a.prev)),
+    }),
   }));
   const reds = found.filter((a) => a.level === 'red').length;
   const yellows = found.filter((a) => a.level === 'yellow').length;
   const windowStart = shiftDays(input.end, w - 1);
   const emptyText = w >= BASELINE_DAYS
-    ? '窗口与基线取的是同一段日子，逐维当然读不出偏离。要看偏离，把窗口开小一点（比如最近 7 天）。'
-    : '这一段的日均与基线比，没有哪一维的偏离过了一成。';
+    ? m('skill-schedule.analyze-analyzeDocs.c069')
+    : m('skill-schedule.analyze-analyzeDocs.c070');
   const cards: readonly KpiCardInput[] = [
-    { label: '检测窗口', value: String(w), unit: '天', detail: windowStart + ' 至 ' + input.end },
+    { label: m('skill-schedule.analyze-analyzeDocs.c071'), value: String(w), unit: m('skill-schedule.analyze-analyzeDocs.c072'), detail: m('skill-schedule.analyze-analyzeDocs.c073', { p0: String(windowStart), p1: String(input.end) }) },
     {
-      label: '检出异常', value: String(found.length), unit: '项',
-      detail: found.length === 0 ? '这一段没有过线的维度' : '过了一成的维度数',
+      label: m('skill-schedule.analyze-analyzeDocs.c074'), value: String(found.length), unit: m('skill-schedule.analyze-analyzeDocs.c075'),
+      detail: found.length === 0 ? m('skill-schedule.analyze-analyzeDocs.c076') : m('skill-schedule.analyze-analyzeDocs.c077'),
     },
-    { label: '红框', value: String(reds), unit: '项', detail: '偏离过了两成' },
-    { label: '黄框', value: String(yellows), unit: '项', detail: '偏离过了一成' },
+    { label: m('skill-schedule.analyze-analyzeDocs.c078'), value: String(reds), unit: m('skill-schedule.analyze-analyzeDocs.c079'), detail: m('skill-schedule.analyze-analyzeDocs.c080') },
+    { label: m('skill-schedule.analyze-analyzeDocs.c081'), value: String(yellows), unit: m('skill-schedule.analyze-analyzeDocs.c082'), detail: m('skill-schedule.analyze-analyzeDocs.c083') },
   ];
   const head: PageHead = {
-    docTitle: '作息管家 异常检测',
-    eyebrow: EYEBROW,
-    title: '异常检测',
-    subtitle: '最近 ' + String(w) + ' 天（' + windowStart + ' 至 ' + input.end + '）的日均，与 ' + input.baselineStart
-      + ' 至 ' + input.end + ' 这 30 天的日均逐维对照。',
+    docTitle: m('skill-schedule.analyze-analyzeDocs.c084'),
+    eyebrow: eyebrow(),
+    title: m('skill-schedule.analyze-analyzeDocs.c085'),
+    subtitle: m('skill-schedule.analyze-analyzeDocs.c086', {
+      p0: String(String(w)),
+      p1: String(windowStart),
+      p2: String(input.end),
+      p3: String(input.baselineStart),
+      p4: String(input.end),
+    }),
   };
   const radarRows = DIMS.map((dim) => ({
     dim,
@@ -468,49 +521,61 @@ export function renderAnomalyPage(input: AnomalyPageInput): string {
     prev: Math.round(baseDaily[dim]),
     move: signedShort(curDaily[dim] - baseDaily[dim]),
   }));
+  // #1223：逐维那一句先算成中转变量——整句化只认「一段文案 ＋ 若干变量」，
+  // 链里再嵌回调（map 里的拼接）会被判成形状拿不准，整件不写盘。
+  const radarSummary = radarRows.map((row) => m('skill-schedule.analyze-analyzeDocs.c087', {
+    p0: String(row.dim),
+    p1: String(fmtDur(row.cur)),
+    p2: String(fmtDur(row.prev)),
+    p3: String(row.move),
+  })).join('');
   const { toc, body } = pageSections([
-    { navText: '这一趟检测的读数', html: renderKpiGrid(cards, { title: '这一趟检测的读数' }) },
-    { navText: '异常详情', html: renderSectionTitle('异常详情')
-      + renderCaliberLine('红框＝偏离过两成 ｜ 黄框＝偏离过一成 ｜ 基线＝' + input.baselineStart
-        + ' 至 ' + input.end + ' 这 30 天的日均')
+    { navText: m('skill-schedule.analyze-analyzeDocs.c088'), html: renderKpiGrid(cards, { title: m('skill-schedule.analyze-analyzeDocs.c089') }) },
+    { navText: m('skill-schedule.analyze-analyzeDocs.c090'), html: renderSectionTitle(m('skill-schedule.analyze-analyzeDocs.c091'))
+      + renderCaliberLine(m('skill-schedule.analyze-analyzeDocs.c092', { p0: String(input.baselineStart), p1: String(input.end) }))
       + renderAnomalyFrames(frames, emptyText) },
-    { navText: '7 维雷达', html: renderSectionTitle('7 维雷达')
+    { navText: m('skill-schedule.analyze-analyzeDocs.c093'), html: renderSectionTitle(m('skill-schedule.analyze-analyzeDocs.c094'))
       + renderRadar({
         dims: DIMS.map((dim) => ({ label: dim, current: curDaily[dim], baseline: baseDaily[dim] })),
-        currentLabel: '最近 ' + String(w) + ' 天',
-        baselineLabel: '近 30 天',
-        caption: '蓝面＝最近 ' + String(w) + ' 天的日均，灰面＝近 30 天的日均。每一个轴按这一维里两段的较大者铺满，谁缩进去谁就少。',
+        currentLabel: m('skill-schedule.analyze-analyzeDocs.c095', { p0: String(String(w)) }),
+        baselineLabel: m('skill-schedule.analyze-analyzeDocs.c096'),
+        caption: m('skill-schedule.analyze-analyzeDocs.c097', { p0: String(String(w)) }),
       })
       + renderDataTable({
         columns: [
-          { key: 'dim', label: '维度' },
-          { key: 'cur', label: '这一段日均', align: 'right' },
-          { key: 'prev', label: '基线日均', align: 'right' },
-          { key: 'move', label: '日均变化', align: 'right' },
+          { key: 'dim', label: m('skill-schedule.analyze-analyzeDocs.c098') },
+          { key: 'cur', label: m('skill-schedule.analyze-analyzeDocs.c099'), align: 'right' },
+          { key: 'prev', label: m('skill-schedule.analyze-analyzeDocs.c100'), align: 'right' },
+          { key: 'move', label: m('skill-schedule.analyze-analyzeDocs.c101'), align: 'right' },
         ],
         rows: radarRows.map((row) => {
           const glyph = getEmojiPrefix(row.dim);
           return { dim: glyph === '' ? row.dim : glyph + ' ' + row.dim, cur: fmtDur(row.cur), prev: fmtDur(row.prev), move: row.move };
         }),
-        caption: '七维的日均读数（创作不参评）',
+        caption: m('skill-schedule.analyze-analyzeDocs.c102'),
       }) },
-    { navText: '复制与留档', html: scheduleCopyArea({
-      title: '复制与留档',
+    { navText: m('skill-schedule.analyze-analyzeDocs.c103'), html: scheduleCopyArea({
+      title: m('skill-schedule.analyze-analyzeDocs.c104'),
       dataActionId: 'ilife-sch-anomaly-copy-data',
       logActionId: 'ilife-sch-anomaly-copy-log',
       key: 'schedule.record.compare',
       // 这一份摘要从页上那几张读数原样拼（不重跑口径：红黄框与逐维日均就是上面算出来的那几行）。
       payload: {
-        summary: '异常检测：最近 ' + String(w) + ' 天（' + windowStart + ' 至 ' + input.end + '），基线 '
-          + input.baselineStart + ' 至 ' + input.end + ' 这 30 天的日均，检出红框 ' + String(reds)
-          + ' 项、黄框 ' + String(yellows) + ' 项。'
-          + radarRows.map((row) => row.dim + ' 这一段日均 ' + fmtDur(row.cur) + '，基线日均 ' + fmtDur(row.prev)
-            + '（' + row.move + '）。').join(''),
+        summary: m('skill-schedule.analyze-analyzeDocs.c105', {
+          p0: String(String(w)),
+          p1: String(windowStart),
+          p2: String(input.end),
+          p3: String(input.baselineStart),
+          p4: String(input.end),
+          p5: String(String(reds)),
+          p6: String(String(yellows)),
+          p7: String(radarSummary),
+        }),
       },
       log: scheduleCopyLog({
         command: 'schedule-cmd-read schedule.record.compare --params {"kind":"anomaly","end":"' + input.end
           + '","windowDays":' + String(w) + '}',
-        source: '作息记录表（窗口 ' + String(input.records.length) + ' 行）',
+        source: m('skill-schedule.analyze-analyzeDocs.c106', { p0: String(String(input.records.length)) }),
         actionAt: scheduleNowStamp(),
       }),
     }) },

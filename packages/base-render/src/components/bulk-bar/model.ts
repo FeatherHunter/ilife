@@ -39,6 +39,7 @@ import {
   BULK_BAR_PREVIEW_KEYS,
   BULK_BAR_PREVIEW_ROW_KEYS,
 } from './keys.js';
+import { m } from '../../entries/index.js';
 
 /** 条目的上限（再多就不该用「批量」了，该用筛选或全选）。 */
 export const BULK_BAR_ITEM_MAX = 200;
@@ -167,7 +168,7 @@ function previewRowOf(value: unknown, at: number, field: string): BulkBarPreview
   const at0 = field + '[' + String(at) + ']';
   assertKeys(value as object, BULK_BAR_PREVIEW_ROW_KEYS, at0);
   const keep = optBool(raw.keep, at0 + '.keep');
-  if (keep === undefined) badInput(at0 + '.keep 必填（`true`＝这条会改；`false`＝跳过）');
+  if (keep === undefined) badInput(at0 + '.keep 必填（true＝这条会改；false＝跳过）');
   const note = optText(raw.note, at0 + '.note');
   if (keep === false && note === undefined) {
     badInput(at0 + '.note 必填：跳过的那一条要**写清为什么**不被改（只写「跳过」等于没说）');
@@ -189,20 +190,25 @@ function previewOf(value: unknown, field: string, unit: string): BulkBarPreviewM
   let keepCount = 0;
   for (const r of rows) if (r.keep) keepCount += 1;
   const skipCount = rows.length - keepCount;
+  const skipPart = skipCount === 0 ? '' : m('base-render.components-bulk-bar-model.c001', { p0: String(String(skipCount)), p1: String(unit) });
   const defaultSummary = keepCount === 0
-    ? BULK_BAR_NOTHING_TEXT
-    : ('会改 ' + String(keepCount) + ' ' + unit + (skipCount === 0 ? '' : ' · 跳过 ' + String(skipCount) + ' ' + unit));
+    ? BULK_BAR_NOTHING_TEXT()
+    : m('base-render.components-bulk-bar-model.c002', {
+      p0: String(String(keepCount)),
+      p1: String(unit),
+      p2: String(skipPart),
+    });
   return {
     title: reqText(raw.title, field + '.title'),
     cap: optText(raw.cap, field + '.cap'),
-    valueLabel: optText(raw.valueLabel, field + '.valueLabel') ?? BULK_BAR_VALUE_LABEL,
+    valueLabel: optText(raw.valueLabel, field + '.valueLabel') ?? BULK_BAR_VALUE_LABEL(),
     value: optText(raw.value, field + '.value'),
     recent: optTextList(raw.recent, field + '.recent', BULK_BAR_RECENT_MAX),
     rows,
     summary: optText(raw.summary, field + '.summary') ?? defaultSummary,
     submitLabel: optText(raw.submitLabel, field + '.submitLabel')
-      ?? (keepCount === 0 ? BULK_BAR_NOTHING_TEXT : '改这 ' + String(keepCount) + ' ' + unit),
-    cancelLabel: optText(raw.cancelLabel, field + '.cancelLabel') ?? BULK_BAR_CANCEL_LABEL,
+      ?? (keepCount === 0 ? BULK_BAR_NOTHING_TEXT() : m('base-render.components-bulk-bar-model.c003', { p0: String(String(keepCount)), p1: String(unit) })),
+    cancelLabel: optText(raw.cancelLabel, field + '.cancelLabel') ?? BULK_BAR_CANCEL_LABEL(),
     keepCount,
     skipCount,
   };
@@ -261,7 +267,7 @@ export function normalizeBulkBar(input: unknown): BulkBarModel {
 
   const actionsRaw = reqList(raw.actions, 'bulk-bar: input.actions');
   if (actionsRaw.length === 0) badInput('bulk-bar: input.actions 至少要有一项动作');
-  const countUnit = optText(raw.countUnit, 'bulk-bar: input.countUnit') ?? BULK_BAR_COUNT_UNIT;
+  const countUnit = optText(raw.countUnit, 'bulk-bar: input.countUnit') ?? BULK_BAR_COUNT_UNIT();
   const hint = optText(raw.hint, 'bulk-bar: input.hint');
   const seenActions = new Set<string>();
   const actions = actionsRaw.map((one, i) => actionOf(one, i, seenActions, countUnit, hint));
@@ -284,7 +290,7 @@ export function normalizeBulkBar(input: unknown): BulkBarModel {
     countUnit,
     tail: optText(raw.tail, 'bulk-bar: input.tail'),
     hint,
-    emptyText: optText(raw.emptyText, 'bulk-bar: input.emptyText') ?? BULK_BAR_EMPTY_TEXT,
+    emptyText: optText(raw.emptyText, 'bulk-bar: input.emptyText') ?? BULK_BAR_EMPTY_TEXT(),
     openAction,
     extraClass: optExtraClass(raw.extraClass, 'bulk-bar: input.extraClass'),
   };

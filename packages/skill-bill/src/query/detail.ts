@@ -29,6 +29,7 @@ import { assembleSheetPage, sheetHead, ticketActions, ticketRule, ticketSection,
 import { directionWord } from '../shared/direction.js';
 import { EMPTY_CELL, csvCell, oneLine } from '../shared/copyText.js';
 import type { BillRow } from '../fetch/index.js';
+import { m } from '../entries/index.js';
 
 /** 详情页的入参：这一页是谁（命令名／唤醒词）＋ 查到哪一条 ＋ 复制日志的取数（来源与时刻只进复制日志，不上屏）。 */
 export interface QueryDetailInput {
@@ -55,28 +56,38 @@ function textOrDash(v: string): string {
   return v.trim() === '' ? EMPTY_CELL : v;
 }
 
-/** 店头品牌行与纸外脚注（原型第一行与末行同字，静态）：饼干记账 · 账单详情。 */
-const DETAIL_BRAND = DOC_TITLE + ' · 账单详情';
+/** 店头品牌行与纸外脚注（原型第一行与末行同字，静态）：饼干记账 · 账单详情。
+ *  #1209：模块级常量改函数——模块加载期取词会把语言固化，渲染期才取。 */
+function detailBrand(): string {
+  return m('skill-bill.query-detail.c001', { p0: String(DOC_TITLE) });
+}
+
 /** 店头副题行（原型第三行，静态）：账单详情 · 单记录。 */
-const DETAIL_SUB = '账单详情 · 单记录';
+function detailSub(): string {
+  return m('skill-bill.query-detail.c002');
+}
 
 /** 店头标题（原型第二行）：#编号 备注 · 单笔方向确认（方向词走共用位 `../shared/direction.js`）。 */
 function paperTitle(row: BillRow): string {
-  return '#' + row.id + ' ' + escapeHtml(row.note.trim()) + ' · 单笔' + directionWord(row.amount) + '确认';
+  return m('skill-bill.query-detail.c003', {
+    p0: String(row.id),
+    p1: String(escapeHtml(row.note.trim())),
+    p2: String(directionWord(row.amount)),
+  });
 }
 
 /** 落点行（原型 6 行：编号带#／账户／账本／币种／创建时间／状态纯文本；
  *  已撤销才加删除时间行（原值），正常态不印这一行。 */
 function fieldRows(row: BillRow, deleted: boolean): readonly { readonly label: string; readonly value: string }[] {
   const rows: { label: string; value: string }[] = [
-    { label: '编号', value: '#' + row.id },
-    { label: '账户', value: textOrDash(row.account) },
-    { label: '账本', value: textOrDash(row.ledger) },
-    { label: '币种', value: textOrDash(row.currency) },
-    { label: '创建时间', value: textOrDash(row.created_at) },
+    { label: m('skill-bill.query-detail.c004'), value: '#' + row.id },
+    { label: m('skill-bill.query-detail.c005'), value: textOrDash(row.account) },
+    { label: m('skill-bill.query-detail.c006'), value: textOrDash(row.ledger) },
+    { label: m('skill-bill.query-detail.c007'), value: textOrDash(row.currency) },
+    { label: m('skill-bill.query-detail.c008'), value: textOrDash(row.created_at) },
   ];
-  if (deleted) rows.push({ label: '删除时间', value: String(row.deleted_at) });
-  rows.push({ label: '状态', value: deleted ? '已撤销' : '有效' });
+  if (deleted) rows.push({ label: m('skill-bill.query-detail.c009'), value: String(row.deleted_at) });
+  rows.push({ label: m('skill-bill.query-detail.c050'), value: deleted ? m('skill-bill.query-detail.c010') : m('skill-bill.query-detail.c011') });
   return rows;
 }
 
@@ -88,31 +99,36 @@ function ledgerBlock(row: BillRow, deleted: boolean): string {
 
 /** 主数字块下面那两行（原型 `.summary-note`＋时刻行）：结论逐字＋记账时刻。 */
 function summaryLines(row: BillRow): string {
-  return '<p class="ilife-ticket-summary-note">' + DETAIL_CONCLUSION + '</p>'
+  return '<p class="ilife-ticket-summary-note">' + detailConclusion() + '</p>'
     + '<p class="ilife-ticket-summary-time">' + escapeHtml(row.time) + '</p>';
 }
 
-/** 详情结论逐字（1056 v2.1 manifest w17，一字不动）。 */
-const DETAIL_CONCLUSION = '已入账，可复制三格式存档';
+/** 详情结论逐字（1056 v2.1 manifest w17，一字不动）；#1209：常量改函数，渲染期取词。 */
+function detailConclusion(): string {
+  return m('skill-bill.query-detail.c012');
+}
+
 /** 详情占比条注记逐字（1056 v2.1 w17 scale-note，一字不动）。 */
-const DETAIL_SCALE_NOTE = '单笔支出，占本笔 100%。';
+function detailScaleNote(): string {
+  return m('skill-bill.query-detail.c013');
+}
 
 /** 详情单条 100% 占比条（与列表页同一组件 `renderDistributionRows`，载荷不动）。 */
 function detailScale(row: BillRow): string {
   return renderDistributionRows({
-    rows: [{ label: row.category, value: row.amount.toFixed(2) + ' 元', pct: 100 }],
-  }) + '<p class="ilife-ticket-scale-note">' + DETAIL_SCALE_NOTE + '</p>';
+    rows: [{ label: row.category, value: m('skill-bill.query-detail.c014', { p0: String(row.amount.toFixed(2)) }), pct: 100 }],
+  }) + '<p class="ilife-ticket-scale-note">' + detailScaleNote() + '</p>';
 }
 
 /** 明细卡（原型 2 行）：收付行（收付词＋金额，走加粗档）＋备注行（备注·原文·#编号）。 */
 function entryCard(row: BillRow): string {
-  const payWord = row.amount < 0 ? '实付' : '实收';
+  const payWord = row.amount < 0 ? m('skill-bill.query-detail.c015') : m('skill-bill.query-detail.c016');
   const note = row.note.trim() === '' ? EMPTY_CELL : row.note.trim();
   return '<div class="ilife-ticket-card"><ol class="ilife-ticket-entries">'
     + '<li class="is-pay"><span class="ilife-ticket-entry-text">'
     + escapeHtml(payWord + ' ' + row.amount.toFixed(2)) + '</span></li>'
     + '<li><span class="ilife-ticket-entry-text">'
-    + escapeHtml('备注·' + note + '·#' + row.id) + '</span></li>'
+    + escapeHtml(m('skill-bill.query-detail.c017', { p0: String(note), p1: String(row.id) })) + '</span></li>'
     + '</ol></div>';
 }
 
@@ -121,9 +137,9 @@ function checkCard(row: BillRow, deleted: boolean): string {
   return '<div class="ilife-ticket-check' + (deleted ? ' is-danger' : '') + '">'
     + '<span class="ilife-ticket-check-dot" aria-hidden="true"></span>'
     + checkListHtml([
-      { label: '编号', value: String(row.id) },
-      { label: '写入', value: textOrDash(row.created_at) },
-      { label: '异常', value: deleted ? '已撤销' : '无', ok: !deleted },
+      { label: m('skill-bill.query-detail.c018'), value: String(row.id) },
+      { label: m('skill-bill.query-detail.c019'), value: textOrDash(row.created_at) },
+      { label: m('skill-bill.query-detail.c020'), value: deleted ? m('skill-bill.query-detail.c021') : m('skill-bill.query-detail.c022'), ok: !deleted },
     ]) + '</div>';
 }
 
@@ -156,19 +172,19 @@ function noteOne(row: BillRow): string {
  *  ［删除时间］／状态＋备注——值与纸面同表达式，纯文本行与纸面行一一对应）。 */
 function detailCopyFields(row: BillRow, deleted: boolean): readonly (readonly [string, string])[] {
   const fields: (readonly [string, string])[] = [
-    ['编号', '#' + row.id],
-    ['时间', dashOne(row.time)],
-    ['分类', dashOne(row.category)],
-    ['金额', row.amount.toFixed(2)],
-    ['方向', directionWord(row.amount)],
-    ['账户', dashOne(row.account)],
-    ['账本', dashOne(row.ledger)],
-    ['币种', dashOne(row.currency)],
-    ['创建时间', dashOne(row.created_at)],
+    [m('skill-bill.query-detail.c023'), '#' + row.id],
+    [m('skill-bill.query-detail.c024'), dashOne(row.time)],
+    [m('skill-bill.query-detail.c025'), dashOne(row.category)],
+    [m('skill-bill.query-detail.c026'), row.amount.toFixed(2)],
+    [m('skill-bill.query-detail.c027'), directionWord(row.amount)],
+    [m('skill-bill.query-detail.c028'), dashOne(row.account)],
+    [m('skill-bill.query-detail.c029'), dashOne(row.ledger)],
+    [m('skill-bill.query-detail.c030'), dashOne(row.currency)],
+    [m('skill-bill.query-detail.c031'), dashOne(row.created_at)],
   ];
-  if (deleted) fields.push(['删除时间', oneLine(String(row.deleted_at))]);
-  fields.push(['状态', deleted ? '已撤销' : '有效']);
-  fields.push(['备注', noteOne(row)]);
+  if (deleted) fields.push([m('skill-bill.query-detail.c032'), oneLine(String(row.deleted_at))]);
+  fields.push([m('skill-bill.query-detail.c050'), deleted ? m('skill-bill.query-detail.c033') : m('skill-bill.query-detail.c034')]);
+  fields.push([m('skill-bill.query-detail.c035'), noteOne(row)]);
   return fields;
 }
 
@@ -199,7 +215,7 @@ export function buildDetailCopyJson(row: BillRow): string {
       currency: row.currency,
       created_at: row.created_at,
       deleted_at: row.deleted_at,
-      status: deleted ? '已撤销' : '有效',
+      status: deleted ? m('skill-bill.query-detail.c036') : m('skill-bill.query-detail.c037'),
       note: t === '' ? null : oneLine(t),
     },
   };
@@ -219,24 +235,25 @@ export function buildDetailCopyCsv(row: BillRow): string {
 /** 查询详情页（一纸 w17 v2.1：店头三行＋主数字四行＋落点＋占比＋明细＋对账＋复制区＋纸外脚注）。 */
 export function queryDetailDoc(input: QueryDetailInput): string {
   const deleted = input.row.deleted_at !== null && input.row.deleted_at !== '';
-  const stamp = deleted ? { text: '已撤销', tone: 'danger' as const } : null;
-  const paper = queryStyleTag() + sheetHead(DETAIL_BRAND, paperTitle(input.row), DETAIL_SUB)
+  const stamp = deleted ? { text: m('skill-bill.query-detail.c038'), tone: 'danger' as const } : null;
+  const deletedSuffix = deleted ? m('skill-bill.query-detail.c039') : m('skill-bill.query-detail.c040');
+  const paper = queryStyleTag() + sheetHead(detailBrand(), paperTitle(input.row), detailSub())
     + ticketRule()
     + ticketSummary(renderSummaryHead({
-      eyebrow: '单笔' + directionWord(input.row.amount),
+      eyebrow: m('skill-bill.query-detail.c041', { p0: String(directionWord(input.row.amount)) }),
       value: input.row.amount.toFixed(2),
-      unit: '元',
+      unit: m('skill-bill.query-detail.c042'),
       ...(stamp === null ? {} : { stamp }),
       layout: 'ticket',
     }), summaryLines(input.row))
     + ticketRule()
-    + ticketSection({ title: '落点', tag: 'LEDGER', content: ledgerBlock(input.row, deleted) })
+    + ticketSection({ title: m('skill-bill.query-detail.c043'), tag: 'LEDGER', content: ledgerBlock(input.row, deleted) })
     + ticketRule()
-    + ticketSection({ title: '分类占比', tag: 'SCALE', content: detailScale(input.row) })
+    + ticketSection({ title: m('skill-bill.query-detail.c044'), tag: 'SCALE', content: detailScale(input.row) })
     + ticketRule()
-    + ticketSection({ title: '明细', tag: 'DETAIL', content: entryCard(input.row) })
+    + ticketSection({ title: m('skill-bill.query-detail.c045'), tag: 'DETAIL', content: entryCard(input.row) })
     + ticketRule()
-    + ticketSection({ title: '对账', tag: 'CHECK', content: checkCard(input.row, deleted) })
+    + ticketSection({ title: m('skill-bill.query-detail.c046'), tag: 'CHECK', content: checkCard(input.row, deleted) })
     + ticketRule()
     + ticketActions(copyArea({
       data: { envelope: input.envelope, title: input.wakeWord },
@@ -248,7 +265,7 @@ export function queryDetailDoc(input: QueryDetailInput): string {
         copyLog: copyLog({
           command: commandLine(input.key, input.params),
           source: input.source,
-          detail: '详情 1 笔 · 记录编号 ' + input.row.id + (deleted ? ' · 已撤销' : ' · 正常'),
+          detail: m('skill-bill.query-detail.c047', { p0: String(input.row.id), p1: String(deletedSuffix) }),
           actionAt: input.actionAt,
           version: DOC_VERSION,
         }),
@@ -256,11 +273,11 @@ export function queryDetailDoc(input: QueryDetailInput): string {
     }));
   const content = writeSection({
     slot: 'list', page: 'list', shape: 'detail', key: input.key,
-    content: renderSheetFrame({ variant: 'ticket', cutLine: true, cutLineText: '✂ 裁切线', content: paper })
-      + '<p class="ilife-ticket-foot">' + escapeHtml(DETAIL_BRAND) + '</p>',
+    content: renderSheetFrame({ variant: 'ticket', cutLine: true, cutLineText: m('skill-bill.query-detail.c048'), content: paper })
+      + '<p class="ilife-ticket-foot">' + escapeHtml(detailBrand()) + '</p>',
   });
   return assembleSheetPage({
-    docTitle: DOC_TITLE + '·查询',
+    docTitle: m('skill-bill.query-detail.c049', { p0: String(DOC_TITLE) }),
     bodyHtml: content,
     paper: 'detail',
   });

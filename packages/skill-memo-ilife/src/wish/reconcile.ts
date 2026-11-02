@@ -13,6 +13,7 @@ import { larkSetupOf, openGate } from './gate.js';
 import { ownerIdOf } from './mark.js';
 import { ensureRemoteWish } from './taskSync.js';
 import type { WishReceipt } from './ensure.js';
+import { m } from '../entries/index.js';
 
 const WISH_TOP = '心愿';
 
@@ -47,10 +48,10 @@ export function reconcileWishes(db: MemoDb): { receipt: ReconcileReceipt; exit: 
   const errors: string[] = [];
   const gate = openGate();
   if (!gate.open) {
-    errors.push('远端不可用：' + gate.why);
+    errors.push(m('skill-memo-ilife.wish-reconcile.c001', { p0: String(gate.why) }));
     return {
       receipt: {
-        ok: false, message: '对账没跑成：远端不可用（' + gate.why + '）',
+        ok: false, message: m('skill-memo-ilife.wish-reconcile.c002', { p0: String(gate.why) }),
         local: 'unchanged', remote: 'unavailable', remoteId: null, larkSetup: larkSetupOf(gate), ...zero, errors,
       },
       exit: 4,
@@ -65,7 +66,7 @@ export function reconcileWishes(db: MemoDb): { receipt: ReconcileReceipt; exit: 
       ensureRemoteWish(db, gate.cli, gate.openId, note);
       backfilled += 1;
     } catch (e) {
-      errors.push('补建 id=' + note.id + '：' + textOf(e));
+      errors.push(m('skill-memo-ilife.wish-reconcile.c003', { p0: String(note.id), p1: String(textOf(e)) }));
     }
   }
 
@@ -74,10 +75,10 @@ export function reconcileWishes(db: MemoDb): { receipt: ReconcileReceipt; exit: 
   try {
     items = listRelatedTasks(gate.cli);
   } catch (e) {
-    errors.push('拉远端任务：' + textOf(e));
+    errors.push(m('skill-memo-ilife.wish-reconcile.c004', { p0: String(textOf(e)) }));
     return {
       receipt: {
-        ok: false, message: '对账没跑完：远端拉不动（' + textOf(e) + '）',
+        ok: false, message: m('skill-memo-ilife.wish-reconcile.c005', { p0: String(textOf(e)) }),
         local: backfilled > 0 ? 'updated' : 'unchanged', remote: 'failed', remoteId: null,
         ...zero, backfilled, errors,
       },
@@ -105,9 +106,9 @@ export function reconcileWishes(db: MemoDb): { receipt: ReconcileReceipt; exit: 
     try {
       const r = completeWish(db, { id: row.id });
       synced += 1;
-      if (r.exit !== 0) errors.push('完成同步 id=' + row.id + '：' + r.receipt.message);
+      if (r.exit !== 0) errors.push(m('skill-memo-ilife.wish-reconcile.c006', { p0: String(row.id), p1: String(r.receipt.message) }));
     } catch (e) {
-      errors.push('完成同步 id=' + row.id + '：' + textOf(e));
+      errors.push(m('skill-memo-ilife.wish-reconcile.c007', { p0: String(row.id), p1: String(textOf(e)) }));
     }
   }
 
@@ -122,7 +123,7 @@ export function reconcileWishes(db: MemoDb): { receipt: ReconcileReceipt; exit: 
     try {
       feishuDue = taskDueDate(gate.cli, t.guid);
     } catch (e) {
-      errors.push('取排期 id=' + row.id + '：' + textOf(e));
+      errors.push(m('skill-memo-ilife.wish-reconcile.c008', { p0: String(row.id), p1: String(textOf(e)) }));
       continue;
     }
     const localDue = row.due ?? null;
@@ -141,8 +142,12 @@ export function reconcileWishes(db: MemoDb): { receipt: ReconcileReceipt; exit: 
   return {
     receipt: {
       ok: errors.length === 0,
-      message: '对账完成：补建=' + backfilled + '，完成同步=' + synced
-        + '，排期同步=' + (dueAdded + dueOverridden + dueRemoved) + '，错误=' + errors.length,
+      message: m('skill-memo-ilife.wish-reconcile.c009', {
+        p0: String(backfilled),
+        p1: String(synced),
+        p2: String(dueAdded + dueOverridden + dueRemoved),
+        p3: String(errors.length),
+      }),
       local: touched > 0 ? 'updated' : 'unchanged',
       remote: errors.length > 0 ? 'partial' : (backfilled > 0 ? 'created' : 'synced'),
       remoteId: null,

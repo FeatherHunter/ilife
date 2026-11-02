@@ -48,7 +48,7 @@ function bubbleHtml(m: TooltipModel): string {
     + hint
     + '</span>'
     + '<span class="' + tooltipSlot('text') + '">' + esc(m.text) + '</span>'
-    + '<span class="' + tooltipSlot('why') + '"><b>' + esc(TOOLTIP_WHY_LABEL) + '</b>' + esc(m.why) + '</span>'
+    + '<span class="' + tooltipSlot('why') + '"><b>' + esc(TOOLTIP_WHY_LABEL()) + '</b>' + esc(m.why) + '</span>'
     + '</span>';
 }
 

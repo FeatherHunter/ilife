@@ -20,7 +20,7 @@ import {
   renderPreBlock, type DataTableRow, type DistributionRowInput, type KpiCardInput,
 } from 'base-paint/blocks';
 import { renderFactStrip } from 'base-paint';
-import { LEVEL1_WHITELIST, completionLabelOf, fmtDur, fmtDurShort, fmtPct, l1Of, type Anomaly } from '../policy/index.js';
+import { HEALTH_TARGETS, LEVEL1_WHITELIST, completionLabelOf, fmtDur, fmtDurShort, fmtPct, l1Of, type Anomaly } from '../policy/index.js';
 import { scheduleCopyArea, type ScheduleCopyAreaInput } from '../render/copyArea.js';
 import { assembleDocPage, type PageHead } from '../shared/docPage.js';
 import { pageSections, type PageSection } from '../shared/pageNav.js';
@@ -30,17 +30,23 @@ import { HEAT_DAYS_CAP, LIST_ROWS_CAP, PAIR_ROWS_CAP, replayData, type ReplayDat
 import { renderGoalCards, renderSectionTitle } from './planParts.js';
 import { planCopyArea } from './receipt.js';
 import type { ScheduleDb } from '../fetch/db.js';
+import { m } from '../entries/index.js';
 
-const EYEBROW = '作息管家 日程与计划';
+/** 页眉（品牌＋域）。#1197：改成函数——`m()` 只在渲染期取词，模块级常量的初值会定死语言。 */
+const eyebrowOf = (): string => m('skill-schedule.plan-replaySections.c001');
 /** 一级分类的权威顺序（配色与图例都照它），定义只此一处：`policy` 的白名单。 */
 const L1_ORDER: readonly string[] = [...LEVEL1_WHITELIST];
-/** 健康分那七维的顺序（＝ `HEALTH_TARGETS` 的键序，见 `policy`）。 */
-const DIM_ORDER: readonly string[] = ['维持', '健康', '工作', '学习', '调整', '日常', '投入'];
-const WEEKDAYS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
-const GRAN_CN: Record<ReplayGranularity, string> = { day: '今日', week: '本周', month: '本月', range: '区间' };
+/** 健康分那七维的顺序（＝ `HEALTH_TARGETS` 的键序，见 `policy`）：键序即权威顺序，不另抄一份中文维度名（#1197）。 */
+const DIM_ORDER: readonly string[] = Object.keys(HEALTH_TARGETS);
 
-const span = (start: string, end: string): string => start + ' 至 ' + end;
-const weekdayOf = (date: string): string => WEEKDAYS[(new Date(date + 'T00:00:00').getDay() + 6) % 7];
+const span = (start: string, end: string): string => m('skill-schedule.plan-replaySections.c002', { p0: String(start), p1: String(end) });
+const weekdayOf = (date: string): string =>
+  [m('skill-schedule.plan-replaySections.c003'), m('skill-schedule.plan-replaySections.c004'), m('skill-schedule.plan-replaySections.c005'), m('skill-schedule.plan-replaySections.c006'), m('skill-schedule.plan-replaySections.c007'), m('skill-schedule.plan-replaySections.c008'), m('skill-schedule.plan-replaySections.c009')][(new Date(date + 'T00:00:00').getDay() + 6) % 7];
+/** 四档在页上那一行的说法（一处定义）。同 `eyebrowOf`：#1197 起改函数。 */
+const granCnOf = (g: ReplayGranularity): string => {
+  const table: Record<ReplayGranularity, string> = { day: m('skill-schedule.plan-replaySections.c010'), week: m('skill-schedule.plan-replaySections.c011'), month: m('skill-schedule.plan-replaySections.c012'), range: m('skill-schedule.plan-replaySections.c013') };
+  return table[g];
+};
 const pctText = (value: number | null): string => (value === null ? '—' : String(value) + '%');
 const minutesOf = minutesOfDayEnd;
 
@@ -63,25 +69,26 @@ function segPlanActual(data: ReplayData, withDate: boolean, capped: boolean): Pa
     };
   });
   const columns = [
-    ...(withDate ? [{ key: 'date', label: '日期' }] : []),
-    { key: 'time', label: '时段' },
-    { key: 'title', label: '计划' },
-    { key: 'plan', label: '计划时长' },
-    { key: 'actual', label: '实际时长' },
-    { key: 'delta', label: '差值' },
-    { key: 'completion', label: '完成状态' },
+    ...(withDate ? [{ key: 'date', label: m('skill-schedule.plan-replaySections.c014') }] : []),
+    { key: 'time', label: m('skill-schedule.plan-replaySections.c015') },
+    { key: 'title', label: m('skill-schedule.plan-replaySections.c016') },
+    { key: 'plan', label: m('skill-schedule.plan-replaySections.c017') },
+    { key: 'actual', label: m('skill-schedule.plan-replaySections.c018') },
+    { key: 'delta', label: m('skill-schedule.plan-replaySections.c019') },
+    { key: 'completion', label: m('skill-schedule.plan-replaySections.c020') },
   ];
   const rest = data.cross.pairs.length - rows.length;
-  return [{ navText: '计划 vs 实际对照', html: renderSectionTitle('计划 vs 实际对照')
+  return [{ navText: m('skill-schedule.plan-replaySections.c021'), html: renderSectionTitle(m('skill-schedule.plan-replaySections.c022'))
     + renderDataTable({
       columns, rows,
       emptyText: data.plans.length === 0
-        ? '这一段没有日程计划，无从对照'
-        : '这一段排了计划，但每一条的时段里都没有作息记录',
+        ? m('skill-schedule.plan-replaySections.c023')
+        : m('skill-schedule.plan-replaySections.c024'),
     })
-    + (rest <= 0 ? '' : '<p class="sch-pl-note">计划与记录相交的一共 ' + String(data.cross.pairs.length)
-      + ' 条，这里印的是头 ' + String(rows.length) + ' 条，另有 ' + String(rest) + ' 条。</p>')
-    + renderCaliberLine('实际时长按记录与计划时段相交的部分累加，同一时段记了多条就一起算进去') }];
+    + (rest <= 0 ? '' : '<p class="sch-pl-note">' + m('skill-schedule.plan-replaySections.c146', {
+      p0: String(data.cross.pairs.length), p1: String(rows.length), p2: String(rest),
+    }) + '</p>')
+    + renderCaliberLine(m('skill-schedule.plan-replaySections.c025')) }];
 }
 
 /** 实际作息（老侧 day／month／通用档的第一段）：分类聚合分布行；单日另给 24 小时色带。
@@ -99,13 +106,13 @@ function segRecord(data: ReplayData): PageSection[] {
     hourCellsOf(data.records.map((r) => ({
       start: minutesOf(r.time_start), end: minutesOf(r.time_end), key: l1Of(r.category),
     }))),
-    { order: L1_ORDER, title: '这一天的 24 小时', height: 120 },
+    { order: L1_ORDER, title: m('skill-schedule.plan-replaySections.c026'), height: 120 },
   );
   return [
-    { navText: '实际作息', html: renderSectionTitle('实际作息') },
+    { navText: m('skill-schedule.plan-replaySections.c027'), html: renderSectionTitle(m('skill-schedule.plan-replaySections.c028')) },
     // 段名是「这一天的 24 小时」；目录项逐字用它。
-    { navText: band === '' ? '' : '这一天的 24 小时', html: band },
-    { navText: '分类聚合', html: renderSectionTitle('分类聚合') + renderDistributionRows({ rows: distribution }) },
+    { navText: band === '' ? '' : m('skill-schedule.plan-replaySections.c029'), html: band },
+    { navText: m('skill-schedule.plan-replaySections.c030'), html: renderSectionTitle(m('skill-schedule.plan-replaySections.c031')) + renderDistributionRows({ rows: distribution }) },
   ];
 }
 
@@ -114,9 +121,9 @@ function segTrend(data: ReplayData): PageSection[] {
   const days = data.days.filter((d) => d.records.length > 0);
   if (days.length < 2) return [];
   const labels = days.map((d) => d.date.slice(5));
-  return [{ navText: '7 维趋势', html: renderChartBlock({
+  return [{ navText: m('skill-schedule.plan-replaySections.c032'), html: renderChartBlock({
     kind: 'line',
-    title: '7 维趋势',
+    title: m('skill-schedule.plan-replaySections.c033'),
     input: {
       items: labels.map((label) => ({ label, value: 0 })),
       options: {
@@ -144,14 +151,16 @@ function segHeat(data: ReplayData): PageSection[] {
     cells: hourCellsOf(d.records.map((r) => ({
       start: minutesOf(r.time_start), end: minutesOf(r.time_end), key: l1Of(r.category),
     }))),
-    sum: d.minutes > 0 ? fmtDurShort(d.minutes) : '无记录',
+    sum: d.minutes > 0 ? fmtDurShort(d.minutes) : m('skill-schedule.plan-replaySections.c034'),
   }));
   // 段名是「24h × N 天热力图」；目录项逐字用它。
-  return [{ navText: '24h × N 天热力图', html: renderHeatMatrix(rows, {
-    order: L1_ORDER, id: 'replay-heat', title: '24h × N 天热力图', legend: true, withTotal: true,
+  return [{ navText: m('skill-schedule.plan-replaySections.c035'), html: renderHeatMatrix(rows, {
+    order: L1_ORDER, id: 'replay-heat', title: m('skill-schedule.plan-replaySections.c036'), legend: true, withTotal: true,
   }) + (capped.length === days.length ? ''
-    : renderCaliberLine('这一段跨了 ' + String(days.length) + ' 天，热力图只印最近 ' + String(capped.length)
-      + ' 天，整段的读数看上面的分类聚合与 7 维趋势')) }];
+    : renderCaliberLine(m('skill-schedule.plan-replaySections.c037', {
+      p0: String(String(days.length)),
+      p1: String(String(capped.length)),
+    }))) }];
 }
 
 /** 计划执行（老侧 day／月／通用档）：六态分布 ＋ 按一级分类拆解。 */
@@ -160,24 +169,24 @@ function segPlan(data: ReplayData): PageSection[] {
   const byCat: DataTableRow[] = data.completionByL1.map((c) => ({
     name: c.name, total: String(c.total), done: String(c.done), rate: pctText(c.rate),
   }));
-  return [{ navText: '计划执行', html: renderSectionTitle('计划执行')
-    + '<p class="sch-pl-note">这一段排了 ' + String(data.plans.length) + ' 条计划，其中 '
-      + String(data.marked) + ' 条标过完成状态，完成率 ' + pctText(data.completionRate)
-      + '（分母是标过的那些，还没标的不算输）。</p>'
+  return [{ navText: m('skill-schedule.plan-replaySections.c038'), html: renderSectionTitle(m('skill-schedule.plan-replaySections.c039'))
+    + '<p class="sch-pl-note">' + m('skill-schedule.plan-replaySections.c147', {
+      p0: String(data.plans.length), p1: String(data.marked), p2: pctText(data.completionRate),
+    }) + '</p>'
     + renderDataTable({
-      caption: '完成状态分布',
-      columns: [{ key: 'state', label: '完成状态' }, { key: 'count', label: '件数', align: 'right' }],
+      caption: m('skill-schedule.plan-replaySections.c040'),
+      columns: [{ key: 'state', label: m('skill-schedule.plan-replaySections.c041') }, { key: 'count', label: m('skill-schedule.plan-replaySections.c042'), align: 'right' }],
       rows: counts,
-      emptyText: '这一段没有计划',
+      emptyText: m('skill-schedule.plan-replaySections.c043'),
     })
     + renderDataTable({
-      caption: '按分类拆解',
+      caption: m('skill-schedule.plan-replaySections.c044'),
       columns: [
-        { key: 'name', label: '分类' }, { key: 'total', label: '件数', align: 'right' },
-        { key: 'done', label: '已完成', align: 'right' }, { key: 'rate', label: '完成率', align: 'right' },
+        { key: 'name', label: m('skill-schedule.plan-replaySections.c045') }, { key: 'total', label: m('skill-schedule.plan-replaySections.c046'), align: 'right' },
+        { key: 'done', label: m('skill-schedule.plan-replaySections.c047'), align: 'right' }, { key: 'rate', label: m('skill-schedule.plan-replaySections.c048'), align: 'right' },
       ],
       rows: byCat,
-      emptyText: '这一段没有计划',
+      emptyText: m('skill-schedule.plan-replaySections.c049'),
     }) }];
 }
 
@@ -190,17 +199,23 @@ function segCross(data: ReplayData, withDate: boolean, aggregate: boolean): Page
   const u = limited(data.cross.unexecuted);
   const o = limited(data.cross.overrun);
   const unexecuted = u.rows.map((p) => ({
-    left: tag(p.date) + p.time_start + ' 至 ' + p.time_end,
+    left: m('skill-schedule.plan-replaySections.c050', {
+      p0: String(tag(p.date) + p.time_start),
+      p1: String(p.time_end),
+    }),
     main: p.title,
-    right: p.completion === null || p.completion === '' ? '未复盘' : completionLabelOf(p.completion),
+    right: p.completion === null || p.completion === '' ? m('skill-schedule.plan-replaySections.c051') : completionLabelOf(p.completion),
   }));
   const overrun = o.rows.map((x) => ({
     left: tag(x.date),
     main: x.title,
-    right: '时段外多花了 ' + fmtDurShort(x.spillMinutes),
+    right: m('skill-schedule.plan-replaySections.c052', { p0: String(fmtDurShort(x.spillMinutes)) }),
   }));
   const unexpectedRows = data.cross.unexpected.map((r) => ({
-    left: tag(r.date) + r.time_start + ' 至 ' + r.time_end,
+    left: m('skill-schedule.plan-replaySections.c053', {
+      p0: String(tag(r.date) + r.time_start),
+      p1: String(r.time_end),
+    }),
     main: r.activity,
     right: l1Of(r.category),
   }));
@@ -210,28 +225,30 @@ function segCross(data: ReplayData, withDate: boolean, aggregate: boolean): Page
   const unexpectedHtml = aggregate
     ? renderDistributionRows({
       rows: ranked.map((name) => ({
-        label: name, value: String(byCat[name]) + ' 块', pct: fmtPct(byCat[name], data.cross.unexpected.length),
+        label: name, value: m('skill-schedule.plan-replaySections.c054', { p0: String(String(byCat[name])) }), pct: fmtPct(byCat[name], data.cross.unexpected.length),
         color: categoryColor(name, L1_ORDER),
       })),
-    }) + (data.cross.unexpected.length === 0 ? '' : '<p class="sch-pl-note">计划外记录一共 '
-      + String(data.cross.unexpected.length) + ' 块，这里按一级分类聚着看，另有 '
-      + String(limited(data.cross.unexpected).rest) + ' 块没逐条印。</p>')
-    : renderListRows({ items: limited(unexpectedRows).rows, emptyText: '这一段的记录都落在某条计划的时段里' });
-  const restLine = (n: number): string => (n === 0 ? '' : '<p class="sch-pl-note">另有 ' + String(n) + ' 条没印出来。</p>');
-  return [{ navText: '跨域对比', html: renderSectionTitle('跨域对比')
-    + renderCaliberLine('计划外＝这天没有任何计划与它时段相交的记录。溢出＝与计划搭边的记录里，落在计划时段之外的那部分合计到了计划时长的两成以上。')
+    }) + (data.cross.unexpected.length === 0 ? '' : '<p class="sch-pl-note">' + m('skill-schedule.plan-replaySections.c148', {
+      p0: String(data.cross.unexpected.length), p1: String(limited(data.cross.unexpected).rest),
+    }) + '</p>')
+    : renderListRows({ items: limited(unexpectedRows).rows, emptyText: m('skill-schedule.plan-replaySections.c055') });
+  const restLine = (n: number): string => (n === 0
+    ? ''
+    : '<p class="sch-pl-note">' + m('skill-schedule.plan-replaySections.c149', { p0: String(n) }) + '</p>');
+  return [{ navText: m('skill-schedule.plan-replaySections.c056'), html: renderSectionTitle(m('skill-schedule.plan-replaySections.c057'))
+    + renderCaliberLine(m('skill-schedule.plan-replaySections.c058'))
     + renderDisclosure({
-      title: '没做成的计划',
+      title: m('skill-schedule.plan-replaySections.c059'),
       open: true,
-      contentHtml: renderListRows({ items: unexecuted, emptyText: '这一段没有「部分完成」与「未完成」的计划' }) + restLine(u.rest),
+      contentHtml: renderListRows({ items: unexecuted, emptyText: m('skill-schedule.plan-replaySections.c060') }) + restLine(u.rest),
     })
     + renderDisclosure({
-      title: '时段溢出',
+      title: m('skill-schedule.plan-replaySections.c061'),
       open: true,
-      contentHtml: renderListRows({ items: overrun, emptyText: '这一段没有明显溢出计划时段的记录' }) + restLine(o.rest),
+      contentHtml: renderListRows({ items: overrun, emptyText: m('skill-schedule.plan-replaySections.c062') }) + restLine(o.rest),
     })
     + renderDisclosure({
-      title: '计划之外的记录',
+      title: m('skill-schedule.plan-replaySections.c063'),
       open: true,
       contentHtml: unexpectedHtml,
     }) }];
@@ -250,80 +267,91 @@ function segHealth(data: ReplayData): PageSection[] {
   const series = data.healthSeries;
   const chart = series.length < 2 ? '' : renderChartBlock({
     kind: 'line',
-    title: '逐日健康分',
+    title: m('skill-schedule.plan-replaySections.c064'),
     input: {
       items: series.map((h) => ({ label: h.date.slice(5), value: h.score })),
       options: { height: 170, labels: 'select' as const, showValues: false as const },
     },
   });
   return [
-    { navText: '健康分', html: renderSectionTitle('健康分')
+    { navText: m('skill-schedule.plan-replaySections.c065'), html: renderSectionTitle(m('skill-schedule.plan-replaySections.c066'))
       + renderFactStrip({
         items: single
-          ? [{ label: '这一天', value: String(data.healthScore) }]
+          ? [{ label: m('skill-schedule.plan-replaySections.c067'), value: String(data.healthScore) }]
           : [
-            { label: '均值', value: String(data.healthMean) },
-            { label: '有记录的天数', value: String(data.activeDays) + ' 天' },
-            { label: '最高的一天', value: series.length === 0 ? '—' : String(Math.max(...series.map((h) => h.score))) },
-            { label: '最低的一天', value: series.length === 0 ? '—' : String(Math.min(...series.map((h) => h.score))) },
+            { label: m('skill-schedule.plan-replaySections.c068'), value: String(data.healthMean) },
+            { label: m('skill-schedule.plan-replaySections.c069'), value: m('skill-schedule.plan-replaySections.c070', { p0: String(String(data.activeDays)) }) },
+            { label: m('skill-schedule.plan-replaySections.c071'), value: series.length === 0 ? '—' : String(Math.max(...series.map((h) => h.score))) },
+            { label: m('skill-schedule.plan-replaySections.c072'), value: series.length === 0 ? '—' : String(Math.min(...series.map((h) => h.score))) },
           ],
       })
-      + renderCaliberLine('七个维度各自按目标时长给分再取均（创作不参评），单日与整段都是这一条算式')
+      + renderCaliberLine(m('skill-schedule.plan-replaySections.c073'))
       + renderDistributionRows({ rows: dims }) },
-    { navText: chart === '' ? '' : '逐日健康分', html: chart },
+    { navText: chart === '' ? '' : m('skill-schedule.plan-replaySections.c074'), html: chart },
   ];
 }
 
 /** 环比对比（老侧 month 档）：本月与上月同期逐分类并排。 */
 function segMonthCompare(data: ReplayData): PageSection[] {
-  const rows: DataTableRow[] = data.monthCompare.map((m) => ({
-    name: m.name,
-    cur: fmtDurShort(m.cur),
-    prev: fmtDurShort(m.prev),
-    delta: m.deltaPct === null ? '上月没有' : (m.deltaPct >= 0 ? '+' : '−') + String(Math.abs(m.deltaPct)) + '%',
+  const rows: DataTableRow[] = data.monthCompare.map((row) => ({
+    name: row.name,
+    cur: fmtDurShort(row.cur),
+    prev: fmtDurShort(row.prev),
+    delta: row.deltaPct === null ? m('skill-schedule.plan-replaySections.c075') : (row.deltaPct >= 0 ? '+' : '−') + String(Math.abs(row.deltaPct)) + '%',
   }));
   const rate = data.monthRateCompare;
-  return [{ navText: '环比对比', html: renderSectionTitle('环比对比')
-    + '<p class="sch-pl-note">对照窗口是 ' + span(data.prevSpan.start, data.prevSpan.end)
-      + '（起止各往前挪一个自然月）。</p>'
+  return [{ navText: m('skill-schedule.plan-replaySections.c076'), html: renderSectionTitle(m('skill-schedule.plan-replaySections.c077'))
+    + '<p class="sch-pl-note">' + m('skill-schedule.plan-replaySections.c150', {
+      p0: span(data.prevSpan.start, data.prevSpan.end),
+    }) + '</p>'
     + renderDataTable({
       columns: [
-        { key: 'name', label: '分类' }, { key: 'cur', label: '本月', align: 'right' },
-        { key: 'prev', label: '上月同期', align: 'right' }, { key: 'delta', label: '环比', align: 'right' },
+        { key: 'name', label: m('skill-schedule.plan-replaySections.c078') }, { key: 'cur', label: m('skill-schedule.plan-replaySections.c079'), align: 'right' },
+        { key: 'prev', label: m('skill-schedule.plan-replaySections.c080'), align: 'right' }, { key: 'delta', label: m('skill-schedule.plan-replaySections.c081'), align: 'right' },
       ],
       rows,
-      emptyText: '本月与上月同期都没有记录',
+      emptyText: m('skill-schedule.plan-replaySections.c082'),
     })
-    + (rate === null ? '' : '<p class="sch-pl-note">计划完成率：本月 ' + String(rate.cur) + '%，上月同期 '
-      + String(rate.prev) + '%，差 ' + (rate.deltaPct >= 0 ? '+' : '−') + String(Math.abs(rate.deltaPct)) + ' 个百分点。</p>') }];
+    + (rate === null ? '' : '<p class="sch-pl-note">' + m('skill-schedule.plan-replaySections.c151', {
+      p0: String(rate.cur), p1: String(rate.prev),
+      p2: (rate.deltaPct >= 0 ? '+' : '−') + String(Math.abs(rate.deltaPct)),
+    }) + '</p>') }];
 }
 
 /** 目标达成（老侧 month 档）：完成率、维持（睡眠）占比、记录覆盖三格。 */
 function segGoals(data: ReplayData): PageSection[] {
   const maintain = data.byL1['维持'] ?? 0;
+  // §4.7 · filter 里那句比对会带着「已完成」进参数子树，先单独数出来。
+  const doneCount = data.plans.filter((p) => p.completion === '已完成').length;
   const lastDay = data.win.end;
-  return [{ navText: '目标达成', html: renderSectionTitle('目标达成')
+  return [{ navText: m('skill-schedule.plan-replaySections.c083'), html: renderSectionTitle(m('skill-schedule.plan-replaySections.c084'))
     + renderGoalCards([
       {
-        label: '计划完成率',
+        label: m('skill-schedule.plan-replaySections.c085'),
         value: pctText(data.completionRate),
-        hint: '已完成 ' + String(data.plans.filter((p) => p.completion === '已完成').length) + ' 条，这一段一共排了 '
-          + String(data.plans.length) + ' 条，标过完成状态的有 ' + String(data.marked) + ' 条',
+        hint: m('skill-schedule.plan-replaySections.c086', {
+          p0: String(String(doneCount)),
+          p1: String(String(data.plans.length)),
+          p2: String(String(data.marked)),
+        }),
       },
       {
-        label: '维持占比',
+        label: m('skill-schedule.plan-replaySections.c087'),
         value: String(fmtPct(maintain, data.totalMinutes)) + '%',
-        hint: '维持（睡眠与起居那一类）共 ' + fmtDur(maintain) + '，目标是一天 10 小时',
+        hint: m('skill-schedule.plan-replaySections.c088', { p0: String(fmtDur(maintain)) }),
       },
       {
-        label: '记录覆盖',
-        value: String(data.activeDays) + ' 天',
-        hint: '本月至 ' + lastDay + ' 一共有记录的天数，日历天数是 ' + String(data.win.days) + ' 天',
+        label: m('skill-schedule.plan-replaySections.c089'),
+        value: m('skill-schedule.plan-replaySections.c090', { p0: String(String(data.activeDays)) }),
+        hint: m('skill-schedule.plan-replaySections.c091', {
+          p0: String(lastDay),
+          p1: String(String(data.win.days)),
+        }),
       },
       {
-        label: '健康分',
+        label: m('skill-schedule.plan-replaySections.c092'),
         value: String(data.healthScore),
-        hint: '整段按七个维度取均，逐日曲线在下面那一段',
+        hint: m('skill-schedule.plan-replaySections.c093'),
       },
     ]) }];
 }
@@ -334,25 +362,35 @@ function segInsights(data: ReplayData): PageSection[] {
   const red = data.anomalies.filter((a) => a.level === 'red');
   const yellow = data.anomalies.filter((a) => a.level === 'yellow');
   const line = (a: Anomaly): string => {
-    const arrow = a.deltaPct >= 0 ? '多了' : '少了';
+    const arrow = a.deltaPct >= 0 ? m('skill-schedule.plan-replaySections.c094') : m('skill-schedule.plan-replaySections.c095');
     const pct = String(Math.abs(a.deltaPct));
-    return a.dim + ' ' + arrow + ' ' + pct + '%（上一段 ' + fmtDurShort(a.prev) + '，这一段 ' + fmtDurShort(a.cur) + '）';
+    return m('skill-schedule.plan-replaySections.c096', {
+      p0: String(a.dim),
+      p1: String(arrow),
+      p2: String(pct),
+      p3: String(fmtDurShort(a.prev)),
+      p4: String(fmtDurShort(a.cur)),
+    });
   };
   const none = data.anomalies.length === 0;
   return [
-    { navText: '亮点与问题', html: renderSectionTitle('亮点与问题') },
-    { navText: '与上一段比', html: renderFeedbackBlock({
-      title: '与上一段比',
+    { navText: m('skill-schedule.plan-replaySections.c097'), html: renderSectionTitle(m('skill-schedule.plan-replaySections.c098')) },
+    { navText: m('skill-schedule.plan-replaySections.c099'), html: renderFeedbackBlock({
+      title: m('skill-schedule.plan-replaySections.c100'),
       toast: none
         ? {
           icon: 'ok',
-          msg: '对照 ' + span(data.prevSpan.start, data.prevSpan.end)
-            + '，这一段各维度的变化都在平常波动范围内（不到 10%）。',
+          msg: m('skill-schedule.plan-replaySections.c101', {
+            p0: String(span(data.prevSpan.start, data.prevSpan.end)),
+          }),
         }
         : {
           icon: red.length > 0 ? 'warn' : 'info',
-          msg: '对照 ' + span(data.prevSpan.start, data.prevSpan.end) + '：' + String(red.length)
-            + ' 处变化超过 20%，' + String(yellow.length) + ' 处在 10% 到 20% 之间。',
+          msg: m('skill-schedule.plan-replaySections.c102', {
+            p0: String(span(data.prevSpan.start, data.prevSpan.end)),
+            p1: String(String(red.length)),
+            p2: String(String(yellow.length)),
+          }),
           lines: [...red, ...yellow].slice(0, 6).map(line),
         },
       staticNotice: true,
@@ -363,33 +401,32 @@ function segInsights(data: ReplayData): PageSection[] {
 /** 缺计划补齐引导（老侧 day 档）：这一天没有计划可对照时给这一块，**不降级**成一句空话。 */
 function segPlanGuide(data: ReplayData): PageSection[] {
   if (data.win.effective !== 'day' || data.plans.length > 0) return [];
-  return [{ navText: '缺计划补齐引导', html: renderSectionTitle('缺计划补齐引导')
+  return [{ navText: m('skill-schedule.plan-replaySections.c103'), html: renderSectionTitle(m('skill-schedule.plan-replaySections.c104'))
     + renderFeedbackBlock({
-      title: '这一天还没有计划',
+      title: m('skill-schedule.plan-replaySections.c105'),
       toast: {
         icon: 'info',
-        msg: '这一天没有日程计划，所以「计划 vs 实际对照」没有可比的对象。先把这一天的计划排出来，再回来看这一页。',
+        msg: m('skill-schedule.plan-replaySections.c106'),
       },
       staticNotice: true,
     })
     + renderPreBlock({
-      label: '先排计划就说这一句',
-      command: '商量一下 ' + data.win.start + ' 这一天的计划',
+      label: m('skill-schedule.plan-replaySections.c107'),
+      command: m('skill-schedule.plan-replaySections.c108', { p0: String(data.win.start) }),
       actionId: 'ilife-sch-replay-copy-plan',
-      copyLabel: '复制这句话',
+      copyLabel: m('skill-schedule.plan-replaySections.c109'),
     }) }];
 }
 
 /** 页尾那一段（全档）：复盘接计划（老侧跨场景约定 C）。 */
 function segNext(data: ReplayData): PageSection[] {
-  return [{ navText: '复盘到明天的衔接', html: renderSectionTitle('复盘到明天的衔接')
-    + '<p class="sch-pl-note">复盘看完了，下一步是给 ' + data.nextDay
-      + ' 排日程：说「商量计划」或「规划明天」，也可以把下面这一句复制给 AI 接着走。</p>'
+  return [{ navText: m('skill-schedule.plan-replaySections.c110'), html: renderSectionTitle(m('skill-schedule.plan-replaySections.c111'))
+    + '<p class="sch-pl-note">' + m('skill-schedule.plan-replaySections.c152', { p0: String(data.nextDay) }) + '</p>'
     + renderPreBlock({
-      label: '下一步说这一句',
-      command: '商量一下 ' + data.nextDay + ' 的计划',
+      label: m('skill-schedule.plan-replaySections.c112'),
+      command: m('skill-schedule.plan-replaySections.c113', { p0: String(data.nextDay) }),
       actionId: 'ilife-sch-replay-copy-next',
-      copyLabel: '复制这句话',
+      copyLabel: m('skill-schedule.plan-replaySections.c114'),
     }) }];
 }
 
@@ -413,19 +450,22 @@ function kpisOf(data: ReplayData): readonly KpiCardInput[] {
   const total = data.totalMinutes;
   const score = data.win.effective === 'day' ? data.healthScore : data.healthMean;
   return [
-    { label: '总时长', value: fmtDurShort(total), detail: String(data.records.length) + ' 块记录' },
+    { label: m('skill-schedule.plan-replaySections.c115'), value: fmtDurShort(total), detail: m('skill-schedule.plan-replaySections.c116', { p0: String(String(data.records.length)) }) },
     {
-      label: '记录天数', value: String(data.activeDays), unit: '天',
-      detail: span(data.win.start, data.win.end) + ' 一共 ' + String(data.win.days) + ' 天',
+      label: m('skill-schedule.plan-replaySections.c117'), value: String(data.activeDays), unit: m('skill-schedule.plan-replaySections.c118'),
+      detail: m('skill-schedule.plan-replaySections.c119', {
+        p0: String(span(data.win.start, data.win.end)),
+        p1: String(String(data.win.days)),
+      }),
     },
     {
-      label: '完成率', value: pctText(data.completionRate),
-      detail: data.plans.length === 0 ? '这一段没有计划' : '这一段排了 ' + String(data.plans.length) + ' 条计划',
+      label: m('skill-schedule.plan-replaySections.c120'), value: pctText(data.completionRate),
+      detail: data.plans.length === 0 ? m('skill-schedule.plan-replaySections.c121') : m('skill-schedule.plan-replaySections.c122', { p0: String(String(data.plans.length)) }),
       ...(data.completionRate === null ? {} : { bar: { pct: Math.min(100, Math.max(0, data.completionRate)) } }),
     },
     {
-      label: '健康分', value: String(score),
-      detail: data.win.effective === 'day' ? '单日七个维度取均' : '这一段逐日均值',
+      label: m('skill-schedule.plan-replaySections.c123'), value: String(score),
+      detail: data.win.effective === 'day' ? m('skill-schedule.plan-replaySections.c124') : m('skill-schedule.plan-replaySections.c125'),
       bar: { pct: Math.min(100, Math.max(0, score)) },
     },
   ];
@@ -437,18 +477,33 @@ function copyOf(data: ReplayData): ScheduleCopyAreaInput {
   const g = data.win.effective;
   const ranked = Object.keys(data.byL1).sort((a, b) => (data.byL1[b] ?? 0) - (data.byL1[a] ?? 0));
   const lines = [
-    '复盘' + GRAN_CN[g] + '：' + span(data.win.start, data.win.end) + '，' + String(data.win.days) + ' 天，记录 '
-      + String(data.records.length) + ' 块共 ' + fmtDur(data.totalMinutes) + '，健康分 '
-      + String(g === 'day' ? data.healthScore : data.healthMean),
-    '计划 ' + String(data.plans.length) + ' 条，完成率 ' + pctText(data.completionRate),
+    m('skill-schedule.plan-replaySections.c126', {
+      p0: String(granCnOf(g)),
+      p1: String(span(data.win.start, data.win.end)),
+      p2: String(String(data.win.days)),
+      p3: String(String(data.records.length)),
+      p4: String(fmtDur(data.totalMinutes)),
+      p5: String(String(g === 'day' ? data.healthScore : data.healthMean)),
+    }),
+    m('skill-schedule.plan-replaySections.c127', {
+      p0: String(String(data.plans.length)),
+      p1: String(pctText(data.completionRate)),
+    }),
     ...ranked.map((name) => name + ' ' + fmtDur(data.byL1[name])),
-    ...data.anomalies.map((a) => a.dim + ' 比上一段 ' + (a.deltaPct >= 0 ? '+' : '') + String(a.deltaPct) + '%'),
+    ...data.anomalies.map((a) => m('skill-schedule.plan-replaySections.c128', {
+      p0: String(a.dim),
+      p1: String(a.deltaPct >= 0 ? '+' : ''),
+      p2: String(String(a.deltaPct)),
+    })),
   ];
   return planCopyArea({
     message: lines.join('，'),
     command: 'schedule-cmd-read schedule.plan.write --params {"op":"review","granularity":"' + g
       + '","start":"' + data.win.start + '","end":"' + data.win.end + '"}',
-    source: '作息记录表 ' + String(data.records.length) + ' 行与日程计划表 ' + String(data.plans.length) + ' 行',
+    source: m('skill-schedule.plan-replaySections.c129', {
+      p0: String(String(data.records.length)),
+      p1: String(String(data.plans.length)),
+    }),
   });
 }
 
@@ -456,22 +511,29 @@ function copyOf(data: ReplayData): ScheduleCopyAreaInput {
 export function replayPage(handle: ScheduleDb, win: ReplayWindow): string {
   const data = replayData(handle, win);
   const g = win.effective;
+  // §4.7 · 副标题末尾那一支是条件，抽成局部变量。
+  const spanNote = win.requested === 'range' && g !== 'range'
+    ? m('skill-schedule.plan-replaySections.c130', { p0: String(String(win.days)), p1: String(granCnOf(g)) }) : '';
   const head: PageHead = {
-    docTitle: '作息管家 复盘' + GRAN_CN[g],
-    eyebrow: EYEBROW,
-    title: '复盘' + GRAN_CN[g],
-    subtitle: span(win.start, win.end) + ' 这一段：记录 ' + String(data.records.length) + ' 块，共 '
-      + fmtDur(data.totalMinutes) + '。计划 ' + String(data.plans.length) + ' 条，完成率 '
-      + pctText(data.completionRate) + '。'
-      + (win.requested === 'range' && g !== 'range' ? '这一段的跨度是 ' + String(win.days) + ' 天，按' + GRAN_CN[g] + '档画。' : ''),
+    docTitle: m('skill-schedule.plan-replaySections.c131', { p0: String(granCnOf(g)) }),
+    eyebrow: eyebrowOf(),
+    title: m('skill-schedule.plan-replaySections.c132', { p0: String(granCnOf(g)) }),
+    subtitle: m('skill-schedule.plan-replaySections.c133', {
+      p0: String(span(win.start, win.end)),
+      p1: String(String(data.records.length)),
+      p2: String(fmtDur(data.totalMinutes)),
+      p3: String(String(data.plans.length)),
+      p4: String(pctText(data.completionRate)),
+      p5: String(spanNote),
+    }),
   };
   const content = pageSections([
-    { navText: '这一段的总览', html: renderKpiGrid(kpisOf(data), { title: '这一段的总览' }) },
+    { navText: m('skill-schedule.plan-replaySections.c134'), html: renderKpiGrid(kpisOf(data), { title: m('skill-schedule.plan-replaySections.c135') }) },
     { html: renderConclusionBar(conclusionOf(data)) },
     ...sectionsOf(data),
     ...segNext(data),
-    { navText: '复制与留档', html: scheduleCopyArea({
-      title: '复制与留档',
+    { navText: m('skill-schedule.plan-replaySections.c136'), html: scheduleCopyArea({
+      title: m('skill-schedule.plan-replaySections.c137'),
       dataActionId: 'ilife-sch-replay-copy-data',
       logActionId: 'ilife-sch-replay-copy-log',
       ...copyOf(data),
@@ -484,11 +546,21 @@ export function replayPage(handle: ScheduleDb, win: ReplayWindow): string {
 function conclusionOf(data: ReplayData): string {
   const g = data.win.effective;
   const top = Object.keys(data.byL1).sort((a, b) => (data.byL1[b] ?? 0) - (data.byL1[a] ?? 0))[0];
-  const base = span(data.win.start, data.win.end) + ' 记了 ' + String(data.records.length) + ' 块，共 ' + fmtDur(data.totalMinutes) + '。';
-  const plan = data.plans.length === 0 ? '这一段没有排计划。' : '排了 ' + String(data.plans.length) + ' 条计划，完成率 ' + pctText(data.completionRate) + '。';
+  const base = m('skill-schedule.plan-replaySections.c138', {
+    p0: String(span(data.win.start, data.win.end)),
+    p1: String(String(data.records.length)),
+    p2: String(fmtDur(data.totalMinutes)),
+  });
+  const plan = data.plans.length === 0 ? m('skill-schedule.plan-replaySections.c139') : m('skill-schedule.plan-replaySections.c140', {
+    p0: String(String(data.plans.length)),
+    p1: String(pctText(data.completionRate)),
+  });
   const cross = g !== 'day' ? '' : (data.cross.pairs.length === 0
-    ? '计划与记录没有时段相交，对照表是空的。'
-    : '计划与记录相交的有 ' + String(data.cross.pairs.length) + ' 条，计划之外另有 ' + String(data.cross.unexpected.length) + ' 块记录。');
-  const health = (g === 'day' ? '这天健康分 ' + String(data.healthScore) : '这段健康分均值 ' + String(data.healthMean)) + '。';
-  return base + plan + cross + (top === undefined ? '' : '投入最多的是「' + top + '」。') + health;
+    ? m('skill-schedule.plan-replaySections.c141')
+    : m('skill-schedule.plan-replaySections.c142', {
+      p0: String(String(data.cross.pairs.length)),
+      p1: String(String(data.cross.unexpected.length)),
+    }));
+  const health = (g === 'day' ? m('skill-schedule.plan-replaySections.c143', { p0: String(String(data.healthScore)) }) : m('skill-schedule.plan-replaySections.c144', { p0: String(String(data.healthMean)) })) + '。';
+  return base + plan + cross + (top === undefined ? '' : m('skill-schedule.plan-replaySections.c145', { p0: String(top) })) + health;
 }

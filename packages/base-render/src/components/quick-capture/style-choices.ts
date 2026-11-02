@@ -17,6 +17,7 @@ import {
   quickCaptureSlot,
   type QuickCaptureSlot,
 } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -33,9 +34,9 @@ export function quickCaptureChoicesCss(input?: { readonly prefix?: string }): st
   const touch = String(QUICK_CAPTURE_TOUCH_PX) + 'px';
 
   return [
-    '/* quick-capture 候选带与「记过的」（`style-choices.ts`）：一格摊开后的候选、「不改」、记过的每一条。 */',
-    '/* 某一格的候选带：摊开时**整条占满一行**（它住在那一格下面，不跟同排的格挤在一起）。',
-    '   收起＝`hidden`（一屏只留一层话：一次只摊开一格）。 */',
+    m('base-render.components-quick-capture-style-choices.c001'),
+    m('base-render.components-quick-capture-style-choices.c002'),
+    m('base-render.components-quick-capture-style-choices.c003'),
     s('tray') + ' {',
     '  flex: 1 1 100%;',
     '  display: flex;',
@@ -44,13 +45,13 @@ export function quickCaptureChoicesCss(input?: { readonly prefix?: string }): st
     '  gap: ' + String(QUICK_CAPTURE_GAP_PX) + 'px;',
     '  min-width: 0;',
     '}',
-    '/* **收起必须真的收起**：作者层的 `display: flex` 会盖掉浏览器默认那条 `[hidden] { display: none }`',
-    '   （作者规则赢过 UA 规则）——不补这一条，四条候选带会一直摊在屏上（2026-09-25 由变异自证读出：',
-    '   把格与格的缝压到 2px，四档几何里那条缝的判据却照绿——因为屏上根本没在量那一格）。 */',
+    m('base-render.components-quick-capture-style-choices.c004'),
+    m('base-render.components-quick-capture-style-choices.c005'),
+    m('base-render.components-quick-capture-style-choices.c006'),
     s('tray') + '[hidden] {',
     '  display: none;',
     '}',
-    '/* 一枚候选：纸面 ＋ 发丝线边；现在这一格认成的就是它 ⇒ 软底 ＋ 主色字 ＋ 主色描边 ＋ 勾。 */',
+    m('base-render.components-quick-capture-style-choices.c007'),
     s('pick') + ' {',
     '  display: inline-flex;',
     '  align-items: center;',
@@ -68,7 +69,7 @@ export function quickCaptureChoicesCss(input?: { readonly prefix?: string }): st
     '  transition: transform 80ms ease;',
     '  overflow-wrap: anywhere;',
     '}',
-    '/* **勾选槽位固定**（未选也留这么宽）：勾上时不把候选名顶歪，一排候选的左右沿才齐平。 */',
+    m('base-render.components-quick-capture-style-choices.c008'),
     s('pick') + '::before {',
     '  content: "";',
     '  display: inline-block;',
@@ -87,7 +88,7 @@ export function quickCaptureChoicesCss(input?: { readonly prefix?: string }): st
     '  content: "' + QUICK_CAPTURE_TICK + '";',
     '  font-weight: 700;',
     '}',
-    '/* 「不改」＝取消那一枚（次动作：无底、只有字与发丝线框）。 */',
+    m('base-render.components-quick-capture-style-choices.c009'),
     s('keep') + ' {',
     '  display: inline-flex;',
     '  align-items: center;',
@@ -104,7 +105,7 @@ export function quickCaptureChoicesCss(input?: { readonly prefix?: string }): st
     '  cursor: pointer;',
     '  transition: transform 80ms ease;',
     '}',
-    '/* 「记过的」那一条带：点一条＝把那句话填回输入框（不用打字也能换一句话）。 */',
+    m('base-render.components-quick-capture-style-choices.c010'),
     s('recent') + ' {',
     '  display: flex;',
     '  flex-wrap: wrap;',
@@ -120,7 +121,7 @@ export function quickCaptureChoicesCss(input?: { readonly prefix?: string }): st
     '  font-size: ' + skinVar('fs-xs') + ';',
     '  font-weight: 600;',
     '}',
-    '/* 记过的一条：**点它＝把那句话填回输入框**（不用打字也能换一句话）。 */',
+    m('base-render.components-quick-capture-style-choices.c011'),
     s('recall') + ' {',
     '  display: inline-flex;',
     '  align-items: center;',

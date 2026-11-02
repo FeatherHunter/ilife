@@ -33,10 +33,25 @@ function asIdList(value: unknown): number[] | null {
   });
 }
 
+/** 心愿三支的 SQL（代码，不是文案：`category='心愿'` 是库里的分类值，译了查不到行）。
+ *  `ids` 那支要拼占位符串，故拆成头尾两段；另三支整条常量，缺省／含已排期各一条（不拼条件）。 */
+const SQL_WISH_BY_IDS_HEAD =
+  "SELECT id, content, category, sub_category, due, feishu_task_guid FROM notes WHERE id IN (";
+const SQL_WISH_BY_IDS_TAIL =
+  ") AND category='心愿' ORDER BY updated_at DESC";
+const SQL_WISH_PLAN_PENDING =
+  "SELECT id, content, category, sub_category, due, feishu_task_guid FROM notes WHERE category='心愿' AND due IS NULL ORDER BY updated_at DESC LIMIT 50";
+const SQL_WISH_PLAN_ALL =
+  "SELECT id, content, category, sub_category, due, feishu_task_guid FROM notes WHERE category='心愿' ORDER BY updated_at DESC LIMIT 50";
+const SQL_WISH_OVERDUE =
+  "SELECT id, content, category, sub_category, due, feishu_task_guid FROM notes WHERE category='心愿' AND (due IS NULL OR due < date('now','localtime')) ORDER BY updated_at DESC LIMIT 200";
+const SQL_WISH_ALL =
+  "SELECT id, content, category, sub_category, due, feishu_task_guid FROM notes WHERE category='心愿' ORDER BY updated_at DESC LIMIT 200";
+
 function wishRowsOrThrow(db: MemoDb, ids: number[]): Record<string, unknown>[] {
   const marks = ids.map(() => '?').join(',');
   const rows = db.conn
-    .prepare("SELECT id, content, category, sub_category, due, feishu_task_guid FROM notes WHERE id IN (" + marks + ") AND category='心愿' ORDER BY updated_at DESC")
+    .prepare(SQL_WISH_BY_IDS_HEAD + marks + SQL_WISH_BY_IDS_TAIL)
     .all(...ids) as Record<string, unknown>[];
   const missing = ids.filter((i) => !rows.some((r) => r.id === i));
   if (missing.length) throw new MemoPolicyError('POLICY_BAD_INPUT', '这些 id 不是心愿或不存在：' + missing.join(','));
@@ -67,11 +82,7 @@ export function planWizard(
   if (ids !== null && includeAll) throw new MemoPolicyError('POLICY_BAD_INPUT', 'ids 与 all 互斥，只可选其一');
   if (ids !== null) return { items: wishRowsOrThrow(db, ids).map(toPlanItem(suggestDue)), suggestDue, includeAll };
   const rows = db.conn
-    .prepare(
-      "SELECT id, content, category, sub_category, due, feishu_task_guid FROM notes WHERE category='心愿'" +
-        (includeAll ? '' : ' AND due IS NULL') +
-        ' ORDER BY updated_at DESC LIMIT 50',
-    )
+    .prepare(includeAll ? SQL_WISH_PLAN_ALL : SQL_WISH_PLAN_PENDING)
     .all() as Record<string, unknown>[];
   return { items: rows.map(toPlanItem(suggestDue)), suggestDue, includeAll };
 }
@@ -104,17 +115,12 @@ export function completeWizard(
     rows = wishRowsOrThrow(db, ids);
   } else if (onlyOverdue) {
     rows = db.conn
-      .prepare(
-        "SELECT id, content, category, sub_category, due, feishu_task_guid FROM notes WHERE category='心愿'" +
-          " AND (due IS NULL OR due < date('now','localtime')) ORDER BY updated_at DESC LIMIT 200",
-      )
+      .prepare(SQL_WISH_OVERDUE)
       .all() as Record<string, unknown>[];
   } else {
     // 默认列全部心愿（`all` 等同默认，留作向后兼容）。
     rows = db.conn
-      .prepare(
-        "SELECT id, content, category, sub_category, due, feishu_task_guid FROM notes WHERE category='心愿' ORDER BY updated_at DESC LIMIT 200",
-      )
+      .prepare(SQL_WISH_ALL)
       .all() as Record<string, unknown>[];
   }
   return {

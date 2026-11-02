@@ -28,10 +28,9 @@ import { sourceLine } from '../shared/sourceLine.js';
 import { commandLine } from '../shared/writeParts.js';
 import type { AccountCopy } from './copyTextAccount.js';
 import { ACCOUNT_DECLARATION } from './declaration.js';
-import { textOf } from './params.js';
-
-/** 账户域各页的眉标：**只在本域写一次**（共用位不持「域名→取值」表）。 */
-export const EYEBROW = '记账｜账户域';
+import { textOf, WHY_MISSING } from './params.js';
+import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /* 1064 acct v2.2 新口径复制区＋填写 guards（1036-v2.1 两钮块居中文本居中左缘对齐▾补位＋1053-③不溢出）
    已按 #1124 §22 **逐字节搬进 base**：`packages/base-render/src/components/style/ticket-family.ts` 的票据族样式段
@@ -44,7 +43,7 @@ export function accountHelpTemplate(sceneId: 'account_add' | 'account_update' | 
     const hit = entry.scenes.find((s) => s.id === sceneId);
     if (hit !== undefined) return hit.prompt_template;
   }
-  throw new Error('accountHelpTemplate 找不到场景 `' + sceneId + '`');
+  throw new Error('accountHelpTemplate 找不到场景：' + sceneId);
 }
 
 /** 1064 HELP 单源：采集 prompt 逐字取域声明 `prompt_template`，不抄第二份（沿 993 退出口径）。
@@ -59,7 +58,7 @@ export function accountHelpPrompt(
     const hit = entry.scenes.find((s) => s.id === sceneId);
     if (hit !== undefined) { template = hit.prompt_template; break; }
   }
-  if (template === '') throw new Error('accountHelpPrompt 找不到场景 `' + sceneId + '`');
+  if (template === '') throw new Error('accountHelpPrompt 找不到场景：' + sceneId);
   const fill = (s: string): string => (s === '' ? '____' : s);
   const table: Record<string, string> = {};
   if (sceneId === 'account_add') {
@@ -79,7 +78,7 @@ export function accountHelpPrompt(
 
 /** 本域各页统一走它：补上眉标再转共用位的 `pageShell`；调用点写法 `pageShell({…})` 不变。 */
 export function accountPageShell(input: Omit<PageShellInput, 'eyebrow'>): string {
-  return pageShell({ ...input, eyebrow: EYEBROW });
+  return pageShell({ ...input, eyebrow: m('skill-bill.account-pageParts.c001') });
 }
 
 /** 写命令两页的页面内置 envelope（采集页 `ok:false`、回执页 `ok:true`；两页同一形状 `receipt`）。 */
@@ -154,7 +153,7 @@ export interface AccountField {
 export function slotFieldsOf(params: Record<string, unknown>, fields: readonly AccountField[]): ParamFieldInput[] {
   return fields.map((f) => {
     const raw = params[f.name];
-    const value = raw === true ? '是' : raw === false || raw === undefined || raw === null ? '' : String(raw).trim();
+    const value = raw === true ? m('skill-bill.account-pageParts.c002') : raw === false || raw === undefined || raw === null ? '' : String(raw).trim();
     return {
       name: f.name,
       label: f.label,
@@ -178,22 +177,22 @@ export function blockedFoldOf(input: {
   const items = input.blocked.map((b) => ({ text: b.label }));
   return renderChips({ items })
     + renderDisclosure({
-      title: '还缺什么（点开看补齐后照抄的那条）',
+      title: m('skill-bill.account-pageParts.c003'),
       contentHtml: renderDataTable({
         columns: [
-          { key: 'label', label: '缺失字段' },
-          { key: 'why', label: '为什么进不去' },
+          { key: 'label', label: m('skill-bill.account-pageParts.c004') },
+          { key: 'why', label: m('skill-bill.account-pageParts.c005') },
         ],
-        rows: input.blocked.map((b) => ({ label: b.label, why: b.why === '没给' ? '未提供' : b.why })),
-        caption: '缺一项就先不写进去',
-      }) + renderPreBlock({ command: input.command, label: '口令原文（只给看不给复制）' })
-        + renderCaliberLine('这一页先不写库；补齐之后照上面那句跟助手说一遍才会写。'),
+        rows: input.blocked.map((b) => ({ label: b.label, why: b.why === WHY_MISSING ? m('skill-bill.account-pageParts.c006') : b.why })),
+        caption: m('skill-bill.account-pageParts.c007'),
+      }) + renderPreBlock({ command: input.command, label: m('skill-bill.account-pageParts.c008') })
+        + renderCaliberLine(m('skill-bill.account-pageParts.c009')),
     });
 }
 
 /** 复制指令块（过程型页的「照这句跟助手说一遍」）：走公共层 `renderPreBlock` 的自带复制按钮。
  *  查询域那种结果型页不出这一块——查询不写库，没有要交回助手的一句。 */
-export function promptBlockOf(prompt: string, label = '复制给助手：这一句可以直接复制'): string {
+export function promptBlockOf(prompt: string, label = m('skill-bill.account-pageParts.c010')): string {
   return renderPreBlock({
     label,
     command: prompt,
@@ -267,25 +266,25 @@ export function blockedCommandOf(
 
 /** 回执页的状态卡：无改动／已改动 ＋ 一句写入去向的说明（形状照写入域同件，措辞由调用方给）。 */
 export function receiptStatusCard(noChange: boolean, sameText: string, writtenText: string): KpiCardInput {
-  return statusCard(noChange ? '无改动' : '已改动', noChange ? sameText : writtenText);
+  return statusCard(noChange ? m('skill-bill.account-pageParts.c011') : m('skill-bill.account-pageParts.c012'), noChange ? sameText : writtenText);
 }
 
 /** 一格的状态值：值 ＋ 一句说明。 */
 export function statusCard(value: string, detail: string): KpiCardInput {
-  return { label: '状态', value, detail };
+  return { label: m('skill-bill.account-pageParts.c013'), value, detail };
 }
 
 /** 页尾「对账信息」折叠区：本次写入的**可核对信息**（改了几处／什么时候写的／怎么核对）。
  *  这次记了几笔与写进去的项已在上方卡片与明细表上，这里不重写。 */
 export function reconcileOf(input: { readonly actionAt: string; readonly changed: number; readonly note: string }): string {
   return renderDisclosure({
-    title: '对账信息',
+    title: m('skill-bill.account-pageParts.c014'),
     contentHtml: renderDataTable({
-      columns: [{ key: 'k', label: '字段' }, { key: 'v', label: '值' }],
+      columns: [{ key: 'k', label: m('skill-bill.account-pageParts.c015') }, { key: 'v', label: m('skill-bill.account-pageParts.c016') }],
       rows: [
-        { k: '改了账本里几处', v: String(input.changed) + ' 处' },
-        { k: '写入时间', v: input.actionAt },
-        { k: '怎么核对', v: input.note },
+        { k: m('skill-bill.account-pageParts.c017'), v: m('skill-bill.account-pageParts.c018', { p0: String(String(input.changed)) }) },
+        { k: m('skill-bill.account-pageParts.c019'), v: input.actionAt },
+        { k: m('skill-bill.account-pageParts.c020'), v: input.note },
       ],
     }),
   });
@@ -293,12 +292,12 @@ export function reconcileOf(input: { readonly actionAt: string; readonly changed
 
 /** 复制日志第 3 段的两句来源：给机器看的那句可带载体名，上屏（来源脚注）的那句只写人话
  *  （照 #688 裁定 1：库文件名、命令名与脚本路径一律不上屏）。 */
-export const SOURCE_COLLECT = '账户表与账本（只读：这一页先不写库，只采集）';
-export const SOURCE_WRITE = '账户表与账本（写库回执）';
-export const SOURCE_READ = '账户表与账本（只读：算余额与流水）';
-export const SOURCE_COLLECT_TEXT = '账户表与账本（只读）';
-export const SOURCE_WRITE_TEXT = '账户表与账本（写入）';
-export const SOURCE_READ_TEXT = '账户表与账本（只读）';
+export function sourceCollect(): string { return m('skill-bill.account-pageParts.c021'); }
+export function sourceWrite(): string { return m('skill-bill.account-pageParts.c022'); }
+export function sourceRead(): string { return m('skill-bill.account-pageParts.c023'); }
+export function sourceCollectText(): string { return m('skill-bill.account-pageParts.c024'); }
+export function sourceWriteText(): string { return m('skill-bill.account-pageParts.c025'); }
+export function sourceReadText(): string { return m('skill-bill.account-pageParts.c026'); }
 
 /** 这一笔的时间（来源脚注的窗口起止都读它；参数没给就退回这一页的执行时刻）。 */
 export function timeOf(params: Record<string, unknown>, fallback: string): string {
@@ -311,10 +310,10 @@ export function timeOf(params: Record<string, unknown>, fallback: string): strin
 export function changeTextOf(params: Record<string, unknown>): string {
   const parts: string[] = [];
   const next = textOf(params['new-name']);
-  if (next !== '') parts.push('改名「' + next + '」');
-  if (params['disable'] === true) parts.push('停用');
-  if (params['enable'] === true) parts.push('启用');
-  return parts.join('、');
+  if (next !== '') parts.push(m('skill-bill.account-pageParts.c027', { p0: String(next) }));
+  if (params['disable'] === true) parts.push(m('skill-bill.account-pageParts.c028'));
+  if (params['enable'] === true) parts.push(m('skill-bill.account-pageParts.c029'));
+  return listJoin(currentRenderLanguage(), parts);
 }
 
 /** 采集页／确认页复制口令那一段（「照这句跟助手说一遍」）：说清是哪条词、每一格填什么。
@@ -326,24 +325,24 @@ export function promptOf(
 ): string {
   const lines = slots.map((s) => {
     const raw = params[s.name];
-    const v = raw === true ? '是' : raw === false || raw === undefined || raw === null ? '' : String(raw).trim();
-    const blank = s.required ? '____' : '____（选填）';
+    const v = raw === true ? m('skill-bill.account-pageParts.c030') : raw === false || raw === undefined || raw === null ? '' : String(raw).trim();
+    const blank = s.required ? '____' : m('skill-bill.account-pageParts.c031');
     return '  ' + s.label + ': ' + (v === '' ? blank : v);
   });
-  return '请加载「饼干记账」技能，帮我' + word + '：\n\n' + lines.join('\n');
+  return m('skill-bill.account-pageParts.c032', { p0: String(word), p1: String(lines.join('\n')) });
 }
 
 /** 已有账户表（采集页与汇总页共用的一张只读表）：账户／类型／状态。 */
 export function accountsTableOf(rows: readonly { readonly name: string; readonly type: string; readonly disabled: boolean }[], caption: string): string {
   const columns: readonly DataTableColumn[] = [
-    { key: 'name', label: '账户' },
-    { key: 'type', label: '类型' },
-    { key: 'state', label: '状态' },
+    { key: 'name', label: m('skill-bill.account-pageParts.c033') },
+    { key: 'type', label: m('skill-bill.account-pageParts.c034') },
+    { key: 'state', label: m('skill-bill.account-pageParts.c035') },
   ];
   const body: readonly DataTableRow[] = rows.map((a) => ({
     name: a.name,
     type: textOrDash(a.type),
-    state: a.disabled ? '已停用' : '使用中',
+    state: a.disabled ? m('skill-bill.account-pageParts.c036') : m('skill-bill.account-pageParts.c037'),
   }));
-  return renderDataTable({ columns, rows: body, caption, emptyText: '账户表里还没有账户' });
+  return renderDataTable({ columns, rows: body, caption, emptyText: m('skill-bill.account-pageParts.c038') });
 }

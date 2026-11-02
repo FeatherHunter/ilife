@@ -1,6 +1,11 @@
 // 取数层·域表 helper（D1 9 域表直接 SQL；调用方缺失阻断，不返空冒充）。
 import type { HomeDb } from './db.js';
+import {
+  STATUS_AT_HOME, STATUS_DISCARDED, STATUS_USED_UP, STATUS_DONE, WARRANTY_KINDS, WARRANTY_STATE,
+  INVENTORY_SCOPE_ALL, FILTER_ALL,
+} from './db.js';
 import { HomeFetchError } from './errors.js';
+import { m } from '../entries/index.js';
 
 function q(handle: HomeDb, sql: string, ...args: (string | number | null)[]): Record<string, unknown>[] {
   try { return handle.db.prepare(sql).all(...args) as unknown as Record<string, unknown>[]; }
@@ -20,13 +25,13 @@ export function addInventoryRecord(handle: HomeDb, scopeName: string, opts?: {
   missingCnt?: number; extraCnt?: number; diffCnt?: number; pendingCnt?: number;
   detailJson?: string; status?: string; total?: number;
 }): number {
-  const scope = scopeName.trim() === '' ? '全屋' : scopeName;
+  const scope = scopeName.trim() === '' ? INVENTORY_SCOPE_ALL : scopeName;
   const missing = opts?.missingCnt ?? 0;
   const extra = opts?.extraCnt ?? 0;
   const diff = opts?.diffCnt ?? 0;
   const pending = opts?.pendingCnt ?? 0;
   const detail = opts?.detailJson ?? (opts?.total !== undefined ? JSON.stringify({ total: opts.total }) : '[]');
-  const status = opts?.status ?? '已完成';
+  const status = opts?.status ?? STATUS_DONE;
   run(handle, `INSERT INTO inventory_records
     (scope, occurred_at, missing_cnt, extra_cnt, diff_cnt, pending_cnt, detail_json, status, created_at)
     VALUES (?, datetime('now','localtime'), ?, ?, ?, ?, ?, ?, datetime('now','localtime'))`,
@@ -116,19 +121,21 @@ export function listWarranties(handle: HomeDb, status?: string): Record<string, 
     end.setDate(end.getDate() + days);
     const endS = end.toISOString().slice(0, 10);
     const remain = (new Date(endS).getTime() - new Date(now).getTime()) / 86400000;
-    const st = remain < 0 ? '已过' : remain <= 30 ? '即将到期' : '在保';
+    const stCode = remain < 0 ? WARRANTY_STATE.expired : remain <= 30 ? WARRANTY_STATE.soon : WARRANTY_STATE.active;
+    const st = remain < 0 ? m('skill-home.fetch-domains.c023') : remain <= 30 ? m('skill-home.fetch-domains.c024') : m('skill-home.fetch-domains.c025');
     const evs = q(handle, 'SELECT date, cost FROM service_events WHERE warranty_id=? ORDER BY date', Number(r.id));
-    const pieces = evs.map((e) => String(e.date) + (e.cost === null || e.cost === undefined ? '' : ' ' + String(e.cost) + ' 元'));
+    const pieces = evs.map((e) => String(e.date) + (e.cost === null || e.cost === undefined ? '' : m('skill-home.fetch-domains.c026', { p0: String(String(e.cost)) })));
     return {
-      ...r, status: st, expires_at: endS, remaining_days: Math.round(remain),
+      ...r, status: st, status_code: stCode, expires_at: endS, remaining_days: Math.round(remain),
       repair_count: evs.length, service_events: pieces.join('；'),
     };
   });
-  if (!status || status === '全部') return derived;
-  return derived.filter((r) => r.status === status);
+  // 判据位按**码**筛（不是按上屏译文）：码是库里的中文原值，译文随语言变。
+  if (!status || status === FILTER_ALL) return derived;
+  return derived.filter((r) => r.status_code === status);
 }
 export function addWarranty(handle: HomeDb, itemId: number, kind: string, startDate: string, durationDays: number, scene: string | null): number {
-  if (!['保修', '保养'].includes(kind)) throw new HomeFetchError('HOME_BAD_QUERY', 'kind 须 保修/保养');
+  if (!WARRANTY_KINDS.includes(kind)) throw new HomeFetchError('HOME_BAD_QUERY', 'kind 须 保修/保养');
   if (!Number.isInteger(durationDays) || durationDays <= 0) throw new HomeFetchError('HOME_BAD_QUERY', 'duration-days 须为正整数');
   run(handle, 'INSERT INTO warranties (item_id, kind, start_date, duration_days, scene) VALUES (?,?,?,?,?)', itemId, kind, startDate, durationDays, scene);
   return (one(handle, 'SELECT last_insert_rowid() AS id') as unknown as { id: number }).id;
@@ -143,9 +150,9 @@ export function addServiceEvent(handle: HomeDb, warrantyId: number, date: string
  *  数据原文三处都可能落盘，故脱敏在取数这一层做完，出去的就只有 `number_masked`。
  *  规则与 `receipt/pages/certificates.ts` 原来的 `maskDisplay` 逐字同一条（那处改读本函数，见铁律二）。 */
 export function maskCertNumber(raw: unknown): string {
-  if (typeof raw !== 'string') return '未登记';
+  if (typeof raw !== 'string') return m('skill-home.fetch-domains.c027');
   const s = raw.trim();
-  if (s === '') return '未登记';
+  if (s === '') return m('skill-home.fetch-domains.c028');
   if (s.length <= 4) return '****';
   return '****' + s.slice(-4);
 }
@@ -191,7 +198,7 @@ export function addBorrow(handle: HomeDb, itemId: number | null, member: string,
 
 // ---- 统计 ----
 /** 活跃物品判据（老 `stats/__init__.py` 的 `_active_condition` 口径：至少一个位置的状态不在「已废弃／已用完」）。 */
-const ACTIVE_ITEM = "EXISTS (SELECT 1 FROM item_locations il WHERE il.item_id = i.id AND il.location_status NOT IN ('已废弃','已用完'))";
+const ACTIVE_ITEM = `EXISTS (SELECT 1 FROM item_locations il WHERE il.item_id = i.id AND il.location_status NOT IN ('${STATUS_DISCARDED}','${STATUS_USED_UP}'))`;
 /** 顶级分类递归表（子分类物品归并到顶级祖先；老 `top_category_rows` 的 `cat_path` 口径）。 */
 const CAT_PATH = `WITH RECURSIVE cat_path AS (
     SELECT id, parent_id, name, id AS top_id, name AS top_name FROM categories WHERE parent_id IS NULL
@@ -229,21 +236,21 @@ export function frequentTopItems(handle: HomeDb, limit = 5): { id: number; name:
 }
 /** 价值 TOP（#865）：价格 > 0 的活跃物品，单价降序，带分类名（老 `_value_top` 口径）。 */
 export function valueTopItems(handle: HomeDb, limit = 5): { id: number; name: string; price: number; category: string }[] {
-  const rows = q(handle, `SELECT i.id, i.name, i.purchase_price AS price, ifnull(c.name,'(未分类)') AS category
+  const rows = q(handle, `SELECT i.id, i.name, i.purchase_price AS price, ifnull(c.name,'') AS category
     FROM items i LEFT JOIN categories c ON c.id = i.category_id
     WHERE i.purchase_price IS NOT NULL AND i.purchase_price > 0 AND ${ACTIVE_ITEM}
     ORDER BY i.purchase_price DESC, i.id LIMIT ?`, limit);
-  return rows.map((r) => ({ id: Number(r.id), name: String(r.name), price: Number(r.price), category: String(r.category) }));
+  return rows.map((r) => ({ id: Number(r.id), name: String(r.name), price: Number(r.price), category: String(r.category) || m('skill-home.fetch-domains.c018') }));
 }
 /** 分类分布（#865）：顶级分类逐项件数＋该类合计价值；无 category_id 归「(未分类)」。 */
 export function categoryDistribution(handle: HomeDb): { name: string; count: number; totalValue: number }[] {
   const rows = q(handle, CAT_PATH + `, item_top AS (
-      SELECT i.id AS id, ifnull(cp.top_name,'(未分类)') AS name, ifnull(i.purchase_price,0) AS price
+      SELECT i.id AS id, ifnull(cp.top_name,'') AS name, ifnull(i.purchase_price,0) AS price
       FROM items i LEFT JOIN cat_path cp ON cp.id = i.category_id
       WHERE ${ACTIVE_ITEM}
     )
     SELECT name, count(*) AS count, round(sum(price),2) AS total_value FROM item_top GROUP BY name ORDER BY count DESC, name`);
-  return rows.map((r) => ({ name: String(r.name), count: Number(r.count), totalValue: Number(r.total_value) }));
+  return rows.map((r) => ({ name: String(r.name) || m('skill-home.fetch-domains.c019'), count: Number(r.count), totalValue: Number(r.total_value) }));
 }
 /** 位置分布（#865）：位置路径第一段归并（老 `_location_distribution` 口径）。 */
 export function locationDistribution(handle: HomeDb): { name: string; count: number }[] {
@@ -253,10 +260,10 @@ export function locationDistribution(handle: HomeDb): { name: string; count: num
 }
 /** 状态分布（#865）：位置状态逐项件数＋占比（老 `_status_distribution` 口径）。 */
 export function statusDistribution(handle: HomeDb): { name: string; count: number; pct: number }[] {
-  const rows = q(handle, `SELECT ifnull(location_status,'(未设置)') AS name, count(DISTINCT item_id) AS count
+  const rows = q(handle, `SELECT ifnull(location_status,'') AS name, count(DISTINCT item_id) AS count
     FROM item_locations GROUP BY name ORDER BY count DESC, name`);
   const total = rows.reduce((a, r) => a + Number(r.count), 0) || 1;
-  return rows.map((r) => ({ name: String(r.name), count: Number(r.count), pct: Math.round((Number(r.count) * 1000) / total) / 10 }));
+  return rows.map((r) => ({ name: String(r.name) || m('skill-home.fetch-domains.c020'), count: Number(r.count), pct: Math.round((Number(r.count) * 1000) / total) / 10 }));
 }
 /** 归属分布（#865）：items.owner 分组（老 `_owner_distribution` 口径）。 */
 export function ownerDistribution(handle: HomeDb): { name: string; count: number }[] {
@@ -267,15 +274,15 @@ export function ownerDistribution(handle: HomeDb): { name: string; count: number
 /** 近 N 天变动趋势（#865）：四桶（近7天／8-14天／15-21天／22-30天，老 `_trend_buckets` 分档）。 */
 export function recordTrend(handle: HomeDb, days = 30): { days: number; note: string; buckets: { label: string; added: number; discarded: number }[] } {
   const spans: [string, number, number][] = [
-    ['近7天', -7, 0], ['8-14天', -14, -7], ['15-21天', -21, -14], ['22-' + Math.max(days, 22) + '天', -Math.max(days, 22), -21],
+    [m('skill-home.fetch-domains.c029'), -7, 0], [m('skill-home.fetch-domains.c030'), -14, -7], [m('skill-home.fetch-domains.c031'), -21, -14], [m('skill-home.fetch-domains.c032', { p0: String(Math.max(days, 22)) }), -Math.max(days, 22), -21],
   ];
   const buckets = spans.map(([label, from, to]) => {
     const a = (one(handle, 'SELECT count(*) AS c FROM items WHERE date(created_at) BETWEEN ? AND ?', localDayAt(from), localDayAt(to)) as unknown as { c: number }).c;
     const d = (one(handle, `SELECT count(DISTINCT i.id) AS c FROM items i JOIN item_locations il ON il.item_id = i.id
-      WHERE il.location_status='已废弃' AND date(il.updated_at) BETWEEN ? AND ?`, localDayAt(from), localDayAt(to)) as unknown as { c: number }).c;
+      WHERE il.location_status='${STATUS_DISCARDED}' AND date(il.updated_at) BETWEEN ? AND ?`, localDayAt(from), localDayAt(to)) as unknown as { c: number }).c;
     return { label, added: a, discarded: d };
   });
-  return { days, note: '录入按物品创建时间；废弃按位置状态改为已废弃的时间', buckets };
+  return { days, note: m('skill-home.fetch-domains.c033'), buckets };
 }
 /** 闲置物品（#865）：逐件闲置天数与来源（访问记录／估算）＋位置、件数、状态。
  *  筛选与排序保持搬迁前口径不变（`last_accessed_at` 空或早于阈值；按 `last_accessed_at` 排序）——
@@ -290,15 +297,15 @@ export function idleItems(handle: HomeDb, days: number): {
   const cut = cutoff.toISOString();
   const rows = q(handle, `SELECT i.id, i.name, ifnull(c.name,'') AS category,
       CAST(julianday(date('now','localtime')) - julianday(date(coalesce(i.last_accessed_at, i.created_at))) AS INTEGER) AS days_idle,
-      CASE WHEN i.last_accessed_at IS NULL THEN '估算' ELSE '访问记录' END AS source,
+      CASE WHEN i.last_accessed_at IS NULL THEN 1 ELSE 0 END AS estimated,
       ifnull((SELECT l.location FROM item_locations l WHERE l.item_id=i.id ORDER BY l.id LIMIT 1),'') AS location,
       ifnull((SELECT sum(l.quantity) FROM item_locations l WHERE l.item_id=i.id),0) AS quantity,
-      ifnull((SELECT l.location_status FROM item_locations l WHERE l.item_id=i.id ORDER BY l.id LIMIT 1),'在家') AS status
+      ifnull((SELECT l.location_status FROM item_locations l WHERE l.item_id=i.id ORDER BY l.id LIMIT 1),'${STATUS_AT_HOME}') AS status
     FROM items i LEFT JOIN categories c ON c.id = i.category_id WHERE (i.last_accessed_at IS NULL OR i.last_accessed_at < ?)
     ORDER BY i.last_accessed_at LIMIT 50`, cut);
   return rows.map((r) => ({
     id: Number(r.id), name: String(r.name), category: String(r.category), days_idle: Number(r.days_idle) || 0,
-    source: String(r.source), location: String(r.location), quantity: Number(r.quantity) || 0, status: String(r.status),
+    source: Number(r.estimated) ? m('skill-home.fetch-domains.c021') : m('skill-home.fetch-domains.c022'), location: String(r.location), quantity: Number(r.quantity) || 0, status: String(r.status),
   }));
 }
 /** 过期与预告（#865）：逐条剩余天数（到期日缺为空）＋所在位置与状态。 */
@@ -312,7 +319,7 @@ export function expiringItems(handle: HomeDb, days: number, expiredOnly: boolean
       ? 'l.expiration_date IS NOT NULL AND l.expiration_date < ?'
       : 'l.expiration_date IS NOT NULL AND l.expiration_date <= ?';
     return q(handle, `SELECT l.item_id, l.location, l.expiration_date, ifnull(i.name,'') AS item_name, ifnull(c.name,'') AS category,
-        l.quantity AS quantity, ifnull(l.location_status,'在家') AS location_status,
+        l.quantity AS quantity, ifnull(l.location_status,'${STATUS_AT_HOME}') AS location_status,
         CAST(julianday(date(l.expiration_date)) - julianday(date('now','localtime')) AS INTEGER) AS days_left
       FROM item_locations l LEFT JOIN items i ON i.id=l.item_id LEFT JOIN categories c ON c.id = i.category_id
       WHERE ${where} ORDER BY l.expiration_date, l.id LIMIT 50`, expiredOnly ? localToday() : endS) as unknown as {

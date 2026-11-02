@@ -22,6 +22,7 @@
  * 所以页底预览块与复制按钮给的是同一串，就是要人先看清再贴。
  */
 import type { EditorDay, EditorSession, EditorState, EditorWeek } from './planEditor.js';
+import { m } from '../entries/index.js';
 
 /** 载荷里那个标记（模板与被换出来的串都靠它对齐）。 */
 export const PLAN_MARKER = '__PLAN__';
@@ -112,7 +113,7 @@ export function planEditorPayload(state: EditorState): string {
     }
   }
   return JSON.stringify({
-    config: { title: state.title, start_date: state.startDate, user_level: '中手', available_equipment: equip },
+    config: { title: state.title, start_date: state.startDate, user_level: m('skill-calorie.workout-planPayload.c001'), available_equipment: equip },
     weeks: weeksPayload(state),
   });
 }
@@ -137,7 +138,7 @@ function weeksPayload(state: EditorState): unknown[] {
         movements: session.moves.map((mv) => ({
           name: mv.name, part: mv.part, type: mv.type,
           sets: mv.kind === '有氧'
-            ? [{ reps: mv.minutes, weight: 0, unit: '分钟' }]
+            ? [{ reps: mv.minutes, weight: 0, unit: m('skill-calorie.workout-planPayload.c002') }]
             : [{ reps: mv.reps, weight: mv.load, unit: mv.mode === 'rm' ? 'RM' : 'kg' }],
         })),
       }));

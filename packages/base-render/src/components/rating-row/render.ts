@@ -37,23 +37,23 @@ function starState(value: number | null, star: number): 'on' | 'half' | 'off' {
 }
 
 /** 星组（`role="radiogroup"`）：每颗星都是可聚焦的按钮，`aria-label="N 分"`。 */
-function starsHtml(m: RatingRowModel): string {
+function starsHtml(model: RatingRowModel): string {
   const attrs: string[] = [
     'class="' + ratingRowSlot('stars') + '"',
     'role="radiogroup"',
-    'aria-label="' + esc(m.label) + '"',
+    'aria-label="' + esc(model.label) + '"',
   ];
-  if (m.required) attrs.push('aria-required="true"');
-  if (m.error !== undefined) {
+  if (model.required) attrs.push('aria-required="true"');
+  if (model.error !== undefined) {
     attrs.push('aria-invalid="true"');
-    attrs.push('aria-describedby="' + esc(ratingRowErrorId(m.name)) + '"');
+    attrs.push('aria-describedby="' + esc(ratingRowErrorId(model.name)) + '"');
   }
-  if (m.loading) attrs.push('aria-busy="true"');
+  if (model.loading) attrs.push('aria-busy="true"');
   const parts: string[] = ['<div ' + attrs.join(' ') + '>'];
   /* 漫游 tabindex：**可聚焦的那一枚** ＝ 当前分值那一颗；没有分值就落在第一颗。 */
-  const focusAt = m.value === null ? 1 : Math.max(1, Math.ceil(m.value));
-  for (let star = 1; star <= m.max; star += 1) {
-    const state = starState(m.value, star);
+  const focusAt = model.value === null ? 1 : Math.max(1, Math.ceil(model.value));
+  for (let star = 1; star <= model.max; star += 1) {
+    const state = starState(model.value, star);
     /* 状态一律写在**无障碍面／`data-*`** 上，不另挂 `is-*` 修饰类：整颗实心＝`aria-checked="true"`
        （每颗星本来就必须带它），半颗＝`data-ilife-rating-half`。两三个字母的类名是全仓共享的
        拼写空间：重名就会被别件的选择器命中（判据「跨件零交集」会红）。 */
@@ -67,7 +67,7 @@ function starsHtml(m: RatingRowModel): string {
       'tabindex="' + (star === focusAt ? '0' : '-1') + '"',
     ];
     if (state === 'half') starAttrs.push(RATING_ROW_HALF_ATTR + '="1"');
-    if (m.disabled || m.loading) {
+    if (model.disabled || model.loading) {
       /* 不可评时按钮落 `disabled`（说得出为什么：原因那句话在 `why` 槽里）。 */
       starAttrs.push('disabled');
     }
@@ -81,30 +81,30 @@ function starsHtml(m: RatingRowModel): string {
 
 /** 数字读数那一排：大数字 ＋ 分母（＋ 可选补充）。**星星之外必须有它**。
  *  加载态：数字位**原地换字**（盒模型不动 ⇒ 不跳版），并把这一排做成 `role="status"` 让读屏也知道。 */
-function scoreHtml(m: RatingRowModel): string {
+function scoreHtml(model: RatingRowModel): string {
   const parts: string[] = ['<p class="' + ratingRowSlot('score') + '"'
-    + (m.loading ? ' role="status"' : '') + '>'];
+    + (model.loading ? ' role="status"' : '') + '>'];
   parts.push('<b class="' + ratingRowSlot('num') + '">'
-    + esc(m.loading ? m.loadingText : ratingRowValueText(m.value)) + '</b>');
-  parts.push('<span class="' + ratingRowSlot('den') + '">/ ' + String(m.max) + ' 星</span>');
-  if (m.hint !== undefined) parts.push('<span class="' + ratingRowSlot('hint') + '">' + esc(m.hint) + '</span>');
+    + esc(model.loading ? model.loadingText : ratingRowValueText(model.value)) + '</b>');
+  parts.push('<span class="' + ratingRowSlot('den') + '">/ ' + String(model.max) + ' 星</span>');
+  if (model.hint !== undefined) parts.push('<span class="' + ratingRowSlot('hint') + '">' + esc(model.hint) + '</span>');
   parts.push('</p>');
   return parts.join('');
 }
 
 /** 形态 A 的骨架。 */
-function renderStars(m: RatingRowModel): string {
+function renderStars(model: RatingRowModel): string {
   const parts: string[] = [];
   parts.push('<p class="' + ratingRowSlot('label') + '"><b class="' + ratingRowSlot('label-title') + '">'
-    + esc(m.label) + '</b>'
-    + (m.prevNote === undefined ? '' : '<span class="' + ratingRowSlot('prev') + '">' + esc(m.prevNote) + '</span>')
+    + esc(model.label) + '</b>'
+    + (model.prevNote === undefined ? '' : '<span class="' + ratingRowSlot('prev') + '">' + esc(model.prevNote) + '</span>')
     + '</p>');
-  parts.push('<div class="' + ratingRowSlot('body') + '">' + starsHtml(m) + scoreHtml(m) + '</div>');
-  if (m.disabledReason !== undefined) {
-    parts.push('<p class="' + ratingRowSlot('why') + '">' + esc(m.disabledReason) + '</p>');
+  parts.push('<div class="' + ratingRowSlot('body') + '">' + starsHtml(model) + scoreHtml(model) + '</div>');
+  if (model.disabledReason !== undefined) {
+    parts.push('<p class="' + ratingRowSlot('why') + '">' + esc(model.disabledReason) + '</p>');
   }
-  if (m.error !== undefined) {
-    parts.push('<p class="' + ratingRowSlot('error') + '" id="' + esc(ratingRowErrorId(m.name)) + '">' + esc(m.error) + '</p>');
+  if (model.error !== undefined) {
+    parts.push('<p class="' + ratingRowSlot('error') + '" id="' + esc(ratingRowErrorId(model.name)) + '">' + esc(model.error) + '</p>');
   }
   return parts.join('');
 }

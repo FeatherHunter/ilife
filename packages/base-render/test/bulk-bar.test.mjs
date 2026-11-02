@@ -262,7 +262,7 @@ describe('bulk-bar ① 渲染契约 · 形态 A 骨架', () => {
 
   it('空态：条目给空数组 ⇒ 出设计过的那句（不是留白），且条仍是 hidden', () => {
     const empty = renderBulkBar({ name: 'n', items: [], actions: [{ key: 'a', label: '改' }] });
-    assert.ok(empty.includes('class="' + bulkBarSlot('empty') + '" role="status">' + BULK_BAR_EMPTY_TEXT + '</p>'));
+    assert.ok(empty.includes('class="' + bulkBarSlot('empty') + '" role="status">' + BULK_BAR_EMPTY_TEXT() + '</p>'));
     assert.ok(empty.includes(bulkBarSlot('bar') + '" hidden'));
     assert.equal(countOf(empty, '<input type="checkbox"'), 0);
     const custom = renderBulkBar({ name: 'n', items: [], actions: [{ key: 'a', label: '改' }], emptyText: '这批没有可挑的' });

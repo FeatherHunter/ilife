@@ -24,6 +24,7 @@
 import { escapeHtml } from 'base-paint';
 import { renderDataTable } from 'base-paint/blocks';
 import { MEASUREMENT_FIELDS, MEASUREMENT_ZH } from '../fetch/body.js';
+import { m } from '../entries/index.js';
 
 const esc = (s: string): string => escapeHtml(s);
 
@@ -90,16 +91,16 @@ export function recordsSection(
   const table = renderDataTable({
     columns: [
       { key: 'date', label: '日期' },
-      { key: 'pct', label: '体脂', align: 'right' },
-      { key: 'source', label: '来源' },
-      { key: 'note', label: '备注' },
+      { key: 'pct', label: m('skill-calorie.body-bodyReadUi.c001'), align: 'right' },
+      { key: 'source', label: m('skill-calorie.body-bodyReadUi.c002') },
+      { key: 'note', label: m('skill-calorie.body-bodyReadUi.c003') },
     ],
     rows,
     caption,
     emptyText,
   });
   return '<section id="records"><div class="bru-table">' + table + '</div>'
-    + scrollHint('表格较宽时，可以在表里左右滑。') + '</section>';
+    + scrollHint(m('skill-calorie.body-bodyReadUi.c004')) + '</section>';
 }
 
 /** 皮褶 7 点小表（部位／毫米两列）：**日期只出现在表题一处、单位只出现在表头一处**。
@@ -108,12 +109,12 @@ export function recordsSection(
 export function caliperSection(date: string, sites: readonly { readonly label: string; readonly mm: number | null }[]): string {
   const table = renderDataTable({
     columns: [
-      { key: 'site', label: '部位' },
-      { key: 'mm', label: '皮褶（毫米）', align: 'right' },
+      { key: 'site', label: m('skill-calorie.body-bodyReadUi.c005') },
+      { key: 'mm', label: m('skill-calorie.body-bodyReadUi.c006'), align: 'right' },
     ],
     rows: sites.map((s) => ({ site: s.label, mm: s.mm === null ? '—' : s.mm })),
-    caption: '皮褶 7 点原始值（' + date + '）',
-    emptyText: '该记录无皮褶 7 点数据',
+    caption: m('skill-calorie.body-bodyReadUi.c007', { p0: String(date) }),
+    emptyText: m('skill-calorie.body-bodyReadUi.c008'),
   });
   return '<section id="calipers"><div class="bru-table">' + table + '</div></section>';
 }
@@ -149,7 +150,7 @@ export function measureFullTable(
     columns: [
       { key: 'date', label: '日期' },
       ...MEASUREMENT_FIELDS.map((f) => ({ key: f, label: MEASUREMENT_ZH[f] ?? f, align: 'right' as const })),
-      { key: 'note', label: '备注' },
+      { key: 'note', label: m('skill-calorie.body-bodyReadUi.c009') },
     ],
     rows: items.map((r) => {
       const row: Record<string, unknown> = { date: strOrEmpty(r['date']), note: strOrEmpty(r['note']) };

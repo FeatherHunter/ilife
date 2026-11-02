@@ -12,16 +12,17 @@ import { logTexts } from './log.js';
 import { dataRows, headerLine, sanitizeLine } from './rows.js';
 import { CSV_EMPTY, LF, TIME_LABEL, fail } from './shared.js';
 import { DATA_TEXT_PROJECTIONS, DataTextInput, LOG_SECTIONS, LOG_SECTION_TITLES, LOG_UNKNOWN_PLACEHOLDER, LogTextInput, SENSITIVE_ROW_RULE, TEXT_EMPTY_PLACEHOLDER } from '../../spec/text.js';
+import { m } from '../../entries/index.js';
 
 /* ── 出口 ───────────────────────────────────────────────────── */
 
 /** 数据文本：envelope 逐 shape 投影 → `text`／`json`／`csv`。失败抛 `TextError`（不返空、不降级）。 */
 export function buildDataText(input: DataTextInput): string {
   const record = asRecord(input);
-  if (record === null) fail('structure-invalid', '入参必须是对象（DataTextInput），实为 ' + describeValue(input));
+  if (record === null) fail('structure-invalid', m('base-render.components-text-api.c001', { p0: String(describeValue(input)) }));
   const format = resolveFormat(record.format);
   const envelope = asRecord(record.envelope);
-  if (envelope === null) fail('structure-invalid', 'envelope 必须是对象，实为 ' + describeValue(record.envelope));
+  if (envelope === null) fail('structure-invalid', m('base-render.components-text-api.c002', { p0: String(describeValue(record.envelope)) }));
   const shape = resolveShape(envelope.shape);
   const title = optionalString(record.title, 'title');
   const occurredAt = optionalString(record.occurredAt, 'occurredAt');
@@ -42,7 +43,7 @@ export function buildDataText(input: DataTextInput): string {
   if (format === 'csv') return csvText(dataCsvRows(projection, rows));
 
   const lines: string[] = [sanitizeLine(headerLine(envelope, title))];
-  if (occurredAt !== undefined) lines.push(sanitizeLine(TIME_LABEL + occurredAt));
+  if (occurredAt !== undefined) lines.push(sanitizeLine(TIME_LABEL() + occurredAt));
   for (const row of rows.tail === null ? rows.body : [...rows.body, rows.tail]) {
     lines.push(sanitizeLine(row.text));
     if (row.sensitive) lines.push(SENSITIVE_ROW_RULE.textNotice);
@@ -54,10 +55,10 @@ export function buildDataText(input: DataTextInput): string {
  *  结构校验与 `buildDataText` **同口径**（U14 定案：`data` 不符 shape 同样抛 `structure-invalid`）。 */
 export function buildLogText(input: LogTextInput): string {
   const record = asRecord(input);
-  if (record === null) fail('structure-invalid', '入参必须是对象（LogTextInput），实为 ' + describeValue(input));
+  if (record === null) fail('structure-invalid', m('base-render.components-text-api.c003', { p0: String(describeValue(input)) }));
   const format = resolveFormat(record.format);
   const envelope = asRecord(record.envelope);
-  if (envelope === null) fail('structure-invalid', 'envelope 必须是对象，实为 ' + describeValue(record.envelope));
+  if (envelope === null) fail('structure-invalid', m('base-render.components-text-api.c004', { p0: String(describeValue(record.envelope)) }));
   const shape = resolveShape(envelope.shape);
   const copyLog = resolveCopyLog(record.copyLog);
   requireShapeData(shape, envelope.data);

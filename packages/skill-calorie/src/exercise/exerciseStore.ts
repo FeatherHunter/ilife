@@ -11,6 +11,7 @@ import { FetchError } from '../fetch/errors.js';
    模板串里的那一处改走 `${EX_ALIVE}` 插值。 */
 import { EX_ALIVE } from '../shared/alive.js';
 import { timeOfDayISO, todayISO } from '../shared/time.js';
+import { m } from '../entries/index.js';
 /* #717 批③·时钟归一：本件原先自己写着两份本地时钟（`todayStr`／`nowTime`）——抓取层被要求
    「不反向依赖 analysis」，于是绕路自造一份。现在本件四个读写口同取共用位 `shared/time.js`。 */
 const todayStr = todayISO;
@@ -93,7 +94,7 @@ export function parseUserDifficulty(userText: string | null | undefined): string
   const t = userText.toLowerCase();
   if (HARD_WORDS.some((k) => t.includes(k.toLowerCase()))) return 'hard';
   if (EASY_WORDS.some((k) => t.includes(k.toLowerCase()))) return 'easy';
-  if (MID_WORDS.some((k) => t.includes(k))) return '中';
+  if (MID_WORDS.some((k) => t.includes(k))) return m('skill-calorie.exercise-exerciseStore.c001');
   return null;
 }
 
@@ -101,10 +102,14 @@ export function combinedCalories(userReported: number | null | undefined, estima
   if (userReported === null || userReported === undefined) return [Math.round(estimated * 10) / 10, null, 0.0];
   if (estimated <= 0) return [Number(userReported), null, 0.0];
   const deviation = Math.abs(Number(userReported) - estimated) / estimated;
-  const suffix = `你报 ${userReported}/AI ${Math.round(estimated * 10) / 10}/偏差 ${Math.trunc(deviation * 100)}%`;
+  const suffix = m('skill-calorie.exercise-exerciseStore.c002', {
+    p0: String(userReported),
+    p1: String(Math.round(estimated * 10) / 10),
+    p2: String(Math.trunc(deviation * 100)),
+  });
   if (deviation < 0.2) return [Math.round(estimated * 10) / 10, suffix, deviation];
-  if (deviation < warnAt) return [Math.round((Number(userReported) + estimated) / 2 * 10) / 10, `${suffix}/取中位`, deviation];
-  return [null, `${suffix}/需确认`, deviation];
+  if (deviation < warnAt) return [Math.round((Number(userReported) + estimated) / 2 * 10) / 10, m('skill-calorie.exercise-exerciseStore.c003', { p0: String(suffix) }), deviation];
+  return [null, m('skill-calorie.exercise-exerciseStore.c004', { p0: String(suffix) }), deviation];
 }
 
 export function estimateCaloriesFromTraining(totalVolumeKg: number): number {

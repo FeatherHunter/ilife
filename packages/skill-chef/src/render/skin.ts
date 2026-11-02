@@ -26,6 +26,7 @@
  * （8 个 `src/<域>/**` 装配件 ＋ 2 个 `docs/skills/skill-chef/t77*-run-*.mjs` 驱动器）。
  */
 import { CHART_PALETTE, CSS_VAR_TOKENS, pageShapeCss, pageUiCss } from 'base-paint';
+import { m } from '../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义，与 `blocks.ts`／`pageShapes.ts` 同）。 */
 const LF = String.fromCharCode(10);
@@ -67,7 +68,7 @@ export function chefSkinCss(input?: ChefSkinCssInput): string {
     && typeof input.prefix === 'string' && input.prefix !== '' ? input.prefix : 'ilife-';
   const root = '.' + p + 'page-ui';
   return [
-    '/* #873 私家大厨视觉皮肤 · 每一条规则都挂在根类 ' + root + ' 之下 */',
+    m('skill-chef.render-skin.c001', { p0: String(root) }),
     /* ① 品牌带：整页顶端一条暖色渐变，给「这是私家大厨的页」一个色彩锚点。
        为什么是暖色：评审反复点「缺温度」；蓝在本页是主色（交互与语义），暖色只做品牌定位。 */
     root + '::before {',

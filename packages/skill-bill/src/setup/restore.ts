@@ -11,6 +11,7 @@
  *   ⑤ **选中项只有一处**（`selected`）：详情卡、步骤说明、口令三处都从它派生——老侧最高危缺陷
  *      （`restore.html:141-145` 的详情卡冻结在初值）就是从这里长出来的（`#688` §二 D5）。
  */
+import { currentRenderLanguage } from 'base-entries';
 import { closeBillDb } from '../fetch/index.js';
 import type { BillDb } from '../fetch/index.js';
 import { resolveBackupDir, resolveGoalsPath } from '../fetch/paths.js';
@@ -28,10 +29,11 @@ import { setupSceneFor } from './scene.js';
 import { restoreSteps } from './steps.js';
 import { blockedWizardDoc } from './blocked.js';
 import { wizardDoc } from './template-wizard.js';
+import { m } from '../entries/index.js';
 
 /** 从备份恢复（`op=restore`）：不确认只出向导页；确认则「验备份 → 造现状备份 → 覆盖 → 验库」。 */
 export function runRestore(db: BillDb, key: string, params: Record<string, unknown>): WriteOut {
-  const scene = setupSceneFor('restore');
+  const scene = setupSceneFor('restore', currentRenderLanguage());
   const word = projectWakeWord({ key: 'bill.setup.run', op: 'restore' });
   const dir = resolveBackupDir();
   const entries = listBackups(dir);
@@ -39,18 +41,18 @@ export function runRestore(db: BillDb, key: string, params: Record<string, unkno
   const selected = selectedBackup(dir, wanted);
   if (wanted !== '' && selected === null) {
     const blocked: readonly SetupBlocked[] = [{
-      name: 'name', label: '要恢复的那一份',
-      why: '备份目录里没有这一份（先说一遍「查看备份」看看有哪些）',
+      name: 'name', label: m('skill-bill.setup-restore.c001'),
+      why: m('skill-bill.setup-restore.c002'),
     }];
     const html = blockedWizardDoc({ op: 'restore', scene, key, params, blocked, actionAt: actionStamp() });
-    const message = word + '还差 1 项：要恢复的那一份（备份目录里没有这一份）';
+    const message = m('skill-bill.setup-restore.c003', { p0: String(word) });
     return { data: { ok: false, message, receipt: { op: 'restore', blocked } }, page: { wakeWord: word, kind: 'single' }, html };
   }
   if (!confirmOf(params) || selected === null) {
     const ok = selected !== null;
     const message = selected === null
-      ? '还没有可恢复的备份（先跟助手说一遍「备份」）'
-      : '恢复向导：要恢复的是 ' + selected.file + '，确认之后才动数据';
+      ? m('skill-bill.setup-restore.c004')
+      : m('skill-bill.setup-restore.c005', { p0: String(selected.file) });
     const receipt = {
       op: 'restore', selected: selected === null ? null : selected.file, count: entries.length,
       confirmed: false, safety: '', verified: false,
@@ -62,7 +64,7 @@ export function runRestore(db: BillDb, key: string, params: Record<string, unkno
         selected: selected?.file ?? '', count: entries.length, confirmed: false, safety: '', verified: false,
       }),
       prompt: scene.promptOf({ ...params, name: selected?.file ?? '' }),
-      promptLabel: '复制给助手：照这句确认，恢复前会自动备份现状',
+      promptLabel: m('skill-bill.setup-restore.c006'),
       entries, selected, confirmed: false, safety: '', verified: false, result: '',
     });
     return { data: { ok, message, receipt }, page: { wakeWord: word, kind: 'single' }, html };
@@ -72,9 +74,9 @@ export function runRestore(db: BillDb, key: string, params: Record<string, unkno
   const sourceOk = verifyRestored(target.path);
   if (!sourceOk.ok) {
     const blocked: readonly SetupBlocked[] = [
-      { name: 'name', label: '那一份备份', why: '读不动：' + sourceOk.why },
+      { name: 'name', label: m('skill-bill.setup-restore.c007'), why: m('skill-bill.setup-restore.c008', { p0: String(sourceOk.why) }) },
     ];
-    const message = word + '没走：那一份备份读不动（' + sourceOk.why + '），没有动现在的数据';
+    const message = m('skill-bill.setup-restore.c009', { p0: String(word), p1: String(sourceOk.why) });
     const receipt = { op: 'restore', selected: target.file, count: entries.length, confirmed: true, safety: '', verified: false };
     const envelope = receiptEnvelopeOf(key, { ok: false, message, ...receipt });
     const html = wizardDoc({
@@ -83,8 +85,8 @@ export function runRestore(db: BillDb, key: string, params: Record<string, unkno
         selected: target.file, count: entries.length, confirmed: true, safety: '', verified: false,
       }),
       prompt: scene.promptOf({ ...params, name: '' }),
-      promptLabel: '复制给助手：换一份再试',
-      entries, selected: target, confirmed: true, safety: '', verified: false, result: '那一份读不动',
+      promptLabel: m('skill-bill.setup-restore.c010'),
+      entries, selected: target, confirmed: true, safety: '', verified: false, result: m('skill-bill.setup-restore.c011'),
     });
     return { data: { ok: false, message, receipt }, page: { wakeWord: word, kind: 'single' }, html };
   }
@@ -96,7 +98,11 @@ export function runRestore(db: BillDb, key: string, params: Record<string, unkno
   try {
     restoreBackup({ entry: target, dbPath, goalsPath: resolveGoalsPath() });
   } catch (e) {
-    const message = word + '没走完：覆盖时出错（' + (e as Error).message + '），现状备份在 ' + safety.file;
+    const message = m('skill-bill.setup-restore.c012', {
+      p0: String(word),
+      p1: String((e as Error).message),
+      p2: String(safety.file),
+    });
     const receipt = { op: 'restore', selected: target.file, safety: safety.file, verified: false };
     const envelope = receiptEnvelopeOf(key, { ok: false, message, ...receipt });
     const html = wizardDoc({
@@ -105,16 +111,19 @@ export function runRestore(db: BillDb, key: string, params: Record<string, unkno
         selected: target.file, count: entries.length, confirmed: true, safety: safety.file, verified: false,
       }),
       prompt: scene.promptOf({ ...params, name: safety.file }),
-      promptLabel: '复制给助手：拿现状备份回去',
-      entries, selected: target, confirmed: true, safety: safety.file, verified: false, result: '覆盖时出错',
+      promptLabel: m('skill-bill.setup-restore.c013'),
+      entries, selected: target, confirmed: true, safety: safety.file, verified: false, result: m('skill-bill.setup-restore.c014'),
     });
     return { data: { ok: false, message, receipt }, page: { wakeWord: word, kind: 'single' }, html };
   }
   const verified = verifyRestored(dbPath);
   const message = verified.ok
-    ? '已从备份恢复：' + target.file + '（现状已备份：' + safety.file + '）'
-    : '恢复了 ' + target.file + '，但这个库读不动：' + verified.why
-      + '（现状备份在 ' + safety.file + '，拿它回去）';
+    ? m('skill-bill.setup-restore.c015', { p0: String(target.file), p1: String(safety.file) })
+    : m('skill-bill.setup-restore.c016', {
+      p0: String(target.file),
+      p1: String(verified.why),
+      p2: String(safety.file),
+    });
   const receipt = {
     op: 'restore', selected: target.file, safety: safety.file, verified: verified.ok,
     count: listBackups(dir).length,
@@ -126,9 +135,9 @@ export function runRestore(db: BillDb, key: string, params: Record<string, unkno
       selected: target.file, count: entries.length, confirmed: true, safety: safety.file, verified: verified.ok,
     }),
     prompt: scene.promptOf({ ...params, name: safety.file }),
-    promptLabel: verified.ok ? '复制给助手：不满意就用现状备份回去' : '复制给助手：库读不动，用现状备份回去',
+    promptLabel: verified.ok ? m('skill-bill.setup-restore.c017') : m('skill-bill.setup-restore.c018'),
     entries: listBackups(dir), selected: target, confirmed: true, safety: safety.file,
-    verified: verified.ok, result: verified.ok ? target.file : '恢复回来的库读不动',
+    verified: verified.ok, result: verified.ok ? target.file : m('skill-bill.setup-restore.c019'),
   });
   return { data: { ok: verified.ok, message, receipt }, page: { wakeWord: word, kind: 'single' }, html };
 }

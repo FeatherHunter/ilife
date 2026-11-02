@@ -14,6 +14,7 @@ import type { SkillCliErrorCode } from 'dsh-life-pack';
 import { VERSION_READ_KEY } from './contract.js';
 import type { ConfigSurfaceReply, InstalledVersions } from './contract.js';
 import { PLUGIN, SKILL_PACKAGE } from './slot.js';
+import { m } from './entries/index.js';
 
 /** 技能包名：**唯一定义地在 `slot.ts`**（本处只转出，包内各处仍按原路径取用）。 */
 export { SKILL_PACKAGE };
@@ -21,8 +22,13 @@ export const SKILL_CLI = 'packages/skill-memo-ilife/dist/cli/cmd_read.js' as con
 export const HOST_CALL_METHOD = 'ilife.memo.read' as const;
 export const MANAGER_PACKAGE = 'dsh-life-pack' as const;
 
-export const MANAGER_MISSING_HINT =
-  '总管缺席，请补装：dsh plugin add dsh-life-pack dsh-memo-ilife（不许单卸总管）';
+/** 总管缺席时给用户看的补装提示：渲染期现取，词条随语言走（#1229）。 */
+export function managerMissingHint(): string {
+  return m('plugin-memo-ilife.bridge.c001');
+}
+
+/** 兼容镜像：模块加载期取一次；渲染路径请用 managerMissingHint()。 */
+export const MANAGER_MISSING_HINT = managerMissingHint();
 
 export class SkillBridgeError extends Error {
   readonly code: SkillCliErrorCode;

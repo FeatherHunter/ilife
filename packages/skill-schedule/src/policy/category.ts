@@ -2,6 +2,8 @@
 // 一级固定 8 个不可改；二级白名单内置默认（老家 DEFAULT_WHITELIST；用户 YAML 增量不迁）。
 // 无 --skip-validation 跳过通道：坏分类一律 throw。
 import { SchedulePolicyError } from '../fetch/errors.js';
+import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 export const LEVEL1_WHITELIST: ReadonlySet<string> = new Set(
   ['维持', '健康', '工作', '学习', '创作', '投入', '调整', '日常'],
@@ -50,14 +52,14 @@ export function normalizeCategory(category: unknown): string {
   if (!LEVEL1_WHITELIST.has(level1)) {
     throw new SchedulePolicyError(
       'POLICY_BAD_CATEGORY',
-      'category 一级 ' + JSON.stringify(level1) + ' 不在白名单（允许：' + [...LEVEL1_WHITELIST].sort().join('、') + '）',
+      'category 一级 ' + JSON.stringify(level1) + ' 不在白名单（允许：' + listJoin(currentRenderLanguage(), [...LEVEL1_WHITELIST].sort()) + '）',
     );
   }
   if (level2 !== null && !(DEFAULT_WHITELIST[level1] || []).includes(level2)) {
     throw new SchedulePolicyError(
       'POLICY_BAD_CATEGORY',
       'category 二级 ' + JSON.stringify(level2) + ' 不在 ' + JSON.stringify(level1) + ' 白名单（允许：' +
-      (DEFAULT_WHITELIST[level1] || []).join('、') + '；怎么修：提议新增 ' + c + '，后续票登记）',
+      listJoin(currentRenderLanguage(), (DEFAULT_WHITELIST[level1] || [])) + '；怎么修：提议新增 ' + c + '，后续票登记）',
     );
   }
   return c;
@@ -95,6 +97,9 @@ export function getEmojiPrefix(category: string): string {
   return l2 ? EMOJI_L1[level1] + l2 : EMOJI_L1[level1];
 }
 
+/** 日文中点：分类串的解析分隔符之一（**数据，不译**）。放在模块级常量里，迁移器按 SKIP_MODULE_CONST 跳过。 */
+const SEP_KATAKANA_MIDDLE_DOT = '・';
+
 // ---- 老词别名 → 新 8 L1（老家 _L1_ALIAS；分隔符兼容 ./·/・/•） ----
 const L1_ALIAS: Record<string, string> = {
   '运动': '健康', '通勤': '维持', '休息': '调整', '起居': '维持', '娱乐': '调整',
@@ -103,8 +108,8 @@ const L1_ALIAS: Record<string, string> = {
 };
 
 export function l1Of(category: string): string {
-  if (!category) return '未知';
-  for (const sep of ['.', '·', '・', '•']) {
+  if (!category) return m('skill-schedule.policy-category.c001');
+  for (const sep of ['.', '·', SEP_KATAKANA_MIDDLE_DOT, '•']) {
     if (category.includes(sep)) {
       const base = category.split(sep)[0];
       return L1_ALIAS[base] || base;
@@ -115,20 +120,20 @@ export function l1Of(category: string): string {
 
 // ---- 时长/百分比格式（老家 fmt_dur 双版本） ----
 export function fmtDur(mins: number): string {
-  if (mins <= 0) return '0分钟';
-  const h = Math.floor(mins / 60);
-  const m = mins % 60;
-  if (h && m) return h + '小时' + m + '分钟';
-  if (h) return h + '小时';
-  return m + '分钟';
+  if (mins <= 0) return m('skill-schedule.policy-category.c003');
+  const hours = Math.floor(mins / 60);
+  const rest = mins % 60;
+  if (hours && rest) return m('skill-schedule.policy-category.c004', { p0: String(hours), p1: String(rest) });
+  if (hours) return m('skill-schedule.policy-category.c005', { p0: String(hours) });
+  return m('skill-schedule.policy-category.c006', { p0: String(rest) });
 }
 
 export function fmtDurShort(mins: number): string {
-  const h = Math.floor(mins / 60);
-  const m = mins % 60;
-  if (h && m) return h + 'h' + m + 'm';
-  if (h) return h + 'h';
-  return m + 'm';
+  const hours = Math.floor(mins / 60);
+  const rest = mins % 60;
+  if (hours && rest) return hours + 'h' + rest + 'm';
+  if (hours) return hours + 'h';
+  return rest + 'm';
 }
 
 export function fmtPct(part: number, whole: number): number {

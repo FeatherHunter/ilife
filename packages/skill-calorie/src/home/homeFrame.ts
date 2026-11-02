@@ -16,6 +16,7 @@ import type { DayCellInput, DayStripCaptionInput, SegNavIcon } from 'base-paint'
 import type { DaySeries } from '../analysis/series.js';
 import type { HomeData } from './home.js';
 import { fmt } from './homeCards.js';
+import { m } from '../entries/index.js';
 
 /** 页内导航项：锚点 id ＋ 人话短名 ＋ 图标（图标闭集由公共层给，清单外的值当场抛）。 */
 export interface HomeNavItem {
@@ -33,7 +34,7 @@ function hasData(s: DaySeries): boolean {
  *  （判语住结论条，两句分住两件——这正是 `renderStateBanner` 存在的理由）。 */
 export function stateBannerBlock(d: HomeData): string {
   if (!d.goalsPaused) return '';
-  return renderStateBanner({ tone: 'warn', badge: '目标暂停中', text: '按暂停前的目标' });
+  return renderStateBanner({ tone: 'warn', badge: m('skill-calorie.home-homeFrame.c001'), text: m('skill-calorie.home-homeFrame.c002') });
 }
 
 /** 分段导航：页内三块的动作形（等宽分格 ＋ 选中实底 ＋ 图标位），`current` ＝ 这一档的主角区。
@@ -42,7 +43,7 @@ export function navBlock(items: readonly HomeNavItem[], current?: string): strin
   return renderSegmentedNav({
     items: items.map((it) => ({ id: it.id, label: it.text, icon: it.icon })),
     ...(current === undefined ? {} : { current }),
-    ariaLabel: '页内导航',
+    ariaLabel: m('skill-calorie.home-homeFrame.c003'),
   });
 }
 
@@ -72,17 +73,17 @@ export function dayStripBlock(d: HomeData, day: (date: string) => string): strin
   const days: DayCellInput[] = shown.map((s) => {
     const isToday = s.date === d.date;
     return {
-      label: isToday ? day(s.date) + ' 今天' : day(s.date),
+      label: isToday ? m('skill-calorie.home-homeFrame.c009', { p0: day(s.date) }) : day(s.date),
       value: hasData(s) ? String(s.calories) : null,
       today: isToday,
     };
   });
   const caption: DayStripCaptionInput[] = [
-    { text: '本窗 ' + d.week.loggedDays + '/' + d.week.windowDays + ' 天有记录' },
-    { text: '连续记录 ' + d.streakDays + ' 天', tone: 'ok' },
-    { text: '周均摄入 ' + fmt(intOf(d.week.avgIntake)) + ' 卡' },
-    { text: '周均缺口 ' + fmt(intOf(d.week.avgDeficit)) + ' 卡' },
-    ...(truncated ? [{ text: '带上是最近 ' + STRIP_MAX_DAYS + ' 天' }] : []),
+    { text: m('skill-calorie.home-homeFrame.c004', { p0: String(d.week.loggedDays), p1: String(d.week.windowDays) }) },
+    { text: m('skill-calorie.home-homeFrame.c005', { p0: String(d.streakDays) }), tone: 'ok' },
+    { text: m('skill-calorie.home-homeFrame.c006', { p0: String(fmt(intOf(d.week.avgIntake))) }) },
+    { text: m('skill-calorie.home-homeFrame.c007', { p0: String(fmt(intOf(d.week.avgDeficit))) }) },
+    ...(truncated ? [{ text: m('skill-calorie.home-homeFrame.c008', { p0: String(STRIP_MAX_DAYS) }) }] : []),
   ];
   return renderDayStrip({ days, caption });
 }

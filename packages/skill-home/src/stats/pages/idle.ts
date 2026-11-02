@@ -8,6 +8,52 @@
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { m } from '../../entries/index.js';
+
+/** 本页可见文案（渲染期取词：写成函数，模块加载时不取词）。 */
+function pageText() {
+  return {
+    k001: m('skill-home.stats-pages-idle.c001'),
+    k002: m('skill-home.stats-pages-idle.c002'),
+    k003: (p0: string, p1: string) => m('skill-home.stats-pages-idle.c003', { p0: String(p0), p1: String(p1) }),
+    k004: m('skill-home.stats-pages-idle.c004'),
+    k005: m('skill-home.stats-pages-idle.c005'),
+    k006: m('skill-home.stats-pages-idle.c006'),
+    k007: m('skill-home.stats-pages-idle.c007'),
+    k008: m('skill-home.stats-pages-idle.c008'),
+    k009: m('skill-home.stats-pages-idle.c009'),
+    k010: m('skill-home.stats-pages-idle.c010'),
+    k011: (p0: string) => m('skill-home.stats-pages-idle.c011', { p0: String(p0) }),
+    k012: m('skill-home.stats-pages-idle.c012'),
+    k013: m('skill-home.stats-pages-idle.c013'),
+    k014: m('skill-home.stats-pages-idle.c014'),
+    k015: (p0: string) => m('skill-home.stats-pages-idle.c015', { p0: String(p0) }),
+    k016: m('skill-home.stats-pages-idle.c016'),
+    k017: m('skill-home.stats-pages-idle.c017'),
+    k018: m('skill-home.stats-pages-idle.c018'),
+    k019: m('skill-home.stats-pages-idle.c019'),
+    k020: m('skill-home.stats-pages-idle.c020'),
+    k021: m('skill-home.stats-pages-idle.c021'),
+    k022: m('skill-home.stats-pages-idle.c022'),
+    k023: m('skill-home.stats-pages-idle.c023'),
+    k024: m('skill-home.stats-pages-idle.c024'),
+    k025: m('skill-home.stats-pages-idle.c025'),
+    k026: m('skill-home.stats-pages-idle.c026'),
+    k027: m('skill-home.stats-pages-idle.c027'),
+    k028: m('skill-home.stats-pages-idle.c028'),
+    k029: m('skill-home.stats-pages-idle.c029'),
+    k030: m('skill-home.stats-pages-idle.c030'),
+    k031: m('skill-home.stats-pages-idle.c031'),
+    k032: m('skill-home.stats-pages-idle.c032'),
+    k033: m('skill-home.stats-pages-idle.c033'),
+    k034: m('skill-home.stats-pages-idle.c034'),
+    k035: m('skill-home.stats-pages-idle.c035'),
+    k036: m('skill-home.stats-pages-idle.c036'),
+    k037: m('skill-home.stats-pages-idle.c037'),
+    k038: m('skill-home.stats-pages-idle.c038'),
+  };
+}
+
 
 export const FAMILY = 'idle' as const;
 
@@ -56,13 +102,16 @@ export const REQUIRED_BLOCKS = {
 };
 
 // 可见转写（无拉丁字母；原文在 data-need 属性里一字未动）。
-const SHOWN: Record<string, string> = {
-  '空态：衣橱状态良好＋没有超N天未使用': '空态：衣橱状态良好，没有超过所选天数未使用的物品',
-  '拦截态：还没有勾选任何处理': '拦截态：还没有勾选任何处理',
-  '异常：数据解析失败／数据校验失败': '异常：数据解析失败，数据校验失败',
-  'AI建议': '智能建议',
+/** 本页可见文案（渲染期取词：写成函数，模块加载时不取词）。 */
+function shownText(): Record<string, string> {
+  return {
+  '空态：衣橱状态良好＋没有超N天未使用': m('skill-home.stats-pages-idle.c049'),
+  '拦截态：还没有勾选任何处理': m('skill-home.stats-pages-idle.c050'),
+  '异常：数据解析失败／数据校验失败': m('skill-home.stats-pages-idle.c051'),
+  'AI建议': m('skill-home.stats-pages-idle.c052'),
 };
-const showOf = (b: string): string => SHOWN[b] ?? b;
+}
+const showOf = (b: string): string => shownText()[b] ?? b;
 
 // 可见文本归一：半角拉丁字母转全角（机审只认半角为英文裸词；载荷原文不动）。
 function latinFree(s: string): string {
@@ -119,14 +168,31 @@ const CSS = '<style>'
   + '.st-toast.show{opacity:1}@media(max-width:560px){.st-card span{font-size:19px}.st-actions .st-btn{flex:1 1 100%}.st-count{margin-left:0}}'
   + '</style>';
 
-const JS = '<script>(function(){var t=null;function toast(m){var e=document.getElementById("stToast");e.textContent=m;e.classList.add("show");clearTimeout(t);t=setTimeout(function(){e.classList.remove("show")},2000)}'
-  + 'function fb(s){var a=document.createElement("textarea");a.value=s;document.body.appendChild(a);a.select();try{document.execCommand("copy");toast("已复制")}catch(e){toast("复制失败，请长按手动复制")}a.remove()}'
-  + 'function cp(s){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(s).then(function(){toast("已复制")},function(){fb(s)})}else{fb(s)}}'
-  + 'var sel={};function paint(){document.querySelectorAll(".st-item").forEach(function(el){var id=el.getAttribute("data-id");var on=!!sel[id];el.classList.toggle("on",on);el.querySelectorAll("button[data-act]").forEach(function(b){b.classList.toggle("on",sel[id]===b.getAttribute("data-act"))})});var n=Object.keys(sel).length;var stop=document.getElementById("stStop");if(stop){stop.style.display=n?"none":"";}var c=document.getElementById("stConfirm");if(c){c.textContent=n?("确认处理（已选"+n+"件）"):"确认处理"}}'
+/** 内联脚本（渲染期取词：写成函数，模块加载时不取词）。 */
+function pageScript(): string {
+  const SX = {
+    k001: m('skill-home.stats-pages-idle.c039'),
+    k002: m('skill-home.stats-pages-idle.c040'),
+    k003: m('skill-home.stats-pages-idle.c041'),
+    k004: m('skill-home.stats-pages-idle.c042'),
+    k005: m('skill-home.stats-pages-idle.c043'),
+    k006: m('skill-home.stats-pages-idle.c044'),
+    k007: m('skill-home.stats-pages-idle.c045'),
+    k008: m('skill-home.stats-pages-idle.c046'),
+    k009: m('skill-home.stats-pages-idle.c047'),
+    k010: "：",
+    k011: m('skill-home.stats-pages-idle.c048'),
+    k012: "；",
+  };
+  return '<script>(function(){var t=null;function toast(m){var e=document.getElementById("stToast");e.textContent=m;e.classList.add("show");clearTimeout(t);t=setTimeout(function(){e.classList.remove("show")},2000)}'
+  + "function fb(s){var a=document.createElement(\"textarea\");a.value=s;document.body.appendChild(a);a.select();try{document.execCommand(\"copy\");toast(\"" + SX.k001 + "\")}catch(e){toast(\"" + SX.k002 + "\")}a.remove()}"
+  + "function cp(s){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(s).then(function(){toast(\"" + SX.k003 + "\")},function(){fb(s)})}else{fb(s)}}"
+  + "var sel={};function paint(){document.querySelectorAll(\".st-item\").forEach(function(el){var id=el.getAttribute(\"data-id\");var on=!!sel[id];el.classList.toggle(\"on\",on);el.querySelectorAll(\"button[data-act]\").forEach(function(b){b.classList.toggle(\"on\",sel[id]===b.getAttribute(\"data-act\"))})});var n=Object.keys(sel).length;var stop=document.getElementById(\"stStop\");if(stop){stop.style.display=n?\"none\":\"\";}var c=document.getElementById(\"stConfirm\");if(c){c.textContent=n?(\"" + SX.k004 + "\"+n+\"" + SX.k005 + "\"):\"" + SX.k006 + "\"}}"
   + 'document.querySelectorAll(".st-item button[data-act]").forEach(function(b){b.addEventListener("click",function(){var id=b.getAttribute("data-item");var act=b.getAttribute("data-act");if(sel[id]===act){delete sel[id]}else{sel[id]=act}paint()})});'
-  + 'var cf=document.getElementById("stCat");if(cf){cf.addEventListener("change",function(){var v=cf.value;var n=0;document.querySelectorAll(".st-item").forEach(function(el){var show=!v||el.getAttribute("data-cat")===v;el.style.display=show?"":"none";if(show){n++}});var cc=document.getElementById("stCount");if(cc){cc.textContent="共"+n+"件"}})}'
+  + "var cf=document.getElementById(\"stCat\");if(cf){cf.addEventListener(\"change\",function(){var v=cf.value;var n=0;document.querySelectorAll(\".st-item\").forEach(function(el){var show=!v||el.getAttribute(\"data-cat\")===v;el.style.display=show?\"\":\"none\";if(show){n++}});var cc=document.getElementById(\"stCount\");if(cc){cc.textContent=\"" + SX.k007 + "\"+n+\"" + SX.k008 + "\"}})}"
   + 'document.querySelectorAll("button[data-t]").forEach(function(b){b.addEventListener("click",function(){cp(b.getAttribute("data-t"))})});'
-  + 'var ok=document.getElementById("stConfirm");if(ok){ok.addEventListener("click",function(){var ids=Object.keys(sel);if(!ids.length){toast("还没有勾选任何处理");return}var lines=ids.map(function(id){var el=document.querySelector(".st-item[data-id=\\""+id+"\\"]");var nm=el?el.getAttribute("data-name"):"#"+id;return nm+"："+sel[id]});cp("请处理以下闲置物品："+lines.join("；"))})}paint();})();</script>';
+  + "var ok=document.getElementById(\"stConfirm\");if(ok){ok.addEventListener(\"click\",function(){var ids=Object.keys(sel);if(!ids.length){toast(\"" + SX.k009 + "\");return}var lines=ids.map(function(id){var el=document.querySelector(\".st-item[data-id=\\\"\"+id+\"\\\"]\");var nm=el?el.getAttribute(\"data-name\"):\"#\"+id;return nm+\"" + SX.k010 + "\"+sel[id]});cp(\"" + SX.k011 + "\"+lines.join(\"" + SX.k012 + "\"))})}paint();})();</script>";
+}
 
 interface AlertItem {
   id: number; name: string; location: string; quantity: number; status: string; category: string; tags: string;
@@ -137,63 +203,35 @@ interface AlertItem {
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
 // 复制区走共用件（卡路里同款三格式＋六段日志）；`ctx.command` 由交付链供给（含 params），直调缺省按本族主 key。
 export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
+  const L = pageText();
   const template = readFileSync(new URL('../../../templates/stats/idle.html', import.meta.url), 'utf8');
   const d = (env.data ?? {}) as { items?: AlertItem[]; total?: number; days?: number; allowed?: number[] };
   const items = Array.isArray(d.items) ? d.items : [];
-  const head = '<div class="fam-head"><span class="fam-name" data-family="idle">统计总览</span>'
-    + '<span class="fam-key" data-key="' + escapeHtml(PAGE_META.key) + '">查闲置</span></div>';
+  const head = '<div class="fam-head">' + '<span class="fam-name" data-family="idle">' + L.k001 + '</span>' + '<span class="fam-key" data-key="' + escapeHtml(PAGE_META.key) + '">' + L.k002 + '</span>' + '</div>';
   // #817（⑤文案不冗余）：胶囊原写「查闲置」，与 h1（交付链回填的场景名）同名相邻＝同一个词说两遍
   // （本页正文里「闲置」另有十几处）。去掉胶囊：这一行的范围由下面那句与「闲置件数」卡承担。
   // #865：本次判定档位来自回执 `days`（真值），不再写死文案里的默认值。
   const stdDays = typeof d.days === 'number' && d.days > 0 ? d.days : null;
-  const hero = '<div class="st st-hero"><p class="st-lead">共' + items.length + '件超过'
-    + (stdDays === null ? '所选天数' : stdDays + ' 天') + '未使用，勾选后确认处理</p></div>';
-  const cards = '<div class="st st-cards">'
-    + '<div class="st-card"><b>闲置件数</b><span>' + items.length + '</span></div>'
-    + '<div class="st-card"><b>闲置标准</b><span>' + (stdDays === null ? '—' : stdDays + ' 天') + '</span><small>下单时指定</small></div></div>';
+  const hero = '<div class="st st-hero">' + '<p class="st-lead">' + L.k003(String(items.length), String((stdDays === null ? L.k005 : stdDays + L.k004))) + '</p>' + '</div>';
+  const cards = '<div class="st st-cards">' + '<div class="st-card">' + '<b>' + L.k006 + '</b>' + '<span>' + items.length + '</span>' + '</div>' + '<div class="st-card">' + '<b>' + L.k007 + '</b>' + '<span>' + (stdDays === null ? '—' : stdDays + L.k008) + '</span>' + '<small>' + L.k009 + '</small>' + '</div>' + '</div>';
   // #865：可调档位由回执 `allowed` 给（老 idle.py ALLOWED_THRESHOLDS）；本次在用的那一档实心标出。
   const gears = Array.isArray(d.allowed) && d.allowed.length
     ? '<div class="st-chips">' + d.allowed.map((g) => '<span class="st-chip' + (g === stdDays ? ' on' : '') + '">'
-      + escapeHtml(String(g)) + ' 天</span>').join('') + '</div>'
+      + escapeHtml(String(g)) + L.k010 + '</span>').join('') + '</div>'
     : '';
-  const sug = '<div class="st st-sug">先处理占地方的大件与重复款，'
-    + (items.length ? '拿不准的选先不处理' : '当前没有需要处理的闲置物品') + '</div>';
+  const sug = '<div class="st st-sug">' + L.k011(String((items.length ? L.k013 : L.k012))) + '</div>';
   const cats = [...new Set(items.map((it) => it.category).filter(Boolean))];
-  const filter = '<div class="st st-filter"><select class="st-sel" id="stCat"><option value="">全部分类</option>'
-    + cats.map((c) => '<option value="' + escapeHtml(c) + '">' + escapeHtml(latinFree(c)) + '</option>').join('')
-    + '</select><span class="st-count" id="stCount">筛出' + items.length + '件</span></div>';
-  const rows = items.map((it) => '<div class="st-item" data-id="' + it.id + '" data-name="' + escapeHtml(it.name)
-    + '" data-cat="' + escapeHtml(it.category) + '"><div class="st-name">' + escapeHtml(latinFree(it.name)) + '</div>'
-    // #817 第二波（⑥ 分隔符不懒政）：名称行原写「名称（编号13）」，把名称与编号挤成一段括号串；
-    // 编号本来就是独立字段（`id`），拆出来单独一行「编号 13」。
-    // #865：闲置天数与时长来源来自回执（`daysIdle` 按 `coalesce(last_accessed_at, created_at)` 算，`source` 记来源）。
-    // 走「标签＋值」的行内两格：两个事实各有自己的格子，不靠分隔符串成一句，也不会让同一串在多行重复。
-    + '<div class="st-sub"><span class="st-kv"><b>编号</b>' + escapeHtml(String(it.id)) + '</span>'
-    + (typeof it.daysIdle === 'number' ? '<span class="st-kv"><b>闲置</b>' + it.daysIdle + ' 天</span>' : '')
-    + (it.source ? '<span class="st-kv"><b>时长来源</b>' + escapeHtml(latinFree(it.source)) + '</span>' : '')
-    + (typeof it.quantity === 'number' && it.quantity > 1 ? '<span class="st-kv"><b>数量</b>' + it.quantity + ' 件</span>' : '')
-    + '</div>'
-    + locChips(it.location)
-    // #817（⑤文案不冗余）：徽标原写「闲置」——逐行复述页面主题词，等于没带信息；
-    // 改挂该行自己的分类（与上面的分类筛选同一取值），行与筛选口径才对得上。
-    + '<span class="st-badge">' + escapeHtml(latinFree(it.category || '闲置')) + '</span>'
-    + '<div class="st-ops tight"><button class="st-btn" data-act="标记废弃" data-item="' + it.id + '">标记废弃</button>'
-    + '<button class="st-btn" data-act="送人" data-item="' + it.id + '">送人</button>'
-    + '<button class="st-btn soft" data-act="先不处理" data-item="' + it.id + '">先不处理</button></div></div>').join('');
-  const list = items.length ? filter + rows : '<div class="st st-empty"><b>衣橱状态良好</b>没有超过所选天数未使用的物品</div>';
-  const bar = '<div class="st-actions"><button class="st-btn pri" id="stConfirm">确认处理</button>'
-    + homeCopyArea({
+  const filter = '<div class="st st-filter">' + '<select class="st-sel" id="stCat">' + '<option value="">' + L.k014 + '</option>' + cats.map((c) => '<option value="' + escapeHtml(c) + '">' + escapeHtml(latinFree(c)) + '</option>').join('') + '</select>' + '<span class="st-count" id="stCount">' + L.k015(String(items.length)) + '</span>' + '</div>';
+  const rows = items.map((it) => '<div class="st-item" data-id="' + it.id + '" data-name="' + escapeHtml(it.name) + '" data-cat="' + escapeHtml(it.category) + '">' + '<div class="st-name">' + escapeHtml(latinFree(it.name)) + '</div>' + '<div class="st-sub">' + '<span class="st-kv">' + '<b>' + L.k016 + '</b>' + escapeHtml(String(it.id)) + '</span>' + (typeof it.daysIdle === 'number' ? '<span class="st-kv">' + '<b>' + L.k018 + '</b>' + it.daysIdle + L.k017 + '</span>' : '') + (it.source ? '<span class="st-kv">' + '<b>' + L.k019 + '</b>' + escapeHtml(latinFree(it.source)) + '</span>' : '') + (typeof it.quantity === 'number' && it.quantity > 1 ? '<span class="st-kv">' + '<b>' + L.k021 + '</b>' + it.quantity + L.k020 + '</span>' : '') + '</div>' + locChips(it.location) + '<span class="st-badge">' + escapeHtml(latinFree(it.category || L.k022)) + '</span>' + '<div class="st-ops tight">' + '<button class="st-btn" data-act="' + L.k023 + '" data-item="' + it.id + '">' + L.k024 + '</button>' + '<button class="st-btn" data-act="' + L.k025 + '" data-item="' + it.id + '">' + L.k026 + '</button>' + '<button class="st-btn soft" data-act="' + L.k027 + '" data-item="' + it.id + '">' + L.k028 + '</button>' + '</div>' + '</div>').join('');
+  const list = items.length ? filter + rows : '<div class="st st-empty">' + '<b>' + L.k029 + '</b>' + L.k030 + '</div>';
+  const bar = '<div class="st-actions">' + '<button class="st-btn pri" id="stConfirm">' + L.k031 + '</button>' + homeCopyArea({
         data: { envelope: env },
         log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
-      }) + '</div>'
-    + '<p class="st-stop" id="stStop">还没有勾选任何处理</p>';
-  const raw = '<details hidden class="st st-raw"><summary>原始回执（给排查用）</summary><pre>'
-    + escapeHtml(JSON.stringify(env)) + '</pre></details>';
-  const blocks = '<details hidden class="st-blocks"><summary>必需块登记（契约对账用）</summary>'
-    + sectionOf('fields', '字段') + sectionOf('operations', '操作')
-    + sectionOf('empty', '空态与异常') + sectionOf('status', '状态词') + '</details>';
+      }) + '</div>' + '<p class="st-stop" id="stStop">' + L.k032 + '</p>';
+  const raw = '<details hidden class="st st-raw">' + '<summary>' + L.k033 + '</summary>' + '<pre>' + escapeHtml(JSON.stringify(env)) + '</pre>' + '</details>';
+  const blocks = '<details hidden class="st-blocks">' + '<summary>' + L.k034 + '</summary>' + sectionOf('fields', L.k035) + sectionOf('operations', L.k036) + sectionOf('empty', L.k037) + sectionOf('status', L.k038) + '</details>';
   const content = CSS + head + '<div class="fam-content st">' + hero + cards + gears + sug + list + '</div>'
     + bar + raw + blocks
-    + '<div class="st-toast" id="stToast"></div>' + JS;
+    + '<div class="st-toast" id="stToast"></div>' + pageScript();
   return fillTemplate(template, content);
 }

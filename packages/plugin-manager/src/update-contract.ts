@@ -5,6 +5,7 @@
  * 0.5.1 新接线由 wire 票 1170 重建，此处不预留。
  */
 
+import { m } from './entries/index.js';
 export const CONFIG_TAB_SLOT = 'ilife.config-tab' as const;
 
 export const CARRIER_BASE = '/api' as const;
@@ -22,12 +23,15 @@ export const MANAGER_ACTIONS = {
 
 export const VERSION_UNKNOWN = 'unknown' as const;
 
-const REASON_TEXT: Record<string, string> = {
-  'manager-unreachable': '面板连不上总管插件。重启 DSH 后重试。',
-  'bad-request': '面板与总管之间的请求出错了（属程序缺陷）。',
-  internal: '面板与总管之间的请求出错了（属程序缺陷）。',
-};
+/** 三种失败原因的文案（渲染期现取）。 */
+function reasonTextTable(): Record<string, string> {
+  return {
+    'manager-unreachable': m('plugin-manager.update-contract.c002'),
+    'bad-request': m('plugin-manager.update-contract.c003'),
+    internal: m('plugin-manager.update-contract.c004'),
+  };
+}
 
 export function reasonText(code: string): string {
-  return REASON_TEXT[code] ?? '面板不认识这个原因码（' + code + '）。';
+  return reasonTextTable()[code] ?? m('plugin-manager.update-contract.c001', { p0: String(code) });
 }

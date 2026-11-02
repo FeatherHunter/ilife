@@ -20,6 +20,7 @@ import { CalorieRenderError } from '../render/errors.js';
 import { assertDate } from './plate.js';
 import type { VolatilityView } from './plate.js';
 import { buildVolatilityDoc, volatilityCommandOf } from './volatilityDoc.js';
+import { m } from '../entries/index.js';
 
 /** 整页出口仍从本件转出（`render/html.ts` 与用例的历史入口，别处不必知道页面搬去了哪）。 */
 export { buildVolatilityDoc } from './volatilityDoc.js';
@@ -76,8 +77,9 @@ export function deviationText(deviationKg: number): string {
  *  免得同一个量在页面两处各印一套说法。零差值不写「高 0 kg」，写「正好在平均线上」。 */
 export function baselineDeltaText(deviationKg: number): string {
   const v = round2(deviationKg);
-  if (v === 0) return '正好在平均线上';
-  return '比平均线' + (v > 0 ? '高' : '低') + ' ' + Math.abs(v) + ' kg';
+  if (v === 0) return m('skill-calorie.weight-volatility.c001');
+  const direction = v > 0 ? m('skill-calorie.weight-volatility.c002') : m('skill-calorie.weight-volatility.c003');
+  return m('skill-calorie.weight-volatility.c004', { p0: String(direction), p1: String(Math.abs(v)) });
 }
 
 export function weightVolatilityV2(db: DatabaseSync, startDate: string, endDate?: string | null, baselineMode: BaselineMode = 'rolling'): AnalysisResult<VolatilityV2> {
@@ -107,12 +109,12 @@ export function weightVolatilityV2(db: DatabaseSync, startDate: string, endDate?
   if (baselineMode === 'goal' && goalWeight) {
     baselineValue = goalWeight;
     baselineSigma = fullDetrendedSigma(weights);
-    toggleLabel = '目标体重 ' + goalWeight + ' kg';
+    toggleLabel = m('skill-calorie.weight-volatility.c005', { p0: String(goalWeight) });
   } else {
     const recent30 = weights.length >= 30 ? weights.slice(-30) : weights;
     baselineValue = recent30.reduce((a, b) => a + b, 0) / recent30.length;
     baselineSigma = rollingSigma7d(weights);
-    toggleLabel = '近 ' + Math.min(30, weights.length) + ' 天平均体重';
+    toggleLabel = m('skill-calorie.weight-volatility.c006', { p0: String(Math.min(30, weights.length)) });
   }
   const sigmaForThresholds = baselineSigma > 0 ? baselineSigma : 0.5;
   const thresholds = { yellow: round3(YELLOW_SIGMA * sigmaForThresholds), red: round3(RED_SIGMA * sigmaForThresholds) };
@@ -138,10 +140,16 @@ export function weightVolatilityV2(db: DatabaseSync, startDate: string, endDate?
   // #485 人话改写：`2sigma 红线／1.5sigma 黄线` 读者看不懂，改成「超过警戒线／注意线」
   // 并带上那条线的数（读者要的是「越过多少算报警」）。方向词由 `baselineDeltaText` 一处给。
   const ewMsg = ewLevel === 'red'
-    ? '今天' + baselineDeltaText(lastDev) + '，超过警戒线 ±' + thresholds.red + ' kg，请留意'
+    ? m('skill-calorie.weight-volatility.c007', {
+      p0: String(baselineDeltaText(lastDev)),
+      p1: String(thresholds.red),
+    })
     : ewLevel === 'yellow'
-      ? '今天' + baselineDeltaText(lastDev) + '，超过注意线 ±' + thresholds.yellow + ' kg，请留意'
-      : '今天' + baselineDeltaText(lastDev) + '，在正常范围内';
+      ? m('skill-calorie.weight-volatility.c008', {
+        p0: String(baselineDeltaText(lastDev)),
+        p1: String(thresholds.yellow),
+      })
+      : m('skill-calorie.weight-volatility.c009', { p0: String(baselineDeltaText(lastDev)) });
   return ok({
     baselineMode,
     baselineValue: round2(baselineValue),
@@ -154,7 +162,10 @@ export function weightVolatilityV2(db: DatabaseSync, startDate: string, endDate?
     baselineToggleLabel: toggleLabel,
     days: days > 0 ? days : 1,
     warnDays: points.length,
-  }, '波动分析完成:baseline=' + baselineValue.toFixed(1) + 'kg,σ=' + baselineSigma.toFixed(2) + 'kg');
+  }, m('skill-calorie.weight-volatility.c010', {
+    p0: String(baselineValue.toFixed(1)),
+    p1: String(baselineSigma.toFixed(2)),
+  }));
 }
 
 /* ── 命令层（#294）：看体重稳不稳＝HELP 场景 03「体重」下一级 ──────────────────────────────
@@ -234,7 +245,7 @@ export function buildVolatilityView(
  *  #485：只说「越了哪条线」——阈值数字已在「波动带」卡与复制载荷各一处，
  *  行内再印一遍就是同一组数字的第四次重复（90 天页里这行要重复 5 次）。 */
 export function anomalyReason(p: VolPoint): string {
-  return p.level === 'red' ? '超过警戒线' : '超过注意线';
+  return p.level === 'red' ? m('skill-calorie.weight-volatility.c011') : m('skill-calorie.weight-volatility.c012');
 }
 
 /** 结论句（由取数层数字拼，页面不做自然语言解析；§5.3）。 */
@@ -242,16 +253,16 @@ export function volatilitySummary(o: VolatilityV2): string {
   const kgs = o.points.map((p) => p.kg);
   const overall = kgs.length >= 2 ? stdev(kgs) : 0;
   const std2 = (Math.round(overall * 100) / 100).toFixed(2);
-  if (o.points.length === 1) return '只有 1 条记录：本窗只有一天体重 ' + o.baselineValue + ' kg，看不出波动';
+  if (o.points.length === 1) return m('skill-calorie.weight-volatility.c013', { p0: String(o.baselineValue) });
   // #485 对抗审查整改（D2／D3，S1 的根）：本句原来把自己那个标准差也叫「波动幅度」——于是同一屏里
   // 「波动幅度」同时代表本窗 σ（卡②说明）与本句的整窗离散度，两个数互不相容。现在**只有卡②说明**用
   // 「波动幅度」这个词（＝σ）；本句这个量按它自己的名字写（`整体离散度`＝本窗所有点到平均线的距离的
   // 总体离散程度，σ 是它去掉逐日涨跌后的那一份），读者一眼看得出是两个量、不是一个量的两种写法。
   // 同时结论不再复述卡面已有的读数（卡②的档位天数、卡③的今日偏离与线值、图②的趋势点数）。
   if (overall < 0.3 && o.recentAnomalies.length === 0) {
-    return '体重很稳：整体离散度 ' + std2 + ' kg，近期没有超过注意线的天';
+    return m('skill-calorie.weight-volatility.c014', { p0: String(std2) });
   }
-  const head = '整体离散度 ' + std2 + ' kg，近 7 天有 ' + o.recentAnomalies.length + ' 天超过波动带';
-  if (overall < 0.5) return '体重基本稳定：' + head;
-  return '体重波动较大：' + head + '，建议关注饮食与饮水';
+  const head = m('skill-calorie.weight-volatility.c015', { p0: String(std2), p1: String(o.recentAnomalies.length) });
+  if (overall < 0.5) return m('skill-calorie.weight-volatility.c016', { p0: String(head) });
+  return m('skill-calorie.weight-volatility.c017', { p0: String(head) });
 }

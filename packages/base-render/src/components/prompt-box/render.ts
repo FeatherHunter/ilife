@@ -8,6 +8,7 @@
  */
 import { esc } from '../shared/escape.js';
 import { assertPlainObject, badInput, optExtraClass, optText, reqText } from '../shared/validate.js';
+import { m } from '../../entries/index.js';
 
 /** 本件的类名根（标记与样式共用这一份拼法）。 */
 export const PROMPT_BOX_CLASS = 'ilife-block-prompt-box';
@@ -49,7 +50,9 @@ export const PROMPT_BOX_BOUND_ATTR = 'data-ilife-prompt-bound';
 /** 复制事件（冒泡 `CustomEvent`，`detail = { label, chars, ok }`）。 */
 export const PROMPT_BOX_EVENT_COPY = 'ilife:prompt-copy';
 /** 复制按钮的缺省字（调用方不给就用它）。 */
-export const PROMPT_BOX_COPY_TEXT = '复制';
+export function PROMPT_BOX_COPY_TEXT(): string {
+  return m('base-render.components-prompt-box-render.c001');
+}
 
 /** 提示框的入参。`text` 必填——没有正文的提示框是个空壳。 */
 export interface PromptBoxInput {
@@ -88,7 +91,7 @@ export function renderPromptBox(input: unknown): string {
   assertKeys(raw, ROOT_KEYS, 'input');
   const text = reqText(raw.text, 'text');
   const label = raw.label === undefined ? undefined : optText(raw.label, 'label');
-  const copy = raw.copyText === undefined ? PROMPT_BOX_COPY_TEXT : reqText(raw.copyText, 'copyText');
+  const copy = raw.copyText === undefined ? PROMPT_BOX_COPY_TEXT() : reqText(raw.copyText, 'copyText');
   const hint = raw.hint === undefined ? undefined : optText(raw.hint, 'hint');
   const form = raw.form === undefined ? 'card' : reqForm(raw.form);
   const extra = raw.extraClass === undefined ? undefined : optExtraClass(raw.extraClass, 'extraClass');

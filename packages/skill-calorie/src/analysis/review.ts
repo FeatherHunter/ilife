@@ -10,6 +10,7 @@ import { FetchError } from '../fetch/errors.js';
 import { EX_ALIVE, getActivityFactor, mifflinStJeorBmr, shiftISODate, todayISO } from './utils.js';
 /* #717 批④：1 公斤的热量当量正本住共用位（本处原写裸字面 7700）。 */
 import { KCAL_PER_KG } from '../shared/kcalPerKg.js';
+import { m } from '../entries/index.js';
 
 const round = (n: number): number => Math.round(n);
 const round1 = (n: number): number => Math.round(n * 10) / 10;
@@ -62,8 +63,7 @@ function daysBetween(d1: string, d2: string): number {
 
 export function query5dims(db: DatabaseSync, start: string, end: string): FiveDims {
   const dailyIntake = db.prepare(
-    "SELECT date, SUM(calories) AS totalCalorie, SUM(protein) AS totalProtein, SUM(carbs) AS totalCarbs, SUM(fat) AS totalFat, COUNT(*) AS mealCount" +
-    " FROM food_log WHERE food_name != '💧水' AND date BETWEEN ? AND ? GROUP BY date ORDER BY date",
+    m('skill-calorie.analysis-review.c001'),
   ).all(start, end) as unknown as DayIntake[];
   const dailyBurn = db.prepare(
     'SELECT date, SUM(calories_burned) AS totalBurned, SUM(duration_minutes) AS totalMinutes,' +
@@ -107,7 +107,7 @@ export function query5dims(db: DatabaseSync, start: string, end: string): FiveDi
     | undefined;
   const goalRow = db.prepare('SELECT * FROM daily_goal WHERE id = 1').get() as Record<string, unknown> | undefined;
   const topRows = db.prepare(
-    "SELECT food_name AS n, SUM(calories) AS totalCal, COUNT(*) AS cnt FROM food_log WHERE food_name != '💧水' AND date BETWEEN ? AND ? GROUP BY food_name ORDER BY cnt DESC, totalCal DESC LIMIT 5",
+    m('skill-calorie.analysis-review.c002'),
   ).all(start, end) as unknown as Array<{ n: string; totalCal: number; cnt: number }>;
   return {
     range: { start, end, days: daysBetween(start, end) + 1 },
@@ -128,18 +128,22 @@ export function query5dims(db: DatabaseSync, start: string, end: string): FiveDi
 export interface NutritionMatch { daysCount: number; matchedDays: number; matchRatePct: number; summary: string }
 
 export function nutritionMatchRate(dailyIntake: DayIntake[], targets: Record<string, unknown>): NutritionMatch {
-  if (dailyIntake.length === 0) return { daysCount: 0, matchedDays: 0, matchRatePct: 0, summary: '无数据' };
+  if (dailyIntake.length === 0) return { daysCount: 0, matchedDays: 0, matchRatePct: 0, summary: m('skill-calorie.analysis-review.c003') };
   const calGoal = targets['calorie_goal'];
   const proGoal = targets['protein_goal'];
   if (typeof calGoal !== 'number' || typeof proGoal !== 'number' || !calGoal || !proGoal) {
-    return { daysCount: dailyIntake.length, matchedDays: 0, matchRatePct: 0, summary: '无营养目标' };
+    return { daysCount: dailyIntake.length, matchedDays: 0, matchRatePct: 0, summary: m('skill-calorie.analysis-review.c004') };
   }
   let matched = 0;
   for (const day of dailyIntake) {
     if (Math.abs(day.totalCalorie - calGoal) <= calGoal * 0.1 && day.totalProtein >= proGoal * 0.8) matched += 1;
   }
   const pct = round((matched / dailyIntake.length) * 100);
-  return { daysCount: dailyIntake.length, matchedDays: matched, matchRatePct: pct, summary: pct + '%(' + matched + '/' + dailyIntake.length + ' 天 配比达标)' };
+  return { daysCount: dailyIntake.length, matchedDays: matched, matchRatePct: pct, summary: m('skill-calorie.analysis-review.c005', {
+    p0: String(pct),
+    p1: String(matched),
+    p2: String(dailyIntake.length),
+  }) };
 }
 
 export interface AnomalyDay { date: string | null; type: string; value: number; target: number; diff: string; severity: string }
@@ -205,9 +209,9 @@ export function deriveReview(db: DatabaseSync, dims: FiveDims, today: string = t
   const fatGoal = typeof targets['fat_goal'] === 'number' ? (targets['fat_goal'] as number) : 60;
   const anomalyDays: AnomalyDay[] = [];
   for (const d of completeIntake) {
-    if (d.totalCalorie > calGoal + 300) anomalyDays.push({ date: d.date, type: 'intake_excess', value: d.totalCalorie, target: calGoal, diff: '+' + (d.totalCalorie - calGoal) + ' 卡', severity: 'warn' });
-    else if (d.totalCalorie < calGoal - 500) anomalyDays.push({ date: d.date, type: 'intake_deficit', value: d.totalCalorie, target: calGoal, diff: (d.totalCalorie - calGoal) + ' 卡', severity: 'warn' });
-    if (d.totalFat > fatGoal * 1.5) anomalyDays.push({ date: d.date, type: 'fat_excess', value: d.totalFat, target: fatGoal, diff: '+' + (d.totalFat - fatGoal) + 'g 脂肪', severity: 'info' });
+    if (d.totalCalorie > calGoal + 300) anomalyDays.push({ date: d.date, type: 'intake_excess', value: d.totalCalorie, target: calGoal, diff: m('skill-calorie.analysis-review.c006', { p0: String(d.totalCalorie - calGoal) }), severity: 'warn' });
+    else if (d.totalCalorie < calGoal - 500) anomalyDays.push({ date: d.date, type: 'intake_deficit', value: d.totalCalorie, target: calGoal, diff: m('skill-calorie.analysis-review.c007', { p0: String(d.totalCalorie - calGoal) }), severity: 'warn' });
+    if (d.totalFat > fatGoal * 1.5) anomalyDays.push({ date: d.date, type: 'fat_excess', value: d.totalFat, target: fatGoal, diff: m('skill-calorie.analysis-review.c008', { p0: String(d.totalFat - fatGoal) }), severity: 'info' });
   }
   const sortedBurn = [...completeBurn].sort((a, b) => (a.date < b.date ? -1 : 1));
   let consec = 0;
@@ -216,7 +220,7 @@ export function deriveReview(db: DatabaseSync, dims: FiveDims, today: string = t
     if ((d.totalBurned ?? 0) === 0) { consec += 1; maxConsec = Math.max(maxConsec, consec); }
     else consec = 0;
   }
-  if (maxConsec >= 3) anomalyDays.push({ date: null, type: 'exercise_streak_miss', value: maxConsec, target: 1, diff: '连续 ' + maxConsec + ' 天未运动', severity: 'warn' });
+  if (maxConsec >= 3) anomalyDays.push({ date: null, type: 'exercise_streak_miss', value: maxConsec, target: 1, diff: m('skill-calorie.analysis-review.c009', { p0: String(maxConsec) }), severity: 'warn' });
   return {
     ...dims,
     todayPartial: { intake: todayIntake, burn: todayBurn },
@@ -230,7 +234,7 @@ export function deriveReview(db: DatabaseSync, dims: FiveDims, today: string = t
     theoreticalWeightLoss: round1(weeklyDeficit / KCAL_PER_KG),
     nutritionMatch,
     weightTrendSvg: null,
-    weightTrendMeta: { deferred: 'SVG 属渲染层，归 T8-T10（待裁决）' },
+    weightTrendMeta: { deferred: m('skill-calorie.analysis-review.c010') },
     anomalyDays,
   };
 }

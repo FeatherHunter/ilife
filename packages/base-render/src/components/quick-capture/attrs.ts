@@ -26,6 +26,7 @@
  */
 
 /** 本件的类名根：全部槽位类名都是 `QUICK_CAPTURE_CLASS + '-' + 槽名`。 */
+import { m } from '../../entries/index.js';
 export const QUICK_CAPTURE_CLASS = 'ilife-block-quick-capture';
 
 /** 槽位闭集（标记契约的一部分：`render.ts`／`style.ts`／`runtime.ts` 与判据都用这里的名字拼类名）。
@@ -180,30 +181,30 @@ export const QUICK_CAPTURE_PEN_PX = 32;
  *  **屏上只留一层话**：这一份里每一句都是「这一处是什么／这一枚按了会怎样」，
  *  一句解释性的话都没有（「认错了点那一格改」这类口径由**格上那枚「改」**承担，不由句子承担）。 */
 
-export const QUICK_CAPTURE_TEXT = Object.freeze({
+export const QUICK_CAPTURE_TEXT = {
   /** 行首那枚小签。 */
-  lead: '随手记',
+  get lead(): string { return m('base-render.components-quick-capture-attrs.c001'); },
   /** 左边是原话、右边是认成的值，中间这一枚（印在左边那一截的末尾：「午饭」＝）。 */
-  eq: '＝',
+  get eq(): string { return '＝'; },
   /** 格尾那枚（点它会改这一格）。 */
-  pen: '改',
+  get pen(): string { return m('base-render.components-quick-capture-attrs.c002'); },
   /** 候选带里那枚取消。 */
-  keep: '不改',
+  get keep(): string { return m('base-render.components-quick-capture-attrs.c003'); },
   /** 主按钮。 */
-  save: '存',
+  get save(): string { return m('base-render.components-quick-capture-attrs.c004'); },
   /** 第二颗按钮。 */
-  split: '分开填',
+  get split(): string { return m('base-render.components-quick-capture-attrs.c005'); },
   /** 「记过的」那三个字。 */
-  recentLead: '记过的',
+  get recentLead(): string { return m('base-render.components-quick-capture-attrs.c006'); },
   /** 抽屉标题里那一段连接（「分开填 · 6 格」）：标题＝`split ＋ 这一截 ＋ 格数 ＋ 单位`。 */
-  drawerJoin: ' · ',
+  get drawerJoin(): string { return ' · '; },
   /** 抽屉标题里的单位（「分开填 · 6 格」）。 */
-  drawerUnit: ' 格',
+  get drawerUnit(): string { return m('base-render.components-quick-capture-attrs.c007'); },
   /** 输入框的无障碍名（不上屏）。 */
-  boxLabel: '一句话记一笔',
+  get boxLabel(): string { return m('base-render.components-quick-capture-attrs.c008'); },
   /** 候选带的无障碍名尾巴（不上屏）：`<这一格叫什么>能改成`。 */
-  trayLead: '能改成',
-} as const);
+  get trayLead(): string { return m('base-render.components-quick-capture-attrs.c009'); },
+};
 
 /* ── 入参类型 ───────────────────────────────────────────────────── */
 

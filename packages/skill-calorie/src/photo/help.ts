@@ -22,6 +22,7 @@ import { HELP_FILE_STEM, buildHelpFileData, formatHelpMinute, renderHelpFileHtml
 import { HELP_HTML_DIR_NAME } from './helpPaths.js';
 import { fail, optStr } from '../shared/params.js';
 import type { ViewOut } from '../shared/commandSpec.js';
+import { m } from '../entries/index.js';
 
 /** HELP 的信封载荷：**10 分组索引**（不把整份产物塞进 envelope）。
  *
@@ -57,13 +58,12 @@ export function viewPhotoHelpCenter(params: Record<string, unknown>): ViewOut {
   const q = optStr(params, 'q') ?? optStr(params, 'keyword') ?? undefined;
   if (q !== undefined) {
     // #652 删单：照片 HELP 现找（q 支）已下线，路由入口词保留指路（order 17／68 不动）。
-    fail(2, '照片 HELP 现找（q 支）已下线：请用 calorie.help.lookup 查唤醒词（示例 q=记身材照）');
+    fail(2, m('skill-calorie.photo-help.c001'));
   }
   const mode = optStr(params, 'mode');
   if (mode !== undefined) {
     // 速查台删单：本技能只有一份 HELP HTML（见件头）。
-    fail(2, '速查台（mode=' + mode + '）已下线：本技能只有一份 HELP HTML，'
-      + '跑 `calorie-cmd-read calorie.help.center` 即得');
+    fail(2, m('skill-calorie.photo-help.c002', { p0: String(mode) }));
   }
   const now = new Date();
   // 缺省：老实物同款 HELP 文件（5 键 JSON → V4 三级目录壳）。落点走 `target`——本键的

@@ -13,6 +13,7 @@
  */
 import { skinVar } from '../skin/contract.js';
 import { radarProfileSlot, type RadarProfileSlot } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -31,7 +32,7 @@ export function radarProfileReadoutsCss(input?: { readonly prefix?: string }): s
   const c = (slot: RadarProfileSlot): string => '.' + radarProfileSlot(slot, p);
 
   return [
-    '/* 印出来的刻度（三圈格子各是多少分）：它是这一张图的尺子，读者与判据都从它读。 */',
+    m('base-render.components-radar-profile-style-readouts.c001'),
     s('scale') + ' {',
     '  display: flex;',
     '  flex-wrap: wrap;',

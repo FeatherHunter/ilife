@@ -139,7 +139,7 @@ export function assertKeys(raw: Record<string, unknown>, allowed: readonly strin
   for (const key of Object.getOwnPropertyNames(raw)) note(key);
   for (const key in raw) note(key);
   if (bad.length > 0) {
-    badInput(field + ' 里没有 `' + bad.join('`／`') + '` 这个键（入参表以外的键一律拒：写错的键静默吞掉会让'
+    badInput(field + ' 里没有 「' + bad.join('」「') + '」 这个键（入参表以外的键一律拒：写错的键静默吞掉会让'
       + '调用方以为自己设上了；继承来的与不可枚举的键同样算）');
   }
 }
@@ -153,7 +153,7 @@ const FLOW_RIBBON_MAGNITUDE_MAX = Number.MAX_VALUE / 2;
  *  可它一算就溢出，屏上写出的是 `1e+308` 这种读不出来的东西——调用方以为给了一笔真读数，拿到的是张坏图）。 */
 function reqMagnitude(n: number, field: string): number {
   if (Math.abs(n) > FLOW_RIBBON_MAGNITUDE_MAX) {
-    badInput(field + ' 的量级太大：两笔同量级的读数相加就溢出成 `Infinity`'
+    badInput(field + ' 的量级太大：两笔同量级的读数相加就溢出成 Infinity'
       + '（图上会写出 `1e+308` 这类读不出来的数；读数至多到 `Number.MAX_VALUE ÷ 2` 那一档）');
   }
   return n;

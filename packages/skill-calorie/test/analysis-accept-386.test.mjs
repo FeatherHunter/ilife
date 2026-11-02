@@ -51,7 +51,7 @@ const { routesFor } = await import(pathToFileURL(join(DIST, 'triggers', 'routing
 const { HELP_LOOKUP, lookupWake, isExecCli } = await import(pathToFileURL(join(DIST, 'triggers', 'index.js')).href);
 const { SCENE_10_ANALYSIS } = await import(pathToFileURL(join(DIST, 'triggers', 'scene-10-analysis.js')).href);
 const { ANALYSIS_ROUTES } = await import(pathToFileURL(join(DIST, 'analysis', 'routes.js')).href);
-const { KIND_LABELS } = await import(pathToFileURL(join(DIST, 'analysis', 'reportDoc.js')).href);
+const { kindLabels } = await import(pathToFileURL(join(DIST, 'analysis', 'reportDoc.js')).href);
 const { SIM_MIN_DAYS } = await import(pathToFileURL(join(DIST, 'analysis', 'simulate.js')).href);
 const { assertDocPage } = await import(pathToFileURL(join(HERE, 'doc-page-assert.mjs')).href);
 
@@ -191,7 +191,7 @@ const REPORT_PIECE = {
   trend: '评分序列',
   compare: '两期变化量',
 };
-const REPORT_KINDS = Object.keys(KIND_LABELS);
+const REPORT_KINDS = Object.keys(kindLabels());
 
 /** 报告族的**页型身份标记**（新形状；#519 裁定 Q 的落点）。
  *
@@ -219,13 +219,13 @@ test('#386 判据：范围由冻结表＋routes.ts 派生（预测模拟／报�
   const words = SCOPED.map((t) => t.wake_word);
   assert.equal(new Set(words).size, words.length, '冻结表范围内有重复唤醒词');
   for (const t of REPORTS) assert.ok(!PREDICT.includes(t) && !DEFICIT.includes(t), '报告词与别段重叠：' + t.wake_word);
-  // 8 条报告各指一条自己的命令（一条命令一个词），形态名与 KIND_LABELS 逐个对得上
+  // 8 条报告各指一条自己的命令（一条命令一个词），形态名与 kindLabels() 逐个对得上
   const reportKeys = REPORTS.map((t) => commandKeyOf(t.main_prompt.cli));
   assert.equal(new Set(reportKeys).size, reportKeys.length, '8 条报告有两个词共用一条命令：' + JSON.stringify(reportKeys));
   assert.deepEqual(
     [...reportKeys].map((k) => k.replace('calorie.report.', '')).sort(),
     [...REPORT_KINDS].sort(),
-    '报告命令的形态名与 KIND_LABELS 的形态集不相等',
+    '报告命令的形态名与 kindLabels() 的形态集不相等',
   );
   // 别名：本图范围的 new 记录＝`routes.ts` 里命令键落在范围内且 list==='new' 的那些
   assert.ok(ALIASES.length > 0, '本图范围一条 new 别名都没有（分母缺了口）');
@@ -316,8 +316,8 @@ test('#386 第三组：8 报告各拿自己那页（不是 full 健康盘）／�
     const expectKind = MUT_TPL && i === 0
       ? REPORT_KINDS[(REPORT_KINDS.indexOf(kind) + 1) % REPORT_KINDS.length]
       : kind;
-    assert.ok(rec.html.includes('<title>卡路里 ' + KIND_LABELS[expectKind] + '</title>'),
-      t.wake_word + ' 页面标题不是它自己那个形态（疑似拿错页）：期望「卡路里 ' + KIND_LABELS[expectKind] + '」');
+    assert.ok(rec.html.includes('<title>卡路里 ' + kindLabels()[expectKind] + '</title>'),
+      t.wake_word + ' 页面标题不是它自己那个形态（疑似拿错页）：期望「卡路里 ' + kindLabels()[expectKind] + '」');
     assert.ok(rec.html.includes('<div class="type-badge">报告</div>'), t.wake_word + ' 缺报告类型徽标');
     assert.ok(rec.html.includes('calorie.report.' + kind), t.wake_word + ' 产物缺本形态命令回执行');
     /* #519 授权改写（编排者 2026-09-16，《编排者授权（2026-09-16 · 报告族 4 条冻结断言的形状改写）》；

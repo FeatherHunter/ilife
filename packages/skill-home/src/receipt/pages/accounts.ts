@@ -19,6 +19,37 @@
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { m } from '../../entries/index.js';
+
+/** 本页可见文案（渲染期取词：写成函数，模块加载时不取词）。 */
+function pageText() {
+  return {
+    k001: m('skill-home.receipt-pages-accounts.c001'),
+    k002: m('skill-home.receipt-pages-accounts.c002'),
+    k003: m('skill-home.receipt-pages-accounts.c003'),
+    k004: m('skill-home.receipt-pages-accounts.c004'),
+    k005: m('skill-home.receipt-pages-accounts.c005'),
+    k006: m('skill-home.receipt-pages-accounts.c006'),
+    k007: m('skill-home.receipt-pages-accounts.c007'),
+    k008: m('skill-home.receipt-pages-accounts.c008'),
+    k009: m('skill-home.receipt-pages-accounts.c009'),
+    k010: (p0: string, p1: string) => m('skill-home.receipt-pages-accounts.c010', { p0: String(p0), p1: String(p1) }),
+    k011: (p0: string, p1: string) => m('skill-home.receipt-pages-accounts.c011', { p0: String(p0), p1: String(p1) }),
+    k012: m('skill-home.receipt-pages-accounts.c012'),
+    k013: m('skill-home.receipt-pages-accounts.c013'),
+    k014: m('skill-home.receipt-pages-accounts.c014'),
+    k015: m('skill-home.receipt-pages-accounts.c015'),
+    k016: m('skill-home.receipt-pages-accounts.c016'),
+    k017: m('skill-home.receipt-pages-accounts.c017'),
+    k018: m('skill-home.receipt-pages-accounts.c018'),
+    k019: m('skill-home.receipt-pages-accounts.c019'),
+    k020: m('skill-home.receipt-pages-accounts.c020'),
+    k021: '复制数据',
+    k022: m('skill-home.receipt-pages-accounts.c021'),
+    k023: m('skill-home.receipt-pages-accounts.c022'),
+  };
+}
+
 
 export const FAMILY = 'accounts' as const;
 
@@ -78,9 +109,9 @@ function parseThinName(name: string): AccountRow {
   const open = name.indexOf('（');
   const close = name.indexOf('）');
   if (open >= 0 && close > open) {
-    return { platform: name.slice(0, open), username: name.slice(open + 1, close), typeText: '待补' };
+    return { platform: name.slice(0, open), username: name.slice(open + 1, close), typeText: m('skill-home.receipt-pages-accounts.c023') };
   }
-  return { platform: name, username: '待补', typeText: '待补' };
+  return { platform: name, username: m('skill-home.receipt-pages-accounts.c024'), typeText: m('skill-home.receipt-pages-accounts.c025') };
 }
 
 function isRich(item: Record<string, unknown>): boolean {
@@ -92,35 +123,35 @@ function isRich(item: Record<string, unknown>): boolean {
 function rowOf(item: Record<string, unknown>): AccountRow {
   if (!isRich(item)) return parseThinName(String((item as { name?: unknown }).name ?? ''));
   return {
-    platform: String((item as { platform?: unknown }).platform ?? '待补'),
-    username: String((item as { username?: unknown }).username ?? '待补'),
-    typeText: String((item as { type?: unknown }).type ?? '待补'),
+    platform: String((item as { platform?: unknown }).platform ?? m('skill-home.receipt-pages-accounts.c026')),
+    username: String((item as { username?: unknown }).username ?? m('skill-home.receipt-pages-accounts.c027')),
+    typeText: String((item as { type?: unknown }).type ?? m('skill-home.receipt-pages-accounts.c028')),
   };
 }
 
 function groupTitle(t: string): string {
   if (t === '购物' || t === '银行' || t === '社交' || t === '其他') return t;
-  return '其他';
+  return m('skill-home.receipt-pages-accounts.c029');
 }
 
 /** 一组账号的清单表：表头四列，格子挂 `data-label`（390 档改纵排卡片时由 CSS 伪元素挂字段名，
  *  主字段「密码」不再被横滑区推到屏外，见 PAGE_CSS 的 560 断点）。 */
 function rowsTable(list: AccountRow[]): string {
-  return '<div class="rc-scroll"><table><thead><tr><th>平台</th><th>用户名</th><th>类型</th><th>密码</th></tr></thead><tbody>'
-    + list.map((r) => '<tr><td data-label="平台">' + escapeHtml(r.platform) + '</td>'
-      + '<td data-label="用户名">' + escapeHtml(r.username) + '</td>'
-      + '<td data-label="类型">' + escapeHtml(groupTitle(r.typeText)) + '</td>'
-      + '<td data-label="密码">******</td></tr>').join('')
-    + '</tbody></table></div>';
+  const L = pageText();
+  return '<div class="rc-scroll">' + '<table>' + '<thead>' + '<tr>' + '<th>' + L.k001 + '</th>' + '<th>' + L.k002 + '</th>' + '<th>' + L.k003 + '</th>' + '<th>' + L.k004 + '</th>' + '</tr>' + '</thead>' + '<tbody>' + list.map((r) => '<tr>' + '<td data-label="' + L.k008 + '">' + escapeHtml(r.platform) + '</td>'
+      + '<td data-label="' + L.k007 + '">' + escapeHtml(r.username) + '</td>'
+      + '<td data-label="' + L.k006 + '">' + escapeHtml(groupTitle(r.typeText)) + '</td>'
+      + '<td data-label="' + L.k005 + '">' + '******' + '</td>' + '</tr>').join('') + '</tbody>' + '</table>' + '</div>';
 }
 
 function listGroups(env: Envelope): string {
+  const L = pageText();
   const data = env.data as Record<string, unknown>;
   const items = Array.isArray((data as { items?: unknown }).items)
     ? (data as { items: Record<string, unknown>[] }).items
     : [];
   if (!items.length) {
-    return '<div><p class="rc-note">暂无账号，可新增一个账号后回来按类型复核</p></div>';
+    return '<div>' + '<p class="rc-note">' + L.k009 + '</p>' + '</div>';
   }
   const rows = items.map(rowOf);
   const groups = new Map<string, AccountRow[]>();
@@ -130,18 +161,18 @@ function listGroups(env: Envelope): string {
     if (hit) hit.push(r);
     else groups.set(g, [r]);
   }
-  const order = ['购物', '银行', '社交', '其他'];
+  const order = [m('skill-home.receipt-pages-accounts.c030'), m('skill-home.receipt-pages-accounts.c031'), m('skill-home.receipt-pages-accounts.c032'), m('skill-home.receipt-pages-accounts.c033')];
   const parts: string[] = ['<div>'];
   for (const g of order) {
     const list = groups.get(g);
     if (!list || !list.length) continue;
-    parts.push('<h2 class="rc-group">' + escapeHtml(g) + '（共' + list.length + '个）</h2>');
+    parts.push('<h2 class="rc-group">' + L.k010(String(escapeHtml(g)), String(list.length)) + '</h2>');
     parts.push(rowsTable(list));
   }
   const rest = [...groups.keys()].filter((k) => !order.includes(k));
   for (const g of rest) {
     const list = groups.get(g) as AccountRow[];
-    parts.push('<h2 class="rc-group">' + escapeHtml(g) + '（共' + list.length + '个）</h2>');
+    parts.push('<h2 class="rc-group">' + L.k011(String(escapeHtml(g)), String(list.length)) + '</h2>');
     parts.push(rowsTable(list));
   }
   parts.push('</div>');
@@ -149,29 +180,25 @@ function listGroups(env: Envelope): string {
 }
 
 function receiptNote(env: Envelope): string {
+  const L = pageText();
   const data = env.data as Record<string, unknown>;
-  const msg = String((data as { message?: unknown }).message ?? '已落盘');
+  const msg = String((data as { message?: unknown }).message ?? m('skill-home.receipt-pages-accounts.c034'));
   // 明文只走对话 JSON 回显；「页上不展示明文」这条由页首敏感横幅说一次，回执里不再说。
-  const safe = /密码/.test(msg) ? '密码已回显' : msg;
+  const safe = /密码/.test(msg) ? m('skill-home.receipt-pages-accounts.c035') : msg;
   // 存账号（新增）补一句密码怎么存；改账号（更新）说清只填要改的——消息文本带动作词，据此分流。
   const byOp = /(新增|新建|已存)/.test(msg)
-    ? '<p class="rc-note">密码加密落库，只在对话里回显</p>'
-    : /(更新|已改|修改)/.test(msg) ? '<p class="rc-note">只填要改的字段，其余留空即保持原值</p>' : '';
+    ? '<p class="rc-note">' + L.k012 + '</p>'
+    : /(更新|已改|修改)/.test(msg) ? '<p class="rc-note">' + L.k013 + '</p>' : '';
   // 真实回执放绿卡（回执是本页主内容，字号／字重抬到说明句之上，见 PAGE_CSS 的层级阶梯）。
   return '<div>' + byOp + '<p class="receipt rc-receipt">' + escapeHtml(safe) + '</p></div>';
 }
 
 function opsBlock(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
+  const L = pageText();
   // 主次：四颗动作按钮里「新增账号」是本页主命令（写类入口），走实心蓝；其余三颗保持白底（#817 seq 61–64 的 ④）。
-  return '<div>'
-    + '<button type="button" class="rc-primary" data-t="请新增账号">新增账号</button>'
-    + '<button type="button" data-t="请查看密码，经对话回显">查看密码</button>'
-    + '<button type="button" data-t="请复制密码，复制前二次确认">复制密码</button>'
-    + '<button type="button" data-t="复制账号脱敏数据">复制数据</button>'
-    + homeCopyArea({
+  return '<div>' + '<button type="button" class="rc-primary" data-t="' + L.k014 + '">' + L.k015 + '</button>' + '<button type="button" data-t="' + L.k016 + '">' + L.k017 + '</button>' + '<button type="button" data-t="' + L.k018 + '">' + L.k019 + '</button>' + '<button type="button" data-t="' + L.k020 + '">' + L.k021 + '</button>' + homeCopyArea({
         log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
-      })
-    + '</div>';
+      }) + '</div>';
 }
 
 function envelopeBrief(env: Envelope): string {
@@ -182,7 +209,8 @@ function envelopeBrief(env: Envelope): string {
 }
 
 function sensitiveBanner(): string {
-  return '<div><p class="rc-note">说明页不展示明文，查看与复制均需二次确认</p></div>';
+  const L = pageText();
+  return '<div>' + '<p class="rc-note">' + L.k022 + '</p>' + '</div>';
 }
 
 /** 按钮绑定（#817 收口补）：操作区这 5 颗是 `data-t` 复制按钮，只渲染不绑点击＝点了没反应
@@ -222,9 +250,9 @@ const PAGE_CSS = '<style>button{min-height:44px;min-width:44px;padding:0 14px;bo
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
 // 日志位走共用件（卡路里同款六段日志）；`ctx.command` 由交付链供给（含 params），直调缺省按本族主 key。
 export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
+  const L = pageText();
   const template = readFileSync(new URL('../../../templates/receipt/accounts.html', import.meta.url), 'utf8');
-  const head = '<div class="fam-head" data-family="' + FAMILY + '" data-key="' + escapeHtml(String((env as { key?: unknown }).key ?? PAGE_META.key)) + '">'
-    + '<span>账号密码</span></div>';
+  const head = '<div class="fam-head" data-family="' + FAMILY + '" data-key="' + escapeHtml(String((env as { key?: unknown }).key ?? PAGE_META.key)) + '">' + '<span>' + L.k023 + '</span>' + '</div>';
   const main = env.shape === 'receipt' ? receiptNote(env) : listGroups(env);
   const content = PAGE_CSS
     + head
@@ -232,9 +260,9 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + main
     + opsBlock(env, ctx)
     + PAGE_SCRIPT
-    + sectionOf('fields', '字段')
-    + sectionOf('operations', '操作')
-    + sectionOf('empty', '空态与异常')
-    + sectionOf('status', '状态词');
+    + sectionOf('fields', m('skill-home.receipt-pages-accounts.c036'))
+    + sectionOf('operations', m('skill-home.receipt-pages-accounts.c037'))
+    + sectionOf('empty', m('skill-home.receipt-pages-accounts.c038'))
+    + sectionOf('status', m('skill-home.receipt-pages-accounts.c039'));
   return fillTemplate(template, content);
 }

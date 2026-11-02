@@ -18,6 +18,7 @@
  */
 
 /** 本件的类名根：全部槽位类名都是 `CONFIRM_STRIP_CLASS + '-' + 槽名`。 */
+import { m } from '../../entries/index.js';
 export const CONFIRM_STRIP_CLASS = 'ilife-block-confirm-strip';
 
 /** 槽位闭集（标记契约的一部分：`render.ts`、`runtime.ts` 与判据都用这里的名字拼类名，不各抄一份字面量）。 */
@@ -100,18 +101,18 @@ export type ConfirmStripAct = (typeof CONFIRM_STRIP_ACTS)[number];
 /** **空词表**：这些词不回答「按下去会怎样」，一律不许当危险动词。
  *  写的是闭集不是正则——「删除」这种**光有动词、没有对象与条数**的情形由本件拼装时补全
  *  （危险按钮恒为 `<动词>这 <条数> <单位>`），所以这里只拦「确定」这类纯确认词。 */
-export const CONFIRM_STRIP_BARE_WORDS = [
-  '确定', '确认', '好', '好的', '是', '是的', '行', '可以', '提交', '继续', '下一步', 'OK', 'ok', 'yes', 'no',
-] as const;
+export function CONFIRM_STRIP_BARE_WORDS(): readonly string[] { return [
+  m('base-render.components-confirm-strip-attrs.c001'), m('base-render.components-confirm-strip-attrs.c002'), m('base-render.components-confirm-strip-attrs.c003'), m('base-render.components-confirm-strip-attrs.c004'), m('base-render.components-confirm-strip-attrs.c005'), m('base-render.components-confirm-strip-attrs.c006'), m('base-render.components-confirm-strip-attrs.c007'), m('base-render.components-confirm-strip-attrs.c008'), m('base-render.components-confirm-strip-attrs.c009'), m('base-render.components-confirm-strip-attrs.c010'), m('base-render.components-confirm-strip-attrs.c011'), 'OK', 'ok', 'yes', 'no',
+]; }
 
 /** 量词缺省值（「3 **条**记录」）：六个技能的记录都以「条」计。 */
-export const CONFIRM_STRIP_UNIT_DEFAULT = '条';
+export function CONFIRM_STRIP_UNIT_DEFAULT(): string { return m('base-render.components-confirm-strip-attrs.c012'); }
 /** 安全按钮的缺省字（左边的动作恒是「先别删」）。 */
-export const CONFIRM_STRIP_KEEP_DEFAULT = '再想想';
+export function CONFIRM_STRIP_KEEP_DEFAULT(): string { return m('base-render.components-confirm-strip-attrs.c013'); }
 /** 不可撤销时的缺省后果话（调用方可用 `loss` 覆盖得更具体）。 */
-export const CONFIRM_STRIP_LOSS_DEFAULT = '删掉之后找不回来，也没有回收站。';
+export function CONFIRM_STRIP_LOSS_DEFAULT(): string { return m('base-render.components-confirm-strip-attrs.c014'); }
 /** 缺省的备份复选项文字（`backup: true` 且没给 `backupLabel` 时用这一句）。 */
-export const CONFIRM_STRIP_BACKUP_DEFAULT = '删之前先把这几条导出备份';
+export function CONFIRM_STRIP_BACKUP_DEFAULT(): string { return m('base-render.components-confirm-strip-attrs.c015'); }
 
 /** 要删掉的一条（**点名**：这三格合起来让用户认得出「就是它」）。 */
 export interface ConfirmStripItem {

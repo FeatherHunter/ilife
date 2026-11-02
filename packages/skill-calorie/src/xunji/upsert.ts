@@ -21,6 +21,7 @@ import type { XunjiResItem } from './request.js';
 import { XUNJI_KEY_FIELD, readKey } from './key.js';
 import { classifyStatusBody, classifyThrown, retryWithBackoff, softFailureOf } from './retry.js';
 import type { XunjiCallOutcome, XunjiFailure } from './retry.js';
+import { m } from '../entries/index.js';
 
 /** KEY 落点名＋缺省读法薄转出（定义见 `key.ts`）。 */
 export { XUNJI_KEY_FIELD, readKey };
@@ -39,7 +40,7 @@ export interface UpsertTransport {
 /** 缺省传输（全局 fetch；缺失即明确失败，不静默）。 */
 const defaultTransport: UpsertTransport = (url, init) => {
   const f: unknown = (globalThis as { fetch?: unknown }).fetch;
-  if (typeof f !== 'function') return Promise.reject(new Error('HTTP 通道不可用：全局 fetch 缺失'));
+  if (typeof f !== 'function') return Promise.reject(new Error(m('skill-calorie.xunji-upsert.c003')));
   return (f as typeof fetch)(url, init).then((r) => ({
     status: r.status,
     bodyText: () => r.text(),
@@ -74,7 +75,7 @@ export type UpsertOutcome = XunjiCallOutcome;
 function authMissing(): UpsertOutcome {
   const failure: XunjiFailure = {
     error_type: 'auth',
-    message: '未配置训记 KEY（配置项 ' + XUNJI_KEY_FIELD + '；用 key set <KEY> 写进配置文件）',
+    message: m('skill-calorie.xunji-upsert.c002', { p0: XUNJI_KEY_FIELD }),
     retry_after: null,
     raw_body: null,
     code: null,
@@ -115,7 +116,7 @@ export async function upsertTrains(resList: readonly XunjiResItem[], opts: Upser
       try {
         parsed = JSON.parse(text);
       } catch {
-        const failure: XunjiFailure = { error_type: 'validation', message: '响应 JSON 解析失败', retry_after: null, raw_body: text.slice(0, 200), code: resp.status };
+        const failure: XunjiFailure = { error_type: 'validation', message: m('skill-calorie.xunji-upsert.c001'), retry_after: null, raw_body: text.slice(0, 200), code: resp.status };
         return { ok: false, failure, attempts: 1 };
       }
       if (resp.status >= 200 && resp.status < 300) {

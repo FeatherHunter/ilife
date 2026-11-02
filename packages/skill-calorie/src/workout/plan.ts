@@ -15,6 +15,7 @@ import { anchorOf, assertISO, dayField, fail, nums, optInt, optStr, windowRange 
 import { commandLine } from '../shared/writeParts.js';
 import { planConfirmCommand, planModifyPayload } from './planPreviewPayloads.js';
 import { previewWrite } from './write.js';
+import { m } from '../entries/index.js';
 
 /** `calorie.view.plan` · 训练计划看（整个计划：总周数／训练日／动作数 ＋ 每周完成率；带筛选即看该粒度）。
  *  无计划（空库／撤销后）就照 `buildPlanView` 的缺失阻断抛 `missing-data`（调用方走 fallback，不静默空页）：
@@ -67,8 +68,8 @@ export function viewPlanVsActual(params: Record<string, unknown>, db: DatabaseSy
   const s0 = optStr(params, 'start');
   const e0 = optStr(params, 'end');
   const range = windowRange(params) ??
-    (s0 && e0 ? { start: s0, end: e0 } : windowRange({ ...params, window: '本周' }));
-  if (!range) fail(2, '缺参数 window（或 start＋end）');
+    (s0 && e0 ? { start: s0, end: e0 } : windowRange({ ...params, window: m('skill-calorie.workout-plan.c001') }));
+  if (!range) fail(2, m('skill-calorie.workout-plan.c002'));
   assertISO(range.start, 'start');
   assertISO(range.end, 'end');
   const v = buildPlanVsActualView(db, range);

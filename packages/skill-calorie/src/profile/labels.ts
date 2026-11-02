@@ -13,33 +13,36 @@
  * `localizeEnums` 因此只在页面层对着**整句话**用（摘要、逐字段对照那句），不对载荷用。
  */
 import { ACTIVITY_LEVEL_LABELS, GENDER_LABELS } from '../analysis/utils.js';
+import { m } from '../entries/index.js';
 
 /** 档案字段名（CLI 参数名，与 `writtenFields`／`items[].status` 同形）→ 中文列名。
  *  与写命令的参数允许清单同集（`src/cli/write.ts` 的 `PROFILE_COLS` 同五项，那边映射的是库列名）。 */
-const FIELD_LABELS: Record<string, string> = {
-  heightCm: '身高',
-  age: '年龄',
-  gender: '性别',
-  activityLevel: '活动量',
-  note: '备注',
-};
+function fieldLabels(): Record<string, string> {
+  return {
+    heightCm: m('skill-calorie.profile-labels.c003'),
+    age: m('skill-calorie.profile-labels.c004'),
+    gender: m('skill-calorie.profile-labels.c005'),
+    activityLevel: m('skill-calorie.profile-labels.c006'),
+    note: m('skill-calorie.profile-labels.c007'),
+  };
+}
 
 /** 认不出的字段名原样露出（不编中文名，也不吞掉）。 */
 export function fieldLabel(camel: string): string {
-  return FIELD_LABELS[camel] ?? camel;
+  return fieldLabels()[camel] ?? camel;
 }
 
 /** 性别显示值：`male→男`／`female→女`；别的原样露出（认不出的绝不猜成男）。空值写「未设置」。 */
 export function genderLabel(raw: string | null | undefined): string {
   const s = raw === null || raw === undefined ? '' : String(raw).trim();
-  if (s === '') return '未设置';
+  if (s === '') return m('skill-calorie.profile-labels.c001');
   return GENDER_LABELS[s] ?? s;
 }
 
 /** 活动量档位显示值：五档取正本 `ACTIVITY_LEVEL_LABELS`；认不出的档位原样露出。空值写「未设置」。 */
 export function activityLabel(level: string | null | undefined): string {
   const s = level === null || level === undefined ? '' : String(level).trim();
-  if (s === '') return '未设置';
+  if (s === '') return m('skill-calorie.profile-labels.c002');
   return ACTIVITY_LEVEL_LABELS[s] ?? s;
 }
 

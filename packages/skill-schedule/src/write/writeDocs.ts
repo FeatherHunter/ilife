@@ -40,6 +40,7 @@ import { assembleDocPage, type PageHead } from '../shared/docPage.js';
 import { pageSections } from '../shared/pageNav.js';
 import { hourCellsOf, renderHourBand, type HourCell } from '../shared/pageParts.js';
 import { renderDiffPanel, renderChipBand, renderPastHours, writePartsCss, type PastHourCard } from './writeParts.js';
+import { m } from '../entries/index.js';
 
 /** 回溯窗口＝这一条记录结束时刻往前推这么多分钟（老侧 `RECENT_HOURS = 3`）。 */
 const RECENT_MINUTES = 3 * 60;
@@ -52,21 +53,24 @@ const BATCH_ROWS_MAX = 40;
 const DAY_MINUTES = 24 * 60;
 const WEEK_DAYS = 7;
 
-/** 域词（页眉那一行）与页名。 */
-const EYEBROW = '作息管家 写入与同步';
+/** 域词（页眉那一行）与页名。#1197：取词在渲染期，故写成函数（模块级常量只会在加载期取到 zh）。 */
+function eyebrow(): string { return m('skill-schedule.write-writeDocs.c150'); }
 
-/** 修正作息回执的字段中文名（库列名与命令参数名都不上屏；一处定义）。 */
-const FIELD_LABELS: Readonly<Record<string, string>> = {
-  date: '日期',
-  time_start: '开始时间',
-  time_end: '结束时间',
-  duration_minutes: '时长',
-  activity: '活动',
-  category: '分类',
-  source_contents: '来源消息',
-  source_timestamps: '来源时间',
-  analysis_reasoning: '推理说明',
-};
+/** 修正作息回执的字段中文名（库列名与命令参数名都不上屏；一处定义）。
+ *  #1197：取词在渲染期，故写成函数（模块级常量只会在加载期取到 zh）。 */
+function fieldLabels(): Readonly<Record<string, string>> {
+  return {
+    date: m('skill-schedule.write-writeDocs.c151'),
+    time_start: m('skill-schedule.write-writeDocs.c152'),
+    time_end: m('skill-schedule.write-writeDocs.c153'),
+    duration_minutes: m('skill-schedule.write-writeDocs.c154'),
+    activity: m('skill-schedule.write-writeDocs.c155'),
+    category: m('skill-schedule.write-writeDocs.c156'),
+    source_contents: m('skill-schedule.write-writeDocs.c157'),
+    source_timestamps: m('skill-schedule.write-writeDocs.c158'),
+    analysis_reasoning: m('skill-schedule.write-writeDocs.c159'),
+  };
+}
 
 const isoOf = (d: Date): string => d.toISOString().slice(0, 10);
 const dayShift = (iso: string, days: number): string => {
@@ -78,7 +82,7 @@ const hhmm = (minutes: number): string => (minutes >= DAY_MINUTES
   ? '24:00'
   : String(Math.floor(minutes / 60)).padStart(2, '0') + ':' + String(minutes % 60).padStart(2, '0'));
 /** 范围一律写「至」（不用波浪号，也不用短横）。 */
-const span = (from: string, to: string): string => from + ' 至 ' + to;
+const span = (from: string, to: string): string => m('skill-schedule.write-writeDocs.c001', { p0: String(from), p1: String(to) });
 const snip = (text: string, max: number): string => {
   const s = (text ?? '').trim();
   return s.length <= max ? s : s.slice(0, max) + '…';
@@ -86,8 +90,10 @@ const snip = (text: string, max: number): string => {
 /** **预览**（来源消息／推理说明这两处截断文本）的显示规范化：把「拿符号当分隔」的写法换回人话
  *  （范围写「至」，并列写「，」）——这两段本来就是摘要，改的是摘要的写法，不动库里那两列原文。
  *  **活动与分类原样上屏**：那是用户自己的话，不是我们的版面债，本函数不碰它们。 */
+/** 范围连接词：整句在渲染期取词（宿主的 replace 第二参不迁，故先取成局部值）。 */
+const rangeJoin = (): string => m('skill-schedule.write-writeDocs.c160');
 const preview = (text: string, max: number): string => snip(
-  (text ?? '').replace(/[~～]/g, ' 至 ').replace(/[·；｜|、／;]/g, '，').replace(/\s+/g, ' ').trim(),
+  (text ?? '').replace(/[~～]/g, ' ' + rangeJoin() + ' ').replace(/[·；｜|、／;]/g, '，').replace(/\s+/g, ' ').trim(),
   max,
 );
 const nowMinutes = (now: Date): number => now.getHours() * 60 + now.getMinutes();
@@ -138,8 +144,8 @@ function writeCopy(title: string, lines: readonly string[], command: string, sou
 function l1OnlyNotice(category: string): string {
   const level2 = DEFAULT_WHITELIST[category] ?? [];
   const notice = renderFeedbackBlock({
-    title: '这条可以再细一档',
-    toast: { icon: 'warn', msg: '这一条只记到一级分类「' + category + '」，二级还空着。' },
+    title: m('skill-schedule.write-writeDocs.c002'),
+    toast: { icon: 'warn', msg: m('skill-schedule.write-writeDocs.c003', { p0: String(category) }) },
     staticNotice: true,
   });
   return notice + renderChipBand(level2);
@@ -148,18 +154,18 @@ function l1OnlyNotice(category: string): string {
 /** 三条「接下来可以说什么」：整句可复制（老侧三个操作按钮的 prompt 位）。 */
 function nextSteps(date: string, record: ScheduleRecord): string {
   const lines = [
-    '请帮我接着 ' + date + ' 的 ' + record.time_end + ' 之后记下一条作息。',
-    '请帮我看看 ' + date + ' 这一天的全貌。',
-    '请帮我复盘 ' + date + ' 这一天。',
+    m('skill-schedule.write-writeDocs.c004', { p0: String(date), p1: String(record.time_end) }),
+    m('skill-schedule.write-writeDocs.c005', { p0: String(date) }),
+    m('skill-schedule.write-writeDocs.c006', { p0: String(date) }),
   ];
-  const labels = ['继续记下一条', '看今日全貌', '晚点复盘'];
+  const labels = [m('skill-schedule.write-writeDocs.c007'), m('skill-schedule.write-writeDocs.c008'), m('skill-schedule.write-writeDocs.c009')];
   const blocks = lines.map((command, i) => renderPreBlock({
     label: labels[i],
     command,
     actionId: 'ilife-sch-write-next-' + String(i + 1),
-    copyLabel: '复制这句话',
+    copyLabel: m('skill-schedule.write-writeDocs.c010'),
   })).join('');
-  return renderDisclosure({ title: '接下来可以说什么', contentHtml: blocks });
+  return renderDisclosure({ title: m('skill-schedule.write-writeDocs.c011'), contentHtml: blocks });
 }
 
 /** 「记作息结果」整页：状态总览 ＋ 全天时间轴 ＋ 过去几小时推断回溯（老侧三件套），只记一级时加提示。 */
@@ -191,59 +197,76 @@ export function recordResultPage(handle: ScheduleDb, record: ScheduleRecord, now
   const level2 = parseCategory(record.category).level2;
   const sameCategory = records.filter((r) => r.category === record.category).length;
   const kpis: KpiCardInput[] = [
-    { label: '今日已记录', value: String(view.total) + ' 块', detail: date },
+    { label: m('skill-schedule.write-writeDocs.c012'), value: m('skill-schedule.write-writeDocs.c013', { p0: String(String(view.total)) }), detail: date },
     {
-      label: '覆盖时长', value: fmtDurShort(view.coverage),
-      detail: '已过 ' + fmtDurShort(passed) + '，覆盖 ' + coveragePct + '%',
+      label: m('skill-schedule.write-writeDocs.c014'), value: fmtDurShort(view.coverage),
+      detail: m('skill-schedule.write-writeDocs.c015', { p0: String(fmtDurShort(passed)), p1: String(coveragePct) }),
       bar: { pct: Math.round(coveragePct) },
     },
     {
-      label: '缺口时段', value: String(gaps.length) + ' 段',
+      label: m('skill-schedule.write-writeDocs.c016'), value: m('skill-schedule.write-writeDocs.c017', { p0: String(String(gaps.length)) }),
       detail: gaps.length === 0
-        ? '整天都记满了'
-        : ('合计 ' + String(gaps.reduce((sum, g) => sum + gapMinutes(g), 0)) + ' 分钟'),
+        ? m('skill-schedule.write-writeDocs.c018')
+        : m('skill-schedule.write-writeDocs.c019', {
+          p0: String(String(gaps.reduce((sum, g) => sum + gapMinutes(g), 0))),
+        }),
     },
-    { label: '本周累计', value: String(week.length) + ' 块', detail: '最近 7 天' },
+    { label: m('skill-schedule.write-writeDocs.c020'), value: m('skill-schedule.write-writeDocs.c021', { p0: String(String(week.length)) }), detail: m('skill-schedule.write-writeDocs.c022') },
   ];
   const head: PageHead = {
-    docTitle: '作息管家 记作息结果',
-    eyebrow: EYEBROW,
-    title: '记作息结果',
-    subtitle: '刚写入的是 ' + date + ' 的 ' + span(record.time_start, record.time_end)
-      + '，活动是「' + record.activity + '」，分类是「' + record.category + '」。',
+    docTitle: m('skill-schedule.write-writeDocs.c023'),
+    eyebrow: eyebrow(),
+    title: m('skill-schedule.write-writeDocs.c024'),
+    subtitle: m('skill-schedule.write-writeDocs.c025', {
+      p0: String(date),
+      p1: String(span(record.time_start, record.time_end)),
+      p2: String(record.activity),
+      p3: String(record.category),
+    }),
   };
   const { toc, body } = pageSections([
-    { navText: level2 === null ? '这条可以再细一档' : '', html: level2 === null ? l1OnlyNotice(level1) : '' },
-    { html: renderConclusionBar('已记下这一条，' + date + ' 一共 ' + view.total + ' 块记录，健康分 ' + view.score + '。') },
-    { navText: '当前状态总览', html: renderKpiGrid(kpis, { title: '当前状态总览' }) },
-    { navText: '全天作息时间轴', html: renderHourBand(cellsOf(records), { order: orderOf(), title: '全天作息时间轴', height: 140 }) },
+    { navText: level2 === null ? m('skill-schedule.write-writeDocs.c026') : '', html: level2 === null ? l1OnlyNotice(level1) : '' },
+    { html: renderConclusionBar(m('skill-schedule.write-writeDocs.c027', {
+      p0: String(date),
+      p1: String(view.total),
+      p2: String(view.score),
+    })) },
+    { navText: m('skill-schedule.write-writeDocs.c028'), html: renderKpiGrid(kpis, { title: m('skill-schedule.write-writeDocs.c029') }) },
+    { navText: m('skill-schedule.write-writeDocs.c030'), html: renderHourBand(cellsOf(records), { order: orderOf(), title: m('skill-schedule.write-writeDocs.c031'), height: 140 }) },
     { html: renderFactStrip({
       items: [
-        { label: '回溯窗口', value: span(hhmm(windowStart), record.time_end) },
-        { label: '刚记录', value: span(record.time_start, record.time_end) },
-        { label: '本类已有', value: String(sameCategory) + ' 块' },
-        { label: '本类占比', value: fmtPct(record.duration_minutes ?? 0, view.coverage) + '%' },
+        { label: m('skill-schedule.write-writeDocs.c032'), value: span(hhmm(windowStart), record.time_end) },
+        { label: m('skill-schedule.write-writeDocs.c033'), value: span(record.time_start, record.time_end) },
+        { label: m('skill-schedule.write-writeDocs.c034'), value: m('skill-schedule.write-writeDocs.c035', { p0: String(String(sameCategory)) }) },
+        { label: m('skill-schedule.write-writeDocs.c036'), value: fmtPct(record.duration_minutes ?? 0, view.coverage) + '%' },
       ],
     }) },
-    { navText: '过去几小时推断回溯', html: renderPastHours({
-      title: '过去几小时推断回溯',
+    { navText: m('skill-schedule.write-writeDocs.c037'), html: renderPastHours({
+      title: m('skill-schedule.write-writeDocs.c038'),
       cards,
-      emptyText: '回溯窗口里还没有别的记录，这是窗口里的第一笔。',
+      emptyText: m('skill-schedule.write-writeDocs.c039'),
     }) },
     { html: nextSteps(date, record) },
-    { navText: '复制与留档', html: scheduleCopyArea({
-      title: '复制与留档',
+    { navText: m('skill-schedule.write-writeDocs.c040'), html: scheduleCopyArea({
+      title: m('skill-schedule.write-writeDocs.c041'),
       dataActionId: 'ilife-sch-write-copy-data',
       logActionId: 'ilife-sch-write-copy-log',
-      ...writeCopy('记作息结果', [
-        '日期：' + date,
-        '这一条：' + span(record.time_start, record.time_end) + ' ' + record.activity,
-        '分类：' + record.category,
-        '今日块数：' + view.total + '，覆盖：' + fmtDur(view.coverage) + '，健康分：' + view.score,
+      ...writeCopy(m('skill-schedule.write-writeDocs.c042'), [
+        m('skill-schedule.write-writeDocs.c043', { p0: String(date) }),
+        m('skill-schedule.write-writeDocs.c044', {
+          p0: String(span(record.time_start, record.time_end)),
+          p1: String(record.activity),
+        }),
+        m('skill-schedule.write-writeDocs.c045', { p0: String(record.category) }),
+        m('skill-schedule.write-writeDocs.c046', {
+          p0: String(view.total),
+          p1: String(fmtDur(view.coverage)),
+          p2: String(view.score),
+        }),
       ], 'schedule-cmd-read schedule.record.write --params {"op":"add","date":"' + date
         + '","time_start":"' + record.time_start + '","time_end":"' + record.time_end
         + '","activity":"' + record.activity + '","category":"' + record.category + '"}',
-      '作息记录表（这一条已入库）'),
+      m('skill-schedule.write-writeDocs.c047')),
     }) },
   ]);
   return assembleDocPage({ head, content: toc + body, extraCss: writePartsCss() });
@@ -254,7 +277,7 @@ export function recordResultPage(handle: ScheduleDb, record: ScheduleRecord, now
 /** 一个字段改前改后长什么样（时长补单位、空值写破折号）。 */
 function fieldValue(key: string, value: unknown): string {
   if (value === null || value === undefined || value === '') return '—';
-  if (key === 'duration_minutes') return String(value) + ' 分钟';
+  if (key === 'duration_minutes') return m('skill-schedule.write-writeDocs.c048', { p0: String(String(value)) });
   return String(value);
 }
 
@@ -263,70 +286,76 @@ export function amendReceiptPage(
   before: ScheduleRecord, after: ScheduleRecord, patchKeys: readonly string[], now: Date = new Date(),
 ): string {
   const rows: ChangeRowInput[] = patchKeys
-    .filter((key) => FIELD_LABELS[key] !== undefined)
+    .filter((key) => fieldLabels()[key] !== undefined)
     .map((key) => ({
-      label: FIELD_LABELS[key],
+      label: fieldLabels()[key],
       before: fieldValue(key, (before as unknown as Record<string, unknown>)[key]),
       after: fieldValue(key, (after as unknown as Record<string, unknown>)[key]),
     }));
   const older = after.date < isoOf(now);
   const stale = older
     ? renderFeedbackBlock({
-      title: '改的是一条旧记录',
+      title: m('skill-schedule.write-writeDocs.c049'),
       toast: {
         icon: 'warn',
-        msg: '这条记的是 ' + after.date + '，不是今天的。改动照样写进库，次数也照样加一。',
+        msg: m('skill-schedule.write-writeDocs.c050', { p0: String(after.date) }),
       },
       staticNotice: true,
     })
     : '';
   const current: DataTableRow[] = [
-    { k: '日期', v: after.date },
-    { k: '起止', v: span(after.time_start, after.time_end) },
-    { k: '时长', v: fmtDur(after.duration_minutes ?? 0) },
-    { k: '活动', v: after.activity },
-    { k: '分类', v: after.category },
-    { k: '来源消息', v: fieldValue('source_contents', after.source_contents) },
-    { k: '来源时间', v: fieldValue('source_timestamps', after.source_timestamps) },
-    { k: '推理说明', v: fieldValue('analysis_reasoning', after.analysis_reasoning) },
+    { k: m('skill-schedule.write-writeDocs.c051'), v: after.date },
+    { k: m('skill-schedule.write-writeDocs.c052'), v: span(after.time_start, after.time_end) },
+    { k: m('skill-schedule.write-writeDocs.c053'), v: fmtDur(after.duration_minutes ?? 0) },
+    { k: m('skill-schedule.write-writeDocs.c054'), v: after.activity },
+    { k: m('skill-schedule.write-writeDocs.c055'), v: after.category },
+    { k: m('skill-schedule.write-writeDocs.c056'), v: fieldValue('source_contents', after.source_contents) },
+    { k: m('skill-schedule.write-writeDocs.c057'), v: fieldValue('source_timestamps', after.source_timestamps) },
+    { k: m('skill-schedule.write-writeDocs.c058'), v: fieldValue('analysis_reasoning', after.analysis_reasoning) },
   ];
   const head: PageHead = {
-    docTitle: '作息管家 修正作息回执',
-    eyebrow: EYEBROW,
-    title: '修正作息回执',
-    subtitle: '这条记录改过 ' + after.edit_count + ' 次，这次动的是 ' + after.date
-      + ' 的 ' + span(after.time_start, after.time_end) + '。',
+    docTitle: m('skill-schedule.write-writeDocs.c059'),
+    eyebrow: eyebrow(),
+    title: m('skill-schedule.write-writeDocs.c060'),
+    subtitle: m('skill-schedule.write-writeDocs.c061', {
+      p0: String(after.edit_count),
+      p1: String(after.date),
+      p2: String(span(after.time_start, after.time_end)),
+    }),
   };
   const { toc, body } = pageSections([
     { html: stale },
-    { html: renderConclusionBar('这条记录已经改好，改的是哪几格，原来是什么值，下面逐格对照。') },
-    { navText: '这条记录现在的样子', html: renderKpiGrid([
-      { label: '记录日期', value: after.date, detail: span(after.time_start, after.time_end) },
-      { label: '修改次数', value: '第 ' + after.edit_count + ' 次', detail: '库里这条被改过几次' },
-      { label: '现在的分类', value: after.category, detail: '一级 ' + l1Of(after.category) },
-      { label: '现在的活动', value: after.activity, detail: fmtDur(after.duration_minutes ?? 0) },
-    ], { title: '这条记录现在的样子' }) },
-    { navText: '这次改了什么', html: renderDiffPanel({ title: '这次改了什么', rows }) },
+    { html: renderConclusionBar(m('skill-schedule.write-writeDocs.c062')) },
+    { navText: m('skill-schedule.write-writeDocs.c063'), html: renderKpiGrid([
+      { label: m('skill-schedule.write-writeDocs.c064'), value: after.date, detail: span(after.time_start, after.time_end) },
+      { label: m('skill-schedule.write-writeDocs.c065'), value: m('skill-schedule.write-writeDocs.c066', { p0: String(after.edit_count) }), detail: m('skill-schedule.write-writeDocs.c067') },
+      { label: m('skill-schedule.write-writeDocs.c068'), value: after.category, detail: m('skill-schedule.write-writeDocs.c069', { p0: String(l1Of(after.category)) }) },
+      { label: m('skill-schedule.write-writeDocs.c070'), value: after.activity, detail: fmtDur(after.duration_minutes ?? 0) },
+    ], { title: m('skill-schedule.write-writeDocs.c071') }) },
+    { navText: m('skill-schedule.write-writeDocs.c072'), html: renderDiffPanel({ title: m('skill-schedule.write-writeDocs.c073'), rows }) },
     { html: renderDisclosure({
-      title: '改完之后的完整一条',
+      title: m('skill-schedule.write-writeDocs.c074'),
       contentHtml: renderDataTable({
-        columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+        columns: [{ key: 'k', label: m('skill-schedule.write-writeDocs.c075') }, { key: 'v', label: m('skill-schedule.write-writeDocs.c076') }],
         rows: current,
       }),
     }) },
-    { html: renderCaliberLine('改前那一格画着删除线，改后那一格是新值 ｜ 时长按时段实算，跟起止对得上') },
-    { navText: '复制与留档', html: scheduleCopyArea({
-      title: '复制与留档',
+    { html: renderCaliberLine(m('skill-schedule.write-writeDocs.c077')) },
+    { navText: m('skill-schedule.write-writeDocs.c078'), html: scheduleCopyArea({
+      title: m('skill-schedule.write-writeDocs.c079'),
       dataActionId: 'ilife-sch-write-copy-data',
       logActionId: 'ilife-sch-write-copy-log',
-      ...writeCopy('修正作息回执', [
-        '日期：' + after.date,
-        '这次改了 ' + String(rows.length) + ' 处：' + rows.map((r) => r.label).join('，'),
-        '现在的分类：' + after.category,
-        '现在的活动：' + after.activity,
-        '修改次数：' + after.edit_count,
+      ...writeCopy(m('skill-schedule.write-writeDocs.c080'), [
+        m('skill-schedule.write-writeDocs.c081', { p0: String(after.date) }),
+        m('skill-schedule.write-writeDocs.c082', {
+          p0: String(String(rows.length)),
+          p1: String(rows.map((r) => r.label).join('，')),
+        }),
+        m('skill-schedule.write-writeDocs.c083', { p0: String(after.category) }),
+        m('skill-schedule.write-writeDocs.c084', { p0: String(after.activity) }),
+        m('skill-schedule.write-writeDocs.c085', { p0: String(after.edit_count) }),
       ], 'schedule-cmd-read schedule.record.write --params {"op":"amend","id":' + String(after.id) + '}',
-      '作息记录表（这一条已改好，第 ' + String(after.edit_count) + ' 次）'),
+      m('skill-schedule.write-writeDocs.c086', { p0: String(String(after.edit_count)) })),
     }) },
   ]);
   return assembleDocPage({ head, content: toc + body, extraCss: writePartsCss() });
@@ -363,55 +392,60 @@ export function batchReceiptPage(input: {
     result: r.result,
   }));
   const head: PageHead = {
-    docTitle: '作息管家 批量导入回执',
-    eyebrow: EYEBROW,
-    title: '批量导入回执',
-    subtitle: '导入的是 ' + input.date + ' 的记录，一共收到 ' + total + ' 条，写入 ' + done + ' 条。',
+    docTitle: m('skill-schedule.write-writeDocs.c087'),
+    eyebrow: eyebrow(),
+    title: m('skill-schedule.write-writeDocs.c088'),
+    subtitle: m('skill-schedule.write-writeDocs.c089', { p0: String(input.date), p1: String(total), p2: String(done) }),
   };
   const { toc, body } = pageSections([
-    { navText: failed === 0 ? '' : '有几条没写进去', html: failed === 0 ? '' : renderFeedbackBlock({
-      title: '有几条没写进去',
+    { navText: failed === 0 ? '' : m('skill-schedule.write-writeDocs.c090'), html: failed === 0 ? '' : renderFeedbackBlock({
+      title: m('skill-schedule.write-writeDocs.c091'),
       toast: {
         icon: 'warn',
-        msg: '没通过的 ' + failed + ' 条没有写进库，改好之后可以再导一次。',
+        msg: m('skill-schedule.write-writeDocs.c092', { p0: String(failed) }),
       },
       staticNotice: true,
     }) },
     { html: renderConclusionBar(failed === 0
-      ? '这次收到 ' + total + ' 条，全都写进库了。'
-      : '这次收到 ' + total + ' 条，写进 ' + done + ' 条，另有 ' + failed + ' 条没通过校验。') },
-    { navText: '这一趟的结果', html: renderKpiGrid([
-      { label: '收到条数', value: String(total) + ' 条', detail: input.date },
-      { label: '写入成功', value: String(done) + ' 条', detail: '已进作息记录' },
-      { label: '没通过', value: String(failed) + ' 条', detail: failed === 0 ? '一条不差' : '没有写进库' },
+      ? m('skill-schedule.write-writeDocs.c093', { p0: String(total) })
+      : m('skill-schedule.write-writeDocs.c094', { p0: String(total), p1: String(done), p2: String(failed) })) },
+    { navText: m('skill-schedule.write-writeDocs.c095'), html: renderKpiGrid([
+      { label: m('skill-schedule.write-writeDocs.c096'), value: m('skill-schedule.write-writeDocs.c097', { p0: String(String(total)) }), detail: input.date },
+      { label: m('skill-schedule.write-writeDocs.c098'), value: m('skill-schedule.write-writeDocs.c099', { p0: String(String(done)) }), detail: m('skill-schedule.write-writeDocs.c100') },
+      { label: m('skill-schedule.write-writeDocs.c101'), value: m('skill-schedule.write-writeDocs.c102', { p0: String(String(failed)) }), detail: failed === 0 ? m('skill-schedule.write-writeDocs.c103') : m('skill-schedule.write-writeDocs.c104') },
       {
-        label: '写入进度', value: String(total === 0 ? 0 : Math.round((done / total) * 100)) + '%',
+        label: m('skill-schedule.write-writeDocs.c105'), value: String(total === 0 ? 0 : Math.round((done / total) * 100)) + '%',
         detail: String(done) + ' ／ ' + String(total),
       },
-    ], { title: '这一趟的结果' }) },
+    ], { title: m('skill-schedule.write-writeDocs.c106') }) },
     { html: renderDataTable({
-      caption: '逐条结果',
+      caption: m('skill-schedule.write-writeDocs.c107'),
       columns: [
-        { key: 'n', label: '第几条' },
-        { key: 'time', label: '时段' },
-        { key: 'activity', label: '活动' },
-        { key: 'category', label: '分类' },
-        { key: 'result', label: '结果' },
+        { key: 'n', label: m('skill-schedule.write-writeDocs.c108') },
+        { key: 'time', label: m('skill-schedule.write-writeDocs.c109') },
+        { key: 'activity', label: m('skill-schedule.write-writeDocs.c110') },
+        { key: 'category', label: m('skill-schedule.write-writeDocs.c111') },
+        { key: 'result', label: m('skill-schedule.write-writeDocs.c112') },
       ],
       rows: tableRows,
-      emptyText: '这一趟一条也没收到',
+      emptyText: m('skill-schedule.write-writeDocs.c113'),
     }) },
-    { html: left <= 0 ? '' : renderCaliberLine('另有 ' + left + ' 条没有摆上来，完整清单在复制出去的数据里') },
-    { navText: '复制与留档', html: scheduleCopyArea({
-      title: '复制与留档',
+    { html: left <= 0 ? '' : renderCaliberLine(m('skill-schedule.write-writeDocs.c114', { p0: String(left) })) },
+    { navText: m('skill-schedule.write-writeDocs.c115'), html: scheduleCopyArea({
+      title: m('skill-schedule.write-writeDocs.c116'),
       dataActionId: 'ilife-sch-write-copy-data',
       logActionId: 'ilife-sch-write-copy-log',
-      ...writeCopy('批量导入回执', [
-        '日期：' + input.date,
-        '收到：' + total + ' 条，写入：' + done + ' 条，没通过：' + failed + ' 条',
-        ...input.rows.map((r) => '第 ' + r.seq + ' 条：' + r.time + ' ' + r.activity + ' ' + r.result),
-      ], 'schedule-cmd-read schedule.record.write --params {"records":[' + String(total) + ' 条]}',
-      '作息记录表（这一趟写入 ' + done + ' 条）', failed === 0),
+      ...writeCopy(m('skill-schedule.write-writeDocs.c117'), [
+        m('skill-schedule.write-writeDocs.c118', { p0: String(input.date) }),
+        m('skill-schedule.write-writeDocs.c119', { p0: String(total), p1: String(done), p2: String(failed) }),
+        ...input.rows.map((r) => m('skill-schedule.write-writeDocs.c120', {
+          p0: String(r.seq),
+          p1: String(r.time),
+          p2: String(r.activity),
+          p3: String(r.result),
+        })),
+      ], m('skill-schedule.write-writeDocs.c121', { p0: String(String(total)) }),
+      m('skill-schedule.write-writeDocs.c122', { p0: String(done) }), failed === 0),
     }) },
   ]);
   return assembleDocPage({ head, content: toc + body, extraCss: writePartsCss() });
@@ -428,41 +462,47 @@ export function summaryReceiptPage(
   const level1Minutes = inLevel1.reduce((sum, r) => sum + (r.duration_minutes ?? 0), 0);
   const dayMinutes = records.reduce((sum, r) => sum + (r.duration_minutes ?? 0), 0);
   const head: PageHead = {
-    docTitle: '作息管家 写作息摘要回执',
-    eyebrow: EYEBROW,
-    title: '写作息摘要回执',
-    subtitle: '写的是 ' + summary.date + ' 的「' + summary.category + '」摘要，一共 '
-      + fmtDur(summary.totalMinutes) + '。',
+    docTitle: m('skill-schedule.write-writeDocs.c123'),
+    eyebrow: eyebrow(),
+    title: m('skill-schedule.write-writeDocs.c124'),
+    subtitle: m('skill-schedule.write-writeDocs.c125', {
+      p0: String(summary.date),
+      p1: String(summary.category),
+      p2: String(fmtDur(summary.totalMinutes)),
+    }),
   };
   const { toc, body } = pageSections([
-    { html: renderConclusionBar('这一条摘要已经写进库：' + summary.date + ' 的「' + summary.category + '」记作 '
-      + fmtDur(summary.totalMinutes) + '。') },
-    { navText: '这次写了什么', html: renderKpiGrid([
-      { label: '摘要日期', value: summary.date, detail: '写进每日摘要' },
-      { label: '一级分类', value: summary.category, detail: '八类之一' },
-      { label: '写入时长', value: fmtDur(summary.totalMinutes), detail: '这一次写的值' },
-      { label: '当天记录', value: String(inLevel1.length) + ' 块', detail: '同一天同一支' },
-    ], { title: '这次写了什么' }) },
+    { html: renderConclusionBar(m('skill-schedule.write-writeDocs.c126', {
+      p0: String(summary.date),
+      p1: String(summary.category),
+      p2: String(fmtDur(summary.totalMinutes)),
+    })) },
+    { navText: m('skill-schedule.write-writeDocs.c127'), html: renderKpiGrid([
+      { label: m('skill-schedule.write-writeDocs.c128'), value: summary.date, detail: m('skill-schedule.write-writeDocs.c129') },
+      { label: m('skill-schedule.write-writeDocs.c130'), value: summary.category, detail: m('skill-schedule.write-writeDocs.c131') },
+      { label: m('skill-schedule.write-writeDocs.c132'), value: fmtDur(summary.totalMinutes), detail: m('skill-schedule.write-writeDocs.c133') },
+      { label: m('skill-schedule.write-writeDocs.c134'), value: m('skill-schedule.write-writeDocs.c135', { p0: String(String(inLevel1.length)) }), detail: m('skill-schedule.write-writeDocs.c136') },
+    ], { title: m('skill-schedule.write-writeDocs.c137') }) },
     { html: renderFactStrip({
       items: [
-        { label: '当天这支记录合计', value: fmtDur(level1Minutes) },
-        { label: '当天全部记录合计', value: fmtDur(dayMinutes) },
-        { label: '这支占当天', value: fmtPct(level1Minutes, dayMinutes) + '%' },
+        { label: m('skill-schedule.write-writeDocs.c138'), value: fmtDur(level1Minutes) },
+        { label: m('skill-schedule.write-writeDocs.c139'), value: fmtDur(dayMinutes) },
+        { label: m('skill-schedule.write-writeDocs.c140'), value: fmtPct(level1Minutes, dayMinutes) + '%' },
       ],
     }) },
-    { html: renderCaliberLine('摘要与记录是两支账 ｜ 摘要按天按一级分类各存一行，记录表照原样留着') },
-    { navText: '复制与留档', html: scheduleCopyArea({
-      title: '复制与留档',
+    { html: renderCaliberLine(m('skill-schedule.write-writeDocs.c141')) },
+    { navText: m('skill-schedule.write-writeDocs.c142'), html: scheduleCopyArea({
+      title: m('skill-schedule.write-writeDocs.c143'),
       dataActionId: 'ilife-sch-write-copy-data',
       logActionId: 'ilife-sch-write-copy-log',
-      ...writeCopy('写作息摘要回执', [
-        '日期：' + summary.date,
-        '一级分类：' + summary.category,
-        '写入时长：' + fmtDur(summary.totalMinutes),
-        '当天这支记录合计：' + fmtDur(level1Minutes),
+      ...writeCopy(m('skill-schedule.write-writeDocs.c144'), [
+        m('skill-schedule.write-writeDocs.c145', { p0: String(summary.date) }),
+        m('skill-schedule.write-writeDocs.c146', { p0: String(summary.category) }),
+        m('skill-schedule.write-writeDocs.c147', { p0: String(fmtDur(summary.totalMinutes)) }),
+        m('skill-schedule.write-writeDocs.c148', { p0: String(fmtDur(level1Minutes)) }),
       ], 'schedule-cmd-read schedule.record.write --params {"op":"summary","date":"' + summary.date
         + '","category":"' + summary.category + '","total_minutes":' + String(summary.totalMinutes) + '}',
-      '每日摘要表（这一天这一支已入库）'),
+      m('skill-schedule.write-writeDocs.c149')),
     }) },
   ]);
   return assembleDocPage({ head, content: toc + body, extraCss: writePartsCss() });

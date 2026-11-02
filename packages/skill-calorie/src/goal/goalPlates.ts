@@ -20,6 +20,7 @@ import { buildSeries, seriesCount, seriesDelta } from '../analysis/series.js';
 import { FetchError } from '../fetch/errors.js';
 import { round2 } from '../kcal.js';
 import { CalorieRenderError } from '../render/errors.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 function assertDate(s: string): void {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(s) || Number.isNaN(Date.parse(s + 'T12:00:00Z'))) {
@@ -68,7 +69,7 @@ export function buildGoalRecommend(db: DatabaseSync, profile: string = 'cut'): G
   const recommend = recommendNutritionGoal(db, { profile: p });
   // #100 · 空库阻断：缺档案/体重时不返 weightKg=70 等合成数字，明示缺失（exit 4）。
   if (recommend.missing.length > 0) {
-    throw new CalorieRenderError('missing-data', '目标推荐缺必要输入（' + recommend.missing.join('、') + '缺失，不编造默认值，先补档案与体重记录）');
+    throw new CalorieRenderError('missing-data', '目标推荐缺必要输入（' + listJoin(currentRenderLanguage(), recommend.missing) + '缺失，不编造默认值，先补档案与体重记录）');
   }
   const water = recommendWaterGoal(db, {});
   return { profile: p, recommend, water };

@@ -7,20 +7,32 @@
  *   ③ 老侧空态那一句「还没有备份 ＋ 点下方「一键备份」，数据库和目标数据会自动归档」（`backup_list.html:117`）
  *      是本模板唯一的 `emptyState`——新侧照它的意思落成空态块 ＋ 引导句（`./template-list.js` 里那一支）。
  */
+import { runWithLanguage } from 'base-entries';
 import { projectWakeWord } from '../triggers/wakeTable.js';
 import type { SetupScene } from './scene.js';
+import { m } from '../entries/index.js';
 
 const WORD: string = projectWakeWord({ key: 'bill.setup.run', op: 'backup-list' });
 const KEY = 'bill.setup.run' as const;
 
-export const SCENE: SetupScene = {
-  id: 'backup-list',
-  sceneId: 'setup_backup_list',
-  key: KEY,
-  op: 'backup-list',
-  page: 'list',
-  title: '查看备份',
-  caliber: '备份列表',
-  subtitle: '备份目录里的这些份 · 每次备份都会新存一份',
-  promptOf: () => '请加载「饼干记账」技能,帮我看看有哪些备份(唤醒词:' + WORD + '):\n',
-};
+/** 构建场景（`#1214`：文案经词条层，**渲染期**取词——模块级常量会把语言固化成 zh）。 */
+function buildScene(): SetupScene {
+  return {
+    id: 'backup-list',
+    sceneId: 'setup_backup_list',
+    key: KEY,
+    op: 'backup-list',
+    page: 'list',
+    title: m('skill-bill.setup-scene-backup-list.c001'),
+    caliber: m('skill-bill.setup-scene-backup-list.c002'),
+    subtitle: m('skill-bill.setup-scene-backup-list.c003'),
+    promptOf: () => m('skill-bill.setup-scene-backup-list.c004', { p0: String(WORD) }),
+  };
+}
+
+export const SCENE: SetupScene = buildScene();
+
+/** 按语言重建本场景（`#1214`：语言是运行期参数，不是模块加载期事实）。 */
+export function sceneBackupListFor(language: string): SetupScene {
+  return runWithLanguage(language, buildScene);
+}

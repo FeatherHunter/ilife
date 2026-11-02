@@ -7,6 +7,7 @@
  */
 import { BODY_ALIVE, EX_ALIVE } from '../shared/alive.js';
 import { shiftISODate, todayISO } from '../shared/time.js';
+import { m } from '../entries/index.js';
 /* #717 批③·谓词归一：两个软删存活谓词的正本上移共用位 `shared/alive.ts`（抓取层也读得到——
    从前「fetch 不反向依赖 analysis」逼出了 45 处内联字面，任一处手滑写成 `= 0` 就静默漏掉 NULL 活行）。
    本件按原名转出，包对外的名字一个不少。
@@ -115,15 +116,15 @@ export function energyOf(parts: EnergyParts): EnergyResult {
   const weightKg = parts.weightKg === null || parts.weightKg === undefined ? null : Number(parts.weightKg);
   const level = parts.activityLevel === null || parts.activityLevel === undefined ? '' : String(parts.activityLevel).trim();
   const factor = level === '' ? null : (TDEE_ACTIVITY_FACTORS[level.toLowerCase()] ?? null);
-  if (!(heightCm > 0)) bodyMissing.push('身高');
-  if (!(age > 0)) bodyMissing.push('年龄');
-  if (gender === null) bodyMissing.push('性别');
-  if (weightKg === null || !(weightKg > 0)) bodyMissing.push('体重');
+  if (!(heightCm > 0)) bodyMissing.push(m('skill-calorie.analysis-utils.c001'));
+  if (!(age > 0)) bodyMissing.push(m('skill-calorie.analysis-utils.c002'));
+  if (gender === null) bodyMissing.push(m('skill-calorie.analysis-utils.c003'));
+  if (weightKg === null || !(weightKg > 0)) bodyMissing.push(m('skill-calorie.analysis-utils.c004'));
   // BMR 只要四要素（活动量是 TDEE 才要的那一项）——缺活动量不影响 BMR 出数字。
   const rawBmr = bodyMissing.length === 0
     ? mifflinStJeorBmr(weightKg, heightCm, age, gender)
     : null;
-  const missing = factor === null ? [...bodyMissing, '活动量'] : bodyMissing;
+  const missing = factor === null ? [...bodyMissing, m('skill-calorie.analysis-utils.c005')] : bodyMissing;
   return {
     bmr: rawBmr === null ? null : Math.round(rawBmr),
     tdee: rawBmr === null || factor === null ? null : Math.round(rawBmr * factor),

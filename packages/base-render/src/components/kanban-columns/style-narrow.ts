@@ -14,6 +14,7 @@ import {
   kanbanColumnsSlot,
   type KanbanColumnsSlot,
 } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -34,9 +35,11 @@ export function kanbanColumnsNarrowCss(input?: { readonly prefix?: string }): st
     + ' ' + sc('cols') + ' > ' + sc('col') + ':nth-child(' + String(at) + ')';
 
   return [
-    '/* 窄容器（<' + String(KANBAN_COLUMNS_NARROW_PX) + 'px）：**一列一屏**——分段切换出来，',
-    '   一次只留当前那一列（三列同时立着会把内容挤成三根细柱）。',
-    '   判的是**本件自己的宽度**：嵌进侧栏／面板／卡片时照样按自己的宽度折（所以这里不用 `@media`）。 */',
+    m('base-render.components-kanban-columns-style-narrow.c001', {
+      p0: String(String(KANBAN_COLUMNS_NARROW_PX)),
+    }),
+    m('base-render.components-kanban-columns-style-narrow.c002'),
+    m('base-render.components-kanban-columns-style-narrow.c003'),
     narrow + ' {',
     '  ' + s('switch') + ' {',
     '    display: grid;',

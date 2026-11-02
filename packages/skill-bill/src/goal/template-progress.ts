@@ -21,8 +21,9 @@ import { DOC_TITLE } from '../shared/pageIdentity.js';
 import { listSheetPage } from '../shared/票据纸页型.js';
 import type { TicketSheetRow } from '../shared/票据纸页型.js';
 import { buildGoalCopy } from './copyTextGoal.js';
-import { SAVING_STATUS_META, clampPct, copyZoneOf, emptyOf, listEnvelopeOf, money } from './pageParts.js';
+import { clampPct, copyZoneOf, emptyOf, listEnvelopeOf, money, savingStatusMeta } from './pageParts.js';
 import type { GoalProgressInput, GoalReadScene } from './scene.js';
+import { m } from '../entries/index.js';
 
 /** 场景给模板件的**差异声明**：值、文案与「哪个可选块出不出」，**不含任何块位拼装**。
  *
@@ -70,20 +71,23 @@ export function bindGoalProgressPage(spec: GoalProgressSpec): Pick<GoalReadScene
 /** 落点那几行（判地 g05／g06 各四行）。 */
 function ledgerOf(input: GoalProgressInput, counts: { readonly items: number }): readonly TicketSheetRow[] {
   const month = typeof input.params['month'] === 'string' ? String(input.params['month']).trim() : '';
-  const end = input.windowEnd.trim() === '' ? '不限' : input.windowEnd;
+  const end = input.windowEnd.trim() === '' ? m('skill-bill.goal-template-progress.c001') : input.windowEnd;
   if (input.budget !== null) {
     return [
-      { label: '分类', value: '总预算' },
-      { label: '账本', value: '目标和当月支出' },
-      { label: '时间', value: (month === '' ? input.budget.month : month) + '（已过 ' + String(input.budget.budgets[0]?.days_elapsed ?? 0) + ' 天）' },
-      { label: '编号', value: '预算 ' + String(counts.items) + ' 条' },
+      { label: m('skill-bill.goal-template-progress.c002'), value: m('skill-bill.goal-template-progress.c003') },
+      { label: m('skill-bill.goal-template-progress.c004'), value: m('skill-bill.goal-template-progress.c005') },
+      { label: m('skill-bill.goal-template-progress.c006'), value: m('skill-bill.goal-template-progress.c007', {
+        p0: String(month === '' ? input.budget.month : month),
+        p1: String(String(input.budget.budgets[0]?.days_elapsed ?? 0)),
+      }) },
+      { label: m('skill-bill.goal-template-progress.c008'), value: m('skill-bill.goal-template-progress.c009', { p0: String(String(counts.items)) }) },
     ];
   }
   return [
-    { label: '分类', value: '—（储蓄目标）' },
-    { label: '账本', value: '目标和账本累计' },
-    { label: '时间', value: '账本算到 ' + end },
-    { label: '编号', value: '目标 ' + String(counts.items) + ' 个' },
+    { label: m('skill-bill.goal-template-progress.c010'), value: m('skill-bill.goal-template-progress.c011') },
+    { label: m('skill-bill.goal-template-progress.c012'), value: m('skill-bill.goal-template-progress.c013') },
+    { label: m('skill-bill.goal-template-progress.c014'), value: m('skill-bill.goal-template-progress.c015', { p0: String(end) }) },
+    { label: m('skill-bill.goal-template-progress.c016'), value: m('skill-bill.goal-template-progress.c017', { p0: String(String(counts.items)) }) },
   ];
 }
 
@@ -95,13 +99,16 @@ function detailRowsOf(input: GoalProgressInput): readonly EntryCardEntry[] {
     const projection = b.month_end_proj === null ? '' : money(b.month_end_proj);
     return [
       // 判地：首行一枚占比条＝当月已用比例（与主数字同一个百分数）。
-      { title: '总预算 ' + money(b.amount), sub: '上限（金额仅此一处）', bar: { pct: b.amount <= 0 ? 0 : Math.round((b.actual / b.amount) * 1000) / 10 } },
-      { title: '实际支出 ' + money(b.actual) + ' ｜ ' + String(b.count) + ' 笔', sub: '当月所有支出都在内' },
+      { title: m('skill-bill.goal-template-progress.c018', { p0: String(money(b.amount)) }), sub: m('skill-bill.goal-template-progress.c019'), bar: { pct: b.amount <= 0 ? 0 : Math.round((b.actual / b.amount) * 1000) / 10 } },
+      { title: m('skill-bill.goal-template-progress.c020', {
+        p0: String(money(b.actual)),
+        p1: String(String(b.count)),
+      }), sub: m('skill-bill.goal-template-progress.c021') },
       {
-        title: (b.remaining >= 0 ? '剩余 ' + money(b.remaining) : '超出 ' + money(Math.abs(b.remaining)) + ' 元')
-          + (b.daily_avg === null ? '' : ' ｜ 日均 ' + money(b.daily_avg)),
+        title: (b.remaining >= 0 ? m('skill-bill.goal-template-progress.c022', { p0: String(money(b.remaining)) }) : m('skill-bill.goal-template-progress.c023', { p0: String(money(Math.abs(b.remaining))) }))
+          + (b.daily_avg === null ? '' : m('skill-bill.goal-template-progress.c024', { p0: String(money(b.daily_avg)) })),
       },
-      { title: '预计月底 ' + (projection === '' ? '—' : projection), sub: '按当前日均推算，仅供参考' },
+      { title: m('skill-bill.goal-template-progress.c025', { p0: String(projection === '' ? '—' : projection) }), sub: m('skill-bill.goal-template-progress.c026') },
     ];
   }
   const s = input.saving;
@@ -109,12 +116,15 @@ function detailRowsOf(input: GoalProgressInput): readonly EntryCardEntry[] {
   if (s === null || one === undefined) return [];
   return [
     // 判地：首行一枚占比条＝已存进度（与主数字同一个百分数）。
-    { title: one.name + ' ｜ 总额 ' + money(one.amount), sub: '存够就算达成', bar: { pct: one.amount <= 0 ? 0 : Math.round((one.saved / one.amount) * 1000) / 10 } },
-    { title: '累计已存 ' + money(one.saved), sub: '相当于总额的进度见主数字' },
-    { title: '还差 ' + money(one.remaining) },
+    { title: m('skill-bill.goal-template-progress.c027', { p0: String(one.name), p1: String(money(one.amount)) }), sub: m('skill-bill.goal-template-progress.c028'), bar: { pct: one.amount <= 0 ? 0 : Math.round((one.saved / one.amount) * 1000) / 10 } },
+    { title: m('skill-bill.goal-template-progress.c029', { p0: String(money(one.saved)) }), sub: m('skill-bill.goal-template-progress.c030') },
+    { title: m('skill-bill.goal-template-progress.c031', { p0: String(money(one.remaining)) }) },
     {
-      title: String(s.count) + ' 个目标 · 已完成 ' + String(s.done_count) + ' 个',
-      sub: s.done_count === 0 ? '都没达成，再加把劲' : String(s.done_count) + ' 个已经达成',
+      title: m('skill-bill.goal-template-progress.c032', {
+        p0: String(String(s.count)),
+        p1: String(String(s.done_count)),
+      }),
+      sub: s.done_count === 0 ? m('skill-bill.goal-template-progress.c033') : m('skill-bill.goal-template-progress.c034', { p0: String(String(s.done_count)) }),
     },
   ];
 }
@@ -123,10 +133,10 @@ function detailRowsOf(input: GoalProgressInput): readonly EntryCardEntry[] {
 function checkOf(input: GoalProgressInput, counts: { readonly items: number; readonly records: number }): string {
   const e = input.budget;
   if (e !== null) {
-    const state = e.totals.over_count > 0 ? String(e.totals.over_count) + ' 条超支' : '都在预算内';
-    return String(counts.items) + ' 条预算 · ' + state + ' ／ 没有异常';
+    const state = e.totals.over_count > 0 ? m('skill-bill.goal-template-progress.c035', { p0: String(String(e.totals.over_count)) }) : m('skill-bill.goal-template-progress.c036');
+    return m('skill-bill.goal-template-progress.c037', { p0: String(String(counts.items)), p1: String(state) });
   }
-  return String(counts.records) + ' 条记录参与累计 ／ 没有异常';
+  return m('skill-bill.goal-template-progress.c038', { p0: String(String(counts.records)) });
 }
 
 /** 进度视图整页（结果型 ⑥）。 */
@@ -141,23 +151,23 @@ function progressPage(spec: GoalProgressSpec, input: GoalProgressInput): string 
   const e = input.budget;
   const one = input.saving?.savings[0];
   const eyebrow = e !== null
-    ? (e.totals.over_count > 0 ? '有超支' : '都在预算内')
-    : (one === undefined ? '暂无进度' : SAVING_STATUS_META[one.status].label);
+    ? (e.totals.over_count > 0 ? m('skill-bill.goal-template-progress.c039') : m('skill-bill.goal-template-progress.c040'))
+    : (one === undefined ? m('skill-bill.goal-template-progress.c041') : savingStatusMeta()[one.status].label);
   const pct = e !== null
     ? (e.totals.budget > 0 ? clampPct(e.totals.actual / e.totals.budget * 100) : 0)
     : (one === undefined ? 0 : clampPct(one.pct));
   return listSheetPage({
     docTitle: DOC_TITLE + spec.docSuffix,
-    brand: '饼干记账 · ' + input.wakeWord,
+    brand: m('skill-bill.goal-template-progress.c042', { p0: String(input.wakeWord) }),
     title: input.wakeWord,
     subtitle: spec.window(input),
     summary: {
-      eyebrow: hasItems ? eyebrow : '一条都还没有',
+      eyebrow: hasItems ? eyebrow : m('skill-bill.goal-template-progress.c043'),
       value: hasItems ? pct.toFixed(1) : '0.0',
       unit: '%',
       note: spec.conclusion(input),
     },
-    ledgerTitle: e !== null ? '预算落点' : '目标落点',
+    ledgerTitle: e !== null ? m('skill-bill.goal-template-progress.c044') : m('skill-bill.goal-template-progress.c045'),
     ledger: ledgerOf(input, counts),
     detailTitle: spec.cardsTitle,
     detailTag: 'DETAIL',
@@ -169,7 +179,7 @@ function progressPage(spec: GoalProgressSpec, input: GoalProgressInput): string 
       source: spec.source, detail: spec.logDetail(input), actionAt: input.actionAt,
       copy: buildGoalCopy(input.wakeWord, input.budget, input.saving),
     }),
-    foot: '饼干记账 · ' + input.wakeWord,
+    foot: m('skill-bill.goal-template-progress.c046', { p0: String(input.wakeWord) }),
     styleHtml: '<style>' + ticketButtonCss() + entryCardCss() + '</style>',
     slot: 'list', page: 'list', shape: 'list', key: input.key, paper: 'detail',
   });

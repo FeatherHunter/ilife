@@ -11,6 +11,7 @@ import type { DaySeries } from './series.js';
 import { shiftISODate } from './utils.js';
 import { KCAL_PER_KG } from '../shared/kcalPerKg.js';
 import { TARGET_RATE } from '../shared/healthRate.js';
+import { m } from '../entries/index.js';
 
 export const SIM_MIN_DAYS = 14;
 export { KCAL_PER_KG };
@@ -28,7 +29,7 @@ export interface SimBase { kind: string; title: string; degraded: boolean; start
  *  按门槛同一条量纲传进来（改前这里报的是 `series.length`＝**请求窗口的天数**，空库时会说出
  *  「需要 ≥14 天体重记录,当前只有 14 天」这种自相矛盾的句子）。 */
 function degrade(kind: string, title: string, need: string, have: string): SimBase {
-  return { kind, title, degraded: true, degradeMsg: '数据不足:需要 ' + need + ',当前只有 ' + have + '。', insight: '数据不足,无法预测。' };
+  return { kind, title, degraded: true, degradeMsg: m('skill-calorie.analysis-simulate.c001', { p0: String(need), p1: String(have) }), insight: m('skill-calorie.analysis-simulate.c002') };
 }
 
 type NumField = 'weightKg' | 'calories';
@@ -95,9 +96,9 @@ export interface WeightForecast extends SimBase { current?: number; ratePerWeek?
 
 export function weightForecast(series: DaySeries[], horizonDays: number, title: string, kind = 'weight_forecast'): WeightForecast {
   const wv = weightVals(series);
-  if (wv.length < SIM_MIN_DAYS) return degrade(kind, title, '≥' + SIM_MIN_DAYS + ' 天体重记录', wv.length + ' 天体重记录');
+  if (wv.length < SIM_MIN_DAYS) return degrade(kind, title, m('skill-calorie.analysis-simulate.c003', { p0: String(SIM_MIN_DAYS) }), m('skill-calorie.analysis-simulate.c004', { p0: String(wv.length) }));
   const [rate, latest] = linearRate(series, 'weightKg');
-  if (rate === null || latest === null) return degrade(kind, title, '≥' + SIM_MIN_DAYS + ' 天有效体重记录', wv.length + ' 天体重记录');
+  if (rate === null || latest === null) return degrade(kind, title, m('skill-calorie.analysis-simulate.c005', { p0: String(SIM_MIN_DAYS) }), m('skill-calorie.analysis-simulate.c006', { p0: String(wv.length) }));
   const sigma = residualStd(series, 'weightKg', rate);
   const last = series[series.length - 1] as DaySeries;
   const fc = forecastSeries(latest, rate, sigma, horizonDays, last.date, title);
@@ -107,10 +108,19 @@ export function weightForecast(series: DaySeries[], horizonDays: number, title: 
     kind, title, degraded: false,
     start: (series[0] as DaySeries).date, end: last.date, days: series.length,
     current: round2(latest), ratePerWeek: round2(weekly),
-    rateNote: '按近 ' + series.length + ' 天线性趋势外推,当前 ' + (weekly >= 0 ? '+' : '') + weekly.toFixed(2) + ' kg/周',
-    assumption: '假设趋势延续:体重 = 当前值 + 日速率 × 天数;置信带按残差 σ 扩张',
+    rateNote: m('skill-calorie.analysis-simulate.c007', {
+      p0: String(series.length),
+      p1: String(weekly >= 0 ? '+' : ''),
+      p2: String(weekly.toFixed(2)),
+    }),
+    assumption: m('skill-calorie.analysis-simulate.c008'),
     forecast: fc,
-    insight: '按当前趋势,' + horizonDays + ' 天后体重约 ' + lastPt.value + ' kg(' + lastPt.lo + ' ~ ' + lastPt.hi + ',95% 置信带)。',
+    insight: m('skill-calorie.analysis-simulate.c009', {
+      p0: String(horizonDays),
+      p1: String(lastPt.value),
+      p2: String(lastPt.lo),
+      p3: String(lastPt.hi),
+    }),
   };
 }
 
@@ -118,24 +128,31 @@ export interface WeightTarget extends SimBase { current?: number; target?: numbe
 
 export function weightTarget(series: DaySeries[], targetKg: number, title: string, kind = 'weight_target'): WeightTarget {
   const wv = weightVals(series);
-  if (wv.length < SIM_MIN_DAYS) return degrade(kind, title, '≥' + SIM_MIN_DAYS + ' 天体重记录', wv.length + ' 天体重记录');
+  if (wv.length < SIM_MIN_DAYS) return degrade(kind, title, m('skill-calorie.analysis-simulate.c010', { p0: String(SIM_MIN_DAYS) }), m('skill-calorie.analysis-simulate.c011', { p0: String(wv.length) }));
   const [rate, latest] = linearRate(series, 'weightKg');
-  if (rate === null || latest === null || Math.abs(rate) < 1e-6) return degrade(kind, title, '有趋势的体重记录', wv.length + ' 天体重记录但处于平台期');
+  if (rate === null || latest === null || Math.abs(rate) < 1e-6) return degrade(kind, title, m('skill-calorie.analysis-simulate.c012'), m('skill-calorie.analysis-simulate.c013', { p0: String(wv.length) }));
   // 有意偏离老家：老家 (latest-target)/rate 在正常趋近时恒为负→恒降级；此处用 (target-latest)/rate，趋近为正（待口径裁决 T7）。
   const daysLeft = (targetKg - latest) / rate;
   if (daysLeft < 0) {
-    return { kind, title, degraded: true, degradeMsg: '目标体重与当前趋势方向相反(当前在上涨)。', insight: '先纠正趋势再预测。' };
+    return { kind, title, degraded: true, degradeMsg: m('skill-calorie.analysis-simulate.c014'), insight: m('skill-calorie.analysis-simulate.c015') };
   }
   const last = series[series.length - 1] as DaySeries;
   const eta = shiftISODate(last.date, round(daysLeft));
   const weekly = rate * 7;
   const feasible = HEALTHY_RATE[0] <= weekly && weekly <= HEALTHY_RATE[1];
+  /* #1197 §4.7：条件分枝先落成局部变量，整句才好迁成 m(key, {...})。 */
+  const sign = weekly >= 0 ? '+' : '';
+  const feasibleNote = feasible ? '。' : m('skill-calorie.analysis-simulate.c016');
   return {
     kind, title, degraded: false,
     start: (series[0] as DaySeries).date, end: last.date, days: series.length,
     current: round2(latest), target: targetKg, eta,
     daysLeft: round(daysLeft), ratePerWeek: round2(weekly), feasible,
-    assumption: '按当前速率 ' + (weekly >= 0 ? '+' : '') + weekly.toFixed(2) + ' kg/周 线性外推;健康范围 0.5-1.0 kg/周',
-    insight: '按当前趋势,预计 ' + eta + ' 前后达到 ' + targetKg + ' kg' + (feasible ? '。' : ';⚠️ 当前速率超出健康范围,建议调整目标或策略。'),
+    assumption: m('skill-calorie.analysis-simulate.c017', { p0: String(sign), p1: String(weekly.toFixed(2)) }),
+    insight: m('skill-calorie.analysis-simulate.c018', {
+      p0: String(eta),
+      p1: String(targetKg),
+      p2: String(feasibleNote),
+    }),
   };
 }

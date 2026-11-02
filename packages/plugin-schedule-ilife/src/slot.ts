@@ -6,10 +6,17 @@
  * 有界重试归一由 base-render 拥有，单品不自建）。
  */
 
+import { m } from './entries/index.js';
 export const SKILL = 'schedule' as const;
 export const SLOT_ID = 'ilife:schedule' as const;
 export const SLOT_ORDER = 85 as const;
-export const SLOT_TITLE = '作息管家' as const;
+/** 页签名（产品名）：渲染期现取，词条随语言走（#1229）。 */
+export function slotTitle(): string {
+  return m('plugin-schedule-ilife.slot.c001');
+}
+
+/** 兼容镜像：模块加载期取一次（仓库级边界测试与跨包消费方按常量读）；渲染路径一律走 slotTitle()。 */
+export const SLOT_TITLE = slotTitle();
 export const PLUGIN = 'dsh-schedule-ilife' as const;
 export const MANAGER_PLUGIN = 'dsh-life-pack' as const;
 
@@ -22,7 +29,7 @@ export interface SlotDescriptor {
 }
 
 export function slotDescriptor(): SlotDescriptor {
-  return { skill: SKILL, slotId: SLOT_ID, order: SLOT_ORDER, title: SLOT_TITLE, kind: 'page' };
+  return { skill: SKILL, slotId: SLOT_ID, order: SLOT_ORDER, title: slotTitle(), kind: 'page' };
 }
 
 /** 写死原生组件描述（纯数据，无按需加载，无外嵌页）。 */
@@ -37,7 +44,7 @@ export interface TabsPort {
 /** 自注册：幂等（调用方持 disposer），失败返回 false 由调用方决定重试。 */
 export function registerSingle(port: TabsPort): (() => void) | null {
   if (!port.hasTabs()) return null;
-  return port.registerTab({ id: SLOT_ID, title: SLOT_TITLE, order: SLOT_ORDER, single: true, component: TAB_COMPONENT });
+  return port.registerTab({ id: SLOT_ID, title: slotTitle(), order: SLOT_ORDER, single: true, component: TAB_COMPONENT });
 }
 
 /** 内容型打开：path seed，折叠面板自动展开。 */

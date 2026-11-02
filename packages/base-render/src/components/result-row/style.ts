@@ -9,6 +9,7 @@
 import { PAGE_LIMITS, PAGE_UI_CLASS } from '../page-ui/index.js';
 import { skinVar } from '../skin/contract.js';
 import { RESULT_ROOT_CLASS } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 宽档上限（1280 档不让一行拉成一条长带）。 */
 export const RESULT_MAX_WIDTH_PX = 860;
@@ -40,7 +41,7 @@ export function resultRowCss(): string {
 
   return [
     '/* resultRow（结果行 · 形态 A：单行，值在右）。命中词用 <mark> 标出来；',
-    '   高亮＝下划线 ＋ 加粗（形与字重两样，不靠色块）。 */',
+    m('base-render.components-result-row-style.c001'),
     R + '{display:grid;gap:0;min-width:0;max-width:' + RESULT_MAX_WIDTH_PX + 'px;',
     '  color:' + ink + ';font-family:' + font + ';font-size:' + fsBody + ';line-height:1.5}',
     R + '-item{display:grid;gap:4px 10px;align-items:center;box-sizing:border-box;',

@@ -16,12 +16,14 @@
  *   ④ 期间芯片＝`TOP N · 期间`（老侧 `TOP ${limit} · ${period}` 那枚 `.filter-chip`）；
  *   ⑤ 载荷＝`./views.js` 的 `buildTrend('top', …)`（`limit` 照传）。
  */
+import { runWithLanguage } from 'base-entries';
 import type { BillDb, BillRow } from '../fetch/db.js';
 import { BillPolicyError } from '../fetch/errors.js';
 import { dayOf, expenseTop, kpiOf, round1, windowWithRecords } from './agg.js';
 import { NO_WINDOW, money, textOrDash } from './pageParts.js';
 import type { AnalysisScene } from './scene.js';
 import { buildTrend } from './views.js';
+import { m } from '../entries/index.js';
 
 /** 取前几笔的读数：缺省 10；给了就必须是 1~50 的整数，否则阻断（坏输入不冒充正常）。 */
 function limitOf(params: Record<string, unknown>): number {
@@ -35,11 +37,12 @@ function limitOf(params: Record<string, unknown>): number {
 }
 
 
-export const sceneTop: AnalysisScene = {
+function buildScene(): AnalysisScene {
+  return {
   id: 'top',
   key: 'bill.analysis.trend',
   kind: 'top',
-  title: '看大额',
+  title: m('skill-bill.analysis-scene-top.title'),
   family: 'bars',
   values: ({ params, db }) => {
     const limit = limitOf(params);
@@ -50,18 +53,21 @@ export const sceneTop: AnalysisScene = {
     const head = items[0];
     const chip = 'TOP ' + String(limit) + ' · ' + win.label;
     return {
-      title: '看大额',
+      title: m('skill-bill.analysis-scene-top.title'),
       label: win.label,
       from: win.from,
       to: win.to,
       count: items.length,
       conclusion: head === undefined
-        ? win.label + '：没有支出记录。'
-        : '支出最大的 ' + String(items.length) + ' 笔合计 ' + money(sum) + ' 元；最贵的一笔是 '
-          + textOrDash(dayOf(head.time)) + ' 的「' + textOrDash(head.category) + '」'
-          + money(Math.abs(head.amount)) + ' 元。',
-      caliber: '支出金额从大到小取前 ' + String(limit) + ' 笔，同额先出时间晚的；条长按最大一笔折算；'
-        + '转账与收入都不上这一页。',
+        ? m('skill-bill.analysis-scene-top.c003', { p0: String(win.label) })
+        : m('skill-bill.analysis-scene-top.c004', {
+          p0: String(String(items.length)),
+          p1: String(money(sum)),
+          p2: String(textOrDash(dayOf(head.time))),
+          p3: String(textOrDash(head.category)),
+          p4: String(money(Math.abs(head.amount))),
+        }),
+      caliber: m('skill-bill.analysis-scene-top.c005', { p0: String(String(limit)) }),
       chips: [chip],
       payload: buildTrend('top', [...win.records], { limit }),
       kpi: kpiOf(win.records),
@@ -70,21 +76,33 @@ export const sceneTop: AnalysisScene = {
         chips: [chip],
         charts: [],
         barGroups: [{
-          title: '大额支出排行（' + String(items.length) + ' 笔）',
+          title: m('skill-bill.analysis-scene-top.c006', { p0: String(String(items.length)) }),
           rows: items.map((r, i) => ({
             label: String(i + 1) + '. ' + textOrDash(r.category),
-            text: money(Math.abs(r.amount)) + ' 元 · ' + textOrDash(dayOf(r.time)) + ' · ' + textOrDash(r.note),
+            text: m('skill-bill.analysis-scene-top.c007', {
+              p0: String(money(Math.abs(r.amount))),
+              p1: String(textOrDash(dayOf(r.time))),
+              p2: String(textOrDash(r.note)),
+            }),
             pct: peak === 0 ? 0 : round1((Math.abs(r.amount) / peak) * 100),
           })),
-          emptyText: '这段时间还没有支出记录',
+          emptyText: m('skill-bill.analysis-scene-top.c008'),
         }],
         listCards: [],
         factCards: [],
         empty: {
-          text: win.label + ' 还没有支出记录。',
-          hint: '先说「记支出」记一笔，回来看这里就有数了。',
+          text: m('skill-bill.analysis-scene-top.c009', { p0: String(win.label) }),
+          hint: m('skill-bill.analysis-scene-top.c010'),
         },
       },
     };
   },
-};
+  };
+}
+
+export const sceneTop: AnalysisScene = buildScene();
+
+/** 按语言重建本场景（#1197：文案经词条层，语言是运行期参数）。 */
+export function sceneTopFor(language: string): AnalysisScene {
+  return runWithLanguage(language, buildScene);
+}

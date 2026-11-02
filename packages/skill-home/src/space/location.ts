@@ -3,6 +3,7 @@
 // 命令、出参形状、失败口径一字不动（`commands.ts`／`routes.ts` 权威源不碰）；
 // 页装配（`pages/<族>.ts`）只读本件给出的数据，不再查库。
 import type { HomeDb } from '../fetch/db.js';
+import { STATUS_AT_HOME, STATUS_DISCARDED, STATUS_USED_UP } from '../fetch/db.js';
 import {
   getCategoryById, getItemById, searchItems, listLocationNodes, ensureLocationNode, updateItem,
 } from '../fetch/index.js';
@@ -10,6 +11,8 @@ import { normalizeLocation, needId } from '../policy/index.js';
 import { fail } from '../shared/fail.js';
 import { asLimit, asQueryString } from '../shared/params.js';
 import { buildLocationList, buildReceipt } from '../render/index.js';
+import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 // #928 收口：**不给 limit 即全量**（页面不再按体积截断，用户裁定「不限制 html 文件大小」）；
 // 给了 limit 才截，超界大声失败。只住本能力，标签取行另住 items。
@@ -70,10 +73,10 @@ function activeLocs(handle: HomeDb): ActiveLoc[] {
       il.location_status AS status, i.name AS name, i.category_id AS category_id,
       i.fixed_location AS fixed FROM item_locations il JOIN items i ON i.id=il.item_id
       WHERE il.location IS NOT NULL AND il.location <> ''
-      AND il.location_status NOT IN ('已废弃','已用完') ORDER BY il.location, i.id`)
+      AND il.location_status NOT IN ('${STATUS_DISCARDED}','${STATUS_USED_UP}') ORDER BY il.location, i.id`)
     .map((r) => ({
       location: softNorm(r.location), item_id: Number(r.item_id), quantity: Number(r.quantity) || 0,
-      status: String(r.status ?? '在家'), name: String(r.name ?? ''),
+      status: String(r.status ?? STATUS_AT_HOME), name: String(r.name ?? ''),
       category_id: r.category_id === null ? null : Number(r.category_id),
       fixed: r.fixed === null ? null : String(r.fixed),
     })).filter((r) => r.location !== '');
@@ -173,17 +176,17 @@ function recommendFor(handle: HomeDb, itemId: number, mode: string): Recommendat
   } catch { return null; }
   const locs = activeLocs(handle).filter((l) => l.item_id === itemId);
   const current = locs.length > 0 ? locs[0].location : '';
-  let catName = '未分类';
+  let catName = m('skill-home.space-location.c001');
   if (item.category_id !== null) {
     try { catName = String((getCategoryById(handle, item.category_id) as { name: string }).name); }
-    catch { catName = '未分类'; }
+    catch { catName = m('skill-home.space-location.c002'); }
   }
   const ranked = item.category_id === null ? [] : categoryHits(handle, item.category_id, itemId)
     .filter((h) => h.loc !== current)
     .map((h) => ({
       location: h.loc,
       // 理由逐件唯一（同证据＋件名后缀）：机审重复句按整行判等，证据相同也须逐件区分。
-      reason: h.n + '件同类（' + h.ex.join('、') + '）',
+      reason: m('skill-home.space-location.c003', { p0: String(h.n), p1: String(listJoin(currentRenderLanguage(), h.ex)) }),
       score: h.n,
     }));
   const strong = ranked.filter((r) => r.score >= 2).sort((a, b) => b.score - a.score);
@@ -198,8 +201,12 @@ function recommendFor(handle: HomeDb, itemId: number, mode: string): Recommendat
     keep = {
       location: current,
       reason: ranked.length > 0 && ranked.some((r) => r.score >= 1)
-        ? '「' + item.name + '」已在常用位置「' + current + '」：分类「' + catName + '」的物品也分布在此，无需移动'
-        : '「' + item.name + '」暂无强依据，保持现状（同分类没有更集中的位置）',
+        ? m('skill-home.space-location.c004', {
+          p0: String(item.name),
+          p1: String(current),
+          p2: String(catName),
+        })
+        : m('skill-home.space-location.c005', { p0: String(item.name) }),
     };
     alternates = ranked.slice(0, 3).map((r) => ({ location: r.location, reason: r.reason }));
   } else {
@@ -250,7 +257,7 @@ function spaceLayer(handle: HomeDb, rawPath: unknown): SpaceView {
     }
   }
   return {
-    kind: 'space_view', path: cur, name: cur === '' ? '(全屋)' : cur.split('/').pop() ?? cur,
+    kind: 'space_view', path: cur, name: cur === '' ? m('skill-home.space-location.c006') : cur.split('/').pop() ?? cur,
     crumbs, children, items, hints, total: paths.length,
   };
 }
@@ -272,7 +279,7 @@ export function runLocationQuery(params: Record<string, unknown>, handle: HomeDb
         .map((r) => Number(r.id));
     } else {
       const cid = params.category_id ?? params.categoryId;
-      if (cid === undefined) fail(2, '推位置须给 category_id');
+      if (cid === undefined) fail(2, m('skill-home.space-location.c007'));
       getCategoryById(handle, Number(cid));
       ids = rows(handle, 'SELECT id FROM items WHERE category_id=? ORDER BY id LIMIT 10', Number(cid))
         .map((r) => Number(r.id));
@@ -284,7 +291,7 @@ export function runLocationQuery(params: Record<string, unknown>, handle: HomeDb
   }
   if (mode === 'find') {
     const ref = params.reference as string | undefined;
-    if (!ref) fail(2, '找位置须给 reference');
+    if (!ref) fail(2, m('skill-home.space-location.c008'));
     const hits = searchItems(handle, { name: ref, limit: 5 });
     return buildLocationList(hits.map((h) => h.item.name + ' #' + h.item.id + ' ' + h.locations.map((l) => l.location).join('；')));
   }
@@ -309,45 +316,48 @@ export function runLocationWrite(params: Record<string, unknown>, handle: HomeDb
   if (op === 'fixed') {
     const id = needId(params);
     const loc = params.fixed_location ?? params.fixedLocation ?? params.location;
-    if (typeof loc !== 'string' || !loc) fail(2, '固定位须给 fixed_location');
+    if (typeof loc !== 'string' || !loc) fail(2, m('skill-home.space-location.c009'));
     updateItem(handle, id, { fixed_location: normalizeLocation(loc) });
-    const msg = '已把「' + getItemById(handle, id).name + '」的固定位设为 ' + normalizeLocation(loc);
+    const msg = m('skill-home.space-location.c010', {
+      p0: String(getItemById(handle, id).name),
+      p1: String(normalizeLocation(loc)),
+    });
     const entries = fixedEntries(handle);
     return { ...buildReceipt(msg), detail: { fixed_items: entries, total: entries.length } };
   }
   const action = (params.action as string | undefined) ?? 'add';
   if (action === 'add') {
     const path = params.path as string | undefined;
-    if (!path) fail(2, '位置新增须给 path');
+    if (!path) fail(2, m('skill-home.space-location.c011'));
     ensureLocationNode(handle, normalizeLocation(path));
-    const msg = '已新增位置：' + normalizeLocation(path);
+    const msg = m('skill-home.space-location.c012', { p0: String(normalizeLocation(path)) });
     const nodes = locNodes(handle);
     return { ...buildReceipt(msg), detail: { nodes, similar_groups: similarGroups(handle), total_nodes: nodes.length, action: 'add', subject: normalizeLocation(path) } };
   }
   if (action === 'rename') {
     const from = params.from as string | undefined, to = params.to as string | undefined;
-    if (!from || !to) fail(2, '位置改名须给 from/to');
+    if (!from || !to) fail(2, m('skill-home.space-location.c013'));
     const nf = normalizeLocation(from), nt = normalizeLocation(to);
     handle.db.prepare('UPDATE item_locations SET location=? WHERE location=?').run(nt, nf);
     handle.db.prepare('UPDATE location_nodes SET path=? WHERE path=?').run(nt, nf);
-    const msg = '已改名位置：' + nf + '→' + nt;
+    const msg = m('skill-home.space-location.c014', { p0: String(nf), p1: String(nt) });
     const nodes = locNodes(handle);
     return { ...buildReceipt(msg), detail: { nodes, similar_groups: similarGroups(handle), total_nodes: nodes.length, action: 'rename', subject: nf + '→' + nt } };
   }
   if (action === 'merge') {
     const from = params.from as string | undefined, to = params.to as string | undefined;
-    if (!from || !to) fail(2, '位置合并须给 from/to');
+    if (!from || !to) fail(2, m('skill-home.space-location.c015'));
     const nf = normalizeLocation(from), nt = normalizeLocation(to);
     handle.db.prepare('UPDATE item_locations SET location=? WHERE location=?').run(nt, nf);
     handle.db.prepare('DELETE FROM location_nodes WHERE path=?').run(nf);
     ensureLocationNode(handle, nt);
-    const msg = '已合并位置：' + nf + '→' + nt;
+    const msg = m('skill-home.space-location.c016', { p0: String(nf), p1: String(nt) });
     const nodes = locNodes(handle);
     return { ...buildReceipt(msg), detail: { nodes, similar_groups: similarGroups(handle), total_nodes: nodes.length, action: 'merge', subject: nf + '→' + nt } };
   }
   const nodes = locNodes(handle);
   return {
-    ...buildReceipt('位置管理：' + listLocationNodes(handle).length + ' 节点（详情走 home.location.query）'),
+    ...buildReceipt(m('skill-home.space-location.c017', { p0: String(listLocationNodes(handle).length) })),
     detail: { nodes, similar_groups: similarGroups(handle), total_nodes: nodes.length, action: 'view', subject: '' },
   };
 }

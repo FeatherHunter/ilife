@@ -9,6 +9,7 @@
  * 高亮**不靠色块**：`<mark>` 是语义标签，视觉走「下划线 ＋ 加粗」（形与字重两样）。
  */
 import { SEARCH_HIT_ATTR, SEARCH_ITEM_ATTR, SEARCH_REGION_ATTR, SEARCH_TAGS_ATTR } from '../search-field/index.js';
+import { m } from '../../entries/index.js';
 
 /** 本件的类名根。 */
 export const RESULT_ROOT_CLASS = 'ilife-block-result-row';
@@ -30,11 +31,11 @@ export const RESULT_SEARCH_TAGS_ATTR = SEARCH_TAGS_ATTR;
 export const RESULT_SEARCH_HIT_ATTR = SEARCH_HIT_ATTR;
 export const RESULT_SEARCH_REGION_ATTR = SEARCH_REGION_ATTR;
 
-export const RESULT_DEFAULTS = Object.freeze({
+export const RESULT_DEFAULTS = {
   /** 缺值写法（工艺书：缺值写成 `—`）。 */
-  unset: '—',
-  emptyText: '没有结果',
-} as const);
+  get unset(): string { return '—'; },
+  get emptyText(): string { return m('base-render.components-result-row-attrs.c001'); },
+};
 
 export interface ResultRowItemInput {
   /** 标题（**必填**）：命中词在这里被标出来。 */

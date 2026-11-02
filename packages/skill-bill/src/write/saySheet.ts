@@ -11,14 +11,16 @@
  * sayCollectOut（本词有数据出这一页，没有返 null 走老的通用页面壳）。复制三份走采集人话门／buildLogText，
  * 整页外壳走 shared/docPage 的 assembleSheetPage。
  */
+import { m } from '../entries/index.js';
 import { buildLogText, escapeHtml } from "base-paint";
 import type { DataTextInput, LogTextInput } from "base-paint";
 import { assembleSheetPage, ticketCollectRuntime } from "../shared/docPage.js";
 import { WRITE_DECLARATION } from "./declaration.js";
 import { writeSection } from "../shared/writeParts.js";
-import { SAY_WORDS } from "./sayWords.js";
+import { sayWords } from "./sayWords.js";
 import { buildCollectCopyCsv, buildCollectCopyJson, buildCollectCopyText } from "./collectCopyText.js";
 import type { CollectCopyFacts, CollectExtra } from "./collectCopyText.js";
+import { currentRenderLanguage, listJoin, plusSign } from 'base-entries';
 
 /** 这一页的 SAY prompt 模板：**逐字取域声明的 `prompt_template`**，本件不抄第二份。 */
 function sayTemplateOf(word: string): string {
@@ -30,7 +32,7 @@ function sayTemplateOf(word: string): string {
   return "";
 }
 
-/** 把表里的 {word} 占位符换成投影出来的唤醒词（表里只有占位符，没有词面）。 */
+/** 把仍以裸占位符留下的 {word} 换成投影出来的唤醒词（带文案的模板已由 sayWords(word) 取词时填好）。 */
 function withWord(text: string, word: string): string {
   return text.split("{word}").join(word);
 }
@@ -100,7 +102,7 @@ export interface SayCollectInput {
 }
 
 /** 两态里固定那两位（判地脚本里的常量，16 页同）。 */
-const TODO_READY_TEXT = "这几项都齐了";
+const TODO_READY_TEXT = m('skill-bill.write-saySheet.c001');
 const TODO_READY_TAG = "READY";
 
 /** 已给的槽位取值（键＝槽位 key）。 */
@@ -177,7 +179,7 @@ function optGroupHtml(spec: SayWordSpec, values: Readonly<Record<string, string>
   const fields = spec.optFields;
   if (fields === undefined || fields.length === 0) return "";
   return '<details class="say-opt">'
-    + '<summary><span class="plus">＋</span><span class="lbl">补充选填项</span>'
+    + '<summary><span class="plus">' + plusSign(currentRenderLanguage()) + '</span><span class="lbl">' + m('skill-bill.write-saySheet.c014') + '</span>'
     + '<span class="sub">' + escapeHtml(spec.optSummary ?? "") + "</span>"
     + '<span class="cnt" id="say-opt-n"></span></summary>'
     + '<div class="say-form">' + fields.map((f) => fieldHtml(f, valueOf(values, f.slot), disabledOf(spec, values, f.slot))).join("") + "</div>"
@@ -202,7 +204,7 @@ function chipsHtml(spec: SayWordSpec, values: Readonly<Record<string, string>>):
   return '<div class="slot-row">' + spec.chips.map((c) => {
     const done = valueOf(values, c.key) !== "";
     return '<span class="slot ' + (done ? "ok" : "miss") + '" data-chip="' + escapeHtml(c.key) + '">'
-      + escapeHtml(c.label) + " <small>" + (done ? "已填" : escapeHtml(c.small)) + "</small></span>";
+      + escapeHtml(c.label) + " <small>" + (done ? m('skill-bill.write-saySheet.c002') : escapeHtml(c.small)) + "</small></span>";
   }).join("") + "</div>";
 }
 
@@ -215,15 +217,15 @@ function fillsHtml(spec: SayWordSpec): string {
 /** 按钮区（判地 .actions：主话术钮 ＋ 复制数据 ＋ 复制日志）。 */
 function actionsHtml(ready: boolean): string {
   return '<div class="actions">'
-    + '<button class="btn btn-primary" type="button" id="say-btn" data-action-id="ilife-say-prompt"' + (ready ? "" : " disabled") + ">复制这句话去跟助手说</button>"
+    + '<button class="btn btn-primary" type="button" id="say-btn" data-action-id="ilife-say-prompt"' + (ready ? "" : " disabled") + '>' + m('skill-bill.write-saySheet.c015') + '</button>'
     + '<div class="copy-wrap" id="say-copy-wrap">'
-    + '<button class="btn btn-secondary" type="button" id="say-data-btn" aria-expanded="false"><span class="btn-in">复制数据<span class="tri"> ▾</span></span></button>'
+    + '<button class="btn btn-secondary" type="button" id="say-data-btn" aria-expanded="false"><span class="btn-in">' + m('skill-bill.write-saySheet.c016') + '<span class="tri"> ▾</span></span></button>'
     + '<div class="copy-menu" role="menu">'
-    + '<button class="copy-item" type="button" data-fmt="text">纯文本 <small>粘贴给助手或自己看</small></button>'
-    + '<button class="copy-item" type="button" data-fmt="json">JSON <small>结构化存档</small></button>'
-    + '<button class="copy-item" type="button" data-fmt="csv">CSV <small>表格导入</small></button>'
+    + '<button class="copy-item" type="button" data-fmt="text">' + m('skill-bill.write-saySheet.c017') + ' <small>' + m('skill-bill.write-saySheet.c018') + '</small></button>'
+    + '<button class="copy-item" type="button" data-fmt="json">JSON <small>' + m('skill-bill.write-saySheet.c019') + '</small></button>'
+    + '<button class="copy-item" type="button" data-fmt="csv">CSV <small>' + m('skill-bill.write-saySheet.c020') + '</small></button>'
     + "</div></div>"
-    + '<button class="btn btn-secondary copy-log" type="button" id="say-log-btn"><span class="btn-in">复制日志<span class="tri ghost" aria-hidden="true"> ▾</span></span></button>'
+    + '<button class="btn btn-secondary copy-log" type="button" id="say-log-btn"><span class="btn-in">' + m('skill-bill.write-saySheet.c021') + '<span class="tri ghost" aria-hidden="true"> ▾</span></span></button>'
     + "</div>";
 }
 
@@ -259,7 +261,7 @@ export function sayCollectOut(input: {
   readonly data: DataTextInput;
   readonly log: LogTextInput;
 }): string | null {
-  const raw = SAY_WORDS[input.sayKey];
+  const raw = sayWords(input.word)[input.sayKey];
   if (raw === undefined) return null;
   const w = input.word;
   const spec: SayWordSpec = {
@@ -321,21 +323,21 @@ export function sayCollectRuntimeJs(): string {
     '    V[s.key] = r.val; if(r.bad) bad[s.key] = 1;',
     '    if(!s.opt && !r.val) miss.push(s.label); });',
     '  var on = 0; (C.slots || []).forEach(function(s){ if(s.opt && String(V[s.key] || "").trim()) on++; });',
-    '  var oc = document.getElementById("say-opt-n"); if(oc) oc.textContent = on ? ("已补 " + on + " 项") : "";',
+    m('skill-bill.write-saySheet.c003'),
     '  (C.slots || []).forEach(function(s){ var i = form.querySelector("[data-slot=\\\"\" + s.key + "\\"]"); if(i) i.classList.toggle("bad", !!bad[s.key]); });',
     '  (C.slots || []).forEach(function(s){ if(s.opt) return; var chip = document.querySelector("[data-chip=\\\"\" + s.key + "\\"]"); if(!chip) return;',
     '    var done = !!V[s.key]; chip.classList.toggle("miss", !done); chip.classList.toggle("ok", done);',
-    '    var sm = chip.querySelector("small"); if(sm) sm.textContent = done ? "已填" : "待补"; });',
+    m('skill-bill.write-saySheet.c004'),
     '  var ready = miss.length === 0;',
     '  if(h2) h2.textContent = ready ? C.title.ready : C.title.wait;',
     '  if(sub) sub.textContent = ready ? C.sub.ready : C.sub.wait;',
     '  if(noEl) noEl.textContent = ready ? C.todo.ready : C.todo.wait;',
     '  if(tagEl) tagEl.textContent = ready ? C.todo.tagReady : C.todo.tagWait;',
     '  if(hint){ hint.classList.toggle("ready", ready);',
-    '    hint.textContent = ready ? "已填齐，可以复制去说了。" : ("还差 " + miss.length + " 项：" + miss.join("、") + "。"); }',
-    '  /* 主按钮的禁用档与 data-t 由共用件 ticketCollectRuntime 拥有（#1129：一处实现），本件不再动它。 */',
+    m('skill-bill.write-saySheet.c005'),
+    m('skill-bill.write-saySheet.c012'),
     '  return build(V); }',
-    'function cp(t, node){ function done(){ if(node.getAttribute("data-label") === null) node.setAttribute("data-label", node.textContent); var o = node.getAttribute("data-label"); node.textContent = "已复制 ✓"; setTimeout(function(){ node.textContent = o; }, 1600); }',
+    m('skill-bill.write-saySheet.c006'),
     '  function fb(){ var ta = document.createElement("textarea"); ta.value = t; document.body.appendChild(ta); ta.select(); try{ document.execCommand("copy"); }catch(e){} document.body.removeChild(ta); done(); }',
     '  if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(done, fb); } else { fb(); } }',
     'var wrap = document.getElementById("say-copy-wrap"), db = document.getElementById("say-data-btn");',
@@ -343,7 +345,7 @@ export function sayCollectRuntimeJs(): string {
     'document.addEventListener("click", function(){ if(wrap){ wrap.classList.remove("open"); if(db) db.setAttribute("aria-expanded", "false"); } });',
     'if(wrap){ Array.prototype.forEach.call(wrap.querySelectorAll(".copy-item"), function(it){ it.addEventListener("click", function(e){ e.stopPropagation(); cp((C.payloads || {})[this.getAttribute("data-fmt")] || "", db); wrap.classList.remove("open"); }); }); }',
     'var lb = document.getElementById("say-log-btn"); if(lb) lb.addEventListener("click", function(){ cp((C.payloads || {}).log || "", lb); });',
-    '/* 复制走公共层 helpers 的 [data-action-id] 委派（读 data-t），本件不再自己复制。 */',
+    m('skill-bill.write-saySheet.c013'),
     'if(form){ form.addEventListener("input", render); form.addEventListener("change", render); }',
     'render();',
     '})();',
@@ -353,11 +355,11 @@ export function sayCollectRuntimeJs(): string {
 /** 采集页整页：纸 ＋ 店头 ＋ 三段 ＋ 按钮区 ＋ 裁切线（结构照判地，逐层层数一致）。 */
 export function sayCollectDoc(input: SayCollectInput): string {
   const s = input.spec;
-  const brand = "饼干记账 · " + input.word;
+  const brand = m('skill-bill.write-saySheet.c007', { p1: String(input.word) });
   const values = input.values ?? {};
   const miss = missingLabels(s, values);
   const ready = miss.length === 0;
-  const hintText = ready ? "已填齐，可以复制去说了。" : "还差 " + String(miss.length) + " 项：" + miss.join("、") + "。";
+  const hintText = ready ? m('skill-bill.write-saySheet.c008') : m('skill-bill.write-saySheet.c009', { p1: String(String(miss.length)), p2: String(listJoin(currentRenderLanguage(), miss)) });
   const page = '<div class="say-page">'
     + '<div class="sheet-wrap"><div class="sheet-frame"><div class="sheet-inner">'
     + '<div class="shop-head"><div class="shop-brand">' + escapeHtml(brand) + "</div>"
@@ -369,15 +371,15 @@ export function sayCollectDoc(input: SayCollectInput): string {
     + sectionHtml({ id: "say-todo", noId: "say-todo-no", tagId: "say-todo-tag",
       title: ready ? TODO_READY_TEXT : s.todoWait, tag: ready ? TODO_READY_TAG : s.todoTagWait, content: chipsHtml(s, values) })
     + '<hr class="dashed">'
-    + sectionHtml({ title: "已替你填好的", tag: "FILLED", content: fillsHtml(s) })
+    + sectionHtml({ title: m('skill-bill.write-saySheet.c010'), tag: "FILLED", content: fillsHtml(s) })
     + '<hr class="dashed">'
-    + sectionHtml({ title: "下一步怎么说", tag: "SAY",
+    + sectionHtml({ title: m('skill-bill.write-saySheet.c011'), tag: "SAY",
       content: '<div class="say-form" id="say-form">'
         + s.fields.map((f) => fieldHtml(f, valueOf(values, f.slot), disabledOf(s, values, f.slot))).join("") + optGroupHtml(s, values) + "</div>"
         + '<p class="say-hint' + (ready ? " ready" : "") + '" id="say-hint">' + escapeHtml(hintText) + "</p>" })
     + '<hr class="dashed">'
     + actionsHtml(ready)
-    + '<div class="cut-line">✂ 裁切线</div>'
+    + '<div class="cut-line">✂ ' + m('skill-bill.write-saySheet.c022') + '</div>'
     + "</div><div class=\"zigzag\"></div></div></div>"
     + '<div class="foot-note">' + escapeHtml(brand) + "</div>"
     + '</div>'

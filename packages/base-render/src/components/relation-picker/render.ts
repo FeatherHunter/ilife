@@ -50,6 +50,7 @@ import {
   type RelationPickerForm,
 } from './attrs.js';
 import { normalizeRelationPicker, type RelationPickerModel, type RelationPickerRow } from './model.js';
+import { m } from '../../entries/index.js';
 
 /** 命中词那一截的开标签：槽类名与 `data-*` 两样都写（样式按类命中、运行时段按锚重画）。 */
 const HIT_OPEN = '<mark class="' + relationPickerSlot('hit') + '" ' + RELATION_PICKER_HIT_ATTR + '="1">';
@@ -75,48 +76,48 @@ function highlightHtml(text: string, term: string): string {
 /** 字段行：标签 ＋ 触发键（触发键里读的是当前值——选中两头的这一头）。
  *  `overlay` 下触发键还写一枚逐实例锚名（`anchor-name`）：浮面靠它贴到触发键下沿
  *  （静态 CSS 认不出逐实例的名字，故这枚名字由标记写、由浮面的 `position-anchor` 读）。 */
-function fieldHtml(m: RelationPickerModel, panelId: string, isOverlay: boolean): string {
+function fieldHtml(model: RelationPickerModel, panelId: string, isOverlay: boolean): string {
   const T = RELATION_PICKER_TEXT;
-  const value = m.selected === undefined ? T.unpicked : m.selected.title;
-  const state = m.selected === undefined ? T.picking : T.picked;
-  const anchor = RELATION_PICKER_ANCHOR_PREFIX + m.id;
+  const value = model.selected === undefined ? T.unpicked : model.selected.title;
+  const state = model.selected === undefined ? T.picking : T.picked;
+  const anchor = RELATION_PICKER_ANCHOR_PREFIX + model.id;
   const trigger = isOverlay
     ? '<button type="button" class="' + relationPickerSlot('box') + '"'
       + ' style="anchor-name: ' + esc(anchor) + '"'
-      + ' ' + RELATION_PICKER_OPEN_ATTR + '="' + esc(m.id) + '"'
+      + ' ' + RELATION_PICKER_OPEN_ATTR + '="' + esc(model.id) + '"'
       + ' popovertarget="' + esc(panelId) + '" aria-haspopup="dialog" aria-controls="' + esc(panelId) + '"'
       + ' aria-expanded="false">'
     : '<button type="button" class="' + relationPickerSlot('box') + '"'
-      + ' ' + RELATION_PICKER_OPEN_ATTR + '="' + esc(m.id) + '"'
-      + ' aria-controls="' + esc(panelId) + '" aria-expanded="' + (m.expanded ? 'true' : 'false') + '">';
+      + ' ' + RELATION_PICKER_OPEN_ATTR + '="' + esc(model.id) + '"'
+      + ' aria-controls="' + esc(panelId) + '" aria-expanded="' + (model.expanded ? 'true' : 'false') + '">';
   return '<div class="' + relationPickerSlot('field') + '">'
-    + '<span class="' + relationPickerSlot('label') + '">' + esc(m.label)
+    + '<span class="' + relationPickerSlot('label') + '">' + esc(model.label)
     + ' <em class="' + relationPickerSlot('state') + '">' + esc(T.stateLead + state) + '</em></span>'
     + trigger
-    + '<span class="' + relationPickerSlot('value') + '" ' + RELATION_PICKER_VALUE_ATTR + '="' + esc(m.id) + '">'
+    + '<span class="' + relationPickerSlot('value') + '" ' + RELATION_PICKER_VALUE_ATTR + '="' + esc(model.id) + '">'
     + esc(value) + '</span>'
     + '<span class="' + relationPickerSlot('caret') + '" aria-hidden="true">' + esc(T.caret) + '</span>'
     + '</button></div>';
 }
 
 /** 输入行 ＋（有错时的）错态行：错态**写在控件旁边**，并由输入框的 `aria-describedby` 指到它，不只染色。 */
-function inputHtml(m: RelationPickerModel, searchLabel: string): string {
+function inputHtml(model: RelationPickerModel, searchLabel: string): string {
   const T = RELATION_PICKER_TEXT;
-  const boxId = m.id + '-q';
-  const errId = m.id + '-err';
-  const described = m.error === undefined ? '' : ' aria-describedby="' + esc(errId) + '" aria-invalid="true"';
+  const boxId = model.id + '-q';
+  const errId = model.id + '-err';
+  const described = model.error === undefined ? '' : ' aria-describedby="' + esc(errId) + '" aria-invalid="true"';
   const parts: string[] = ['<div class="' + relationPickerSlot('in') + '">'];
   parts.push('<input class="' + relationPickerSlot('q') + '" id="' + esc(boxId) + '" type="text"'
-    + ' value="' + esc(m.query) + '" aria-label="' + esc(searchLabel) + '"'
-    + ' ' + RELATION_PICKER_QUERY_ATTR + '="' + esc(m.id) + '"'
+    + ' value="' + esc(model.query) + '" aria-label="' + esc(searchLabel) + '"'
+    + ' ' + RELATION_PICKER_QUERY_ATTR + '="' + esc(model.id) + '"'
     + ' autocomplete="off" enterkeyhint="search"' + described + '>');
   parts.push('<button type="button" class="' + relationPickerSlot('clear') + '"'
-    + ' ' + RELATION_PICKER_CLEAR_ATTR + '="' + esc(m.id) + '"'
+    + ' ' + RELATION_PICKER_CLEAR_ATTR + '="' + esc(model.id) + '"'
     + ' aria-label="' + esc(T.clear) + '" aria-controls="' + esc(boxId) + '">✕</button>');
   parts.push('</div>');
-  if (m.error !== undefined) {
+  if (model.error !== undefined) {
     parts.push('<p class="' + relationPickerSlot('err') + '" id="' + esc(errId) + '" role="alert">'
-      + esc(m.error) + '</p>');
+      + esc(model.error) + '</p>');
   }
   return parts.join('');
 }
@@ -124,19 +125,19 @@ function inputHtml(m: RelationPickerModel, searchLabel: string): string {
 /** 「最近用过」里的一枚 chip：**同一个选项的第三处摆法**——机器键、可搜底串、名字格三样都照着那一行写
  *  （少一样就会走散：2026-09 对抗审查读出，chip 只写了机器键，点它字段行读空串、结果行写「选好了 」）。
  *  露不露与那一行**同一条口径**（自己的 `hidden`；筛掉的那一枚常渲＋藏着，清空搜索词就回来）。 */
-function chipHtml(m: RelationPickerModel, r: RelationPickerRow): string {
+function chipHtml(model: RelationPickerModel, r: RelationPickerRow): string {
   return '<button type="button" class="' + relationPickerSlot('chip') + (r.selected ? ' is-on' : '') + '"'
     + ' ' + RELATION_PICKER_ITEM_ATTR + '="' + esc(r.key) + '"'
     + ' ' + RELATION_PICKER_SEARCH_ATTR + '="' + esc(r.haystack) + '"'
     + ' ' + RELATION_PICKER_RECENT_ATTR + '="1"'
     + (r.selected ? ' aria-current="true"' : '') + (r.hidden ? ' hidden' : '') + '>'
     + '<b class="' + relationPickerSlot('name') + '" ' + RELATION_PICKER_NAME_ATTR + '="1">'
-    + highlightHtml(r.title, m.query.toLowerCase()) + '</b>'
+    + highlightHtml(r.title, model.query.toLowerCase()) + '</b>'
     + '<span class="' + relationPickerSlot('tag') + '">用过</span></button>';
 }
 
 /** 一行选项：记号 ＋ 名字（命中词标出来）＋ 副语 ＋ 读数（＋ `inline` 下行尾那一枚「已选／选它」）。 */
-function rowHtml(m: RelationPickerModel, row: RelationPickerRow, withPick: boolean): string {
+function rowHtml(model: RelationPickerModel, row: RelationPickerRow, withPick: boolean): string {
   const T = RELATION_PICKER_TEXT;
   const classes = [relationPickerSlot('row')];
   if (row.selected) classes.push('is-on');
@@ -150,7 +151,7 @@ function rowHtml(m: RelationPickerModel, row: RelationPickerRow, withPick: boole
     + esc(row.selected ? T.tick : T.dot) + '</span>');
   parts.push('<span class="' + relationPickerSlot('tx') + '">');
   parts.push('<b class="' + relationPickerSlot('name') + '" ' + RELATION_PICKER_NAME_ATTR + '="1">'
-    + highlightHtml(row.title, m.query.toLowerCase()) + '</b>');
+    + highlightHtml(row.title, model.query.toLowerCase()) + '</b>');
   if (row.note !== undefined) {
     parts.push('<em class="' + relationPickerSlot('note') + '">' + esc(row.note) + '</em>');
   }
@@ -167,86 +168,86 @@ function rowHtml(m: RelationPickerModel, row: RelationPickerRow, withPick: boole
 }
 
 /** 一组（标题 ＋ 行容器；组里全被筛掉了，标题也跟着收起来）。 */
-function groupHtml(m: RelationPickerModel, kind: string, title: string, rows: readonly RelationPickerRow[], withPick: boolean): string {
+function groupHtml(model: RelationPickerModel, kind: string, title: string, rows: readonly RelationPickerRow[], withPick: boolean): string {
   if (rows.length === 0) return '';
   const hidden = rows.every((r) => r.hidden);
   return '<p class="' + relationPickerSlot('grp') + '" ' + RELATION_PICKER_GROUP_ATTR + '="' + kind + '"'
     + (hidden ? ' hidden' : '') + '>' + esc(title) + '</p>'
     + '<div class="' + relationPickerSlot('rows') + '">'
-    + rows.map((r) => rowHtml(m, r, withPick)).join('') + '</div>';
+    + rows.map((r) => rowHtml(model, r, withPick)).join('') + '</div>';
 }
 
 /** 末行「新建」：前面一句 ＋ 把当前搜索词直接建成新的那一枚键。 */
-function newHtml(m: RelationPickerModel): string {
+function newHtml(model: RelationPickerModel): string {
   return '<div class="' + relationPickerSlot('new') + '">'
-    + '<span class="' + relationPickerSlot('newlabel') + '">' + esc(m.newPrefix) + '</span>'
+    + '<span class="' + relationPickerSlot('newlabel') + '">' + esc(model.newPrefix) + '</span>'
     + '<button type="button" class="' + relationPickerSlot('create') + '"'
-    + ' ' + RELATION_PICKER_CREATE_ATTR + '="' + esc(m.query) + '">' + esc(m.createLabel) + '</button>'
+    + ' ' + RELATION_PICKER_CREATE_ATTR + '="' + esc(model.query) + '">' + esc(model.createLabel) + '</button>'
     + '</div>';
 }
 
 /** 空态：一条都没命中时出来（`role="status"`，换词时屏读器会念这一句）。 */
-function emptyHtml(m: RelationPickerModel): string {
-  const shown = m.query !== '' && m.hits === 0;
-  return '<p class="' + relationPickerSlot('empty') + '" ' + RELATION_PICKER_EMPTY_ATTR + '="' + esc(m.id) + '"'
-    + ' role="status"' + (shown ? '' : ' hidden') + '>' + esc(m.empty) + '</p>';
+function emptyHtml(model: RelationPickerModel): string {
+  const shown = model.query !== '' && model.hits === 0;
+  return '<p class="' + relationPickerSlot('empty') + '" ' + RELATION_PICKER_EMPTY_ATTR + '="' + esc(model.id) + '"'
+    + ' role="status"' + (shown ? '' : ' hidden') + '>' + esc(model.empty) + '</p>';
 }
 
 /** 脚注行：这一屏**现在**是什么状态（常用去处／命中几条／换个词）。 */
-function footHtml(m: RelationPickerModel): string {
-  return '<p class="' + relationPickerSlot('foot') + '" ' + RELATION_PICKER_FOOT_ATTR + '="' + esc(m.id) + '">'
-    + esc(m.foot) + '</p>';
+function footHtml(model: RelationPickerModel): string {
+  return '<p class="' + relationPickerSlot('foot') + '" ' + RELATION_PICKER_FOOT_ATTR + '="' + esc(model.id) + '">'
+    + esc(model.foot) + '</p>';
 }
 
 /** 列头行（`overlay` 下给了 `readingLabel` 才出：sources 名／读数名与下面每行同一条内边距）。 */
-function colhHtml(m: RelationPickerModel): string {
-  if (m.readingLabel === undefined) return '';
+function colhHtml(model: RelationPickerModel): string {
+  if (model.readingLabel === undefined) return '';
   return '<div class="' + relationPickerSlot('colh') + '" aria-hidden="true">'
-    + '<span class="' + relationPickerSlot('col') + '">' + esc(m.label) + '</span>'
-    + '<span class="' + relationPickerSlot('colr') + '">' + esc(m.readingLabel) + '</span></div>';
+    + '<span class="' + relationPickerSlot('col') + '">' + esc(model.label) + '</span>'
+    + '<span class="' + relationPickerSlot('colr') + '">' + esc(model.readingLabel) + '</span></div>';
 }
 
 /** 形态 `overlay` 的骨架：字段行 → 浮面（输入行 ＋ 列头 ＋ 两组 ＋ 末行新建 ＋ 空态 ＋ 脚注）。
  *  浮面读触发键那枚锚名（`position-anchor`）：贴触发键下沿，贴不下由 `position-try-fallbacks` 翻上去。 */
-function renderOverlay(m: RelationPickerModel): string {
-  const panelId = m.id + '-panel';
-  return fieldHtml(m, panelId, true)
+function renderOverlay(model: RelationPickerModel): string {
+  const panelId = model.id + '-panel';
+  return fieldHtml(model, panelId, true)
     + '<div class="' + relationPickerSlot('panel') + '" id="' + esc(panelId) + '" popover="auto" role="dialog"'
-    + ' style="position-anchor: ' + esc(RELATION_PICKER_ANCHOR_PREFIX + m.id) + '"'
-    + ' aria-label="' + esc(m.label) + '" ' + RELATION_PICKER_PANEL_ATTR + '="' + esc(m.id) + '">'
-    + inputHtml(m, '搜' + m.label) + colhHtml(m)
-    + groupHtml(m, 'recent', RELATION_PICKER_TEXT.recentGroup, m.recents, false)
-    + groupHtml(m, 'all', m.allLabel, m.all, false)
-    + newHtml(m) + emptyHtml(m) + footHtml(m) + '</div>';
+    + ' style="position-anchor: ' + esc(RELATION_PICKER_ANCHOR_PREFIX + model.id) + '"'
+    + ' aria-label="' + esc(model.label) + '" ' + RELATION_PICKER_PANEL_ATTR + '="' + esc(model.id) + '">'
+    + inputHtml(model, '搜' + model.label) + colhHtml(model)
+    + groupHtml(model, 'recent', RELATION_PICKER_TEXT.recentGroup, model.recents, false)
+    + groupHtml(model, 'all', model.allLabel, model.all, false)
+    + newHtml(model) + emptyHtml(model) + footHtml(model) + '</div>';
 }
 
 /** 形态 `inline` 的骨架：字段行 → 行内块（输入行 ＋ 最近一排 ＋ 组头 ＋ 单列 ＋ 末行新建）→ 选完那一行。 */
-function renderInline(m: RelationPickerModel): string {
+function renderInline(model: RelationPickerModel): string {
   const T = RELATION_PICKER_TEXT;
-  const inlineId = m.id + '-inline';
-  const parts: string[] = [fieldHtml(m, inlineId, false)];
+  const inlineId = model.id + '-inline';
+  const parts: string[] = [fieldHtml(model, inlineId, false)];
   parts.push('<div class="' + relationPickerSlot('inline') + '" id="' + esc(inlineId) + '"'
-    + ' ' + RELATION_PICKER_INLINE_ATTR + '="' + esc(m.id) + '"' + (m.expanded ? '' : ' hidden') + '>');
-  parts.push(inputHtml(m, '搜' + m.label));
-  if (m.recents.length > 0) {
+    + ' ' + RELATION_PICKER_INLINE_ATTR + '="' + esc(model.id) + '"' + (model.expanded ? '' : ' hidden') + '>');
+  parts.push(inputHtml(model, '搜' + model.label));
+  if (model.recents.length > 0) {
     /* 一枚都不露时，这条带子自己也收起来（与组头同一条口径：不给屏上留一条 20px 的空带）。 */
-    const none = m.recents.every((r) => r.hidden);
+    const none = model.recents.every((r) => r.hidden);
     parts.push('<div class="' + relationPickerSlot('quick') + '"' + (none ? ' hidden' : '') + '>'
-      + m.recents.map((r) => chipHtml(m, r)).join('')
+      + model.recents.map((r) => chipHtml(model, r)).join('')
       + '</div>');
   }
-  parts.push('<p class="' + relationPickerSlot('gh') + '">' + esc(m.allLabel)
-    + '<span class="' + relationPickerSlot('count') + '">' + esc(String(m.all.length) + ' 个') + '</span></p>');
+  parts.push('<p class="' + relationPickerSlot('gh') + '">' + esc(model.allLabel)
+    + '<span class="' + relationPickerSlot('count') + '">' + esc(m('base-render.components-relation-picker-render.c001', { p0: String(String(model.all.length)) })) + '</span></p>');
   parts.push('<div class="' + relationPickerSlot('list') + '">'
-    + m.all.map((r) => rowHtml(m, r, true)).join('') + '</div>');
-  parts.push(newHtml(m) + emptyHtml(m) + footHtml(m));
+    + model.all.map((r) => rowHtml(model, r, true)).join('') + '</div>');
+  parts.push(newHtml(model) + emptyHtml(model) + footHtml(model));
   parts.push('</div>');
   /* 选完那一行：**常渲**（没选时 `hidden`；运行时选中一行就填上字并摊开它——选完必须收成一行读得出的结果）。 */
   {
-    const s = m.selected;
+    const s = model.selected;
     const result = s === undefined ? '' : s.title + (s.reading === undefined ? '' : '（' + s.reading + '）');
     parts.push('<div class="' + relationPickerSlot('chosen') + '"'
-      + ' ' + RELATION_PICKER_CHOSEN_ATTR + '="' + esc(m.id) + '"'
+      + ' ' + RELATION_PICKER_CHOSEN_ATTR + '="' + esc(model.id) + '"'
       + (s === undefined ? ' hidden' : '') + '>'
       + '<span class="' + relationPickerSlot('tick') + '" aria-hidden="true">' + esc(T.tick) + '</span>'
       + '<span class="' + relationPickerSlot('tx') + '">'
@@ -254,7 +255,7 @@ function renderInline(m: RelationPickerModel): string {
       + '<em class="' + relationPickerSlot('why') + '">点「换」重新选一个（字段行与这一行始终读的是同一个值）</em>'
       + '</span>'
       + '<button type="button" class="' + relationPickerSlot('change') + '"'
-      + ' ' + RELATION_PICKER_CHANGE_ATTR + '="' + esc(m.id) + '"'
+      + ' ' + RELATION_PICKER_CHANGE_ATTR + '="' + esc(model.id) + '"'
       + ' aria-controls="' + esc(inlineId) + '">' + esc(T.change) + '</button></div>');
   }
   return parts.join('');

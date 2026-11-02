@@ -47,19 +47,20 @@ import { nowStamp } from '../render/receipt.js';
 import type { FoodRanking, RankItem } from './dietEngine.js';
 import { rankShortName } from './dietEngine.js';
 import type { AllRankings } from './rankingPlate.js';
+import { m } from '../entries/index.js';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；测试钉死一致）。 */
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
 
 /** 本文件各页共用的 head 标题（整页模板住 `src/shared/docPage.ts`，标题走参数）。 */
-const DOC_TITLE = '卡路里 饮食';
+const DOC_TITLE = (): string => m('skill-calorie.diet-rankingDocs.c057');
 
 /** 人话眉标（裁定 1：这一行写归属，不写命令键）。 */
-const EYEBROW = '饮食排行榜';
+const EYEBROW = (): string => m('skill-calorie.diet-rankingDocs.c058');
 
 /** 来源脚注上给**读者看**的来源名（库表名只留在复制日志的「来源」段里，那是给复核的人照抄的技术原件）。 */
-const SOURCE = '饮食记录';
+const SOURCE = (): string => m('skill-calorie.diet-rankingDocs.c059');
 
 /** 缺值口径（裁定 4）：可见文本一律 `—`，不写 0、不写空串、不拿缺省值顶替。 */
 const MISS = '—';
@@ -72,31 +73,35 @@ const MEDAL: Record<number, string> = { 1: '🥇', 2: '🥈', 3: '🥉' };
  *  #511 · `frequent` 原写「常吃」，同页另外两处写「频繁吃榜」（表题，来自 `dietEngine.ts` 的
  *  `RANK_TITLES`）与「频繁吃」（页题）——一页三个名字（审查件第 59 条）⇒ 统一成「常吃榜」。
  *  名字里带上「榜」字，下游不再各自拼一次（原来全榜页靠 `+ '榜'` 拼，改名单就会拼出「常吃榜榜」）。 */
-const RANK_ZH: Record<string, string> = {
-  high_calorie: '高热量榜', low_calorie: '低热量榜', frequent: '常吃榜', high_carb: '高碳水榜', high_protein: '高蛋白榜',
-};
+const RANK_ZH = (): Record<string, string> => ({
+  high_calorie: m('skill-calorie.diet-rankingDocs.c060'), low_calorie: m('skill-calorie.diet-rankingDocs.c061'), frequent: m('skill-calorie.diet-rankingDocs.c062'), high_carb: m('skill-calorie.diet-rankingDocs.c063'), high_protein: m('skill-calorie.diet-rankingDocs.c064'),
+});
 
 /** 一类榜的主指标（**主指标永远排在食物名之后的第一列**）：名字、单位、取值一处定死。 */
 interface RankMetric { readonly label: string; readonly unit: string; readonly of: (it: RankItem) => number }
 
-const RANK_METRIC: Record<string, RankMetric> = {
-  high_calorie: { label: '总热量', unit: '卡', of: (it) => it.totalCal },
-  low_calorie: { label: '总热量', unit: '卡', of: (it) => it.totalCal },
-  frequent: { label: '次数', unit: '次', of: (it) => it.cnt },
-  high_carb: { label: '总碳水', unit: '克', of: (it) => it.totalCarbs },
-  high_protein: { label: '总蛋白', unit: '克', of: (it) => it.totalProtein },
-};
+const RANK_METRIC = (): Record<string, RankMetric> => ({
+  high_calorie: { label: m('skill-calorie.diet-rankingDocs.c065'), unit: m('skill-calorie.diet-rankingDocs.c066'), of: (it) => it.totalCal },
+  low_calorie: { label: m('skill-calorie.diet-rankingDocs.c067'), unit: m('skill-calorie.diet-rankingDocs.c068'), of: (it) => it.totalCal },
+  frequent: { label: m('skill-calorie.diet-rankingDocs.c069'), unit: m('skill-calorie.diet-rankingDocs.c070'), of: (it) => it.cnt },
+  high_carb: { label: m('skill-calorie.diet-rankingDocs.c071'), unit: '克', of: (it) => it.totalCarbs },
+  high_protein: { label: m('skill-calorie.diet-rankingDocs.c072'), unit: '克', of: (it) => it.totalProtein },
+});
 
-const metricOf = (cat: string): RankMetric => RANK_METRIC[cat] ?? RANK_METRIC.high_calorie;
-const nameOf = (cat: string): string => RANK_ZH[cat] ?? cat;
-const textOf = (it: RankItem, m: RankMetric): string => m.of(it) + ' ' + m.unit;
+const metricOf = (cat: string): RankMetric => RANK_METRIC()[cat] ?? RANK_METRIC().high_calorie;
+const nameOf = (cat: string): string => RANK_ZH()[cat] ?? cat;
+const textOf = (it: RankItem, metric: RankMetric): string => metric.of(it) + ' ' + metric.unit;
 
 /** 头名那一句话（读数卡、折叠标题、结论句**共用一处**，免得三处各写一遍又走散）：
  *  常吃榜的主指标就是次数，说「吃了 N 次」；其余说「<指标> N <单位>，共 M 次」。 */
 function headPhrase(it: RankItem, cat: string): string {
-  if (cat === 'frequent') return '吃了 ' + it.cnt + ' 次';
-  const m = metricOf(cat);
-  return m.label + ' ' + textOf(it, m) + '，共 ' + it.cnt + ' 次';
+  if (cat === 'frequent') return m('skill-calorie.diet-rankingDocs.c001', { p0: String(it.cnt) });
+  const metric = metricOf(cat);
+  return m('skill-calorie.diet-rankingDocs.c002', {
+    p0: String(metric.label),
+    p1: String(textOf(it, metric)),
+    p2: String(it.cnt),
+  });
 }
 
 /** 表列（老实物 `CATEGORIES` 的 thead 逐类查表）：**列序即标签序、值一律按标签对齐**。
@@ -108,20 +113,20 @@ function headPhrase(it: RankItem, cat: string): string {
  *  五类的列序逐条：高热量／低热量＝排名｜食物｜总热量｜次数｜餐均｜营养结构；
  *  常吃＝排名｜食物｜次数｜总热量｜餐均｜营养结构；高碳水／高蛋白＝排名｜食物｜总碳水（总蛋白）｜次数｜总热量｜营养结构。 */
 function columnsOf(cat: string): DataTableColumn[] {
-  const m = metricOf(cat);
+  const metric = metricOf(cat);
   const cols: DataTableColumn[] = [
-    { key: 'rank', label: '排名', align: 'right' },
-    { key: 'food', label: '食物' },
-    { key: 'metric', label: m.label, align: 'right' },
+    { key: 'rank', label: m('skill-calorie.diet-rankingDocs.c003'), align: 'right' },
+    { key: 'food', label: m('skill-calorie.diet-rankingDocs.c004') },
+    { key: 'metric', label: metric.label, align: 'right' },
   ];
   if (cat === 'frequent') {
-    cols.push({ key: 'cal', label: '总热量', align: 'right' }, { key: 'avg', label: '餐均', align: 'right' });
+    cols.push({ key: 'cal', label: m('skill-calorie.diet-rankingDocs.c005'), align: 'right' }, { key: 'avg', label: m('skill-calorie.diet-rankingDocs.c006'), align: 'right' });
   } else if (cat === 'high_carb' || cat === 'high_protein') {
-    cols.push({ key: 'cnt', label: '次数', align: 'right' }, { key: 'cal', label: '总热量', align: 'right' });
+    cols.push({ key: 'cnt', label: m('skill-calorie.diet-rankingDocs.c007'), align: 'right' }, { key: 'cal', label: m('skill-calorie.diet-rankingDocs.c008'), align: 'right' });
   } else {
-    cols.push({ key: 'cnt', label: '次数', align: 'right' }, { key: 'avg', label: '餐均', align: 'right' });
+    cols.push({ key: 'cnt', label: m('skill-calorie.diet-rankingDocs.c009'), align: 'right' }, { key: 'avg', label: m('skill-calorie.diet-rankingDocs.c010'), align: 'right' });
   }
-  cols.push({ key: 'nutri', label: '营养结构' });
+  cols.push({ key: 'nutri', label: m('skill-calorie.diet-rankingDocs.c011') });
   return cols;
 }
 
@@ -138,7 +143,7 @@ function nutriOf(it: RankItem): { p: number; c: number; f: number } | null {
 
 const nutriText = (it: RankItem): string => {
   const n = nutriOf(it);
-  return n === null ? MISS : '蛋白 ' + n.p + '% 碳水 ' + n.c + '% 脂肪 ' + n.f + '%';
+  return n === null ? MISS : m('skill-calorie.diet-rankingDocs.c012', { p0: String(n.p), p1: String(n.c), p2: String(n.f) });
 };
 
 /** 名次写法：前三带金银铜章（老实物桌面圆章／手机左色条那一处信息），其余只给名次数字。 */
@@ -146,14 +151,14 @@ const rankText = (rank: number): string => (MEDAL[rank] === undefined ? String(r
 
 /** 一行表数据（列由 `columnsOf()` 挑，多余的键不出现）。 */
 function rowOf(it: RankItem, cat: string): Record<string, string> {
-  const m = metricOf(cat);
+  const metric = metricOf(cat);
   return {
     rank: rankText(it.rank),
     food: it.foodName,
-    metric: textOf(it, m),
-    cnt: it.cnt + ' 次',
-    cal: it.totalCal + ' 卡',
-    avg: it.avgCalPerMeal + ' 卡',
+    metric: textOf(it, metric),
+    cnt: m('skill-calorie.diet-rankingDocs.c013', { p0: String(it.cnt) }),
+    cal: m('skill-calorie.diet-rankingDocs.c014', { p0: String(it.totalCal) }),
+    avg: m('skill-calorie.diet-rankingDocs.c015', { p0: String(it.avgCalPerMeal) }),
     nutri: nutriText(it),
   };
 }
@@ -212,17 +217,21 @@ function tocOf(items: ReadonlyArray<{ id: string; text: string }>): string {
 /** 复制区（两页共用）：数据走三格式菜单，日志六段齐、第 4 段＝本次命令原文（裁定 7）。 */
 function docCopy(env: SerializableEnvelope, command: string): string {
   return copyArea({
-    title: '复制榜单',
+    title: m('skill-calorie.diet-rankingDocs.c016'),
     data: { envelope: env },
-    log: { envelope: env, copyLog: copyLog({ command, source: SOURCE, actionAt: nowStamp(), version: DOC_VERSION }) },
+    log: { envelope: env, copyLog: copyLog({ command, source: SOURCE(), actionAt: nowStamp(), version: DOC_VERSION }) },
   });
 }
 
 /** 结论句（裁定 2：紧跟标题、句内含本页至少一个读数）。 */
 function oneLine(cat: string, r: FoodRanking): string {
   const top = r.items[0];
-  if (top === undefined) return '本窗 ' + r.start + ' 至 ' + r.end + ' 里没有可上榜的食物：' + MISS + '。';
-  return '本窗 ' + r.items.length + ' 种食物上榜，头名「' + top.foodName + '」：' + headPhrase(top, cat) + '。';
+  if (top === undefined) return m('skill-calorie.diet-rankingDocs.c017', { p0: String(r.start), p1: String(r.end), p2: String(MISS) });
+  return m('skill-calorie.diet-rankingDocs.c018', {
+    p0: String(r.items.length),
+    p1: String(top.foodName),
+    p2: String(headPhrase(top, cat)),
+  });
 }
 
 /** 空窗那一态的两句（裁定 4 的 2026-09-15 澄清）：**空态句**说这一窗为什么空，
@@ -230,8 +239,8 @@ function oneLine(cat: string, r: FoodRanking): string {
 function emptyWindowGuide(start: string, end: string, scope: string): string {
   return emptyGuide({
     icon: '🍽️',
-    text: '本窗 ' + start + ' 至 ' + end + ' 里一条饮食记录都没有，' + scope + '。',
-    hint: '说「记一餐」把吃的那顿记上，榜单就有内容了。补以前的日期就说「补记饮食」。',
+    text: m('skill-calorie.diet-rankingDocs.c019', { p0: String(start), p1: String(end), p2: String(scope) }),
+    hint: m('skill-calorie.diet-rankingDocs.c020'),
   });
 }
 
@@ -241,10 +250,10 @@ function emptyWindowGuide(start: string, end: string, scope: string): string {
  *  仍然出完整页，只是把「营养结构」那一块换成空态块（空态句 ＋ 引导句），读数卡与表位一律 `—`。 */
 export function buildRankingDoc(r: FoodRanking, cmd?: string): string {
   const cat = r.category;
-  const m = metricOf(cat);
+  const metric = metricOf(cat);
   const top = r.items[0];
   const emptyWindow = r.items.length === 0;
-  const sum = r.items.reduce((acc, it) => acc + m.of(it), 0);
+  const sum = r.items.reduce((acc, it) => acc + metric.of(it), 0);
   const env: SerializableEnvelope = {
     version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: 'calorie.view.ranking',
     data: {
@@ -255,45 +264,45 @@ export function buildRankingDoc(r: FoodRanking, cmd?: string): string {
     },
   };
   const kpis = renderKpiGrid([
-    { label: nameOf(cat), value: String(r.items.length), unit: '种', detail: '窗口 ' + r.start + ' 至 ' + r.end },
+    { label: nameOf(cat), value: String(r.items.length), unit: m('skill-calorie.diet-rankingDocs.c021'), detail: m('skill-calorie.diet-rankingDocs.c022', { p0: String(r.start), p1: String(r.end) }) },
     {
-      label: '头名', value: top === undefined ? MISS : top.foodName,
-      detail: top === undefined ? '本窗无上榜食物' : headPhrase(top, cat),
+      label: m('skill-calorie.diet-rankingDocs.c023'), value: top === undefined ? MISS : top.foodName,
+      detail: top === undefined ? m('skill-calorie.diet-rankingDocs.c024') : headPhrase(top, cat),
     },
-    { label: '上榜' + m.label, value: String(sum), unit: m.unit, detail: '前 ' + r.items.length + ' 名合计' },
+    { label: m('skill-calorie.diet-rankingDocs.c025', { p0: String(metric.label) }), value: String(sum), unit: metric.unit, detail: m('skill-calorie.diet-rankingDocs.c026', { p0: String(r.items.length) }) },
   ]);
   const table = renderDataTable({
     columns: columnsOf(cat),
     rows: r.items.map((it) => rowOf(it, cat)),
     caption: rankShortName(cat),
-    emptyText: '本窗没有可上榜的食物（记一餐之后再看这张榜）',
+    emptyText: m('skill-calorie.diet-rankingDocs.c027'),
   });
   const content = [
     RANK_CSS,
     dietUiCss(),
-    windowStrip(r.start, r.end, r.items.length + ' 种'),
+    windowStrip(r.start, r.end, m('skill-calorie.diet-rankingDocs.c028', { p0: String(r.items.length) })),
     tocOf([
-      { id: 'sec-kpi', text: '上榜速览' },
-      emptyWindow ? { id: 'sec-empty', text: '本窗没有记录' } : { id: 'sec-nutri', text: '营养结构' },
-      { id: 'sec-table', text: '榜单明细' },
+      { id: 'sec-kpi', text: m('skill-calorie.diet-rankingDocs.c029') },
+      emptyWindow ? { id: 'sec-empty', text: m('skill-calorie.diet-rankingDocs.c030') } : { id: 'sec-nutri', text: m('skill-calorie.diet-rankingDocs.c031') },
+      { id: 'sec-table', text: m('skill-calorie.diet-rankingDocs.c032') },
     ]),
     '<section id="sec-kpi">' + kpis + '</section>',
     emptyWindow
-      ? '<section id="sec-empty">' + emptyWindowGuide(r.start, r.end, '这张榜没有可上榜的食物') + '</section>'
+      ? '<section id="sec-empty">' + emptyWindowGuide(r.start, r.end, m('skill-calorie.diet-rankingDocs.c033')) + '</section>'
       : '<section id="sec-nutri">' + nutriBlock(r.items) + '</section>',
     '<section id="sec-table">' + table + '</section>',
-    renderCaliberLine('口径：表里一行是一种食物，热量 碳水和蛋白都是窗口内同名记录的合计。'),
-    renderCaliberLine('营养结构按每克蛋白 4 千卡 碳水 4 千卡 脂肪 9 千卡折算成热量占比。'),
-    renderCaliberLine('零值不画条，缺值一律写 ' + MISS + '。'),
-    renderCaliberLine('条数＝上榜食物数。'),
+    renderCaliberLine(m('skill-calorie.diet-rankingDocs.c034')),
+    renderCaliberLine(m('skill-calorie.diet-rankingDocs.c035')),
+    renderCaliberLine(m('skill-calorie.diet-rankingDocs.c036', { p0: String(MISS) })),
+    renderCaliberLine(m('skill-calorie.diet-rankingDocs.c037')),
     docCopy(env, cmd ?? commandLine('calorie.view.ranking', { category: cat })),
-    sourceLine({ source: SOURCE, start: r.start, end: r.end, count: r.items.length }),
+    sourceLine({ source: SOURCE(), start: r.start, end: r.end, count: r.items.length }),
   ].join('');
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '排行 ' + nameOf(cat),
+    docTitle: DOC_TITLE(),
+    title: m('skill-calorie.diet-rankingDocs.c038', { p0: String(nameOf(cat)) }),
     pageUi: true,
-    eyebrow: EYEBROW,
+    eyebrow: EYEBROW(),
     subtitle: oneLine(cat, r),
     content,
   });
@@ -315,55 +324,62 @@ export function buildAllRankingsDoc(a: AllRankings, cmd?: string): string {
   };
   const kpis = renderKpiGrid(cats.map((c) => {
     const b = a.boards[c];
-    const m = metricOf(c);
-    if (b === null || b.items.length === 0) return { label: nameOf(c), value: MISS, detail: '本窗无数据' };
+    const metric = metricOf(c);
+    if (b === null || b.items.length === 0) return { label: nameOf(c), value: MISS, detail: m('skill-calorie.diet-rankingDocs.c039') };
     const top = b.items[0];
     return {
       label: nameOf(c), value: top.foodName,
-      detail: headPhrase(top, c) + '。本窗 ' + b.items.length + ' 种',
+      detail: m('skill-calorie.diet-rankingDocs.c040', { p0: String(headPhrase(top, c)), p1: String(b.items.length) }),
     };
   }));
   const boards = live.map((c) => {
     const b = a.boards[c] as FoodRanking;
     const top = b.items[0];
     return renderDisclosure({
-      title: nameOf(c) + '（' + b.items.length + ' 种，头名 ' + top.foodName + '：' + headPhrase(top, c) + '）',
+      title: m('skill-calorie.diet-rankingDocs.c041', {
+        p0: String(nameOf(c)),
+        p1: String(b.items.length),
+        p2: String(top.foodName),
+        p3: String(headPhrase(top, c)),
+      }),
       open: c === live[0],
       contentHtml: renderDataTable({
         columns: columnsOf(c),
         rows: b.items.map((it) => rowOf(it, c)),
         caption: rankShortName(c),
-        emptyText: '本窗没有可上榜的食物（记一餐之后再看这张榜）',
+        emptyText: m('skill-calorie.diet-rankingDocs.c042'),
       }),
     });
   }).join('');
-  const head = live.length === 0 ? '' : '，' + nameOf(live[0]) + '的头名「'
-    + (a.boards[live[0]] as FoodRanking).items[0].foodName + '」（'
-    + headPhrase((a.boards[live[0]] as FoodRanking).items[0], live[0]) + '）';
+  const head = live.length === 0 ? '' : m('skill-calorie.diet-rankingDocs.c043', {
+    p0: String(nameOf(live[0])),
+    p1: String((a.boards[live[0]] as FoodRanking).items[0].foodName),
+    p2: String(headPhrase((a.boards[live[0]] as FoodRanking).items[0], live[0])),
+  });
   const content = [
     dietUiCss(),
-    windowStrip(a.start, a.end, total + ' 种'),
+    windowStrip(a.start, a.end, m('skill-calorie.diet-rankingDocs.c044', { p0: String(total) })),
     tocOf(windowEmpty
-      ? [{ id: 'sec-kpi', text: '五类榜速览' }, { id: 'sec-empty', text: '本窗没有记录' }]
-      : [{ id: 'sec-kpi', text: '五类榜速览' }, { id: 'sec-boards', text: '逐榜明细' }]),
+      ? [{ id: 'sec-kpi', text: m('skill-calorie.diet-rankingDocs.c045') }, { id: 'sec-empty', text: m('skill-calorie.diet-rankingDocs.c046') }]
+      : [{ id: 'sec-kpi', text: m('skill-calorie.diet-rankingDocs.c047') }, { id: 'sec-boards', text: m('skill-calorie.diet-rankingDocs.c048') }]),
     '<section id="sec-kpi">' + kpis + '</section>',
     windowEmpty
-      ? '<section id="sec-empty">' + emptyWindowGuide(a.start, a.end, '五类榜都没有可上榜的食物') + '</section>'
+      ? '<section id="sec-empty">' + emptyWindowGuide(a.start, a.end, m('skill-calorie.diet-rankingDocs.c049')) + '</section>'
       : '<section id="sec-boards">' + boards + '</section>',
-    renderCaliberLine('口径：五类榜同一个窗口和同一套取数口径。'),
-    renderCaliberLine('每类榜的列序按榜单类查表，主指标排在食物名之后第一列。'),
-    (empty.length === 0 ? renderCaliberLine('本窗五类榜都有数据。') : renderCaliberLine('本窗没有数据的榜不出明细块：' + empty.map(nameOf).join(' ') + '。')),
+    renderCaliberLine(m('skill-calorie.diet-rankingDocs.c050')),
+    renderCaliberLine(m('skill-calorie.diet-rankingDocs.c051')),
+    (empty.length === 0 ? renderCaliberLine(m('skill-calorie.diet-rankingDocs.c052')) : renderCaliberLine(m('skill-calorie.diet-rankingDocs.c053', { p0: String(empty.map(nameOf).join(' ')) }))),
     docCopy(env, cmd ?? commandLine('calorie.view.ranking', {})),
-    sourceLine({ source: SOURCE, start: a.start, end: a.end, count: total }),
+    sourceLine({ source: SOURCE(), start: a.start, end: a.end, count: total }),
   ].join('');
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '全部排行',
+    docTitle: DOC_TITLE(),
+    title: m('skill-calorie.diet-rankingDocs.c054'),
     pageUi: true,
-    eyebrow: EYEBROW,
+    eyebrow: EYEBROW(),
     subtitle: windowEmpty
-      ? '本窗 ' + a.start + ' 至 ' + a.end + ' 五类榜都没有可上榜的食物：' + MISS + '。'
-      : '五类榜里 ' + a.okCount + ' 类本窗有数据，合计 ' + total + ' 种食物上榜' + head + '。',
+      ? m('skill-calorie.diet-rankingDocs.c055', { p0: String(a.start), p1: String(a.end), p2: String(MISS) })
+      : m('skill-calorie.diet-rankingDocs.c056', { p0: String(a.okCount), p1: String(total), p2: String(head) }),
     content,
   });
 }

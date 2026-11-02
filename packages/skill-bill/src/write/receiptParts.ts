@@ -11,8 +11,8 @@
  *   两边说法不同，故它是必填参数，不给默认值，免得哪张页悄悄用了别处的说法。
  *
  *  #1206 首切件（多语言文本外置）：状态字与对账区文案不住这里，住 `../entries/zh.ts`（中文基准）
- *  与 `../entries/en.ts`（英文列）；各函数末参 `language` 按语言取值（不给＝`zh`，
- *  与改造前逐字节相同）。
+ *  与 `../entries/en.ts`（英文列）；各函数末参 `language` 按语言取值。**语言由调用方必给**
+ *  （#1307）：出口解析一次、一路传下来，本件不再兜 `zh`（兜了就把漏传变成静默中文）。
  */
 import { resolve } from 'base-entries';
 import { SKILL_BILL_CATALOG } from '../entries/index.js';
@@ -22,12 +22,12 @@ import type { BillReceipt } from '../shared/writeParts.js';
 import { RECEIPT_FORMAT } from '../shared/writeParts.js';
 
 /** 一格的状态值：值 ＋ 一句说明（说明由调用方按本页措辞传入）。 */
-export function statusCard(value: string, detail: string, language: string = 'zh'): KpiCardInput {
+export function statusCard(value: string, detail: string, language: string): KpiCardInput {
   return { label: resolve(SKILL_BILL_CATALOG, language, 'receipt-parts.status.label'), value, detail };
 }
 
 /** 回执页的状态卡：无改动／已改动 ＋ 一句写入去向的说明。 */
-export function receiptStatusCard(receipt: BillReceipt, writtenDetail: string, language: string = 'zh'): KpiCardInput {
+export function receiptStatusCard(receipt: BillReceipt, writtenDetail: string, language: string): KpiCardInput {
   return statusCard(
     receipt.noChange ? resolve(SKILL_BILL_CATALOG, language, 'receipt-parts.status.unchanged') : resolve(SKILL_BILL_CATALOG, language, 'receipt-parts.status.changed'),
     receipt.noChange ? resolve(SKILL_BILL_CATALOG, language, 'receipt-parts.status.unchanged-detail') : writtenDetail,
@@ -39,7 +39,7 @@ export function receiptStatusCard(receipt: BillReceipt, writtenDetail: string, l
  *  这次记了几笔与写进去的项已在上方卡片上，这里不重写。
  *  本轮整改删掉两行内部话（照 `docs/skills/skill-bill/t407-文字审查.md` 第 54 条）：
  *  `本地时钟` 与 `回执格式 / v1（写库回执）`——前者是实现细节，后者是版本自指，用户都拿它没动作可做。 */
-export function reconcileDisclosure(receipt: BillReceipt, language: string = 'zh'): string {
+export function reconcileDisclosure(receipt: BillReceipt, language: string): string {
   return renderDisclosure({
     title: resolve(SKILL_BILL_CATALOG, language, 'receipt-parts.reconcile.title'),
     contentHtml: renderDataTable({

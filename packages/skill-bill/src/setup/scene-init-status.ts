@@ -9,22 +9,32 @@
  *   ③ 老侧 `init_status.html:145` 在零记录时正确显示「现有记录 0 条」（不吞 0）——这条**照抄**
  *      （`#688` 裁定 4 的正面例子）。
  */
+import { runWithLanguage } from 'base-entries';
 import type { SetupScene } from './scene.js';
+import { m } from '../entries/index.js';
 
 const KEY = 'bill.setup.run' as const;
 
-/** 未就绪时那块引导说的仍是「初始化」那一句（老侧 `init_status.html:151` 逐字同句）。
- *  本件不另取唤醒词字面量：引导那一句是**另一条场景**的口令，取自 `./scene-init.js` 那一支的写法。 */
-const INIT_PROMPT = '请加载「饼干记账」技能,帮我开始使用饼干记账(唤醒词:初始化):\n';
+/** 构建场景（`#1214`：文案经词条层，**渲染期**取词）。
+ *  未就绪时那块引导说的仍是「初始化」那一句（老侧 `init_status.html:151` 逐字同句）——
+ *  引导那一句是**另一条场景**的口令，取自 `./scene-init.js` 那一支的写法。 */
+function buildScene(): SetupScene {
+  return {
+    id: 'init-status',
+    sceneId: 'setup_init_status',
+    key: KEY,
+    op: 'init-status',
+    page: 'list',
+    title: m('skill-bill.setup-scene-init-status.title'),
+    caliber: m('skill-bill.setup-scene-init-status.c002'),
+    subtitle: m('skill-bill.setup-scene-init-status.c003'),
+    promptOf: () => m('skill-bill.setup-scene-init-status.c004'),
+  };
+}
 
-export const SCENE: SetupScene = {
-  id: 'init-status',
-  sceneId: 'setup_init_status',
-  key: KEY,
-  op: 'init-status',
-  page: 'list',
-  title: '初始化状态',
-  caliber: '三重判定',
-  subtitle: '三项检查 · 数据在 · 结构对 · 记录能数',
-  promptOf: () => INIT_PROMPT,
-};
+export const SCENE: SetupScene = buildScene();
+
+/** 按语言重建本场景（`#1214`：语言是运行期参数，不是模块加载期事实）。 */
+export function sceneInitStatusFor(language: string): SetupScene {
+  return runWithLanguage(language, buildScene);
+}

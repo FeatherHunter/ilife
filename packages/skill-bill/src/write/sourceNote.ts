@@ -16,7 +16,8 @@
  *
  *  #1206 首切件（多语言文本外置）：两句来源不住这里，住 `../entries/zh.ts`（中文基准）
  *  与 `../entries/en.ts`（英文列）；`receiptSourceNote(time, changed, language)`／
- *  `collectSourceNote(time, language)` 按语言取值（不给＝`zh`，与改造前逐字节相同）。
+ *  `collectSourceNote(time, language)` 按语言取值。**语言由调用方必给**（#1307）：
+ *  出口解析一次、一路传下来，本件不再兜 `zh`——兜一次就是一处「调用方忘传即静默中文」的缺口。
  */
 import { resolve } from 'base-entries';
 import { SKILL_BILL_CATALOG } from '../entries/index.js';
@@ -32,11 +33,11 @@ function sourceNote(time: string, count: number, source: string): string {
 }
 
 /** 结果型回执页（④）的来源脚注：窗口＝这一笔的时间、条数＝本次改动笔数。 */
-export function receiptSourceNote(time: string, changed: number, language: string = 'zh'): string {
+export function receiptSourceNote(time: string, changed: number, language: string): string {
   return sourceNote(time, changed, resolve(SKILL_BILL_CATALOG, language, 'source-note.receipt'));
 }
 
 /** 过程型采集页（①）的来源脚注：窗口＝这一笔的时间、条数＝本次改动笔数（这一页没写库 ⇒ 0）。 */
-export function collectSourceNote(time: string, language: string = 'zh'): string {
+export function collectSourceNote(time: string, language: string): string {
   return sourceNote(time, 0, resolve(SKILL_BILL_CATALOG, language, 'source-note.collect'));
 }

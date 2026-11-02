@@ -12,6 +12,7 @@
  */
 import { skinVar } from '../skin/contract.js';
 import { SCALE_BAR_DEFAULT_CELLS } from './render.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -27,7 +28,7 @@ export function scaleBarCss(input?: { readonly prefix?: string }): string {
   const root = '.' + p + 'page-ui';
   const s = root + ' .' + p + 'block-scale-bar';
   return [
-    '/* scale-bar（刻度条）：条形码（N 格可数）／细线（一条轨）两形态，同一份值域。 */',
+    m('base-render.components-scale-bar-style.c001'),
     s + ' {',
     '  display: flex;',
     '  flex-direction: column;',
@@ -50,7 +51,7 @@ export function scaleBarCss(input?: { readonly prefix?: string }): string {
     s + '.is-cells ' + '.' + p + 'block-scale-bar-cell.is-on {',
     '  background: ' + skinVar('accent') + ';',
     '}',
-    '/* 细线档：轨高 6px，填充只用主色；轨底用 --line（与条形码的"空格"同色 ⇒ 两形态的空/满语义一致）。 */',
+    m('base-render.components-scale-bar-style.c002'),
     s + '.is-line ' + '.' + p + 'block-scale-bar-track {',
     '  gap: 0;',
     '  height: ' + SCALE_BAR_LINE_HEIGHT_PX + 'px;',
@@ -64,7 +65,7 @@ export function scaleBarCss(input?: { readonly prefix?: string }): string {
     '  border-radius: 999px;',
     '  background: var(--blue);',
     '}',
-    '/* 超目标：只换色（走语义档 `danger`——契约里它就是"危险／逾期"），形状不变。 */',
+    m('base-render.components-scale-bar-style.c003'),
     s + '.is-over ' + '.' + p + 'block-scale-bar-cell.is-on,',
     s + '.is-over ' + '.' + p + 'block-scale-bar-fill {',
     '  background: ' + skinVar('danger') + ';',
@@ -84,6 +85,6 @@ export function scaleBarCss(input?: { readonly prefix?: string }): string {
     s + '-cap-right {',
     '  font-weight: 600;',
     '}',
-    '/* 条形码总格数写在产出器里（' + SCALE_BAR_DEFAULT_CELLS + ' 格缺省）；样式不猜格数。 */',
+    m('base-render.components-scale-bar-style.c004', { p0: String(SCALE_BAR_DEFAULT_CELLS) }),
   ].join(LF);
 }

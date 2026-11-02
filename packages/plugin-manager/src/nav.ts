@@ -14,6 +14,8 @@
  * 的 ActionGroup 提供，本仓不再维护入口表。
  */
 
+import { m } from './entries/index.js';
+import { PLUGIN_CHANNELS } from './shared-copy.generated.js';
 export interface ManagerTab {
   readonly skill: string;
   readonly slotId: string;
@@ -33,7 +35,11 @@ export interface ManagerTab {
    *  总管从账本上读到的那一格恒是空串。后果是六家恒被判成「没有体检出口」，
    *  面板的体检目标表恒为空，「体检一次」按下去毫无反应（第 1 版的实现就是这么哑掉的）。
    *  这份镜像由 `test/plugin-p10-boundaries.test.mjs` 逐家与各包契约件的常量对齐守着。
-   *  各家注册里那一格**留着不删**：上游哪天开始透传自定义选项，可以一行切回账本。 */
+   *  各家注册里那一格**留着不删**：上游哪天开始透传自定义选项，可以一行切回账本。
+   *
+   *  #1231 起这一格不再是手写副本：七份镜像（六家契约件＋本表）的唯一可编辑处是
+   *  `tooling/shared-copy.json`，本表取 `shared-copy.generated.ts` 的 `PLUGIN_CHANNELS`——
+   *  与各家契约件的 `RPC_CHANNEL` 同一份派生，改值只改那张表再跑 `node tooling/gen-shared-copy.mjs`。 */
   readonly channel: string;
 }
 
@@ -58,14 +64,24 @@ export function dualInstallCmd(singlePlugin: string): string {
 }
 
 /** P3 定案 6 tab（order 升序即 + 号菜单顺序；已打开条不受 order 控制）。 */
-export const MANAGER_TABS: readonly ManagerTab[] = [
-  { skill: 'bill', slotId: 'ilife:cookie', order: 70, title: '饼干记账', plugin: 'dsh-bill-ilife', channel: '/ilife-bill-ilife' },
-  { skill: 'calorie', slotId: 'ilife:calorie', order: 75, title: '卡路里', plugin: 'dsh-calorie', channel: '/ilife-calorie' },
-  { skill: 'memo', slotId: 'ilife:memo', order: 80, title: '备忘录', plugin: 'dsh-memo-ilife', channel: '/ilife-memo' },
-  { skill: 'schedule', slotId: 'ilife:schedule', order: 85, title: '作息管家', plugin: 'dsh-schedule-ilife', channel: '/ilife-schedule-ilife' },
-  { skill: 'home', slotId: 'ilife:home', order: 90, title: '居家管家', plugin: 'dsh-home-ilife', channel: '/ilife-home-ilife' },
-  { skill: 'chef', slotId: 'ilife:chef', order: 95, title: '私家大厨', plugin: 'dsh-chef', channel: '/ilife-chef' },
-];
+function buildManagerTabs(): readonly ManagerTab[] {
+  return [
+    { skill: 'bill', slotId: 'ilife:cookie', order: 70, title: m('plugin-manager.nav.c002'), plugin: 'dsh-bill-ilife', channel: PLUGIN_CHANNELS.bill },
+    { skill: 'calorie', slotId: 'ilife:calorie', order: 75, title: m('plugin-manager.nav.c003'), plugin: 'dsh-calorie', channel: PLUGIN_CHANNELS.calorie },
+    { skill: 'memo', slotId: 'ilife:memo', order: 80, title: m('plugin-manager.nav.c004'), plugin: 'dsh-memo-ilife', channel: PLUGIN_CHANNELS.memo },
+    { skill: 'schedule', slotId: 'ilife:schedule', order: 85, title: m('plugin-manager.nav.c005'), plugin: 'dsh-schedule-ilife', channel: PLUGIN_CHANNELS.schedule },
+    { skill: 'home', slotId: 'ilife:home', order: 90, title: m('plugin-manager.nav.c006'), plugin: 'dsh-home-ilife', channel: PLUGIN_CHANNELS.home },
+    { skill: 'chef', slotId: 'ilife:chef', order: 95, title: m('plugin-manager.nav.c007'), plugin: 'dsh-chef', channel: PLUGIN_CHANNELS.chef },
+  ];
+}
+
+/** 渲染期现取：产品名随语言走（#1229）。 */
+export function managerTabs(): readonly ManagerTab[] {
+  return buildManagerTabs();
+}
+
+/** 兼容镜像：模块加载期取一次（仓库级边界测试与 update-batch 按常量读）；渲染路径用 managerTabs()。 */
+export const MANAGER_TABS: readonly ManagerTab[] = buildManagerTabs();
 
 export function recoFor(tab: ManagerTab): RecoTab {
   const installCmd = dualInstallCmd(tab.plugin);
@@ -73,14 +89,14 @@ export function recoFor(tab: ManagerTab): RecoTab {
     ...tab,
     kind: 'reco',
     installCmd,
-    hint: '未安装[' + tab.plugin + ']，请补装后使用：' + installCmd,
+    hint: m('plugin-manager.nav.c001', { p0: String(tab.plugin), p1: String(installCmd) }),
   };
 }
 
 export type Presence = ReadonlySet<string>;
 
 export function tabsForPresence(present: Presence): readonly (ManagerTab | RecoTab)[] {
-  return MANAGER_TABS.map((t) => (present.has(t.slotId) ? t : recoFor(t)));
+  return managerTabs().map((t) => (present.has(t.slotId) ? t : recoFor(t)));
 }
 
 export interface OpenPort {
@@ -106,9 +122,15 @@ export interface ManualEntryRow {
   readonly tip: string;
 }
 
-export const MANUAL_ENTRY: ManualEntryRow = {
-  key: 'manual',
-  title: '使用手册',
-  tip: '打开使用手册',
-};
+/** 使用手册入口那一行（渲染期现取）。 */
+export function manualEntry(): ManualEntryRow {
+  return {
+    key: 'manual',
+    title: m('plugin-manager.nav.c008'),
+    tip: m('plugin-manager.nav.c009'),
+  };
+}
+
+/** 兼容镜像：模块加载期取一次；渲染路径用 manualEntry()。 */
+export const MANUAL_ENTRY: ManualEntryRow = manualEntry();
 

@@ -25,6 +25,7 @@
  * 同一条色基，本件不发明色值）。
  */
 import { CHART_PALETTE, CSS_VAR_TOKENS } from 'base-paint';
+import { m } from '../entries/index.js';
 
 /** 换行（仓库口径：`String.fromCharCode(10)`，不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -60,8 +61,9 @@ export function historyPageCss(input?: { readonly family?: string; readonly fill
   /* 填满度那组只挂在**实测为正向**的那一页（33）：同一条规则在第 34 格实测把读数从 92 拉到 89
      （同会话、只差这一组），故按页开关，不按族一刀切。 */
   const fill = input !== undefined && input !== null && input.fill === true;
+  const resultSuffix = result ? m('skill-chef.history-page-css.c001') : '';
   return [
-    '/* #873 历史域页内收口 · 每一条规则都挂在根类 ' + root + ' 之下' + (result ? ' · result 族' : '') + ' */',
+    m('skill-chef.history-page-css.c002', { p0: String(root), p1: String(resultSuffix) }),
     /* 第三轮撤掉：上一轮自建的「页顶色带收边」（`::before` 圆角＋暖色晕）——公共层族级装饰带
        已经落在版面根第一个子节点上，两条件叠在一起抢戏（复评原话「装饰条带略抢戏、与下方统计
        卡片的简洁风格略有割裂」）。页内不再画任何纯装饰带，只留载真数据的评分圆环。 */

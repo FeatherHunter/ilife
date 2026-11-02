@@ -2,6 +2,7 @@
 // id 是老库自增整数：对外接受数字或数字串，统一归一为 number（老 `note_id <= 0` 即错口径）。
 import { MemoPolicyError } from '../shared/errors.js';
 import { needId } from '../shared/validators.js';
+import { m } from '../entries/index.js';
 
 export function crudCreate(input: { title?: unknown; body?: unknown }): { title: string; body: string } {
   const title = typeof input.title === 'string' ? input.title.trim() : '';
@@ -41,11 +42,11 @@ export function withHelpFieldNames(params: Record<string, unknown>): Record<stri
 }
 
 export function crudUpdate(input: { id?: unknown }): { id: number } {
-  return { id: needId(input.id, '更新') };
+  return { id: needId(input.id, m('skill-memo-ilife.memo-crud.c001')) };
 }
 
 export function crudRemove(input: { id?: unknown; confirm?: unknown }): { id: number } {
-  const id = needId(input.id, '删除');
+  const id = needId(input.id, m('skill-memo-ilife.memo-crud.c002'));
   if (input.confirm !== true) throw new MemoPolicyError('POLICY_BAD_INPUT', '真删须 confirm:true（废弃提醒走 abandon）');
   return { id };
 }

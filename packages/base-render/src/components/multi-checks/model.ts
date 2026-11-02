@@ -17,6 +17,7 @@ import {
   type MultiChecksForm,
   type MultiChecksRow,
 } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 内部行类型：金额已算成整数「分」（浮点相加会把 0.1＋0.2 变成 0.30000000000000004）。 */
 export interface MultiChecksRowModel {
@@ -99,7 +100,7 @@ function normalizeRow(raw: unknown, index: number): MultiChecksRowModel {
   const disabled = optBool(r.disabled, 'multi-checks: input.rows[' + index + '].disabled') === true;
   const disabledReason = optText(r.disabledReason, 'multi-checks: input.rows[' + index + '].disabledReason');
   if (disabledReason !== undefined && !disabled) {
-    badInput('multi-checks: input.rows[' + index + '].disabledReason 只在 disabled=true 时给（否则这句"为什么不能勾"说不清）');
+    badInput('multi-checks: input.rows[' + index + '].disabledReason 只在 disabled=true 时给（否则这句「为什么不能勾」说不清）');
   }
   return {
     id,
@@ -218,30 +219,38 @@ export function normalizeMultiChecks(input: unknown): MultiChecksModel {
     groups,
     selected,
     actions,
-    allText: allText === undefined ? MULTI_CHECKS_ALL_TEXT : allText,
+    allText: allText === undefined ? MULTI_CHECKS_ALL_TEXT() : allText,
     moneyUnit: moneyUnit === undefined ? '¥' : moneyUnit,
-    countUnit: countUnit === undefined ? '条' : countUnit,
+    countUnit: countUnit === undefined ? m('base-render.components-multi-checks-model.c001') : countUnit,
     money: rows.length > 0 && withAmount === rows.length,
     required: optBool(raw.required, 'multi-checks: input.required') === true,
     loading,
-    loadingText: loadingText === undefined ? MULTI_CHECKS_LOADING_TEXT : loadingText,
+    loadingText: loadingText === undefined ? MULTI_CHECKS_LOADING_TEXT() : loadingText,
     error: optText(raw.error, 'multi-checks: input.error'),
-    emptyText: emptyText === undefined ? MULTI_CHECKS_EMPTY_TEXT : emptyText,
+    emptyText: emptyText === undefined ? MULTI_CHECKS_EMPTY_TEXT() : emptyText,
     extraClass: optExtraClass(raw.extraClass, 'multi-checks: input.extraClass'),
   };
 }
 
 /** 顶上那句「已选 N / M 条」（渲染与运行时**同一份**算法：两处各写一套必然走散）。 */
 export function multiChecksCountText(count: number, total: number, unit: string): string {
-  return '已选 ' + String(count) + ' / ' + String(total) + ' ' + unit;
+  return m('base-render.components-multi-checks-model.c002', {
+    p0: String(String(count)),
+    p1: String(String(total)),
+    p2: String(unit),
+  });
 }
 
 /** 底下那句合计／已勾（渲染与运行时**同一份**算法）。`totalCents === null` ⇒ 这一坨没有金额。
  *  金额的符号写在**货币号前**（`-¥56.00`）：`¥-56.00` 读起来像"负的日元"，也不合账目习惯。 */
 export function multiChecksSumText(count: number, unit: string, totalCents: number | null, moneyUnit: string): string {
-  if (count === 0) return MULTI_CHECKS_NONE_TEXT;
-  if (totalCents === null) return '已勾 ' + String(count) + ' ' + unit;
-  return '合计 ' + (totalCents < 0 ? '-' : '') + moneyUnit + formatCents(Math.abs(totalCents));
+  if (count === 0) return MULTI_CHECKS_NONE_TEXT();
+  if (totalCents === null) return m('base-render.components-multi-checks-model.c003', { p0: String(String(count)), p1: String(unit) });
+  return m('base-render.components-multi-checks-model.c004', {
+    p0: String(totalCents < 0 ? '-' : ''),
+    p1: String(moneyUnit),
+    p2: String(formatCents(Math.abs(totalCents))),
+  });
 }
 
 /** 整数分 → `1,286.40` 这种给人看的样子（千分位只在本件产出的读数上用）。 */

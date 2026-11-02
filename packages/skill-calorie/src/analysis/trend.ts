@@ -18,7 +18,8 @@ import { buildSeries } from './series.js';
 import { weekdayName } from './deficit.js';
 
 export interface TrendDay {
-  date: string; weekday: string; type: '工作日' | '周末';
+  /** 分组标记（控制用，不是文案：判据位不许用本地化文本，渲染侧另取词）。 */
+  date: string; weekday: string; type: 'weekday' | 'weekend';
   /** 当日摄入（卡，round(2)）；**没记录的天为 null**（#160 收口：空白日不按 0 算）。 */
   calorie: number | null;
 }
@@ -43,7 +44,7 @@ export function buildTrendData(db: DatabaseSync, start: string, end: string): Tr
     return {
       date: day.date,
       weekday: wd,
-      type: wd === '周六' || wd === '周日' ? '周末' : '工作日',
+      type: wd === '周六' || wd === '周日' ? 'weekend' as const : 'weekday' as const,
       /* #160 收口：没记录的天**不再** `?? 0` 补成 0 卡（老口径的空白日＝0 卡，既在图上落一个
        * 0 点、又被达标统计算成达标）。这里保 null，由消费方各自处理：图跨空连线，达标只数有记录的天。 */
       calorie: day.calories === null || day.calories === undefined ? null : round2(day.calories),
@@ -55,8 +56,8 @@ export function buildTrendData(db: DatabaseSync, start: string, end: string): Tr
    * 7 天窗 5 记录即只除以 5）。窗内无记录时不编数（回 0，不断言 NaN）。 */
   const logged = series.filter((d) => d.calorie !== null);
   const avg = logged.length ? Math.round(total / logged.length) : 0;
-  const work = series.filter((d) => d.type === '工作日');
-  const rest = series.filter((d) => d.type === '周末');
+  const work = series.filter((d) => d.type === 'weekday');
+  const rest = series.filter((d) => d.type === 'weekend');
   /* #497：组内分母同样只数有记录的天（旧口径除以分组窗口天数）；组内无记录回 0。 */
   const mean = (arr: TrendDay[]) => {
     const vals = arr.filter((d) => d.calorie !== null);

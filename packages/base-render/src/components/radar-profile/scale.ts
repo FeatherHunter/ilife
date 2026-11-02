@@ -19,6 +19,7 @@ import {
   RADAR_PROFILE_MISSING,
   RADAR_PROFILE_VIEW,
 } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 两位小数（所有出出去的坐标与百分比都过它：行内样式里不许出现 0.30000000000000004）。 */
 export const round2 = (v: number): number => Number(v.toFixed(2));
@@ -41,7 +42,7 @@ export function signedDelta(v: number): string {
 /** 「差」那一格：进／退给方向字形，持平与大缺写清字面（**色不是唯一信息**）。 */
 export function deltaText(delta: number | null): string {
   if (delta === null) return RADAR_PROFILE_MISSING;
-  if (delta === 0) return '持平';
+  if (delta === 0) return m('base-render.components-radar-profile-scale.c001');
   return (delta > 0 ? '▲ ' : '▼ ') + signedDelta(delta);
 }
 

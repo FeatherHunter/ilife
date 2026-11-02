@@ -14,6 +14,7 @@
  */
 
 /** 一层目录里的一个子目录。`hidden` 由宿主判，本件只照传。 */
+import { m } from './entries/index.js';
 export interface DirectoryEntry {
   readonly name: string;
   readonly path: string;
@@ -147,7 +148,9 @@ export function readPickAnswer(raw: unknown): PickOutcome {
   return {
     kind: 'unavailable',
     ...(typeof code === 'string' && code !== '' ? { code } : {}),
-    message: '打不开系统文件夹对话框' + (detail === '' ? '' : '（' + detail + '）') + '：请直接在框里填绝对路径。',
+    message: m('plugin-manager.directory-browser-contract.c001', {
+      p0: String(detail === '' ? '' : '（' + detail + '）'),
+    }),
   };
 }
 
@@ -214,16 +217,16 @@ export function browseFaceOf(raw: unknown): DirectoryBrowseFace | null {
   return {
     list: async (path) => {
       if (path !== undefined) {
-        return readBrowseAnswer<DirectoryListing>(await namespace.list(path), '列举目录');
+        return readBrowseAnswer<DirectoryListing>(await namespace.list(path), m('plugin-manager.directory-browser-contract.c002'));
       }
       try {
-        return readBrowseAnswer<DirectoryListing>(await namespace.list(), '列举目录');
+        return readBrowseAnswer<DirectoryListing>(await namespace.list(), m('plugin-manager.directory-browser-contract.c003'));
       } catch (first) {
         if (!isArgCountRejection(first)) throw first;
-        return readBrowseAnswer<DirectoryListing>(await namespace.list(undefined), '列举目录');
+        return readBrowseAnswer<DirectoryListing>(await namespace.list(undefined), m('plugin-manager.directory-browser-contract.c004'));
       }
     },
-    createDirectory: async (path, name) => readBrowseAnswer<string>(await namespace.createDirectory(path, name), '新建文件夹'),
+    createDirectory: async (path, name) => readBrowseAnswer<string>(await namespace.createDirectory(path, name), m('plugin-manager.directory-browser-contract.c005')),
   };
 }
 
@@ -292,8 +295,8 @@ export function filterEntries(entries: readonly DirectoryEntry[], filter: string
  * 与宿主 browse 后端的校验同口径——这里先拦一道，是为了在图上给得出人话，不是替代宿主校验。 */
 export function validateFolderName(name: string): { readonly ok: true } | { readonly ok: false; readonly reason: string } {
   const trimmed = name.trim();
-  if (trimmed === '') return { ok: false, reason: '文件夹名不能为空。' };
-  if (/[\\/]/.test(trimmed)) return { ok: false, reason: '文件夹名里不能带路径分隔符。' };
-  if (trimmed === '.' || trimmed === '..') return { ok: false, reason: '「.」与「..」不是文件夹名。' };
+  if (trimmed === '') return { ok: false, reason: m('plugin-manager.directory-browser-contract.c006') };
+  if (/[\\/]/.test(trimmed)) return { ok: false, reason: m('plugin-manager.directory-browser-contract.c007') };
+  if (trimmed === '.' || trimmed === '..') return { ok: false, reason: m('plugin-manager.directory-browser-contract.c008') };
   return { ok: true };
 }

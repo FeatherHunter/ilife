@@ -29,6 +29,7 @@ import { renderSceneShell } from '../render/sceneShell.js';
 import type { SceneFamily } from '../render/sceneBand.js';
 import { HIST_NODE_TIERS, historyPageCss } from './page-css.js';
 import type { HistoryGlobalPortrait } from './run-query.js';
+import { m } from '../entries/index.js';
 
 /** 换行（仓库口径：`String.fromCharCode(10)`，不写字面换行转义；两层样式段之间那一处连接位）。 */
 const LF = String.fromCharCode(10);
@@ -72,16 +73,16 @@ function histTimelineHtml(
       + '<text class="ilife-hist-node-num" x="13" y="16.5" fill="' + color + '">'
       + escapeHtml(r.rating === null ? '—' : String(r.rating)) + '</text>'
       + '</svg></span>'
-      + '<span class="ilife-block-timeline-time">' + escapeHtml(sameDay ? '同日' : r.cookDate) + '</span>'
-      + '<span class="ilife-block-timeline-main">第 ' + r.cookSequence + ' 次做</span>'
-      + '<span class="ilife-block-timeline-note">' + escapeHtml(r.feedback || '这次没写反馈') + '</span>'
+      + '<span class="ilife-block-timeline-time">' + escapeHtml(sameDay ? m('skill-chef.history-pages.c001') : r.cookDate) + '</span>'
+      + '<span class="ilife-block-timeline-main">' + m('skill-chef.history-pages.c079', { p0: String(r.cookSequence) }) + '</span>'
+      + '<span class="ilife-block-timeline-note">' + escapeHtml(r.feedback || m('skill-chef.history-pages.c002')) + '</span>'
       + '</li>';
   }).join('') + '</ol>';
 }
 
 /** 平均分显示：null 即「未评」，否则保留两位。 */
 function fmtAvg(v: number | null): string {
-  if (v === null) return '未评';
+  if (v === null) return m('skill-chef.history-pages.c003');
   return String(Math.round(v * 100) / 100);
 }
 
@@ -98,7 +99,7 @@ function fmtNum(v: number): string {
 function docOf(family: SceneFamily, docTitle: string, eyebrow: string, title: string, blocks: readonly string[], fill = false): string {
   return renderSceneShell({
     family,
-    docTitle: docTitle + ' ｜ 私家大厨',
+    docTitle: m('skill-chef.history-pages.c004', { p0: String(docTitle) }),
     bodyHtml: renderPageShell({ eyebrow, title, content: blocks.join('') }),
     extraCss: historyPageCss({ family, fill }),
   });
@@ -125,29 +126,29 @@ export function renderRecordPage(input: RecordPageInput): string {
   // 状态翻转只在首做时发生；未翻转时不印「已做 → 已做」这种恒等行（vision 第一轮）。
   const changes =
     input.prevStatus === input.newStatus
-      ? [{ label: '做菜次数', before: input.prevCount + ' 次', after: input.newCount + ' 次' }]
+      ? [{ label: m('skill-chef.history-pages.c005'), before: m('skill-chef.history-pages.c006', { p0: String(input.prevCount) }), after: m('skill-chef.history-pages.c007', { p0: String(input.newCount) }) }]
       : [
-          { label: '菜谱状态', before: input.prevStatus, after: input.newStatus },
-          { label: '做菜次数', before: input.prevCount + ' 次', after: input.newCount + ' 次' },
+          { label: m('skill-chef.history-pages.c008'), before: input.prevStatus, after: input.newStatus },
+          { label: m('skill-chef.history-pages.c009'), before: m('skill-chef.history-pages.c010', { p0: String(input.prevCount) }), after: m('skill-chef.history-pages.c011', { p0: String(input.newCount) }) },
         ];
-  return docOf('receipt', '记录做菜：' + input.name, '私家大厨 ｜ 历史', '记录做菜：' + input.name, [
+  return docOf('receipt', m('skill-chef.history-pages.c012', { p0: String(input.name) }), m('skill-chef.history-pages.c013'), m('skill-chef.history-pages.c014', { p0: String(input.name) }), [
     // 结论条改印这次记录本身：第几次、几分。改前是「已记下这次做菜。」——与标题
     // 「记录做菜：…」说同一件事（#873 第 31 格扣分项），结论条那一格因此白占一行。
-    renderConclusionBar('第 ' + input.cookSequence + ' 次做这道菜，评分 ' + input.rating + ' 分。'),
+    renderConclusionBar(m('skill-chef.history-pages.c015', { p0: String(input.cookSequence), p1: String(input.rating) })),
     // 事实条三格：这道菜是谁、哪一天、现在什么状态。评分不在这里重印（结论条与本次评分卡各一次）。
     renderFactStrip({
       items: [
-        { label: '菜', value: input.name },
-        { label: '日期', value: input.cookDate },
-        { label: '状态', value: input.newStatus },
+        { label: m('skill-chef.history-pages.c016'), value: input.name },
+        { label: m('skill-chef.history-pages.c017'), value: input.cookDate },
+        { label: m('skill-chef.history-pages.c018'), value: input.newStatus },
       ],
     }),
     renderKpiGrid([
-      { label: '本次评分', value: String(input.rating), unit: '分', bar: { pct: Math.round((input.rating / 5) * 100) } },
+      { label: m('skill-chef.history-pages.c019'), value: String(input.rating), unit: m('skill-chef.history-pages.c020'), bar: { pct: Math.round((input.rating / 5) * 100) } },
       {
-        label: '平均评分',
+        label: m('skill-chef.history-pages.c021'),
         value: avgText,
-        unit: input.avgRating === null ? '' : '分',
+        unit: input.avgRating === null ? '' : m('skill-chef.history-pages.c022'),
         ...(input.avgRating === null ? {} : { bar: { pct: Math.round((input.avgRating / 5) * 100) } }),
       },
       // 第二轮返修：评委原话「『本次/平均评分』并排与『累计做过』重复统计语义」——累计次数与下面
@@ -157,20 +158,31 @@ export function renderRecordPage(input: RecordPageInput): string {
     renderChangeRows({ rows: changes }),
     renderActionBar({
       buttons: [
-        { label: '看历史', kind: 'primary', actionId: 'h775-record-history' },
-        { label: '看菜谱', kind: 'ghost', actionId: 'h775-record-view' },
-        { label: '撤销这次记录', kind: 'ghost', actionId: 'h775-record-undo' },
+        { label: m('skill-chef.history-pages.c023'), kind: 'primary', actionId: 'h775-record-history' },
+        { label: m('skill-chef.history-pages.c024'), kind: 'ghost', actionId: 'h775-record-view' },
+        { label: m('skill-chef.history-pages.c025'), kind: 'ghost', actionId: 'h775-record-undo' },
       ],
     }),
     chefCopyArea({
       data: {
         key: 'chef.history.record', shape: 'receipt', ok: true,
-        message: input.name + '\n' + input.cookDate + ' 第' + input.cookSequence + '次 评分' + input.rating + '\n' + input.feedback,
+        message: m('skill-chef.history-pages.c026', {
+          p0: String(input.name),
+          p1: String(input.cookDate),
+          p2: String(input.cookSequence),
+          p3: String(input.rating),
+          p4: String(input.feedback),
+        }),
       },
       // 手拼日志迁六段：调用链沿用原先那句过程证据，时间戳取这次做菜日期；给不出的来源如实缺省。
       log: {
         command: 'chef.history.record',
-        m5Line: '记录做菜 ' + input.name + ' ' + input.cookDate + ' 评分' + input.rating + ' 记录' + input.historyId,
+        m5Line: m('skill-chef.history-pages.c027', {
+          p0: String(input.name),
+          p1: String(input.cookDate),
+          p2: String(input.rating),
+          p3: String(input.historyId),
+        }),
         actionAt: input.cookDate,
       },
     }),
@@ -193,23 +205,23 @@ export interface TimelinePageInput {
  * 行序照取数面的口径不动（做菜日期倒序，同一天按第几次倒序），页面只改日期印几次。
  */
 export function renderTimelinePage(input: TimelinePageInput): string {
-  const last = input.rows.length ? input.rows[0].cookDate : '还没有记录';
+  const last = input.rows.length ? input.rows[0].cookDate : m('skill-chef.history-pages.c028');
   // 评分区间：本页列的就是这道菜的全部记录（取数面一次性给全，不分页），故区间就取这些行里
   // 有评分的那几条的极值——与单菜统计同一口径，不另查库、不猜数。
   const rated = input.rows.map((r) => r.rating).filter((v): v is number => v !== null);
   const facts = [
-    { label: '菜', value: input.name },
-    { label: '最近一次', value: last },
-    { label: '状态', value: input.status },
-    ...(rated.length === 0 ? [] : [{ label: '最高评分', value: Math.max(...rated) + ' 分' }]),
-    ...(rated.length === 0 ? [] : [{ label: '最低评分', value: Math.min(...rated) + ' 分' }]),
+    { label: m('skill-chef.history-pages.c029'), value: input.name },
+    { label: m('skill-chef.history-pages.c030'), value: last },
+    { label: m('skill-chef.history-pages.c031'), value: input.status },
+    ...(rated.length === 0 ? [] : [{ label: m('skill-chef.history-pages.c032'), value: m('skill-chef.history-pages.c033', { p0: String(Math.max(...rated)) }) }]),
+    ...(rated.length === 0 ? [] : [{ label: m('skill-chef.history-pages.c034'), value: m('skill-chef.history-pages.c035', { p0: String(Math.min(...rated)) }) }]),
   ];
   const timeline =
     input.rows.length === 0
-      ? renderProseBlock({ text: '还没有烹饪记录，做完后记一次就会出现在这里。' })
+      ? renderProseBlock({ text: m('skill-chef.history-pages.c036') })
       : histTimelineHtml(input.rows);
-  return docOf('receipt', '历史时间线：' + input.name, '私家大厨 ｜ 历史', '历史时间线：' + input.name, [
-    renderConclusionBar('共做过 ' + input.count + ' 次，平均 ' + fmtAvg(input.avgRating) + ' 分。'),
+  return docOf('receipt', m('skill-chef.history-pages.c037', { p0: String(input.name) }), m('skill-chef.history-pages.c038'), m('skill-chef.history-pages.c039', { p0: String(input.name) }), [
+    renderConclusionBar(m('skill-chef.history-pages.c040', { p0: String(input.count), p1: String(fmtAvg(input.avgRating)) })),
     renderFactStrip({ items: facts }),
     timeline,
     chefCopyArea({
@@ -247,24 +259,24 @@ export function renderSingleStatsPage(input: SingleStatsPageInput): string {
   // 最高与最低合成一格「评分区间」（第二轮返修：评委原话「平均分/最高分双块冗余」——四张卡里
   // 三张都在印"同一个 0—5 分的数"，合成区间后四张卡各说一件事：次数／均值／区间／日期）。
   const range = input.maxRating === null || input.minRating === null ? '—' : dash(input.minRating) + '-' + dash(input.maxRating);
-  return docOf('result', '单菜统计：' + input.name, '私家大厨 ｜ 历史', '单菜统计：' + input.name, [
-    renderConclusionBar('平均 ' + fmtAvg(input.avgRating) + ' 分，做过 ' + input.count + ' 次。'),
+  return docOf('result', m('skill-chef.history-pages.c041', { p0: String(input.name) }), m('skill-chef.history-pages.c042'), m('skill-chef.history-pages.c043', { p0: String(input.name) }), [
+    renderConclusionBar(m('skill-chef.history-pages.c044', { p0: String(fmtAvg(input.avgRating)), p1: String(input.count) })),
     renderFactStrip({
       items: [
-        { label: '菜', value: input.name },
-        { label: '状态', value: input.status },
+        { label: m('skill-chef.history-pages.c045'), value: input.name },
+        { label: m('skill-chef.history-pages.c046'), value: input.status },
       ],
     }),
     renderKpiGrid([
-      { label: '总次数', value: String(input.count), unit: '次' },
+      { label: m('skill-chef.history-pages.c047'), value: String(input.count), unit: m('skill-chef.history-pages.c048') },
       {
-        label: '平均评分',
+        label: m('skill-chef.history-pages.c049'),
         value: fmtAvg(input.avgRating),
-        unit: input.avgRating === null ? '' : '分',
+        unit: input.avgRating === null ? '' : m('skill-chef.history-pages.c050'),
         ...barOf(input.avgRating),
       },
-      { label: '评分区间', value: range, unit: input.maxRating === null ? '' : '分' },
-      { label: '最近一次', value: dash(input.lastDate) },
+      { label: m('skill-chef.history-pages.c051'), value: range, unit: input.maxRating === null ? '' : m('skill-chef.history-pages.c052') },
+      { label: m('skill-chef.history-pages.c053'), value: dash(input.lastDate) },
     ]),
     chefCopyArea({
       data: {
@@ -293,43 +305,49 @@ export function renderGlobalStatsPage(portrait: HistoryGlobalPortrait): string {
     portrait.favoriteAvg !== null && portrait.favoriteMost !== null && portrait.favoriteAvg.name === portrait.favoriteMost.name;
   const favLine =
     portrait.favoriteAvg === null || portrait.favoriteMost === null
-      ? '还没有记录，做完后这里会出现最常做的那道菜。'
+      ? m('skill-chef.history-pages.c054')
       : sameFav
-        ? portrait.favoriteAvg.name + '做得最多，均分也最高（' + portrait.favoriteAvg.avgRating + ' 分）。'
-        : '均分最高是' + portrait.favoriteAvg.name + '（' + portrait.favoriteAvg.avgRating + ' 分），做得最多是' +
-          portrait.favoriteMost.name + '。';
+        ? m('skill-chef.history-pages.c055', {
+          p0: String(portrait.favoriteAvg.name),
+          p1: String(portrait.favoriteAvg.avgRating),
+        })
+        : m('skill-chef.history-pages.c056', {
+          p0: String(portrait.favoriteAvg.name),
+          p1: String(portrait.favoriteAvg.avgRating),
+          p2: String(portrait.favoriteMost.name),
+        });
   /** 均分写法：时间轴与列表同一种写法（保留两位，未评的写人话，不留空值位）。 */
-  const avgTextOf = (v: number | null): string => (v === null ? '均分未评' : '均分 ' + fmtNum(v) + ' 分');
+  const avgTextOf = (v: number | null): string => (v === null ? m('skill-chef.history-pages.c057') : m('skill-chef.history-pages.c058', { p0: String(fmtNum(v)) }));
   const recent =
     portrait.recent.length === 0
-      ? renderProseBlock({ text: '还没有记录。' })
+      ? renderProseBlock({ text: m('skill-chef.history-pages.c059') })
       : renderTimelineRows({
           rows: portrait.recent.map((r) => ({ time: r.lastDate, main: r.name, note: avgTextOf(r.avgRating) })),
         });
   const never =
     portrait.neverCooked.length === 0
-      ? renderProseBlock({ text: '全部都做过，没有没做过的菜。' })
+      ? renderProseBlock({ text: m('skill-chef.history-pages.c060') })
       : renderChipRow({ items: portrait.neverCooked.map((n) => ({ text: n })) });
   const cookedList = renderListRows({
     items: portrait.perRecipe.map((r) => ({
-      left: r.count + ' 次',
+      left: m('skill-chef.history-pages.c061', { p0: String(r.count) }),
       main: r.name,
-      right: r.avgRating === null ? '未评' : fmtNum(r.avgRating) + ' 分',
+      right: r.avgRating === null ? m('skill-chef.history-pages.c062') : m('skill-chef.history-pages.c063', { p0: String(fmtNum(r.avgRating)) }),
     })),
-    emptyText: '还没有记录。',
+    emptyText: m('skill-chef.history-pages.c064'),
   });
-  return docOf('result', '全局统计', '私家大厨 ｜ 历史', '全局统计', [
+  return docOf('result', m('skill-chef.history-pages.c065'), m('skill-chef.history-pages.c066'), m('skill-chef.history-pages.c067'), [
     renderConclusionBar(favLine),
     renderKpiGrid([
-      { label: '共收录', value: String(portrait.recipeTotal), unit: '道' },
-      { label: '做过', value: String(portrait.cookedCount), unit: '道' },
-      { label: '没做过', value: String(portrait.neverCookedCount), unit: '道' },
-      { label: '总次数', value: String(portrait.totalCooks), unit: '次' },
+      { label: m('skill-chef.history-pages.c068'), value: String(portrait.recipeTotal), unit: m('skill-chef.history-pages.c069') },
+      { label: m('skill-chef.history-pages.c070'), value: String(portrait.cookedCount), unit: m('skill-chef.history-pages.c071') },
+      { label: m('skill-chef.history-pages.c072'), value: String(portrait.neverCookedCount), unit: m('skill-chef.history-pages.c073') },
+      { label: m('skill-chef.history-pages.c074'), value: String(portrait.totalCooks), unit: m('skill-chef.history-pages.c075') },
     ]),
     recent,
-    renderCaliberLine('最近 5 道按末次做菜日期倒序。'),
-    renderDisclosure({ title: '做过的菜（' + portrait.perRecipe.length + ' 道）', contentHtml: cookedList, open: true }),
-    renderDisclosure({ title: '还没做过的菜（' + portrait.neverCooked.length + ' 道）', contentHtml: never, open: false }),
+    renderCaliberLine(m('skill-chef.history-pages.c076')),
+    renderDisclosure({ title: m('skill-chef.history-pages.c077', { p0: String(portrait.perRecipe.length) }), contentHtml: cookedList, open: true }),
+    renderDisclosure({ title: m('skill-chef.history-pages.c078', { p0: String(portrait.neverCooked.length) }), contentHtml: never, open: false }),
     chefCopyArea({
       // 第二轮返修：评委原话「'复制这份画像'与'复制数据'重复啰嗦」——标题只说这一块是什么，
       // 动词留给按钮。

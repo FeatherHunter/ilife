@@ -8,6 +8,7 @@
  */
 import { esc } from '../shared/escape.js';
 import { assertPlainObject, badInput, optExtraClass, optText, reqText } from '../shared/validate.js';
+import { m } from '../../entries/index.js';
 
 /** 本件的类名根（**常量只住这里**：样式从这里取，不各写一份）。 */
 export const MISSING_BADGE_CLASS = 'ilife-block-missing-badge';
@@ -15,7 +16,7 @@ export const MISSING_BADGE_CLASS = 'ilife-block-missing-badge';
 export const MISSING_BADGE_STATES = ['missing', 'pending'] as const;
 export type MissingBadgeState = (typeof MISSING_BADGE_STATES)[number];
 /** 状态字（与闭集同序：调用方与读者只认这两个字）。 */
-export const MISSING_BADGE_STATE_WORDS = Object.freeze({ missing: '缺', pending: '待补' });
+export const MISSING_BADGE_STATE_WORDS = { get missing() { return m('base-render.components-missing-badge-render.c001'); }, get pending() { return m('base-render.components-missing-badge-render.c002'); } };
 /** 槽位闭集。 */
 export const MISSING_BADGE_SLOTS = ['label', 'state', 'reason'] as const;
 export type MissingBadgeSlot = (typeof MISSING_BADGE_SLOTS)[number];

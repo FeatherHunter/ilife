@@ -14,18 +14,22 @@ import { gridSvg, ticksSvg } from './svg.js';
 import { charts } from './dispatch.js';
 import { STYLE_PREFIX } from '../../style.js';
 import { ChartOutput, ScatterChartInput, ScatterChartOptions, ScatterItem } from '../../spec/index.js';
+import { m } from '../../entries/index.js';
 
 /* ── scatter ──────────────────────────────────────────────────────────── */
 
 function normalizeScatterItems(raw: unknown): ScatterItem[] {
   if (!Array.isArray(raw)) {
-    badStructure('charts.scatter: items 必须是数组, 收到 ' + (raw === null ? 'null' : typeof raw));
+    badStructure(m('base-render.components-charts-scatter.c001', { p0: String(raw === null ? 'null' : typeof raw) }));
   }
   return (raw as readonly unknown[]).map((entry, i) => {
     const field = 'charts.scatter: items[' + i + ']';
     const item = requireObject(entry, field);
     if (!isNum(item.x) || !isNum(item.y)) {
-      badStructure(field + '.x/y 无效（缺省/非数字）: ' + JSON.stringify({ x: item.x === undefined ? null : item.x, y: item.y === undefined ? null : item.y }));
+      badStructure(m('base-render.components-charts-scatter.c002', {
+        p0: String(field),
+        p1: String(JSON.stringify({ x: item.x === undefined ? null : item.x, y: item.y === undefined ? null : item.y })),
+      }));
     }
     return {
       x: item.x,

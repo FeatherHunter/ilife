@@ -712,6 +712,14 @@ describe('drag-sort ② 样式与零 DOM 纪律', () => {
       'runtime-lift.ts', 'runtime-buttons.ts', 'runtime-text.ts'];
     const src = SRC_FILES.map((n) => readFileSync(join(DIR, n), 'utf8'))
       .map((t) => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|\s)\/\/[^\n]*/g, '$1')).join('\n');
+    /** #1226 起文案住进词条表（`entries/zh.ts`）：**定义地＝源码 ＋ 本件运行时段那几段词条**。
+     *  样式段（`-style*`）里的 CSS 注释不算运行时段文案的定义地，故按段过滤掉。 */
+    const ENTRY_SEGS = SRC_FILES.map((n) => n.replace(/\.ts$/, ''));
+    const entryText = readFileSync(join(DIR, '..', '..', 'entries', 'zh.ts'), 'utf8')
+      .split('\n')
+      .filter((line) => ENTRY_SEGS.some((seg) => line.includes("'base-render.components-drag-sort-" + seg + '.')))
+      .join('\n');
+    const definitionSurface = src + '\n' + entryText;
     /** 源码里那几处句子的**处数**（`hint` 与 `idleStatus` 共用那半句＝两处；`gripSelect` 那句是
      *  `gripSelected` 的前缀＝两处）与产出文本里该有几处（`hint`／`buttonsHint` 不在运行时段：
      *  文案由调用方给或只住渲染期；其余各烘一份）。 */
@@ -732,7 +740,7 @@ describe('drag-sort ② 样式与零 DOM 纪律', () => {
       ['已选中第 ', 1, 1],
     ];
     for (const [phrase, wantSrc, wantBuilt] of CASES) {
-      const timesSrc = (src.match(new RegExp(phrase, 'g')) || []).length;
+      const timesSrc = (definitionSurface.match(new RegExp(phrase, 'g')) || []).length;
       const timesBuilt = (built.match(new RegExp(phrase, 'g')) || []).length;
       assert.equal(timesSrc, wantSrc, '源码里这一段字面量的处数变了（同一句话两个定义地）：' + phrase
         + ' 源码=' + String(timesSrc) + ' 该是=' + String(wantSrc));

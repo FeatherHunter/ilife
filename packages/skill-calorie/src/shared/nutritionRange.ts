@@ -14,6 +14,7 @@
  */
 
 /** 三大营养素的名字（取值键；页面与诊断两侧共用同一组键，避免各写一套中文名）。 */
+import { m } from '../entries/index.js';
 export const MACRO_NAMES = ['protein', 'carb', 'fat'] as const;
 
 export type MacroName = (typeof MACRO_NAMES)[number];
@@ -34,7 +35,12 @@ export const NUTRITION_RANGE: Record<MacroName, NutritionRange> = {
 
 /** 判决用的一句话参考串（诊断侧的证据句用它，免得逐项拼、也免得两处措辞走散）。 */
 export function nutritionRangeNote(): string {
-  return '参考 蛋白' + NUTRITION_RANGE.protein.min + '-' + NUTRITION_RANGE.protein.max
-    + ' 碳水' + NUTRITION_RANGE.carb.min + '-' + NUTRITION_RANGE.carb.max
-    + ' 脂肪' + NUTRITION_RANGE.fat.min + '-' + NUTRITION_RANGE.fat.max;
+  return m('skill-calorie.shared-nutritionRange.c001', {
+    p0: String(NUTRITION_RANGE.protein.min),
+    p1: String(NUTRITION_RANGE.protein.max),
+    p2: String(NUTRITION_RANGE.carb.min),
+    p3: String(NUTRITION_RANGE.carb.max),
+    p4: String(NUTRITION_RANGE.fat.min),
+    p5: String(NUTRITION_RANGE.fat.max),
+  });
 }

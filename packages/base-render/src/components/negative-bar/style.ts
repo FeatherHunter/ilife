@@ -8,6 +8,7 @@
  */
 import { skinVar } from '../skin/contract.js';
 import { negativeBarSlot, type NegativeBarSlot } from './render.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -38,7 +39,7 @@ export function negativeBarCss(input?: { readonly prefix?: string }): string {
     '  font-weight: 600;',
     '  overflow-wrap: anywhere;',
     '}',
-    '/* 虚线空框：描边虚线 ＋ 底透明 —— 负值**不画实条**（长度语义只属于正值）。 */',
+    m('base-render.components-negative-bar-style.c001'),
     s('box') + ' {',
     '  flex: 1 1 auto;',
     '  min-width: 0;',

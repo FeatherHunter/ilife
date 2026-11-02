@@ -35,6 +35,7 @@ import { fmt, streakCards, todayGridHtml, weekCards } from './homeCards.js';
 import { dayStripBlock, navBlock, stateBannerBlock } from './homeFrame.js';
 import { HOME_VIEW_BODIES, viewConclusion, viewTitle } from './homeViewParts.js';
 import type { HomeSection } from './homeViewParts.js';
+import { m } from '../entries/index.js';
 
 /* ── #370 老片段页（`renderHomeHtml`）：只给 `render-t8` 锁形状，live 出口不走它 ──────────────
  * 本段是 #370 的纯搬迁物，与主页那套按档拼页的装配**分住两路**（`render-t8.test.mjs` 逐字锁着它），
@@ -59,7 +60,7 @@ function kpi(label: string, value: string, sub?: string): string {
 }
 
 function bar(label: string, pct: number | null): string {
-  const p = pct === null || pct === undefined ? '未设目标' : pct + '%';
+  const p = pct === null || pct === undefined ? m('skill-calorie.home-homeDocs.c001') : pct + '%';
   const w = pct === null || pct === undefined ? 0 : Math.max(0, Math.min(100, pct));
   return (
     '<div class="' + cx('bar') + '"><span style="color:' + token('muted') + '">' + escapeHtml(label) + ' ' + escapeHtml(p) + '</span>' +
@@ -75,20 +76,24 @@ function legacyFmt(n: number | null | undefined, suffix = ''): string {
 
 export function renderHomeHtml(d: HomeData): string {
   const t = d.daily.totals;
+  const overNote = d.daily.overCal
+    ? '<div class="' + cx('warn') + '" style="color:' + token('danger') + '">今日已超热量目标</div>'
+    : '<div class="' + cx('ok') + '" style="color:' + token('accent') + '">热量在目标内</div>';
+  // 目标那格原先借 legacyFmt 的第二参数塞单位：单位串留在实参里就成了「整句里嵌着一句文案」，
+  // 迁移器拿不到整句，故先把「值 ＋ 单位」算成一句话（缺值仍是 '—'，不带单位）。
+  const goalText = d.calorieGoal === null || d.calorieGoal === undefined ? '—' : m('skill-calorie.home-homeDocs.c002', { p0: String(d.calorieGoal) });
   const body =
     '<div class="' + cx('grid') + '">' +
-    kpi('今日摄入', legacyFmt(t.cal, ' 卡'), '目标 ' + legacyFmt(d.calorieGoal, ' 卡')) +
+    kpi(m('skill-calorie.home-homeDocs.c003'), legacyFmt(t.cal, m('skill-calorie.home-homeDocs.c004')), m('skill-calorie.home-homeDocs.c005', { p0: String(goalText) })) +
     kpi('蛋白', legacyFmt(t.pro, ' g')) +
-    kpi('饮水', legacyFmt(d.daily.waterMl, ' ml'), '目标 ' + legacyFmt(d.waterGoal, ' ml')) +
-    kpi('今日缺口', legacyFmt(d.deficitToday, ' 卡'), '正=缺口') +
-    kpi('连续记录', d.streakDays + ' 天', '近' + d.week.loggedDays + '天有记录') +
-    kpi('周均摄入', legacyFmt(d.week.avgIntake, ' 卡'), d.week.start + ' ~ ' + d.week.end) +
+    kpi(m('skill-calorie.home-homeDocs.c006'), legacyFmt(d.daily.waterMl, ' ml'), m('skill-calorie.home-homeDocs.c007', { p0: String(legacyFmt(d.waterGoal, ' ml')) })) +
+    kpi(m('skill-calorie.home-homeDocs.c008'), legacyFmt(d.deficitToday, m('skill-calorie.home-homeDocs.c009')), m('skill-calorie.home-homeDocs.c010')) +
+    kpi(m('skill-calorie.home-homeDocs.c011'), m('skill-calorie.home-homeDocs.c012', { p0: String(d.streakDays) }), m('skill-calorie.home-homeDocs.c013', { p0: String(d.week.loggedDays) })) +
+    kpi(m('skill-calorie.home-homeDocs.c014'), legacyFmt(d.week.avgIntake, m('skill-calorie.home-homeDocs.c015')), d.week.start + ' ~ ' + d.week.end) +
     '</div>' +
-    bar('热量完成度', d.caloriePct) + bar('蛋白完成度', d.proteinPct) + bar('饮水完成度', d.waterPct) +
-    (d.daily.overCal
-      ? '<div class="' + cx('warn') + '" style="color:' + token('danger') + '">今日已超热量目标</div>'
-      : '<div class="' + cx('ok') + '" style="color:' + token('accent') + '">热量在目标内</div>');
-  return pageShell('calorie', 'ilife:calorie', '今日总览 ' + d.date, body);
+    bar(m('skill-calorie.home-homeDocs.c016'), d.caloriePct) + bar(m('skill-calorie.home-homeDocs.c017'), d.proteinPct) + bar(m('skill-calorie.home-homeDocs.c018'), d.waterPct) +
+    overNote;
+  return pageShell('calorie', 'ilife:calorie', m('skill-calorie.home-homeDocs.c019', { p0: String(d.date) }), body);
 }
 
 /* ── #371 · 主页完整文档（按唤醒词的 `section` 分档）── */
@@ -96,7 +101,7 @@ export function renderHomeHtml(d: HomeData): string {
 /** 本文件各页共用的 head 标题（整页模板住 `src/shared/docPage.ts`，标题走参数）。
  *  #401 债 #1：原为 `卡路里·主页`（与眉标两种写法）→ 统一成「产品名＋空格＋页名」，不带 `·`：
  *  `·` 是「用符号挡 UI」，且分隔符探针把 `<title>` 文本也算可见文本。 */
-const DOC_TITLE = '卡路里 主页';
+const docTitle = (): string => m('skill-calorie.home-homeDocs.c026');
 
 /** envelope 头（值冻结对齐 `cli/keys.ts` ENVELOPE_VERSION 与 CALORIE_SKILL）。 */
 const DOC_VERSION = '0.1.0';
@@ -104,7 +109,7 @@ const DOC_SKILL = 'calorie';
 
 /** 页头眉标（人话）：**只留产品名**（`t425` 裁定 1 禁上屏英文内部标识符，故不印命令键）。
  *  #401 债 #2：原 `卡路里 · 主页` 用 `·` 并排了「谁的产品」与「哪一页」；页面身份改由页内内容承担。 */
-const HOME_EYEBROW = '卡路里';
+const homeEyebrow = (): string => m('skill-calorie.home-homeDocs.c027');
 
 /** 复制区落点锚（`sec-copy`）：用户缺陷 6（2026-09-15）「有『💰 数据与日志』文字的直接删，
  *  用户直接看得见按钮」⇒ 本页复制区**不出标题**（`copyArea` 不传 `title`，公共层即不出 `<h2>`），
@@ -115,7 +120,7 @@ const SEC_COPY = { id: 'sec-copy' } as const;
 /** 来源脚注上给**读者看**的来源名：可见文本零 snake_case（库表名只留在复制日志的「来源」段里，那是给复核
  *  的人照抄用的技术原件，不上页面——同 `render/sportDocs.ts:54-57` 口径）。#401 分隔符债 #8：三件来源
  *  **不再用 `＋` 串**，改用行文逗号，三件来源仍在一句话里读得完。 */
-const SOURCE_LOGGED = '饮食记录，运动记录，每日目标';
+const sourceLogged = (): string => m('skill-calorie.home-homeDocs.c028');
 
 /** 单日日期上屏只有一种长法：`09-07`（窗口跨年才补两位年份，同 `analysis/multiTrendPage.ts:145-152`）。
  *  表内日期、图轴刻度、记录带的格子**同走本函数**（同一语义一处实现 ⇒ 页上日期写法从三种降到两种）。
@@ -129,14 +134,16 @@ function dayLabel(start: string, end: string): (date: string) => string {
  *  #401g：区间保持 ISO 长法（它是**窗口标识**：跨年读得出年份、与复制载荷里的命令对得上），
  *  单日那几处（表内／图轴／记录带）另走 `dayLabel` 的 `MM-DD`——页上日期写法因此只剩这两种，各有其位。 */
 function subtitleText(d: HomeData): string {
-  return d.week.start + ' 至 ' + d.week.end;
+  return m('skill-calorie.home-homeDocs.c020', { p0: String(d.week.start), p1: String(d.week.end) });
 }
 
 /** 复制载荷里的**命令原文**：窗口非缺省 7 天时把窗口写全，`section` 逐档照写——照抄重跑得到同一张页
  *  （逐字照 `home/routes.ts` 的声明形状；缺省档位也要写全，读者才看得出这页是哪一档出的）。 */
 function homeCommand(windowDays: number, section: HomeSection): string {
-  return 'calorie-cmd-read calorie.view.home --params \'{"date":"今日"'
-    + (windowDays === 7 ? '' : ',"windowDays":' + windowDays) + ',"section":"' + section + '"}\'';
+  return m('skill-calorie.home-homeDocs.c021', {
+    p0: String(windowDays === 7 ? '' : ',"windowDays":' + windowDays),
+    p1: String(section),
+  });
 }
 
 /** `calorie.view.home` · 结果型完整文档（`<!doctype html>` 起）：按 `section` 逐档拼页。
@@ -152,10 +159,10 @@ export function buildHomeDoc(d: HomeData, section: HomeSection = 'overview'): st
     weekCards: renderKpiGrid(weekCards(d)),
     streakCards: renderKpiGrid(streakCards(d)),
     budgetCards: todayGridHtml(d, {
-      label: '剩余预算', value: fmt(d.calorieGoal === null || d.calorieGoal === undefined
+      label: m('skill-calorie.home-homeDocs.c022'), value: fmt(d.calorieGoal === null || d.calorieGoal === undefined
         ? null
         : d.calorieGoal - t.cal),
-      detail: '目标减已摄入',
+      detail: m('skill-calorie.home-homeDocs.c023'),
     }),
     day,
   });
@@ -174,7 +181,7 @@ export function buildHomeDoc(d: HomeData, section: HomeSection = 'overview'): st
     // 用户缺陷 6：复制区不出标题（按钮自己会说话）；`title` 位空着，公共层即不出 `<h2>`。
     // #950：原型在按钮排上方有一行说明（「复制后粘回对话…」）——公共层 `renderCopyBlock` 早有这一位
     // （#870 的说明行），本包的门外壳此前没透出，这一票补上（`copyArea` 的 `hint` 位），文本照原型逐字。
-    hint: '复制后粘回对话，可继续追问或换窗口重算。',
+    hint: m('skill-calorie.home-homeDocs.c024'),
     data: {
       envelope: {
         version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.home',
@@ -188,7 +195,7 @@ export function buildHomeDoc(d: HomeData, section: HomeSection = 'overview'): st
       },
       copyLog: copyLog({
         command: homeCommand(windowDays, section),
-        source: SOURCE_LOGGED + '（只读）',
+        source: m('skill-calorie.home-homeDocs.c025', { p0: sourceLogged() }),
         actionAt: nowStamp(), version: DOC_VERSION,
       }),
     },
@@ -210,9 +217,9 @@ export function buildHomeDoc(d: HomeData, section: HomeSection = 'overview'): st
     // （用户直接看得见按钮与内容，不需要脚注复读来路）。」）。复制载荷 `copyLog.source` 一律保留，只删屏上脚注。
   ].join('');
   return assembleDocPage({
-    docTitle: DOC_TITLE,
+    docTitle: docTitle(),
     title: viewTitle(section, d),
-    eyebrow: HOME_EYEBROW,
+    eyebrow: homeEyebrow(),
     subtitle: subtitleText(d),
     content,
     charts: body.charts, pageUi: true,

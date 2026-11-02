@@ -42,33 +42,45 @@ import { reconcileDisclosure, statusCard } from '../shared/receiptParts.js';
 import { activityLabel, fieldLabel, genderLabel, localizeEnums } from './labels.js';
 import { buildChangeSheetDoc } from './sheetDoc.js';
 import { profileSnapshot, PROFILE_SOURCE } from './view.js';
+import { PROFILE_ROUTES } from './routes.js';
+import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
-const DOC_TITLE = '卡路里·档案预检';
+const docTitle = (): string => m('skill-calorie.profile-setup.c033');
 /** 本页由哪条命令产出（写进「复制日志」第 4 段，可照抄重跑）。 */
 const WIZARD_KEY = 'calorie.view.profile-wizard';
 
 /** 首格状态卡的「写入去向」一句（#251 起由共用件收参数，本域说法只此一处定义）。 */
-export const PROFILE_WRITTEN_DETAIL = '已写入档案';
+export function profileWrittenDetail(): string {
+  return m('skill-calorie.profile-setup.c034');
+}
 
-/** 三条写入词（HELP `scene-07-profile.ts` 的 name，逐字）。 */
-const SET_WORD = '设置档案';
-const ACTIVITY_WORD = '设活动量';
-const UPDATE_WORD = '改档案';
+/** 三条写入词：唤醒词是命令面资产，从路由唯一来源取（本件不重写中文）。 */
+const wakeOfOrder = (order: number): string => PROFILE_ROUTES.find((r) => r.order === order)?.wakeWord ?? '';
+const SET_WORD = wakeOfOrder(233);
+const ACTIVITY_WORD = wakeOfOrder(234);
+const UPDATE_WORD = wakeOfOrder(235);
 const WAKE_WORDS: readonly string[] = [SET_WORD, ACTIVITY_WORD, UPDATE_WORD];
 
 /** 设置档案 4 项（`scene-07-profile.ts:5` 的 data_fields）；参数名与写命令同形。
  *  性别那一格的括注照 HELP 的 prompt 写「男/女」（#238：不再写 `male/female`）。 */
-const SET_FIELDS: readonly { camel: string; label: string }[] = [
-  { camel: 'heightCm', label: '身高（cm）' },
-  { camel: 'age', label: '年龄' },
-  { camel: 'gender', label: '性别（男/女）' },
-  { camel: 'activityLevel', label: '活动量（久坐/轻度/中度/活跃/高度活跃）' },
-];
+function setFields(): readonly { camel: string; label: string }[] {
+  return [
+    { camel: 'heightCm', label: m('skill-calorie.profile-setup.c035') },
+    { camel: 'age', label: m('skill-calorie.profile-setup.c036') },
+    { camel: 'gender', label: m('skill-calorie.profile-setup.c037') },
+    { camel: 'activityLevel', label: m('skill-calorie.profile-setup.c038') },
+  ];
+}
 /** 改档案 5 项（单列，含备注；`scene-07-profile.ts:7`）。 */
-const NOTE_FIELD = { camel: 'note', label: '备注' } as const;
-const UPDATE_FIELDS: readonly { camel: string; label: string }[] = [...SET_FIELDS, NOTE_FIELD];
+function noteField(): { camel: string; label: string } {
+  return { camel: 'note', label: m('skill-calorie.profile-setup.c039') };
+}
+function updateFields(): readonly { camel: string; label: string }[] {
+  return [...setFields(), noteField()];
+}
 const NUM_FIELDS: readonly string[] = ['heightCm', 'age'];
 
 export interface ProfileSettingView {
@@ -101,12 +113,12 @@ function numOrUndef(raw: unknown, field: string): number | undefined {
 
 /** 参数 → 草稿（键名与写命令同形；值只为展示，写入仍由三条写命令各自校验）。 */
 function draftOf(raw: Record<string, unknown>): ProfileSettingView['draft'] {
-  const allowed = new Set<string>(['wakeWord', 'key', ...UPDATE_FIELDS.map((f) => f.camel)]);
+  const allowed = new Set<string>(['wakeWord', 'key', ...updateFields().map((f) => f.camel)]);
   for (const k of Object.keys(raw)) {
     if (!allowed.has(k)) throw new CalorieRenderError('bad-input', '不支持字段: ' + k);
   }
   const out: ProfileSettingView['draft'] = [];
-  for (const f of UPDATE_FIELDS) {
+  for (const f of updateFields()) {
     const v = NUM_FIELDS.includes(f.camel) ? numOrUndef(raw[f.camel], f.camel) : strOrUndef(raw[f.camel], f.camel);
     if (v !== undefined) out.push({ camel: f.camel, label: f.label, value: String(v) });
   }
@@ -128,7 +140,7 @@ function profileField(camel: string, p: ProfileRow | null): string | number | nu
 
 /** 一格的显示值（#238 清单 7 条）：「没有值」这一页只有一个词＝`未设置`；性别／活动量走中文说法。 */
 function cellOf(camel: string, raw: string | number | null | undefined): string {
-  if (raw === null || raw === undefined || raw === '') return '未设置';
+  if (raw === null || raw === undefined || raw === '') return m('skill-calorie.profile-setup.c001');
   if (camel === 'gender') return genderLabel(String(raw));
   if (camel === 'activityLevel') return activityLabel(String(raw));
   return String(raw);
@@ -161,9 +173,9 @@ function tdeeChoices(
 
 /** 该写入词要写的字段（设置档案不含备注；设活动量只写活动量）。 */
 function fieldsForWord(wakeWord: string | null): readonly { camel: string; label: string }[] {
-  if (wakeWord === SET_WORD) return SET_FIELDS;
-  if (wakeWord === ACTIVITY_WORD) return [SET_FIELDS[3] as { camel: string; label: string }];
-  return UPDATE_FIELDS;
+  if (wakeWord === SET_WORD) return setFields();
+  if (wakeWord === ACTIVITY_WORD) return [setFields()[3] as { camel: string; label: string }];
+  return updateFields();
 }
 
 /** 写命令段（确认后跑哪条；三条单命令入口，参数名与写命令同形）。 */
@@ -177,23 +189,26 @@ function writeCommand(wakeWord: string, picked: Record<string, unknown>): string
 /** 复制给 AI 的第一句话（#238 清单 14 条：自然句 ＋ 标点统一用全角）。
  *  这一句是用户要粘给 AI 的原话，不能写成「请帮我改档案到卡路里」这种内部说法。 */
 function askSentence(wakeWord: string | null, hasDraft: boolean): string {
-  if (wakeWord === ACTIVITY_WORD) return '请帮我把卡路里里的活动量改成下面这一项';
-  if (wakeWord === SET_WORD && hasDraft) return '请帮我把卡路里里的基础档案设置成下面这些值';
-  if (wakeWord === UPDATE_WORD && hasDraft) return '请帮我把卡路里里的基础档案改成下面这些值';
-  return '请帮我把卡路里里的基础档案写成下面这些值';
+  if (wakeWord === ACTIVITY_WORD) return m('skill-calorie.profile-setup.c002');
+  if (wakeWord === SET_WORD && hasDraft) return m('skill-calorie.profile-setup.c003');
+  if (wakeWord === UPDATE_WORD && hasDraft) return m('skill-calorie.profile-setup.c004');
+  return m('skill-calorie.profile-setup.c005');
 }
 
 function settingPrompt(wakeWord: string | null, draft: ProfileSettingView['draft'], before: ProfileRow | null): string {
   if (draft.length === 0) {
-    return '// 请至少填 1 项（设置档案 4 项：身高/年龄/性别/活动量；改档案 5 项另含备注；设活动量 5 档见下方对照表）';
+    return m('skill-calorie.profile-setup.c006');
   }
   const lines = draft.map((d) => '- ' + d.label.replace(/（.*）$/, '') + '：' + d.value);
-  const head = askSentence(wakeWord, true) + '\n\n参数：'
-    + (wakeWord ? '\n- 写入词：' + wakeWord : '')
-    + '\n' + lines.join('\n');
+  const wakeLine = wakeWord ? m('skill-calorie.profile-setup.c007', { p0: String(wakeWord) }) : '';
+  const head = m('skill-calorie.profile-setup.c008', {
+    p0: String(askSentence(wakeWord, true)),
+    p1: String(wakeLine),
+    p2: String(lines.join('\n')),
+  });
   const beforeNote = before
-    ? '\n\n改前值已在页面「档案现值（改前值）」一节列出；写入前请与库内现值核对，对不上就停下来问我。'
-    : '\n\n库内还没有档案：本次是首次设置，没有改前值可比对。';
+    ? m('skill-calorie.profile-setup.c009')
+    : m('skill-calorie.profile-setup.c010');
   if (!wakeWord) return head + beforeNote;
   const keep = fieldsForWord(wakeWord).map((f) => f.camel);
   const picked: Record<string, unknown> = {};
@@ -202,7 +217,10 @@ function settingPrompt(wakeWord: string | null, draft: ProfileSettingView['draft
     picked[d.camel] = d.camel === 'note' ? d.value : (NUM_FIELDS.includes(d.camel) ? Number(d.value) : d.value);
   }
   if (Object.keys(picked).length === 0) return head + beforeNote;
-  return head + beforeNote + '\n\n命令：\n```bash\n' + writeCommand(wakeWord, picked) + '\n```\n完成后返回写库回执。';
+  return m('skill-calorie.profile-setup.c011', {
+    p0: String(head + beforeNote),
+    p1: String(writeCommand(wakeWord, picked)),
+  });
 }
 
 /** ① 取数：改前值（`getProfile`，可缺）＋ 待写草稿＋活动量五档＋最近体重＋复制 prompt。 */
@@ -238,8 +256,9 @@ export function buildProfileSettingDoc(v: ProfileSettingView): string {
  *  推荐口径＝按「日常活动情况」在五档里判定的档位；它由页面按**库内现值 ＋ 最近体重**算出。 */
 function recommendedActivityText(profile: ProfileRow | null, latestWeightKg: number | null): string {
   const level = profile?.activity_level ?? null;
-  if (level === null || level === '') return '未设置（档案里没有活动量）';
-  const head = activityLabel(level) + '（系数 ×' + (TDEE_ACTIVITY_FACTORS[level] ?? '未设置') + '）';
+  if (level === null || level === '') return m('skill-calorie.profile-setup.c012');
+  const factorText = TDEE_ACTIVITY_FACTORS[level] ?? m('skill-calorie.profile-setup.c013');
+  const head = m('skill-calorie.profile-setup.c014', { p0: String(activityLabel(level)), p1: String(factorText) });
   const energy = energyOf({
     weightKg: latestWeightKg,
     heightCm: profile?.height_cm,
@@ -247,8 +266,12 @@ function recommendedActivityText(profile: ProfileRow | null, latestWeightKg: num
     gender: profile?.gender,
     activityLevel: level,
   });
-  if (energy.tdee === null) return head + ' · TDEE 待补（缺' + energy.missing.join('／') + '，不算）';
-  return head + ' · TDEE 约 ' + energy.tdee + ' 卡/天（按最近体重 ' + latestWeightKg + ' kg）';
+  if (energy.tdee === null) return m('skill-calorie.profile-setup.c015', { p0: String(head), p1: String(energy.missing.join('／')) });
+  return m('skill-calorie.profile-setup.c016', {
+    p0: String(head),
+    p1: String(energy.tdee),
+    p2: String(latestWeightKg),
+  });
 }
 
 /** ③ 两条写命令（设置档案／设活动量）的写后回执页；改档案回执页在 `update.ts`（它的对照区不同）。
@@ -262,24 +285,24 @@ export function buildProfileSettingReceiptDoc(db: DatabaseSync, receipt: CrudRec
   };
   const content = [
     renderKpiGrid([
-      statusCard(receipt, PROFILE_WRITTEN_DETAIL),
-      { label: '影响行数', value: receipt.affectedRows + ' 行', detail: '本次写入的行数' },
+      statusCard(receipt, profileWrittenDetail()),
+      { label: m('skill-calorie.profile-setup.c017'), value: m('skill-calorie.profile-setup.c018', { p0: String(receipt.affectedRows) }), detail: m('skill-calorie.profile-setup.c019') },
       {
-        label: '写入字段',
-        value: receipt.writtenFields.length + ' 项',
-        detail: receipt.writtenFields.map(fieldLabel).join('、') || '未设置',
+        label: m('skill-calorie.profile-setup.c020'),
+        value: m('skill-calorie.profile-setup.c021', { p0: String(receipt.writtenFields.length) }),
+        detail: listJoin(currentRenderLanguage(), receipt.writtenFields.map(fieldLabel)) || m('skill-calorie.profile-setup.c022'),
       },
     ]),
     renderDataTable({
-      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+      columns: [{ key: 'k', label: m('skill-calorie.profile-setup.c023') }, { key: 'v', label: m('skill-calorie.profile-setup.c024') }],
       rows: [
-        { k: '身高(cm)', v: cellOf('heightCm', profile?.height_cm) },
-        { k: '年龄', v: cellOf('age', profile?.age) },
-        { k: '性别', v: genderLabel(profile?.gender) },
-        { k: '推荐活动量', v: recommendedActivityText(profile, latestWeightKg) },
-        { k: '设置时间', v: receipt.meta.actionAt },
+        { k: m('skill-calorie.profile-setup.c025'), v: cellOf('heightCm', profile?.height_cm) },
+        { k: m('skill-calorie.profile-setup.c026'), v: cellOf('age', profile?.age) },
+        { k: m('skill-calorie.profile-setup.c027'), v: genderLabel(profile?.gender) },
+        { k: m('skill-calorie.profile-setup.c028'), v: recommendedActivityText(profile, latestWeightKg) },
+        { k: m('skill-calorie.profile-setup.c029'), v: receipt.meta.actionAt },
       ],
-      caption: '写后档案：推荐活动量＝按日常活动情况在五档里判定的档位，算法与预检页一致',
+      caption: m('skill-calorie.profile-setup.c030'),
     }),
     reconcileDisclosure(receipt),
     copyArea({
@@ -294,9 +317,9 @@ export function buildProfileSettingReceiptDoc(db: DatabaseSync, receipt: CrudRec
     }),
   ].join('');
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: receipt.scene + ' · 回执',
-    eyebrow: '基础信息 · 写后回执',
+    docTitle: docTitle(),
+    title: m('skill-calorie.profile-setup.c031', { p0: String(receipt.scene) }),
+    eyebrow: m('skill-calorie.profile-setup.c032'),
     subtitle: localizeEnums(receipt.summary),
     content, pageUi: true,
     // 宽屏单列锁（同上）：写后回执的读数卡与写后档案表同样收回 880 正文列。

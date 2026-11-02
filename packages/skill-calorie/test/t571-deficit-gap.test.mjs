@@ -65,7 +65,10 @@ test('#571 R-33 图例含摄入目标与目标值（撤第三序列即红）', (
   const leg = (html.match(/ilife-charts-legend">([\s\S]*?)<\/div>/) || [])[1] || '';
   assert.ok(leg.includes('摄入目标'), '图例缺摄入目标：' + leg.slice(0, 120));
   assert.ok(leg.includes('1800'), '图例缺目标值：' + leg.slice(0, 120));
-  assert.ok(SRC.includes("name: '摄入目标 ' + d.target.intake"), '第三序列缺失');
+  // #1217 起第三序列名是词条 `c036`（模板「摄入目标 {p0} 卡」）＋目标值参数；结构锁认 key 与参数，
+  // 不认中文字面（字面已进词条表，源码里许可的只剩 key）。
+  assert.ok(SRC.includes("'skill-calorie.render-trendPredictDocs.c036'"), '第三序列缺词条 key');
+  assert.ok(/c036'\s*,\s*\{\s*p0:\s*String\(d\.target\.intake\)/.test(SRC), '第三序列缺目标值参数');
 });
 
 test('#571 R-34 刻度3条保持（撤yTicks即红）', () => {

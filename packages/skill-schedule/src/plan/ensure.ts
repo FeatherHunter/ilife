@@ -7,8 +7,9 @@
 import { ensurePlanEvent, setFeishuEventId } from '../fetch/index.js';
 import { validateEnsureBatchInput, validateEnsureInput } from '../policy/index.js';
 import { receiptResult, type PlanOpCtx, type PlanOpResult } from './context.js';
-import { buildReceipt, REMOTE_LABEL, type RemoteState } from './receipt.js';
+import { buildReceipt, remoteLabelOf, type RemoteState } from './receipt.js';
 import { takeSnapshot, alignOne } from './remoteDay.js';
+import { m } from '../entries/index.js';
 
 export function runEnsure(ctx: PlanOpCtx): PlanOpResult {
   const input = validateEnsureInput(ctx.params);
@@ -49,8 +50,17 @@ export function runEnsure(ctx: PlanOpCtx): PlanOpResult {
     remote = 'unavailable';
   }
 
-  const message = '已补计划 #' + event.id + '：' + input.date + ' ' + event.time_start + '~' + event.time_end + ' '
-    + event.title + '（' + (created ? '本地新建' : '本地已有（幂等未重复）') + '／' + REMOTE_LABEL[remote] + '）';
+  // §4.7 · 链内的条件分支抽成局部变量。
+  const localNote = created ? m('skill-schedule.plan-ensure.c001') : m('skill-schedule.plan-ensure.c002');
+  const message = m('skill-schedule.plan-ensure.c003', {
+    p0: String(event.id),
+    p1: String(input.date),
+    p2: String(event.time_start),
+    p3: String(event.time_end),
+    p4: String(event.title),
+    p5: String(localNote),
+    p6: String(remoteLabelOf(remote)),
+  });
   return receiptResult(buildReceipt({
     op: 'ensure',
     message,
@@ -104,7 +114,7 @@ export function runEnsureBatch(ctx: PlanOpCtx): PlanOpResult {
       if (d.errors.length) {
         for (const e of d.errors) errors.push(item.date + '：' + e);
       } else {
-        errors.push(item.date + '：远端没成（remote=' + d.remote + '）');
+        errors.push(m('skill-schedule.plan-ensure.c004', { p0: String(item.date), p1: String(d.remote) }));
       }
     }
     for (const n of d.notes) notes.push(item.date + '：' + n);
@@ -117,8 +127,15 @@ export function runEnsureBatch(ctx: PlanOpCtx): PlanOpResult {
   else remote = 'skipped';
 
   const sorted = [...dates].sort();
-  const message = '批量补计划 ' + sorted[0] + '~' + sorted[sorted.length - 1] + '：' + items.length
-    + ' 天（本地新建 ' + created + '／已有 ' + found + '／失败 ' + failed + '／' + REMOTE_LABEL[remote] + '）';
+  const message = m('skill-schedule.plan-ensure.c005', {
+    p0: String(sorted[0]),
+    p1: String(sorted[sorted.length - 1]),
+    p2: String(items.length),
+    p3: String(created),
+    p4: String(found),
+    p5: String(failed),
+    p6: String(remoteLabelOf(remote)),
+  });
   return receiptResult(buildReceipt({
     op: 'ensure',
     message,

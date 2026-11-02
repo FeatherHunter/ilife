@@ -1,6 +1,7 @@
 // HELP 速查：WAKE_TABLE 唯一上游；短语→key/cli/一句话。构建期注入 SKILL.md（scripts/build-help.mjs）。
 import { WAKE_TABLE, type HomeKey } from '../policy/index.js';
 import { HOME_KEY_SHAPES } from '../render/index.js';
+import { m } from '../entries/index.js';
 
 export interface HelpHit { phrase: string; key: HomeKey; shape: string; cli: string; desc: string; }
 
@@ -8,45 +9,50 @@ function exampleParams(e: { key: HomeKey; needs?: string[]; preset?: Record<stri
   const p: Record<string, unknown> = { ...(e.preset || {}) };
   for (const n of e.needs || []) {
     if (p[n] === undefined) {
-      p[n] = n === 'id' ? 1 : n === 'from' ? '旧' : n === 'to' ? '新' : '<值>';
+      p[n] = n === 'id' ? 1 : n === 'from' ? m('skill-home.help-lookup.c001') : n === 'to' ? m('skill-home.help-lookup.c002') : m('skill-home.help-lookup.c003');
     }
   }
   const keys = Object.keys(p);
   return keys.length ? ' --params \'' + JSON.stringify(p) + '\'' : '';
 }
 
-const DESCS: Record<string, string> = {
-  'home.item.search': '搜物品（名称/位置/标签/分类，紧急定位/筛选/图搜/查重复）',
-  'home.item.detail': '看单品详情（含历史/照片/照片墙 view 分流，须 id）',
-  'home.item.add': '录物品 op=single/batch/backfill（含拍物品一次写入）',
-  'home.item.update': '改物品 op=generic/move/qty/status/tags/merge/undo/relate/photo（须 id）',
-  'home.tag.query': '看标签（标签总览 + 分类树）',
-  'home.tag.write': '管标签/管分类/合标签/整理建议 op 分流',
-  'home.inventory.round': '盘点核对 op=round/resolve/move（按位置/分类/全屋）',
-  'home.inventory.records': '盘点记录（复查入口）',
-  'home.location.query': '位置查 mode=manage/space/suggest/find/storage',
-  'home.location.write': '位置改 op=manage/fixed（含固定位锚定）',
-  'home.outfit.pick': '穿搭推荐 kind=pick/wardrobe/season/trip-plan',
-  'home.trip.manage': '出行清单 mode=pack/return（旅游中↔在家）',
-  'home.stats.overview': '总体统计 kind=summary/inventory（状态/分类/价值/高频 TOP）',
-  'home.stats.alert': '闲置/过期 kind=idle/expiring',
-  'home.shopping.query': '购物查 kind=list/missing/stock/express',
-  'home.shopping.write': '购物改 op=list-add/list-check/missing-to-list/stock-threshold/stock-fix/express-confirm',
-  'home.ticket.query': '票据查 kind=purchase/warranty/cert/account',
-  'home.ticket.write': '票据改 kind+op（购买/保修/证件/账号，账号须 master-key）',
-  'home.care.query': '协作查 kind=borrow/member/firstuse-status/lint/backup-list',
-  'home.care.write': '协作改 kind=init/backup/export/import/borrow/member（幂等可重试）',
-  'home.help.lookup': 'HELP 现找（q 可空，不过滤即全表）',
-};
+// #1220 · 模块级常量取词禁令：这张表的值是上屏文案，语言必须在取词那一刻定
+// （模块加载期取词会把语言固化在 import 那一刻），故改成函数，`m()` 只在函数体内调。
+function descs(): Record<string, string> {
+  return {
+    'home.item.search': m('skill-home.help-lookup.c004'),
+    'home.item.detail': m('skill-home.help-lookup.c005'),
+    'home.item.add': m('skill-home.help-lookup.c006'),
+    'home.item.update': m('skill-home.help-lookup.c007'),
+    'home.tag.query': m('skill-home.help-lookup.c008'),
+    'home.tag.write': m('skill-home.help-lookup.c009'),
+    'home.inventory.round': m('skill-home.help-lookup.c010'),
+    'home.inventory.records': m('skill-home.help-lookup.c011'),
+    'home.location.query': m('skill-home.help-lookup.c012'),
+    'home.location.write': m('skill-home.help-lookup.c013'),
+    'home.outfit.pick': m('skill-home.help-lookup.c014'),
+    'home.trip.manage': m('skill-home.help-lookup.c015'),
+    'home.stats.overview': m('skill-home.help-lookup.c016'),
+    'home.stats.alert': m('skill-home.help-lookup.c017'),
+    'home.shopping.query': m('skill-home.help-lookup.c018'),
+    'home.shopping.write': m('skill-home.help-lookup.c019'),
+    'home.ticket.query': m('skill-home.help-lookup.c020'),
+    'home.ticket.write': m('skill-home.help-lookup.c021'),
+    'home.care.query': m('skill-home.help-lookup.c022'),
+    'home.care.write': m('skill-home.help-lookup.c023'),
+    'home.help.lookup': m('skill-home.help-lookup.c024'),
+  };
+}
 
 // 全量速查表（WAKE_TABLE 有几条就有几行）。
 export function buildHelpLookup(): HelpHit[] {
+  const d = descs();
   return WAKE_TABLE.map((e) => ({
     phrase: e.phrase,
     key: e.key,
     shape: HOME_KEY_SHAPES[e.key] || '??',
     cli: 'home-cmd-read ' + e.key + exampleParams(e),
-    desc: DESCS[e.key] || '',
+    desc: d[e.key] || '',
   }));
 }
 

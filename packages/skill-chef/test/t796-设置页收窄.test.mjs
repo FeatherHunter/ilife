@@ -197,8 +197,10 @@ describe('#796 设置页收窄 · 技能侧回执与落点', () => {
       const htmlItem = report.items.find((i) => i.id === 'html.dir');
       // html.dir 那条「目录在但写不进去」时才有行动指引（沙盒里新目录一律能写，此处不断言分支命中）；
       // 改指配置文件的写法锁在源码文本上（与 696 F 组同形：读源码不断言运行时分支）。
-      const healthSrc = readFileSync(join(HERE, '..', 'src', 'health.ts'), 'utf8');
-      assert.match(healthSrc, /编辑配置文件里的 html\.dir/,
+      // #1224 起这句文案住词条表（`src/health.ts` 那行只剩 `m('skill-chef.health.c048')`），
+      // 所以同一条判据改成锁 zh 词条表里那一行，语义不变。
+      const zhEntries = readFileSync(join(HERE, '..', 'src', 'entries', 'zh.ts'), 'utf8');
+      assert.match(zhEntries, /'skill-chef\.health\.c048': "去掉这个目录的只读属性；要换目录，编辑配置文件里的 html\.dir。"/,
         'html.dir 那条行动指引应改指配置文件');
     });
   });

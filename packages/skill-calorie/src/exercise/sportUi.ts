@@ -34,6 +34,7 @@ import {
   factStrip as stripFactStrip, factStripCss,
   windowStrip as stripWindowStrip, windowStripCss,
 } from '../shared/pageStrips.js';
+import { m } from '../entries/index.js';
 
 const esc = (s: string): string => escapeHtml(s);
 
@@ -232,7 +233,7 @@ export function inlineShaped(s: string): string {
 export function receiptSource(source: string): string {
   const s = source.trim();
   if (s === '') return '';
-  return s.includes('exercise_log') ? '运动记录' : s;
+  return s.includes('exercise_log') ? m('skill-calorie.exercise-sportUi.c001') : s;
 }
 
 /** 显示层取整（#523）：`153.60000000000002` → `153.6`；`21053.499999999985` → `21053.5`；

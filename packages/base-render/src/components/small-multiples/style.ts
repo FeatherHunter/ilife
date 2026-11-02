@@ -19,6 +19,7 @@
  */
 import { skinVar } from '../skin/contract.js';
 import { smallMultiplesSlot, type SmallMultiplesSlot } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -47,10 +48,10 @@ export function smallMultiplesCss(input?: { readonly prefix?: string }): string 
   const s = (slot: SmallMultiplesSlot): string => root + ' .' + smallMultiplesSlot(slot, p);
 
   return [
-    '/* small-multiples（小倍数面板 · 期间并排迷你柱阵 ＋ 均值线）：同一个读数的几期并排成柱，',
-    '   共用一套归一化刻度横着比高低；虚线是这几期的均值。',
-    '   色一律从强调色系出（柱与本期竖标＝无文字的点／格／条走 accent 实底，「本期」那枚字走 accent-text），',
-    '   任何一处都不拿文字墨色当面；换皮只换取值、不换结构。 */',
+    m('base-render.components-small-multiples-style.c001'),
+    m('base-render.components-small-multiples-style.c002'),
+    m('base-render.components-small-multiples-style.c003'),
+    m('base-render.components-small-multiples-style.c004'),
     box + ' {',
     /* 宽度判据的落点：本件是**自己的容器**——嵌进侧栏／面板／卡片时照样按自己的宽度排。 */
     '  container-type: inline-size;',
@@ -246,7 +247,7 @@ export function smallMultiplesCss(input?: { readonly prefix?: string }): string 
     '  line-height: 1.6;',
     '  overflow-wrap: anywhere;',
     '}',
-    '/* 本件自身不带可点元素（纯静态图）。这一条是**地板**：调用方把某一列包成入口时，焦点必须看得见。 */',
+    m('base-render.components-small-multiples-style.c005'),
     box + ' :focus-visible {',
     '  outline: 2px solid ' + skinVar('accent') + ';',
     '  outline-offset: 2px;',

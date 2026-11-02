@@ -7,7 +7,8 @@
  *
  *  #1204 首迁件（多语言文本外置）：本件的用户可见文案不住这里，住 `../entries/zh.ts`（中文基准）
  *  与 `../entries/en.ts`（英文列）；`sceneInstallment(language)` 按语言取值，`SCENE` 是 `zh`
- *  的那一份（不启用多语言时与改造前逐字节相同）。期数角标前三枚**复用**三格中文名的 key
+ *  的那一份（落点表的静态快照，只有 `zh` 请求会拿到它）。**语言必给**（#1307）：本件不兜 `zh`。
+ *  期数角标前三枚**复用**三格中文名的 key
  *  （同一概念只一处定义，见本件头注③）。参数名（`total`／`periods`／`start_date`）是槽位标识、
  *  命令键冻结，二者都不进词条表。
  */
@@ -21,7 +22,7 @@ const KIND = 'installment';
 const WORD: string = wakeWordOf(KIND);
 
 /** 按语言取本件的差异声明（key 拼错编译期红：`SkillBillMessageId` 从 zh 表派生）。 */
-export function sceneInstallment(language: string = 'zh'): Scene {
+export function sceneInstallment(language: string): Scene {
   const t = (id: SkillBillMessageId): string => resolve(SKILL_BILL_CATALOG, language, id);
   return {
     id: 'installment',

@@ -17,12 +17,13 @@ import { buildEmptyWindowDoc, buildTodayWaterDoc } from './nutritionPortDocs.js'
 import type { ViewOut } from '../shared/commandSpec.js';
 import { assertISO, dayField, fail, latestFoodDate, nums, optStr, windowRange } from '../shared/params.js';
 import { commandLine } from '../shared/writeParts.js';
+import { m } from '../entries/index.js';
 
 /** 备注筛选参数：`hasNote` 主名、`withNote` 兼容旧唤醒词文案（`--with-note`）。只收布尔，非布尔即用法错。 */
 function hasNoteOf(params: Record<string, unknown>): boolean | undefined {
   const v = params['hasNote'] !== undefined ? params['hasNote'] : params['withNote'];
   if (v === undefined || v === null) return undefined;
-  if (typeof v !== 'boolean') fail(2, '参数 hasNote 须为布尔');
+  if (typeof v !== 'boolean') fail(2, m('skill-calorie.diet-today.c001'));
   return v as boolean;
 }
 
@@ -71,18 +72,18 @@ export function viewTodayWater(params: Record<string, unknown>, db: DatabaseSync
        ⇒ 这是「今天还没喝水」这个再常见不过的状态，出完整页 ＋ 空态句 ＋ 引导句；
        **库为空**仍原样抛出去走 `exit 4`（既有设计行为，本件不据裁定 4 去改它）。 */
     if (!(e instanceof CalorieRenderError) || e.code !== 'missing-data' || !hasAnyDietRow(db)) throw e;
-    const name = entry === 'drink' ? '今日喝水' : '今日饮水';
+    const name = entry === 'drink' ? m('skill-calorie.diet-today.c002') : m('skill-calorie.diet-today.c003');
     const weekStart = shiftISODate(date, -6);
     return {
       data: { metrics: {} },
       html: buildEmptyWindowDoc({
         key: 'calorie.view.today-water',
-        metaLeft: name + '（饮食）',
+        metaLeft: m('skill-calorie.diet-today.c004', { p0: String(name) }),
         title: '💧 ' + name,
-        blockTitle: '今日读数',
-        emptyText: '这一段（' + weekStart + ' ~ ' + date + '）没有饮水记录，进度与每杯都还是空的。',
-        guide: '要让它有内容，先用「记喝水」记上一杯（可带时间），再来看进度。',
-        footnote: '📊 数据来源 · 饮水记录 · ' + date,
+        blockTitle: m('skill-calorie.diet-today.c005'),
+        emptyText: m('skill-calorie.diet-today.c006', { p0: String(weekStart), p1: String(date) }),
+        guide: m('skill-calorie.diet-today.c007'),
+        footnote: m('skill-calorie.diet-today.c008', { p0: String(date) }),
         command,
       }),
     };

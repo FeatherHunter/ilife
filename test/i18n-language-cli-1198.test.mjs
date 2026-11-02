@@ -7,8 +7,10 @@
  *
  * 票面三条验收（读数形状）：
  *   ① 不设语言时产物与基线逐字节相同；
- *   ② 设 `language.text: en` 后同一条命令的输出走英文（本件读的是**链**：解析出来的语言是不是 en。
- *      文本本身的英文要等词条层 #1200 的渲染消费方接线，本件不伪造一个「英文产物」）；
+ *   ② 设 `language.text: en` 后同一条命令的输出走英文：
+ *      · 链：解析出来的语言是不是 en（--language／配置两条来路都要通）；
+ *      · 产物：真跑 `bill.record.add` 读**落盘 HTML 的可见正文**，英文锚点在、中文只剩
+ *        冻结面（命令关键字）与数据值（ADR-0004 不译）——不伪造一个「英文产物」；
  *   ③ 设 `zz` 时退出码非 0 且报错里列出可用语言。
  *
  * 隔离：家目录指到临时目录（`test/helpers/home-test-base.mjs`），真实家目录一行不碰。
@@ -123,7 +125,20 @@ describe('#1198 语言选择链（真出口端到端）', () => {
       const a = JSON.parse(plain.stdout);
       const b = JSON.parse(withLang.stdout);
       assert.equal(b.key, a.key);
-      assert.equal(b.delivery.bytes, a.delivery.bytes, '本轮未接渲染消费方：产物字节数不变（只接线与校验）');
+      // 渲染消费方已接线：--language en 必须真的改到产物（不是只解析了参数就丢）。
+      const htmlOf = (envelope) => readFileSync(envelope.delivery.path, 'utf8');
+      const helpDataOf = (html) => {
+        const open = '<script id="help-data" type="application/json">';
+        const i = html.indexOf(open);
+        assert.ok(i >= 0, 'help 产物须带 help-data 载荷');
+        const j = html.indexOf('</script>', i + open.length);
+        return JSON.parse(html.slice(i + open.length, j));
+      };
+      const zhData = helpDataOf(htmlOf(a));
+      const enData = helpDataOf(htmlOf(b));
+      assert.match(zhData.subtitle, /功能域|场景/, '未设语言时 help 载荷仍是中文：' + zhData.subtitle);
+      assert.match(enData.subtitle, /domains|scenes/, '--language en 后 help 载荷须是英文：' + enData.subtitle);
+      assert.match(enData.contact.items[0].label, /Email|邮箱/, '联系方式标签随语言：' + enData.contact.items[0].label);
     });
   });
 
@@ -136,6 +151,39 @@ describe('#1198 语言选择链（真出口端到端）', () => {
       assert.equal(r.code, 0, 'language.text: en 不许让命令失败，stderr=' + r.stderr);
       const envelope = JSON.parse(r.stdout);
       assert.equal(envelope.key, 'bill.help.lookup');
+    });
+  });
+
+  it('② 配置文件 language.text: en：bill.record.add 采集页的可见正文是英文（真产物）', () => {
+    withHome((home) => {
+      const dir = configDirOf(home);
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(join(dir, 'bill.yaml'), EN_YAML, 'utf8');
+      const r = runBill(home, 'bill.record.add');
+      assert.equal(r.code, 0, 'language.text: en 不许让记账页交付失败，stderr=' + r.stderr);
+      const envelope = JSON.parse(r.stdout);
+      const path = envelope.delivery?.path;
+      assert.ok(typeof path === 'string' && path.length > 0, '交付须带落盘路径');
+      const html = readFileSync(path, 'utf8');
+      // 可见正文：剥掉 style／script／标签，只留用户能看见的字。
+      const visible = html
+        .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+        .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ');
+      // ① 英文锚点：这几句是采集页的固定文案，en 下必须真的是英文。
+      for (const anchor of ['Fill in the items below', 'Pick a category', 'Additional optional fields', 'Copy data', 'Plain text']) {
+        assert.ok(visible.includes(anchor), 'en 可见正文缺英文锚点「' + anchor + '」：' + visible.slice(0, 300));
+      }
+      // ② 中文残留只许两类：冻结的命令关键字（#1236）、数据值（ADR-0004 不译）。
+      const ALLOW = new Set(['记一笔', '餐饮', '工资', '出行', '其他收入']);
+      const cjk = [...new Set(visible.match(/[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]+/g) || [])];
+      assert.deepEqual(cjk.filter((s) => !ALLOW.has(s)), [], 'en 可见正文出现未申报的中文残留：' + JSON.stringify(cjk));
+      // ③ 显示面连接符按语言（#1311）：en 下不许顿号／全角加号。
+      assert.ok(!visible.includes('、'), 'en 可见正文仍出现顿号（列表连接符未按语言）');
+      assert.ok(!visible.includes('＋'), 'en 可见正文仍出现全角加号（符号未按语言）');
+      // ④ 回执里的可见数据串同样不许中文（这句是回执 message，不是落盘文件）。
+      assert.ok(!/[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/.test(String(envelope.data?.message ?? '')), '回执 message 仍是中文：' + String(envelope.data?.message ?? ''));
     });
   });
 

@@ -17,6 +17,7 @@
  * 谁在用（一个调用点，指名）：`src/analysis/read.ts` 的 `pageOf`——`family === 'charts'` 的 4 件场景
  *  由落点表 `./scene.js` 取到本件，`values` 出的形状交给 `./template-charts.js` 拼页。
  */
+import { runWithLanguage, listJoin, currentRenderLanguage } from 'base-entries';
 import type { BillRow } from '../fetch/db.js';
 import { BillPolicyError } from '../fetch/errors.js';
 import { monthRange } from '../shared/dateRange.js';
@@ -27,6 +28,7 @@ import type { AnalysisScene, ChartCard } from './scene.js';
 import { buildAnalysisCopy } from './copyTextAnalysis.js';
 import { projectWakeWord } from '../triggers/wakeTable.js';
 import { buildTrend } from './views.js';
+import { m } from '../entries/index.js';
 
 /** 正整数型参数（缺＝缺省值）。老侧 `args.months or 12` 的严格版：形态不对即报参数错，不悄悄退回缺省。 */
 function monthsOf(params: Record<string, unknown>, fallback: number): number {
@@ -64,7 +66,7 @@ function lineInputOf(series: readonly MonthPoint[], usable: number, emptyText: s
   return {
     items: expense,
     options: {
-      series: [{ name: '支出', items: expense }, { name: '收入', items: income }],
+      series: [{ name: m('skill-bill.analysis-scene-trend.c001'), items: expense }, { name: m('skill-bill.analysis-scene-trend.c002'), items: income }],
       yTicks: 4,
       /* 纵轴下界恒 0：金额没有负数，公共层派生的那 6% 下外扩会印出「-732.26 元」这种读不出意思的刻度。 */
       yMin: 0,
@@ -77,11 +79,12 @@ function lineInputOf(series: readonly MonthPoint[], usable: number, emptyText: s
   };
 }
 
-export const sceneTrend: AnalysisScene = {
+function buildScene(): AnalysisScene {
+  return {
   id: 'trend',
   key: 'bill.analysis.trend',
   kind: 'trend',
-  title: '看趋势',
+  title: m('skill-bill.analysis-scene-trend.title'),
   family: 'charts',
   values: ({ params, db }) => {
     /* ① 取数：窗口＝近 N 个月，序列终点＝库里最新一条记录所在的月（不取今天的月）。 */
@@ -105,23 +108,35 @@ export const sceneTrend: AnalysisScene = {
     const lastMonth = series.length === 0 ? '' : series[series.length - 1].month;
 
     /* ④ 结论句与口径句：口径句点名没有记录的月（裁定 3 第 4 条），点数不足时也在这里说清。 */
+    /* 峰值那一句先算成变量：让结论句成为一条只拼字面量与变量的链，迁移器才能整句取词。 */
+    const peakClause = peak > 0
+      ? m('skill-bill.analysis-scene-trend.c004', { p0: String(peakMonth), p1: String(money(peak)) })
+      : m('skill-bill.analysis-scene-trend.c005');
     const conclusion = kpi.count === 0
-      ? '这 ' + String(series.length) + ' 个月还没有记录。'
-      : '这 ' + String(series.length) + ' 个月一共记了 ' + String(kpi.count) + ' 笔：支出 ' + money(kpi.expense)
-        + ' 元、收入 ' + money(kpi.income) + ' 元，平均每月支出 ' + money(avg) + ' 元'
-        + (peak > 0 ? '，最高的是 ' + peakMonth + '（' + money(peak) + ' 元）。' : '；窗口里一笔支出都没有。');
+      ? m('skill-bill.analysis-scene-trend.c006', { p0: String(String(series.length)) })
+      : m('skill-bill.analysis-scene-trend.c007', {
+        p0: String(String(series.length)),
+        p1: String(String(kpi.count)),
+        p2: String(money(kpi.expense)),
+        p3: String(money(kpi.income)),
+        p4: String(money(avg)),
+        p5: String(peakClause),
+      });
     const caliber = [
-      '窗口取近 ' + String(months) + ' 个月，终点是库里最新一条记录所在的月（不是今天）',
+      m('skill-bill.analysis-scene-trend.c008', { p0: String(String(months)) }),
       gaps.length === 0
-        ? '这 ' + String(series.length) + ' 个月每个月都有记录'
-        : gaps.join('、') + ' 这 ' + String(gaps.length) + ' 个月没有记录，折线在那里断开、用同色虚线桥接',
-      recorded.length < 2 ? '有记录的月不到 2 个，不画半截线、图卡改出说明句' : '',
-      '支出与收入各一条线，纵轴刻度标在图上',
-      '转账不计入收支',
+        ? m('skill-bill.analysis-scene-trend.c009', { p0: String(String(series.length)) })
+        : m('skill-bill.analysis-scene-trend.c010', {
+          p0: String(listJoin(currentRenderLanguage(), gaps)),
+          p1: String(String(gaps.length)),
+        }),
+      recorded.length < 2 ? m('skill-bill.analysis-scene-trend.c011') : '',
+      m('skill-bill.analysis-scene-trend.c012'),
+      m('skill-bill.analysis-scene-trend.c013'),
     ].filter((s) => s !== '').join('；') + '。';
 
     return {
-      title: '看趋势',
+      title: m('skill-bill.analysis-scene-trend.title'),
       label: windowLabel(firstMonth, lastMonth),
       from: firstMonth === '' ? NO_WINDOW : monthRange(firstMonth).start,
       to: lastMonth === '' ? NO_WINDOW : monthRange(lastMonth).end,
@@ -139,32 +154,43 @@ export const sceneTrend: AnalysisScene = {
       }),
       page: {
         kpis: [
-          { label: '峰值月', value: peakMonth },
-          { label: '峰值支出', value: money(peak), unit: '元' },
-          { label: '月均支出', value: money(avg), unit: '元' },
-          { label: '窗口月数', value: String(months), unit: '个月' },
+          { label: m('skill-bill.analysis-scene-trend.c015'), value: peakMonth },
+          { label: m('skill-bill.analysis-scene-trend.c016'), value: money(peak), unit: m('skill-bill.analysis-scene-trend.c017') },
+          { label: m('skill-bill.analysis-scene-trend.c018'), value: money(avg), unit: m('skill-bill.analysis-scene-trend.c019') },
+          { label: m('skill-bill.analysis-scene-trend.c020'), value: String(months), unit: m('skill-bill.analysis-scene-trend.c021') },
         ],
         chips: [],
         charts: [{
-          title: '逐月收支走势',
+          title: m('skill-bill.analysis-scene-trend.c022'),
           kind: 'line',
-          input: lineInputOf(series, recorded.length, '有记录的月不到 2 个，画不出折线；下面那张明细按月列了每一笔。'),
+          input: lineInputOf(series, recorded.length, m('skill-bill.analysis-scene-trend.c023')),
         }],
         listCards: [{
-          title: '逐月明细',
+          title: m('skill-bill.analysis-scene-trend.c024'),
           rows: recorded.map((p) => ({
             left: p.month,
-            main: String(p.count) + ' 笔',
-            right: '支出 ' + money(p.expense) + ' ／ 收入 ' + money(p.income),
+            main: m('skill-bill.analysis-scene-trend.c025', { p0: String(String(p.count)) }),
+            right: m('skill-bill.analysis-scene-trend.c026', {
+              p0: String(money(p.expense)),
+              p1: String(money(p.income)),
+            }),
           })),
-          emptyText: '这 ' + String(months) + ' 个月一笔都没有记',
+          emptyText: m('skill-bill.analysis-scene-trend.c027', { p0: String(String(months)) }),
         }],
         factCards: [],
         empty: {
-          text: '这 ' + String(months) + ' 个月还没有记录。',
-          hint: '先说「记支出」或「记收入」记一笔，回来看这里就有数了。',
+          text: m('skill-bill.analysis-scene-trend.c028', { p0: String(String(months)) }),
+          hint: m('skill-bill.analysis-scene-trend.c029'),
         },
       },
     };
   },
-};
+  };
+}
+
+export const sceneTrend: AnalysisScene = buildScene();
+
+/** 按语言重建本场景（#1197：文案经词条层，语言是运行期参数）。 */
+export function sceneTrendFor(language: string): AnalysisScene {
+  return runWithLanguage(language, buildScene);
+}

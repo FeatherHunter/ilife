@@ -3,7 +3,7 @@
  * 来源与口径：本件是 **W1 搬家**的产物——把 `trendDocs.ts` 里 10 个 `build*Doc`
  * （deficit 族 1 ＋ predict 族 9）与它们的独占页内小件原样搬出，**一字未改**；
  * 判据＝搬迁前后 31 页产物逐字节相同（`t518-W1-搬家-证据.md`）。
- * 两族共用的件头小件（`DOC_TITLE`／`DOC_VERSION`／`DOC_SKILL`／`fmt`／`humanText`／
+ * 两族共用的件头小件（`DOC_TITLE()`／`DOC_VERSION`／`DOC_SKILL`／`fmt`／`humanText`／
  * `techNoteHtml`）仍住 `trendDocs.ts`，本件**从它导入**；`trendDocs.ts` 再把本件的 10 个出口
  * 薄转出，既有调用面（`render/index.ts`／各测试的 `dist/render/trendDocs.js`）一个不动。
  */
@@ -34,21 +34,27 @@ import type {
   WeightSimCut, WeightSimTarget,
 } from '../analysis/simulate2.js';
 import type { GoalPredictView } from '../goal/goalExtraPlate.js';
+import { m } from '../entries/index.js';
 
 /* ── 热量缺口（calorie_deficit.html 对照：4 KPI＋每日摄入 vs 消耗＋缺口明细表＋合计行） ── */
+function DEFICIT_TREND_ZH() : Record<string, string> {
 
-const DEFICIT_TREND_ZH: Record<string, string> = { loss: '减重方向', gain: '增重方向', flat: '持平' };
+  return { loss: m('skill-calorie.render-trendPredictDocs.c289'), gain: m('skill-calorie.render-trendPredictDocs.c290'), flat: m('skill-calorie.render-trendPredictDocs.c291') };
+
+}
 
 /** 页内导航锚点（#517）：**先有 `id` 才有导航项**——六个区块与六个导航项同源这一份清单，
  *  `href="#x"` 与页内 `id` 因此不可能走散（判据 J8 要求双向自洽，多一点孤儿锚点即红）。 */
-const DEFICIT_SECTIONS: ReadonlyArray<{ readonly id: string; readonly text: string }> = [
-  { id: 'sec-params', text: '参数' },
-  { id: 'sec-overview', text: '概览' },
-  { id: 'sec-chart', text: '每日摄入与消耗' },
-  { id: 'sec-detail', text: '缺口明细' },
-  { id: 'sec-totals', text: '合计' },
-  { id: 'sec-data', text: '数据与日志' },
+function DEFICIT_SECTIONS() : ReadonlyArray<{ readonly id: string; readonly text: string }> {
+  return [
+  { id: 'sec-params', text: m('skill-calorie.render-trendPredictDocs.c292') },
+  { id: 'sec-overview', text: m('skill-calorie.render-trendPredictDocs.c293') },
+  { id: 'sec-chart', text: m('skill-calorie.render-trendPredictDocs.c294') },
+  { id: 'sec-detail', text: m('skill-calorie.render-trendPredictDocs.c295') },
+  { id: 'sec-totals', text: m('skill-calorie.render-trendPredictDocs.c296') },
+  { id: 'sec-data', text: m('skill-calorie.render-trendPredictDocs.c297') },
 ];
+}
 
 /** 区块锚点外壳：`renderTocBlock` 只认 `id`、区块产出器本身不带 `id` ⇒ 由调用方在外面套一层
  *  （同族先例 `diet/sourceStatsDocs.ts` 的 `shell()`）。**只加锚点，不写任何样式**——
@@ -66,9 +72,9 @@ function pageSection(id: string, html: string, heading?: string): string {
  *  「日均缺口」那张卡走**状态徽章**（`renderKpiCard` 的 `status` 槽）。
  *  改的只是呈现：判定阈值仍是 `target.weeklyDeficitPerDay` 这一个数，没有第二套口径。 */
 function deficitVerdict(deficit: number, targetDef: number): { status: 'ok' | 'warn' | 'danger'; text: string } {
-  if (deficit >= targetDef) return { status: 'ok', text: '达标' };
-  if (deficit > 0) return { status: 'warn', text: '偏低' };
-  return { status: 'danger', text: '超量' };
+  if (deficit >= targetDef) return { status: 'ok', text: m('skill-calorie.render-trendPredictDocs.c001') };
+  if (deficit > 0) return { status: 'warn', text: m('skill-calorie.render-trendPredictDocs.c002') };
+  return { status: 'danger', text: m('skill-calorie.render-trendPredictDocs.c003') };
 }
 
 /** 带符号整数（与 `summary.avgDeficit`／`weeklyDeficit` 上屏的既有写法同口径：正数前置 `+`）。
@@ -84,8 +90,12 @@ function deficitConclusion(d: DeficitData): string {
   const avg = signed(d.summary.avgDeficit);
   const week = signed(d.summary.weeklyDeficit);
   return d.summary.weeklyDeficit > 0
-    ? '这段时间平均每天有 ' + avg + ' 卡缺口，一周合计 ' + week + ' 卡，折算下来约 ' + d.summary.predictedLossKg + ' kg。'
-    : '这段时间平均每天缺口 ' + avg + ' 卡，一周合计 ' + week + ' 卡，还没有形成减重缺口。';
+    ? m('skill-calorie.render-trendPredictDocs.c004', {
+      p0: String(avg),
+      p1: String(week),
+      p2: String(d.summary.predictedLossKg),
+    })
+    : m('skill-calorie.render-trendPredictDocs.c005', { p0: String(avg), p1: String(week) });
 }
 
 /** 日均消耗的加法分解改形状（要点 ⑥；`renderDistributionRows`）。KPI `detail` 原文是 385 冻结
@@ -94,7 +104,7 @@ function deficitBurnMix(d: DeficitData): string {
   const burn = d.summary.avgBurn;
   if (burn <= 0) return '';
   const row = (label: string, value: number) => ({ label, value: Math.round((value / burn) * 100) + '%', pct: Math.round((value / burn) * 100) });
-  return renderDistributionRows({ rows: [row('日常消耗', d.target.tdee), row('运动', d.summary.avgExerciseBurn)] });
+  return renderDistributionRows({ rows: [row(m('skill-calorie.render-trendPredictDocs.c006'), d.target.tdee), row(m('skill-calorie.render-trendPredictDocs.c007'), d.summary.avgExerciseBurn)] });
 }
 
 /** 状态读数改走**徽章列**（票面改法要点 ⑤；#516 §3.1 的「徽章列」＝`renderChips`）。
@@ -103,11 +113,12 @@ function deficitBurnMix(d: DeficitData): string {
  *  的 `cellText`；把徽章塞进单元格要动公共层产出器，不属本票），故状态换个位置走形状。 */
 function deficitStatusChips(rows: DeficitData['series'], targetDef: number): string {
   if (rows.length === 0) return '';
-  const count = (text: string) => rows.filter((s) => deficitVerdict(s.deficit, targetDef).text === text).length;
+  /* #1197 §4.3 判据位：按 `status` 控制标记计数，不拿上屏文本比字面（英文页比不到）。 */
+  const count = (status: 'ok' | 'warn' | 'danger') => rows.filter((s) => deficitVerdict(s.deficit, targetDef).status === status).length;
   return renderChips({ items: [
-    { text: '达标 ' + count('达标') + ' 天' },
-    { text: '偏低 ' + count('偏低') + ' 天' },
-    { text: '超量 ' + count('超量') + ' 天' },
+    { text: m('skill-calorie.render-trendPredictDocs.c008', { p0: String(count('ok')) }) },
+    { text: m('skill-calorie.render-trendPredictDocs.c009', { p0: String(count('warn')) }) },
+    { text: m('skill-calorie.render-trendPredictDocs.c010', { p0: String(count('danger')) }) },
   ] });
 }
 
@@ -143,37 +154,42 @@ export function buildDeficitDoc(d: DeficitData): string {
    *  按 #516 判据 R6（`~` 顶替「至」判债）改成「至」，旧串留注释，供 `trend-homogeneity-110.test.mjs:195`
    *  那条**不在本票授权改写范围内**的逐字断言（`'热量缺口 2026-09-05 ~ 2026-09-07'`）认领。 */
   const noteBits = techNoteHtml([
-    '缺口=消耗−摄入（正=缺口） 消耗=TDEE＋当日运动 摄入=当日食物（不含水）',
-    'KCAL_PER_KG=7700（理论减重=周缺口÷7700）',
-    '每日摄入 vs 消耗（虚线=消耗；水平线=摄入目标 ' + d.target.intake + ' 卡）',
-    '旧页标题写法：热量缺口 ' + d.meta.start + ' ~ ' + d.meta.end,
+    m('skill-calorie.render-trendPredictDocs.c011'),
+    m('skill-calorie.render-trendPredictDocs.c012'),
+    m('skill-calorie.render-trendPredictDocs.c013', { p0: String(d.target.intake) }),
+    m('skill-calorie.render-trendPredictDocs.c014', { p0: String(d.meta.start), p1: String(d.meta.end) }),
   ]);
   const avgVerdict = deficitVerdict(d.summary.avgDeficit, targetDef);
   const shown = d.series.slice(0, 100);
+  /* #1197 §4.7：条件分枝先落成局部变量，整句才好迁成 m(key, {...})。 */
+  const seriesTruncNote = d.series.length > 100 ? m('skill-calorie.render-trendPredictDocs.c015', { p0: String(d.series.length) }) : m('skill-calorie.render-trendPredictDocs.c016', { p0: String(d.series.length) });
   /* 图表区块只在有序列时出（零序列那页的走势图没东西可画）⇒ 导航项跟着少一项，
    * 不许留「href 指向不存在的 id」的孤儿锚点（J8）。空窗在上游即 missing-data 阻断，这里只是兜住。 */
-  const navItems = d.series.length > 0 ? DEFICIT_SECTIONS : DEFICIT_SECTIONS.filter((s) => s.id !== 'sec-chart');
+  const navItems = d.series.length > 0 ? DEFICIT_SECTIONS() : DEFICIT_SECTIONS().filter((s) => s.id !== 'sec-chart');
   const totals = d.series.reduce((a, s) => ({ intake: a.intake + s.intake, burn: a.burn + s.burn, deficit: a.deficit + s.deficit }), { intake: 0, burn: 0, deficit: 0 });
   const parts: string[] = [
     noteBits,
     /* ① 页头胶囊（#516 §3.2 D01／D02）：归属词与页型不拿 `·` 串进题名，改走徽章件；题名只留人话名
      *  （H1 的正文在 `assembleDocPage` 的 `title`，眉标只留一个归属词）。 */
-    renderChips({ items: [{ text: '卡路里' }, { text: '热量缺口' }, { text: '趋势分析' }] }),
+    renderChips({ items: [{ text: m('skill-calorie.render-trendPredictDocs.c017') }, { text: m('skill-calorie.render-trendPredictDocs.c018') }, { text: m('skill-calorie.render-trendPredictDocs.c019') }] }),
     /* ② 结论条（J2／J9 三条恒出之一；`t425` 裁定 2：结论句紧跟标题）：只用页里已有的数。 */
     renderConclusionBar(deficitConclusion(d)),
-    /* ③ 页内导航（J8／J9）：六个区块与六个导航项同源 `DEFICIT_SECTIONS`。 */
+    /* ③ 页内导航（J8／J9）：六个区块与六个导航项同源 `DEFICIT_SECTIONS()`。 */
     renderTocBlock({ items: navItems.map((s) => ({ id: s.id, text: s.text })) }),
     pageSection('sec-params', renderParamForm({
-      fields: [{ name: 'start', label: '开始', value: d.meta.start }, { name: 'end', label: '结束', value: d.meta.end }],
+      fields: [{ name: 'start', label: m('skill-calorie.render-trendPredictDocs.c020'), value: d.meta.start }, { name: 'end', label: m('skill-calorie.render-trendPredictDocs.c021'), value: d.meta.end }],
       /* #567 D4：口径定义只留页脚口径行；参数说明只讲窗口起止（改前与口径行逐句同义）。 */
-      description: '开始和结束是这页统计的窗口，共 ' + d.meta.days + ' 天。',
+      description: m('skill-calorie.render-trendPredictDocs.c022', { p0: String(d.meta.days) }),
     })),
     pageSection('sec-overview', renderKpiGrid([
-      { label: '日均摄入', value: String(d.summary.avgIntake), unit: '卡', detail: '目标 ' + d.target.intake + ' 卡/天' },
-      { label: '日均消耗', value: String(d.summary.avgBurn), unit: '卡', detail: '日常消耗 ' + d.target.tdee + ' ＋ 运动 ' + d.summary.avgExerciseBurn + ' 卡' },
+      { label: m('skill-calorie.render-trendPredictDocs.c023'), value: String(d.summary.avgIntake), unit: m('skill-calorie.render-trendPredictDocs.c024'), detail: m('skill-calorie.render-trendPredictDocs.c025', { p0: String(d.target.intake) }) },
+      { label: m('skill-calorie.render-trendPredictDocs.c026'), value: String(d.summary.avgBurn), unit: m('skill-calorie.render-trendPredictDocs.c027'), detail: m('skill-calorie.render-trendPredictDocs.c028', {
+        p0: String(d.target.tdee),
+        p1: String(d.summary.avgExerciseBurn),
+      }) },
       /* 「日均缺口」这张卡挂状态徽章（票面改法要点 ④）：判定词不再只当文字印，改走徽章的三个闭集档。 */
-      { label: '日均缺口', value: signed(d.summary.avgDeficit), unit: '卡', detail: DEFICIT_TREND_ZH[d.summary.trend] ?? d.summary.trend, status: avgVerdict.status, statusText: avgVerdict.text },
-      { label: '理论减重', value: String(d.summary.predictedLossKg), unit: 'kg', detail: '周缺口 ' + d.summary.weeklyDeficit + ' 卡' },
+      { label: m('skill-calorie.render-trendPredictDocs.c029'), value: signed(d.summary.avgDeficit), unit: m('skill-calorie.render-trendPredictDocs.c030'), detail: DEFICIT_TREND_ZH()[d.summary.trend] ?? d.summary.trend, status: avgVerdict.status, statusText: avgVerdict.text },
+      { label: m('skill-calorie.render-trendPredictDocs.c031'), value: String(d.summary.predictedLossKg), unit: 'kg', detail: m('skill-calorie.render-trendPredictDocs.c032', { p0: String(d.summary.weeklyDeficit) }) },
     ]) + deficitBurnMix(d)),
   ];
   let charts = false;
@@ -191,17 +207,17 @@ export function buildDeficitDoc(d: DeficitData): string {
        *  （虚线）〔公共层图例不给虚线序列画虚线样图，`charts.ts:946-973` 只印名字〕，故本页必须开 `legend`
        *  ——否则图例那行根本不渲染，系列名（含「（虚线）」）就没人看得见；横线的读法落在 markLine 自己的
        *  标签上（就写在线旁边）。旧图题原文进 HTML 注释。 */
-      title: '每日摄入与消耗',
+      title: m('skill-calorie.render-trendPredictDocs.c033'),
       input: {
         items: intake, options: {
           legend: true,
           series: [
-            { name: '摄入', items: intake },
-            { name: '消耗（虚线）', items: burn, dashed: true },
-            { name: '摄入目标 ' + d.target.intake + ' 卡', items: targetLine, dashed: true },
+            { name: m('skill-calorie.render-trendPredictDocs.c034'), items: intake },
+            { name: m('skill-calorie.render-trendPredictDocs.c035'), items: burn, dashed: true },
+            { name: m('skill-calorie.render-trendPredictDocs.c036', { p0: String(d.target.intake) }), items: targetLine, dashed: true },
           ],
           /* #385：补刻度值＋数字格式（老侧 `:150-157` 的 format／yMin／yMax；同包先例 `multiTrendPage.ts:261`）；量程不写死。 */
-          yTicks: 3, labels: 'select', format: (v: number) => Math.round(v).toLocaleString(), markLine: { value: d.target.intake, label: '摄入目标 ' + d.target.intake + ' 卡' },
+          yTicks: 3, labels: 'select', format: (v: number) => Math.round(v).toLocaleString(), markLine: { value: d.target.intake, label: m('skill-calorie.render-trendPredictDocs.c037', { p0: String(d.target.intake) }) },
         },
       },
     })));
@@ -218,24 +234,30 @@ export function buildDeficitDoc(d: DeficitData): string {
    *  `analysis-deficit-385` 的 D2 逐字断言，本票不动文案（见证据 §2），只做折叠。 */
   parts.push(pageSection('sec-detail', '<div class="t571-deficit-detail"><div class="t571-deficit-table">'
     + renderDisclosure({
-      title: '缺口明细（点击展开）',
+      title: m('skill-calorie.render-trendPredictDocs.c038'),
       contentHtml: renderDataTable({
         columns: [
-          { key: 'date', label: '日期' },
-          { key: 'intake', label: '摄入', align: 'right' },
-          { key: 'burn', label: '消耗', align: 'right' },
-          { key: 'deficit', label: '缺口', align: 'right' },
-          { key: 'status', label: '状态' },
+          { key: 'date', label: m('skill-calorie.render-trendPredictDocs.c039') },
+          { key: 'intake', label: m('skill-calorie.render-trendPredictDocs.c040'), align: 'right' },
+          { key: 'burn', label: m('skill-calorie.render-trendPredictDocs.c041'), align: 'right' },
+          { key: 'deficit', label: m('skill-calorie.render-trendPredictDocs.c042'), align: 'right' },
+          { key: 'status', label: m('skill-calorie.render-trendPredictDocs.c043') },
         ],
-        rows: shown.map((s) => ({
-          date: s.date + ' ' + s.weekday,
-          intake: s.intake, burn: s.burn,
-          deficit: signed(s.deficit),
-          status: s.deficit >= targetDef ? '✓ 达标' : s.deficit > 0 ? '⚠ 偏低' : '✗ 超量',
-        })),
-        caption: '缺口明细' + (d.series.length > 100 ? '（仅列前 100 条，共 ' + d.series.length + ' 天）' : '（共 ' + d.series.length + ' 天）') +
-          '，其中 ' + d.meta.weekdayCount + ' 天是工作日，' + d.meta.weekendCount + ' 天是周末',
-        emptyText: '这段时间还没有记录，先记一餐或记一次运动再来看',
+        rows: shown.map((s) => {
+          const statusText = s.deficit >= targetDef ? m('skill-calorie.render-trendPredictDocs.c044') : s.deficit > 0 ? m('skill-calorie.render-trendPredictDocs.c045') : m('skill-calorie.render-trendPredictDocs.c046');
+          return {
+            date: s.date + ' ' + s.weekday,
+            intake: s.intake, burn: s.burn,
+            deficit: signed(s.deficit),
+            status: statusText,
+          };
+        }),
+        caption: m('skill-calorie.render-trendPredictDocs.c047', {
+          p0: String(seriesTruncNote),
+          p1: String(d.meta.weekdayCount),
+          p2: String(d.meta.weekendCount),
+        }),
+        emptyText: m('skill-calorie.render-trendPredictDocs.c048'),
       }) + deficitStatusChips(shown, targetDef),
     }) + '</div></div>'));
   /* 三行的右槽原是两个碎片随手拼的（`5 天`／`TDEE×天＋运动`／`周缺口 300 卡`）——连起来读不成句，
@@ -247,11 +269,11 @@ export function buildDeficitDoc(d: DeficitData): string {
    *  值被裁得只露半个字）⇒ 右槽只留短注，「消耗＝日常消耗加当天运动」这类口径上移到口径行，
    *  「一周合计」这类事实住结论条与 KPI 卡（同一事实一页一处）。 */
   parts.push(pageSection('sec-totals', '<div class="t571-deficit-totals">' + renderListRows({ items: [
-    { left: '合计摄入', main: totals.intake + ' 卡', right: '共 ' + d.meta.days + ' 天有记录' },
-    { left: '合计消耗', main: totals.burn + ' 卡', right: '逐日累加' },
-    { left: '合计缺口', main: signed(totals.deficit) + ' 卡' },
+    { left: m('skill-calorie.render-trendPredictDocs.c049'), main: m('skill-calorie.render-trendPredictDocs.c050', { p0: String(totals.intake) }), right: m('skill-calorie.render-trendPredictDocs.c051', { p0: String(d.meta.days) }) },
+    { left: m('skill-calorie.render-trendPredictDocs.c052'), main: m('skill-calorie.render-trendPredictDocs.c053', { p0: String(totals.burn) }), right: m('skill-calorie.render-trendPredictDocs.c054') },
+    { left: m('skill-calorie.render-trendPredictDocs.c055'), main: m('skill-calorie.render-trendPredictDocs.c056', { p0: String(signed(totals.deficit)) }) },
   ] }) + '</div>'));
-  parts.push(pageSection('sec-data', dataCopyArea('复制数据', {
+  parts.push(pageSection('sec-data', dataCopyArea(m('skill-calorie.render-trendPredictDocs.c057'), {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.deficit',
       data: {
@@ -268,18 +290,21 @@ export function buildDeficitDoc(d: DeficitData): string {
    *  段间用**全角竖线**——`renderCaliberLine` 把它切成逐段 `<span>`、改由版式出细竖线，产物文本里
    *  不再有该字符（#516 判据 R4）。人话里不写全角加号（并列分隔符集里有它），写「加」。
    *  第二条里的「达标线」是**`目标` 列上浮的落点**：每日缺口目标这份事实在页上只此一处（表里那列已撤）。 */
-  parts.push(renderCaliberLine('缺口＝当天消耗减当天摄入（正数就是有缺口）｜消耗＝日常消耗加当天运动｜摄入只算吃进去的，喝水不算'));
-  parts.push(renderCaliberLine('理论减重按每 7700 卡折算约 1 kg 估算｜达标线＝每天 ' + signed(targetDef) + ' 卡缺口｜图里实线是摄入，虚线是消耗，横线是摄入目标 ' + d.target.intake + ' 卡'));
+  parts.push(renderCaliberLine(m('skill-calorie.render-trendPredictDocs.c058')));
+  parts.push(renderCaliberLine(m('skill-calorie.render-trendPredictDocs.c059', {
+    p0: String(signed(targetDef)),
+    p1: String(d.target.intake),
+  })));
   /* ⑥ 来源脚注（J9 第三条恒出；同族写法见 `diet/sourceStatsDocs.ts` 末行）：走普通小字行，不走深底块。 */
-  parts.push(renderCaliberLine('📊 数据来源：本机饮食记录与运动记录，窗口 ' + d.meta.start + ' 至 ' + d.meta.end));
+  parts.push(renderCaliberLine(m('skill-calorie.render-trendPredictDocs.c060', { p0: String(d.meta.start), p1: String(d.meta.end) })));
   return assembleDocPage({
     /* head 的 `<title>`（#517 判据 J1：题名两段不拿 `·` 串；同族先例 `goalProgressDocs.ts` 的「卡路里 目标进度」）。 */
-    docTitle: '卡路里 热量缺口',
+    docTitle: m('skill-calorie.render-trendPredictDocs.c061'),
     /* H1：区间写「至」（#516 判据 R6：`~` 顶替「至」判债）。旧写法留在 `noteBits` 注释里，
      *  供 `trend-homogeneity-110.test.mjs:195` 那条不在本票授权范围内的逐字断言认领。 */
-    title: '热量缺口 ' + d.meta.start + ' 至 ' + d.meta.end,
+    title: m('skill-calorie.render-trendPredictDocs.c062', { p0: String(d.meta.start), p1: String(d.meta.end) }),
     /* 眉标只留一个归属词（#516 §3.2 D02）：`热量缺口 · 趋势分析域` 那个 `·` 串拆开——页型进上面的页头胶囊，眉标留域。 */
-    eyebrow: '趋势分析',
+    eyebrow: m('skill-calorie.render-trendPredictDocs.c063'),
     subtitle: null,
     /* 宽屏余量的裁定（本票「宽屏余量」一节）：选 **(a) 加宽内容列**，用包内**既有**页面壳件
      *  `pageChromeCss(<宽>)`——页面级生效、只本页 opt-in（该件自带触屏三件与 ≤820 的页壳／栅格收紧，
@@ -295,28 +320,30 @@ export function buildDeficitDoc(d: DeficitData): string {
 /** 预测族页内导航锚点（W2／W3 共用）：**先有 `id` 才有导航项**——区块与导航项同源这一份轻清单，
  *  `href="#x"` 与页内 `id` 因此不可能走散（判据 J8 要求双向自洽，多一个孤儿锚点即红）。
  *  `sec-track` 只有真出轨迹表的页才进导航（零轨迹的页不许留一个指向不存在 id 的孤儿锚点）。 */
-const PREDICT_SECTIONS: ReadonlyArray<{ readonly id: string; readonly text: string }> = [
-  { id: 'sec-params', text: '参数' },
-  { id: 'sec-overview', text: '概览' },
-  { id: 'sec-track', text: '模拟轨迹' },
-  { id: 'sec-data', text: '数据与日志' },
+function PREDICT_SECTIONS() : ReadonlyArray<{ readonly id: string; readonly text: string }> {
+  return [
+  { id: 'sec-params', text: m('skill-calorie.render-trendPredictDocs.c298') },
+  { id: 'sec-overview', text: m('skill-calorie.render-trendPredictDocs.c299') },
+  { id: 'sec-track', text: m('skill-calorie.render-trendPredictDocs.c300') },
+  { id: 'sec-data', text: m('skill-calorie.render-trendPredictDocs.c301') },
 ];
+}
 
 /** 导航项（按当页实际出的区块裁掉没有的那几项）＝`renderTocBlock`（J2／J8／J9 三条恒出之一）。
  *  #570 R-15：轨迹项文本按族给——模拟减重族沿用`模拟轨迹`（缺省），摄入预测族传`摄入预测轨迹`
  *  （与表注`摄入预测轨迹（共 N 天，每周一点）`前6字一致）；只改文本不改id，有轨迹页仍四项、
  *  无轨迹页仍三项（J8双向自洽冻结，见R-25冲突点）。 */
-function predictNav(hasTrack: boolean, trackText = '模拟轨迹'): string {
-  const items = PREDICT_SECTIONS.filter((s) => hasTrack || s.id !== 'sec-track')
+function predictNav(hasTrack: boolean, trackText = m('skill-calorie.render-trendPredictDocs.c064')): string {
+  const items = PREDICT_SECTIONS().filter((s) => hasTrack || s.id !== 'sec-track')
     .map((s) => ({ id: s.id, text: s.id === 'sec-track' ? trackText : s.text }));
   return renderTocBlock({ items });
 }
 
 /** #573 R-60：区块可见标题与导航项同源——`sec-track` 取调用方传进来的同一份 `trackText`，
- *  其余取 `PREDICT_SECTIONS` 同一格；导航与标题因此不可能走散（R-60验收：headings==导航项逐项相等）。 */
-function secTitle(id: string, trackText = '模拟轨迹'): string {
+ *  其余取 `PREDICT_SECTIONS()` 同一格；导航与标题因此不可能走散（R-60验收：headings==导航项逐项相等）。 */
+function secTitle(id: string, trackText = m('skill-calorie.render-trendPredictDocs.c065')): string {
   if (id === 'sec-track') return trackText;
-  const s = PREDICT_SECTIONS.find((x) => x.id === id);
+  const s = PREDICT_SECTIONS().find((x) => x.id === id);
   return s === undefined ? '' : s.text;
 }
 
@@ -326,8 +353,8 @@ function secTitle(id: string, trackText = '模拟轨迹'): string {
  *  其余页逐字节不变（01–17 的 V1 读数不受影响）。 */
 function predictChips(pageType: string, short = false): string {
   const items = short
-    ? [{ text: '卡路里' }, { text: pageType }]
-    : [{ text: '卡路里' }, { text: pageType }, { text: '趋势分析' }];
+    ? [{ text: m('skill-calorie.render-trendPredictDocs.c066') }, { text: pageType }]
+    : [{ text: m('skill-calorie.render-trendPredictDocs.c067') }, { text: pageType }, { text: m('skill-calorie.render-trendPredictDocs.c068') }];
   return renderChips({ items });
 }
 
@@ -463,12 +490,12 @@ function t573CrossCss(): string {
  *  #569 R-10：模拟减重族第二格改留空格形态（`每天 -300 卡`／`30 天减 2 kg`），仍与眉题 distinct。
  */
 function t568Chips(pageLabel: string): string {
-  return renderChips({ items: [{ text: '卡路里' }, { text: pageLabel }, { text: '趋势分析' }] });
+  return renderChips({ items: [{ text: m('skill-calorie.render-trendPredictDocs.c069') }, { text: pageLabel }, { text: m('skill-calorie.render-trendPredictDocs.c070') }] });
 }
 
 /** 来源脚注（J9 第三条恒出；同族写法见缺口页与 `diet/sourceStatsDocs.ts`）：走普通小字行，不走深底块。 */
 function sourceFootnote(what: string, start: string, end: string): string {
-  return renderCaliberLine('📊 数据来源：本机' + what + '，窗口 ' + start + ' 至 ' + end);
+  return renderCaliberLine(m('skill-calorie.render-trendPredictDocs.c071', { p0: String(what), p1: String(start), p2: String(end) }));
 }
 
 /** 轨迹覆盖天数（#455：表头写**实际覆盖天数**，不拿请求天数顶替——两者在非整周 horizon 上本不相等，
@@ -527,12 +554,12 @@ function fmtKcal(n: number | null | undefined): string {
 function trackTable(points: ReadonlyArray<{ date: string; value: number }>, what: string, unit: string, restoreHead = false): string {
   const span = spanDaysOf(points);
   const shown = points.slice(0, 14);
-  const truncated = points.length > shown.length ? '（仅列前 14 点，共 ' + points.length + ' 点）' : '';
+  const truncated = points.length > shown.length ? m('skill-calorie.render-trendPredictDocs.c072', { p0: String(points.length) }) : '';
   const table = '<div class="tpd-track-table">' + renderDataTable({
-    columns: [{ key: 'date', label: '日期' }, { key: 'weight', label: what + '（' + unit + '）', align: 'right' }],
+    columns: [{ key: 'date', label: m('skill-calorie.render-trendPredictDocs.c073') }, { key: 'weight', label: what + '（' + unit + '）', align: 'right' }],
     rows: shown.map((p) => ({ date: p.date, weight: fmtWeight(p.value) })),
-    caption: '模拟轨迹（共 ' + span + ' 天，每周一点' + truncated + '）',
-    emptyText: '这一段还没有体重记录，先称一次体重再来看',
+    caption: m('skill-calorie.render-trendPredictDocs.c074', { p0: String(span), p1: String(truncated) }),
+    emptyText: m('skill-calorie.render-trendPredictDocs.c075'),
   }) + '</div>';
   return restoreHead ? '<div class="tpd-track-table--cols2">' + table + '</div>' : table;
 }
@@ -618,39 +645,45 @@ function withVerdictCard(gridHtml: string, cardHtml: string): string {
 export function buildPredictDoc(v: PredictView): string {
   const parts: string[] = [
     /* #568 R-03：眉题写族名（见`eyebrow:预测体重`）、chip写页名（第二格`N 天`），二者 distinct。 */
-    t568Chips(String(v.horizonDays) + ' 天'),
+    t568Chips(m('skill-calorie.render-trendPredictDocs.c076', { p0: String(String(v.horizonDays)) })),
     /* 结论条（J2／J9 三条恒出之一；`t425` 裁定 2：结论句紧跟标题）：只用页里已有的数——
      * `forecastValue` 是**轨迹末点**的值，补了第 horizon 天末点之后它与「N 天后」真正同轴（#455）。
      * W5：末值走 `fmtWeight`（1 位）——与同页「预计区间」两端同一档（视觉抽查 §2.1 缺陷 4）。 */
-    renderConclusionBar('按最近的趋势，' + v.horizonDays + ' 天后体重约 ' + fmtWeight(v.forecastValue) + ' kg。'),
+    renderConclusionBar(m('skill-calorie.render-trendPredictDocs.c077', {
+      p0: String(v.horizonDays),
+      p1: String(fmtWeight(v.forecastValue)),
+    })),
     /* 页内导航（J8／J9）：本页无轨迹表（`PredictView` 不带点列），导航项同步不出「模拟轨迹」那一项。 */
     predictNav(false),
     pageSection('sec-params', renderParamForm({
       fields: [
-        { name: 'start', label: '开始', value: v.start },
-        { name: 'end', label: '结束', value: v.end },
-        { name: 'horizonDays', label: '预测天数', value: String(v.horizonDays) },
+        { name: 'start', label: m('skill-calorie.render-trendPredictDocs.c078'), value: v.start },
+        { name: 'end', label: m('skill-calorie.render-trendPredictDocs.c079'), value: v.end },
+        { name: 'horizonDays', label: m('skill-calorie.render-trendPredictDocs.c080'), value: String(v.horizonDays) },
       ],
       /* 说明里原印内部参数名与拒绝码（`horizonDays`／`missing-data`）——读者认不得；参数名仍在
        * 参数表单的 `name` 属性里。W2 再把那句 `；` 改写成两句（#516 §3.2 D03：参数说明里的 `；`
        * 是「拿符号简化 UI」的债，该处要做的是换成两句人话，不是删掉标点）。
        * 这 8 页（predict 族）**不另加 HTML 注释**：`analysis-predict-383.test.mjs` 的残留判据只认
        * 五个未填充的槽位标记，口径一律走可见的口径行（下面那两条），不靠注释留档。 */
-      description: '按最近的体重趋势往后推，能推 7 到 180 天。体重记录不到 14 天就只说数据不够，不编预测。',
+      description: m('skill-calorie.render-trendPredictDocs.c081'),
     }), secTitle('sec-params')),
     pageSection('sec-overview', renderKpiGrid([
-      { label: '当前', value: String(v.current), unit: 'kg' },
+      { label: m('skill-calorie.render-trendPredictDocs.c082'), value: String(v.current), unit: 'kg' },
       /* W5：与结论句同一档（1 位）——同一件事（末点预测值）在页上只该有一个写法。 */
-      { label: '预测', value: fmtWeight(v.forecastValue), unit: 'kg', detail: v.horizonDays + ' 天后' },
+      { label: m('skill-calorie.render-trendPredictDocs.c083'), value: fmtWeight(v.forecastValue), unit: 'kg', detail: m('skill-calorie.render-trendPredictDocs.c084', { p0: String(v.horizonDays) }) },
       /* W5：速率 2 位（语义档＝kg/周）。 */
-      { label: '速率', value: fmtRate(v.ratePerWeek), unit: 'kg/周' },
+      { label: m('skill-calorie.render-trendPredictDocs.c085'), value: fmtRate(v.ratePerWeek), unit: m('skill-calorie.render-trendPredictDocs.c086') },
       /* 区间写「至」（#516 §3.2 D06：值位不许拿 `~` 顶替「至」）。
        * W5：两端走 `fmtWeight`（1 位）——原写法 `fmt()` 把 `74.80` 印成 `74.8`，
        * 与同卡另一端的两位小数混排（视觉抽查 §2.1 缺陷 4 的原句）。 */
-      { label: '预计区间', value: fmtWeight(v.forecastLo) + ' 至 ' + fmtWeight(v.forecastHi), unit: 'kg', detail: '95% 置信带' },
+      { label: m('skill-calorie.render-trendPredictDocs.c087'), value: m('skill-calorie.render-trendPredictDocs.c088', {
+        p0: String(fmtWeight(v.forecastLo)),
+        p1: String(fmtWeight(v.forecastHi)),
+      }), unit: 'kg', detail: m('skill-calorie.render-trendPredictDocs.c089') },
     ]), secTitle('sec-overview')),
   ];
-  parts.push(pageSection('sec-data', dataCopyArea('复制数据', {
+  parts.push(pageSection('sec-data', dataCopyArea(m('skill-calorie.render-trendPredictDocs.c090'), {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.predict',
       data: {
@@ -662,16 +695,16 @@ export function buildPredictDoc(v: PredictView): string {
     },
   }), secTitle('sec-data')));
   /* 口径行（J2／J9 三条恒出之一；`renderCaliberLine` 走 `｜` 分槽，产物可见文本里不留该字符）。 */
-  parts.push(renderCaliberLine('体重＝当前值加日速率乘天数｜预计区间按体重残差向外放宽，取 95% 置信带｜体重记录不到 14 天不出预测'));
-  parts.push(sourceFootnote('体重记录', v.start, v.end));
+  parts.push(renderCaliberLine(m('skill-calorie.render-trendPredictDocs.c091')));
+  parts.push(sourceFootnote(m('skill-calorie.render-trendPredictDocs.c092'), v.start, v.end));
   return assembleDocPage({
     /* head 的 `<title>` 也去 `·`（J1 题名两段不拿 `·` 串；同族先例 #517 缺口页的「卡路里 热量缺口」）。 */
-    docTitle: '卡路里 体重预测',
-    title: '体重预测（' + v.horizonDays + ' 天）',
+    docTitle: m('skill-calorie.render-trendPredictDocs.c093'),
+    title: m('skill-calorie.render-trendPredictDocs.c094', { p0: String(v.horizonDays) }),
     /* 眉标只留一个归属词（#516 §3.2 D02）：原来那串 `体重预测 · 趋势分析域` 的 `·` 拆开——
      * 页型进了页头胶囊，眉标留域；`域` 是仓库里的架构词，不上屏。
      * #568 R-03：眉题改写族名`预测体重`（chip第二格写页名`N 天`，二者 distinct，8/8）。 */
-    eyebrow: '预测体重',
+    eyebrow: m('skill-calorie.render-trendPredictDocs.c095'),
     subtitle: null,
     content: pageChromeCss(1120) + t568PredictCss() + t573CrossCss() + parts.join(''),
     charts: false, pageUi: true,
@@ -687,31 +720,35 @@ export function buildPredictTargetDoc(v: WeightTarget): string {
     && Number.isFinite(v.current) && Number.isFinite(v.target))
     ? (v.current - v.target).toFixed(1) : null;
   const conclTail = diffKg === null
-    ? '' : '还差 ' + diffKg + ' kg，剩余 ' + String(v.daysLeft) + ' 天。';
+    ? '' : m('skill-calorie.render-trendPredictDocs.c096', { p0: String(diffKg), p1: String(String(v.daysLeft)) });
   /* W6-①硬规矩：可见文本里的`—`只许用于真缺值。此处降级视图（rate缺失）不许印`—`（否则完整夹具也被判有`—`），改一句无数字人话。 */
   const rateText = (typeof v.ratePerWeek === 'number' && Number.isFinite(v.ratePerWeek))
-    ? '当前速率 ' + fmtRate(v.ratePerWeek) + ' kg/周。' : '按窗口内趋势推算。';
+    ? m('skill-calorie.render-trendPredictDocs.c097', { p0: String(fmtRate(v.ratePerWeek)) }) : m('skill-calorie.render-trendPredictDocs.c098');
   const parts: string[] = [
     /* #568 R-03：chip第二格写页名`自定义目标`，眉题写族名`预测体重`（见`eyebrow`）。 */
-    t568Chips('自定义目标'),
+    t568Chips(m('skill-calorie.render-trendPredictDocs.c099')),
     /* 结论句只用页里已有的数（`eta`／`target`／`diff`／`daysLeft`），判断只留徽标（R-06计数==1）。 */
-    renderConclusionBar('按最近的趋势，预计 ' + String(v.eta) + ' 前后达到 ' + String(v.target) + ' kg。' + conclTail),
+    renderConclusionBar(m('skill-calorie.render-trendPredictDocs.c100', {
+      p0: String(String(v.eta)),
+      p1: String(String(v.target)),
+      p2: String(conclTail),
+    })),
     predictNav(false),
     pageSection('sec-params', renderParamForm({
       fields: [
-        { name: 'start', label: '开始', value: v.start ?? '' },
-        { name: 'end', label: '结束', value: v.end ?? '' },
-        { name: 'target', label: '目标体重', value: String(v.target ?? '') },
+        { name: 'start', label: m('skill-calorie.render-trendPredictDocs.c101'), value: v.start ?? '' },
+        { name: 'end', label: m('skill-calorie.render-trendPredictDocs.c102'), value: v.end ?? '' },
+        { name: 'target', label: m('skill-calorie.render-trendPredictDocs.c103'), value: String(v.target ?? '') },
       ],
-      description: '按当前的体重趋势算出哪天能达到目标体重。体重记录不到 14 天就只说数据不够，不编一个日期出来。',
+      description: m('skill-calorie.render-trendPredictDocs.c104'),
     }), secTitle('sec-params')),
     pageSection('sec-overview', withVerdictCard(renderKpiGrid([
-      { label: '当前', value: String(v.current), unit: 'kg' },
-      { label: '目标', value: String(v.target), unit: 'kg' },
-      { label: '预计达成', value: String(v.eta), detail: '剩余 ' + String(v.daysLeft) + ' 天' },
-    ]), verdictCard('可行性', rateText, v.feasible, '可行', '超范围')), secTitle('sec-overview')),
+      { label: m('skill-calorie.render-trendPredictDocs.c105'), value: String(v.current), unit: 'kg' },
+      { label: m('skill-calorie.render-trendPredictDocs.c106'), value: String(v.target), unit: 'kg' },
+      { label: m('skill-calorie.render-trendPredictDocs.c107'), value: String(v.eta), detail: m('skill-calorie.render-trendPredictDocs.c108', { p0: String(String(v.daysLeft)) }) },
+    ]), verdictCard(m('skill-calorie.render-trendPredictDocs.c109'), rateText, v.feasible, m('skill-calorie.render-trendPredictDocs.c110'), m('skill-calorie.render-trendPredictDocs.c111'))), secTitle('sec-overview')),
   ];
-  parts.push(pageSection('sec-data', dataCopyArea('复制数据', {
+  parts.push(pageSection('sec-data', dataCopyArea(m('skill-calorie.render-trendPredictDocs.c112'), {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.predict',
       data: {
@@ -722,18 +759,18 @@ export function buildPredictTargetDoc(v: WeightTarget): string {
       },
     },
   }), secTitle('sec-data')));
-  parts.push(renderCaliberLine('预计达成日＝按当前速率线性外推的那一天｜健康范围＝每周掉 0.5 到 1.0 kg｜体重记录不到 14 天不出日期'));
-  parts.push(sourceFootnote('体重记录', String(v.start ?? ''), String(v.end ?? '')));
+  parts.push(renderCaliberLine(m('skill-calorie.render-trendPredictDocs.c113')));
+  parts.push(sourceFootnote(m('skill-calorie.render-trendPredictDocs.c114'), String(v.start ?? ''), String(v.end ?? '')));
   return assembleDocPage({
-    docTitle: '卡路里 体重预测',
+    docTitle: m('skill-calorie.render-trendPredictDocs.c115'),
     /* H1（W5：括号统一为全角）**必须带本页自己的参数**：`analysis-accept-386.test.mjs:327` 那条
      * 「页头不是它自己那一页」的断言对 `target:65` 这条词要求「非 window 的数字参数都出现在 H1 里」
      * （同族 01–05／07–17 本就满足：H1 里带天数／卡数）；本页原文不带目标值 ⇒ 补上「65 kg」。
      * 括号**只换形状不换词**：唤醒词原文与冻结表仍写半角（`routes.ts` 的 `wake_word` 一字未动）。
      * #568 R-05：`65`与`kg`之间用不换行空格（U+00A0），二者不可断（冻结W5-③要求H1纯文本，故不用span，见§6冲突点）。 */
-    title: '预测体重（自定义目标 ' + String(v.target ?? '') + ' kg）',
+    title: m('skill-calorie.render-trendPredictDocs.c116', { p0: String(String(v.target ?? '')) }),
     /* #568 R-03：眉题写族名`预测体重`（chip第二格`自定义目标`，二者 distinct）。 */
-    eyebrow: '预测体重',
+    eyebrow: m('skill-calorie.render-trendPredictDocs.c117'),
     subtitle: null,
     content: pageChromeCss(1120) + t568PredictCss() + t573CrossCss() + parts.join(''),
     charts: false, pageUi: true,
@@ -748,39 +785,42 @@ export function buildSimCutDoc(v: WeightSimCut): string {
    *  `/一周大约掉 (\d+\.\d+) kg/` 不动）；判定卡 detail 改互补事实——`newDeficit`（每天总缺口）
    *  页上别处未用，不与徽标同词（W5-①），无 `—`（W6-①-c），缺数时 fallback 无数字人话。 */
   const totalGap = (typeof v.newDeficit === 'number' && Number.isFinite(v.newDeficit))
-    ? '每天总缺口约 ' + String(v.newDeficit) + ' 卡。' : '缺口按窗口内趋势另算。';
+    ? m('skill-calorie.render-trendPredictDocs.c118', { p0: String(String(v.newDeficit)) }) : m('skill-calorie.render-trendPredictDocs.c119');
   const parts: string[] = [
     /* #568 R-03（01–08）：chip第二格写页名`每天-N卡`，眉题写族名`模拟减重`（见`eyebrow`）。
      *  #569 R-10：页名留半角空格（`每天 -300 卡`），与正文同一间距规则（数字与单位间留空格）。 */
-    t568Chips('每天 -' + String(v.cutKcal) + ' 卡'),
+    t568Chips(m('skill-calorie.render-trendPredictDocs.c120', { p0: String(String(v.cutKcal)) })),
     /* 结论句只用页里已有的数（`cutKcal`／`weeklyLoss`）。
      * W5：`weeklyLoss` 走 `fmtRate`（2 位）——与第 3 张卡的「每周掉重」同一档。 */
-    renderConclusionBar('每天多减 ' + String(v.cutKcal ?? '') + ' 卡，一周大约掉 ' + fmtRate(v.weeklyLoss) + ' kg。'),
+    renderConclusionBar(m('skill-calorie.render-trendPredictDocs.c121', {
+      p0: String(String(v.cutKcal ?? '')),
+      p1: String(fmtRate(v.weeklyLoss)),
+    })),
     predictNav(pts.length > 0),
     pageSection('sec-params', renderParamForm({
       fields: [
-        { name: 'start', label: '开始', value: v.start ?? '' },
-        { name: 'end', label: '结束', value: v.end ?? '' },
-        { name: 'cut_kcal', label: '每天多减', value: String(v.cutKcal ?? '') },
+        { name: 'start', label: m('skill-calorie.render-trendPredictDocs.c122'), value: v.start ?? '' },
+        { name: 'end', label: m('skill-calorie.render-trendPredictDocs.c123'), value: v.end ?? '' },
+        { name: 'cut_kcal', label: m('skill-calorie.render-trendPredictDocs.c124'), value: String(v.cutKcal ?? '') },
       ],
       /* 原说明里那句 `；` 与「90 天的轨迹在下面」拆开：轨迹那一句由区块自己（表题）承担，
        * 这里只说这一页在做什么（#516 §3.2 D03；`KCAL_PER_KG` 这类常量名不上屏）。 */
-      description: '看看每天再多减一些卡路里，体重会怎么掉。每 7700 卡大约对应 1 kg，按这个折算每周掉多少。能不能做到，看每周的掉重落在 0.5 到 1.0 kg 这个安全区间里没有。',
+      description: m('skill-calorie.render-trendPredictDocs.c125'),
     }), secTitle('sec-params')),
     trackTableCss(),
     pageSection('sec-overview', withVerdictCard(renderKpiGrid([
-      { label: '当前', value: String(v.current), unit: 'kg' },
-      { label: '每天多减', value: String(v.cutKcal), unit: '卡' },
+      { label: m('skill-calorie.render-trendPredictDocs.c126'), value: String(v.current), unit: 'kg' },
+      { label: m('skill-calorie.render-trendPredictDocs.c127'), value: String(v.cutKcal), unit: m('skill-calorie.render-trendPredictDocs.c128') },
       /* W5：值走 `fmtRate`（2 位，kg/周 的语义档）——原写法把上游 `round2` 的尾零吃掉，
        * 会出现 `1.4` 与同族 `1.36` 两种写法；`安全区间 0.5 到 1.0 kg/周`这份事实已由
        * 同页口径行末段承担（「安全区间＝每周掉 0.5 到 1.0 kg」），卡内不再印第二遍。
        * #569 R-12：本卡为结论卡（字号由 `t569SimCss` 升档，不改此处）。 */
-      { label: '每周掉重', value: fmtRate(v.weeklyLoss), unit: 'kg/周' },
-    ]), verdictCard('可行性', totalGap, v.feasible, '可行', '超范围')), secTitle('sec-overview')),
+      { label: m('skill-calorie.render-trendPredictDocs.c129'), value: fmtRate(v.weeklyLoss), unit: m('skill-calorie.render-trendPredictDocs.c130') },
+    ]), verdictCard(m('skill-calorie.render-trendPredictDocs.c131'), totalGap, v.feasible, m('skill-calorie.render-trendPredictDocs.c132'), m('skill-calorie.render-trendPredictDocs.c133'))), secTitle('sec-overview')),
   ];
   /* #569 R-07：两列表传 `restoreHead`（窄档恢复表头＋列式对齐，见 `t569SimCss`）。 */
-  if (pts.length > 0) parts.push(pageSection('sec-track', trackTable(pts, '模拟体重', 'kg', true), secTitle('sec-track')));
-  parts.push(pageSection('sec-data', dataCopyArea('复制数据', {
+  if (pts.length > 0) parts.push(pageSection('sec-track', trackTable(pts, m('skill-calorie.render-trendPredictDocs.c134'), 'kg', true), secTitle('sec-track')));
+  parts.push(pageSection('sec-data', dataCopyArea(m('skill-calorie.render-trendPredictDocs.c135'), {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.predict',
       data: {
@@ -791,15 +831,15 @@ export function buildSimCutDoc(v: WeightSimCut): string {
       },
     },
   }), secTitle('sec-data')));
-  parts.push(renderCaliberLine('每 7700 卡大约折算 1 kg｜轨迹从窗口最后一天起算，每周一点，非整周时补最后一天那一行｜安全区间＝每周掉 0.5 到 1.0 kg'));
-  parts.push(sourceFootnote('体重记录与运动记录', String(v.start ?? ''), String(v.end ?? '')));
+  parts.push(renderCaliberLine(m('skill-calorie.render-trendPredictDocs.c136')));
+  parts.push(sourceFootnote(m('skill-calorie.render-trendPredictDocs.c137'), String(v.start ?? ''), String(v.end ?? '')));
   return assembleDocPage({
-    docTitle: '卡路里 模拟减重',
+    docTitle: m('skill-calorie.render-trendPredictDocs.c138'),
     /* #569 R-10：主标与正文同一间距规则（数字与单位间留半角空格）：`每天 -300 卡`。
      *  唤醒词原文（`模拟减重(每天-300卡)`）住 routes.ts 冻结不动；括号仍全角（W5-③）。 */
-    title: '模拟减重（每天 -' + String(v.cutKcal) + ' 卡）',
+    title: m('skill-calorie.render-trendPredictDocs.c139', { p0: String(String(v.cutKcal)) }),
     /* #568 R-03：眉题写族名`模拟减重`（chip第二格页名，二者 distinct）。 */
-    eyebrow: '模拟减重',
+    eyebrow: m('skill-calorie.render-trendPredictDocs.c140'),
     subtitle: null,
     content: pageChromeCss(1120) + t568PredictCss() + t569SimCss() + t573CrossCss() + parts.join(''),
     charts: false, pageUi: true,
@@ -815,45 +855,56 @@ export function buildSimTargetDoc(v: WeightSimTarget): string {
    *  该视图无“当前缺口”字段，报告的“如…”例无数组成）。无 `—`（W6-①-c）。 */
   const periodTotal = (typeof v.neededDeficit === 'number' && typeof v.daysTarget === 'number'
     && Number.isFinite(v.neededDeficit) && Number.isFinite(v.daysTarget))
-    ? String(v.daysTarget) + ' 天合计约 ' + String(v.neededDeficit * v.daysTarget) + ' 卡。'
-    : '缺口按窗口内趋势另算。';
+    ? m('skill-calorie.render-trendPredictDocs.c141', {
+      p0: String(String(v.daysTarget)),
+      p1: String(String(v.neededDeficit * v.daysTarget)),
+    })
+    : m('skill-calorie.render-trendPredictDocs.c142');
   /* #620 增量1：结论与徽标按 `weeklyRate` 分偏慢/偏快（`feasible`只保兼容）。慢速（<0.5）说“偏慢”，快速（>1.0）说“超出/偏快”，口径唯一处 `HEALTHY_RATE`。 */
   const weeklyRateNum = typeof v.weeklyRate === 'number' ? v.weeklyRate : NaN;
   const slowTarget = Number.isFinite(weeklyRateNum) && weeklyRateNum < HEALTHY_RATE[0];
+  const speedNote = v.feasible ? m('skill-calorie.render-trendPredictDocs.c143') : slowTarget ? m('skill-calorie.render-trendPredictDocs.c144') : m('skill-calorie.render-trendPredictDocs.c145');
   const parts: string[] = [
     /* #569 R-03 同形延伸（10–13）：眉题写族名`模拟减重`、chip 写页名（与 H1 同 spaced 形态），
      *  二者 distinct（改前眉题`趋势分析`与第三格同字，R-03 的 01–08 范围未含 10–13）。 */
-    t568Chips(String(v.daysTarget) + ' 天减 ' + String(v.targetLoss) + ' kg'),
+    t568Chips(m('skill-calorie.render-trendPredictDocs.c146', {
+      p0: String(String(v.daysTarget)),
+      p1: String(String(v.targetLoss)),
+    })),
     /* 结论句只用页里已有的数（`daysTarget`／`targetLoss`／`neededDeficit`／`feasible`＋`weeklyRate`判方向）。 */
-    renderConclusionBar('要在 ' + String(v.daysTarget) + ' 天里减掉 ' + String(v.targetLoss) + ' kg，每天大约要留出 ' + String(v.neededDeficit) + ' 卡缺口。'
-      + (v.feasible ? '这个速度在健康范围内。' : slowTarget ? '这个速度偏慢，建议缩短时间或提高目标。' : '这个速度超出健康范围，建议拉长时间或降低目标。')),
+    renderConclusionBar(m('skill-calorie.render-trendPredictDocs.c147', {
+      p0: String(String(v.daysTarget)),
+      p1: String(String(v.targetLoss)),
+      p2: String(String(v.neededDeficit)),
+      p3: String(speedNote),
+    })),
     predictNav(pts.length > 0),
     pageSection('sec-params', renderParamForm({
       fields: [
-        { name: 'start', label: '开始', value: v.start ?? '' },
-        { name: 'end', label: '结束', value: v.end ?? '' },
-        { name: 'target_loss', label: '想减', value: String(v.targetLoss ?? '') },
-        { name: 'days_target', label: '天数', value: String(v.daysTarget ?? '') },
+        { name: 'start', label: m('skill-calorie.render-trendPredictDocs.c148'), value: v.start ?? '' },
+        { name: 'end', label: m('skill-calorie.render-trendPredictDocs.c149'), value: v.end ?? '' },
+        { name: 'target_loss', label: m('skill-calorie.render-trendPredictDocs.c150'), value: String(v.targetLoss ?? '') },
+        { name: 'days_target', label: m('skill-calorie.render-trendPredictDocs.c151'), value: String(v.daysTarget ?? '') },
       ],
       /* 原说明句尾夹常量名、还拿 `；` 串两条规则（#516 §3.2 D03；`Xkg` 那种占位写法不上屏）。 */
-      description: '模拟在自定的天数里减掉想减的重量，需要每天留出多少缺口。每 7700 卡大约对应 1 kg，按这个反推。能不能做到，看每周的掉重落在 0.5 到 1.0 kg 这个安全区间里没有。',
+      description: m('skill-calorie.render-trendPredictDocs.c152'),
     }), secTitle('sec-params')),
     trackTableCss(),
     pageSection('sec-overview', withVerdictCard(renderKpiGrid([
-      { label: '当前', value: String(v.current), unit: 'kg' },
+      { label: m('skill-calorie.render-trendPredictDocs.c153'), value: String(v.current), unit: 'kg' },
       /* #569 R-11：detail 改总量互补（见本函数头注释）。
        *  #569 R-12：本页结论卡为第 3 格`每周掉重`（报告点名的模拟页结论数量级即 kg/周），
        *  由 `t569SimCss` 统一升档。 */
-      { label: '所需缺口', value: String(v.neededDeficit), unit: '卡/天', detail: periodTotal },
+      { label: m('skill-calorie.render-trendPredictDocs.c154'), value: String(v.neededDeficit), unit: m('skill-calorie.render-trendPredictDocs.c155'), detail: periodTotal },
       /* W5：值走 `fmtRate`（2 位）——与结论句及同页轨迹同一语义档；「安全区间」那半句已住口径行，卡内不重印。 */
-      { label: '每周掉重', value: fmtRate(v.weeklyRate), unit: 'kg/周' },
-    ]), verdictCard('可行性', v.feasible
-      ? '这个期限赶得上。'
-      : slowTarget ? '这个期限赶得偏慢。' : '这个期限赶得偏快。', v.feasible, '可行', '超范围')), secTitle('sec-overview')),
+      { label: m('skill-calorie.render-trendPredictDocs.c156'), value: fmtRate(v.weeklyRate), unit: m('skill-calorie.render-trendPredictDocs.c157') },
+    ]), verdictCard(m('skill-calorie.render-trendPredictDocs.c158'), v.feasible
+      ? m('skill-calorie.render-trendPredictDocs.c159')
+      : slowTarget ? m('skill-calorie.render-trendPredictDocs.c160') : m('skill-calorie.render-trendPredictDocs.c161'), v.feasible, m('skill-calorie.render-trendPredictDocs.c162'), m('skill-calorie.render-trendPredictDocs.c163'))), secTitle('sec-overview')),
   ];
   /* #569 R-07：两列表传 `restoreHead`（同 cut 页）。 */
-  if (pts.length > 0) parts.push(pageSection('sec-track', trackTable(pts, '模拟体重', 'kg', true), secTitle('sec-track')));
-  parts.push(pageSection('sec-data', dataCopyArea('复制数据', {
+  if (pts.length > 0) parts.push(pageSection('sec-track', trackTable(pts, m('skill-calorie.render-trendPredictDocs.c164'), 'kg', true), secTitle('sec-track')));
+  parts.push(pageSection('sec-data', dataCopyArea(m('skill-calorie.render-trendPredictDocs.c165'), {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.predict',
       data: {
@@ -864,15 +915,18 @@ export function buildSimTargetDoc(v: WeightSimTarget): string {
       },
     },
   }), secTitle('sec-data')));
-  parts.push(renderCaliberLine('所需缺口＝用 7700 卡折算要减的重量，再除以天数｜轨迹从窗口最后一天起算，每周一点，末点是第 ' + String(v.daysTarget) + ' 天｜安全区间＝每周掉 0.5 到 1.0 kg'));
-  parts.push(sourceFootnote('体重记录与运动记录', String(v.start ?? ''), String(v.end ?? '')));
+  parts.push(renderCaliberLine(m('skill-calorie.render-trendPredictDocs.c166', { p0: String(String(v.daysTarget)) })));
+  parts.push(sourceFootnote(m('skill-calorie.render-trendPredictDocs.c167'), String(v.start ?? ''), String(v.end ?? '')));
   return assembleDocPage({
-    docTitle: '卡路里 模拟减重',
+    docTitle: m('skill-calorie.render-trendPredictDocs.c168'),
     /* #569 R-10：主标与正文同一间距规则（数字与单位间留半角空格）：`30 天减 2 kg`。
      *  唤醒词原文住 routes.ts 冻结不动；括号仍全角（W5-③）；目标/天数仍在 H1（386:327）。 */
-    title: '模拟减重（' + String(v.daysTarget) + ' 天减 ' + String(v.targetLoss) + ' kg）',
+    title: m('skill-calorie.render-trendPredictDocs.c169', {
+      p0: String(String(v.daysTarget)),
+      p1: String(String(v.targetLoss)),
+    }),
     /* #569 R-03 同形延伸：眉题写族名`模拟减重`（chip 第二格为页名，二者 distinct）。 */
-    eyebrow: '模拟减重',
+    eyebrow: m('skill-calorie.render-trendPredictDocs.c170'),
     subtitle: null,
     content: pageChromeCss(1120) + t569SimCss() + t573CrossCss() + parts.join(''),
     charts: false, pageUi: true,
@@ -896,65 +950,65 @@ export function buildCalorieForecastDoc(v: CalorieForecast): string {
   const gapDetail = (typeof lastV === 'number' && Number.isFinite(lastV)
     && typeof v.goal === 'number' && Number.isFinite(v.goal))
     ? (lastV >= v.goal
-      ? '比目标高 ' + fmtKcal(lastV - v.goal) + ' 卡'
-      : '比目标低 ' + fmtKcal(v.goal - lastV) + ' 卡')
-    : '按当前趋势';
+      ? m('skill-calorie.render-trendPredictDocs.c171', { p0: String(fmtKcal(lastV - v.goal)) })
+      : m('skill-calorie.render-trendPredictDocs.c172', { p0: String(fmtKcal(v.goal - lastV)) }))
+    : m('skill-calorie.render-trendPredictDocs.c173');
   const parts: string[] = [
-    predictChips('摄入预测'),
+    predictChips(m('skill-calorie.render-trendPredictDocs.c174')),
     /* 结论只给判定不复述数（末点预测值／目标两数住卡；`目标`一词保留，383 针住它；
      *  #625 A团）。W5 有效位口径不变：卡内末值与目标仍走 `fmtKcal`（整数）。 */
     renderConclusionBar(lastV === null
-      ? '这一段的摄入还不够算预测。'
+      ? m('skill-calorie.render-trendPredictDocs.c175')
       : v.goal === null || v.goal === undefined
-        ? '按当前速率，' + span + ' 天后继续保持当前节奏（还没有设目标，先去定目标）。'
+        ? m('skill-calorie.render-trendPredictDocs.c176', { p0: String(span) })
         : (typeof lastV === 'number' && typeof v.goal === 'number' && lastV >= v.goal)
-          ? '按当前速率，' + span + ' 天后能达到目标一带。'
-          : '按当前速率，' + span + ' 天后离目标还差一些。'),
+          ? m('skill-calorie.render-trendPredictDocs.c177', { p0: String(span) })
+          : m('skill-calorie.render-trendPredictDocs.c178', { p0: String(span) })),
     /* #570 R-15：轨迹项改`摄入预测轨迹`（与表注前6字一致，模拟族仍缺省`模拟轨迹`）。 */
-    predictNav(pts.length > 0, '摄入预测轨迹'),
+    predictNav(pts.length > 0, m('skill-calorie.render-trendPredictDocs.c179')),
     pageSection('sec-params', renderParamForm({
       fields: [
-        { name: 'start', label: '开始', value: v.start ?? '' },
-        { name: 'end', label: '结束', value: v.end ?? '' },
-        { name: 'horizonDays', label: '预测天数', value: String(v.forecast?.horizonDays ?? '') },
+        { name: 'start', label: m('skill-calorie.render-trendPredictDocs.c180'), value: v.start ?? '' },
+        { name: 'end', label: m('skill-calorie.render-trendPredictDocs.c181'), value: v.end ?? '' },
+        { name: 'horizonDays', label: m('skill-calorie.render-trendPredictDocs.c182'), value: String(v.forecast?.horizonDays ?? '') },
       ],
       /* 原说明那句 `；` 改写成两句（#516 §3.2 D03：该处要换形状，不是删标点）。 */
-      description: '按最近的摄入趋势往后推每天会吃多少。摄入记录不到 14 天就只说数据不够，不编预测。',
+      description: m('skill-calorie.render-trendPredictDocs.c183'),
     }), secTitle('sec-params')),
     pageSection('sec-overview', renderKpiGrid([
-      { label: '当前摄入', value: String(v.current), unit: '卡', detail: '日均' },
-      { label: '目标', value: String(v.goal ?? '—'), unit: '卡' },
-      { label: '日变化', value: String(v.dailyRate ?? '—'), unit: '卡/天' },
+      { label: m('skill-calorie.render-trendPredictDocs.c184'), value: String(v.current), unit: m('skill-calorie.render-trendPredictDocs.c185'), detail: m('skill-calorie.render-trendPredictDocs.c186') },
+      { label: m('skill-calorie.render-trendPredictDocs.c187'), value: String(v.goal ?? '—'), unit: m('skill-calorie.render-trendPredictDocs.c188') },
+      { label: m('skill-calorie.render-trendPredictDocs.c189'), value: String(v.dailyRate ?? '—'), unit: m('skill-calorie.render-trendPredictDocs.c190') },
       /* 摄入量是**整数语义**的读数（卡路里不印小数），故这一页的数值不动有效位；
        * 只有外推末值走 `fmtKcal`（它自带两位小数，与同排的整数不齐）。 */
-      { label: '摄入预测', value: fmtKcal(v.forecast?.points[v.forecast.points.length - 1]?.value), unit: '卡', detail: gapDetail },
+      { label: m('skill-calorie.render-trendPredictDocs.c191'), value: fmtKcal(v.forecast?.points[v.forecast.points.length - 1]?.value), unit: m('skill-calorie.render-trendPredictDocs.c192'), detail: gapDetail },
     ]), secTitle('sec-overview')),
   ];
   if (pts.length > 0) {
     const shown = pts.slice(0, 14);
-    const cut = pts.length > shown.length ? '（仅列前 14 点，共 ' + pts.length + ' 点）' : '';
+    const cut = pts.length > shown.length ? m('skill-calorie.render-trendPredictDocs.c193', { p0: String(pts.length) }) : '';
     /* W5：摄入轨迹表也套 `.tpd-track-table`（窄档那三条规则对三列表同样只压掉「日期」那半个标签，
      * 列数多时体重／区间两列的标签仍逐行出现——窄档不叠列、不横滑）。
      * #570 R-16/R-17：再套 `.tpd-track-table--cols3` 纯标记（三列表堆叠＋列宽按内容，见`t570IntakeCss`）。 */
     parts.push(trackTableCss());
     parts.push(pageSection('sec-track', '<div class="tpd-track-table tpd-track-table--cols3">' + renderDataTable({
       columns: [
-        { key: 'date', label: '日期' },
-        { key: 'intake', label: '预测摄入', align: 'right' },
-        { key: 'band', label: '预计区间', align: 'right' },
+        { key: 'date', label: m('skill-calorie.render-trendPredictDocs.c194') },
+        { key: 'intake', label: m('skill-calorie.render-trendPredictDocs.c195'), align: 'right' },
+        { key: 'band', label: m('skill-calorie.render-trendPredictDocs.c196'), align: 'right' },
       ],
       /* #570 R-18：零宽区间折叠为单值（首行残差为零时`lo/hi`同值）。按**格式化后**字面判等
        * （裸值差半卡内也会印成同字，判裸值会漏折）；右缘本就共线（右对齐，CDP极差0），折叠后保持。 */
       rows: shown.map((p) => {
         const loS = fmtKcal(p.lo);
         const hiS = fmtKcal(p.hi);
-        return { date: p.date, intake: fmtKcal(p.value), band: loS === hiS ? fmtKcal(p.value) : loS + ' 至 ' + hiS };
+        return { date: p.date, intake: fmtKcal(p.value), band: loS === hiS ? fmtKcal(p.value) : m('skill-calorie.render-trendPredictDocs.c197', { p0: String(loS), p1: String(hiS) }) };
       }),
-      caption: '摄入预测轨迹（共 ' + span + ' 天，每周一点' + cut + '）',
-      emptyText: '这一段还没有饮食记录，先记一餐再来看',
-    }) + '</div>', secTitle('sec-track', '摄入预测轨迹')));
+      caption: m('skill-calorie.render-trendPredictDocs.c198', { p0: String(span), p1: String(cut) }),
+      emptyText: m('skill-calorie.render-trendPredictDocs.c199'),
+    }) + '</div>', secTitle('sec-track', m('skill-calorie.render-trendPredictDocs.c200'))));
   }
-  parts.push(pageSection('sec-data', dataCopyArea('复制数据', {
+  parts.push(pageSection('sec-data', dataCopyArea(m('skill-calorie.render-trendPredictDocs.c201'), {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.predict',
       data: {
@@ -965,15 +1019,15 @@ export function buildCalorieForecastDoc(v: CalorieForecast): string {
       },
     },
   }), secTitle('sec-data')));
-  parts.push(renderCaliberLine('摄入＝按最近的趋势线往外推｜预计区间按摄入残差向外放宽，取 95% 置信带｜摄入记录不到 14 天不出预测'));
-  parts.push(sourceFootnote('饮食记录', String(v.start ?? ''), String(v.end ?? '')));
+  parts.push(renderCaliberLine(m('skill-calorie.render-trendPredictDocs.c202')));
+  parts.push(sourceFootnote(m('skill-calorie.render-trendPredictDocs.c203'), String(v.start ?? ''), String(v.end ?? '')));
   return assembleDocPage({
-    docTitle: '卡路里 摄入预测',
+    docTitle: m('skill-calorie.render-trendPredictDocs.c204'),
     /* #570 R-19：自定义入口 H1 带身份（见函数头 `isCustom`；14–16仍按当前速率）。 */
     title: isCustom
-      ? '摄入预测（自定义 ' + String(v.forecast?.horizonDays ?? '') + ' 天）'
-      : '摄入预测（按当前速率 ' + String(v.forecast?.horizonDays ?? '') + ' 天）',
-    eyebrow: '趋势分析',
+      ? m('skill-calorie.render-trendPredictDocs.c205', { p0: String(String(v.forecast?.horizonDays ?? '')) })
+      : m('skill-calorie.render-trendPredictDocs.c206', { p0: String(String(v.forecast?.horizonDays ?? '')) }),
+    eyebrow: m('skill-calorie.render-trendPredictDocs.c207'),
     subtitle: null,
     /* #569 R-12/R-13（09–16，含本页 14–16）：结论卡`摄入预测`升档＋卡内距 16px（`t569ForecastCss`）。
      *  三列表不动（R-16 归 #570）；本改动只增益，#570 可在其上继续。
@@ -989,33 +1043,33 @@ export function buildCalorieGoalDoc(v: CalorieGoalEta): string {
   /* #570 R-26：`缺口`卡值是相对目标的差（avg−goal），页上别处未点名该口径。detail 补限定词
    * `相对目标 N 卡`（与该卡数值一一对应；徽标`在轨/偏离`不进detail，W5-①仍绿）。 */
   const gapBasis = (typeof v.goal === 'number' && Number.isFinite(v.goal))
-    ? '相对目标 ' + fmtKcal(v.goal) + ' 卡' : '相对目标';
+    ? m('skill-calorie.render-trendPredictDocs.c208', { p0: String(fmtKcal(v.goal)) }) : m('skill-calorie.render-trendPredictDocs.c209');
   const parts: string[] = [
     /* #625 A团：去第三枚胶囊（与眉标逐字重复）；结论改综合不断复述数
      * （均值／目标／缺口三数住卡，结论只留判定；`目标`／`在轨`两词保留，383 针住它们）。 */
-    predictChips('摄入预测', true),
+    predictChips(m('skill-calorie.render-trendPredictDocs.c210'), true),
     renderConclusionBar(v.onTarget
-      ? '这段的日均摄入守在营养目标 ±10% 以内，在轨。'
-      : '这段的日均摄入偏离营养目标较多，偏离。'),
+      ? m('skill-calorie.render-trendPredictDocs.c211')
+      : m('skill-calorie.render-trendPredictDocs.c212')),
     predictNav(false),
     pageSection('sec-params', renderParamForm({
       fields: [
-        { name: 'start', label: '开始', value: v.start ?? '' },
-        { name: 'end', label: '结束', value: v.end ?? '' },
+        { name: 'start', label: m('skill-calorie.render-trendPredictDocs.c213'), value: v.start ?? '' },
+        { name: 'end', label: m('skill-calorie.render-trendPredictDocs.c214'), value: v.end ?? '' },
       ],
       /* #570 R-27：原说明与口径行同义（10%两处、14天两处）。说明只讲做法与缺数分支，
        * 阈值与判据归口径行（`达标线＝…10%`），两处不再互为子串。 */
-      description: '看每天的摄入能不能守在营养目标上。摄入记录不到 14 天就只说数据不够，够 14 天才给判定。',
+      description: m('skill-calorie.render-trendPredictDocs.c215'),
     }), secTitle('sec-params')),
     pageSection('sec-overview', withVerdictCard(renderKpiGrid([
-      { label: '均值', value: String(v.avg), unit: '卡' },
-      { label: '目标', value: String(v.goal), unit: '卡' },
-      { label: '缺口', value: String(v.gap), unit: '卡', detail: gapBasis },
-    ]), verdictCard('是否在轨', v.onTarget
-      ? '日均与目标差得不远。'
-      : '日均摄入离目标偏开。', v.onTarget, '在轨', '偏离')), secTitle('sec-overview')),
+      { label: m('skill-calorie.render-trendPredictDocs.c216'), value: String(v.avg), unit: m('skill-calorie.render-trendPredictDocs.c217') },
+      { label: m('skill-calorie.render-trendPredictDocs.c218'), value: String(v.goal), unit: m('skill-calorie.render-trendPredictDocs.c219') },
+      { label: m('skill-calorie.render-trendPredictDocs.c220'), value: String(v.gap), unit: m('skill-calorie.render-trendPredictDocs.c221'), detail: gapBasis },
+    ]), verdictCard(m('skill-calorie.render-trendPredictDocs.c222'), v.onTarget
+      ? m('skill-calorie.render-trendPredictDocs.c223')
+      : m('skill-calorie.render-trendPredictDocs.c224'), v.onTarget, m('skill-calorie.render-trendPredictDocs.c225'), m('skill-calorie.render-trendPredictDocs.c226'))), secTitle('sec-overview')),
   ];
-  parts.push(pageSection('sec-data', dataCopyArea('复制数据', {
+  parts.push(pageSection('sec-data', dataCopyArea(m('skill-calorie.render-trendPredictDocs.c227'), {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.predict',
       data: {
@@ -1025,12 +1079,12 @@ export function buildCalorieGoalDoc(v: CalorieGoalEta): string {
       },
     },
   }), secTitle('sec-data')));
-  parts.push(renderCaliberLine('目标＝每天的热量目标｜达标线＝日均偏离不超过目标的 10%｜摄入记录不到 14 天不出判定'));
-  parts.push(sourceFootnote('饮食记录', String(v.start ?? ''), String(v.end ?? '')));
+  parts.push(renderCaliberLine(m('skill-calorie.render-trendPredictDocs.c228')));
+  parts.push(sourceFootnote(m('skill-calorie.render-trendPredictDocs.c229'), String(v.start ?? ''), String(v.end ?? '')));
   return assembleDocPage({
-    docTitle: '卡路里 摄入预测',
-    title: '摄入预测（营养目标达成预测）',
-    eyebrow: '趋势分析',
+    docTitle: m('skill-calorie.render-trendPredictDocs.c230'),
+    title: m('skill-calorie.render-trendPredictDocs.c231'),
+    eyebrow: m('skill-calorie.render-trendPredictDocs.c232'),
     subtitle: null,
     /* #570 R-20/R-21：本族网格两列＋判定徽章升格（`t570IntakeCss`；判定卡不增值位，W6-①仍绿）。 */
     content: pageChromeCss(1120) + t570IntakeCss() + t573CrossCss() + parts.join(''),
@@ -1048,29 +1102,29 @@ export function buildCalorieDeficitDoc(v: CalorieDeficitEta): string {
     ? (v.avgDeficit >= 0 ? '+' : '') + String(v.avgDeficit) : String(v.avgDeficit);
   const parts: string[] = [
     /* #625 A团：去第三枚胶囊；结论改综合不断复述数（`缺口`／`每周`两词保留，383 针住它们）。 */
-    predictChips('摄入预测', true),
-    renderConclusionBar((Number(v.avgDeficit) >= 0 ? '这段时间平均每天都有缺口，折到每周掉重，处减重方向。' : '这段时间平均每天还没有缺口，每周掉重无从谈起。')),
+    predictChips(m('skill-calorie.render-trendPredictDocs.c233'), true),
+    renderConclusionBar((Number(v.avgDeficit) >= 0 ? m('skill-calorie.render-trendPredictDocs.c234') : m('skill-calorie.render-trendPredictDocs.c235'))),
     predictNav(false),
     pageSection('sec-params', renderParamForm({
       fields: [
-        { name: 'start', label: '开始', value: v.start ?? '' },
-        { name: 'end', label: '结束', value: v.end ?? '' },
+        { name: 'start', label: m('skill-calorie.render-trendPredictDocs.c236'), value: v.start ?? '' },
+        { name: 'end', label: m('skill-calorie.render-trendPredictDocs.c237'), value: v.end ?? '' },
       ],
       /* #570 R-27：原说明与口径行同义（缺口定义两处、7700两处）。说明只讲做法，
        * 定义与折算归口径行，两处不再互为子串。 */
-      description: '按最近的饮食与运动趋势，推后面每天能留出多少缺口，折算一周能掉多少。',
+      description: m('skill-calorie.render-trendPredictDocs.c238'),
     }), secTitle('sec-params')),
     pageSection('sec-overview', renderKpiGrid([
       /* #570 R-26：该卡是相对消耗的差（消耗−摄入），detail 补限定词与数值一一对应。 */
-      { label: '平均缺口', value: deficitSigned, unit: '卡/天', detail: '相对消耗，正数是缺口' },
+      { label: m('skill-calorie.render-trendPredictDocs.c239'), value: deficitSigned, unit: m('skill-calorie.render-trendPredictDocs.c240'), detail: m('skill-calorie.render-trendPredictDocs.c241') },
       /* W5：卡内只留一条事实——`健康区间 0.3 到 1.2 kg/周` 已由同页口径行末段承担
        * （「健康区间＝每周掉 0.3 到 1.2 kg」；W6 起同页单位统一成 `kg`，不再有「公斤」那一形态），
        * 卡里再印一遍就是「同一事实在卡内出现两次」，
        * 且它与主值 1.09 是同一量纲却不同有效位（视觉抽查 §2.3 缺陷 3 的原句）。 */
-      { label: '每周掉重', value: fmtRate(v.weeklyLoss), unit: 'kg/周' },
+      { label: m('skill-calorie.render-trendPredictDocs.c242'), value: fmtRate(v.weeklyLoss), unit: m('skill-calorie.render-trendPredictDocs.c243') },
     ]), secTitle('sec-overview')),
   ];
-  parts.push(pageSection('sec-data', dataCopyArea('复制数据', {
+  parts.push(pageSection('sec-data', dataCopyArea(m('skill-calorie.render-trendPredictDocs.c244'), {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.predict',
       data: {
@@ -1078,12 +1132,12 @@ export function buildCalorieDeficitDoc(v: CalorieDeficitEta): string {
       },
     },
   }), secTitle('sec-data')));
-  parts.push(renderCaliberLine('缺口＝日常消耗加运动消耗减当天摄入｜每 7700 卡大约折算 1 kg｜健康区间＝每周掉 0.3 到 1.2 kg｜符号＝缺口取正数表示缺口，每周掉重取掉量为正，体重速率页另取变化率为负表示下降'));
-  parts.push(sourceFootnote('饮食记录与运动记录', String(v.start ?? ''), String(v.end ?? '')));
+  parts.push(renderCaliberLine(m('skill-calorie.render-trendPredictDocs.c245')));
+  parts.push(sourceFootnote(m('skill-calorie.render-trendPredictDocs.c246'), String(v.start ?? ''), String(v.end ?? '')));
   return assembleDocPage({
-    docTitle: '卡路里 摄入预测',
-    title: '摄入预测（卡路里缺口预测）',
-    eyebrow: '趋势分析',
+    docTitle: m('skill-calorie.render-trendPredictDocs.c247'),
+    title: m('skill-calorie.render-trendPredictDocs.c248'),
+    eyebrow: m('skill-calorie.render-trendPredictDocs.c249'),
     subtitle: null,
     /* #570 R-20：本族网格两列（`t570IntakeCss`）。 */
     content: pageChromeCss(1120) + t570IntakeCss() + t573CrossCss() + parts.join(''),
@@ -1096,30 +1150,33 @@ export function buildCalorieDeficitDoc(v: CalorieDeficitEta): string {
 export function buildCalorieStabilityDoc(v: CalorieStability): string {
   /* #570 R-24：本页`均值`与缺口页`日均摄入`窗口不同（30天窗 vs 7天窗）而都不带窗口。
    *  缺口页只读（#571地盘），本页均值卡detail补窗口区间（可达文本含窗口；21侧待#571，见§6）。 */
-  const avgWindow = '日均，窗口 ' + String(v.start ?? '') + ' 至 ' + String(v.end ?? '');
+  const avgWindow = m('skill-calorie.render-trendPredictDocs.c250', {
+    p0: String(String(v.start ?? '')),
+    p1: String(String(v.end ?? '')),
+  });
   const parts: string[] = [
     /* #625 A团：去第三枚胶囊；结论改综合不断复述数（`稳定`／`波动`两词保留，383 针住它们）。 */
-    predictChips('摄入预测', true),
-    renderConclusionBar(v.stable ? '每天的摄入比较匀，波动不大，整体稳定。' : '每天的摄入忽高忽低，波动偏大，不稳定。'),
+    predictChips(m('skill-calorie.render-trendPredictDocs.c251'), true),
+    renderConclusionBar(v.stable ? m('skill-calorie.render-trendPredictDocs.c252') : m('skill-calorie.render-trendPredictDocs.c253')),
     predictNav(false),
     pageSection('sec-params', renderParamForm({
       fields: [
-        { name: 'start', label: '开始', value: v.start ?? '' },
-        { name: 'end', label: '结束', value: v.end ?? '' },
+        { name: 'start', label: m('skill-calorie.render-trendPredictDocs.c254'), value: v.start ?? '' },
+        { name: 'end', label: m('skill-calorie.render-trendPredictDocs.c255'), value: v.end ?? '' },
       ],
       /* #570 R-27：原说明与口径行同义（300卡判据两处）。说明只讲做法与缺数分支，
        * 阈值归口径行（`判据＝…300 卡算稳`），两处不再互为子串。 */
-      description: '看每天的摄入稳不稳定。摄入记录不到 14 天就只说数据不够，够 14 天才给判定。',
+      description: m('skill-calorie.render-trendPredictDocs.c256'),
     }), secTitle('sec-params')),
     pageSection('sec-overview', withVerdictCard(renderKpiGrid([
-      { label: '均值', value: String(v.avg), unit: '卡', detail: avgWindow },
+      { label: m('skill-calorie.render-trendPredictDocs.c257'), value: String(v.avg), unit: m('skill-calorie.render-trendPredictDocs.c258'), detail: avgWindow },
       /* σ 是统计符号，读者认不得：这一格就说「上下波动的幅度」（口径在同页的口径行里）。 */
-      { label: '波动', value: String(v.sigma), unit: '卡', detail: '上下波动的幅度' },
-    ]), verdictCard('是否稳定', v.stable
-      ? '每天的摄入比较匀。'
-      : '每天的摄入忽高忽低。', v.stable, '稳定', '波动大')), secTitle('sec-overview')),
+      { label: m('skill-calorie.render-trendPredictDocs.c259'), value: String(v.sigma), unit: m('skill-calorie.render-trendPredictDocs.c260'), detail: m('skill-calorie.render-trendPredictDocs.c261') },
+    ]), verdictCard(m('skill-calorie.render-trendPredictDocs.c262'), v.stable
+      ? m('skill-calorie.render-trendPredictDocs.c263')
+      : m('skill-calorie.render-trendPredictDocs.c264'), v.stable, m('skill-calorie.render-trendPredictDocs.c265'), m('skill-calorie.render-trendPredictDocs.c266'))), secTitle('sec-overview')),
   ];
-  parts.push(pageSection('sec-data', dataCopyArea('复制数据', {
+  parts.push(pageSection('sec-data', dataCopyArea(m('skill-calorie.render-trendPredictDocs.c267'), {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.predict',
       data: {
@@ -1127,12 +1184,12 @@ export function buildCalorieStabilityDoc(v: CalorieStability): string {
       },
     },
   }), secTitle('sec-data')));
-  parts.push(renderCaliberLine('波动＝每天摄入偏离日均的幅度（标准差）｜判据＝上下波动不超过 300 卡算稳｜摄入记录不到 14 天不出判定'));
-  parts.push(sourceFootnote('饮食记录', String(v.start ?? ''), String(v.end ?? '')));
+  parts.push(renderCaliberLine(m('skill-calorie.render-trendPredictDocs.c268')));
+  parts.push(sourceFootnote(m('skill-calorie.render-trendPredictDocs.c269'), String(v.start ?? ''), String(v.end ?? '')));
   return assembleDocPage({
-    docTitle: '卡路里 摄入预测',
-    title: '摄入预测（摄入稳定性预测）',
-    eyebrow: '趋势分析',
+    docTitle: m('skill-calorie.render-trendPredictDocs.c270'),
+    title: m('skill-calorie.render-trendPredictDocs.c271'),
+    eyebrow: m('skill-calorie.render-trendPredictDocs.c272'),
     subtitle: null,
     /* #570 R-20/R-21：本族网格两列＋判定徽章升格（`t570IntakeCss`；判定卡不增值位，W6-①仍绿）。
      * #625 A团再加本页末格补齐（`t625StabilityCss`，只本页）。 */
@@ -1146,29 +1203,29 @@ export function buildCalorieStabilityDoc(v: CalorieStability): string {
 export function buildGoalPredictDoc(v: GoalPredictView): string {
   /* 被删的技术口径改住 HTML 注释（#160 回炉）：缺失拒绝码与内部票号（`#103 G2`）原在参数卡说明里。 */
   const noteBits = techNoteHtml([
-    '无体重目标即 missing-data；默认 14 天窗（7 天窗结构性不可达，#103 G2）',
+    m('skill-calorie.render-trendPredictDocs.c273'),
   ]);
   const parts: string[] = [
     noteBits,
     renderParamForm({
       fields: [
-        { name: 'start', label: '开始', value: v.start },
-        { name: 'end', label: '结束', value: v.end },
+        { name: 'start', label: m('skill-calorie.render-trendPredictDocs.c274'), value: v.start },
+        { name: 'end', label: m('skill-calorie.render-trendPredictDocs.c275'), value: v.end },
       ],
-      description: '要先定过体重目标，才能算出哪天能达到；没定目标就只说缺目标，不编一个日期出来。默认看最近 14 天。',
+      description: m('skill-calorie.render-trendPredictDocs.c276'),
     }),
     renderKpiGrid([
       /* 区间写「至」（#516 判据 R6：值位不许拿 `~` 顶替「至」）；W5 顺手统一这一处。 */
-      { label: '目标', value: String(v.targetKg), unit: 'kg', detail: v.start + ' 至 ' + v.end },
-      { label: '当前', value: String(v.current), unit: 'kg' },
-      { label: '预计达成', value: v.eta, detail: '剩余 ' + v.daysLeft + ' 天' },
+      { label: m('skill-calorie.render-trendPredictDocs.c277'), value: String(v.targetKg), unit: 'kg', detail: m('skill-calorie.render-trendPredictDocs.c278', { p0: String(v.start), p1: String(v.end) }) },
+      { label: m('skill-calorie.render-trendPredictDocs.c279'), value: String(v.current), unit: 'kg' },
+      { label: m('skill-calorie.render-trendPredictDocs.c280'), value: v.eta, detail: m('skill-calorie.render-trendPredictDocs.c281', { p0: String(v.daysLeft) }) },
       /* W5（同族 06／07／10 的同一处）：判定词上屏一次。速率值走 `fmtRate`（2 位）；
        * 原来挂在 `detail` 的「健康／超范围」改由徽标承担（闭集档带语义色）。 */
-      { label: '速率', value: fmtRate(v.ratePerWeek), unit: 'kg/周', status: v.feasible ? 'ok' : 'warn',
-        statusText: v.feasible ? '健康' : '超范围' },
+      { label: m('skill-calorie.render-trendPredictDocs.c282'), value: fmtRate(v.ratePerWeek), unit: m('skill-calorie.render-trendPredictDocs.c283'), status: v.feasible ? 'ok' : 'warn',
+        statusText: v.feasible ? m('skill-calorie.render-trendPredictDocs.c284') : m('skill-calorie.render-trendPredictDocs.c285') },
     ]),
   ];
-  parts.push(dataCopyArea('复制数据', {
+  parts.push(dataCopyArea(m('skill-calorie.render-trendPredictDocs.c286'), {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.goal-predict',
       data: {
@@ -1180,9 +1237,9 @@ export function buildGoalPredictDoc(v: GoalPredictView): string {
     },
   }));
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '目标预测达成',
-    eyebrow: '目标预测达成 · 趋势分析域',
+    docTitle: DOC_TITLE(),
+    title: m('skill-calorie.render-trendPredictDocs.c287'),
+    eyebrow: m('skill-calorie.render-trendPredictDocs.c288'),
     subtitle: null,
     content: parts.join(''),
     charts: false, pageUi: true,

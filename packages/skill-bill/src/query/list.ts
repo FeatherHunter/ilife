@@ -34,7 +34,7 @@ import type { KpiCardInput } from 'base-paint/blocks';
 import { escapeHtml } from 'base-paint';
 import type { SerializableEnvelope } from 'base-paint';
 import { copyArea, copyLog } from '../shared/copyArea.js';
-import { buildListCopyCsv, buildListCopyJson, buildListCopyText, COLUMNS } from './list-copy.js';
+import { buildListCopyCsv, buildListCopyJson, buildListCopyText, COLUMNS, queryColumns } from './list-copy.js';
 
 export { COLUMNS };
 import { DOC_SKILL, DOC_TITLE, DOC_VERSION, sceneKeyOf } from '../shared/pageIdentity.js';
@@ -47,6 +47,7 @@ import { pageBody, pageNav } from '../shared/pageSections.js';
 import type { PageBlock } from '../shared/pageSections.js';
 import { isTagList, queryTagDoc } from './list-tag.js';
 import { checkListHtml, checkRowsOf } from '../shared/checkLine.js';
+import { m } from '../entries/index.js';
 
 /** 数据表的一行（值一律是已文本化的字符串：表格不吃对象，也不做二次格式化）。
  *  写成 `type` 别名而不是 `interface`：公共层的表格与复制载荷收 `Record<string, unknown>`，
@@ -176,10 +177,10 @@ function sumText(n: number): string {
 /** KPI 行四格：笔数／支出／收入／净额（口径由 `calcKpi` 算好，本件只摆版式）。 */
 function kpiCards(kpi: QueryKpi): readonly KpiCardInput[] {
   return [
-    { label: '笔数', value: String(kpi.count), detail: '转账不计进收支' },
-    { label: '支出', value: sumText(kpi.expense), detail: '本页支出合计' },
-    { label: '收入', value: sumText(kpi.income), detail: '本页收入合计' },
-    { label: '净额', value: sumText(kpi.net), detail: '收入减支出' },
+    { label: m('skill-bill.query-list.c001'), value: String(kpi.count), detail: m('skill-bill.query-list.c002') },
+    { label: m('skill-bill.query-list.c003'), value: sumText(kpi.expense), detail: m('skill-bill.query-list.c004') },
+    { label: m('skill-bill.query-list.c005'), value: sumText(kpi.income), detail: m('skill-bill.query-list.c006') },
+    { label: m('skill-bill.query-list.c007'), value: sumText(kpi.net), detail: m('skill-bill.query-list.c008') },
   ];
 }
 
@@ -187,11 +188,14 @@ function kpiCards(kpi: QueryKpi): readonly KpiCardInput[] {
  *  （那是同一件事说两遍），而是「这批账主要是什么」这一句人话判定；没有支出时说清只有收入。
  *  1056 查询 v2.1 逐字（`.scratch/1019-p-query` manifest w00 结论）：空窗含下一步句。 */
 function conclusionOf(input: QueryListInput): string {
-  if (input.rows.length === 0) return '本窗没有记录。下一步说「记一笔 午饭 35」即可记上。';
+  if (input.rows.length === 0) return m('skill-bill.query-list.c009');
   const top = input.categories[0];
-  if (top === undefined) return '本页只有收入，没有支出。';
-  return '主要花在「' + top.label + '」，' + sumText(top.amount) + ' 元，占本页支出 '
-    + String(Math.round(top.pct)) + '%。';
+  if (top === undefined) return m('skill-bill.query-list.c010');
+  return m('skill-bill.query-list.c011', {
+    p0: String(top.label),
+    p1: String(sumText(top.amount)),
+    p2: String(String(Math.round(top.pct))),
+  });
 }
 
 /** w09 查分类占比注记（原型 SCALE 区那句用户侧话，括号内构造注不搬）：`其中餐饮类共 333.00 元，占全部支出约 26%。` */
@@ -199,10 +203,16 @@ function categoryShareNote(input: QueryListInput): string {
   if (input.key !== 'bill.record.range') return '';
   const c = input.params['category'];
   if (typeof c !== 'string' || c.trim() === '') return '';
-  const chip = input.chips.find((s) => s.startsWith('占全部支出'));
-  const m = chip === undefined ? null : /(\d+)%/.exec(chip);
-  if (m === null) return '';
-  return '<p class="ilife-ticket-scale-note">其中' + c.trim() + '类共 ' + sumText(input.kpi.expense) + ' 元，占全部支出约 ' + m[1] + '%。</p>';
+  /* 认芯片只按形状（含 `N%` 的那一枚）：文案随语言变，判据不认文案（#1209）。 */
+  const chip = input.chips.find((s) => /(\d+)%/.test(s));
+  const pctMatch = chip === undefined ? null : /(\d+)%/.exec(chip);
+  if (pctMatch === null) return '';
+  const note = m('skill-bill.query-list.c056', {
+    p0: String(c.trim()),
+    p1: String(sumText(input.kpi.expense)),
+    p2: String(pctMatch[1]),
+  });
+  return '<p class="ilife-ticket-scale-note">' + note + '</p>';
 }
 
 /** 分类聚合卡的每一行：`名称 ｜ 占比条 ｜ 金额 · 笔数 · 均额`（老页 `categoryBar` 的四件事全在）。
@@ -212,24 +222,24 @@ function categoryRows(input: QueryListInput): readonly PageBlock[] {
   if (input.categories.length === 0) {
     if (input.rows.length !== 0) return [];
     return [{
-      nav: { anchor: 'sec-categories', navText: '分类聚合' },
-      heading: '分类聚合',
-      html: '<p class="ilife-ticket-scale-note">本窗无支出，无占比。</p>',
+      nav: { anchor: 'sec-categories', navText: m('skill-bill.query-list.c012') },
+      heading: m('skill-bill.query-list.c013'),
+      html: '<p class="ilife-ticket-scale-note">' + m('skill-bill.query-list.c057') + '</p>',
     }];
   }
   const shown = input.categories.slice(0, CATEGORY_LIMIT);
   const hidden = input.categories.length - shown.length;
   const rows = shown.map((c) => {
-    const parts = [sumText(c.amount) + ' 元', String(c.count) + ' 笔'];
-    if (c.count > 0) parts.push('均 ' + sumText(c.amount / c.count));
+    const parts = [m('skill-bill.query-list.c014', { p0: String(sumText(c.amount)) }), m('skill-bill.query-list.c015', { p0: String(String(c.count)) })];
+    if (c.count > 0) parts.push(m('skill-bill.query-list.c016', { p0: String(sumText(c.amount / c.count)) }));
     return { label: c.label, value: parts.join(' · '), pct: c.pct };
   });
   const caliber = hidden > 0
-    ? renderCaliberLine('这一页只列支出最多的前 ' + String(CATEGORY_LIMIT) + ' 类，还有 ' + String(hidden) + ' 类没列')
+    ? renderCaliberLine(m('skill-bill.query-list.c017', { p0: String(String(CATEGORY_LIMIT)), p1: String(String(hidden)) }))
     : '';
   return [{
-    nav: { anchor: 'sec-categories', navText: '分类聚合' },
-    heading: '分类聚合',
+    nav: { anchor: 'sec-categories', navText: m('skill-bill.query-list.c018') },
+    heading: m('skill-bill.query-list.c019'),
     html: renderDistributionRows({ rows }) + caliber + categoryShareNote(input),
   }];
 }
@@ -239,14 +249,12 @@ function categoryRows(input: QueryListInput): readonly PageBlock[] {
 function truncatedBlocks(hidden: number, total: number, shownCount: number): readonly PageBlock[] {
   if (hidden <= 0) return [];
   return [{
-    nav: { anchor: 'sec-truncated', navText: '没显示的记录' },
-    heading: '没显示的记录',
+    nav: { anchor: 'sec-truncated', navText: m('skill-bill.query-list.c020') },
+    heading: m('skill-bill.query-list.c021'),
     html: renderDisclosure({
-      title: '还有 ' + String(hidden) + ' 条没显示（这一页画了前 ' + String(shownCount) + ' 条）',
-      contentHtml: renderCaliberLine('要看其余的，把区间收窄再查一次；上面那几格读数与分类聚合不受影响，'
-        + '它们一直按本窗全部 ' + String(total) + ' 条算'),
-    }) + renderCaliberLine('本页的表与复制区都只带前面 ' + String(shownCount) + ' 条，'
-      + '其余 ' + String(hidden) + ' 条按上面那一块说得出口'),
+      title: m('skill-bill.query-list.c022', { p0: String(String(hidden)), p1: String(String(shownCount)) }),
+      contentHtml: renderCaliberLine(m('skill-bill.query-list.c023', { p0: String(String(total)) })),
+    }) + renderCaliberLine(m('skill-bill.query-list.c024', { p0: String(String(shownCount)), p1: String(String(hidden)) })),
   }];
 }
 
@@ -289,7 +297,11 @@ function searchTicketQ(input: QueryListInput): string {
 }
 
 function searchTicketTitle(input: QueryListInput, q: string): string {
-  return '备注含「' + q + '」共 ' + String(input.rows.length) + ' 笔，支出 ' + sumText(input.kpi.expense) + ' 元';
+  return m('skill-bill.query-list.c025', {
+    p0: String(q),
+    p1: String(String(input.rows.length)),
+    p2: String(sumText(input.kpi.expense)),
+  });
 }
 
 function searchTicketLedger(input: QueryListInput): string {
@@ -299,26 +311,26 @@ function searchTicketLedger(input: QueryListInput): string {
   const currencies = [...new Set(items.map((x) => String(x['currency'] ?? '').trim()).filter((s) => s !== ''))];
   const currency = currencies.length === 0 ? 'CNY' : currencies.join(' · ');
   const rows = [
-    { label: '收入', value: sumText(input.kpi.income) },
-    { label: '净额', value: sumText(input.kpi.net) },
-    { label: '落点账本', value: ledgers },
-    { label: '币种', value: currency },
+    { label: m('skill-bill.query-list.c026'), value: sumText(input.kpi.income) },
+    { label: m('skill-bill.query-list.c027'), value: sumText(input.kpi.net) },
+    { label: m('skill-bill.query-list.c028'), value: ledgers },
+    { label: m('skill-bill.query-list.c029'), value: currency },
   ];
   return '<div class="ilife-block-ledger-rows is-ticket">' + renderLedgerRows({ rows, layout: 'ticket' }) + '</div>';
 }
 
 function searchTicketScale(input: QueryListInput): string {
-  if (input.categories.length === 0) return '<p class="ilife-ticket-scale-note">本窗无支出，无占比。</p>';
+  if (input.categories.length === 0) return '<p class="ilife-ticket-scale-note">' + m('skill-bill.query-list.c057') + '</p>';
   const shown = input.categories.slice(0, CATEGORY_LIMIT);
   const hidden = input.categories.length - shown.length;
-  const rows = shown.map((c) => ({ label: c.label, value: sumText(c.amount) + ' 元', pct: c.pct }));
+  const rows = shown.map((c) => ({ label: c.label, value: m('skill-bill.query-list.c030', { p0: String(sumText(c.amount)) }), pct: c.pct }));
   return renderDistributionRows({ rows })
-    + (hidden > 0 ? renderCaliberLine('这一页只列支出最多的前 ' + String(CATEGORY_LIMIT) + ' 类，还有 ' + String(hidden) + ' 类没列') : '');
+    + (hidden > 0 ? renderCaliberLine(m('skill-bill.query-list.c031', { p0: String(String(CATEGORY_LIMIT)), p1: String(String(hidden)) })) : '');
 }
 
 function searchTicketDetail(input: QueryListInput, shown: readonly QueryTableRow[]): string {
   if (input.rows.length === 0) return renderEmptyBlock({ text: input.emptyText, hint: input.emptyHint });
-  const items = shown.map((r) => '<li><span class="ilife-ticket-entry-text">备注：' + escapeHtml(r.note.trim() === '' ? '—' : r.note)
+  const items = shown.map((r) => '<li><span class="ilife-ticket-entry-text">' + m('skill-bill.query-list.c058') + escapeHtml(r.note.trim() === '' ? '—' : r.note)
     + '<span style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12.5px;color:var(--ilife-ink-2);line-height:1.6">'
     + escapeHtml(r.category) + ' · ' + escapeHtml(r.account) + ' · ' + escapeHtml(r.time) + ' · #' + escapeHtml(r.id) + '</span></span>'
     + '<span style="flex:none;white-space:nowrap;font-weight:800;font-variant-numeric:tabular-nums;">' + escapeHtml(r.amount) + '</span></li>').join('');
@@ -327,8 +339,8 @@ function searchTicketDetail(input: QueryListInput, shown: readonly QueryTableRow
 
 function searchTicketCheck(input: QueryListInput): string {
   const rows = input.rows.length === 0
-    ? checkRowsOf({ countText: '0 笔' })
-    : checkRowsOf({ ids: input.rows.map((r) => r.id), countText: String(input.rows.length) + ' 笔' });
+    ? checkRowsOf({ countText: m('skill-bill.query-list.c032') })
+    : checkRowsOf({ ids: input.rows.map((r) => r.id), countText: m('skill-bill.query-list.c033', { p0: String(String(input.rows.length)) }) });
   return '<div class="ilife-ticket-card" style="border-color:color-mix(in srgb, var(--ilife-ok) 30%, var(--ilife-ok-soft));background:var(--ilife-ok-soft);">'
     + '<span style="display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.6;">'
     + '<span aria-hidden="true" style="flex:none;width:8px;height:8px;margin-top:6px;border-radius:999px;background:var(--ilife-ok);"></span>'
@@ -389,41 +401,39 @@ function renderSearchTicket(input: QueryListInput, shownCount: number): string {
       copyLog: copyLog({
         command: commandLine(input.key, input.params),
         source: input.source,
-        detail: '查到 ' + String(input.rows.length) + ' 笔',
+        detail: m('skill-bill.query-list.c034', { p0: String(String(input.rows.length)) }),
         actionAt: input.actionAt,
         version: DOC_VERSION,
       }),
     },
   });
   const truncated = hidden <= 0 ? '' : ticketRule() + ticketSection({
-    title: '没显示的记录', tag: 'MORE', content: renderDisclosure({
-      title: '还有 ' + String(hidden) + ' 条没显示（这一页画了前 ' + String(shownCount) + ' 条）',
-      contentHtml: renderCaliberLine('要看其余的，把关键词换得更准再搜一次；上面那句结论与分类占比不受影响，'
-        + '它们一直按本窗全部 ' + String(input.rows.length) + ' 条算'),
-    }) + renderCaliberLine('本页的明细与复制区都只带前面 ' + String(shownCount) + ' 条，'
-      + '其余 ' + String(hidden) + ' 条按上面那一块说得出口'),
+    title: m('skill-bill.query-list.c035'), tag: 'MORE', content: renderDisclosure({
+      title: m('skill-bill.query-list.c036', { p0: String(String(hidden)), p1: String(String(shownCount)) }),
+      contentHtml: renderCaliberLine(m('skill-bill.query-list.c037', { p0: String(String(input.rows.length)) })),
+    }) + renderCaliberLine(m('skill-bill.query-list.c038', { p0: String(String(shownCount)), p1: String(String(hidden)) })),
   });
   const paper = queryStyleTag() + sheetHead(DOC_TITLE + ' · ' + input.wakeWord, escapeHtml(title), input.window)
     + ticketRule()
-    + ticketSummary(renderSummaryHead({ eyebrow: '备注命中 · ' + q, value: expenseText, unit: '元', layout: 'ticket' }), '')
+    + ticketSummary(renderSummaryHead({ eyebrow: m('skill-bill.query-list.c039', { p0: String(q) }), value: expenseText, unit: m('skill-bill.query-list.c040'), layout: 'ticket' }), '')
     + renderConclusionBar(conclusion)
     + ticketRule()
-    + ticketSection({ title: '落点', tag: 'LEDGER', content: searchTicketLedger(input) })
+    + ticketSection({ title: m('skill-bill.query-list.c041'), tag: 'LEDGER', content: searchTicketLedger(input) })
     + ticketRule()
-    + ticketSection({ title: '分类占比', tag: 'SCALE', content: searchTicketScale(input) })
+    + ticketSection({ title: m('skill-bill.query-list.c042'), tag: 'SCALE', content: searchTicketScale(input) })
     + ticketRule()
-    + ticketSection({ title: '明细', tag: 'DETAIL', content: searchTicketDetail(input, shown) })
+    + ticketSection({ title: m('skill-bill.query-list.c043'), tag: 'DETAIL', content: searchTicketDetail(input, shown) })
     + ticketRule()
-    + ticketSection({ title: '对账', tag: 'CHECK', content: searchTicketCheck(input) })
+    + ticketSection({ title: m('skill-bill.query-list.c044'), tag: 'CHECK', content: searchTicketCheck(input) })
     + truncated
     + ticketRule()
     + ticketActions(copyHtml);
   const content = writeSection({
     slot: 'list', page: 'list', shape: input.shape, key: input.key,
-    content: renderSheetFrame({ variant: 'ticket', cutLine: true, cutLineText: '✂ 裁切线', content: paper })
+    content: renderSheetFrame({ variant: 'ticket', cutLine: true, cutLineText: m('skill-bill.query-list.c045'), content: paper })
       + '<p class="ilife-ticket-foot">' + escapeHtml(DOC_TITLE + ' · ' + input.wakeWord) + '</p>',
   });
-  return assembleSheetPage({ docTitle: DOC_TITLE + '·查询', bodyHtml: content, paper: 'detail' });
+  return assembleSheetPage({ docTitle: m('skill-bill.query-list.c046', { p0: String(DOC_TITLE) }), bodyHtml: content, paper: 'detail' });
 }
 
 /** 通用查询列表页：一整页。块序在本件只写一份（`blocks` 既拼正文也派生导航）。
@@ -466,15 +476,15 @@ function renderQueryList(input: QueryListInput, shownCount: number): string {
   const table = input.rows.length === 0
     ? renderEmptyBlock({ text: input.emptyText, hint: input.emptyHint })
     : '<div class="bill-query-wide">' + renderDataTable({
-      columns: COLUMNS,
+      columns: queryColumns(),
       rows: shown,
-      caption: hidden > 0 ? '查到的记录（前 ' + String(shownCount) + ' 条）' : '查到的记录',
+      caption: hidden > 0 ? m('skill-bill.query-list.c047', { p0: String(String(shownCount)) }) : m('skill-bill.query-list.c048'),
       emptyText: input.emptyText,
     }) + '</div>';
   const blocks = blocksOf(input, table, hidden, shownCount);
   const content = queryStyleTag() + renderConclusionBar(conclusionOf(input)) + pageNav(blocks) + pageBody(blocks);
   return pageShell({
-    docTitle: DOC_TITLE + '·查询',
+    docTitle: m('skill-bill.query-list.c049', { p0: String(DOC_TITLE) }),
     title: input.wakeWord,
     subtitle: input.window,
     slot: 'list',
@@ -492,10 +502,10 @@ function blocksOf(input: QueryListInput, table: string, hidden: number, shownCou
   return [
     {
       html: renderChips({ items: input.chips.map((text) => ({ text })) }),
-      nav: { anchor: 'sec-summary', navText: '结果' },
+      nav: { anchor: 'sec-summary', navText: m('skill-bill.query-list.c050') },
     },
-    { html: renderKpiGrid(kpiCards(input.kpi)), nav: { anchor: 'sec-kpi', navText: '读数' } },
-    { html: table, nav: { anchor: 'sec-records', navText: '记录' }, heading: '记录' },
+    { html: renderKpiGrid(kpiCards(input.kpi)), nav: { anchor: 'sec-kpi', navText: m('skill-bill.query-list.c051') } },
+    { html: table, nav: { anchor: 'sec-records', navText: m('skill-bill.query-list.c052') }, heading: m('skill-bill.query-list.c053') },
     ...categoryRows(input),
     ...truncatedBlocks(hidden, input.rows.length, shownCount),
     {
@@ -509,13 +519,13 @@ function blocksOf(input: QueryListInput, table: string, hidden: number, shownCou
           copyLog: copyLog({
             command: commandLine(input.key, input.params),
             source: input.source,
-            detail: '查到 ' + String(input.rows.length) + ' 笔',
+            detail: m('skill-bill.query-list.c054', { p0: String(String(input.rows.length)) }),
             actionAt: input.actionAt,
             version: DOC_VERSION,
           }),
         },
       }),
-      nav: { anchor: 'sec-copy', navText: '复制' },
+      nav: { anchor: 'sec-copy', navText: m('skill-bill.query-list.c055') },
     },
     { html: sourceLine({ source: input.sourceText, start: input.windowStart, end: input.windowEnd, count: input.rows.length }) },
   ];

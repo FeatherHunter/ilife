@@ -9,6 +9,7 @@
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { m } from '../../entries/index.js';
 
 export const FAMILY = 'history' as const;
 
@@ -98,13 +99,15 @@ const CSS = '.hero{background:linear-gradient(180deg,#fff,#f8fbff);border-radius
 + 'pre{white-space:pre-wrap;word-break:break-all;background:#f8f9fb;border-radius:10px;padding:10px;font-size:12px}'
 + '@media(max-width:820px){.hero{padding:18px 14px}.sec{padding:14px}.btnrow{grid-template-columns:1fr}}';
 
-const JS = 'function copyText(t){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t);}else{var ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");}catch(e){}document.body.removeChild(ta);}}'
+function pageScript(): string {
+  return 'function copyText(t){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t);}else{var ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");}catch(e){}document.body.removeChild(ta);}}'
 + 'function chipFilter(btn){document.querySelectorAll(".chip[data-t]").forEach(function(x){x.classList.remove("on");});btn.classList.add("on");'
 + 'var t=btn.dataset.t;document.querySelectorAll(".ev").forEach(function(x){x.style.display=(t==="all"||x.dataset.t===t)?"":"none";});}'
 + 'function toggleDiff(id){var d=document.getElementById(id);if(d)d.style.display=(d.style.display==="block")?"none":"block";}'
-+ 'function undoEv(btn){var s=btn.dataset.s||"该操作";copyText("请加载「居家管家」技能,帮我撤销最近操作(唤醒词:撤销操作):\\n\\n  撤  销: "+s);}'
++ 'function undoEv(btn){var s=btn.dataset.s||F.undoFallback;copyText(F.undoPrompt.replace("{p0}",s));}'
 + 'function typeCycle(){var cs=document.querySelectorAll(".chip[data-t]");if(!cs.length)return;var i=0;for(var k=0;k<cs.length;k++){if(cs[k].classList.contains("on")){i=k;break;}}var nx=cs[(i+1)%cs.length];chipFilter(nx);nx.scrollIntoView();}'
-+ 'function histLog(){var d=new Date();function p(n){return (n<10?"0":"")+n;}copyText("物品历史｜"+d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes())+":"+p(d.getSeconds())+"｜时间线共"+document.querySelectorAll(".ev").length+"条事件");}';
++ 'function histLog(){var d=new Date();function p(n){return (n<10?"0":"")+n;}var ts=d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes())+":"+p(d.getSeconds());copyText(F.logPrompt.replace("{p0}",ts).replace("{p1}",String(document.querySelectorAll(".ev").length)));}';
+}
 
 interface HistEvent {
   type: string;
@@ -119,17 +122,17 @@ type HistSummary = { label: string; value: string; loc: boolean };
 function str(v: unknown): string { return typeof v === 'string' ? v : ''; }
 
 function typeLabel(t: string): string {
-  if (t === 'create') return '录入';
-  if (t === 'relate') return '关联';
-  if (t === 'update') return '更新';
-  if (t === 'move') return '移动';
-  if (t === 'qty') return '数量变更';
-  if (t === 'status') return '状态变更';
-  if (t === 'undo') return '撤销';
-  if (t === 'inventory') return '盘点';
-  if (t === 'resolve') return '差异处理';
-  if (t === 'photo') return '照片';
-  return t === '' ? '其他' : t;
+  if (t === 'create') return m('skill-home.items-pages-history.c001');
+  if (t === 'relate') return m('skill-home.items-pages-history.c002');
+  if (t === 'update') return m('skill-home.items-pages-history.c003');
+  if (t === 'move') return m('skill-home.items-pages-history.c004');
+  if (t === 'qty') return m('skill-home.items-pages-history.c005');
+  if (t === 'status') return m('skill-home.items-pages-history.c006');
+  if (t === 'undo') return m('skill-home.items-pages-history.c007');
+  if (t === 'inventory') return m('skill-home.items-pages-history.c008');
+  if (t === 'resolve') return m('skill-home.items-pages-history.c009');
+  if (t === 'photo') return m('skill-home.items-pages-history.c010');
+  return t === '' ? m('skill-home.items-pages-history.c011') : t;
 }
 
 // 信封事件串形如“create:卧室/衣柜；relate:8:常用搭配”：按；分条，首个冒号分类型与明细。
@@ -146,13 +149,13 @@ const FIELD_NAME_DETAIL = /^(?:名称|分类|归属|价格|备注|照片|固定�
 
 function summarize(type: string, detail: string): HistSummary {
   if (type === 'relate') {
-    const m = detail.match(/^(\d+)\s*[:：]\s*(.+)$/);
-    if (m) return { label: '关联', value: '与物品' + m[1] + '建立' + m[2], loc: false };
-    return { label: '关联', value: detail === '' ? '—' : '建立关联' + detail, loc: false };
+    const relPair = detail.match(/^(\d+)\s*[:：]\s*(.+)$/);
+    if (relPair) return { label: m('skill-home.items-pages-history.c012'), value: m('skill-home.items-pages-history.c013', { p0: String(relPair[1]), p1: String(relPair[2]) }), loc: false };
+    return { label: m('skill-home.items-pages-history.c014'), value: detail === '' ? '—' : m('skill-home.items-pages-history.c015', { p0: String(detail) }), loc: false };
   }
-  if (type === 'create') return { label: '位置', value: detail === '' ? '未记' : detail, loc: detail !== '' };
+  if (type === 'create') return { label: m('skill-home.items-pages-history.c016'), value: detail === '' ? m('skill-home.items-pages-history.c017') : detail, loc: detail !== '' };
   if (detail === '' || FIELD_NAME_DETAIL.test(detail)) return { label: '', value: '—', loc: false };
-  if (isLocationDetail(type, detail)) return { label: '位置', value: detail, loc: true };
+  if (isLocationDetail(type, detail)) return { label: m('skill-home.items-pages-history.c018'), value: detail, loc: true };
   return { label: '', value: detail, loc: false };
 }
 
@@ -186,9 +189,9 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
 
   const trajHtml = traj.length > 0
     ? '<div class="traj">' + traj.map((l) => '<span class="pill">' + locSegs(l) + '</span>').join('<span> → </span>') + '</div>'
-    : '<p class="lead">暂无轨迹</p>';
+    : '<p class="lead">' + m('skill-home.items-pages-history.c023') + '</p>';
 
-  const chips = '<button class="chip on" data-t="all" onclick="chipFilter(this)">全部</button>'
+  const chips = '<button class="chip on" data-t="all" onclick="chipFilter(this)">' + m('skill-home.items-pages-history.c024') + '</button>'
     + types.map((t) => '<button class="chip" data-t="' + escapeHtml(t) + '" onclick="chipFilter(this)">' + escapeHtml(typeLabel(t)) + '</button>').join('');
   const typeTags = types.length > 0 ? types.map((t) => '<span class="pill">' + escapeHtml(typeLabel(t)) + '</span>').join('') : '<span class="pill">—</span>';
 
@@ -197,28 +200,29 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
       const s = e.summary;
       const plain = plainSum(s);
       return '<div class="ev" data-t="' + escapeHtml(e.type) + '">'
-      + '<div class="top"><span class="ord">第' + (i + 1) + '条</span><span class="type">' + escapeHtml(e.label) + '</span></div>'
+      + '<div class="top"><span class="ord">' + m('skill-home.items-pages-history.c025', { p0: String(i + 1) }) + '</span><span class="type">' + escapeHtml(e.label) + '</span></div>'
       + '<div class="sum">' + (s.label === '' ? '' : '<span class="k">' + escapeHtml(s.label) + '</span>')
       + '<span class="v">' + (s.loc ? locSegs(s.value) : escapeHtml(s.value)) + '</span></div>'
-      + '<div class="diffx" id="ev' + i + '">' + escapeHtml(e.detail || '无') + '</div>'
-      + '<div><button class="undoable" onclick="toggleDiff(\'ev' + i + '\')">展开详情</button>'
+      + '<div class="diffx" id="ev' + i + '">' + escapeHtml(e.detail || m('skill-home.items-pages-history.c019')) + '</div>'
+      + '<div><button class="undoable" onclick="toggleDiff(\'ev' + i + '\')">' + m('skill-home.items-pages-history.c026') + '</button>'
       + (e.type === 'undo'
-        ? '<span class="pill">已撤销</span>'
-        : '<button class="undoable" data-s="' + escapeHtml(plain === '—' ? '第' + (i + 1) + '条 ' + e.label : plain) + '" onclick="undoEv(this)">撤销此操作</button>')
+        ? '<span class="pill">' + m('skill-home.items-pages-history.c027') + '</span>'
+        : '<button class="undoable" data-s="' + escapeHtml(plain === '—' ? m('skill-home.items-pages-history.c020', { p0: String(i + 1), p1: String(e.label) }) : plain) + '" onclick="undoEv(this)">' + m('skill-home.items-pages-history.c028') + '</button>')
       + '</div></div>';
     }).join('')
-    : '<div class="empty">暂无事件</div>';
+    : '<div class="empty">' + m('skill-home.items-pages-history.c029') + '</div>';
 
-  const content = '<div class="hero"><p class="eyebrow">查看</p><p class="lead">' + (name !== '' ? '「' + escapeHtml(name) + '」的一生' : '物品历史') + '，时间倒序</p></div>'
-    + '<section class="sec" data-block="fields" data-need="' + NEED.fields + '"><h2>位置轨迹</h2>' + trajHtml
-    + '<h2>时间线共' + events.length + '条</h2><div class="chips">' + chips + '</div>'
-    + '<h2>事件条目</h2><div class="tl">' + timeline + '</div></section>'
+  const nameLead = name !== '' ? m('skill-home.items-pages-history.c021', { p0: String(escapeHtml(name)) }) : m('skill-home.items-pages-history.c022');
+  const content = '<div class="hero"><p class="eyebrow">' + m('skill-home.items-pages-history.c030') + '</p><p class="lead">' + m('skill-home.items-pages-history.c031', { p0: nameLead }) + '</p></div>'
+    + '<section class="sec" data-block="fields" data-need="' + NEED.fields + '"><h2>' + m('skill-home.items-pages-history.c032') + '</h2>' + trajHtml
+    + '<h2>' + m('skill-home.items-pages-history.c033', { p0: String(events.length) }) + '</h2><div class="chips">' + chips + '</div>'
+    + '<h2>' + m('skill-home.items-pages-history.c034') + '</h2><div class="tl">' + timeline + '</div></section>'
     // #817（⑤文案不冗余）：「本次事件类型」与上面时间线块的筛选胶囊是同一份取值（同一组类型词），
     // 双份并排＝一个事实说两遍；段与 data-need 原文照留（判据件读属性），只在页面上不再重复一遍。
-    + '<section class="sec" hidden data-block="status" data-need="' + NEED.status + '"><h2>本次事件类型</h2><div class="chips">' + typeTags + '</div></section>'
-    + '<section class="sec" data-block="operations" data-need="' + NEED.operations + '"><h2>动作</h2>'
+    + '<section class="sec" hidden data-block="status" data-need="' + NEED.status + '"><h2>' + m('skill-home.items-pages-history.c035') + '</h2><div class="chips">' + typeTags + '</div></section>'
+    + '<section class="sec" data-block="operations" data-need="' + NEED.operations + '"><h2>' + m('skill-home.items-pages-history.c036') + '</h2>'
     + '<div class="btnrow">'
-    + '<button class="btn ghost" onclick="typeCycle()">类型筛选</button>'
+    + '<button class="btn ghost" onclick="typeCycle()">' + m('skill-home.items-pages-history.c037') + '</button>'
     + '</div>'
     + homeCopyArea({
         data: { envelope: env },
@@ -226,7 +230,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
       })
     + '</section>'
     + '<section class="sec" data-block="empty" data-need="' + NEED.empty + '" hidden></section>'
-    + '<details><summary>数据原文</summary><pre class="pre-block-code" id="raw">' + escapeHtml(JSON.stringify(env.data ?? {})) + '</pre></details>'
-    + '<style>' + CSS + '</style><script>' + JS + '</script>';
+    + '<details><summary>' + m('skill-home.items-pages-history.c038') + '</summary><pre class="pre-block-code" id="raw">' + escapeHtml(JSON.stringify(env.data ?? {})) + '</pre></details>'
+    + '<style>' + CSS + '</style><script>var F=' + JSON.stringify({ undoFallback: m('skill-home.items-pages-history.c039'), undoPrompt: m('skill-home.items-pages-history.c040', { p0: "{p0}" }), logPrompt: m('skill-home.items-pages-history.c041', { p0: "{p0}", p1: "{p1}" }) }) + ';' + pageScript() + '</script>';
   return fillTemplate(template, content);
 }

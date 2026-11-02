@@ -16,6 +16,7 @@ import type { ChartBlockChartInput, KpiCardInput } from 'base-paint/blocks';
 import type { PageBlock } from '../shared/pageSections.js';
 import type { BarGroup, ChartCard, EmptySpec, FactCard, ListCard, TableCard } from './scene.js';
 import { textOrDash } from './pageParts.js';
+import { m } from '../entries/index.js';
 
 /** 一格带导航面与段标题的卡（各族的块清单由它逐张拼出）：锚点与导航条目同源给，标题即那枚 `<h2>`。 */
 export function cardBlock(html: string, anchor: string, title: string): PageBlock {
@@ -131,9 +132,9 @@ export function emptyHtml(spec: EmptySpec): string {
 /** 一段期间的读数（对比页的一侧：期间标签 ＋ 那一侧的读数卡）。 */
 export function sideKpisOf(label: string, kpi: { count: number; expense: number; income: number; net: number }, money: (n: number) => string): readonly KpiCardInput[] {
   return [
-    { label: '笔数', value: String(kpi.count), unit: '笔' },
-    { label: '支出', value: money(kpi.expense), unit: '元' },
-    { label: '收入', value: money(kpi.income), unit: '元' },
-    { label: '净额', value: money(kpi.net), unit: '元', detail: kpi.net >= 0 ? '收大于支' : '支大于收' },
+    { label: m('skill-bill.analysis-cards.c001'), value: String(kpi.count), unit: m('skill-bill.analysis-cards.c002') },
+    { label: m('skill-bill.analysis-cards.c003'), value: money(kpi.expense), unit: m('skill-bill.analysis-cards.c004') },
+    { label: m('skill-bill.analysis-cards.c005'), value: money(kpi.income), unit: m('skill-bill.analysis-cards.c006') },
+    { label: m('skill-bill.analysis-cards.c007'), value: money(kpi.net), unit: m('skill-bill.analysis-cards.c008'), detail: kpi.net >= 0 ? m('skill-bill.analysis-cards.c009') : m('skill-bill.analysis-cards.c010') },
   ];
 }

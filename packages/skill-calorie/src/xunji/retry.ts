@@ -21,6 +21,7 @@
  */
 
 /** 训记错误 7 类（老 `ErrorType`，`errors.py:39-46`）。 */
+import { m } from '../entries/index.js';
 export type XunjiErrorKind =
   | 'auth'
   | 'rate_limit'
@@ -59,38 +60,38 @@ function parseRetryAfterMs(body: unknown): number | null {
 export function classifyStatusBody(code: number | null, body: unknown, rawBody: unknown): XunjiFailure {
   const lowered = JSON.stringify(body ?? rawBody ?? '').toLowerCase();
   if (lowered.includes('仅vip') || lowered.includes('vip required') || lowered.includes('仅 vip')) {
-    return { error_type: 'vip_required', message: '训记仅 VIP 可用，需要会员权限', retry_after: null, raw_body: rawBody, code };
+    return { error_type: 'vip_required', message: m('skill-calorie.xunji-retry.c001'), retry_after: null, raw_body: rawBody, code };
   }
   if (
     code === 401 ||
     code === 403 ||
     (lowered.includes('apikey') && (lowered.includes('missing') || lowered.includes('invalid')))
   ) {
-    return { error_type: 'auth', message: '训记 API KEY 缺失或无效', retry_after: null, raw_body: rawBody, code };
+    return { error_type: 'auth', message: m('skill-calorie.xunji-retry.c002'), retry_after: null, raw_body: rawBody, code };
   }
   if (code === 429 || lowered.includes('too frequent') || lowered.includes('frequent')) {
     const after = parseRetryAfterMs(body) ?? 45;
-    return { error_type: 'rate_limit', message: '训记限频（需等 ' + after + 's）', retry_after: after, raw_body: rawBody, code };
+    return { error_type: 'rate_limit', message: m('skill-calorie.xunji-retry.c003', { p0: String(after) }), retry_after: after, raw_body: rawBody, code };
   }
   if (code === 400) {
-    return { error_type: 'validation', message: '请求字段错（400）', retry_after: null, raw_body: rawBody, code };
+    return { error_type: 'validation', message: m('skill-calorie.xunji-retry.c004'), retry_after: null, raw_body: rawBody, code };
   }
   if (code !== null && code >= 500 && code < 600) {
-    return { error_type: 'server', message: '训记服务端错（' + code + '）', retry_after: null, raw_body: rawBody, code };
+    return { error_type: 'server', message: m('skill-calorie.xunji-retry.c005', { p0: String(code) }), retry_after: null, raw_body: rawBody, code };
   }
-  return { error_type: 'unknown', message: '未分类错误（code=' + String(code) + '）', retry_after: null, raw_body: rawBody, code };
+  return { error_type: 'unknown', message: m('skill-calorie.xunji-retry.c006', { p0: String(String(code)) }), retry_after: null, raw_body: rawBody, code };
 }
 
 /** 异常（超时／连接错／JSON 解析失败）→ 结构化失败（老 `classify_error` 的 Exception 分支，`:106-117`）。 */
 export function classifyThrown(e: unknown): XunjiFailure {
   const msg = e instanceof Error ? e.message : String(e);
   if (e instanceof Error && (e.name === 'AbortError' || e.name === 'TimeoutError' || /timed out|timeout|aborted/i.test(msg))) {
-    return { error_type: 'network', message: '训记调用超时：' + msg, retry_after: null, raw_body: msg, code: null };
+    return { error_type: 'network', message: m('skill-calorie.xunji-retry.c007', { p0: String(msg) }), retry_after: null, raw_body: msg, code: null };
   }
   if (/ECONN|ENOTFOUND|EAI_AGAIN|fetch failed|network/i.test(msg)) {
-    return { error_type: 'network', message: '网络错误：' + msg, retry_after: null, raw_body: msg, code: null };
+    return { error_type: 'network', message: m('skill-calorie.xunji-retry.c008', { p0: String(msg) }), retry_after: null, raw_body: msg, code: null };
   }
-  return { error_type: 'unknown', message: '未知错误：' + msg, retry_after: null, raw_body: msg, code: null };
+  return { error_type: 'unknown', message: m('skill-calorie.xunji-retry.c009', { p0: String(msg) }), retry_after: null, raw_body: msg, code: null };
 }
 
 /** 2xx 正文的软错误检测（老 `:83-93`）：命中即按失败走分类，否则当成功。 */

@@ -28,9 +28,14 @@
 import { escapeHtml } from 'base-paint';
 import type { PlanSessionRow } from '../workout/planStore.js';
 import { movementTableHtml, tempoOf } from './workoutMovementTable.js';
+import { m } from '../entries/index.js';
 
-/** 星期名（看计划一族共用的唯一出处）：`day_of_week` 1–7 对「周一–周日」。 */
-export const DOW = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+/** 星期名（看计划一族共用的唯一出处）＋按需取词：`day_of_week` 1–7 对「周一–周日」。
+ *  收成函数而不是模块级数组——模块级数组会在加载时把语言固化（迁移手册 §4）。 */
+export function dowOf(i: number): string | undefined {
+  const names = ['', m('skill-calorie.render-workoutPlanLook.c010'), m('skill-calorie.render-workoutPlanLook.c011'), m('skill-calorie.render-workoutPlanLook.c012'), m('skill-calorie.render-workoutPlanLook.c013'), m('skill-calorie.render-workoutPlanLook.c014'), m('skill-calorie.render-workoutPlanLook.c015'), m('skill-calorie.render-workoutPlanLook.c016')];
+  return names[i];
+}
 
 /** 一周（周次号 ＋ 该周各场次）。 */
 export interface PlanWeek {
@@ -39,12 +44,14 @@ export interface PlanWeek {
 }
 
 /** 休息日卡的正文（老页 `.rest-day` 的「主动恢复，不练力量」，本单口径把「力量」写成「训练动作」）。 */
-const REST_NOTE = '主动恢复，不排训练动作';
+function restNote(): string {
+  return m('skill-calorie.render-workoutPlanLook.c017');
+}
 
 /** 休息日卡的场次名：空 `label` 与「休息」都写「休息日」；库中已是「休息日」的（生产库 4 行）不追加。 */
 function restLabel(raw: string): string {
-  if (raw === '' || raw === '休息') return '休息日';
-  return raw.includes('休息日') ? raw : raw + '（休息日）';
+  if (raw === '' || raw === '休息') return m('skill-calorie.render-workoutPlanLook.c001');
+  return raw.includes('休息日') ? raw : m('skill-calorie.render-workoutPlanLook.c002', { p0: String(raw) });
 }
 
 /** 时段：起点为空不印；终点为空或与起点同值只印起点；否则「起–止」（短横线同老页 `:277` 的位置）。 */
@@ -64,21 +71,21 @@ function setsCount(s: PlanSessionRow, moves: readonly { sets?: readonly unknown[
  *  节奏取该场动作备注方括号内逗号之后那段（场内恒定，摆成列就是整列重复，故只上头行）；休息日无表、无节奏。 */
 export function sessionCardHtml(s: PlanSessionRow): string {
   const moves = Array.isArray(s.movements) ? s.movements : [];
-  const dow = DOW[s.day_of_week] ?? '周' + s.day_of_week;
+  const dow = dowOf(s.day_of_week) ?? m('skill-calorie.render-workoutPlanLook.c003', { p0: String(s.day_of_week) });
   if (s.is_rest_day === 1) {
     return '<div class="ilw-session ilw-rest"><h3 class="ilw-rest-title">'
       + '<span class="ilw-sess-tag">' + escapeHtml(dow) + '</span>'
       + '<span class="ilw-rest-txt">' + escapeHtml(restLabel(s.session_label ?? '')) + '</span></h3>'
-      + '<p class="ilw-rest-note">' + REST_NOTE + '</p></div>';
+      + '<p class="ilw-rest-note">' + restNote() + '</p></div>';
   }
   const raw = s.session_label ?? '';
-  const name = raw === '' ? '训练' : raw;
+  const name = raw === '' ? m('skill-calorie.render-workoutPlanLook.c004') : raw;
   const count = setsCount(s, moves);
   const tempo = tempoOf(moves);
   const meta = [
     timeText(s),
-    count === 0 ? '' : '共 ' + count + ' 组',
-    tempo === '' ? '' : '节奏 ' + tempo,
+    count === 0 ? '' : m('skill-calorie.render-workoutPlanLook.c005', { p0: String(count) }),
+    tempo === '' ? '' : m('skill-calorie.render-workoutPlanLook.c006', { p0: String(tempo) }),
   ].filter((t) => t !== '').map((t) => '<span>' + escapeHtml(t) + '</span>').join('\n');
   // 各段之间留一个换行：flex 容器忽略纯空白文本节点（视觉不变），但选中复制与正文检索能拿到分隔。
   return '<div class="ilw-session">'
@@ -112,7 +119,7 @@ function tabRow(cls: string, label: string, items: readonly TabItem[], aria: str
 
 /** 日页签的七枚（周一…周日）：「全部」那一枚按负责人裁定去掉，选钮 id 尾即 `day_of_week`。 */
 const DAY_ITEMS: readonly { readonly id: string; readonly text: string }[] =
-  Array.from({ length: 7 }, (_, d) => ({ id: String(d + 1), text: DOW[d + 1] }));
+  Array.from({ length: 7 }, (_, d) => ({ id: String(d + 1), text: dowOf(d + 1) ?? String(d + 1) }));
 
 /** 日页签的默认选中项＝周一（`day_of_week=1`；老页首屏就是周一，无安排也不改选）。 */
 const DEFAULT_DOW = '1';
@@ -130,7 +137,7 @@ function weekSection(index: number, w: PlanWeek): string {
     const dow = i + 1;
     const list = w.sessions.filter((s) => s.day_of_week === dow);
     const body = list.length === 0
-      ? '<p class="ilw-none">' + DOW[dow] + ' 不排训练</p>'
+      ? '<p class="ilw-none">' + (dowOf(dow) ?? String(dow)) + ' 不排训练</p>'
       : list.map(sessionCardHtml).join('');
     return '<div class="ilw-day' + (list.length === 0 ? ' ilw-day-empty' : '') + '" data-dow="' + dow + '">'
       + body + '</div>';
@@ -139,7 +146,7 @@ function weekSection(index: number, w: PlanWeek): string {
     + '<h2 class="ilw-week-head"><span class="ilw-week-n">第 ' + w.week + ' 周</span>'
     + '<span class="ilw-week-count">' + w.sessions.length + ' 场</span></h2>'
     + radios(prefix, 'ilw-dyr', items)
-    + tabRow('ilw-day-tabs', 'ilw-day-tab', items, '按星期看')
+    + tabRow('ilw-day-tabs', 'ilw-day-tab', items, m('skill-calorie.render-workoutPlanLook.c007'))
     + panes.join('')
     + '</section>';
 }
@@ -151,11 +158,11 @@ export function planWeeksHtml(weeks: readonly PlanWeek[], currentWeek: number | 
   // `findIndex` 落空（-1）即兜底到第 1 周；`weeks` 为空时 items 为空，两块页签都不出。
   const active = Math.max(0, weeks.findIndex((w) => w.week === currentWeek));
   const items: TabItem[] = weeks.map((w, i) => ({
-    id: 'ilw-wk-' + i, text: '第 ' + w.week + ' 周', on: i === active, off: false,
+    id: 'ilw-wk-' + i, text: m('skill-calorie.render-workoutPlanLook.c008', { p0: String(w.week) }), on: i === active, off: false,
   }));
   return '<div class="ilw-app">'
     + radios('ilw-wk', 'ilw-wkr', items)
-    + tabRow('ilw-tabs', 'ilw-tab', items, '按周次看')
+    + tabRow('ilw-tabs', 'ilw-tab', items, m('skill-calorie.render-workoutPlanLook.c009'))
     + weeks.map((w, i) => weekSection(i, w)).join('')
     + '</div>';
 }

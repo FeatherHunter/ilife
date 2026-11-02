@@ -15,6 +15,7 @@
 import { skinVar } from '../skin/contract.js';
 import { bulkBarSlot, type BulkBarSlot } from './attrs.js';
 import { BULK_BAR_NARROW_PX } from './style-sizes.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -31,7 +32,7 @@ export function bulkBarConfirmCss(input?: { readonly prefix?: string }): string 
   const s = (slot: BulkBarSlot): string => root + ' ' + c(slot);
 
   return [
-    '/* ── 就地确认面（改之前先看见会改哪几条）───────────────────────────── */',
+    m('base-render.components-bulk-bar-style-confirm.c001'),
     s('confirm') + ' {',
     '  display: grid;',
     '  grid-template-columns: minmax(0, 1fr);',
@@ -42,7 +43,7 @@ export function bulkBarConfirmCss(input?: { readonly prefix?: string }): string 
     '  border-radius: ' + skinVar('radius-sm') + ';',
     '  overflow: hidden;',
     '}',
-    '/* 同上：`display:grid` 会压过 UA 的 `[hidden]{display:none}` ⇒ 显式重写。 */',
+    m('base-render.components-bulk-bar-style-confirm.c002'),
     s('confirm') + '[hidden] {',
     '  display: none;',
     '}',
@@ -77,7 +78,7 @@ export function bulkBarConfirmCss(input?: { readonly prefix?: string }): string 
     '  min-width: 0;',
     '  padding: 12px;',
     '}',
-    '/* 「改成」那一格：标签 ＋ 输入框并成一块命中区（点标签也能把光标送进框里）。 */',
+    m('base-render.components-bulk-bar-style-confirm.c003'),
     s('value') + ' {',
     '  display: grid;',
     '  grid-template-columns: minmax(0, 1fr);',
@@ -113,7 +114,7 @@ export function bulkBarConfirmCss(input?: { readonly prefix?: string }): string 
     '  font-size: ' + skinVar('fs-xs') + ';',
     '  font-weight: 600;',
     '}',
-    '/* 「最近用过」那几枚胶囊：点它＝把它的字填进输入框（比让人重新敲一遍快）。 */',
+    m('base-render.components-bulk-bar-style-confirm.c004'),
     s('chip') + ' {',
     '  min-width: 44px;',
     '  min-height: 44px;',
@@ -139,7 +140,7 @@ export function bulkBarConfirmCss(input?: { readonly prefix?: string }): string 
     s('chip') + ':active {',
     '  transform: scale(.98);',
     '}',
-    '/* ── 逐条预演：`✓ 会改` / `⊘ 跳过` ＋ 旧值删除线 ＋ 右端那两个字 ─────── */',
+    m('base-render.components-bulk-bar-style-confirm.c005'),
     s('preview') + ' {',
     '  display: grid;',
     '  grid-template-columns: minmax(0, 1fr);',
@@ -161,7 +162,7 @@ export function bulkBarConfirmCss(input?: { readonly prefix?: string }): string 
     s('prow') + ':first-child {',
     '  border-top: 0;',
     '}',
-    '/* 会改那一行：`ok` 是「达标／正常」那一档；跳过那一行整体压到弱字（它不是错误，**不借 danger**）。 */',
+    m('base-render.components-bulk-bar-style-confirm.c006'),
     s('mark') + ' {',
     '  color: ' + skinVar('ok') + ';',
     '  font-weight: 700;',
@@ -192,14 +193,14 @@ export function bulkBarConfirmCss(input?: { readonly prefix?: string }): string 
     '  font-size: ' + skinVar('fs-xs') + ';',
     '  overflow-wrap: anywhere;',
     '}',
-    '/* 右端那两个字是状态的**字**那一重（色只是第三重：换皮不靠色也读得出）。 */',
+    m('base-render.components-bulk-bar-style-confirm.c007'),
     s('pstate') + ' {',
     '  color: ' + skinVar('ink-2') + ';',
     '  font-size: ' + skinVar('fs-xs') + ';',
     '  font-style: normal;',
     '  font-weight: 600;',
     '}',
-    '/* ── 页脚：结论句 ＋ 取消 ＋ 改这 N 条 ─────────────────────────────── */',
+    m('base-render.components-bulk-bar-style-confirm.c008'),
     s('cfoot') + ' {',
     '  display: flex;',
     '  flex-wrap: wrap;',
@@ -220,12 +221,12 @@ export function bulkBarConfirmCss(input?: { readonly prefix?: string }): string 
     '  overflow-wrap: anywhere;',
     '}',
     '@container (max-width: ' + String(BULK_BAR_NARROW_PX) + 'px) {',
-    '  /* 窄档：标题右端那句另起一行（挤在标题右边会把标题压成两三个字一列）。 */',
+    m('base-render.components-bulk-bar-style-confirm.c009'),
     '  ' + s('ccap') + ' {',
     '    margin-left: 0;',
     '    flex: 1 1 100%;',
     '  }',
-    '  /* 页脚两枚按钮铺满整行、等分（手指好按）。 */',
+    m('base-render.components-bulk-bar-style-confirm.c010'),
     '  ' + s('cfoot') + ' > ' + c('act') + ' {',
     '    flex: 1 1 auto;',
     '  }',

@@ -33,10 +33,13 @@ export interface InitPageOutput {
   readonly kind: '结果页' | '过程页';
 }
 
+/** 模式 → 册子页型（数据：`kind` 是判别值，`bookletFileStem` 按它查格；模块级常量，不进词条表）。 */
+const PAGE_KIND: Readonly<Record<InitPageMode, '结果页' | '过程页'>> = { report: '结果页', guide: '过程页' };
+
 /** 出页。入参＝诊断载荷 ＋ 生成时刻 ＋ 回执信封（复制区载荷由它序列化）。 */
 export function renderInitPage(mode: InitPageMode, diagnosis: InitDiagnosis, input: Omit<InitPageInput, 'diagnosis'>): InitPageOutput {
   const page: InitPageInput = { diagnosis, ...input };
   return mode === 'guide'
-    ? { html: renderInitGuidePage(page), kind: '过程页' }
-    : { html: renderInitReportPage(page), kind: '结果页' };
+    ? { html: renderInitGuidePage(page), kind: PAGE_KIND.guide }
+    : { html: renderInitReportPage(page), kind: PAGE_KIND.report };
 }

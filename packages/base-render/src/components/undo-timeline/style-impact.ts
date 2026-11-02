@@ -18,6 +18,7 @@ import {
   undoTimelineSlot,
   type UndoTimelineSlot,
 } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -34,7 +35,7 @@ export function undoTimelineImpactCss(input?: { readonly prefix?: string }): str
   const box = root + ' .' + p + 'block-undo-timeline';
 
   return [
-    '/* ── 回滚单：一次改动的影响面清单（形态 impact 的整张卡／track 里摊开的那一块） ── */',
+    m('base-render.components-undo-timeline-style-impact.c001'),
     s('pkh') + ' {',
     '  display: grid;',
     '  gap: 2px;',
@@ -42,7 +43,7 @@ export function undoTimelineImpactCss(input?: { readonly prefix?: string }): str
     '  min-width: 0;',
     '  border-bottom: 1px solid ' + skinVar('line') + ';',
     '}',
-    '/* 单独成件那一张（形态 impact）：头是这一块的面，走次要面，好与列表分开。 */',
+    m('base-render.components-undo-timeline-style-impact.c002'),
     box + '.is-impact > ' + c('pkh') + ' {',
     '  background: ' + skinVar('surface-2') + ';',
     '}',
@@ -79,7 +80,7 @@ export function undoTimelineImpactCss(input?: { readonly prefix?: string }): str
     s('item') + ':first-child {',
     '  border-top: 0;',
     '}',
-    '/* 勾上的那一行：底走次要面 ＋ 左端一条 3px 强调侧标（**形**的一重，行内主字仍 `ink`）。 */',
+    m('base-render.components-undo-timeline-style-impact.c003'),
     s('item') + ':has(input:checked) {',
     '  background: ' + skinVar('surface-2') + ';',
     '  box-shadow: inset 3px 0 0 ' + skinVar('accent') + ';',
@@ -87,7 +88,7 @@ export function undoTimelineImpactCss(input?: { readonly prefix?: string }): str
     s('item') + '.is-off {',
     '  cursor: not-allowed;',
     '}',
-    '/* 勾选框的**命中盒** 44×44；视觉盒 24×24；原生框铺满命中盒（视觉隐藏不是 `display:none`）。 */',
+    m('base-render.components-undo-timeline-style-impact.c004'),
     s('check') + ' {',
     '  position: relative;',
     '  display: grid;',
@@ -114,7 +115,7 @@ export function undoTimelineImpactCss(input?: { readonly prefix?: string }): str
     '  border-radius: ' + skinVar('radius-sm') + ';',
     '  background: ' + skinVar('surface') + ';',
     '}',
-    '/* 勾上＝强调**实底** ＋ 一枚对钩（无文字的点／格走强调实底；对钩是图形，不是正文）。 */',
+    m('base-render.components-undo-timeline-style-impact.c005'),
     s('check') + ' input:checked + ' + c('box') + ' {',
     '  border-color: ' + skinVar('accent') + ';',
     '  background: ' + skinVar('accent') + ';',
@@ -130,13 +131,13 @@ export function undoTimelineImpactCss(input?: { readonly prefix?: string }): str
     '  font-weight: 700;',
     '  line-height: 1;',
     '}',
-    '/* 勾不动那一档：方块走虚线（**形**），原因写在行里（**字**）——不只画一枚灰方块。 */',
+    m('base-render.components-undo-timeline-style-impact.c006'),
     s('check') + ' input[disabled] + ' + c('box') + ' {',
     '  border-style: dashed;',
     '  border-color: ' + skinVar('line') + ';',
     '  background: ' + skinVar('surface') + ';',
     '}',
-    '/* 焦点环画在视觉盒上（原生框是透明的，焦点得看得见）。 */',
+    m('base-render.components-undo-timeline-style-impact.c007'),
     s('check') + ' input:focus-visible + ' + c('box') + ' {',
     '  outline: 2px solid ' + skinVar('accent') + ';',
     '  outline-offset: 2px;',
@@ -170,7 +171,7 @@ export function undoTimelineImpactCss(input?: { readonly prefix?: string }): str
     '  line-height: 1.6;',
     '  overflow-wrap: anywhere;',
     '}',
-    '/* 行右端读数：数一档（等宽 ＋ 加粗），**永不 `…` 截断**。 */',
+    m('base-render.components-undo-timeline-style-impact.c008'),
     s('count') + ' {',
     '  color: ' + skinVar('ink') + ';',
     '  font-family: ' + skinVar('font-num') + ';',
@@ -180,8 +181,10 @@ export function undoTimelineImpactCss(input?: { readonly prefix?: string }): str
     '  text-align: right;',
     '  overflow-wrap: anywhere;',
     '}',
-    '/* 窄容器（<' + String(UNDO_TIMELINE_NARROW_PX) + 'px）：行右端那枚读数排到文字下面',
-    '   （挤在右边会把「一句话后果」压成一列孤字）。判的是**本件自己的宽度**。 */',
+    m('base-render.components-undo-timeline-style-impact.c009', {
+      p0: String(String(UNDO_TIMELINE_NARROW_PX)),
+    }),
+    m('base-render.components-undo-timeline-style-impact.c010'),
     '@container ' + UNDO_TIMELINE_CONTAINER + ' (max-width: ' + String(UNDO_TIMELINE_NARROW_PX) + 'px) {',
     '  ' + s('item') + ' {',
     '    grid-template-columns: auto minmax(0, 1fr);',

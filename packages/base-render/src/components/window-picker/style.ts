@@ -10,6 +10,7 @@
 import { PAGE_LIMITS, PAGE_UI_CLASS } from '../page-ui/index.js';
 import { skinVar } from '../skin/contract.js';
 import { WINDOW_LOADING_ATTR, WINDOW_ROOT_CLASS } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 宽档上限。 */
 export const WINDOW_MAX_WIDTH_PX = 900;
@@ -47,8 +48,8 @@ export function windowPickerCss(): string {
   const LOADING_ON = '[' + WINDOW_LOADING_ATTR + '="1"]';
 
   return [
-    '/* windowPicker（窗口选择器 · 形态 A：一行工具条——档 ＋ 起止 ＋ 天数）。',
-    '   窗口是整页读数的口径 ⇒ 起止与天数永远写在页上；天数不许被压掉（nowrap 且不缩）。 */',
+    m('base-render.components-window-picker-style.c001'),
+    m('base-render.components-window-picker-style.c002'),
     R + '{display:grid;gap:8px;min-width:0;max-width:' + WINDOW_MAX_WIDTH_PX + 'px;',
     '  color:' + ink + ';font-family:' + font + ';font-size:' + fsBody + ';line-height:1.5}',
     R + '-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;min-width:0}',

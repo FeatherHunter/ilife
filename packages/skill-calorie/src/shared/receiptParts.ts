@@ -15,14 +15,15 @@
 import { renderDataTable, renderDisclosure } from 'base-paint/blocks';
 import type { KpiCardInput } from 'base-paint/blocks';
 import type { CrudReceipt } from '../render/receipt.js';
+import { m } from '../entries/index.js';
 
 /** 一格的状态值：无改动／已改动 ＋ 一句写入去向的说明（说明由调用方按本域措辞传入）。
  *  承接原「无变化 否」那个双重否定，一页只出现这一处。 */
 export function statusCard(receipt: CrudReceipt, writtenDetail: string): KpiCardInput {
   return {
     label: '状态',
-    value: receipt.noChange ? '无改动' : '已改动',
-    detail: receipt.noChange ? '值与改前一致' : writtenDetail,
+    value: receipt.noChange ? m('skill-calorie.shared-receiptParts.c001') : m('skill-calorie.shared-receiptParts.c002'),
+    detail: receipt.noChange ? m('skill-calorie.shared-receiptParts.c003') : writtenDetail,
   };
 }
 
@@ -30,13 +31,13 @@ export function statusCard(receipt: CrudReceipt, writtenDetail: string): KpiCard
  *  影响行数与写入字段已在卡片上，这里不重写；眉标与副标题不再出现版本号与那行机器文本。 */
 export function reconcileDisclosure(receipt: CrudReceipt): string {
   return renderDisclosure({
-    title: '对账信息',
+    title: m('skill-calorie.shared-receiptParts.c004'),
     contentHtml: renderDataTable({
-      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+      columns: [{ key: 'k', label: m('skill-calorie.shared-receiptParts.c005') }, { key: 'v', label: m('skill-calorie.shared-receiptParts.c006') }],
       rows: [
-        { k: '记录编号', v: receipt.recordId === null ? '未设置' : String(receipt.recordId) },
-        { k: '写入时间', v: receipt.meta.actionAt },
-        { k: '回执格式', v: 'v' + receipt.m5Contract + '（写库回执）' },
+        { k: m('skill-calorie.shared-receiptParts.c007'), v: receipt.recordId === null ? m('skill-calorie.shared-receiptParts.c008') : String(receipt.recordId) },
+        { k: m('skill-calorie.shared-receiptParts.c009'), v: receipt.meta.actionAt },
+        { k: m('skill-calorie.shared-receiptParts.c010'), v: m('skill-calorie.shared-receiptParts.c011', { p0: String(receipt.m5Contract) }) },
       ],
     }),
   });

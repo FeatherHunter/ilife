@@ -16,6 +16,7 @@ import type { DuplicatePolicy } from './batch.js';
 import { getCalorieHistory } from '../analysis/historyStore.js';
 import { auditPlanNames } from './audit.js';
 import { verifyMovements } from '../xunji/index.js';
+import { m } from '../entries/index.js';
 
 const flag = (name: string): string | undefined => {
   const i = process.argv.indexOf(name);
@@ -32,7 +33,7 @@ function openTarget(dbFlag: string | undefined, writable: boolean): DatabaseSync
 async function askDuplicate(name: string): Promise<DuplicatePolicy> {
   const rl = createInterface({ input, output });
   try {
-    const ans = (await rl.question(`重复 '${name}'：[o]覆盖 [s]跳过 [d]废弃（默认 s）`)).trim().toLowerCase();
+    const ans = (await rl.question(m('skill-calorie.fetch-cli.c001', { p0: String(name) }))).trim().toLowerCase();
     return ans === 'o' ? 'overwrite' : ans === 'd' ? 'deprecate' : 'skip';
   } finally {
     rl.close();
@@ -49,23 +50,24 @@ async function cmdImport(file: string, dbFlag?: string): Promise<number> {
   const db = openTarget(dbFlag, true);
   try {
     const r = await importProducts(db, file, { dryRun: has('--dry-run'), onDuplicate: policy, ask: askDuplicate });
-    if (r.parseErrors.length > 0) console.log(`JSON 解析失败: ${r.parseErrors.length} 行`);
-    console.log(`校验通过: ${r.invalid.length === 0 ? '全部' : r.invalid.length + ' 条失败'}`);
+    if (r.parseErrors.length > 0) console.log(m('skill-calorie.fetch-cli.c002', { p0: String(r.parseErrors.length) }));
+    const badgeText = r.invalid.length === 0 ? m('skill-calorie.fetch-cli.c003') : m('skill-calorie.fetch-cli.c004', { p0: String(r.invalid.length) });
+    console.log(m('skill-calorie.fetch-cli.c005', { p0: String(badgeText) }));
     if (r.dryRun) {
-      console.log('\n🔍 Dry-run 模式,不写入数据库');
+      console.log(m('skill-calorie.fetch-cli.c006'));
       return 0;
     }
     console.log('\n============================================================');
-    console.log('📊 导入完成');
-    console.log(`   ✅ 新增: ${r.stats.inserted}`);
-    console.log(`   🔄 覆盖: ${r.stats.updated}`);
-    console.log(`   ⏭️  跳过: ${r.stats.skipped}`);
-    console.log(`   🗑️  废弃: ${r.stats.deprecated}`);
-    console.log(`   ❌ 失败: ${r.stats.failed}`);
-    for (const f of r.failures) console.log(`   第 ${f.line} 行: ${f.name} - ${f.error}`);
+    console.log(m('skill-calorie.fetch-cli.c007'));
+    console.log(m('skill-calorie.fetch-cli.c008', { p0: String(r.stats.inserted) }));
+    console.log(m('skill-calorie.fetch-cli.c009', { p0: String(r.stats.updated) }));
+    console.log(m('skill-calorie.fetch-cli.c010', { p0: String(r.stats.skipped) }));
+    console.log(m('skill-calorie.fetch-cli.c011', { p0: String(r.stats.deprecated) }));
+    console.log(m('skill-calorie.fetch-cli.c012', { p0: String(r.stats.failed) }));
+    for (const f of r.failures) console.log(m('skill-calorie.fetch-cli.c013', { p0: String(f.line), p1: String(f.name), p2: String(f.error) }));
     return 0;
   } catch (e) {
-    console.error(`导入失败: ${e instanceof Error ? e.message : e}`);
+    console.error(m('skill-calorie.fetch-cli.c014', { p0: String(e instanceof Error ? e.message : e) }));
     return 1;
   } finally {
     db.close();
@@ -79,11 +81,11 @@ function cmdValidate(file: string): number {
   }
   try {
     const r = validateFile(file, flag('--json-output'));
-    console.log(`校验通过: ${r.valid} / ${r.total}`);
+    console.log(m('skill-calorie.fetch-cli.c015', { p0: String(r.valid), p1: String(r.total) }));
     // exit 只表达“校验是否执行成功”，失败行是结果不是命令失败（老家 #44）
     return 0;
   } catch (e) {
-    console.error(`校验失败: ${e instanceof Error ? e.message : e}`);
+    console.error(m('skill-calorie.fetch-cli.c016', { p0: String(e instanceof Error ? e.message : e) }));
     return 1;
   }
 }
@@ -92,7 +94,7 @@ function cmdDedupe(dbFlag?: string): number {
   const db = openTarget(dbFlag, false);
   try {
     const dups = dedupeReport(db);
-    console.log(`重复组: ${dups.length}`);
+    console.log(m('skill-calorie.fetch-cli.c017', { p0: String(dups.length) }));
     for (const g of dups) console.log(`   '${g.productName}' ×${g.ids.length} (IDs: ${g.ids.join(',')})`);
     return 0;
   } finally {
@@ -103,7 +105,7 @@ function cmdDedupe(dbFlag?: string): number {
 function cmdExport(dbFlag?: string): number {
   const source = flag('--source');
   if (!source) {
-    console.error('用法：export --source X [--output F] [--db path]');
+    console.error(m('skill-calorie.fetch-cli.c018'));
     return 1;
   }
   const db = openTarget(dbFlag, false);
@@ -124,10 +126,10 @@ function cmdHistory(dbFlag?: string): number {
   try {
     const h = getCalorieHistory(db, days);
     if (h.rows.length === 0) {
-      console.log(`最近${days}天无记录`);
+      console.log(m('skill-calorie.fetch-cli.c019', { p0: String(days) }));
       return 0;
     }
-    console.log(`\n热量历史（最近${days}天）:`);
+    console.log(m('skill-calorie.fetch-cli.c020', { p0: String(days) }));
     console.log('-'.repeat(70));
     for (const r of h.rows) {
       console.log(`${r.date} | ${r.calories} | ${r.protein} | ${r.carbs} | ${r.fat} | ${r.status}`);
@@ -159,7 +161,7 @@ function cmdAudit(dbFlag?: string): number {
 
 function cmdCatalogVerify(name: string): number {
   if (!name) {
-    console.error('用法：catalog-verify <动作名> [--catalog path]');
+    console.error(m('skill-calorie.fetch-cli.c021'));
     return 1;
   }
   const catFlag = flag('--catalog');
@@ -189,7 +191,7 @@ async function main(): Promise<number> {
     case 'catalog-verify':
       return cmdCatalogVerify(arg);
     default:
-      console.error('用法：cli.js <import|validate|dedupe|export|history|audit|catalog-verify> ...');
+      console.error(m('skill-calorie.fetch-cli.c022'));
       return 2;
   }
 }

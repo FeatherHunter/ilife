@@ -15,6 +15,7 @@ import { skinVar } from '../skin/contract.js';
 import { FLOW_RIBBON_NARROW_PX, flowRibbonSlot, type FlowRibbonSlot } from './attrs.js';
 import { flowRibbonFormsCss } from './style-forms.js';
 import { flowRibbonRailsCss } from './style-rails.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -28,9 +29,9 @@ export function flowRibbonCss(input?: { readonly prefix?: string }): string {
   const s = (slot: FlowRibbonSlot): string => root + ' .' + flowRibbonSlot(slot, p);
 
   return [
-    '/* flow-ribbon（流向带）：三个骨架——桑基带／交叉矩阵／两条构成轨＋汇合读数。',
-    '   一把尺子贯穿三处几何：每 1% 高／宽＝同一个钱数（从总额与跨度算出，写在标记的行内样式里）。',
-    '   色一律从强调色系算（淡洗），读数不截断；宽度只由容器判。 */',
+    m('base-render.components-flow-ribbon-style.c001'),
+    m('base-render.components-flow-ribbon-style.c002'),
+    m('base-render.components-flow-ribbon-style.c003'),
     box + ' {',
     /* 宽度判据的落点：本件是**自己的容器**——嵌进侧栏／面板／卡片时照样按自己的宽度排。 */
     '  container-type: inline-size;',

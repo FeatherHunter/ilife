@@ -15,6 +15,7 @@ import {
   type DateRangeInput,
   type DateRangePreset,
 } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 内部类型：每个字段都已校验、已归一。 */
 export interface DateRangeModel {
@@ -177,7 +178,7 @@ export function normalizeDateRange(input: unknown): DateRangeModel {
   const both = from !== undefined && to !== undefined;
   const hit = both ? presets.find((p) => p.from === from && p.to === to) : undefined;
   const preset = hit !== undefined ? hit.key : (both ? 'custom' : 'none');
-  const presetLabel = hit !== undefined ? hit.label : (both ? '自定义区间' : '还未选');
+  const presetLabel = hit !== undefined ? hit.label : (both ? m('base-render.components-date-range-model.c001') : m('base-render.components-date-range-model.c002'));
 
   const today = optIso(raw.today, 'date-range: input.today');
   /* 锚月：调用方点的月 → 起点 → 终点 → 今天；都没有就不出日历那一块（设计过的空态）。 */

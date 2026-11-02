@@ -22,7 +22,7 @@ export function renderDonut(raw: DonutChartInput): ChartOutput {
   const items = normalizeItems(input.items, 'donut', false);
   if (items.length === 0) return emptyOutput('donut', input.options);
   const total = items.reduce((sum, item) => sum + Math.max(0, item.value as number), 0);
-  if (total <= 0) return emptyOutput('donut', input.options, DONUT_ZERO_HINT);
+  if (total <= 0) return emptyOutput('donut', input.options, DONUT_ZERO_HINT());
 
   const size = numOr(opts === undefined ? undefined : opts.size, 150);
   const ringWidth = numOr(opts === undefined ? undefined : opts.ringWidth, 16);

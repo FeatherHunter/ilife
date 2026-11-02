@@ -4,6 +4,20 @@
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { m } from '../../entries/index.js';
+
+/** 本页可见文案（渲染期取词：写成函数，模块加载时不取词）。 */
+function pageText() {
+  return {
+    k001: m('skill-home.setup-pages-import-restore.c001'),
+    k002: m('skill-home.setup-pages-import-restore.c002'),
+    k003: m('skill-home.setup-pages-import-restore.c003'),
+    k004: m('skill-home.setup-pages-import-restore.c004'),
+    k005: m('skill-home.setup-pages-import-restore.c005'),
+    k006: m('skill-home.setup-pages-import-restore.c006'),
+  };
+}
+
 
 export const FAMILY = 'import_restore' as const;
 
@@ -74,6 +88,13 @@ function safetyOf(msg: string): string {
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 同形整页；fail-closed：模板缺失／标记异常即抛，不返空页。
 // 复制区走共用件（envelope 投影，三格式恒开；receipt 形 data={ok,message} 同走 buildDataText）；`ctx.command` 由交付链供给，直调缺省按本族主 key。
 export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
+  const SX = {
+    k001: m('skill-home.setup-pages-import-restore.c015'),
+    k002: m('skill-home.setup-pages-import-restore.c016'),
+    k003: m('skill-home.setup-pages-import-restore.c017'),
+    k004: m('skill-home.setup-pages-import-restore.c018'),
+  };
+  const L = pageText();
   const template = readFileSync(new URL('../../../templates/setup/import_restore.html', import.meta.url), 'utf8');
   const msg = msgOf(env);
   const isPreview = msg.includes('预告通过');
@@ -87,9 +108,9 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   };
   const stepLabel = (i: number): string => {
     const s = stepState(i);
-    return s === 'done' ? '已完成' : s === 'current' ? '进行中' : '待办';
+    return s === 'done' ? '已完成' : s === 'current' ? m('skill-home.setup-pages-import-restore.c007') : m('skill-home.setup-pages-import-restore.c008');
   };
-  const titles = ['选择文件', '校验结果', '冲突处理', '确认导入'];
+  const titles = [m('skill-home.setup-pages-import-restore.c009'), m('skill-home.setup-pages-import-restore.c010'), m('skill-home.setup-pages-import-restore.c011'), m('skill-home.setup-pages-import-restore.c012')];
   const steps = titles.map((t, i) => '<div class="su-step" data-status="'
     + stepState(i) + '"><b>' + (i + 1) + '</b>' + escapeHtml(t)
     + '<i>' + stepLabel(i) + '</i></div>').join('');
@@ -128,10 +149,10 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '<div class="su-steps" data-need="done" data-extra="current">' + steps + '</div>'
     + '<h2 data-need="校验项">校验结果</h2>'
     + '<div class="su-tablewrap"><table class="su-table">'
-    + '<tr><th>备份中物品</th><td>' + (nums.backup === '—' ? '—' : escapeHtml(nums.backup) + ' 件') + '</td></tr>'
-    + '<tr><th>当前库物品</th><td>' + (nums.current === '—' ? '—' : escapeHtml(nums.current) + ' 件') + '</td></tr>'
-    + (isDone ? '<tr><th>导入后物品</th><td>' + (nums.after === '—' ? '—' : escapeHtml(nums.after) + ' 件') + '</td></tr>' : '')
-    + (safety !== '' ? '<tr><th>恢复前备份</th><td>' + escapeHtml(safety) + '</td></tr>' : '')
+    + '<tr><th>备份中物品</th><td>' + (nums.backup === '—' ? '—' : m('skill-home.setup-pages-import-restore.c013', { p0: String(escapeHtml(nums.backup)) })) + '</td></tr>'
+    + '<tr><th>当前库物品</th><td>' + (nums.current === '—' ? '—' : m('skill-home.setup-pages-import-restore.c014', { p0: String(escapeHtml(nums.current)) })) + '</td></tr>'
+    + (isDone ? '<tr>' + '<th>' + L.k001 + '</th>' + '<td>' + (nums.after === '—' ? '—' : escapeHtml(nums.after) + L.k002) + '</td>' + '</tr>' : '')
+    + (safety !== '' ? '<tr>' + '<th>' + L.k003 + '</th>' + '<td>' + escapeHtml(safety) + '</td>' + '</tr>' : '')
     + '</table></div>'
     + '<h2 data-need="冲突名单">冲突处理</h2>'
     + '<div class="su-tablewrap" data-need="冲突处理下拉"><table class="su-table">'
@@ -143,10 +164,10 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '<p class="su-note" hidden data-need="冲突超10条折叠">只看前十条，其余只报总数。</p>'
     + '<h2 data-need="导入结果">导入结果</h2>'
     + (isDone
-      ? '<p>导入完成，当前库已经是备份里的样子。想反悔就用恢复前那份自动备份恢复回去。</p>'
+      ? '<p>' + L.k004 + '</p>'
       : isPreview
-        ? '<p>预告通过，数字对得上就可以确认导入，确认前库里的数据原样不动。</p>'
-        : '<p>还没有选择文件，先走预告看看这份备份里有多少东西，再决定导不导入。</p>')
+        ? '<p>' + L.k005 + '</p>'
+        : '<p>' + L.k006 + '</p>')
     + '</section>'
     + '<section class="su-sec" data-block="operations">'
     + '<h2>可以做的操作</h2>'
@@ -181,9 +202,9 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '<script>'
     + 'function suToast(t){var el=document.getElementById("suToast");if(!el)return;el.textContent=t;el.classList.add("show");setTimeout(function(){el.classList.remove("show")},3500)}'
     + 'function suCopy(text,ok){function fb(){try{var ta=document.createElement("textarea");ta.value=text;document.body.appendChild(ta);ta.select();var ok=false;try{ok=document.execCommand("copy")}catch(e){}document.body.removeChild(ta);return ok}catch(e){return false}}'
-    + 'if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(function(){suToast(ok)}).catch(function(){suToast(fb()?ok:"复制失败，请长按手动复制")})}else{suToast(fb()?ok:"复制失败，请长按手动复制")}}'
-    + 'document.querySelectorAll("[data-t]").forEach(function(b){b.addEventListener("click",function(){suCopy(b.getAttribute("data-t"),"指令已复制，发给助手即可执行")})});'
-    + 'var kd=document.getElementById("suKnow");if(kd)kd.addEventListener("click",function(){suToast("收到")});'
+    + "if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(function(){suToast(ok)}).catch(function(){suToast(fb()?ok:\"" + SX.k001 + "\")})}else{suToast(fb()?ok:\"" + SX.k002 + "\")}}"
+    + "document.querySelectorAll(\"[data-t]\").forEach(function(b){b.addEventListener(\"click\",function(){suCopy(b.getAttribute(\"data-t\"),\"" + SX.k003 + "\")})});"
+    + "var kd=document.getElementById(\"suKnow\");if(kd)kd.addEventListener(\"click\",function(){suToast(\"" + SX.k004 + "\")});"
     + '</script>';
   return fillTemplate(template, content);
 }

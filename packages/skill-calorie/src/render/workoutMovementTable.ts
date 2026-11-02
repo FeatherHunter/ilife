@@ -26,6 +26,7 @@ import { TYPE_ZH as TYPE_ZH_SRC } from '../workout/movementType.js';
 import { renderDataTable } from 'base-paint/blocks';
 import { PART_CLASS, PART_FALLBACK_CLASS } from './workoutPlanCss.js';
 import type { PlanMovement } from '../workout/planStore.js';
+import { m } from '../entries/index.js';
 
 /** 库里缺的字段一律写短横线，不印空白格（老页同口径）；页面的缺值记号以本件为唯一出处，
  *  装配件 `./workoutPlanDocs.ts` 从这里取（别的族各写各的，不去碰）。 */
@@ -42,21 +43,21 @@ function cell(value: string | undefined): string {
 
 /** 组数×次数（组数＝`sets.length`，次数＝`sets[].reps`）：同重复数写「3组×12次」，
  *  逐组不同写「3组×10／12次」；库里没有 `sets` 写短横线。（口径随迁，未改。） */
-function setsText(m: PlanMovement): string {
-  const sets = m.sets ?? [];
+function setsText(move: PlanMovement): string {
+  const sets = move.sets ?? [];
   if (sets.length === 0) return DASH;
   const reps = [...new Set(sets.map((s) => s.reps))];
-  return sets.length + '组×' + reps.join('／') + '次';
+  return m('skill-calorie.render-workoutMovementTable.c001', { p0: String(sets.length), p1: String(reps.join('／')) });
 }
 
 /** 重量（重量＝`sets[].weight` ＋ `unit`）：逐组同一写「35kg」，逐组不同写「30／35kg」；
  *  逐组都没有正数重量时，单位是 `kg`／`自重` 写「自重」、其余写短横线。（口径随迁，未改。） */
-function weightText(m: PlanMovement): string {
-  const sets = m.sets ?? [];
+function weightText(move: PlanMovement): string {
+  const sets = move.sets ?? [];
   if (sets.length === 0) return DASH;
   const unit = sets[0].unit;
   const weights = [...new Set(sets.map((s) => s.weight))];
-  if (!weights.some((w) => w > 0)) return unit === 'kg' || unit === '自重' ? '自重' : DASH;
+  if (!weights.some((w) => w > 0)) return unit === 'kg' || unit === '自重' ? m('skill-calorie.render-workoutMovementTable.c002') : DASH;
   return weights.join('／') + unit;
 }
 
@@ -79,7 +80,7 @@ function splitNote(note: string | undefined): { detail: string; tempo: string } 
  *  处置：先把裸词按同一张表中文化，再删掉那个与第二段**同字**的词；其余逐字保留、不吞。
  *  例：`背 iso 主` → `背 主`（副行读作「背 主 · 孤立」）；`背 iso 补充` → `背 补充`；`胸整体` 一字不动。 */
 function detailWord(raw: string, typeZh: string): string {
-  const words = raw.split(/\s+/).filter((w) => w !== '').map((w) => TYPE_ZH[w] ?? w);
+  const words = raw.split(/\s+/).filter((w) => w !== '').map((w) => TYPE_ZH()[w] ?? w);
   if (typeZh !== '') {
     const dup = words.indexOf(typeZh);
     if (dup >= 0) words.splice(dup, 1);
@@ -92,10 +93,10 @@ function detailWord(raw: string, typeZh: string): string {
  *  改成两颗标签排一行（浅底＝细化词、淡主色＝类型），扫读时类型一列自成一路。
  *  共享口径行 `renderCaliberLine` 是纯文本单参、会转义，装不下标签，故本页自落一行（样式在
  *  `./workoutPlanCss.ts` 的 `.ilw-sub`，字号与共享口径行同值 12px／`--fg2`）。 */
-function subLine(m: PlanMovement): string {
-  const type = cell(m.type);
-  const zh = type === DASH ? '' : TYPE_ZH[type] ?? type;
-  const detail = detailWord(splitNote(m.note).detail, zh);
+function subLine(move: PlanMovement): string {
+  const type = cell(move.type);
+  const zh = type === DASH ? '' : TYPE_ZH()[type] ?? type;
+  const detail = detailWord(splitNote(move.note).detail, zh);
   const bits = [
     detail === '' ? '' : '<span class="ilw-sub-detail">' + escapeHtml(detail) + '</span>',
     zh === '' ? '' : '<span class="ilw-sub-type">' + escapeHtml(zh) + '</span>',
@@ -127,18 +128,18 @@ function fill(html: string, placeholder: string, block: string): string {
 
 /** 四列动作明细表（动作｜部位｜组数×次数｜重量）。零动作走 `renderDataTable` 的空态，不印空表。 */
 export function movementTableHtml(moves: readonly PlanMovement[]): string {
-  const rows = moves.map((m, i) => ({
-    move: mark(i), part: partMark(i), sets: setsText(m), weight: weightText(m),
+  const rows = moves.map((mv, i) => ({
+    move: mark(i), part: partMark(i), sets: setsText(mv), weight: weightText(mv),
   }));
   let html = renderDataTable({
     columns: [
-      { key: 'move', label: '动作' },
-      { key: 'part', label: '部位' },
-      { key: 'sets', label: '组数×次数', align: 'right' },
-      { key: 'weight', label: '重量', align: 'right' },
+      { key: 'move', label: m('skill-calorie.render-workoutMovementTable.c003') },
+      { key: 'part', label: m('skill-calorie.render-workoutMovementTable.c004') },
+      { key: 'sets', label: m('skill-calorie.render-workoutMovementTable.c005'), align: 'right' },
+      { key: 'weight', label: m('skill-calorie.render-workoutMovementTable.c006'), align: 'right' },
     ],
     rows,
-    emptyText: '本场无动作明细',
+    emptyText: m('skill-calorie.render-workoutMovementTable.c007'),
   });
   for (let i = 0; i < moves.length; i += 1) {
     html = fill(html, mark(i), '<strong>' + escapeHtml(cell(moves[i].name)) + '</strong>' + subLine(moves[i]));

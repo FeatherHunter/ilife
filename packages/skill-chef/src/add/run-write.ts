@@ -13,6 +13,7 @@ import { canonicalRecipeName, mustRecipe, now, qGet, qRun, toIngredient, toStep 
 import { needName, validateCategory } from '../policy/index.js';
 import { buildRecipeReceipt } from '../render/index.js';
 import { pickNum, pickStr, resolveRecipeId } from '../shared/slots.js';
+import { m } from '../entries/index.js';
 
 /** 写入前预检（原子性：校验不过就不落盘，不写半条脏数据）。
  *
@@ -80,7 +81,7 @@ export function runRecipeWriteAdd(handle: ChefDb, params: Record<string, unknown
         if (s && typeof s === 'object') addStep(handle, r.id, s as never);
       }
     }
-    return buildRecipeReceipt('已新增菜谱：' + r.name + '（id=' + r.id + '）');
+    return buildRecipeReceipt(m('skill-chef.add-run-write.c001', { p0: String(r.name), p1: String(r.id) }));
   }
   if (op === 'add-ingredient') {
     const recipeId = resolveRecipeId(handle, params);
@@ -98,7 +99,7 @@ export function runRecipeWriteAdd(handle: ChefDb, params: Record<string, unknown
     }
     if (params.is_optional !== undefined) input.is_optional = params.is_optional === true || params.is_optional === 1 ? 1 : 0;
     const g = addIngredient(handle, recipeId, input);
-    return buildRecipeReceipt('已加食材：' + g.name + '（菜 id=' + recipeId + '）');
+    return buildRecipeReceipt(m('skill-chef.add-run-write.c002', { p0: String(g.name), p1: String(recipeId) }));
   }
   if (op === 'add-step') {
     const recipeId = resolveRecipeId(handle, params);
@@ -114,7 +115,7 @@ export function runRecipeWriteAdd(handle: ChefDb, params: Record<string, unknown
       input.duration_minutes = n === undefined ? null : n;
     }
     const s = addStep(handle, recipeId, input);
-    return buildRecipeReceipt('已加步骤' + s.sequence + '：' + s.action);
+    return buildRecipeReceipt(m('skill-chef.add-run-write.c003', { p0: String(s.sequence), p1: String(s.action) }));
   }
   // 不可达：入口注册表已用 `parseWriteOpCompat` 同集合拦过非法 op（原分支尾的 fail 同语义，归口径错 exit 2）。
   throw new ChefPolicyError('POLICY_BAD_INPUT', 'recipe.write 只接受 op=add/update/discard/add-ingredient/add-step');

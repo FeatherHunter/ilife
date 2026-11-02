@@ -34,23 +34,26 @@ import { nowStamp } from '../render/receipt.js';
 import { copyArea, copyLog } from '../shared/copyArea.js';
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import type { GoalDraft } from './set.js';
+import { m } from '../entries/index.js';
 
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
-const DOC_TITLE = '卡路里·目标预检';
+
 /** 本页由哪条命令产出（写进「复制日志」第 4 段，可照抄重跑）。 */
 const WIZARD_KEY = 'calorie.view.goal-wizard';
 /** 数据来源一句话（页面上给用户看的「这份数是哪来的」）。 */
 const GOAL_SOURCE = 'daily_goal ＋ user_profile ＋ weight_log';
 
 /** 营养五项：字段名与中文标签（老配置页的 label 逐字），上限写进 hint 供页面显示。 */
-const NUTRI_FIELDS = [
-  { name: 'calorie', label: '热量(卡)', hint: '上限 4550，步进 5' },
-  { name: 'protein', label: '蛋白(g)', hint: '上限 300' },
-  { name: 'carbs', label: '碳水(g)', hint: '上限 500' },
-  { name: 'fat', label: '脂肪(g)', hint: '上限 150' },
-  { name: 'water', label: '饮水(ml)', hint: '上限 6000，步进 100' },
-] as const;
+function nutriFields(): { name: string; label: string; hint: string }[] {
+  return [
+    { name: 'calorie', label: m('skill-calorie.goal-precheck.c076'), hint: m('skill-calorie.goal-precheck.c077') },
+    { name: 'protein', label: m('skill-calorie.goal-precheck.c078'), hint: m('skill-calorie.goal-precheck.c079') },
+    { name: 'carbs', label: m('skill-calorie.goal-precheck.c080'), hint: m('skill-calorie.goal-precheck.c081') },
+    { name: 'fat', label: m('skill-calorie.goal-precheck.c082'), hint: m('skill-calorie.goal-precheck.c083') },
+    { name: 'water', label: m('skill-calorie.goal-precheck.c084'), hint: m('skill-calorie.goal-precheck.c085') },
+  ];
+}
 
 /** 预检确认页的入参（≤5 字段）。 */
 export interface GoalPrecheckView {
@@ -65,24 +68,24 @@ export interface GoalPrecheckView {
 
 /** 一格草稿值 → 表格里的展示串；没值就写同一个词「未设置」（不在页面上编 0）。 */
 function cellOf(v: number | null | undefined, unit: string): string {
-  return v === null || v === undefined ? '未设置' : String(v) + unit;
+  return v === null || v === undefined ? m('skill-calorie.goal-precheck.c001') : String(v) + unit;
 }
 
 /** 现值的五项表（改前基准）。老技能把它摆在页首，本页同位置。 */
 function currentTable(d: GoalDraft): string {
   const c = d.current;
   return renderDataTable({
-    columns: [{ key: 'k', label: '项' }, { key: 'v', label: '库内现值' }],
+    columns: [{ key: 'k', label: m('skill-calorie.goal-precheck.c002') }, { key: 'v', label: m('skill-calorie.goal-precheck.c003') }],
     rows: [
-      { k: '热量(卡)', v: cellOf(c?.calorie_goal, ' 卡') },
-      { k: '蛋白(g)', v: cellOf(c?.protein_goal, ' g') },
-      { k: '碳水(g)', v: cellOf(c?.carbs_goal, ' g') },
-      { k: '脂肪(g)', v: cellOf(c?.fat_goal, ' g') },
-      { k: '饮水(ml)', v: cellOf(c?.water_goal, ' ml') },
-      { k: '体重目标(kg)', v: cellOf(c?.weight_goal, ' kg') },
-      { k: '截止日期', v: c?.goal_deadline ?? '未设置' },
+      { k: m('skill-calorie.goal-precheck.c004'), v: cellOf(c?.calorie_goal, m('skill-calorie.goal-precheck.c005')) },
+      { k: m('skill-calorie.goal-precheck.c006'), v: cellOf(c?.protein_goal, ' g') },
+      { k: m('skill-calorie.goal-precheck.c007'), v: cellOf(c?.carbs_goal, ' g') },
+      { k: m('skill-calorie.goal-precheck.c008'), v: cellOf(c?.fat_goal, ' g') },
+      { k: m('skill-calorie.goal-precheck.c009'), v: cellOf(c?.water_goal, ' ml') },
+      { k: m('skill-calorie.goal-precheck.c010'), v: cellOf(c?.weight_goal, ' kg') },
+      { k: m('skill-calorie.goal-precheck.c011'), v: c?.goal_deadline ?? m('skill-calorie.goal-precheck.c012') },
     ],
-    caption: '改前基准：本页只摆现值，不替 AI 算最终对比',
+    caption: m('skill-calorie.goal-precheck.c013'),
   });
 }
 
@@ -112,9 +115,9 @@ function fillForm(d: GoalDraft): string {
   };
   return renderParamForm({
     description: r === null
-      ? '档案不齐，本页不出推荐值；下面是我按库内现值预填的，请直接改成你要的值'
-      : '下面是我按档案算的推荐值，请核对后改成你要的值',
-    fields: NUTRI_FIELDS.map((f) => ({ name: f.name, label: f.label, hint: f.hint, value: valueOf(rec(f.name), cur(f.name)) })),
+      ? m('skill-calorie.goal-precheck.c014')
+      : m('skill-calorie.goal-precheck.c015'),
+    fields: nutriFields().map((f) => ({ name: f.name, label: f.label, hint: f.hint, value: valueOf(rec(f.name), cur(f.name)) })),
   });
 }
 
@@ -123,19 +126,21 @@ function fillForm(d: GoalDraft): string {
 function weightBlock(d: GoalDraft): string {
   const w = d.weight;
   const rows = [
-    { k: '目标体重(kg)', v: cellOf(w.targetKg, ' kg') },
-    { k: '起点体重(kg)', v: w.startKg === null ? '未设置（按最近体重）' : w.startKg + ' kg' },
-    { k: '起始日', v: w.startDate ?? '未设置' },
-    { k: '截止日期', v: w.deadline ?? '未设置' },
-    { k: '最近体重(kg)', v: cellOf(w.latestKg, ' kg') },
-    { k: '还差(kg)', v: w.gapKg === null ? '不算（缺目标或缺体重）' : String(w.gapKg) + ' kg' },
-    { k: '剩余天数', v: w.daysLeft === null ? '不算（没有截止日）' : String(w.daysLeft) + ' 天' },
+    { k: m('skill-calorie.goal-precheck.c016'), v: cellOf(w.targetKg, ' kg') },
+    { k: m('skill-calorie.goal-precheck.c017'), v: w.startKg === null ? m('skill-calorie.goal-precheck.c018') : w.startKg + ' kg' },
+    { k: m('skill-calorie.goal-precheck.c019'), v: w.startDate ?? m('skill-calorie.goal-precheck.c020') },
+    { k: m('skill-calorie.goal-precheck.c021'), v: w.deadline ?? m('skill-calorie.goal-precheck.c022') },
+    { k: m('skill-calorie.goal-precheck.c023'), v: cellOf(w.latestKg, ' kg') },
+    { k: m('skill-calorie.goal-precheck.c024'), v: w.gapKg === null ? m('skill-calorie.goal-precheck.c025') : String(w.gapKg) + ' kg' },
+    { k: m('skill-calorie.goal-precheck.c026'), v: w.daysLeft === null ? m('skill-calorie.goal-precheck.c027') : m('skill-calorie.goal-precheck.c028', { p0: String(String(w.daysLeft)) }) },
     {
-      k: '需要的每日调整',
-      v: w.requiredDailyKcal === null ? '不算（缺截止日或缺体重）' : (w.requiredDailyKcal >= 0 ? '-' : '+') + Math.abs(w.requiredDailyKcal) + ' 卡/天',
+      k: m('skill-calorie.goal-precheck.c029'),
+      v: w.requiredDailyKcal === null ? m('skill-calorie.goal-precheck.c030') : m('skill-calorie.goal-precheck.c031', {
+        p0: String((w.requiredDailyKcal >= 0 ? '-' : '+') + Math.abs(w.requiredDailyKcal)),
+      }),
     },
   ];
-  const tables = [renderDataTable({ columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }], rows })];
+  const tables = [renderDataTable({ columns: [{ key: 'k', label: m('skill-calorie.goal-precheck.c032') }, { key: 'v', label: m('skill-calorie.goal-precheck.c033') }], rows })];
   if (w.rateWarning !== null) tables.push('<p>' + w.rateWarning + '</p>');
   return tables.join('');
 }
@@ -165,7 +170,7 @@ function copyZone(v: GoalPrecheckView, envelope: SerializableEnvelope): string {
         copyLog: { actionId: CALORIE_COPY_ACTION.actionId, label: CALORIE_COPY_ACTION.label, text: v.prompt },
       });
   return instruction + copyArea({
-    data: { envelope, title: '【calorie 目标预检】' },
+    data: { envelope, title: m('skill-calorie.goal-precheck.c034') },
     log: {
       envelope,
       copyLog: copyLog({
@@ -186,65 +191,67 @@ export function buildGoalPrecheckDoc(v: GoalPrecheckView): string {
         hasGoal: d.current === null ? 0 : 1,
         recommendReady: d.recommend === null ? 0 : 1,
         missingCount: d.energy.missing.length,
-        fillCount: NUTRI_FIELDS.length,
+        fillCount: nutriFields().length,
       }),
     },
   };
   const r = d.recommend;
+  const missingPart = d.energy.missing.join('／') || m('skill-calorie.goal-precheck.c035');
   const cards: KpiCardInput[] = [
-    { label: '写入词', value: v.wakeWord ?? '全部写词', detail: v.wakeWord ? '填好表再复制指令' : '定目标／改目标共 13 条写词' },
+    { label: m('skill-calorie.goal-precheck.c036'), value: v.wakeWord ?? m('skill-calorie.goal-precheck.c037'), detail: v.wakeWord ? m('skill-calorie.goal-precheck.c038') : m('skill-calorie.goal-precheck.c039') },
     {
-      label: '改前值',
-      value: d.current === null ? '未设置' : '有',
-      detail: d.current === null ? '空库：本次是首次设目标' : '库里已有目标，下面「库内现值」就是改前基准',
+      label: m('skill-calorie.goal-precheck.c040'),
+      value: d.current === null ? m('skill-calorie.goal-precheck.c041') : m('skill-calorie.goal-precheck.c042'),
+      detail: d.current === null ? m('skill-calorie.goal-precheck.c043') : m('skill-calorie.goal-precheck.c044'),
     },
     {
-      label: '推荐',
-      value: d.profileLabel ?? '不推荐',
+      label: m('skill-calorie.goal-precheck.c045'),
+      value: d.profileLabel ?? m('skill-calorie.goal-precheck.c046'),
       detail: r === null
-        ? (d.profile === null ? '本条词要你直接给值' : '档案缺' + (d.energy.missing.join('／') || '项') + '，不出推荐数字')
-        : 'TDEE ' + r.tdee + ' 卡 × 系数 ' + r.factor,
+        ? (d.profile === null ? m('skill-calorie.goal-precheck.c047') : m('skill-calorie.goal-precheck.c048', { p0: String(missingPart) }))
+        : m('skill-calorie.goal-precheck.c049', { p0: String(r.tdee), p1: String(r.factor) }),
     },
   ];
+  const missingNote = d.profile === null
+          ? m('skill-calorie.goal-precheck.c050')
+          : m('skill-calorie.goal-precheck.c086', { p0: d.energy.missing.join('／') });
   const content = [
     renderKpiGrid(cards),
-    renderDisclosure({ title: '库内现值（改前基准）', contentHtml: currentTable(d), open: true }),
-    renderDisclosure({ title: '营养 5 项（要填的项）', contentHtml: fillForm(d), open: true }),
+    renderDisclosure({ title: m('skill-calorie.goal-precheck.c051'), contentHtml: currentTable(d), open: true }),
+    renderDisclosure({ title: m('skill-calorie.goal-precheck.c052'), contentHtml: fillForm(d), open: true }),
     r === null
       ? renderDisclosure({
-        title: '推荐方案',
-        contentHtml: '<p>' + (d.profile === null
-          ? '本条写入词要你直接给值，不算推荐。'
-          : '档案里缺 ' + d.energy.missing.join('／') + '，<b>不算推荐数字</b>——补上档案与体重记录再回来，或直接手填下面 5 项。') + '</p>',
+        title: m('skill-calorie.goal-precheck.c053'),
+        contentHtml: '<p>' + missingNote + '</p>',
         open: true,
       })
       : renderDisclosure({
-        title: '推荐方案与依据（' + (d.profileLabel ?? '') + '）',
+        title: m('skill-calorie.goal-precheck.c054', { p0: String(d.profileLabel ?? '') }),
         contentHtml: renderDataTable({
-          columns: [{ key: 'k', label: '项' }, { key: 'v', label: '推荐值' }],
+          columns: [{ key: 'k', label: m('skill-calorie.goal-precheck.c055') }, { key: 'v', label: m('skill-calorie.goal-precheck.c056') }],
           rows: [
-            { k: '热量(卡)', v: r.calorieGoal + ' 卡' },
-            { k: '蛋白(g)', v: r.proteinGoal + ' g' },
-            { k: '碳水(g)', v: r.carbsGoal + ' g' },
-            { k: '脂肪(g)', v: r.fatGoal + ' g' },
-            { k: '饮水(ml)', v: r.waterGoal + ' ml' },
-            { k: 'BMR(卡)', v: r.bmr + ' 卡' },
-            { k: 'TDEE(卡)', v: r.tdee + ' 卡' },
-            { k: '自洽性', v: r.selfCheck.consistent ? '通过（差 ' + r.selfCheck.diffKcal + ' 卡）' : '不通过（差 ' + r.selfCheck.diffKcal + ' 卡，>50 建议复核）' },
+            { k: m('skill-calorie.goal-precheck.c057'), v: m('skill-calorie.goal-precheck.c058', { p0: String(r.calorieGoal) }) },
+            { k: m('skill-calorie.goal-precheck.c059'), v: r.proteinGoal + ' g' },
+            { k: m('skill-calorie.goal-precheck.c060'), v: r.carbsGoal + ' g' },
+            { k: m('skill-calorie.goal-precheck.c061'), v: r.fatGoal + ' g' },
+            { k: m('skill-calorie.goal-precheck.c062'), v: r.waterGoal + ' ml' },
+            { k: m('skill-calorie.goal-precheck.c063'), v: m('skill-calorie.goal-precheck.c064', { p0: String(r.bmr) }) },
+            { k: m('skill-calorie.goal-precheck.c065'), v: m('skill-calorie.goal-precheck.c066', { p0: String(r.tdee) }) },
+            { k: m('skill-calorie.goal-precheck.c067'), v: r.selfCheck.consistent ? m('skill-calorie.goal-precheck.c068', { p0: String(r.selfCheck.diffKcal) }) : m('skill-calorie.goal-precheck.c069', { p0: String(r.selfCheck.diffKcal) }) },
           ],
-          caption: '推荐依据',
+          caption: m('skill-calorie.goal-precheck.c070'),
         }) + '<ul>' + r.planReasons.map((s) => '<li>' + s + '</li>').join('') + '</ul>',
         open: true,
       }),
-    renderDisclosure({ title: '体重目标（目标／起始日／截止日／速率校验）', contentHtml: weightBlock(d), open: false }),
+    renderDisclosure({ title: m('skill-calorie.goal-precheck.c071'), contentHtml: weightBlock(d), open: false }),
     // 本页唯一的复制区：指令 ＋ 数据 ＋ 日志三通道、三颗按钮（见 `copyZone` 的注释）。
     copyZone(v, envelope),
   ].join('');
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '目标预检',
-    eyebrow: '目标管理 · 预检确认',
-    subtitle: '这一页只做预检、不写目标；确认下面的值无误后，把指令复制给 AI 执行',
+    docTitle: m('skill-calorie.goal-precheck.c075'),
+    title: m('skill-calorie.goal-precheck.c072'),
+    eyebrow: m('skill-calorie.goal-precheck.c073'),
+    subtitle: m('skill-calorie.goal-precheck.c074'),
     content,
     pageUi: true,
   });

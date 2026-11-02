@@ -15,6 +15,7 @@ import { shiftISODate } from '../analysis/utils.js';
 import { round2 } from '../kcal.js';
 import { FetchError } from '../fetch/errors.js';
 import { CalorieRenderError } from './errors.js';
+import { m } from '../entries/index.js';
 
 function assertRange(start: string, end: string): void {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(start) || !/^\d{4}-\d{2}-\d{2}$/.test(end)) {
@@ -51,7 +52,7 @@ function toPortRow(r: ExerciseRow): PortRow {
   return {
     date: String(r.date),
     time: r.time === null || r.time === undefined ? null : String(r.time),
-    type: String(r.exercise_type ?? '未知'),
+    type: String(r.exercise_type ?? m('skill-calorie.render-exercisePort.c001')),
     minutes: num(r.duration_minutes),
     burned: num(r.calories_burned) ?? 0,
     category: effectiveCategory(r),
@@ -254,7 +255,7 @@ export function buildDistributionView(db: DatabaseSync, start: string, end: stri
   const acc = new Map<string, { sessions: number; burned: number; minutes: number; minKnown: boolean }>();
   let totalBurned = 0;
   for (const r of rows) {
-    const cat = KNOWN_CATS.includes(r.category) ? r.category : '其他';
+    const cat = KNOWN_CATS.includes(r.category) ? r.category : m('skill-calorie.render-exercisePort.c002');
     const b = acc.get(cat) ?? { sessions: 0, burned: 0, minutes: 0, minKnown: false };
     b.sessions += 1;
     b.burned = round2(b.burned + r.burned);
@@ -265,7 +266,7 @@ export function buildDistributionView(db: DatabaseSync, start: string, end: stri
     acc.set(cat, b);
     totalBurned = round2(totalBurned + r.burned);
   }
-  const order = [...KNOWN_CATS, '其他'].filter((c) => acc.has(c));
+  const order = [...KNOWN_CATS, m('skill-calorie.render-exercisePort.c003')].filter((c) => acc.has(c));
   const buckets: DistributionBucket[] = order.map((c) => {
     const b = acc.get(c) as { sessions: number; burned: number; minutes: number; minKnown: boolean };
     return {
@@ -344,12 +345,19 @@ export function buildRecapView(db: DatabaseSync, start: string, end: string): Re
   const peak = series
     .filter((d) => d.exerciseKcal !== null)
     .sort((a, b) => (b.exerciseKcal as number) - (a.exerciseKcal as number))[0];
-  const summary = `本窗 ${series.length} 天中共运动 ${daySetOf(rows).size} 天、${rows.length} 次、` +
-    `累计消耗 ${totalBurned} 卡` +
-    (topCat ? `；${topCat[0]}类为主（${topCat[1].sessions} 次）` : '') +
-    (top5[0] ? `；最高频为${top5[0].type}（${top5[0].sessions} 次）` : '') +
-    (peak && peak.exerciseKcal !== null ? `；单日峰值 ${peak.date}（${peak.exerciseKcal} 卡）` : '') +
-    '。';
+  /* #1197 §4.7：条件分枝先落成局部变量，整句才好迁成 m(key, {...})。 */
+  const catClause = topCat ? m('skill-calorie.render-exercisePort.c004', { p0: String(topCat[0]), p1: String(topCat[1].sessions) }) : '';
+  const freqClause = top5[0] ? m('skill-calorie.render-exercisePort.c005', { p0: String(top5[0].type), p1: String(top5[0].sessions) }) : '';
+  const peakClause = peak && peak.exerciseKcal !== null ? m('skill-calorie.render-exercisePort.c006', { p0: String(peak.date), p1: String(peak.exerciseKcal) }) : '';
+  const summary = m('skill-calorie.render-exercisePort.c007', {
+    p0: String(series.length),
+    p1: String(daySetOf(rows).size),
+    p2: String(rows.length),
+    p3: String(totalBurned),
+    p4: String(catClause),
+    p5: String(freqClause),
+    p6: String(peakClause),
+  });
   return {
     start,
     end,

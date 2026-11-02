@@ -39,36 +39,37 @@ import type { DataTextInput } from 'base-paint';
 import type { DedupeView } from '../render/insightPlate.js';
 import type { ProductLibrary, ProductSearch } from './libraryPlate.js';
 import type { ProductRow } from './productStore.js';
+import { m } from '../entries/index.js';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；测试钉死一致）。 */
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
 
 /** head 标题（各老实物 `<title>` 逐字：查食品／食品库同走 `food_search.html`，去重页走 `dedupe_report.html`）。 */
-const DOC_TITLE_SEARCH = '卡路里食物热量查询';
-const DOC_TITLE_DEDUPE = '卡路里食品库去重';
+const DOC_TITLE_SEARCH = (): string => m('skill-calorie.diet-libraryDocs.c058');
+const DOC_TITLE_DEDUPE = (): string => m('skill-calorie.diet-libraryDocs.c059');
 
 /** 类型徽章（`t425` §五 第 1 行右槽）：本类三页同属食品库。 */
-const BADGE = '食品库';
+const BADGE = (): string => m('skill-calorie.diet-libraryDocs.c060');
 
 /** 老实物「来源」缺失时的显示兜底（`it.source || '未知'`）。 */
-const UNKNOWN_SOURCE = '未知';
+const UNKNOWN_SOURCE = (): string => m('skill-calorie.diet-libraryDocs.c061');
 
 /** 老实物的缺值破折号（与 `render/dietDocs.ts` 同字面）。 */
 const DASH = '—';
 
 /** 口径说明行（§五 第 ⑬ 行）：这一页的数是怎么来的、单位是什么（#581 起一条一行）。 */
-const CALIBER_FOOD = ['营养值都是每 100 克。', '只列没有下架的食品。'];
+const CALIBER_FOOD = (): string[] => [m('skill-calorie.diet-libraryDocs.c062'), m('skill-calorie.diet-libraryDocs.c063')];
 /** 去重页的口径行照老实物 `.footer .src`（「名称和品牌都一样的算重复」）＋下架口径（同上一条一行）。 */
-const CALIBER_DEDUPE = ['判定标准：名称和品牌都一样的算重复。', '已下架的食品不算，也不会出现在这张表里。'];
+const CALIBER_DEDUPE = (): string[] => [m('skill-calorie.diet-libraryDocs.c064'), m('skill-calorie.diet-libraryDocs.c065')];
 
 /** 数据来源脚注（§五 第 ⑮ 行）：库名 ＋ 在架条数（老实物 `.footer .src` 的库名 · 表名在 #496 已换人话）。 */
 function sourceNote(count: number): string {
-  return '📊 数据来源：本机食品库 · 在架食品共 ' + count + ' 条';
+  return m('skill-calorie.diet-libraryDocs.c001', { p0: String(count) });
 }
 
 /** 复制日志第 3 段后半（数据结构）：本类三页的取数面同一处。 */
-const LOG_SOURCE = DB_FILENAME + ' ｜ 食品库（在架食品）';
+const LOG_SOURCE = (): string => m('skill-calorie.diet-libraryDocs.c066', { p0: String(DB_FILENAME) });
 
 /** 食品卡片格样式（局部 CSS；类名只在 `renderFoodGrid` 产出的片段上出现）。 */
 const FOOD_CSS = [
@@ -111,20 +112,20 @@ function renderFoodGrid(items: readonly ProductRow[], withUpdatedAt: boolean): s
   if (items.length === 0) {
     return emptyGuide({
       icon: '🔍',
-      text: '没有找到匹配的食品',
-      hint: '换个关键词或分类试试。库里还没有的话，说「存食品」就能加进第一条。',
+      text: m('skill-calorie.diet-libraryDocs.c002'),
+      hint: m('skill-calorie.diet-libraryDocs.c003'),
     });
   }
   const cards = items.map((it) => {
     const macros = [
-      { label: '热量', value: fixed0(it.calories) + ' 卡' },
+      { label: m('skill-calorie.diet-libraryDocs.c004'), value: m('skill-calorie.diet-libraryDocs.c005', { p0: String(fixed0(it.calories)) }) },
       { label: '蛋白', value: fixed1(it.protein) + ' 克' },
       { label: '脂肪', value: fixed1(it.fat) + ' 克' },
       { label: '碳水', value: fixed1(it.carbohydrates) + ' 克' },
     ];
     /* #581 · 来源行去间隔号：一行一键值（来源一行、更新于另起一行）。#633 种子内部名「测试」屏上改印「内置食品」（缺值仍归「未知」）。
        #587 C项时间到分：屏上取到分（slice 0,16）；复制载荷机器时间保持秒级（copyLog 仍传完整）。 */
-    let source = '<div class="food-src">来源：' + escapeHtml(it.source === '测试' ? '内置食品' : (it.source || UNKNOWN_SOURCE)) + '</div>';
+    let source = '<div class="food-src">来源：' + escapeHtml(it.source === '测试' ? m('skill-calorie.diet-libraryDocs.c006') : (it.source || UNKNOWN_SOURCE())) + '</div>';
     if (withUpdatedAt && it.updated_at) {
       source += '<div class="food-src">更新于 ' + escapeHtml(String(it.updated_at).slice(0, 16)) + '</div>';
     }
@@ -169,7 +170,7 @@ function finishPage(o: {
       log: {
         envelope: o.envelope,
         copyLog: copyLog({
-          command: o.command, source: LOG_SOURCE, actionAt: nowStamp(), version: DOC_VERSION,
+          command: o.command, source: LOG_SOURCE(), actionAt: nowStamp(), version: DOC_VERSION,
         }),
       },
     }),
@@ -203,36 +204,36 @@ export function buildSearchDoc(s: ProductSearch, command: string): string {
   const cards: Card[] = [
     {
       id: 'sec-query',
-      label: '搜索',
+      label: m('skill-calorie.diet-libraryDocs.c007'),
       html: renderParamForm({
-        fields: [{ name: 'keyword', label: '关键词', value: s.keyword, hint: '输入食物关键词，如鸡胸' }],
-        description: '按名称或品牌模糊查找',
+        fields: [{ name: 'keyword', label: m('skill-calorie.diet-libraryDocs.c008'), value: s.keyword, hint: m('skill-calorie.diet-libraryDocs.c009') }],
+        description: m('skill-calorie.diet-libraryDocs.c010'),
       }),
     },
     {
       id: 'sec-count',
-      label: '匹配',
+      label: m('skill-calorie.diet-libraryDocs.c011'),
       /* 这一格的副行写成「搜索：<词>」——同一信息换个槽位承载：`test/diet-homogeneity-108.test.mjs`
          把 #496 那版副标题「搜索：鸡胸 · 找到 1 条」里的 `搜索：鸡胸` 逐字钉住了，而那条引脚在别人
          的测试件里（`t425` 裁定 11：不越界改人家的引脚，改用别的槽位）。结论句仍按裁定 2 出在标题下。 */
-      html: renderKpiGrid([{ label: '匹配', value: String(s.total), unit: '条', detail: '搜索：' + s.keyword }]),
+      html: renderKpiGrid([{ label: m('skill-calorie.diet-libraryDocs.c012'), value: String(s.total), unit: m('skill-calorie.diet-libraryDocs.c013'), detail: m('skill-calorie.diet-libraryDocs.c014', { p0: String(s.keyword) }) }]),
     },
-    { id: 'sec-list', label: '食品卡片', html: renderFoodGrid(s.items, true) },
+    { id: 'sec-list', label: m('skill-calorie.diet-libraryDocs.c015'), html: renderFoodGrid(s.items, true) },
   ];
   return assembleDocPage({
-    docTitle: DOC_TITLE_SEARCH,
-    title: '🍱 食物热量查询',
+    docTitle: DOC_TITLE_SEARCH(),
+    title: m('skill-calorie.diet-libraryDocs.c016'),
     pageUi: true,
     eyebrow: '',
     subtitle: null,
-    metaLeft: '查食品',
-    badge: BADGE,
-    summary: '在食品库里搜「' + s.keyword + '」，找到 ' + s.total + ' 条。',
+    metaLeft: m('skill-calorie.diet-libraryDocs.c017'),
+    badge: BADGE(),
+    summary: m('skill-calorie.diet-libraryDocs.c018', { p0: String(s.keyword), p1: String(s.total) }),
     content: body({
       css: FOOD_CSS,
       cards,
       command,
-      caliber: CALIBER_FOOD,
+      caliber: CALIBER_FOOD(),
       /* 页脚报的是**库内在架条数**（`s.libraryTotal`），不是本次命中数：这一格写明「在架食品共 N 条」，
          N 若取命中数，搜「鸡胸」会印成「在架食品共 1 条」（库里其实 5 条），本次零命中那一页更会印成
          「在架食品共 0 条」——两处都不是库里真有那么多。 */
@@ -250,46 +251,47 @@ export function buildSearchDoc(s: ProductSearch, command: string): string {
 
 export function buildLibraryDoc(lib: ProductLibrary, statsTotal: number, command: string): string {
   const byCategory = lib.category !== null;
+  const scopePhrase = byCategory ? m('skill-calorie.diet-libraryDocs.c019', { p0: String(lib.category) }) : m('skill-calorie.diet-libraryDocs.c020');
   const cards: Card[] = [
     {
       id: 'sec-query',
-      label: '分类',
+      label: m('skill-calorie.diet-libraryDocs.c021'),
       /* 这一页的参数是**分类名**（取数走 `listProductsByCategory` 的等值匹配），提示照实写：
          #511 那一版写「输入名称或品牌」，与本命令的取数口径不符，本次改回分类口径。 */
       html: renderParamForm({
         fields: [{
-          name: 'category', label: '分类', value: lib.category ?? '',
-          hint: '输入分类名，如主食（留空＝看全部）',
+          name: 'category', label: m('skill-calorie.diet-libraryDocs.c022'), value: lib.category ?? '',
+          hint: m('skill-calorie.diet-libraryDocs.c023'),
         }],
-        description: byCategory ? '只看这个分类的食品' : '列出库里全部在架食品，按名称排序',
+        description: byCategory ? m('skill-calorie.diet-libraryDocs.c024') : m('skill-calorie.diet-libraryDocs.c025'),
       }),
     },
     {
       id: 'sec-count',
-      label: '本页条数',
+      label: m('skill-calorie.diet-libraryDocs.c026'),
       html: renderKpiGrid([{
-        label: byCategory ? '这个分类' : '本页',
+        label: byCategory ? m('skill-calorie.diet-libraryDocs.c027') : m('skill-calorie.diet-libraryDocs.c028'),
         value: String(lib.total),
-        unit: '条',
-        detail: (byCategory ? '分类：' + lib.category : '全部食品') + '。库内共 ' + statsTotal + ' 条。',
+        unit: m('skill-calorie.diet-libraryDocs.c029'),
+        detail: m('skill-calorie.diet-libraryDocs.c030', { p0: String(scopePhrase), p1: String(statsTotal) }),
       }]),
     },
-    { id: 'sec-list', label: '食品卡片', html: renderFoodGrid(lib.items, true) },
+    { id: 'sec-list', label: m('skill-calorie.diet-libraryDocs.c031'), html: renderFoodGrid(lib.items, true) },
   ];
   return assembleDocPage({
-    docTitle: DOC_TITLE_SEARCH,
-    title: '🍱 食物热量查询',
+    docTitle: DOC_TITLE_SEARCH(),
+    title: m('skill-calorie.diet-libraryDocs.c032'),
     pageUi: true,
     eyebrow: '',
     subtitle: null,
-    metaLeft: '查食品库',
-    badge: BADGE,
+    metaLeft: m('skill-calorie.diet-libraryDocs.c033'),
+    badge: BADGE(),
     summary: librarySummary(lib, statsTotal),
     content: body({
       css: FOOD_CSS,
       cards,
       command,
-      caliber: CALIBER_FOOD,
+      caliber: CALIBER_FOOD(),
       sourceCount: statsTotal,
       envelope: {
         version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: 'calorie.view.library',
@@ -303,9 +305,9 @@ export function buildLibraryDoc(lib: ProductLibrary, statsTotal: number, command
 /** 结论句（§五 第 ③ 行，句内含本页读数）：全量那支报库内总数，按分类那支报本分类与库内总数。 */
 function librarySummary(lib: ProductLibrary, statsTotal: number): string {
   const head = lib.category === null
-    ? '食品库共 ' + statsTotal + ' 条在架食品'
-    : '分类「' + lib.category + '」下有 ' + lib.total + ' 条';
-  const tail = lib.category === null ? '，下面是全部。' : '（库内共 ' + statsTotal + ' 条）。';
+    ? m('skill-calorie.diet-libraryDocs.c034', { p0: String(statsTotal) })
+    : m('skill-calorie.diet-libraryDocs.c035', { p0: String(lib.category), p1: String(lib.total) });
+  const tail = lib.category === null ? m('skill-calorie.diet-libraryDocs.c036') : m('skill-calorie.diet-libraryDocs.c037', { p0: String(statsTotal) });
   return head + tail;
 }
 
@@ -321,11 +323,11 @@ function productCopyRow(p: ProductRow): Record<string, string | number> {
 
 /** #496 · 列名与文案改人话（审查件第 6、7、8 条）：「冗余」「重复组」都是内部词。
  *  表头 `记录编号` 是**记录号**（读者要拿它去下架／改食品，所以留着可核对）。 */
-const DEDUPE_COLUMNS: DataTableColumn[] = [
-  { key: 'name', label: '食品名' },
-  { key: 'brand', label: '品牌' },
-  { key: 'count', label: '条数', align: 'right' },
-  { key: 'ids', label: '记录编号' },
+const DEDUPE_COLUMNS = (): DataTableColumn[] => [
+  { key: 'name', label: m('skill-calorie.diet-libraryDocs.c067') },
+  { key: 'brand', label: m('skill-calorie.diet-libraryDocs.c068') },
+  { key: 'count', label: m('skill-calorie.diet-libraryDocs.c069'), align: 'right' },
+  { key: 'ids', label: m('skill-calorie.diet-libraryDocs.c070') },
 ];
 
 export function buildDedupeDoc(v: DedupeView, command: string): string {
@@ -335,58 +337,58 @@ export function buildDedupeDoc(v: DedupeView, command: string): string {
        结论句已按裁定 2 紧跟标题，这条幅仍照老实物留在正文第一块（形状属 §一 第 ⑤ 类用途列）。 */
     {
       id: 'sec-banner',
-      label: '结论',
+      label: m('skill-calorie.diet-libraryDocs.c038'),
       html: '<h3 class="dedupe-banner">' + (clean
-        ? '✅ 食品库无重复，数据干净'
-        : '⚠ 发现 ' + v.groupCount + ' 组重复，共 ' + v.rowCount + ' 条可合并的重复食品') + '</h3>',
+        ? m('skill-calorie.diet-libraryDocs.c039')
+        : m('skill-calorie.diet-libraryDocs.c040', { p0: String(v.groupCount), p1: String(v.rowCount) })) + '</h3>',
     },
     {
       id: 'sec-count',
-      label: '读数',
+      label: m('skill-calorie.diet-libraryDocs.c041'),
       html: renderKpiGrid([
-        { label: '重复组', value: String(v.groupCount), unit: '组' },
-        { label: '可合并的重复食品', value: String(v.rowCount), unit: '条' },
-        { label: '库内食品', value: String(v.totalProducts), unit: '条' },
+        { label: m('skill-calorie.diet-libraryDocs.c042'), value: String(v.groupCount), unit: m('skill-calorie.diet-libraryDocs.c043') },
+        { label: m('skill-calorie.diet-libraryDocs.c044'), value: String(v.rowCount), unit: m('skill-calorie.diet-libraryDocs.c045') },
+        { label: m('skill-calorie.diet-libraryDocs.c046'), value: String(v.totalProducts), unit: m('skill-calorie.diet-libraryDocs.c047') },
       ]),
     },
     {
       id: 'sec-groups',
-      label: '重复组',
+      label: m('skill-calorie.diet-libraryDocs.c048'),
       html: '<h2 class="dedupe-h2">重复组列表</h2>' + renderDataTable({
-        columns: DEDUPE_COLUMNS,
+        columns: DEDUPE_COLUMNS(),
         rows: v.groups.slice(0, 50).map((g) => ({
           name: g.productName, brand: g.brand ?? DASH, count: g.ids.length, ids: g.ids.join(', '),
         })),
-        emptyText: '没有重复食品（库内 ' + v.totalProducts + ' 条都只出现一次）',
+        emptyText: m('skill-calorie.diet-libraryDocs.c049', { p0: String(v.totalProducts) }),
       }),
     },
     {
       id: 'sec-advice',
-      label: '处理建议',
+      label: m('skill-calorie.diet-libraryDocs.c050'),
       html: '<h2 class="dedupe-h2">处理建议</h2>' + renderListRows({
         items: clean
-          ? [{ main: '无需处理。' }]
+          ? [{ main: m('skill-calorie.diet-libraryDocs.c051') }]
           : [
-            { main: '保留营养数据最完整的一条，其余可用「下架食品」下架（数据保留可溯源）。' },
-            { main: '或「改食品」合并数据后下架多余条目。' },
+            { main: m('skill-calorie.diet-libraryDocs.c052') },
+            { main: m('skill-calorie.diet-libraryDocs.c053') },
           ],
       }),
     },
   ];
   return assembleDocPage({
-    docTitle: DOC_TITLE_DEDUPE,
-    title: '📦 食品库去重',
+    docTitle: DOC_TITLE_DEDUPE(),
+    title: m('skill-calorie.diet-libraryDocs.c054'),
     pageUi: true,
     eyebrow: '',
     subtitle: null,
-    metaLeft: '看食品库（去重）',
-    badge: BADGE,
+    metaLeft: m('skill-calorie.diet-libraryDocs.c055'),
+    badge: BADGE(),
     summary: dedupeSummary(v),
     content: body({
       css: DEDUPE_CSS,
       cards,
       command,
-      caliber: CALIBER_DEDUPE,
+      caliber: CALIBER_DEDUPE(),
       sourceCount: v.totalProducts,
       envelope: {
         version: DOC_VERSION, skill: DOC_SKILL, shape: 'list', key: 'calorie.view.dedupe',
@@ -402,7 +404,10 @@ export function buildDedupeDoc(v: DedupeView, command: string): string {
 
 /** 结论句（§五 第 ③ 行）：两态各报本页读数（重复组数／可合并条数／库内条数）。 */
 function dedupeSummary(v: DedupeView): string {
-  if (v.groupCount === 0) return '食品库 ' + v.totalProducts + ' 条没有同名同品牌的重复，可以直接用。';
-  return '食品库 ' + v.totalProducts + ' 条里有 ' + v.groupCount + ' 组重复，'
-    + v.rowCount + ' 条可以合并后再用。';
+  if (v.groupCount === 0) return m('skill-calorie.diet-libraryDocs.c056', { p0: String(v.totalProducts) });
+  return m('skill-calorie.diet-libraryDocs.c057', {
+    p0: String(v.totalProducts),
+    p1: String(v.groupCount),
+    p2: String(v.rowCount),
+  });
 }

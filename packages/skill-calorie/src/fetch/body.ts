@@ -11,6 +11,7 @@ import { FetchError } from './errors.js';
 /* #717 批③·谓词归一：软删存活谓词正本住共用位 `shared/alive.ts`——本件原先 12 处内联同一句话。
    凡在**模板串**里的改走 `${BODY_ALIVE}` 插值（生成的 SQL 逐字不变）。 */
 import { BODY_ALIVE } from '../shared/alive.js';
+import { m } from '../entries/index.js';
 
 export class ValidationError extends Error {
   constructor(message: string) {
@@ -93,7 +94,7 @@ export type SourceFilter = SourceChoice | typeof SOURCE_FILTER_ALL;
  */
 export function assertSourceFilter(source: string): void {
   if (source !== SOURCE_FILTER_ALL && !SOURCE_CHOICES.includes(source as SourceChoice)) {
-    throw new FetchError(`未知来源: ${source}（合法值: ${SOURCE_CHOICES.join(' / ')} 或 ${SOURCE_FILTER_ALL}）`);
+    throw new FetchError(m('skill-calorie.fetch-body.c006', { p0: String(source), p1: SOURCE_CHOICES.join(' / '), p2: String(SOURCE_FILTER_ALL) }));
   }
 }
 
@@ -112,7 +113,7 @@ export function validateCompositionInput(input: CompositionInput): void {
   for (const f of CALIPER_FIELDS) {
     const v = input[f] as number | null | undefined;
     if (isCaliper && (v === null || v === undefined)) {
-      fail(f, v, '(0, 100)mm · 皮褶钳来源 7 个皮褶必填', `fix: --${cliName(f)} 5`);
+      fail(f, v, m('skill-calorie.fetch-body.c001'), `fix: --${cliName(f)} 5`);
     }
     if (v !== null && v !== undefined && !(CALIPER_MIN_MM < v && v < CALIPER_MAX_MM)) {
       fail(f, v, `(${CALIPER_MIN_MM}, ${CALIPER_MAX_MM})mm (exclusive)`, `fix: --${cliName(f)} 5`);
@@ -120,7 +121,7 @@ export function validateCompositionInput(input: CompositionInput): void {
   }
   const bf = input.bodyFatPct;
   if (bf === null || bf === undefined) {
-    fail('body_fat_pct', bf, `[${BODY_FAT_PCT_MIN}, ${BODY_FAT_PCT_MAX}]`, 'fix: 自动算或 --body-fat-pct 18');
+    fail('body_fat_pct', bf, `[${BODY_FAT_PCT_MIN}, ${BODY_FAT_PCT_MAX}]`, m('skill-calorie.fetch-body.c002'));
   }
   if (!(BODY_FAT_PCT_MIN < (bf as number) && (bf as number) < BODY_FAT_PCT_MAX)) {
     fail('body_fat_pct', bf, `[${BODY_FAT_PCT_MIN}, ${BODY_FAT_PCT_MAX}] (exclusive)`, 'fix: --body-fat-pct 18');
@@ -140,7 +141,7 @@ export function validateMeasurementInput(input: MeasurementInput): string[] {
       filled.push(f);
     }
   }
-  if (!filled.length) fail('围度', 'empty', '≥ 1 个(记录级必填)', 'fix: --waist-cm 85 或 --hip-cm 95 至少 1 个');
+  if (!filled.length) fail(m('skill-calorie.fetch-body.c003'), 'empty', m('skill-calorie.fetch-body.c004'), m('skill-calorie.fetch-body.c005'));
   return filled;
 }
 
@@ -202,7 +203,7 @@ export function deleteMeasurement(db: DatabaseSync, id: number): { id: number; s
 
 export function trendMeasurement(db: DatabaseSync, metric: string, days: number): { date: string; avgVal: number; n: number }[] {
   if (!metric || !MEASUREMENT_FIELDS.includes(metric)) {
-    throw new FetchError(`--metric 必填且为: ${MEASUREMENT_FIELDS.join(', ')}`);
+    throw new FetchError(m('skill-calorie.fetch-body.c007', { p0: MEASUREMENT_FIELDS.join(', ') }));
   }
   const rows = db.prepare(`SELECT date, AVG(${metric}) AS avg_val, COUNT(*) AS n FROM body_measurements
     WHERE ${BODY_ALIVE} AND date >= ? AND ${metric} IS NOT NULL GROUP BY date ORDER BY date ASC`)

@@ -50,33 +50,42 @@ import { capsStrip, exerciseUiCss, factStrip, fmtNum, windowStrip } from './spor
 import { defaultRange, fail, nums, optStr } from '../shared/params.js';
 import { CalorieRenderError } from '../render/errors.js';
 import type { ViewOut } from '../shared/commandSpec.js';
+import { m } from '../entries/index.js';
 
 /** 整页装配的版本与标题（与运动移植页同值域，不另起）。
  *  #523：品牌名里的 `·` 去掉——`·` 是分隔符债，`<title>` 也是可见文本。 */
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
-const DOC_TITLE = '卡路里 运动记录';
 /** 眉标与页内 H1（页头写人话：不出命令键、票号、工序词；判据读这两处原字）。
  *  #523：眉标 `运动 · 记录级明细` 的 `·` 去掉，类别与页族两个字都留着。
  *  #523 返修：眉标原来与 H1 逐字同名（都是「运动记录明细」），现眉标退回族名「运动记录」，
  *  H1 留页名——一眼分出「哪一族／哪一页」。 */
-const EYEBROW = '运动记录';
-const PAGE_TITLE = '运动记录明细';
 /** 来源脚注里的来源名（读页自己的取数面）。#523：不再印库表名 `exercise_log`，
  *  改成读者看得懂的「运动记录」，未删除这一条取数口径留在复制日志的「来源」段里（机器面）。 */
-const SOURCE = '运动记录（本窗内未删除的行）';
 /** 复制区的场景标识：人话短名，不放命令键（产物里命令键命中必须为 0）。 */
-const COPY_KEY = '运动记录';
 /** 行数上限：老技能当年静默截断 50 条是反面样板，本页把上限写进表标题。 */
 const ROW_LIMIT = 50;
-/** 八列表头（逐字、逐序；按老实物 `exercise_summary.html` 的记录表逐列核过）。 */
-const COLUMNS = ['日期', '类型', '分类', '时长', '消耗', '距离', '心率', '备注'] as const;
+/** 八列表头（逐字、逐序；按老实物 `exercise_summary.html` 的记录表逐列核过）。
+ *  列身份用 ASCII id（`date`…`note`）：判据按 id 认，不按显示文案认——显示文案随语言变，
+ *  拿它当键会把英文页的右对齐判据打空（同 `sportPortDocs` 的 `INT_UNITS` 那处）。 */
+function columnsOf(): { id: string; label: string }[] {
+  return [
+    { id: 'date', label: m('skill-calorie.exercise-records.c045') },
+    { id: 'type', label: m('skill-calorie.exercise-records.c046') },
+    { id: 'category', label: m('skill-calorie.exercise-records.c047') },
+    { id: 'duration', label: m('skill-calorie.exercise-records.c048') },
+    { id: 'kcal', label: m('skill-calorie.exercise-records.c049') },
+    { id: 'distance', label: m('skill-calorie.exercise-records.c050') },
+    { id: 'hr', label: m('skill-calorie.exercise-records.c051') },
+    { id: 'note', label: m('skill-calorie.exercise-records.c052') },
+  ];
+}
 /** 数值那四列（#523 返修 R3）：挂公共层既有档位 `align:'right'` —— 右对齐 ＋ 等宽栈 ＋ `tabular-nums`
  *  ＋ 正文字色（数值列主次 #507；`renderDataTable` 里「这一列是数值」的唯一信号就是它）。
  *  此前八列**全走缺省 `left`**，`renderDataTable` 于是给两张表的每一格都挂 `cell-left`：时长／消耗／
  *  距离既不右对齐，也拿不到等宽与 `tabular-nums`，数字走比例字体——视觉复评 R2 的硬伤①
  *  （两页共 144 格同点位退化，而同族汇总页同名列挂对了，可作对照样板）。诊断列是数据本身，不在此列。 */
-const NUMERIC = new Set<string>(['时长', '消耗', '距离', '心率']);
+const NUMERIC = new Set<string>(['duration', 'kcal', 'distance', 'hr']);
 
 /** 记录视图（筛选后的逐条行＋汇总数；调用方只读，不改库）。 */
 export interface RecordsView {
@@ -95,7 +104,7 @@ export interface RecordsView {
 function hasNoteOf(params: Record<string, unknown>): boolean | null {
   const v = params['hasNote'] !== undefined ? params['hasNote'] : params['withNote'];
   if (v === undefined || v === null) return null;
-  if (typeof v !== 'boolean') fail(2, '参数 hasNote 须为布尔');
+  if (typeof v !== 'boolean') fail(2, m('skill-calorie.exercise-records.c001'));
   return v as boolean;
 }
 
@@ -109,11 +118,11 @@ function categoryOf(params: Record<string, unknown>): string | null {
 
 /** 列里的数是显示层取整过的（`fmtNum`）：库里 `320.40000000000003` 那样的原值不上屏。 */
 function fmtMinutes(n: number | null): string {
-  return n === null ? '—' : fmtNum(n, 0) + ' 分钟';
+  return n === null ? '—' : m('skill-calorie.exercise-records.c053', { p0: fmtNum(n, 0) });
 }
 
 function fmtBurned(n: number): string {
-  return fmtNum(n) + ' 卡';
+  return m('skill-calorie.exercise-records.c002', { p0: String(fmtNum(n)) });
 }
 
 function fmtKm(n: number | null): string {
@@ -179,13 +188,17 @@ function shownCount(v: RecordsView): number {
 /** 表标题句（票面第 2 条：行数上限写在这里；总数与本页显示数两处口径逐字一致）。
  *  #523：三段之间原来用 `；`，改行文标点（`；` 是并列分隔符，判债）。 */
 function captionOf(v: RecordsView, shown: number): string {
-  return '运动记录明细（共 ' + v.sessions + ' 条，本页显示 ' + shown + ' 条，每页最多 ' + ROW_LIMIT + ' 条）';
+  return m('skill-calorie.exercise-records.c003', {
+    p0: String(v.sessions),
+    p1: String(shown),
+    p2: String(ROW_LIMIT),
+  });
 }
 
 /** 页眉副标题：本页列的是什么（#523 返修：「本页显示 N 条」原来在副标题与表 caption 各写一遍，
  *  现只留表标题那一处——副标题只说内容，不复读数）。 */
 function subtitleOf(): string {
-  return '逐条列出本窗的运动记录';
+  return m('skill-calorie.exercise-records.c004');
 }
 
 /** 数字口径行（#523）：原来五件事一个 `；` 串，改后一条事实一行的 `口径：` 行。
@@ -196,27 +209,27 @@ function subtitleOf(): string {
  *  自己的 `flex-wrap` 换行。**事实一条不减**：条数口径、消耗口径、缺时长的情形照旧都在列。 */
 function caliberLine(v: RecordsView): string {
   const parts = [
-    '口径：条数＝本窗内未删除的运动记录',
-    '消耗＝记录行上报值合计，不按天摊',
+    m('skill-calorie.exercise-records.c005'),
+    m('skill-calorie.exercise-records.c006'),
   ];
-  if (v.totalMinutes === null) parts.push('本窗没有一行填了时长，总时长不印假 0');
+  if (v.totalMinutes === null) parts.push(m('skill-calorie.exercise-records.c007'));
   return parts.join('｜');
 }
 
 /** 单位图例（胶囊行）：每条一个「列名＝单位」，各自成形。 */
 function unitCaps(): string {
   return capsStrip(renderChips({ items: [
-    { text: '消耗＝卡' }, { text: '时长＝分钟' }, { text: '距离＝km' }, { text: '心率＝bpm' },
+    { text: m('skill-calorie.exercise-records.c008') }, { text: m('skill-calorie.exercise-records.c009') }, { text: m('skill-calorie.exercise-records.c010') }, { text: m('skill-calorie.exercise-records.c011') },
   ] }));
 }
 
 /** 筛选口径句（票面第 3 条：三种筛选各一句人话；无筛选即整行不出现）。 */
 function filterText(v: RecordsView): string | null {
-  if (v.category === '力量') return '筛选口径：只看分类为力量的记录（力量训练）';
-  if (v.category === '有氧') return '筛选口径：只看分类为有氧的记录（有氧运动）';
-  if (v.category !== null) return '筛选口径：只看分类为' + v.category + '的记录';
-  if (v.hasNote === true) return '筛选口径：只看带备注的记录（备注栏有字的才算）';
-  if (v.hasNote === false) return '筛选口径：只看没有备注的记录';
+  if (v.category === '力量') return m('skill-calorie.exercise-records.c012');
+  if (v.category === '有氧') return m('skill-calorie.exercise-records.c013');
+  if (v.category !== null) return m('skill-calorie.exercise-records.c014', { p0: String(v.category) });
+  if (v.hasNote === true) return m('skill-calorie.exercise-records.c015');
+  if (v.hasNote === false) return m('skill-calorie.exercise-records.c016');
   return null;
 }
 
@@ -224,7 +237,7 @@ function filterText(v: RecordsView): string | null {
  *  #523 返修：「每页最多 N 条」原来在表标题与这句各写一遍，现只留表标题一处。 */
 function truncationText(v: RecordsView, shown: number): string | null {
   if (shown >= v.sessions) return null;
-  return '口径：本窗共 ' + v.sessions + ' 条，本页只列前 ' + shown + ' 条';
+  return m('skill-calorie.exercise-records.c017', { p0: String(v.sessions), p1: String(shown) });
 }
 
 /** 窗口卡：这一页看的是哪一段。
@@ -245,8 +258,8 @@ function windowCard(v: RecordsView): Card {
     id: 'sec-window',
     label: '窗口',
     html: factStrip(v.start === v.end
-      ? [{ k: '日期', v: v.start }]
-      : [{ k: '开始', v: v.start }, { k: '结束', v: v.end }]),
+      ? [{ k: m('skill-calorie.exercise-records.c045'), v: v.start }]
+      : [{ k: m('skill-calorie.exercise-records.c018'), v: v.start }, { k: m('skill-calorie.exercise-records.c019'), v: v.end }]),
   };
 }
 
@@ -257,12 +270,12 @@ function windowCard(v: RecordsView): Card {
 function figureCard(v: RecordsView): Card {
   return {
     id: 'sec-figures',
-    label: '指标',
+    label: m('skill-calorie.exercise-records.c020'),
     html: '<h2 style="margin:0;font-size:15px;font-weight:700">指标</h2>' + renderKpiGrid([
-      { label: '记录数', value: String(v.sessions), unit: '条' },
-      { label: '总消耗', value: fmtNum(v.totalBurned), unit: '卡' },
-      { label: '总时长', value: v.totalMinutes === null ? '—' : fmtNum(v.totalMinutes, 0), unit: '分钟' },
-      { label: '活跃天数', value: String(v.activeDays), unit: '天' },
+      { label: m('skill-calorie.exercise-records.c021'), value: String(v.sessions), unit: m('skill-calorie.exercise-records.c022') },
+      { label: m('skill-calorie.exercise-records.c023'), value: fmtNum(v.totalBurned), unit: m('skill-calorie.exercise-records.c024') },
+      { label: m('skill-calorie.exercise-records.c025'), value: v.totalMinutes === null ? '—' : fmtNum(v.totalMinutes, 0), unit: m('skill-calorie.exercise-records.c054') },
+      { label: m('skill-calorie.exercise-records.c026'), value: String(v.activeDays), unit: m('skill-calorie.exercise-records.c027') },
     ]),
   };
 }
@@ -271,18 +284,18 @@ function figureCard(v: RecordsView): Card {
 function detailCard(v: RecordsView, shown: number): Card {
   return {
     id: 'sec-table',
-    label: '记录明细',
+    label: m('skill-calorie.exercise-records.c028'),
     html: renderDataTable({
-      columns: COLUMNS.map((label) => (NUMERIC.has(label) ? { key: label, label, align: 'right' as const } : { key: label, label })),
+      columns: columnsOf().map((c) => (NUMERIC.has(c.id) ? { key: c.id, label: c.label, align: 'right' as const } : { key: c.id, label: c.label })),
       rows: v.rows.slice(0, shown).map((r) => ({
-        日期: r.date,
-        类型: r.type,
-        分类: r.category,
-        时长: fmtMinutes(r.minutes),
-        消耗: fmtBurned(r.burned),
-        距离: fmtKm(r.distanceKm),
-        心率: fmtHr(r.avgHr),
-        备注: fmtNote(r.note),
+        date: r.date,
+        type: r.type,
+        category: r.category,
+        duration: fmtMinutes(r.minutes),
+        kcal: fmtBurned(r.burned),
+        distance: fmtKm(r.distanceKm),
+        hr: fmtHr(r.avgHr),
+        note: fmtNote(r.note),
       })),
       caption: captionOf(v, shown),
     }),
@@ -291,11 +304,11 @@ function detailCard(v: RecordsView, shown: number): Card {
 
 /** 空态卡（票面第 6 条）：无记录不留空表，把「说哪句话记下第一条」递到眼前。 */
 function emptyCard(v: RecordsView): Card {
-  const word = v.category === '力量' ? '记力量训练' : v.category === '有氧' ? '记有氧运动' : '记运动';
+  const word = v.category === '力量' ? m('skill-calorie.exercise-records.c029') : v.category === '有氧' ? m('skill-calorie.exercise-records.c030') : m('skill-calorie.exercise-records.c031');
   return {
     id: 'sec-empty',
-    label: '记录明细',
-    html: emptyGuide({ icon: '🏃', text: '本窗还没有运动记录', hint: '说「' + word + '」就能记下第一条' }),
+    label: m('skill-calorie.exercise-records.c032'),
+    html: emptyGuide({ icon: '🏃', text: m('skill-calorie.exercise-records.c033'), hint: m('skill-calorie.exercise-records.c034', { p0: String(word) }) }),
   };
 }
 
@@ -311,11 +324,11 @@ function emptyCard(v: RecordsView): Card {
  *  `test/exercise-records-fusion-451.test.mjs` 的空态判据（「0 条也要报」）读的正是它。
  *  有表时（条数已在读数卡与表标题各一处）脚注不再报，只为「这份数从哪来」负责。 */
 function sourceCard(v: RecordsView): Card {
-  const facts = [{ k: '数据来源', v: SOURCE }];
-  if (v.sessions === 0) facts.push({ k: '记录数', v: '共 ' + v.sessions + ' 条' });
+  const facts = [{ k: m('skill-calorie.exercise-records.c035'), v: m('skill-calorie.exercise-records.c043') }];
+  if (v.sessions === 0) facts.push({ k: m('skill-calorie.exercise-records.c036'), v: m('skill-calorie.exercise-records.c037', { p0: String(v.sessions) }) });
   return {
     id: 'sec-source',
-    label: '数据来源',
+    label: m('skill-calorie.exercise-records.c038'),
     html: factStrip(facts),
   };
 }
@@ -334,7 +347,7 @@ export function buildRecordsDoc(v: RecordsView): string {
   const truncation = truncationText(v, shown);
   const content = [
     exerciseUiCss(),
-    windowStrip(v.start, v.end, v.activeDays + ' 天有记录'),
+    windowStrip(v.start, v.end, m('skill-calorie.exercise-records.c039', { p0: String(v.activeDays) })),
     renderTocBlock({ items: cards.map((c) => ({ id: c.id, text: c.label })) }),
     unitCaps(),
     renderCaliberLine(caliberLine(v)),
@@ -344,7 +357,7 @@ export function buildRecordsDoc(v: RecordsView): string {
     copyArea({
       data: {
         envelope: {
-          version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: COPY_KEY,
+          version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: m('skill-calorie.exercise-records.c044'),
           data: {
             metrics: metricsOf({
               sessions: v.sessions, totalBurned: v.totalBurned,
@@ -356,9 +369,9 @@ export function buildRecordsDoc(v: RecordsView): string {
     }),
   ].join('');
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: PAGE_TITLE,
-    eyebrow: EYEBROW,
+    docTitle: m('skill-calorie.exercise-records.c040'),
+    title: m('skill-calorie.exercise-records.c042'),
+    eyebrow: m('skill-calorie.exercise-records.c041'),
     subtitle: subtitleOf(),
     content,
     // 可打印版面（#420 第 7 条）：类走 `assembleDocPage` 的 `printable` 透传位（#448），

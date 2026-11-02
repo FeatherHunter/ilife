@@ -488,7 +488,8 @@ test('#452 口径单源：周口径那句在包内 src 只命中一个文件', (
   walk(join(PKG, 'src'));
   note('CALIBER-SRC', '命中文件=' + hits.length + ' → ' + hits.map((p) => p.replace(REPO + '\\', '')).join('、'));
   assert.equal(hits.length, 1, '周口径那句在包内 src 命中 ' + hits.length + ' 个文件：' + hits.join('、'));
-  assert.equal(dirname(hits[0]), join(PKG, 'src', 'render'), '周口径那句不在本票主件所在目录：' + hits[0]);
+  // #1218 起文案外置到词条表：单源位置随文案迁到 src/entries（仍是包内唯一命中）。
+  assert.equal(dirname(hits[0]), join(PKG, 'src', 'entries'), '周口径那句不在词条表目录：' + hits[0]);
 });
 
 /* ───────────────────────────── 六、汇总页空态（装配层构造） ───────────────────────────── */

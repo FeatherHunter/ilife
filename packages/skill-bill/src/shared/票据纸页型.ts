@@ -22,6 +22,7 @@ import { escapeHtml } from 'base-paint';
 import { renderCheckRow, renderLedgerRows, renderSheetFrame, renderSummaryHead } from 'base-paint/blocks';
 import { assembleSheetPage, sheetHead, ticketActions, ticketRule, ticketSection, ticketSummary } from './docPage.js';
 import { writeSection } from './writeParts.js';
+import { m } from '../entries/index.js';
 
 /** 主数字那一段的差异值（眉标药丸、主读数、单位、下面那句小字、右上角印章）。 */
 export interface TicketSheetSummary {
@@ -114,7 +115,7 @@ function ledgerHtmlOf(title: string, rows: readonly TicketSheetRow[]): string {
 
 /** 对账那一段（浅绿卡 ＋ 圆点 ＋ 一句；形状走 base 件 `check-row`，默认档字节与改前逐字相同）。 */
 function checkHtmlOf(text: string): string {
-  return ticketSection({ title: '对账', tag: 'CHECK', content: renderCheckRow({ text }) });
+  return ticketSection({ title: m('skill-bill.shared.c001'), tag: 'CHECK', content: renderCheckRow({ text }) });
 }
 
 /** 三张页型共用的收口：纸（含裁切线）＋ 机器标记段 ＋ 纸外页脚 ＋ 整页外壳。 */
@@ -122,7 +123,7 @@ function finish(input: TicketSheetCommon, parts: readonly string[]): string {
   const paper = renderSheetFrame({
     variant: 'ticket',
     cutLine: true,
-    cutLineText: '✂ 裁切线',
+    cutLineText: m('skill-bill.shared.c002'),
     content: parts.join(''),
   });
   const section = writeSection({

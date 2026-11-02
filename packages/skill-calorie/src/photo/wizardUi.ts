@@ -22,6 +22,7 @@
  *  `min／max／step／options` 的落位口径），字号与色值只用冻结 token；`packages/base-render/**` 一行不碰。
  */
 import { escapeHtml } from 'base-paint';
+import { m } from '../entries/index.js';
 
 const esc = (s: string): string => escapeHtml(s);
 
@@ -99,7 +100,7 @@ export interface EditRowInput {
 export function editRows(rows: readonly EditRowInput[]): string {
   const body = rows.map((r) => {
     const empty = r.v === '';
-    const lines = (empty ? [r.emptyText ?? '还没填'] : r.v.split('\n'))
+    const lines = (empty ? [r.emptyText ?? m('skill-calorie.photo-wizardUi.c001')] : r.v.split('\n'))
       .map((s) => '<span class="phu-line">' + esc(s) + '</span>').join('');
     const badge = r.badge === undefined || r.badge === ''
       ? '' : '<span class="phu-edit-n">' + esc(r.badge) + '</span>';

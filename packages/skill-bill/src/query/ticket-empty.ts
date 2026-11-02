@@ -22,7 +22,7 @@
  */
 import { escapeHtml } from 'base-paint';
 import { DB_FILENAME } from '../fetch/index.js';
-import { renderEmptyBlock, renderLedgerRows, renderSheetFrame, renderSummaryHead } from 'base-paint/blocks';
+import { renderEmptyBlock, renderLedgerRows, renderSheetFrame, renderSummaryHead, type LedgerRowInput } from 'base-paint/blocks';
 import type { ViewOut } from '../shared/commandSpec.js';
 import { actionStamp, copyArea, copyLog } from '../shared/copyArea.js';
 import { checkListHtml, checkRowsOf } from '../shared/checkLine.js';
@@ -34,30 +34,21 @@ import type { QueryListData } from './list.js';
 import { queryStyleTag } from './pageParts.js';
 import { assembleSheetPage, sheetHead, ticketActions, ticketRule, ticketSection, ticketSummary } from '../shared/docPage.js';
 import { commandLine, writeSection } from '../shared/writeParts.js';
+import { m } from '../entries/index.js';
 
 /** 本次数据来源（复制日志第 3 段；与其它查询页同字）。 */
-const SOURCE_QUERY = DB_FILENAME + '（查询结果：只读，不改库）';
+function sourceQuery(): string {
+  return DB_FILENAME + m('skill-bill.query-ticket-empty.c010');
+}
 
-/** 主数字那一格（w00 判地逐字：空态 · 0 笔 ／ 0 ／ 笔）。 */
-const SUMMARY_EYEBROW = '空态 · 0 笔';
-const SUMMARY_UNIT = '笔';
-
-/** 结论句第一句（w00 判地逐字；第二句＝调用方给的引导句）。 */
-const NOTE_HEAD = '本窗没有记录。';
-
-/** 落点 LEDGER 三行（w00 判地逐字）。 */
-const LEDGER_ROWS = [
-  { label: '笔数', value: '0' },
-  { label: '币种', value: 'CNY' },
-  { label: '说明', value: '只看不改，转账不算收支' },
-] as const;
-
-/** 分类占比那一句（w00 判地逐字）。 */
-const SCALE_NOTE = '本窗无支出，无占比。';
-
-/** 对账 CHECK 的笔数片段（零行页：只发笔数、异常两行，编号那一行不发）。 */
-const CHECK_COUNT = '0 笔';
-
+/** 落点 LEDGER 三行（w00 判地逐字；文案按渲染期语言取词）。 */
+function ledgerRows(): readonly LedgerRowInput[] {
+  return [
+    { label: m('skill-bill.query-ticket-empty.c014'), value: '0' },
+    { label: m('skill-bill.query-ticket-empty.c015'), value: 'CNY' },
+    { label: m('skill-bill.query-ticket-empty.c016'), value: m('skill-bill.query-ticket-empty.c017') },
+  ];
+}
 
 
 /** 空窗口票据纸的入参。 */
@@ -86,32 +77,32 @@ export function queryEmptyTicketDoc(input: EmptyTicketInput): string {
   const envelope = listEnvelope(input.key, data);
   const listCopy = ticketCopyOf(input.wakeWord, input.window, []);
   const paper = queryStyleTag()
-    + sheetHead(DOC_TITLE + ' · ' + input.wakeWord, escapeHtml(input.window + '没有记录'))
-    + '<p class="ilife-empty-shop-sub">' + escapeHtml(input.wakeWord + ' · 空窗') + '</p>'
+    + sheetHead(DOC_TITLE + ' · ' + input.wakeWord, escapeHtml(m('skill-bill.query-ticket-empty.c001', { p0: String(input.window) })))
+    + '<p class="ilife-empty-shop-sub">' + escapeHtml(m('skill-bill.query-ticket-empty.c002', { p0: String(input.wakeWord) })) + '</p>'
     + ticketRule()
     + ticketSummary(renderSummaryHead({
-      eyebrow: SUMMARY_EYEBROW,
+      eyebrow: m('skill-bill.query-ticket-empty.c011'),
       value: '0',
-      unit: SUMMARY_UNIT,
+      unit: m('skill-bill.query-ticket-empty.c012'),
       layout: 'ticket',
-    }), '<p class="ilife-ticket-summary-note">' + escapeHtml(NOTE_HEAD + input.emptyHint) + '</p>')
+    }), '<p class="ilife-ticket-summary-note">' + escapeHtml(m('skill-bill.query-ticket-empty.c013') + input.emptyHint) + '</p>')
     + ticketRule()
     + ticketSection({
-      title: '落点', tag: 'LEDGER',
-      content: '<div class="ilife-block-ledger-rows is-ticket">' + renderLedgerRows({ rows: [...LEDGER_ROWS], layout: 'ticket' }) + '</div>',
+      title: m('skill-bill.query-ticket-empty.c003'), tag: 'LEDGER',
+      content: '<div class="ilife-block-ledger-rows is-ticket">' + renderLedgerRows({ rows: ledgerRows(), layout: 'ticket' }) + '</div>',
     })
     + ticketRule()
-    + ticketSection({ title: '分类占比', tag: 'SCALE', content: '<p class="ilife-ticket-scale-note">' + SCALE_NOTE + '</p>' })
+    + ticketSection({ title: m('skill-bill.query-ticket-empty.c004'), tag: 'SCALE', content: '<p class="ilife-ticket-scale-note">' + m('skill-bill.query-ticket-empty.c018') + '</p>' })
     + ticketRule()
     + ticketSection({
-      title: '明细', tag: 'DETAIL',
+      title: m('skill-bill.query-ticket-empty.c005'), tag: 'DETAIL',
       content: renderEmptyBlock({ text: input.emptyText, hint: input.emptyHint }),
     })
     + ticketRule()
     + ticketSection({
-      title: '对账', tag: 'CHECK',
+      title: m('skill-bill.query-ticket-empty.c006'), tag: 'CHECK',
       content: '<div class="ilife-empty-check"><span class="ilife-empty-check-dot" aria-hidden="true"></span>'
-        + checkListHtml(checkRowsOf({ countText: CHECK_COUNT })) + '</div>',
+        + checkListHtml(checkRowsOf({ countText: m('skill-bill.query-ticket-empty.c019') })) + '</div>',
     })
     + ticketRule()
     + ticketActions(copyArea({
@@ -123,8 +114,8 @@ export function queryEmptyTicketDoc(input: EmptyTicketInput): string {
         envelope,
         copyLog: copyLog({
           command: commandLine(input.key, input.params),
-          source: SOURCE_QUERY,
-          detail: '查到 0 笔',
+          source: sourceQuery(),
+          detail: m('skill-bill.query-ticket-empty.c007'),
           actionAt: actionStamp(),
           version: DOC_VERSION,
         }),
@@ -132,10 +123,10 @@ export function queryEmptyTicketDoc(input: EmptyTicketInput): string {
     }));
   const content = writeSection({
     slot: 'list', page: 'list', shape: 'list', key: input.key,
-    content: renderSheetFrame({ variant: 'ticket', cutLine: true, cutLineText: '✂ 裁切线', content: paper })
+    content: renderSheetFrame({ variant: 'ticket', cutLine: true, cutLineText: m('skill-bill.query-ticket-empty.c008'), content: paper })
       + '<div class="ilife-empty-foot">' + escapeHtml(DOC_TITLE + ' · ' + input.wakeWord) + '</div>',
   });
-  return assembleSheetPage({ docTitle: DOC_TITLE + '·查询', bodyHtml: content, paper: 'detail' });
+  return assembleSheetPage({ docTitle: m('skill-bill.query-ticket-empty.c009', { p0: String(DOC_TITLE) }), bodyHtml: content, paper: 'detail' });
 }
 
 /** 空窗口那一支的出口：载荷与其它票据页同形，页走本件票据纸空态。 */

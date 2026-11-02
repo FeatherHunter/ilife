@@ -1,0 +1,26 @@
+{
+  "note": "由 node tooling/i18n-anchor.mjs --write 生成；锚指向已提交的 git 对象，--check 用 git 复核，不是自录快照。",
+  "anchors": [
+    {
+      "path": "tooling/skill-html.snapshot.json",
+      "commit": "746123ffb313ff581cf92e7e799fe94bdcf7f85d",
+      "blob": "854872a30611ecf7372721c6c8c62aa18b88d45a",
+      "sha256": "c3477e474a7aa216b3e6e8b8fc41ace41fba22c0d4e1f297d6058499f6e7e081",
+      "bytes": 117875
+    },
+    {
+      "path": "tooling/calorie-html.snapshot.json",
+      "commit": "b7966d40f21ece803bc5765172abfe0361bbe02f",
+      "blob": "f044b24d463f12797ad7880ae163676929f2ae9d",
+      "sha256": "3e18b00d43761c412cf1ada210357ecdedf75c9971a1c9eb82f8a5fad9053bc2",
+      "bytes": 915
+    },
+    {
+      "path": "packages/skill-bill/test/t689-页面指纹.json",
+      "commit": "e5d056cbee1f8b2dfec601764ffb75fc64fda1c9",
+      "blob": "3150621e5e11e7bbb193275a10bc450ae671c900",
+      "sha256": "d9f3d0281b1e5deea16d78e1780ac3738836645d192e85190abadc60b458d401",
+      "bytes": 4170
+    }
+  ]
+}

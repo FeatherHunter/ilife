@@ -9,14 +9,16 @@
  *      连下界都没有——负 pct 会画负宽度 ＋ 印负百分比；同域的 `saving_view.html:208` 是双端
  *      ⇒ **同域两套下界口径，新侧取双端**（口径住 `./pageParts.js` 的 `clampPct`）。
  */
+import { runWithLanguage } from 'base-entries';
 import { projectWakeWord } from '../triggers/wakeTable.js';
 import type { DistributionRowInput, KpiCardInput } from 'base-paint/blocks';
 import { MONTH_RE } from '../shared/dateRange.js';
-import { BUDGET_STATUS_META, clampPct, money, monthEndHintOf, pctText } from './pageParts.js';
+import { budgetStatusMeta, clampPct, money, monthEndHintOf, pctText } from './pageParts.js';
 import { localMonth, textOf } from './params.js';
 import type { BudgetItem } from './goalData.js';
 import type { GoalProgressInput, GoalReadScene } from './scene.js';
 import { bindGoalProgressPage } from './template-progress.js';
+import { m } from '../entries/index.js';
 
 const WORD: string = projectWakeWord({ key: 'bill.goal.query', op: 'budget' });
 const WRITE_WORD: string = projectWakeWord({ key: 'bill.goal.write', op: 'set-budget' });
@@ -28,55 +30,67 @@ function monthOf(params: Record<string, unknown>): string {
   return MONTH_RE.test(raw) ? raw : localMonth();
 }
 
-export const SCENE: GoalReadScene = {
-  id: 'budget',
-  key: KEY,
-  op: 'budget',
-  family: '进度',
-  ...bindGoalProgressPage({
-    word: WORD,
-    docSuffix: '·预算执行',
-    window: (input: GoalProgressInput) => monthOf(input.params) + ' 的预算执行（当月支出实时合计）',
-    conclusion: (input) => {
-      const e = input.budget;
-      if (e === null || e.budgets.length === 0) return monthOf(input.params) + ' 还没有设置预算，这个月花多少都还没有上限。';
-      const t = e.totals;
-      const head = '一共 ' + String(e.budgets.length) + ' 条预算，加起来 ' + money(t.budget) + ' 元，已经用掉 '
-        + money(t.actual) + ' 元。';
-      if (t.budget <= 0) return head;
-      return head + '整体用掉 ' + pctText(clampPct(t.actual / t.budget * 100))
-        + (t.over_count > 0 ? '，其中 ' + String(t.over_count) + ' 条已经超了。' : '，都还在预算内。');
-    },
-    caliber: (input) => {
-      const e = input.budget;
-      if (e === null || e.budgets.length === 0) return '还没有预算';
-      return String(e.budgets.length) + ' 条预算 ／ '
-        + (e.totals.over_count > 0 ? String(e.totals.over_count) + ' 条超支' : '都在预算内');
-    },
-    kpi: (input) => budgetKpi(input),
-    cardsTitle: '各条预算执行',
-    cards: (input) => (input.budget?.budgets ?? []).map(budgetCard),
-    bars: (input) => {
-      const items = input.budget?.budgets ?? [];
-      const total = items.reduce((s, b) => s + Math.abs(b.amount), 0);
-      const rows: readonly DistributionRowInput[] = items.length === 0 || total === 0 ? []
-        : items.map((b) => ({ label: b.category_cn, value: money(b.amount) + ' 元', pct: Math.abs(b.amount) / total * 100 }));
-      return { title: '各条预算占了多少', rows };
-    },
-    counts: (input) => ({ items: input.budget?.budgets.length ?? 0, records: input.budget?.records ?? 0 }),
-    empty: (input) => ({
-      icon: '🎯',
-      text: monthOf(input.params) + ' 还没有设置预算',
-      next: '说「' + WRITE_WORD + '」就能开始',
+/** 按渲染语言重建这一件的场景对象（取词都在里面，见 `./scene.js` 的接线）。 */
+function buildScene(): GoalReadScene {
+  return {
+    id: 'budget',
+    key: KEY,
+    op: 'budget',
+    family: m('skill-bill.goal-scene-budget.c001'),
+    ...bindGoalProgressPage({
+      word: WORD,
+      docSuffix: m('skill-bill.goal-scene-budget.c002'),
+      window: (input: GoalProgressInput) => m('skill-bill.goal-scene-budget.c003', { p0: String(monthOf(input.params)) }),
+      conclusion: (input) => {
+        const e = input.budget;
+        if (e === null || e.budgets.length === 0) return m('skill-bill.goal-scene-budget.c004', { p0: String(monthOf(input.params)) });
+        const t = e.totals;
+        const head = m('skill-bill.goal-scene-budget.c005', {
+          p0: String(String(e.budgets.length)),
+          p1: String(money(t.budget)),
+          p2: String(money(t.actual)),
+        });
+        if (t.budget <= 0) return head;
+        const used = pctText(clampPct(t.actual / t.budget * 100));
+        const over = t.over_count > 0 ? m('skill-bill.goal-scene-budget.c006', { p0: String(String(t.over_count)) }) : m('skill-bill.goal-scene-budget.c007');
+        return m('skill-bill.goal-scene-budget.c008', { p0: String(head), p1: String(used), p2: String(over) });
+      },
+      caliber: (input) => {
+        const e = input.budget;
+        if (e === null || e.budgets.length === 0) return m('skill-bill.goal-scene-budget.c009');
+        const over = e.totals.over_count > 0 ? m('skill-bill.goal-scene-budget.c010', { p0: String(String(e.totals.over_count)) }) : m('skill-bill.goal-scene-budget.c011');
+        return m('skill-bill.goal-scene-budget.c012', { p0: String(String(e.budgets.length)), p1: String(over) });
+      },
+      kpi: (input) => budgetKpi(input),
+      cardsTitle: m('skill-bill.goal-scene-budget.c013'),
+      cards: (input) => (input.budget?.budgets ?? []).map(budgetCard),
+      bars: (input) => {
+        const items = input.budget?.budgets ?? [];
+        const total = items.reduce((s, b) => s + Math.abs(b.amount), 0);
+        const rows: readonly DistributionRowInput[] = items.length === 0 || total === 0 ? []
+          : items.map((b) => ({ label: b.category_cn, value: m('skill-bill.goal-scene-budget.c014', { p0: String(money(b.amount)) }), pct: Math.abs(b.amount) / total * 100 }));
+        return { title: m('skill-bill.goal-scene-budget.c015'), rows };
+      },
+      counts: (input) => ({ items: input.budget?.budgets.length ?? 0, records: input.budget?.records ?? 0 }),
+      empty: (input) => ({
+        icon: '🎯',
+        text: m('skill-bill.goal-scene-budget.c016', { p0: String(monthOf(input.params)) }),
+        next: m('skill-bill.goal-scene-budget.c017', { p0: String(WRITE_WORD) }),
+      }),
+      caliberLines: m('skill-bill.goal-scene-budget.c018'),
+      source: m('skill-bill.goal-scene-budget.c019'),
+      sourceText: m('skill-bill.goal-scene-budget.c020'),
+      logDetail: (input) => m('skill-bill.goal-scene-budget.c021', { p0: String(String(input.budget?.budgets.length ?? 0)) }),
     }),
-    caliberLines: '预算按当月算，不跨月累计：填了分类就看这一类的支出，没填分类就看当月全部支出。'
-      + '进度是「已经用掉的钱 ÷ 预算」，超过 100% 就是已经超支，条与百分数都按 0–100% 夹住画。'
-      + '月底预测按这个月已经过去的几天外推，说的是照现在的花法继续下去会怎样。',
-    source: '预算表与账本（只读：算预算执行）',
-    sourceText: '预算表与账本（只读）',
-    logDetail: (input) => '查到 ' + String(input.budget?.budgets.length ?? 0) + ' 条预算',
-  }),
-};
+  };
+}
+
+export const SCENE: GoalReadScene = buildScene();
+
+/** 按渲染语言重建这一件（`language` 来自调用方的 `currentRenderLanguage()`）。 */
+export function sceneBudget(language: string): GoalReadScene {
+  return runWithLanguage(language, buildScene);
+}
 
 /** 读数行四格（老侧 `budget_view.html:193-196` 同数同序；超支项为 0 出「✓ 无」）。 */
 function budgetKpi(input: GoalProgressInput): readonly KpiCardInput[] {
@@ -84,41 +98,41 @@ function budgetKpi(input: GoalProgressInput): readonly KpiCardInput[] {
   const used = t.budget > 0 ? clampPct(t.actual / t.budget * 100) : 0;
   return [
     {
-      label: '预算总额', value: money(t.budget), unit: '元',
-      detail: t.budget > 0 ? '已经用掉 ' + pctText(used) : '这个月还没有预算',
+      label: m('skill-bill.goal-scene-budget.c022'), value: money(t.budget), unit: m('skill-bill.goal-scene-budget.c023'),
+      detail: t.budget > 0 ? m('skill-bill.goal-scene-budget.c024', { p0: String(pctText(used)) }) : m('skill-bill.goal-scene-budget.c025'),
       ...(t.budget > 0 ? { bar: { pct: used } } : {}),
     },
-    { label: '实际支出', value: money(t.actual), unit: '元', detail: '当月所有支出都在内' },
+    { label: m('skill-bill.goal-scene-budget.c026'), value: money(t.actual), unit: m('skill-bill.goal-scene-budget.c027'), detail: m('skill-bill.goal-scene-budget.c028') },
     {
-      label: '剩余', value: money(t.remaining), unit: '元',
-      detail: t.remaining < 0 ? '已经超了 ' + money(Math.abs(t.remaining)) + ' 元' : '还能再用这么多',
+      label: m('skill-bill.goal-scene-budget.c029'), value: money(t.remaining), unit: m('skill-bill.goal-scene-budget.c030'),
+      detail: t.remaining < 0 ? m('skill-bill.goal-scene-budget.c031', { p0: String(money(Math.abs(t.remaining))) }) : m('skill-bill.goal-scene-budget.c032'),
       status: t.remaining < 0 ? 'danger' : 'ok',
-      statusText: t.remaining < 0 ? '超支' : '在预算内',
+      statusText: t.remaining < 0 ? m('skill-bill.goal-scene-budget.c033') : m('skill-bill.goal-scene-budget.c034'),
     },
     {
-      label: '超支项', value: t.over_count > 0 ? String(t.over_count) : '✓ 无',
-      ...(t.over_count > 0 ? { unit: '条' } : {}),
-      detail: t.over_count > 0 ? '这几条要收着点花' : '没有超支的预算',
+      label: m('skill-bill.goal-scene-budget.c035'), value: t.over_count > 0 ? String(t.over_count) : m('skill-bill.goal-scene-budget.c036'),
+      ...(t.over_count > 0 ? { unit: m('skill-bill.goal-scene-budget.c037') } : {}),
+      detail: t.over_count > 0 ? m('skill-bill.goal-scene-budget.c038') : m('skill-bill.goal-scene-budget.c039'),
       status: t.over_count > 0 ? 'danger' : 'ok',
-      statusText: t.over_count > 0 ? '有超支' : '都还好',
+      statusText: t.over_count > 0 ? m('skill-bill.goal-scene-budget.c040') : m('skill-bill.goal-scene-budget.c041'),
     },
   ];
 }
 
 /** 一条预算一张带进度条的读数卡（老侧 `budgetBar` 那一块的信息量）。 */
 function budgetCard(b: BudgetItem): KpiCardInput {
-  const meta = BUDGET_STATUS_META[b.status];
-  const remain = b.remaining >= 0 ? '剩余 ' + money(b.remaining) + ' 元' : '超出 ' + money(Math.abs(b.remaining)) + ' 元';
+  const meta = budgetStatusMeta()[b.status];
+  const remain = b.remaining >= 0 ? m('skill-bill.goal-scene-budget.c042', { p0: String(money(b.remaining)) }) : m('skill-bill.goal-scene-budget.c043', { p0: String(money(Math.abs(b.remaining))) });
   const projection = monthEndHintOf(b);
   return {
     label: b.category_cn,
     value: money(b.actual),
-    unit: '元',
+    unit: m('skill-bill.goal-scene-budget.c044'),
     detail: [
-      '预算 ' + money(b.amount) + ' 元',
-      '已用 ' + money(b.actual) + ' 元',
-      String(b.count) + ' 笔',
-      '进度 ' + pctText(b.pct),
+      m('skill-bill.goal-scene-budget.c045', { p0: String(money(b.amount)) }),
+      m('skill-bill.goal-scene-budget.c046', { p0: String(money(b.actual)) }),
+      m('skill-bill.goal-scene-budget.c047', { p0: String(String(b.count)) }),
+      m('skill-bill.goal-scene-budget.c048', { p0: String(pctText(b.pct)) }),
       remain,
       ...(projection === '' ? [] : [projection]),
     ].join(' · '),

@@ -18,7 +18,7 @@
  */
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import { buildReportDoc, KIND_LABELS } from '../dist/analysis/reportDoc.js';
+import { buildReportDoc, kindLabels } from '../dist/analysis/reportDoc.js';
 import { assertDocPage } from './doc-page-assert.mjs';
 import { configTestBase } from './helpers/config-test.mjs';
 
@@ -129,7 +129,7 @@ function anchorsOf(html) {
 
 test('#519 ① 三条恒出：页内导航 ＋ 口径说明行 ＋ 来源脚注 ＋ 结论条恰好一条（J2／J9）', () => {
   for (const [kind, html] of Object.entries(built)) {
-    const what = KIND_LABELS[kind];
+    const what = kindLabels()[kind];
     assertDocPage(html, what);
     assert.ok(countIn(html, 'ilife-block-toc') >= 1, what + ' 缺页内导航（ilife-block-toc）');
     assert.ok(countIn(html, 'ilife-block-caliber') >= 2, what + ' 口径说明行／来源脚注都走 ilife-block-caliber，至少两条');
@@ -141,7 +141,7 @@ test('#519 ① 三条恒出：页内导航 ＋ 口径说明行 ＋ 来源脚注 
 
 test('#519 ② 页内导航与区块 id 双向自洽（J8：多一个孤儿锚点即红），8 个形态逐个跑', () => {
   for (const [kind, html] of Object.entries(built)) {
-    const what = KIND_LABELS[kind];
+    const what = kindLabels()[kind];
     const { hrefs, ids } = anchorsOf(html);
     assert.ok(hrefs.length >= 2, what + ' 导航项至少 2 项，实得 ' + hrefs.length);
     assert.deepEqual([...hrefs].sort(), [...ids].sort(), what + ' 导航 href 与区块 id 必须一一对应（双向，不许有孤儿）');
@@ -153,11 +153,11 @@ test('#519 ③ 形状件接上：徽章列／状态徽章／键值表／空态�
   // 页头胶囊（#516 §3.2 D01／D02／D04）：三个词各一格，8 页齐
   for (const [kind, html] of Object.entries(built)) {
     const chips = [...html.matchAll(/ilife-block-chip">([^<]*)</g)].map((m) => m[1]);
-    assert.ok(chips.includes('卡路里') && chips.includes('健康报告'), KIND_LABELS[kind] + ' 页头胶囊缺归属词：' + chips.join('|'));
+    assert.ok(chips.includes('卡路里') && chips.includes('健康报告'), kindLabels()[kind] + ' 页头胶囊缺归属词：' + chips.join('|'));
   }
   // 有状态处走徽章（`renderKpiCard` 的 status 槽 → `ilife-status-badge`）
   for (const kind of ['bmi', 'tdee', 'bmr', 'score', 'trend', 'compare']) {
-    assert.ok(countIn(built[kind], 'ilife-status-badge') >= 1, KIND_LABELS[kind] + ' 有状态处没挂状态徽章');
+    assert.ok(countIn(built[kind], 'ilife-status-badge') >= 1, kindLabels()[kind] + ' 有状态处没挂状态徽章');
   }
   // 状态维度改走徽章列：蛋白／水分两页的「达标／未达标天数」（R-39／R-46：两页统一用「达标」）
   const water = [...built.water.matchAll(/ilife-block-chip">([^<]*)</g)].map((m) => m[1]);
@@ -172,16 +172,16 @@ test('#519 ④ 可见文本零并列分隔符（J1 的页内影子）', () => {
   for (const [kind, html] of Object.entries(built)) {
     const vis = visible(html);
     for (const ch of ['·', '；', '~', '｜', '、']) {
-      assert.ok(!vis.includes(ch), KIND_LABELS[kind] + ' 可见文本里出现并列分隔符「' + ch + '」');
+      assert.ok(!vis.includes(ch), kindLabels()[kind] + ' 可见文本里出现并列分隔符「' + ch + '」');
     }
     // 口径行的段间竖线只活在版式里：产物文本里没有该字符，但有逐段 span
-    assert.ok(/ilife-block-caliber">\s*<span>/.test(html), KIND_LABELS[kind] + ' 口径行的分段没落成 span（分隔应由版式承担）');
+    assert.ok(/ilife-block-caliber">\s*<span>/.test(html), kindLabels()[kind] + ' 口径行的分段没落成 span（分隔应由版式承担）');
   }
 });
 
 test('#519 ⑤ 页头三件与宽屏页宽（J6）', () => {
   for (const [kind, html] of Object.entries(built)) {
-    const what = KIND_LABELS[kind];
+    const what = kindLabels()[kind];
     assert.ok(html.includes('<title>卡路里 ' + what + '</title>'), what + ' head 标题应两段不拿「·」串');
     assert.ok(html.includes('<div class="type-badge">报告</div>'), what + ' 页型徽章只写一个词「报告」（D04）');
     const meta = (html.match(/<div class="left">([^<]*)</) || [])[1] ?? '';
@@ -199,8 +199,8 @@ test('#519 ⑥ 8 个形态互不相同（同一底座、不同形态，不许落
     }
   }
   for (const [kind, html] of Object.entries(built)) {
-    assert.ok(html.includes(KIND_LABELS[kind]), KIND_LABELS[kind] + ' 页里没有自己的形态名（疑似拿错页）');
-    assert.ok(html.includes('calorie.report.' + kind), KIND_LABELS[kind] + ' 复制载荷里没有本形态命令原文');
+    assert.ok(html.includes(kindLabels()[kind]), kindLabels()[kind] + ' 页里没有自己的形态名（疑似拿错页）');
+    assert.ok(html.includes('calorie.report.' + kind), kindLabels()[kind] + ' 复制载荷里没有本形态命令原文');
   }
 });
 
@@ -250,7 +250,7 @@ test('#519 ⑧ 图表读数纪律：无逐点数值标签 ＋ 折线横轴等距
   const chartSections = (html) => [...html.matchAll(/<section class="ilife-block ilife-block-chart-block">[\s\S]*?<\/section>/g)].map((m) => m[0]);
   let lineCharts = 0;
   for (const [kind, html] of Object.entries(built)) {
-    const what = KIND_LABELS[kind];
+    const what = kindLabels()[kind];
     for (const chart of chartSections(html)) {
       assert.equal([...chart.matchAll(/<text class="ilife-charts-value"/g)].length, 0,
         what + ' 图里出现逐点数值标签（公共层那一档字号 9.5px，且密集时互压）');
@@ -322,12 +322,12 @@ test('#519 ⑩ y 轴刻度值：同图小数位一致 ＋ 整数语义的图全�
   for (const [kind, html] of Object.entries(built)) {
     const ticks = tickKind(html);
     if (ticks.length === 0) continue;
-    assert.equal(ticks.length % 3, 0, KIND_LABELS[kind] + ' 的 y 刻度不是三的倍数（每图 3 条）：' + JSON.stringify(ticks));
+    assert.equal(ticks.length % 3, 0, kindLabels()[kind] + ' 的 y 刻度不是三的倍数（每图 3 条）：' + JSON.stringify(ticks));
     for (let i = 0; i < ticks.length; i += 3) {
       const three = ticks.slice(i, i + 3);
       const ds = three.map(decimals);
       assert.equal(new Set(ds).size, 1,
-        KIND_LABELS[kind] + ' 同一张图的 y 刻度小数位不一致（D7：外刻度整数、中刻度带小数）：' + JSON.stringify(three));
+        kindLabels()[kind] + ' 同一张图的 y 刻度小数位不一致（D7：外刻度整数、中刻度带小数）：' + JSON.stringify(three));
     }
   }
   // ② 专挑「去掉取整守卫即退化成 .5」的序列

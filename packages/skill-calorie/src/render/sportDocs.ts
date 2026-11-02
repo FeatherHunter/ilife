@@ -53,6 +53,7 @@ import { exerciseUiCss, factStrip, fmtNum, windowStrip } from '../exercise/sport
 import type { DaySeries } from '../analysis/series.js';
 import type { ExerciseView } from '../home/exercise.js';
 import type { ExerciseGoalView } from './planPlate.js';
+import { m } from '../entries/index.js';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；测试钉死一致）。 */
 const DOC_VERSION = '0.1.0';
@@ -60,7 +61,9 @@ const DOC_SKILL = 'calorie';
 
 /** 本文件各页共用的 head 标题（整页模板住 `src/shared/docPage.ts`，标题走参数）。
  *  #523：品牌名里的 `·` 去掉——`·` 是分隔符债，`<title>` 也是可见文本（探针按 `#401` 样板加了这条锁）。 */
-const DOC_TITLE = '卡路里 运动';
+function DOC_TITLE() {
+  return m('skill-calorie.render-sportDocs.c093');
+}
 
 /** 逐日明细表最多摆几行（超上限**逐条明示**：表标题只报本窗天数，可见行数只报这一截）。
  *  口径取全仓既有上限写法（`copyArea` 的 100 条 caption 同数），不静默截数。 */
@@ -77,14 +80,20 @@ const DIST_TOP = 8;
  *  #523 返修 R3：眉标原来与 H1（`运动汇总`）**逐字全同**——#552 把 H1 的日期摘掉之后两者撞成同一个串，
  *  视觉复评 R2 在汇总族两页各记 −5「眉标与 H1 逐字同名」。现眉标退回**类别词**「运动」、页族「汇总」
  *  由 H1 承载：两件事实都还在页头，眉标不再复读页名（与明细族「眉标＝运动记录／H1＝运动记录明细」同构）。 */
-const SUMMARY_EYEBROW = '运动';
-const GOAL_EYEBROW = '运动对照目标';
+function SUMMARY_EYEBROW() {
+  return m('skill-calorie.render-sportDocs.c094');
+}
+function GOAL_EYEBROW() {
+  return m('skill-calorie.render-sportDocs.c095');
+}
 
 /** 来源脚注上给**读者看**的来源名：可见文本零 snake_case（库表名只留在复制日志的「来源」段里，
  *  那是给复核的人照抄用的技术原件，不上页面）。
- *  #552 去文：SOURCE_LOGGED 已删（运动汇总来源块整块消失后本件只剩目标页用 SOURCE_GOAL；
+ *  #552 去文：SOURCE_LOGGED 已删（运动汇总来源块整块消失后本件只剩目标页用 SOURCE_GOAL()；
  *  用户裁决“口径/来源块消失”——见票面判据）。 */
-const SOURCE_GOAL = '每日目标 ＋ 运动记录';
+function SOURCE_GOAL() {
+  return m('skill-calorie.render-sportDocs.c096');
+}
 
 /** 数值的展示写形一律走 `sportUi.fmtNum()`（显示层取整，见 #523）；本件不再另立一个 `fmt`。 */
 /** 窗内天数（闭区间；只做天数差，不当取数口径）。 */
@@ -114,9 +123,9 @@ function card(id: string, label: string, html: string): Card { return { id, labe
  *  `·` 串已去（口径归 #470）；取数面无条数字段，天数不再冒充条数，第三格如实报天。 */
 function footFacts(source: string, start: string, end: string, days: number): string {
   return factStrip([
-    { k: '数据来源', v: source },
-    { k: '窗口', v: start + ' → ' + end },
-    { k: '窗口天数', v: '共 ' + fmtNum(days, 0) + ' 天' },
+    { k: m('skill-calorie.render-sportDocs.c001'), v: source },
+    { k: m('skill-calorie.render-sportDocs.c002'), v: start + ' → ' + end },
+    { k: m('skill-calorie.render-sportDocs.c003'), v: m('skill-calorie.render-sportDocs.c004', { p0: String(fmtNum(days, 0)) }) },
   ]);
 }
 
@@ -148,11 +157,13 @@ function pageBody(cards: readonly Card[], caliber: readonly string[], source: st
 function summaryKpi(v: ExerciseView): KpiCardInput[] {
   const r = v.review;
   return [
-    { label: '总消耗', value: fmtNum(r.totalBurned, 0), unit: '卡' },
-    { label: '总时长', value: fmtNum(r.totalMinutes, 0), unit: '分钟',
-      detail: '每次平均 ' + fmtNum(r.totalMinutes / Math.max(1, r.sessions), 0) + ' 分钟' },
-    { label: '次数', value: String(r.sessions), unit: '次', detail: '活跃 ' + r.activeDays + ' 天' },
-    { label: '日均', value: fmtNum(v.avgBurnedPerLoggedDay, 0), unit: '卡', detail: '按有记录的天数算' },
+    { label: m('skill-calorie.render-sportDocs.c005'), value: fmtNum(r.totalBurned, 0), unit: m('skill-calorie.render-sportDocs.c006') },
+    { label: m('skill-calorie.render-sportDocs.c007'), value: fmtNum(r.totalMinutes, 0), unit: m('skill-calorie.render-sportDocs.c008'),
+      detail: m('skill-calorie.render-sportDocs.c009', {
+        p0: String(fmtNum(r.totalMinutes / Math.max(1, r.sessions), 0)),
+      }) },
+    { label: m('skill-calorie.render-sportDocs.c010'), value: String(r.sessions), unit: m('skill-calorie.render-sportDocs.c011'), detail: m('skill-calorie.render-sportDocs.c012', { p0: String(r.activeDays) }) },
+    { label: m('skill-calorie.render-sportDocs.c013'), value: fmtNum(v.avgBurnedPerLoggedDay, 0), unit: m('skill-calorie.render-sportDocs.c014'), detail: m('skill-calorie.render-sportDocs.c015') },
   ];
 }
 
@@ -168,19 +179,19 @@ function goalCard(v: ExerciseView): Card | null {
   const gap = v.goalGap ?? null;
   const achieved = v.goalAchieved ?? null;
   if (daily === null || total === null || pct === null || gap === null || achieved === null) {
-    return card('sec-goal', '目标对照', '<h2 style="margin:0;font-size:15px;font-weight:700">目标对照</h2>' + emptyGuide({
-      icon: '🎯', text: '还没设每日运动消耗目标',
-      hint: '先说一句「定运动目标」把每日运动消耗目标定下来，再看对照。',
+    return card('sec-goal', m('skill-calorie.render-sportDocs.c016'), '<h2 style="margin:0;font-size:15px;font-weight:700">目标对照</h2>' + emptyGuide({
+      icon: '🎯', text: m('skill-calorie.render-sportDocs.c017'),
+      hint: m('skill-calorie.render-sportDocs.c018'),
     }));
   }
   const verdict = '<span class="' + part('verdict') + ' ' + (achieved ? 'ok' : 'no') + '">'
-    + (achieved ? '✓ 已达成目标' : '✕ 还差 ' + fmtNum(Math.abs(gap), 0) + ' 卡') + '</span>';
-  return card('sec-goal', '目标对照', '<h2 style="margin:0;font-size:15px;font-weight:700">目标对照</h2>'
+    + (achieved ? m('skill-calorie.render-sportDocs.c019') : m('skill-calorie.render-sportDocs.c020', { p0: String(fmtNum(Math.abs(gap), 0)) })) + '</span>';
+  return card('sec-goal', m('skill-calorie.render-sportDocs.c021'), '<h2 style="margin:0;font-size:15px;font-weight:700">目标对照</h2>'
     + renderKpiGrid([
-      { label: '目标', value: fmtNum(total, 0), unit: '卡' },
-      { label: '实际', value: fmtNum(v.review.totalBurned, 0), unit: '卡' },
-      { label: '完成度', value: fmtNum(pct) + '%' },
-      { label: '差额', value: fmtNum(Math.abs(gap), 0), unit: '卡', detail: gap >= 0 ? '超出目标' : '还差这么多' },
+      { label: m('skill-calorie.render-sportDocs.c022'), value: fmtNum(total, 0), unit: m('skill-calorie.render-sportDocs.c023') },
+      { label: m('skill-calorie.render-sportDocs.c024'), value: fmtNum(v.review.totalBurned, 0), unit: m('skill-calorie.render-sportDocs.c025') },
+      { label: m('skill-calorie.render-sportDocs.c026'), value: fmtNum(pct) + '%' },
+      { label: m('skill-calorie.render-sportDocs.c027'), value: fmtNum(Math.abs(gap), 0), unit: m('skill-calorie.render-sportDocs.c028'), detail: gap >= 0 ? m('skill-calorie.render-sportDocs.c029') : m('skill-calorie.render-sportDocs.c030') },
     ]) + verdict);
 }
 
@@ -195,7 +206,11 @@ function truncation(days: number): { visible: boolean; note: string } {
   if (days <= DAILY_CAP) return { visible: false, note: '' };
   return {
     visible: true,
-    note: '逐日表已截断：本窗共 ' + days + ' 天，显示最近 ' + DAILY_CAP + ' 天，其余 ' + (days - DAILY_CAP) + ' 天见上方折线',
+    note: m('skill-calorie.render-sportDocs.c031', {
+      p0: String(days),
+      p1: String(DAILY_CAP),
+      p2: String(days - DAILY_CAP),
+    }),
   };
 }
 
@@ -208,16 +223,16 @@ function truncation(days: number): { visible: boolean; note: string } {
 function seriesCard(v: ExerciseView): Card | null {
   if (v.series.length === 0) return null;
   const rows = v.series.map((d: DaySeries) => ({
-    date: d.date, burn: d.exerciseKcal === null ? '—' : fmtNum(d.exerciseKcal, 0) + ' 卡',
+    date: d.date, burn: d.exerciseKcal === null ? '—' : m('skill-calorie.render-sportDocs.c032', { p0: String(fmtNum(d.exerciseKcal, 0)) }),
   }));
   const cut = truncation(rows.length);
   const table = renderDataTable({
-    columns: [{ key: 'date', label: '日期' }, { key: 'burn', label: '消耗', align: 'right' }],
+    columns: [{ key: 'date', label: m('skill-calorie.render-sportDocs.c033') }, { key: 'burn', label: m('skill-calorie.render-sportDocs.c034'), align: 'right' }],
     rows: cut.visible ? rows.slice(rows.length - DAILY_CAP) : rows,
-    caption: '按日消耗',
-    emptyText: '本窗无按日消耗',
+    caption: m('skill-calorie.render-sportDocs.c035'),
+    emptyText: m('skill-calorie.render-sportDocs.c036'),
   });  return {
-    id: 'sec-series', label: '按日消耗',
+    id: 'sec-series', label: m('skill-calorie.render-sportDocs.c037'),
     html: (cut.note === '' ? '' : '<p class="sui-note">' + escapeHtml(cut.note) + '</p>') + table,
   };
 }
@@ -233,18 +248,18 @@ function typeCard(v: ExerciseView): Card | null {
   if (byType.length === 0) return null;
   return {
     id: 'sec-type',
-    label: '按类型明细',
+    label: m('skill-calorie.render-sportDocs.c038'),
     html: renderDataTable({
       columns: [
-        { key: 'type', label: '类型' }, { key: 'cat', label: '分类' }, { key: 'sessions', label: '次数', align: 'right' },
-        { key: 'burned', label: '消耗', align: 'right' }, { key: 'minutes', label: '时长', align: 'right' },
+        { key: 'type', label: m('skill-calorie.render-sportDocs.c039') }, { key: 'cat', label: m('skill-calorie.render-sportDocs.c040') }, { key: 'sessions', label: m('skill-calorie.render-sportDocs.c041'), align: 'right' },
+        { key: 'burned', label: m('skill-calorie.render-sportDocs.c042'), align: 'right' }, { key: 'minutes', label: m('skill-calorie.render-sportDocs.c043'), align: 'right' },
       ],
       rows: byType.map((t) => ({
-        type: t.type, cat: inferCategory(t.type), sessions: t.sessions + ' 次',
-        burned: fmtNum(t.burned, 0) + ' 卡', minutes: fmtNum(t.minutes, 0) + ' 分钟',
+        type: t.type, cat: inferCategory(t.type), sessions: m('skill-calorie.render-sportDocs.c044', { p0: String(t.sessions) }),
+        burned: m('skill-calorie.render-sportDocs.c045', { p0: String(fmtNum(t.burned, 0)) }), minutes: m('skill-calorie.render-sportDocs.c046', { p0: String(fmtNum(t.minutes, 0)) }),
       })),
-      caption: '按类型明细（共 ' + byType.length + ' 类）',
-      emptyText: '本窗无类型明细',
+      caption: m('skill-calorie.render-sportDocs.c047', { p0: String(byType.length) }),
+      emptyText: m('skill-calorie.render-sportDocs.c048'),
     }),
   };
 }
@@ -253,17 +268,17 @@ function typeCard(v: ExerciseView): Card | null {
  *  四格 KPI ／ 目标对照 ／ 每日消耗折线 ／ 类型消耗分布 ／ 逐日明细 ／ 按类型明细 ／ 按分类汇总，逐块判空。 */
 function summaryCards(v: ExerciseView): Card[] {
   const r = v.review;
-  const cards: Card[] = [{ id: 'sec-kpi', label: '核心数字', html: '<h2 style="margin:0;font-size:15px;font-weight:700">核心数字</h2>' + renderKpiGrid(summaryKpi(v)) }];
+  const cards: Card[] = [{ id: 'sec-kpi', label: m('skill-calorie.render-sportDocs.c049'), html: '<h2 style="margin:0;font-size:15px;font-weight:700">核心数字</h2>' + renderKpiGrid(summaryKpi(v)) }];
   const goal = goalCard(v);
   if (goal !== null) cards.push(goal);
   const logged = v.series.filter((d: DaySeries) => d.exerciseKcal !== null);
   if (logged.length > 0) {
-    cards.push(card('sec-trend', '每日消耗', renderChartBlock({
+    cards.push(card('sec-trend', m('skill-calorie.render-sportDocs.c050'), renderChartBlock({
       kind: 'line',
-      title: '每日消耗',
+      title: m('skill-calorie.render-sportDocs.c051'),
       input: {
         items: v.series.map((d: DaySeries) => ({ label: (v.start.slice(0, 4) !== v.end.slice(0, 4) ? d.date : d.date.slice(5)), value: d.exerciseKcal })),
-        options: { markLine: { value: v.avgBurnedPerLoggedDay ?? undefined, label: '日均' }, showDots: true },
+        options: { markLine: { value: v.avgBurnedPerLoggedDay ?? undefined, label: m('skill-calorie.render-sportDocs.c052') }, showDots: true },
       },
     })));
   }
@@ -273,12 +288,12 @@ function summaryCards(v: ExerciseView): Card[] {
     const top = [...r.byType].sort((a, b) => b.burned - a.burned).slice(0, DIST_TOP);
     const max = top.length === 0 || !Number.isFinite(top[0].burned) || top[0].burned <= 0 ? 0 : top[0].burned;
     const distNote = r.byType.length > DIST_TOP
-      ? '<p class="sui-note">' + escapeHtml('只列消耗最高的 ' + DIST_TOP + ' 类，逐类消耗见下方按类型明细表') + '</p>'
+      ? '<p class="sui-note">' + escapeHtml(m('skill-calorie.render-sportDocs.c053', { p0: String(DIST_TOP) })) + '</p>'
       : '';
-    cards.push(card('sec-dist', '类型消耗分布', '<h2 style="margin:0;font-size:15px;font-weight:700">类型消耗分布</h2>' + renderDistributionRows({
+    cards.push(card('sec-dist', m('skill-calorie.render-sportDocs.c054'), '<h2 style="margin:0;font-size:15px;font-weight:700">类型消耗分布</h2>' + renderDistributionRows({
       rows: top.map((t) => ({
         label: t.type,
-        value: fmtNum(t.burned, 0) + ' 卡',
+        value: m('skill-calorie.render-sportDocs.c055', { p0: String(fmtNum(t.burned, 0)) }),
         pct: max === 0 ? 0 : Math.max(0, Math.min(100, (t.burned / max) * 100)),
       })),
     }) + distNote));
@@ -289,10 +304,10 @@ function summaryCards(v: ExerciseView): Card[] {
   if (type !== null) cards.push(type);
   const cats = Object.entries(r.byCategory);
   if (cats.length > 0) {
-    cards.push(card('sec-cat', '按分类汇总', renderDisclosure({
-      title: '按分类汇总（共 ' + cats.length + ' 类）',
+    cards.push(card('sec-cat', m('skill-calorie.render-sportDocs.c056'), renderDisclosure({
+      title: m('skill-calorie.render-sportDocs.c057', { p0: String(cats.length) }),
       contentHtml: renderListRows({
-        items: cats.map(([cat, s]) => ({ left: cat, main: s.sessions + ' 次', right: fmtNum(s.burned, 0) + ' 卡' })),
+        items: cats.map(([cat, s]) => ({ left: cat, main: m('skill-calorie.render-sportDocs.c058', { p0: String(s.sessions) }), right: m('skill-calorie.render-sportDocs.c059', { p0: String(fmtNum(s.burned, 0)) }) })),
       }),
     })));
   }
@@ -304,7 +319,7 @@ function summaryCards(v: ExerciseView): Card[] {
 function summaryEnvelope(v: ExerciseView): SerializableEnvelope {
   const r = v.review;
   return {
-    version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: '运动汇总',
+    version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: m('skill-calorie.render-sportDocs.c060'),
     data: {
       metrics: metricsOf({
         totalBurned: r.totalBurned, totalMinutes: r.totalMinutes, sessions: r.sessions,
@@ -323,15 +338,15 @@ function summaryEnvelope(v: ExerciseView): SerializableEnvelope {
  *  口径/来源整块消失（pageBody 传 [] 与空串）。 */
 export function buildExerciseDoc(v: ExerciseView, cmd?: string): string {
   const env = summaryEnvelope(v);
-  const copy = docCopy(env, cmd ?? commandLine('calorie.view.exercise', { start: v.start, end: v.end }), 'exercise_log（只读汇总）');
-  const title = '运动汇总';
+  const copy = docCopy(env, cmd ?? commandLine('calorie.view.exercise', { start: v.start, end: v.end }), m('skill-calorie.render-sportDocs.c061'));
+  const title = m('skill-calorie.render-sportDocs.c062');
   if (v.series.length === 0) {
     // 零窗（装配层构造）＝一整页空态指引：不留空 KPI 卡、不出空折线。
     return assembleDocPage({
-      docTitle: DOC_TITLE, title, eyebrow: SUMMARY_EYEBROW, subtitle: '本段时间没有运动记录',
+      docTitle: DOC_TITLE(), title, eyebrow: SUMMARY_EYEBROW(), subtitle: m('skill-calorie.render-sportDocs.c063'),
       content: exerciseUiCss() + '<section id="sec-empty">' + emptyGuide({
-        icon: '🏃', text: '本段时间没有运动记录',
-        hint: '先说一句「记运动」把这一次补上，或把窗口换成最近 7 天再看。',
+        icon: '🏃', text: m('skill-calorie.render-sportDocs.c064'),
+        hint: m('skill-calorie.render-sportDocs.c065'),
       }) + '</section>',
       printable: true,
       pageUi: true,
@@ -339,11 +354,11 @@ export function buildExerciseDoc(v: ExerciseView, cmd?: string): string {
   }
   const cards = summaryCards(v);
   return assembleDocPage({
-    docTitle: DOC_TITLE, title, eyebrow: SUMMARY_EYEBROW,
+    docTitle: DOC_TITLE(), title, eyebrow: SUMMARY_EYEBROW(),
     subtitle: null,
     // 窗口条（#523）：起止两枚日期块 ＋ 天数胶囊，替掉原来挤在副标题／表标题里的 `·` 串。
     // #552 去文：窗口只由 windowStrip 承载（用户裁决“窗口由 windowStrip 承载”——见票面判据）。
-    content: windowStrip(v.start, v.end, daysIn(v.start, v.end) + ' 天')
+    content: windowStrip(v.start, v.end, m('skill-calorie.render-sportDocs.c066', { p0: String(daysIn(v.start, v.end)) }))
       + pageBody(cards, [], '', copy),
     charts: true, printable: true,
     pageUi: true,
@@ -368,7 +383,7 @@ export interface ExerciseGoalPageInput extends Omit<ExerciseGoalView, 'goalTotal
 function ringCard(v: ExerciseGoalPageInput, pct: number): string {
   const deg = Math.max(0, Math.min(100, Math.min(pct, 100)));
   return '<div class="' + part('ring-card') + '">'
-    + '<div class="' + part('ring-wrap') + '" role="img" aria-label="运动目标完成度 ' + fmtNum(v.pct) + '%">'
+    + '<div class="' + part('ring-wrap') + '" role="img" aria-label="' + m('skill-calorie.render-sportDocs.c900', { p0: fmtNum(v.pct) }) + '">'
     + '<div style="position:absolute;inset:0;border-radius:50%;background:conic-gradient(var(--blue) 0 ' + deg + '%, var(--line) ' + deg + '% 100%)"></div>'
     + '<div class="' + part('ring-center') + '">'
     + '<div class="' + part('ring-pct') + '">' + fmtNum(v.pct) + '%</div>'
@@ -380,7 +395,7 @@ function ringCard(v: ExerciseGoalPageInput, pct: number): string {
 
 /** 判决胶囊：达成 `ok`／未达成 `no`（两态同一个类的两个档）。 */
 function verdictPill(v: ExerciseGoalPageInput): string {
-  const text = v.achieved ? '✓ 已达成目标' : '✕ 还差 ' + fmtNum(Math.abs(v.gap), 0) + ' 卡';
+  const text = v.achieved ? m('skill-calorie.render-sportDocs.c067') : m('skill-calorie.render-sportDocs.c068', { p0: String(fmtNum(Math.abs(v.gap), 0)) });
   return '<span class="' + part('verdict') + ' ' + (v.achieved ? 'ok' : 'no') + '">' + text + '</span>';
 }
 
@@ -388,10 +403,10 @@ function verdictPill(v: ExerciseGoalPageInput): string {
  *  #523 返修：判决只住胶囊一处（窗口条后的状态徽标与环心判语两处已撤，不再一页三遍）；**#602 补题**：本块原只有裸 KPI 卡格、块内无可见标题（终审 #268 §2.6 N1 的页枚举漏了 23／24 两页），现照同件 `sec-kpi`／`sec-dist` 同形，把题作为 `<section>` 首个子节点补上——题词与页内导航同源（都取 `card()` 的 label「数值对照」，两处不会走散），风格同档（15px／700）。 */
 function goalFigures(v: ExerciseGoalPageInput, goalTotal: number): string {
   return renderKpiGrid([
-    { label: '目标', value: fmtNum(goalTotal, 0), unit: '卡' },
-    { label: '实际', value: fmtNum(v.actual, 0), unit: '卡' },
-    { label: '完成度', value: fmtNum(v.pct) + '%', detail: '环最高画到 100%' },
-    { label: '差额', value: fmtNum(Math.abs(v.gap), 0), unit: '卡', detail: v.gap >= 0 ? '超出目标' : '还差这么多' },
+    { label: m('skill-calorie.render-sportDocs.c069'), value: fmtNum(goalTotal, 0), unit: m('skill-calorie.render-sportDocs.c070') },
+    { label: m('skill-calorie.render-sportDocs.c071'), value: fmtNum(v.actual, 0), unit: m('skill-calorie.render-sportDocs.c072') },
+    { label: m('skill-calorie.render-sportDocs.c073'), value: fmtNum(v.pct) + '%', detail: m('skill-calorie.render-sportDocs.c074') },
+    { label: m('skill-calorie.render-sportDocs.c075'), value: fmtNum(Math.abs(v.gap), 0), unit: m('skill-calorie.render-sportDocs.c076'), detail: v.gap >= 0 ? m('skill-calorie.render-sportDocs.c077') : m('skill-calorie.render-sportDocs.c078') },
   ]);
 }
 
@@ -399,15 +414,18 @@ function goalFigures(v: ExerciseGoalPageInput, goalTotal: number): string {
  *  返回 `null` ＝ 本窗不是整周，不出这句（免得把日口径页也印成周口径）。 */
 function weekCaliberLine(v: ExerciseGoalPageInput, goalTotal: number): string | null {
   if (v.days !== 7) return null;
-  return '周目标口径＝每日目标 × 7：每日目标 ' + fmtNum(v.dailyGoal, 0) + ' 卡 × 7 = ' + fmtNum(goalTotal, 0) + ' 卡';
+  return m('skill-calorie.render-sportDocs.c079', {
+    p0: String(fmtNum(v.dailyGoal, 0)),
+    p1: String(fmtNum(goalTotal, 0)),
+  });
 }
 
 /** 目标页口径行（#523 一条事实一行；周口径那句只走这里一处）。 */
 function goalCalibers(v: ExerciseGoalPageInput, goalTotal: number | null): string[] {
   const parts: string[] = [
-    '完成度＝实际 ÷ 目标',
-    '差额＝实际 − 目标',
-    '每日目标 ' + fmtNum(v.dailyGoal, 0) + ' 卡',
+    m('skill-calorie.render-sportDocs.c080'),
+    m('skill-calorie.render-sportDocs.c081'),
+    m('skill-calorie.render-sportDocs.c082', { p0: String(fmtNum(v.dailyGoal, 0)) }),
   ];
   if (goalTotal !== null) {
     const week = weekCaliberLine(v, goalTotal);
@@ -418,7 +436,7 @@ function goalCalibers(v: ExerciseGoalPageInput, goalTotal: number | null): strin
 
 function goalEnvelope(v: ExerciseGoalPageInput): SerializableEnvelope {
   return {
-    version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: '运动目标',
+    version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: m('skill-calorie.render-sportDocs.c083'),
     data: {
       metrics: metricsOf({
         dailyGoal: v.dailyGoal, goalTotal: v.goalTotal, actual: v.actual,
@@ -435,17 +453,19 @@ export function buildExerciseGoalDoc(v: ExerciseGoalPageInput, cmd?: string): st
   const copy = docCopy(
     env,
     cmd ?? commandLine('calorie.view.exercise-goal', { start: v.start, end: v.end }),
-    v.source ?? 'daily_goal ＋ exercise_log（只读对照）',
+    v.source ?? m('skill-calorie.render-sportDocs.c084'),
   );
   // #523 返修 R3：单日窗原来印成「运动目标 2026-09-15 ~ 2026-09-15」——同一天在 H1 里写两遍
   // （窗口条与来源脚注再各一份，视觉复评 R2 记 −3）。起止同日只印一次，与窗口条的退化分支同口径。
-  const title = '运动目标 ' + (v.start === v.end ? v.start : rangeText(v.start, v.end));
+  const title = m('skill-calorie.render-sportDocs.c085', {
+    p0: String(v.start === v.end ? v.start : rangeText(v.start, v.end)),
+  });
   if (v.goalTotal === null || v.pct === null) {
     return assembleDocPage({
-      docTitle: DOC_TITLE, title, eyebrow: GOAL_EYEBROW, subtitle: '还没设每日运动消耗目标',
+      docTitle: DOC_TITLE(), title, eyebrow: GOAL_EYEBROW(), subtitle: m('skill-calorie.render-sportDocs.c086'),
       content: exerciseUiCss() + '<section id="sec-empty">' + emptyGuide({
-        icon: '🎯', text: '还没设每日运动消耗目标',
-        hint: '先说一句「定营养目标」把每日运动消耗目标定下来，再看这张对照页。',
+        icon: '🎯', text: m('skill-calorie.render-sportDocs.c087'),
+        hint: m('skill-calorie.render-sportDocs.c088'),
       }) + '</section>',
       printable: true,
       pageUi: true,
@@ -453,14 +473,14 @@ export function buildExerciseGoalDoc(v: ExerciseGoalPageInput, cmd?: string): st
   }
   const goalTotal = v.goalTotal;
   const cards: Card[] = [
-    card('sec-ring', '目标环', ringCard(v, v.pct)),
-    card('sec-figures', '数值对照', '<h2 style="margin:0;font-size:15px;font-weight:700">数值对照</h2>' + goalFigures(v, goalTotal)),
+    card('sec-ring', m('skill-calorie.render-sportDocs.c089'), ringCard(v, v.pct)),
+    card('sec-figures', m('skill-calorie.render-sportDocs.c090'), '<h2 style="margin:0;font-size:15px;font-weight:700">数值对照</h2>' + goalFigures(v, goalTotal)),
   ];
-  const source = footFacts(SOURCE_GOAL, v.start, v.end, v.days);
+  const source = footFacts(SOURCE_GOAL(), v.start, v.end, v.days);
   return assembleDocPage({
-    docTitle: DOC_TITLE, title, eyebrow: GOAL_EYEBROW,
-    subtitle: '这段时间的运动消耗与每日目标的对照',
-    content: windowStrip(v.start, v.end, v.days + ' 天')
+    docTitle: DOC_TITLE(), title, eyebrow: GOAL_EYEBROW(),
+    subtitle: m('skill-calorie.render-sportDocs.c091'),
+    content: windowStrip(v.start, v.end, m('skill-calorie.render-sportDocs.c092', { p0: String(v.days) }))
       + pageBody(cards, goalCalibers(v, goalTotal), source, copy),
     printable: true,
     pageUi: true,

@@ -55,17 +55,18 @@ import type { SerializableEnvelope } from 'base-paint';
 import type { CrudReceipt, ReceiptItem } from '../render/receipt.js';
 import { MEASUREMENT_FIELDS, MEASUREMENT_ZH } from '../fetch/body.js';
 import { CALIPER_SITE_LABELS } from './bodyPlate.js';
-import { JP7_METHOD } from './log.js';
+import { jp7Method } from './log.js';
 import { assembleDocPage } from '../shared/docPage.js';
 import { copyArea, copyLog, notice } from '../shared/copyArea.js';
-import { OPERATION_ICONS, OPERATION_LABELS, OPERATION_TONES } from '../shared/operationHead.js';
+import { OPERATION_ICONS, OPERATION_TONES, operationLabel } from '../shared/operationHead.js';
 import { commandLine } from '../shared/writeParts.js';
 import { CALORIE_COPY_ACTION } from '../render/copy.js';
 import { bodyReceiptCss, groupHead, labeledChips } from './receiptUi.js';
 import {
   cell, currentRows, deleteSnapshotRows, entityOf, hasValue, isMeasure, otherItems, payloadMessage,
-  snapshotOf, zhLabel,
+  metaLabels, snapshotOf, zhLabel,
 } from './receiptData.js';
+import { m } from '../entries/index.js';
 
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
@@ -73,10 +74,10 @@ const DOC_SKILL = 'calorie';
 /** 页签名（七页同值，由编排者裁定）：**空格分层、不带任何符号**——`·` 是设计债
  *  （`scripts/audit-separators.mjs` 的 R1），同仓已交付先例是 `卡路里 身材照片`。
  *  页与页的分家靠页内主标题与眉标，不靠页签。 */
-const DOC_TITLE = '卡路里 身体细节';
+
 
 /** 归属词（眉标，**一页一处**）：说清这是哪一族，不再在同一页里说三遍。 */
-const EYEBROW = '身体细节';
+
 
 /** 身体细节 4 条会改数据库的命令（**具名键集**，命令名权威源＝`body/commands.ts`；分派层只调本文件）。 */
 const BODY_RECEIPT_KEYS: ReadonlySet<string> = new Set([
@@ -101,10 +102,10 @@ function isBackfill(receipt: CrudReceipt, row: Record<string, unknown> | null): 
 /** 这一页叫什么：由**记录本身**推（见上）。体脂按来源分两条路：皮褶钳来源是按 7 点换算来的，
  *  其余来源是外部量来的读数。七条唤醒词由此各自落到一个页名上。 */
 function pageNameOf(key: string, op: CrudReceipt['op'], source: unknown, backfill: boolean): string {
-  if (isMeasure(key)) return op === 'delete' ? '删围度' : (backfill ? '补记围度' : '记围度');
-  if (op === 'delete') return '删体脂';
-  if (backfill) return '补记体脂';
-  return source === 'home_caliper' ? '记体脂（皮褶钳）' : '记体脂（外部测量）';
+  if (isMeasure(key)) return op === 'delete' ? m('skill-calorie.body-receipt.c001') : (backfill ? m('skill-calorie.body-receipt.c002') : m('skill-calorie.body-receipt.c003'));
+  if (op === 'delete') return m('skill-calorie.body-receipt.c004');
+  if (backfill) return m('skill-calorie.body-receipt.c005');
+  return source === 'home_caliper' ? m('skill-calorie.body-receipt.c006') : m('skill-calorie.body-receipt.c007');
 }
 
 /** 逐格段里插组头（「躯干」「左右成对」「皮褶读数」这类）——一长串裸数字按部位分家。
@@ -119,19 +120,23 @@ function groupedRows(
 }
 
 /** 组头表（按家族取；键是**已有的中文标签**，不是库列名——组头只挑行，不改行的名字）。 */
-const GROUP_HEADS: Readonly<Record<'caliper' | 'measure', Readonly<Record<string, string>>>> = {
-  caliper: { 胸: '皮褶读数（毫米）' },
-  measure: { 胸围: '躯干（厘米）', 左大腿: '左右成对（厘米）' },
-};
+function groupHeads(family: 'caliper' | 'measure'): Readonly<Record<string, string>> {
+  return family === 'caliper'
+    ? { [CALIPER_SITE_LABELS[0] ?? '']: m('skill-calorie.body-receipt.c038') }
+    : {
+      [MEASUREMENT_ZH['chest_cm'] ?? '']: m('skill-calorie.body-receipt.c039'),
+      [MEASUREMENT_ZH['left_thigh_cm'] ?? '']: m('skill-calorie.body-receipt.c040'),
+    };
+}
 
 /** 身份字段（不是部位读数）：它们落在所有组之外，整行抬开一档（`.brc-meta`）。 */
-const META_LABELS: ReadonlySet<string> = new Set(['日期', '来源', '体脂率', '备注']);
+
 
 /** 逐格行落在哪一档：身份字段走 `.brc-meta`（组外），部位读数不带单位——
  *  **单位只留组头一处**（编排者视觉复核：组头已写「（厘米）」，行里再写就成同事实两处说，
  *  且行里那根单位前的短横读起来像负号）。 */
 function rowClass(label: string): string {
-  return META_LABELS.has(label) ? 'brc-none brc-meta' : 'brc-none';
+  return metaLabels().has(label) ? 'brc-none brc-meta' : 'brc-none';
 }
 
 /** **只留有值的行**（缺值的整行不摆，见编排者视觉裁定第 1 条）——「没记」这件事由段下那一句
@@ -150,16 +155,16 @@ const filledOnly = (rows: readonly ChangeRowInput[]): ChangeRowInput[] =>
  *  字段名一律经 `zhLabel` 取唯一来源的中文名（库列名与 CLI 参数名都不上屏）。 */
 function m5Disclosure(receipt: CrudReceipt, withFields: boolean): string {
   const fields = withFields
-    ? labeledChips('这次写进去的', receipt.writtenFields.map((f) => zhLabel(f)))
+    ? labeledChips(m('skill-calorie.body-receipt.c008'), receipt.writtenFields.map((f) => zhLabel(f)))
     : '';
   return renderDisclosure({
-    title: '对账信息',
+    title: m('skill-calorie.body-receipt.c009'),
     contentHtml: fields + renderDataTable({
-      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+      columns: [{ key: 'k', label: m('skill-calorie.body-receipt.c010') }, { key: 'v', label: m('skill-calorie.body-receipt.c011') }],
       rows: [
-        { k: '影响行数', v: receipt.affectedRows + ' 行' },
-        { k: '回执格式', v: 'v' + receipt.m5Contract },
-        { k: '写入时间', v: receipt.meta.actionAt },
+        { k: m('skill-calorie.body-receipt.c012'), v: m('skill-calorie.body-receipt.c013', { p0: String(receipt.affectedRows) }) },
+        { k: m('skill-calorie.body-receipt.c014'), v: 'v' + receipt.m5Contract },
+        { k: m('skill-calorie.body-receipt.c015'), v: receipt.meta.actionAt },
       ],
     }),
   });
@@ -171,7 +176,7 @@ function m5Disclosure(receipt: CrudReceipt, withFields: boolean): string {
 function undoBlock(undoCli: unknown): string {
   if (typeof undoCli !== 'string' || undoCli.trim() === '') return '';
   return renderPreBlock({
-    label: '撤销指令（可复制重跑）',
+    label: m('skill-calorie.body-receipt.c016'),
     command: undoCli.trim(),
     actionId: CALORIE_COPY_ACTION.actionId,
     copyLabel: CALORIE_COPY_ACTION.label,
@@ -187,11 +192,11 @@ function undoCliOf(receipt: CrudReceipt): unknown {
  *  入口），但**不摆「软删除」这个仓内叫法**——读者话是「行还留在库里」。
  *  #537：这句原先与结论条／状态卡各说一遍（同一事实三处说），现在**只跟结论条一处走**
  *  （记／补记页按命令指下一步复查入口，删类页出在警示块的详情行里）。 */
-const DELETE_NOTE = '行还留在库里，查询和统计里不再出现它，暂时没有恢复入口。';
+const deleteNote = (): string => m('skill-calorie.body-receipt.c041');
 
 /** 记／补记类结论句尾巴：这条记录以后去哪儿复查（两条唤醒词各指各的）。 */
 const nextStepOf = (key: string): string =>
-  (isMeasure(key) ? '可照「看围度趋势」复查' : '可照「看体脂趋势」复查');
+  (isMeasure(key) ? m('skill-calorie.body-receipt.c017') : m('skill-calorie.body-receipt.c018'));
 
 /** **结论那一句**（一页只有这一处说「写成功／已删除」）。
  *
@@ -200,13 +205,15 @@ const nextStepOf = (key: string): string =>
 function conclusionOf(
   key: string, receipt: CrudReceipt, row: Record<string, unknown> | null, backfill: boolean,
 ): string {
-  if (receipt.noChange === true) return '这次没有改动任何东西。';
+  if (receipt.noChange === true) return m('skill-calorie.body-receipt.c019');
   const date = row === null ? '—' : cell(row['date']);
-  if (receipt.op === 'delete') return date + ' 的这条' + entityOf(key) + '记录已经删掉。';
-  const done = (backfill ? '已补记 ' : '已记下 ') + date + ' 的' + entityOf(key) + '记录';
+  if (receipt.op === 'delete') return m('skill-calorie.body-receipt.c020', { p0: String(date), p1: String(entityOf(key)) });
+  const doneWord = (backfill ? m('skill-calorie.body-receipt.c021') : m('skill-calorie.body-receipt.c022'));
+  const done = m('skill-calorie.body-receipt.c023', { p0: String(doneWord + date), p1: String(entityOf(key)) });
   if (isMeasure(key)) return done + '，' + nextStepOf(key) + '。';
   const byCaliper = row !== null && row['source'] === 'home_caliper';
-  return done + (byCaliper ? '，按 ' + JP7_METHOD + '换算' : '') + '，' + nextStepOf(key) + '。';
+  const caliperNote = (byCaliper ? m('skill-calorie.body-receipt.c024', { p0: String(jp7Method()) }) : '');
+  return done + caliperNote + '，' + nextStepOf(key) + '。';
 }
 
 /** 一张读数卡：值缺省写 `—`，缺值时**连单位一起省**（不留 `—%` 这种半截写法）。 */
@@ -223,7 +230,7 @@ const opBadge = (op: CrudReceipt['op'], backfill: boolean): Pick<KpiCardInput, '
   // #539 收口：补记页顶「✓ 新增」语义矛盾（终审指控成立）——落库日期早于今天即补记（J6 同规则），
   // 徽章改「补记」，图标色档沿用共享表（只换标签字，不动共享件）。
   status: OPERATION_TONES[op],
-  statusText: OPERATION_ICONS[op] + ' ' + (backfill && op !== 'delete' ? '补记' : OPERATION_LABELS[op]),
+  statusText: OPERATION_ICONS[op] + ' ' + (backfill && op !== 'delete' ? m('skill-calorie.body-receipt.c025') : operationLabel(op)),
 });
 
 /** 读数卡两张（**主角数字 ＋ 日期**）：体脂族给体脂率，围度族给这条记录里量到的部位数。
@@ -233,10 +240,10 @@ function kpiCards(key: string, receipt: CrudReceipt, row: Record<string, unknown
   const date: KpiCardInput = { label: '日期', value: cell(at('date')) };
   const head: KpiCardInput = isMeasure(key)
     ? {
-      label: receipt.op === 'delete' ? '删掉的部位' : '量到的部位',
-      value: String(MEASUREMENT_FIELDS.filter((f) => hasValue(at(f))).length), unit: '个',
+      label: receipt.op === 'delete' ? m('skill-calorie.body-receipt.c026') : m('skill-calorie.body-receipt.c027'),
+      value: String(MEASUREMENT_FIELDS.filter((f) => hasValue(at(f))).length), unit: m('skill-calorie.body-receipt.c028'),
     }
-    : numCard('体脂率', at('body_fat_pct'), '%');
+    : numCard(m('skill-calorie.body-receipt.c029'), at('body_fat_pct'), '%');
   return [{ ...head, ...opBadge(receipt.op, backfill) }, date];
 }
 
@@ -247,8 +254,8 @@ function kpiCards(key: string, receipt: CrudReceipt, row: Record<string, unknown
 function existingBlock(db: DatabaseSync, key: string, item: ReceiptItem): string {
   const id = typeof item.id === 'number' ? item.id : -1;
   const rows = filledOnly(currentRows(db, key, id));
-  return '<div class="brc-alt">' + renderCaliberLine('同一天还记过这条')
-    + groupedRows(key, rows, GROUP_HEADS[isMeasure(key) ? 'measure' : 'caliper']) + '</div>';
+  return '<div class="brc-alt">' + renderCaliberLine(m('skill-calorie.body-receipt.c030'))
+    + groupedRows(key, rows, groupHeads(isMeasure(key) ? 'measure' : 'caliper')) + '</div>';
 }
 
 /** 七条写词共用的写后回执整页。`command` ＝ AI 真跑那条写命令的原文，进「复制日志」第 4 段。 */
@@ -259,7 +266,7 @@ function buildBodyReceiptDoc(
   const isDel = receipt.op === 'delete';
   const row = id === null ? null : snapshotOf(db, key, id);
   const backfill = isBackfill(receipt, row);
-  const heads = GROUP_HEADS[isMeasure(key) ? 'measure' : 'caliper'];
+  const heads = groupHeads(isMeasure(key) ? 'measure' : 'caliper');
   // 逐格段的题目：**口径一句话说清单位与范围**（原先括号里印的是库表名与「读自库内」的实现细节，
   // 而数值一律裸摆、没有单位）。段名本身是三条写词测试的锚点，逐字不动。
   const allRows = isDel
@@ -278,7 +285,7 @@ function buildBodyReceiptDoc(
     // ① 结论：**一页只在这一处说「写成功／已补记／已删除」**（原先是结论条／状态卡／表各说一遍）。
     //    删类走警示块（浅色静态提示），记／补记类走结论条。
     isDel
-      ? notice({ icon: 'warn', msg: conclusionOf(key, receipt, row, backfill), detail: DELETE_NOTE })
+      ? notice({ icon: 'warn', msg: conclusionOf(key, receipt, row, backfill), detail: deleteNote() })
       : renderConclusionBar(conclusionOf(key, receipt, row, backfill)),
     // ② 主角读数卡（原先四张：状态／记录编号／影响行数／写入字段——后两张进页尾对账区，
     //    记录编号是内部主键、整张撤）。
@@ -289,9 +296,9 @@ function buildBodyReceiptDoc(
     snapRows.length === 0
       ? ''
       : '<div class="brc-now">'
-        + renderCaliberLine((isDel ? '删除前的原值：' : '这次记下的：'))
+        + renderCaliberLine((isDel ? m('skill-calorie.body-receipt.c031') : m('skill-calorie.body-receipt.c032')))
         + groupedRows(key, snapRows, heads)
-        + (leftOut === 0 ? '' : renderCaliberLine('另有 ' + leftOut + ' 项这次没记，就没摆上来'))
+        + (leftOut === 0 ? '' : renderCaliberLine(m('skill-calorie.body-receipt.c033', { p0: String(leftOut) })))
         + '</div>',
     ...existing.map((it) => existingBlock(db, key, it)),
     m5Disclosure(receipt, !isDel),
@@ -308,13 +315,13 @@ function buildBodyReceiptDoc(
     }),
     // ④ 口径两行：原先是一条 `；`-串（还夹着库文件名与库表名、两个反引号），现在一条一件事，
     //    段内分隔用 `renderCaliberLine` 自带的 `｜` 段位（它把每段摊成独立节点，不落可见文本）。
-    renderCaliberLine('数据来源：身体细节 ｜ 单位：皮褶读毫米 ｜ 围度读厘米 ｜ 体脂率读百分比'),
-    renderCaliberLine('表里没记到的格子写 — ｜ 复制出去的数据里，没值的项整项不出现'),
+    renderCaliberLine(m('skill-calorie.body-receipt.c034')),
+    renderCaliberLine(m('skill-calorie.body-receipt.c035')),
   ].join('');
   return assembleDocPage({
-    docTitle: DOC_TITLE,
+    docTitle: m('skill-calorie.body-receipt.c036'),
     title: pageNameOf(key, receipt.op, row === null ? undefined : row['source'], backfill),
-    eyebrow: EYEBROW,
+    eyebrow: m('skill-calorie.body-receipt.c037'),
     subtitle: null,
     content,
     pageUi: true,

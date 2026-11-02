@@ -93,7 +93,7 @@ describe('heat-grid ① 渲染契约', () => {
     const html = renderHeatGrid({ ...base, facts: [{ label: '一周合计', value: '90 条', sub: '六个时段相加' }] });
     assert.match(html, new RegExp('^<div class="' + HEAT_GRID_CLASS + ' is-matrix">'));
     assert.equal(countOf(html, 'class="[^"]*-col-head"'), HEAT_GRID_COLUMNS, '恰好七枚列头');
-    for (const day of HEAT_GRID_WEEKDAYS) assert.ok(html.includes('>' + day + '<'), '列头缺：' + day);
+    for (const day of HEAT_GRID_WEEKDAYS()) assert.ok(html.includes('>' + day + '<'), '列头缺：' + day);
     assert.equal(countOf(html, 'class="[^"]*-row-label"'), WEEK.length, '逐行一枚行标签');
     assert.equal(countOf(html, 'class="[^"]*-cell '), WEEK.length * HEAT_GRID_COLUMNS, '格数 ＝ 行 × 七');
     assert.match(html, /role="img" aria-label="作息 · 一周：合计 90 条，峰值 16–20 周三 5 条"/,
@@ -179,7 +179,7 @@ describe('heat-grid ① 渲染契约', () => {
   it('缺值写法与列头缺省', () => {
     assert.equal(HEAT_GRID_MISSING, '—');
     assert.equal(HEAT_GRID_COLUMNS, 7);
-    assert.equal(HEAT_GRID_WEEKDAYS.length, HEAT_GRID_COLUMNS);
+    assert.equal(HEAT_GRID_WEEKDAYS().length, HEAT_GRID_COLUMNS);
   });
 
   it('入参违规一律拒（不静默降级）：行列对不齐／非数组／分档／形态键／附加类名', () => {

@@ -22,6 +22,7 @@
 import { skinVar } from '../skin/contract.js';
 import { cashWaterlineSlot, type CashWaterlineSlot } from './attrs.js';
 import { cashWaterlineFormsCss } from './style-forms.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -45,9 +46,9 @@ export function cashWaterlineCss(input?: { readonly prefix?: string }): string {
   const s = (slot: CashWaterlineSlot): string => root + ' .' + cashWaterlineSlot(slot, p);
 
   return [
-    '/* cash-waterline（现金水位）：三个形态——逐日水位柱／每周子弹图／进出水三栏。',
-    '   水位沿的是**时间**：读的是「存量还在不在底线之上」，跌破的那几天逐日点名。',
-    '   底色只读皮肤 token（换皮只换取值）；宽度只由容器判。 */',
+    m('base-render.components-cash-waterline-style.c001'),
+    m('base-render.components-cash-waterline-style.c002'),
+    m('base-render.components-cash-waterline-style.c003'),
     box + ' {',
     /* 宽度判据的落点：本件是**自己的容器**——嵌进侧栏／面板／卡片时照样按自己的宽度折行。 */
     '  container-type: inline-size;',
@@ -211,13 +212,13 @@ export function cashWaterlineCss(input?: { readonly prefix?: string }): string {
     '  line-height: 1.6;',
     '  overflow-wrap: anywhere;',
     '}',
-    '/* 本件自身不带可点元素。这一条是**地板**：调用方把点名那块或图例包成入口时，焦点必须看得见。 */',
+    m('base-render.components-cash-waterline-style.c004'),
     box + ' :focus-visible {',
     '  outline: 2px solid ' + skinVar('accent') + ';',
     '  outline-offset: 2px;',
     '}',
-    '/* 窄容器（<' + String(NARROW_PX) + 'px）：画布矮一档、进出水三栏改一列',
-    '   ——三栏并排会被压成三根窄柱，读数（钱数）就没地方站了。 */',
+    m('base-render.components-cash-waterline-style.c005', { p0: String(String(NARROW_PX)) }),
+    m('base-render.components-cash-waterline-style.c006'),
     '@container (max-width: ' + String(NARROW_PX) + 'px) {',
     '  ' + s('plot') + ' {',
     '    height: ' + String(CASH_WATERLINE_NARROW_PLOT_HEIGHT_PX) + 'px;',

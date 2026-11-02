@@ -14,6 +14,7 @@
  */
 import { CHART_PALETTE } from 'base-paint';
 import { renderChartBlock } from 'base-paint/blocks';
+import { m } from '../entries/index.js';
 
 /** 一格＝某小时里「覆盖分钟最多」的那枚键（没有记录的小时＝`key: null`）。 */
 export interface HourCell {
@@ -34,7 +35,7 @@ const LF = String.fromCharCode(10);
 
 /** 五字符转义表（与公共层 `blocks.ts` 同口径；本件不引区块层内部件）。 */
 function esc(value: string): string {
-  return value.replace(/[&<>"']/g, (ch) => {
+  return value.replace(/[&<>\u0022\u0027]/g, (ch) => {
     if (ch === '&') return '&amp;';
     if (ch === '<') return '&lt;';
     if (ch === '>') return '&gt;';
@@ -124,9 +125,19 @@ export function renderHeatMatrix(
   const rowClass = 'heat-row' + (withTotal ? ' heat-row-total' : '');
   const head = rows.map((row) => {
     const label = opts.dayLabel === undefined ? row.label + ' ' + row.date.slice(5) : opts.dayLabel(row);
-    const cells = row.cells.map((cell, h) => '<span class="heat-cell" style="background:'
-      + categoryColor(cell.key, opts.order) + '" title="' + esc(row.date + ' ' + String(h).padStart(2, '0')
-      + ':00 · ' + (cell.key ?? '无记录') + ' · ' + cell.minutes + ' 分钟') + '"></span>').join('');
+    const cells = row.cells.map((cell, h) => {
+      // #1223：悬停提示先算成中转变量——整句化只认「一段文案 ＋ 若干变量」，
+      // 链里再嵌带文案的调用（esc(...)）会被判成形状拿不准，整件不写盘。
+      const keyText = cell.key ?? m('skill-schedule.shared-pageParts.c001');
+      const tip = m('skill-schedule.shared-pageParts.c002', {
+        p0: String(row.date),
+        p1: String(String(h).padStart(2, '0')),
+        p2: String(keyText),
+        p3: String(cell.minutes),
+      });
+      return '<span class="heat-cell" style="background:'
+        + categoryColor(cell.key, opts.order) + '" title="' + esc(tip) + '"></span>';
+    }).join('');
     return '<div class="' + rowClass + '">'
       + '<div class="heat-day">' + esc(label) + '</div>'
       + '<div class="heat-cells">' + cells + '</div>'
@@ -150,7 +161,7 @@ export function renderHeatMatrix(
 /** 两处块件的样式唯一产出者（只对用上它们的页面有作用）。 */
 export function pagePartsCss(): string {
   return [
-    '/* #782 页内自造件·7×24 热力矩阵（断点只用仓内既有值 820） */',
+    m('skill-schedule.shared-pageParts.c003'),
     '.heat-title { margin: 0 0 8px; font-size: 15px; font-weight: 600; color: var(--fg); }',
     '.heat { display: flex; flex-direction: column; gap: 5px; margin: 16px 0 8px; }',
     '.heat-row { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 10px; align-items: center; }',

@@ -23,22 +23,22 @@ import type { BillRow } from '../fetch/db.js';
 import type { SummaryFacts } from './summaryRow.js';
 import type { BillReceipt } from '../shared/writeParts.js';
 import type { RecordSlot } from './slots.js';
-import { SCENE as sceneBorrow } from './scene-borrow.js';
+import { SCENE as sceneBorrow, sceneBorrow as buildBorrowScene } from './scene-borrow.js';
 import { SCENE as sceneBatch, sceneBatch as buildBatchScene } from './scene-batch.js';
 import { SCENE as sceneCollect, sceneCollect as buildCollectScene } from './scene-collect.js';
 import { SCENE as sceneExpense } from './scene-expense.js';
 import { SCENE as sceneIncome } from './scene-income.js';
 import { SCENE as sceneInstallment, sceneInstallment as buildInstallmentScene } from './scene-installment.js';
-import { SCENE as sceneLend } from './scene-lend.js';
-import { SCENE as scenePhoto } from './scene-photo.js';
-import { SCENE as scenePlain } from './scene-plain.js';
-import { SCENE as sceneRefund } from './scene-refund.js';
-import { SCENE as sceneReimburse } from './scene-reimburse.js';
-import { SCENE as sceneReimburseDone } from './scene-reimburse-done.js';
-import { SCENE as sceneRepay } from './scene-repay.js';
-import { SCENE as sceneRestore } from './scene-restore.js';
-import { SCENE as sceneUndo } from './scene-undo.js';
-import { SCENE as sceneUpdate } from './scene-update.js';
+import { SCENE as sceneLend, sceneLend as buildLendScene } from './scene-lend.js';
+import { SCENE as scenePhoto, scenePhoto as buildPhotoScene } from './scene-photo.js';
+import { SCENE as scenePlain, scenePlain as buildPlainScene } from './scene-plain.js';
+import { SCENE as sceneRefund, sceneRefund as buildRefundScene } from './scene-refund.js';
+import { SCENE as sceneReimburse, sceneReimburse as buildReimburseScene } from './scene-reimburse.js';
+import { SCENE as sceneReimburseDone, sceneReimburseDone as buildReimburseDoneScene } from './scene-reimburse-done.js';
+import { SCENE as sceneRepay, sceneRepay as buildRepayScene } from './scene-repay.js';
+import { SCENE as sceneRestore, sceneRestore as buildRestoreScene } from './scene-restore.js';
+import { SCENE as sceneUndo, sceneUndo as buildUndoScene } from './scene-undo.js';
+import { SCENE as sceneUpdate, sceneUpdate as buildUpdateScene } from './scene-update.js';
 
 /** 采集页入参：时刻与来源由调用方给（共用位不取时钟、不取库文件名）；`recent`＝近期记录（预填／重复检测／候选三处共用）。 */
 export interface CollectInput {
@@ -52,8 +52,9 @@ export interface CollectInput {
   readonly today: string;
   /** 近期记录（按时间倒序，最近在先）；取数由处理体给，页面不碰库。 */
   readonly recent: readonly BillRow[];
-  /** 本页的文本语言（BCP 47；不给＝`zh`，与改造前逐字节相同）。#1204 起由命令行透传进来。 */
-  readonly language?: string;
+  /** 本页的文本语言（BCP 47）。**必给**（#1307）：出口解析一次，`write.ts` 的边界转换后一路传下来；
+   *  这里再兜一个 `zh` 就是又一处「调用方忘传即静默中文」的缺口。 */
+  readonly language: string;
 }
 
 /** 回执页入参：回执事实 ＋ 本次写入的明细行 ＋ 一句写入去向的说明（`receiptStatusCard` 要它）
@@ -69,8 +70,8 @@ export interface ReceiptInput {
   readonly detail: readonly { readonly k: string; readonly v: string }[];
   readonly facts: SummaryFacts;
   readonly recent: readonly BillRow[];
-  /** 本页的文本语言（BCP 47；不给＝`zh`，与改造前逐字节相同）。#1204 起由命令行透传进来。 */
-  readonly language?: string;
+  /** 本页的文本语言（BCP 47）。**必给**（#1307），口径同 `CollectInput.language`。 */
+  readonly language: string;
 }
 
 /** 一件场景件：一条唤醒词的落点。 */
@@ -108,18 +109,31 @@ const BY_OP = new Map(SCENES.filter((s) => s.op !== '').map((s) => [s.op, s]));
 
 /** 取件（判定只有四条，见件头；认不得的 kind 落「记一笔」，不猜、不抛——命令本身已由注册表拦过）。
  *
- *  `language` 只决定**已迁入词条层**的件（记分期、记收回、批量录入三件，其余随各自迁移票加入）按哪门语言取值：`zh`（含不给）走落点表里
- *  那一行静态件（与改造前同一对象）；其余语言现算。未迁移的件任何语言都走静态件（＝中文页）。 */
-export function sceneFor(input: { readonly key: string; readonly kind?: string; readonly op?: string }, language: string = 'zh'): Scene {
+ *  `language` 只决定**已迁入词条层**的件（记分期、记收回、批量录入、记借入、记借出、记退款、报销到账、记偿还、
+ *  拍账单、记报销、记一笔、改记录、撤销、恢复十四件，其余随各自迁移票加入）按哪门语言取值：`zh` 走落点表里
+ *  那一行静态件（与改造前同一对象）；其余语言现算。未迁移的件任何语言都走静态件（＝中文页）。
+ *  **语言必给**（#1307）：本件不再兜 `zh`——兜一次，调用方漏传就静默出中文页，正是这一票要消掉的缺口。 */
+export function sceneFor(input: { readonly key: string; readonly kind?: string; readonly op?: string }, language: string): Scene {
   const kind = typeof input.kind === 'string' ? input.kind : '';
   const op = typeof input.op === 'string' ? input.op : '';
   if (kind === 'installment' && language !== 'zh') return buildInstallmentScene(language);
   if (kind === 'collect' && language !== 'zh') return buildCollectScene(language);
   if (kind === 'batch' && language !== 'zh') return buildBatchScene(language);
+  if (kind === 'borrow' && language !== 'zh') return buildBorrowScene(language);
+  if (kind === 'lend' && language !== 'zh') return buildLendScene(language);
+  if (kind === 'refund' && language !== 'zh') return buildRefundScene(language);
+  if (kind === 'reimburse-done' && language !== 'zh') return buildReimburseDoneScene(language);
+  if (kind === 'repay' && language !== 'zh') return buildRepayScene(language);
+  if (kind === 'photo' && language !== 'zh') return buildPhotoScene(language);
+  if (kind === 'reimburse' && language !== 'zh') return buildReimburseScene(language);
+  if (op === 'undo' && language !== 'zh') return buildUndoScene(language);
+  if (op === 'restore' && language !== 'zh') return buildRestoreScene(language);
   const byKind = BY_KIND.get(kind);
   if (kind !== '' && byKind !== undefined) return byKind;
   const byOp = BY_OP.get(op);
   if (byOp !== undefined) return byOp;
-  if (input.key === 'bill.record.update') return sceneUpdate;
-  return scenePlain;
+  if (input.key === 'bill.record.update') {
+    return language === 'zh' ? sceneUpdate : buildUpdateScene(language);
+  }
+  return language === 'zh' ? scenePlain : buildPlainScene(language);
 }

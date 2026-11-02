@@ -28,6 +28,7 @@ import { R, provided } from '../shared/writeParts.js';
 import type { ViewOut, WriteOut } from '../shared/commandSpec.js';
 import type { CrudReceipt } from '../render/receipt.js';
 import { invokeXunji, xunjiExitToCmd } from './xunjiRunner.js';
+import { m } from '../entries/index.js';
 
 export const XUNJI_KEY_STATUS_KEY = 'calorie.view.xunji-key';
 export const XUNJI_KEY_SET_KEY = 'calorie.workout.xunji-key-set';
@@ -35,8 +36,8 @@ export const XUNJI_KEY_CLEAR_KEY = 'calorie.workout.xunji-key-clear';
 const XUNJI_KEY_STATUS_WAKE = '查训记KEY状态';
 const XUNJI_KEY_SET_WAKE = '设训记KEY';
 const XUNJI_KEY_CLEAR_WAKE = '清训记KEY';
-const DOC_TITLE = '卡路里·健身计划回执';
-const KEY_SOURCE = '配置文件里的 xunji.key（卡路里设置页同源）';
+const DOC_TITLE = (): string => m('skill-calorie.workout-xunjiKey.c076');
+const KEY_SOURCE = (): string => m('skill-calorie.workout-xunjiKey.c077');
 
 /** 下一步文案里的两条可复制命令（全仓只此一处，缺 KEY 的四处报错都引它）。 */
 export const XUNJI_KEY_STATUS_CMD = 'calorie-cmd-read ' + XUNJI_KEY_STATUS_KEY;
@@ -44,7 +45,10 @@ export const XUNJI_KEY_SET_CMD = 'calorie-cmd-read ' + XUNJI_KEY_SET_KEY + ' --p
 
 /** 缺 KEY 错误的后半句（前半句保留「本地缺 KEY（没调远端）」老子串，旧测试不断）。 */
 export function xunjiKeyNext(): string {
-  return '先跑 ' + XUNJI_KEY_STATUS_CMD + ' 查状态，再跑 ' + XUNJI_KEY_SET_CMD + ' 写入后重试';
+  return m('skill-calorie.workout-xunjiKey.c001', {
+    p0: String(XUNJI_KEY_STATUS_CMD),
+    p1: String(XUNJI_KEY_SET_CMD),
+  });
 }
 
 /** 预演页只问有无（见件头：预览以查状态命令为准）。读不到配置即按未配处理。 */
@@ -79,11 +83,10 @@ function asKeyStatus(data: unknown): KeyStatusRead | null {
 /** 预演页与报错页共用的 KEY 行（配了／没配两态，没配即点名下一步）。 */
 export function xunjiKeyRow(): { k: string; v: string } {
   return isXunjiKeyConfigured()
-    ? { k: '训记 KEY', v: '已配（预演不验有效性，实跑以远端为准；401／403 即 KEY 不对，回来重设）' }
+    ? { k: m('skill-calorie.workout-xunjiKey.c002'), v: m('skill-calorie.workout-xunjiKey.c003') }
     : {
-      k: '训记 KEY',
-      v: '未配（实跑要调训记的步骤会停在缺 KEY：有段的推送、以及每天的回写——即使当天 0 段也要回写）：'
-        + xunjiKeyNext(),
+      k: m('skill-calorie.workout-xunjiKey.c004'),
+      v: m('skill-calorie.workout-xunjiKey.c005', { p0: String(xunjiKeyNext()) }),
     };
 }
 
@@ -104,31 +107,31 @@ export function viewXunjiKeyStatus(_params: Record<string, unknown>, _db: Databa
   };
   const content = [
     renderKpiGrid([
-      { label: '状态', value: configured ? '已配' : '未配', detail: '只查配了没有，值不在这里显示' },
-      { label: '预览', value: preview ?? '—', detail: configured ? '前 4 字＋…＋末 2 字' : '没配就没有预览' },
-      { label: '落点', value: 'xunji.key', detail: KEY_SOURCE },
+      { label: m('skill-calorie.workout-xunjiKey.c006'), value: configured ? m('skill-calorie.workout-xunjiKey.c007') : m('skill-calorie.workout-xunjiKey.c008'), detail: m('skill-calorie.workout-xunjiKey.c009') },
+      { label: m('skill-calorie.workout-xunjiKey.c010'), value: preview ?? '—', detail: configured ? m('skill-calorie.workout-xunjiKey.c011') : m('skill-calorie.workout-xunjiKey.c012') },
+      { label: m('skill-calorie.workout-xunjiKey.c013'), value: 'xunji.key', detail: KEY_SOURCE() },
     ]),
     renderDataTable({
-      columns: [{ key: 'step', label: '下一步' }, { key: 'does', label: '做什么' }],
+      columns: [{ key: 'step', label: m('skill-calorie.workout-xunjiKey.c014') }, { key: 'does', label: m('skill-calorie.workout-xunjiKey.c015') }],
       rows: configured
         ? [
-          { step: '验有效', does: '跑一次带 dryRun 的同步（如同步到训记 dryRun），远端 401／403 即 KEY 不对' },
-          { step: '换 KEY', does: '跑 设训记KEY：' + XUNJI_KEY_SET_CMD },
-          { step: '不用训记', does: '跑 清训记KEY：calorie-cmd-read ' + XUNJI_KEY_CLEAR_KEY + ' --params \'{"confirm":true}\'' },
+          { step: m('skill-calorie.workout-xunjiKey.c016'), does: m('skill-calorie.workout-xunjiKey.c017') },
+          { step: m('skill-calorie.workout-xunjiKey.c018'), does: m('skill-calorie.workout-xunjiKey.c019', { p0: String(XUNJI_KEY_SET_CMD) }) },
+          { step: m('skill-calorie.workout-xunjiKey.c020'), does: m('skill-calorie.workout-xunjiKey.c021', { p0: String(XUNJI_KEY_CLEAR_KEY) }) },
         ]
         : [
-          { step: '写入', does: '找训记 App 里的 KEY，跑 设训记KEY：' + XUNJI_KEY_SET_CMD },
-          { step: '重验', does: '写完再跑一次 查训记KEY状态（本命令），状态应变已配' },
-          { step: '再落地', does: '接着跑落地训练（建议先 dryRun 预演）' },
+          { step: m('skill-calorie.workout-xunjiKey.c022'), does: m('skill-calorie.workout-xunjiKey.c023', { p0: String(XUNJI_KEY_SET_CMD) }) },
+          { step: m('skill-calorie.workout-xunjiKey.c024'), does: m('skill-calorie.workout-xunjiKey.c025') },
+          { step: m('skill-calorie.workout-xunjiKey.c026'), does: m('skill-calorie.workout-xunjiKey.c027') },
         ],
-      caption: '下一步',
+      caption: m('skill-calorie.workout-xunjiKey.c028'),
     }),
   ].join('');
   const html = assembleDocPage({
-    docTitle: DOC_TITLE,
+    docTitle: DOC_TITLE(),
     title: XUNJI_KEY_STATUS_WAKE,
-    eyebrow: '健身计划',
-    subtitle: configured ? '已配' : '未配（按页上下一步写入）',
+    eyebrow: m('skill-calorie.workout-xunjiKey.c029'),
+    subtitle: configured ? m('skill-calorie.workout-xunjiKey.c030') : m('skill-calorie.workout-xunjiKey.c031'),
     content,
     pageUi: true,
   });
@@ -139,17 +142,17 @@ export function viewXunjiKeyStatus(_params: Record<string, unknown>, _db: Databa
 function readXunjiKey(params: Record<string, unknown>): string {
   const v = params['xunjiKey'] ?? params['key'];
   if (typeof v !== 'string' || v.trim() === '') {
-    fail(2, '设训记 KEY 要给 xunjiKey（用法：' + XUNJI_KEY_SET_CMD + '；KEY 值不回显、不进仓）');
+    fail(2, m('skill-calorie.workout-xunjiKey.c032', { p0: String(XUNJI_KEY_SET_CMD) }));
   }
   const trimmed = (v as string).trim();
-  if (trimmed.length > 1024) fail(2, 'KEY 过长（> 1024 字符），疑似输入错误');
+  if (trimmed.length > 1024) fail(2, m('skill-calorie.workout-xunjiKey.c033'));
   return trimmed;
 }
 
 function keyWriteReceipt(wake: string, message: string, params: Record<string, unknown>, fields: string[]): CrudReceipt {
-  return R(wake, 'create', message, wake, KEY_SOURCE, {
+  return R(wake, 'create', message, wake, KEY_SOURCE(), {
     recordId: null, ids: [], idSource: 'condition', writtenFields: provided(params, fields),
-    items: [{ status: '成功', reason: '', detail: message }],
+    items: [{ status: m('skill-calorie.workout-xunjiKey.c034'), reason: '', detail: message }],
   });
 }
 
@@ -158,62 +161,64 @@ export function writeXunjiKeySet(params: Record<string, unknown>, _db: DatabaseS
   const value = readXunjiKey(params);
   const call = invokeXunji(['key', 'set', value], XUNJI_KEY_SET_WAKE);
   if (call.code !== 0) {
-    fail(xunjiExitToCmd(call.code), '设训记 KEY 失败：' + (call.stderr !== '' ? call.stderr : '写配置文件没达成'));
+    const errText = call.stderr !== '' ? call.stderr : m('skill-calorie.workout-xunjiKey.c035');
+    fail(xunjiExitToCmd(call.code), m('skill-calorie.workout-xunjiKey.c036', { p0: String(errText) }));
   }
-  const message = '训记 KEY 已写入（' + 'xunji.key' + '）：下次调用即生效（值不回显）';
+  const message = m('skill-calorie.workout-xunjiKey.c037');
   const receipt = keyWriteReceipt(XUNJI_KEY_SET_WAKE, message, params, ['xunjiKey']);
   const redacted = { ...params, xunjiKey: '***', key: params['key'] === undefined ? undefined : '***' };
   const content = [
     renderKpiGrid([
-      { label: '结果', value: '已写入', detail: '落点 xunji.key' },
-      { label: '生效', value: '下次调用', detail: '含子进程，不用重启' },
-      { label: '回显', value: '不显示值', detail: '本页任何位置都没有 KEY 全串' },
+      { label: m('skill-calorie.workout-xunjiKey.c038'), value: m('skill-calorie.workout-xunjiKey.c039'), detail: m('skill-calorie.workout-xunjiKey.c040') },
+      { label: m('skill-calorie.workout-xunjiKey.c041'), value: m('skill-calorie.workout-xunjiKey.c042'), detail: m('skill-calorie.workout-xunjiKey.c043') },
+      { label: m('skill-calorie.workout-xunjiKey.c044'), value: m('skill-calorie.workout-xunjiKey.c045'), detail: m('skill-calorie.workout-xunjiKey.c046') },
     ]),
     renderDataTable({
-      columns: [{ key: 'step', label: '下一步' }, { key: 'does', label: '做什么' }],
+      columns: [{ key: 'step', label: m('skill-calorie.workout-xunjiKey.c047') }, { key: 'does', label: m('skill-calorie.workout-xunjiKey.c048') }],
       rows: [
-        { step: '验状态', does: '跑 查训记KEY状态：' + XUNJI_KEY_STATUS_CMD },
-        { step: '先预演', does: 'calorie-cmd-read calorie.workout.xunji-push --params \'{"date":"今日","dryRun":true}\'' },
+        { step: m('skill-calorie.workout-xunjiKey.c049'), does: m('skill-calorie.workout-xunjiKey.c050', { p0: String(XUNJI_KEY_STATUS_CMD) }) },
+        { step: m('skill-calorie.workout-xunjiKey.c051'), does: m('skill-calorie.workout-xunjiKey.c052') },
       ],
-      caption: '下一步',
+      caption: m('skill-calorie.workout-xunjiKey.c053'),
     }),
-    copyBlock(XUNJI_KEY_SET_KEY, redacted, receipt, KEY_SOURCE),
+    copyBlock(XUNJI_KEY_SET_KEY, redacted, receipt, KEY_SOURCE()),
   ].join('');
   return {
     data: { ok: true, message, receipt },
-    html: assembleDocPage({ docTitle: DOC_TITLE, title: XUNJI_KEY_SET_WAKE, eyebrow: '健身计划', subtitle: '结果页', content, pageUi: true }),
+    html: assembleDocPage({ docTitle: DOC_TITLE(), title: XUNJI_KEY_SET_WAKE, eyebrow: m('skill-calorie.workout-xunjiKey.c054'), subtitle: m('skill-calorie.workout-xunjiKey.c055'), content, pageUi: true }),
   };
 }
 
 /** `calorie.workout.xunji-key-clear` · 清训记 KEY（`confirm:true` 才清）。 */
 export function writeXunjiKeyClear(params: Record<string, unknown>, _db: DatabaseSync): WriteOut {
   if (params['confirm'] !== true) {
-    fail(2, '清训记 KEY 要给 confirm:true（用法：calorie-cmd-read ' + XUNJI_KEY_CLEAR_KEY + ' --params \'{"confirm":true}\'）');
+    fail(2, m('skill-calorie.workout-xunjiKey.c056', { p0: String(XUNJI_KEY_CLEAR_KEY) }));
   }
   const call = invokeXunji(['key', 'clear'], XUNJI_KEY_CLEAR_WAKE);
   if (call.code !== 0) {
-    fail(xunjiExitToCmd(call.code), '清训记 KEY 失败：' + (call.stderr !== '' ? call.stderr : '写配置文件没达成'));
+    const errText = call.stderr !== '' ? call.stderr : m('skill-calorie.workout-xunjiKey.c057');
+    fail(xunjiExitToCmd(call.code), m('skill-calorie.workout-xunjiKey.c058', { p0: String(errText) }));
   }
-  const message = '训记 KEY 已清除：落地链的推送／回写会停在缺 KEY，需要时重设';
+  const message = m('skill-calorie.workout-xunjiKey.c059');
   const receipt = keyWriteReceipt(XUNJI_KEY_CLEAR_WAKE, message, params, ['confirm']);
   const content = [
     renderKpiGrid([
-      { label: '结果', value: '已清除', detail: '落点 xunji.key 已写空' },
-      { label: '影响', value: '推送回写会停', detail: '缺 KEY 即 exit 3，不调远端' },
-      { label: '重设', value: '随时可设', detail: '按本页下一步重设' },
+      { label: m('skill-calorie.workout-xunjiKey.c060'), value: m('skill-calorie.workout-xunjiKey.c061'), detail: m('skill-calorie.workout-xunjiKey.c062') },
+      { label: m('skill-calorie.workout-xunjiKey.c063'), value: m('skill-calorie.workout-xunjiKey.c064'), detail: m('skill-calorie.workout-xunjiKey.c065') },
+      { label: m('skill-calorie.workout-xunjiKey.c066'), value: m('skill-calorie.workout-xunjiKey.c067'), detail: m('skill-calorie.workout-xunjiKey.c068') },
     ]),
     renderDataTable({
-      columns: [{ key: 'step', label: '下一步' }, { key: 'does', label: '做什么' }],
+      columns: [{ key: 'step', label: m('skill-calorie.workout-xunjiKey.c069') }, { key: 'does', label: m('skill-calorie.workout-xunjiKey.c070') }],
       rows: [
-        { step: '验状态', does: XUNJI_KEY_STATUS_CMD },
-        { step: '重设', does: XUNJI_KEY_SET_CMD },
+        { step: m('skill-calorie.workout-xunjiKey.c071'), does: XUNJI_KEY_STATUS_CMD },
+        { step: m('skill-calorie.workout-xunjiKey.c072'), does: XUNJI_KEY_SET_CMD },
       ],
-      caption: '下一步',
+      caption: m('skill-calorie.workout-xunjiKey.c073'),
     }),
-    copyBlock(XUNJI_KEY_CLEAR_KEY, params, receipt, KEY_SOURCE),
+    copyBlock(XUNJI_KEY_CLEAR_KEY, params, receipt, KEY_SOURCE()),
   ].join('');
   return {
     data: { ok: true, message, receipt },
-    html: assembleDocPage({ docTitle: DOC_TITLE, title: XUNJI_KEY_CLEAR_WAKE, eyebrow: '健身计划', subtitle: '结果页', content, pageUi: true }),
+    html: assembleDocPage({ docTitle: DOC_TITLE(), title: XUNJI_KEY_CLEAR_WAKE, eyebrow: m('skill-calorie.workout-xunjiKey.c074'), subtitle: m('skill-calorie.workout-xunjiKey.c075'), content, pageUi: true }),
   };
 }

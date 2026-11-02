@@ -9,7 +9,7 @@
 
 import { resolve } from 'base-entries';
 import { assertActionId, assertPlainObject, badInput, esc, isStatusKind } from './shared.js';
-import { BASE_RENDER_CATALOG, type BaseRenderMessageId } from '../../entries/index.js';
+import { BASE_RENDER_CATALOG, type BaseRenderMessageId, m } from '../../entries/index.js';
 import { ACTION_BAR_DEFAULTS, ACTION_ID_ATTR, COPY_ACTION_IDS, DEFAULT_DATA_ATTR, EmptyStateInput, ErrorReceiptInput, RenderEmptyState, RenderErrorReceipt, RenderStatusBadge, STATUS_DEFAULT_TEXT, StatusBadgeInput, StatusKind } from '../../spec/index.js';
 import { STYLE_PREFIX } from '../../style.js';
 
@@ -60,7 +60,7 @@ export const renderEmptyState: RenderEmptyState = (input) => {
 };
 
 /** 修正重试按钮缺省文案（文档无规定；沿用旧基线）。 */
-const ERROR_RETRY_LABEL = '修正重试';
+function ERROR_RETRY_LABEL(): string { return m('base-render.components-controls-status.c001'); }
 
 /** 错误标题前缀（文档无规定；沿用旧基线 `❌ `）。 */
 const ERROR_TITLE_PREFIX = '❌ ';
@@ -73,7 +73,7 @@ export const renderErrorReceipt: RenderErrorReceipt = (input) => {
   const receipt = input as ErrorReceiptInput;
   if (typeof receipt.message !== 'string') badInput('renderErrorReceipt: input.message 必须是字符串');
 
-  const retryLabel = typeof receipt.retryPrompt === 'string' && receipt.retryPrompt !== '' ? receipt.retryPrompt : ERROR_RETRY_LABEL;
+  const retryLabel = typeof receipt.retryPrompt === 'string' && receipt.retryPrompt !== '' ? receipt.retryPrompt : ERROR_RETRY_LABEL();
   // #733 复现实测：这一颗**从来不带** ACTION_ID_ATTR 与 DEFAULT_DATA_ATTR（件头第 42 行自述「该按钮不带…」），
   //   而产物内联委派的第一道 `node.closest("[data-action-id]")` 就早退 ⇒ **点了零动作、零反馈**。
   //   记账写入域 16 张采集页上，它是整块错误回执里视觉权重最重的一颗（primary ＋ wide），

@@ -68,10 +68,10 @@ export function buildUndoTimelineJs(): string {
     + ', EV_ROLL=' + q(UNDO_TIMELINE_EVENT_ROLLBACK) + ';' + LF
     + '  var EV_PICK=' + q(UNDO_TIMELINE_EVENT_PICK) + ', EV_CANCEL=' + q(UNDO_TIMELINE_EVENT_CANCEL)
     + ', CLS_LABEL=' + CLS_LABEL + ';' + LF
-    + '  var SUM_PRE=' + q(UNDO_TIMELINE_SUM_PRE) + ', SUM_MID=' + q(UNDO_TIMELINE_SUM_MID)
-    + ', SUM_ZERO=' + q(UNDO_TIMELINE_SUM_ZERO) + ';' + LF
-    + '  var SUB_PRE=' + q(UNDO_TIMELINE_SUBMIT_PRE) + ', SUB_POST=' + q(UNDO_TIMELINE_SUBMIT_POST)
-    + ', SUB_ZERO=' + q(UNDO_TIMELINE_SUBMIT_ZERO) + ';' + LF
+    + '  var SUM_PRE=' + q(UNDO_TIMELINE_SUM_PRE()) + ', SUM_MID=' + q(UNDO_TIMELINE_SUM_MID())
+    + ', SUM_ZERO=' + q(UNDO_TIMELINE_SUM_ZERO()) + ';' + LF
+    + '  var SUB_PRE=' + q(UNDO_TIMELINE_SUBMIT_PRE()) + ', SUB_POST=' + q(UNDO_TIMELINE_SUBMIT_POST())
+    + ', SUB_ZERO=' + q(UNDO_TIMELINE_SUBMIT_ZERO()) + ';' + LF
     + '  var doc=document;' + LF
     + '  if (doc.documentElement.getAttribute(A_RT)==="1") return;' + LF
     + '  doc.documentElement.setAttribute(A_RT,"1");' + LF

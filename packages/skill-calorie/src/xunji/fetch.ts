@@ -20,6 +20,7 @@ import type { XunjiCallOutcome } from './retry.js';
 import { xunjiStateDir } from './rateLimit.js';
 import { readKey } from './key.js';
 import type { UpsertTransport } from './upsert.js';
+import { m } from '../entries/index.js';
 
 /** 拉取接口地址（老 `fetch.py:43-44` 同值；全模块只此一处）。 */
 export const XUNJI_FETCH_ENDPOINT = 'https://trains.xunjiapp.cn/api_trains_for_llm_v2';
@@ -140,7 +141,7 @@ export async function fetchTrains(dateStr: string, opts: FetchOptions = {}): Pro
       } catch {
         return {
           ok: false,
-          failure: { error_type: 'validation', message: '响应 JSON 解析失败', retry_after: null, raw_body: text.slice(0, 200), code: resp.status },
+          failure: { error_type: 'validation', message: m('skill-calorie.xunji-fetch.c001'), retry_after: null, raw_body: text.slice(0, 200), code: resp.status },
           attempts: 1,
         };
       }
@@ -162,7 +163,7 @@ export async function fetchTrains(dateStr: string, opts: FetchOptions = {}): Pro
 /** 缺省传输（全局 fetch；缺失即明确失败，不静默）。 */
 const defaultTransport: UpsertTransport = (url, init) => {
   const f: unknown = (globalThis as { fetch?: unknown }).fetch;
-  if (typeof f !== 'function') return Promise.reject(new Error('HTTP 通道不可用：全局 fetch 缺失'));
+  if (typeof f !== 'function') return Promise.reject(new Error(m('skill-calorie.xunji-fetch.c002')));
   return (f as typeof fetch)(url, init).then((r) => ({
     status: r.status,
     bodyText: () => r.text(),

@@ -16,6 +16,7 @@ import { loadCalorieConfig, saveCalorieConfig } from '../config.js';
 import { XUNJI_EXIT_CODES } from './subcommands.js';
 import type { XunjiSubcommand } from './subcommands.js';
 import type { XunjiRun } from './run.js';
+import { m } from '../entries/index.js';
 
 /** KEY 在配置文件里的落点（全模块只此一处；设置页的行名与它同源）。 */
 export const XUNJI_KEY_FIELD = 'xunji.key';
@@ -62,7 +63,7 @@ function writeKey(value: string): { readonly ok: true } | { readonly ok: false; 
     saveCalorieConfig(next);
     return { ok: true };
   } catch (e) {
-    return { ok: false, error: '写配置文件失败：' + (e instanceof Error ? e.message : String(e)) };
+    return { ok: false, error: m('skill-calorie.xunji-key.c001', { p0: String(e instanceof Error ? e.message : String(e)) }) };
   }
 }
 
@@ -71,8 +72,8 @@ export function setKey(
   value: string,
 ): { readonly ok: true } | { readonly ok: false; readonly error: string } {
   const trimmed = (value ?? '').trim();
-  if (trimmed === '') return { ok: false, error: 'KEY 不能为空' };
-  if (trimmed.length > 1024) return { ok: false, error: 'KEY 过长（> 1024 字符），疑似输入错误' };
+  if (trimmed === '') return { ok: false, error: m('skill-calorie.xunji-key.c002') };
+  if (trimmed.length > 1024) return { ok: false, error: m('skill-calorie.xunji-key.c003') };
   return writeKey(trimmed);
 }
 
@@ -88,21 +89,22 @@ type Values = Readonly<Record<string, string | boolean | readonly string[]>>;
 /** `key` 子命令的分派（`run.ts` 调；`status` 无 KEY 退 2，`set／clear` 走 0／1）。 */
 export async function runKeyCommand(sub: XunjiSubcommand, values: Values): Promise<XunjiRun> {
   const refuse = (why: string, data: unknown): XunjiRun => ({
-    subcommand: 'key', code: XUNJI_EXIT_CODES.error, message: why, data, stderr: why + '（用法：' + sub.usage + '）',
+    subcommand: 'key', code: XUNJI_EXIT_CODES.error, message: why, data, stderr: m('skill-calorie.xunji-key.c004', { p0: String(why), p1: String(sub.usage) }),
   });
   const action = values['<子动作>'];
   if (action !== 'status' && action !== 'set' && action !== 'clear') {
-    return refuse('用法：key 的子动作只能是 status|set|clear（实际：' + String(action ?? '缺失') + '）', { usage: sub.usage });
+    const actionText = String(action ?? m('skill-calorie.xunji-key.c005'));
+    return refuse(m('skill-calorie.xunji-key.c006', { p0: String(actionText) }), { usage: sub.usage });
   }
   if (action === 'status') {
     const s = keyStatus();
     if (!s.configured) {
-      const line = '未配置训记 KEY（配置项 ' + s.key_field + '；用 key set <KEY> 或设置页写进配置文件）';
+      const line = m('skill-calorie.xunji-key.c011', { p0: s.key_field });
       return { subcommand: 'key', code: XUNJI_EXIT_CODES.auth, message: line, data: s, stderr: line };
     }
     return {
       subcommand: 'key', code: XUNJI_EXIT_CODES.ok,
-      message: 'KEY 已配置（' + s.key_field + '，预览 ' + String(s.active_key_preview) + '）',
+      message: m('skill-calorie.xunji-key.c007', { p0: String(s.key_field), p1: String(String(s.active_key_preview)) }),
       data: s, stderr: null,
     };
   }
@@ -113,7 +115,7 @@ export async function runKeyCommand(sub: XunjiSubcommand, values: Values): Promi
     if (!r.ok) return { subcommand: 'key', code: XUNJI_EXIT_CODES.error, message: r.error, data: { error: r.error }, stderr: r.error };
     return {
       subcommand: 'key', code: XUNJI_EXIT_CODES.ok,
-      message: '已写入配置文件（' + XUNJI_KEY_FIELD + '）：下次调用即生效',
+      message: m('skill-calorie.xunji-key.c008', { p0: String(XUNJI_KEY_FIELD) }),
       data: { key_field: XUNJI_KEY_FIELD }, stderr: null,
     };
   }
@@ -121,7 +123,7 @@ export async function runKeyCommand(sub: XunjiSubcommand, values: Values): Promi
   if (!r.ok) return { subcommand: 'key', code: XUNJI_EXIT_CODES.error, message: r.error, data: { error: r.error }, stderr: r.error };
   return {
     subcommand: 'key', code: XUNJI_EXIT_CODES.ok,
-    message: r.had ? '已删除配置里的 KEY' : 'KEY 未配置，无需删除',
+    message: r.had ? m('skill-calorie.xunji-key.c009') : m('skill-calorie.xunji-key.c010'),
     data: { key_field: XUNJI_KEY_FIELD, had: r.had }, stderr: null,
   };
 }

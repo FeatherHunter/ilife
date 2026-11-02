@@ -30,18 +30,20 @@ import { pageSections } from '../shared/pageNav.js';
 import { hourCellsOf, renderHourBand } from '../shared/pageParts.js';
 import { clockOf, gapsOf, minutesOfDayEnd } from './planDocs.js';
 import { shiftDay } from './iso.js';
-import { REMOTE_LABEL, planCopyArea, type RemoteState } from './receipt.js';
+import { remoteLabelOf, planCopyArea, type RemoteState } from './receipt.js';
 import { planPartsCss } from './planParts.js';
+import { m } from '../entries/index.js';
 
-const EYEBROW = '作息管家 日程与计划';
+/** 页眉（品牌＋域）。#1197：改成函数——`m()` 只在渲染期取词，模块级常量的初值会定死语言。 */
+const eyebrowOf = (): string => m('skill-schedule.plan-discussDocs.c001');
 /** 一级分类的权威顺序（色带配色与图例都照它），定义只此一处：`policy` 的白名单。 */
 const L1_ORDER: readonly string[] = [...LEVEL1_WHITELIST];
 /** 历史窗口（天）：老侧 `plan_scenarios.DEFAULT_HISTORY_DAYS`。 */
 const HISTORY_DAYS = 7;
 const HOURS_PER_DAY = 24;
 
-const span = (start: string, end: string): string => start + ' 至 ' + end;
-const categoryOf = (c: string | null | undefined): string => (c === null || c === undefined || c === '' ? '未分类' : c);
+const span = (start: string, end: string): string => m('skill-schedule.plan-discussDocs.c002', { p0: String(start), p1: String(end) });
+const categoryOf = (c: string | null | undefined): string => (c === null || c === undefined || c === '' ? m('skill-schedule.plan-discussDocs.c003') : c);
 /** 钟点 → 分钟（**这一天末尾那一格按 24:00 算**，与空档同一条口径）：定义在 `planDocs`，本件只引用。 */
 const minutesOf = minutesOfDayEnd;
 
@@ -99,17 +101,21 @@ function fitOf(
   start: string, end: string,
 ): { readonly fit: Fit; readonly hint: string } {
   const top = dominantOf(habits, hoursOf(start, end));
-  if (top === null) return { fit: 'none', hint: '该时段近几天没有作息记录，这一条没有历史可参照。' };
+  if (top === null) return { fit: 'none', hint: m('skill-schedule.plan-discussDocs.c004') };
   const mine = categoryOf(category);
   if (category === null || category === undefined || category === '') {
-    return { fit: 'none', hint: '这一条没有标分类，历史该时段主要是「' + top.category + '」。' };
+    return { fit: 'none', hint: m('skill-schedule.plan-discussDocs.c005', { p0: String(top.category) }) };
   }
   if (mine === top.category) {
-    return { fit: 'match', hint: '贴合历史：该时段近几天主要是「' + top.category + '」。' };
+    return { fit: 'match', hint: m('skill-schedule.plan-discussDocs.c006', { p0: String(top.category) }) };
   }
   return {
     fit: 'drift',
-    hint: '与历史不同：该时段近几天主要是「' + top.category + '」（' + String(top.count) + ' 次），这一条排的是「' + mine + '」。',
+    hint: m('skill-schedule.plan-discussDocs.c007', {
+      p0: String(top.category),
+      p1: String(String(top.count)),
+      p2: String(mine),
+    }),
   };
 }
 
@@ -161,68 +167,76 @@ export function previewPage(handle: ScheduleDb, date: string, candidates: readon
     right: categoryOf(e.category),
   }));
   const head: PageHead = {
-    docTitle: '作息管家 商量计划预览',
-    eyebrow: EYEBROW,
-    title: '商量计划预览',
-    subtitle: '候选 ' + String(candidates.length) + ' 段排的是 ' + date + '，这一步只预览，没有写库。',
+    docTitle: m('skill-schedule.plan-discussDocs.c008'),
+    eyebrow: eyebrowOf(),
+    title: m('skill-schedule.plan-discussDocs.c009'),
+    subtitle: m('skill-schedule.plan-discussDocs.c010', { p0: String(String(candidates.length)), p1: String(date) }),
   };
   const { toc, body } = pageSections([
-    { html: renderConclusionBar('候选 ' + String(candidates.length) + ' 段把 ' + date + ' 的 24 小时接满，'
-      + '共 ' + fmtDur(covered) + '。这一天现在已有 ' + String(locked.length) + ' 件，其中 '
-      + String(overlaps.length) + ' 处与候选时段重叠。') },
-    { navText: '这一版候选的读数', html: renderKpiGrid([
-      { label: '候选段数', value: String(candidates.length) + ' 段', detail: '这一版商量出来的' },
+    { html: renderConclusionBar(m('skill-schedule.plan-discussDocs.c011', {
+      p0: String(String(candidates.length)),
+      p1: String(date),
+      p2: String(fmtDur(covered)),
+      p3: String(String(locked.length)),
+      p4: String(String(overlaps.length)),
+    })) },
+    { navText: m('skill-schedule.plan-discussDocs.c012'), html: renderKpiGrid([
+      { label: m('skill-schedule.plan-discussDocs.c013'), value: m('skill-schedule.plan-discussDocs.c014', { p0: String(String(candidates.length)) }), detail: m('skill-schedule.plan-discussDocs.c015') },
       {
-        label: '24 小时覆盖', value: fmtDur(covered),
-        detail: covered >= HOURS_PER_DAY * 60 ? '整天接满，可以落盘' : '还没接满，先补上缺口',
+        label: m('skill-schedule.plan-discussDocs.c016'), value: fmtDur(covered),
+        detail: covered >= HOURS_PER_DAY * 60 ? m('skill-schedule.plan-discussDocs.c017') : m('skill-schedule.plan-discussDocs.c018'),
         bar: { pct: Math.min(100, Math.round((covered / (HOURS_PER_DAY * 60)) * 100)) },
       },
-      { label: '与已有重叠', value: String(overlaps.length) + ' 处', detail: overlaps.length === 0 ? '与原有排布不搭边' : '落盘前先看一眼' },
-      { label: '这一天已有', value: String(locked.length) + ' 件', detail: '现在库里的排布' },
-    ], { title: '这一版候选的读数' }) },
+      { label: m('skill-schedule.plan-discussDocs.c019'), value: m('skill-schedule.plan-discussDocs.c020', { p0: String(String(overlaps.length)) }), detail: overlaps.length === 0 ? m('skill-schedule.plan-discussDocs.c021') : m('skill-schedule.plan-discussDocs.c022') },
+      { label: m('skill-schedule.plan-discussDocs.c023'), value: m('skill-schedule.plan-discussDocs.c024', { p0: String(String(locked.length)) }), detail: m('skill-schedule.plan-discussDocs.c025') },
+    ], { title: m('skill-schedule.plan-discussDocs.c026') }) },
     // 段名是「候选的 24 小时」；目录项逐字用它。
-    { navText: '候选的 24 小时', html: renderHourBand(cellsOf(candidates), { order: L1_ORDER, title: '候选的 24 小时', height: 120 }) },
+    { navText: m('skill-schedule.plan-discussDocs.c027'), html: renderHourBand(cellsOf(candidates), { order: L1_ORDER, title: m('skill-schedule.plan-discussDocs.c028'), height: 120 }) },
     { html: renderDataTable({
-      caption: '候选事件',
+      caption: m('skill-schedule.plan-discussDocs.c029'),
       columns: [
-        { key: 'time', label: '时段' },
-        { key: 'title', label: '标题' },
-        { key: 'category', label: '分类' },
-        { key: 'notes', label: '备注' },
+        { key: 'time', label: m('skill-schedule.plan-discussDocs.c030') },
+        { key: 'title', label: m('skill-schedule.plan-discussDocs.c031') },
+        { key: 'category', label: m('skill-schedule.plan-discussDocs.c032') },
+        { key: 'notes', label: m('skill-schedule.plan-discussDocs.c033') },
       ],
       rows,
-      emptyText: '这一版一段也没给',
+      emptyText: m('skill-schedule.plan-discussDocs.c034'),
     }) },
-    { html: renderCaliberLine('候选是把这一天整段重排 ｜ 落盘时先按日期整日覆盖，候选之外的那些会被标记成不再算') },
+    { html: renderCaliberLine(m('skill-schedule.plan-discussDocs.c035')) },
     { html: renderDisclosure({
-      title: '锁定事件区',
+      title: m('skill-schedule.plan-discussDocs.c036'),
       contentHtml: (locked.length === 0
-        ? '<p class="sch-pl-note">这一天现在库里没有别的安排，落盘不会顶掉任何一件。</p>'
-        : '<p class="sch-pl-note">这些是这一天现在库里的排布，落盘时会被候选整段换掉。</p>')
-        + renderListRows({ items: lockedRows, emptyText: '这一天现在库里没有别的安排' }),
+        ? '<p class="sch-pl-note">' + m('skill-schedule.plan-discussDocs.c106') + '</p>'
+        : '<p class="sch-pl-note">' + m('skill-schedule.plan-discussDocs.c107') + '</p>')
+        + renderListRows({ items: lockedRows, emptyText: m('skill-schedule.plan-discussDocs.c037') }),
     }) },
     { html: renderDisclosure({
-      title: '空隙提示',
+      title: m('skill-schedule.plan-discussDocs.c038'),
       contentHtml: renderListRows({
-        items: gaps.map((g) => ({ left: span(clockOf(g.start), clockOf(g.end)), main: '空隙', right: fmtDurShort(g.end - g.start) })),
-        emptyText: '候选把 24 小时一段接一段接满了，没有空隙。',
+        items: gaps.map((g) => ({ left: span(clockOf(g.start), clockOf(g.end)), main: m('skill-schedule.plan-discussDocs.c039'), right: fmtDurShort(g.end - g.start) })),
+        emptyText: m('skill-schedule.plan-discussDocs.c040'),
       }),
     }) },
     { html: renderPreBlock({
-      label: '认可这一版就说这一句',
-      command: '按这一版把 ' + date + ' 的计划落下来',
+      label: m('skill-schedule.plan-discussDocs.c041'),
+      command: m('skill-schedule.plan-discussDocs.c042', { p0: String(date) }),
       actionId: 'ilife-sch-plan-copy-next',
-      copyLabel: '复制这句话',
+      copyLabel: m('skill-schedule.plan-discussDocs.c043'),
     }) },
-    { navText: '复制与留档', html: scheduleCopyArea({
-      title: '复制与留档',
+    { navText: m('skill-schedule.plan-discussDocs.c044'), html: scheduleCopyArea({
+      title: m('skill-schedule.plan-discussDocs.c045'),
       dataActionId: 'ilife-sch-plan-copy-data',
       logActionId: 'ilife-sch-plan-copy-log',
       ...planCopyArea({
-        message: '商量计划预览：日期 ' + date + '，候选 ' + String(candidates.length) + ' 段共 ' + fmtDur(covered)
-          + '，与已有重叠 ' + String(overlaps.length) + ' 处',
+        message: m('skill-schedule.plan-discussDocs.c046', {
+          p0: String(date),
+          p1: String(String(candidates.length)),
+          p2: String(fmtDur(covered)),
+          p3: String(String(overlaps.length)),
+        }),
         command: 'schedule-cmd-read schedule.plan.write --params {"op":"preview","date":"' + date + '"}',
-        source: '日程计划表与作息记录表（近 ' + String(HISTORY_DAYS) + ' 天）',
+        source: m('skill-schedule.plan-discussDocs.c047', { p0: String(String(HISTORY_DAYS)) }),
       }),
     }) },
   ]);
@@ -252,101 +266,133 @@ export function resultPage(
   const fitRows: DataTableRow[] = fits.map((f) => ({
     time: span(f.event.time_start, f.event.time_end),
     title: f.event.title,
-    fit: f.fit === 'match' ? '贴合' : (f.fit === 'drift' ? '偏离' : '无参考'),
+    fit: f.fit === 'match' ? m('skill-schedule.plan-discussDocs.c048') : (f.fit === 'drift' ? m('skill-schedule.plan-discussDocs.c049') : m('skill-schedule.plan-discussDocs.c050')),
     hint: f.hint,
   }));
   const head: PageHead = {
-    docTitle: '作息管家 制定次日计划结果',
-    eyebrow: EYEBROW,
-    title: '制定次日计划结果',
-    subtitle: '落下来的是 ' + date + '，候选 ' + String(candidates.length) + ' 段，'
-      + '贴历史 ' + String(match) + ' 段，偏离 ' + String(drift) + ' 段。',
+    docTitle: m('skill-schedule.plan-discussDocs.c051'),
+    eyebrow: eyebrowOf(),
+    title: m('skill-schedule.plan-discussDocs.c052'),
+    subtitle: m('skill-schedule.plan-discussDocs.c053', {
+      p0: String(date),
+      p1: String(String(candidates.length)),
+      p2: String(String(match)),
+      p3: String(String(drift)),
+    }),
   };
+  // §4.7 · 提示句尾那一支是条件，抽成局部变量。
+  const driftNote = drift === 0 ? '' : m('skill-schedule.plan-discussDocs.c054');
+  // §4.7 · 结论串末尾那一支是条件（两支各含文案），先算成局部变量，链里只拼字面量＋变量。
+  const rateNote = rate === null
+    ? m('skill-schedule.plan-discussDocs.c055', { p0: String(String(HISTORY_DAYS)) })
+    : m('skill-schedule.plan-discussDocs.c056', { p0: String(String(HISTORY_DAYS)), p1: String(String(rate)) });
   const { toc, body } = pageSections([
-    { html: renderConclusionBar('这一版已经落盘：' + date + ' 现在排着 ' + String(written.length) + ' 件，'
-      + '共 ' + fmtDur(covered) + '。' + (rate === null
-        ? '近 ' + String(HISTORY_DAYS) + ' 天没有作息记录，贴合与否无从比较。'
-        : '与近 ' + String(HISTORY_DAYS) + ' 天的作息习惯贴合率 ' + String(rate) + '%。')) },
-    { navText: '这一版的读数', html: renderKpiGrid([
-      { label: '候选段数', value: String(candidates.length) + ' 段', detail: date },
+    { html: renderConclusionBar(m('skill-schedule.plan-discussDocs.c057', {
+      p0: String(date),
+      p1: String(String(written.length)),
+      p2: String(fmtDur(covered)),
+      p3: String(rateNote),
+    })) },
+    { navText: m('skill-schedule.plan-discussDocs.c058'), html: renderKpiGrid([
+      { label: m('skill-schedule.plan-discussDocs.c059'), value: m('skill-schedule.plan-discussDocs.c060', { p0: String(String(candidates.length)) }), detail: date },
       {
-        label: '历史贴合率', value: rate === null ? '—' : String(rate) + '%',
-        detail: rate === null ? '没有可比的记录' : '贴合 ' + String(match) + ' 段，偏离 ' + String(drift) + ' 段',
+        label: m('skill-schedule.plan-discussDocs.c061'), value: rate === null ? '—' : String(rate) + '%',
+        detail: rate === null ? m('skill-schedule.plan-discussDocs.c062') : m('skill-schedule.plan-discussDocs.c063', { p0: String(String(match)), p1: String(String(drift)) }),
         ...(rate === null ? {} : { bar: { pct: Math.round(rate) } }),
       },
-      { label: '偏离与无参考', value: String(drift) + ' 段偏离', detail: '另有 ' + String(none) + ' 段无历史可参照' },
-      { label: '冲突', value: String(overlaps.length) + ' 处', detail: overlaps.length === 0 ? '与原有排布不搭边' : '采纳前先看一眼' },
-    ], { title: '这一版的读数' }) },
+      { label: m('skill-schedule.plan-discussDocs.c064'), value: m('skill-schedule.plan-discussDocs.c065', { p0: String(String(drift)) }), detail: m('skill-schedule.plan-discussDocs.c066', { p0: String(String(none)) }) },
+      { label: m('skill-schedule.plan-discussDocs.c067'), value: m('skill-schedule.plan-discussDocs.c068', { p0: String(String(overlaps.length)) }), detail: overlaps.length === 0 ? m('skill-schedule.plan-discussDocs.c069') : m('skill-schedule.plan-discussDocs.c070') },
+    ], { title: m('skill-schedule.plan-discussDocs.c071') }) },
     // 段名是「24 小时时间轴与分类色带」；目录项逐字用它。
-    { navText: '24 小时时间轴与分类色带', html: renderHourBand(cellsOf(written), { order: L1_ORDER, title: '24 小时时间轴与分类色带', height: 140 }) },
+    { navText: m('skill-schedule.plan-discussDocs.c072'), html: renderHourBand(cellsOf(written), { order: L1_ORDER, title: m('skill-schedule.plan-discussDocs.c073'), height: 140 }) },
     { html: renderFactStrip({
       items: [
-        { label: '历史窗口', value: String(HISTORY_DAYS) + ' 天' },
-        { label: '这段窗口的作息记录', value: String(records.length) + ' 条' },
-        { label: '远端侧', value: REMOTE_LABEL[remote] },
-        { label: '这一天现在', value: String(written.length) + ' 件' },
+        { label: m('skill-schedule.plan-discussDocs.c074'), value: m('skill-schedule.plan-discussDocs.c075', { p0: String(String(HISTORY_DAYS)) }) },
+        { label: m('skill-schedule.plan-discussDocs.c076'), value: m('skill-schedule.plan-discussDocs.c077', { p0: String(String(records.length)) }) },
+        { label: m('skill-schedule.plan-discussDocs.c078'), value: remoteLabelOf(remote) },
+        { label: m('skill-schedule.plan-discussDocs.c079'), value: m('skill-schedule.plan-discussDocs.c080', { p0: String(String(written.length)) }) },
       ],
     }) },
-    { navText: '历史贴合提示', html: renderFeedbackBlock({
-      title: '历史贴合提示',
+    { navText: m('skill-schedule.plan-discussDocs.c081'), html: renderFeedbackBlock({
+      title: m('skill-schedule.plan-discussDocs.c082'),
       toast: {
         icon: rate === null ? 'info' : (drift === 0 ? 'ok' : 'warn'),
         msg: rate === null
-          ? '近 ' + String(HISTORY_DAYS) + ' 天没有作息记录，这一版没有历史可参照，逐段都按无参考算。'
-          : '拿近 ' + String(HISTORY_DAYS) + ' 天的作息记录按整点归类：贴合 ' + String(match) + ' 段，偏离 '
-            + String(drift) + ' 段，无参考 ' + String(none) + ' 段。'
-            + (drift === 0 ? '' : '逐段原因见下表「逐段贴合」。'),
+          ? m('skill-schedule.plan-discussDocs.c083', { p0: String(String(HISTORY_DAYS)) })
+          : m('skill-schedule.plan-discussDocs.c084', {
+            p0: String(String(HISTORY_DAYS)),
+            p1: String(String(match)),
+            p2: String(String(drift)),
+            p3: String(String(none)),
+            p4: String(driftNote),
+          }),
       },
       staticNotice: true,
     }) },
     { html: renderDataTable({
-      caption: '逐段贴合',
+      caption: m('skill-schedule.plan-discussDocs.c085'),
       columns: [
-        { key: 'time', label: '时段' },
-        { key: 'title', label: '标题' },
-        { key: 'fit', label: '贴合' },
-        { key: 'hint', label: '说明' },
+        { key: 'time', label: m('skill-schedule.plan-discussDocs.c086') },
+        { key: 'title', label: m('skill-schedule.plan-discussDocs.c087') },
+        { key: 'fit', label: m('skill-schedule.plan-discussDocs.c088') },
+        { key: 'hint', label: m('skill-schedule.plan-discussDocs.c089') },
       ],
       rows: fitRows,
-      emptyText: '这一版一段也没给',
+      emptyText: m('skill-schedule.plan-discussDocs.c090'),
     }) },
-    { navText: drift === 0 ? '' : '偏离警示', html: drift === 0 ? '' : renderFeedbackBlock({
-      title: '偏离警示',
+    { navText: drift === 0 ? '' : m('skill-schedule.plan-discussDocs.c091'), html: drift === 0 ? '' : renderFeedbackBlock({
+      title: m('skill-schedule.plan-discussDocs.c092'),
       toast: {
         icon: 'warn',
-        msg: '有 ' + String(drift) + ' 段与近 ' + String(HISTORY_DAYS) + ' 天的作息习惯不同，可能是刻意安排，也可能是排错了。',
+        msg: m('skill-schedule.plan-discussDocs.c093', {
+          p0: String(String(drift)),
+          p1: String(String(HISTORY_DAYS)),
+        }),
         lines: fits.filter((f) => f.fit === 'drift').map((f) => span(f.event.time_start, f.event.time_end) + ' ' + f.event.title),
       },
       staticNotice: true,
     }) },
-    { navText: '冲突与警告', html: renderFeedbackBlock({
-      title: '冲突与警告',
+    { navText: m('skill-schedule.plan-discussDocs.c094'), html: renderFeedbackBlock({
+      title: m('skill-schedule.plan-discussDocs.c095'),
       toast: overlaps.length === 0
-        ? { icon: 'ok', msg: '这一版候选与这一天原来的排布没有时段重叠。' }
+        ? { icon: 'ok', msg: m('skill-schedule.plan-discussDocs.c096') }
         : {
           icon: 'danger',
-          msg: '有 ' + String(overlaps.length) + ' 处候选与落盘前原有的事件时段重叠。',
-          lines: overlaps.map((o) => o.candidate + ' ↔ ' + o.locked + '，重叠 ' + o.overlap + '（' + String(o.minutes) + ' 分钟）'),
+          msg: m('skill-schedule.plan-discussDocs.c097', { p0: String(String(overlaps.length)) }),
+          lines: overlaps.map((o) => m('skill-schedule.plan-discussDocs.c098', {
+            p0: String(o.candidate),
+            p1: String(o.locked),
+            p2: String(o.overlap),
+            p3: String(String(o.minutes)),
+          })),
         },
       staticNotice: true,
     }) },
     { html: renderPreBlock({
-      label: '要再改这一版就说这一句',
-      command: '把 ' + date + ' 的计划再调整一版',
+      label: m('skill-schedule.plan-discussDocs.c099'),
+      command: m('skill-schedule.plan-discussDocs.c100', { p0: String(date) }),
       actionId: 'ilife-sch-plan-copy-next',
-      copyLabel: '复制这句话',
+      copyLabel: m('skill-schedule.plan-discussDocs.c101'),
     }) },
-    { navText: '复制与留档', html: scheduleCopyArea({
-      title: '复制与留档',
+    { navText: m('skill-schedule.plan-discussDocs.c102'), html: scheduleCopyArea({
+      title: m('skill-schedule.plan-discussDocs.c103'),
       dataActionId: 'ilife-sch-plan-copy-data',
       logActionId: 'ilife-sch-plan-copy-log',
       ...planCopyArea({
-        message: '制定次日计划结果：日期 ' + date + '，候选 ' + String(candidates.length) + ' 段共 ' + fmtDur(covered)
-          + '，历史窗口近 ' + String(HISTORY_DAYS) + ' 天共 ' + String(records.length) + ' 条作息记录，贴合率 '
-          + (rate === null ? '—' : String(rate) + '%') + '（贴合 ' + String(match) + ' 段，偏离 ' + String(drift)
-          + ' 段，无参考 ' + String(none) + ' 段），远端侧 ' + REMOTE_LABEL[remote],
+        message: m('skill-schedule.plan-discussDocs.c104', {
+          p0: String(date),
+          p1: String(String(candidates.length)),
+          p2: String(fmtDur(covered)),
+          p3: String(String(HISTORY_DAYS)),
+          p4: String(String(records.length)),
+          p5: String(rate === null ? '—' : String(rate) + '%'),
+          p6: String(String(match)),
+          p7: String(String(drift)),
+          p8: String(String(none)),
+          p9: String(remoteLabelOf(remote)),
+        }),
         command: 'schedule-cmd-read schedule.plan.write --params {"op":"upsert","date":"' + date + '"}',
-        source: '日程计划表（' + date + ' 落库 ' + String(written.length) + ' 件）',
+        source: m('skill-schedule.plan-discussDocs.c105', { p0: String(date), p1: String(String(written.length)) }),
       }),
     }) },
   ]);

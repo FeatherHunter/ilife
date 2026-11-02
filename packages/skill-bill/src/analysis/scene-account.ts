@@ -18,9 +18,15 @@
  *   ⑤ 账户筛选不在本件（那属「看分类」的槽）；转账不入收支（#691），故四样里一笔转账都不算，
  *      本件不自己看金额正负，归堆走 `./agg.js` 的 `aggBy`；
  *   ⑥ 载荷照搬迁前那一支（`./views.js` 的 `buildOverview`），一字不改。
+ *
+ * #1210：文案迁词条层——模块级场景对象改成 `buildScene()` 构造（照 #1207 的 `scene-stats.ts`）：
+ *  取值里每一句上屏文案走 `m()`，语言由渲染语言上下文给；静态导出 `sceneAccount` 是 zh 快照
+ *  （未进入语言上下文时逐字节不变），非基准语言由 `sceneAccountFor(language)` 重建。
  */
+import { runWithLanguage } from 'base-entries';
 import type { BillRow } from '../fetch/db.js';
 import { listRange } from '../fetch/index.js';
+import { m } from '../entries/index.js';
 import { aggBy, kpiOf, readWindow, round1, round2 } from './agg.js';
 import { money, pctText } from './pageParts.js';
 import type { AnalysisScene } from './scene.js';
@@ -36,12 +42,14 @@ interface AccountRow {
 }
 
 /** 账户名空着时记的名字（老侧 `r.get("account") or "未填账户"` 那一句的同义词）。 */
-const UNNAMED = '未填账户';
+function unnamed(): string {
+  return m('skill-bill.analysis-scene-account.c001');
+}
 
 /** 按账户归堆：支出侧与收入侧各走一次 `aggBy` 再合并（转账由 `aggBy` 剔，本件不自己看金额正负），
  *  支出多的在前、同额按名字排。空账户名在这里补成「未填账户」（`aggBy` 会跳过空键，故先补再聚合）。 */
 function byAccount(records: readonly BillRow[]): AccountRow[] {
-  const keyOf = (r: BillRow): string => (r.account.trim() === '' ? UNNAMED : r.account);
+  const keyOf = (r: BillRow): string => (r.account.trim() === '' ? unnamed() : r.account);
   const merged = new Map<string, { expense: number; income: number; count: number }>();
   for (const row of aggBy(records, keyOf)) {
     merged.set(row.key, { expense: row.value, income: 0, count: row.count });
@@ -59,70 +67,102 @@ function byAccount(records: readonly BillRow[]): AccountRow[] {
   return rows;
 }
 
-export const sceneAccount: AnalysisScene = {
-  id: 'account',
-  key: 'bill.analysis.overview',
-  kind: 'account',
-  title: '看账户',
-  family: 'bars',
-  values: ({ params, db }) => {
-    const win = readWindow(params);
-    const records = listRange(db, win.from, win.to);
-    const kpi = kpiOf(records);
-    const rows = byAccount(records);
-    const head = rows[0];
-    const max = rows.length === 0 ? 0 : Math.max(...rows.map((x) => x.expense));
-    return {
-      title: '看账户',
-      label: win.label,
-      from: win.from,
-      to: win.to,
-      count: records.length,
-      conclusion: rows.length === 0
-        ? win.label + ' 这段时间一笔都没有记。'
-        : win.label + ' 记了 ' + String(kpi.count) + ' 笔，落在 ' + String(rows.length) + ' 个账户上：支出 '
-          + money(kpi.expense) + ' 元、收入 ' + money(kpi.income) + ' 元'
-          + (head === undefined ? '。' : '；支出最多的是「' + head.name + '」' + money(head.expense) + ' 元。'),
-      caliber: '按账户归堆，空账户名记作「未填账户」，笔数＝该账户参与收支的记录条数；'
-        + '条长按支出最多的那个账户折算，占比＝占本期支出合计；转账不计入收支。',
-      chips: [win.label],
-      payload: buildOverview(win.label, [...records]),
-      kpi,
-      page: {
-        kpis: [],
+/** 这一页的场景对象（按当前渲染语言取词；模块级只构造一份 zh 快照）。 */
+function buildScene(): AnalysisScene {
+  return {
+    id: 'account',
+    key: 'bill.analysis.overview',
+    kind: 'account',
+    title: m('skill-bill.analysis-scene-account.title'),
+    family: 'bars',
+    values: ({ params, db }) => {
+      const win = readWindow(params);
+      const records = listRange(db, win.from, win.to);
+      const kpi = kpiOf(records);
+      const rows = byAccount(records);
+      const head = rows[0];
+      const max = rows.length === 0 ? 0 : Math.max(...rows.map((x) => x.expense));
+      /* #1210：这一句原先嵌在结论串的末尾（条件表达式），抽成局部变量才迁得动词条。 */
+      const top = head === undefined ? '' : m('skill-bill.analysis-scene-account.c003', { p0: String(head.name), p1: String(money(head.expense)) });
+      return {
+        title: m('skill-bill.analysis-scene-account.title'),
+        label: win.label,
+        from: win.from,
+        to: win.to,
+        count: records.length,
+        conclusion: rows.length === 0
+          ? m('skill-bill.analysis-scene-account.c005', { p0: String(win.label) })
+          : m('skill-bill.analysis-scene-account.c006', {
+            p0: String(win.label),
+            p1: String(String(kpi.count)),
+            p2: String(String(rows.length)),
+            p3: String(money(kpi.expense)),
+            p4: String(money(kpi.income)),
+            p5: String(top),
+          }),
+        caliber: m('skill-bill.analysis-scene-account.c007'),
         chips: [win.label],
-        charts: [],
-        barGroups: [{
-          title: '账户占比（' + String(rows.length) + ' 个账户）',
-          rows: rows.map((x) => ({
-            label: x.name,
-            text: x.income > 0
-              ? '支出 ' + money(x.expense) + ' 元 · 收入 ' + money(x.income) + ' 元 · ' + String(x.count) + ' 笔 · 支出占比 '
-                + pctText(kpi.expense === 0 ? 0 : round1((x.expense / kpi.expense) * 100))
-              : money(x.expense) + ' 元 · ' + String(x.count) + ' 笔 · '
-                + pctText(kpi.expense === 0 ? 0 : round1((x.expense / kpi.expense) * 100)),
-            pct: max === 0 ? 0 : round1((x.expense / max) * 100),
-          })),
-          emptyText: '这段时间还没有账户记录',
-        }],
-        listCards: [{
-          title: '各账户汇总（' + String(rows.length) + ' 个）',
-          /* #I（a06 返工）：判地这三行是 `idx ＋ 整句`（无 left 列）——之前把「N 笔」塞进 left 槽，
-             顶出一大截空白，负责人点名缩小。整句并进 main，left／right 给空串（公共层 `optText`
-             视为空＝不出那一列，行拿 `row-no-left`，一字不占位）。长句的截断由 #1134 popover 兜。 */
-          rows: rows.map((x) => ({
-            left: '',
-            main: x.name + ' · ' + String(x.count) + ' 笔 · 支出 ' + money(x.expense) + ' ／ 收入 ' + money(x.income),
-            right: '',
-          })),
-          emptyText: '这段时间还没有账户记录',
-        }],
-        factCards: [],
-        empty: {
-          text: win.label + ' 这段时间还没有记录。',
-          hint: '先说「记支出」或「记收入」记一笔，回来看这里就有数了。',
+        payload: buildOverview(win.label, [...records]),
+        kpi,
+        page: {
+          kpis: [],
+          chips: [win.label],
+          charts: [],
+          barGroups: [{
+            title: m('skill-bill.analysis-scene-account.c008', { p0: String(String(rows.length)) }),
+            rows: rows.map((x) => {
+              const share = pctText(kpi.expense === 0 ? 0 : round1((x.expense / kpi.expense) * 100));
+              return {
+                label: x.name,
+                text: x.income > 0
+                  ? m('skill-bill.analysis-scene-account.c009', {
+                    p0: String(money(x.expense)),
+                    p1: String(money(x.income)),
+                    p2: String(String(x.count)),
+                    p3: String(share),
+                  })
+                  : m('skill-bill.analysis-scene-account.c010', {
+                    p0: String(money(x.expense)),
+                    p1: String(String(x.count)),
+                    p2: String(share),
+                  }),
+                pct: max === 0 ? 0 : round1((x.expense / max) * 100),
+              };
+            }),
+            emptyText: m('skill-bill.analysis-scene-account.c011'),
+          }],
+          listCards: [{
+            title: m('skill-bill.analysis-scene-account.c012', { p0: String(String(rows.length)) }),
+            /* #I（a06 返工）：判地这三行是 `idx ＋ 整句`（无 left 列）——之前把「N 笔」塞进 left 槽，
+               顶出一大截空白，负责人点名缩小。整句并进 main，left／right 给空串（公共层 `optText`
+               视为空＝不出那一列，行拿 `row-no-left`，一字不占位）。长句的截断由 #1134 popover 兜。 */
+            rows: rows.map((x) => ({
+              left: '',
+              main: m('skill-bill.analysis-scene-account.c013', {
+                p0: String(x.name),
+                p1: String(String(x.count)),
+                p2: String(money(x.expense)),
+                p3: String(money(x.income)),
+              }),
+              right: '',
+            })),
+            emptyText: m('skill-bill.analysis-scene-account.c014'),
+          }],
+          factCards: [],
+          empty: {
+            text: m('skill-bill.analysis-scene-account.c015', { p0: String(win.label) }),
+            hint: m('skill-bill.analysis-scene-account.c016'),
+          },
         },
-      },
-    };
-  },
-};
+      };
+    },
+  };
+}
+
+/** zh 快照（静态落点，未进入语言上下文时用它，产物与 #1210 之前逐字节相同）。 */
+export const sceneAccount: AnalysisScene = buildScene();
+
+/** 按语言重建这一页（#1207 先例：进 `runWithLanguage` 内取词，出了上下文即回 zh）。 */
+export function sceneAccountFor(language: string): AnalysisScene {
+  return runWithLanguage(language, buildScene);
+}

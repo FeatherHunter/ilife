@@ -57,7 +57,7 @@ function reqLevel(value: unknown, field: string): CalendarMonthLevel {
 
 /** 星期表头：七枚非空串（少一枚就把七列错位，所以长度是硬约束）。 */
 function reqWeekdays(value: unknown): readonly string[] {
-  if (value === undefined) return CALENDAR_MONTH_WEEKDAYS;
+  if (value === undefined) return CALENDAR_MONTH_WEEKDAYS();
   if (!Array.isArray(value)) badInput('calendar-month: input.weekdays 必须是字符串数组');
   if (value.length !== CALENDAR_MONTH_WEEK_LENGTH) {
     badInput('calendar-month: input.weekdays 必须恰好 ' + CALENDAR_MONTH_WEEK_LENGTH + ' 枚（一周七格）');

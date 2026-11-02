@@ -43,6 +43,7 @@ import type { EditorDay, EditorMove, EditorState, EditorWeek } from './planEdito
 import { buildPlanEditorDoc } from './planEditorDocs.js';
 import { PLAN_SET_COMMAND_TEMPLATE } from './planEditorRuntime.js';
 import { buildPlanWizardView } from '../render/planPlate.js';
+import { m } from '../entries/index.js';
 
 /** 这条键：186「定训练计划」的过程页就是它（换装前后键名不变，见件头）。 */
 const EDITOR_KEY = 'calorie.view.plan-wizard';
@@ -170,10 +171,10 @@ function libOf(catalog: readonly string[] | undefined, fromPreset: boolean): { l
   }
   const lib = [...seen.values()].map((h) => ({ ...h, sets: NEW_MOVE_SETS, reps: NEW_MOVE_REPS, mode: 'kg' as const, load: 0, minutes: h.kind === CARDIO ? NEW_MOVE_MINUTES : 0 }));
   const src = catalog === undefined
-    ? '动作库：暂无可用来源（' + lib.length + ' 件）'
+    ? m('skill-calorie.workout-planEditorPort.c001', { p0: String(lib.length) })
     : (fromPreset
-      ? '动作库：预置训记官方库（' + lib.length + ' 件）'
-      : '动作库：命令参数 catalog（' + lib.length + ' 件）');
+      ? m('skill-calorie.workout-planEditorPort.c002', { p0: String(lib.length) })
+      : m('skill-calorie.workout-planEditorPort.c003', { p0: String(lib.length) }));
   return { lib, libSource: src };
 }
 
@@ -189,7 +190,7 @@ function countOf(weeks: readonly EditorWeek[], what: 'sessions' | 'moves'): numb
 function catalogOf(params: Record<string, unknown>): readonly string[] | undefined {
   const raw = params['catalog'];
   if (raw === undefined || raw === null) return undefined;
-  if (!Array.isArray(raw) || !raw.every((x) => typeof x === 'string')) fail(2, 'catalog 须为字符串数组');
+  if (!Array.isArray(raw) || !raw.every((x) => typeof x === 'string')) fail(2, m('skill-calorie.workout-planEditorPort.c004'));
   return raw as readonly string[];
 }
 
@@ -197,7 +198,7 @@ function catalogOf(params: Record<string, unknown>): readonly string[] | undefin
 function openWeekOf(params: Record<string, unknown>): number | undefined {
   const raw = params['openWeek'];
   if (raw === undefined || raw === null) return undefined;
-  if (typeof raw !== 'number' || !Number.isInteger(raw) || raw < 0) fail(2, 'openWeek 须为非负整数');
+  if (typeof raw !== 'number' || !Number.isInteger(raw) || raw < 0) fail(2, m('skill-calorie.workout-planEditorPort.c005'));
   return raw;
 }
 
@@ -216,7 +217,7 @@ export function editorStateFromPlan(plan: unknown, opts: { catalog?: readonly st
   const cfg = isRecord(p['config']) ? p['config'] : {};
   const title = asText(cfg['title']).trim();
   return {
-    title: title === '' ? '训练计划' : title,
+    title: title === '' ? m('skill-calorie.workout-planEditorPort.c006') : title,
     startDate: isoOrToday(asText(cfg['start_date'])),
     slots: [...SLOTS],
     maxSessionsPerDay: MAX_SESSIONS_PER_DAY,

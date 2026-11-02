@@ -31,17 +31,23 @@ import { exitForFailure } from './exitMap.js';
 import { XUNJI_EXIT_CODES } from './subcommands.js';
 import type { XunjiSubcommand } from './subcommands.js';
 import type { XunjiRun } from './run.js';
+import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** 四步的代号（顺序固定：plan → wish → push → backfill）。 */
 export type RunSyncPhase = 'plan' | 'wish' | 'push' | 'backfill';
 
-/** 四步的人话名（失败点名用这四个词，`key.ts` 的 `does` 同词）。 */
-export const RUN_SYNC_PHASE_LABEL: Record<RunSyncPhase, string> = {
-  plan: '补计划',
-  wish: '记心愿',
-  push: '推送',
-  backfill: '回写',
-};
+/** 四步的人话名（失败点名用这四个词，`key.ts` 的 `does` 同词）。
+ *  取值在**调用时**才发生（模块级常量不得在顶层取词：语言由运行期上下文决定）。 */
+export function phaseLabel(phase: RunSyncPhase): string {
+  const id = {
+    plan: 'skill-calorie.xunji-runSync.c001',
+    wish: 'skill-calorie.xunji-runSync.c002',
+    push: 'skill-calorie.xunji-runSync.c003',
+    backfill: 'skill-calorie.xunji-runSync.c004',
+  } as const;
+  return m(id[phase]);
+}
 
 /** 一步的成功（含 `skipped`：没跑但不算失败，如缺省的补计划／记心愿）。 */
 export interface RunSyncStepOk {
@@ -156,12 +162,16 @@ function codeOfPushSummary(summary: PushDaySummary): 2 | 3 {
 /** 缺省推一天：读本仓计划 → `pushDayPlan`（无计划即失败，不静默跳过）。 */
 async function defaultPushDay(dateStr: string, deps: RunSyncDeps): Promise<RunSyncStepResult> {
   const day = (deps.planSource ?? resolveDayPlan)(dateStr);
-  if (!day.found) return { ok: false, code: XUNJI_EXIT_CODES.error, error: '推送 ' + dateStr + '：' + day.reason };
+  if (!day.found) return { ok: false, code: XUNJI_EXIT_CODES.error, error: m('skill-calorie.xunji-run-sync.c001', { p0: String(dateStr), p1: String(day.reason) }) };
   const summary = await pushDayPlan(dateStr, day.sessions, deps.pushDeps ?? {});
   if (summary.fail_count > 0) {
     return {
       ok: false, code: codeOfPushSummary(summary),
-      error: '推送 ' + dateStr + '：' + summary.fail_count + ' 个 session 推送失败（共 ' + summary.session_count + ' 个）',
+      error: m('skill-calorie.xunji-run-sync.c002', {
+        p0: String(dateStr),
+        p1: String(summary.fail_count),
+        p2: String(summary.session_count),
+      }),
       detail: summary,
     };
   }
@@ -174,12 +184,12 @@ async function defaultBackfill(endISO: string, days: number, deps: RunSyncDeps):
   for (const r of result.results) {
     if (r.fetch_ok === false && r.failure !== null) {
       const code = exitForFailure(r.failure);
-      return { ok: false, code: code === 2 ? 2 : 3, error: '回写失败（没拉到）：' + r.date + ' ' + r.failure.message, detail: result };
+      return { ok: false, code: code === 2 ? 2 : 3, error: m('skill-calorie.xunji-run-sync.c003', { p0: String(r.date), p1: String(r.failure.message) }), detail: result };
     }
   }
   for (const r of result.results) {
     if (r.err !== null) {
-      return { ok: false, code: XUNJI_EXIT_CODES.api, error: '回写失败（拉到了没写进）：' + r.date + ' ' + r.err, detail: result };
+      return { ok: false, code: XUNJI_EXIT_CODES.api, error: m('skill-calorie.xunji-run-sync.c004', { p0: String(r.date), p1: String(r.err) }), detail: result };
     }
   }
   return { ok: true, detail: result };
@@ -210,7 +220,7 @@ export async function runSync(opts: { readonly days?: number; readonly startOffs
   if (opts.dryRun === true) {
     const done: RunSyncState = {
       ...running, status: 'completed', finished_at: nowISO(), phase: 'push',
-      error_summary: 'dry_run 模式，只建状态文件、无实际操作',
+      error_summary: m('skill-calorie.xunji-run-sync.c005'),
     };
     write(done);
     return done;
@@ -225,40 +235,40 @@ export async function runSync(opts: { readonly days?: number; readonly startOffs
     write(done);
     return done;
   };
-  const plan = await (deps.plan ?? ((ds) => skippedStep('未接入：作息管家不在本仓，#614 接线前跳过（' + ds.length + ' 天）')))(dates);
+  const plan = await (deps.plan ?? ((ds) => skippedStep(m('skill-calorie.xunji-run-sync.c006', { p0: String(ds.length) }))))(dates);
   results.push({
-    phase: 'plan', label: RUN_SYNC_PHASE_LABEL.plan, ok: plan.ok,
+    phase: 'plan', label: phaseLabel('plan'), ok: plan.ok,
     skipped: plan.ok ? plan.skipped === true : undefined, note: plan.ok ? plan.note : undefined,
     error: plan.ok ? undefined : plan.error, code: plan.ok ? undefined : plan.code, detail: plan.detail,
   });
-  if (!plan.ok) return fail(results[results.length - 1] as RunSyncPhaseEntry, RUN_SYNC_PHASE_LABEL.plan, plan.code, plan.error);
-  const wish = await (deps.wish ?? ((ds) => skippedStep('未接入：备忘录不在本仓，#614 接线前跳过（' + ds.length + ' 天）')))(dates);
+  if (!plan.ok) return fail(results[results.length - 1] as RunSyncPhaseEntry, phaseLabel('plan'), plan.code, plan.error);
+  const wish = await (deps.wish ?? ((ds) => skippedStep(m('skill-calorie.xunji-run-sync.c007', { p0: String(ds.length) }))))(dates);
   results.push({
-    phase: 'wish', label: RUN_SYNC_PHASE_LABEL.wish, ok: wish.ok,
+    phase: 'wish', label: phaseLabel('wish'), ok: wish.ok,
     skipped: wish.ok ? wish.skipped === true : undefined, note: wish.ok ? wish.note : undefined,
     error: wish.ok ? undefined : wish.error, code: wish.ok ? undefined : wish.code, detail: wish.detail,
   });
-  if (!wish.ok) return fail(results[results.length - 1] as RunSyncPhaseEntry, RUN_SYNC_PHASE_LABEL.wish, wish.code, wish.error);
+  if (!wish.ok) return fail(results[results.length - 1] as RunSyncPhaseEntry, phaseLabel('wish'), wish.code, wish.error);
   const pushDay = deps.pushDay ?? ((d) => defaultPushDay(d, deps));
   for (const dateStr of dates) {
     const step = await pushDay(dateStr);
     const entry: RunSyncPhaseEntry = {
-      phase: 'push', label: RUN_SYNC_PHASE_LABEL.push, ok: step.ok, date: dateStr,
+      phase: 'push', label: phaseLabel('push'), ok: step.ok, date: dateStr,
       note: step.ok ? step.note : undefined,
       error: step.ok ? undefined : step.error, code: step.ok ? undefined : step.code, detail: step.detail,
     };
     results.push(entry);
-    if (!step.ok) return fail(entry, RUN_SYNC_PHASE_LABEL.push + ' ' + dateStr, step.code, step.error);
+    if (!step.ok) return fail(entry, phaseLabel('push') + ' ' + dateStr, step.code, step.error);
   }
   const endISO = dates[dates.length - 1] as string;
   const bf = await (deps.backfill ?? ((end, n) => defaultBackfill(end, n, deps)))(endISO, days);
   const bfEntry: RunSyncPhaseEntry = {
-    phase: 'backfill', label: RUN_SYNC_PHASE_LABEL.backfill, ok: bf.ok,
+    phase: 'backfill', label: phaseLabel('backfill'), ok: bf.ok,
     note: bf.ok ? bf.note : undefined,
     error: bf.ok ? undefined : bf.error, code: bf.ok ? undefined : bf.code, detail: bf.detail,
   };
   results.push(bfEntry);
-  if (!bf.ok) return fail(bfEntry, RUN_SYNC_PHASE_LABEL.backfill, bf.code, bf.error);
+  if (!bf.ok) return fail(bfEntry, phaseLabel('backfill'), bf.code, bf.error);
   const done: RunSyncState = {
     status: 'completed', started_at: startedAt, finished_at: nowISO(),
     total_days: days, current_day: days, phase: null, results, error_summary: null, failed_step: null, failed_code: null,
@@ -272,29 +282,33 @@ type Values = Readonly<Record<string, string | boolean | readonly string[]>>;
 /** `run-sync` 子命令的分派（`run.ts` 调；失败即非 0 并点名哪一步）。 */
 export async function runRunSyncCommand(sub: XunjiSubcommand, values: Values, deps: RunSyncDeps = {}): Promise<XunjiRun> {
   const refuse = (why: string, data: unknown): XunjiRun => ({
-    subcommand: 'run-sync', code: XUNJI_EXIT_CODES.error, message: why, data, stderr: why + '（用法：' + sub.usage + '）',
+    subcommand: 'run-sync', code: XUNJI_EXIT_CODES.error, message: why, data, stderr: m('skill-calorie.xunji-run-sync.c008', { p0: String(why), p1: String(sub.usage) }),
   });
   let days = 3;
   if (values['--days'] !== undefined) {
     const n = Number(values['--days']);
-    if (!Number.isInteger(n) || n < 1) return refuse('天数须为 ≥1 整数（实际：' + String(values['--days']) + '）', { usage: sub.usage });
+    if (!Number.isInteger(n) || n < 1) return refuse(m('skill-calorie.xunji-run-sync.c009', { p0: String(String(values['--days'])) }), { usage: sub.usage });
     days = n;
   }
   let startOffset = 0;
   if (values['--start-offset'] !== undefined) {
     const n = Number(values['--start-offset']);
-    if (!Number.isInteger(n)) return refuse('起始偏移须为整数（实际：' + String(values['--start-offset']) + '）', { usage: sub.usage });
+    if (!Number.isInteger(n)) return refuse(m('skill-calorie.xunji-run-sync.c010', { p0: String(String(values['--start-offset'])) }), { usage: sub.usage });
     startOffset = n;
   }
   const state = await runSync({ days, startOffset, dryRun: values['--dry-run'] === true, deps });
   if (state.status === 'failed') {
-    const line = 'run-sync 失败在' + String(state.failed_step) + '：' + String(state.error_summary);
+    const line = m('skill-calorie.xunji-run-sync.c011', {
+      p0: String(String(state.failed_step)),
+      p1: String(String(state.error_summary)),
+    });
     return { subcommand: 'run-sync', code: state.failed_code ?? XUNJI_EXIT_CODES.api, message: line, data: state, stderr: line };
   }
   const skipped = state.results.filter((e) => e.skipped === true).map((e) => e.label);
+  const skipNote = skipped.length > 0 ? m('skill-calorie.xunji-run-sync.c012', { p0: String(listJoin(currentRenderLanguage(), skipped)) }) : m('skill-calorie.xunji-run-sync.c013');
   return {
     subcommand: 'run-sync', code: XUNJI_EXIT_CODES.ok,
-    message: 'run-sync 完成：' + days + ' 天' + (skipped.length > 0 ? '（其中 ' + skipped.join('、') + '跳过：外部技能未接入）' : '（四步全过）'),
+    message: m('skill-calorie.xunji-run-sync.c014', { p0: String(days), p1: String(skipNote) }),
     data: state, stderr: null,
   };
 }

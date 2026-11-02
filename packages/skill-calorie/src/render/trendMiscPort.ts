@@ -25,6 +25,8 @@ import { shiftISODate, todayISO } from '../analysis/utils.js';
 /* #717 批③·谓词归一：软删存活谓词正本住共用位 `shared/alive.ts`（本件原先 4 处内联同一句话）。 */
 import { BODY_ALIVE, EX_ALIVE } from '../shared/alive.js';
 import { CalorieRenderError } from './errors.js';
+import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 function assertRange(start: string, end: string): void {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(start) || !/^\d{4}-\d{2}-\d{2}$/.test(end)) {
@@ -180,13 +182,13 @@ export function buildNutritionAnalysisView(db: DatabaseSync, start: string, end:
   const sugarAvg = Math.round((row.sugar / days) * 10) / 10;
   // 规则建议（阈值：蛋白占比<10／脂肪占比>35／纤维日均<25g／钠日均>2000mg／糖日均>50g）。
   const advice: string[] = [];
-  if (pPct < 10) advice.push('蛋白占比 ' + pPct + '% 偏低（建议 10~20%）：可加一份高蛋白食物');
-  if (fPct > 35) advice.push('脂肪占比 ' + fPct + '% 偏高（建议 20~35%）：可减油炸/肥肉类');
-  if (cPct < 45) advice.push('碳水占比 ' + cPct + '% 偏低（建议 45~65%）：主食不宜长期缺席');
-  if (fiberAvg < 25) advice.push('膳食纤维日均 ' + fiberAvg + 'g 不足 25g：可加蔬菜/全谷物');
-  if (sodiumAvg > 2000) advice.push('钠日均 ' + sodiumAvg + 'mg 超 2000mg：注意减盐');
-  if (sugarAvg > 50) advice.push('糖日均 ' + sugarAvg + 'g 超 50g：含糖饮料/甜点宜减量');
-  if (advice.length === 0) advice.push('窗内配比与微量均在建议范围内，继续保持');
+  if (pPct < 10) advice.push(m('skill-calorie.render-trendMiscPort.c001', { p0: String(pPct) }));
+  if (fPct > 35) advice.push(m('skill-calorie.render-trendMiscPort.c002', { p0: String(fPct) }));
+  if (cPct < 45) advice.push(m('skill-calorie.render-trendMiscPort.c003', { p0: String(cPct) }));
+  if (fiberAvg < 25) advice.push(m('skill-calorie.render-trendMiscPort.c004', { p0: String(fiberAvg) }));
+  if (sodiumAvg > 2000) advice.push(m('skill-calorie.render-trendMiscPort.c005', { p0: String(sodiumAvg) }));
+  if (sugarAvg > 50) advice.push(m('skill-calorie.render-trendMiscPort.c006', { p0: String(sugarAvg) }));
+  if (advice.length === 0) advice.push(m('skill-calorie.render-trendMiscPort.c007'));
   return {
     start, end, days, totalCalorie: total,
     proteinG: row.p, proteinPct: pPct, carbG: row.c, carbPct: cPct, fatG: row.f, fatPct: fPct,
@@ -226,36 +228,38 @@ export function buildSixFactorsView(db: DatabaseSync, date: string): SixFactorsV
   const calGoal = goal?.calorie_goal ?? null;
   const proGoal = goal?.protein_goal ?? null;
   const waterGoal = goal?.water_goal ?? null;
+  /* #1197 §4.7：条件分枝先落成局部变量，整句才好迁成 m(key, {...})。 */
+  const mealNote = diet.meals >= 3 ? '' : m('skill-calorie.render-trendMiscPort.c008');
   const factors: SixFactor[] = [
     {
-      key: 'calorie', label: '热量达标',
+      key: 'calorie', label: m('skill-calorie.render-trendMiscPort.c009'),
       ok: calGoal !== null && diet.cal > 0 && diet.cal <= calGoal * 1.05,
-      detail: calGoal === null ? '无热量目标（先设目标）' : `${diet.cal} / ${calGoal}卡`,
+      detail: calGoal === null ? m('skill-calorie.render-trendMiscPort.c010') : m('skill-calorie.render-trendMiscPort.c011', { p0: String(diet.cal), p1: String(calGoal) }),
     },
     {
-      key: 'protein', label: '蛋白达标',
+      key: 'protein', label: m('skill-calorie.render-trendMiscPort.c012'),
       ok: proGoal !== null && diet.p >= proGoal,
-      detail: proGoal === null ? '无蛋白目标（先设目标）' : `${diet.p} / ${proGoal}g`,
+      detail: proGoal === null ? m('skill-calorie.render-trendMiscPort.c013') : `${diet.p} / ${proGoal}g`,
     },
     {
-      key: 'water', label: '饮水达标',
+      key: 'water', label: m('skill-calorie.render-trendMiscPort.c014'),
       ok: waterGoal !== null && water.ml >= waterGoal,
-      detail: waterGoal === null ? '无饮水目标（先设目标）' : `${water.ml} / ${waterGoal}ml`,
+      detail: waterGoal === null ? m('skill-calorie.render-trendMiscPort.c015') : `${water.ml} / ${waterGoal}ml`,
     },
     {
-      key: 'exercise', label: '当日运动',
+      key: 'exercise', label: m('skill-calorie.render-trendMiscPort.c016'),
       ok: ex.n > 0,
-      detail: ex.n > 0 ? ex.n + ' 次运动记录' : '当日无运动记录',
+      detail: ex.n > 0 ? m('skill-calorie.render-trendMiscPort.c017', { p0: String(ex.n) }) : m('skill-calorie.render-trendMiscPort.c018'),
     },
     {
-      key: 'weigh', label: '当日称重',
+      key: 'weigh', label: m('skill-calorie.render-trendMiscPort.c019'),
       ok: w.n > 0,
-      detail: w.n > 0 ? '已称重' : '当日未称重',
+      detail: w.n > 0 ? m('skill-calorie.render-trendMiscPort.c020') : m('skill-calorie.render-trendMiscPort.c021'),
     },
     {
-      key: 'meals', label: '三餐齐备',
+      key: 'meals', label: m('skill-calorie.render-trendMiscPort.c022'),
       ok: diet.meals >= 3,
-      detail: diet.meals + ' 餐记录' + (diet.meals >= 3 ? '' : '（不足三餐）'),
+      detail: m('skill-calorie.render-trendMiscPort.c023', { p0: String(diet.meals), p1: String(mealNote) }),
     },
   ];
   if (diet.meals === 0 && ex.n === 0 && w.n === 0) {
@@ -299,24 +303,24 @@ export function buildLintHealthView(db: DatabaseSync): LintHealthView {
   ).get() as { n: number }).n;
   const checks: LintCheck[] = [
     {
-      key: 'unmatched', label: '未匹配食品库',
+      key: 'unmatched', label: m('skill-calorie.render-trendMiscPort.c024'),
       count: unmatched.length,
-      detail: unmatched.length > 0 ? '如：' + unmatched.slice(0, 5).join('、') : '全部已匹配',
+      detail: unmatched.length > 0 ? m('skill-calorie.render-trendMiscPort.c025', { p0: String(listJoin(currentRenderLanguage(), unmatched.slice(0, 5))) }) : m('skill-calorie.render-trendMiscPort.c026'),
     },
     {
-      key: 'bad-calorie', label: '零/负热量行',
+      key: 'bad-calorie', label: m('skill-calorie.render-trendMiscPort.c027'),
       count: badCal,
-      detail: badCal > 0 ? badCal + ' 行热量≤0（水行除外），建议核查' : '无',
+      detail: badCal > 0 ? m('skill-calorie.render-trendMiscPort.c028', { p0: String(badCal) }) : m('skill-calorie.render-trendMiscPort.c029'),
     },
     {
-      key: 'future', label: '未来日期行',
+      key: 'future', label: m('skill-calorie.render-trendMiscPort.c030'),
       count: future,
-      detail: future > 0 ? future + ' 行日期晚于今天，疑似误录' : '无',
+      detail: future > 0 ? m('skill-calorie.render-trendMiscPort.c031', { p0: String(future) }) : m('skill-calorie.render-trendMiscPort.c032'),
     },
     {
-      key: 'duplicate', label: '疑似重复行',
+      key: 'duplicate', label: m('skill-calorie.render-trendMiscPort.c033'),
       count: dupGroups,
-      detail: dupGroups > 0 ? dupGroups + ' 组同日期时间食物名重复' : '无',
+      detail: dupGroups > 0 ? m('skill-calorie.render-trendMiscPort.c034', { p0: String(dupGroups) }) : m('skill-calorie.render-trendMiscPort.c035'),
     },
   ];
   return { issueCount: checks.reduce((a, c) => a + c.count, 0), checks };
@@ -400,14 +404,18 @@ export function buildReviewTemplateView(db: DatabaseSync, start: string, end: st
   const points: string[] = [];
   if (goal !== null && diet.meals > 0) {
     points.push(avgCalorie <= goal.calorie_goal * 1.05
-      ? `日均 ${avgCalorie}卡，控在目标 ${goal.calorie_goal}卡内，达标`
-      : `日均 ${avgCalorie}卡，超目标 ${goal.calorie_goal}卡，日均超约 ${avgCalorie - goal.calorie_goal}卡`);
+      ? m('skill-calorie.render-trendMiscPort.c036', { p0: String(avgCalorie), p1: String(goal.calorie_goal) })
+      : m('skill-calorie.render-trendMiscPort.c037', {
+        p0: String(avgCalorie),
+        p1: String(goal.calorie_goal),
+        p2: String(avgCalorie - goal.calorie_goal),
+      }));
   }
-  points.push(ex.n > 0 ? `共运动 ${ex.n} 次 ${ex.mins} 分钟` : '窗内无运动记录，下周可先加一次短时运动');
+  points.push(ex.n > 0 ? m('skill-calorie.render-trendMiscPort.c038', { p0: String(ex.n), p1: String(ex.mins) }) : m('skill-calorie.render-trendMiscPort.c039'));
   if (weightChange !== null) {
-    points.push(weightChange < 0 ? `体重降 ${0 - weightChange}kg，方向向好` : (weightChange > 0 ? `体重涨 ${weightChange}kg，结合饮食找原因` : '体重持平'));
+    points.push(weightChange < 0 ? m('skill-calorie.render-trendMiscPort.c040', { p0: String(0 - weightChange) }) : (weightChange > 0 ? m('skill-calorie.render-trendMiscPort.c041', { p0: String(weightChange) }) : m('skill-calorie.render-trendMiscPort.c042')));
   }
-  if (diet.meals > 0 && diet.meals < days * 2) points.push('记餐偏疏（日均不足 2 餐），复盘结论仅供参考');
+  if (diet.meals > 0 && diet.meals < days * 2) points.push(m('skill-calorie.render-trendMiscPort.c043'));
   return {
     start, end, days, meals: diet.meals, avgCalorie,
     goalCalorie: goal?.calorie_goal ?? null,

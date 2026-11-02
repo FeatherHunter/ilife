@@ -9,6 +9,7 @@
 
 import { CONTROL_STYLE_SECTIONS, DEFAULT_DATA_ATTR, HELP_SHELL_ID, SharedHelpersInput } from '../../spec/index.js';
 import { STYLE_PREFIX } from '../../style.js';
+import { m } from '../../entries/index.js';
 
 /* ── 共享 JS 文本的唯一产出者（FX-2③／FX-18；#74 只消费） ─────────────── */
 
@@ -62,14 +63,14 @@ export const HELP_BACKTOP_MIN_Y = 400;
 /** H-19：按钮字形 `↑`（18px／600 由 CSS 承担）。 */
 export const HELP_BACKTOP_LABEL = '↑';
 /** 无障碍名（文档未规定 → 本票取值，与 `TOAST_CLOSE_LABEL` 同口径记账）。 */
-export const HELP_BACKTOP_ARIA = '回到顶部';
+export function HELP_BACKTOP_ARIA(): string { return m('base-render.components-controls-helpers-meta.c001'); }
 /** 搜索框占位文案（F3 `卡路里.html` 的 `#sB` 逐字：`搜索全部场景`）。 */
-export const HELP_SEARCH_PLACEHOLDER = '搜索全部场景';
+export function HELP_SEARCH_PLACEHOLDER(): string { return m('base-render.components-controls-helpers-meta.c002'); }
 /** 搜索框无障碍名（文档未规定 → 本票取值）。 */
-export const HELP_SEARCH_ARIA = '搜索全部场景';
+export function HELP_SEARCH_ARIA(): string { return m('base-render.components-controls-helpers-meta.c003'); }
 /** 清空按钮字形（F3 `#sClear` 逐字：`✕`）与无障碍名。 */
 export const HELP_CLEAR_LABEL = '✕';
-export const HELP_CLEAR_ARIA = '清空搜索';
+export function HELP_CLEAR_ARIA(): string { return m('base-render.components-controls-helpers-meta.c004'); }
 /** H-16 双反馈的**按钮通道**类名（#121；规格逐字 `copied`，**非** `ilife-` 前缀 → 不占样式区命名空间）。
  *  CSS 侧两处已就位：`style.ts` 的 `copyButton` 区（`.ilife-copy-btn.copied`，#75）与本区追加的
  *  helpShell 复制按钮 `.copied`（#121）；本常量只供运行时**加类**，不产第二份样式真相。 */
@@ -79,10 +80,10 @@ export const HELP_COPY_COPIED_CLASS = 'copied';
  *  由 `test/copy-copied-121.test.mjs` 跨文件交叉钉死（改一侧不改另一侧即红）。 */
 export const HELP_COPY_COPIED_MS = 450;
 /** 命中计数文案（F3 `#hitC` 逐字：`匹配 N 个场景`）。 */
-export const HELP_HIT_PREFIX = '匹配 ';
-export const HELP_HIT_SUFFIX = ' 个场景';
+export function HELP_HIT_PREFIX(): string { return m('base-render.components-controls-helpers-meta.c005'); }
+export function HELP_HIT_SUFFIX(): string { return m('base-render.components-controls-helpers-meta.c006'); }
 /** 零命中文案（F3 `#emptyC` 逐字）。 */
-export const HELP_HIT_EMPTY = '没有找到相关场景,换个词试试～';
+export function HELP_HIT_EMPTY(): string { return m('base-render.components-controls-helpers-meta.c007'); }
 
 /** 冻结签名：`buildSharedHelpersJs(input?: SharedHelpersInput): string`。
  *

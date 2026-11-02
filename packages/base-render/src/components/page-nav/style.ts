@@ -18,6 +18,7 @@
  */
 
 /** 换行（仓库口径：不写字面换行转义，与 `blocks.ts`／`pageShapes.ts` 同）。 */
+import { m } from '../../entries/index.js';
 const LF = String.fromCharCode(10);
 
 /* ══════════════════════════════════════════════════════════════
@@ -30,10 +31,10 @@ export function pageNavCss(input?: { readonly prefix?: string }): string {
     && typeof input.prefix === 'string' && input.prefix !== '' ? input.prefix : 'ilife-';
   const root = '.' + p + 'page-ui';
   return [
-    '/* ① 胶囊行（容器 ＋ 语气色 ＋ 行内元素不被网格拉伸）已于 #950 收口时**移籍区块层** */',
-    '/*   （`blocks.ts` 的 `chipButton` 区）：容器类 `ilife-block-chip-row` 的样式原在两处各定义 */',
-    '/*   一次、页面层那条会吃掉区块层的 `margin`；且胶囊的语气本就是胶囊自己的皮肤。本件只管导航。 */',
-    '/* ② 分段导航：等宽分格 ＋ 选中实底。做「动作」的形，不做「状态」的形。 */',
+    m('base-render.components-page-nav-style.c001'),
+    m('base-render.components-page-nav-style.c002'),
+    m('base-render.components-page-nav-style.c003'),
+    m('base-render.components-page-nav-style.c004'),
     root + ' .' + p + 'block-seg-nav {',
     '  display: flex;',
     '  gap: 4px;',

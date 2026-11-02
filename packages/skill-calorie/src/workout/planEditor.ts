@@ -26,6 +26,7 @@
  */
 
 /** 一节课里排的一个动作。`kind` 决定这一行要填哪些参数——「有氧只有时间」就落在这里。 */
+import { m } from '../entries/index.js';
 export interface EditorMove {
   readonly name: string;
   readonly part: string;
@@ -102,7 +103,11 @@ export function serializeState(state: EditorState): string {
 
 /** 日期上屏一律写成「2026年9月7日」——ISO 里那两个连字符也算分隔符，负责人④不接受。 */
 export function cnDate(iso: string): string {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
-  if (m === null) return iso;
-  return m[1] + '年' + Number(m[2]) + '月' + Number(m[3]) + '日';
+  const hit = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (hit === null) return iso;
+  return m('skill-calorie.workout-planEditor.c001', {
+    p0: String(hit[1]),
+    p1: String(Number(hit[2])),
+    p2: String(Number(hit[3])),
+  });
 }

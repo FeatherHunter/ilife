@@ -37,17 +37,18 @@ import { CalorieRenderError } from '../render/errors.js';
 import type { DataTextInput } from 'base-paint';
 import type { DietReview } from '../render/analysisPlate.js';
 import type { FoodRanking } from './dietEngine.js';
+import { m } from '../entries/index.js';
 
 /** envelope 头（值冻结对齐 `cli/keys.ts` 的 ENVELOPE_VERSION／CALORIE_SKILL）与整页 title。 */
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
-const DOC_TITLE = '卡路里饮食';
+const DOC_TITLE = (): string => m('skill-calorie.diet-reviewDocs.c080');
 
 /** 眉标／徽章（§五 第 1 行；**不出命令键**——裁定 1）与餐别口径行（正文里说一次的版本）。 */
-const EYEBROW = '卡路里饮食';
-const REVIEW_BADGE = '复盘餐别';
-const REVIEW_META_LEFT = '饮食复盘饮食';
-const MEAL_NOTE = '加餐是下午茶和夜宵';
+const EYEBROW = (): string => m('skill-calorie.diet-reviewDocs.c081');
+const REVIEW_BADGE = (): string => m('skill-calorie.diet-reviewDocs.c082');
+const REVIEW_META_LEFT = (): string => m('skill-calorie.diet-reviewDocs.c083');
+const MEAL_NOTE = (): string => m('skill-calorie.diet-reviewDocs.c084');
 
 /** 同源入口页的入口标记（#630）：`calorie.view.diet-review` 底下「看今日营养」与「看饮食复盘」
  *  在命令面上完全同形（都是 `{"window":"今日"}`），命令这一层分不出进来的是哪条词 ⇒ 由入口
@@ -79,10 +80,10 @@ function docCopy(key: string, metrics: Record<string, number | null | undefined>
   const envelope: DataTextInput['envelope'] = {
     version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key, data: { metrics: metricsOf(metrics) },
   };
-  if (command === undefined) return dataCopyArea('复制数据', { envelope });
+  if (command === undefined) return dataCopyArea(m('skill-calorie.diet-reviewDocs.c001'), { envelope });
   return copyArea({
     data: { envelope },
-    log: { envelope, copyLog: copyLog({ command, source: '饮食记录', actionAt: nowStamp(), version: DOC_VERSION }) },
+    log: { envelope, copyLog: copyLog({ command, source: m('skill-calorie.diet-reviewDocs.c002'), actionAt: nowStamp(), version: DOC_VERSION }) },
   });
 }
 
@@ -106,12 +107,22 @@ function proteinTotals(r: DietReview): { total: number; avg: number | null } {
 
 /** 结论句（§五 第 3 行，句内含本页读数）：有记录天数／总量／日均／蛋白／达标，一次说完。 */
 function reviewSummary(r: DietReview | null, t: { totalCal: number; avgCal: number; complianceDays: number; daysCount: number; calGoal: number | null } | null, protein: { total: number; avg: number | null }): string {
-  if (r === null || t === null) return '这段日子没有饮食记录，本页只出空态与口径。';
+  if (r === null || t === null) return m('skill-calorie.diet-reviewDocs.c003');
   const goal = t.calGoal === null
-    ? '未设热量目标'
-    : '热量目标 ' + t.calGoal + ' 卡，达标 ' + t.complianceDays + '/' + t.daysCount + ' 天';
-  return '本窗有记录 ' + r.loggedDays + ' 天：共摄入 ' + t.totalCal + ' 卡，日均 ' + t.avgCal
-    + ' 卡。蛋白合计 ' + protein.total + ' 克，日均 ' + fmt(protein.avg) + ' 克，' + goal + '。';
+    ? m('skill-calorie.diet-reviewDocs.c004')
+    : m('skill-calorie.diet-reviewDocs.c005', {
+      p0: String(t.calGoal),
+      p1: String(t.complianceDays),
+      p2: String(t.daysCount),
+    });
+  return m('skill-calorie.diet-reviewDocs.c006', {
+    p0: String(r.loggedDays),
+    p1: String(t.totalCal),
+    p2: String(t.avgCal),
+    p3: String(protein.total),
+    p4: String(fmt(protein.avg)),
+    p5: String(goal),
+  });
 }
 
 /** 复盘页正文（不含页头与导航）：读数卡四张 → 趋势图 → 高频 TOP5 → 按餐汇总 → 营养区块 →
@@ -130,71 +141,72 @@ function reviewBody(r: DietReview | null, top5: FoodRanking | null, extra: DietR
   if (r === null) {
     /* 裁定 4 空窗：整页仍是完整页——空态句 ＋ 一句「怎么记第一条」的引导句。 */
     parts.push(anchored('rv-empty', renderEmptyBlock({
-      title: '本窗读数',
-      text: '这段日子（' + start + ' 至 ' + end + '）一条饮食记录也没有。'
-        + '要让它有内容，先用「记一餐」把其中一天吃的东西记上（可带日期与时间），再来复盘。',
+      title: m('skill-calorie.diet-reviewDocs.c007'),
+      text: m('skill-calorie.diet-reviewDocs.c008', { p0: String(start), p1: String(end) }),
     })));
-    parts.push(renderCaliberLine('📊 数据来源 · 饮食记录 · 饮食专属复盘 · ' + start + ' → ' + end));
+    parts.push(renderCaliberLine(m('skill-calorie.diet-reviewDocs.c009', { p0: String(start), p1: String(end) })));
     parts.push(anchored('rv-copy', docCopy('calorie.view.diet-review', { loggedDays: 0 }, extra.command)));
     return parts.join('');
   }
   /* 四张读数卡＝老实物那四张（总热量／日均热量／总蛋白／日均蛋白），标签与顺序逐字对得上。 */
   parts.push(anchored('rv-kpi', renderKpiGrid([
-    { label: '总热量', value: t ? String(t.totalCal) : '—', unit: '卡', detail: '按有记录的 ' + r.loggedDays + ' 天合计' },
-    { label: '日均热量', value: t ? String(t.avgCal) : '—', unit: '卡/天', detail: '按有记录的天算' },
-    { label: '总蛋白', value: String(protein.total), unit: '克', detail: '按有记录的 ' + r.loggedDays + ' 天合计' },
-    { label: '日均蛋白', value: fmt(protein.avg), unit: '克/天', detail: '按有记录的天算' },
+    { label: m('skill-calorie.diet-reviewDocs.c010'), value: t ? String(t.totalCal) : '—', unit: m('skill-calorie.diet-reviewDocs.c011'), detail: m('skill-calorie.diet-reviewDocs.c012', { p0: String(r.loggedDays) }) },
+    { label: m('skill-calorie.diet-reviewDocs.c013'), value: t ? String(t.avgCal) : '—', unit: m('skill-calorie.diet-reviewDocs.c014'), detail: m('skill-calorie.diet-reviewDocs.c015') },
+    { label: m('skill-calorie.diet-reviewDocs.c016'), value: String(protein.total), unit: '克', detail: m('skill-calorie.diet-reviewDocs.c017', { p0: String(r.loggedDays) }) },
+    { label: m('skill-calorie.diet-reviewDocs.c018'), value: fmt(protein.avg), unit: m('skill-calorie.diet-reviewDocs.c019'), detail: m('skill-calorie.diet-reviewDocs.c020') },
   ])));
   if (t && t.daily.length >= 2) {
     parts.push(anchored('rv-trend', renderChartBlock({
       kind: 'line',
-      title: '每日热量趋势',
+      title: m('skill-calorie.diet-reviewDocs.c021'),
       input: {
         items: t.daily.map((d) => ({ label: d.date.slice(5), value: d.totalCal })),
         options: { avgLine: t.avgCal },
       },
     })));
-    parts.push(renderCaliberLine('每个点 = 有记录的一天。'));
-    parts.push(renderCaliberLine('没记录的日子不当 0 算，图上的空档就是那几天没记。'));
+    parts.push(renderCaliberLine(m('skill-calorie.diet-reviewDocs.c022')));
+    parts.push(renderCaliberLine(m('skill-calorie.diet-reviewDocs.c023')));
   } else if (t) {
     // 裁定 5：单点不成线 —— 只有一天有记录时不画半截线，改出说明句（锚点照旧，页内导航不指空）。
-    parts.push(anchored('rv-trend', renderCaliberLine('本窗只有 1 天有记录，连不成趋势线，这里只把那一天的量写出来：'
-      + (t.daily[0]?.date ?? r.start) + ' 摄入 ' + (t.daily[0]?.totalCal ?? 0) + ' 卡。')));
+    parts.push(anchored('rv-trend', renderCaliberLine(m('skill-calorie.diet-reviewDocs.c024', {
+      p0: String(t.daily[0]?.date ?? r.start),
+      p1: String(t.daily[0]?.totalCal ?? 0),
+    }))));
   }
   const top = top5 ? top5.items : [];
   parts.push(anchored('rv-top', renderDataTable({
     columns: [
-      { key: 'rank', label: '排名', align: 'right' },
-      { key: 'food', label: '食物' },
-      { key: 'cal', label: '总热量', align: 'right' },
-      { key: 'cnt', label: '次数', align: 'right' },
-      { key: 'avg', label: '餐均', align: 'right' },
+      { key: 'rank', label: m('skill-calorie.diet-reviewDocs.c025'), align: 'right' },
+      { key: 'food', label: m('skill-calorie.diet-reviewDocs.c026') },
+      { key: 'cal', label: m('skill-calorie.diet-reviewDocs.c027'), align: 'right' },
+      { key: 'cnt', label: m('skill-calorie.diet-reviewDocs.c028'), align: 'right' },
+      { key: 'avg', label: m('skill-calorie.diet-reviewDocs.c029'), align: 'right' },
     ],
     rows: top.slice(0, 5).map((it) => ({
-      rank: '#' + it.rank, food: it.foodName, cal: it.totalCal + ' 卡', cnt: it.cnt + ' 次', avg: it.avgCalPerMeal + ' 卡',
+      rank: '#' + it.rank, food: it.foodName, cal: m('skill-calorie.diet-reviewDocs.c030', { p0: String(it.totalCal) }), cnt: m('skill-calorie.diet-reviewDocs.c031', { p0: String(it.cnt) }), avg: m('skill-calorie.diet-reviewDocs.c032', { p0: String(it.avgCalPerMeal) }),
     })),
-    caption: '高频食物 TOP5',
-    emptyText: '本窗无高频食物',
+    caption: m('skill-calorie.diet-reviewDocs.c033'),
+    emptyText: m('skill-calorie.diet-reviewDocs.c034'),
   })));
   parts.push(anchored('rv-meal', renderDataTable({
     columns: [
-      { key: 'meal', label: '餐别' },
-      { key: 'days', label: '天数', align: 'right' },
-      { key: 'cal', label: '累计热量', align: 'right' },
+      { key: 'meal', label: m('skill-calorie.diet-reviewDocs.c035') },
+      { key: 'days', label: m('skill-calorie.diet-reviewDocs.c036'), align: 'right' },
+      { key: 'cal', label: m('skill-calorie.diet-reviewDocs.c037'), align: 'right' },
     ],
-    rows: r.byMeal.map((s) => ({ meal: s.meal, days: s.days + ' 天', cal: s.totalCalories + ' 卡' })),
+    rows: r.byMeal.map((s) => ({ meal: s.meal, days: m('skill-calorie.diet-reviewDocs.c038', { p0: String(s.days) }), cal: m('skill-calorie.diet-reviewDocs.c039', { p0: String(s.totalCalories) }) })),
     // #496 · 原 caption「按餐汇总（窗口跟 MEAL_WINDOWS · 加餐=下午茶+夜宵）」把常量名送上屏；口径半句挪到下一行小字。
-    caption: '按餐汇总',
-    emptyText: '本窗无按餐汇总',
+    caption: m('skill-calorie.diet-reviewDocs.c040'),
+    emptyText: m('skill-calorie.diet-reviewDocs.c041'),
   })));
-  parts.push(renderCaliberLine('按餐汇总的「天数」＝那一餐有记录的天数。'));
-  parts.push(renderCaliberLine(MEAL_NOTE + '。'));
+  parts.push(renderCaliberLine(m('skill-calorie.diet-reviewDocs.c042')));
+  parts.push(renderCaliberLine(MEAL_NOTE() + '。'));
   /* 营养配比（#275 交的具名区块）：本页八个唤醒词共出一页，「看营养结构」「看今日营养」读到的就是这一段。 */
   if (typeof extra.nutrition === 'string' && extra.nutrition !== '') parts.push(extra.nutrition);
   parts.push(anchored('rv-copy', docCopy('calorie.view.diet-review', {
     loggedDays: r.loggedDays, totalCal: t ? t.totalCal : null, avgCal: t ? t.avgCal : null, totalProtein: protein.total,
   }, extra.command)));
-  parts.push(renderCaliberLine('📊 数据来源 · 饮食记录 · 饮食专属复盘 · ' + r.start + ' → ' + r.end));
+  parts.push(renderCaliberLine(m('skill-calorie.diet-reviewDocs.c043', { p0: String(r.start), p1: String(r.end) })));
   return parts.join('');
 }
 
@@ -204,16 +216,16 @@ export function buildDietReviewDoc(r: DietReview | null, top5: FoodRanking | nul
   const hasNutrition = typeof extra.nutrition === 'string' && extra.nutrition !== '';
   const t = r && r.trend.status === 'ok' && r.trend.data ? r.trend.data : null;
   const nav = r === null
-    ? [{ id: 'rv-empty', text: '本窗读数' }, { id: 'rv-copy', text: '复制数据' }]
+    ? [{ id: 'rv-empty', text: m('skill-calorie.diet-reviewDocs.c044') }, { id: 'rv-copy', text: m('skill-calorie.diet-reviewDocs.c045') }]
     : [
-      { id: 'rv-kpi', text: '本窗读数' },
-      { id: 'rv-trend', text: '每日热量趋势' },
-      { id: 'rv-top', text: '高频食物 TOP5' },
-      { id: 'rv-meal', text: '按餐汇总' },
+      { id: 'rv-kpi', text: m('skill-calorie.diet-reviewDocs.c046') },
+      { id: 'rv-trend', text: m('skill-calorie.diet-reviewDocs.c047') },
+      { id: 'rv-top', text: m('skill-calorie.diet-reviewDocs.c048') },
+      { id: 'rv-meal', text: m('skill-calorie.diet-reviewDocs.c049') },
       /* 营养区块自带锚点 `sec-kpi`（#275 的块内契约）——这一项指它的图，不指它的读数卡，
          免得整页出现两个 `id="sec-kpi"`（锚点重号是无效文档）。 */
-      ...(hasNutrition ? [{ id: 'sec-chart', text: '营养配比' }] : []),
-      { id: 'rv-copy', text: '复制数据' },
+      ...(hasNutrition ? [{ id: 'sec-chart', text: m('skill-calorie.diet-reviewDocs.c050') }] : []),
+      { id: 'rv-copy', text: m('skill-calorie.diet-reviewDocs.c051') },
     ];
   const summary = reviewSummary(r, t, r === null ? { total: 0, avg: null } : proteinTotals(r));
   const start = r === null ? extra.start : r.start;
@@ -222,19 +234,19 @@ export function buildDietReviewDoc(r: DietReview | null, top5: FoodRanking | nul
      （题名／眉标／副题，沿 #511 同源入口页的做法），徽章／导航／正文区块／复制区／来源脚注不动；
      不给标记（含未知值）＝其余 7 条词从前的行为，一字不差。 */
   const today = extra.entry === ENTRY_TODAY_NUTRITION;
-  const headTitle = today ? '📝 今日营养' : '📝 饮食复盘';
-  const headMetaLeft = today ? '看今日营养（饮食）' : REVIEW_META_LEFT;
-  const headSummary = today ? '今日营养：' + summary : summary;
+  const headTitle = today ? m('skill-calorie.diet-reviewDocs.c052') : m('skill-calorie.diet-reviewDocs.c053');
+  const headMetaLeft = today ? m('skill-calorie.diet-reviewDocs.c054') : REVIEW_META_LEFT();
+  const headSummary = today ? m('skill-calorie.diet-reviewDocs.c055', { p0: String(summary) }) : summary;
   return assembleDocPage({
-    docTitle: DOC_TITLE,
+    docTitle: DOC_TITLE(),
     title: headTitle,
     pageUi: true,
-    eyebrow: EYEBROW,
+    eyebrow: EYEBROW(),
     subtitle: headSummary,
     metaLeft: headMetaLeft,
-    badge: REVIEW_BADGE,
+    badge: REVIEW_BADGE(),
     summary: headSummary,
-    content: dietUiCss() + windowStrip(start, end, r === null ? '' : r.loggedDays + ' 天有记录')
+    content: dietUiCss() + windowStrip(start, end, r === null ? '' : m('skill-calorie.diet-reviewDocs.c056', { p0: String(r.loggedDays) }))
       + renderTocBlock({ items: nav }) + reviewBody(r, top5, extra),
     charts: r !== null && t !== null && t.daily.length >= 2,
   });
@@ -315,13 +327,13 @@ const MEAL_COLORS: Record<string, string> = { 早餐: '#ff9500', 午餐: '#0071e
 export function buildMealDistributionBlock(v: MealDistributionView, command?: string): string {
   const parts: string[] = [];
   parts.push(anchored('md-kpi', renderKpiGrid([
-    { label: '餐数', value: String(v.total), unit: '餐', detail: v.start + ' 至 ' + v.end + '（' + v.days + ' 天）' },
+    { label: m('skill-calorie.diet-reviewDocs.c057'), value: String(v.total), unit: m('skill-calorie.diet-reviewDocs.c058'), detail: m('skill-calorie.diet-reviewDocs.c059', { p0: String(v.start), p1: String(v.end), p2: String(v.days) }) },
     {
-      label: '日均热量',
+      label: m('skill-calorie.diet-reviewDocs.c060'),
       /* 裁定 4：这一支一段记录都没有时值位写 `—`，不写 0（0 是「那天真吃了 0 卡」的意思）。 */
       value: v.total > 0 ? String(v.avg) : '—',
-      ...(v.total > 0 ? { unit: '卡' } : {}),
-      detail: v.total > 0 ? '按窗口 ' + v.days + ' 天算（' + v.mealLabel + '）' : '这一段没有' + v.mealLabel + '的记录',
+      ...(v.total > 0 ? { unit: m('skill-calorie.diet-reviewDocs.c061') } : {}),
+      detail: v.total > 0 ? m('skill-calorie.diet-reviewDocs.c062', { p0: String(v.days), p1: String(v.mealLabel) }) : m('skill-calorie.diet-reviewDocs.c063', { p0: String(v.mealLabel) }),
     },
   ])));
   if (v.meal === 'all' && v.total > 0) {
@@ -330,47 +342,50 @@ export function buildMealDistributionBlock(v: MealDistributionView, command?: st
     const top = drawn.reduce((a, b) => (b.pct > a.pct ? b : a), drawn[0] as MealDistributionSlice);
     parts.push(anchored('md-dist', renderChartBlock({
       kind: 'donut',
-      title: '餐别热量占比',
+      title: m('skill-calorie.diet-reviewDocs.c064'),
       input: {
         items: drawn.map((s) => ({ label: s.label, value: s.cal })),
-        options: { showPercent: true, centerLabel: '最高占比', centerValue: top.label + ' ' + top.pct + '%' },
+        options: { showPercent: true, centerLabel: m('skill-calorie.diet-reviewDocs.c065'), centerValue: top.label + ' ' + top.pct + '%' },
       },
     })));
     parts.push(renderDistributionRows({
       rows: v.dist.map((s) => ({
-        label: s.label, value: '共 ' + s.cal + ' 卡，占 ' + s.pct + '%', pct: s.pct, color: MEAL_COLORS[s.label],
+        label: s.label, value: m('skill-calorie.diet-reviewDocs.c066', { p0: String(s.cal), p1: String(s.pct) }), pct: s.pct, color: MEAL_COLORS[s.label],
       })),
     }));
-    parts.push(renderCaliberLine('占比按各餐热量在四餐合计里的份额算。'));
-    parts.push(renderCaliberLine(MEAL_NOTE + '。'));
+    parts.push(renderCaliberLine(m('skill-calorie.diet-reviewDocs.c067')));
+    parts.push(renderCaliberLine(MEAL_NOTE() + '。'));
   }
   if (v.items.length === 0) {
     // 裁定 4 空窗：整段仍出完整区块——空态句 ＋ 一句「怎么记第一条」的引导句。
     parts.push(anchored('md-table', renderEmptyBlock({
-      title: '明细',
-      text: '这一段（' + v.start + ' 至 ' + v.end + '）没有' + v.mealLabel + '的记录。'
-        + '要让它有内容，用「记一餐」把那一顿记上（时间落在这一餐的时段里，就会归到这一支）。',
+      title: m('skill-calorie.diet-reviewDocs.c068'),
+      text: m('skill-calorie.diet-reviewDocs.c069', {
+        p0: String(v.start),
+        p1: String(v.end),
+        p2: String(v.mealLabel),
+      }),
     })));
   } else {
     parts.push(anchored('md-table', renderDataTable({
       columns: [
-        { key: 'date', label: '日期' },
-        { key: 'time', label: '时间' },
-        { key: 'meal', label: '餐次' },
-        { key: 'food', label: '食物' },
-        { key: 'grams', label: '克数', align: 'right' },
-        { key: 'cal', label: '热量', align: 'right' },
+        { key: 'date', label: m('skill-calorie.diet-reviewDocs.c070') },
+        { key: 'time', label: m('skill-calorie.diet-reviewDocs.c071') },
+        { key: 'meal', label: m('skill-calorie.diet-reviewDocs.c072') },
+        { key: 'food', label: m('skill-calorie.diet-reviewDocs.c073') },
+        { key: 'grams', label: m('skill-calorie.diet-reviewDocs.c074'), align: 'right' },
+        { key: 'cal', label: m('skill-calorie.diet-reviewDocs.c075'), align: 'right' },
         { key: 'protein', label: '蛋白', align: 'right' },
       ],
       rows: v.items.map((it) => ({
         date: it.date, time: it.time, meal: it.meal, food: it.food,
-        grams: it.grams + ' 克', cal: it.cal + ' 卡', protein: it.protein + ' 克',
+        grams: it.grams + ' 克', cal: m('skill-calorie.diet-reviewDocs.c076', { p0: String(it.cal) }), protein: it.protein + ' 克',
       })),
-      caption: '明细（共 ' + v.items.length + ' 条）',
-      emptyText: '这一段没有' + v.mealLabel + '的记录',
+      caption: m('skill-calorie.diet-reviewDocs.c077', { p0: String(v.items.length) }),
+      emptyText: m('skill-calorie.diet-reviewDocs.c078', { p0: String(v.mealLabel) }),
     })));
   }
-  parts.push(renderCaliberLine('📊 数据来源 · 饮食记录 · 餐别时间窗推断 · ' + v.start + ' → ' + v.end));
+  parts.push(renderCaliberLine(m('skill-calorie.diet-reviewDocs.c079', { p0: String(v.start), p1: String(v.end) })));
   if (command !== undefined) {
     parts.push(anchored('md-copy', docCopy('calorie.view.diet', {
       days: v.days, total: v.total, totalCal: v.totalCal, avg: v.avg,

@@ -21,6 +21,7 @@
 import { ENTRY_ROW_TIME_MIN_WIDTH_PX } from '../entry-rows/index.js';
 import { skinVar } from '../skin/contract.js';
 import { skeletonSlot, type SkeletonSlot } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -66,8 +67,8 @@ export function skeletonCss(input?: { readonly prefix?: string }): string {
   const pulse = SKELETON_PULSE_NAME + ' ' + String(SKELETON_PULSE_DURATION_MS) + 'ms ease-in-out infinite';
 
   return [
-    '/* skeleton（加载骨架 · 形态 A「读数 ＋ 明细行骨架」）：占位块照真版式排，加载完不跳版。',
-    '   动效只走 opacity；`prefers-reduced-motion` 下停住但照样看得见。 */',
+    m('base-render.components-skeleton-style.c001'),
+    m('base-render.components-skeleton-style.c002'),
     '@keyframes ' + SKELETON_PULSE_NAME + ' {',
     '  0%, 100% { opacity: ' + String(SKELETON_PULSE_MIN_OPACITY) + '; }',
     '  50% { opacity: 1; }',
@@ -82,7 +83,7 @@ export function skeletonCss(input?: { readonly prefix?: string }): string {
     '  font-size: ' + skinVar('fs-body') + ';',
     '  line-height: 1.5;',
     '}',
-    '/* 排头那句人话：正在读什么 ＋ 还要多久（骨架不是「无话可说」的样子）。 */',
+    m('base-render.components-skeleton-style.c003'),
     s('cap') + ' {',
     '  display: flex;',
     '  flex-wrap: wrap;',
@@ -103,7 +104,7 @@ export function skeletonCss(input?: { readonly prefix?: string }): string {
     '  font-weight: 700;',
     '  font-variant-numeric: tabular-nums;',
     '}',
-    '/* 纸面：占位块落在它上面（与真件的纸面同一副盒子：同内距、同圆角、同纸边）。 */',
+    m('base-render.components-skeleton-style.c004'),
     s('card') + ' {',
     '  display: grid;',
     '  gap: 12px;',
@@ -114,7 +115,7 @@ export function skeletonCss(input?: { readonly prefix?: string }): string {
     '  background: ' + skinVar('surface') + ';',
     '  box-shadow: ' + skinVar('shadow') + ';',
     '}',
-    '/* 读数位：真件这里是页头的主读数大字 ⇒ 占位块的高度就是那一行字的高度（两件同尺度）。 */',
+    m('base-render.components-skeleton-style.c005'),
     s('reading') + ' {',
     '  display: grid;',
     '  gap: 8px;',
@@ -141,7 +142,7 @@ export function skeletonCss(input?: { readonly prefix?: string }): string {
     '  background: ' + block + ';',
     '  animation: ' + pulse + ';',
     '}',
-    '/* 明细行组：列宽与真件一致（时间槽读 `entry-rows` 的常量、值位右对齐）。 */',
+    m('base-render.components-skeleton-style.c006'),
     s('list') + ' {',
     '  display: grid;',
     '  gap: 0;',
@@ -157,8 +158,8 @@ export function skeletonCss(input?: { readonly prefix?: string }): string {
     '  min-height: ' + String(SKELETON_ROW_HEIGHT_PX) + 'px;',
     '  min-width: 0;',
     '}',
-    '/* 行间一条发丝线（第一行不出，与 `entry-rows` 同一副盒子）；`box-sizing:border-box` ⇒',
-    '   线画在行盒里，行距恒 ＝ ' + String(SKELETON_ROW_HEIGHT_PX) + 'px。 */',
+    m('base-render.components-skeleton-style.c007'),
+    m('base-render.components-skeleton-style.c008', { p0: String(String(SKELETON_ROW_HEIGHT_PX)) }),
     s('row') + ' + ' + cls('row') + ' {',
     '  border-top: ' + String(SKELETON_ROW_SEPARATOR_PX) + 'px solid ' + skinVar('line') + ';',
     '}',
@@ -203,7 +204,7 @@ export function skeletonCss(input?: { readonly prefix?: string }): string {
     '  background: ' + block + ';',
     '  animation: ' + pulse + ';',
     '}',
-    '/* 动效停住：占位块换成一个静止的可见度（停住 ≠ 看不见）。 */',
+    m('base-render.components-skeleton-style.c009'),
     '@media (prefers-reduced-motion:reduce) {',
     '  ' + s('reading-value') + ',',
     '  ' + s('reading-sub') + ',',
@@ -215,8 +216,8 @@ export function skeletonCss(input?: { readonly prefix?: string }): string {
     '    opacity: ' + String(SKELETON_STILL_OPACITY) + ';',
     '  }',
     '}',
-    '/* 窄容器（<' + String(SKELETON_NARROW_PX) + 'px）：只把排头那句人话改成两台 ——',
-    '   **行距与列宽一律不动**（它们是「加载完不跳版」的锚点，窄档改了就等于换版式）。 */',
+    m('base-render.components-skeleton-style.c010', { p0: String(String(SKELETON_NARROW_PX)) }),
+    m('base-render.components-skeleton-style.c011'),
     '@container (max-width: ' + String(SKELETON_NARROW_PX) + 'px) {',
     '  ' + s('cap') + ' {',
     '    display: grid;',

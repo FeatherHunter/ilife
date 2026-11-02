@@ -10,6 +10,7 @@
  */
 
 /** 本件的类名根：全部槽位类名都是 `PAGE_HEAD_CLASS + '-' + 槽名`。 */
+import { m } from '../../entries/index.js';
 export const PAGE_HEAD_CLASS = 'ilife-block-page-head';
 
 /** 槽位闭集（标记契约的一部分：`render.ts` 与判据都用这里的名字拼类名，不各抄一份字面量）。 */
@@ -58,7 +59,7 @@ export type PageHeadForm = (typeof PAGE_HEAD_FORMS)[number];
 export const PAGE_HEAD_MISSING = '—';
 
 /** 口径行左端那枚标签（口径行只要出，就带它：读者一眼看出这一行是「怎么算的」）。 */
-export const PAGE_HEAD_CALIBER_LABEL = '口径';
+export function PAGE_HEAD_CALIBER_LABEL(): string { return m('base-render.components-page-head-attrs.c001'); }
 
 /** 主读数：值 ＋ 单位 ＋ 分母 ＋ 说明。**值只收「已经是给人看的样子」的串**（取整与单位口径归调用方）。 */
 export interface PageHeadReading {

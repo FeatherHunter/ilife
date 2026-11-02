@@ -56,8 +56,8 @@ export function buildSliderRowJs(): string {
     + ', ATTR_DISABLED=' + q(SLIDER_ROW_DISABLED_ATTR) + ', ATTR_LOADING=' + q(SLIDER_ROW_LOADING_ATTR)
     + ', ATTR_BOUND=' + q(SLIDER_ROW_BOUND_ATTR) + ';' + '\n'
     + '  var EV_CHANGE=' + q(SLIDER_ROW_EVENT_CHANGE) + ', MISSING=' + q(SLIDER_ROW_MISSING) + ';' + '\n'
-    + '  var WORD_MIN=' + q(SLIDER_ROW_AT_MIN) + ', WORD_MAX=' + q(SLIDER_ROW_AT_MAX)
-    + ', WORD_UNSET=' + q(SLIDER_ROW_UNSET) + ', WORD_LOADING=' + q(SLIDER_ROW_LOADING) + ';' + '\n'
+    + '  var WORD_MIN=' + q(SLIDER_ROW_AT_MIN()) + ', WORD_MAX=' + q(SLIDER_ROW_AT_MAX())
+    + ', WORD_UNSET=' + q(SLIDER_ROW_UNSET()) + ', WORD_LOADING=' + q(SLIDER_ROW_LOADING()) + ';' + '\n'
     + '  var CLS=' + q(SLIDER_ROW_CLASS) + ', CLS_STATE=' + q(sliderRowSlot('state'))
     + ', CLS_NUMBER=' + q(sliderRowSlot('number')) + ', CLS_FILL=' + q(sliderRowSlot('fill')) + ';' + '\n'
     + '  var CLS_VALUE=' + q(sliderRowSlot('value')) + ', CLS_INPUT=' + q(sliderRowSlot('input'))

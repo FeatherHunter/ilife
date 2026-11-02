@@ -48,17 +48,19 @@ import { renderRangePage } from '../shared/rangePage.js';
 import { renderOverviewPage } from '../shared/overviewPage.js';
 import { renderDetailPage, type RecordDetailItem } from '../shared/detailPage.js';
 import { type ListRowInput } from 'base-paint/blocks';
+import { m } from '../entries/index.js';
 
 /** 一级分类的权威顺序（配色与图例都照它），取自 `policy` 的白名单，本件不另写一份。 */
 const L1_ORDER: readonly string[] = [...LEVEL1_WHITELIST];
 
-const WEEKDAY_LABELS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+/** 周一到周日的上屏写法（矩阵行序即此序）。#1197：取词在渲染期，故写成函数。 */
+function weekdayLabels(): readonly string[] { return [m('skill-schedule.query-queryDocs.c137'), m('skill-schedule.query-queryDocs.c138'), m('skill-schedule.query-queryDocs.c139'), m('skill-schedule.query-queryDocs.c140'), m('skill-schedule.query-queryDocs.c141'), m('skill-schedule.query-queryDocs.c142'), m('skill-schedule.query-queryDocs.c143')]; }
 
 /** 一天的分钟数（「没记完」的判据里当分母用）。 */
 const DAY_MINUTES = 1440;
 
-/** 作息库现状那一块的段落名（一处写，页上不再各说一遍）。 */
-const STATUS_TITLE = '作息库现状';
+/** 作息库现状那一块的段落名（一处写，页上不再各说一遍）。#1197：取词在渲染期，故写成函数。 */
+function statusTitle(): string { return m('skill-schedule.query-queryDocs.c144'); }
 
 /** 作息库现状的原始读数（`fetch` 层给什么就是什么，本件只摆位与化人话）。 */
 export interface StatusView {
@@ -72,7 +74,7 @@ export interface StatusView {
 
 /** 起止写成「起至止」（范围一律写「至」，不写 `~`：`~` 是分隔符门点名的那几种之一）。 */
 function timeRangeOf(start: string, end: string): string {
-  return start + ' 至 ' + end;
+  return m('skill-schedule.query-queryDocs.c001', { p0: String(start), p1: String(end) });
 }
 
 /** 一级分类分钟数（同一批记录聚合一次）。 */
@@ -108,17 +110,17 @@ function sleepOf(records: readonly ScheduleRecord[]): { readonly all: number; re
  *  库空时给「无」，不留空格子，也不出假读数。 */
 export function statusBlockOf(status: StatusView): { readonly title: string; readonly items: readonly { readonly label: string; readonly value: string }[] } {
   const span = status.firstDate === null || status.lastDate === null
-    ? '无'
-    : (status.firstDate === status.lastDate ? status.firstDate : status.firstDate + ' 至 ' + status.lastDate);
+    ? m('skill-schedule.query-queryDocs.c002')
+    : (status.firstDate === status.lastDate ? status.firstDate : m('skill-schedule.query-queryDocs.c003', { p0: String(status.firstDate), p1: String(status.lastDate) }));
   const last = status.last;
   return {
-    title: STATUS_TITLE,
+    title: statusTitle(),
     items: [
-      { label: '总记录数', value: String(status.records) + ' 条' },
-      { label: '已记录天数', value: String(status.days) + ' 天' },
-      { label: '日期范围', value: span },
-      { label: '最后记录日期', value: last === null ? '无' : last.date },
-      { label: '最后记录内容', value: last === null ? '无' : last.time_end + ' 那次是' + last.activity },
+      { label: m('skill-schedule.query-queryDocs.c004'), value: m('skill-schedule.query-queryDocs.c005', { p0: String(String(status.records)) }) },
+      { label: m('skill-schedule.query-queryDocs.c006'), value: m('skill-schedule.query-queryDocs.c007', { p0: String(String(status.days)) }) },
+      { label: m('skill-schedule.query-queryDocs.c008'), value: span },
+      { label: m('skill-schedule.query-queryDocs.c009'), value: last === null ? m('skill-schedule.query-queryDocs.c010') : last.date },
+      { label: m('skill-schedule.query-queryDocs.c011'), value: last === null ? m('skill-schedule.query-queryDocs.c012') : m('skill-schedule.query-queryDocs.c013', { p0: String(last.time_end), p1: String(last.activity) }) },
     ],
   };
 }
@@ -130,8 +132,10 @@ function partialSentenceOf(coverage: number, nowMinutes: number | undefined): st
   if (nowMinutes === undefined) return '';
   const elapsed = Math.min(DAY_MINUTES, Math.max(0, Math.floor(nowMinutes)));
   if (elapsed >= DAY_MINUTES || coverage >= elapsed) return '';
-  return '这一天还没过完，到此刻已记录 ' + fmtDurShort(coverage)
-    + '，还差 ' + fmtDurShort(elapsed - coverage) + ' 到此刻，所以这一页还不是整天的全貌。';
+  return m('skill-schedule.query-queryDocs.c014', {
+    p0: String(fmtDurShort(coverage)),
+    p1: String(fmtDurShort(elapsed - coverage)),
+  });
 }
 
 /** 逐条时间轴（老侧「24h 时间轴」的下半截）的一行：**行列表三槽**。
@@ -163,29 +167,35 @@ export function renderTodaySummaryPage(
   const data: DayPageData = {
     head: {
       // 文档标题走「技能名 空格 页名」（与 #783 那几张页同口径；`·` 是分隔符门点名的那几种之一）。
-      docTitle: '作息管家 今天总结',
-      eyebrow: '作息管家 查询与浏览',
-      title: '今天总结',
-      subtitle: date + ' 这一天的作息在这儿，一共 ' + view.total + ' 块记录。',
+      docTitle: m('skill-schedule.query-queryDocs.c015'),
+      eyebrow: m('skill-schedule.query-queryDocs.c016'),
+      title: m('skill-schedule.query-queryDocs.c017'),
+      subtitle: m('skill-schedule.query-queryDocs.c018', { p0: String(date), p1: String(view.total) }),
     },
     cells: cellsOf(records),
     order: L1_ORDER,
     // 结论条＝两句整话：这一天的读数 ＋（今天并且还没记完时）「还没过完」那句。**不用分号堆**。
-    conclusion: '这一天记了 ' + view.total + ' 块，覆盖 ' + fmtDurShort(view.coverage) + '，健康分 '
-      + view.score + '。投入最多的是「' + top + '」' + fmtDurShort(byL1[top] ?? 0) + '，睡眠合计 '
-      + fmtDurShort(sleep.all) + '。' + partialSentenceOf(view.coverage, opts.nowMinutes),
+    conclusion: m('skill-schedule.query-queryDocs.c019', {
+      p0: String(view.total),
+      p1: String(fmtDurShort(view.coverage)),
+      p2: String(view.score),
+      p3: String(top),
+      p4: String(fmtDurShort(byL1[top] ?? 0)),
+      p5: String(fmtDurShort(sleep.all)),
+      p6: String(partialSentenceOf(view.coverage, opts.nowMinutes)),
+    }),
     facts: [
-      { label: '记录块数', value: String(view.total) + ' 块' },
-      { label: '覆盖时长', value: fmtDurShort(view.coverage) },
-      { label: '健康分', value: String(view.score) },
-      { label: '睡眠＋午睡', value: fmtDurShort(sleep.all) },
+      { label: m('skill-schedule.query-queryDocs.c020'), value: m('skill-schedule.query-queryDocs.c021', { p0: String(String(view.total)) }) },
+      { label: m('skill-schedule.query-queryDocs.c022'), value: fmtDurShort(view.coverage) },
+      { label: m('skill-schedule.query-queryDocs.c023'), value: String(view.score) },
+      { label: m('skill-schedule.query-queryDocs.c024'), value: fmtDurShort(sleep.all) },
     ],
     timeline: timelineRowsOf(records),
     sleep: [
-      { label: '夜间睡眠', value: fmtDurShort(sleep.night) },
-      { label: '午睡', value: fmtDurShort(sleep.all - sleep.night) },
-      { label: '合计', value: fmtDurShort(sleep.all), tone: sleep.all >= 420 ? 'ok' : 'warn' },
-      ...(longest === undefined ? [] : [{ label: '最长一块', value: longest.activity }]),
+      { label: m('skill-schedule.query-queryDocs.c025'), value: fmtDurShort(sleep.night) },
+      { label: m('skill-schedule.query-queryDocs.c026'), value: fmtDurShort(sleep.all - sleep.night) },
+      { label: m('skill-schedule.query-queryDocs.c027'), value: fmtDurShort(sleep.all), tone: sleep.all >= 420 ? 'ok' : 'warn' },
+      ...(longest === undefined ? [] : [{ label: m('skill-schedule.query-queryDocs.c028'), value: longest.activity }]),
     ],
     distribution: ranked.map((key) => ({
       label: key,
@@ -197,7 +207,7 @@ export function renderTodaySummaryPage(
       payload: view,
       log: scheduleCopyLog({
         command: 'schedule-cmd-read schedule.record.today --params {"date":"' + date + '"}',
-        source: '作息记录表（' + records.length + ' 行）',
+        source: m('skill-schedule.query-queryDocs.c029', { p0: String(records.length) }),
         actionAt: scheduleNowStamp(),
       }),
     },
@@ -216,17 +226,17 @@ export function renderWeekViewPage(records: readonly ScheduleRecord[], days: rea
     const cells = cellsOf(dayRecords);
     const minutes = dayRecords.reduce((sum, r) => sum + (r.duration_minutes ?? 0), 0);
     return {
-      label: WEEKDAY_LABELS[i % WEEKDAY_LABELS.length],
+      label: weekdayLabels()[i % weekdayLabels().length],
       date: day,
       cells,
-      sum: minutes > 0 ? fmtDurShort(minutes) : '无记录',
+      sum: minutes > 0 ? fmtDurShort(minutes) : m('skill-schedule.query-queryDocs.c030'),
     };
   });
   const byL1 = byL1Of(records);
   const ranked = Object.keys(byL1).sort((a, b) => byL1[b] - byL1[a]);
   const total = records.reduce((sum, r) => sum + (r.duration_minutes ?? 0), 0);
   const score = computeHealthScore(byL1).score;
-  const activeDays = rows.filter((row) => row.sum !== '无记录').length;
+  const activeDays = rows.filter((row) => row.sum !== m('skill-schedule.query-queryDocs.c030')).length;
   const start = days[0];
   const end = days[days.length - 1];
   const data: WeekPageData = {
@@ -234,16 +244,20 @@ export function renderWeekViewPage(records: readonly ScheduleRecord[], days: rea
       // 文档标题走「技能名 空格 页名」（与 #784／本票另两张页同口径）：`·` 是分隔符门（#516）
       // 名点的并列分隔符，而 `<title>` 是**可见文本节点**（head 区）——周视图这张页此前没走过那道门，
       // #785 把它接入真出口之后当场命中，故这里改成空格（件序列与页身一字未动）。
-      docTitle: '作息管家 周视图',
-      eyebrow: '作息管家 查询与浏览',
-      title: '周视图',
-      subtitle: start + ' 至 ' + end + ' 这一周，一共 ' + records.length + ' 块记录。',
+      docTitle: m('skill-schedule.query-queryDocs.c031'),
+      eyebrow: m('skill-schedule.query-queryDocs.c032'),
+      title: m('skill-schedule.query-queryDocs.c033'),
+      subtitle: m('skill-schedule.query-queryDocs.c034', {
+        p0: String(start),
+        p1: String(end),
+        p2: String(records.length),
+      }),
     },
     kpis: [
-      { label: '总时长', value: fmtDurShort(total), detail: records.length + ' 块记录' },
-      { label: '日均', value: fmtDurShort(Math.round(total / Math.max(activeDays, 1))), detail: '有记录 ' + activeDays + ' 天' },
-      { label: '健康分', value: String(score), detail: '七个维度取均（创作不参评）', bar: { pct: score } },
-      { label: '投入最多', value: ranked[0] ?? '—', detail: fmtDurShort(byL1[ranked[0]] ?? 0) },
+      { label: m('skill-schedule.query-queryDocs.c035'), value: fmtDurShort(total), detail: m('skill-schedule.query-queryDocs.c036', { p0: String(records.length) }) },
+      { label: '日均', value: fmtDurShort(Math.round(total / Math.max(activeDays, 1))), detail: m('skill-schedule.query-queryDocs.c037', { p0: String(activeDays) }) },
+      { label: m('skill-schedule.query-queryDocs.c038'), value: String(score), detail: m('skill-schedule.query-queryDocs.c039'), bar: { pct: score } },
+      { label: m('skill-schedule.query-queryDocs.c040'), value: ranked[0] ?? '—', detail: fmtDurShort(byL1[ranked[0]] ?? 0) },
     ],
     rows,
     order: L1_ORDER,
@@ -254,7 +268,7 @@ export function renderWeekViewPage(records: readonly ScheduleRecord[], days: rea
     })),
     daily: rows.map((row) => ({
       left: row.label + ' ' + row.date.slice(5),
-      main: (byDate[row.date] ?? []).length + ' 块',
+      main: m('skill-schedule.query-queryDocs.c041', { p0: String((byDate[row.date] ?? []).length) }),
       right: row.sum,
     })),
     copy: {
@@ -262,7 +276,7 @@ export function renderWeekViewPage(records: readonly ScheduleRecord[], days: rea
       payload: buildRecordRange(start, end, [...records]),
       log: scheduleCopyLog({
         command: 'schedule-cmd-read schedule.record.range --params {"view":"week","date":"' + start + '"}',
-        source: '作息记录表（这一周 ' + records.length + ' 行）',
+        source: m('skill-schedule.query-queryDocs.c042', { p0: String(records.length) }),
         actionAt: scheduleNowStamp(),
       }),
     },
@@ -283,7 +297,14 @@ function dateOf(date: string): Date {
 
 /** 那一天是周几（周一起始，与 `policy` 的周口径同源）。 */
 function weekdayLabelOf(date: string): string {
-  return WEEKDAY_LABELS[(dateOf(date).getDay() + 6) % 7];
+  return weekdayLabels()[(dateOf(date).getDay() + 6) % 7];
+}
+
+/** 「日均」那一格的读数（整句在渲染期取词，占位符只有两个读数）。 */
+function avgDetailOf(total: number, dayCount: number): string {
+  return m('skill-schedule.query-queryDocs.c145', {
+    p0: String(fmtDurShort(Math.round(total / dayCount))),
+  });
 }
 
 /** 「这一周」的七个日期：锚点那天所在周的周一至周日，顺序即矩阵行序。
@@ -291,17 +312,18 @@ function weekdayLabelOf(date: string): string {
  *  周口径**不另写一份**：走 `policy` 的 `relativeToRange('本周')`（周一起始）＋ `recentNDays(7)`，
  *  末尾一处自洽断言——口径若哪天改了而这里没跟，当场抛，不静默漂移。 */
 export function weekDatesOf(anchor: string): string[] {
-  const { start, end } = relativeToRange('本周', dateOf(anchor));
+  const { start, end } = relativeToRange(m('skill-schedule.query-queryDocs.c043'), dateOf(anchor));
   const last7 = recentNDays(7, dateOf(end));
   if (last7.start !== start || last7.end !== end) {
     throw new Error('周窗口口径不一致：本周＝' + start + ' 至 ' + end + '，最近七天＝' + last7.start + ' 至 ' + last7.end);
   }
-  const y = Number(start.slice(0, 4));
-  const m = Number(start.slice(5, 7));
-  const d = Number(start.slice(8, 10));
+  const year = Number(start.slice(0, 4));
+  // #1223：月变量原叫 m，会遮住词条层的 m()——改名 month（迁移器报「m 遮蔽」）。
+  const month = Number(start.slice(5, 7));
+  const day = Number(start.slice(8, 10));
   const days: string[] = [];
   for (let i = 0; i < 7; i += 1) {
-    const at = new Date(y, m - 1, d + i);
+    const at = new Date(year, month - 1, day + i);
     days.push(at.getFullYear() + '-' + String(at.getMonth() + 1).padStart(2, '0')
       + '-' + String(at.getDate()).padStart(2, '0'));
   }
@@ -382,19 +404,29 @@ export function renderRangeSummaryPage(
   const top = ranked[0];
   return renderRangePage({
     head: {
-      docTitle: '作息管家 汇总作息',
-      eyebrow: '作息管家 查询与浏览',
-      title: '汇总作息',
-      subtitle: start + ' 至 ' + end + ' 这一段的作息在这儿，一共 ' + records.length + ' 块记录。',
+      docTitle: m('skill-schedule.query-queryDocs.c044'),
+      eyebrow: m('skill-schedule.query-queryDocs.c045'),
+      title: m('skill-schedule.query-queryDocs.c046'),
+      subtitle: m('skill-schedule.query-queryDocs.c047', {
+        p0: String(start),
+        p1: String(end),
+        p2: String(records.length),
+      }),
     },
     kpis: [
-      { label: '覆盖天数', value: String(days.length), unit: '天', detail: start + ' 至 ' + end },
-      { label: '记录块数', value: String(records.length), unit: '块', detail: '日均 ' + Math.round(records.length / dayCount) + ' 块' },
-      { label: '覆盖时长', value: fmtDurShort(total), detail: '日均 ' + fmtDurShort(Math.round(total / dayCount)) },
-      { label: '健康分', value: String(score), bar: { pct: score }, detail: '七个维度取均（创作不参评）' },
+      { label: m('skill-schedule.query-queryDocs.c048'), value: String(days.length), unit: m('skill-schedule.query-queryDocs.c049'), detail: m('skill-schedule.query-queryDocs.c050', { p0: String(start), p1: String(end) }) },
+      { label: m('skill-schedule.query-queryDocs.c051'), value: String(records.length), unit: m('skill-schedule.query-queryDocs.c052'), detail: m('skill-schedule.query-queryDocs.c053', { p0: String(Math.round(records.length / dayCount)) }) },
+      { label: m('skill-schedule.query-queryDocs.c054'), value: fmtDurShort(total), detail: avgDetailOf(total, dayCount) },
+      { label: m('skill-schedule.query-queryDocs.c055'), value: String(score), bar: { pct: score }, detail: m('skill-schedule.query-queryDocs.c056') },
     ],
-    conclusion: '这一段记了 ' + records.length + ' 块，覆盖 ' + fmtDurShort(total) + '，健康分 ' + score
-      + '。投入最多的是「' + (top ?? '—') + '」' + fmtDurShort(byDim[top] ?? 0) + '，睡眠合计 ' + fmtDurShort(sleep.all) + '。',
+    conclusion: m('skill-schedule.query-queryDocs.c057', {
+      p0: String(records.length),
+      p1: String(fmtDurShort(total)),
+      p2: String(score),
+      p3: String(top ?? '—'),
+      p4: String(fmtDurShort(byDim[top] ?? 0)),
+      p5: String(fmtDurShort(sleep.all)),
+    }),
     distribution: ranked.map((key) => ({
       label: key,
       value: fmtDurShort(byDim[key]),
@@ -403,20 +435,20 @@ export function renderRangeSummaryPage(
     order: L1_ORDER,
     trend: trendInput,
     sleep: [
-      { label: '夜间睡眠', value: fmtDurShort(sleep.night) },
-      { label: '午睡', value: fmtDurShort(sleep.all - sleep.night) },
-      { label: '合计', value: fmtDurShort(sleep.all), tone: sleep.all >= 420 ? 'ok' : 'warn' },
+      { label: m('skill-schedule.query-queryDocs.c058'), value: fmtDurShort(sleep.night) },
+      { label: m('skill-schedule.query-queryDocs.c059'), value: fmtDurShort(sleep.all - sleep.night) },
+      { label: m('skill-schedule.query-queryDocs.c060'), value: fmtDurShort(sleep.all), tone: sleep.all >= 420 ? 'ok' : 'warn' },
     ],
     daily: days.map((day) => {
       const got = perDay(day);
-      return { left: day.slice(5) + ' ' + weekdayLabelOf(day), main: got.blocks + ' 块', right: fmtDurShort(got.minutes) };
+      return { left: day.slice(5) + ' ' + weekdayLabelOf(day), main: m('skill-schedule.query-queryDocs.c061', { p0: String(got.blocks) }), right: fmtDurShort(got.minutes) };
     }),
     copy: {
       key: 'schedule.record.range',
       payload: buildRecordRange(start, end, [...records]),
       log: scheduleCopyLog({
         command: 'schedule-cmd-read schedule.record.range --params {"start":"' + start + '","end":"' + end + '"}',
-        source: '作息记录表（' + records.length + ' 行）',
+        source: m('skill-schedule.query-queryDocs.c062', { p0: String(records.length) }),
         actionAt: scheduleNowStamp(),
       }),
     },
@@ -436,54 +468,70 @@ export function renderPlanOverviewPage(payload: PlanOverviewPayload): string {
   const plannedTotal = days.reduce((sum, day) => sum + day.plannedHours, 0);
   const emptyTotal = 24 * dayCount - plannedTotal;
   const fullest = [...days].sort((a, b) => b.plannedHours - a.plannedHours)[0];
-  const stamp = (value: string | null): string => (value === null ? '无' : value.slice(5, 16).replace('T', ' '));
+  const stamp = (value: string | null): string => (value === null ? m('skill-schedule.query-queryDocs.c063') : value.slice(5, 16).replace('T', ' '));
   const single = days.length === 1;
-  const span = single ? days[0].date : days[0].date + ' 至 ' + days[days.length - 1].date;
+  // #1223：条件分支里的文案先抽成变量——整句化只认「一段文案 ＋ 若干变量」。
+  const viewLabel = single ? m('skill-schedule.query-queryDocs.c064') : m('skill-schedule.query-queryDocs.c065');
+  const span = single ? days[0].date : m('skill-schedule.query-queryDocs.c066', {
+    p0: String(days[0].date),
+    p1: String(days[days.length - 1].date),
+  });
+  const fullestTail = fullest === undefined
+    ? m('skill-schedule.query-queryDocs.c067')
+    : m('skill-schedule.query-queryDocs.c068', { p0: String(fullest.date), p1: String(fullest.plannedHours) });
   return renderOverviewPage({
     head: {
-      docTitle: '作息管家 ' + (single ? '24h 概览' : '查多日计划'),
-      eyebrow: '作息管家 查询与浏览',
-      title: single ? '24h 概览' : '查多日计划',
+      docTitle: m('skill-schedule.query-queryDocs.c069', { p0: String(viewLabel) }),
+      eyebrow: m('skill-schedule.query-queryDocs.c070'),
+      title: viewLabel,
       subtitle: single
-        ? days[0].date + ' 这一天 24 格长什么样，已经排了 ' + plannedTotal + ' 格。'
-        : span + ' 这几天每天 24 格长什么样，一共排了 ' + plannedTotal + ' 格。',
+        ? m('skill-schedule.query-queryDocs.c071', { p0: String(days[0].date), p1: String(plannedTotal) })
+        : m('skill-schedule.query-queryDocs.c072', { p0: String(span), p1: String(plannedTotal) }),
     },
     kpis: [
-      { label: '天数', value: String(days.length), unit: '天', detail: span },
-      { label: '已排格数', value: String(plannedTotal), unit: '格', detail: '一共 ' + 24 * dayCount + ' 格里' },
-      { label: '空白格数', value: String(emptyTotal), unit: '格', detail: '没有安排的小时' },
-      { label: '排得最满', value: fullest === undefined ? '—' : fullest.date.slice(5), detail: fullest === undefined ? '无' : fullest.plannedHours + ' 格' },
+      { label: m('skill-schedule.query-queryDocs.c073'), value: String(days.length), unit: m('skill-schedule.query-queryDocs.c074'), detail: span },
+      { label: m('skill-schedule.query-queryDocs.c075'), value: String(plannedTotal), unit: m('skill-schedule.query-queryDocs.c076'), detail: m('skill-schedule.query-queryDocs.c077', { p0: String(24 * dayCount) }) },
+      { label: m('skill-schedule.query-queryDocs.c078'), value: String(emptyTotal), unit: m('skill-schedule.query-queryDocs.c079'), detail: m('skill-schedule.query-queryDocs.c080') },
+      { label: m('skill-schedule.query-queryDocs.c081'), value: fullest === undefined ? '—' : fullest.date.slice(5), detail: fullest === undefined ? m('skill-schedule.query-queryDocs.c082') : m('skill-schedule.query-queryDocs.c083', { p0: String(fullest.plannedHours) }) },
     ],
-    conclusion: '这 ' + days.length + ' 天里 24 格排了 ' + plannedTotal + ' 格，空着 ' + emptyTotal + ' 格。'
-      + (fullest === undefined
-        ? '没有任何安排。'
-        : '排得最满的是 ' + fullest.date + '，有 ' + fullest.plannedHours + ' 格。'),
-    caliber: '这一页是 24h 聚合视图：同一小时里的多条事件并成一格（并起来用加号连接），不含备注与完成状态，'
-      + '也不含飞书同步状态。要看全字段请用「查日程」。',
+    conclusion: m('skill-schedule.query-queryDocs.c084', {
+      p0: String(days.length),
+      p1: String(plannedTotal),
+      p2: String(emptyTotal),
+      p3: String(fullestTail),
+    }),
+    caliber: m('skill-schedule.query-queryDocs.c085'),
     table: {
       columns: [
-        { key: 'date', label: '日期' },
-        { key: 'planned', label: '已排格数', align: 'right' },
-        { key: 'empty', label: '空白格数', align: 'right' },
-        { key: 'created', label: '首建' },
-        { key: 'updated', label: '末改' },
+        { key: 'date', label: m('skill-schedule.query-queryDocs.c086') },
+        { key: 'planned', label: m('skill-schedule.query-queryDocs.c087'), align: 'right' },
+        { key: 'empty', label: m('skill-schedule.query-queryDocs.c088'), align: 'right' },
+        { key: 'created', label: m('skill-schedule.query-queryDocs.c089') },
+        { key: 'updated', label: m('skill-schedule.query-queryDocs.c090') },
       ],
       rows: days.map((day) => ({
         date: day.date + ' ' + weekdayLabelOf(day.date),
-        planned: day.plannedHours + ' 格',
-        empty: (24 - day.plannedHours) + ' 格',
+        planned: m('skill-schedule.query-queryDocs.c091', { p0: String(day.plannedHours) }),
+        empty: m('skill-schedule.query-queryDocs.c092', { p0: String(24 - day.plannedHours) }),
         created: stamp(day.createdAt),
         updated: stamp(day.updatedAt),
       })),
-      caption: '多日概览：一天一行',
+      caption: m('skill-schedule.query-queryDocs.c093'),
     },
     days: days.map((day) => ({
-      title: weekdayLabelOf(day.date) + ' ' + day.date + ' 已排 ' + day.plannedHours + ' 格',
+      title: m('skill-schedule.query-queryDocs.c094', {
+        p0: String(weekdayLabelOf(day.date)),
+        p1: String(day.date),
+        p2: String(day.plannedHours),
+      }),
       rows: day.hours.map((hour) => ({
         left: String(hour.hour).padStart(2, '0') + ':00',
         main: hour.text,
       })),
-      footnote: '首建 ' + stamp(day.createdAt) + '，末改 ' + stamp(day.updatedAt),
+      footnote: m('skill-schedule.query-queryDocs.c095', {
+        p0: String(stamp(day.createdAt)),
+        p1: String(stamp(day.updatedAt)),
+      }),
     })),
     copy: {
       key: 'schedule.plan.today',
@@ -491,7 +539,7 @@ export function renderPlanOverviewPage(payload: PlanOverviewPayload): string {
       log: scheduleCopyLog({
         command: 'schedule-cmd-read schedule.plan.today --params {"view":"aggregate","dates":["'
           + days.map((day) => day.date).join('","') + '"]}',
-        source: '日程事件表（' + days.length + ' 天聚合）',
+        source: m('skill-schedule.query-queryDocs.c096', { p0: String(days.length) }),
         actionAt: scheduleNowStamp(),
       }),
     },
@@ -507,32 +555,36 @@ export function renderPlanOverviewPage(payload: PlanOverviewPayload): string {
  *  缺失一律写「无」，不留空格子、也不编一个值出来（`source_contents`／`source_timestamps`
  *  在库里多为空——老侧渲染时 `or '（无）'`，本件写「无」）。 */
 function detailFieldsOf(record: ScheduleRecord): { readonly label: string; readonly value: string }[] {
-  const stamp = (value: string): string => (value === '' ? '无' : value.slice(0, 16).replace('T', ' '));
-  const text = (value: string | null): string => (value === null || value === '' ? '无' : value);
+  const stamp = (value: string): string => (value === '' ? m('skill-schedule.query-queryDocs.c097') : value.slice(0, 16).replace('T', ' '));
+  const text = (value: string | null): string => (value === null || value === '' ? m('skill-schedule.query-queryDocs.c098') : value);
   return [
-    { label: '记录号', value: String(record.id) },
-    { label: '日期', value: record.date },
-    { label: '开始', value: record.time_start },
-    { label: '结束', value: record.time_end },
-    { label: '时长', value: fmtDur(record.duration_minutes ?? 0) },
-    { label: '活动', value: record.activity },
-    { label: '分类', value: record.category },
-    { label: '消息原文', value: text(record.source_contents) },
-    { label: '消息时间戳', value: text(record.source_timestamps) },
-    { label: '创建时间', value: stamp(record.created_at) },
+    { label: m('skill-schedule.query-queryDocs.c099'), value: String(record.id) },
+    { label: m('skill-schedule.query-queryDocs.c100'), value: record.date },
+    { label: m('skill-schedule.query-queryDocs.c101'), value: record.time_start },
+    { label: m('skill-schedule.query-queryDocs.c102'), value: record.time_end },
+    { label: m('skill-schedule.query-queryDocs.c103'), value: fmtDur(record.duration_minutes ?? 0) },
+    { label: m('skill-schedule.query-queryDocs.c104'), value: record.activity },
+    { label: m('skill-schedule.query-queryDocs.c105'), value: record.category },
+    { label: m('skill-schedule.query-queryDocs.c106'), value: text(record.source_contents) },
+    { label: m('skill-schedule.query-queryDocs.c107'), value: text(record.source_timestamps) },
+    { label: m('skill-schedule.query-queryDocs.c108'), value: stamp(record.created_at) },
   ];
 }
 
 /** 一条记录的段名（页上那一段的标题）：记录号 ＋ 日期 ＋ 起止 ＋ 做什么。 */
 function detailTitleOf(record: ScheduleRecord): string {
-  return '记录号 ' + record.id + '：' + record.date + ' ' + timeRangeOf(record.time_start, record.time_end)
-    + ' ' + record.activity;
+  return m('skill-schedule.query-queryDocs.c109', {
+    p0: String(record.id),
+    p1: String(record.date),
+    p2: String(timeRangeOf(record.time_start, record.time_end)),
+    p3: String(record.activity),
+  });
 }
 
 /** 同一条记录在**页内目录**里的短名（#891）：只留记录号那一截，跳转仍落在同一段上。
  *  与段名同住一处，两处写法不会走散（段名改了这里跟着改）。 */
 function detailNavOf(record: ScheduleRecord): string {
-  return '记录号 ' + record.id;
+  return m('skill-schedule.query-queryDocs.c110', { p0: String(record.id) });
 }
 
 /** 「作息详情」整页（形状＝`shared/detailPage.ts`；老侧 f06 的两个必现块都在）。
@@ -554,40 +606,56 @@ export function renderRecordDetailPage(
     .sort((a, b) => b.minutes - a.minutes);
   const picked = opts.pickedId === undefined ? undefined : records.find((r) => r.id === opts.pickedId);
   const reasoningClause = withReasoning === 0
-    ? '这一批记录都没有留 AI 推理链。'
-    : (withReasoning === records.length ? '每一条都留着 AI 推理链。' : '其中 ' + withReasoning + ' 条留着 AI 推理链。');
+    ? m('skill-schedule.query-queryDocs.c111')
+    : (withReasoning === records.length ? m('skill-schedule.query-queryDocs.c112') : m('skill-schedule.query-queryDocs.c113', { p0: String(withReasoning) }));
   const items: RecordDetailItem[] = records.map((r) => ({
     title: detailTitleOf(r),
     // 页内目录的条目文本（#891）：只写记录号那一截（日期／起止／活动留在大段名上）。
     navText: detailNavOf(r),
     fields: detailFieldsOf(r),
     // 空的写「（无）」（老侧页同一个写法）：这一块**恒在**，11 个字段一个不少。
-    reasoning: (r.analysis_reasoning ?? '') === '' ? '（无）' : (r.analysis_reasoning ?? ''),
+    reasoning: (r.analysis_reasoning ?? '') === '' ? m('skill-schedule.query-queryDocs.c114') : (r.analysis_reasoning ?? ''),
   }));
   const spanLine = records.length === 0
-    ? opts.date + ' 这一天没有记录。'
-    : records[0].time_start + ' 至 ' + records[records.length - 1].time_end;
+    ? m('skill-schedule.query-queryDocs.c115', { p0: String(opts.date) })
+    : m('skill-schedule.query-queryDocs.c116', {
+      p0: String(records[0].time_start),
+      p1: String(records[records.length - 1].time_end),
+    });
+  // #1223：链尾那个条件句先抽成中转变量——整句化只认「一段文案 ＋ 若干变量」，
+  // 链里再嵌三目会被判成形状拿不准，整件不写盘。
+  const recordReasoningTail = picked === undefined
+    ? ''
+    : ((picked.analysis_reasoning ?? '') === '' ? m('skill-schedule.query-queryDocs.c117') : m('skill-schedule.query-queryDocs.c118'));
   const conclusion = picked === undefined
-    ? opts.date + ' 这一天有 ' + records.length + ' 条记录，覆盖 ' + fmtDurShort(total) + '。' + reasoningClause
-      + '11 个字段逐条展开在这一页上，一条也不折叠。'
-    : '记录号 ' + picked.id + ' 这一条：' + picked.date + ' ' + timeRangeOf(picked.time_start, picked.time_end)
-      + ' ' + picked.activity + '，时长 ' + fmtDurShort(picked.duration_minutes ?? 0) + '。'
-      + '11 个字段全展开在这一页上，'
-      + ((picked.analysis_reasoning ?? '') === '' ? '这一条没有留 AI 推理链。' : 'AI 推理链也照全文摆出来。');
+    ? m('skill-schedule.query-queryDocs.c119', {
+      p0: String(opts.date),
+      p1: String(records.length),
+      p2: String(fmtDurShort(total)),
+      p3: String(reasoningClause),
+    })
+    : m('skill-schedule.query-queryDocs.c120', {
+      p0: String(picked.id),
+      p1: String(picked.date),
+      p2: String(timeRangeOf(picked.time_start, picked.time_end)),
+      p3: String(picked.activity),
+      p4: String(fmtDurShort(picked.duration_minutes ?? 0)),
+      p5: String(recordReasoningTail),
+    });
   return renderDetailPage({
     head: {
-      docTitle: '作息管家 作息详情',
-      eyebrow: '作息管家 查询与浏览',
-      title: '作息详情',
+      docTitle: m('skill-schedule.query-queryDocs.c121'),
+      eyebrow: m('skill-schedule.query-queryDocs.c122'),
+      title: m('skill-schedule.query-queryDocs.c123'),
       subtitle: picked === undefined
-        ? opts.date + ' 这一天 ' + records.length + ' 条记录，字段逐条展开。'
-        : '记录号 ' + picked.id + ' 这一条，字段逐条展开。',
+        ? m('skill-schedule.query-queryDocs.c124', { p0: String(opts.date), p1: String(records.length) })
+        : m('skill-schedule.query-queryDocs.c125', { p0: String(picked.id) }),
     },
     kpis: [
-      { label: '记录条数', value: String(records.length), unit: '条', detail: spanLine },
-      { label: '覆盖时长', value: fmtDurShort(total), detail: ranked.length === 0 ? '无分类' : '投入最多 ' + ranked[0].dim },
-      { label: '带 AI 推理链', value: String(withReasoning), unit: '条', detail: reasoningClause },
-      { label: '覆盖一级分类', value: String(dims.length), unit: '类', detail: ranked.length === 0 ? '无' : ranked.map((r) => r.dim).join(' ') },
+      { label: m('skill-schedule.query-queryDocs.c126'), value: String(records.length), unit: m('skill-schedule.query-queryDocs.c127'), detail: spanLine },
+      { label: m('skill-schedule.query-queryDocs.c128'), value: fmtDurShort(total), detail: ranked.length === 0 ? m('skill-schedule.query-queryDocs.c129') : m('skill-schedule.query-queryDocs.c130', { p0: String(ranked[0].dim) }) },
+      { label: m('skill-schedule.query-queryDocs.c131'), value: String(withReasoning), unit: m('skill-schedule.query-queryDocs.c132'), detail: reasoningClause },
+      { label: m('skill-schedule.query-queryDocs.c133'), value: String(dims.length), unit: m('skill-schedule.query-queryDocs.c134'), detail: ranked.length === 0 ? m('skill-schedule.query-queryDocs.c135') : ranked.map((r) => r.dim).join(' ') },
     ],
     conclusion,
     records: items,
@@ -597,7 +665,7 @@ export function renderRecordDetailPage(
       log: scheduleCopyLog({
         command: 'schedule-cmd-read schedule.record.detail --params '
           + (opts.pickedId === undefined ? '{"date":"' + opts.date + '"}' : '{"id":' + String(opts.pickedId) + '}'),
-        source: '作息记录表（' + records.length + ' 行，11 字段全展开）',
+        source: m('skill-schedule.query-queryDocs.c136', { p0: String(records.length) }),
         actionAt: scheduleNowStamp(),
       }),
     },

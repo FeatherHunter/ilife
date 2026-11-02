@@ -8,6 +8,7 @@
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { m } from '../../entries/index.js';
 
 export const FAMILY = 'confirm' as const;
 
@@ -100,11 +101,11 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const template = readFileSync(new URL('../../../templates/items/confirm.html', import.meta.url), 'utf8');
   const msg = msgOf(env);
   const key = String((env as { key?: unknown }).key ?? PAGE_META.key);
-  const m = msg.match(/^已合并到 (.+)：\+(.+) 件$/);
-  const target = (m?.[1] ?? '').trim();
-  const moved = (m?.[2] ?? '').trim();
+  const merged = msg.match(/^已合并到 (.+)：\+(.+) 件$/);
+  const target = (merged?.[1] ?? '').trim();
+  const moved = (merged?.[2] ?? '').trim();
 
-  const archivePrompt = '请加载「居家管家」技能，帮我确认合并归档（唤醒词：合并物品）：\n\n  结果：' + msg;
+  const archivePrompt = m('skill-home.items-pages-confirm.c001', { p0: String(msg) });
   // #864 加厚：来源清单有 detail 写真条目（编号＋名称＋件数），无则回退破折号。
   const det = detailOf(env);
   const rawSources = det.sources;
@@ -115,43 +116,43 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     : [];
   const hasSources = Array.isArray(rawSources);
   const sourceRows = !hasSources
-    ? '<div class="fp-row"><div class="fp-k">来源条目</div><div class="fp-v">—</div></div>'
+    ? '<div class="fp-row"><div class="fp-k">' + m('skill-home.items-pages-confirm.c005') + '</div><div class="fp-v">—</div></div>'
     : (sources.length
-      ? sources.map((s) => '<div class="fp-row"><div class="fp-k">编号 ' + esc(s.id) + '</div><div class="fp-v">' + esc(s.name === '' ? '—' : s.name) + '，共 ' + esc(s.quantity === '' ? '—' : s.quantity) + ' 件</div></div>').join('')
-      : '<div class="fp-row"><div class="fp-k">来源条目</div><div class="fp-v">无</div></div>');
+      ? sources.map((s) => '<div class="fp-row"><div class="fp-k">' + m('skill-home.items-pages-confirm.c006', { p0: esc(s.id) }) + '</div><div class="fp-v">' + m('skill-home.items-pages-confirm.c007', { p0: esc(s.name === '' ? '—' : s.name), p1: esc(s.quantity === '' ? '—' : s.quantity) }) + '</div></div>').join('')
+      : '<div class="fp-row"><div class="fp-k">' + m('skill-home.items-pages-confirm.c005') + '</div><div class="fp-v">' + m('skill-home.items-pages-confirm.c008') + '</div></div>');
 
   const content = PAGE_CSS
     + '<div class="fp-page" data-family="' + FAMILY + '" data-key="' + esc(key) + '">'
     // 头卡只写结果值：页型名徽章删了（#817 seq 15 的 ②：徽章是页型名，不是内容）。
     + '<div class="fp-hero">'
-    + '<div class="fp-title">' + (target === '' ? '合并物品已执行' : '已合并到 ' + esc(target)) + '</div>'
-    + '<p class="fp-lead">重复的那几条已经并入留下的这件，请核对范围后归档</p></div>'
+    + '<div class="fp-title">' + (target === '' ? m('skill-home.items-pages-confirm.c002') : m('skill-home.items-pages-confirm.c003', { p0: String(esc(target)) })) + '</div>'
+    + '<p class="fp-lead">' + m('skill-home.items-pages-confirm.c009') + '</p></div>'
     + '<section class="fp-sec"><div class="fp-grid2">'
     // 保留的这条编号只在「变更前」写这一处；「变更后」写这次真变了的量，逐条明细不再重复编号。
-    + '<div class="fp-compare fp-compare-before"><h2 class="fp-sec-t">变更前</h2>'
+    + '<div class="fp-compare fp-compare-before"><h2 class="fp-sec-t">' + m('skill-home.items-pages-confirm.c010') + '</h2>'
     + sourceRows
-    + '<div class="fp-row"><div class="fp-k">留下的这件</div><div class="fp-v">编号 ' + esc(target || '—') + '</div></div>'
+    + '<div class="fp-row"><div class="fp-k">' + m('skill-home.items-pages-confirm.c011') + '</div><div class="fp-v">' + m('skill-home.items-pages-confirm.c006', { p0: esc(target || '—') }) + '</div></div>'
     + '</div>'
-    + '<div class="fp-compare fp-compare-after"><h2 class="fp-sec-t">变更后</h2>'
-    + '<div class="fp-row"><div class="fp-k">并入数量</div><div class="fp-v">' + (moved === '' ? '—' : '共 ' + esc(moved) + ' 件') + '</div></div>'
+    + '<div class="fp-compare fp-compare-after"><h2 class="fp-sec-t">' + m('skill-home.items-pages-confirm.c012') + '</h2>'
+    + '<div class="fp-row"><div class="fp-k">' + m('skill-home.items-pages-confirm.c013') + '</div><div class="fp-v">' + (moved === '' ? '—' : m('skill-home.items-pages-confirm.c004', { p0: String(esc(moved)) })) + '</div></div>'
     + '</div>'
     + '</div></section>'
-    + '<section class="fp-sec"><h2 class="fp-sec-t">逐条明细</h2>'
-    + '<div class="fp-row"><div class="fp-k">保留条目</div><div class="fp-v">留下的这件</div></div>'
-    + (hasSources ? sources.map((s) => '<div class="fp-row"><div class="fp-k">并入</div><div class="fp-v">编号 ' + esc(s.id) + ' ' + esc(s.name === '' ? '—' : s.name) + '</div></div>').join('') : '')
+    + '<section class="fp-sec"><h2 class="fp-sec-t">' + m('skill-home.items-pages-confirm.c014') + '</h2>'
+    + '<div class="fp-row"><div class="fp-k">' + m('skill-home.items-pages-confirm.c015') + '</div><div class="fp-v">' + m('skill-home.items-pages-confirm.c011') + '</div></div>'
+    + (hasSources ? sources.map((s) => '<div class="fp-row"><div class="fp-k">' + m('skill-home.items-pages-confirm.c016') + '</div><div class="fp-v">' + m('skill-home.items-pages-confirm.c006', { p0: esc(s.id) }) + ' ' + esc(s.name === '' ? '—' : s.name) + '</div></div>').join('') : '')
     // #890（⑤文案不冗余）：原先这一节末尾还有一行「合并记录：已合并到 63：+1 件」——它把回执短句
     // 原样再说一遍，而这一句的每一半都已经在别处落位（「已合并到 63」在头卡大字、「共 1 件」在
     // 「变更后 → 并入数量」）。重复的一行删掉，逐条明细只留判据要的 entries（保留条目＋逐条并入）。
     + '</section>'
     // 影响说明拆三条：原先是一句六十多字、用分号硬挤的串（#817 seq 15 的 ⑥）。
-    + '<section class="fp-sec"><h2 class="fp-sec-t">影响说明</h2>'
+    + '<section class="fp-sec"><h2 class="fp-sec-t">' + m('skill-home.items-pages-confirm.c017') + '</h2>'
     + '<div class="fp-impact"><ul>'
-    + '<li>来源条目的位置与标签记录已经删除，只保留留下的这件</li>'
-    + '<li>并入的件数已经加到留下的这件上</li>'
-    + '<li>这次合并不能自动撤销，错了要手动把这些条目再拆开</li>'
+    + '<li>' + m('skill-home.items-pages-confirm.c018') + '</li>'
+    + '<li>' + m('skill-home.items-pages-confirm.c019') + '</li>'
+    + '<li>' + m('skill-home.items-pages-confirm.c020') + '</li>'
     + '</ul></div></section>'
     + '<div class="fp-actions">'
-    + '<button type="button" class="fp-btn fp-btn-primary" onclick="copyItem(\'fp-confirm-archive\')">确认</button>'
+    + '<button type="button" class="fp-btn fp-btn-primary" onclick="copyItem(\'fp-confirm-archive\')">' + m('skill-home.items-pages-confirm.c021') + '</button>'
     + '</div>'
     + homeCopyArea({
         data: { envelope: env },

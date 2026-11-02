@@ -25,6 +25,7 @@ import {
 import { scheduleCopyArea, type ScheduleCopyAreaInput } from '../render/copyArea.js';
 import { assembleDocPage, type PageHead } from './docPage.js';
 import { pageSections } from './pageNav.js';
+import { m } from '../entries/index.js';
 
 /** 逐日那一段（一天一段：段名 ＋ 24 格 ＋ 该日的随附读数）。 */
 export interface OverviewDaySection {
@@ -68,11 +69,11 @@ export function renderOverviewPage(data: OverviewPageData): string {
     ...data.days.map((day) => ({
       navText: day.title,
       html: '<h2 class="heat-title">' + escText(day.title) + '</h2>'
-        + renderListRows({ items: day.rows, emptyText: '这一天没有安排' })
+        + renderListRows({ items: day.rows, emptyText: m('skill-schedule.shared-overviewPage.c001') })
         + (day.footnote === undefined || day.footnote === '' ? '' : renderCaliberLine(day.footnote)),
     })),
-    { navText: '复制与留档', html: scheduleCopyArea({
-      title: '复制与留档',
+    { navText: m('skill-schedule.shared-overviewPage.c002'), html: scheduleCopyArea({
+      title: m('skill-schedule.shared-overviewPage.c003'),
       dataActionId: 'ilife-sch-overview-copy-data',
       logActionId: 'ilife-sch-overview-copy-log',
       ...data.copy,

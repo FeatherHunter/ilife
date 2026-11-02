@@ -16,6 +16,7 @@
  *  提示色取黄系（`warn`），**独立一块**，不与别的提示共容器（施工图第三节第 8 行原话）。
  *  金额的两位小数文本不在这里另写一份：走 `./summaryRow.ts` 的 `money2`。
  */
+import { m } from '../entries/index.js';
 import { renderFeedbackBlock } from 'base-paint/blocks';
 import type { ToastInput } from 'base-paint/blocks';
 import type { BillRow } from '../fetch/db.js';
@@ -97,16 +98,15 @@ export function duplicateNote(
   //   每条只出**因记录而异**的两列——编号与时刻；账户只在与「没设置」不同时补一句。
   //   `，`／`·` 一个不进版式（用户要求 5），字段之间靠括号与行距分列。
   const lines = hits.map((h) => {
-    const account = h.account === '' ? '' : '　账户 ' + h.account + (h.sameAccount ? '（同账户）' : '');
-    return '记录编号 ' + h.id + '（' + h.time + '）' + account;
+    const account = h.account === '' ? '' : m('skill-bill.write-duplicateNote.c001', { p1: String(h.account), p2: h.sameAccount ? m('skill-bill.write-duplicateNote.c009') : '' });
+    return m('skill-bill.write-duplicateNote.c002', { p1: String(h.id), p2: String(h.time), p3: String(account) });
   });
-  const detail = '对的是 ' + probe.date.slice(0, 10) + ' 这一天，金额 ' + money2(probe.amount)
-    + '，分类 ' + probe.category.trim();
+  const detail = m('skill-bill.write-duplicateNote.c003', { p1: String(probe.date.slice(0, 10)), p2: String(money2(probe.amount)), p3: String(probe.category.trim()) });
   if (mode === 'static') {
     return renderFeedbackBlock({
-      title: '先核一眼再定',
+      title: m('skill-bill.write-duplicateNote.c004'),
       toast: {
-        msg: '看着像重复：同一天同一金额同一分类，已经有 ' + hits.length + ' 笔了',
+        msg: m('skill-bill.write-duplicateNote.c005', { p1: String(hits.length) }),
         detail,
         icon: 'warn',
         lines,
@@ -115,11 +115,11 @@ export function duplicateNote(
     });
   }
   const toast: ToastInput = {
-    msg: '看着像重复：同一天同一金额同一分类，已经有 ' + hits.length + ' 笔了',
+    msg: m('skill-bill.write-duplicateNote.c006', { p1: String(hits.length) }),
     detail,
     icon: 'warn',
-    badge: { text: '疑似重复', type: 'warn' },
+    badge: { text: m('skill-bill.write-duplicateNote.c007'), type: 'warn' },
     lines,
   };
-  return renderFeedbackBlock({ title: '先核一眼再定', toast });
+  return renderFeedbackBlock({ title: m('skill-bill.write-duplicateNote.c008'), toast });
 }

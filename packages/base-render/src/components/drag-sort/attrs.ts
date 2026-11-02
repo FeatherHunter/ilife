@@ -24,6 +24,12 @@
  */
 
  /** 本件的类名根：全部槽位类名都是 `DRAG_SORT_CLASS + '-' + 槽名`。 */
+import { m } from '../../entries/index.js';
+/** 模板原样返回（占位符由本件的运行时替换，求值端口不碰）：`{名}` 映射回它自己。 */
+const KEEP_PLACEHOLDERS: Readonly<Record<string, string>> = {
+  n: '{n}', from: '{from}', to: '{to}', label: '{label}', p: '{p}', why: '{why}',
+};
+
 export const DRAG_SORT_CLASS = 'ilife-block-drag-sort';
 
 /** 槽位闭集（标记契约的一部分：`render.ts`／`style.ts`／`runtime.ts` 与判据都用这里的名字拼类名）。 */
@@ -159,49 +165,49 @@ export const DRAG_SORT_MAX_ITEMS = 30;
  */
 
 /** 文案段（**整句定义地**：渲染期与运行时段读的就是这一份）。 */
-export const DRAG_SORT_TEXT = Object.freeze({
+export const DRAG_SORT_TEXT = {
   /** 卡头右端那句拿法：只说看得见的通路（不提长按／双击／方向键那一路）。 */
-  hint: '点把手拿起一行。放下时点另一行。',
+  get hint() { return m('base-render.components-drag-sort-attrs.c001'); },
   /** 取消键上的字。 */
-  cancel: '取消放回',
+  get cancel() { return m('base-render.components-drag-sort-attrs.c002'); },
   /** 锁定前缀（原因写在名称格那一位）。 */
-  lockedPrefix: '不可移：',
-  /** plain 态的状态句：`{n}`＝共几步。 */
-  idleStatus: '共 {n} 步。点把手拿起一行。放下时点另一行。',
-  /** lifted 态的状态句：`{from}`／`{to}`＝第几位（1 起），`{label}`＝被拿起那一行的名称。 */
-  liftStatus: '已拿起第 {from} 步「{label}」，将放到第 {to} 位。点另一行放下，或点取消放回原位。',
+  get lockedPrefix() { return m('base-render.components-drag-sort-attrs.c003'); },
+  /** plain 态的状态句：`«n»`＝共几步。 */
+  get idleStatus() { return m('base-render.components-drag-sort-attrs.c004', KEEP_PLACEHOLDERS); },
+  /** lifted 态的状态句：`«from»`／`«to»`＝第几位（1 起），`«label»`＝被拿起那一行的名称。 */
+  get liftStatus() { return m('base-render.components-drag-sort-attrs.c005', KEEP_PLACEHOLDERS); },
   /** 空槽句：写出哪一步空着、被拿起的是谁。 */
-  slotText: '第 {from} 步原位空着，被拿起的是{label}',
+  get slotText() { return m('base-render.components-drag-sort-attrs.c006', KEEP_PLACEHOLDERS); },
   /** 落点句：写出放第几位。 */
-  lineText: '放这里（第 {to} 位）',
-  /** 可拿起那两行的把手名：`{p}`＝第几位，`{label}`＝名称。 */
-  gripPick: '拿起第 {p} 步：{label}',
+  get lineText() { return m('base-render.components-drag-sort-attrs.c007', KEEP_PLACEHOLDERS); },
+  /** 可拿起那两行的把手名：`«p»`＝第几位，`«label»`＝名称。 */
+  get gripPick() { return m('base-render.components-drag-sort-attrs.c008', KEEP_PLACEHOLDERS); },
   /** 已拿起那一行的把手名（再点＝放回原位）。 */
-  gripLift: '已拿起第 {p} 步：{label}，再点放回原位',
-  /** 锁定那一行的把手名：`{p}`＝第几位，`{why}`＝锁定原因。 */
-  gripLock: '第 {p} 步不可移，{why}',
+  get gripLift() { return m('base-render.components-drag-sort-attrs.c009', KEEP_PLACEHOLDERS); },
+  /** 锁定那一行的把手名：`«p»`＝第几位，`«why»`＝锁定原因。 */
+  get gripLock() { return m('base-render.components-drag-sort-attrs.c010', KEEP_PLACEHOLDERS); },
   /* ── `buttons` 档（第二形态）那几句 ────────────────────────────────
    *  **旁白与口径句一个都不搬**（原型上的「选中了这一条 · 点右边的按钮」那种句子不进屏面）：
    *  一屏只留一层话，同一个数只印一次。 */
   /** 卡头那句拿法（`buttons` 档的缺省）：总数只在这一处说。 */
-  buttonsHint: '共 {n} 步。点一行选中，再点「上移」或「下移」。',
+  get buttonsHint() { return m('base-render.components-drag-sort-attrs.c011', KEEP_PLACEHOLDERS); },
   /** 每行的位置读数：只印自己那一位（总数在卡头那句里说过一次）。 */
-  posOne: '第 {p} 位',
-  /** 虚线落点预告那一句：写出会落到第几位（`{to}`＝1 起的位）。 */
-  previewText: '落到第 {to} 位',
+  get posOne() { return m('base-render.components-drag-sort-attrs.c012', KEEP_PLACEHOLDERS); },
+  /** 虚线落点预告那一句：写出会落到第几位（`«to»`＝1 起的位）。 */
+  get previewText() { return m('base-render.components-drag-sort-attrs.c013', KEEP_PLACEHOLDERS); },
   /** 两半控件「上移」半边上的两个字。 */
-  moveUp: '上移',
+  get moveUp() { return m('base-render.components-drag-sort-attrs.c014'); },
   /** 两半控件「下移」半边上的两个字。 */
-  moveDown: '下移',
-  /** 「上移」半边的无障碍名：`{label}`＝这一行的名称。 */
-  moveUpName: '上移：{label}',
+  get moveDown() { return m('base-render.components-drag-sort-attrs.c015'); },
+  /** 「上移」半边的无障碍名：`«label»`＝这一行的名称。 */
+  get moveUpName() { return m('base-render.components-drag-sort-attrs.c016', KEEP_PLACEHOLDERS); },
   /** 「下移」半边的无障碍名。 */
-  moveDownName: '下移：{label}',
+  get moveDownName() { return m('base-render.components-drag-sort-attrs.c017', KEEP_PLACEHOLDERS); },
   /** `buttons` 档的把手名：点它＝选中这一行。 */
-  gripSelect: '选中第 {p} 步：{label}',
+  get gripSelect() { return m('base-render.components-drag-sort-attrs.c018', KEEP_PLACEHOLDERS); },
   /** `buttons` 档已选中那一行的把手名（再点＝取消选中）。 */
-  gripSelected: '已选中第 {p} 步：{label}，再点取消',
-} as const);
+  get gripSelected() { return m('base-render.components-drag-sort-attrs.c019', KEEP_PLACEHOLDERS); },
+};
 
 /** 文案段里占位符的值：字符串原样、数走十进制（渲染期与产出的 JS 用同一个口径）。 */
 export type DragSortTextValue = string | number;

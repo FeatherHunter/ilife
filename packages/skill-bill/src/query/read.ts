@@ -47,16 +47,54 @@ import { detailEnvelope, listEnvelope, queryListDoc } from './list.js';
 import { queryDetailDoc } from './detail.js';
 import { MULTI_COND } from './declaration.js';
 import type { QueryCategoryRow, QueryDetailData, QueryListData, QueryTableRow } from './list.js';
+import { resolve, listJoin, currentRenderLanguage } from 'base-entries';
+import { SKILL_BILL_CATALOG, m } from '../entries/index.js';
+import type { SkillBillMessageId } from '../entries/index.js';
 
 /** 本次数据来源（复制日志第 3 段）：库文件名逐字取本包常量，共用件不取本包文件名。 */
-const SOURCE_QUERY = DB_FILENAME + '（查询结果：只读，不改库）';
+function sourceQuery(): string {
+  return m('skill-bill.query-read.c052', { p0: DB_FILENAME });
+}
 
-/** 来源脚注上屏的那句人话来源（与 `SOURCE_QUERY` 分住两个常量）：复制日志给机器看、可带库文件名；
+/** 来源脚注上屏的那句人话来源（与 `sourceQuery()` 分住两处）：复制日志给机器看、可带库文件名；
  *  上屏的不许带库文件名与脚本路径（`688-融合基准.md` §四 裁定 1；老页脚恒印 `scripts/record_bill.py` 是反面）。 */
-const SOURCE_TEXT_QUERY = '记账库（只读）';
+function sourceTextQuery(): string {
+  return m('skill-bill.query-read.c053');
+}
 
 /** 没有时间窗的查法（条件查、查最近）在来源脚注起止位写的那两个字——留空会读成缺值。 */
-const NO_WINDOW = '不限';
+function noWindow(): string {
+  return m('skill-bill.query-read.c054');
+}
+
+/** 输入词（命令关键字与用户数据判据，ADR-0004 不译）：判据一律取词条表 **zh 列**的值——
+ *  界面语言变了判据不变。与显示位分住两处：同一句话在判据位住 `input` 段，在显示位住 `cNNN`。 */
+function inputWord(id: SkillBillMessageId): string {
+  return resolve(SKILL_BILL_CATALOG, 'zh', id);
+}
+
+/** 判据读的输入词表（槽位取值／分类前缀／标签母词／状态哨兵）：全部取 zh 列，不随界面语言变。 */
+const INPUT_WORD = {
+  sortTimeDesc: inputWord('skill-bill.query-read.input.sort-time-desc'),
+  sortTimeAsc: inputWord('skill-bill.query-read.input.sort-time-asc'),
+  sortAmountDesc: inputWord('skill-bill.query-read.input.sort-amount-desc'),
+  sortAmountAsc: inputWord('skill-bill.query-read.input.sort-amount-asc'),
+  weekThis: inputWord('skill-bill.query-read.input.week-this'),
+  weekLast: inputWord('skill-bill.query-read.input.week-last'),
+  weekBeforeLast: inputWord('skill-bill.query-read.input.week-before-last'),
+  monthThis: inputWord('skill-bill.query-read.input.month-this'),
+  monthLast: inputWord('skill-bill.query-read.input.month-last'),
+  monthLastAlt: inputWord('skill-bill.query-read.input.month-last-alt'),
+  categoryDebt: inputWord('skill-bill.query-read.input.category-debt'),
+  categoryInstallment: inputWord('skill-bill.query-read.input.category-installment'),
+  tagOpen: inputWord('skill-bill.query-read.input.tag-open'),
+  tagPaid: inputWord('skill-bill.query-read.input.tag-paid'),
+  tagInstallment: inputWord('skill-bill.query-read.input.tag-installment'),
+  tagInstalling: inputWord('skill-bill.query-read.input.tag-installing'),
+  tagPendingReimburse: inputWord('skill-bill.query-read.input.tag-pending-reimburse'),
+  tagReimbursed: inputWord('skill-bill.query-read.input.tag-reimbursed'),
+  statusAll: inputWord('skill-bill.query-read.input.status-all'),
+} as const;
 
 /** 查分类的占比芯片（老页 `query_view.html:287` 的 `category_pct`）：该分类支出 ÷ 全库支出合计
  *  （查分类没有时间窗，「同期」＝全部时间）。**本域唯一一处页面侧第二次取数**，故单独成函数记账。 */
@@ -64,7 +102,7 @@ function shareChip(db: BillDb, records: readonly BillRow[]): string {
   const mine = calcKpi([...records]).expense;
   const all = calcKpi(fetchAll(db)).expense;
   const pct = all === 0 ? 0 : Math.round((mine / all) * 100);
-  return '占全部支出的 ' + String(pct) + '%';
+  return m('skill-bill.query-read.c001', { p0: String(String(pct)) });
 }
 
 /** 一条库行 → 表格行（值一律文本化；金额照库里的符号写两位小数：支出负数、收入正数）。 */
@@ -121,15 +159,15 @@ function listOut(input: {
       shape: 'list',
       wakeWord: input.wakeWord,
       window: input.window,
-      chips: ['共 ' + records.length + ' 笔', ...(input.extraChips ?? [])],
+      chips: [m('skill-bill.query-read.c002', { p0: String(records.length) }), ...(input.extraChips ?? [])],
       rows,
       kpi,
       categories,
       emptyText: input.emptyText,
       emptyHint: input.emptyHint,
       envelope: listEnvelope(input.key, data),
-      source: SOURCE_QUERY,
-      sourceText: SOURCE_TEXT_QUERY,
+      source: sourceQuery(),
+      sourceText: sourceTextQuery(),
       windowStart: input.windowStart,
       windowEnd: input.windowEnd,
       actionAt: actionStamp(),
@@ -152,21 +190,23 @@ const DAY_WAKE_YESTERDAY = projectWakeWord({ key: 'bill.record.today', preset: {
 /** today 分支的空态四句（**唯一判地**）+ 查某天自指已摘（说「换个日子再查一次」而不是「查某天」）。
  *  w02 查昨天 v2.1（`w02-查昨天-v2.1.html`：窗口 `date + ' 这一天'`／结论标准句／单类 100%，载荷键不动）。 */
 function todayEmpty(params: Record<string, unknown>): { readonly emptyText: string; readonly emptyHint: string } {
-  if (params.date === 'yesterday') return { emptyText: '昨天还没有记录', emptyHint: '要补昨天那笔就说「记支出」。' };
-  if (params.date !== undefined && params.date !== null && params.date !== '') return { emptyText: '这一天没有记录', emptyHint: '要记一笔就说「记支出」。换个日子再查一次。' };
-  return { emptyText: '今天还没有记录', emptyHint: '要记一笔就说「记支出」。' };
+  if (params.date === 'yesterday') return { emptyText: m('skill-bill.query-read.c003'), emptyHint: m('skill-bill.query-read.c004') };
+  if (params.date !== undefined && params.date !== null && params.date !== '') return { emptyText: m('skill-bill.query-read.c005'), emptyHint: m('skill-bill.query-read.c006') };
+  return { emptyText: m('skill-bill.query-read.c007'), emptyHint: m('skill-bill.query-read.c008') };
 }
 
 /** 查最近的排序档（与 `./declaration.js` 里 `sort` 的候选逐字同表）；空＝时间从近到远。
  *  金额档按**绝对值**排：支出在库里记负数，用户说的「金额大」是面额大，不该把大额支出排到大额收入后面。 */
-const RECENT_SORTS = ['时间从近到远', '时间从远到近', '金额从大到小', '金额从小到大'] as const;
+const RECENT_SORTS = [
+  INPUT_WORD.sortTimeDesc, INPUT_WORD.sortTimeAsc, INPUT_WORD.sortAmountDesc, INPUT_WORD.sortAmountAsc,
+] as const;
 type RecentSort = (typeof RECENT_SORTS)[number];
 
 function recentSortOf(raw: unknown): RecentSort {
   if (raw === undefined || raw === null || raw === '') return RECENT_SORTS[0];
   const v = typeof raw === 'string' ? raw.trim() : '';
   if (!(RECENT_SORTS as readonly string[]).includes(v)) {
-    throw new BillPolicyError('POLICY_BAD_INPUT', '排序只认：' + RECENT_SORTS.join('、') + '；收到 ' + String(raw));
+    throw new BillPolicyError('POLICY_BAD_INPUT', '排序只认：' + listJoin(currentRenderLanguage(), RECENT_SORTS) + '；收到 ' + String(raw));
   }
   return v as RecentSort;
 }
@@ -174,9 +214,9 @@ function recentSortOf(raw: unknown): RecentSort {
 function orderRecent(rows: readonly BillRow[], sort: RecentSort): BillRow[] {
   const timeDesc = (a: BillRow, b: BillRow): number => b.time.localeCompare(a.time) || b.id - a.id;
   const out = rows.slice();
-  if (sort === '时间从近到远') return out.sort(timeDesc);
-  if (sort === '时间从远到近') return out.sort((a, b) => a.time.localeCompare(b.time) || a.id - b.id);
-  if (sort === '金额从大到小') return out.sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount) || timeDesc(a, b));
+  if (sort === RECENT_SORTS[0]) return out.sort(timeDesc);
+  if (sort === RECENT_SORTS[1]) return out.sort((a, b) => a.time.localeCompare(b.time) || a.id - b.id);
+  if (sort === RECENT_SORTS[2]) return out.sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount) || timeDesc(a, b));
   return out.sort((a, b) => Math.abs(a.amount) - Math.abs(b.amount) || timeDesc(a, b));
 }
 
@@ -191,13 +231,13 @@ function daysBefore(anchor: string, days: number): string {
  *  `YYYY-Www`（ISO 周，周选择器写的就是这个形状）＝那一周的周一..周日。 */
 function weekWindowOf(raw: unknown, anchor: string): { readonly start: string; readonly end: string; readonly label: string } {
   const v = typeof raw === 'string' ? raw.trim() : '';
-  if (v === '' || v === '本周') return { ...weekWindowFrom(anchor), label: '本周' };
-  if (v === '上周') return { ...shiftWeek(anchor, -1), label: '上周' };
-  if (v === '上上周') return { ...shiftWeek(anchor, -2), label: '上上周' };
-  const m = /^(\d{4})-W(\d{2})$/.exec(v);
-  if (!m) throw new BillPolicyError('POLICY_BAD_TIME', '周只认 ISO 周（如 2026-W42）或 本周／上周／上上周：' + v);
-  const year = Number(m[1]);
-  const week = Number(m[2]);
+  if (v === '' || v === INPUT_WORD.weekThis) return { ...weekWindowFrom(anchor), label: m('skill-bill.query-read.c055') };
+  if (v === INPUT_WORD.weekLast) return { ...shiftWeek(anchor, -1), label: m('skill-bill.query-read.c009') };
+  if (v === INPUT_WORD.weekBeforeLast) return { ...shiftWeek(anchor, -2), label: m('skill-bill.query-read.c010') };
+  const weekMatch = /^(\d{4})-W(\d{2})$/.exec(v);
+  if (!weekMatch) throw new BillPolicyError('POLICY_BAD_TIME', '周只认 ISO 周（如 2026-W42）或 本周／上周／上上周：' + v);
+  const year = Number(weekMatch[1]);
+  const week = Number(weekMatch[2]);
   if (week < 1 || week > 53) throw new BillPolicyError('POLICY_BAD_TIME', 'ISO 周号须在 1~53：' + v);
   /* ISO 周 1 是含 1 月 4 日的那一周（周一为第一天）；不自己发明数法。 */
   const jan4 = Date.UTC(year, 0, 4);
@@ -207,8 +247,8 @@ function weekWindowOf(raw: unknown, anchor: string): { readonly start: string; r
   const end = new Date(mon + 6 * 86400000).toISOString().slice(0, 10);
   const cur = weekWindowFrom(anchor);
   /* 选到本周那一周：与「本周」同口径（周一..锚点，未来不计），免得窗口写到一个还没到的周日。 */
-  if (start === cur.start) return { ...cur, label: '本周' };
-  return { start, end, label: '这一周' };
+  if (start === cur.start) return { ...cur, label: m('skill-bill.query-read.c055') };
+  return { start, end, label: m('skill-bill.query-read.c011') };
 }
 
 /** 锚点所在周的周一往前退 `n` 周的整周（上周／上上周）。 */
@@ -222,20 +262,20 @@ function shiftWeek(anchor: string, n: number): { readonly start: string; readonl
  *  空／「本月」＝月初..锚点（未来不计，与改前同）；「上月」＝上个整月；`YYYY-MM`＝那个整月。 */
 function monthWindowOf(raw: unknown, anchor: string): { readonly start: string; readonly end: string; readonly label: string } {
   const v = typeof raw === 'string' ? raw.trim() : '';
-  if (v === '' || v === '本月') return { ...monthWindowFrom(anchor), label: '本月' };
-  if (v === '上月' || v === '上个月') {
+  if (v === '' || v === INPUT_WORD.monthThis) return { ...monthWindowFrom(anchor), label: m('skill-bill.query-read.c056') };
+  if (v === INPUT_WORD.monthLast || v === INPUT_WORD.monthLastAlt) {
     const y = Number(anchor.slice(0, 4));
-    const m = Number(anchor.slice(5, 7));
-    const pm = m === 1 ? 12 : m - 1;
-    const py = m === 1 ? y - 1 : y;
+    const monthNum = Number(anchor.slice(5, 7));
+    const pm = monthNum === 1 ? 12 : monthNum - 1;
+    const py = monthNum === 1 ? y - 1 : y;
     const { start, end } = monthRange(String(py) + '-' + String(pm).padStart(2, '0'));
-    return { start, end, label: '上月' };
+    return { start, end, label: m('skill-bill.query-read.c012') };
   }
   const key = normalizeMonth(v, 'month');
   /* 选到本月：与「本月」同口径（月初..锚点，未来不计）。 */
-  if (key === anchor.slice(0, 7)) return { ...monthWindowFrom(anchor), label: '本月' };
+  if (key === anchor.slice(0, 7)) return { ...monthWindowFrom(anchor), label: m('skill-bill.query-read.c056') };
   const { start, end } = monthRange(key);
-  return { start, end, label: '这个月' };
+  return { start, end, label: m('skill-bill.query-read.c013') };
 }
 
 /** `bill.record.today`：查今天／查昨天／查某天／查最近（`recent` ＋ `limit` 1~200）／查账单；当日无记录不是故障，照实出零行的页。 */
@@ -259,8 +299,14 @@ export function viewRecordToday(params: Record<string, unknown>, db: BillDb): Vi
       const anchor = new Date().toISOString().slice(0, 10);
       const from = daysBefore(anchor, days);
       records = orderRecent(all.filter((r) => r.time.slice(0, 10) >= from && r.time.slice(0, 10) <= anchor), sort);
-      head = String(days) + ' 天';
-      window = '最近 ' + head + '（' + from + ' ~ ' + anchor + (sort === '时间从近到远' ? '' : '；' + sort) + '）';
+      head = m('skill-bill.query-read.c014', { p0: String(String(days)) });
+      const sortSuffix = sort === RECENT_SORTS[0] ? '' : '；' + sort;
+      window = m('skill-bill.query-read.c015', {
+        p0: String(head),
+        p1: String(from),
+        p2: String(anchor),
+        p3: String(sortSuffix),
+      });
     } else {
       const limit = params.limit === undefined ? 10 : params.limit;
       if (!Number.isInteger(limit) || (limit as number) < 1 || (limit as number) > 200) {
@@ -269,8 +315,9 @@ export function viewRecordToday(params: Record<string, unknown>, db: BillDb): Vi
       /* 先取「最近 N 笔」（按时间倒序切窗），再按用户选的档排展示序：排序说的是这一页怎么摆，不是改取哪几笔。 */
       const newest = all.slice().sort((a, b) => b.time.localeCompare(a.time) || b.id - a.id).slice(0, limit as number);
       records = orderRecent(newest, sort);
-      head = String(limit) + ' 笔';
-      window = '最近 ' + head + '（' + (sort === '时间从近到远' ? '按时间倒序' : sort) + '）';
+      head = m('skill-bill.query-read.c016', { p0: String(String(limit)) });
+      const sortText = sort === RECENT_SORTS[0] ? m('skill-bill.query-read.c017') : sort;
+      window = m('skill-bill.query-read.c018', { p0: String(head), p1: String(sortText) });
     }
     if (records.length > 0) {
       return recentTicketOut({
@@ -281,8 +328,8 @@ export function viewRecordToday(params: Record<string, unknown>, db: BillDb): Vi
     return emptyTicketOut({
       key, params, wakeWord: todayWakeWord(params), window,
       date: 'recent',
-      emptyText: '库里还没有记录',
-      emptyHint: '要记一笔就说「记支出」。',
+      emptyText: m('skill-bill.query-read.c019'),
+      emptyHint: m('skill-bill.query-read.c020'),
     });
   }
   const date = params.date === 'yesterday' ? yesterdayStr() : resolveQueryDate(params);
@@ -294,15 +341,15 @@ export function viewRecordToday(params: Record<string, unknown>, db: BillDb): Vi
   if (records.length === 0) {
     const empty = todayEmpty(params);
     return emptyTicketOut({
-      key, params, wakeWord, window: date + ' 这一天', date,
+      key, params, wakeWord, window: m('skill-bill.query-read.c021', { p0: String(date) }), date,
       emptyText: empty.emptyText, emptyHint: empty.emptyHint,
     });
   }
   // w01 查今天 v2.1 票据纸（`w01-查今天-v2.1.html`）：唤醒词是查今天（有数）走本页票据。
   if (wakeWord === DAY_WAKE_TODAY) {
     const ticket = todayTicketOut({
-      key, params, wakeWord, window: date + ' 这一天', date, records,
-      emptyText: '今天还没有记录', emptyHint: '要记一笔就说「记支出」。',
+      key, params, wakeWord, window: m('skill-bill.query-read.c022', { p0: String(date) }), date, records,
+      emptyText: m('skill-bill.query-read.c023'), emptyHint: m('skill-bill.query-read.c024'),
     });
     if (ticket !== null) return ticket;
   }
@@ -310,7 +357,7 @@ export function viewRecordToday(params: Record<string, unknown>, db: BillDb): Vi
   // w02 查昨天 v2.1 票据纸（`w02-查昨天-v2.1.html`）：唤醒词是查昨天（有数）走本页票据。
   if (wakeWord === DAY_WAKE_YESTERDAY) {
     const ticket = yesterdayTicketOut({
-      key, params, wakeWord, window: date + ' 这一天', date, records,
+      key, params, wakeWord, window: m('skill-bill.query-read.c025', { p0: String(date) }), date, records,
       emptyText: empty.emptyText, emptyHint: empty.emptyHint,
     });
     if (ticket !== null) return ticket;
@@ -318,7 +365,7 @@ export function viewRecordToday(params: Record<string, unknown>, db: BillDb): Vi
   // w03 查某天 v2.1 票据纸（`w03-查某天-v2.1.html`）：唤醒词是查某天（有数）走本页票据。
   if (wakeWord === somedayWord) {
     const ticket = somedayTicketOut({
-      key, params, wakeWord, window: date + ' 这一天', date, records,
+      key, params, wakeWord, window: m('skill-bill.query-read.c026', { p0: String(date) }), date, records,
       emptyText: empty.emptyText, emptyHint: empty.emptyHint,
     });
     if (ticket !== null) return ticket;
@@ -369,21 +416,21 @@ function multiWindowOf(params: Record<string, unknown>): { readonly start: strin
   if (params.range === 'week' || params.range === 'month') {
     const anchor = rangeAnchor(params);
     const w = params.range === 'week' ? weekWindowFrom(anchor) : monthWindowFrom(anchor);
-    return { ...w, text: w.start + ' ~ ' + w.end + (params.range === 'week' ? '（本周）' : '（本月）'), timed: true };
+    return { ...w, text: w.start + ' ~ ' + w.end + (params.range === 'week' ? m('skill-bill.query-read.c027') : m('skill-bill.query-read.c028')), timed: true };
   }
   if (params.start !== undefined || params.end !== undefined) {
     const { start, end } = resolveRange(params);
     return { start, end, text: start + ' ~ ' + end, timed: true };
   }
-  return { start: '', end: '', text: '全部时间', timed: false };
+  return { start: '', end: '', text: m('skill-bill.query-read.c029'), timed: false };
 }
 
 /** 多条件页副题里的条件串（与单条件那几支的 `by + '＝' + value` 同字：`分类＝餐饮 · 账户＝招行`）。 */
 function conditionLineOf(input: { readonly category?: string; readonly account?: string; readonly ledger?: string }): string {
   const parts: string[] = [];
-  if (input.category !== undefined) parts.push('分类＝' + input.category);
-  if (input.account !== undefined) parts.push('账户＝' + input.account);
-  if (input.ledger !== undefined) parts.push('账本＝' + input.ledger);
+  if (input.category !== undefined) parts.push(m('skill-bill.query-read.c030', { p0: String(input.category) }));
+  if (input.account !== undefined) parts.push(m('skill-bill.query-read.c031', { p0: String(input.account) }));
+  if (input.ledger !== undefined) parts.push(m('skill-bill.query-read.c032', { p0: String(input.ledger) }));
   return parts.join(' · ');
 }
 
@@ -444,10 +491,10 @@ export function viewRecordRange(params: Record<string, unknown>, db: BillDb): Vi
   if (category !== undefined || account !== undefined || ledger !== undefined) {
     const records = fetchAll(db, cond);
     if (!records.length) throw new BillFetchError('BILL_EMPTY_RANGE', '条件无记录（缺失阻断，不返空统计）');
-    const by = category !== undefined ? '分类' : account !== undefined ? '账户' : '账本';
+    const by = category !== undefined ? m('skill-bill.query-read.c033') : account !== undefined ? m('skill-bill.query-read.c034') : m('skill-bill.query-read.c035');
     const value = String(category ?? account ?? ledger);
     const wakeWord = projectWakeWord({ key, preset: params });
-    const window = by + '＝' + value + '（全部时间）';
+    const window = m('skill-bill.query-read.c036', { p0: String(by), p1: String(value) });
     if (account !== undefined && category === undefined && ledger === undefined) {
       return accountTicketOut({ key, params, wakeWord, window, records, account }); // w10 查账户 v2.1 票据纸（原型 w10-查账户-v2.1.html：结论80%／占比80/10/7/3／载荷键不动）
     }
@@ -463,8 +510,8 @@ export function viewRecordRange(params: Record<string, unknown>, db: BillDb): Vi
       }
       const timed = fetchAll(db, { ...cond, fromTime: win.start + ' 00:00:00', toTime: win.end + ' 23:59:59' });
       if (!timed.length) throw new BillFetchError('BILL_EMPTY_RANGE', `区间无记录：${win.start}~${win.end}（缺失阻断，不返空统计）`);
-      const timeLabel = win.start === win.end ? win.start + ' 这一天' : win.start + ' ~ ' + win.end + (win.tag !== '' ? '，' + win.tag : '');
-      return ledgerTicketOut({ key, params, wakeWord: ledgerWord, window: '账本＝' + ledger + '（' + timeLabel + '）', records: timed, ledger }); // 1275 四段：周／月／年／区间（开始＝结束即某天）
+      const timeLabel = win.start === win.end ? m('skill-bill.query-read.c037', { p0: String(win.start) }) : win.start + ' ~ ' + win.end + (win.tag !== '' ? '，' + win.tag : '');
+      return ledgerTicketOut({ key, params, wakeWord: ledgerWord, window: m('skill-bill.query-read.c038', { p0: String(ledger), p1: String(timeLabel) }), records: timed, ledger }); // 1275 四段：周／月／年／区间（开始＝结束即某天）
     }
     if (category !== undefined && account === undefined && ledger === undefined) {
       const mine = calcKpi([...records]).expense;
@@ -483,18 +530,18 @@ export function viewRecordRange(params: Record<string, unknown>, db: BillDb): Vi
 /** #414 · 查欠款行判（**唯一判地**）：借贷分类或带 `#未还` 精确，且未带 `#已还` 精确——收回／偿还后
  *  原记录分类仍是 `借贷/*`（换的只是 tag），不排除就把还清的也算成还欠着。 */
 function isDebtRow(r: BillRow): boolean {
-  return (r.category.startsWith('借贷/') || tagMatch(r.note, '未还')) && !tagMatch(r.note, '已还');
+  return (r.category.startsWith(INPUT_WORD.categoryDebt) || tagMatch(r.note, INPUT_WORD.tagOpen)) && !tagMatch(r.note, INPUT_WORD.tagPaid);
 }
 
 /** #414 · 查待报销行判（**唯一判地**）：带 `#待报销` 精确且未带 `#已报销` 精确（到账后消补）。 */
 function isReimburseRow(r: BillRow): boolean {
-  return tagMatch(r.note, '待报销') && !tagMatch(r.note, '已报销');
+  return tagMatch(r.note, INPUT_WORD.tagPendingReimburse) && !tagMatch(r.note, INPUT_WORD.tagReimbursed);
 }
 
 /** #414 · 查分期行判（**唯一判地**）：分期分类或带 `#分期`／`#分期中` 精确（写侧记分期不落 `#tag`，
  *  分类是主口径，两串并存）。 */
 function isInstallmentRow(r: BillRow): boolean {
-  return r.category.startsWith('分期/') || tagMatch(r.note, '分期') || tagMatch(r.note, '分期中');
+  return r.category.startsWith(INPUT_WORD.categoryInstallment) || tagMatch(r.note, INPUT_WORD.tagInstallment) || tagMatch(r.note, INPUT_WORD.tagInstalling);
 }
 
 /** `bill.record.search`：搜备注（`q` 必给）／查标签（`kind:"tag"` ＋ `tag` 必给，精确匹配）／
@@ -513,15 +560,15 @@ export function viewRecordSearch(params: Record<string, unknown>, db: BillDb): V
     const tag = rawTag.trim();
     records = listByTag(db, tag);
     label = 'tag:' + tag;
-    window = '标签 ' + tag + '（精确匹配）';
+    window = m('skill-bill.query-read.c042', { p0: String(tag) });
   } else if (kind === 'debt') {
     records = fetchAll(db).filter(isDebtRow);
     label = 'debt';
-    window = '还欠着的那些账';
+    window = m('skill-bill.query-read.c043');
   } else if (kind === 'reimburse') {
     records = fetchAll(db).filter(isReimburseRow);
     label = 'reimburse';
-    window = '等着报销的那些账';
+    window = m('skill-bill.query-read.c044');
   } else if (kind === 'installment') {
     const base = fetchAll(db).filter(isInstallmentRow);
     // 1276 条目 14：三个可选维度（名目／账户／状态）。全缺席＝原样返回（存量行为不动）；
@@ -536,10 +583,10 @@ export function viewRecordSearch(params: Record<string, unknown>, db: BillDb): V
     records = filtered;
     label = 'installment';
     const bits: string[] = [];
-    if (typeof rawItem === 'string' && rawItem.trim() !== '') bits.push('名目含「' + rawItem.trim() + '」');
-    if (typeof params.account === 'string' && (params.account as string).trim() !== '') bits.push('账户＝' + (params.account as string).trim());
-    if (typeof params.status === 'string' && (params.status as string).trim() !== '' && (params.status as string).trim() !== '全部') bits.push((params.status as string).trim());
-    window = bits.length === 0 ? '分期还款的那些账' : '分期还款的那些账（' + bits.join('、') + '）';
+    if (typeof rawItem === 'string' && rawItem.trim() !== '') bits.push(m('skill-bill.query-read.c045', { p0: String(rawItem.trim()) }));
+    if (typeof params.account === 'string' && (params.account as string).trim() !== '') bits.push(m('skill-bill.query-read.c046', { p0: String((params.account as string).trim()) }));
+    if (typeof params.status === 'string' && (params.status as string).trim() !== '' && (params.status as string).trim() !== INPUT_WORD.statusAll) bits.push((params.status as string).trim());
+    window = bits.length === 0 ? m('skill-bill.query-read.c047') : m('skill-bill.query-read.c048', { p0: String(listJoin(currentRenderLanguage(), bits)) });
   } else {
     const rawQ = params.q;
     if (typeof rawQ !== 'string' || !rawQ.trim()) {
@@ -548,7 +595,7 @@ export function viewRecordSearch(params: Record<string, unknown>, db: BillDb): V
     const q = rawQ.trim();
     records = searchKeyword(db, q);
     label = 'search:' + q;
-    window = '备注里有「' + q + '」的记录';
+    window = m('skill-bill.query-read.c049', { p0: String(q) });
   }
   // 这一页是哪条词（查标签／查欠款／查待报销／查分期／搜备注）由**域声明**按同一份入参算，本件不写第二处。
   const wakeWord = projectWakeWord({ key, preset: params });
@@ -563,10 +610,10 @@ export function viewRecordSearch(params: Record<string, unknown>, db: BillDb): V
   }
   return listOut({
     key, params, wakeWord, window, records, extra: { kind: label },
-    emptyText: '没有找到符合条件的记录',
-    emptyHint: '换个关键词试试，也可以看看「查最近」。',
-    windowStart: NO_WINDOW,
-    windowEnd: NO_WINDOW,
+    emptyText: m('skill-bill.query-read.c050'),
+    emptyHint: m('skill-bill.query-read.c051'),
+    windowStart: noWindow(),
+    windowEnd: noWindow(),
   });
 }
 
@@ -590,7 +637,7 @@ export function viewRecordDetail(params: Record<string, unknown>, db: BillDb): V
       wakeWord,
       row,
       envelope: detailEnvelope(key, data),
-      source: SOURCE_QUERY,
+      source: sourceQuery(),
       actionAt: actionStamp(),
     }),
   };

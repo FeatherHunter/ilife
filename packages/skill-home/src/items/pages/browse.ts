@@ -11,6 +11,7 @@
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { m } from '../../entries/index.js';
 
 export const FAMILY = 'browse' as const;
 
@@ -90,7 +91,7 @@ function cardsOf(env: Envelope): Card[] {
 }
 
 function groupOf(c: Card): string {
-  return String(c.category ?? '').trim() || '未分类';
+  return String(c.category ?? '').trim() || m('skill-home.items-pages-browse.c001');
 }
 
 /** 位置槽只放位置路径（#817 ⑥分隔符不懒政）：信封的 `location` 是复合串
@@ -120,35 +121,35 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const relOrder = [...groups.keys()];      // 信封返回序＝相关度序（「排序：相关」档位按它重排）
   const names = [...relOrder].sort();       // 默认按分组名排
   const switchButtons = names.map((g, i) => '<button class="op' + (i === 0 ? '' : ' alt') + '" data-t="'
-    + escapeHtml('请加载居家管家技能，帮我筛选浏览' + g + '分组') + '"'
-    + ' onclick="showGroup(' + i + ')">' + escapeHtml(g) + '（' + groups.get(g)?.length + '）</button>').join('');
+    + escapeHtml(m('skill-home.items-pages-browse.c002', { p0: String(g) })) + '"'
+    + ' onclick="showGroup(' + i + ')">' + escapeHtml(m('skill-home.items-pages-browse.c006', { p0: g, p1: String(groups.get(g)?.length ?? 0) })) + '</button>').join('');
   const tables = names.map((g, i) => '<div class="grp" data-k="' + escapeHtml(g) + '" data-rel="' + relOrder.indexOf(g) + '"><h3>' + escapeHtml(g) + '</h3>'
-    + '<div class="wrap-x"><table class="kv" data-g="' + i + '"><tr><th>名称</th><th>编号</th><th>位置</th><th>数量</th><th>状态</th></tr>'
+    + '<div class="wrap-x"><table class="kv" data-g="' + i + '"><tr><th>' + m('skill-home.items-pages-browse.c007') + '</th><th>' + m('skill-home.items-pages-browse.c008') + '</th><th>' + m('skill-home.items-pages-browse.c009') + '</th><th>' + m('skill-home.items-pages-browse.c010') + '</th><th>' + m('skill-home.items-pages-browse.c011') + '</th></tr>'
     + (groups.get(g) ?? []).map((c) => '<tr><td>' + escapeHtml(String(c.name ?? ''))
       + '</td><td>' + escapeHtml(String(c.id ?? ''))
       + '</td><td>' + escapeHtml(pathOf(String(c.location ?? ''), c.quantity, c.status))
       + '</td><td>' + escapeHtml(String(c.quantity ?? ''))
       + '</td><td>' + escapeHtml(String(c.status ?? '')) + '</td></tr>').join('')
     + '</table></div></div>').join('');
-  const allButton = '<button class="op" data-t="' + escapeHtml('请加载居家管家技能，帮我筛选浏览全部物品') + '" onclick="showGroup(-1)">全部</button>';
+  const allButton = '<button class="op" data-t="' + escapeHtml(m('skill-home.items-pages-browse.c003')) + '" onclick="showGroup(-1)">' + m('skill-home.items-pages-browse.c012') + '</button>';
   const body = cards.length
-    ? '<p>计数：共 ' + cards.length + ' 件，分 ' + names.length + ' 组。</p>'
+    ? '<p>' + m('skill-home.items-pages-browse.c013', { p0: String(cards.length), p1: String(names.length) }) + '</p>'
       + '<div>' + allButton + switchButtons + '</div>'
-      + '<div><button class="op alt" onclick="sortRel(this)">排序：名称</button><span class="note">按分组名重排</span></div>'
+      + '<div><button class="op alt" onclick="sortRel(this)">' + m('skill-home.items-pages-browse.c014') + '</button><span class="note">' + m('skill-home.items-pages-browse.c015') + '</span></div>'
       + '<div id="grps">' + tables + '</div>'
-    : '<div class="hm-empty">没有匹配的物品，换个条件再筛一次吧。</div>';
+    : '<div class="hm-empty">' + m('skill-home.items-pages-browse.c016') + '</div>';
   const content = PAGE_CSS
-    + '<script>function showGroup(i){var ts=document.querySelectorAll("table[data-g]");for(var k=0;k<ts.length;k++){var t=ts[k];var tb=t;while(tb&&tb.tagName!=="DIV"){tb=tb.parentNode;}var h=null;if(tb){h=tb.previousElementSibling;}var on=i<0||t.getAttribute("data-g")==String(i);t.style.display=on?"":"none";if(h&&h.tagName==="H3"){h.style.display=on?"":"none";}}}function sortRel(b){var box=document.getElementById("grps");if(!box)return;var rel=b.className.indexOf("alt")>=0;var ks=[].slice.call(box.children);ks.sort(function(x,y){if(rel){return Number(x.getAttribute("data-rel"))-Number(y.getAttribute("data-rel"));}var p=x.getAttribute("data-k"),q=y.getAttribute("data-k");return p<q?-1:p>q?1:0;});for(var i=0;i<ks.length;i++){box.appendChild(ks[i]);}b.className=rel?"op":"op alt";b.textContent=rel?"排序：相关":"排序：名称";var nt=b.nextElementSibling;if(nt&&nt.className==="note"){nt.textContent=rel?"按本次查询的相关度重排分组":"按分组名重排";}}</script>'
-    + '<p class="greet">筛选浏览按分类分组，点分组名就切换到那一组，点「全部」回到全部分组。</p>'
-    + '<section class="sec" data-block="fields" data-need="' + needs('fields') + '"><h2>分组浏览</h2>' + body + '</section>'
+    + '<script>var SL=' + JSON.stringify({ rel: m('skill-home.items-pages-browse.c017'), byName: m('skill-home.items-pages-browse.c014'), relNote: m('skill-home.items-pages-browse.c018'), nameNote: m('skill-home.items-pages-browse.c015') }) + ';function showGroup(i){var ts=document.querySelectorAll("table[data-g]");for(var k=0;k<ts.length;k++){var t=ts[k];var tb=t;while(tb&&tb.tagName!=="DIV"){tb=tb.parentNode;}var h=null;if(tb){h=tb.previousElementSibling;}var on=i<0||t.getAttribute("data-g")==String(i);t.style.display=on?"":"none";if(h&&h.tagName==="H3"){h.style.display=on?"":"none";}}}function sortRel(b){var box=document.getElementById("grps");if(!box)return;var rel=b.className.indexOf("alt")>=0;var ks=[].slice.call(box.children);ks.sort(function(x,y){if(rel){return Number(x.getAttribute("data-rel"))-Number(y.getAttribute("data-rel"));}var p=x.getAttribute("data-k"),q=y.getAttribute("data-k");return p<q?-1:p>q?1:0;});for(var i=0;i<ks.length;i++){box.appendChild(ks[i]);}b.className=rel?"op":"op alt";b.textContent=rel?SL.rel:SL.byName;var nt=b.nextElementSibling;if(nt&&nt.className==="note"){nt.textContent=rel?SL.relNote:SL.nameNote;}}</script>'
+    + '<p class="greet">' + m('skill-home.items-pages-browse.c019') + '</p>'
+    + '<section class="sec" data-block="fields" data-need="' + needs('fields') + '"><h2>' + m('skill-home.items-pages-browse.c020') + '</h2>' + body + '</section>'
     // #817（②层级清）：有结果时「没有匹配时」这一段不再与结果同屏（同页 `status` 段同款处置：
     // 标记与原文留在 HTML 里，靠 `hidden` 收声）。
     + '<section class="sec" data-block="empty" data-need="' + needs('empty') + '"'
-    + (cards.length ? ' hidden' : '') + '><h2>没有匹配时</h2><p>换个条件再筛一次。</p></section>'
+    + (cards.length ? ' hidden' : '') + '><h2>' + m('skill-home.items-pages-browse.c021') + '</h2><p>' + m('skill-home.items-pages-browse.c022') + '</p></section>'
     // 状态块：分组表里已经有「状态」列（真值随信封来），再渲染一遍就是复述，整块隐藏；标记与原文留住。
     + '<section class="sec" data-block="status" data-need="' + needs('status') + '" hidden></section>'
-    + '<section class="sec" data-block="operations" data-need="' + needs('operations') + '"><h2>下一步</h2><div>'
-    + op('分组切换', '请加载居家管家技能，帮我切换浏览分组', false)
+    + '<section class="sec" data-block="operations" data-need="' + needs('operations') + '"><h2>' + m('skill-home.items-pages-browse.c023') + '</h2><div>'
+    + op(m('skill-home.items-pages-browse.c004'), m('skill-home.items-pages-browse.c005'), false)
     + '</div>'
     + homeCopyArea({
         data: { envelope: env },

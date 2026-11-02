@@ -22,6 +22,7 @@ import { larkSetupOf, openGate } from './gate.js';
 import type { LarkSetupInfo } from '../sync/index.js';
 import { clearRemoteWishDue, completeRemoteWish, ensureRemoteWish, rescheduleRemoteWish, retitleRemoteWish } from './taskSync.js';
 import { deleteRemoteWish } from './taskRemove.js';
+import { m } from '../entries/index.js';
 
 const WISH_TOP = '心愿';
 
@@ -103,7 +104,7 @@ export function ensureWish(db: MemoDb, input: WishCreateInput): WishWriteResult 
       });
       return null;
     } catch (e) {
-      return '；提醒没设上（' + textOf(e) + '）';
+      return m('skill-memo-ilife.wish-ensure.c001', { p0: String(textOf(e)) });
     }
   };
   if (input.category !== WISH_TOP) {
@@ -115,8 +116,8 @@ export function ensureWish(db: MemoDb, input: WishCreateInput): WishWriteResult 
       due: null,
     });
     const err = placeReminder(n);
-    if (err) return { receipt: { ok: false, message: '已记一条：' + n.id + err, local: 'created', remote: 'not-applicable', remoteId: null }, exit: 4 };
-    return { receipt: { ok: true, message: '已记一条：' + n.id, local: 'created', remote: 'not-applicable', remoteId: null }, exit: 0 };
+    if (err) return { receipt: { ok: false, message: m('skill-memo-ilife.wish-ensure.c002', { p0: String(n.id), p1: String(err) }), local: 'created', remote: 'not-applicable', remoteId: null }, exit: 4 };
+    return { receipt: { ok: true, message: m('skill-memo-ilife.wish-ensure.c003', { p0: String(n.id) }), local: 'created', remote: 'not-applicable', remoteId: null }, exit: 0 };
   }
   const found = localWishRow(db, content, due);
   const note = found ?? addNote(db, {
@@ -127,11 +128,11 @@ export function ensureWish(db: MemoDb, input: WishCreateInput): WishWriteResult 
     due,
   });
   const local: WishReceipt['local'] = found ? 'existing' : 'created';
-  const named = (found ? '已存在这条心愿（未新建）：' : '已记一条：') + note.id;
+  const named = (found ? m('skill-memo-ilife.wish-ensure.c004') : m('skill-memo-ilife.wish-ensure.c005')) + note.id;
   const reminderErr = placeReminder(note);
   const gate = openGate();
   if (!gate.open) {
-    const message = named + (reminderErr ?? '') + '；远端没成（' + gate.why + '）';
+    const message = m('skill-memo-ilife.wish-ensure.c006', { p0: String(named + (reminderErr ?? '')), p1: String(gate.why) });
     if (reminderErr) return fail(message, local, note.feishu_task_guid ?? null, larkSetupOf(gate));
     return {
       receipt: { ok: false, message, local, remote: 'unavailable', remoteId: note.feishu_task_guid ?? null, larkSetup: larkSetupOf(gate) },
@@ -144,7 +145,10 @@ export function ensureWish(db: MemoDb, input: WishCreateInput): WishWriteResult 
     return { receipt: { ok: true, message: named, local, remote: r.remote, remoteId: r.remoteId }, exit: 0 };
   } catch (e) {
     return {
-      receipt: { ok: false, message: named + (reminderErr ?? '') + '；远端没成（' + textOf(e) + '）', local, remote: 'failed', remoteId: note.feishu_task_guid ?? null },
+      receipt: { ok: false, message: m('skill-memo-ilife.wish-ensure.c007', {
+        p0: String(named + (reminderErr ?? '')),
+        p1: String(textOf(e)),
+      }), local, remote: 'failed', remoteId: note.feishu_task_guid ?? null },
       exit: 4,
     };
   }
@@ -160,7 +164,7 @@ export interface WishUpdateInput {
  *  完成心愿不走这里（走 `completeWish` 的原子转换，老 `complete_wish`）。 */
 export function updateWish(db: MemoDb, input: WishUpdateInput): WishWriteResult {
   const note = updateNote(db, input.id, input.patch);
-  const done = '已更新：' + note.id;
+  const done = m('skill-memo-ilife.wish-ensure.c008', { p0: String(note.id) });
   const mirror = note.category === WISH_TOP
     && (input.patch.content !== undefined || Object.prototype.hasOwnProperty.call(input.patch, 'due'));
   if (!mirror) {
@@ -168,7 +172,7 @@ export function updateWish(db: MemoDb, input: WishUpdateInput): WishWriteResult 
   }
   const gate = openGate();
   if (!gate.open) {
-    return { receipt: { ok: false, message: done + '；远端没成（' + gate.why + '）', local: 'updated', remote: 'unavailable', remoteId: note.feishu_task_guid ?? null, larkSetup: larkSetupOf(gate) }, exit: 4 };
+    return { receipt: { ok: false, message: m('skill-memo-ilife.wish-ensure.c009', { p0: String(done), p1: String(gate.why) }), local: 'updated', remote: 'unavailable', remoteId: note.feishu_task_guid ?? null, larkSetup: larkSetupOf(gate) }, exit: 4 };
   }
   let guid = note.feishu_task_guid ?? null;
   try {
@@ -181,7 +185,7 @@ export function updateWish(db: MemoDb, input: WishUpdateInput): WishWriteResult 
     }
     return { receipt: { ok: true, message: done, local: 'updated', remote: 'synced', remoteId: guid }, exit: 0 };
   } catch (e) {
-    return { receipt: { ok: false, message: done + '；远端没成（' + textOf(e) + '）', local: 'updated', remote: 'failed', remoteId: guid }, exit: 4 };
+    return { receipt: { ok: false, message: m('skill-memo-ilife.wish-ensure.c010', { p0: String(done), p1: String(textOf(e)) }), local: 'updated', remote: 'failed', remoteId: guid }, exit: 4 };
   }
 }
 
@@ -196,24 +200,24 @@ export function removeWish(db: MemoDb, id: number, purge = false): WishWriteResu
   if (note.category !== WISH_TOP || !guid) {
     removeReminderRowsOfNote(db, id);
     removeNote(db, id, true);
-    return { receipt: { ok: true, message: '已删除：' + id, local: 'removed', remote: 'not-applicable', remoteId: guid }, exit: 0 };
+    return { receipt: { ok: true, message: m('skill-memo-ilife.wish-ensure.c011', { p0: String(id) }), local: 'removed', remote: 'not-applicable', remoteId: guid }, exit: 0 };
   }
   const gate = openGate();
   if (!gate.open) {
-    return { receipt: { ok: false, message: '本地未删（远端没成：' + gate.why + '）：' + id, local: 'unchanged', remote: 'unavailable', remoteId: guid, larkSetup: larkSetupOf(gate) }, exit: 4 };
+    return { receipt: { ok: false, message: m('skill-memo-ilife.wish-ensure.c012', { p0: String(gate.why), p1: String(id) }), local: 'unchanged', remote: 'unavailable', remoteId: guid, larkSetup: larkSetupOf(gate) }, exit: 4 };
   }
   try {
     if (purge) deleteRemoteWish(gate.cli, guid);
     else completeRemoteWish(gate.cli, guid);
   } catch (e) {
-    return { receipt: { ok: false, message: '本地未删（远端没成：' + textOf(e) + '）：' + id, local: 'unchanged', remote: 'failed', remoteId: guid }, exit: 4 };
+    return { receipt: { ok: false, message: m('skill-memo-ilife.wish-ensure.c013', { p0: String(textOf(e)), p1: String(id) }), local: 'unchanged', remote: 'failed', remoteId: guid }, exit: 4 };
   }
   removeReminderRowsOfNote(db, id);
   removeNote(db, id, true);
   return {
     receipt: {
       ok: true,
-      message: (purge ? '已删除（远端任务一并删除）：' : '已删除（远端任务标为完成）：') + id,
+      message: (purge ? m('skill-memo-ilife.wish-ensure.c014') : m('skill-memo-ilife.wish-ensure.c015')) + id,
       local: 'removed', remote: 'synced', remoteId: guid,
     },
     exit: 0,
@@ -238,18 +242,18 @@ export function setWishDue(db: MemoDb, input: WishSetDueInput): { receipt: WishB
     } catch {
       row = null;
     }
-    if (!row) { skipped += 1; errors.push('id=' + id + '：没有这条笔记'); continue; }
-    if (row.category !== WISH_TOP) { skipped += 1; errors.push('id=' + id + '：分类是 ' + row.category + '，不是心愿'); continue; }
+    if (!row) { skipped += 1; errors.push(m('skill-memo-ilife.wish-ensure.c016', { p0: String(id) })); continue; }
+    if (row.category !== WISH_TOP) { skipped += 1; errors.push(m('skill-memo-ilife.wish-ensure.c017', { p0: String(id), p1: String(row.category) })); continue; }
     const next = updateNote(db, id, { due });
     updated += 1;
-    if (!gate.open) { errors.push('id=' + id + '：本地排期已设，远端没成（' + gate.why + '）'); continue; }
+    if (!gate.open) { errors.push(m('skill-memo-ilife.wish-ensure.c018', { p0: String(id), p1: String(gate.why) })); continue; }
     try {
       const guid = next.feishu_task_guid ?? ensureRemoteWish(db, gate.cli, gate.openId, next).remoteId;
       if (due) rescheduleRemoteWish(gate.cli, guid, due);
       else clearRemoteWishDue(gate.cli, guid);
       feishuSynced += 1;
     } catch (e) {
-      errors.push('id=' + id + '：远端没成（' + textOf(e) + '）');
+      errors.push(m('skill-memo-ilife.wish-ensure.c019', { p0: String(id), p1: String(textOf(e)) }));
     }
   }
   const remote: WishReceipt['remote'] = !gate.open ? 'unavailable'
@@ -257,7 +261,11 @@ export function setWishDue(db: MemoDb, input: WishSetDueInput): { receipt: WishB
   return {
     receipt: {
       ok: errors.length === 0,
-      message: '排期完成：本地更新=' + updated + '，远端同步=' + feishuSynced + '，错误=' + errors.length,
+      message: m('skill-memo-ilife.wish-ensure.c020', {
+        p0: String(updated),
+        p1: String(feishuSynced),
+        p2: String(errors.length),
+      }),
       local: updated > 0 ? 'updated' : 'unchanged',
       remote,
       remoteId: null,

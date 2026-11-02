@@ -10,6 +10,7 @@
  *  **它是交互件**：动作走真运行时（`runtime.ts` 产出 JS 文本）——点一下翻译成一条冒泡事件，
  *  本件不自己决定动作语义。按钮标记与运行时只通过本文件的名字耦合。
  */
+import { m } from '../../entries/index.js';
 export const DUE_ROW_CLASS = 'ilife-block-due-row';
 
 /** 槽位闭集（数组里带注释 ⇒ 不会被当成"形态闭集"）。 */
@@ -81,7 +82,7 @@ export const DUE_BOUND_ATTR = 'data-ilife-due-bound';
 export const DUE_EVENT_ACTION = 'ilife:due-action';
 
 /** 动作进行中按钮上的字（原地换字；宽度由 `DUE_ROW_BUTTON_MIN_WIDTH_PX` 锁住）。 */
-export const DUE_LOADING_LABEL = '处理中…';
+export function DUE_LOADING_LABEL(): string { return m('base-render.components-due-row-attrs.c001'); }
 
 /** 缺值的写法：**缺值写成 `—`，不许写 0、不许留空**（全仓同一条地板）。 */
 export const DUE_ROW_MISSING = '—';

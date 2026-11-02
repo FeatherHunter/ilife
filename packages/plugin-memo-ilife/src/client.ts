@@ -25,10 +25,11 @@ import * as React from 'react';
 import { ConfigPanel, StatusBlock } from 'dsh-life-pack/config-panel';
 import { RPC_CHANNEL, RPC_ENDPOINT_READ, RPC_ENDPOINT_CONFIG_CHECK, DEFAULT_READ_KEY, VERSION_READ_KEY, VERSION_UNKNOWN, isRpcResult } from './contract.js';
 import type { InstalledVersions, LarkState } from './contract.js';
-import { SLOT_TITLE } from './slot.js';
+import { SLOT_TITLE, slotTitle } from './slot.js';
 import { SEAL_SEED, sealStates } from './seal-states.generated.js';
-import { CONFIG_ITEMS } from './settings.js';
+import { CONFIG_ITEMS, configItems } from './settings.js';
 import type { ClientCtx, RpcCallFace, RpcCallResult } from './dsh-ctx.js';
+import { m } from './entries/index.js';
 
 /** 版本读取键与 unknown 显示值住 port（`contract.ts`，browser 安全）：导出供单测复用。 */
 export { VERSION_READ_KEY, VERSION_UNKNOWN };
@@ -50,17 +51,17 @@ export type HealthOutcome =
 
 /** 读一次配置体检（只读；判据由技能侧出，本包只透传，不重写一个字）。 */
 export async function fetchHealthSurface(call: unknown): Promise<HealthOutcome> {
-  if (typeof call !== 'function') return { ok: false, message: '宿主连接缺席：connection.rpc.call 不可用' };
+  if (typeof call !== 'function') return { ok: false, message: m('plugin-memo-ilife.client.c001') };
   try {
     const raw: unknown = await (call as RpcCallFace)('/api', RPC_CHANNEL.slice(1), { method: RPC_ENDPOINT_CONFIG_CHECK, payload: {} }, AbortSignal.timeout(HEALTH_TIMEOUT_MS));
-    if (!isRpcResult(raw)) return { ok: false, message: '回执信封异常（非 ok 信封）' };
-    if (!raw.ok) return { ok: false, message: raw.error?.message ?? '体检回执被拒（宿主未给报文）' };
+    if (!isRpcResult(raw)) return { ok: false, message: m('plugin-memo-ilife.client.c002') };
+    if (!raw.ok) return { ok: false, message: raw.error?.message ?? m('plugin-memo-ilife.client.c003') };
     return { ok: true, report: raw.value };
   } catch (e) {
     if (e instanceof Error && (e.name === 'AbortError' || e.name === 'TimeoutError')) {
-      return { ok: false, message: `体检请求超时（${Math.round(HEALTH_TIMEOUT_MS / 1000)}s）：宿主未回，点重新检测` };
+      return { ok: false, message: m('plugin-memo-ilife.client.c004', { p0: String(Math.round(HEALTH_TIMEOUT_MS / 1000)) }) };
     }
-    return { ok: false, message: `体检失败：${e instanceof Error ? e.message : String(e)}` };
+    return { ok: false, message: m('plugin-memo-ilife.client.c005', { p0: String(e instanceof Error ? e.message : String(e)) }) };
   }
 }
 
@@ -135,7 +136,10 @@ export function normalizeVersion(v: unknown): string {
 
 /** 版本行文本（纯函数，供 VersionLine 与单测复用）。 */
 export function formatVersionLine(pluginVersion: unknown, skillVersion: unknown): string {
-  return `${normalizeVersion(pluginVersion)} · 技能 ${normalizeVersion(skillVersion)}`;
+  return m('plugin-memo-ilife.client.c006', {
+    p0: String(normalizeVersion(pluginVersion)),
+    p1: String(normalizeVersion(skillVersion)),
+  });
 }
 
 /** 版本行：纯渲染宿主给的两个号（读不到侧已归一成 unknown）。 */
@@ -215,7 +219,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   const limit = new Promise<never>((_, reject) => {
     timer = setTimeout(() => {
       timer = undefined;
-      const e = new Error(`取数超时（${Math.round(ms / 1000)}s）：宿主未回，先查宿主日志与 DB 环境`);
+      const e = new Error(m('plugin-memo-ilife.client.c038', { p0: String(Math.round(ms / 1000)) }));
       e.name = 'TimeoutError';
       reject(e);
     }, ms);
@@ -235,7 +239,7 @@ type ReadOutcome =
 /** 单次读数（纯异步函数，无 hook；挂载期调用一次，无轮询）。 */
 async function fetchRead(call: unknown, key: string, params: Record<string, unknown>): Promise<ReadOutcome> {
   // extractRpc 同式守卫：非函数即缺席态。
-  if (typeof call !== 'function') return { ok: false, absent: true, message: '宿主连接缺席：connection.rpc.call 不可用' };
+  if (typeof call !== 'function') return { ok: false, absent: true, message: m('plugin-memo-ilife.client.c007') };
   let result: RpcCallResult;
   try {
     // 防御纵深 + 自家超时双保险（AbortSignal 帮正规传输提前收工；race 保传输忽略 signal 时仍落字）。
@@ -244,20 +248,20 @@ async function fetchRead(call: unknown, key: string, params: Record<string, unkn
       call('/api', RPC_CHANNEL.slice(1), { method: RPC_ENDPOINT_READ, payload: { key, params } }, AbortSignal.timeout(READ_TIMEOUT_MS)),
       READ_TIMEOUT_MS,
     );
-    if (!isRpcResult(raw)) return { ok: false, absent: false, message: '回执信封异常（非 ok 信封）' };
+    if (!isRpcResult(raw)) return { ok: false, absent: false, message: m('plugin-memo-ilife.client.c008') };
     result = raw;
   } catch (e) {
-    if (e instanceof Error && e.name === 'AbortError') return { ok: false, absent: false, message: '取数超时（20s）：宿主未回，先查宿主日志与 DB 环境' };
-    return { ok: false, absent: false, message: `取数失败：${e instanceof Error ? e.message : String(e)}` };
+    if (e instanceof Error && e.name === 'AbortError') return { ok: false, absent: false, message: m('plugin-memo-ilife.client.c009') };
+    return { ok: false, absent: false, message: m('plugin-memo-ilife.client.c010', { p0: String(e instanceof Error ? e.message : String(e)) }) };
   }
   if (!result.ok) {
     const code = result.error?.code ?? 'unknown';
     const message = result.error?.message ?? '';
-    if (code === 'missing-cli') return { ok: false, absent: true, message: `技能出口缺席（missing-cli）：${message}` };
-    return { ok: false, absent: false, message: `取数失败（${code}）：${message}` };
+    if (code === 'missing-cli') return { ok: false, absent: true, message: m('plugin-memo-ilife.client.c011', { p0: String(message) }) };
+    return { ok: false, absent: false, message: m('plugin-memo-ilife.client.c012', { p0: String(code), p1: String(message) }) };
   }
   const text = extractTotal(result.value);
-  if (text === null) return { ok: false, absent: false, message: '取数为空（不冒充正常）' };
+  if (text === null) return { ok: false, absent: false, message: m('plugin-memo-ilife.client.c013') };
   return { ok: true, text };
 }
 
@@ -278,13 +282,13 @@ function MemoWork(props: { getCall: GetCall }): React.ReactElement {
     };
   }, [props.getCall]);
   if (state.kind === 'loading') {
-    return React.createElement('div', { style: W.card }, React.createElement('div', { style: W.muted }, '备忘录加载中'));
+    return React.createElement('div', { style: W.card }, React.createElement('div', { style: W.muted }, m('plugin-memo-ilife.client.c014')));
   }
   if (state.kind === 'data') {
     return React.createElement(
       'div',
       { style: W.card },
-      React.createElement('div', { style: W.title }, SLOT_TITLE),
+      React.createElement('div', { style: W.title }, slotTitle()),
       React.createElement('div', { style: W.total }, `total ${state.total}`),
       React.createElement(HostVersionLine, { getCall: props.getCall }),
     );
@@ -349,27 +353,27 @@ export function LarkStatus(props: {
   const lark = props.lark;
   if (lark === undefined) {
     return React.createElement(StatusBlock, {
-      name: '飞书 CLI',
+      name: m('plugin-memo-ilife.client.c015'),
       tone: 'pending',
-      text: '状态未知（技能回执无此格，请升级技能包）',
+      text: m('plugin-memo-ilife.client.c016'),
       path: '',
     });
   }
   return React.createElement(StatusBlock, {
-    name: '飞书 CLI',
+    name: m('plugin-memo-ilife.client.c017'),
     tone: lark.tier === 'full' ? 'ok' : lark.tier === 'partial' ? 'warn' : 'bad',
     text:
       lark.tier === 'full'
-        ? '已登录，task 域可写'
+        ? m('plugin-memo-ilife.client.c018')
         : lark.tier === 'partial'
-          ? '找到了，但还没登录或没拿到 task 域授权'
-          : '没找到飞书 CLI',
+          ? m('plugin-memo-ilife.client.c019')
+          : m('plugin-memo-ilife.client.c020'),
     // 路径从原先把状态写成一句长话里拆出来，单独一行（真源 `.ic-spath`）；找不到 CLI 时这一格留空。
     path: lark.cliPath ?? '',
     version: lark.version,
     actions: [
-      { text: '复制安装指引', onPress: () => props.onCopy(lark.prompt) },
-      ...(props.onCheck === undefined ? [] : [{ text: '重新检测', onPress: props.onCheck }]),
+      { text: m('plugin-memo-ilife.client.c021'), onPress: () => props.onCopy(lark.prompt) },
+      ...(props.onCheck === undefined ? [] : [{ text: m('plugin-memo-ilife.client.c022'), onPress: props.onCheck }]),
     ],
     link: { text: lark.websiteLine, href: lark.websiteUrl },
   });
@@ -418,20 +422,20 @@ function MemoExtras(props: {
       return;
     }
     const item = larkItemOf(r.report);
-    setHealth(item === null ? { kind: 'failed', message: '体检回执里没有飞书 CLI 那一项' } : { kind: 'ready', item, report: r.report });
+    setHealth(item === null ? { kind: 'failed', message: m('plugin-memo-ilife.client.c023') } : { kind: 'ready', item, report: r.report });
   }, [props.getCall]);
   const onCopy = (prompt: string): void => {
     void copyPrompt(prompt).then((ok) => setCopied(ok ? 'done' : 'failed'));
   };
   const copyNote = copied === 'done'
-    ? React.createElement('div', { style: props.styles.okText }, '已复制，去粘贴给 AI')
+    ? React.createElement('div', { style: props.styles.okText }, m('plugin-memo-ilife.client.c024'))
     : copied === 'failed'
-      ? React.createElement('div', { style: props.styles.error }, '复制失败，长按选择下方文本手动复制')
+      ? React.createElement('div', { style: props.styles.error }, m('plugin-memo-ilife.client.c025'))
       : null;
   if (!props.hasReply) return React.createElement('div', null, copyNote);
   const fallback = props.fallback;
   const copyAction = (prompt: string | undefined): Array<{ readonly text: string; readonly onPress: () => void }> =>
-    prompt === undefined || prompt === '' ? [] : [{ text: '复制安装指引', onPress: () => onCopy(prompt) }];
+    prompt === undefined || prompt === '' ? [] : [{ text: m('plugin-memo-ilife.client.c026'), onPress: () => onCopy(prompt) }];
   if (health.kind === 'idle') {
     // #1302：挂载不再自动打体检电话。旧技能回执带 `lark` 格 ⇒ 先照那格画（回执自带读数，不花额外电话），
     // 旁边多给一枚「重新检测」；新技能没有该格 ⇒ 一行「还没检测」等人点。
@@ -447,12 +451,12 @@ function MemoExtras(props: {
       'div',
       null,
       React.createElement(StatusBlock, {
-        name: '飞书 CLI',
+        name: m('plugin-memo-ilife.client.c027'),
         tone: 'pending',
-        text: '还没检测，点「重新检测」跑一次体检',
+        text: m('plugin-memo-ilife.client.c028'),
         path: '',
         version: null,
-        actions: [{ text: '重新检测', onPress: () => void loadHealth() }],
+        actions: [{ text: m('plugin-memo-ilife.client.c029'), onPress: () => void loadHealth() }],
       }),
       copyNote,
     );
@@ -465,12 +469,12 @@ function MemoExtras(props: {
       'div',
       null,
       React.createElement(StatusBlock, {
-        name: '飞书 CLI',
+        name: m('plugin-memo-ilife.client.c030'),
         tone: item.status === 'green' ? 'ok' : item.status === 'red' ? 'bad' : 'warn',
         text: item.message,
         path: fallback?.cliPath ?? '',
         version: fallback?.version ?? null,
-        actions: [...copyAction(prompt), { text: '重新检测', onPress: () => void loadHealth() }],
+        actions: [...copyAction(prompt), { text: m('plugin-memo-ilife.client.c031'), onPress: () => void loadHealth() }],
         link: site === undefined ? undefined : { text: site.line, href: site.url },
       }),
       copyNote,
@@ -489,12 +493,12 @@ function MemoExtras(props: {
       'div',
       null,
       React.createElement(StatusBlock, {
-        name: '飞书 CLI',
+        name: m('plugin-memo-ilife.client.c032'),
         tone: 'pending',
-        text: '检测中',
+        text: m('plugin-memo-ilife.client.c033'),
         path: null,
         version: null,
-        actions: [{ text: '重新检测', onPress: () => void loadHealth() }],
+        actions: [{ text: m('plugin-memo-ilife.client.c034'), onPress: () => void loadHealth() }],
       }),
       copyNote,
     );
@@ -511,11 +515,11 @@ function MemoExtras(props: {
     'div',
     null,
     React.createElement(StatusBlock, {
-      name: '飞书 CLI',
+      name: m('plugin-memo-ilife.client.c035'),
       tone: 'bad',
       text: health.message,
       path: '',
-      actions: [{ text: '重新检测', onPress: () => void loadHealth() }],
+      actions: [{ text: m('plugin-memo-ilife.client.c036'), onPress: () => void loadHealth() }],
     }),
     copyNote,
   );
@@ -545,15 +549,15 @@ export function apply(ctx: ClientCtx): void {
         name: 'ilife.config-tab',
         id: 'dsh-memo-ilife',
         order: 80,
-        label: () => SLOT_TITLE,
+        label: () => slotTitle(),
         // #706：本包自己那条 RPC 通道交给总管（各家都写这一格），总管据此调配置体检——
         // 它因此不必在源码里写死任何一家的通道名（零单品依赖照旧成立）。
         channel: RPC_CHANNEL,
       },
       () => React.createElement(ConfigPanel, {
         channel: RPC_CHANNEL,
-        items: CONFIG_ITEMS,
-        title: SLOT_TITLE,
+        items: configItems(),
+        title: slotTitle(),
         // 三枚签（1145）：HELP＋技能＋插件，各家只说自家档位与三段文案。
         seals: sealStates(SLOT_TITLE),
         sealSeed: SEAL_SEED,
@@ -578,7 +582,7 @@ export function apply(ctx: ClientCtx): void {
       if (!bs || typeof bs.registerTab !== 'function') return false;
       const dispose = bs.registerTab({
         id: 'ilife-memo-ilife:work',
-        title: '备忘录',
+        title: m('plugin-memo-ilife.client.c037'),
         order: 60,
         single: true,
         component: () => React.createElement(MemoWork, { getCall }),

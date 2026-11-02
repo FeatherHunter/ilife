@@ -27,30 +27,37 @@ import { chefSceneCss } from '../render/skin.js';
 import { viewPageCss } from './pageCss.js';
 import { paramBandOf, sectionOf } from './pageSection.js';
 import type { SecHead } from './pageSection.js';
+import { m } from '../entries/index.js';
 
 /** 换行（本件只在拼 `extraCss` 时用一次）。 */
 const LF = String.fromCharCode(10);
 /** 五字符归一（与区块层同源 `escapeHtml`，不自写第二份字符表）。 */
 const esc = escapeHtml;
 
-/** 8 卡清单（id／标题／唤醒词；出处见文件头注释，细节在 HELP 场景资产里）。 */
+/** 8 卡清单（id／标题／唤醒词；出处见文件头注释，细节在 HELP 场景资产里）。
+ *
+ *  **标题走取值器**：`m()` 只能在函数体内调用，故不做模块级常量；取值器体就是函数体，
+ *  访问时才按当前渲染语言解词条。`wake` 是唤醒词（数据，不译）。 */
 export const VIEW_CARDS: readonly { id: string; title: string; wake: string }[] = [
-  { id: 'view_full_recipe', title: '完整食谱', wake: '查看食谱' },
-  { id: 'view_for_beginner', title: '新手强调(关键成功点)', wake: '查看食谱' },
-  { id: 'view_recipe_with_substitution', title: '替换食材预览(临时假设)', wake: '查看食谱' },
-  { id: 'view_ingredients_only', title: '只看食材', wake: '查看食材' },
-  { id: 'view_ingredients_grouped', title: '食材分组(11 大类)', wake: '查看食材' },
-  { id: 'view_steps_only', title: '只看步骤', wake: '查看步骤' },
-  { id: 'view_nutrition_only', title: '只看营养', wake: '查看营养' },
-  { id: 'view_background_only', title: '只看背景文化', wake: '查看背景' },
+  { id: 'view_full_recipe', get title() { return m('skill-chef.view-page.c083'); }, wake: '查看食谱' },
+  { id: 'view_for_beginner', get title() { return m('skill-chef.view-page.c084'); }, wake: '查看食谱' },
+  { id: 'view_recipe_with_substitution', get title() { return m('skill-chef.view-page.c085'); }, wake: '查看食谱' },
+  { id: 'view_ingredients_only', get title() { return m('skill-chef.view-page.c086'); }, wake: '查看食材' },
+  { id: 'view_ingredients_grouped', get title() { return m('skill-chef.view-page.c087'); }, wake: '查看食材' },
+  { id: 'view_steps_only', get title() { return m('skill-chef.view-page.c088'); }, wake: '查看步骤' },
+  { id: 'view_nutrition_only', get title() { return m('skill-chef.view-page.c089'); }, wake: '查看营养' },
+  { id: 'view_background_only', get title() { return m('skill-chef.view-page.c090'); }, wake: '查看背景' },
 ];
 
-/** 徽章行的维度分组（键＝给人看的维度名，字段＝`badges` 里的那一张关联表）。 */
-const TAG_GROUPS: readonly { readonly key: string; readonly field: string }[] = [
-  { key: '菜系', field: 'cuisine' }, { key: '口味', field: 'flavors' },
-  { key: '季节', field: 'seasons' }, { key: '餐别', field: 'meal_types' },
-  { key: '营养', field: 'diet_tags' }, { key: '做法', field: 'cooking_methods' },
-];
+/** 徽章行的维度分组（键＝给人看的维度名，字段＝`badges` 里的那一张关联表）。
+ *  **按需构建**：`m()` 只能在函数体内调用，故不做模块级常量。 */
+function tagGroups(): readonly { readonly key: string; readonly field: string }[] {
+  return [
+    { key: m('skill-chef.view-page.c091'), field: 'cuisine' }, { key: m('skill-chef.view-page.c092'), field: 'flavors' },
+    { key: m('skill-chef.view-page.c093'), field: 'seasons' }, { key: m('skill-chef.view-page.c094'), field: 'meal_types' },
+    { key: m('skill-chef.view-page.c095'), field: 'diet_tags' }, { key: m('skill-chef.view-page.c096'), field: 'cooking_methods' },
+  ];
+}
 
 interface ViewItem extends Record<string, unknown> {
   name: string; difficulty: string; servings: number; total_time_minutes: number; status: string;
@@ -77,7 +84,10 @@ function chipRowOf(texts: readonly string[]): string {
 function catsOf(d: ViewItem): string {
   const cats = [...new Set(d.ingredients.map((g) => str(g.category)))].filter((c) => c !== '');
   if (cats.length < 2) return '';
-  return chipRowOf(cats.map((c) => c + ' ' + d.ingredients.filter((g) => str(g.category) === c).length + ' 味'));
+  return chipRowOf(cats.map((c) => m('skill-chef.view-page.c001', {
+    p0: String(c),
+    p1: String(d.ingredients.filter((g) => str(g.category) === c).length),
+  })));
 }
 
 /** 四枚分区的题头（页内导航与分区标题同源，不许两处各写一份）。 */
@@ -85,13 +95,13 @@ function secHeadsOf(d: ViewItem): Record<'ingredients' | 'steps' | 'nutrition' |
   const n = d.nutrition;
   return {
     // 食材那一位的读数不写「分 N 类」：分类由正文里那行「哪几类各几味」点名，两处同说一件事＝复读。
-    ingredients: { title: '食材（' + d.ingredients.length + ' 味）', note: '' },
+    ingredients: { title: m('skill-chef.view-page.c002', { p0: String(d.ingredients.length) }), note: '' },
     // 步骤那一位的读数不写「火候与时长」：正文每张卡里就是火候／时长／锅温三格，标题先报一遍＝复读。
-    steps: { title: '步骤（' + d.steps.length + ' 步）', note: '' },
+    steps: { title: m('skill-chef.view-page.c003', { p0: String(d.steps.length) }), note: '' },
     nutrition: n.estimated === true
-      ? { title: '营养成分', note: '每 ' + String(n.serving_size) + str(n.serving_unit) }
-      : { title: '营养成分', note: '' },
-    background: { title: '背景文化', note: '' },
+      ? { title: m('skill-chef.view-page.c004'), note: m('skill-chef.view-page.c005', { p0: String(String(n.serving_size)), p1: String(str(n.serving_unit)) }) }
+      : { title: m('skill-chef.view-page.c006'), note: '' },
+    background: { title: m('skill-chef.view-page.c007'), note: '' },
   };
 }
 
@@ -100,9 +110,9 @@ function factsOf(d: ViewItem): string {
   // 「'已做／做过 1 次' 文案仍可再精炼」）；撤掉那一格之后这一行在 390 档也不再把三枚标签挤到贴边
   // （判官原话「四枚水平并排出现明显挤压」）。状态本身没有丢：结论条的「做过 N 次／还没做过」就是它。
   const items: { label: string; value: string; tone?: 'ok' | 'warn' | 'danger' }[] = [
-    { label: '难度', value: d.difficulty || '未写' },
-    { label: '份量', value: d.servings + ' 人份' },
-    { label: '总时长', value: d.total_time_minutes + ' 分钟' },
+    { label: m('skill-chef.view-page.c008'), value: d.difficulty || m('skill-chef.view-page.c009') },
+    { label: m('skill-chef.view-page.c010'), value: m('skill-chef.view-page.c011', { p0: String(d.servings) }) },
+    { label: m('skill-chef.view-page.c012'), value: m('skill-chef.view-page.c013', { p0: String(d.total_time_minutes) }) },
   ];
   return renderFactStrip({ extraClass: 'chef-view-facts', items });
 }
@@ -112,13 +122,13 @@ function conclusionOf(d: ViewItem): string {
   // 结论条只说「做过几次 ＋ 最近一次几分」，**不再报平均分**——平均分是页尾读数卡那一位的活
   // （判官第三轮仍点「'平均 4 分' 句式略冗余」）。最近一次的分数取时间轴上最新的一条；没记过就退回平均分。
   const last = d.history_timeline[0];
-  const latest = last !== undefined && last.rating !== null ? '最近一次 ' + last.rating + ' 分' : '还没记过评分';
-  return renderConclusionBar(count === 0 ? '还没做过，暂无评分。' : '做过 ' + count + ' 次，' + latest + '。');
+  const latest = last !== undefined && last.rating !== null ? m('skill-chef.view-page.c014', { p0: String(last.rating) }) : m('skill-chef.view-page.c015');
+  return renderConclusionBar(count === 0 ? m('skill-chef.view-page.c016') : m('skill-chef.view-page.c017', { p0: String(count), p1: String(latest) }));
 }
 
 /** 分组标签块（#873 ②）：一枚维度一枚维度地排，不再是 13 枚无名色块挤成一片标签云。 */
 function tagsOf(d: ViewItem): string {
-  const rows = TAG_GROUPS.map((g) => {
+  const rows = tagGroups().map((g) => {
     const vals = d.badges[g.field] ?? [];
     if (vals.length === 0) return '';
     return '<div class="chef-view-tags-row">'
@@ -128,17 +138,17 @@ function tagsOf(d: ViewItem): string {
   }).join('');
   if (rows === '') return '';
   // 右端读数留空：标签块自己的六个维度名已经把「这一份怎么分类」说全，标题旁再补一句是复述。
-  return sectionOf('', 'tags', { title: '标签', note: '' },
+  return sectionOf('', 'tags', { title: m('skill-chef.view-page.c018'), note: '' },
     '<div class="chef-view-tags">' + rows + '</div>');
 }
 
 function ingredientsTableOf(d: ViewItem): string {
   return renderDataTable({
-    columns: [{ key: 'name', label: '食材' }, { key: 'qty', label: '用量', align: 'right' as const }, { key: 'note', label: '说明' }],
+    columns: [{ key: 'name', label: m('skill-chef.view-page.c019') }, { key: 'qty', label: m('skill-chef.view-page.c020'), align: 'right' as const }, { key: 'note', label: m('skill-chef.view-page.c021') }],
     rows: d.ingredients.map((g) => ({
       name: str(g.name),
-      qty: g.quantity === null || g.quantity === undefined || g.quantity === '' ? '适量' : String(g.quantity) + str(g.unit),
-      note: str(g.quantity_text) || '未写',
+      qty: g.quantity === null || g.quantity === undefined || g.quantity === '' ? m('skill-chef.view-page.c022') : String(g.quantity) + str(g.unit),
+      note: str(g.quantity_text) || m('skill-chef.view-page.c023'),
     })),
   });
 }
@@ -146,22 +156,25 @@ function ingredientsTableOf(d: ViewItem): string {
 function stepCardsOf(d: ViewItem, open: boolean): string {
   // #873 第二轮：火候／时长／锅温由「三格白瓦片」换成**带图标位的参数带**——每张步骤卡上因此
   // 有一处色彩锚点，判官点的「卡片纯白底、步骤色块薄」由这条销账。
-  return d.steps.map((s) => renderDisclosure({
-    title: '第 ' + String(s.sequence) + ' 步', open,
-    contentHtml: renderProseBlock({ text: str(s.action) || '未写' }) + paramBandOf([
-      { tone: 'heat', label: '火候', value: str(s.heat_level) || '未写' },
-      { tone: 'clock', label: '时长', value: (s.duration_minutes ?? '—') + ' 分钟' },
-      { tone: 'temp', label: '锅温', value: str(s.temperature) || '未写' },
-    ]) + renderCaliberLine('这一步做成：' + (str(s.expected_result) || '未写')),
-  })).join('');
+  return d.steps.map((s) => {
+    const expected = str(s.expected_result) || m('skill-chef.view-page.c024');
+    return renderDisclosure({
+      title: m('skill-chef.view-page.c025', { p0: String(String(s.sequence)) }), open,
+      contentHtml: renderProseBlock({ text: str(s.action) || m('skill-chef.view-page.c026') }) + paramBandOf([
+        { tone: 'heat', label: m('skill-chef.view-page.c027'), value: str(s.heat_level) || m('skill-chef.view-page.c028') },
+        { tone: 'clock', label: m('skill-chef.view-page.c029'), value: m('skill-chef.view-page.c030', { p0: String(s.duration_minutes ?? '—') }) },
+        { tone: 'temp', label: m('skill-chef.view-page.c031'), value: str(s.temperature) || m('skill-chef.view-page.c032') },
+      ]) + renderCaliberLine(m('skill-chef.view-page.c033', { p0: String(expected) })),
+    });
+  }).join('');
 }
 
 /** 新手要点（#873 ⑥）：一条一枚序号牌——「第几步」由形状承担，不再是一行行等重的字。 */
 function keysOf(d: ViewItem): string {
   const rows = d.steps.map((s) => '<li class="chef-view-key">'
-    + '<span class="chef-view-key-no">第 ' + esc(String(s.sequence)) + ' 步</span>'
-    + '<span class="chef-view-key-text">' + esc(str(s.expected_result) || '按动作做') + '</span></li>').join('');
-  return sectionOf('', 'keys', { title: '新手关键成功点', note: String(d.steps.length) + ' 条' },
+    + '<span class="chef-view-key-no">' + m('skill-chef.view-page.c025', { p0: String(s.sequence) }) + '</span>'
+    + '<span class="chef-view-key-text">' + esc(str(s.expected_result) || m('skill-chef.view-page.c034')) + '</span></li>').join('');
+  return sectionOf('', 'keys', { title: m('skill-chef.view-page.c035'), note: m('skill-chef.view-page.c036', { p0: String(String(d.steps.length)) }) },
     '<ol class="chef-view-keys">' + rows + '</ol>');
 }
 
@@ -169,15 +182,15 @@ function nutritionOf(d: ViewItem, head: SecHead): string {
   const n = d.nutrition;
   const anchor = 'section-nutrition';
   if (n.estimated !== true) {
-    return sectionOf(anchor, 'nutrition', head, renderCaliberLine('营养未估算：这个谱按实际称量走，页面不编数字。'));
+    return sectionOf(anchor, 'nutrition', head, renderCaliberLine(m('skill-chef.view-page.c037')));
   }
-  const cell = (v: unknown, unit: string): string => (v === null || v === undefined ? '未写' : String(v) + ' ' + unit);
+  const cell = (v: unknown, unit: string): string => (v === null || v === undefined ? m('skill-chef.view-page.c038') : String(v) + ' ' + unit);
   return sectionOf(anchor, 'nutrition', head, renderFactStrip({
     extraClass: 'chef-view-nutri',
     items: [
-      { label: '热量', value: cell(n.calories, '千卡') }, { label: '蛋白质', value: cell(n.protein, '克') },
-      { label: '脂肪', value: cell(n.fat, '克') }, { label: '碳水', value: cell(n.carbs, '克') },
-      { label: '纤维', value: cell(n.fiber, '克') }, { label: '钠', value: cell(n.sodium, '毫克') },
+      { label: m('skill-chef.view-page.c039'), value: cell(n.calories, m('skill-chef.view-page.c040')) }, { label: m('skill-chef.view-page.c041'), value: cell(n.protein, m('skill-chef.view-page.c042')) },
+      { label: m('skill-chef.view-page.c043'), value: cell(n.fat, m('skill-chef.view-page.c044')) }, { label: m('skill-chef.view-page.c045'), value: cell(n.carbs, m('skill-chef.view-page.c046')) },
+      { label: m('skill-chef.view-page.c047'), value: cell(n.fiber, m('skill-chef.view-page.c048')) }, { label: m('skill-chef.view-page.c049'), value: cell(n.sodium, m('skill-chef.view-page.c050')) },
     ],
   }));
 }
@@ -196,9 +209,9 @@ const cleanOf = (s: string): string => s.replace(MACHINE_ANNOTATION, '').trim();
 function backgroundOf(d: ViewItem, head: SecHead): string {
   if (!d.background) return '';
   const segs: readonly (readonly [string, string])[] = [
-    ['来历', cleanOf(str(d.background.origin_story))],
-    ['历史脉络', cleanOf(str(d.background.historical_background))],
-    ['文化意味', cleanOf(str(d.background.cultural_significance))],
+    [m('skill-chef.view-page.c051'), cleanOf(str(d.background.origin_story))],
+    [m('skill-chef.view-page.c052'), cleanOf(str(d.background.historical_background))],
+    [m('skill-chef.view-page.c053'), cleanOf(str(d.background.cultural_significance))],
   ];
   const body = segs.filter((seg) => seg[1] !== '').map((seg) =>
     '<div class="chef-view-prose-block">'
@@ -211,18 +224,18 @@ function historyOf(d: ViewItem): string {
   const avg = d.history.avgRating;
   // #873：结论条已说「做过 N 次」，读数卡的说明位不再把同一句复读一遍。
   const kpi = avg === null
-    ? renderKpiCard({ label: '做过', value: String(d.history.count), unit: '次', detail: '暂无评分' })
-    : renderKpiCard({ label: '平均评分', value: String(avg), unit: '分', detail: '满分 5 分', bar: { pct: (avg / 5) * 100 } });
+    ? renderKpiCard({ label: m('skill-chef.view-page.c054'), value: String(d.history.count), unit: m('skill-chef.view-page.c055'), detail: m('skill-chef.view-page.c056') })
+    : renderKpiCard({ label: m('skill-chef.view-page.c057'), value: String(avg), unit: m('skill-chef.view-page.c058'), detail: m('skill-chef.view-page.c059'), bar: { pct: (avg / 5) * 100 } });
   const body = d.history_timeline.length === 0 ? kpi : kpi + renderTimelineRows({ rows: d.history_timeline.map((r) => ({
-    time: r.cook_date, main: '第 ' + r.cook_sequence + ' 次做这道菜，评分 ' + r.rating + ' 分', note: r.feedback || '这次没写反馈',
+    time: r.cook_date, main: m('skill-chef.view-page.c060', { p0: String(r.cook_sequence), p1: String(r.rating) }), note: r.feedback || m('skill-chef.view-page.c061'),
   })) });
-  return sectionOf('', 'history', { title: '下厨记录', note: '按日期' }, body);
+  return sectionOf('', 'history', { title: m('skill-chef.view-page.c062'), note: m('skill-chef.view-page.c063') }, body);
 }
 
 /** 替换预览（#873 ⑦）：替代品全是同一句时不逐行重复（配方件第 12 格原话「全是同一句时不印」）。 */
 function swapOf(d: ViewItem): string {
   const rows = d.ingredients.map((g) => ({
-    label: str(g.name), before: str(g.name), after: str(g.substitute) || '未写',
+    label: str(g.name), before: str(g.name), after: str(g.substitute) || m('skill-chef.view-page.c064'),
   }));
   const first = rows[0];
   const uniform = first !== undefined && rows.every((r) => r.after === first.after) ? first.after : null;
@@ -230,17 +243,20 @@ function swapOf(d: ViewItem): string {
   // 这一份的实物名（11 行同义行换成一行点名，读者仍看得到论的是哪几味）。
   const body = uniform === null
     ? renderChangeRows({ rows })
-    : renderCaliberLine(rows.length + ' 味食材的替代品一致：' + uniform + '。')
+    : renderCaliberLine(m('skill-chef.view-page.c065', { p0: String(rows.length), p1: String(uniform) }))
       + chipRowOf(d.ingredients.map((g) => str(g.name)));
   // 判官点过「'临时预览' 仍可再精炼」：标题已说「替换食材预览」、下面那句已说「只是临时假设」，
   // 右端读数不再复述第三遍 ⇒ 留空。
-  return sectionOf('section-substitution', 'swap', { title: '替换食材预览', note: '' },
-    body + renderCaliberLine('替换只是临时假设，不落库，真换走修改域。'));
+  return sectionOf('section-substitution', 'swap', { title: m('skill-chef.view-page.c066'), note: '' },
+    body + renderCaliberLine(m('skill-chef.view-page.c067')));
 }
 
 function footerOf(d: ViewItem): string {
-  return renderCaliberLine('出处：' + (d.source || '未写'))
-    + renderCaliberLine('建档 ' + (d.created_at || '未写') + '，最近更新 ' + (d.updated_at || '未写'));
+  const source = d.source || m('skill-chef.view-page.c068');
+  const created = d.created_at || m('skill-chef.view-page.c069');
+  const updated = d.updated_at || m('skill-chef.view-page.c070');
+  return renderCaliberLine(m('skill-chef.view-page.c071', { p0: String(source) }))
+    + renderCaliberLine(m('skill-chef.view-page.c072', { p0: String(created), p1: String(updated) }));
 }
 
 function copyOf(d: ViewItem): string {
@@ -255,8 +271,8 @@ function copyOf(d: ViewItem): string {
 
 function actionsOf(): string {
   return renderActionBar({ buttons: [
-    { label: '开始做菜', kind: 'primary', actionId: 't770-cook' },
-    { label: '记一次', kind: 'ghost', actionId: 't770-record' },
+    { label: m('skill-chef.view-page.c073'), kind: 'primary', actionId: 't770-cook' },
+    { label: m('skill-chef.view-page.c074'), kind: 'ghost', actionId: 't770-record' },
   ] });
 }
 
@@ -270,13 +286,13 @@ function sectionsOf(d: ViewItem): Record<string, string> {
   const grouped = [...new Set(d.ingredients.map((g) => str(g.category)))].map((c) => {
     const rows = d.ingredients.filter((g) => str(g.category) === c);
     return renderDisclosure({
-      title: c + '（' + rows.length + ' 味）', open: true,
+      title: m('skill-chef.view-page.c075', { p0: String(c), p1: String(rows.length) }), open: true,
       contentHtml: renderDataTable({
-        columns: [{ key: 'name', label: '食材' }, { key: 'qty', label: '用量', align: 'right' as const }, { key: 'note', label: '说明' }],
+        columns: [{ key: 'name', label: m('skill-chef.view-page.c076') }, { key: 'qty', label: m('skill-chef.view-page.c077'), align: 'right' as const }, { key: 'note', label: m('skill-chef.view-page.c078') }],
         rows: rows.map((g) => ({
           name: str(g.name),
-          qty: g.quantity === null || g.quantity === undefined || g.quantity === '' ? '适量' : String(g.quantity) + str(g.unit),
-          note: str(g.quantity_text) || '未写',
+          qty: g.quantity === null || g.quantity === undefined || g.quantity === '' ? m('skill-chef.view-page.c079') : String(g.quantity) + str(g.unit),
+          note: str(g.quantity_text) || m('skill-chef.view-page.c080'),
         })),
       }),
     });
@@ -297,8 +313,8 @@ function shellOf(title: string, content: string): string {
     family: 'result',
     // 文档标题与页标题错开一句（页标题只说这是什么页，文档标题带技能名），不互相复读。
     // 页面级样式＝公共层两配方 ＋ 私家大厨皮肤 ＋ 族级标准（单一入口 `renderSceneShell`）＋ 本域页内那一段。
-    docTitle: title + ' - 私家大厨', extraCss: viewPageCss(),
-    bodyHtml: renderPageShell({ eyebrow: '私家大厨 ｜ 查看', title, content }),
+    docTitle: m('skill-chef.view-page.c081', { p0: String(title) }), extraCss: viewPageCss(),
+    bodyHtml: renderPageShell({ eyebrow: m('skill-chef.view-page.c082'), title, content }),
   });
 }
 
@@ -318,8 +334,8 @@ export function buildViewHtml(cardId: string, item: Record<string, unknown>): st
     case 'view_full_recipe': {
       // 页内导航的标签取短名（390 档四枚胶囊要排得下，长名会被裁到右缘）；分区标题仍带读数。
       const toc = renderTocBlock({ items: [
-        { id: 'section-ingredients', text: '食材' }, { id: 'section-steps', text: '步骤' },
-        { id: 'section-nutrition', text: '营养' }, { id: 'section-background', text: '背景' },
+        { id: 'section-ingredients', text: m('skill-chef.view-page.c019') }, { id: 'section-steps', text: m('skill-chef.view-page.c097') },
+        { id: 'section-nutrition', text: m('skill-chef.view-page.c098') }, { id: 'section-background', text: m('skill-chef.view-page.c099') },
       ] });
       return shellOf(d.name, head + toc + sec.ingredients + sec.steps + sec.nutrition + sec.background + tail);
     }
@@ -328,16 +344,16 @@ export function buildViewHtml(cardId: string, item: Record<string, unknown>): st
     case 'view_recipe_with_substitution':
       return shellOf(d.name, head + sec.swap + sec.ingredients + tail);
     case 'view_ingredients_only':
-      return shellOf(d.name + '（只看食材）', head + sec.ingredients + tail);
+      return shellOf(d.name + m('skill-chef.view-page.c100'), head + sec.ingredients + tail);
     case 'view_ingredients_grouped':
-      return shellOf(d.name + '（食材分组）', head + sec.grouped + tail);
+      return shellOf(d.name + m('skill-chef.view-page.c101'), head + sec.grouped + tail);
     case 'view_steps_only':
-      return shellOf(d.name + '（只看步骤）', head + sec.steps + tail);
+      return shellOf(d.name + m('skill-chef.view-page.c102'), head + sec.steps + tail);
     case 'view_nutrition_only':
-      return shellOf(d.name + '（只看营养）', head + sec.nutrition + tail);
+      return shellOf(d.name + m('skill-chef.view-page.c103'), head + sec.nutrition + tail);
     case 'view_background_only':
       if (!d.background) throw new Error('无背景数据：' + d.name + '（' + cardId + '）');
-      return shellOf(d.name + '（只看背景）', head + sec.background + tail);
+      return shellOf(d.name + m('skill-chef.view-page.c104'), head + sec.background + tail);
     default:
       throw new Error('未知查看卡：' + cardId);
   }

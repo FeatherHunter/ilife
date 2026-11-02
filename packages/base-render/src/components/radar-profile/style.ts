@@ -31,6 +31,7 @@ import {
 } from './attrs.js';
 import { radarProfileFormsCss } from './style-forms.js';
 import { radarProfileReadoutsCss } from './style-readouts.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -65,9 +66,9 @@ export function radarProfileCss(input?: { readonly prefix?: string }): string {
   const c = (slot: RadarProfileSlot): string => '.' + radarProfileSlot(slot, p);
 
   return [
-    '/* radar-profile（多维画像雷达 · 三个形态：多边形雷达／极区扇图／展平成轴表）：',
-    '   一个对象在几根互不同单位的轴上的形状。色一律从皮肤 token 出：网格是墨色淡洗、',
-    '   本期轮廓走强调色实线、上期走副文字色虚线、达标档走 ok／未达标走 warn。 */',
+    m('base-render.components-radar-profile-style.c001'),
+    m('base-render.components-radar-profile-style.c002'),
+    m('base-render.components-radar-profile-style.c003'),
     box + ' {',
     /* 宽度判据的落点：本件是**自己的容器**——嵌进侧栏／面板／卡片时照样按自己的宽度排。 */
     '  container-type: inline-size;',
@@ -124,7 +125,7 @@ export function radarProfileCss(input?: { readonly prefix?: string }): string {
     '  font-variant-numeric: tabular-nums;',
     '  overflow-wrap: anywhere;',
     '}',
-    '/* 形态 `polygon` 那一层：窄档图与表上下排，宽档并排（图在左、表在右）。 */',
+    m('base-render.components-radar-profile-style.c004'),
     s('body') + ' {',
     '  display: grid;',
     '  gap: 14px;',
@@ -243,14 +244,14 @@ export function radarProfileCss(input?: { readonly prefix?: string }): string {
     '  outline: 2px solid ' + skinVar('accent') + ';',
     '  outline-offset: 2px;',
     '}',
-    '/* 图外面的读数件（刻度条／读数表／平均分／图例／未达标点名／脚注）在 `style-readouts.ts`：',
-    '   同一份纪律、同一个前缀，插在这里——顺序即层叠顺序（各段选择器互不相交）。 */',
+    m('base-render.components-radar-profile-style.c005'),
+    m('base-render.components-radar-profile-style.c006'),
     radarProfileReadoutsCss({ prefix: p }),
-    '/* 两形态自己的形状（扇区／外沿弧／达标环／轴表的行与轨道）在 `style-forms.ts`：',
-    '   同一份纪律、同一个前缀，插在这里——顺序即层叠顺序。 */',
+    m('base-render.components-radar-profile-style.c007'),
+    m('base-render.components-radar-profile-style.c008'),
     radarProfileFormsCss({ prefix: p }),
-    '/* 窄容器（<' + String(RADAR_PROFILE_NARROW_PX) + 'px，阈值住 `attrs.ts`，三份样式文件共用同一份）：',
-    '   读数表收一档、行内距收一档 —— **一列不减**；宽度靠 `minmax(0,1fr)`／`flex: 1 1 0` 自己变窄。 */',
+    m('base-render.components-radar-profile-style.c009', { p0: String(String(RADAR_PROFILE_NARROW_PX)) }),
+    m('base-render.components-radar-profile-style.c010'),
     '@container (max-width: ' + String(RADAR_PROFILE_NARROW_PX) + 'px) {',
     '  ' + s('trow') + ' {',
     '    gap: 3px 6px;',
@@ -260,8 +261,8 @@ export function radarProfileCss(input?: { readonly prefix?: string }): string {
     '    gap: 2px 8px;',
     '  }',
     '}',
-    '/* 宽容器（≥' + String(RADAR_PROFILE_WIDE_PX) + 'px）：形态 `polygon` 的图与读数表并排。',
-    '   图那一列按**自己的**宽度排（轴名内距在里面），表在右边自己收窄。 */',
+    m('base-render.components-radar-profile-style.c011', { p0: String(String(RADAR_PROFILE_WIDE_PX)) }),
+    m('base-render.components-radar-profile-style.c012'),
     '@container (min-width: ' + String(RADAR_PROFILE_WIDE_PX) + 'px) {',
     '  ' + box + '.is-polygon ' + c('body') + ' {',
     '    grid-template-columns: ' + WIDE_STAGE_COL + ' minmax(0, 1fr);',

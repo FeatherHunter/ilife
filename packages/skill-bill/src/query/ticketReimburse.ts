@@ -36,9 +36,12 @@ import { queryStyleTag } from './pageParts.js';
 import { assembleSheetPage, sheetHead, ticketActions, ticketRule, ticketSection, ticketSummary } from '../shared/docPage.js';
 import { commandLine, writeSection } from '../shared/writeParts.js';
 import { checkListHtml, checkRowsOf } from '../shared/checkLine.js';
+import { m } from '../entries/index.js';
 
 /** 本次数据来源（复制日志第 3 段，与 `./read.js` 的查询来源同字）。 */
-const SOURCE_QUERY = DB_FILENAME + '（查询结果：只读，不改库）';
+function sourceQuery(): string {
+  return DB_FILENAME + m('skill-bill.query-ticketReimburse.c022');
+}
 
 /** 分类聚合卡的类数上限（与 `./list.js` 的 `CATEGORY_LIMIT` 同数，老页 `slice(0,8)` 同）。 */
 const CATEGORY_LIMIT = 8;
@@ -74,19 +77,22 @@ function dominantOf(values: readonly string[]): string {
 /** 结论标准句（与 `./list.js` 的 `conclusionOf` 同字：有支出取首类，无支出说清只有收入）。 */
 function conclusionOf(categories: readonly QueryCategoryRow[]): string {
   const top = categories[0];
-  if (top === undefined) return '本页只有收入，没有支出。';
-  return '主要花在「' + top.label + '」，' + sumText(top.amount) + ' 元，占本页支出 '
-    + String(Math.round(top.pct)) + '%。';
+  if (top === undefined) return m('skill-bill.query-ticketReimburse.c001');
+  return m('skill-bill.query-ticketReimburse.c002', {
+    p0: String(top.label),
+    p1: String(sumText(top.amount)),
+    p2: String(String(Math.round(top.pct))),
+  });
 }
 
 /** 落点 LEDGER 四行（原型逐字：收入／净额／落点账本／币种；金额裸数不带单位）。 */
 function ledgerHtml(kpi: QueryKpi, records: readonly BillRow[]): string {
   return '<div class="ilife-block-ledger-rows is-ticket">' + renderLedgerRows({
     rows: [
-      { label: '收入', value: sumText(kpi.income) },
-      { label: '净额', value: sumText(kpi.net) },
-      { label: '落点账本', value: dominantOf(records.map((r) => r.ledger)) },
-      { label: '币种', value: dominantOf(records.map((r) => r.currency)) },
+      { label: m('skill-bill.query-ticketReimburse.c003'), value: sumText(kpi.income) },
+      { label: m('skill-bill.query-ticketReimburse.c004'), value: sumText(kpi.net) },
+      { label: m('skill-bill.query-ticketReimburse.c005'), value: dominantOf(records.map((r) => r.ledger)) },
+      { label: m('skill-bill.query-ticketReimburse.c006'), value: dominantOf(records.map((r) => r.currency)) },
     ],
     layout: 'ticket',
   }) + '</div>';
@@ -97,20 +103,23 @@ function scaleHtml(categories: readonly QueryCategoryRow[]): string {
   const shown = categories.slice(0, CATEGORY_LIMIT);
   const hidden = categories.length - shown.length;
   const rows = renderDistributionRows({
-    rows: shown.map((c) => ({ label: c.label, value: sumText(c.amount) + ' 元', pct: c.pct })),
+    rows: shown.map((c) => ({ label: c.label, value: m('skill-bill.query-ticketReimburse.c007', { p0: String(sumText(c.amount)) }), pct: c.pct })),
   });
   return rows + (hidden > 0
-    ? renderCaliberLine('这一页只列支出最多的前 ' + String(CATEGORY_LIMIT) + ' 类，还有 ' + String(hidden) + ' 类没列')
+    ? renderCaliberLine(m('skill-bill.query-ticketReimburse.c008', {
+      p0: String(String(CATEGORY_LIMIT)),
+      p1: String(String(hidden)),
+    }))
     : '');
 }
 
 /** 明细 DETAIL（展示序即入参序：序号由卡片计数器出，备注首行，次行分类·账户·时刻·#编号，金额右对齐）。 */
 function entriesHtml(records: readonly BillRow[]): string {
   return '<div class="ilife-ticket-card"><ol class="ilife-ticket-entries">' + records.map((r) => {
-    const note = escapeHtml(textOrDash(r.note));
+    const note = textOrDash(r.note);
     const sub = escapeHtml(textOrDash(r.category)) + ' · ' + escapeHtml(textOrDash(r.account)) + ' · '
       + '<span class="ilife-reimburse-mono">' + escapeHtml(r.time) + '</span> · #' + String(r.id);
-    return '<li><span class="ilife-ticket-entry-text">备注 · ' + note
+    return '<li><span class="ilife-ticket-entry-text">' + escapeHtml(m('skill-bill.query-ticketReimburse.c023', { p0: note }))
       + '<span class="ilife-reimburse-sub">' + sub + '</span></span>'
       + '<span class="ilife-reimburse-amt">' + escapeHtml(r.amount.toFixed(2)) + '</span></li>';
   }).join('') + '</ol></div>';
@@ -119,7 +128,7 @@ function entriesHtml(records: readonly BillRow[]): string {
 /** 对账 CHECK（两列三行：编号、笔数、异常；卡壳与状态点照本页原型）。 */
 function checkHtml(records: readonly BillRow[]): string {
   return '<div class="ilife-reimburse-check"><span class="ilife-reimburse-check-dot" aria-hidden="true"></span>'
-    + checkListHtml(checkRowsOf({ ids: records.map((r) => r.id), countText: String(records.length) + ' 笔' })) + '</div>';
+    + checkListHtml(checkRowsOf({ ids: records.map((r) => r.id), countText: m('skill-bill.query-ticketReimburse.c009', { p0: String(String(records.length)) }) })) + '</div>';
 }
 
 /** 查待报销票据纸的入参（调用方 `./read.js` 的 reimburse 分支已按待报销口径取好窗）。 */
@@ -155,31 +164,39 @@ export function queryReimburseTicketDoc(input: ReimburseTicketInput): string {
   const envelope = listEnvelope(input.key, data);
   const listCopy = ticketCopyOf(input.wakeWord, input.window, shownRows);
   const paper = queryStyleTag()
-    + sheetHead(DOC_TITLE + ' · ' + input.wakeWord, escapeHtml('等报销 ' + String(records.length) + ' 笔，' + sumText(kpi.expense) + ' 元'))
+    + sheetHead(DOC_TITLE + ' · ' + input.wakeWord, escapeHtml(m('skill-bill.query-ticketReimburse.c010', {
+      p0: String(String(records.length)),
+      p1: String(sumText(kpi.expense)),
+    })))
     + '<p class="ilife-reimburse-shop-sub">' + escapeHtml(input.window) + '</p>'
     + ticketRule()
     + ticketSummary(renderSummaryHead({
-      eyebrow: '待报销 · ' + String(records.length) + ' 笔',
+      eyebrow: m('skill-bill.query-ticketReimburse.c011', { p0: String(String(records.length)) }),
       value: sumText(kpi.expense),
-      unit: '元',
+      unit: m('skill-bill.query-ticketReimburse.c012'),
       layout: 'ticket',
     }), '<p class="ilife-ticket-summary-note">' + escapeHtml(conclusionOf(categories)) + '</p>')
     + ticketRule()
-    + ticketSection({ title: '落点', tag: 'LEDGER', content: ledgerHtml(kpi, records) })
+    + ticketSection({ title: m('skill-bill.query-ticketReimburse.c013'), tag: 'LEDGER', content: ledgerHtml(kpi, records) })
     + ticketRule()
-    + ticketSection({ title: '分类占比', tag: 'SCALE', content: scaleHtml(categories) })
+    + ticketSection({ title: m('skill-bill.query-ticketReimburse.c014'), tag: 'SCALE', content: scaleHtml(categories) })
     + ticketRule()
-    + ticketSection({ title: '明细', tag: 'DETAIL', content: entriesHtml(shownRows) })
+    + ticketSection({ title: m('skill-bill.query-ticketReimburse.c015'), tag: 'DETAIL', content: entriesHtml(shownRows) })
     + (hidden > 0
       ? ticketRule() + ticketSection({
-        title: '还有 ' + String(hidden) + ' 条没显示（这一页画了前 ' + String(shownRows.length) + ' 条）',
+        title: m('skill-bill.query-ticketReimburse.c016', {
+          p0: String(String(hidden)),
+          p1: String(String(shownRows.length)),
+        }),
         tag: 'MORE',
-        content: renderCaliberLine('结论、分类占比与落点都按本窗全部 ' + String(records.length) + ' 条算；'
-          + '本页的明细与复制区只带前面 ' + String(shownRows.length) + ' 条，要看其余的，把条件收窄一点再查一次'),
+        content: renderCaliberLine(m('skill-bill.query-ticketReimburse.c017', {
+          p0: String(String(records.length)),
+          p1: String(String(shownRows.length)),
+        })),
       })
       : '')
     + ticketRule()
-    + ticketSection({ title: '对账', tag: 'CHECK', content: checkHtml(records) })
+    + ticketSection({ title: m('skill-bill.query-ticketReimburse.c018'), tag: 'CHECK', content: checkHtml(records) })
     + ticketRule()
     + ticketActions(copyArea({
       data: { envelope, title: input.wakeWord },
@@ -190,8 +207,8 @@ export function queryReimburseTicketDoc(input: ReimburseTicketInput): string {
         envelope,
         copyLog: copyLog({
           command: commandLine(input.key, input.params),
-          source: SOURCE_QUERY,
-          detail: '查到 ' + String(records.length) + ' 笔',
+          source: sourceQuery(),
+          detail: m('skill-bill.query-ticketReimburse.c019', { p0: String(String(records.length)) }),
           actionAt: actionStamp(),
           version: DOC_VERSION,
         }),
@@ -199,11 +216,11 @@ export function queryReimburseTicketDoc(input: ReimburseTicketInput): string {
     }));
   const content = writeSection({
     slot: 'list', page: 'list', shape: 'list', key: input.key,
-    content: renderSheetFrame({ variant: 'ticket', cutLine: true, cutLineText: '✂ 裁切线', content: paper })
+    content: renderSheetFrame({ variant: 'ticket', cutLine: true, cutLineText: m('skill-bill.query-ticketReimburse.c020'), content: paper })
       + '<div class="ilife-reimburse-foot">' + escapeHtml(DOC_TITLE + ' · ' + input.wakeWord) + '</div>',
   });
   return assembleSheetPage({
-    docTitle: DOC_TITLE + '·查询',
+    docTitle: m('skill-bill.query-ticketReimburse.c021', { p0: String(DOC_TITLE) }),
     bodyHtml: content,
     paper: 'detail',
   });

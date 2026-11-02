@@ -11,6 +11,7 @@
  */
 import { skinVar } from '../skin/contract.js';
 import { SCATTER_FIT_NARROW_PX, scatterFitSlot, type ScatterFitSlot } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -37,7 +38,7 @@ export function scatterFitFormsCss(input?: { readonly prefix?: string }): string
   const c = (slot: ScatterFitSlot): string => '.' + scatterFitSlot(slot, p);
 
   return [
-    '/* 分箱区：每箱 `flex: 1 1 0`（纯 CSS 等分，箱数由标记给）⇒ 箱标签行同一份口径，永远对着它那一箱。 */',
+    m('base-render.components-scatter-fit-style-forms.c001'),
     s('bins') + ' {',
     '  grid-column: 2;',
     '  grid-row: 1;',
@@ -80,7 +81,7 @@ export function scatterFitFormsCss(input?: { readonly prefix?: string }): string
     '  text-align: center;',
     '  overflow-wrap: anywhere;',
     '}',
-    '/* 滞后表：三列（错开 ｜ 轨道 ｜ 系数）——列宽写在一处，表头与逐档行共用同一份。 */',
+    m('base-render.components-scatter-fit-style-forms.c002'),
     s('laghead') + ' {',
     '  display: grid;',
     '  grid-template-columns: ' + LAG_COLS + ';',

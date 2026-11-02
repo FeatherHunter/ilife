@@ -8,6 +8,35 @@
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { m } from '../../entries/index.js';
+
+/** 本页可见文案（渲染期取词：写成函数，模块加载时不取词）。 */
+function pageText() {
+  return {
+    k001: m('skill-home.express-pages-express.c001'),
+    k002: m('skill-home.express-pages-express.c002'),
+    k003: (p0: string) => m('skill-home.express-pages-express.c003', { p0: String(p0) }),
+    k004: (p0: string) => m('skill-home.express-pages-express.c004', { p0: String(p0) }),
+    k005: (p0: string) => m('skill-home.express-pages-express.c005', { p0: String(p0) }),
+    k006: (p0: string) => m('skill-home.express-pages-express.c006', { p0: String(p0) }),
+    k007: m('skill-home.express-pages-express.c007'),
+    k008: m('skill-home.express-pages-express.c008'),
+    k009: m('skill-home.express-pages-express.c009'),
+    k010: m('skill-home.express-pages-express.c010'),
+    k011: m('skill-home.express-pages-express.c011'),
+    k012: m('skill-home.express-pages-express.c012'),
+    k013: m('skill-home.express-pages-express.c013'),
+    k014: m('skill-home.express-pages-express.c014'),
+    k015: m('skill-home.express-pages-express.c015'),
+    k016: m('skill-home.express-pages-express.c016'),
+    k017: m('skill-home.express-pages-express.c017'),
+    k018: m('skill-home.express-pages-express.c018'),
+    k019: m('skill-home.express-pages-express.c019'),
+    k020: m('skill-home.express-pages-express.c020'),
+    k021: m('skill-home.express-pages-express.c021'),
+  };
+}
+
 
 export const FAMILY = 'express' as const;
 
@@ -57,7 +86,7 @@ function sectionOf(group: 'fields' | 'operations' | 'empty' | 'status', title: s
     // 注：fields:0 含单字母占位符，按判据例外以全角呈现给人看，
     // 原文仍藏在注释里供机审对账（见 renderFamilyPage 尾部，补票待契约改字）。
     const vis = b === '快递中物品（名称/已等N天/是否超时）'
-      ? '快递中物品（名称/已等Ｎ天/是否超时）'
+      ? m('skill-home.express-pages-express.c022')
       : b;
     return '<li data-need="' + escapeHtml(b) + '">' + escapeHtml(vis) + '</li>';
   }).join('');
@@ -98,9 +127,15 @@ function asExpress(env: Envelope): { items: ExpressItem[]; timeout: number } {
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
 // 复制区走共用件（卡路里同款三格式＋六段日志）；`ctx.command` 由交付链供给（含 params），直调缺省按本族主 key。
 export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
+  const SX = {
+    k001: m('skill-home.express-pages-express.c027'),
+    k002: "、",
+  
+  k003: m('skill-home.express-pages-express.c028'),
+  k004: m('skill-home.express-pages-express.c029'),};
+  const L = pageText();
   const template = readFileSync(new URL('../../../templates/express/express.html', import.meta.url), 'utf8');
-  const head = '<div class="fam-head"><span>快递购物</span>'
-    + '<span>快递跟踪</span></div>';
+  const head = '<div class="fam-head">' + '<span>' + L.k001 + '</span>' + '<span>' + L.k002 + '</span>' + '</div>';
   const { items, timeout } = asExpress(env);
   const overdue = items.filter((x) => x.overdue);
 
@@ -127,37 +162,25 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '@media(max-width:820px){.x-cards{grid-template-columns:1fr}.x-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.x-btn{width:100%}}'
     + '</style>';
 
-  const P_BACKUP = '请加载居家管家技能，帮我确认收货，收到的放备用';
-  const P_NEW = '请加载居家管家技能，帮我录入新到的物品';
+  const P_BACKUP = m('skill-home.express-pages-express.c023');
+  const P_NEW = m('skill-home.express-pages-express.c024');
   // #890：「我收到了」的初始载荷（点后由页内 `onclick` 按当刻勾选改写 `data-t`）。
-  const P_RECEIVE = '请加载居家管家技能，帮我确认收货';
+  const P_RECEIVE = m('skill-home.express-pages-express.c025');
 
   let body = style;
-  body += '<p class="x-lead">勾选收到的快递，点下方的按钮标记到家，超过 ' + timeout + ' 天会标红提醒</p>';
-  body += '<div class="x-metrics">'
-    + '<span class="x-pill">在途 ' + items.length + ' 件</span>'
-    + '<span class="x-pill">超时 ' + overdue.length + ' 件</span>'
-    + '<span class="x-pill">超时线 ' + timeout + ' 天</span>'
-    + '</div>';
+  body += '<p class="x-lead">' + L.k003(String(timeout)) + '</p>';
+  body += '<div class="x-metrics">' + '<span class="x-pill">' + L.k004(String(items.length)) + '</span>' + '<span class="x-pill">' + L.k005(String(overdue.length)) + '</span>' + '<span class="x-pill">' + L.k006(String(timeout)) + '</span>' + '</div>';
 
   if (items.length) {
-    body += '<section><h2>快递中</h2><div class="x-cards" id="x-list">'
-      + items.map((it) => '<div class="x-card"><input class="x-check" type="checkbox" data-id="' + it.id + '" data-name="' + escapeHtml(it.name) + '">'
+    body += '<section>' + '<h2>' + L.k007 + '</h2>' + '<div class="x-cards" id="x-list">' + items.map((it) => '<div class="x-card"><input class="x-check" type="checkbox" data-id="' + it.id + '" data-name="' + escapeHtml(it.name) + '">'
         + '<div class="x-body">'
         // 照片为空时不渲染占位块：灰底「无照片」零信息却占卡片最大面积（#817 seq 45 的 ⑤）。
         + (it.photo === '' ? '' : '<div class="x-photo">' + escapeHtml(it.photo) + '</div>')
         + '<div class="x-name">' + escapeHtml(it.name)
-        + '<span class="x-state ' + (it.overdue ? 'over' : 'days') + '">已等 ' + it.days + ' 天' + (it.overdue ? ' 超时' : '') + '</span></div>'
-        + '<div class="x-meta">' + escapeHtml(it.category_name) + ' ' + escapeHtml(it.location) + ' 数量 ' + it.quantity + '</div></div></div>').join('')
-      + '</div><div class="x-actions">'
-      + '<button class="x-btn" data-action-id="x-receive" data-t="' + escapeHtml(P_RECEIVE) + '" onclick="xReceive(this)">我收到了</button>'
-      + '<button class="x-btn ghost" data-action-id="x-backup" data-t="' + escapeHtml(P_BACKUP) + '">收到的放备用</button>'
-      + '<button class="x-btn ghost" data-action-id="x-new" data-t="' + escapeHtml(P_NEW) + '">新到物品去录入</button>'
-      + '</div></section>';
+        + '<span class="x-state ' + (it.overdue ? 'over' : 'days') + L.k011 + it.days + L.k010 + (it.overdue ? L.k009 : '') + '</span></div>'
+        + '<div class="x-meta">' + escapeHtml(it.category_name) + ' ' + escapeHtml(it.location) + L.k008 + it.quantity + '</div></div></div>').join('') + '</div>' + '<div class="x-actions">' + '<button class="x-btn" data-action-id="x-receive" data-t="' + escapeHtml(P_RECEIVE) + '" onclick="xReceive(this)">' + L.k012 + '</button>' + '<button class="x-btn ghost" data-action-id="x-backup" data-t="' + escapeHtml(P_BACKUP) + '">' + L.k013 + '</button>' + '<button class="x-btn ghost" data-action-id="x-new" data-t="' + escapeHtml(P_NEW) + '">' + L.k014 + '</button>' + '</div>' + '</section>';
   } else {
-    body += '<section><div class="x-empty">当前没有快递中<br>新到的物品可以先录入<div class="x-actions" style="justify-content:center">'
-      + '<button class="x-btn ghost" data-action-id="x-new" data-t="' + escapeHtml(P_NEW) + '">新到物品去录入</button>'
-      + '</div></div></section>';
+    body += '<section>' + '<div class="x-empty">' + L.k015 + '<br>' + L.k016 + '<div class="x-actions" style="justify-content:center">' + '<button class="x-btn ghost" data-action-id="x-new" data-t="' + escapeHtml(P_NEW) + '">' + L.k017 + '</button>' + '</div>' + '</div>' + '</section>';
   }
 
   // #890：复制路径交给公共层共享运行时（`<!--SHARED-HELPERS-->` 槽的 `buildSharedHelpersJs`），
@@ -165,9 +188,9 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   // ＋ `data-t` 即由 document 委派复制；按当刻勾选现算的那一颗，用元素级 `onclick` 先把载荷写回
   // 自己的 `data-t`（目标阶段先于 document 冒泡），没勾选时置空并保留拦截提示。
   body += '<script>'
-    + 'function xReceive(b){var s=[...document.querySelectorAll("#x-list input:checked")];if(!s.length){b.setAttribute("data-t","");alert("请先勾选收到的物品");return;}'
-    + 'var ids=s.map(function(c){return c.getAttribute("data-id");}).join(",");var names=s.map(function(c){return c.getAttribute("data-name");}).join("、");'
-    + 'b.setAttribute("data-t","请加载居家管家技能，帮我确认收货："+names+" 编号["+ids+"]");}'
+    + "function xReceive(b){var s=[...document.querySelectorAll(\"#x-list input:checked\")];if(!s.length){b.setAttribute(\"data-t\",\"\");alert(\"" + SX.k001 + "\");return;}"
+    + "var ids=s.map(function(c){return c.getAttribute(\"data-id\");}).join(\",\");var names=s.map(function(c){return c.getAttribute(\"data-name\");}).join(\"" + SX.k002 + "\");"
+    + "b.setAttribute(\"data-t\",\"" + SX.k003 + "\"+names+\" " + SX.k004 + "[\"+ids+\"]\");}"
     + '</script>';
 
   // 主 operations 唯一复制区（envelope 投影；上下两分支旧按钮已删，只留这一处）。
@@ -176,13 +199,8 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     log: { envelope: env, copyLog: homeCopyLog({ command: ctx?.command ?? 'home-cmd-read ' + PAGE_META.key, actionAt: ctx?.actionAt ?? homeNowStamp() }) },
   });
 
-  const content = head
-    + body
-    + sectionOf('fields', '字段')
-    + sectionOf('operations', '操作')
-    + sectionOf('empty', '空态与异常')
-    + sectionOf('status', '状态词')
-    // 机审对账用原文（注释内，不进可见文案，避免单字母占位符触发英文裸词）：
-    + '<!--REQUIRED:快递中物品（名称/已等N天/是否超时）-->';
+  const content = m('skill-home.express-pages-express.c026', {
+    p0: String(head + body + sectionOf('fields', L.k018) + sectionOf('operations', L.k019) + sectionOf('empty', L.k020) + sectionOf('status', L.k021)),
+  });
   return fillTemplate(template, content);
 }

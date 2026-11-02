@@ -18,6 +18,7 @@ import { WAKE_TABLE, routeWakeword } from '../triggers/wakeTable.js';
 import type { BillKey } from '../triggers/routeSpec.js';
 import { WAKE_ASSETS, WAKE_GROUPS } from '../triggers/wake-assets.js';
 import { buildHelpLookup } from '../help/lookup.js';
+import { m } from '../entries/index.js';
 
 /** 写入 16 词（派生：`WAKE_TABLE` 里两条写命令的短语，顺序照表序＝施工图序）。 */
 export const WRITE_WORDS: readonly string[] = WAKE_TABLE
@@ -52,19 +53,19 @@ function findWriteScene(phrase: string): { readonly id: string } | null {
 /** 示例可执行性（静态，不 spawn）：add 要 category＋amount，update 要 id。 */
 function executableReason(key: BillKey, cli: string): string {
   const at = cli.indexOf('--params ');
-  if (at < 0) return '示例缺 --params：' + cli;
+  if (at < 0) return m('skill-bill.write-writeWire.c001', { p0: String(cli) });
   let p: Record<string, unknown>;
   try {
     p = JSON.parse(cli.slice(at + '--params '.length).replace(/^'|'$/g, '')) as Record<string, unknown>;
   } catch {
-    return '示例 params 非 JSON：' + cli;
+    return m('skill-bill.write-writeWire.c002', { p0: String(cli) });
   }
   if (key === 'bill.record.add') {
-    if (typeof p.category !== 'string' || p.category.length === 0) return '示例缺 category：' + cli;
-    if (typeof p.amount !== 'number') return '示例缺 amount：' + cli;
+    if (typeof p.category !== 'string' || p.category.length === 0) return m('skill-bill.write-writeWire.c003', { p0: String(cli) });
+    if (typeof p.amount !== 'number') return m('skill-bill.write-writeWire.c004', { p0: String(cli) });
     return '';
   }
-  if (p.id === undefined || p.id === null || p.id === '') return '示例缺 id：' + cli;
+  if (p.id === undefined || p.id === null || p.id === '') return m('skill-bill.write-writeWire.c005', { p0: String(cli) });
   return '';
 }
 
@@ -74,7 +75,7 @@ export function buildWriteWire(): readonly WriteWireRow[] {
   return WRITE_WORDS.map((phrase) => {
     const entry = WAKE_TABLE.find((e) => e.phrase === phrase);
     if (entry === undefined) {
-      return { phrase, key: 'bill.record.add', params: {}, shape: '', cli: '', helpSceneId: '', reason: '口径层无此词：' + phrase };
+      return { phrase, key: 'bill.record.add', params: {}, shape: '', cli: '', helpSceneId: '', reason: m('skill-bill.write-writeWire.c006', { p0: String(phrase) }) };
     }
     let key: BillKey;
     let params: Record<string, unknown>;
@@ -83,29 +84,29 @@ export function buildWriteWire(): readonly WriteWireRow[] {
       key = r.key;
       params = r.params;
     } catch (e) {
-      return { phrase, key: entry.key, params: {}, shape: '', cli: '', helpSceneId: '', reason: '路由失败：' + (e as Error).message };
+      return { phrase, key: entry.key, params: {}, shape: '', cli: '', helpSceneId: '', reason: m('skill-bill.write-writeWire.c007', { p0: String((e as Error).message) }) };
     }
     if (key !== entry.key) {
-      return { phrase, key, params, shape: '', cli: '', helpSceneId: '', reason: '路由 key 与口径层不一致：' + key + '≠' + entry.key };
+      return { phrase, key, params, shape: '', cli: '', helpSceneId: '', reason: m('skill-bill.write-writeWire.c008', { p0: String(key), p1: String(entry.key) }) };
     }
     const hit = hits.find((h) => h.phrase === phrase);
     if (hit === undefined) {
-      return { phrase, key, params, shape: '', cli: '', helpSceneId: '', reason: 'SKILL 速查缺行：' + phrase };
+      return { phrase, key, params, shape: '', cli: '', helpSceneId: '', reason: m('skill-bill.write-writeWire.c009', { p0: String(phrase) }) };
     }
     if (hit.key !== key) {
-      return { phrase, key, params, shape: hit.shape, cli: hit.cli, helpSceneId: '', reason: 'SKILL 行 key 与路由不一致：' + hit.key + '≠' + key };
+      return { phrase, key, params, shape: hit.shape, cli: hit.cli, helpSceneId: '', reason: m('skill-bill.write-writeWire.c010', { p0: String(hit.key), p1: String(key) }) };
     }
     const shapeOf = (BILL_KEY_SHAPES as Record<string, string | undefined>)[key];
     if (shapeOf === undefined || shapeOf.length === 0 || shapeOf === '??' || shapeOf !== hit.shape) {
-      return { phrase, key, params, shape: hit.shape, cli: hit.cli, helpSceneId: '', reason: '形状对不上：' + String(shapeOf) + '≠' + hit.shape };
+      return { phrase, key, params, shape: hit.shape, cli: hit.cli, helpSceneId: '', reason: m('skill-bill.write-writeWire.c011', { p0: String(String(shapeOf)), p1: String(hit.shape) }) };
     }
     if (!hit.cli.startsWith('bill-cmd-read ' + key)) {
-      return { phrase, key, params, shape: shapeOf, cli: hit.cli, helpSceneId: '', reason: 'CLI 不含命令名：' + hit.cli };
+      return { phrase, key, params, shape: shapeOf, cli: hit.cli, helpSceneId: '', reason: m('skill-bill.write-writeWire.c012', { p0: String(hit.cli) }) };
     }
     const scene = findWriteScene(phrase);
     if (scene === null) {
       const count = WAKE_ASSETS.filter((s) => s.wake_word === phrase).length;
-      return { phrase, key, params, shape: shapeOf, cli: hit.cli, helpSceneId: '', reason: 'HELP 写卡缺位或不唯一（全资产同词 ' + count + ' 张）：' + phrase };
+      return { phrase, key, params, shape: shapeOf, cli: hit.cli, helpSceneId: '', reason: m('skill-bill.write-writeWire.c013', { p0: String(count), p1: String(phrase) }) };
     }
     const exec = executableReason(key, hit.cli);
     if (exec !== '') {

@@ -19,13 +19,14 @@
  */
 import { lineOf } from './reportDocParts.js';
 import type { ReportPlate } from './reportPlate.js';
+import { m } from '../entries/index.js';
 
 export function scoreSeries(plate: ReportPlate): string {
   const scores = plate.scores;
   if (scores.length === 0) return '';
   return lineOf(
     scores.map((d) => ({ date: d.date, value: d.score as number | null })),
-    '评分序列（满分 100 分）',
+    m('skill-calorie.analysis-reportDocScoreSeries.c001'),
     { format: (v) => String(Math.round(v)) },
   );
 }

@@ -10,6 +10,7 @@
  * 校验口径沿 #850 落地的实现，两条不放宽：① `items[].status` 只认 `ok／warn／err`（写错即拦，
  * 不猜意图）；② 兼容「裸对象」与「`{data:{…}}`」两层、以及 JSON 字符串（老调用点两种都给过）。
  */
+import { m } from '../entries/index.js';
 export type InitCheckStatus = 'ok' | 'warn' | 'err';
 
 /** 一条环境检查项：名字、状态、当前情况说明、缺什么时怎么办（`action` 空串＝不用处理）。 */
@@ -68,9 +69,9 @@ function textOf(value: unknown): string {
 }
 
 function readItems(raw: unknown): InitCheckItem[] {
-  const list = asArray(raw, 'data.items 须为数组（检查清单）');
+  const list = asArray(raw, m('skill-memo-ilife.init-diagnosis.c001'));
   return list.map((entry) => {
-    const item = asObject(entry, 'data.items 须为对象数组（含 name／status／desc／action）');
+    const item = asObject(entry, m('skill-memo-ilife.init-diagnosis.c002'));
     if (!CHECK_STATUSES.includes(String(item.status))) {
       throw new InitInputError('items[].status 只认 ok／warn／err：' + String(item.status));
     }
@@ -84,16 +85,16 @@ function readItems(raw: unknown): InitCheckItem[] {
 }
 
 function readTodos(raw: unknown): InitTodo[] {
-  const list = asArray(raw, 'data.todos／data.verify 须为数组');
+  const list = asArray(raw, m('skill-memo-ilife.init-diagnosis.c003'));
   return list.map((entry) => {
-    const todo = asObject(entry, 'data.todos[] 须为对象（含 title／steps）');
-    const steps = todo.steps === undefined ? [] : asArray(todo.steps, 'data.todos[].steps 须为数组').map(textOf);
+    const todo = asObject(entry, m('skill-memo-ilife.init-diagnosis.c004'));
+    const steps = todo.steps === undefined ? [] : asArray(todo.steps, m('skill-memo-ilife.init-diagnosis.c005')).map(textOf);
     return { title: textOf(todo.title), steps };
   });
 }
 
 function readVerify(raw: unknown): InitVerifyEntry[] {
-  const list = asArray(raw, 'data.todos／data.verify 须为数组');
+  const list = asArray(raw, m('skill-memo-ilife.init-diagnosis.c006'));
   return list.map((entry) => {
     if (typeof entry === 'object' && entry !== null && !Array.isArray(entry)) {
       const obj = entry as Record<string, unknown>;
@@ -123,7 +124,7 @@ export function readInitDiagnosis(params: Record<string, unknown>): InitDiagnosi
       throw new InitInputError('data 不是合法 JSON');
     }
   }
-  const outer = asObject(raw, 'data 须为对象（含检查清单＋待办＋验证清单三段）');
+  const outer = asObject(raw, m('skill-memo-ilife.init-diagnosis.c007'));
   const inner = typeof outer.data === 'object' && outer.data !== null && !Array.isArray(outer.data)
     ? (outer.data as Record<string, unknown>)
     : outer;

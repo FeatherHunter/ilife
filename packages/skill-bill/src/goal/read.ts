@@ -17,6 +17,7 @@
  *   - `items` 是 `list` 形必填的那一格（老侧那两支的键名分别是 `budgets`／`savings`，形状换名不换物）；
  *   - `total` ＝ 这一页几条（老侧写 `count`，两个键在新侧都留着）。
  */
+import { currentRenderLanguage } from 'base-entries';
 import { loadGoals, resolveGoalsPath } from '../fetch/index.js';
 import type { BillDb } from '../fetch/index.js';
 import type { ViewOut } from '../shared/commandSpec.js';
@@ -26,10 +27,13 @@ import { projectWakeWord } from '../triggers/wakeTable.js';
 import { budgetExecution, savingProgress } from './goalData.js';
 import { localDay, localMonth, parseGoalReadOp, textOf } from './params.js';
 import { readSceneFor } from './scene.js';
+import { m } from '../entries/index.js';
 import type { GoalProgressData, GoalProgressInput } from './scene.js';
 
 /** 没有记录可算窗口时，来源脚注的起止位写这两个字（留空会读成缺值）。 */
-const NO_WINDOW = '不限';
+function noWindow(): string {
+  return m('skill-bill.goal-read.c001');
+}
 
 /** 这一页看的是哪个月（参数给的月份归一不了就按本月——与写命令那一支同一处口径）。 */
 function monthOf(params: Record<string, unknown>): string {
@@ -41,7 +45,7 @@ function monthOf(params: Record<string, unknown>): string {
 export function viewGoal(params: Record<string, unknown>, db: BillDb): ViewOut {
   const key = 'bill.goal.query';
   const op = parseGoalReadOp(params);
-  const scene = readSceneFor(op);
+  const scene = readSceneFor(op, currentRenderLanguage());
   const goals = loadGoals(resolveGoalsPath());
   const wakeWord = projectWakeWord({ key, op });
   const actionAt = actionStamp();
@@ -77,8 +81,8 @@ export function viewGoal(params: Record<string, unknown>, db: BillDb): ViewOut {
     page: { wakeWord, kind: 'single' },
     html: scene.view({
       key, params, wakeWord, budget: null, saving: progress, data,
-      windowStart: first === '' ? NO_WINDOW : monthRange(first).start,
-      windowEnd: progress.savings.length === 0 ? NO_WINDOW : localDay(),
+      windowStart: first === '' ? noWindow() : monthRange(first).start,
+      windowEnd: progress.savings.length === 0 ? noWindow() : localDay(),
       actionAt,
     } satisfies GoalProgressInput),
   };

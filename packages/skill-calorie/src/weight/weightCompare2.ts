@@ -3,6 +3,7 @@ import type { DatabaseSync } from 'node:sqlite';
 import { FetchError } from '../fetch/errors.js';
 import { shiftISODate, todayISO } from '../analysis/utils.js';
 import { ratePerDayText } from './weightCompare.js';
+import { m } from '../entries/index.js';
 
 const round1 = (n: number): number => Math.round(n * 10) / 10;
 const round2 = (n: number): number => Math.round(n * 100) / 100;
@@ -20,8 +21,8 @@ export interface ScenarioOpts { startA?: string; endA?: string; startB?: string;
 const mean = (xs: number[]): number => xs.reduce((a, b) => a + b, 0) / xs.length;
 const stdev = (xs: number[]): number => {
   if (xs.length < 2) return 0;
-  const m = mean(xs);
-  return Math.sqrt(xs.reduce((a, b) => a + (b - m) * (b - m), 0) / (xs.length - 1));
+  const mu = mean(xs);
+  return Math.sqrt(xs.reduce((a, b) => a + (b - mu) * (b - mu), 0) / (xs.length - 1));
 };
 
 function fetchRows(db: DatabaseSync, start: string, end: string): Row[] {
@@ -87,16 +88,16 @@ export function scenarioB8(db: DatabaseSync): ScenarioResult {
      * #503 形状化：区间原来写 `2026-08-01(持续 14 天)`——日期与天数挤在一个串里（口径 §一）；
      * 改回**真区间** `起 ~ 止`，天数另走 `spanDays`（页上由 `windowStrip()` 的胶囊呈现，
      * 并且这一改让这一段**跨天数**可算，节奏判语不再白丢——`spanOf()` 靠 `~` 形态）。 */
-    segA: { label: '平台期第一天', range: p.start[0] + ' ~ ' + p.end[0], count: p.span, avg: round2(plateauAvg), startKg: p.start[1], endKg: p.end[1], netChange: round2(p.end[1] - p.start[1]), volatility: round2(Math.abs(p.end[1] - p.start[1])), spanDays: p.span },
-    segB: singleSeg('当前', (rows[rows.length - 1] as Row)[0], current),
-    compare: { deltaKg: round2(current - plateauAvg), direction: current < plateauAvg ? '下降' : current > plateauAvg ? '上升' : '持平', rateDiffG: null, speed: '—' },
+    segA: { label: m('skill-calorie.weight-weightCompare2.c001'), range: p.start[0] + ' ~ ' + p.end[0], count: p.span, avg: round2(plateauAvg), startKg: p.start[1], endKg: p.end[1], netChange: round2(p.end[1] - p.start[1]), volatility: round2(Math.abs(p.end[1] - p.start[1])), spanDays: p.span },
+    segB: singleSeg(m('skill-calorie.weight-weightCompare2.c002'), (rows[rows.length - 1] as Row)[0], current),
+    compare: { deltaKg: round2(current - plateauAvg), direction: current < plateauAvg ? m('skill-calorie.weight-weightCompare2.c003') : current > plateauAvg ? m('skill-calorie.weight-weightCompare2.c004') : m('skill-calorie.weight-weightCompare2.c005'), rateDiffG: null, speed: '—' },
     extraRows: [
-      { label: '平台期持续', value: p.span + ' 天' },
+      { label: m('skill-calorie.weight-weightCompare2.c006'), value: m('skill-calorie.weight-weightCompare2.c007', { p0: String(p.span) }) },
       /* #481 整改缺陷 7：`突破后变化` → `平台期结束后变化`（「突破」是行话）；
        * `第几次平台期` → `这是第几次平台期`（问句要带问的主语）；
        * 「历史平均突破耗时」整行删——本轮种子下它的值是 `—`（零信息），且数的是**别的段**的事。 */
-      { label: '平台期结束后变化', value: (deltaAfter >= 0 ? '+' : '') + deltaAfter.toFixed(1) + ' kg' },
-      { label: '这是第几次平台期', value: '第 ' + plateauCount + ' 次' },
+      { label: m('skill-calorie.weight-weightCompare2.c008'), value: (deltaAfter >= 0 ? '+' : '') + deltaAfter.toFixed(1) + ' kg' },
+      { label: m('skill-calorie.weight-weightCompare2.c009'), value: m('skill-calorie.weight-weightCompare2.c010', { p0: String(plateauCount) }) },
     ],
   };
 }
@@ -108,10 +109,10 @@ export function scenarioE1(db: DatabaseSync, today: string): ScenarioResult {
   const minRow = rows.reduce((a, b) => (b[1] < a[1] ? b : a));
   const daysSince = dayDiff(minRow[0], today);
   return {
-    segA: singleSeg('历史最低', minRow[0], minRow[1]),
-    segB: singleSeg('当前', (rows[rows.length - 1] as Row)[0], current),
-    compare: { deltaKg: round2(current - minRow[1]), direction: current > minRow[1] ? '上升' : '持平', rateDiffG: null, speed: '—' },
-    extraRows: [{ label: '距历史最低', value: daysSince + ' 天' }],
+    segA: singleSeg(m('skill-calorie.weight-weightCompare2.c011'), minRow[0], minRow[1]),
+    segB: singleSeg(m('skill-calorie.weight-weightCompare2.c012'), (rows[rows.length - 1] as Row)[0], current),
+    compare: { deltaKg: round2(current - minRow[1]), direction: current > minRow[1] ? m('skill-calorie.weight-weightCompare2.c013') : m('skill-calorie.weight-weightCompare2.c014'), rateDiffG: null, speed: '—' },
+    extraRows: [{ label: m('skill-calorie.weight-weightCompare2.c015'), value: m('skill-calorie.weight-weightCompare2.c016', { p0: String(daysSince) }) }],
   };
 }
 
@@ -123,14 +124,14 @@ export function scenarioE2(db: DatabaseSync): ScenarioResult {
   const dropped = round2(maxRow[1] - current);
   const days = Math.max(1, dayDiff(maxRow[0], (rows[rows.length - 1] as Row)[0]));
   return {
-    segA: singleSeg('历史最高', maxRow[0], maxRow[1]),
-    segB: singleSeg('当前', (rows[rows.length - 1] as Row)[0], current),
-    compare: { deltaKg: round2(current - maxRow[1]), direction: current < maxRow[1] ? '下降' : '持平', rateDiffG: null, speed: '—' },
+    segA: singleSeg(m('skill-calorie.weight-weightCompare2.c017'), maxRow[0], maxRow[1]),
+    segB: singleSeg(m('skill-calorie.weight-weightCompare2.c018'), (rows[rows.length - 1] as Row)[0], current),
+    compare: { deltaKg: round2(current - maxRow[1]), direction: current < maxRow[1] ? m('skill-calorie.weight-weightCompare2.c019') : m('skill-calorie.weight-weightCompare2.c020'), rateDiffG: null, speed: '—' },
     extraRows: [
-      { label: '已下降', value: dropped.toFixed(1) + ' kg' },
+      { label: m('skill-calorie.weight-weightCompare2.c021'), value: dropped.toFixed(1) + ' kg' },
       /* #481 整改缺陷 5：本行与节奏卡标签逐字同名（都叫「每天变化」），这里是**这一段的平均**，写全。
        * #481 本轮：符号与「已下降」同向——`dropped` 是正数 magnitude，直接除会印出「+19 克」（上升），与「已下降 9.6 kg」打架；改按 `(当前 − 最高) ÷ 天数` 取负值。 */
-      { label: '这段时间平均', value: ratePerDayText((current - maxRow[1]) / days) },
+      { label: m('skill-calorie.weight-weightCompare2.c022'), value: ratePerDayText((current - maxRow[1]) / days) },
     ],
   };
 }
@@ -157,29 +158,29 @@ export function scenarioE3(db: DatabaseSync, deltaKg: number): ScenarioResult {
     pts = idxs.map((i) => pts[i] as Row);
   }
   return {
-    segA: singleSeg('减重 ' + deltaKg + ' kg 那天', hit[0], hit[1]),
-    segB: singleSeg('今天', (rows[rows.length - 1] as Row)[0], current),
-    compare: { deltaKg: round2(current - hit[1]), direction: current < hit[1] ? '下降' : current > hit[1] ? '上升' : '持平', rateDiffG: null, speed: '—' },
+    segA: singleSeg(m('skill-calorie.weight-weightCompare2.c023', { p0: String(deltaKg) }), hit[0], hit[1]),
+    segB: singleSeg(m('skill-calorie.weight-weightCompare2.c024'), (rows[rows.length - 1] as Row)[0], current),
+    compare: { deltaKg: round2(current - hit[1]), direction: current < hit[1] ? m('skill-calorie.weight-weightCompare2.c025') : current > hit[1] ? m('skill-calorie.weight-weightCompare2.c026') : m('skill-calorie.weight-weightCompare2.c027'), rateDiffG: null, speed: '—' },
     extraRows: [
-      { label: '用时', value: elapsed + ' 天' },
+      { label: m('skill-calorie.weight-weightCompare2.c028'), value: m('skill-calorie.weight-weightCompare2.c029', { p0: String(elapsed) }) },
       /* #481 整改缺陷 5：改名避与节奏卡标签撞词（这里是这一段的平均，写全「平均每天」）。 */
-      { label: '这段时间平均', value: ratePerDayText(rate) },
+      { label: m('skill-calorie.weight-weightCompare2.c030'), value: ratePerDayText(rate) },
       /* #503 形状化：值原为 `75 → 70.4 kg · 13 天`（同一格用 `·` 串了两件事）——天数本来就有
        * 「用时 13 天」一行，取数层的这一格只留**两端值 ＋ 箭头**（口径 §一「正文里零 `·`」）。 */
-      { label: '体重变化曲线', value: hit[1] + ' → ' + current + ' kg', spark: pts.map((r) => ({ d: fmt(r[0]), kg: r[1] })) },
+      { label: m('skill-calorie.weight-weightCompare2.c031'), value: hit[1] + ' → ' + current + ' kg', spark: pts.map((r) => ({ d: fmt(r[0]), kg: r[1] })) },
     ],
   };
 }
 
 function seasonMin(rows: Row[], today: string, season: 'summer' | 'winter'): Row | null {
   const y = Number(today.slice(0, 4));
-  const m = Number(today.slice(5, 7));
+  const mon = Number(today.slice(5, 7));
   let s: string;
   let e: string;
   if (season === 'summer') { s = y + '-06-01'; e = y + '-08-31'; }
-  else if (m >= 12) { s = y + '-12-01'; e = (y + 1) + '-02-28'; }
+  else if (mon >= 12) { s = y + '-12-01'; e = (y + 1) + '-02-28'; }
   else { s = (y - 1) + '-12-01'; e = y + '-02-28'; }
-  void m;
+  void mon;
   const inSeason = rows.filter((r) => r[0] >= s && r[0] <= e);
   if (inSeason.length === 0) return null;
   return inSeason.reduce((a, b) => (b[1] < a[1] ? b : a));
@@ -189,15 +190,15 @@ export function scenarioE5(db: DatabaseSync, today: string): ScenarioResult {
   const rows = fetchAll(db);
   if (rows.length === 0) throw new FetchError('无体重记录');
   const current = (rows[rows.length - 1] as Row)[1];
-  const m = seasonMin(rows, today, 'summer');
-  if (!m) throw new FetchError('今年夏天（6～8 月）没有体重记录');
-  const daysSince = Math.max(0, dayDiff(m[0], today));
+  const lo = seasonMin(rows, today, 'summer');
+  if (!lo) throw new FetchError('今年夏天（6～8 月）没有体重记录');
+  const daysSince = Math.max(0, dayDiff(lo[0], today));
   return {
     /* #481 整改缺陷 12：`入夏最低` 读者不知道是哪个夏天 ⇒ `今夏以来最低`（段标签与距今天数两处同改）。 */
-    segA: singleSeg('今夏以来最低', m[0], m[1]),
-    segB: singleSeg('当前', (rows[rows.length - 1] as Row)[0], current),
-    compare: { deltaKg: round2(current - m[1]), direction: current > m[1] ? '上升' : current < m[1] ? '下降' : '持平', rateDiffG: null, speed: '—' },
-    extraRows: [{ label: '距今夏最低', value: daysSince + ' 天' }],
+    segA: singleSeg(m('skill-calorie.weight-weightCompare2.c032'), lo[0], lo[1]),
+    segB: singleSeg(m('skill-calorie.weight-weightCompare2.c033'), (rows[rows.length - 1] as Row)[0], current),
+    compare: { deltaKg: round2(current - lo[1]), direction: current > lo[1] ? m('skill-calorie.weight-weightCompare2.c034') : current < lo[1] ? m('skill-calorie.weight-weightCompare2.c035') : m('skill-calorie.weight-weightCompare2.c036'), rateDiffG: null, speed: '—' },
+    extraRows: [{ label: m('skill-calorie.weight-weightCompare2.c037'), value: m('skill-calorie.weight-weightCompare2.c038', { p0: String(daysSince) }) }],
   };
 }
 
@@ -205,14 +206,14 @@ export function scenarioE6(db: DatabaseSync, today: string): ScenarioResult {
   const rows = fetchAll(db);
   if (rows.length === 0) throw new FetchError('无体重记录');
   const current = (rows[rows.length - 1] as Row)[1];
-  const m = seasonMin(rows, today, 'winter');
-  if (!m) throw new FetchError('最近一个冬天（12～2 月）没有体重记录');
-  const daysSince = Math.max(0, dayDiff(m[0], today));
+  const lo = seasonMin(rows, today, 'winter');
+  if (!lo) throw new FetchError('最近一个冬天（12～2 月）没有体重记录');
+  const daysSince = Math.max(0, dayDiff(lo[0], today));
   return {
     /* #481 整改缺陷 12：`入冬最低` → `今冬以来最低`（与 e5 同形）。 */
-    segA: singleSeg('今冬以来最低', m[0], m[1]),
-    segB: singleSeg('当前', (rows[rows.length - 1] as Row)[0], current),
-    compare: { deltaKg: round2(current - m[1]), direction: current > m[1] ? '上升' : current < m[1] ? '下降' : '持平', rateDiffG: null, speed: '—' },
-    extraRows: [{ label: '距今冬最低', value: daysSince + ' 天' }],
+    segA: singleSeg(m('skill-calorie.weight-weightCompare2.c039'), lo[0], lo[1]),
+    segB: singleSeg(m('skill-calorie.weight-weightCompare2.c040'), (rows[rows.length - 1] as Row)[0], current),
+    compare: { deltaKg: round2(current - lo[1]), direction: current > lo[1] ? m('skill-calorie.weight-weightCompare2.c041') : current < lo[1] ? m('skill-calorie.weight-weightCompare2.c042') : m('skill-calorie.weight-weightCompare2.c043'), rateDiffG: null, speed: '—' },
+    extraRows: [{ label: m('skill-calorie.weight-weightCompare2.c044'), value: m('skill-calorie.weight-weightCompare2.c045', { p0: String(daysSince) }) }],
   };
 }

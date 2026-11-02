@@ -32,10 +32,12 @@ import { buildLandNothingPage } from './landPages.js';
 import { XUNJI_STUB_ENV, invokeXunji, xunjiExitToCmd } from './xunjiRunner.js';
 import type { XunjiCall } from './xunjiRunner.js';
 import { xunjiKeyNext, xunjiKeyRow } from './xunjiKey.js';
+import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 export const XUNJI_PUSH_KEY = 'calorie.workout.xunji-push';
 const XUNJI_PUSH_WAKE = '同步到训记';
-const DOC_TITLE = '卡路里·健身计划回执';
+const DOC_TITLE = (): string => m('skill-calorie.workout-xunjiPush.c097');
 
 /** 子进程 `push-plan` stdout 的最小形状守卫（成功分支；缺键即回执解析失败 exit 4）。 */
 export interface PushPlanSummary {
@@ -59,7 +61,10 @@ function asPushSummary(data: unknown, step: string): PushPlanSummary {
     || typeof o.session_count !== 'number' || typeof o.ok_count !== 'number'
     || typeof o.fail_count !== 'number' || typeof o.verify_note !== 'string' || !Array.isArray(o.results)
   ) {
-    fail(4, step + '回执解析失败（push-plan 的 stdout 缺汇总键）：' + JSON.stringify(data ?? null).slice(0, 160));
+    fail(4, m('skill-calorie.workout-xunjiPush.c001', {
+      p0: String(step),
+      p1: String(JSON.stringify(data ?? null).slice(0, 160)),
+    }));
   }
   return o as PushPlanSummary;
 }
@@ -68,7 +73,7 @@ function asPushSummary(data: unknown, step: string): PushPlanSummary {
 function readDryRun(params: Record<string, unknown>): boolean {
   const v = params['dryRun'];
   if (v === undefined || v === null) return false;
-  if (typeof v !== 'boolean') fail(2, '参数 dryRun 须为布尔值');
+  if (typeof v !== 'boolean') fail(2, m('skill-calorie.workout-xunjiPush.c002'));
   return v as boolean;
 }
 
@@ -83,10 +88,10 @@ function auditMovements(sessions: readonly PlanSessionRow[]): MovementVerifyRepo
 
 /** 审计表行（动作／结论／建议名——建议只在不通过时给，不过的不拦推）。 */
 function auditRows(audit: MovementVerifyReport | null): { movement: string; verdict: string; suggest: string }[] {
-  if (audit === null) return [{ movement: '（当天无动作可审）', verdict: '—', suggest: '—' }];
+  if (audit === null) return [{ movement: m('skill-calorie.workout-xunjiPush.c003'), verdict: '—', suggest: '—' }];
   return audit.results.map((r) => ({
     movement: r.name,
-    verdict: r.valid === true ? '训记可识别' : (r.valid === false ? '训记不识别（仍会原样推送）' : '无法验证（库读不出）'),
+    verdict: r.valid === true ? m('skill-calorie.workout-xunjiPush.c004') : (r.valid === false ? m('skill-calorie.workout-xunjiPush.c005') : m('skill-calorie.workout-xunjiPush.c006')),
     suggest: r.valid === false ? (r.suggestion ?? '—') : '—',
   }));
 }
@@ -109,16 +114,23 @@ function localNoKey(data: unknown): boolean {
 /** 推送失败：本地缺 KEY 点名没调远端＋可复制的下一步（exit 3），远端失败点名段数与子进程尾行（exit 4）。 */
 function failPush(date: string, call: XunjiCall): never {
   if (call.code === 2 || localNoKey(call.data)) {
-    fail(3, '同步到训记失败（' + date + '）：本地缺 KEY（没调远端）：' + xunjiKeyNext());
+    fail(3, m('skill-calorie.workout-xunjiPush.c007', { p0: String(date), p1: String(xunjiKeyNext()) }));
   }
   const o = call.data as { ok_count?: unknown; fail_count?: unknown; session_count?: unknown } | null;
   const counts = typeof o === 'object' && o !== null
     && typeof o.ok_count === 'number' && typeof o.fail_count === 'number' && typeof o.session_count === 'number'
-    ? '成功 ' + o.ok_count + '／失败 ' + o.fail_count + '（共 ' + o.session_count + ' 段）' : '（读数缺段数）';
+    ? m('skill-calorie.workout-xunjiPush.c008', {
+      p0: String(o.ok_count),
+      p1: String(o.fail_count),
+      p2: String(o.session_count),
+    }) : m('skill-calorie.workout-xunjiPush.c009');
   fail(
     xunjiExitToCmd(call.code),
-    '同步到训记失败（' + date + '）：远端推送失败' + counts + '：稍后重试，远端是否落笔以训记 App 为准'
-      + (call.stderr === '' ? '' : '（' + call.stderr + '）'),
+    m('skill-calorie.workout-xunjiPush.c010', {
+      p0: String(date),
+      p1: String(counts),
+      p2: String(call.stderr === '' ? '' : '（' + call.stderr + '）'),
+    }),
   );
 }
 
@@ -127,7 +139,7 @@ export function writeXunjiPush(params: Record<string, unknown>, db: DatabaseSync
   const date = dayField(params, 'date') ?? todayISO();
   // 形状对、日历上没这一天的那种日期（2026-13-40）算不出周次，会被下面误判成「这天是休息日」——
   // 先在用法层拦掉（exit 2），别把它回成一张「无事可做」页（旧口径这一档由子进程拦，exit 4）。
-  if (!isRealISODate(date)) fail(2, 'date 不是真实日历日（实际：' + date + '）');
+  if (!isRealISODate(date)) fail(2, m('skill-calorie.workout-xunjiPush.c011', { p0: String(date) }));
   const dryRun = readDryRun(params);
   const plan = getPlan(db);
   landPlanGate(plan); // 结构性缺失（库／计划行不在、缺开始日期）才阻断，exit 4（与落地链同一份判据）
@@ -135,25 +147,30 @@ export function writeXunjiPush(params: Record<string, unknown>, db: DatabaseSync
   if (sessions.length === 0) {
     // 这天没有安排（#943 第三选项，与落地三条键同一张页、同一个回执口径）：不调训记、不起子进程，
     // 回「无事可做」页。旧口径在这里照样起子进程拿 0 段读数，再回一张写着「已同步 … 0 段成功」的页。
-    const why = landNoSegmentWhy(plan, date) ?? '这天没有可推送的训练段';
+    const why = landNoSegmentWhy(plan, date) ?? m('skill-calorie.workout-xunjiPush.c012');
     return landNothing(XUNJI_PUSH_WAKE, params, why, date, (receipt) =>
       buildLandNothingPage({
         key: XUNJI_PUSH_KEY, params, wake: XUNJI_PUSH_WAKE, scope: date, why, receipt,
-        unitLabel: '待推送段', stepLabel: '推送', whyLabel: '为什么没得推送',
+        unitLabel: m('skill-calorie.workout-xunjiPush.c013'), stepLabel: m('skill-calorie.workout-xunjiPush.c014'), whyLabel: m('skill-calorie.workout-xunjiPush.c015'),
       }));
   }
   const audit = auditMovements(sessions);
   const invalid = audit === null ? 0 : audit.invalid_count;
   const argv = dryRun ? ['push-plan', '--date', date, '--dry-run'] : ['push-plan', '--date', date];
-  const call = invokeXunji(argv, '同步到训记');
+  const call = invokeXunji(argv, m('skill-calorie.workout-xunjiPush.c016'));
   if (call.code !== 0) failPush(date, call);
-  const summary = asPushSummary(call.data, '同步到训记');
+  const summary = asPushSummary(call.data, m('skill-calorie.workout-xunjiPush.c017'));
+  const failPhrase = summary.fail_count > 0 ? m('skill-calorie.workout-xunjiPush.c018', { p0: String(summary.fail_count) }) : '';
   const message = dryRun
-    ? '预演：' + date + ' ' + summary.session_count + ' 段待推送（远端未调用）'
-    : '已同步 ' + date + ' 训练计划到训记：' + summary.ok_count + ' 段成功' + (summary.fail_count > 0 ? '、' + summary.fail_count + ' 段失败' : '');
-  const receipt = R('同步到训记', 'create', message, XUNJI_PUSH_WAKE, '训练计划（workout_plans）＋ 训记推送读数', {
+    ? m('skill-calorie.workout-xunjiPush.c019', { p0: String(date), p1: String(summary.session_count) })
+    : m('skill-calorie.workout-xunjiPush.c020', {
+      p0: String(date),
+      p1: String(summary.ok_count),
+      p2: String(failPhrase),
+    });
+  const receipt = R(m('skill-calorie.workout-xunjiPush.c021'), 'create', message, XUNJI_PUSH_WAKE, m('skill-calorie.workout-xunjiPush.c022'), {
     recordId: null, ids: [], idSource: 'condition', writtenFields: provided(params, ['date', 'dryRun']),
-    items: [{ status: '成功', reason: '', detail: message }],
+    items: [{ status: m('skill-calorie.workout-xunjiPush.c023'), reason: '', detail: message }],
   });
   const html = dryRun
     ? pushProcessPage(params, date, sessions, audit, summary, receipt, call.stubbed)
@@ -166,53 +183,53 @@ function pushProcessPage(
   params: Record<string, unknown>, date: string, sessions: readonly PlanSessionRow[],
   audit: MovementVerifyReport | null, summary: PushPlanSummary, receipt: CrudReceipt, stubbed: boolean,
 ): string {
-  const message = '预演：' + date + ' ' + summary.session_count + ' 段待推送（远端未调用）';
+  const message = m('skill-calorie.workout-xunjiPush.c024', { p0: String(date), p1: String(summary.session_count) });
   const auditOk = audit === null ? 0 : audit.valid_count;
   const auditBad = audit === null ? 0 : audit.invalid_count;
   const auditTotal = audit === null ? 0 : audit.total;
   const content = [
     renderKpiGrid([
-      { label: '日期', value: date, detail: '推送哪一天的计划' },
-      { label: '待推送段', value: sessions.length + ' 段', detail: sessions.map((s) => s.session_label).join('、') || '当天没排练（空天）' },
+      { label: m('skill-calorie.workout-xunjiPush.c025'), value: date, detail: m('skill-calorie.workout-xunjiPush.c026') },
+      { label: m('skill-calorie.workout-xunjiPush.c027'), value: m('skill-calorie.workout-xunjiPush.c028', { p0: String(sessions.length) }), detail: listJoin(currentRenderLanguage(), sessions.map((s) => s.session_label)) || m('skill-calorie.workout-xunjiPush.c029') },
       {
-        label: '动作审计',
-        value: audit === null ? '当天无动作可审' : '通过 ' + auditOk + ' 个',
+        label: m('skill-calorie.workout-xunjiPush.c030'),
+        value: audit === null ? m('skill-calorie.workout-xunjiPush.c031') : m('skill-calorie.workout-xunjiPush.c032', { p0: String(auditOk) }),
         detail: audit === null
-          ? '段内没有动作名'
+          ? m('skill-calorie.workout-xunjiPush.c033')
           : (audit.catalog_loaded
-            ? '不通过 ' + auditBad + ' 个，共 ' + auditTotal + ' 个。不通过的动作仍会原样推送，建议名见下表'
-            : '动作库读不出，本次无法验证。不通过的动作仍会原样推送，建议名见下表'),
+            ? m('skill-calorie.workout-xunjiPush.c034', { p0: String(auditBad), p1: String(auditTotal) })
+            : m('skill-calorie.workout-xunjiPush.c035')),
       },
     ]),
     renderDataTable({
-      columns: [{ key: 'movement', label: '动作' }, { key: 'verdict', label: '审计结论' }, { key: 'suggest', label: '建议名' }],
+      columns: [{ key: 'movement', label: m('skill-calorie.workout-xunjiPush.c036') }, { key: 'verdict', label: m('skill-calorie.workout-xunjiPush.c037') }, { key: 'suggest', label: m('skill-calorie.workout-xunjiPush.c038') }],
       rows: auditRows(audit),
-      caption: '动作名审计（只读校验）',
+      caption: m('skill-calorie.workout-xunjiPush.c039'),
     }),
     renderDataTable({
-      columns: [{ key: 'label', label: '训练段' }, { key: 'moves', label: '动作' }],
+      columns: [{ key: 'label', label: m('skill-calorie.workout-xunjiPush.c040') }, { key: 'moves', label: m('skill-calorie.workout-xunjiPush.c041') }],
       rows: sessions.length === 0
-        ? [{ label: '（空天）', moves: '这天没排练，推送即回段数 0' }]
-        : sessions.map((s) => ({ label: s.session_label, moves: s.movements.map((m) => m.name ?? '（未命名动作）').join('、') || '（段内无动作）' })),
-      caption: '待推送段',
+        ? [{ label: m('skill-calorie.workout-xunjiPush.c042'), moves: m('skill-calorie.workout-xunjiPush.c043') }]
+        : sessions.map((s) => ({ label: s.session_label, moves: listJoin(currentRenderLanguage(), s.movements.map((mv) => mv.name ?? m('skill-calorie.workout-xunjiPush.c044'))) || m('skill-calorie.workout-xunjiPush.c045') })),
+      caption: m('skill-calorie.workout-xunjiPush.c046'),
     }),
     renderDataTable({
-      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+      columns: [{ key: 'k', label: m('skill-calorie.workout-xunjiPush.c047') }, { key: 'v', label: m('skill-calorie.workout-xunjiPush.c048') }],
       rows: [
-        { k: '本地', v: '转换成功：备好 ' + summary.session_count + ' 段' },
-        { k: '远端', v: '未调用（预演不调训记接口）' },
+        { k: m('skill-calorie.workout-xunjiPush.c049'), v: m('skill-calorie.workout-xunjiPush.c050', { p0: String(summary.session_count) }) },
+        { k: m('skill-calorie.workout-xunjiPush.c051'), v: m('skill-calorie.workout-xunjiPush.c052') },
         xunjiKeyRow(),
-        ...(stubbed ? [{ k: '数据来源', v: '本地挡板（' + XUNJI_STUB_ENV + '，未调远端）' }] : []),
+        ...(stubbed ? [{ k: m('skill-calorie.workout-xunjiPush.c053'), v: m('skill-calorie.workout-xunjiPush.c054', { p0: String(XUNJI_STUB_ENV) }) }] : []),
       ],
-      caption: '本地成远端没成分得清',
+      caption: m('skill-calorie.workout-xunjiPush.c055'),
     }),
-    copyBlock(XUNJI_PUSH_KEY, params, receipt, '训练计划（workout_plans）＋ 训记推送读数'),
+    copyBlock(XUNJI_PUSH_KEY, params, receipt, m('skill-calorie.workout-xunjiPush.c056')),
   ].join('');
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '同步到训记',
-    eyebrow: '健身计划',
-    subtitle: '过程页（预演：只转换不推送）',
+    docTitle: DOC_TITLE(),
+    title: m('skill-calorie.workout-xunjiPush.c057'),
+    eyebrow: m('skill-calorie.workout-xunjiPush.c058'),
+    subtitle: m('skill-calorie.workout-xunjiPush.c059'),
     content,
     pageUi: true,
   });
@@ -223,50 +240,58 @@ function pushResultPage(
   params: Record<string, unknown>, date: string, sessions: readonly PlanSessionRow[],
   audit: MovementVerifyReport | null, invalid: number, summary: PushPlanSummary, receipt: CrudReceipt, stubbed: boolean,
 ): string {
-  const message = '已同步 ' + date + ' 训练计划到训记：' + summary.ok_count + ' 段成功'
-    + (summary.fail_count > 0 ? '、' + summary.fail_count + ' 段失败' : '');
+  const failPhrase = summary.fail_count > 0 ? m('skill-calorie.workout-xunjiPush.c060', { p0: String(summary.fail_count) }) : '';
+  const message = m('skill-calorie.workout-xunjiPush.c061', {
+    p0: String(date),
+    p1: String(summary.ok_count),
+    p2: String(failPhrase),
+  });
+  const missingPhrase = summary.fail_count > 0 ? m('skill-calorie.workout-xunjiPush.c062', { p0: String(summary.fail_count) }) : '';
   const content = [
     renderKpiGrid([
-      { label: '日期', value: date, detail: '推送哪一天的计划' },
+      { label: m('skill-calorie.workout-xunjiPush.c063'), value: date, detail: m('skill-calorie.workout-xunjiPush.c064') },
       {
-        label: '推送',
-        value: '成功 ' + summary.ok_count + ' 段',
-        detail: '失败 ' + summary.fail_count + ' 段，共 ' + summary.session_count + ' 段',
+        label: m('skill-calorie.workout-xunjiPush.c065'),
+        value: m('skill-calorie.workout-xunjiPush.c066', { p0: String(summary.ok_count) }),
+        detail: m('skill-calorie.workout-xunjiPush.c067', {
+          p0: String(summary.fail_count),
+          p1: String(summary.session_count),
+        }),
       },
       {
-        label: '动作审计',
-        value: audit === null ? '当天无动作可审' : '不通过 ' + invalid + ' 个',
-        detail: audit === null ? '段内没有动作名' : '审计只提示，不拦推。建议名见过程页',
+        label: m('skill-calorie.workout-xunjiPush.c068'),
+        value: audit === null ? m('skill-calorie.workout-xunjiPush.c069') : m('skill-calorie.workout-xunjiPush.c070', { p0: String(invalid) }),
+        detail: audit === null ? m('skill-calorie.workout-xunjiPush.c071') : m('skill-calorie.workout-xunjiPush.c072'),
       },
     ]),
     renderDataTable({
-      columns: [{ key: 'label', label: '训练段' }, { key: 'ok', label: '推送' }, { key: 'echo', label: '训记回显' }],
+      columns: [{ key: 'label', label: m('skill-calorie.workout-xunjiPush.c073') }, { key: 'ok', label: m('skill-calorie.workout-xunjiPush.c074') }, { key: 'echo', label: m('skill-calorie.workout-xunjiPush.c075') }],
       rows: summary.results.length === 0
-        ? [{ label: '（空天）', ok: '—', echo: summary.note ?? '这天没排练，段数 0' }]
+        ? [{ label: m('skill-calorie.workout-xunjiPush.c076'), ok: '—', echo: summary.note ?? m('skill-calorie.workout-xunjiPush.c077') }]
         : summary.results.map((r) => ({
           label: r.session_label,
-          ok: r.ok ? '成功' : '失败',
-          echo: r.verified ? '训记已显式回执' : '以训记 App 为准（接口回显缺 trains 属已知缺陷）',
+          ok: r.ok ? m('skill-calorie.workout-xunjiPush.c078') : m('skill-calorie.workout-xunjiPush.c079'),
+          echo: r.verified ? m('skill-calorie.workout-xunjiPush.c080') : m('skill-calorie.workout-xunjiPush.c081'),
         })),
-      caption: '逐段推送结局',
+      caption: m('skill-calorie.workout-xunjiPush.c082'),
     }),
     renderDataTable({
-      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+      columns: [{ key: 'k', label: m('skill-calorie.workout-xunjiPush.c083') }, { key: 'v', label: m('skill-calorie.workout-xunjiPush.c084') }],
       rows: [
-        { k: '本地', v: '计划 ' + sessions.length + ' 段全部参与推送' },
-        { k: '远端', v: '训记落笔 ' + summary.ok_count + ' 段' + (summary.fail_count > 0 ? '、未落笔 ' + summary.fail_count + ' 段' : '') },
-        { k: '回显口径', v: summary.verify_note },
-        ...(stubbed ? [{ k: '数据来源', v: '本地挡板（' + XUNJI_STUB_ENV + '，未调远端）' }] : []),
+        { k: m('skill-calorie.workout-xunjiPush.c085'), v: m('skill-calorie.workout-xunjiPush.c086', { p0: String(sessions.length) }) },
+        { k: m('skill-calorie.workout-xunjiPush.c087'), v: m('skill-calorie.workout-xunjiPush.c088', { p0: String(summary.ok_count), p1: String(missingPhrase) }) },
+        { k: m('skill-calorie.workout-xunjiPush.c089'), v: summary.verify_note },
+        ...(stubbed ? [{ k: m('skill-calorie.workout-xunjiPush.c090'), v: m('skill-calorie.workout-xunjiPush.c091', { p0: String(XUNJI_STUB_ENV) }) }] : []),
       ],
-      caption: '本地成远端没成分得清',
+      caption: m('skill-calorie.workout-xunjiPush.c092'),
     }),
-    copyBlock(XUNJI_PUSH_KEY, params, receipt, '训练计划（workout_plans）＋ 训记推送读数'),
+    copyBlock(XUNJI_PUSH_KEY, params, receipt, m('skill-calorie.workout-xunjiPush.c093')),
   ].join('');
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '同步到训记',
-    eyebrow: '健身计划',
-    subtitle: '结果页',
+    docTitle: DOC_TITLE(),
+    title: m('skill-calorie.workout-xunjiPush.c094'),
+    eyebrow: m('skill-calorie.workout-xunjiPush.c095'),
+    subtitle: m('skill-calorie.workout-xunjiPush.c096'),
     content,
     pageUi: true,
   });

@@ -44,13 +44,15 @@ import { assembleDocPage } from '../shared/docPage.js';
 import { copyArea, copyLog } from '../shared/copyArea.js';
 import { reconcileDisclosure, statusCard } from '../shared/receiptParts.js';
 import { commandLine } from '../shared/writeParts.js';
+import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
 /** 页签名（编排者裁定）：空格分层、不带任何符号——`·` 是设计债（`scripts/audit-separators.mjs` R1）。 */
-const DOC_TITLE = '卡路里 目标回执';
+
 /** 归属词（眉标，**一页一处**）：说清这一页属于哪一族。 */
-const EYEBROW = '目标管理';
+
 
 /** 目标管理 6 条会改数据库的命令（**具名命令集**，命令名权威源＝`goal/commands.ts`）。 */
 const GOAL_RECEIPT_KEYS: ReadonlySet<string> = new Set([
@@ -59,14 +61,17 @@ const GOAL_RECEIPT_KEYS: ReadonlySet<string> = new Set([
 ]);
 
 /** 写入去向那句说明（共用件 `statusCard` 的必填参数，按命令取本域自己的说法）。 */
-const WRITTEN_DETAIL: Readonly<Record<string, string>> = {
-  'calorie.goal.set': '已写入每天的目标。说「看今日目标进度」可复查。',
-  'calorie.goal.water': '已写入饮水目标。说「看今日目标进度」可复查。',
-  'calorie.goal.weight': '已写入体重目标。说「看目标状态」可复查。',
-  'calorie.goal.pause': '目标已暂停，记录照常。说「看目标状态」可复查。',
-  'calorie.goal.resume': '目标已恢复。说「看目标状态」可复查。',
-  'calorie.goal.exercise': '已写入运动目标。说「看目标状态」可复查。',
-};
+function writtenDetail(key: string): string | undefined {
+  switch (key) {
+    case 'calorie.goal.set': return m('skill-calorie.goal-receipt.c092');
+    case 'calorie.goal.water': return m('skill-calorie.goal-receipt.c093');
+    case 'calorie.goal.weight': return m('skill-calorie.goal-receipt.c094');
+    case 'calorie.goal.pause': return m('skill-calorie.goal-receipt.c095');
+    case 'calorie.goal.resume': return m('skill-calorie.goal-receipt.c096');
+    case 'calorie.goal.exercise': return m('skill-calorie.goal-receipt.c097');
+    default: return undefined;
+  }
+}
 
 /** 库列 → 中文名（名字逐字取 `precheck.ts` 的现值表与体重块，本件不另编名）＋ 值的单位。 */
 interface GoalColumn {
@@ -76,19 +81,22 @@ interface GoalColumn {
 }
 
 /** 目标行逐列（顺序＝现值表的读法：四宏量 → 饮水 → 体重目标 → 日期 → 起点 → 暂停态）。 */
-const COLUMNS: readonly GoalColumn[] = [
-  { col: 'calorie_goal', label: '热量(卡)', unit: '卡' },
-  { col: 'protein_goal', label: '蛋白(g)', unit: 'g' },
-  { col: 'carbs_goal', label: '碳水(g)', unit: 'g' },
-  { col: 'fat_goal', label: '脂肪(g)', unit: 'g' },
-  { col: 'water_goal', label: '饮水(ml)', unit: 'ml' },
-  { col: 'exercise_goal', label: '运动目标(卡)', unit: '卡' },
-  { col: 'weight_goal', label: '体重目标(kg)', unit: 'kg' },
-  { col: 'goal_deadline', label: '截止日期', unit: '' },
-  { col: 'start_weight', label: '起点体重(kg)', unit: 'kg' },
-  { col: 'start_date', label: '起始日', unit: '' },
-  { col: 'goal_paused', label: '目标状态', unit: '' },
-];
+function columns(): GoalColumn[] {
+  const kcal = (): string => m('skill-calorie.goal-receipt.c109');
+  return [
+    { col: 'calorie_goal', label: m('skill-calorie.goal-receipt.c098'), unit: kcal() },
+    { col: 'protein_goal', label: m('skill-calorie.goal-receipt.c099'), unit: 'g' },
+    { col: 'carbs_goal', label: m('skill-calorie.goal-receipt.c100'), unit: 'g' },
+    { col: 'fat_goal', label: m('skill-calorie.goal-receipt.c101'), unit: 'g' },
+    { col: 'water_goal', label: m('skill-calorie.goal-receipt.c102'), unit: 'ml' },
+    { col: 'exercise_goal', label: m('skill-calorie.goal-receipt.c103'), unit: kcal() },
+    { col: 'weight_goal', label: m('skill-calorie.goal-receipt.c104'), unit: 'kg' },
+    { col: 'goal_deadline', label: m('skill-calorie.goal-receipt.c105'), unit: '' },
+    { col: 'start_weight', label: m('skill-calorie.goal-receipt.c106'), unit: 'kg' },
+    { col: 'start_date', label: m('skill-calorie.goal-receipt.c107'), unit: '' },
+    { col: 'goal_paused', label: m('skill-calorie.goal-receipt.c108'), unit: '' },
+  ];
+}
 
 /** CLI 参数名 → 库列名（写口 `writtenFields` 报的是参数名，页面要说的是库里的那一列）。 */
 const PARAM_COLUMN: Readonly<Record<string, string>> = {
@@ -98,14 +106,14 @@ const PARAM_COLUMN: Readonly<Record<string, string>> = {
 };
 
 /** 库列名 → 那一列的登记（名单外回 `undefined`：调用面已按 `PARAM_COLUMN`／`COLUMNS` 筛过）。 */
-const metaOf = (col: string): GoalColumn | undefined => COLUMNS.find((c) => c.col === col);
+const metaOf = (col: string): GoalColumn | undefined => columns().find((c) => c.col === col);
 
 /** 库列名 → 中文名（名单外回原名；调用面已按 `PARAM_COLUMN` 筛过，走到这里恒是名单内的列）。 */
 const labelOf = (col: string): string => metaOf(col)?.label ?? col;
 
 /** 一格现值：**逐格读库**，缺值写 `—`（不写 0、不写空串），有单位的写「值 单位」。 */
 function cellValue(col: string, row: NutritionGoalRow | null, paused: boolean): string {
-  if (col === 'goal_paused') return paused ? '已暂停' : '正常（未暂停）';
+  if (col === 'goal_paused') return paused ? m('skill-calorie.goal-receipt.c001') : m('skill-calorie.goal-receipt.c002');
   const raw = row === null ? null : (row as unknown as Record<string, unknown>)[col];
   if (raw === null || raw === undefined || raw === '') return '—';
   const unit = metaOf(col)?.unit ?? '';
@@ -136,8 +144,8 @@ function beforeCell(col: string, after: string, receipt: CrudReceipt): string {
 /** ① 操作回执的读数卡：状态 ＋ 影响行数 ＋（写过的字段名，中文）。 */
 function opCards(key: string, receipt: CrudReceipt): KpiCardInput[] {
   const cards: KpiCardInput[] = [
-    statusCard(receipt, WRITTEN_DETAIL[key] ?? '已写入每天的目标。'),
-    { label: '影响行数', value: receipt.affectedRows + ' 行', detail: '本次写入的行数' },
+    statusCard(receipt, writtenDetail(key) ?? m('skill-calorie.goal-receipt.c003')),
+    { label: m('skill-calorie.goal-receipt.c004'), value: m('skill-calorie.goal-receipt.c005', { p0: String(receipt.affectedRows) }), detail: m('skill-calorie.goal-receipt.c006') },
   ];
   const labels: string[] = [];
   for (const name of receipt.writtenFields) {
@@ -145,7 +153,7 @@ function opCards(key: string, receipt: CrudReceipt): KpiCardInput[] {
     if (col !== undefined) labels.push(labelOf(col));
   }
   if (labels.length > 0) {
-    cards.push({ label: '写入字段', value: labels.length + ' 项', detail: labels.join('、') });
+    cards.push({ label: m('skill-calorie.goal-receipt.c007'), value: m('skill-calorie.goal-receipt.c008', { p0: String(labels.length) }), detail: listJoin(currentRenderLanguage(), labels) });
   }
   return cards;
 }
@@ -167,56 +175,61 @@ function changeSection(receipt: CrudReceipt, row: NutritionGoalRow | null, pause
   }
   const missing = rows.some((r) => r['before'] === '—');
   const html = renderDataTable({
-    columns: [{ key: 'k', label: '字段' }, { key: 'before', label: '改前' }, { key: 'after', label: '改后' }],
+    columns: [{ key: 'k', label: m('skill-calorie.goal-receipt.c009') }, { key: 'before', label: m('skill-calorie.goal-receipt.c010') }, { key: 'after', label: m('skill-calorie.goal-receipt.c011') }],
     rows,
-    caption: '改前 → 改后对照',
-    emptyText: '本次回执没有可对照的写入字段。',
+    caption: m('skill-calorie.goal-receipt.c012'),
+    emptyText: m('skill-calorie.goal-receipt.c013'),
   }) + renderCaliberLine(missing
-    ? '「改前」那一列的原值由写执行那一层回报；当前目标写口只回报变更字段名，故这一列写 —，不拿新值顶替。'
-    : '「改前」是本次写前那一列的原值。');
-  return { id: 'sec-change', title: '📋 字段变更', html };
+    ? m('skill-calorie.goal-receipt.c014')
+    : m('skill-calorie.goal-receipt.c015'));
+  return { id: 'sec-change', title: m('skill-calorie.goal-receipt.c016'), html };
 }
 
 /** ③ 库里现在的目标：逐格读库的现值表（含暂停态），与上一块「改后」同源。 */
 function goalSection(row: NutritionGoalRow | null, paused: boolean): Section {
-  const rows = COLUMNS.map((c) => ({ k: c.label, v: cellValue(c.col, row, paused) }));
+  const rows = columns().map((c) => ({ k: c.label, v: cellValue(c.col, row, paused) }));
   return {
     id: 'sec-goal',
-    title: '📊 库里现在的目标',
+    title: m('skill-calorie.goal-receipt.c017'),
     html: renderDataTable({
-      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+      columns: [{ key: 'k', label: m('skill-calorie.goal-receipt.c018') }, { key: 'v', label: m('skill-calorie.goal-receipt.c019') }],
       rows,
-      caption: '库里现在的目标',
-      emptyText: '库里还没有目标行。',
-    }) + renderCaliberLine('这一块逐格读自库内，与上面「改后」同源；没设过的格子写 —。'),
+      caption: m('skill-calorie.goal-receipt.c020'),
+      emptyText: m('skill-calorie.goal-receipt.c021'),
+    }) + renderCaliberLine(m('skill-calorie.goal-receipt.c022')),
   };
 }
 
 /** #289 · 两列表（项／值）：三族区块共用，表题即段内小标题。 */
 function kvTable(caption: string, rows: Readonly<Record<string, unknown>[]>): string {
   return renderDataTable({
-    columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+    columns: [{ key: 'k', label: m('skill-calorie.goal-receipt.c023') }, { key: 'v', label: m('skill-calorie.goal-receipt.c024') }],
     rows,
     caption,
-    emptyText: '缺项。',
+    emptyText: m('skill-calorie.goal-receipt.c025'),
   });
 }
 
 /** #289 营养族（`calorie.goal.set` 专属）：行值重算宏量合计与换算式（口径照 `nutritionGoal.ts:67`），BMR 提示走草稿 `energy`。 */
 function macroSection(row: NutritionGoalRow | null, draft: GoalDraft): Section {
   const cal = row === null ? null : row.calorie_goal, p = row?.protein_goal ?? null, c = row?.carbs_goal ?? null, f = row?.fat_goal ?? null;
-  if (cal === null || p === null || c === null || f === null) return { id: 'sec-macro', title: '🧮 宏量合计与换算', html: renderCaliberLine('宏量缺项，不算') };
+  if (cal === null || p === null || c === null || f === null) return { id: 'sec-macro', title: m('skill-calorie.goal-receipt.c026'), html: renderCaliberLine(m('skill-calorie.goal-receipt.c027')) };
   const sum = p * 4 + c * 4 + f * 9, diff = sum - cal;
   const bmr = draft.energy.bmr;
   const below = bmr !== null && cal < bmr;
-  const verdict = bmr === null ? '缺' + draft.energy.missing.join('、') + '，不算' : below ? '⚠️ 热量 ' + cal + ' 卡低于基础代谢 BMR ' + bmr + ' 卡，建议复核' : '✅ BMR 安全确认 热量 ' + cal + ' 卡不低于基础代谢 ' + bmr + ' 卡';
-  return { id: 'sec-macro', title: '🧮 宏量合计与换算', html: kvTable('宏量合计与换算', [
-      { k: '热量目标', v: cal + ' 卡' },
-      { k: '宏量合计与换算', v: '合计 ' + sum + ' 卡，宏量换算 ' + sum + ' 卡' },
-      { k: 'diff 与自洽', v: 'diff ' + (diff >= 0 ? '＋' : '') + diff + ' 卡，' + (Math.abs(diff) <= 50 ? '一致' : '不一致，建议复核') },
-      { k: '基础代谢 BMR', v: bmr === null ? '—' : 'BMR ' + bmr + ' 卡' },
+  const verdict = bmr === null ? m('skill-calorie.goal-receipt.c028', { p0: String(listJoin(currentRenderLanguage(), draft.energy.missing)) }) : below ? m('skill-calorie.goal-receipt.c029', { p0: String(cal), p1: String(bmr) }) : m('skill-calorie.goal-receipt.c030', { p0: String(cal), p1: String(bmr) });
+  const diffVerdict = Math.abs(diff) <= 50 ? m('skill-calorie.goal-receipt.c031') : m('skill-calorie.goal-receipt.c032');
+  return { id: 'sec-macro', title: m('skill-calorie.goal-receipt.c033'), html: kvTable(m('skill-calorie.goal-receipt.c034'), [
+      { k: m('skill-calorie.goal-receipt.c035'), v: m('skill-calorie.goal-receipt.c036', { p0: String(cal) }) },
+      { k: m('skill-calorie.goal-receipt.c037'), v: m('skill-calorie.goal-receipt.c038', { p0: String(sum), p1: String(sum) }) },
+      { k: m('skill-calorie.goal-receipt.c039'), v: m('skill-calorie.goal-receipt.c040', {
+        p0: String(diff >= 0 ? '＋' : ''),
+        p1: String(diff),
+        p2: String(diffVerdict),
+      }) },
+      { k: m('skill-calorie.goal-receipt.c041'), v: bmr === null ? '—' : m('skill-calorie.goal-receipt.c042', { p0: String(bmr) }) },
     ]) + (below ? renderFeedbackBlock({ toast: { msg: verdict, icon: 'warn' }, staticNotice: true }) : renderConclusionBar(verdict))
-      + renderCaliberLine('换算式 蛋白 ' + p + '×4＋碳水 ' + c + '×4＋脂肪 ' + f + '×9＝' + sum + ' 卡，公式照老技能 nutrition_goal.py:84-85'),
+      + renderCaliberLine(m('skill-calorie.goal-receipt.c043', { p0: String(p), p1: String(c), p2: String(f), p3: String(sum) })),
   };
 }
 
@@ -224,11 +237,15 @@ function macroSection(row: NutritionGoalRow | null, draft: GoalDraft): Section {
 function waterSection(db: DatabaseSync, receipt: CrudReceipt, row: NutritionGoalRow | null): Section {
   const rec = recommendWaterGoal(db, {}), now = row?.water_goal ?? null;
   const old = beforeOf('water_goal', now === null ? '—' : now + ' ml', receipt);
-  const change = old === null || now === null ? null : '旧 ' + old + ' → 新 ' + now + ' ml，推荐 ' + rec.recommendedWaterMl + ' ml';
-  return { id: 'sec-water', title: '💧 饮水推荐对照', html: kvTable('饮水推荐对照', [
-      { k: '体重与标准', v: rec.weightKg.toFixed(1) + ' kg × ' + rec.mlPerKg + ' ml/kg' },
-      { k: '季节', v: rec.season },
-      { k: '推荐饮水', v: '推荐 ' + rec.recommendedWaterMl + ' ml' },
+  const change = old === null || now === null ? null : m('skill-calorie.goal-receipt.c044', {
+    p0: String(old),
+    p1: String(now),
+    p2: String(rec.recommendedWaterMl),
+  });
+  return { id: 'sec-water', title: m('skill-calorie.goal-receipt.c045'), html: kvTable(m('skill-calorie.goal-receipt.c046'), [
+      { k: m('skill-calorie.goal-receipt.c047'), v: rec.weightKg.toFixed(1) + ' kg × ' + rec.mlPerKg + ' ml/kg' },
+      { k: m('skill-calorie.goal-receipt.c048'), v: rec.season },
+      { k: m('skill-calorie.goal-receipt.c049'), v: m('skill-calorie.goal-receipt.c050', { p0: String(rec.recommendedWaterMl) }) },
     ]) + (change === null ? '' : renderConclusionBar(change))
       + renderCaliberLine(rec.basis),
   };
@@ -238,21 +255,39 @@ function waterSection(db: DatabaseSync, receipt: CrudReceipt, row: NutritionGoal
 function rateSection(row: NutritionGoalRow | null, paused: boolean, draft: GoalDraft): Section {
   const w = draft.weight, gap = w.gapKg, days = w.daysLeft;
   let rate = '—';
-  let verdict = '未设置截止日期，无法计算建议速率。';
+  let verdict = m('skill-calorie.goal-receipt.c051');
   let extreme = false;
   if (gap !== null && days !== null && days > 0) {
     const perWeek = Math.abs(gap) / days * 7, pw = perWeek.toFixed(2);
-    rate = pw + ' kg/周';
-    const formula = gap.toFixed(1) + 'kg ÷ ' + days + '天 × 7 = ' + pw + ' kg/周 ≈ ' + (perWeek * 52 / 12).toFixed(1) + ' kg/月';
+    rate = m('skill-calorie.goal-receipt.c052', { p0: String(pw) });
+    const formula = m('skill-calorie.goal-receipt.c053', {
+      p0: String(gap.toFixed(1)),
+      p1: String(days),
+      p2: String(pw),
+      p3: String((perWeek * 52 / 12).toFixed(1)),
+    });
     const adj = w.requiredDailyKcal;
     extreme = perWeek >= 1.0 || (adj !== null && Math.abs(adj) > 1000);
-    const daily = adj === null ? '' : adj > 0 ? '，每日增加 ' + adj + ' 卡缺口' : adj < 0 ? '，每日减少 ' + Math.abs(adj) + ' 卡缺口' : '，每日缺口为零';
-    verdict = (extreme ? '⚠️ 极端目标 ' : perWeek >= 0.25 ? '✅ 建议速率合理 ' : '建议速率偏低 ') + '建议速率 ' + rate + daily + '，' + formula + '（健康带 0.25 kg/周到 1.0 kg/周）';
+    const daily = adj === null ? '' : adj > 0 ? m('skill-calorie.goal-receipt.c054', { p0: String(adj) }) : adj < 0 ? m('skill-calorie.goal-receipt.c055', { p0: String(Math.abs(adj)) }) : m('skill-calorie.goal-receipt.c056');
+    const rateVerdict = extreme ? m('skill-calorie.goal-receipt.c057') : perWeek >= 0.25 ? m('skill-calorie.goal-receipt.c058') : m('skill-calorie.goal-receipt.c059');
+    verdict = m('skill-calorie.goal-receipt.c060', {
+      p0: String(rateVerdict),
+      p1: String(rate),
+      p2: String(daily),
+      p3: String(formula),
+    });
   }
-  return { id: 'sec-rate', title: '⚖️ 体重速率与剩余天数', html: kvTable('体重目标与建议速率', [
-      { k: '目标', v: cellValue('weight_goal', row, paused) + '，截止 ' + cellValue('goal_deadline', row, paused) },
-      { k: '剩余天数', v: (days === null ? '—' : days + ' 天') + '，建议速率 ' + rate },
-      { k: '起始日', v: cellValue('start_date', row, paused) + '，起点体重 ' + cellValue('start_weight', row, paused) },
+  const daysText = days === null ? '—' : m('skill-calorie.goal-receipt.c061', { p0: String(days) });
+  return { id: 'sec-rate', title: m('skill-calorie.goal-receipt.c062'), html: kvTable(m('skill-calorie.goal-receipt.c063'), [
+      { k: m('skill-calorie.goal-receipt.c064'), v: m('skill-calorie.goal-receipt.c065', {
+        p0: String(cellValue('weight_goal', row, paused)),
+        p1: String(cellValue('goal_deadline', row, paused)),
+      }) },
+      { k: m('skill-calorie.goal-receipt.c066'), v: m('skill-calorie.goal-receipt.c067', { p0: String(daysText), p1: String(rate) }) },
+      { k: m('skill-calorie.goal-receipt.c068'), v: m('skill-calorie.goal-receipt.c069', {
+        p0: String(cellValue('start_date', row, paused)),
+        p1: String(cellValue('start_weight', row, paused)),
+      }) },
     ]) + (extreme ? renderFeedbackBlock({ toast: { msg: verdict, icon: 'danger' }, staticNotice: true }) : renderConclusionBar(verdict)),
   };
 }
@@ -260,10 +295,10 @@ function rateSection(row: NutritionGoalRow | null, paused: boolean, draft: GoalD
 /** #289 自动算（写参带 `profile`）：推荐值＋采纳后写入值两段对照，推荐数与 wizard 页同源 `buildGoalDraft`。 */
 function autoSection(db: DatabaseSync, receipt: CrudReceipt, profile: NutriProfile, paused: boolean): Section {
   const id = 'sec-auto';
-  const title = '🔁 自动算推荐与采纳对照';
+  const title = m('skill-calorie.goal-receipt.c070');
   const d = buildGoalDraft(db, { profile }), r = d.recommend;
-  if (r === null) return { id, title, html: renderCaliberLine('推荐缺' + d.energy.missing.join('、') + '，不算') };
-  const recOf = (col: string): string => col === 'calorie_goal' ? r.calorieGoal + ' 卡'
+  if (r === null) return { id, title, html: renderCaliberLine(m('skill-calorie.goal-receipt.c071', { p0: String(listJoin(currentRenderLanguage(), d.energy.missing)) })) };
+  const recOf = (col: string): string => col === 'calorie_goal' ? m('skill-calorie.goal-receipt.c072', { p0: String(r.calorieGoal) })
     : col === 'protein_goal' ? r.proteinGoal + ' g'
     : col === 'carbs_goal' ? r.carbsGoal + ' g'
     : col === 'fat_goal' ? r.fatGoal + ' g'
@@ -275,14 +310,24 @@ function autoSection(db: DatabaseSync, receipt: CrudReceipt, profile: NutriProfi
   return {
     id,
     title,
-    html: kvTable('推荐值', [
-      { k: '方向', v: (d.profileLabel ?? profile) + '（' + profile + '）' },
-      { k: '热量与宏量', v: '热量 ' + r.calorieGoal + ' 卡，蛋白 ' + r.proteinGoal + ' g，碳水 ' + r.carbsGoal + ' g，脂肪 ' + r.fatGoal + ' g' },
-      { k: '饮水', v: r.waterGoal + ' ml' },
-      { k: '能耗', v: 'BMR ' + r.bmr + ' 卡，TDEE ' + r.tdee + ' 卡' },
-      { k: '每周速率与自洽', v: '每周 ' + r.weeklyRateKg.toFixed(1) + ' kg/周，宏量换算 ' + r.selfCheck.calculatedKcal + ' 卡 diff ' + (r.selfCheck.diffKcal >= 0 ? '＋' : '') + r.selfCheck.diffKcal + ' 卡' },
-    ]) + renderCaliberLine('推荐依据如下') + r.planReasons.map(renderCaliberLine).join('')
-      + renderDataTable({ columns: [{ key: 'k', label: '字段' }, { key: 'r', label: '推荐值' }, { key: 'a', label: '采纳后写入值' }], rows: taken, caption: '采纳后写入值', emptyText: '库里还没有目标行。' }) + renderCaliberLine('推荐值由档案与最近体重按' + (d.profileLabel ?? profile) + '模板算出，采纳值逐格读库'),
+    html: kvTable(m('skill-calorie.goal-receipt.c073'), [
+      { k: m('skill-calorie.goal-receipt.c074'), v: (d.profileLabel ?? profile) + '（' + profile + '）' },
+      { k: m('skill-calorie.goal-receipt.c075'), v: m('skill-calorie.goal-receipt.c076', {
+        p0: String(r.calorieGoal),
+        p1: String(r.proteinGoal),
+        p2: String(r.carbsGoal),
+        p3: String(r.fatGoal),
+      }) },
+      { k: m('skill-calorie.goal-receipt.c077'), v: r.waterGoal + ' ml' },
+      { k: m('skill-calorie.goal-receipt.c078'), v: m('skill-calorie.goal-receipt.c079', { p0: String(r.bmr), p1: String(r.tdee) }) },
+      { k: m('skill-calorie.goal-receipt.c080'), v: m('skill-calorie.goal-receipt.c081', {
+        p0: String(r.weeklyRateKg.toFixed(1)),
+        p1: String(r.selfCheck.calculatedKcal),
+        p2: String(r.selfCheck.diffKcal >= 0 ? '＋' : ''),
+        p3: String(r.selfCheck.diffKcal),
+      }) },
+    ]) + renderCaliberLine(m('skill-calorie.goal-receipt.c082')) + r.planReasons.map(renderCaliberLine).join('')
+      + renderDataTable({ columns: [{ key: 'k', label: m('skill-calorie.goal-receipt.c083') }, { key: 'r', label: m('skill-calorie.goal-receipt.c084') }, { key: 'a', label: m('skill-calorie.goal-receipt.c085') }], rows: taken, caption: m('skill-calorie.goal-receipt.c086'), emptyText: m('skill-calorie.goal-receipt.c087') }) + renderCaliberLine(m('skill-calorie.goal-receipt.c088', { p0: String(d.profileLabel ?? profile) })),
   };
 }
 
@@ -300,7 +345,7 @@ function buildGoalReceiptDoc(db: DatabaseSync, key: string, params: Record<strin
   const startKg = startKgRaw === undefined || startKgRaw === null || startKgRaw === '' ? null : Number(startKgRaw);
   const draft = buildGoalDraft(db, { weight: { startKg: Number.isFinite(startKg) ? startKg : null } });
   const sections: Section[] = [
-    { id: 'sec-op', title: '✅ 操作回执', html: renderKpiGrid(opCards(key, receipt)) },
+    { id: 'sec-op', title: m('skill-calorie.goal-receipt.c089'), html: renderKpiGrid(opCards(key, receipt)) },
     changeSection(receipt, row, paused),
     goalSection(row, paused),
   ];
@@ -332,9 +377,9 @@ function buildGoalReceiptDoc(db: DatabaseSync, key: string, params: Record<strin
     }),
   ].join('');
   return assembleDocPage({
-    docTitle: DOC_TITLE,
+    docTitle: m('skill-calorie.goal-receipt.c090'),
     title: receipt.scene,
-    eyebrow: EYEBROW,
+    eyebrow: m('skill-calorie.goal-receipt.c091'),
     subtitle: subtitleOf(receipt),
     content,
     pageUi: true,

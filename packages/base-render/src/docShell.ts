@@ -23,6 +23,7 @@ import { buildSharedHelpersJs } from './controls.js';
 import { textEntryFloorCss } from './components/page-ui/index.js';
 import { PAGE_UI_CLASS, PAGE_UI_VIEWPORT } from './pageUi.js';
 import { buildStyleSheet, STYLE_PREFIX } from './style.js';
+import { currentRenderLanguage } from 'base-entries';
 import { documentLang } from './contract.js';
 import { fillTemplate } from './template.js';
 
@@ -51,7 +52,11 @@ export interface DocShellInput {
   readonly pageUi?: boolean;
   /** 文档版本声明的写法（缺省 `'lower'`，即 `<!doctype html>`）。 */
   readonly doctypeCase?: DocShellDoctypeCase;
-  /** 文本语言（BCP 47；空串／缺席＝中文，产物与改前逐字节相同；`en` 时文档 `lang` 为 `en`）。 */
+  /** 文本语言（BCP 47；空串＝中文，产物与改前逐字节相同；`en` 时文档 `lang` 为 `en`）。
+   *
+   *  **缺席**＝取当前渲染语言（`currentRenderLanguage()`；未进入渲染上下文时它就是基准语言 zh，
+   *  故不启用多语言时产物逐字节不变）。这样 CLI 解析一次语言（#1198 选择链）、`runWithLanguage`
+   *  包住 dispatch 后，**页面壳不必逐调用方传参**也能拿到正确的 `<html lang>`；显式给值仍最优先。 */
   readonly language?: string;
   /** **组件层随页挂载**：为真时把用到的那几件组件的样式段拼进共享样式槽、运行时拼进共享 helpers 槽。
    *
@@ -119,7 +124,7 @@ export function renderDocShell(input: DocShellInput): string {
   };
   if (charts) assets.chartsHelpersJs = buildChartsHelpersJs();
   return fillTemplate({
-    template: docTemplate(input.docTitle, charts, pageUi, doctypeCase, popoverFullText, documentLang(input.language)),
+    template: docTemplate(input.docTitle, charts, pageUi, doctypeCase, popoverFullText, documentLang(input.language ?? currentRenderLanguage())),
     assets,
     content: input.bodyHtml,
   }).html;

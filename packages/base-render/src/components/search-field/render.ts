@@ -15,6 +15,7 @@ import {
 } from './attrs.js';
 import { normalizeSearchField } from './model.js';
 import type { SearchFieldModel } from './model.js';
+import { m } from '../../entries/index.js';
 
 /** 放大镜字形（公共层自产标记；`aria-hidden`，不参与朗读）。 */
 const ICON = '<span class="' + SEARCH_ROOT_CLASS + '-ico" aria-hidden="true">⌕</span>';
@@ -25,45 +26,45 @@ export function searchErrorId(name: string): string {
 }
 
 /** 范围分段：内置「全部」打头 ＋ 调用方给的档；每档都是原生 `<button>` ＋ `aria-pressed`。 */
-function scopeHtml(m: SearchFieldModel): string {
-  if (m.scopes.length === 0) return '';
+function scopeHtml(model: SearchFieldModel): string {
+  if (model.scopes.length === 0) return '';
   const c = SEARCH_ROOT_CLASS;
-  const picked = m.scope === undefined ? SEARCH_DEFAULTS.scopeAll : m.scope;
+  const picked = model.scope === undefined ? SEARCH_DEFAULTS.scopeAll : model.scope;
   const button = (value: string, label: string, count: string | undefined): string => {
     const on = value === picked;
     return '<button type="button" class="' + c + '-scope-btn" ' + SEARCH_SCOPE_ATTR + '="' + esc(value) + '"'
-      + ' aria-pressed="' + (on ? 'true' : 'false') + '"' + (m.disabled ? ' disabled' : '') + '>'
+      + ' aria-pressed="' + (on ? 'true' : 'false') + '"' + (model.disabled ? ' disabled' : '') + '>'
       + '<span class="' + c + '-scope-lab">' + esc(label) + '</span>'
       + '<span class="' + c + '-n" ' + SEARCH_N_ATTR + '="">' + esc(count === undefined ? SEARCH_DEFAULTS.unset : count) + '</span>'
       + '</button>';
   };
-  const parts = [button(SEARCH_DEFAULTS.scopeAll, '全部', undefined)];
-  for (const s of m.scopes) parts.push(button(s.value, s.label, s.count));
+  const parts = [button(SEARCH_DEFAULTS.scopeAll, m('base-render.components-search-field-render.c001'), undefined)];
+  for (const s of model.scopes) parts.push(button(s.value, s.label, s.count));
   return '<div class="' + c + '-scope" role="group" aria-label="搜索范围">' + parts.join('') + '</div>';
 }
 
 /** 读数行：命中数（`—`，运行时写实）＋ 当前范围 ＋ 第几处／共几处 ＋ 前后跳。
  *  真读数与载入字各占一个 `span`（同一行、原地换字）：换字时**不动**版面，也不重造计数位。 */
-function readoutHtml(m: SearchFieldModel): string {
+function readoutHtml(model: SearchFieldModel): string {
   const c = SEARCH_ROOT_CLASS;
-  const picked = m.scope === undefined ? SEARCH_DEFAULTS.scopeAll : m.scope;
-  const pickedLabel = m.scopes.length === 0 ? ''
-    : (m.scopes.find((s) => s.value === picked) ?? { label: '全部' }).label;
+  const picked = model.scope === undefined ? SEARCH_DEFAULTS.scopeAll : model.scope;
+  const pickedLabel = model.scopes.length === 0 ? ''
+    : (model.scopes.find((s) => s.value === picked) ?? { label: m('base-render.components-search-field-render.c002') }).label;
   const status = '<p class="' + c + '-status" role="status" ' + SEARCH_STATUS_ATTR + '="">'
     + '<span class="' + c + '-status-text"><b ' + SEARCH_COUNT_ATTR + '="">' + SEARCH_DEFAULTS.unset + '</b> '
-    + esc(m.noun) + '命中'
+    + esc(m('base-render.components-search-field-render.c003', { noun: model.noun }))
     + (pickedLabel === '' ? '' : '<span class="' + c + '-dim"> · 范围 <span ' + SEARCH_SCOPE_NAME_ATTR + '="">'
       + esc(pickedLabel) + '</span></span>')
     + '</span>'
-    + '<span class="' + c + '-status-loading">' + esc(m.loadingText) + '</span>'
+    + '<span class="' + c + '-status-loading">' + esc(model.loadingText) + '</span>'
     + '</p>';
   const nav = '<span class="' + c + '-nav">'
     + '<button type="button" class="' + c + '-step" ' + SEARCH_PREV_ATTR + '="" aria-label="' + SEARCH_DEFAULTS.prevLabel + '"'
-    + (m.disabled || m.loading ? ' disabled' : '') + '>‹</button>'
+    + (model.disabled || model.loading ? ' disabled' : '') + '>‹</button>'
     + '<span class="' + c + '-pos" ' + SEARCH_POS_ATTR + '="">第 <b ' + SEARCH_AT_ATTR + '="">' + SEARCH_DEFAULTS.unset
-    + '</b> ' + esc(m.noun) + ' / 共 <b ' + SEARCH_COUNT_ATTR + '="">' + SEARCH_DEFAULTS.unset + '</b> ' + esc(m.noun) + '</span>'
+    + '</b> ' + esc(model.noun) + ' / 共 <b ' + SEARCH_COUNT_ATTR + '="">' + SEARCH_DEFAULTS.unset + '</b> ' + esc(model.noun) + '</span>'
     + '<button type="button" class="' + c + '-step" ' + SEARCH_NEXT_ATTR + '="" aria-label="' + SEARCH_DEFAULTS.nextLabel + '"'
-    + (m.disabled || m.loading ? ' disabled' : '') + '>›</button>'
+    + (model.disabled || model.loading ? ' disabled' : '') + '>›</button>'
     + '</span>';
   return '<div class="' + c + '-readout" ' + SEARCH_READOUT_ATTR + '="">' + status + nav + '</div>';
 }

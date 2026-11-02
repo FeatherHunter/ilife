@@ -14,6 +14,7 @@ import {
 import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { dataCopyArea } from '../shared/copyArea.js';
 import type { MultiTrendView } from './multiTrend.js';
+import { m } from '../entries/index.js';
 
 /** envelope 头（与 `cli/keys.ts` 冻结值一致，测试钉死）。 */
 const DOC_VERSION = '0.1.0';
@@ -33,7 +34,7 @@ const DOC_SKILL = 'calorie';
 
 /** 标题：页型只写「整体趋势」，不再带组名与对照名（见上）。 */
 function docTitleOf(v: MultiTrendView): string {
-  return '卡路里·整体趋势 ' + v.start + ' ~ ' + v.end;
+  return m('skill-calorie.analysis-multiTrendPage.c001', { p0: String(v.start), p1: String(v.end) });
 }
 
 function fmt(n: number | null | undefined): string {
@@ -96,7 +97,7 @@ function calorieAxisOf(peak: number | null): {
   readonly format: (value: number) => string;
 } | null {
   if (peak === null || !Number.isFinite(peak) || peak <= 0) return null;
-  return axisOf(0, niceCeil(peak), '卡');
+  return axisOf(0, niceCeil(peak), m('skill-calorie.analysis-multiTrendPage.c002'));
 }
 
 /** B组独有分支判定：只处理季度／年度对比，默认形态与A组各分组走原路（指纹不动）。 */
@@ -106,35 +107,40 @@ function isBCompare(v: MultiTrendView): boolean {
 
 /** B组人话：窗口（近90天口径，180d＝近180天，730d＝近730天）。 */
 function bWindowHuman(window: string): string {
-  if (window === '7d') return '近7天';
-  if (window === '15d') return '近15天';
-  if (window === '30d') return '近30天';
-  if (window === '60d') return '近60天';
-  if (window === '90d') return '近90天';
-  if (window === '180d') return '近180天';
-  if (window === '365d') return '近365天';
-  if (window === '730d') return '近730天';
-  if (window === 'week_cur') return '本周';
-  if (window === 'month_cur') return '本月';
-  if (window === 'custom') return '自选时间';
+  if (window === '7d') return m('skill-calorie.analysis-multiTrendPage.c003');
+  if (window === '15d') return m('skill-calorie.analysis-multiTrendPage.c004');
+  if (window === '30d') return m('skill-calorie.analysis-multiTrendPage.c005');
+  if (window === '60d') return m('skill-calorie.analysis-multiTrendPage.c006');
+  if (window === '90d') return m('skill-calorie.analysis-multiTrendPage.c007');
+  if (window === '180d') return m('skill-calorie.analysis-multiTrendPage.c008');
+  if (window === '365d') return m('skill-calorie.analysis-multiTrendPage.c009');
+  if (window === '730d') return m('skill-calorie.analysis-multiTrendPage.c010');
+  if (window === 'week_cur') return m('skill-calorie.analysis-multiTrendPage.c011');
+  if (window === 'month_cur') return m('skill-calorie.analysis-multiTrendPage.c012');
+  if (window === 'custom') return m('skill-calorie.analysis-multiTrendPage.c013');
   return window;
 }
 
 /** B组人话：H1 标题（跨年长窗直接说人话——「近730天」读者一眼数不出是两年，「近两年」可以；
  *  精确天数留 meta 行与页面注释）。 */
 function bWindowTitle(window: string): string {
-  if (window === '60d') return '近两个月整体趋势';
-  if (window === '180d') return '近半年整体趋势';
-  if (window === '365d') return '近一年整体趋势';
-  if (window === '730d') return '近两年整体趋势';
-  return bWindowHuman(window) + '整体趋势';
+  if (window === '60d') return m('skill-calorie.analysis-multiTrendPage.c014');
+  if (window === '180d') return m('skill-calorie.analysis-multiTrendPage.c015');
+  if (window === '365d') return m('skill-calorie.analysis-multiTrendPage.c016');
+  if (window === '730d') return m('skill-calorie.analysis-multiTrendPage.c017');
+  return m('skill-calorie.analysis-multiTrendPage.c018', { p0: String(bWindowHuman(window)) });
 }
 
 /** B组人话：区间一句话（从哪天到哪天，共几天，几天有记录）。
  *  给 `bTechNote` 拼页面注释用——区间与「几天有记录」在可见面上已由 meta 行与结论摘要承担，
  *  注释里再原样留一份，供 e2e 与人工核对口径。 */
 function bRangeSentence(v: MultiTrendView): string {
-  return '从' + v.start + '到' + v.end + '，共' + v.days.length + '天，其中' + v.summary.loggedDays + '天有记录';
+  return m('skill-calorie.analysis-multiTrendPage.c019', {
+    p0: String(v.start),
+    p1: String(v.end),
+    p2: String(v.days.length),
+    p3: String(v.summary.loggedDays),
+  });
 }
 
 /** #160 返工②：整页徽章一律不传（空串＝`shared/docPage.ts` 整颗不渲染）。
@@ -156,7 +162,11 @@ function dateLabelOf(v: MultiTrendView): (date: string) => string {
  *  且 350／351／352 三页标着「对照月度／季度／年度值」而页上没有任何对比值 ⇒ 一律删；
  *  组名与对照参数全量留在页面注释（`bTechNote`）供 e2e 消费。 */
 function bMetaLeft(v: MultiTrendView): string {
-  return bWindowHuman(v.window) + ' · 热量＋体重 · ' + v.start + '~' + v.end;
+  return m('skill-calorie.analysis-multiTrendPage.c020', {
+    p0: String(bWindowHuman(v.window)),
+    p1: String(v.start),
+    p2: String(v.end),
+  });
 }
 
 /** 窗口里有几天记了吃多少（节卡与摘要的分母，与 `seriesCount(series,'calories')` 同义）。 */
@@ -188,9 +198,13 @@ function bSummaryLine(v: MultiTrendView): string {
   const days = v.days.length;
   const logged = v.summary.loggedDays;
   const blank = days - logged;
-  if (logged === 0) return days + ' 天的窗口里还没记过吃多少（空白日不按 0 算，只画有记录的两点之间）';
-  return days + ' 天的窗口里只有 ' + logged + ' 天记了吃多少'
-    + (blank > 0 ? '，其余 ' + blank + ' 天空着（空白日不按 0 算）' : '，一天没落');
+  if (logged === 0) return m('skill-calorie.analysis-multiTrendPage.c021', { p0: String(days) });
+  const otherNote = blank > 0 ? m('skill-calorie.analysis-multiTrendPage.c022', { p0: String(blank) }) : m('skill-calorie.analysis-multiTrendPage.c023');
+  return m('skill-calorie.analysis-multiTrendPage.c024', {
+    p0: String(days),
+    p1: String(logged),
+    p2: String(otherNote),
+  });
 }
 
 /** B线技术口径注释（e2e 消费的 window／group／compare 原词＋达标公式全进注释，可见文案只留人话）。
@@ -199,10 +213,17 @@ function bSummaryLine(v: MultiTrendView): string {
  *  #497：达标率分母由窗口天数改成有记录的天（旧句「达标率分母＝窗口天数 N」是旧口径，见 git 历史）。 */
 function bTechNote(v: MultiTrendView): string {
   const ok = compliantDaysOf(v);
-  return '<!-- 窗口' + v.window + ' 分组' + v.group + ' 对照' + v.compare + ' 数列唯一源buildSeries 最小形态 空窗阻断 不编数'
-    + ' 达标＝单日≤目标×1.05 T5 目标取库内现值 ' + bRangeSentence(v)
-    + ' 口径：达标率分母＝有记录的天' + v.summary.loggedDays + '（达标 ' + (ok === null ? '无目标，不统计' : ok + ' 天（整数，直读取数层）') + '）；日均热量分母＝记了吃多少的天'
-    + loggedCalorieDays(v) + '；日均运动分母＝记了运动的天' + loggedExerciseDays(v) + '；均值null跳过、空白日不补0 -->';
+  const okText = ok === null ? m('skill-calorie.analysis-multiTrendPage.c025') : m('skill-calorie.analysis-multiTrendPage.c026', { p0: String(ok) });
+  return m('skill-calorie.analysis-multiTrendPage.c027', {
+    p0: String(v.window),
+    p1: String(v.group),
+    p2: String(v.compare),
+    p3: String(bRangeSentence(v)),
+    p4: String(v.summary.loggedDays),
+    p5: String(okText),
+    p6: String(loggedCalorieDays(v)),
+    p7: String(loggedExerciseDays(v)),
+  });
 }
 
 /** B线目标图例（橙色虚线 #ff9500 不动，说明文字走正文色，随图走）。 */
@@ -219,19 +240,19 @@ function bTargetLegend(v: MultiTrendView): string {
 function bMonthlySummary(v: MultiTrendView): { rows: Array<Record<string, string>>; emptyMonths: number } {
   const map = new Map<string, { days: number; logged: number; sum: number; cnt: number }>();
   for (const d of v.days) {
-    const m = d.date.slice(0, 7);
-    let e = map.get(m);
-    if (!e) { e = { days: 0, logged: 0, sum: 0, cnt: 0 }; map.set(m, e); }
+    const monthKey = d.date.slice(0, 7);
+    let e = map.get(monthKey);
+    if (!e) { e = { days: 0, logged: 0, sum: 0, cnt: 0 }; map.set(monthKey, e); }
     e.days += 1;
     const c = d.calories;
     if (typeof c === 'number' && Number.isFinite(c)) { e.logged += 1; e.sum += c; e.cnt += 1; }
   }
   const shown = [...map.entries()].filter(([, e]) => e.cnt > 0);
-  const rows = shown.map(([m, e]) => {
-    const year = m.slice(0, 4);
-    const month = m.slice(5).replace(/^0/, '');
+  const rows = shown.map(([monthKey, e]) => {
+    const year = monthKey.slice(0, 4);
+    const month = monthKey.slice(5).replace(/^0/, '');
     return {
-      month: year + ' 年 ' + month + ' 月',
+      month: m('skill-calorie.analysis-multiTrendPage.c028', { p0: String(year), p1: String(month) }),
       days: String(e.days),
       logged: String(e.logged),
       avg: String(Math.round((e.sum / e.cnt) * 10) / 10),
@@ -252,25 +273,25 @@ function bKpiGrid(v: MultiTrendView): string {
   const logged = v.summary.loggedDays;
   const exerciseDays = loggedExerciseDays(v);
   const okDays = compliantDaysOf(v);
-  const range = v.target.calorieGoal === null ? '暂无目标' : '目标 ' + v.target.calorieGoal + ' 卡';
+  const range = v.target.calorieGoal === null ? m('skill-calorie.analysis-multiTrendPage.c029') : m('skill-calorie.analysis-multiTrendPage.c030', { p0: String(v.target.calorieGoal) });
   return renderKpiGrid([
-    { label: '日均热量', value: fmt(s.avgCalorie), unit: '卡', detail: loggedCalorieDays(v) + ' 天有热量记录 · ' + range },
+    { label: m('skill-calorie.analysis-multiTrendPage.c031'), value: fmt(s.avgCalorie), unit: m('skill-calorie.analysis-multiTrendPage.c032'), detail: m('skill-calorie.analysis-multiTrendPage.c033', { p0: String(loggedCalorieDays(v)), p1: String(range) }) },
     {
-      label: '体重变化', value: fmt(s.weightChange), unit: s.weightChange === null ? '' : 'kg',
-      detail: v.target.weightGoal === null ? '从开始到结束的变化' : '目标 ' + v.target.weightGoal + 'kg',
+      label: m('skill-calorie.analysis-multiTrendPage.c034'), value: fmt(s.weightChange), unit: s.weightChange === null ? '' : 'kg',
+      detail: v.target.weightGoal === null ? m('skill-calorie.analysis-multiTrendPage.c035') : m('skill-calorie.analysis-multiTrendPage.c036', { p0: String(v.target.weightGoal) }),
       status: s.weightChange === null ? undefined : (s.weightChange < 0 ? 'ok' : (s.weightChange > 0 ? 'warn' : undefined)),
     },
-    { label: '日均运动', value: fmt(s.avgExercise), unit: '卡', detail: exerciseDays + ' 天有运动记录' },
+    { label: m('skill-calorie.analysis-multiTrendPage.c037'), value: fmt(s.avgExercise), unit: m('skill-calorie.analysis-multiTrendPage.c038'), detail: m('skill-calorie.analysis-multiTrendPage.c039', { p0: String(exerciseDays) }) },
     /* #497：分母＝有记录的天（与取数层 complianceRate 同源；旧口径除以窗口天数）。
      * 无热量记录（纯称重／纯运动窗）不断言 0%（0/0 不编数），明示先记一餐。 */
     {
-      label: '达标比例', value: okDays === null || logged === 0 ? '—' : String(Math.round((okDays / logged) * 100)),
+      label: m('skill-calorie.analysis-multiTrendPage.c040'), value: okDays === null || logged === 0 ? '—' : String(Math.round((okDays / logged) * 100)),
       unit: okDays === null || logged === 0 ? '' : '%',
       detail: okDays === null
-        ? '暂无目标，先去设一个目标'
+        ? m('skill-calorie.analysis-multiTrendPage.c041')
         : (logged === 0
-          ? '这段时间还没记过吃多少，先记一餐再来看'
-          : '有记录的 ' + logged + ' 天里 ' + okDays + ' 天达标（每天不超过目标的 105%）'),
+          ? m('skill-calorie.analysis-multiTrendPage.c042')
+          : m('skill-calorie.analysis-multiTrendPage.c043', { p0: String(logged), p1: String(okDays) })),
     },
   ]);
 }
@@ -279,13 +300,13 @@ function bKpiGrid(v: MultiTrendView): string {
  *  单位回括号＝`热量(卡)`／`体重(kg)`／`热量缺口(卡)`，与同页图表标题同形）。 */
 function bDailyColumns(): Array<{ key: string; label: string; align?: 'right' }> {
   return [
-    { key: 'date', label: '日期' },
-    { key: 'calorie', label: '热量(卡)', align: 'right' },
-    { key: 'weight', label: '体重(kg)', align: 'right' },
-    { key: 'exercise', label: '运动消耗(卡)', align: 'right' },
-    { key: 'protein', label: '蛋白(g)', align: 'right' },
-    { key: 'deficit', label: '热量缺口(卡)', align: 'right' },
-    { key: 'water', label: '饮水(ml)', align: 'right' },
+    { key: 'date', label: m('skill-calorie.analysis-multiTrendPage.c044') },
+    { key: 'calorie', label: m('skill-calorie.analysis-multiTrendPage.c045'), align: 'right' },
+    { key: 'weight', label: m('skill-calorie.analysis-multiTrendPage.c046'), align: 'right' },
+    { key: 'exercise', label: m('skill-calorie.analysis-multiTrendPage.c047'), align: 'right' },
+    { key: 'protein', label: m('skill-calorie.analysis-multiTrendPage.c048'), align: 'right' },
+    { key: 'deficit', label: m('skill-calorie.analysis-multiTrendPage.c049'), align: 'right' },
+    { key: 'water', label: m('skill-calorie.analysis-multiTrendPage.c050'), align: 'right' },
   ];
 }
 
@@ -298,7 +319,7 @@ function buildBDoc(v: MultiTrendView): string {
     v.days.reduce((peak, d) => (typeof d.calories === 'number' && d.calories > peak ? d.calories : peak), 0),
     v.target.calorieGoal ?? 0,
   ))
-    ?? axisOf(0, 1, '卡');
+    ?? axisOf(0, 1, m('skill-calorie.analysis-multiTrendPage.c051'));
   const weightAxis = weightAxisOf(weighed.map((d) => d.weightKg as number));
   const dLabel = dateLabelOf(v);
   const techNote = bTechNote(v);
@@ -307,7 +328,7 @@ function buildBDoc(v: MultiTrendView): string {
     bKpiGrid(v),
     renderChartBlock({
       kind: 'line',
-      title: '每天吃了多少',
+      title: m('skill-calorie.analysis-multiTrendPage.c052'),
       input: {
         items: v.days.map((d) => ({ label: dLabel(d.date), value: d.calories })),
         options: {
@@ -319,7 +340,7 @@ function buildBDoc(v: MultiTrendView): string {
           /* #160：空白日不补 0、只连线——没有记录的日期在数列里是 null，公共层折线默认在 null 处断线，
            * 稀疏记录会只剩孤点（用户肉眼反馈「点之间总是没有线」）。 */
           connectNulls: true,
-          ...(v.target.calorieGoal === null ? {} : { markLine: { value: v.target.calorieGoal, label: '目标' } }),
+          ...(v.target.calorieGoal === null ? {} : { markLine: { value: v.target.calorieGoal, label: m('skill-calorie.analysis-multiTrendPage.c053') } }),
         },
       },
     }),
@@ -328,7 +349,7 @@ function buildBDoc(v: MultiTrendView): string {
   if (weighed.length > 0 && weightAxis !== null) {
     parts.push(renderChartBlock({
       kind: 'line',
-      title: '体重轨迹（共 ' + weighed.length + ' 次称重）',
+      title: m('skill-calorie.analysis-multiTrendPage.c054', { p0: String(weighed.length) }),
       input: {
         items: weighed.map((d) => ({ label: dLabel(d.date), value: d.weightKg })),
         options: {
@@ -341,7 +362,7 @@ function buildBDoc(v: MultiTrendView): string {
           legend: true,
           avgLine: 7,
           series: [
-            { name: '每次称重', items: weighed.map((d) => ({ label: dLabel(d.date), value: d.weightKg })) },
+            { name: m('skill-calorie.analysis-multiTrendPage.c055'), items: weighed.map((d) => ({ label: dLabel(d.date), value: d.weightKg })) },
           ],
         },
       },
@@ -358,22 +379,22 @@ function buildBDoc(v: MultiTrendView): string {
       deficit: fmt(d.deficit),
       water: fmt(d.waterMl),
     })),
-    caption: '逐日明细',
-    emptyText: '这段时间还没有逐日记录，先记一餐或称一次体重再来看',
+    caption: m('skill-calorie.analysis-multiTrendPage.c056'),
+    emptyText: m('skill-calorie.analysis-multiTrendPage.c057'),
   }));
   if (v.compare === 'yearly') {
     const last = parts.pop() as string;
     const monthly = bMonthlySummary(v);
     parts.push(renderDataTable({
       columns: [
-        { key: 'month', label: '月份' },
-        { key: 'days', label: '这个月几天', align: 'right' },
-        { key: 'logged', label: '记了几天', align: 'right' },
-        { key: 'avg', label: '日均热量', align: 'right' },
+        { key: 'month', label: m('skill-calorie.analysis-multiTrendPage.c058') },
+        { key: 'days', label: m('skill-calorie.analysis-multiTrendPage.c059'), align: 'right' },
+        { key: 'logged', label: m('skill-calorie.analysis-multiTrendPage.c060'), align: 'right' },
+        { key: 'avg', label: m('skill-calorie.analysis-multiTrendPage.c061'), align: 'right' },
       ],
       rows: monthly.rows,
-      caption: '按月汇总（只列有记录的月份）',
-      emptyText: '这段时间还没有逐日记录',
+      caption: m('skill-calorie.analysis-multiTrendPage.c062'),
+      emptyText: m('skill-calorie.analysis-multiTrendPage.c063'),
     }));
     if (monthly.emptyMonths > 0) {
       parts.push('<div class="legend"><span>其余 ' + monthly.emptyMonths + ' 个月没有记录</span></div>');
@@ -382,11 +403,11 @@ function buildBDoc(v: MultiTrendView): string {
       /* #160 返工④：折叠标题与 pair 页同款「每天一行」（`trendDocs.ts` 同一句），并在括号里报窗口天数；
        * 旧串「逐日明细（730 天）· 展开」的「· 展开」是死字（展开后仍写「展开」），且与块内那张
        * 名为「逐日明细」的表重名——现在标题说「一天一行」、表题说「逐日明细」，各说各的一件事。 */
-      title: '每天一行（共 ' + v.days.length + ' 天）',
+      title: m('skill-calorie.analysis-multiTrendPage.c064', { p0: String(v.days.length) }),
       contentHtml: last,
     }));
   }
-  parts.push(dataCopyArea('复制数据', {
+  parts.push(dataCopyArea(m('skill-calorie.analysis-multiTrendPage.c065'), {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.multi-trend',
       data: {
@@ -427,7 +448,7 @@ export function buildMultiTrendDoc(v: MultiTrendView): string {
   const calorieAxis = calorieAxisOf(Math.max(
     v.days.reduce((peak, d) => (typeof d.calories === 'number' && d.calories > peak ? d.calories : peak), 0),
     v.target.calorieGoal ?? 0,
-  )) ?? axisOf(0, 1, '卡');
+  )) ?? axisOf(0, 1, m('skill-calorie.analysis-multiTrendPage.c066'));
   const weightAxis = weightAxisOf(weighed.map((d) => d.weightKg as number));
   const dLabel = dateLabelOf(v);
   const techNote = bTechNote(v);
@@ -436,7 +457,7 @@ export function buildMultiTrendDoc(v: MultiTrendView): string {
     bKpiGrid(v),
     renderChartBlock({
       kind: 'line',
-      title: '每天吃了多少',
+      title: m('skill-calorie.analysis-multiTrendPage.c067'),
       input: {
         items: v.days.map((d) => ({ label: dLabel(d.date), value: d.calories })),
         options: {
@@ -445,10 +466,10 @@ export function buildMultiTrendDoc(v: MultiTrendView): string {
           labels: 'select',
           yMin: calorieAxis.yMin,
           yMax: calorieAxis.yMax,
-          emptyText: '暂无数据，换个窗口试试',
+          emptyText: m('skill-calorie.analysis-multiTrendPage.c068'),
           /* #160：同 A 组——空白日不补 0、只连线。 */
           connectNulls: true,
-          ...(v.target.calorieGoal === null ? {} : { markLine: { value: v.target.calorieGoal, label: '目标' } }),
+          ...(v.target.calorieGoal === null ? {} : { markLine: { value: v.target.calorieGoal, label: m('skill-calorie.analysis-multiTrendPage.c069') } }),
         },
       },
     }),
@@ -457,7 +478,7 @@ export function buildMultiTrendDoc(v: MultiTrendView): string {
   if (weighed.length > 0 && weightAxis !== null) {
     parts.push(renderChartBlock({
       kind: 'line',
-      title: '体重轨迹（共 ' + weighed.length + ' 次称重）',
+      title: m('skill-calorie.analysis-multiTrendPage.c070', { p0: String(weighed.length) }),
       input: {
         items: weighed.map((d) => ({ label: dLabel(d.date), value: d.weightKg })),
         options: {
@@ -470,7 +491,7 @@ export function buildMultiTrendDoc(v: MultiTrendView): string {
           legend: true,
           avgLine: 7,
           series: [
-            { name: '每次称重', items: weighed.map((d) => ({ label: dLabel(d.date), value: d.weightKg })) },
+            { name: m('skill-calorie.analysis-multiTrendPage.c071'), items: weighed.map((d) => ({ label: dLabel(d.date), value: d.weightKg })) },
           ],
         },
       },
@@ -487,10 +508,10 @@ export function buildMultiTrendDoc(v: MultiTrendView): string {
       deficit: fmt(d.deficit),
       water: fmt(d.waterMl),
     })),
-    caption: '逐日明细',
-    emptyText: '暂无数据，换个窗口试试',
+    caption: m('skill-calorie.analysis-multiTrendPage.c072'),
+    emptyText: m('skill-calorie.analysis-multiTrendPage.c073'),
   }));
-  parts.push(dataCopyArea('复制数据', {
+  parts.push(dataCopyArea(m('skill-calorie.analysis-multiTrendPage.c074'), {
     envelope: {
       version: DOC_VERSION, skill: DOC_SKILL, shape: 'stat', key: 'calorie.view.multi-trend',
       data: {

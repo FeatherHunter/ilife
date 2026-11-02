@@ -17,6 +17,7 @@
  * **先校验再算**：总价解析不出、期数不是正整数、首期日不是有效日期，一律当场抛错——不静默当空、
  *  不拿 `NaN` 往下走（老侧那段裸转数字先崩，本件不照抄那一处）。
  */
+import { m } from '../entries/index.js';
 import { renderCaliberLine, renderDataTable, renderDisclosure } from 'base-paint/blocks';
 
 /** 一期：第几期 ＋ 这一期多少钱 ＋ 哪一天。 */
@@ -72,11 +73,11 @@ function periodsOf(raw: string | number): number {
 /** 首期日 → 年月日。格式不对或日历上没有这一天一律抛错（**先校验再算**的第三处）。 */
 function ymdOf(raw: string): { readonly y: number; readonly m: number; readonly d: number } {
   const s = typeof raw === 'string' ? raw.trim() : '';
-  const m = DATE.exec(s);
-  if (m === null) throw new Error('installmentPreview：首期日解析失败——「' + s + '」不是 YYYY-MM-DD');
-  const y = Number(m[1]);
-  const mo = Number(m[2]);
-  const d = Number(m[3]);
+  const parts = DATE.exec(s);
+  if (parts === null) throw new Error('installmentPreview：首期日解析失败——「' + s + '」不是 YYYY-MM-DD');
+  const y = Number(parts[1]);
+  const mo = Number(parts[2]);
+  const d = Number(parts[3]);
   const daysInMonth = new Date(Date.UTC(y, mo, 0)).getUTCDate();
   if (mo < 1 || mo > 12 || d < 1 || d > daysInMonth) {
     throw new Error('installmentPreview：首期日「' + s + '」这一天不存在');
@@ -93,9 +94,9 @@ function pad(n: number): string {
 function shiftMonths(ymd: { readonly y: number; readonly m: number; readonly d: number }, k: number): string {
   const months = ymd.y * 12 + (ymd.m - 1) + k;
   const y = Math.floor(months / 12);
-  const m = (months % 12) + 1;
-  const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
-  return y + '-' + pad(m) + '-' + pad(Math.min(ymd.d, daysInMonth));
+  const month = (months % 12) + 1;
+  const daysInMonth = new Date(Date.UTC(y, month, 0)).getUTCDate();
+  return y + '-' + pad(month) + '-' + pad(Math.min(ymd.d, daysInMonth));
 }
 
 /** 分摊：逐期金额 ＋ 日期（纯函数）。**合计逐分等于总价**——算完当场核一遍，不等距就抛错。 */
@@ -124,16 +125,16 @@ function yuan(amount: number): string {
 
 /** 表体格的一行。 */
 function rowOf(s: InstallmentShare): { readonly no: string; readonly amount: string; readonly date: string } {
-  return { no: '第 ' + s.no + ' 期', amount: yuan(s.amount), date: s.date };
+  return { no: m('skill-bill.write-installmentPreview.c001', { p1: String(s.no) }), amount: yuan(s.amount), date: s.date };
 }
 
 /** 分摊表（一页表体，列与行都由本件定）。 */
 function shareTable(shares: readonly InstallmentShare[], caption: string): string {
   return renderDataTable({
     columns: [
-      { key: 'no', label: '期数' },
-      { key: 'amount', label: '每期金额', align: 'right' },
-      { key: 'date', label: '日期' },
+      { key: 'no', label: m('skill-bill.write-installmentPreview.c002') },
+      { key: 'amount', label: m('skill-bill.write-installmentPreview.c003'), align: 'right' },
+      { key: 'date', label: m('skill-bill.write-installmentPreview.c004') },
     ],
     rows: shares.map(rowOf),
     caption,
@@ -154,16 +155,15 @@ export function installmentPreview(input: InstallmentInput): string {
   const head = folded ? shares.slice(0, HEAD_PERIODS) : shares;
   const rest = folded ? shares.slice(HEAD_PERIODS) : [];
   const parts = [renderCaliberLine(
-    '每期＝总价 ÷ 期数，四舍五入到分。尾差对齐到最后一期（末期＝总价 − 每期 × (期数 − 1)），'
-    + '故合计逐分等于总价：' + yuan(total) + '（' + periods + ' 期）。',
+    m('skill-bill.write-installmentPreview.c005', { p1: String(yuan(total)), p2: String(periods) }),
   )];
   parts.push(shareTable(head, folded
-    ? '分摊预览：共 ' + periods + ' 期，这里先显前 ' + HEAD_PERIODS + ' 期。合计 ' + yuan(total) + '，等于总价'
-    : '分摊预览：共 ' + periods + ' 期。合计 ' + yuan(total) + '，等于总价'));
+    ? m('skill-bill.write-installmentPreview.c006', { p1: String(periods), p2: String(HEAD_PERIODS), p3: String(yuan(total)) })
+    : m('skill-bill.write-installmentPreview.c007', { p1: String(periods), p2: String(yuan(total)) })));
   if (rest.length > 0) {
     parts.push(renderDisclosure({
-      title: '还有 ' + rest.length + ' 期（折叠在这里）',
-      contentHtml: shareTable(rest, '第 ' + (HEAD_PERIODS + 1) + ' 期到第 ' + periods + ' 期'),
+      title: m('skill-bill.write-installmentPreview.c008', { p1: String(rest.length) }),
+      contentHtml: shareTable(rest, m('skill-bill.write-installmentPreview.c009', { p1: String((HEAD_PERIODS + 1)), p2: String(periods) })),
     }));
   }
   return parts.join('');

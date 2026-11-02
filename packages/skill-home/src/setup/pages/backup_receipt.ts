@@ -5,6 +5,18 @@
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { m } from '../../entries/index.js';
+
+/** 本页可见文案（渲染期取词：写成函数，模块加载时不取词）。 */
+function pageText() {
+  return {
+    k001: m('skill-home.setup-pages-backup-receipt.c001'),
+    k002: m('skill-home.setup-pages-backup-receipt.c002'),
+    k003: (p0: string) => m('skill-home.setup-pages-backup-receipt.c003', { p0: String(p0) }),
+    k004: m('skill-home.setup-pages-backup-receipt.c004'),
+  };
+}
+
 
 export const FAMILY = 'backup_receipt' as const;
 
@@ -88,6 +100,19 @@ function nowStr(): string {
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
 // 复制区走共用件（envelope 投影，三格式恒开；receipt 形 data={ok,message} 同走 buildDataText）；`ctx.command` 由交付链供给，直调缺省按本族主 key。
 export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
+  const SX = {
+    k001: m('skill-home.setup-pages-backup-receipt.c009'),
+    k002: m('skill-home.setup-pages-backup-receipt.c010'),
+    k003: m('skill-home.setup-pages-backup-receipt.c011'),
+    k004: m('skill-home.setup-pages-backup-receipt.c012'),
+    k005: m('skill-home.setup-pages-backup-receipt.c013'),
+    k006: m('skill-home.setup-pages-backup-receipt.c014'),
+    k007: m('skill-home.setup-pages-backup-receipt.c015'),
+    k008: m('skill-home.setup-pages-backup-receipt.c016'),
+    k009: m('skill-home.setup-pages-backup-receipt.c017'),
+    k010: m('skill-home.setup-pages-backup-receipt.c018'),
+  };
+  const L = pageText();
   const template = readFileSync(new URL('../../../templates/setup/backup_receipt.html', import.meta.url), 'utf8');
   const msg = msgOf(env);
   const hist = listOf(env);
@@ -141,7 +166,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '</style>'
     + '<div class="su-wrap">'
     + '<div class="su-hero"><div class="su-eyebrow">开始使用</div>'
-    + '<p class="su-lead">' + (isExport ? '导出完成，文件已经落盘，拿走即可在别处用。' : '备份完成，数据已经打包。') + '</p></div>'
+    + '<p class="su-lead">' + (isExport ? m('skill-home.setup-pages-backup-receipt.c005') : m('skill-home.setup-pages-backup-receipt.c006')) + '</p></div>'
     + '<section class="su-sec" data-block="fields">'
     + '<h2 data-need="本次备份（路径/大小/时间）">本次结果</h2>'
     + '<div class="su-tablewrap"><table class="su-table su-kv">'
@@ -151,15 +176,15 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '</table></div>'
     + '<h2 data-need="备份历史（保留N份）">备份历史</h2>'
     + (hasRecord
-      ? '<div class="su-tablewrap"><table class="su-table"><tr><th>备份文件</th></tr>' + histRows + '</table></div>'
-      : '<div class="su-tablewrap"><table class="su-table"><tr><th>备份文件</th><td>—</td></tr></table></div>')
+      ? '<div class="su-tablewrap">' + '<table class="su-table">' + '<tr>' + '<th>' + L.k001 + '</th>' + '</tr>' + histRows + '</table>' + '</div>'
+      : '<div class="su-tablewrap">' + '<table class="su-table">' + '<tr>' + '<th>' + L.k002 + '</th>' + '<td>' + '—' + '</td>' + '</tr>' + '</table>' + '</div>')
     + '<div class="su-grid">'
-    + '<div class="su-card"><b data-need="距上次备份天数">距上次备份</b><span>' + (hasRecord ? '刚刚' : '从未备份') + '</span></div>'
+    + '<div class="su-card"><b data-need="距上次备份天数">距上次备份</b><span>' + (hasRecord ? m('skill-home.setup-pages-backup-receipt.c007') : m('skill-home.setup-pages-backup-receipt.c008')) + '</span></div>'
     + '</div>'
     + '<h2 data-need="保留份数输入">保留份数</h2>'
     + '<div class="su-frm"><label for="suKeep" data-need="保留份数默认值">保留几份旧备份</label>'
     + '<select id="suKeep" data-need="保留份数下拉">'
-    + ['3', '5', '10'].map((n) => '<option value="' + n + '"' + (n === keep ? ' selected' : '') + '>' + n + ' 份</option>').join('')
+    + ['3', '5', '10'].map((n) => '<option value="' + n + '"' + (n === keep ? ' selected' : '') + '>' + L.k003(String(n)) + '</option>').join('')
     + '</select></div>'
     // #817 核对：下拉必定有选中值（`keepOf` 缺省 '5'，options 恰含 3／5／10，故必有一颗带 selected），
     // 页上同时印「该参数不能为空」＝自相矛盾；加 hidden 收起该句，data-need 标记留在原位（判据仍查得到）。
@@ -188,8 +213,8 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '<section class="su-sec" data-block="empty">'
     + '<h2>这种时候会怎样</h2>'
     + (hasRecord
-      ? '<p hidden data-need="空态：暂无备份记录"></p>'
-      : '<p data-need="空态：暂无备份记录">暂无备份记录，点确认备份建立第一份。</p>')
+      ? '<p hidden data-need="空态：暂无备份记录">' + '</p>'
+      : '<p data-need="空态：暂无备份记录">' + L.k004 + '</p>')
     + '<p data-need="异常：数据解析失败／数据校验失败／备份失败">如果提示解析失败、校验失败或者备份失败，先确认库还在，再用确认备份重试一次。</p>'
     + '</section>'
     + '<section class="su-sec" data-block="status">'
@@ -203,11 +228,11 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '<script>'
     + 'function suToast(t){var el=document.getElementById("suToast");if(!el)return;el.textContent=t;el.classList.add("show");setTimeout(function(){el.classList.remove("show")},3500)}'
     + 'function suCopy(text,ok){function fb(){try{var ta=document.createElement("textarea");ta.value=text;document.body.appendChild(ta);ta.select();var ok=false;try{ok=document.execCommand("copy")}catch(e){}document.body.removeChild(ta);return ok}catch(e){return false}}'
-    + 'if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(function(){suToast(ok)}).catch(function(){suToast(fb()?ok:"复制失败，请长按手动复制")})}else{suToast(fb()?ok:"复制失败，请长按手动复制")}}'
-    + 'document.querySelectorAll("[data-t]").forEach(function(b){b.addEventListener("click",function(){var k=document.getElementById("suKeep");var n=k?k.value:"5";suCopy(b.getAttribute("data-t")+"，保留 "+n+" 份","指令已复制，发给助手即可执行")})});'
-    + 'var ej=document.getElementById("suExpJson");if(ej)ej.addEventListener("click",function(){suCopy("请帮我导出数据文件","指令已复制，发给助手即可执行")});'
-    + 'var ec=document.getElementById("suExpCsv");if(ec)ec.addEventListener("click",function(){suCopy("请帮我导出表格文件","指令已复制，发给助手即可执行")});'
-    + 'var kd=document.getElementById("suKnow");if(kd)kd.addEventListener("click",function(){suToast("收到")});'
+    + "if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(function(){suToast(ok)}).catch(function(){suToast(fb()?ok:\"" + SX.k001 + "\")})}else{suToast(fb()?ok:\"" + SX.k002 + "\")}}"
+    + "document.querySelectorAll(\"[data-t]\").forEach(function(b){b.addEventListener(\"click\",function(){var k=document.getElementById(\"suKeep\");var n=k?k.value:\"5\";suCopy(b.getAttribute(\"data-t\")+\"" + SX.k003 + " \"+n+\" " + SX.k004 + "\",\"" + SX.k005 + "\")})});"
+    + "var ej=document.getElementById(\"suExpJson\");if(ej)ej.addEventListener(\"click\",function(){suCopy(\"" + SX.k006 + "\",\"" + SX.k007 + "\")});"
+    + "var ec=document.getElementById(\"suExpCsv\");if(ec)ec.addEventListener(\"click\",function(){suCopy(\"" + SX.k008 + "\",\"" + SX.k009 + "\")});"
+    + "var kd=document.getElementById(\"suKnow\");if(kd)kd.addEventListener(\"click\",function(){suToast(\"" + SX.k010 + "\")});"
     + '</script>';
   return fillTemplate(template, content);
 }

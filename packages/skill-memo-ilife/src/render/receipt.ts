@@ -13,6 +13,7 @@
  */
 import { bookletFileStem } from '../help/booklet.js';
 import { pageEnvelope, fillMemoPage, type PageSnapshot, type PageCopyLog } from './pages.js';
+import { m } from '../entries/index.js';
 
 /** 场景 id → 本族页。逐域**追加**，不改别人的行（写集互斥）：
  *  mood 域三条 ← #831；remind 域两条 ← #828；wish 域五条 ← #829；memo 域六条 ← #826；
@@ -75,25 +76,31 @@ export interface ReceiptPageInput {
 }
 
 /** 本地侧做了什么 → 人话（`WishReceipt['local']` 的六个取值，一处定义）。 */
-const LOCAL_LABEL: Record<string, string> = {
-  created: '已新建',
-  existing: '已存在（未重复建）',
-  updated: '已修改',
-  unchanged: '未改动',
-  removed: '已删除',
-  checked: '只校验远端（本地零写）',
-};
+function localLabelOf(local: string): string {
+  const table: Readonly<Record<string, string>> = {
+    created: m('skill-memo-ilife.render-receipt.c007'),
+    existing: m('skill-memo-ilife.render-receipt.c008'),
+    updated: m('skill-memo-ilife.render-receipt.c009'),
+    unchanged: m('skill-memo-ilife.render-receipt.c010'),
+    removed: m('skill-memo-ilife.render-receipt.c011'),
+    checked: m('skill-memo-ilife.render-receipt.c012'),
+  };
+  return table[local] ?? local;
+}
 
 /** 远端侧做了什么 → 人话（`WishReceipt['remote']` 的七个取值，一处定义）。 */
-const REMOTE_LABEL: Record<string, string> = {
-  created: '已在飞书新建任务',
-  existing: '飞书已有任务',
-  synced: '已同步飞书',
-  partial: '飞书部分成功',
-  unavailable: '飞书不可用（本机没装或没登录）',
-  failed: '飞书同步失败',
-  'not-applicable': '不适用（这条没有飞书任务）',
-};
+function remoteLabelOf(remote: string): string {
+  const table: Readonly<Record<string, string>> = {
+    created: m('skill-memo-ilife.render-receipt.c013'),
+    existing: m('skill-memo-ilife.render-receipt.c014'),
+    synced: m('skill-memo-ilife.render-receipt.c015'),
+    partial: m('skill-memo-ilife.render-receipt.c016'),
+    unavailable: m('skill-memo-ilife.render-receipt.c017'),
+    failed: m('skill-memo-ilife.render-receipt.c018'),
+    'not-applicable': m('skill-memo-ilife.render-receipt.c019'),
+  };
+  return table[remote] ?? remote;
+}
 
 /** 「对象」那一行的后半（#882）：数字＝记录号，加 `#`；字符串＝域侧自述，原样上屏、不吃 `#`
  *  （不这么分，批量那一格会被拼成 `#1 条` —— `#` 后面跟的不是记录号）。 */
@@ -106,9 +113,12 @@ function objectRowTailOf(entityId: string | number): string {
  *  取值不认得的原样透出，不静默吞掉。 */
 function receiptUserRows(r: ReceiptRows): string[] {
   return [
-    '对象：' + r.entityLabel + objectRowTailOf(r.entityId),
-    '本地侧：' + (LOCAL_LABEL[r.local] ?? r.local),
-    '远端侧：' + (REMOTE_LABEL[r.remote] ?? r.remote),
+    m('skill-memo-ilife.render-receipt.c001', {
+      p0: String(r.entityLabel),
+      p1: String(objectRowTailOf(r.entityId)),
+    }),
+    m('skill-memo-ilife.render-receipt.c002', { p0: String(localLabelOf(r.local)) }),
+    m('skill-memo-ilife.render-receipt.c003', { p0: String(remoteLabelOf(r.remote)) }),
   ];
 }
 
@@ -126,9 +136,11 @@ function receiptUserRows(r: ReceiptRows): string[] {
  *  契约管的是那份 JSON，不是页面形状）。模板侧 `renderRows()` 按 heading「处理结果」把这整段滤掉，
  *  故本段只作数据面，一个字都不上屏。 */
 function receiptSection(r: ReceiptRows): PageSnapshot['sections'][number] {
+  // #1225：空值兜底抽成局部变量（迁移器不切链内分支）。
+  const remoteIdText = r.remoteId === null || r.remoteId === '' ? m('skill-memo-ilife.render-receipt.c004') : r.remoteId;
   return {
-    heading: '处理结果',
-    rows: [...receiptUserRows(r), '远端标识：' + (r.remoteId === null || r.remoteId === '' ? '无' : r.remoteId)],
+    heading: m('skill-memo-ilife.render-receipt.c005'),
+    rows: [...receiptUserRows(r), m('skill-memo-ilife.render-receipt.c006', { p0: String(remoteIdText) })],
   };
 }
 

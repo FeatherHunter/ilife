@@ -17,10 +17,11 @@ import { PLAN_EDITOR_CSS } from './planEditorCss.js';
 import { serializeState, type EditorState } from './planEditor.js';
 import { PLAN_EDITOR_PAGE_JS, planEditorSetCommand } from './planEditorRuntime.js';
 import { nowStamp } from '../render/receipt.js';
+import { m } from '../entries/index.js';
 
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
-const DOC_TITLE = '卡路里·健身计划';
+const DOC_TITLE = (): string => m('skill-calorie.workout-planEditorDocs.c006');
 
 /** 计划编辑器整页。 */
 export function buildPlanEditorDoc(state: EditorState, opts: {
@@ -28,9 +29,7 @@ export function buildPlanEditorDoc(state: EditorState, opts: {
 }): string {
   const parts: string[] = [
     // 口径行：把四条规矩一次说清，用户不必猜「为什么第 2 周加不了动作」。
-    renderCaliberLine('这份计划是按我们刚才讨论的结果填好的，你看着改。'
-      + '动作结构只在第 1 周改，后面每一周的动作都跟它一样，各周自己填时间、重量、次数与时长。'
-      + '每天最多 ' + state.maxSessionsPerDay + ' 个时间段，新建时挑一个时段（同一时段可建多段，靠起止时间分），建好后定时间；有氧只填时长。'),
+    renderCaliberLine(m('skill-calorie.workout-planEditorDocs.c001', { p0: String(state.maxSessionsPerDay) })),
     '<div id="pe-root"></div>',
     '<section class="pe-out">'
       + '<h2 class="pe-out-t">生成的计划，照这张表落库</h2>'
@@ -47,7 +46,7 @@ export function buildPlanEditorDoc(state: EditorState, opts: {
           }),
         },
       } satisfies SerializableEnvelope,
-      dataTitle: '【calorie 定训练计划】',
+      dataTitle: m('skill-calorie.workout-planEditorDocs.c002'),
       // #948 · 故障 9②：这一段**就是本页要交付的那条命令**（`calorie.workout.plan-set` ＋ 本次状态），
       // 出处与页内运行时同一份（`planEditorRuntime.ts` 的模板 ＋ 同一个状态转写）。
       // 页内运行时按当刻状态整段重写进 `data-t` 与预览块（状态在页上会变）；这里先给一份**开页那份状态**
@@ -55,15 +54,15 @@ export function buildPlanEditorDoc(state: EditorState, opts: {
       // 原来这里是一句占位串（「…明细见下面的计划表。」）：既不是命令、也与页内那份走散。
       prompt: planEditorSetCommand(state),
       log: copyLog({
-        command: opts.command, source: '计划编辑器，页内状态，尚未写库',
+        command: opts.command, source: m('skill-calorie.workout-planEditorDocs.c003'),
         actionAt: nowStamp(), version: DOC_VERSION,
       }),
     }),
   ];
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '定训练计划',
-    eyebrow: '健身计划',
+    docTitle: DOC_TITLE(),
+    title: m('skill-calorie.workout-planEditorDocs.c004'),
+    eyebrow: m('skill-calorie.workout-planEditorDocs.c005'),
     subtitle: null,
     content: pageChromeCss(1080) + '<style>\n' + PLAN_EDITOR_CSS + '\n</style>' + parts.join('')
       + '<script type="application/json" id="pe-state">' + serializeState(state) + '</script>'

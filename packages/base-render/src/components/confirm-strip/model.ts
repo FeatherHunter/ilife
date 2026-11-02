@@ -20,6 +20,7 @@ import {
   type ConfirmStripForm,
   type ConfirmStripState,
 } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 内部类型：每个字段都已校验、已归一（`undefined` 一律换成「不给」或缺省值）。 */
 export interface ConfirmStripModel {
@@ -87,7 +88,7 @@ export function normalizeConfirmStrip(input: unknown): ConfirmStripModel {
 
   /* 危险动词：动词打头、不是空词、不带空白 —— 这三条合起来才保证按钮上写着「会怎样」。 */
   const dangerVerb = reqText(raw.dangerVerb, 'confirm-strip: input.dangerVerb');
-  if ((CONFIRM_STRIP_BARE_WORDS as readonly string[]).includes(dangerVerb)) {
+  if ((CONFIRM_STRIP_BARE_WORDS() as readonly string[]).includes(dangerVerb)) {
     badInput('confirm-strip: input.dangerVerb 不许是空词「' + dangerVerb + '」——'
       + '它不回答「按下去会怎样」，请给动词（如「删掉」「永久删除」）');
   }
@@ -132,14 +133,22 @@ export function normalizeConfirmStrip(input: unknown): ConfirmStripModel {
     badInput('confirm-strip: 给了 input.backupLabel 就要同时给 input.backup: true（措辞只在那一项存在时才有用）');
   }
   const backupLabel = raw.backup === true
-    ? (optText(raw.backupLabel, 'confirm-strip: input.backupLabel') ?? CONFIRM_STRIP_BACKUP_DEFAULT)
+    ? (optText(raw.backupLabel, 'confirm-strip: input.backupLabel') ?? CONFIRM_STRIP_BACKUP_DEFAULT())
     : undefined;
 
-  const unit = optText(raw.unit, 'confirm-strip: input.unit') ?? CONFIRM_STRIP_UNIT_DEFAULT;
+  const unit = optText(raw.unit, 'confirm-strip: input.unit') ?? CONFIRM_STRIP_UNIT_DEFAULT();
   const title = optText(raw.title, 'confirm-strip: input.title')
-    ?? '要' + dangerVerb + '这 ' + String(count) + ' ' + unit + '吗？';
+    ?? m('base-render.components-confirm-strip-model.c001', {
+      p0: String(dangerVerb),
+      p1: String(String(count)),
+      p2: String(unit),
+    });
   const status = state === 'busy'
-    ? '正在' + dangerVerb + '这 ' + String(count) + ' ' + unit + '…'
+    ? m('base-render.components-confirm-strip-model.c002', {
+      p0: String(dangerVerb),
+      p1: String(String(count)),
+      p2: String(unit),
+    })
     : (disabledHint ?? '');
 
   return {
@@ -149,14 +158,18 @@ export function normalizeConfirmStrip(input: unknown): ConfirmStripModel {
     count,
     unit,
     title,
-    badge: undoable ? '可撤销' : '不可撤销',
-    dangerLabel: dangerVerb + '这 ' + String(count) + ' ' + unit,
+    badge: undoable ? m('base-render.components-confirm-strip-model.c003') : m('base-render.components-confirm-strip-model.c004'),
+    dangerLabel: m('base-render.components-confirm-strip-model.c005', {
+      p0: String(dangerVerb),
+      p1: String(String(count)),
+      p2: String(unit),
+    }),
     items,
     undoable,
-    noteLead: undoable ? '可以撤销' : '不能撤销',
-    noteTail: undoable ? (undoHint as string) : (loss ?? CONFIRM_STRIP_LOSS_DEFAULT),
+    noteLead: undoable ? m('base-render.components-confirm-strip-model.c006') : m('base-render.components-confirm-strip-model.c007'),
+    noteTail: undoable ? (undoHint as string) : (loss ?? CONFIRM_STRIP_LOSS_DEFAULT()),
     status,
-    keepLabel: optText(raw.keepLabel, 'confirm-strip: input.keepLabel') ?? CONFIRM_STRIP_KEEP_DEFAULT,
+    keepLabel: optText(raw.keepLabel, 'confirm-strip: input.keepLabel') ?? CONFIRM_STRIP_KEEP_DEFAULT(),
     backupLabel,
     extraClass: optExtraClass(raw.extraClass, 'confirm-strip: input.extraClass'),
   };

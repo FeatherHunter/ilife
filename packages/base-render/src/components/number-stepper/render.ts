@@ -40,6 +40,7 @@ import {
   type NumberStepperForm,
 } from './attrs.js';
 import { normalizeNumberStepper, type NumberStepperModel } from './model.js';
+import { m } from '../../entries/index.js';
 
 /** 千分位分组：`1234.5` → `1,234.5`（本仓读数一律分组，与账目／热量同一条口径）。 */
 function grouped(intPart: string): string {
@@ -61,20 +62,20 @@ function valueWord(value: number | null, unit: string | undefined, decimals: num
 }
 
 /** 右上状态字：更新中 → 未设置 → 已到下限／上限 → 不出（**四档是闭集外的空档，不是颜色**）。 */
-function stateWord(m: NumberStepperModel): string {
-  if (m.loading) return NUMBER_STEPPER_LOADING;
-  if (m.value === null) return NUMBER_STEPPER_UNSET;
-  if (m.value <= m.min) return NUMBER_STEPPER_AT_MIN;
-  if (m.value >= m.max) return NUMBER_STEPPER_AT_MAX;
+function stateWord(model: NumberStepperModel): string {
+  if (model.loading) return NUMBER_STEPPER_LOADING();
+  if (model.value === null) return NUMBER_STEPPER_UNSET();
+  if (model.value <= model.min) return NUMBER_STEPPER_AT_MIN();
+  if (model.value >= model.max) return NUMBER_STEPPER_AT_MAX();
   return '';
 }
 
 /** 第一行：标签（左）＋ 状态字（右）。状态字是**字**这一档的落点（不只靠颜色）。 */
-function headHtml(m: NumberStepperModel): string {
-  const state = stateWord(m);
+function headHtml(model: NumberStepperModel): string {
+  const state = stateWord(model);
   const parts: string[] = ['<div class="' + numberStepperSlot('head') + '">'];
-  if (m.label !== undefined) {
-    parts.push('<span class="' + numberStepperSlot('label') + '">' + esc(m.label) + '</span>');
+  if (model.label !== undefined) {
+    parts.push('<span class="' + numberStepperSlot('label') + '">' + esc(model.label) + '</span>');
   }
   if (state !== '') {
     parts.push('<span class="' + numberStepperSlot('state') + '" ' + NUMBER_STEPPER_STATE_ATTR + '="'
@@ -91,24 +92,27 @@ function errorId(name: string): string {
 
 /** 可点区的「不能按」口径：`disabled` 是真禁用（原生键）；`loading` 期只挂 `aria-disabled`
  *  ＋ `tabindex="-1"`，由运行时段拦下点击（**原地换字、宽度锁住**，不让脏点击串成两次变更）。 */
-function hitState(m: NumberStepperModel): string {
-  if (m.disabled) return ' disabled aria-disabled="true"';
-  if (m.loading) return ' aria-disabled="true" tabindex="-1"';
+function hitState(model: NumberStepperModel): string {
+  if (model.disabled) return ' disabled aria-disabled="true"';
+  if (model.loading) return ' aria-disabled="true" tabindex="-1"';
   return '';
 }
 
 /** `− n ＋` 三个可点区。三枚都带 `data-ilife-stepper-hit`（判据按它量触控目标 ≥44×44）。 */
-function controlsHtml(m: NumberStepperModel): string {
-  const stepWord = formatStepperValue(m.step, m.decimals);
-  const unit = m.unit === undefined ? '' : ' ' + m.unit;
-  const described = m.error === undefined && m.disabledReason === undefined
-    ? '' : ' aria-describedby="' + esc(errorId(m.name)) + '"';
-  const state = hitState(m);
+function controlsHtml(model: NumberStepperModel): string {
+  const stepWord = formatStepperValue(model.step, model.decimals);
+  const unit = model.unit === undefined ? '' : ' ' + model.unit;
+  const described = model.error === undefined && model.disabledReason === undefined
+    ? '' : ' aria-describedby="' + esc(errorId(model.name)) + '"';
+  const state = hitState(model);
 
-  const decLabel = '减 ' + stepWord + unit;
-  const incLabel = '加 ' + stepWord + unit;
-  const valueLabel = (m.label === undefined ? '数值' : m.label) + ' ' + valueWord(m.value, m.unit, m.decimals)
-    + '，点一下直接填一个数';
+  const decLabel = m('base-render.components-number-stepper-render.c001', { p0: String(stepWord), p1: String(unit) });
+  const incLabel = m('base-render.components-number-stepper-render.c002', { p0: String(stepWord), p1: String(unit) });
+  const labelText = model.label === undefined ? m('base-render.components-number-stepper-render.c003') : model.label;
+  const valueLabel = m('base-render.components-number-stepper-render.c004', {
+    p0: String(labelText),
+    p1: String(valueWord(model.value, model.unit, model.decimals)),
+  });
 
   const parts: string[] = ['<div class="' + numberStepperSlot('controls') + '">'];
   parts.push('<button type="button" class="' + numberStepperSlot('dec') + '"'
@@ -119,9 +123,9 @@ function controlsHtml(m: NumberStepperModel): string {
     + ' ' + NUMBER_STEPPER_HIT_ATTR + '="value" ' + NUMBER_STEPPER_ACT_ATTR + '="edit"'
     + ' aria-label="' + esc(valueLabel) + '"' + described + state + '>'
     + '<b class="' + numberStepperSlot('number') + '">'
-    + esc(m.value === null ? NUMBER_STEPPER_MISSING : formatStepperValue(m.value, m.decimals))
+    + esc(model.value === null ? NUMBER_STEPPER_MISSING : formatStepperValue(model.value, model.decimals))
     + '</b>'
-    + (m.unit === undefined ? '' : '<small class="' + numberStepperSlot('unit') + '">' + esc(m.unit) + '</small>')
+    + (model.unit === undefined ? '' : '<small class="' + numberStepperSlot('unit') + '">' + esc(model.unit) + '</small>')
     + '</button>');
   parts.push('<button type="button" class="' + numberStepperSlot('inc') + '"'
     + ' ' + NUMBER_STEPPER_HIT_ATTR + '="inc" ' + NUMBER_STEPPER_ACT_ATTR + '="inc"'
@@ -132,43 +136,43 @@ function controlsHtml(m: NumberStepperModel): string {
 }
 
 /** 常用值那一排：当前值命中哪一枚，哪一枚就是 `aria-pressed="true"`（形＋色一起给）。 */
-function quickHtml(m: NumberStepperModel): string {
-  if (m.presets.length === 0) return '';
-  const state = hitState(m);
+function quickHtml(model: NumberStepperModel): string {
+  if (model.presets.length === 0) return '';
+  const state = hitState(model);
   const parts: string[] = ['<div class="' + numberStepperSlot('quick') + '">'];
-  parts.push('<span class="' + numberStepperSlot('quickLabel') + '">' + esc(NUMBER_STEPPER_QUICK_LABEL) + '</span>');
-  for (const preset of m.presets) {
-    const pressed = m.value !== null && Math.abs(m.value - preset) < 1e-9;
+  parts.push('<span class="' + numberStepperSlot('quickLabel') + '">' + esc(NUMBER_STEPPER_QUICK_LABEL()) + '</span>');
+  for (const preset of model.presets) {
+    const pressed = model.value !== null && Math.abs(model.value - preset) < 1e-9;
     parts.push('<button type="button" class="' + numberStepperSlot('preset') + '"'
       + ' ' + NUMBER_STEPPER_HIT_ATTR + '="preset" ' + NUMBER_STEPPER_ACT_ATTR + '="quick"'
       + ' ' + NUMBER_STEPPER_QUICK_ATTR + '="' + esc(String(preset)) + '"'
       + ' aria-pressed="' + (pressed ? 'true' : 'false') + '"' + state
-      + '>' + esc(formatStepperValue(preset, m.decimals)) + '</button>');
+      + '>' + esc(formatStepperValue(preset, model.decimals)) + '</button>');
   }
   parts.push('</div>');
   return parts.join('');
 }
 
 /** 说明行：错误说明（`error`）与禁用原因（`disabledReason`）各占一行，**都能被控件引用到**。 */
-function notesHtml(m: NumberStepperModel): string {
+function notesHtml(model: NumberStepperModel): string {
   const parts: string[] = [];
-  if (m.error !== undefined) {
-    parts.push('<p class="' + numberStepperSlot('error') + '" id="' + esc(errorId(m.name)) + '" role="alert">'
-      + esc(m.error) + '</p>');
-  } else if (m.disabled && m.disabledReason !== undefined) {
+  if (model.error !== undefined) {
+    parts.push('<p class="' + numberStepperSlot('error') + '" id="' + esc(errorId(model.name)) + '" role="alert">'
+      + esc(model.error) + '</p>');
+  } else if (model.disabled && model.disabledReason !== undefined) {
     /* 禁用时也留一个可被 `aria-describedby` 指到的锚（否则读屏器只报"不可用"，不报为什么）。 */
-    parts.push('<p class="' + numberStepperSlot('error') + '" id="' + esc(errorId(m.name)) + '">'
-      + esc(m.disabledReason) + '</p>');
+    parts.push('<p class="' + numberStepperSlot('error') + '" id="' + esc(errorId(model.name)) + '">'
+      + esc(model.disabledReason) + '</p>');
   }
-  if (m.caliber !== undefined) {
-    parts.push('<p class="' + numberStepperSlot('caliber') + '">' + esc(m.caliber) + '</p>');
+  if (model.caliber !== undefined) {
+    parts.push('<p class="' + numberStepperSlot('caliber') + '">' + esc(model.caliber) + '</p>');
   }
   return parts.join('');
 }
 
 /** 形态 A 的骨架（本件只有一格；分派写在这里，加第二形态就是加一支）。 */
-function renderStandard(m: NumberStepperModel): string {
-  return headHtml(m) + controlsHtml(m) + quickHtml(m) + notesHtml(m);
+function renderStandard(model: NumberStepperModel): string {
+  return headHtml(model) + controlsHtml(model) + quickHtml(model) + notesHtml(model);
 }
 
 const SKELETONS: Readonly<Record<NumberStepperForm, (m: NumberStepperModel) => string>> = {
@@ -177,26 +181,26 @@ const SKELETONS: Readonly<Record<NumberStepperForm, (m: NumberStepperModel) => s
 
 /** 渲染数量步进（纯函数：同样的入参恒产同样的字节；转义只经 `shared/escape.ts`）。 */
 export function renderNumberStepper(input: unknown): string {
-  const m = normalizeNumberStepper(input);
-  const cls = [NUMBER_STEPPER_CLASS, 'is-' + m.form];
-  if (m.value === null) cls.push('is-unset');
-  if (m.disabled) cls.push('is-disabled');
-  if (m.loading) cls.push('is-loading');
-  if (m.error !== undefined) cls.push('is-invalid');
-  if (m.extraClass !== undefined) cls.push(m.extraClass);
+  const model = normalizeNumberStepper(input);
+  const cls = [NUMBER_STEPPER_CLASS, 'is-' + model.form];
+  if (model.value === null) cls.push('is-unset');
+  if (model.disabled) cls.push('is-disabled');
+  if (model.loading) cls.push('is-loading');
+  if (model.error !== undefined) cls.push('is-invalid');
+  if (model.extraClass !== undefined) cls.push(model.extraClass);
 
   const attrs: string[] = [
     'class="' + esc(cls.join(' ')) + '"',
-    NUMBER_STEPPER_NAME_ATTR + '="' + esc(m.name) + '"',
-    NUMBER_STEPPER_VALUE_ATTR + '="' + esc(m.value === null ? '' : String(m.value)) + '"',
-    NUMBER_STEPPER_MIN_ATTR + '="' + esc(String(m.min)) + '"',
-    NUMBER_STEPPER_MAX_ATTR + '="' + esc(String(m.max)) + '"',
-    NUMBER_STEPPER_STEP_ATTR + '="' + esc(String(m.step)) + '"',
-    NUMBER_STEPPER_DECIMALS_ATTR + '="' + esc(String(m.decimals)) + '"',
+    NUMBER_STEPPER_NAME_ATTR + '="' + esc(model.name) + '"',
+    NUMBER_STEPPER_VALUE_ATTR + '="' + esc(model.value === null ? '' : String(model.value)) + '"',
+    NUMBER_STEPPER_MIN_ATTR + '="' + esc(String(model.min)) + '"',
+    NUMBER_STEPPER_MAX_ATTR + '="' + esc(String(model.max)) + '"',
+    NUMBER_STEPPER_STEP_ATTR + '="' + esc(String(model.step)) + '"',
+    NUMBER_STEPPER_DECIMALS_ATTR + '="' + esc(String(model.decimals)) + '"',
   ];
-  if (m.unit !== undefined) attrs.push(NUMBER_STEPPER_UNIT_ATTR + '="' + esc(m.unit) + '"');
-  if (m.label !== undefined) attrs.push(NUMBER_STEPPER_LABEL_ATTR + '="' + esc(m.label) + '"');
-  if (m.disabled) attrs.push(NUMBER_STEPPER_DISABLED_ATTR + '="1"');
-  if (m.loading) attrs.push(NUMBER_STEPPER_LOADING_ATTR + '="1"');
-  return '<div ' + attrs.join(' ') + '>' + SKELETONS[m.form](m) + '</div>';
+  if (model.unit !== undefined) attrs.push(NUMBER_STEPPER_UNIT_ATTR + '="' + esc(model.unit) + '"');
+  if (model.label !== undefined) attrs.push(NUMBER_STEPPER_LABEL_ATTR + '="' + esc(model.label) + '"');
+  if (model.disabled) attrs.push(NUMBER_STEPPER_DISABLED_ATTR + '="1"');
+  if (model.loading) attrs.push(NUMBER_STEPPER_LOADING_ATTR + '="1"');
+  return '<div ' + attrs.join(' ') + '>' + SKELETONS[model.form](model) + '</div>';
 }

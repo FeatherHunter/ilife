@@ -7,12 +7,14 @@
  *   ③ 冲突（同月同类已存在）**不再是一句 CLI 报错**（老侧 `cli.py:143-147` 回一句「确认覆盖请加 --force」）：
  *      它进阻断表，页上可见地告诉用户「要覆盖就把确认覆盖给上」，这一页不写库（#688 裁定 9）。
  */
+import { runWithLanguage } from 'base-entries';
 import { projectWakeWord } from '../triggers/wakeTable.js';
 import { MONTH_RE } from '../shared/dateRange.js';
 import { goalHelpPrompt, money, textOrDash } from './pageParts.js';
 import { localMonth, textOf } from './params.js';
 import type { GoalCollectInput, GoalReceiptInput, GoalWriteScene } from './scene.js';
 import { bindGoalFormPages } from './template-form.js';
+import { m } from '../entries/index.js';
 
 const WORD: string = projectWakeWord({ key: 'bill.goal.write', op: 'set-budget' });
 const KEY = 'bill.goal.write' as const;
@@ -23,77 +25,93 @@ function monthOf(params: Record<string, unknown>): string {
   return MONTH_RE.test(raw) ? raw : localMonth();
 }
 
-/** 采集页副标题：缺什么就写清缺几项。 */
-const subtitleOf = (input: GoalCollectInput): string => (
-  input.blocked.length === 0 ? '金额填好就可以写进去了。' : '缺 ' + String(input.blocked.length) + ' 项，详见下表。'
-);
-
-export const SCENE: GoalWriteScene = {
-  id: 'set-budget',
-  key: KEY,
-  op: 'set-budget',
-  family: '设定',
-  ...bindGoalFormPages({
-    word: WORD,
-    caliber: '登记一条月度预算',
-    note: '预算只管当月：分类留空＝全月总预算；填了分类＝这一类的上限（它下面更细的分类也算在内）。',
-    fieldDescription: '金额必填，写正数；月份与分类选填——不填就是本月、不分类。',
-    subtitle: subtitleOf,
-    existing: (input) => {
-      const month = monthOf(input.params);
-      const rows = input.budgets.filter((b) => b.month === month);
-      return {
-        caption: month + ' 已经设过的预算',
-        columns: [
-          { key: 'category', label: '分类' },
-          { key: 'amount', label: '金额' },
-          { key: 'created', label: '记下的时间' },
-        ],
-        rows: rows.map((b) => ({
-          category: b.category === '' ? '全月总预算' : b.category,
-          amount: money(b.amount) + ' 元',
-          created: textOrDash(b.created_at),
-        })),
-        empty: {
-          text: month + ' 还没有设置预算。',
-          next: '把金额填在下面，说一遍「' + WORD + '」就行。',
+/** 按渲染语言重建这一件的场景对象（取词都在里面，见 `./scene.js` 的接线）。 */
+function buildScene(): GoalWriteScene {
+  /** 采集页副标题：缺什么就写清缺几项。 */
+  const subtitleOf = (input: GoalCollectInput): string => (
+    input.blocked.length === 0 ? m('skill-bill.goal-scene-set-budget.c001') : m('skill-bill.goal-scene-set-budget.c002', { p0: String(String(input.blocked.length)) })
+  );
+  return {
+    id: 'set-budget',
+    key: KEY,
+    op: 'set-budget',
+    family: m('skill-bill.goal-scene-set-budget.c003'),
+    ...bindGoalFormPages({
+      word: WORD,
+      caliber: m('skill-bill.goal-scene-set-budget.c004'),
+      note: m('skill-bill.goal-scene-set-budget.c005'),
+      fieldDescription: m('skill-bill.goal-scene-set-budget.c006'),
+      subtitle: subtitleOf,
+      existing: (input) => {
+        const month = monthOf(input.params);
+        const rows = input.budgets.filter((b) => b.month === month);
+        return {
+          caption: m('skill-bill.goal-scene-set-budget.c007', { p0: String(month) }),
+          columns: [
+            { key: 'category', label: m('skill-bill.goal-scene-set-budget.c008') },
+            { key: 'amount', label: m('skill-bill.goal-scene-set-budget.c009') },
+            { key: 'created', label: m('skill-bill.goal-scene-set-budget.c010') },
+          ],
+          rows: rows.map((b) => ({
+            category: b.category === '' ? m('skill-bill.goal-scene-set-budget.c011') : b.category,
+            amount: m('skill-bill.goal-scene-set-budget.c012', { p0: String(money(b.amount)) }),
+            created: textOrDash(b.created_at),
+          })),
+          empty: {
+            text: m('skill-bill.goal-scene-set-budget.c013', { p0: String(month) }),
+            next: m('skill-bill.goal-scene-set-budget.c014', { p0: String(WORD) }),
+          },
+        };
+      },
+      prompt: (input) => goalHelpPrompt('goal_set_budget', input.params),
+      receiptCards: (input) => [
+        { label: m('skill-bill.goal-scene-set-budget.c015'), value: money(Number(input.params['amount'])), unit: m('skill-bill.goal-scene-set-budget.c016'), detail: m('skill-bill.goal-scene-set-budget.c017') },
+        {
+          label: m('skill-bill.goal-scene-set-budget.c018'),
+          value: textOf(input.params['month']) === '' ? monthOf(input.params) : textOrDash(input.params['month']),
+          detail: m('skill-bill.goal-scene-set-budget.c019'),
         },
-      };
-    },
-    prompt: (input) => goalHelpPrompt('goal_set_budget', input.params),
-    receiptCards: (input) => [
-      { label: '这份预算的金额', value: money(Number(input.params['amount'])), unit: '元', detail: '每月的上限' },
-      {
-        label: '管哪个月',
-        value: textOf(input.params['month']) === '' ? monthOf(input.params) : textOrDash(input.params['month']),
-        detail: '按月算，不跨月累计',
+        {
+          label: m('skill-bill.goal-scene-set-budget.c020'),
+          value: textOf(input.params['category']) === '' ? m('skill-bill.goal-scene-set-budget.c021') : textOrDash(input.params['category']),
+          detail: textOf(input.params['category']) === '' ? m('skill-bill.goal-scene-set-budget.c022') : m('skill-bill.goal-scene-set-budget.c023'),
+        },
+        { label: m('skill-bill.goal-scene-set-budget.c024'), value: m('skill-bill.goal-scene-set-budget.c025', { p0: String(String(input.receipt.budgetCount)) }), detail: m('skill-bill.goal-scene-set-budget.c026') },
+      ],
+      result: (input: GoalReceiptInput) => {
+        const old = input.receipt.overwritten;
+        if (old === null) return null;
+        return {
+          navText: m('skill-bill.goal-scene-set-budget.c027'),
+          caption: m('skill-bill.goal-scene-set-budget.c028'),
+          rows: [
+            { k: m('skill-bill.goal-scene-set-budget.c029'), v: old.month },
+            { k: m('skill-bill.goal-scene-set-budget.c030'), v: old.category === '' ? m('skill-bill.goal-scene-set-budget.c031') : old.category },
+            { k: m('skill-bill.goal-scene-set-budget.c032'), v: m('skill-bill.goal-scene-set-budget.c033', { p0: String(money(old.amount)) }) },
+          ],
+          note: m('skill-bill.goal-scene-set-budget.c034'),
+        };
       },
-      {
-        label: '管到哪一层分类',
-        value: textOf(input.params['category']) === '' ? '全部支出' : textOrDash(input.params['category']),
-        detail: textOf(input.params['category']) === '' ? '没写分类＝全月总预算' : '这一类与它下面更细的分类都算',
+      /* #1131：判地主数字下那一行是固定口径句。 */
+      receiptNote: () => m('skill-bill.goal-scene-set-budget.c035'),
+      detailCaption: m('skill-bill.goal-scene-set-budget.c036'),
+      logDetail: (input) => {
+        const category = textOf(input.params['category']) || m('skill-bill.goal-scene-set-budget.c037');
+        const covered = input.receipt.overwritten === null ? '' : m('skill-bill.goal-scene-set-budget.c038');
+        return m('skill-bill.goal-scene-set-budget.c039', {
+          p0: String(monthOf(input.params)),
+          p1: String(category),
+          p2: String(money(Number(input.params['amount']))),
+          p3: String(covered),
+        });
       },
-      { label: '现在一共有几份预算', value: String(input.receipt.budgetCount) + ' 份', detail: '都在预算表里' },
-    ],
-    result: (input: GoalReceiptInput) => {
-      const old = input.receipt.overwritten;
-      if (old === null) return null;
-      return {
-        navText: '覆盖',
-        caption: '被这一条替掉的旧预算',
-        rows: [
-          { k: '月份', v: old.month },
-          { k: '分类', v: old.category === '' ? '全月总预算' : old.category },
-          { k: '原来的金额', v: money(old.amount) + ' 元' },
-        ],
-        note: '覆盖＝把原来那条删掉、按新的值重记一条；同一个月份同一层分类只留一条。',
-      };
-    },
-    /* #1131：判地主数字下那一行是固定口径句。 */
-    receiptNote: () => '覆盖全部支出 · 按自然月统计',
-    detailCaption: '写进去的这份预算',
-    logDetail: (input) => '设定预算 ' + monthOf(input.params) + ' ' + (textOf(input.params['category']) || '全月总预算')
-      + ' ' + money(Number(input.params['amount'])) + ' 元'
-      + (input.receipt.overwritten === null ? '' : '（覆盖了原来那条）'),
-  }),
-};
+    }),
+  };
+}
+
+export const SCENE: GoalWriteScene = buildScene();
+
+/** 按渲染语言重建这一件（`language` 来自调用方的 `currentRenderLanguage()`）。 */
+export function sceneSetBudget(language: string): GoalWriteScene {
+  return runWithLanguage(language, buildScene);
+}

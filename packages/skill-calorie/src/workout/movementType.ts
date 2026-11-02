@@ -8,9 +8,10 @@
  *
  * 清单外的值**原样输出、不吞**（库里有别的新值时，页上至少看得见它是什么）。
  */
-export const TYPE_ZH: Readonly<Record<string, string>> = { main: '主要', iso: '孤立' };
+import { m } from '../entries/index.js';
+export const TYPE_ZH = (): Readonly<Record<string, string>> => ({ main: m('skill-calorie.workout-movementType.c001'), iso: m('skill-calorie.workout-movementType.c002') });
 
 /** 类型原值 → 中文名；表外值原样返回。 */
 export function typeZh(raw: string): string {
-  return TYPE_ZH[raw] ?? raw;
+  return TYPE_ZH()[raw] ?? raw;
 }

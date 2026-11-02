@@ -22,6 +22,7 @@ import { scheduleCopyLog, scheduleNowStamp } from '../render/copyArea.js';
 import type { PlanEvent } from '../fetch/db.js';
 import { hourCellsOf } from '../shared/pageParts.js';
 import { renderPlanPage, type PlanPageData } from '../shared/planPage.js';
+import { m } from '../entries/index.js';
 
 /** 一级分类的权威顺序（配色与图例都照它），取自 `policy` 的白名单。 */
 const L1_ORDER: readonly string[] = [...LEVEL1_WHITELIST];
@@ -58,7 +59,7 @@ export const clockOf = (minutes: number): string =>
   minutes >= DAY_END ? '24:00' : String(Math.floor(minutes / 60)).padStart(2, '0') + ':' + String(minutes % 60).padStart(2, '0');
 
 /** 起止一律写「起 至 止」：`~` 是分隔符门（#516）点名的符号顶替，页上不许出现。 */
-const spanOf = (start: string, end: string): string => start + ' 至 ' + end;
+const spanOf = (start: string, end: string): string => m('skill-schedule.plan-planDocs.c001', { p0: String(start), p1: String(end) });
 
 /** 按标题搜或按时段查重（本票两支，老侧都只出 JSON）。
  *
@@ -99,10 +100,10 @@ export function eventsInWindow(
 /** 事件行（事件卡的一行）：`left`＝起止、`main`＝标题、`right`＝完成与同步状态。
  *  软删的那几行右槽写「已软删」——它是这一行的身份，不另立一段。 */
 function eventRowOf(e: PlanEvent, deleted: boolean): { left: string; main: string; right: string } {
-  const completion = e.completion === null || e.completion === '' ? '未复盘' : completionLabelOf(e.completion);
+  const completion = e.completion === null || e.completion === '' ? m('skill-schedule.plan-planDocs.c002') : completionLabelOf(e.completion);
   const right = deleted
-    ? '已软删'
-    : completion + (e.feishu_event_id === null ? '' : '，已同步飞书');
+    ? m('skill-schedule.plan-planDocs.c003')
+    : completion + (e.feishu_event_id === null ? '' : m('skill-schedule.plan-planDocs.c004'));
   return { left: spanOf(e.time_start, e.time_end), main: e.title, right };
 }
 
@@ -127,19 +128,32 @@ export function renderPlanDayPage(
   const focusLine = search === undefined
     ? ''
     : (search.title !== undefined
-      ? '按标题「' + search.title + '」搜到 ' + hits + ' 件。'
+      ? m('skill-schedule.plan-planDocs.c005', { p0: String(search.title), p1: String(hits) })
       : (search.window !== undefined
-        ? spanOf(search.window.start, search.window.end) + ' 这一段里有 ' + hits + ' 件。'
+        ? m('skill-schedule.plan-planDocs.c006', {
+          p0: String(spanOf(search.window.start, search.window.end)),
+          p1: String(hits),
+        })
         : ''));
+  // §4.7 · conclusion 链里两处条件先抽局部变量。
+  const emptyWindowNote = search !== undefined && search.window !== undefined && hits === 0 ? m('skill-schedule.plan-planDocs.c007') : '';
+  const softDeletedNote = inactive.length === 0 ? '' : m('skill-schedule.plan-planDocs.c008', { p0: String(inactive.length) });
+  const firstStartText = events[0] === undefined ? m('skill-schedule.plan-planDocs.c009') : events[0].time_start;
+  const softDeletedDetail = inactive.length === 0 ? '' : m('skill-schedule.plan-planDocs.c010', { p0: String(inactive.length) });
   const data: PlanPageData = {
     head: {
       // 文档标题走「技能名 空格 页名」（`·` 是分隔符门点名的并列符号之一，页头也是可见文本）。
-      docTitle: '作息管家 查日程',
-      eyebrow: '作息管家 查询与浏览',
-      title: '查日程',
+      docTitle: m('skill-schedule.plan-planDocs.c011'),
+      eyebrow: m('skill-schedule.plan-planDocs.c012'),
+      title: m('skill-schedule.plan-planDocs.c013'),
       subtitle: focusLine === ''
-        ? date + ' 这一天排了 ' + view.total + ' 件事件，空档 ' + gaps.length + ' 段共 ' + fmtDurShort(freeMinutes) + '。'
-        : focusLine + date + ' 这一天一共 ' + view.total + ' 件事件。',
+        ? m('skill-schedule.plan-planDocs.c014', {
+          p0: String(date),
+          p1: String(view.total),
+          p2: String(gaps.length),
+          p3: String(fmtDurShort(freeMinutes)),
+        })
+        : m('skill-schedule.plan-planDocs.c015', { p0: String(focusLine + date), p1: String(view.total) }),
     },
     cells: hourCellsOf(events.map((e) => ({
       start: toMinutes(e.time_start),
@@ -149,22 +163,27 @@ export function renderPlanDayPage(
     order: L1_ORDER,
     kpis: [
       search === undefined
-        ? { label: '事件', value: String(view.total), unit: '件', detail: '这一天排的' }
-        : { label: '命中', value: String(hits), unit: '件', detail: '这一天一共 ' + view.total + ' 件' },
-      { label: '已排时段', value: fmtDurShort(busyMinutes), detail: '最早 ' + (events[0]?.time_start ?? '无') + ' 起' },
-      { label: '空档', value: String(gaps.length), unit: '段', detail: '合计 ' + fmtDurShort(freeMinutes) },
+        ? { label: m('skill-schedule.plan-planDocs.c016'), value: String(view.total), unit: m('skill-schedule.plan-planDocs.c017'), detail: m('skill-schedule.plan-planDocs.c018') }
+        : { label: m('skill-schedule.plan-planDocs.c019'), value: String(hits), unit: m('skill-schedule.plan-planDocs.c020'), detail: m('skill-schedule.plan-planDocs.c021', { p0: String(view.total) }) },
+      { label: m('skill-schedule.plan-planDocs.c022'), value: fmtDurShort(busyMinutes), detail: m('skill-schedule.plan-planDocs.c023', { p0: String(firstStartText) }) },
+      { label: m('skill-schedule.plan-planDocs.c024'), value: String(gaps.length), unit: m('skill-schedule.plan-planDocs.c025'), detail: m('skill-schedule.plan-planDocs.c026', { p0: String(fmtDurShort(freeMinutes)) }) },
       {
-        label: '已完成',
+        label: m('skill-schedule.plan-planDocs.c027'),
         value: String(done),
-        unit: '件',
-        detail: '已同步飞书 ' + synced + ' 件' + (inactive.length === 0 ? '' : '，已软删 ' + inactive.length + ' 件'),
+        unit: m('skill-schedule.plan-planDocs.c028'),
+        detail: m('skill-schedule.plan-planDocs.c029', { p0: String(synced), p1: String(softDeletedDetail) }),
       },
     ],
-    conclusion: date + ' 排了 ' + view.total + ' 件，占了 ' + fmtDurShort(busyMinutes) + '。'
-      + '空档 ' + gaps.length + ' 段，共 ' + fmtDurShort(freeMinutes) + '。'
-      + (search !== undefined && search.window !== undefined && hits === 0 ? '这一时段没有安排。' : '')
-      + '已完成 ' + done + ' 件。'
-      + (inactive.length === 0 ? '' : '另有 ' + inactive.length + ' 件已软删。'),
+    conclusion: m('skill-schedule.plan-planDocs.c030', {
+      p0: String(date),
+      p1: String(view.total),
+      p2: String(fmtDurShort(busyMinutes)),
+      p3: String(gaps.length),
+      p4: String(fmtDurShort(freeMinutes)),
+      p5: String(emptyWindowNote),
+      p6: String(done),
+      p7: String(softDeletedNote),
+    }),
     events: {
       items: [
         ...listed.map((e) => eventRowOf(e, false)),
@@ -173,25 +192,25 @@ export function renderPlanDayPage(
       // 空列表那句话随查法变（#786）：按标题搜没命中与「这一天没有事件」不是一回事。
       ...(search === undefined
         ? {}
-        : { emptyText: search.title !== undefined ? '这一天没有标题命中的事件' : '这一时段没有安排' }),
+        : { emptyText: search.title !== undefined ? m('skill-schedule.plan-planDocs.c031') : m('skill-schedule.plan-planDocs.c032') }),
     },
     gaps: gaps.map((gap) => ({
       left: spanOf(clockOf(gap.start), clockOf(gap.end)),
-      main: '空档',
+      main: m('skill-schedule.plan-planDocs.c033'),
       right: fmtDurShort(gap.end - gap.start),
     })),
     // 筛选位（老侧 f10 的第三块必现块）：日期／分类／状态三格，说明句里不堆并列分隔符。
     filters: [
-      { name: 'plan-date', label: '日期', value: date },
-      { name: 'plan-category', label: '分类', value: '全部', options: ['全部', ...L1_ORDER] },
-      { name: 'plan-state', label: '状态', value: '全部', options: ['全部', '已完成', '未完成', '已同步飞书'] },
+      { name: 'plan-date', label: m('skill-schedule.plan-planDocs.c034'), value: date },
+      { name: 'plan-category', label: m('skill-schedule.plan-planDocs.c035'), value: m('skill-schedule.plan-planDocs.c036'), options: [m('skill-schedule.plan-planDocs.c037'), ...L1_ORDER] },
+      { name: 'plan-state', label: m('skill-schedule.plan-planDocs.c038'), value: m('skill-schedule.plan-planDocs.c039'), options: [m('skill-schedule.plan-planDocs.c040'), m('skill-schedule.plan-planDocs.c041'), m('skill-schedule.plan-planDocs.c042'), m('skill-schedule.plan-planDocs.c043')] },
     ],
     copy: {
       key: 'schedule.plan.today',
       payload: buildPlanToday(date, [...listed]),
       log: scheduleCopyLog({
         command: 'schedule-cmd-read schedule.plan.today --params {"date":"' + date + '"}',
-        source: '日程事件表（' + events.length + ' 行）',
+        source: m('skill-schedule.plan-planDocs.c044', { p0: String(events.length) }),
         actionAt: scheduleNowStamp(),
       }),
     },

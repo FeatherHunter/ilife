@@ -11,10 +11,11 @@
  *
  *  谁在用（两处，指名）：`src/write/summaryRow.ts`（`DIRECTION` 表的 `word` 位）与
  *  `src/query/detail.ts`（详情页那颗药丸眉标）。 */
+import { m } from '../entries/index.js';
 export const DIRECTION_WORDS = Object.freeze({ expense: '支出', income: '收入' } as const);
 
 /** 金额 → 方向词（裸字，不带括号说明；「未判」那两档见上）。 */
 export function directionWord(amount: number | null): string {
-  if (amount === null || !Number.isFinite(amount) || amount === 0) return '未判';
+  if (amount === null || !Number.isFinite(amount) || amount === 0) return m('skill-bill.shared-direction.c001');
   return amount < 0 ? DIRECTION_WORDS.expense : DIRECTION_WORDS.income;
 }

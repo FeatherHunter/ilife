@@ -81,7 +81,7 @@ describe('note-block ① 渲染契约', () => {
     assert.ok(html.includes('-caret" aria-hidden="true">'));
     assert.match(html, /-owner">09-25 的备注</);
     assert.match(html, /-time">09-25 20:14</);
-    assert.match(html, new RegExp('-len">\\d+' + NOTE_BLOCK_LEN_SUFFIX + '</'));
+    assert.match(html, new RegExp('-len">\\d+' + NOTE_BLOCK_LEN_SUFFIX() + '</'));
     assert.ok(html.includes('-peek">早上称重前喝了两杯水，读数可能偏高 0.'), '摘要取正文首行');
     assert.ok(html.includes('<details'), '收起要走原生 details（无脚本也能展开）');
   });

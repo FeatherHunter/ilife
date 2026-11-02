@@ -15,22 +15,33 @@
  * 同步列的 `xunji_localid`／`xunji_title`（#608 登记：回写链补上写入路径后，
  * 这两列有了落库来源，变更卡摆得出来，故给中文名）。
  */
+import { m } from '../entries/index.js';
 import { registerFieldLabels } from '../shared/fieldLabel.js';
 
 /** 本域的域名字符串（查表用；域表一个定义地，别处不许再写字面量）。 */
 export const EXERCISE_DOMAIN = 'exercise';
 
-/** 运动域字段 → 中文标签（CLI 参数名 ＋ 库列名，两套键同表）。 */
-export const EXERCISE_FIELD_LABELS: Readonly<Record<string, string>> = Object.freeze({
+/** 运动域字段 → 中文标签（CLI 参数名 ＋ 库列名，两套键同表）。
+ *  取词在**调用时**发生：表值是按需取词的 m() 结果，语言由运行期上下文决定
+ *  （登记进 `shared/fieldLabel.ts` 的是取表函数，不是加载期快照）。 */
+export function EXERCISE_FIELD_LABELS(): Readonly<Record<string, string>> {
+  return Object.freeze({
   // ① CLI 参数名（写命令回执 `writtenFields` 的口径）
-  type: '运动类型', calories: '消耗', minutes: '时长', date: '日期', time: '时间', note: '备注',
-  category: '分类', difficulty: '强度', distance: '距离', steps: '步数', reps: '次数',
-  loadKg: '重量', setIndex: '组号', backfill: '补录', heartRate: '平均心率', maxHeartRate: '最高心率',
+  type: m('skill-calorie.exercise-fieldLabels.c001'), calories: m('skill-calorie.exercise-fieldLabels.c002'), minutes: m('skill-calorie.exercise-fieldLabels.c003'), date: '日期', time: m('skill-calorie.exercise-fieldLabels.c004'), note: m('skill-calorie.exercise-fieldLabels.c005'),
+  category: m('skill-calorie.exercise-fieldLabels.c006'), difficulty: m('skill-calorie.exercise-fieldLabels.c007'), distance: m('skill-calorie.exercise-fieldLabels.c008'), steps: m('skill-calorie.exercise-fieldLabels.c009'), reps: m('skill-calorie.exercise-fieldLabels.c010'),
+  loadKg: m('skill-calorie.exercise-fieldLabels.c011'), setIndex: m('skill-calorie.exercise-fieldLabels.c012'), backfill: m('skill-calorie.exercise-fieldLabels.c013'), heartRate: m('skill-calorie.exercise-fieldLabels.c014'), maxHeartRate: m('skill-calorie.exercise-fieldLabels.c015'),
   // ② 库列名（字段变更卡按行键摆）
-  exercise_type: '运动类型', duration_minutes: '时长', calories_burned: '消耗', distance_km: '距离',
-  avg_heart_rate: '平均心率', max_heart_rate: '最高心率', load_kg: '重量', set_index: '组号',
-  is_backfill: '补录', is_deleted: '删除标记',
-  xunji_localid: '训记单号', xunji_title: '训记标题',
-});
+  exercise_type: m('skill-calorie.exercise-fieldLabels.c016'), duration_minutes: m('skill-calorie.exercise-fieldLabels.c017'), calories_burned: m('skill-calorie.exercise-fieldLabels.c018'), distance_km: m('skill-calorie.exercise-fieldLabels.c019'),
+  avg_heart_rate: m('skill-calorie.exercise-fieldLabels.c020'), max_heart_rate: m('skill-calorie.exercise-fieldLabels.c021'), load_kg: m('skill-calorie.exercise-fieldLabels.c022'), set_index: m('skill-calorie.exercise-fieldLabels.c023'),
+  is_backfill: m('skill-calorie.exercise-fieldLabels.c024'), is_deleted: m('skill-calorie.exercise-fieldLabels.c025'),
+    xunji_localid: m('skill-calorie.exercise-fieldLabels.c026'), xunji_title: m('skill-calorie.exercise-fieldLabels.c027'),
+  });
+}
 
+/** 查运动域字段标签：命中给标签，缺项回退原键名（与 shared/fieldLabel.ts 同一口径）。 */
+export function exerciseFieldLabel(key: string): string {
+  return EXERCISE_FIELD_LABELS()[key] ?? key;
+}
+
+// 登记进共用查表口径：存的是**取表函数**（不是加载期快照），查表时现取词。
 registerFieldLabels(EXERCISE_DOMAIN, EXERCISE_FIELD_LABELS);

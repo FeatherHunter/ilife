@@ -7,6 +7,7 @@
  */
 import { assertPlainObject, badInput, optExtraClass, optText, reqText } from '../shared/validate.js';
 import { SWITCH_ROW_FORMS, type SwitchRowForm, type SwitchRowInput } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 内部类型：每个字段都已校验、已归一。 */
 export interface SwitchRowModel {
@@ -42,9 +43,9 @@ export function normalizeSwitchRow(input: unknown): SwitchRowModel {
 
   const name = reqText(raw.name, 'switch-row: input.name');
   const label = reqText(raw.label, 'switch-row: input.label');
-  const note = reqText(raw.note, 'switch-row: input.note（说明句要写清「打开会怎样」）');
+  const note = reqText(raw.note, m('base-render.components-switch-row-model.c001'));
   if (typeof raw.checked !== 'boolean') {
-    badInput('switch-row: input.checked 必填且必须是布尔（开关没有"未设置"这一档：说不出开还是关就别上屏）');
+    badInput('switch-row: input.checked 必填且必须是布尔（开关没有「未设置」这一档：说不出开还是关就别上屏）');
   }
 
   const disabled = optBool(raw.disabled, 'switch-row: input.disabled');

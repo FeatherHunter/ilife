@@ -25,6 +25,7 @@
  *   · 只读目录行（照片 GIF 子目录／训记状态文件目录）的「浏览」按钮**保留但不可点击**（#748 定稿）；
  *   · `land.scheduleCli`／`land.memoCli` 两键已删（#748 定稿，#757 落地），面板不再显示这两行。
  */
+import { m } from './entries/index.js';
 export const SETTINGS_OWNER = 'dsh-calorie' as const;
 export const SETTINGS_SLOT = 'ilife:calorie' as const;
 
@@ -64,114 +65,128 @@ export interface ConfigItem {
 }
 
 /** 常用项：数据目录／库文件名／产物目录名／照片目录／训记 KEY（可改 3 ＋ 只读 2）。 */
-const COMMON: readonly ConfigItem[] = [
-  {
-    key: 'db.dir',
-    title: '数据目录',
-    tier: 'common',
-    control: 'directory',
-    // 留空＝技能按默认目录落文件；页面上把解析出来的绝对路径直接填进这一行（见 client.ts 的 toDraft）。
-    prefillFrom: 'dataDir',
-    hint: '库文件与各类产物的根目录。留空＝用默认目录。',
-  },
-  {
-    key: 'db.name',
-    title: '库文件名',
-    tier: 'common',
-    control: 'text',
-    readonly: true,
-    resolveFrom: 'dbFile',
-    hint: '数据目录下的数据库文件。',
-  },
-  {
-    key: 'html.dir',
-    title: 'HTML 产物目录名',
-    tier: 'common',
-    control: 'text',
-    readonly: true,
-    resolveFrom: 'htmlDir',
-    hint: '数据目录下存放交付页面的子目录。',
-  },
-  {
-    key: 'photos.dir',
-    title: '照片目录',
-    tier: 'common',
-    control: 'directory',
-    prefillFrom: 'photosDir',
-    hint: '身材照的存放目录。留空＝用默认目录（数据目录下的 photos）。',
-  },
-  {
-    key: 'xunji.key',
-    title: '训记 KEY',
-    tier: 'common',
-    control: 'text',
-    hint: '训记的凭据。留空＝未配置，推送与回写会被拦下。',
-  },
-];
+function commonItems(): readonly ConfigItem[] {
+  return [
+    {
+      key: 'db.dir',
+      title: m('plugin-calorie.settings.c001'),
+      tier: 'common',
+      control: 'directory',
+      // 留空＝技能按默认目录落文件；页面上把解析出来的绝对路径直接填进这一行（见 client.ts 的 toDraft）。
+      prefillFrom: 'dataDir',
+      hint: m('plugin-calorie.settings.c002'),
+    },
+    {
+      key: 'db.name',
+      title: m('plugin-calorie.settings.c003'),
+      tier: 'common',
+      control: 'text',
+      readonly: true,
+      resolveFrom: 'dbFile',
+      hint: m('plugin-calorie.settings.c004'),
+    },
+    {
+      key: 'html.dir',
+      title: m('plugin-calorie.settings.c005'),
+      tier: 'common',
+      control: 'text',
+      readonly: true,
+      resolveFrom: 'htmlDir',
+      hint: m('plugin-calorie.settings.c006'),
+    },
+    {
+      key: 'photos.dir',
+      title: m('plugin-calorie.settings.c007'),
+      tier: 'common',
+      control: 'directory',
+      prefillFrom: 'photosDir',
+      hint: m('plugin-calorie.settings.c008'),
+    },
+    {
+      key: 'xunji.key',
+      title: m('plugin-calorie.settings.c009'),
+      tier: 'common',
+      control: 'text',
+      hint: m('plugin-calorie.settings.c010'),
+    },
+  ];
+}
 
 /** 高级项：默认收起（只读 6 项）。改错了多半只是自己撞上麻烦，不确定就别动。 */
-const ADVANCED: readonly ConfigItem[] = [
-  {
-    key: 'photos.gifs',
-    title: '照片 GIF 子目录',
-    tier: 'advanced',
-    control: 'text',
-    readonly: true,
-    resolveFrom: 'gifsDir',
-    hint: '照片目录下存放 GIF 的子目录。',
-  },
-  {
-    key: 'xunji.stateDir',
-    title: '训记状态文件目录',
-    tier: 'advanced',
-    control: 'directory',
-    readonly: true,
-    resolveFrom: 'stateDir',
-    hint: '训记的限频与同步游标存放目录。',
-  },
-  {
-    key: 'xunji.catalog',
-    title: '训记动作库路径',
-    tier: 'advanced',
-    control: 'text',
-    readonly: true,
-    resolveFrom: 'catalog',
-    hint: '动作名判定用的动作库。',
-  },
-  {
-    key: 'xunji.backfillDays',
-    title: '回写默认天数',
-    tier: 'advanced',
-    control: 'number',
-    readonly: true,
-    hint: '从训记拉实绩时默认回溯的天数。',
-  },
-  {
-    key: 'land.xunjiSeconds',
-    title: '训记调用限时（秒）',
-    tier: 'advanced',
-    control: 'number',
-    readonly: true,
-    hint: '调用训记的超时秒数。',
-  },
-  {
-    key: 'land.landSeconds',
-    title: '落地调用限时（秒）',
-    tier: 'advanced',
-    control: 'number',
-    readonly: true,
-    hint: '落地训练各步骤的超时秒数。',
-  },
-];
+function advancedItems(): readonly ConfigItem[] {
+  return [
+    {
+      key: 'photos.gifs',
+      title: m('plugin-calorie.settings.c011'),
+      tier: 'advanced',
+      control: 'text',
+      readonly: true,
+      resolveFrom: 'gifsDir',
+      hint: m('plugin-calorie.settings.c012'),
+    },
+    {
+      key: 'xunji.stateDir',
+      title: m('plugin-calorie.settings.c013'),
+      tier: 'advanced',
+      control: 'directory',
+      readonly: true,
+      resolveFrom: 'stateDir',
+      hint: m('plugin-calorie.settings.c014'),
+    },
+    {
+      key: 'xunji.catalog',
+      title: m('plugin-calorie.settings.c015'),
+      tier: 'advanced',
+      control: 'text',
+      readonly: true,
+      resolveFrom: 'catalog',
+      hint: m('plugin-calorie.settings.c016'),
+    },
+    {
+      key: 'xunji.backfillDays',
+      title: m('plugin-calorie.settings.c017'),
+      tier: 'advanced',
+      control: 'number',
+      readonly: true,
+      hint: m('plugin-calorie.settings.c018'),
+    },
+    {
+      key: 'land.xunjiSeconds',
+      title: m('plugin-calorie.settings.c019'),
+      tier: 'advanced',
+      control: 'number',
+      readonly: true,
+      hint: m('plugin-calorie.settings.c020'),
+    },
+    {
+      key: 'land.landSeconds',
+      title: m('plugin-calorie.settings.c021'),
+      tier: 'advanced',
+      control: 'number',
+      readonly: true,
+      hint: m('plugin-calorie.settings.c022'),
+    },
+  ];
+}
 
 /** 设置页的行表，顺序即页面顺序。 */
-export const CONFIG_ITEMS: readonly ConfigItem[] = [...COMMON, ...ADVANCED];
+export function configItems(): readonly ConfigItem[] {
+  return [...commonItems(), ...advancedItems()];
+}
+
+/** 兼容镜像：测试与跨包消费方按常量读；渲染路径用 configItems()。 */
+export const CONFIG_ITEMS: readonly ConfigItem[] = configItems();
 
 /** 常用项行数（页面上直接画出来的那些）。 */
-export const COMMON_ITEM_COUNT = COMMON.length;
+export const COMMON_ITEM_COUNT = commonItems().length;
 
 /** 高级组标题与副文案。 */
-export const ADVANCED_GROUP_TITLE = '高级' as const;
+export function advancedGroupTitle(): string {
+  return m('plugin-calorie.settings.c023');
+}
+
+/** 兼容镜像：契约常量形状不变；渲染路径用 advancedGroupTitle()。 */
+export const ADVANCED_GROUP_TITLE = advancedGroupTitle();
 
 /** 按 `a.b` 路径从配置取值里读（缺层或类型不符一律回 undefined）。 */
 export function readPath(values: Record<string, unknown>, key: string): unknown {

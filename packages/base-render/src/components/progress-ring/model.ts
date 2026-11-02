@@ -14,6 +14,7 @@ import {
   type ProgressRingForm,
   type ProgressRingRow,
 } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 内部类型：每个字段都已校验、已归一、已算好（`render.ts` 只负责拼标记）。 */
 export interface ProgressRingModel {
@@ -121,11 +122,19 @@ export function normalizeProgressRing(input: unknown): ProgressRingModel {
   if (over) {
     const overNote = optText(raw.overNote, 'progress-ring: input.overNote');
     const overPct = fmtPct(value / goal - 1);
-    note = overNote ?? ('已超出目标 ' + overPct + '%（多 ' + fmtQty(value - goal) + unitText + '）。');
+    note = overNote ?? m('base-render.components-progress-ring-model.c001', {
+      p0: String(overPct),
+      p1: String(fmtQty(value - goal)),
+      p2: String(unitText),
+    });
   } else if (note === undefined) {
     note = value === goal
-      ? ('正好用满目标（' + goalText + unitText + '）。')
-      : ('已用 ' + pctText + '%，还剩 ' + fmtQty(goal - value) + unitText + '。');
+      ? m('base-render.components-progress-ring-model.c002', { p0: String(goalText), p1: String(unitText) })
+      : m('base-render.components-progress-ring-model.c003', {
+        p0: String(pctText),
+        p1: String(fmtQty(goal - value)),
+        p2: String(unitText),
+      });
   }
 
   return {
@@ -144,8 +153,9 @@ export function normalizeProgressRing(input: unknown): ProgressRingModel {
     unit,
     rows: optRows(raw.rows),
     note,
-    ariaLabel: '已完成 ' + pctText + '%：'
-      + valueText + unitText + ' / ' + goalText + unitText + (over ? '（超目标）' : ''),
+    ariaLabel: m('base-render.components-progress-ring-model.c005', {
+      pct: pctText, value: valueText + unitText, goal: goalText + unitText,
+    }) + (over ? m('base-render.components-progress-ring-model.c004') : ''),
     extraClass: optExtraClass(raw.extraClass, 'progress-ring: input.extraClass'),
   };
 }

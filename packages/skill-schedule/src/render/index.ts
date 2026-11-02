@@ -6,7 +6,7 @@ export type { ScheduleCopyAreaInput, ScheduleCopyLogInput } from './copyArea.js'
 export {
   toRecordItem, buildRecordToday, buildRecordRange, buildRecordDetail, buildRecordReceipt,
   buildRecordCompare, buildCategoryDeep, buildAnomaly, toPlanItem, buildPlanToday,
-  buildPlanReceipt, buildHelpItems, HELP_EMPTY_HINT,
+  buildPlanReceipt, buildHelpItems, helpEmptyHint,
 } from './views.js';
 export type { RecordItem, PlanItem, HelpItem } from './views.js';
 export {

@@ -3,6 +3,7 @@
  */
 import { spawnSync } from 'node:child_process';
 import { FetchError } from './errors.js';
+import { m } from '../entries/index.js';
 
 export interface SkillEnvelope {
   ok: boolean;
@@ -37,24 +38,24 @@ function defaultSpawn(cmd: string[], timeoutMs: number): { stdout: string; stder
 export function readSkill(opts: ReadSkillOptions): SkillEnvelope {
   const { skill, domain, from, to, timeoutMs = 30000 } = opts;
   if (!opts.command || opts.command.length === 0) {
-    return { ok: false, skill, domain, data: [], error: '技能互联命令未配置，跨读阻断' };
+    return { ok: false, skill, domain, data: [], error: m('skill-calorie.fetch-cross-skill.c001') };
   }
   const cmd = [...opts.command, '--skill', skill, '--domain', domain, '--from', from, '--to', to];
   const run = opts.spawn ?? defaultSpawn;
   const r = run(cmd, timeoutMs);
   if (r.error) {
-    return { ok: false, skill, domain, data: [], error: `技能互联读取 ${skill}.${domain} 失败: ${r.error}` };
+    return { ok: false, skill, domain, data: [], error: m('skill-calorie.fetch-cross-skill.c002', { p0: String(skill), p1: String(domain), p2: String(r.error) }) };
   }
   try {
     const env = JSON.parse(r.stdout || r.stderr);
     if (typeof env.ok !== 'boolean') throw new Error('无 ok 字段');
     return { ...env, data: Array.isArray(env.data) ? env.data : [] };
   } catch {
-    return { ok: false, skill, domain, data: [], error: `技能互联输出解析失败: ${(r.stdout || r.stderr).slice(0, 200)}` };
+    return { ok: false, skill, domain, data: [], error: m('skill-calorie.fetch-cross-skill.c003', { p0: String((r.stdout || r.stderr).slice(0, 200)) }) };
   }
 }
 
 /** 跨读断言：ok 为 false 即抛 FetchError（T4 取数层统一错误），杜绝空数组静默当正常。 */
 export function requireOk(env: SkillEnvelope): asserts env is SkillEnvelope & { ok: true } {
-  if (!env.ok) throw new FetchError(`跨技能读取被阻断: ${env.error ?? '未知错误'}`);
+  if (!env.ok) throw new FetchError(m('skill-calorie.fetch-crossSkill.c001', { p0: String(env.error ?? m('skill-calorie.fetch-crossSkill.c002')) }));
 }

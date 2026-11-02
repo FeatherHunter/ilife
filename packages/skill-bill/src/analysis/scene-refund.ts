@@ -16,11 +16,13 @@
  *      老侧超过 200 条即截断并注明「仅显示前 200 条」，新侧不截断（一页列全，见回报）；
  *   ⑥ 载荷＝`./views.js` 的 `buildTrend('refund', …)`。
  */
+import { runWithLanguage } from 'base-entries';
 import type { BillRow } from '../fetch/db.js';
 import { allRecords, dayOf, firstTimeOf, kpiOf, lastTimeOf, monthOf, monthSeries, round1, tagRecords } from './agg.js';
 import { NO_WINDOW, money, textOrDash } from './pageParts.js';
 import type { AnalysisScene } from './scene.js';
 import { buildTrend } from './views.js';
+import { m } from '../entries/index.js';
 
 /** 记录跨了几个月（首笔所在月到最近一笔所在月，含首尾）；没有记录＝0。 */
 function monthSpan(records: readonly BillRow[]): number {
@@ -34,11 +36,12 @@ function monthSpan(records: readonly BillRow[]): number {
   return span < 1 ? 1 : span;
 }
 
-export const sceneRefund: AnalysisScene = {
+function buildScene(): AnalysisScene {
+  return {
   id: 'refund',
   key: 'bill.analysis.trend',
   kind: 'refund',
-  title: '看退款',
+  title: m('skill-bill.analysis-scene-refund.title'),
   family: 'bars',
   values: ({ db }) => {
     const rows = tagRecords(allRecords(db), '退款');
@@ -47,37 +50,40 @@ export const sceneRefund: AnalysisScene = {
     const peak = monthly.length === 0 ? 0 : Math.max(...monthly.map((m) => m.count));
     const recent = lastTimeOf(rows);
     return {
-      title: '看退款',
-      label: '全部时间',
+      title: m('skill-bill.analysis-scene-refund.title'),
+      label: m('skill-bill.analysis-scene-refund.c004'),
       from: NO_WINDOW,
       to: NO_WINDOW,
       count: rows.length,
       conclusion: rows.length === 0
-        ? '还没有一笔备注里带退款标签的记录。'
-        : '退款 ' + String(rows.length) + ' 次，合计 ' + money(total) + ' 元；最近一次在 '
-          + textOrDash(dayOf(recent)) + '。',
-      caliber: '取备注里带 #退款 标签的记录；金额按绝对值合计，月份分布按记录时间逐月归堆、只列有退款的月。',
+        ? m('skill-bill.analysis-scene-refund.c005')
+        : m('skill-bill.analysis-scene-refund.c006', {
+          p0: String(String(rows.length)),
+          p1: String(money(total)),
+          p2: String(textOrDash(dayOf(recent))),
+        }),
+      caliber: m('skill-bill.analysis-scene-refund.c007'),
       chips: [],
       payload: buildTrend('refund', [...rows]),
       kpi: kpiOf(rows),
       page: {
         kpis: [
-          { label: '退款总额', value: money(total), unit: '元' },
-          { label: '退款次数', value: String(rows.length), unit: '次' },
+          { label: m('skill-bill.analysis-scene-refund.c008'), value: money(total), unit: m('skill-bill.analysis-scene-refund.c009') },
+          { label: m('skill-bill.analysis-scene-refund.c010'), value: String(rows.length), unit: m('skill-bill.analysis-scene-refund.c011') },
         ],
         chips: [],
         charts: [],
         barGroups: [{
-          title: '月份分布（' + String(monthly.length) + ' 个月）',
-          rows: monthly.map((m) => ({
-            label: m.month,
-            text: String(m.count) + ' 次',
-            pct: peak === 0 ? 0 : round1((m.count / peak) * 100),
+          title: m('skill-bill.analysis-scene-refund.c012', { p0: String(String(monthly.length)) }),
+          rows: monthly.map((pt) => ({
+            label: pt.month,
+            text: m('skill-bill.analysis-scene-refund.c013', { p0: String(String(pt.count)) }),
+            pct: peak === 0 ? 0 : round1((pt.count / peak) * 100),
           })),
-          emptyText: '还没有退款记录，看不出月份分布',
+          emptyText: m('skill-bill.analysis-scene-refund.c014'),
         }],
         listCards: [{
-          title: '退款明细（' + String(rows.length) + ' 笔）',
+          title: m('skill-bill.analysis-scene-refund.c015', { p0: String(String(rows.length)) }),
           rows: [...rows]
             .sort((a, b) => b.time.localeCompare(a.time))
             .map((r) => ({
@@ -85,14 +91,22 @@ export const sceneRefund: AnalysisScene = {
               main: textOrDash(r.category) + ' · ' + textOrDash(r.note),
               right: '+' + money(Math.abs(r.amount)),
             })),
-          emptyText: '还没有退款记录',
+          emptyText: m('skill-bill.analysis-scene-refund.c016'),
         }],
         factCards: [],
         empty: {
-          text: '还没有一笔备注里带退款标签的记录。',
-          hint: '哪一笔退了钱，就在备注里写上 #退款，回来看这里就有数了。',
+          text: m('skill-bill.analysis-scene-refund.c017'),
+          hint: m('skill-bill.analysis-scene-refund.c018'),
         },
       },
     };
   },
-};
+  };
+}
+
+export const sceneRefund: AnalysisScene = buildScene();
+
+/** 按语言重建本场景（#1197：文案经词条层，语言是运行期参数）。 */
+export function sceneRefundFor(language: string): AnalysisScene {
+  return runWithLanguage(language, buildScene);
+}

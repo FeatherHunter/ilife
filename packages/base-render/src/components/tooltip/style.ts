@@ -23,6 +23,7 @@ import {
   TOOLTIP_ANCHOR_QUERY, TOOLTIP_EDGE_PX, TOOLTIP_HIT_INSET_Y_PX, TOOLTIP_HIT_PX, TOOLTIP_OFFSET_PX,
   TOOLTIP_WIDTH_PX, tooltipClass, tooltipSlot,
 } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 本件样式段的入参。 */
 export interface TooltipCssInput {
@@ -45,8 +46,8 @@ export function tooltipCss(input?: TooltipCssInput): string {
   const bubble = root + ' ' + slot('bubble');
   const word = root + ' ' + slot('word');
   return [
-    '/* tooltip（气泡说明 · 形态 B 宽气泡带「为什么重要」）：popover ＋ role=tooltip；零 box-shadow。 */',
-    '/* 层次：粗边 ＋ 外圈晕 ＋ 顶层（`popover` 的顶层是浏览器给的，不靠任何投影）。 */',
+    m('base-render.components-tooltip-style.c001'),
+    m('base-render.components-tooltip-style.c002'),
     root + ' ' + '.' + c + '{position:relative;display:inline-block}',
     /* 词：行里的真按钮，视觉盒就是那两个字；下划线是「这里可以问一句」的记号（不是投影）。 */
     word + '{position:relative;display:inline-flex;align-items:baseline;gap:4px;margin:0 -2px;padding:0 2px;',

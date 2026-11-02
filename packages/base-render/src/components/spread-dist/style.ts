@@ -19,6 +19,7 @@ import { skinVar } from '../skin/contract.js';
 import { SPREAD_DIST_NARROW_PX, spreadDistSlot, type SpreadDistSlot } from './attrs.js';
 import { spreadDistBoxCss } from './style-box.js';
 import { spreadDistQuantileCss } from './style-quantile.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -44,9 +45,9 @@ export function spreadDistCss(input?: { readonly prefix?: string }): string {
   const c = (slot: SpreadDistSlot): string => '.' + spreadDistSlot(slot, p);
 
   return [
-    '/* spread-dist（分布与分位 · 三个形态：箱线／逐日范围柱／分位尺）：一批读数摊开成形状。',
-    '   色一律从强调色系出（淡洗给区间面与箱体、实底给中位条、软底给有文字的中位档）：换皮只换取值、',
-    '   不换结构；任何一档都不拿文字墨色当面。 */',
+    m('base-render.components-spread-dist-style.c001'),
+    m('base-render.components-spread-dist-style.c002'),
+    m('base-render.components-spread-dist-style.c003'),
     box + ' {',
     /* 宽度判据的落点：本件是**自己的容器**——嵌进侧栏／面板／卡片时照样按自己的宽度排。 */
     '  container-type: inline-size;',
@@ -107,8 +108,8 @@ export function spreadDistCss(input?: { readonly prefix?: string }): string {
     '  overflow-wrap: anywhere;',
     '}',
     /* ── B 档：坐标框（纵轴刻度列 ‖ 逐日柱区）＋ 横轴日子行 ── */
-    '/* `padding-top` 与 `row-gap` 是给两处「长出框外」的余量：首末两枚刻度各平移半个字高',
-    '   （把中心对到轴顶与轴底）、中位块在极值处平移半个块高 —— 都只长进这两处留白里，不压到别的东西。 */',
+    m('base-render.components-spread-dist-style.c004'),
+    m('base-render.components-spread-dist-style.c005'),
     s('plotbox') + ' {',
     '  display: grid;',
     '  grid-template-columns: max-content minmax(0, 1fr);',
@@ -257,7 +258,7 @@ export function spreadDistCss(input?: { readonly prefix?: string }): string {
     '  line-height: 1.6;',
     '  overflow-wrap: anywhere;',
     '}',
-    '/* 本件自身不带可点元素。这一条是**地板**：调用方把某一天／某一档包成入口时焦点必须看得见。 */',
+    m('base-render.components-spread-dist-style.c006'),
     box + ' :focus-visible {',
     '  outline: 2px solid ' + skinVar('accent') + ';',
     '  outline-offset: 2px;',

@@ -16,21 +16,25 @@
  *  计数口径：本页数的是「记了几笔」（不是收支金额）——转账记录也是记录，一并算在里面；
  *  这一点与 `./agg.js` 各聚合件（转账不入收支）不冲突：那几件算的是钱，本件算的是笔数。
  */
+import { runWithLanguage } from 'base-entries';
 import type { BillRow } from '../fetch/db.js';
 import { allRecords, kpiOf, round1 } from './agg.js';
 import { NO_WINDOW } from './pageParts.js';
 import type { AnalysisScene } from './scene.js';
 import { buildTrend } from './views.js';
+import { m } from '../entries/index.js';
 
 /** 一周七天的名字（逐字照老侧 `weekday_names` 的次序；`getUTCDay()` 是 0＝周日）。 */
-const WEEKDAY_NAMES = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'] as const;
+function weekdayNames(): readonly string[] {
+  return [m('skill-bill.analysis-scene-activity.c001'), m('skill-bill.analysis-scene-activity.c002'), m('skill-bill.analysis-scene-activity.c003'), m('skill-bill.analysis-scene-activity.c004'), m('skill-bill.analysis-scene-activity.c005'), m('skill-bill.analysis-scene-activity.c006'), m('skill-bill.analysis-scene-activity.c007')];
+}
 
 /** 记录时刻落在星期几；时间串认不得＝空串（这一笔不归堆）。 */
 function weekdayOf(time: string): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(time);
   if (m === null) return '';
   const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
-  return WEEKDAY_NAMES[(d.getUTCDay() + 6) % 7];
+  return weekdayNames()[(d.getUTCDay() + 6) % 7];
 }
 
 /** 记录时刻落在几点（两位小时串）；时间串认不得＝空串（这一笔不归堆）。 */
@@ -63,18 +67,19 @@ function peakOf(buckets: readonly Bucket[]): Bucket | null {
   return best;
 }
 
-export const sceneActivity: AnalysisScene = {
+function buildScene(): AnalysisScene {
+  return {
   id: 'activity',
   key: 'bill.analysis.trend',
   kind: 'activity',
-  title: '看活跃',
+  title: m('skill-bill.analysis-scene-activity.title'),
   family: 'bars',
   values: ({ db }) => {
     const rows = allRecords(db);
     const total = rows.length;
     const byWeekday = tally(rows, (r) => weekdayOf(r.time));
     const byHour = tally(rows, (r) => hourOf(r.time));
-    const weekdays: Bucket[] = WEEKDAY_NAMES.map((name) => ({ key: name, count: byWeekday.get(name) ?? 0 }));
+    const weekdays: Bucket[] = weekdayNames().map((name) => ({ key: name, count: byWeekday.get(name) ?? 0 }));
     const hours: Bucket[] = [...byHour.entries()]
       .map(([key, count]) => ({ key, count }))
       .sort((a, b) => a.key.localeCompare(b.key));
@@ -82,21 +87,28 @@ export const sceneActivity: AnalysisScene = {
     const peakHour = hours.reduce((max, h) => Math.max(max, h.count), 0);
     const busiestDay = peakOf(weekdays);
     const busiestHour = peakOf(hours);
+    const hourTail = busiestHour === null
+      ? '。'
+      : m('skill-bill.analysis-scene-activity.c009', {
+        p0: String(busiestHour.key),
+        p1: String(String(busiestHour.count)),
+      });
     return {
-      title: '看活跃',
-      label: '全部时间',
+      title: m('skill-bill.analysis-scene-activity.title'),
+      label: m('skill-bill.analysis-scene-activity.c011'),
       from: NO_WINDOW,
       to: NO_WINDOW,
       count: total,
       conclusion: total === 0
-        ? '全库还没有记录，看不出活跃规律。'
-        : '一共 ' + String(total) + ' 笔记录，记最多的是' + String(busiestDay === null ? '' : busiestDay.key)
-          + '（' + String(busiestDay === null ? 0 : busiestDay.count) + ' 笔）'
-          + (busiestHour === null
-            ? '。'
-            : '；最常记的时段是 ' + busiestHour.key + ' 点（' + String(busiestHour.count) + ' 笔）。'),
-      caliber: '按记录时刻的星期与小时归堆：周一到周日七行恒出，时段只列有记录的小时；转账记录也是记录，一并算在内。',
-      chips: ['共 ' + String(total) + ' 条记录'],
+        ? m('skill-bill.analysis-scene-activity.c012')
+        : m('skill-bill.analysis-scene-activity.c013', {
+          p0: String(String(total)),
+          p1: String(String(busiestDay === null ? '' : busiestDay.key)),
+          p2: String(String(busiestDay === null ? 0 : busiestDay.count)),
+          p3: String(hourTail),
+        }),
+      caliber: m('skill-bill.analysis-scene-activity.c014'),
+      chips: [m('skill-bill.analysis-scene-activity.c015', { p0: String(String(total)) })],
       payload: buildTrend('activity', [...rows]),
       kpi: kpiOf(rows),
       page: {
@@ -105,31 +117,39 @@ export const sceneActivity: AnalysisScene = {
         charts: [],
         barGroups: [
           {
-            title: '周几分布（周一 ~ 周日）',
+            title: m('skill-bill.analysis-scene-activity.c016'),
             rows: weekdays.map((w) => ({
               label: w.key,
-              text: String(w.count) + ' 笔',
+              text: m('skill-bill.analysis-scene-activity.c017', { p0: String(String(w.count)) }),
               pct: peakDay === 0 ? 0 : round1((w.count / peakDay) * 100),
             })),
-            emptyText: '还没有记录，看不出周几记得多',
+            emptyText: m('skill-bill.analysis-scene-activity.c018'),
           },
           {
-            title: '时段分布（' + String(hours.length) + ' 个时段）',
+            title: m('skill-bill.analysis-scene-activity.c019', { p0: String(String(hours.length)) }),
             rows: hours.map((h) => ({
-              label: h.key + ' 点',
-              text: String(h.count) + ' 笔',
+              label: m('skill-bill.analysis-scene-activity.c020', { p0: String(h.key) }),
+              text: m('skill-bill.analysis-scene-activity.c021', { p0: String(String(h.count)) }),
               pct: peakHour === 0 ? 0 : round1((h.count / peakHour) * 100),
             })),
-            emptyText: '还没有记录，看不出哪个时段记得多',
+            emptyText: m('skill-bill.analysis-scene-activity.c022'),
           },
         ],
         listCards: [],
         factCards: [],
         empty: {
-          text: '全库还没有记录，看不出活跃规律。',
-          hint: '先说「记支出」或「记收入」记一笔，回来看这里就有数了。',
+          text: m('skill-bill.analysis-scene-activity.c023'),
+          hint: m('skill-bill.analysis-scene-activity.c024'),
         },
       },
     };
   },
-};
+  };
+}
+
+export const sceneActivity: AnalysisScene = buildScene();
+
+/** 按语言重建本场景（#1197：文案经词条层，语言是运行期参数）。 */
+export function sceneActivityFor(language: string): AnalysisScene {
+  return runWithLanguage(language, buildScene);
+}

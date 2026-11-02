@@ -35,6 +35,8 @@ function collectZh() {
     actionAt: '2026-09-14 12:00:00',
     today: '2026-09-14',
     recent: [],
+    // #1307：语言必给（本件是 CollectInput，缺这格采集页就取不到词条）。
+    language: 'zh',
   });
 }
 
@@ -43,24 +45,23 @@ function cli(db, args) {
 }
 
 describe('#1204 记分期首迁：词条＋语言链', () => {
-  it('词条 zh／en 同 key（170 条＝124 既有＋42 首切 #1206＋回执核对两列净增 2＋#1280 合并分类 2）且英文列无空串', () => {
+  it('词条 zh／en 同 key（4114 条＝各迁移票合入后总键数，逐票增量见 tooling/i18n-ticket-scope.json）且英文列无空串', () => {
     const zhKeys = Object.keys(SKILL_BILL_CATALOG.zh).sort();
     const enKeys = Object.keys(SKILL_BILL_CATALOG.en).sort();
     assert.deepEqual(enKeys, zhKeys);
-    assert.equal(zhKeys.length, 170);
+    assert.equal(zhKeys.length, 4114);
     for (const k of enKeys) assert.ok(SKILL_BILL_CATALOG.en[k].length > 0, '英文缺译：' + k);
   });
 
   it('工厂函数按语言取值（直连字段的抽查）：family 中英各一', () => {
     assert.equal(sceneInstallment('zh').family, '特殊收支族');
     assert.equal(sceneInstallment('en').family, 'Special income and expense');
-    assert.equal(sceneInstallment().family, '特殊收支族');
   });
 
   it('落点表 16 行不动：默认取件仍是表里那一行静态件，en 现算', () => {
     const row = SCENES.find((s) => s.kind === 'installment');
     assert.equal(SCENES.length, 16);
-    assert.strictEqual(sceneFor({ key: 'bill.record.add', kind: 'installment' }), row);
+    assert.strictEqual(sceneFor({ key: 'bill.record.add', kind: 'installment' }, 'zh'), row);
     const enScene = sceneFor({ key: 'bill.record.add', kind: 'installment' }, 'en');
     assert.equal(enScene.family, 'Special income and expense');
     assert.equal(enScene.kind, 'installment');
@@ -89,7 +90,7 @@ describe('#1204 回执纸迁移：词条＋整句化', () => {
     ({ receiptPaper } = await import('../dist/write/receiptPaper.js'));
   });
 
-  function receiptInput(kind, language) {
+  function receiptInput(kind, language = 'zh') {
     return {
       key: 'bill.record.add',
       params: { kind, category: '餐饮', amount: -12.5, time: FIXTURE_TIME },
@@ -103,12 +104,13 @@ describe('#1204 回执纸迁移：词条＋整句化', () => {
       recent: [],
       word: '记支出',
       kind,
-      ...(language === undefined ? {} : { language }),
+      // #1307：语言必给（本件是 ReceiptInput，缺这格回执纸取不到词条）。
+      language,
     };
   }
 
   it('默认中文回执：结论标题沿用旧字面，核对行换成两列', () => {
-    const html = receiptPaper(receiptInput('expense', undefined));
+    const html = receiptPaper(receiptInput('expense'));
     assert.ok(html.includes('记好了：支出 12.50'), '结论标题应为整句');
     assert.ok(html.includes('<dt>编号</dt><dd>7</dd><dt>异常</dt><dd class="is-ok">无</dd>'), '核对行应为两列');
     assert.ok(html.includes('已经记好，不用再操作。'), '纸注应存在');
@@ -122,7 +124,7 @@ describe('#1204 回执纸迁移：词条＋整句化', () => {
   });
 
   it('无金额与无编号分支走第二整句', () => {
-    const noAmount = receiptInput('batch', undefined);
+    const noAmount = receiptInput('batch');
     const html = receiptPaper(noAmount);
     assert.ok(html.includes('这一批记好了'), '批量整句标题');
   });
@@ -139,19 +141,20 @@ describe('#1204 记收回迁移：词条＋语言链', () => {
       actionAt: '2026-09-14 12:00:00',
       today: '2026-09-14',
       recent: recent ?? [],
+      // #1307：语言必给，口径同 collectZh()。
+      language: 'zh',
     };
   }
 
   it('工厂函数按语言取值：family 复用记分期 key，中英各一', () => {
     assert.equal(sceneCollect('zh').family, '特殊收支族');
     assert.equal(sceneCollect('en').family, 'Special income and expense');
-    assert.equal(sceneCollect().family, '特殊收支族');
   });
 
   it('落点表 16 行不动：默认取件仍是表里那一行静态件，en 现算', () => {
     const row = SCENES.find((s) => s.kind === 'collect');
     assert.equal(SCENES.length, 16);
-    assert.strictEqual(sceneFor({ key: 'bill.record.add', kind: 'collect' }), row);
+    assert.strictEqual(sceneFor({ key: 'bill.record.add', kind: 'collect' }, 'zh'), row);
     const enScene = sceneFor({ key: 'bill.record.add', kind: 'collect' }, 'en');
     assert.equal(enScene.family, 'Special income and expense');
     assert.equal(enScene.kind, 'collect');

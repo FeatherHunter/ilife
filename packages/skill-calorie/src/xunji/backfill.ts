@@ -24,6 +24,7 @@ import type { FetchOptions, FetchOutcome } from './fetch.js';
 import { xunjiResponseToRows } from './rows.js';
 import { upsertXunjiRows } from './store.js';
 import type { XunjiFailure } from './retry.js';
+import { m } from '../entries/index.js';
 
 /** 回写默认天数的**默认档**（照签名 `days=1`，不照文档「默认 2」；默认值表里的那一项就是唯一定义地）。 */
 export const BACKFILL_DEFAULT_DAYS = CALORIE_CONFIG_DEFAULTS.xunji.backfillDays;
@@ -126,7 +127,7 @@ export async function backfillOneDay(dateStr: string, deps: BackfillDeps = {}): 
     return {
       date: dateStr, fetch_ok: false, trains_count: 0, inserted: 0, updated: 0,
       skipped_empty: true, body_weight_kg: null, errors: [],
-      err: '拉取失败（没拉到）：' + outcome.failure.message, failure: outcome.failure,
+      err: m('skill-calorie.xunji-backfill.c001', { p0: String(outcome.failure.message) }), failure: outcome.failure,
     };
   }
   const trains = asTrains(outcome.response);
@@ -147,10 +148,11 @@ export async function backfillOneDay(dateStr: string, deps: BackfillDeps = {}): 
     };
   }
   if (db === null) {
+    const openText = openErr ?? m('skill-calorie.xunji-backfill.c002');
     return {
       date: dateStr, fetch_ok: true, trains_count: trains.length, inserted: 0, updated: 0,
-      skipped_empty: false, body_weight_kg: weight, errors: [openErr ?? '打不开库'],
-      err: '写库失败（拉到了没写进）：打不开库：' + (openErr ?? '未知原因'), failure: null,
+      skipped_empty: false, body_weight_kg: weight, errors: [openErr ?? m('skill-calorie.xunji-backfill.c003')],
+      err: m('skill-calorie.xunji-backfill.c004', { p0: String(openText) }), failure: null,
     };
   }
   try {
@@ -174,7 +176,7 @@ export async function backfillOneDay(dateStr: string, deps: BackfillDeps = {}): 
     return {
       date: dateStr, fetch_ok: true, trains_count: trains.length, inserted: 0, updated: 0,
       skipped_empty: false, body_weight_kg: weight, errors: [msg],
-      err: '写库失败（拉到了没写进，已回滚）：' + msg, failure: null,
+      err: m('skill-calorie.xunji-backfill.c005', { p0: String(msg) }), failure: null,
     };
   }
 }

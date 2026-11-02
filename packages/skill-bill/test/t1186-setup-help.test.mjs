@@ -3,9 +3,9 @@
 // 判据：向导页三份可读，帮助页可验；步骤条人话行（第N+标题+状态+现状数），无数据页空态有下一步，复制=显示行，旧thin零产出。
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { initSteps, restoreSteps, importSteps, STEP_STATE_TEXT } from '../dist/setup/steps.js';
-import { buildSetupCopyText, buildSetupCopyJson, buildSetupCopyCsv, SETUP_EMPTY_NEXT } from '../dist/setup/copyTextSetup.js';
-import { buildHelpCopyText, buildHelpCopyJson, buildHelpCopyCsv, HELP_EMPTY_NEXT } from '../dist/help/copyTextHelp.js';
+import { initSteps, restoreSteps, importSteps, stepStateText } from '../dist/setup/steps.js';
+import { buildSetupCopyText, buildSetupCopyJson, buildSetupCopyCsv, setupEmptyNext } from '../dist/setup/copyTextSetup.js';
+import { buildHelpCopyText, buildHelpCopyJson, buildHelpCopyCsv, helpEmptyNext } from '../dist/help/copyTextHelp.js';
 import { wizardDoc } from '../dist/setup/template-wizard.js';
 import { setupSceneFor } from '../dist/setup/scene.js';
 import { receiptEnvelopeOf } from '../dist/setup/pageParts.js';
@@ -25,7 +25,7 @@ describe('t1186 向导步骤人话行（第N+标题+状态+现状数）', () => 
     assert.ok(lines[0].includes('饼干记账') && lines[0].includes('首次使用向导'));
     assert.ok(lines[1].includes('共 4 步'));
     for (const s of steps) {
-      const want = '第 ' + s.no + ' 步 ' + s.label + ' ' + STEP_STATE_TEXT[s.state];
+      const want = '第 ' + s.no + ' 步 ' + s.label + ' ' + stepStateText(s.state);
       assert.ok(text.includes(want), '缺人话行：' + want);
       assert.ok(text.includes(s.detail), '缺现状数：' + s.detail);
     }
@@ -59,7 +59,7 @@ describe('t1186 向导步骤人话行（第N+标题+状态+现状数）', () => 
   it('setup空steps空态有下一步不硬凑行', () => {
     const text = buildSetupCopyText({ op: 'init', title: '首次使用向导', steps: [] });
     assert.ok(text.includes('没有步骤可报'));
-    assert.ok(text.includes(SETUP_EMPTY_NEXT));
+    assert.ok(text.includes(setupEmptyNext()));
     const j = JSON.parse(buildSetupCopyJson({ op: 'init', title: '首次使用向导', steps: [] }));
     assert.deepEqual(j.data.steps, []);
     const csv = buildSetupCopyCsv({ op: 'init', title: '首次使用向导', steps: [] });
@@ -78,7 +78,7 @@ describe('t1186 向导步骤人话行（第N+标题+状态+现状数）', () => 
 
 
 describe('t1186 向导页三份可读复制等于显示行', () => {
-  const scene = setupSceneFor('init');
+  const scene = setupSceneFor('init', 'zh');
   const steps = initSteps(INIT_FACTS);
   const envelope = receiptEnvelopeOf('bill.setup.run', { ok: true, message: '已初始化', op: 'init' });
   const html = wizardDoc({
@@ -156,7 +156,7 @@ describe('t1186 帮助三份可验（纯文本可读/JSON结构/CSV表）', () =
   it('帮助空态有下一步不硬凑行', () => {
     const text = buildHelpCopyText({ title: '能力速查', total: 0, groups: [] });
     assert.ok(text.includes('还没有') || text.includes('没有可查'));
-    assert.ok(text.includes(HELP_EMPTY_NEXT));
+    assert.ok(text.includes(helpEmptyNext()));
     const j = JSON.parse(buildHelpCopyJson({ title: '能力速查', total: 0, groups: [] }));
     assert.equal(j.data.total, 0);
     const csv = buildHelpCopyCsv({ title: '能力速查', total: 0, groups: [] });

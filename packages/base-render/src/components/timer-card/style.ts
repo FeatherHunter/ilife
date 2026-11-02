@@ -18,6 +18,7 @@
  */
 import { skinVar } from '../skin/contract.js';
 import { timerCardClass, timerCardSlot, type TimerCardSlot } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -42,7 +43,7 @@ export function timerCardCss(input?: { readonly prefix?: string }): string {
   const s = root + ' .' + timerCardClass(p);
   const v = skinVar;
   return [
-    '/* timer-card（计时卡）：剩余时间当主读数（大数字 ＋ 进度条 ＋ 已过／还剩），底下开始／暂停／重置。 */',
+    m('base-render.components-timer-card-style.c001'),
     s + ' {',
     '  display: flex;',
     '  flex-direction: column;',
@@ -70,7 +71,7 @@ export function timerCardCss(input?: { readonly prefix?: string }): string {
     '  font-weight: 700;',
     '  overflow-wrap: anywhere;',
     '}',
-    '/* 状态字四档形状：底线／实底块／描边空心／双线框。 */',
+    m('base-render.components-timer-card-style.c002'),
     sc('tag') + ' {',
     '  flex: 0 0 auto;',
     '  box-sizing: border-box;',
@@ -105,7 +106,7 @@ export function timerCardCss(input?: { readonly prefix?: string }): string {
     '  border-radius: 0;',
     '  color: ' + v('ok') + ';',
     '}',
-    '/* 主读数：大数字 ＋ 单位。 */',
+    m('base-render.components-timer-card-style.c003'),
     sc('display') + ' {',
     '  display: flex;',
     '  flex-wrap: wrap;',
@@ -128,7 +129,7 @@ export function timerCardCss(input?: { readonly prefix?: string }): string {
     '  font-size: ' + v('fs-xs') + ';',
     '  font-weight: 700;',
     '}',
-    '/* 进度条：只动 transform（宽度不变 ⇒ 不重排）。 */',
+    m('base-render.components-timer-card-style.c004'),
     sc('bar') + ' {',
     '  height: 8px;',
     '  border-radius: ' + v('radius-pill') + ';',
@@ -176,7 +177,7 @@ export function timerCardCss(input?: { readonly prefix?: string }): string {
     '  margin-top: 2px;',
     '  min-width: 0;',
     '}',
-    '/* 按钮：真按钮。命中盒 44 高、宽度锁住（换字不跳版）。 */',
+    m('base-render.components-timer-card-style.c005'),
     sc('button') + ' {',
     '  display: inline-flex;',
     '  align-items: center;',
@@ -227,17 +228,17 @@ export function timerCardCss(input?: { readonly prefix?: string }): string {
     '  color: ' + v('ink-3') + ';',
     '  font-size: ' + v('fs-sm') + ';',
     '}',
-    '/* 悬停：包在设备能力查询里（不是唯一通路——按钮本来就是按下去的）。 */',
+    m('base-render.components-timer-card-style.c006'),
     '@media (hover:hover) and (pointer:fine) {',
     '  ' + sc('button') + ':hover:not([disabled]) { background: ' + v('accent-text') + '; border-color: ' + v('accent-text') + '; }',
     '  ' + sc('button') + '.is-quiet:hover:not([disabled]) { background: ' + v('surface-2') + '; }',
     '}',
-    '/* 减动效：过渡关掉，读数照走（读数由运行时按时间写，不靠动画收尾）。 */',
+    m('base-render.components-timer-card-style.c007'),
     '@media (prefers-reduced-motion:reduce) {',
     '  ' + sc('bar-fill') + ' { transition: none; }',
     '  ' + sc('button') + ' { transition: none; }',
     '}',
-    '/* 窄档：按钮各占一整行（大数字照旧不截断）。 */',
+    m('base-render.components-timer-card-style.c008'),
     '@container ' + TIMER_CARD_CONTAINER + ' (max-width: ' + TIMER_CARD_NARROW_MAX_PX + 'px) {',
     '  ' + sc('button') + ' { flex: 1 1 100%; }',
     '  ' + sc('tag') + ' { margin-left: 0; }',

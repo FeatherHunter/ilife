@@ -28,6 +28,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { configPaths } from 'base-link-core';
 import { HOME_CONFIG_DEFAULTS, HOME_CONFIG_STEM } from './config.js';
 import { dbDirOf, dbFileOf, htmlDirOf, keyFileOf, DEFAULT_MASTER_KEY_FILENAME } from './fetch/paths.js';
+import { m } from './entries/index.js';
 
 /** 报告里的三档判据（与面板侧镜像同值）。 */
 export type HealthStatus = 'red' | 'yellow' | 'green';
@@ -87,7 +88,7 @@ export function readHomeConfigReadOnly(): ConfigRead {
   try {
     text = readFileSync(file, 'utf8');
   } catch (e) {
-    return { kind: 'bad', message: '读配置文件失败：' + file + '（' + (e instanceof Error ? e.message : String(e)) + '）' };
+    return { kind: 'bad', message: m('skill-home.health.c001', { p0: String(file), p1: String(e instanceof Error ? e.message : String(e)) }) };
   }
   const parsed = parseSubset(text, file);
   if (!parsed.ok) return { kind: 'bad', message: parsed.message };
@@ -122,10 +123,10 @@ function parseSubset(text: string, file: string):
   let openGroupLine = 0;
   /** 标量解析的失败口：`parseScalar` 把报文写进 `scalarError`，调用处读它即可（不抛，免得类型糊）。 */
   let scalarError = '';
-  const fail = (line: number, why: string) => ({ ok: false as const, message: '配置件第 ' + String(line) + ' 行：' + why + '（文件：' + file + '）' });
+  const fail = (line: number, why: string) => ({ ok: false as const, message: m('skill-home.health.c002', { p0: String(String(line)), p1: String(why), p2: String(file) }) });
   const closeGroup = (): string | null => {
     if (openGroup !== null && Object.keys(values[openGroup] as Record<string, unknown>).length === 0) {
-      return fail(openGroupLine, '键「' + openGroup + '」冒号后没有值，也没有子项').message;
+      return fail(openGroupLine, m('skill-home.health.c003', { p0: String(openGroup) })).message;
     }
     openGroup = null;
     return null;
@@ -137,20 +138,24 @@ function parseSubset(text: string, file: string):
     if (/^\s*#/.test(raw)) continue;
     const head = /^[ \t]*/.exec(raw)?.[0] ?? '';
     const body = raw.slice(head.length);
-    if (head.includes('\t')) return fail(lineNo, '缩进里有制表符：本子集只许空格，且嵌套缩进恰好 2 个空格');
-    if (body.startsWith('-')) return fail(lineNo, '本子集不支持列表（「-」开头的行）');
+    if (head.includes('\t')) return fail(lineNo, m('skill-home.health.c004'));
+    if (body.startsWith('-')) return fail(lineNo, m('skill-home.health.c005'));
     const matched = /^([A-Za-z_][A-Za-z0-9_.-]*)[ \t]*:[ \t]*(.*)$/.exec(body);
-    if (matched === null) return fail(lineNo, '不是「键: 值」形状：' + body.trim());
+    if (matched === null) return fail(lineNo, m('skill-home.health.c006', { p0: String(body.trim()) }));
     const key = matched[1] as string;
     const rest = (matched[2] ?? '').trim();
     if (head.length > 0) {
-      if (head.length !== 2) return fail(lineNo, '缩进必须恰好 2 个空格（本子集只支持一层嵌套），实为 ' + String(head.length) + ' 个空格');
-      if (openGroup === null) return fail(lineNo, '缩进的子项「' + key + '」上面没有开着子的顶层键');
+      if (head.length !== 2) return fail(lineNo, m('skill-home.health.c007', { p0: String(String(head.length)) }));
+      if (openGroup === null) return fail(lineNo, m('skill-home.health.c008', { p0: String(key) }));
       const group = values[openGroup] as Record<string, unknown>;
       if (Object.prototype.hasOwnProperty.call(group, key)) {
-        return fail(lineNo, '键「' + openGroup + '.' + key + '」重复定义（第 ' + String(lineOf.get(openGroup + '.' + key)) + ' 行已定义）');
+        return fail(lineNo, m('skill-home.health.c009', {
+          p0: String(openGroup),
+          p1: String(key),
+          p2: String(String(lineOf.get(openGroup + '.' + key))),
+        }));
       }
-      if (rest === '') return fail(lineNo, '键「' + openGroup + '.' + key + '」冒号后没有值');
+      if (rest === '') return fail(lineNo, m('skill-home.health.c010', { p0: String(openGroup), p1: String(key) }));
       const scalar = parseScalar(rest, lineNo, fail, (message) => {
         scalarError = message;
       });
@@ -162,7 +167,7 @@ function parseSubset(text: string, file: string):
     const closedError = closeGroup();
     if (closedError !== null) return { ok: false, message: closedError };
     if (Object.prototype.hasOwnProperty.call(values, key)) {
-      return fail(lineNo, '键「' + key + '」重复定义（第 ' + String(lineOf.get(key)) + ' 行已定义）');
+      return fail(lineNo, m('skill-home.health.c011', { p0: String(key), p1: String(String(lineOf.get(key))) }));
     }
     lineOf.set(key, lineNo);
     if (rest === '') {
@@ -215,7 +220,7 @@ function parseScalar(
       out += ch;
     }
     if (!closed) {
-      onError(fail(lineNo, '引号没有闭合：' + text).message);
+      onError(fail(lineNo, m('skill-home.health.c012', { p0: String(text) })).message);
       return '';
     }
     return out;
@@ -229,7 +234,7 @@ function parseScalar(
   }
   const body = text.slice(0, cut).trim();
   if (body === '') {
-    onError(fail(lineNo, '冒号后没有值（只有注释）').message);
+    onError(fail(lineNo, m('skill-home.health.c013')).message);
     return '';
   }
   if (body === 'true') return true;
@@ -266,7 +271,7 @@ function textOf(value: unknown): string {
 
 /** 「这个值从哪来」：真在文件里写了就是「配置文件」，否则按默认值（文件不存在则全按默认值）。 */
 function sourceOf(present: ReadonlySet<string>, key: string): string {
-  return present.has(key) ? '配置文件' : '默认值';
+  return present.has(key) ? m('skill-home.health.c014') : m('skill-home.health.c015');
 }
 
 /** 老 `accounts.py:32-56` 那四级定位的落点（#794 起只是**只读提示**，判据以配置 `key.file` 为准）：
@@ -318,7 +323,7 @@ function dirVerdict(dir: string): DirVerdict {
 function dirVerdictUncached(dir: string): DirVerdict {
   if (!existsSync(dir)) return { exists: false, writable: false, reason: '' };
   try {
-    if (!statSync(dir).isDirectory()) return { exists: false, writable: false, reason: '同名文件占了它的位置' };
+    if (!statSync(dir).isDirectory()) return { exists: false, writable: false, reason: m('skill-home.health.c016') };
   } catch (e) {
     return { exists: false, writable: false, reason: e instanceof Error ? e.message : String(e) };
   }
@@ -380,8 +385,11 @@ export function homeDataDirAlert(
     'db.dir': {
       code: verdict.exists ? 'DIR_UNWRITABLE' : 'DIR_MISSING',
       message: !verdict.exists
-        ? '不在：' + p(dataDir) + (verdict.reason !== '' ? '（' + verdict.reason + '）' : '')
-        : '在，但写不进去：' + p(dataDir) + '（' + verdict.reason + '）。',
+        ? m('skill-home.health.c017', {
+          p0: String(p(dataDir)),
+          p1: String(verdict.reason !== '' ? '（' + verdict.reason + '）' : ''),
+        })
+        : m('skill-home.health.c018', { p0: String(p(dataDir)), p1: String(verdict.reason) }),
     },
   };
 }
@@ -396,27 +404,27 @@ export function buildHomeHealthReport(): HomeHealthReport {
   // ① 配置文件本身：能不能解析；它落在默认位置还是别处（只陈述，不评价）。
   const defaultConfigFile = join(homedir(), '.ilife', HOME_CONFIG_STEM + '.yaml');
   const relocated = paths.configFile !== defaultConfigFile;
-  const where = relocated ? '位置与默认不同（见配置文件落点）' : '默认位置';
+  const where = relocated ? m('skill-home.health.c019') : m('skill-home.health.c020');
   if (read.kind === 'bad') {
     items.push({
-      id: 'config.file', title: '配置文件', status: 'red',
+      id: 'config.file', title: m('skill-home.health.c021'), status: 'red',
       message: read.message,
-      action: '照报文指的行号改回「键: 值」的写法；改不动就删掉这个文件，让技能按默认值重落一份。',
-      source: '配置文件',
+      action: m('skill-home.health.c022'),
+      source: m('skill-home.health.c023'),
     });
   } else if (read.kind === 'missing') {
     items.push({
-      id: 'config.file', title: '配置文件', status: 'yellow',
-      message: '配置文件还不存在：' + p(paths.configFile) + '（现在跑的是默认值）。',
-      action: '在面板上保存一次即会落一份；也可点「重置为默认」。',
-      source: '默认值',
+      id: 'config.file', title: m('skill-home.health.c024'), status: 'yellow',
+      message: m('skill-home.health.c025', { p0: String(p(paths.configFile)) }),
+      action: m('skill-home.health.c026'),
+      source: m('skill-home.health.c027'),
     });
   } else {
     items.push({
-      id: 'config.file', title: '配置文件', status: 'green',
-      message: '能解析：' + p(paths.configFile) + '（' + where + '）。',
+      id: 'config.file', title: m('skill-home.health.c028'), status: 'green',
+      message: m('skill-home.health.c029', { p0: String(p(paths.configFile)), p1: String(where) }),
       action: '',
-      source: '配置文件',
+      source: m('skill-home.health.c030'),
     });
   }
 
@@ -426,16 +434,19 @@ export function buildHomeHealthReport(): HomeHealthReport {
   const dataDirSource = sourceOf(present, 'db.dir');
   const dataDirVerdict = dirVerdict(dataDir);
   items.push({
-    id: 'db.dir', title: '数据目录',
+    id: 'db.dir', title: m('skill-home.health.c031'),
     status: !dataDirVerdict.exists || !dataDirVerdict.writable ? 'red' : 'green',
     message: !dataDirVerdict.exists
-      ? '不在：' + p(dataDir) + (dataDirVerdict.reason !== '' ? '（' + dataDirVerdict.reason + '）' : '')
+      ? m('skill-home.health.c032', {
+        p0: String(p(dataDir)),
+        p1: String(dataDirVerdict.reason !== '' ? '（' + dataDirVerdict.reason + '）' : ''),
+      })
       : dataDirVerdict.writable
-        ? '在且能写：' + p(dataDir) + '。'
-        : '在，但写不进去：' + p(dataDir) + '（' + dataDirVerdict.reason + '）。',
+        ? m('skill-home.health.c033', { p0: String(p(dataDir)) })
+        : m('skill-home.health.c034', { p0: String(p(dataDir)), p1: String(dataDirVerdict.reason) }),
     action: !dataDirVerdict.exists
-      ? '先建这个目录，或把配置里的「数据目录」改到一个已存在的位置。'
-      : dataDirVerdict.writable ? '' : '去掉这个目录的只读属性，或把「数据目录」改到别处。',
+      ? m('skill-home.health.c035')
+      : dataDirVerdict.writable ? '' : m('skill-home.health.c036'),
     source: dataDirSource,
   });
 
@@ -445,31 +456,35 @@ export function buildHomeHealthReport(): HomeHealthReport {
   const dbSource = sourceOf(present, 'db.name');
   if (!existsSync(dbFile)) {
     items.push({
-      id: 'db.file', title: '库文件', status: 'red',
-      message: '不在：' + p(dbFile) + '。',
-      action: '新装的话，跑一条会写库的命令即会建库；要换库文件名，编辑配置文件里的 db.name。',
+      id: 'db.file', title: m('skill-home.health.c037'), status: 'red',
+      message: m('skill-home.health.c038', { p0: String(p(dbFile)) }),
+      action: m('skill-home.health.c039'),
       source: dbSource,
     });
   } else {
     const tables = tableCount(dbFile);
     if (!tables.ok) {
       items.push({
-        id: 'db.file', title: '库文件', status: 'red',
-        message: '在，但打不开：' + p(dbFile) + '（' + tables.reason + '）。',
-        action: '这个文件可能不是库文件或已损坏；先备份，再看要不要让技能重建一份。',
+        id: 'db.file', title: m('skill-home.health.c040'), status: 'red',
+        message: m('skill-home.health.c041', { p0: String(p(dbFile)), p1: String(tables.reason) }),
+        action: m('skill-home.health.c042'),
         source: dbSource,
       });
     } else if (tables.count < DB_TABLE_THRESHOLD) {
       items.push({
-        id: 'db.file', title: '库文件', status: 'yellow',
-        message: '在，但表不全：' + p(dbFile) + '（' + String(tables.count) + ' / ' + String(DB_TABLE_THRESHOLD) + ' 张表）。',
-        action: '缺表会让对应的功能报错；跑一次会写库的命令让它补齐，或从备份恢复。',
+        id: 'db.file', title: m('skill-home.health.c043'), status: 'yellow',
+        message: m('skill-home.health.c044', {
+          p0: String(p(dbFile)),
+          p1: String(String(tables.count)),
+          p2: String(String(DB_TABLE_THRESHOLD)),
+        }),
+        action: m('skill-home.health.c045'),
         source: dbSource,
       });
     } else {
       items.push({
-        id: 'db.file', title: '库文件', status: 'green',
-        message: '在，' + String(tables.count) + ' 张表齐：' + p(dbFile) + '。',
+        id: 'db.file', title: m('skill-home.health.c046'), status: 'green',
+        message: m('skill-home.health.c047', { p0: String(String(tables.count)), p1: String(p(dbFile)) }),
         action: '',
         source: dbSource,
       });
@@ -483,34 +498,36 @@ export function buildHomeHealthReport(): HomeHealthReport {
   const htmlVerdict = dirVerdict(htmlDir);
   const htmlSource = sourceOf(present, 'html.dir');
   items.push({
-    id: 'html.dir', title: '产物目录',
+    id: 'html.dir', title: m('skill-home.health.c048'),
     status: !htmlVerdict.exists ? 'green' : htmlVerdict.writable ? 'green' : 'yellow',
     message: !htmlVerdict.exists
-      ? '还没建：' + p(htmlDir) + '（交付页面时才落这里，那时自动建）。'
+      ? m('skill-home.health.c049', { p0: String(p(htmlDir)) })
       : htmlVerdict.writable
-        ? '在且能写：' + p(htmlDir) + '。'
-        : '在，但写不进去：' + p(htmlDir) + '（交付会转成内联回执，不再落盘）。',
-    action: !htmlVerdict.exists || htmlVerdict.writable ? '' : '去掉这个目录的只读属性；要换目录，编辑配置文件里的 html.dir。',
+        ? m('skill-home.health.c050', { p0: String(p(htmlDir)) })
+        : m('skill-home.health.c051', { p0: String(p(htmlDir)) }),
+    action: !htmlVerdict.exists || htmlVerdict.writable ? '' : m('skill-home.health.c052'),
     source: htmlSource,
   });
 
   // ⑤ 这个值从哪来：只陈述数据目录与库文件名的来源，不判好坏（六家通用最后一条）。
+  // 缺配置文件时尾注不同：两支各写整句（不拼 '。' 这种标点尾巴，英文列才不会落中文句号）。
   items.push({
-    id: 'value.source', title: '这个值从哪来', status: 'green',
-    message: '数据目录走「' + dataDirSource + '」，库文件名走「' + dbSource + '」'
-      + (read.kind === 'missing' ? '（配置文件还不存在，落点全按默认值）。' : '。'),
+    id: 'value.source', title: m('skill-home.health.c054'), status: 'green',
+    message: read.kind === 'missing'
+      ? m('skill-home.health.c071', { p0: String(dataDirSource), p1: String(dbSource) })
+      : m('skill-home.health.c055', { p0: String(dataDirSource), p1: String(dbSource) }),
     action: '', source: dataDirSource,
   });
 
   // ⑥ 产物根 vs 库根（居家特有）：两处并排显示；不一样＝黄（产物与库分离，不是故障），一样＝绿。
   const sameRoot = htmlDir === dataDir;
   items.push({
-    id: 'paths.split', title: '产物根 vs 库根',
+    id: 'paths.split', title: m('skill-home.health.c056'),
     status: sameRoot ? 'green' : 'yellow',
     message: sameRoot
-      ? '两处同一处：产物根 ' + p(htmlDir) + '，库根 ' + p(dataDir) + '。'
-      : '产物根 ' + p(htmlDir) + '，库根 ' + p(dataDir) + '（产物与库分离，不是故障）。',
-    action: sameRoot ? '' : '这是默认布局：页面产物落在库旁边的产物目录里，库文件仍在库根。想把产物也放库根，编辑配置文件，把 html.dir 留空或写 `.`。',
+      ? m('skill-home.health.c057', { p0: String(p(htmlDir)), p1: String(p(dataDir)) })
+      : m('skill-home.health.c058', { p0: String(p(htmlDir)), p1: String(p(dataDir)) }),
+    action: sameRoot ? '' : m('skill-home.health.c059'),
     source: htmlSource,
   });
 
@@ -522,23 +539,27 @@ export function buildHomeHealthReport(): HomeHealthReport {
   const keyExists = existsSync(keyFile);
   if (keyExists) {
     items.push({
-      id: 'key.file', title: '主密钥文件',
+      id: 'key.file', title: m('skill-home.health.c060'),
       status: 'green',
-      message: '在：' + p(keyFile) + '。',
+      message: m('skill-home.health.c061', { p0: String(p(keyFile)) }),
       action: '',
       source: keySource,
     });
   } else {
     const legacyHit = legacyKeyCandidates(paths.dataDir).find((c) => c !== keyFile && existsSync(c));
     items.push({
-      id: 'key.file', title: '主密钥文件',
+      id: 'key.file', title: m('skill-home.health.c062'),
       status: 'yellow',
       message: legacyHit !== undefined
-        ? '配置那处不在：在 ' + p(legacyHit) + ' 发现 ' + MASTER_KEY_NAME + '（老位置），配置要的是 ' + p(keyFile) + '。'
-        : '不在：' + p(keyFile) + '（只在用「存账号／看密码」时才是故障）。',
+        ? m('skill-home.health.c063', {
+          p0: String(p(legacyHit)),
+          p1: String(MASTER_KEY_NAME),
+          p2: String(p(keyFile)),
+        })
+        : m('skill-home.health.c064', { p0: String(p(keyFile)) }),
       action: legacyHit !== undefined
-        ? '把它复制到 ' + p(keyFile) + '，或编辑配置文件把 key.file 指到它现在的位置。'
-        : '要用「存账号／看密码」就先把这个文件建出来（纯文本一行写口令）；换机恢复后要用账号密码，把它一起带过去。',
+        ? m('skill-home.health.c065', { p0: String(p(keyFile)) })
+        : m('skill-home.health.c066'),
       source: keySource,
     });
   }
@@ -548,12 +569,12 @@ export function buildHomeHealthReport(): HomeHealthReport {
   const templatesOk = existsSync(templatesDir);
   const templateCount = templatesOk ? templateFileCount(templatesDir) : 0;
   items.push({
-    id: 'templates.dir', title: '包内模板目录',
+    id: 'templates.dir', title: m('skill-home.health.c067'),
     status: templatesOk ? 'green' : 'red',
     message: templatesOk
-      ? '在，' + String(templateCount) + ' 件模板：' + p(templatesDir) + '。'
-      : '不在：' + p(templatesDir) + '。',
-    action: templatesOk ? '' : '技能包装得不完整：重装这个技能包，或跑一次它的构建。',
+      ? m('skill-home.health.c068', { p0: String(String(templateCount)), p1: String(p(templatesDir)) })
+      : m('skill-home.health.c069', { p0: String(p(templatesDir)) }),
+    action: templatesOk ? '' : m('skill-home.health.c070'),
   });
 
   return { skill: SKILL, configPath: p(paths.configFile), dataDir: p(dataDir), items };

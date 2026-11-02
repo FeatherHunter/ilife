@@ -416,7 +416,7 @@ describe('wizard-shell ① 渲染契约 · 骨架与槽位', () => {
     const busy = renderWizardShell({ ...CHOICE, loading: true });
     assert.ok(busy.includes('aria-busy="true"'));
     assert.equal(countDisabledButtons(busy), 3, '推进中三枚键都按不动（不许脏点击串成两次变更）');
-    assert.match(busy, new RegExp('>' + WIZARD_SHELL_LOADING_TEXT + '</span>'), '加载态那枚字在标记里');
+    assert.match(busy, new RegExp('>' + WIZARD_SHELL_LOADING_TEXT() + '</span>'), '加载态那枚字在标记里');
     assert.match(busy, />继续</, '常态那枚字**不撤**（两枚同格 ⇒ 宽度锁住不跳版）');
     assert.match(renderWizardShell({ ...CHOICE, loading: true, loadingText: '写库中' }), />写库中</);
   });

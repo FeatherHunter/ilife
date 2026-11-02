@@ -25,10 +25,12 @@ import type { WriteOut } from '../shared/commandSpec.js';
 import { XUNJI_STUB_ENV, invokeXunji, xunjiExitToCmd } from './xunjiRunner.js';
 import type { XunjiCall } from './xunjiRunner.js';
 import { xunjiKeyNext, xunjiKeyRow } from './xunjiKey.js';
+import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 export const XUNJI_BACKFILL_KEY = 'calorie.workout.xunji-backfill';
 const XUNJI_BACKFILL_WAKE = '拉训记实绩';
-const DOC_TITLE = '卡路里·健身计划回执';
+const DOC_TITLE = (): string => m('skill-calorie.workout-xunjiBackfill.c087');
 
 /** 子进程 `backfill` stdout 的最小形状守卫（成功分支；缺键即回执解析失败 exit 4）。 */
 export interface BackfillRangeSummary {
@@ -52,7 +54,10 @@ function asBackfillSummary(data: unknown, step: string): BackfillRangeSummary {
     typeof o !== 'object' || o === null || typeof o.end_date !== 'string' || typeof o.days !== 'number'
     || typeof o.total_inserted !== 'number' || typeof o.total_updated !== 'number' || !Array.isArray(o.results)
   ) {
-    fail(4, step + '回执解析失败（backfill 的 stdout 缺区间汇总键）：' + JSON.stringify(data ?? null).slice(0, 160));
+    fail(4, m('skill-calorie.workout-xunjiBackfill.c001', {
+      p0: String(step),
+      p1: String(JSON.stringify(data ?? null).slice(0, 160)),
+    }));
   }
   return o as BackfillRangeSummary;
 }
@@ -61,7 +66,7 @@ function asBackfillSummary(data: unknown, step: string): BackfillRangeSummary {
 function readDryRun(params: Record<string, unknown>): boolean {
   const v = params['dryRun'];
   if (v === undefined || v === null) return false;
-  if (typeof v !== 'boolean') fail(2, '参数 dryRun 须为布尔值');
+  if (typeof v !== 'boolean') fail(2, m('skill-calorie.workout-xunjiBackfill.c002'));
   return v as boolean;
 }
 
@@ -69,7 +74,7 @@ function readDryRun(params: Record<string, unknown>): boolean {
 function readDays(params: Record<string, unknown>): number {
   const v = optInt(params, 'days');
   if (v === undefined) return 1;
-  if (v < 1) fail(2, '参数 days 须为 ≥1 整数（实际：' + String(params['days']) + '）');
+  if (v < 1) fail(2, m('skill-calorie.workout-xunjiBackfill.c003', { p0: String(String(params['days'])) }));
   return v as number;
 }
 
@@ -81,8 +86,8 @@ function dayFailures(data: unknown): string[] {
   for (const r of o.results as unknown[]) {
     const d = r as { date?: unknown; fetch_ok?: unknown; err?: unknown } | null;
     if (typeof d !== 'object' || d === null || typeof d.date !== 'string') continue;
-    if (d.fetch_ok === false) out.push(d.date + '没拉到');
-    else if (typeof d.err === 'string' && d.err !== '') out.push(d.date + '拉到了没写进');
+    if (d.fetch_ok === false) out.push(m('skill-calorie.workout-xunjiBackfill.c004', { p0: String(d.date) }));
+    else if (typeof d.err === 'string' && d.err !== '') out.push(m('skill-calorie.workout-xunjiBackfill.c005', { p0: String(d.date) }));
   }
   return out;
 }
@@ -90,14 +95,21 @@ function dayFailures(data: unknown): string[] {
 /** 回写失败：本地缺 KEY 点名没调远端＋可复制的下一步（exit 3），其余按天点名失败分类（exit 4）。 */
 function failBackfill(end: string, days: number, call: XunjiCall): never {
   if (call.code === 2) {
-    fail(3, '拉训记实绩失败（' + end + ' 往前 ' + days + ' 天）：本地缺 KEY（没调远端）：' + xunjiKeyNext());
+    fail(3, m('skill-calorie.workout-xunjiBackfill.c006', {
+      p0: String(end),
+      p1: String(days),
+      p2: String(xunjiKeyNext()),
+    }));
   }
   const named = dayFailures(call.data);
   fail(
     xunjiExitToCmd(call.code),
-    '拉训记实绩失败（' + end + ' 往前 ' + days + ' 天）'
-      + (named.length === 0 ? '' : '：' + named.join('、')) + '：稍后重试'
-      + (call.stderr === '' ? '' : '（' + call.stderr + '）'),
+    m('skill-calorie.workout-xunjiBackfill.c007', {
+      p0: String(end),
+      p1: String(days),
+      p2: String(named.length === 0 ? '' : '：' + listJoin(currentRenderLanguage(), named)),
+      p3: String(call.stderr === '' ? '' : '（' + call.stderr + '）'),
+    }),
   );
 }
 
@@ -107,22 +119,26 @@ export function writeXunjiBackfill(params: Record<string, unknown>, _db: Databas
   const days = readDays(params);
   const dryRun = readDryRun(params);
   if (dryRun) {
-    const message = '预演：从训记拉 ' + end + ' 往前 ' + days + ' 天（远端未调用）';
-    const receipt = R('拉训记实绩', 'update', message, XUNJI_BACKFILL_WAKE, '训记实绩回写读数（运动记录）', {
+    const message = m('skill-calorie.workout-xunjiBackfill.c008', { p0: String(end), p1: String(days) });
+    const receipt = R(m('skill-calorie.workout-xunjiBackfill.c009'), 'update', message, XUNJI_BACKFILL_WAKE, m('skill-calorie.workout-xunjiBackfill.c010'), {
       recordId: null, ids: [], idSource: 'condition', writtenFields: provided(params, ['date', 'days', 'dryRun']),
-      items: [{ status: '成功', reason: '', detail: message }],
+      items: [{ status: m('skill-calorie.workout-xunjiBackfill.c011'), reason: '', detail: message }],
     });
     const html = backfillProcessPage(params, end, days, receipt, false);
     return { data: { ok: true, message, receipt }, html };
   }
-  const call = invokeXunji(['backfill', '--date', end, '--days', String(days)], '拉训记实绩');
+  const call = invokeXunji(['backfill', '--date', end, '--days', String(days)], m('skill-calorie.workout-xunjiBackfill.c012'));
   if (call.code !== 0) failBackfill(end, days, call);
-  const summary = asBackfillSummary(call.data, '拉训记实绩');
-  const message = '已拉训记实绩并回写：' + summary.end_date + ' 往前 ' + summary.days + ' 天，新增 '
-    + summary.total_inserted + '，更新 ' + summary.total_updated;
-  const receipt = R('拉训记实绩', 'update', message, XUNJI_BACKFILL_WAKE, '训记实绩回写读数（运动记录）', {
+  const summary = asBackfillSummary(call.data, m('skill-calorie.workout-xunjiBackfill.c013'));
+  const message = m('skill-calorie.workout-xunjiBackfill.c014', {
+    p0: String(summary.end_date),
+    p1: String(summary.days),
+    p2: String(summary.total_inserted),
+    p3: String(summary.total_updated),
+  });
+  const receipt = R(m('skill-calorie.workout-xunjiBackfill.c015'), 'update', message, XUNJI_BACKFILL_WAKE, m('skill-calorie.workout-xunjiBackfill.c016'), {
     recordId: null, ids: [], idSource: 'condition', writtenFields: provided(params, ['date', 'days', 'dryRun']),
-    items: [{ status: '成功', reason: '', detail: message }],
+    items: [{ status: m('skill-calorie.workout-xunjiBackfill.c017'), reason: '', detail: message }],
   });
   const html = backfillResultPage(params, summary, receipt, call.stubbed);
   return { data: { ok: true, message, receipt }, html };
@@ -130,42 +146,42 @@ export function writeXunjiBackfill(params: Record<string, unknown>, _db: Databas
 
 /** 过程页（`dryRun`）：回写区间 ＋ 三步预告 ＋ 幂等与冲突口径；远端未调用写在页头。 */
 function backfillProcessPage(params: Record<string, unknown>, end: string, days: number, receipt: CrudReceipt, stubbed: boolean): string {
-  const message = '预演：从训记拉 ' + end + ' 往前 ' + days + ' 天（远端未调用）';
+  const message = m('skill-calorie.workout-xunjiBackfill.c018', { p0: String(end), p1: String(days) });
   const content = [
     renderKpiGrid([
-      { label: '结束日', value: end, detail: '回写到哪一天为止' },
-      { label: '往前', value: days + ' 天', detail: '回写 [结束日−N＋1，结束日]，新在前' },
-      { label: '远端', value: '未调用', detail: '预演不调训记接口，不写运动记录' },
+      { label: m('skill-calorie.workout-xunjiBackfill.c019'), value: end, detail: m('skill-calorie.workout-xunjiBackfill.c020') },
+      { label: m('skill-calorie.workout-xunjiBackfill.c021'), value: m('skill-calorie.workout-xunjiBackfill.c022', { p0: String(days) }), detail: m('skill-calorie.workout-xunjiBackfill.c023') },
+      { label: m('skill-calorie.workout-xunjiBackfill.c024'), value: m('skill-calorie.workout-xunjiBackfill.c025'), detail: m('skill-calorie.workout-xunjiBackfill.c026') },
     ]),
     renderDataTable({
-      columns: [{ key: 'step', label: '步骤' }, { key: 'does', label: '会做什么' }],
+      columns: [{ key: 'step', label: m('skill-calorie.workout-xunjiBackfill.c027') }, { key: 'does', label: m('skill-calorie.workout-xunjiBackfill.c028') }],
       rows: [
-        { step: '拉取', does: '按天拉训记训练数据（只读训记，不改本仓）' },
-        { step: '转行', does: '已完成标记才转行。范围次数取大，缺单位自动换算' },
-        { step: '回写', does: '显式事务落运动记录，失败整天回滚' },
+        { step: m('skill-calorie.workout-xunjiBackfill.c029'), does: m('skill-calorie.workout-xunjiBackfill.c030') },
+        { step: m('skill-calorie.workout-xunjiBackfill.c031'), does: m('skill-calorie.workout-xunjiBackfill.c032') },
+        { step: m('skill-calorie.workout-xunjiBackfill.c033'), does: m('skill-calorie.workout-xunjiBackfill.c034') },
       ],
-      caption: '实跑三步预告',
+      caption: m('skill-calorie.workout-xunjiBackfill.c035'),
     }),
     renderDataTable({
-      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+      columns: [{ key: 'k', label: m('skill-calorie.workout-xunjiBackfill.c036') }, { key: 'v', label: m('skill-calorie.workout-xunjiBackfill.c037') }],
       rows: [
-        { k: '重复拉取', v: '按单号加类型加序号三列认同一行，重复拉只更新不翻倍' },
-        { k: '本地备注', v: '手填的备注与日期回写时保留，不覆盖' },
-        { k: '空天', v: '训记那天空无训练即跳过，不算失败' },
-        { k: '本地', v: '参数已验过，区间与口径见上两表' },
-        { k: '远端', v: '未调用（预演不调训记接口）' },
+        { k: m('skill-calorie.workout-xunjiBackfill.c038'), v: m('skill-calorie.workout-xunjiBackfill.c039') },
+        { k: m('skill-calorie.workout-xunjiBackfill.c040'), v: m('skill-calorie.workout-xunjiBackfill.c041') },
+        { k: m('skill-calorie.workout-xunjiBackfill.c042'), v: m('skill-calorie.workout-xunjiBackfill.c043') },
+        { k: m('skill-calorie.workout-xunjiBackfill.c044'), v: m('skill-calorie.workout-xunjiBackfill.c045') },
+        { k: m('skill-calorie.workout-xunjiBackfill.c046'), v: m('skill-calorie.workout-xunjiBackfill.c047') },
         xunjiKeyRow(),
-        ...(stubbed ? [{ k: '数据来源', v: '本地挡板（' + XUNJI_STUB_ENV + '，未调远端）' }] : []),
+        ...(stubbed ? [{ k: m('skill-calorie.workout-xunjiBackfill.c048'), v: m('skill-calorie.workout-xunjiBackfill.c049', { p0: String(XUNJI_STUB_ENV) }) }] : []),
       ],
-      caption: '本地成远端没成分得清',
+      caption: m('skill-calorie.workout-xunjiBackfill.c050'),
     }),
-    copyBlock(XUNJI_BACKFILL_KEY, params, receipt, '训记实绩回写读数（运动记录）'),
+    copyBlock(XUNJI_BACKFILL_KEY, params, receipt, m('skill-calorie.workout-xunjiBackfill.c051')),
   ].join('');
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '拉训记实绩',
-    eyebrow: '健身计划',
-    subtitle: '过程页（预演：只看区间与口径）',
+    docTitle: DOC_TITLE(),
+    title: m('skill-calorie.workout-xunjiBackfill.c052'),
+    eyebrow: m('skill-calorie.workout-xunjiBackfill.c053'),
+    subtitle: m('skill-calorie.workout-xunjiBackfill.c054'),
     content,
     pageUi: true,
   });
@@ -173,45 +189,55 @@ function backfillProcessPage(params: Record<string, unknown>, end: string, days:
 
 /** 结果页：逐天回写结局 ＋ 新增／更新合计 ＋ 本地／远端区分。 */
 function backfillResultPage(params: Record<string, unknown>, summary: BackfillRangeSummary, receipt: CrudReceipt, stubbed: boolean): string {
-  const message = '已拉训记实绩并回写：' + summary.end_date + ' 往前 ' + summary.days + ' 天，新增 '
-    + summary.total_inserted + '，更新 ' + summary.total_updated;
+  const message = m('skill-calorie.workout-xunjiBackfill.c055', {
+    p0: String(summary.end_date),
+    p1: String(summary.days),
+    p2: String(summary.total_inserted),
+    p3: String(summary.total_updated),
+  });
   const content = [
     renderKpiGrid([
-      { label: '区间', value: summary.end_date + ' 往前 ' + summary.days + ' 天', detail: '新在前' },
-      { label: '新增', value: summary.total_inserted + ' 行', detail: '训记有、本地没有的行' },
-      { label: '更新', value: summary.total_updated + ' 行', detail: '两边都有、训记新的行' },
+      { label: m('skill-calorie.workout-xunjiBackfill.c056'), value: m('skill-calorie.workout-xunjiBackfill.c057', {
+        p0: String(summary.end_date),
+        p1: String(summary.days),
+      }), detail: m('skill-calorie.workout-xunjiBackfill.c058') },
+      { label: m('skill-calorie.workout-xunjiBackfill.c059'), value: m('skill-calorie.workout-xunjiBackfill.c060', { p0: String(summary.total_inserted) }), detail: m('skill-calorie.workout-xunjiBackfill.c061') },
+      { label: m('skill-calorie.workout-xunjiBackfill.c062'), value: m('skill-calorie.workout-xunjiBackfill.c063', { p0: String(summary.total_updated) }), detail: m('skill-calorie.workout-xunjiBackfill.c064') },
     ]),
     renderDataTable({
       columns: [
-        { key: 'date', label: '日期' },
-        { key: 'fetched', label: '拉取' },
-        { key: 'inserted', label: '新增' },
-        { key: 'updated', label: '更新' },
+        { key: 'date', label: m('skill-calorie.workout-xunjiBackfill.c065') },
+        { key: 'fetched', label: m('skill-calorie.workout-xunjiBackfill.c066') },
+        { key: 'inserted', label: m('skill-calorie.workout-xunjiBackfill.c067') },
+        { key: 'updated', label: m('skill-calorie.workout-xunjiBackfill.c068') },
       ],
       rows: summary.results.map((r) => ({
         date: r.date,
-        fetched: r.skipped_empty ? '训记空（跳过）' : r.trains_count + ' 条训练',
-        inserted: r.inserted + ' 行',
-        updated: r.updated + ' 行',
+        fetched: r.skipped_empty ? m('skill-calorie.workout-xunjiBackfill.c069') : m('skill-calorie.workout-xunjiBackfill.c070', { p0: String(r.trains_count) }),
+        inserted: m('skill-calorie.workout-xunjiBackfill.c071', { p0: String(r.inserted) }),
+        updated: m('skill-calorie.workout-xunjiBackfill.c072', { p0: String(r.updated) }),
       })),
-      caption: '逐天回写结局',
+      caption: m('skill-calorie.workout-xunjiBackfill.c073'),
     }),
     renderDataTable({
-      columns: [{ key: 'k', label: '项' }, { key: 'v', label: '值' }],
+      columns: [{ key: 'k', label: m('skill-calorie.workout-xunjiBackfill.c074') }, { key: 'v', label: m('skill-calorie.workout-xunjiBackfill.c075') }],
       rows: [
-        { k: '远端', v: '训记 ' + summary.results.length + ' 天全部拉到' },
-        { k: '本地', v: '运动记录新增 ' + summary.total_inserted + ' 行、更新 ' + summary.total_updated + ' 行（事务落库）' },
-        ...(stubbed ? [{ k: '数据来源', v: '本地挡板（' + XUNJI_STUB_ENV + '，未调远端）' }] : []),
+        { k: m('skill-calorie.workout-xunjiBackfill.c076'), v: m('skill-calorie.workout-xunjiBackfill.c077', { p0: String(summary.results.length) }) },
+        { k: m('skill-calorie.workout-xunjiBackfill.c078'), v: m('skill-calorie.workout-xunjiBackfill.c079', {
+          p0: String(summary.total_inserted),
+          p1: String(summary.total_updated),
+        }) },
+        ...(stubbed ? [{ k: m('skill-calorie.workout-xunjiBackfill.c080'), v: m('skill-calorie.workout-xunjiBackfill.c081', { p0: String(XUNJI_STUB_ENV) }) }] : []),
       ],
-      caption: '本地成远端没成分得清',
+      caption: m('skill-calorie.workout-xunjiBackfill.c082'),
     }),
-    copyBlock(XUNJI_BACKFILL_KEY, params, receipt, '训记实绩回写读数（运动记录）'),
+    copyBlock(XUNJI_BACKFILL_KEY, params, receipt, m('skill-calorie.workout-xunjiBackfill.c083')),
   ].join('');
   return assembleDocPage({
-    docTitle: DOC_TITLE,
-    title: '拉训记实绩',
-    eyebrow: '健身计划',
-    subtitle: '结果页',
+    docTitle: DOC_TITLE(),
+    title: m('skill-calorie.workout-xunjiBackfill.c084'),
+    eyebrow: m('skill-calorie.workout-xunjiBackfill.c085'),
+    subtitle: m('skill-calorie.workout-xunjiBackfill.c086'),
     content,
     pageUi: true,
   });

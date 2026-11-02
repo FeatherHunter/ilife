@@ -20,10 +20,11 @@ import { assembleSheetPage, sheetHead, ticketActions, ticketFurnitureStyleTag, t
 import { writeSection } from '../shared/writeParts.js';
 import type { BackupEntry } from './backups.js';
 import {
-  SOURCE_READ, copyZoneOf, humanBytes, setupCheck, setupEntryCard, } from './pageParts.js';
+  copyZoneOf, humanBytes, setupCheck, setupEntryCard, sourceRead, } from './pageParts.js';
 import type { SetupRowInput } from './pageParts.js';
 import type { SetupScene } from './scene.js';
 import type { SetupStatus } from './status.js';
+import { m } from '../entries/index.js';
 
 /** 查看备份那一页的入参。 */
 export interface BackupListDocInput {
@@ -68,19 +69,19 @@ function backupListBody(input: BackupListDocInput): string {
     no: '★',
     text: e.file,
     sub: e.time + ' · ' + humanBytes(e.bytes)
-      + (i === 0 ? ' · 最新的一份 · 就是它' : ' · 备份目录里这一份'),
+      + (i === 0 ? m('skill-bill.setup-template-list.c001') : m('skill-bill.setup-template-list.c002')),
     ...(i === 0 ? { pay: true, star: true } : {}),
   }));
   const head = latest === undefined
-    ? { title: '还没有备份', sub: input.scene.subtitle, eyebrow: '还没有 · 空列表', value: '0', unit: '份', note: '备份目录里还没有东西', time: '' }
+    ? { title: m('skill-bill.setup-template-list.c003'), sub: input.scene.subtitle, eyebrow: m('skill-bill.setup-template-list.c004'), value: '0', unit: m('skill-bill.setup-template-list.c005'), note: m('skill-bill.setup-template-list.c006'), time: '' }
     : {
-      title: '一共 ' + String(entries.length) + ' 份备份，最新的是它',
+      title: m('skill-bill.setup-template-list.c007', { p0: String(String(entries.length)) }),
       sub: input.scene.subtitle,
-      eyebrow: '查到了 · 列表正常',
+      eyebrow: m('skill-bill.setup-template-list.c008'),
       value: String(entries.length),
-      unit: '份',
-      note: '备份份数，每次备份新存一份',
-      time: latest.time + ' 最新',
+      unit: m('skill-bill.setup-template-list.c009'),
+      note: m('skill-bill.setup-template-list.c010'),
+      time: m('skill-bill.setup-template-list.c011', { p0: String(latest.time) }),
     };
   return ticketFurnitureStyleTag()
     + sheetHead(DOC_TITLE + ' · ' + input.scene.title, head.title, head.sub)
@@ -88,22 +89,22 @@ function backupListBody(input: BackupListDocInput): string {
       eyebrow: head.eyebrow, value: head.value, unit: head.unit, note: head.note, layout: 'ticket',
     }), head.time === '' ? '' : '<p class="ilife-ticket-summary-time">' + head.time + '</p>')
     + ticketRule()
-    + ticketSection({ title: '备份清单', tag: '01', content: setupEntryCard(rows) })
+    + ticketSection({ title: m('skill-bill.setup-template-list.c012'), tag: '01', content: setupEntryCard(rows) })
     + ticketRule()
     + ticketSection({
-      title: '落点',
+      title: m('skill-bill.setup-template-list.c013'),
       tag: '02',
       content: renderLedgerRows({
         rows: [
-          { label: '合计', value: humanBytes(totalBytes(entries)) },
-          { label: '唤醒词', value: wakeOf(input.key, 'backup-list') },
+          { label: m('skill-bill.setup-template-list.c014'), value: humanBytes(totalBytes(entries)) },
+          { label: m('skill-bill.setup-template-list.c015'), value: wakeOf(input.key, 'backup-list') },
         ],
         layout: 'ticket',
-      }) + setupCheck('要用哪份，说「恢复备份」时点它的名就行。'),
+      }) + setupCheck(m('skill-bill.setup-template-list.c016')),
     })
     + ticketActions(copyZoneOf({
       envelope: input.envelope, title: input.scene.title, key: input.key, params: input.params,
-      source: SOURCE_READ, detail: '查到 ' + String(entries.length) + ' 份备份', actionAt: input.actionAt,
+      source: sourceRead(), detail: m('skill-bill.setup-template-list.c017', { p0: String(String(entries.length)) }), actionAt: input.actionAt,
     }));
 }
 
@@ -111,40 +112,41 @@ function backupListBody(input: BackupListDocInput): string {
 function statusBody(input: StatusDocInput): string {
   const s = input.status;
   const ready = s.ready;
+  const readyText = ready ? m('skill-bill.setup-template-list.c018') : m('skill-bill.setup-template-list.c019');
   const rows: readonly SetupRowInput[] = [
-    { no: '1', text: '数据在 · ' + (ready ? '已就绪' : '没就绪'), sub: '库文件在，不会丢', tone: ready ? 'done' : 'bad' },
-    { no: '2', text: '结构 · ' + s.version, sub: '十列齐，是当前版本', tone: ready ? 'done' : 'bad' },
-    { no: '3', text: '记录能数 · 已数过', sub: '共多少条，看本页大数字', tone: ready ? 'done' : 'bad' },
+    { no: '1', text: m('skill-bill.setup-template-list.c020', { p0: String(readyText) }), sub: m('skill-bill.setup-template-list.c021'), tone: ready ? 'done' : 'bad' },
+    { no: '2', text: m('skill-bill.setup-template-list.c022', { p0: String(s.version) }), sub: m('skill-bill.setup-template-list.c023'), tone: ready ? 'done' : 'bad' },
+    { no: '3', text: m('skill-bill.setup-template-list.c024'), sub: m('skill-bill.setup-template-list.c025'), tone: ready ? 'done' : 'bad' },
   ];
   return ticketFurnitureStyleTag()
-    + sheetHead(DOC_TITLE + ' · ' + input.scene.title, ready ? '已经就绪，可以记账了' : '还没就绪，先跑一遍初始化', input.scene.subtitle)
+    + sheetHead(DOC_TITLE + ' · ' + input.scene.title, ready ? m('skill-bill.setup-template-list.c026') : m('skill-bill.setup-template-list.c027'), input.scene.subtitle)
     + ticketSummary(renderSummaryHead({
-      eyebrow: ready ? '已就绪 · READY' : '未就绪 · 待初始化',
+      eyebrow: ready ? m('skill-bill.setup-template-list.c028') : m('skill-bill.setup-template-list.c029'),
       value: String(s.rows),
-      unit: '条',
-      note: ready ? '库里现有记录，一条不少' : '库里现有记录，先把它数清',
+      unit: m('skill-bill.setup-template-list.c030'),
+      note: ready ? m('skill-bill.setup-template-list.c031') : m('skill-bill.setup-template-list.c032'),
       layout: 'ticket',
     }), '')
     + ticketRule()
-    + ticketSection({ title: '三项检查', tag: '01', content: setupEntryCard(rows) })
+    + ticketSection({ title: m('skill-bill.setup-template-list.c033'), tag: '01', content: setupEntryCard(rows) })
     + ticketRule()
     + ticketSection({
-      title: '落点',
+      title: m('skill-bill.setup-template-list.c034'),
       tag: '02',
       content: renderLedgerRows({
         rows: [
-          { label: '库', value: ready ? '在' : '不在' },
-          { label: '口径', value: String(s.columns.length) + ' 列（含 deleted_at）' },
-          { label: '唤醒词', value: wakeOf(input.key, 'init-status') },
+          { label: m('skill-bill.setup-template-list.c035'), value: ready ? m('skill-bill.setup-template-list.c036') : m('skill-bill.setup-template-list.c037') },
+          { label: m('skill-bill.setup-template-list.c038'), value: m('skill-bill.setup-template-list.c039', { p0: String(String(s.columns.length)) }) },
+          { label: m('skill-bill.setup-template-list.c040'), value: wakeOf(input.key, 'init-status') },
         ],
         layout: 'ticket',
       }) + setupCheck(ready
-        ? '三项都通过：库在、表对、能数清。条数看本页大数字。'
-        : '三项没全过：先跟助手说一遍「初始化」，把库补好再看这一页。'),
+        ? m('skill-bill.setup-template-list.c041')
+        : m('skill-bill.setup-template-list.c042')),
     })
     + ticketActions(copyZoneOf({
       envelope: input.envelope, title: input.scene.title, key: input.key, params: input.params,
-      source: SOURCE_READ, detail: '读了库结构与 ' + String(s.rows) + ' 条记录', actionAt: input.actionAt,
+      source: sourceRead(), detail: m('skill-bill.setup-template-list.c043', { p0: String(String(s.rows)) }), actionAt: input.actionAt,
     }));
 }
 
@@ -153,7 +155,7 @@ export function listDoc(input: ListDocInput): string {
   const paper = input.op === 'backup-list' ? backupListBody(input) : statusBody(input);
   const content = writeSection({
     slot: 'list', page: 'list', shape: 'list', key: input.key,
-    content: renderSheetFrame({ variant: 'ticket', cutLine: true, cutLineText: '✂ 裁切线', content: paper }),
+    content: renderSheetFrame({ variant: 'ticket', cutLine: true, cutLineText: m('skill-bill.setup-template-list.c044'), content: paper }),
   });
   return assembleSheetPage({ docTitle: DOC_TITLE + '·' + input.scene.title, bodyHtml: content, paper: 'detail' });
 }

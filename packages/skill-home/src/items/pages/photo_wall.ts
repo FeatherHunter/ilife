@@ -8,6 +8,7 @@
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { m } from '../../entries/index.js';
 
 export const FAMILY = 'photo_wall' as const;
 
@@ -85,15 +86,14 @@ const CSS = '.hero{background:linear-gradient(180deg,#fff,#f8fbff);border-radius
 + 'pre{white-space:pre-wrap;word-break:break-all;background:#f8f9fb;border-radius:10px;padding:10px;font-size:12px}'
 + '@media(max-width:820px){.hero{padding:18px 14px}.sec{padding:14px}.wall{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}.btnrow{grid-template-columns:1fr}}';
 
-const JS = 'function copyText(t){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t);}else{var ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");}catch(e){}document.body.removeChild(ta);}}'
-+ 'function tileDetail(btn){var nm=btn.dataset.nm||"物品";copyText("请加载「居家管家」技能,帮我查看物品详情(唤醒词:看物品):\\n\\n  物  品: "+nm);}'
-+ 'function wallCmd(kind){var L=["请加载「居家管家」技能,帮我浏览照片墙(唤醒词:照片墙):"];'
-+ 'if(kind==="loc")L.push("", "  分  组: 按位置");'
-+ 'else if(kind==="add")L.push("", "  动  作: 给没照片的物品补拍","","【照片即将发送:】");'
-+ 'copyText(L.join("\\n"));}'
+function pageScript(): string {
+  return 'function copyText(t){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t);}else{var ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");}catch(e){}document.body.removeChild(ta);}}'
++ 'function tileDetail(btn){var nm=btn.dataset.nm||F.item;copyText(F.detail.replace("{p0}",nm));}'
++ 'function wallCmd(kind){copyText(kind==="loc"?F.loc:F.add);}'
 + 'function chipType(btn){document.querySelectorAll(".chip").forEach(function(x){x.classList.remove("on");});btn.classList.add("on");'
-+ 'var t=btn.textContent;var hint=document.getElementById("typehint");if(hint)hint.style.display=(t==="全部")?"none":"block";}'
-+ 'function wallLog(){var d=new Date();function p(n){return (n<10?"0":"")+n;}copyText("照片墙｜"+d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes())+":"+p(d.getSeconds())+"｜共"+document.querySelectorAll(".tile").length+"张照片｜"+document.querySelectorAll(".wall").length+"个位置分组");}';
++ 'var t=btn.textContent;var hint=document.getElementById("typehint");if(hint)hint.style.display=(t===F.all)?"none":"block";}'
++ 'function wallLog(){var d=new Date();function p(n){return (n<10?"0":"")+n;}var ts=d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes())+":"+p(d.getSeconds());copyText(F.log.replace("{p0}",ts).replace("{p1}",String(document.querySelectorAll(".tile").length)).replace("{p2}",String(document.querySelectorAll(".wall").length)));}';
+}
 
 interface WallCard {
   id: number;
@@ -107,7 +107,7 @@ function str(v: unknown): string { return typeof v === 'string' ? v : ''; }
 function groupOf(loc: string): string {
   const s = str(loc).split('×')[0].split('[')[0].trim();
   const head = s.split('/')[0].trim();
-  return head === '' || head === '(无位置)' ? '未分组' : head;
+  return head === '' || head === '(无位置)' ? m('skill-home.items-pages-photo-wall.c001') : head;
 }
 
 // 装配入口：真 envelope（真命令链产出）＋本族模板 → 网格墙真页面。
@@ -119,7 +119,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const total = typeof data.total === 'number' ? data.total : rawItems.length;
   const cards: WallCard[] = rawItems.map((c) => ({
     id: typeof c.id === 'number' ? c.id : 0,
-    name: str(c.name) || '未命名',
+    name: str(c.name) || m('skill-home.items-pages-photo-wall.c002'),
     loc: str(c.location) || '—',
     qty: typeof c.quantity === 'number' ? c.quantity : 1,
   }));
@@ -134,31 +134,31 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     '<h3>' + escapeHtml(g) + ' <span class="count">' + list.length + '</span></h3>'
     + '<div class="wall">' + list.map((c) =>
       '<button class="tile" data-nm="' + escapeHtml(c.name) + '" onclick="tileDetail(this)">'
-      + '<span class="has">有照片</span>'
+      + '<span class="has">' + m('skill-home.items-pages-photo-wall.c007') + '</span>'
       + '<span class="nm">' + escapeHtml(c.name) + '</span></button>',
     ).join('') + '</div>',
   ).join('');
 
   const bodyWall = cards.length > 0
     ? groupHtml
-    : '<div class="empty">没有带照片的物品</div>';
-  const typeHint = '<p class="lead" id="typehint" style="display:none">该类型下暂无照片</p>';
+    : '<div class="empty">' + m('skill-home.items-pages-photo-wall.c008') + '</div>';
+  const typeHint = '<p class="lead" id="typehint" style="display:none">' + m('skill-home.items-pages-photo-wall.c009') + '</p>';
 
-  const content = '<div class="hero"><p class="eyebrow">查看</p><p class="lead">回忆式浏览，按位置分组，共' + total + '张</p></div>'
-    + '<section class="sec" data-block="fields" data-need="' + NEED.fields + '"><h2>分组</h2>'
+  const content = '<div class="hero"><p class="eyebrow">' + m('skill-home.items-pages-photo-wall.c010') + '</p><p class="lead">' + m('skill-home.items-pages-photo-wall.c011', { p0: String(total) }) + '</p></div>'
+    + '<section class="sec" data-block="fields" data-need="' + NEED.fields + '"><h2>' + m('skill-home.items-pages-photo-wall.c012') + '</h2>'
     + bodyWall
-    + '<p class="lead">点图复制该物品的详情查看指令</p>'
+    + '<p class="lead">' + m('skill-home.items-pages-photo-wall.c013') + '</p>'
     // 无照片件数需数据：信封只带带照片的墙体件（search 侧已滤掉无照片件），全库件数不在信封里；
     // 算不出就写「—」，值为 0 或拿不到时不出「去补拍」那颗按钮。
-    + '<h2>无照片件数</h2><div class="warnbox">—</div>'
+    + '<h2>' + m('skill-home.items-pages-photo-wall.c014') + '</h2><div class="warnbox">—</div>'
     + '</section>'
-    + '<section class="sec" data-block="status" data-need="' + NEED.status + '"><h2>照片类型</h2>'
-    + '<div class="chips"><button class="chip on" onclick="chipType(this)">全部</button>'
-    + ['普通', '说明书-使用', '说明书-安装', '说明书-保养'].map((t) => '<button class="chip" onclick="chipType(this)">' + escapeHtml(t) + '</button>').join('')
+    + '<section class="sec" data-block="status" data-need="' + NEED.status + '"><h2>' + m('skill-home.items-pages-photo-wall.c015') + '</h2>'
+    + '<div class="chips"><button class="chip on" onclick="chipType(this)">' + m('skill-home.items-pages-photo-wall.c016') + '</button>'
+    + [m('skill-home.items-pages-photo-wall.c003'), m('skill-home.items-pages-photo-wall.c004'), m('skill-home.items-pages-photo-wall.c005'), m('skill-home.items-pages-photo-wall.c006')].map((t) => '<button class="chip" onclick="chipType(this)">' + escapeHtml(t) + '</button>').join('')
     + '</div>' + typeHint + '</section>'
-    + '<section class="sec" data-block="operations" data-need="' + NEED.operations + '"><h2>动作</h2>'
+    + '<section class="sec" data-block="operations" data-need="' + NEED.operations + '"><h2>' + m('skill-home.items-pages-photo-wall.c017') + '</h2>'
     + '<div class="btnrow">'
-    + '<button class="btn ghost" onclick="wallCmd(\'loc\')">按位置浏览</button>'
+    + '<button class="btn ghost" onclick="wallCmd(\'loc\')">' + m('skill-home.items-pages-photo-wall.c018') + '</button>'
     + '</div>'
     + homeCopyArea({
         data: { envelope: env },
@@ -166,7 +166,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
       })
     + '</section>'
     + '<section class="sec" data-block="empty" data-need="' + NEED.empty + '" hidden></section>'
-    + '<details><summary>数据原文</summary><pre class="pre-block-code" id="raw">' + escapeHtml(JSON.stringify(env.data ?? {})) + '</pre></details>'
-    + '<style>' + CSS + '</style><script>' + JS + '</script>';
+    + '<details><summary>' + m('skill-home.items-pages-photo-wall.c019') + '</summary><pre class="pre-block-code" id="raw">' + escapeHtml(JSON.stringify(env.data ?? {})) + '</pre></details>'
+    + '<style>' + CSS + '</style><script>var F=' + JSON.stringify({ item: m('skill-home.items-pages-photo-wall.c020'), detail: m('skill-home.items-pages-photo-wall.c021', { p0: "{p0}" }), loc: m('skill-home.items-pages-photo-wall.c022'), add: m('skill-home.items-pages-photo-wall.c023'), log: m('skill-home.items-pages-photo-wall.c024', { p0: "{p0}", p1: "{p1}", p2: "{p2}" }), all: m('skill-home.items-pages-photo-wall.c016') }) + ';' + pageScript() + '</script>';
   return fillTemplate(template, content);
 }

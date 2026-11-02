@@ -21,6 +21,7 @@ import {
   DIALOG_EDGE_PX, DIALOG_MAX_WIDTH_PX, DIALOG_MIN_HEIGHT_PX, DIALOG_STATUS_ATTR,
   dialogClass, dialogOpenerClass, dialogSlot,
 } from './attrs.js';
+import { m } from '../../entries/index.js';
 
 /** 样式段的入参（与同层其余件同形：前缀可换）。 */
 export interface DialogCssInput {
@@ -61,7 +62,7 @@ export function dialogCss(input?: DialogCssInput): string {
   const gap = String(DIALOG_EDGE_PX * 2) + 'px';
   return [
     '/* dialog（对话框 · 形态 A 确认型）：真 <dialog> ＋ showModal()——遮罩、焦点锁、Esc、顶层都是浏览器给的。 */',
-    '/* 层次：粗边 ＋ 外圈晕 ＋ 更暗遮罩（本件零 box-shadow ⇒ 零阴影的两套皮肤下也立得住）。 */',
+    m('base-render.components-dialog-style.c001'),
     panel + '{box-sizing:border-box;',
     '  width:min(' + DIALOG_MAX_WIDTH_PX + 'px, calc(100% - ' + gap + '));',
     '  max-width:calc(100% - ' + gap + ');',

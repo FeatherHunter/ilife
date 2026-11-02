@@ -18,6 +18,7 @@
  * 空集口径：`steps` 空数组＝不出这一块（与 base「没内容就不留空块」同口径，返回空串）；
  *  一段既没字段也没成品又没说明＝那一段只剩一枚徽标，出得来、不抛错（三段骨架本身就是要看的东西）。
  */
+import { m } from '../entries/index.js';
 import { renderStatusBadge } from 'base-paint';
 import { renderCaliberLine, renderParamForm } from 'base-paint/blocks';
 import type { ParamFieldInput } from 'base-paint/blocks';
@@ -50,8 +51,8 @@ export interface FlowStepsInput {
  *  本轮整改：段号与标题之间那个 `·` 换全角空格——徽标是版式位，行内不再拿 `·` 当版式
  *  （`docs/skills/skill-bill/t407-机审读数.md` 第三节：`.ilife-status-badge` 上不许再出现 `·`）。 */
 function stepText(no: number, step: FlowStepInput): string {
-  const state = step.state ?? (step.done === true ? '已定' : '未定');
-  return '第 ' + no + ' 段　' + step.title + '：' + state;
+  const state = step.state ?? (step.done === true ? m('skill-bill.write-flowSteps.c001') : m('skill-bill.write-flowSteps.c002'));
+  return m('skill-bill.write-flowSteps.c003', { p1: String(no), p2: String(step.title), p3: String(state) });
 }
 
 /** 流程三段式整块：逐段出「徽标 ＋ 说明行 ＋ 字段表单 ＋ 成品」。空数组＝空串。 */

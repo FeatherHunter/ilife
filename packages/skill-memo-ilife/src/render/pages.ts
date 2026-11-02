@@ -6,6 +6,7 @@ import { MemoRenderError } from './errors.js';
 import { memoPageAssets } from './memoPageAssets.js';
 import { assertHtmlSize, MEMO_HTML_MAX_BYTES } from './html.js';
 import { loadTemplate } from './templates.js';
+import { m } from '../entries/index.js';
 
 /** 区块里的一行：**要么整行文字，要么带结构的行**（#820 收尾：编号与状态不再拼进同一串 ——
  *  屏上落成「编号徽章 ＋ 正文 ＋ 状态徽章」，`#5 xxx：未排期` 那种两个冒号串三件事的写法退场）。 */
@@ -53,7 +54,7 @@ export function pageEnvelope(input: {
   return {
     status: 'ok',
     data: {
-      meta: { command_cn: input.commandCn, occurred_at: at, skill_name: '备忘录', wake_word: input.wakeWord },
+      meta: { command_cn: input.commandCn, occurred_at: at, skill_name: m('skill-memo-ilife.render-pages.c001'), wake_word: input.wakeWord },
       scene: { scene_id: input.sceneId, snapshot: { title: input.title, summary: input.summary, sections: input.sections } },
       copy_log: copyLog,
       generated_at: at,
@@ -72,15 +73,15 @@ export function querySnapshot(items: Row[]): PageSnapshot {
   const media = items.filter((x) => x.media_path).length;
   const remind = items.filter((x) => x.remind_at || x.reminder_id).length;
   return {
-    title: '备忘录查询结果',
-    summary: ['结果 ' + items.length + ' 条', '有排期 ' + due + ' 条', '有附件 ' + media + ' 条', '有提醒 ' + remind + ' 条'],
+    title: m('skill-memo-ilife.render-pages.c002'),
+    summary: [m('skill-memo-ilife.render-pages.c003', { p0: String(items.length) }), m('skill-memo-ilife.render-pages.c004', { p0: String(due) }), m('skill-memo-ilife.render-pages.c005', { p0: String(media) }), m('skill-memo-ilife.render-pages.c006', { p0: String(remind) })],
     sections: [
       {
-        heading: '明细',
+        heading: m('skill-memo-ilife.render-pages.c007'),
         rows: items.map((x) => {
           const id = str(x.id || x.checkin_note_id || x.reminder_id);
           const content = str(x.content || x.checkin_content || x.reminder_content || x.note_content);
-          const cat = str(x.category || x.repeat_type || '未分类');
+          const cat = str(x.category || x.repeat_type || m('skill-memo-ilife.render-pages.c008'));
           const sub = x.sub_category ? '/' + str(x.sub_category) : '';
           const created = str(x.created_at || x.checkin_at || x.remind_at);
           return '#' + id + ' · [' + cat + sub + '] · ' + content.slice(0, 80) + ' · ' + created;
@@ -106,31 +107,31 @@ export function syncSnapshot(c: {
   const dueChanged = c.dueAdded + c.dueOverridden + c.dueRemoved;
   const skipped = c.skippedNoMark + c.skippedAlreadyDone + c.skippedNoLocalNote;
   const sections: PageSnapshot['sections'] = [];
-  if (c.synced) sections.push({ heading: '完成同步明细', rows: ['飞书勾选转本机打卡 ' + c.synced + ' 条'] });
+  if (c.synced) sections.push({ heading: m('skill-memo-ilife.render-pages.c009'), rows: [m('skill-memo-ilife.render-pages.c010', { p0: String(c.synced) })] });
   if (dueChanged) {
     const parts: string[] = [];
-    if (c.dueAdded) parts.push('新增排期 ' + c.dueAdded + ' 条');
-    if (c.dueOverridden) parts.push('覆盖排期 ' + c.dueOverridden + ' 条');
-    if (c.dueRemoved) parts.push('清除排期 ' + c.dueRemoved + ' 条');
-    sections.push({ heading: '排期变更', rows: parts });
+    if (c.dueAdded) parts.push(m('skill-memo-ilife.render-pages.c011', { p0: String(c.dueAdded) }));
+    if (c.dueOverridden) parts.push(m('skill-memo-ilife.render-pages.c012', { p0: String(c.dueOverridden) }));
+    if (c.dueRemoved) parts.push(m('skill-memo-ilife.render-pages.c013', { p0: String(c.dueRemoved) }));
+    sections.push({ heading: m('skill-memo-ilife.render-pages.c014'), rows: parts });
   }
-  if (c.backfilled) sections.push({ heading: '补建到飞书', rows: ['本机心愿补建飞书 task ' + c.backfilled + ' 条'] });
+  if (c.backfilled) sections.push({ heading: m('skill-memo-ilife.render-pages.c015'), rows: [m('skill-memo-ilife.render-pages.c016', { p0: String(c.backfilled) })] });
   if (skipped) {
     const parts: string[] = [];
-    if (c.skippedNoLocalNote) parts.push('飞书已完成但本机无对应心愿 ' + c.skippedNoLocalNote + ' 条');
-    if (c.skippedNoMark) parts.push('飞书 task 缺 memo_id ' + c.skippedNoMark + ' 条');
-    if (c.skippedAlreadyDone) parts.push('已处理过 ' + c.skippedAlreadyDone + ' 条');
-    sections.push({ heading: '跳过', rows: parts });
+    if (c.skippedNoLocalNote) parts.push(m('skill-memo-ilife.render-pages.c017', { p0: String(c.skippedNoLocalNote) }));
+    if (c.skippedNoMark) parts.push(m('skill-memo-ilife.render-pages.c018', { p0: String(c.skippedNoMark) }));
+    if (c.skippedAlreadyDone) parts.push(m('skill-memo-ilife.render-pages.c019', { p0: String(c.skippedAlreadyDone) }));
+    sections.push({ heading: m('skill-memo-ilife.render-pages.c020'), rows: parts });
   }
-  if (c.errors.length) sections.push({ heading: '错误', rows: c.errors.map(String) });
+  if (c.errors.length) sections.push({ heading: m('skill-memo-ilife.render-pages.c021'), rows: c.errors.map(String) });
   return {
-    title: '备忘录同步报告',
+    title: m('skill-memo-ilife.render-pages.c022'),
     summary: [
-      '完成同步 ' + c.synced + ' 条',
-      '补建到飞书 ' + c.backfilled + ' 条',
-      '排期变更 ' + dueChanged + ' 条',
-      '跳过 ' + skipped + ' 条',
-      '错误 ' + c.errors.length + ' 个',
+      m('skill-memo-ilife.render-pages.c023', { p0: String(c.synced) }),
+      m('skill-memo-ilife.render-pages.c024', { p0: String(c.backfilled) }),
+      m('skill-memo-ilife.render-pages.c025', { p0: String(dueChanged) }),
+      m('skill-memo-ilife.render-pages.c026', { p0: String(skipped) }),
+      m('skill-memo-ilife.render-pages.c027', { p0: String(c.errors.length) }),
     ],
     sections,
   };
@@ -138,22 +139,24 @@ export function syncSnapshot(c: {
 
 function wishRow(w: Row, withDue: boolean): string {
   const due = str(w.current_due ?? w.due);
-  const fb = w.feishu_task_guid ? '已同步飞书' : '未同步飞书';
-  return '#' + str(w.id) + ' · ' + str(w.content) + (withDue && due ? ' · 排期 ' + due : ' · 未排期') + ' · ' + fb;
+  const fb = w.feishu_task_guid ? m('skill-memo-ilife.render-pages.c028') : m('skill-memo-ilife.render-pages.c029');
+  return '#' + str(w.id) + ' · ' + str(w.content) + (withDue && due ? m('skill-memo-ilife.render-pages.c030', { p0: String(due) }) : m('skill-memo-ilife.render-pages.c031')) + ' · ' + fb;
 }
 
 /** 排期向导 snapshot（老 `render_wish_plan`）：心愿数／未排期／已排期／建议排期＋清单。 */
 export function wishPlanSnapshot(items: Row[], suggestDue: string | null, includeAll: boolean): PageSnapshot {
   const unset = items.filter((w) => !w.current_due).length;
+  // #1225：?? 兜底抽成局部变量（迁移器不切链内分支）。
+  const suggestText = suggestDue ?? m('skill-memo-ilife.render-pages.c032');
   return {
-    title: '心愿排期向导',
+    title: m('skill-memo-ilife.render-pages.c033'),
     summary: [
-      '心愿 ' + items.length + ' 个',
-      '未排期 ' + unset + ' 个',
-      '已排期 ' + (items.length - unset) + ' 个',
-      '建议排期 ' + (suggestDue ?? '（未填）'),
+      m('skill-memo-ilife.render-pages.c034', { p0: String(items.length) }),
+      m('skill-memo-ilife.render-pages.c035', { p0: String(unset) }),
+      m('skill-memo-ilife.render-pages.c036', { p0: String(items.length - unset) }),
+      m('skill-memo-ilife.render-pages.c037', { p0: String(suggestText) }),
     ],
-    sections: [{ heading: '心愿清单', rows: items.map((w) => wishRow(w, true)) }],
+    sections: [{ heading: m('skill-memo-ilife.render-pages.c038'), rows: items.map((w) => wishRow(w, true)) }],
   };
 }
 
@@ -161,25 +164,28 @@ export function wishPlanSnapshot(items: Row[], suggestDue: string | null, includ
 export function wishCompleteSnapshot(items: Row[]): PageSnapshot {
   const withFb = items.filter((w) => w.feishu_task_guid).length;
   return {
-    title: '心愿完成向导',
-    summary: ['待完成 ' + items.length + ' 个', '已同步飞书 ' + withFb + ' 个', '未同步飞书 ' + (items.length - withFb) + ' 个'],
-    sections: [{ heading: '心愿清单', rows: items.map((w) => wishRow(w, true)) }],
+    title: m('skill-memo-ilife.render-pages.c039'),
+    summary: [m('skill-memo-ilife.render-pages.c040', { p0: String(items.length) }), m('skill-memo-ilife.render-pages.c041', { p0: String(withFb) }), m('skill-memo-ilife.render-pages.c042', { p0: String(items.length - withFb) })],
+    sections: [{ heading: m('skill-memo-ilife.render-pages.c043'), rows: items.map((w) => wishRow(w, true)) }],
   };
 }
 
 /** 批量改分类 snapshot（老 `render_change_category`）：候选数／带子分类／原→目标＋清单。 */
 export function changeCategorySnapshot(items: Row[], from: string | null, to: string | null): PageSnapshot {
   const withSub = items.filter((w) => w.sub_category).length;
+  // #1225：两个 ?? 兜底抽成局部变量（迁移器不切链内分支）。
+  const fromText = from ?? m('skill-memo-ilife.render-pages.c044');
+  const toText = to ?? m('skill-memo-ilife.render-pages.c045');
   return {
-    title: '批量改分类向导',
+    title: m('skill-memo-ilife.render-pages.c046'),
     summary: [
-      '候选笔记 ' + items.length + ' 条',
-      '带子分类 ' + withSub + ' 条',
-      '原分类 ' + (from ?? '（全部）') + ' 改成 ' + (to ?? '（待选）'),
+      m('skill-memo-ilife.render-pages.c047', { p0: String(items.length) }),
+      m('skill-memo-ilife.render-pages.c048', { p0: String(withSub) }),
+      m('skill-memo-ilife.render-pages.c049', { p0: String(fromText), p1: String(toText) }),
     ],
     sections: [
       {
-        heading: '笔记清单',
+        heading: m('skill-memo-ilife.render-pages.c050'),
         rows: items.map(
           (w) => '#' + str(w.id) + ' · ' + str(w.content) + (w.sub_category ? ' · sub: ' + str(w.sub_category) : ''),
         ),
@@ -203,17 +209,17 @@ export function initSnapshot(input: {
   const sections: PageSnapshot['sections'] = [];
   if (items.length) {
     sections.push({
-      heading: '环境检查',
+      heading: m('skill-memo-ilife.render-pages.c051'),
       rows: items.map((i) => {
         const mark = i.status === 'ok' ? '✓' : i.status === 'warn' ? '⚠' : '✗';
         const base = '[' + mark + '] ' + str(i.name) + ' · ' + str(i.desc);
-        return i.action ? base + ' · 处理: ' + str(i.action) : base;
+        return i.action ? m('skill-memo-ilife.render-pages.c052', { p0: String(base), p1: String(str(i.action)) }) : base;
       }),
     });
   }
   if (input.todos.length) {
     sections.push({
-      heading: '待办指引',
+      heading: m('skill-memo-ilife.render-pages.c053'),
       rows: input.todos.map((t) => {
         const steps = Array.isArray(t.steps) ? (t.steps as unknown[]).map(str).join(' → ') : '';
         return str(t.title) + (steps ? ': ' + steps : '');
@@ -222,17 +228,17 @@ export function initSnapshot(input: {
   }
   if (input.verify.length) {
     sections.push({
-      heading: '验证清单',
+      heading: m('skill-memo-ilife.render-pages.c054'),
       rows: input.verify.map((v) => (v !== null && typeof v === 'object' ? str((v as { text?: unknown }).text ?? '') : str(v))),
     });
   }
   return {
-    title: '备忘录 · 初始化报告',
+    title: m('skill-memo-ilife.render-pages.c055'),
     summary: [
-      '检查 ' + items.length + ' 项',
-      '就绪 ' + ready + ' 项',
-      '可选缺失 ' + warn + ' 项',
-      '必装缺失 ' + err + ' 项',
+      m('skill-memo-ilife.render-pages.c056', { p0: String(items.length) }),
+      m('skill-memo-ilife.render-pages.c057', { p0: String(ready) }),
+      m('skill-memo-ilife.render-pages.c058', { p0: String(warn) }),
+      m('skill-memo-ilife.render-pages.c059', { p0: String(err) }),
     ],
     sections,
   };

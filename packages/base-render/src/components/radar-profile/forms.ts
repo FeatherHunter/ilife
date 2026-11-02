@@ -32,6 +32,7 @@ import {
   type RadarProfileWedgeModel,
 } from './fields.js';
 import { meanOk, plainNum, polygonPoints, polarOf, round2, sectorArcPath, sectorPath } from './scale.js';
+import { m } from '../../entries/index.js';
 
 /** 0…100 的占比 → 轨道上的百分数串（形态 `rail` 用）。 */
 const pct = (v: number): string => plainNum(v) + '%';
@@ -41,6 +42,16 @@ const polar = (index: number, count: number, radius: number): RadarProfileVertex
   const p = polarOf(index, count, radius);
   return { x: p.x, y: p.y };
 };
+
+/** 轴表的表头（有没有上期一行取决于数据）。 */
+function tableHeadOf(hasPast: boolean): string[] {
+  return hasPast ? [m('base-render.components-radar-profile-forms.c001'), m('base-render.components-radar-profile-forms.c002'), m('base-render.components-radar-profile-forms.c003'), m('base-render.components-radar-profile-forms.c004')] : [m('base-render.components-radar-profile-forms.c005'), m('base-render.components-radar-profile-forms.c006')];
+}
+
+/** 三圈的字（里→中→外）。 */
+function ringWord(index: number): string {
+  return index === 0 ? m('base-render.components-radar-profile-forms.c007') : index === 1 ? m('base-render.components-radar-profile-forms.c008') : m('base-render.components-radar-profile-forms.c009');
+}
 
 /* ── 形态 `polygon`：多边形雷达（本期／上期两条轮廓） ─────────────────── */
 
@@ -56,21 +67,33 @@ export function polygonModel(c: RadarProfileCommon, axes: readonly RadarProfileA
   const nowDots: RadarProfileVertexModel[] = present
     .map((a) => polar(axes.indexOf(a), count, radiusOf(a.score as number)));
   const meanNow = meanOk(present.map((a) => a.score as number));
+  const pastNote = hasPast
+    ? m('base-render.components-radar-profile-forms.c010')
+    : m('base-render.components-radar-profile-forms.c011');
   const paired = axes.filter((a) => a.score !== null && a.past !== null);
   const meanPairedNow = meanOk(paired.map((a) => a.score as number));
   const meanPairedPast = meanOk(paired.map((a) => a.past as number));
   const deltaOfMeans = meanPairedNow === null || meanPairedPast === null ? null : meanPairedNow - meanPairedPast;
-  const tail = '本期平均 ' + (meanNow === null ? RADAR_PROFILE_MISSING : plainNum(meanNow)) + ' 分'
-    + (deltaOfMeans === null ? ''
-      : (deltaOfMeans === 0 ? '，与上期持平'
-        : '，比上期' + (deltaOfMeans > 0 ? '高 ' : '低 ') + plainNum(Math.abs(deltaOfMeans)) + ' 分'));
+  const deltaTail = deltaOfMeans === null
+    ? ''
+    : deltaOfMeans === 0
+      ? m('base-render.components-radar-profile-forms.c012')
+      : deltaOfMeans > 0
+        ? m('base-render.components-radar-profile-forms.c013', { p0: String(plainNum(Math.abs(deltaOfMeans))) })
+        : m('base-render.components-radar-profile-forms.c014', { p0: String(plainNum(Math.abs(deltaOfMeans))) });
+  const tail = m('base-render.components-radar-profile-forms.c015', {
+    p0: String(meanNow === null ? RADAR_PROFILE_MISSING : plainNum(meanNow)),
+    p1: String(deltaTail),
+  });
+  const stampTail = c.stamp === undefined ? '' : '（' + c.stamp + '）';
   const legend: RadarProfileLegendItemModel[] = [{
-    slot: 'axline', kind: 'now', text: '本期' + (c.stamp === undefined ? '' : '（' + c.stamp + '）'),
+    slot: 'axline', kind: 'now', text: m('base-render.components-radar-profile-forms.c016', { p0: String(stampTail) }),
   }];
   if (hasPast) {
-    legend.push({ slot: 'axline', kind: 'past', text: '上期' + (c.pastStamp === undefined ? '' : '（' + c.pastStamp + '）') });
+    const pastStampTail = c.pastStamp === undefined ? '' : '（' + c.pastStamp + '）';
+    legend.push({ slot: 'axline', kind: 'past', text: m('base-render.components-radar-profile-forms.c017', { p0: String(pastStampTail) }) });
   }
-  const tableHead = ['轴（满分 100）', '本期'].concat(hasPast ? ['上期', '差'] : []);
+  const tableHead = tableHeadOf(hasPast);
   const tableRows: RadarProfileTableRowModel[] = axes.map((a) => ({
     name: a.label, nowText: a.valueText, pastText: a.pastText, deltaText: a.deltaText, dir: a.dir,
   }));
@@ -81,11 +104,12 @@ export function polygonModel(c: RadarProfileCommon, axes: readonly RadarProfileA
     tail,
     /* 三个圈数用「，」分段，不用并排顿号：`、` 连排三段会被仓库的分隔符门（`test/separator-probe.mjs`
        的 R3）判红——它是"该做版式"的信号，不是一句人话该有的写法。 */
-    note: c.noteIn ?? '口径：每根轴各自 0 到 100 分，轴与轴不是同一个单位，所以只能比形状、不能比面积。'
-      + '网格三级是里圈 33 分，中圈 66 分，外圈 100 分。实线是本期，虚线是上期，两条叠在一起的地方更深。'
-      + '缺测的轴整根不画，读数写 ' + RADAR_PROFILE_MISSING + '，不当 0 分算。',
-    ariaLabel: count + ' 根轴的雷达图：' + axisSentences(axes, hasPast) + '。'
-      + (hasPast ? '上期那条轮廓更小或更大都要按轴逐根看，形状差得多就是偏科。' : '实线轮廓就是本期形状。'),
+    note: c.noteIn ?? m('base-render.components-radar-profile-forms.c018', { p0: String(RADAR_PROFILE_MISSING) }),
+    ariaLabel: m('base-render.components-radar-profile-forms.c019', {
+      p0: String(count),
+      p1: String(axisSentences(axes, hasPast)),
+      p2: String(pastNote),
+    }),
     extraClass: c.extraClass,
     labels: axes.map((a, i) => labelModel(a, i, count)),
     rings,
@@ -93,7 +117,7 @@ export function polygonModel(c: RadarProfileCommon, axes: readonly RadarProfileA
     pastPoints: hasPast ? polygonPoints(pasts, radiusOf(100)) : '',
     nowPoints: polygonPoints(scores, radiusOf(100)),
     nowDots,
-    scaleItems: RADAR_PROFILE_RINGS.map((v, i) => ['里圈', '中圈', '外圈'][i] + ' ' + plainNum(v) + ' 分'),
+    scaleItems: RADAR_PROFILE_RINGS.map((v, i) => m('base-render.components-radar-profile-forms.c020', { p0: String(ringWord(i)), p1: String(plainNum(v)) })),
     tableHead,
     tableRows,
     wedges: [],
@@ -133,23 +157,28 @@ export function wedgeModel(c: RadarProfileCommon, axes: readonly RadarProfileAxi
   const gaps: RadarProfileGapModel[] = shortfalls
     .filter((g) => g.diff > 0)
     .sort((a, b) => b.diff - a.diff)
-    .map((g) => ({ label: g.label, scoreText: plainNum(g.score) + ' 分', diffText: '差 ' + plainNum(g.diff) + ' 分' }));
+    .map((g) => ({ label: g.label, scoreText: m('base-render.components-radar-profile-forms.c021', { p0: String(plainNum(g.score)) }), diffText: m('base-render.components-radar-profile-forms.c022', { p0: String(plainNum(g.diff)) }) }));
   const present = axes.filter((a) => a.score !== null);
   const mean = meanOk(present.map((a) => a.score as number));
   const legend: RadarProfileLegendItemModel[] = [{
-    slot: 'swatch', kind: 'ok', text: '达标 ' + String(okCount) + ' 根轴', goalNum: plainNum(goal),
+    slot: 'swatch', kind: 'ok', text: m('base-render.components-radar-profile-forms.c023', { p0: String(String(okCount)) }), goalNum: plainNum(goal),
   }];
-  if (warnCount > 0) legend.push({ slot: 'swatch', kind: 'warn', text: '未达标 ' + String(warnCount) + ' 根轴' });
+  if (warnCount > 0) legend.push({ slot: 'swatch', kind: 'warn', text: m('base-render.components-radar-profile-forms.c024', { p0: String(String(warnCount)) }) });
   return {
     form: 'wedge',
     title: c.title,
     stamp: c.stamp,
-    tail: '平均 ' + (mean === null ? RADAR_PROFILE_MISSING : plainNum(mean)) + ' 分，达标 ' + String(okCount) + ' 根轴',
-    note: c.noteIn ?? '口径：每根扇区的张角固定，半径比例于得分，所以读的是哪几根伸得远，不是面积。'
-      + '虚线圆环是达标线，判据画在图上、不挂角标。没到环的逐根给出差的分数，不靠颜色表示未达标。'
-      + '缺测的轴不落扇区，读数写 ' + RADAR_PROFILE_MISSING + '，不当 0 分算。',
-    ariaLabel: '极区扇图：半径比例于得分，达标线 ' + plainNum(goal) + ' 分。' + axisSentences(axes, false) + '。'
-      + '达标 ' + String(okCount) + ' 根，未达标 ' + String(warnCount) + ' 根。',
+    tail: m('base-render.components-radar-profile-forms.c025', {
+      p0: String(mean === null ? RADAR_PROFILE_MISSING : plainNum(mean)),
+      p1: String(String(okCount)),
+    }),
+    note: c.noteIn ?? m('base-render.components-radar-profile-forms.c026', { p0: String(RADAR_PROFILE_MISSING) }),
+    ariaLabel: m('base-render.components-radar-profile-forms.c027', {
+      p0: String(plainNum(goal)),
+      p1: String(axisSentences(axes, false)),
+      p2: String(String(okCount)),
+      p3: String(String(warnCount)),
+    }),
     extraClass: c.extraClass,
     labels: axes.map((a, i) => labelModel(a, i, count)),
     rings: [],
@@ -179,14 +208,14 @@ function verdictOf(axis: RadarProfileAxisModel): {
   readonly kind: RadarProfileRailRowModel['verdictKind'];
   readonly text: string;
 } {
-  if (axis.score === null) return { kind: 'missing', text: RADAR_PROFILE_MISSING + ' 未测' };
-  if (axis.band === undefined) return { kind: 'none', text: '未给基准带' };
+  if (axis.score === null) return { kind: 'missing', text: m('base-render.components-radar-profile-forms.c028', { p0: String(RADAR_PROFILE_MISSING) }) };
+  if (axis.band === undefined) return { kind: 'none', text: m('base-render.components-radar-profile-forms.c029') };
   const score = round2(axis.score);
   const low = round2(axis.band.low);
   const high = round2(axis.band.high);
-  if (score < low) return { kind: 'low', text: '▼ 低于带 ' + plainNum(round2(low - score)) + ' 分' };
-  if (score > high) return { kind: 'high', text: '▲ 高于带 ' + plainNum(round2(score - high)) + ' 分' };
-  return { kind: 'in', text: '✓ 在带内' };
+  if (score < low) return { kind: 'low', text: m('base-render.components-radar-profile-forms.c030', { p0: String(plainNum(round2(low - score))) }) };
+  if (score > high) return { kind: 'high', text: m('base-render.components-radar-profile-forms.c031', { p0: String(plainNum(round2(score - high))) }) };
+  return { kind: 'in', text: m('base-render.components-radar-profile-forms.c032') };
 }
 
 /** 形态 `rail`：每根轴一行（轴名 ＋ 轨道 ＋ 判定），轨道上色带是基准区间、竖线是当前值。 */
@@ -203,26 +232,33 @@ export function railModel(c: RadarProfileCommon, axes: readonly RadarProfileAxis
       b2: a.band === undefined ? undefined : pct(a.band.high),
       verdict: v.text,
       verdictKind: v.kind,
-      bandText: a.band === undefined ? undefined : '带 ' + plainNum(a.band.low) + '–' + plainNum(a.band.high) + ' 分',
+      bandText: a.band === undefined ? undefined : m('base-render.components-radar-profile-forms.c033', {
+        p0: String(plainNum(a.band.low)),
+        p1: String(plainNum(a.band.high)),
+      }),
     };
   });
+  const bandPart = (row: RadarProfileRailRowModel): string => (row.bandText === undefined ? '' : row.bandText + '，');
+  const rowsSpeech = rows.map((row) => row.label + ' ' + bandPart(row) + row.verdict).join('。');
   const countIn = rows.filter((r) => r.verdictKind === 'in').length;
   const countOut = rows.filter((r) => r.verdictKind === 'low' || r.verdictKind === 'high').length;
   const countNone = rows.filter((r) => r.verdictKind === 'none').length;
   const countMissing = rows.filter((r) => r.verdictKind === 'missing').length;
-  const tail = '在带内 ' + String(countIn) + ' 根轴，出带 ' + String(countOut) + ' 根轴'
-    + (countNone === 0 ? '' : '，未给带 ' + String(countNone) + ' 根轴')
-    + (countMissing === 0 ? '' : '，未测 ' + String(countMissing) + ' 根轴');
+  const noneTail = countNone === 0 ? '' : m('base-render.components-radar-profile-forms.c034', { p0: String(String(countNone)) });
+  const missingTail = countMissing === 0 ? '' : m('base-render.components-radar-profile-forms.c035', { p0: String(String(countMissing)) });
+  const tail = m('base-render.components-radar-profile-forms.c036', {
+    p0: String(String(countIn)),
+    p1: String(String(countOut)),
+    p2: String(noneTail),
+    p3: String(missingTail),
+  });
   return {
     form: 'rail',
     title: c.title,
     stamp: c.stamp,
     tail,
-    note: c.noteIn ?? '口径：每一行的轨道都是从 0 到 100 分。色带是这一根的基准区间，竖线是当前值，'
-      + '读数贴在竖线旁边，不必围着圈子找。判定只给不在带内的那几根着色，在带内的走灰字。'
-      + '缺测的那根不画竖线，判定写未测，不当 0 分算。',
-    ariaLabel: '展平成轴表的画像：' + rows.map((r) => r.label + ' '
-      + (r.bandText === undefined ? '' : r.bandText + '，') + r.verdict).join('。') + '。',
+    note: c.noteIn ?? m('base-render.components-radar-profile-forms.c037'),
+    ariaLabel: m('base-render.components-radar-profile-forms.c038', { p0: String(rowsSpeech) }),
     extraClass: c.extraClass,
     labels: axes.map((a, i) => labelModel(a, i, count)),
     rings: [],

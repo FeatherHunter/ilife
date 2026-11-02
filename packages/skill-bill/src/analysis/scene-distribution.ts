@@ -15,22 +15,28 @@
  * 谁在用（一个调用点，指名）：`src/analysis/read.ts` 的 `pageOf`——`family === 'charts'` 的 4 件场景
  *  由落点表 `./scene.js` 取到本件。
  */
+import { runWithLanguage, listJoin, currentRenderLanguage } from 'base-entries';
 import { BillPolicyError } from '../fetch/errors.js';
 import { monthRange } from '../shared/dateRange.js';
+import { DIRECTION_WORDS } from '../shared/direction.js';
 import { filterOf, kpiOf, round1, thisMonth, windowRecords } from './agg.js';
 import { pctText, windowLabel } from './pageParts.js';
 import { needMonth, needRange } from './params.js';
 import type { AnalysisScene, ChartCard } from './scene.js';
 import { buildTrend } from './views.js';
+import { m } from '../entries/index.js';
 
-/** 五档金额区间（半开区间 `[lo, hi)`；`hi` 为 `null` 即「以上」）——老侧 `cmd_distribution` 的同一张档表。 */
-const BUCKETS: readonly { readonly name: string; readonly lo: number; readonly hi: number | null }[] = [
-  { name: '10 元以下', lo: 0, hi: 10 },
-  { name: '10~50', lo: 10, hi: 50 },
-  { name: '50~100', lo: 50, hi: 100 },
-  { name: '100~500', lo: 100, hi: 500 },
-  { name: '500 以上', lo: 500, hi: null },
-];
+/** 五档金额区间（半开区间 `[lo, hi)`；`hi` 为 `null` 即「以上」）——老侧 `cmd_distribution` 的同一张档表。
+ *  档名要上屏，故按需取词（模块级常量会把语言在加载时固化）。 */
+function bucketsOf(): readonly { readonly name: string; readonly lo: number; readonly hi: number | null }[] {
+  return [
+    { name: m('skill-bill.analysis-scene-distribution.c001'), lo: 0, hi: 10 },
+    { name: '10~50', lo: 10, hi: 50 },
+    { name: '50~100', lo: 50, hi: 100 },
+    { name: '100~500', lo: 100, hi: 500 },
+    { name: m('skill-bill.analysis-scene-distribution.c002'), lo: 500, hi: null },
+  ];
+}
 
 /** 一个金额落在哪一档。 */
 function inBucket(bucket: { readonly lo: number; readonly hi: number | null }, amount: number): boolean {
@@ -40,9 +46,9 @@ function inBucket(bucket: { readonly lo: number; readonly hi: number | null }, a
 /** 收支方向（缺＝支出）。只认支出／收入两种写法；别的形态立即报参数错，不悄悄当收入。 */
 function directionOf(params: Record<string, unknown>): { readonly key: 'expense' | 'income'; readonly word: string } {
   const raw = params['type'];
-  if (raw === undefined || raw === null || raw === '') return { key: 'expense', word: '支出' };
-  if (raw === 'expense' || raw === '支出') return { key: 'expense', word: '支出' };
-  if (raw === 'income' || raw === '收入') return { key: 'income', word: '收入' };
+  if (raw === undefined || raw === null || raw === '') return { key: 'expense', word: m('skill-bill.analysis-scene-distribution.c003') };
+  if (raw === 'expense' || raw === DIRECTION_WORDS.expense) return { key: 'expense', word: m('skill-bill.analysis-scene-distribution.c004') };
+  if (raw === 'income' || raw === DIRECTION_WORDS.income) return { key: 'income', word: m('skill-bill.analysis-scene-distribution.c005') };
   throw new BillPolicyError('POLICY_BAD_INPUT', '收支方向只认支出／收入');
 }
 
@@ -67,16 +73,17 @@ function barInputOf(
       showValues: true,
       yTicks: 4,
       yMax: axisTopOf(max, 4),
-      format: (v: number): string => String(v) + ' 笔',
+      format: (v: number): string => m('skill-bill.analysis-scene-distribution.c006', { p0: String(String(v)) }),
     },
   };
 }
 
-export const sceneDistribution: AnalysisScene = {
+function buildScene(): AnalysisScene {
+  return {
   id: 'distribution',
   key: 'bill.analysis.trend',
   kind: 'distribution',
-  title: '看分布',
+  title: m('skill-bill.analysis-scene-distribution.title'),
   family: 'charts',
   values: ({ params, db }) => {
     /* ① 窗口：给了起止日就走区间（缺一即报缺槽位），否则取一个月（缺＝本月）。 */
@@ -92,31 +99,44 @@ export const sceneDistribution: AnalysisScene = {
     const total = recs.length;
 
     /* ③ 五档笔数与占比（老侧同式：分母＝这一侧的笔数，一笔都没有时占比写 0）。 */
-    const buckets = BUCKETS.map((b) => {
+    const buckets = bucketsOf().map((b) => {
       const count = recs.filter((r) => inBucket(b, Math.abs(r.amount))).length;
       return { name: b.name, count, pct: total === 0 ? 0 : round1((count / total) * 100) };
     });
     const top = buckets.reduce((best, b) => (b.count > best.count ? b : best), buckets[0]);
     const empties = buckets.filter((b) => b.count === 0).map((b) => '「' + b.name + '」');
     const kpi = kpiOf(recs);
+    const emptyTail = empties.length === 0
+      ? m('skill-bill.analysis-scene-distribution.c008')
+      : m('skill-bill.analysis-scene-distribution.c009', {
+        p0: String(listJoin(currentRenderLanguage(), empties)),
+        p1: String(String(empties.length)),
+      });
 
     /* ④ 结论句与口径句：零值档不出柱身但明细照实写 0 笔；一笔都没有时图卡改出说明句。 */
     const conclusion = total === 0
-      ? periodLabel + ' 这段时间没有' + direction.word + '记录。'
-      : periodLabel + ' 一共 ' + String(total) + ' 笔' + direction.word + '：最多的是「' + top.name + '」'
-        + String(top.count) + ' 笔 · ' + pctText(top.pct)
-        + (empties.length === 0
-          ? '；五个金额档都有落点。'
-          : '；' + empties.join('、') + ' 这 ' + String(empties.length) + ' 档一笔都没有。');
+      ? m('skill-bill.analysis-scene-distribution.c010', {
+        p0: String(periodLabel),
+        p1: String(direction.word),
+      })
+      : m('skill-bill.analysis-scene-distribution.c011', {
+        p0: String(periodLabel),
+        p1: String(String(total)),
+        p2: String(direction.word),
+        p3: String(top.name),
+        p4: String(String(top.count)),
+        p5: String(pctText(top.pct)),
+        p6: String(emptyTail),
+      });
     const caliber = [
-      '金额按绝对值归五档，区间左闭右开：「10 元以下」「10~50」「50~100」「100~500」「500 以上」',
-      '笔数为 0 的档不出柱身，明细里照实写 0 笔',
-      total === 0 ? '这段时间一笔都没有，图卡改出说明句' : '',
-      '转账不计入收支',
+      m('skill-bill.analysis-scene-distribution.c012'),
+      m('skill-bill.analysis-scene-distribution.c013'),
+      total === 0 ? m('skill-bill.analysis-scene-distribution.c014') : '',
+      m('skill-bill.analysis-scene-distribution.c015'),
     ].filter((s) => s !== '').join('；') + '。';
 
     return {
-      title: '看分布',
+      title: m('skill-bill.analysis-scene-distribution.title'),
       label: periodLabel,
       from: range.start,
       to: range.end,
@@ -128,26 +148,37 @@ export const sceneDistribution: AnalysisScene = {
       kpi,
       page: {
         kpis: [
-          { label: '统计口径', value: direction.word },
-          { label: '总笔数', value: String(total), unit: '笔' },
-          { label: '期间', value: periodLabel },
+          { label: m('skill-bill.analysis-scene-distribution.c017'), value: direction.word },
+          { label: m('skill-bill.analysis-scene-distribution.c018'), value: String(total), unit: m('skill-bill.analysis-scene-distribution.c019') },
+          { label: m('skill-bill.analysis-scene-distribution.c020'), value: periodLabel },
         ],
         chips: [],
         charts: [{
-          title: '金额区间分布',
+          title: m('skill-bill.analysis-scene-distribution.c021'),
           kind: 'bar',
-          input: barInputOf(buckets, periodLabel + ' 一笔都没有，五个金额档都是空的。'),
+          input: barInputOf(buckets, m('skill-bill.analysis-scene-distribution.c022', { p0: String(periodLabel) })),
         }],
         listCards: [],
         factCards: [{
-          title: '各区间明细',
-          rows: buckets.map((b) => ({ k: b.name, v: String(b.count) + ' 笔 · ' + pctText(b.pct) })),
+          title: m('skill-bill.analysis-scene-distribution.c023'),
+          rows: buckets.map((b) => ({ k: b.name, v: m('skill-bill.analysis-scene-distribution.c024', {
+            p0: String(String(b.count)),
+            p1: String(pctText(b.pct)),
+          }) })),
         }],
         empty: {
-          text: periodLabel + ' 这段时间还没有记录。',
-          hint: '先说「记支出」或「记收入」记一笔，回来看这里就有数了。',
+          text: m('skill-bill.analysis-scene-distribution.c025', { p0: String(periodLabel) }),
+          hint: m('skill-bill.analysis-scene-distribution.c026'),
         },
       },
     };
   },
-};
+  };
+}
+
+export const sceneDistribution: AnalysisScene = buildScene();
+
+/** 按语言重建本场景（#1197：文案经词条层，语言是运行期参数）。 */
+export function sceneDistributionFor(language: string): AnalysisScene {
+  return runWithLanguage(language, buildScene);
+}

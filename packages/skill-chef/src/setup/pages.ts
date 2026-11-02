@@ -21,6 +21,7 @@ import {
 } from 'base-paint/blocks';
 import { chefCopyArea } from '../render/copyArea.js';
 import { renderSceneShell } from '../render/sceneShell.js';
+import { m } from '../entries/index.js';
 
 /** 换行（仓库口径：不写字面换行转义，与 `blocks.ts`／皮肤件同）。 */
 const LF = String.fromCharCode(10);
@@ -42,8 +43,8 @@ function setupPageCss(): string {
   const line = rgbOf(CSS_VAR_TOKENS['--line']);
   const root = '.ilife-page-ui ';
   return [
-    '/* #873 开始使用·首次使用 页内收口 · 每一条都挂在根类之下 */',
-    '/* 读数带：三条读数收进一张暖色面板，格间发丝线分区（不用任何分隔符字符）。 */',
+    m('skill-chef.setup-pages.c001'),
+    m('skill-chef.setup-pages.c002'),
     root + '.ilife-chef-deck {',
     '  box-sizing: border-box;',
     '  margin: 22px 0 0;',
@@ -64,7 +65,7 @@ function setupPageCss(): string {
     root + '.ilife-chef-deck .ilife-block-fact-strip-item + .ilife-block-fact-strip-item {',
     '  border-left: 1px solid rgba(' + line + ', .90);',
     '}',
-    '/* 列头（标签）与正文（数值）差 5px：这一条销的就是「表头与正文同号、难辨列」。 */',
+    m('skill-chef.setup-pages.c003'),
     root + '.ilife-chef-deck .ilife-block-fact-strip-label {',
     '  letter-spacing: .06em;',
     '}',
@@ -80,12 +81,12 @@ function setupPageCss(): string {
     '    text-align: center;',
     '  }',
     '}',
-    '/* 分区题头：折叠条标题那一行带一条暖色渐隐（品牌温度落在「分区」这一层）。 */',
+    m('skill-chef.setup-pages.c004'),
     root + '.ilife-block-page-shell-body > .ilife-block-disclosure > .ilife-block-disclosure-summary {',
     '  background-image: linear-gradient(90deg, rgba(' + yellow + ', .20), rgba(' + yellow + ', 0) 76%);',
     '  border-radius: 13px;',
     '}',
-    '/* 开合标记：换成一枚暖色折角（公共层那枚蓝 ▸ 落在圆底上像播放键；换成实心圆点又被读成空态圆点）。 */',
+    m('skill-chef.setup-pages.c005'),
     root + '.ilife-block-disclosure-summary::before {',
     '  content: "";',
     '  width: 8px;',
@@ -100,9 +101,9 @@ function setupPageCss(): string {
     root + '.ilife-block-disclosure[open] > .ilife-block-disclosure-summary::before {',
     '  transform: rotate(225deg);',
     '}',
-    '/* 窄档填满度：块距 16→26px、三步可点件 44→54px —— 首屏底空从 128px 收到 119px',
-    '   （页族那份填满度只覆盖回执族，process 族这一页由页内自己收；一个字的内容都不编）。',
-    '   反例读数：撤掉这一段，首屏底空立刻回到 189px、双端自适应 20→17（见证据件「第三轮」）。 */',
+    m('skill-chef.setup-pages.c006'),
+    m('skill-chef.setup-pages.c007'),
+    m('skill-chef.setup-pages.c008'),
     '@media (max-width: 640px) {',
     '  ' + root + '.ilife-block-page-shell-body > * + .ilife-block {',
     '    margin-top: 26px;',
@@ -116,38 +117,38 @@ function setupPageCss(): string {
 
 /** 首次使用向导页（过程型：分节折叠＋动作行）。 */
 export function setupInitPage(input: { tables: number; initialized: boolean }): string {
-  const done = input.initialized ? '本次已建齐' : '此前已建齐';
+  const done = input.initialized ? m('skill-chef.setup-pages.c009') : m('skill-chef.setup-pages.c010');
   const body = renderPageShell({
-    eyebrow: '私家大厨 ｜ 开始使用',
-    title: '首次使用',
+    eyebrow: m('skill-chef.setup-pages.c011'),
+    title: m('skill-chef.setup-pages.c012'),
     content: [
       // 第三轮文案审计：原结论条「菜谱库已就绪，录第一道菜就能开工。」——删掉它用户一个字都不会少知道
       // （「已建齐」在读数带的「状态」格里、要做什么在按钮「录第一道菜」上），故删。
       renderFactStrip({
         extraClass: 'ilife-chef-deck',
         items: [
-          { label: '业务表', value: String(input.tables) + ' 张' },
-          { label: '状态', value: done },
-          { label: '建库时机', value: '用到时才建' },
+          { label: m('skill-chef.setup-pages.c013'), value: m('skill-chef.setup-pages.c014', { p0: String(String(input.tables)) }) },
+          { label: m('skill-chef.setup-pages.c015'), value: done },
+          { label: m('skill-chef.setup-pages.c016'), value: m('skill-chef.setup-pages.c017') },
         ],
       }),
       renderDisclosure({
-        title: '环境检测',
-        contentHtml: renderProseBlock({ text: '读写环境正常，有缺项会在这里列出来，并给出安装方法。' }),
+        title: m('skill-chef.setup-pages.c018'),
+        contentHtml: renderProseBlock({ text: m('skill-chef.setup-pages.c019') }),
       }),
       renderDisclosure({
-        title: '建库',
+        title: m('skill-chef.setup-pages.c020'),
         // 原口径行那一句（用到时才建／建好不再改动）并进这一步：三个折叠条里它本来就属于「建库」。
-        contentHtml: renderProseBlock({ text: '缺的会补上，齐的直接跳过，旧数据只提醒，不自动搬动；建好以后不再改动文件。' }),
+        contentHtml: renderProseBlock({ text: m('skill-chef.setup-pages.c021') }),
       }),
       renderDisclosure({
-        title: '完成回执',
-        contentHtml: renderProseBlock({ text: '初始化只做一次，以后每次进来都不会重复建。' }),
+        title: m('skill-chef.setup-pages.c022'),
+        contentHtml: renderProseBlock({ text: m('skill-chef.setup-pages.c023') }),
       }),
       renderActionBar({
         buttons: [
-          { label: '录第一道菜', kind: 'primary', actionId: 'setup-first' },
-          { label: '看看全部菜谱', kind: 'ghost', actionId: 'setup-list' },
+          { label: m('skill-chef.setup-pages.c024'), kind: 'primary', actionId: 'setup-first' },
+          { label: m('skill-chef.setup-pages.c025'), kind: 'ghost', actionId: 'setup-list' },
         ],
       }),
       chefCopyArea({
@@ -158,14 +159,14 @@ export function setupInitPage(input: { tables: number; initialized: boolean }): 
         dataActionId: 'setup-copy',
         data: {
           key: 'chef.setup.init', shape: 'receipt', ok: true,
-          message: '菜谱库已就绪（' + input.tables + ' 张表，' + done + '），录第一道菜就能开工。',
+          message: m('skill-chef.setup-pages.c026', { p0: String(input.tables), p1: String(done) }),
         },
       }),
     ].join(''),
   });
   return renderSceneShell({
     family: 'process',
-    docTitle: '首次使用',
+    docTitle: m('skill-chef.setup-pages.c027'),
     bodyHtml: body,
     extraCss: setupPageCss(),
   });

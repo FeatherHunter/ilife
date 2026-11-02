@@ -151,7 +151,7 @@ describe('sync-status ① 渲染契约', () => {
     assert.equal(typeof js, 'string');
     assert.ok(js.includes(SYNC_STATUS_EVENT_RUN) && js.includes(SYNC_STATUS_EVENT_DONE));
     assert.ok(js.includes(String(SYNC_STATUS_RUN_TIMEOUT_MS)), '超时必须写进运行时段（不许卡在同步中）');
-    assert.ok(js.includes(SYNC_STATUS_RUNNING_LABEL) === false || true); // 换字由样式承担，不重复写字
+    assert.ok(js.includes(SYNC_STATUS_RUNNING_LABEL()) === false || true); // 换字由样式承担，不重复写字
     assert.equal(/^\s*import |^\s*export /m.test(js), false, '运行时段是经典脚本，不是模块');
     assert.equal(js.includes('</script'), false, '不许把脚本标签写进文本');
   });

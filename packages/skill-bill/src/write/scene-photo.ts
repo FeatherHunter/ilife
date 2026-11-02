@@ -8,6 +8,7 @@
  *   ④ 两个页面级入参（本件读 `params`，不由命令注册表声明）：`params.images`＝本次交上来的图片张数（不给＝0）、
  *      `params.imageWhere`＝这些图现在在哪（不给＝「助手那边（本仓不存图、也不读图）」）。
  */
+import { runWithLanguage } from 'base-entries';
 import { ESCAPE_FIELDS } from './outsideScan.js';
 import type { PhotoScale } from './outsideScan.js';
 import { textOf } from './recentPicks.js';
@@ -16,19 +17,23 @@ import { wakeWordOfKind } from '../triggers/wakeTable.js';
 import type { CollectInput, Scene } from './scene.js';
 import type { FieldSlot } from './pageParts.js';
 import { bindExpensePages } from './template-expense.js';
+import { m } from '../entries/index.js';
 
 const WORD: string = wakeWordOfKind('photo');
 const KEY = 'bill.record.add';
 
-/** 三要素那三格：提示一律说人话（`L1/L2/L3` 与「（L3 即名目）」不上屏），名字与顺序仍只认 `ESCAPE_FIELDS`。 */
-const ESCAPE_SLOTS: readonly FieldSlot[] = ESCAPE_FIELDS.map((f) => ({
-  name: f.name,
-  label: f.label,
-  hint: f.name === 'category'
-    ? '要选到最细那一级，如「午餐」'
-    : f.name === 'amount' ? '支出为负、收入为正，如 -12.5' : '账单上的日期，如 2026-09-14',
-  required: true,
-}));
+/** 三要素那三格：提示一律说人话（`L1/L2/L3` 与「（L3 即名目）」不上屏），名字与顺序仍只认 `ESCAPE_FIELDS`。
+ *  按语言取词（#1197）：模块加载期不取词，构建场景时才取。 */
+function escapeSlots(): readonly FieldSlot[] {
+  return ESCAPE_FIELDS.map((f) => ({
+    name: f.name,
+    label: f.label,
+    hint: f.name === 'category'
+      ? m('skill-bill.write-scene-photo.c001')
+      : f.name === 'amount' ? m('skill-bill.write-scene-photo.c002') : m('skill-bill.write-scene-photo.c003'),
+    required: true,
+  }));
+}
 
 function isGiven(v: unknown): boolean {
   if (v === undefined || v === null) return false;
@@ -38,7 +43,7 @@ function isGiven(v: unknown): boolean {
 function scaleOf(params: Record<string, unknown>): PhotoScale {
   const raw = params['images'];
   const n = typeof raw === 'number' ? raw : Number(String(raw ?? '').trim());
-  const where = isGiven(params['imageWhere']) ? String(params['imageWhere']) : '助手那边（本仓不存图、也不读图）';
+  const where = isGiven(params['imageWhere']) ? String(params['imageWhere']) : m('skill-bill.write-scene-photo.c004');
   return { count: Number.isFinite(n) ? n : 0, where };
 }
 
@@ -46,71 +51,82 @@ function lackOf(params: Record<string, unknown>): readonly { readonly label: str
   return ESCAPE_FIELDS.filter((f) => textOf(params[f.name]) === '');
 }
 
-export const SCENE: Scene = {
-  id: 'photo',
-  key: KEY,
-  kind: 'photo',
-  op: '',
-  family: '特殊收支族',
-  ...bindExpensePages({
-    word: WORD,
+function buildScene(): Scene {
+  return {
+    id: 'photo',
+    key: KEY,
     kind: 'photo',
-    replaces: {
-      amount: '<外部识别出的金额：支出为负、收入为正>',
-      category: '<外部识别出的分类，要选到最细那一级>',
-      time: '<账单上的时间，如 2026-09-14>',
-    },
-    progress: true,
-    section1WhenBlockedOnly: false,
-    section1: '三要素缺哪样',
-    calibers: (input: CollectInput) => {
-      const scale = scaleOf(input.params);
-      return [
-        '三要素由外部识别提供。收图在你交图那头，读图在本仓之外，本仓不存图也不读图。',
-        scale.count > 0
-          ? '已收 ' + Math.floor(scale.count) + ' 张账单图片，图放在 ' + scale.where + '。'
-          : '这次一张图都没交上来，走三要素文字填空。',
-      ];
-    },
-    table: (input) => {
-      const lack = lackOf(input.params);
-      return {
-        columns: [{ key: 'field', label: '要素' }, { key: 'now', label: '现在' }],
-        rows: ESCAPE_FIELDS.map((f) => ({
-          field: f.label,
-          now: textOf(input.params[f.name]) === '' ? '还没填' : textOf(input.params[f.name]),
-        })),
-        caption: lack.length === 0 ? '三样要素都给齐了' : '缺一样就先不写库',
-      };
-    },
-    factsGrid: false,
-    foldNote: '补齐后照上面那条口令跟助手说一遍。',
-    prefill: 'caliber',
-    section2: '把三样要素填回来',
-    description: '三样填回这里。金额带符号，支出记负数、收入记正数。',
-    slots: ESCAPE_SLOTS,
-    marksShape: 'short',
-    prompt: (input) => {
-      const lack = lackOf(input.params);
-      return '拍账单：三要素由外部识别给出，还差 ' + lack.length + ' 样，这一页先不写库。'
-        + '补齐后跟助手说一遍「' + WORD + '」。';
-    },
-    promptTitle: '这一段就是补齐后要发给助手的话',
-    section3: '补齐了再请助手记',
-    subtitle: (input) => {
-      const lack = lackOf(input.params);
-      return lack.length === 0 ? '三样要素都给齐了，详见下表。' : '三要素还没齐，详见下表。';
-    },
-    logDetail: (input) => {
-      const scale = scaleOf(input.params);
-      return '没写库（采集页） · 已收 ' + (scale.count > 0 ? scale.count : 0) + ' 张图';
-    },
-    receiptState: '写库成功（三要素来自外部识别）',
-    receiptNext: () => nextStepOf({ page: 'receipt', exit: true }),
-    receiptCaliber: '三要素来自本仓之外，本仓不存图也不读图。',
-    dropDefaultHints: true,
-    cards: 'scene',
-    receiptCaption: '本次写入',
-    receiptEyebrow: WORD,
-  }),
-};
+    op: '',
+    family: m('skill-bill.write-scene-photo.c005'),
+    ...bindExpensePages({
+      word: WORD,
+      kind: 'photo',
+      replaces: {
+        amount: m('skill-bill.write-scene-photo.c006'),
+        category: m('skill-bill.write-scene-photo.c007'),
+        time: m('skill-bill.write-scene-photo.c008'),
+      },
+      progress: true,
+      section1WhenBlockedOnly: false,
+      section1: m('skill-bill.write-scene-photo.c009'),
+      calibers: (input: CollectInput) => {
+        const scale = scaleOf(input.params);
+        return [
+          m('skill-bill.write-scene-photo.c010'),
+          scale.count > 0
+            ? m('skill-bill.write-scene-photo.c011', {
+              p0: String(Math.floor(scale.count)),
+              p1: String(scale.where),
+            })
+            : m('skill-bill.write-scene-photo.c012'),
+        ];
+      },
+      table: (input) => {
+        const lack = lackOf(input.params);
+        return {
+          columns: [{ key: 'field', label: m('skill-bill.write-scene-photo.c013') }, { key: 'now', label: m('skill-bill.write-scene-photo.c014') }],
+          rows: ESCAPE_FIELDS.map((f) => ({
+            field: f.label,
+            now: textOf(input.params[f.name]) === '' ? m('skill-bill.write-scene-photo.c015') : textOf(input.params[f.name]),
+          })),
+          caption: lack.length === 0 ? m('skill-bill.write-scene-photo.c016') : m('skill-bill.write-scene-photo.c017'),
+        };
+      },
+      factsGrid: false,
+      foldNote: m('skill-bill.write-scene-photo.c018'),
+      prefill: 'caliber',
+      section2: m('skill-bill.write-scene-photo.c019'),
+      description: m('skill-bill.write-scene-photo.c020'),
+      slots: escapeSlots(),
+      marksShape: 'short',
+      prompt: (input) => {
+        const lack = lackOf(input.params);
+        return m('skill-bill.write-scene-photo.c021', { p0: String(lack.length), p1: String(WORD) });
+      },
+      promptTitle: m('skill-bill.write-scene-photo.c022'),
+      section3: m('skill-bill.write-scene-photo.c023'),
+      subtitle: (input) => {
+        const lack = lackOf(input.params);
+        return lack.length === 0 ? m('skill-bill.write-scene-photo.c024') : m('skill-bill.write-scene-photo.c025');
+      },
+      logDetail: (input) => {
+        const scale = scaleOf(input.params);
+        return m('skill-bill.write-scene-photo.c026', { p0: String(scale.count > 0 ? scale.count : 0) });
+      },
+      receiptState: m('skill-bill.write-scene-photo.c027'),
+      receiptNext: () => nextStepOf({ page: 'receipt', exit: true }),
+      receiptCaliber: m('skill-bill.write-scene-photo.c028'),
+      dropDefaultHints: true,
+      cards: 'scene',
+      receiptCaption: m('skill-bill.write-scene-photo.c029'),
+      receiptEyebrow: WORD,
+    }),
+  };
+}
+
+export const SCENE: Scene = buildScene();
+
+/** 按语言重建本场景（#1197：文案经词条层，语言是运行期参数）。 */
+export function scenePhoto(language: string): Scene {
+  return runWithLanguage(language, buildScene);
+}

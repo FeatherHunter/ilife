@@ -75,24 +75,31 @@ export const SORT_EVENT_CHANGE = 'ilife:sort-change';
 /** 载入态开关（页面派发）：`detail = { name, on }`。 */
 export const SORT_EVENT_LOADING = 'ilife:sort-loading';
 
-export const SORT_DEFAULTS = Object.freeze({
-  label: '视图',
+import { m } from '../../entries/index.js';
+
+/** 模板原样返回（占位符由本件的运行时替换，求值端口不碰）：`{名}` 映射回它自己。 */
+const KEEP_PLACEHOLDERS: Readonly<Record<string, string>> = {
+  field: '{field}', label: '{label}', caliber: '{caliber}',
+};
+
+export const SORT_DEFAULTS = {
+  get label(): string { return m('base-render.components-sort-toggle-attrs.c004'); },
   /** 反向键的默认字：键面写的是「反过来会变成什么」。 */
-  flipLabel: '反过来',
-  toDesc: '从多到少',
-  toAsc: '从少到多',
-  loadingText: '正在排…',
-  emptyText: '这个视图里没有记录',
+  get flipLabel(): string { return m('base-render.components-sort-toggle-attrs.c005'); },
+  get toDesc(): string { return m('base-render.components-sort-toggle-attrs.c006'); },
+  get toAsc(): string { return m('base-render.components-sort-toggle-attrs.c007'); },
+  get loadingText(): string { return m('base-render.components-sort-toggle-attrs.c008'); },
+  get emptyText(): string { return m('base-render.components-sort-toggle-attrs.c009'); },
   /** 排序键在条目上一条都读不到时那句（错态）。 */
-  noKeyText: '这个视图按「{field}」排，但条目上没有这个键（data-ilife-sort-{field}）',
+  get noKeyText(): string { return m('base-render.components-sort-toggle-attrs.c001', KEEP_PLACEHOLDERS); },
   /** 条目区没接上时那句（错态）。 */
-  unwiredText: '这个排序没接上条目区：页面上找不到可排的条目',
+  get unwiredText(): string { return m('base-render.components-sort-toggle-attrs.c010'); },
   /** 口径行的两块模板（`{label}`／`{caliber}` 由运行时替换；标点也住这里，运行时不许自造字面量）。 */
-  inkText: '「{label}」',
-  caliberText: '＝{caliber}',
-  noCaliberText: '（这一档没写口径句）',
-  unset: '—',
-} as const);
+  get inkText(): string { return m('base-render.components-sort-toggle-attrs.c002', KEEP_PLACEHOLDERS); },
+  get caliberText(): string { return m('base-render.components-sort-toggle-attrs.c003', KEEP_PLACEHOLDERS); },
+  get noCaliberText(): string { return m('base-render.components-sort-toggle-attrs.c011'); },
+  get unset(): string { return '—'; },
+};
 
 export interface SortViewInput {
   /** 机器值（`aria-pressed` 的载荷与条目的 `data-ilife-sort-tags` 按它对号）。 */

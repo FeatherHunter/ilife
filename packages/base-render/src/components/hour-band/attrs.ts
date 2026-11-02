@@ -21,6 +21,7 @@
  */
 
 /** 本件的类名根：全部槽位类名都是 `HOUR_BAND_CLASS + '-' + 槽名`。 */
+import { m } from '../../entries/index.js';
 export const HOUR_BAND_CLASS = 'ilife-block-hour-band';
 
 /** 槽位闭集（标记契约的一部分：`render.ts` 与判据都用这里的名字拼类名，不各抄一份字面量）。 */
@@ -99,7 +100,7 @@ export const HOUR_BAND_TEXT_MIN_FRACTION = 0.2;
 export const HOUR_BAND_RULER_NARROW_PX = 700;
 
 /** 未记录那一行的写法：`— ／ 其余时间未记录 ／ 时长`（缺值一律 `—`）。 */
-export const HOUR_BAND_UNRECORDED_LABEL = '其余时间未记录';
+export function HOUR_BAND_UNRECORDED_LABEL(): string { return m('base-render.components-hour-band-attrs.c001'); }
 export const HOUR_BAND_MISSING = '\u2014';
 
 /** 一段时间在做什么（时刻＝当天第几分钟，0..1440）。 */

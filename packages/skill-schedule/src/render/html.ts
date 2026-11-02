@@ -1,6 +1,7 @@
 // 渲染层·HTML：envelope 按形状渲染为 section 页；转义仅 &<>"'；超体积大声失败。
 import type { Envelope } from 'base-link-core';
 import { completionLabelOf } from '../policy/plan.js';
+import { m } from '../entries/index.js';
 import { ScheduleRenderError } from './errors.js';
 
 // #1279 扩面（用户 2026-10-15 批准）：2.4MB 口径扩到作息 HELP／结果页，与饼干记账同门。
@@ -29,7 +30,7 @@ function planItemHtml(n: Record<string, unknown>): string {
 }
 
 function listHtml(items: unknown[], key: string): string {
-  if (!items.length) return '<div class="hm-empty">暂无记录</div>';
+  if (!items.length) return '<div class="hm-empty">' + m('skill-schedule.render-html.c001') + '</div>';
   const fn = key.startsWith('schedule.plan.') ? planItemHtml : recordItemHtml;
   return items.map((x) => fn(x as Record<string, unknown>)).join('');
 }

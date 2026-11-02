@@ -32,7 +32,7 @@ describe('t407 · 写入域 16 条唤醒词一场景一件', () => {
     assert.equal(WORDS.length, 16, '写入域就是 16 条词');
     const ids = WORDS.map((w) => {
       const r = routeWakeword(w, { id: 1 });
-      return sceneFor({ key: r.key, kind: r.params.kind, op: r.params.op }).id;
+      return sceneFor({ key: r.key, kind: r.params.kind, op: r.params.op }, 'zh').id;
     });
     assert.deepEqual(ids, EXPECTED_IDS);
     assert.equal(new Set(ids).size, 16, '一件一条词，不许两条词挤一件');
@@ -58,11 +58,11 @@ describe('t407 · 写入域 16 条唤醒词一场景一件', () => {
   });
 
   it('认不得的 kind 落通用词那一件；不带 kind 的「记一笔」也落它', () => {
-    assert.equal(sceneFor({ key: 'bill.record.add', kind: '没这个型' }).id, 'plain');
-    assert.equal(sceneFor({ key: 'bill.record.add' }).id, 'plain');
-    assert.equal(sceneFor({ key: 'bill.record.update' }).id, 'update');
-    assert.equal(sceneFor({ key: 'bill.record.update', op: 'undo' }).id, 'undo');
-    assert.equal(sceneFor({ key: 'bill.record.update', op: 'restore' }).id, 'restore');
+    assert.equal(sceneFor({ key: 'bill.record.add', kind: '没这个型' }, 'zh').id, 'plain');
+    assert.equal(sceneFor({ key: 'bill.record.add' }, 'zh').id, 'plain');
+    assert.equal(sceneFor({ key: 'bill.record.update' }, 'zh').id, 'update');
+    assert.equal(sceneFor({ key: 'bill.record.update', op: 'undo' }, 'zh').id, 'undo');
+    assert.equal(sceneFor({ key: 'bill.record.update', op: 'restore' }, 'zh').id, 'restore');
   });
 });
 

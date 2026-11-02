@@ -13,14 +13,20 @@
 import { createSkillCliBridge, resolveNodeBin, SPAWN_TIMEOUT_MS } from 'dsh-life-pack';
 import type { SkillCliErrorCode } from 'dsh-life-pack';
 import type { ConfigSurfaceReply } from './contract.js';
+import { m } from './entries/index.js';
 
 export const SKILL_PACKAGE = 'skill-schedule' as const;
 export const SKILL_CLI = 'packages/skill-schedule/dist/cli/cmd_read.js' as const;
 export const HOST_CALL_METHOD = 'ilife.schedule.read' as const;
 export const MANAGER_PACKAGE = 'dsh-life-pack' as const;
 
-export const MANAGER_MISSING_HINT =
-  '总管缺席，请补装：dsh plugin add dsh-life-pack dsh-schedule-ilife（不许单卸总管）';
+/** 总管缺席时给用户看的补装提示：渲染期现取，词条随语言走（#1229）。 */
+export function managerMissingHint(): string {
+  return m('plugin-schedule-ilife.bridge.c001');
+}
+
+/** 兼容镜像：模块加载期取一次；渲染路径请用 managerMissingHint()。 */
+export const MANAGER_MISSING_HINT = managerMissingHint();
 
 export class SkillBridgeError extends Error {
   readonly code: SkillCliErrorCode;

@@ -8,6 +8,35 @@
 import { readFileSync } from 'node:fs';
 import type { Envelope } from 'base-link-core';
 import { fillTemplate, escapeHtml, homeCopyArea, homeCopyLog, homeNowStamp } from '../../render/index.js';
+import { m } from '../../entries/index.js';
+
+/** 本页可见文案（渲染期取词：写成函数，模块加载时不取词）。 */
+function pageText() {
+  return {
+    k001: m('skill-home.express-pages-list.c001'),
+    k002: m('skill-home.express-pages-list.c002'),
+    k003: m('skill-home.express-pages-list.c003'),
+    k004: (p0: string) => m('skill-home.express-pages-list.c004', { p0: String(p0) }),
+    k005: (p0: string) => m('skill-home.express-pages-list.c005', { p0: String(p0) }),
+    k006: (p0: string) => m('skill-home.express-pages-list.c006', { p0: String(p0) }),
+    k007: m('skill-home.express-pages-list.c007'),
+    k008: m('skill-home.express-pages-list.c008'),
+    k009: m('skill-home.express-pages-list.c009'),
+    k010: m('skill-home.express-pages-list.c010'),
+    k011: m('skill-home.express-pages-list.c011'),
+    k012: m('skill-home.express-pages-list.c012'),
+    k013: m('skill-home.express-pages-list.c013'),
+    k014: m('skill-home.express-pages-list.c014'),
+    k015: m('skill-home.express-pages-list.c015'),
+    k016: m('skill-home.express-pages-list.c016'),
+    k017: m('skill-home.express-pages-list.c017'),
+    k018: m('skill-home.express-pages-list.c018'),
+    k019: m('skill-home.express-pages-list.c019'),
+    k020: m('skill-home.express-pages-list.c020'),
+    k021: m('skill-home.express-pages-list.c021'),
+  };
+}
+
 
 export const FAMILY = 'list' as const;
 
@@ -79,8 +108,8 @@ function asListItems(env: Envelope): ListItem[] {
       quantity: Number(o.quantity ?? 1),
       routine: String(o.routine ?? ''),
       checked: Number(o.checked ?? 0),
-      sourceLabel: String(o.sourceLabel ?? (o.routine ? '例行' : '手动记的')),
-      statusLabel: String(o.statusLabel ?? (Number(o.checked ?? 0) ? '已买' : '待买')),
+      sourceLabel: String(o.sourceLabel ?? (o.routine ? m('skill-home.express-pages-list.c022') : m('skill-home.express-pages-list.c023'))),
+      statusLabel: String(o.statusLabel ?? (Number(o.checked ?? 0) ? m('skill-home.express-pages-list.c024') : m('skill-home.express-pages-list.c025'))),
     };
   }).filter((x) => x.name);
 }
@@ -89,9 +118,15 @@ function asListItems(env: Envelope): ListItem[] {
 // fail-closed：模板缺失／标记异常（fillTemplate 内抛）不返空页。
 // 复制区走共用件（卡路里同款三格式＋六段日志）；`ctx.command` 由交付链供给（含 params），直调缺省按本族主 key。
 export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: string; readonly actionAt?: string }): string {
+  const SX = {
+    k001: m('skill-home.express-pages-list.c036'),
+    k002: "、",
+  
+  k003: m('skill-home.express-pages-list.c037'),
+  k004: m('skill-home.express-pages-list.c038'),};
+  const L = pageText();
   const template = readFileSync(new URL('../../../templates/express/list.html', import.meta.url), 'utf8');
-  const head = '<div class="fam-head"><span>快递购物</span>'
-    + '<span>购物清单</span></div>';
+  const head = '<div class="fam-head">' + '<span>' + L.k001 + '</span>' + '<span>' + L.k002 + '</span>' + '</div>';
   const items = asListItems(env);
   const pending = items.filter((x) => !x.checked);
   const done = items.filter((x) => x.checked);
@@ -120,52 +155,34 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     + '@media(max-width:820px){.x-row{flex-direction:row;align-items:center}.x-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.x-btn{width:100%}}'
     + '</style>';
 
-  const P_NEW = '请加载居家管家技能，帮我录入新买的物品';
-  const P_RESTOCK = '请加载居家管家技能，帮我给物品补数量';
-  const P_ADD = '请加载居家管家技能，帮我添加购物清单条目';
-  const P_MISSING = '请加载居家管家技能，帮我检测缺货';
-  const P_CLEAN = '请加载居家管家技能，帮我清理已买的购物清单条目';
+  const P_NEW = m('skill-home.express-pages-list.c026');
+  const P_RESTOCK = m('skill-home.express-pages-list.c027');
+  const P_ADD = m('skill-home.express-pages-list.c028');
+  const P_MISSING = m('skill-home.express-pages-list.c029');
+  const P_CLEAN = m('skill-home.express-pages-list.c030');
   // #890：「我买到了」的初始载荷（点后由页内 `onclick` 按当刻勾选改写 `data-t`）。
-  const P_CHECK = '请加载居家管家技能，帮我标记购物清单条目已买到';
+  const P_CHECK = m('skill-home.express-pages-list.c031');
 
   let body = style;
   // #890（说明句与真实行为不符）：原文写「点下方的按钮划掉」——点下方那颗只把一句指令复制进剪贴板，
   // 页上不会划掉任何条目；划掉是回到对话里让助手执行的那一步。改成两句都说得上的说法。
-  body += '<p class="x-lead">勾选买到的条目，点「我买到了」复制指令</p>';
-  body += '<div class="x-metrics">'
-    + '<span class="x-pill">待买 ' + pending.length + ' 件</span>'
-    + '<span class="x-pill">已买 ' + done.length + ' 件</span>'
-    + '<span class="x-pill">查重 ' + dupes.length + ' 组</span>'
-    + '</div>';
+  body += '<p class="x-lead">' + L.k003 + '</p>';
+  body += '<div class="x-metrics">' + '<span class="x-pill">' + L.k004(String(pending.length)) + '</span>' + '<span class="x-pill">' + L.k005(String(done.length)) + '</span>' + '<span class="x-pill">' + L.k006(String(dupes.length)) + '</span>' + '</div>';
 
   if (dupes.length) {
-    body += '<section><h2>清单内查重</h2><div>'
-      + dupes.map((n) => '<span class="x-pill">别买重 ' + escapeHtml(n) + ' 在清单中出现多次，建议合并为一条</span>').join('')
-      + '</div></section>';
+    body += '<section>' + '<h2>' + L.k007 + '</h2>' + '<div>' + dupes.map((n) => '<span class="x-pill">' + L.k009 + escapeHtml(n) + L.k008 + '</span>').join('') + '</div>' + '</section>';
   }
 
   if (pending.length) {
-    body += '<section><h2>待买条目</h2><div id="x-list">'
-      + pending.map((it) => '<div class="x-row"><input class="x-check" type="checkbox" data-id="' + it.id + '" data-name="' + escapeHtml(it.name) + '" data-qty="' + it.quantity + '">'
+    body += '<section>' + '<h2>' + L.k010 + '</h2>' + '<div id="x-list">' + pending.map((it) => '<div class="x-row"><input class="x-check" type="checkbox" data-id="' + it.id + '" data-name="' + escapeHtml(it.name) + '" data-qty="' + it.quantity + '">'
         + '<div style="flex:1"><div class="x-name">' + escapeHtml(it.name)
         + '<span class="x-tag' + (it.routine ? '' : ' manual') + '">' + escapeHtml(it.sourceLabel) + '</span>'
         + '<span class="x-tag manual">' + escapeHtml(it.statusLabel) + '</span></div>'
         // #817：来源标注位已说「例行」，注里不再写「周期 例行」——同一事实两遍。
-        + '<div class="x-note">数量 ' + it.quantity + '</div></div></div>').join('')
-      + '</div></section>';
-    body += '<section><div class="x-actions">'
-      + '<button class="x-btn" data-action-id="x-check" data-t="' + escapeHtml(P_CHECK) + '" onclick="xCheck(this)">我买到了</button>'
-      + '<button class="x-btn ghost" data-action-id="x-new" data-t="' + escapeHtml(P_NEW) + '">清单外新买的</button>'
-      + '<button class="x-btn ghost" data-action-id="x-restock" data-t="' + escapeHtml(P_RESTOCK) + '">给已有物品补数量</button>'
-      + '<button class="x-btn ghost" data-action-id="x-add" data-t="' + escapeHtml(P_ADD) + '">记一笔要买的</button>'
-      + '<button class="x-btn ghost" data-action-id="x-missing" data-t="' + escapeHtml(P_MISSING) + '">看看家里缺什么</button>'
-      + '<button class="x-btn danger" data-action-id="x-clean" data-t="' + escapeHtml(P_CLEAN) + '">清掉已买记录</button>'
-      + '</div></section>';
+        + '<div class="x-note">' + L.k011 + it.quantity + '</div></div></div>').join('') + '</div>' + '</section>';
+    body += '<section>' + '<div class="x-actions">' + '<button class="x-btn" data-action-id="x-check" data-t="' + escapeHtml(P_CHECK) + '" onclick="xCheck(this)">' + L.k012 + '</button>' + '<button class="x-btn ghost" data-action-id="x-new" data-t="' + escapeHtml(P_NEW) + '">' + L.k013 + '</button>' + '<button class="x-btn ghost" data-action-id="x-restock" data-t="' + escapeHtml(P_RESTOCK) + '">' + L.k014 + '</button>' + '<button class="x-btn ghost" data-action-id="x-add" data-t="' + escapeHtml(P_ADD) + '">' + L.k015 + '</button>' + '<button class="x-btn ghost" data-action-id="x-missing" data-t="' + escapeHtml(P_MISSING) + '">' + L.k016 + '</button>' + '<button class="x-btn danger" data-action-id="x-clean" data-t="' + escapeHtml(P_CLEAN) + '">' + L.k017 + '</button>' + '</div>' + '</section>';
   } else {
-    body += '<section><div class="x-empty">清单是空的<br>可以先看看家里缺什么，或者记一笔要买的<div class="x-actions" style="justify-content:center">'
-      + '<button class="x-btn ghost" data-action-id="x-missing" data-t="' + escapeHtml(P_MISSING) + '">看看家里缺什么</button>'
-      + '<button class="x-btn ghost" data-action-id="x-add" data-t="' + escapeHtml(P_ADD) + '">记一笔要买的</button>'
-      + '</div></div></section>';
+    body += '<section>' + '<div class="x-empty">' + L.k018 + '<br>' + L.k019 + '<div class="x-actions" style="justify-content:center">' + '<button class="x-btn ghost" data-action-id="x-missing" data-t="' + escapeHtml(P_MISSING) + '">' + L.k020 + '</button>' + '<button class="x-btn ghost" data-action-id="x-add" data-t="' + escapeHtml(P_ADD) + '">' + L.k021 + '</button>' + '</div>' + '</div>' + '</section>';
   }
 
   // #890：复制路径交给公共层共享运行时（`<!--SHARED-HELPERS-->` 槽的 `buildSharedHelpersJs`），
@@ -173,9 +190,9 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   // 双通道复制 ＋ toast ＋ `execCommand` 降级都走共用件。按当刻勾选现算的那一颗，用元素级
   // `onclick` 先把载荷写回自己的 `data-t`（目标阶段先于 document 冒泡），没勾选时置空并保留拦截提示。
   body += '<script>'
-    + 'function xCheck(b){var s=[...document.querySelectorAll("#x-list input:checked")];if(!s.length){b.setAttribute("data-t","");alert("请先勾选买到的条目");return;}'
-    + 'var ids=s.map(function(c){return c.getAttribute("data-id");}).join(",");var names=s.map(function(c){return c.getAttribute("data-name");}).join("、");'
-    + 'b.setAttribute("data-t","请加载居家管家技能，帮我标记购物清单条目已买到："+names+" 编号["+ids+"]");}'
+    + "function xCheck(b){var s=[...document.querySelectorAll(\"#x-list input:checked\")];if(!s.length){b.setAttribute(\"data-t\",\"\");alert(\"" + SX.k001 + "\");return;}"
+    + "var ids=s.map(function(c){return c.getAttribute(\"data-id\");}).join(\",\");var names=s.map(function(c){return c.getAttribute(\"data-name\");}).join(\"" + SX.k002 + "\");"
+    + "b.setAttribute(\"data-t\",\"" + SX.k003 + "\"+names+\" " + SX.k004 + "[\"+ids+\"]\");}"
     + '</script>';
 
   // 主 operations 唯一复制区（envelope 投影；旧标题计数按钮已删，只留这一处）。
@@ -186,9 +203,9 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
 
   const content = head
     + body
-    + sectionOf('fields', '字段')
-    + sectionOf('operations', '操作')
-    + sectionOf('empty', '空态与异常')
-    + sectionOf('status', '状态词');
+    + sectionOf('fields', m('skill-home.express-pages-list.c032'))
+    + sectionOf('operations', m('skill-home.express-pages-list.c033'))
+    + sectionOf('empty', m('skill-home.express-pages-list.c034'))
+    + sectionOf('status', m('skill-home.express-pages-list.c035'));
   return fillTemplate(template, content);
 }

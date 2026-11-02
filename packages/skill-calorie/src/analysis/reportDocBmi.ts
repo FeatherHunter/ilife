@@ -16,20 +16,24 @@
  *   · 空记录那一支不再印一张只有一行字的「表」，改走公共层空态件（`renderEmptyBlock`，J2 要求空窗页有空态块）。
  */
 import { renderChips, renderDataTable, renderEmptyBlock, renderKpiGrid } from 'base-paint/blocks';
-import { bmiBandOf, BMI_BANDS } from './reportPlate.js';
+import { bmiBandIdOf, bmiBandLabel, BMI_BANDS } from './reportPlate.js';
 import { fmt, foldedTable, lineOf, sec } from './reportDocParts.js';
 import type { ReportSection } from './reportDocParts.js';
 import type { ReportPlate } from './reportPlate.js';
+import { m } from '../entries/index.js';
 
 /** 分类里程碑：分数带「from → to」的流水（相邻两次称重跨档才算一次）。 */
 function milestonesOf(points: readonly { readonly date: string; readonly bmi: number | null }[]): string[] {
   const out: string[] = [];
-  let prev: string | null = null;
+  let prevId: string | null = null;
+  let prevLabel = '';
   for (const p of points) {
     if (p.bmi === null) continue;
-    const band = bmiBandOf(p.bmi);
-    if (prev !== null && band !== prev) out.push(prev + ' → ' + band + '（' + p.date + '，BMI ' + p.bmi + '）');
-    prev = band;
+    const bandId = bmiBandIdOf(p.bmi);
+    const label = bmiBandLabel(String(bandId ?? 'unknown'));
+    if (prevId !== null && bandId !== prevId) out.push(prevLabel + ' → ' + label + '（' + p.date + '，BMI ' + p.bmi + '）');
+    prevId = bandId;
+    prevLabel = label;
   }
   return out;
 }
@@ -38,53 +42,54 @@ export function buildBmiBlocks(plate: ReportPlate): ReportSection[] {
   const pts = plate.bandPoints;
   const withBmi = pts.filter((p): p is { date: string; kg: number; bmi: number } => p.bmi !== null);
   if (withBmi.length === 0) {
-    return [sec('sec-overview', '概览', renderEmptyBlock({
-      title: '逐日体重与 BMI',
-      text: '这段时间没有可算 BMI 的称重记录（BMI 由体重与档案身高算出）',
+    return [sec('sec-overview', m('skill-calorie.analysis-reportDocBmi.c001'), renderEmptyBlock({
+      title: m('skill-calorie.analysis-reportDocBmi.c002'),
+      text: m('skill-calorie.analysis-reportDocBmi.c003'),
     }))];
   }
   const last = withBmi[withBmi.length - 1] as { date: string; kg: number; bmi: number };
-  const band = bmiBandOf(last.bmi);
+  const bandId = bmiBandIdOf(last.bmi);
+  const band = bmiBandLabel(String(bandId ?? 'unknown'));
   const milestones = milestonesOf(pts);
   return [
-    sec('sec-overview', '概览', renderKpiGrid([
+    sec('sec-overview', m('skill-calorie.analysis-reportDocBmi.c004'), renderKpiGrid([
       /* #516 §3.2 D11：日期与状态分槽——原来这一格拿 `·` 把「称重日期」与「分级」串成一行
        * （判据 R1 的债），现在日期住说明、分级由下面那张「分类」卡的值位与状态徽章承担。 */
-      { label: '当前 BMI', value: String(last.bmi), detail: '称重日期 ' + last.date },
+      { label: m('skill-calorie.analysis-reportDocBmi.c005'), value: String(last.bmi), detail: m('skill-calorie.analysis-reportDocBmi.c006', { p0: String(last.date) }) },
       {
-        label: '分类', value: band,
-        detail: '判定线逐条列在下方分级表里',
-        status: band === '正常' ? 'ok' as const : 'warn' as const,
-        statusText: band === '正常' ? '在正常区间' : '偏离正常区间',
+        label: m('skill-calorie.analysis-reportDocBmi.c007'), value: band,
+        detail: m('skill-calorie.analysis-reportDocBmi.c008'),
+        status: bandId === 'normal' ? 'ok' as const : 'warn' as const,
+        statusText: bandId === 'normal' ? m('skill-calorie.analysis-reportDocBmi.c009') : m('skill-calorie.analysis-reportDocBmi.c010'),
       },
       {
-        label: '身高', value: fmt(plate.base.profile.heightCm), unit: 'cm',
-        detail: plate.base.profile.heightCm === null ? '未设档案身高' : '来自档案（BMI 的分母）',
+        label: m('skill-calorie.analysis-reportDocBmi.c011'), value: fmt(plate.base.profile.heightCm), unit: 'cm',
+        detail: plate.base.profile.heightCm === null ? m('skill-calorie.analysis-reportDocBmi.c012') : m('skill-calorie.analysis-reportDocBmi.c013'),
       },
-      { label: '采样点', value: String(withBmi.length), unit: '次', detail: '窗口共 ' + plate.base.days + ' 天' },
+      { label: m('skill-calorie.analysis-reportDocBmi.c014'), value: String(withBmi.length), unit: m('skill-calorie.analysis-reportDocBmi.c015'), detail: m('skill-calorie.analysis-reportDocBmi.c016', { p0: String(plate.base.days) }) },
     ])),
-    sec('sec-chart', 'BMI 轨迹', lineOf(pts.map((p) => ({ date: p.date, value: p.bmi })), 'BMI 轨迹（逐日体重与 BMI）', { format: (v) => v.toFixed(1) })),
-    sec('sec-bands', 'BMI 分级',
+    sec('sec-chart', m('skill-calorie.analysis-reportDocBmi.c017'), lineOf(pts.map((p) => ({ date: p.date, value: p.bmi })), m('skill-calorie.analysis-reportDocBmi.c018'), { format: (v) => v.toFixed(1) })),
+    sec('sec-bands', m('skill-calorie.analysis-reportDocBmi.c019'),
       renderDataTable({
         columns: [
-          { key: 'band', label: 'BMI 分级' },
-          { key: 'range', label: '区间' },
-          { key: 'now', label: '当前落在' },
+          { key: 'band', label: m('skill-calorie.analysis-reportDocBmi.c020') },
+          { key: 'range', label: m('skill-calorie.analysis-reportDocBmi.c021') },
+          { key: 'now', label: m('skill-calorie.analysis-reportDocBmi.c022') },
         ],
         rows: BMI_BANDS.map((b) => ({
-          band: b.label,
+          band: bmiBandLabel(b.id),
           range: b.hi === null ? '≥ ' + String(b.lo) : String(b.lo) + ' – ' + String(b.hi),
-          now: band === b.label ? '✔' : '—',
+          now: bandId === b.id ? '✔' : '—',
         })),
-        caption: 'BMI 分级（中国标准）',
+        caption: m('skill-calorie.analysis-reportDocBmi.c023'),
       })
       /* 徽章列（#516 §3.1 的第二种形状）：与上表「当前落在」那一列同源同值，
        * 把「落在哪一档」从表内的一个勾变成一行扫得动的标签。 */
-      + renderChips({ items: [{ text: '当前分级 ' + band }, { text: '分级线共 ' + String(BMI_BANDS.length) + ' 档' }] })),
-    sec('sec-detail', '逐日明细', foldedTable({
+      + renderChips({ items: [{ text: m('skill-calorie.analysis-reportDocBmi.c024', { p0: String(band) }) }, { text: m('skill-calorie.analysis-reportDocBmi.c025', { p0: String(String(BMI_BANDS.length)) }) }] })),
+    sec('sec-detail', m('skill-calorie.analysis-reportDocBmi.c026'), foldedTable({
       columns: [
-        { key: 'date', label: '日期' },
-        { key: 'kg', label: '体重（kg）', align: 'right' },
+        { key: 'date', label: m('skill-calorie.analysis-reportDocBmi.c027') },
+        { key: 'kg', label: m('skill-calorie.analysis-reportDocBmi.c028'), align: 'right' },
         { key: 'bmi', label: 'BMI', align: 'right' },
       ],
       /* #620 增量6：同列小数位统一 1 位（整数补 `.0`，与预测族轨迹列同口径；只改显示，分级判定仍走原值）。 */
@@ -93,14 +98,14 @@ export function buildBmiBlocks(plate: ReportPlate): ReportSection[] {
         kg: (Math.round(p.kg * 10) / 10).toFixed(1),
         bmi: p.bmi === null ? null : (Math.round(p.bmi * 10) / 10).toFixed(1),
       })),
-      caption: '逐日体重与 BMI',
-      emptyText: '这段时间还没有称重记录',
+      caption: m('skill-calorie.analysis-reportDocBmi.c029'),
+      emptyText: m('skill-calorie.analysis-reportDocBmi.c030'),
     })),
-    sec('sec-milestone', '分类里程碑', renderDataTable({
-      columns: [{ key: 'm', label: '分类里程碑' }],
+    sec('sec-milestone', m('skill-calorie.analysis-reportDocBmi.c031'), renderDataTable({
+      columns: [{ key: 'm', label: m('skill-calorie.analysis-reportDocBmi.c032') }],
       rows: milestones.map((m) => ({ m })),
-      caption: milestones.length === 0 ? '分类里程碑' : '分类里程碑（起 → 止）',
-      emptyText: '窗口内 BMI 没有跨过分级线',
+      caption: milestones.length === 0 ? m('skill-calorie.analysis-reportDocBmi.c033') : m('skill-calorie.analysis-reportDocBmi.c034'),
+      emptyText: m('skill-calorie.analysis-reportDocBmi.c035'),
     })),
   ];
 }

@@ -9,6 +9,7 @@
  */
 
 /** 本件的类名根。 */
+import { m } from '../../entries/index.js';
 export const PHOTO_GRID_CLASS = 'ilife-block-photo-grid';
 
 /** 槽位闭集。 */
@@ -80,10 +81,10 @@ export const PHOTO_GRID_MIN_STACK = 2;
 
 /** 末尾那一格的加号与字。 */
 export const PHOTO_GRID_ADD_MARK = '＋';
-export const PHOTO_GRID_ADD_LABEL = '加一张';
+export function PHOTO_GRID_ADD_LABEL(): string { return m('base-render.components-photo-grid-attrs.c001'); }
 
 /** 一格都没有时那句话（**是空态，不是错误**：新账本／新物品本来就没有照片）。 */
-export const PHOTO_GRID_EMPTY_TEXT = '还没有照片';
+export function PHOTO_GRID_EMPTY_TEXT(): string { return m('base-render.components-photo-grid-attrs.c002'); }
 
 /** 缺值那一栏的写法（日期拿不到时不再编一个）——**本件用不到，留作同族口径**：
  *  一格照片宁可只写题注（没有日期那一栏就不出），也不要写一个假的 `—`。 */

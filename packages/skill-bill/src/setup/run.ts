@@ -18,6 +18,7 @@
  *   与写入域／账户域「`receipt` 那一格的形状由各域自己定」同一条口径（`src/shared/commandSpec.ts`）。
  */
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 import { dirname, join } from 'node:path';
 import type { BillDb } from '../fetch/index.js';
 import { resolveBackupDir, resolveGoalsPath } from '../fetch/paths.js';
@@ -42,6 +43,7 @@ import { readSetupStatus } from './status.js';
 import { backupReceiptDoc } from './template-receipt.js';
 import { listDoc } from './template-list.js';
 import { wizardDoc } from './template-wizard.js';
+import { m } from '../entries/index.js';
 
 /** 目录可写探测（老侧 `cli.py:111-125` 的 `.write_probe` 同法：真写一个再删，不凭猜）。 */
 function dirWritable(dir: string): boolean {
@@ -71,25 +73,27 @@ function verifyReadable(db: BillDb): boolean {
   } catch { return false; }
 }
 
-/** 记第一笔那句口令（老侧 `init_wizard.html:158` 逐字同句：初始化完成后顺势推进到下一步，`#688` §二 D3）。 */
-const NEXT_RECORD_PROMPT = '请加载「饼干记账」技能,帮我记一笔支出(唤醒词:记支出):\n\n'
-  + '  分类: ____(如:餐饮/外卖/午餐)\n  金额: ____(支出为负)\n  备注: ____(选填)';
+/** 记第一笔那句口令（老侧 `init_wizard.html:158` 逐字同句：初始化完成后顺势推进到下一步，`#688` §二 D3）。
+ *  `#1214`：改成**函数**按语言取词（模块级常量会把语言固化成 zh）。 */
+function nextRecordPrompt(): string {
+  return m('skill-bill.setup-run.c001');
+}
 
 /** 初始化（`op=init`）：环境检测 → 数据目录 → 建库自愈 → 真跑一次读。**幂等**，重复跑安全。 */
 function runInit(db: BillDb, key: string, params: Record<string, unknown>): WriteOut {
-  const scene = setupSceneFor('init');
+  const scene = setupSceneFor('init', currentRenderLanguage());
   const dir = dirname(db.path);
   const status = readSetupStatus(db);
   const writable = dirWritable(dir);
   const envChecks = [
-    { label: '运行环境', ok: nodeOk(), detail: 'node ' + process.versions.node + '（要 22.13 以上）' },
-    { label: '数据目录', ok: writable, detail: dir + (writable ? '（可写）' : '（不可写）') },
+    { label: m('skill-bill.setup-run.c002'), ok: nodeOk(), detail: m('skill-bill.setup-run.c003', { p0: String(process.versions.node) }) },
+    { label: m('skill-bill.setup-run.c004'), ok: writable, detail: dir + (writable ? m('skill-bill.setup-run.c005') : m('skill-bill.setup-run.c006')) },
   ];
   const verifyOk = status.tableExists && verifyReadable(db);
   const steps = initSteps({
     envCount: envChecks.length,
     envOk: envChecks.every((c) => c.ok),
-    envSummary: envChecks.every((c) => c.ok) ? '两项都过了' : '有没过的项',
+    envSummary: envChecks.every((c) => c.ok) ? m('skill-bill.setup-run.c007') : m('skill-bill.setup-run.c008'),
     dirPath: dir,
     dirWritable: writable,
     schemaOk: status.checks[1]?.ok === true,
@@ -99,8 +103,12 @@ function runInit(db: BillDb, key: string, params: Record<string, unknown>): Writ
   });
   const ready = status.ready && verifyOk;
   const message = ready
-    ? '已初始化：' + db.path + '（' + String(status.columns.length) + ' 列，现有记录 ' + String(status.rows) + ' 条）'
-    : '初始化没走完：库结构还不齐（现有记录 ' + String(status.rows) + ' 条）';
+    ? m('skill-bill.setup-run.c009', {
+      p0: String(db.path),
+      p1: String(String(status.columns.length)),
+      p2: String(String(status.rows)),
+    })
+    : m('skill-bill.setup-run.c010', { p0: String(String(status.rows)) });
   const receipt = {
     op: 'init', db_path: db.path, records: status.rows, schema_ok: ready, repaired: status.repaired,
     created: db.initialized,
@@ -108,8 +116,8 @@ function runInit(db: BillDb, key: string, params: Record<string, unknown>): Writ
   const envelope = receiptEnvelopeOf(key, { ok: ready, message, ...receipt });
   const html = wizardDoc({
     op: 'init', scene, key, params, actionAt: actionStamp(), steps, envelope,
-    blocked: [], prompt: ready ? NEXT_RECORD_PROMPT : scene.promptOf(params),
-    promptLabel: ready ? '复制给助手：直接开始记第一笔' : '复制给助手：照这句先把初始化走完',
+    blocked: [], prompt: ready ? nextRecordPrompt() : scene.promptOf(params),
+    promptLabel: ready ? m('skill-bill.setup-run.c011') : m('skill-bill.setup-run.c012'),
     envChecks, ready, dbPath: db.path, records: status.rows, created: db.initialized,
   });
   return { data: { ok: ready, message, receipt }, page: { wakeWord: projectWakeWord({ key: key as BillKey, op: 'init' }), kind: 'single' }, html };
@@ -117,12 +125,16 @@ function runInit(db: BillDb, key: string, params: Record<string, unknown>): Writ
 
 /** 初始化状态（`op=init-status`）：只读三重判定 ＋ 独立的迁移块。 */
 function runStatus(db: BillDb, key: string, params: Record<string, unknown>): WriteOut {
-  const scene = setupSceneFor('init-status');
+  const scene = setupSceneFor('init-status', currentRenderLanguage());
   const status = readSetupStatus(db);
+  const why = status.needsMigration ? m('skill-bill.setup-run.c013') : m('skill-bill.setup-run.c014');
   const message = status.ready
-    ? '就绪：' + String(status.columns.length) + ' 列齐（含 deleted_at），库 ' + db.path
-      + '，现有记录 ' + String(status.rows) + ' 条'
-    : '未就绪：' + (status.needsMigration ? '结构还是老版本' : '这个位置还不是一个记账库') + '（' + db.path + '）';
+    ? m('skill-bill.setup-run.c015', {
+      p0: String(String(status.columns.length)),
+      p1: String(db.path),
+      p2: String(String(status.rows)),
+    })
+    : m('skill-bill.setup-run.c016', { p0: String(why), p1: String(db.path) });
   const receipt = {
     op: 'init-status', db_path: db.path, records: status.rows, version: status.version,
     repaired: status.repaired, ready: status.ready,
@@ -134,12 +146,16 @@ function runStatus(db: BillDb, key: string, params: Record<string, unknown>): Wr
 
 /** 一键备份（`op=backup-create`）：无条件造一份，出结果回执。 */
 function runBackupCreate(db: BillDb, key: string, params: Record<string, unknown>): WriteOut {
-  const scene = setupSceneFor('backup-create');
+  const scene = setupSceneFor('backup-create', currentRenderLanguage());
   const dir = resolveBackupDir();
   const entry = createBackup({ db, dir, stamp: backupStampOf(new Date()), goalsPath: resolveGoalsPath() });
   const entries = listBackups(dir);
-  const message = '已备份：' + entry.file + '（' + humanBytes(entry.bytes)
-    + (entry.hasGoals ? ' ＋ 目标那一份' : '') + '）';
+  const goalsPart = entry.hasGoals ? m('skill-bill.setup-run.c017') : '';
+  const message = m('skill-bill.setup-run.c018', {
+    p0: String(entry.file),
+    p1: String(humanBytes(entry.bytes)),
+    p2: String(goalsPart),
+  });
   const receipt = {
     op: 'backup-create', backup: entry.file, path: entry.path, time: entry.time, bytes: entry.bytes,
     has_goals: entry.hasGoals, count: entries.length,
@@ -151,16 +167,19 @@ function runBackupCreate(db: BillDb, key: string, params: Record<string, unknown
 
 /** 查看备份（`op=backup-list`）：只读列一遍目录，空目录出空态与引导。 */
 function runBackupList(key: string, params: Record<string, unknown>): WriteOut {
-  const scene = setupSceneFor('backup-list');
+  const scene = setupSceneFor('backup-list', currentRenderLanguage());
   const entries = listBackups(resolveBackupDir());
   const ok = entries.length > 0;
   const message = ok
-    ? '备份 ' + String(entries.length) + ' 份，最新一份是 ' + (entries[0] as BackupEntry).time
-    : '还没有备份（跟助手说一遍「备份」就会存一份）';
+    ? m('skill-bill.setup-run.c019', {
+      p0: String(String(entries.length)),
+      p1: String((entries[0] as BackupEntry).time),
+    })
+    : m('skill-bill.setup-run.c020');
   const receipt = {
     op: 'backup-list', count: entries.length,
     backups: entries.map((e) => ({
-      name: e.file, time: e.time, size: e.bytes, files: e.hasGoals ? '库 ＋ 目标' : '只有库',
+      name: e.file, time: e.time, size: e.bytes, files: e.hasGoals ? m('skill-bill.setup-run.c021') : m('skill-bill.setup-run.c022'),
     })),
   };
   const envelope = receiptEnvelopeOf(key, { ok, message, ...receipt });
@@ -170,9 +189,9 @@ function runBackupList(key: string, params: Record<string, unknown>): WriteOut {
 
 /** 查看当前配置（`op=config-read`）：只读 6 项＋落点，上屏已脱敏，载荷带绝对路径（机器用）。 */
 function runConfigRead(key: string, params: Record<string, unknown>): WriteOut {
-  const scene = setupSceneFor('config-read');
+  const scene = setupSceneFor('config-read', currentRenderLanguage());
   const view = readConfigView();
-  const message = '当前配置 6 项（路径已脱敏，绝对路径进载荷）：' + view.configPath;
+  const message = m('skill-bill.setup-run.c023', { p0: String(view.configPath) });
   const receipt = { op: 'config-read', config_path: view.configPath, rows: view.rows.length };
   const envelope = receiptEnvelopeOf(key, { ok: true, message, ...receipt });
   const html = configDoc({ op: 'config-read', scene, key, params, actionAt: actionStamp(), view, envelope });
@@ -182,11 +201,11 @@ function runConfigRead(key: string, params: Record<string, unknown>): WriteOut {
 /** 设置当前配置（`op=config-write`）：两步确认（不给 `confirm` 只出预览＋确认口令，给了才落盘）。
  *  四格全空＝预览页（不落盘）；给了＋确认＝合并写（没给的子项保留现值）。 */
 function runConfigWrite(key: string, params: Record<string, unknown>): WriteOut {
-  const scene = setupSceneFor('config-write');
+  const scene = setupSceneFor('config-write', currentRenderLanguage());
   const confirmed = confirmOf(params);
   if (!hasConfigValues(params)) {
     const view = readConfigView();
-    const message = '还没说改哪格：在弹窗里填数据目录／库文件名／备份目录／产物目录名，确认后跟助手说一遍';
+    const message = m('skill-bill.setup-run.c024');
     const receipt = { op: 'config-write', confirmed: false, preview: [] as readonly unknown[] };
     const envelope = receiptEnvelopeOf(key, { ok: false, message, ...receipt });
     const html = configDoc({
@@ -197,13 +216,13 @@ function runConfigWrite(key: string, params: Record<string, unknown>): WriteOut 
   }
   const previewRaw = configValuesFrom(params);
   const preview = [
-    ...(previewRaw.db !== undefined ? Object.entries(previewRaw.db as Record<string, unknown>).map(([k, v]) => ({ key: 'db.' + k, label: k === 'dir' ? '数据目录' : '库文件名', value: String(v) })) : []),
-    ...(previewRaw.backup !== undefined ? Object.entries(previewRaw.backup as Record<string, unknown>).map(([k, v]) => ({ key: 'backup.' + k, label: '备份目录', value: String(v) })) : []),
-    ...(previewRaw.html !== undefined ? Object.entries(previewRaw.html as Record<string, unknown>).map(([k, v]) => ({ key: 'html.' + k, label: '产物目录名', value: String(v) })) : []),
+    ...(previewRaw.db !== undefined ? Object.entries(previewRaw.db as Record<string, unknown>).map(([k, v]) => ({ key: 'db.' + k, label: k === 'dir' ? m('skill-bill.setup-run.c025') : m('skill-bill.setup-run.c026'), value: String(v) })) : []),
+    ...(previewRaw.backup !== undefined ? Object.entries(previewRaw.backup as Record<string, unknown>).map(([k, v]) => ({ key: 'backup.' + k, label: m('skill-bill.setup-run.c027'), value: String(v) })) : []),
+    ...(previewRaw.html !== undefined ? Object.entries(previewRaw.html as Record<string, unknown>).map(([k, v]) => ({ key: 'html.' + k, label: m('skill-bill.setup-run.c028'), value: String(v) })) : []),
   ];
   if (!confirmed) {
     const view = readConfigView();
-    const message = '这样写进去，对就确认：' + preview.map((p) => p.label + '＝' + p.value).join('、') + '（跟助手说一遍确认口令即落盘）';
+    const message = m('skill-bill.setup-run.c029', { p0: String(listJoin(currentRenderLanguage(), preview.map((p) => p.label + '＝' + p.value))) });
     const receipt = { op: 'config-write', confirmed: false, preview };
     const envelope = receiptEnvelopeOf(key, { ok: false, message, ...receipt });
     const html = configDoc({
@@ -214,7 +233,7 @@ function runConfigWrite(key: string, params: Record<string, unknown>): WriteOut 
   }
   const r = writeConfigValues(params);
   const view = readConfigView();
-  const message = '已经写进配置文件了：' + r.path + '（' + String(preview.length) + ' 项）';
+  const message = m('skill-bill.setup-run.c030', { p0: String(r.path), p1: String(String(preview.length)) });
   const receipt = { op: 'config-write', confirmed: true, preview, path: r.path };
   const envelope = receiptEnvelopeOf(key, { ok: true, message, ...receipt });
   const html = configDoc({
@@ -231,10 +250,13 @@ export function setupRun(params: Record<string, unknown>, db: BillDb): WriteOut 
   // 缺必需槽位那一条只可能出在导入这一支（八种 op 里只有它有一个必填格）。
   const missing = setupBlocked(op, params);
   if (missing.length > 0) {
-    const scene = setupSceneFor('import');
+    const scene = setupSceneFor('import', currentRenderLanguage());
     const html = blockedWizardDoc({ op: 'import', scene, key, params, blocked: missing, actionAt: actionStamp() });
-    const message = projectWakeWord({ key: 'bill.setup.run', op: 'import' }) + '还差 ' + String(missing.length)
-      + ' 项：' + missing.map((b) => b.label).join('、') + '（已出向导页，补齐之后跟助手说一遍）';
+    const message = m('skill-bill.setup-run.c031', {
+      p0: String(projectWakeWord({ key: 'bill.setup.run', op: 'import' })),
+      p1: String(String(missing.length)),
+      p2: String(listJoin(currentRenderLanguage(), missing.map((b) => b.label))),
+    });
     return { data: { ok: false, message, receipt: { op: 'import', blocked: missing } }, page: { wakeWord: projectWakeWord({ key: key as BillKey, op: 'import' }), kind: 'single' }, html };
   }
   if (op === 'init') return runInit(db, key, params);

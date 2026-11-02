@@ -20,6 +20,7 @@
  */
 
 /** 本件的类名根：全部槽位类名都是 `BULK_BAR_CLASS + '-' + 槽名`。 */
+import { m } from '../../entries/index.js';
 export const BULK_BAR_CLASS = 'ilife-block-bulk-bar';
 
 /** 槽位闭集（标记契约的一部分：`render.ts`／`style.ts` 与判据都用这里的名字拼类名，不各抄一份字面量）。 */
@@ -176,20 +177,20 @@ export const BULK_BAR_EVENT_ACTION = 'ilife:bulk-action';
 /** 缺值的写法：**缺值写成 `—`，不许写 0、不许留空**（全仓同一条地板）。 */
 export const BULK_BAR_MISSING = '—';
 /** 计数单位（缺省 `条`）。 */
-export const BULK_BAR_COUNT_UNIT = '条';
+export function BULK_BAR_COUNT_UNIT(): string { return m('base-render.components-bulk-bar-attrs.c001'); }
 /** 计数单位后面那句（`条已选`）。 */
-export const BULK_BAR_COUNT_SUFFIX = '已选';
+export function BULK_BAR_COUNT_SUFFIX(): string { return m('base-render.components-bulk-bar-attrs.c002'); }
 /** 空态的缺省写法（设计过的空态，不是留白）。 */
-export const BULK_BAR_EMPTY_TEXT = '没有可挑的条目';
+export function BULK_BAR_EMPTY_TEXT(): string { return m('base-render.components-bulk-bar-attrs.c003'); }
 /** 「改成」那枚标签的缺省字。 */
-export const BULK_BAR_VALUE_LABEL = '改成';
+export function BULK_BAR_VALUE_LABEL(): string { return m('base-render.components-bulk-bar-attrs.c004'); }
 /** 确认面脚上那两枚按钮的缺省字。 */
-export const BULK_BAR_CANCEL_LABEL = '取消';
+export function BULK_BAR_CANCEL_LABEL(): string { return m('base-render.components-bulk-bar-attrs.c005'); }
 /** 一条都改不了时（预演里每一条都跳过），主按钮的字。 */
-export const BULK_BAR_NOTHING_TEXT = '一条都改不了';
+export function BULK_BAR_NOTHING_TEXT(): string { return m('base-render.components-bulk-bar-attrs.c006'); }
 /** 预演行右端那两个字（**字**是状态的一重：不靠颜色）。 */
-export const BULK_BAR_KEEP_TEXT = '会改';
-export const BULK_BAR_SKIP_TEXT = '跳过';
+export function BULK_BAR_KEEP_TEXT(): string { return m('base-render.components-bulk-bar-attrs.c007'); }
+export function BULK_BAR_SKIP_TEXT(): string { return m('base-render.components-bulk-bar-attrs.c008'); }
 /** 预演行左端那两枚记号（**形**是状态的另一重：`✓` 会改／`⊘` 跳过）。 */
 export const BULK_BAR_KEEP_MARK = '✓';
 export const BULK_BAR_SKIP_MARK = '⊘';

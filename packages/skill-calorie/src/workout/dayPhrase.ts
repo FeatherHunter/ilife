@@ -8,9 +8,10 @@
  */
 
 /** 星期名（`day_of_week` 1–7）：`第 1 周 周三` 里的那截。 */
+import { m } from '../entries/index.js';
 export const DOW_CN = ['', '一', '二', '三', '四', '五', '六', '日'];
 
 /** 「第 1 周 周三」——周次与星期都带空格与「周」字，读得出是哪一周的哪一天。 */
 export function dayPhrase(wn: number, dn: number): string {
-  return '第 ' + wn + ' 周 周' + (DOW_CN[dn] ?? String(dn));
+  return m('skill-calorie.workout-dayPhrase.c001', { p0: String(wn), p1: String(DOW_CN[dn] ?? String(dn)) });
 }

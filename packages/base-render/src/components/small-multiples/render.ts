@@ -60,7 +60,7 @@ function xaxHtml(m: SmallMultiplesModel): string {
     parts.push('<b class="' + smallMultiplesSlot('xperiod') + '">' + esc(tick.label) + '</b>');
     parts.push('<em class="' + smallMultiplesSlot('xvalue') + '">' + esc(tick.value) + '</em>');
     if (tick.now) {
-      parts.push('<i class="' + smallMultiplesSlot('nowmark') + '">' + esc(SMALL_MULTIPLES_NOW_LABEL) + '</i>');
+      parts.push('<i class="' + smallMultiplesSlot('nowmark') + '">' + esc(SMALL_MULTIPLES_NOW_LABEL()) + '</i>');
     }
     parts.push('</li>');
   }

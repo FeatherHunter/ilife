@@ -6,6 +6,7 @@
  */
 import type { DatabaseSync } from 'node:sqlite';
 import { FetchError } from '../fetch/errors.js';
+import { m } from '../entries/index.js';
 
 export interface ProductRow {
   id: number;
@@ -93,7 +94,7 @@ export function updateProduct(db: DatabaseSync, id: number, fields: Partial<Reco
 
 export function deprecateProduct(db: DatabaseSync, id: unknown): { ok: boolean; id?: number; name?: string; error?: string } {
   const pid = typeof id === 'number' ? id : parseInt(String(id), 10);
-  if (!Number.isInteger(pid)) return { ok: false, error: 'Product ID 必须是数字' };
+  if (!Number.isInteger(pid)) return { ok: false, error: m('skill-calorie.diet-productStore.c001') };
   const row = db.prepare('SELECT product_name FROM nutrition_products WHERE id = ?').get(pid) as
     | { product_name: string }
     | undefined;
