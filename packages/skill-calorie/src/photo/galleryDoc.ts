@@ -102,7 +102,7 @@ function missReason(e: PhotoEmbed | undefined, skipReason: string | undefined): 
   const kind = e?.missingKind;
   if (kind === undefined) return { badge: m('skill-calorie.photo-galleryDoc.c004'), why: m('skill-calorie.photo-galleryDoc.c005'), what: m('skill-calorie.photo-galleryDoc.c006') };
   if (kind === 'too-big') return { badge: m('skill-calorie.photo-galleryDoc.c007'), why: m('skill-calorie.photo-galleryDoc.c008'), what: m('skill-calorie.photo-galleryDoc.c009') };
-  if (kind === 'no-dir') return { badge: '读不到', why: m('skill-calorie.photo-galleryDoc.c010'), what: m('skill-calorie.photo-galleryDoc.c011') };
+  if (kind === 'no-dir') return { badge: m('skill-calorie.photo-galleryDoc.c052'), why: m('skill-calorie.photo-galleryDoc.c010'), what: m('skill-calorie.photo-galleryDoc.c011') };
   if (kind === 'file-missing') return { badge: m('skill-calorie.photo-galleryDoc.c012'), why: m('skill-calorie.photo-galleryDoc.c013'), what: m('skill-calorie.photo-galleryDoc.c014') };
   return { badge: m('skill-calorie.photo-galleryDoc.c015'), why: m('skill-calorie.photo-galleryDoc.c016'), what: m('skill-calorie.photo-galleryDoc.c017') };
 }
@@ -111,7 +111,7 @@ function missReason(e: PhotoEmbed | undefined, skipReason: string | undefined): 
 function relativeDays(date: string, today: string): string {
   const days = Math.round((Date.parse(today + 'T12:00:00Z') - Date.parse(date + 'T12:00:00Z')) / 86400000);
   if (!Number.isFinite(days) || days < 0) return '';
-  return days === 0 ? '今天' : m('skill-calorie.photo-galleryDoc.c018', { p0: String(days) });
+  return days === 0 ? m('skill-calorie.photo-galleryDoc.c053') : m('skill-calorie.photo-galleryDoc.c018', { p0: String(days) });
 }
 
 /** 窗口天数（页头身份行那一枚徽章）：取头尾真实区间，不拿 `days` 参数冒充。 */
@@ -223,9 +223,9 @@ function detailTable(g: GalleryData, skipReason: ReadonlyMap<string, string>): s
     + renderDataTable({
       columns: [
         { key: 'id', label: m('skill-calorie.photo-galleryDoc.c038'), align: 'right' },
-        { key: 'date', label: '日期' },
+        { key: 'date', label: m('skill-calorie.photo-galleryDoc.c054') },
         { key: 'tags', label: m('skill-calorie.photo-galleryDoc.c039') },
-        { key: 'status', label: '状态' },
+        { key: 'status', label: m('skill-calorie.photo-galleryDoc.c055') },
       ],
       rows,
       emptyText: m('skill-calorie.photo-galleryDoc.c040'),

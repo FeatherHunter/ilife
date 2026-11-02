@@ -85,7 +85,7 @@ function detailCommand(id: number): string {
  *  「今天」取自 `todayISO()`（唯一出处；#718 起「今天」由真实时钟给，钉钟走 `test/helpers/config-test.mjs` 的 `pinProcessClock`）。 */
 function relTime(date: string, today: string): string {
   const days = Math.round((Date.parse(today + 'T12:00:00Z') - Date.parse(date + 'T12:00:00Z')) / 86400000);
-  if (days <= 0) return '今天';
+  if (days <= 0) return m('skill-calorie.photo-viewerDoc.c038');
   if (days === 1) return m('skill-calorie.photo-viewerDoc.c001');
   if (days < 30) return m('skill-calorie.photo-viewerDoc.c002', { p0: String(days) });
   if (days < 365) return m('skill-calorie.photo-viewerDoc.c003', { p0: String(Math.round(days / 30)) });

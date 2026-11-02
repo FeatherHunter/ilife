@@ -256,7 +256,7 @@ function truncationText(v: RecordsView, shown: number): string | null {
 function windowCard(v: RecordsView): Card {
   return {
     id: 'sec-window',
-    label: '窗口',
+    label: m('skill-calorie.exercise-records.c055'),
     html: factStrip(v.start === v.end
       ? [{ k: m('skill-calorie.exercise-records.c045'), v: v.start }]
       : [{ k: m('skill-calorie.exercise-records.c018'), v: v.start }, { k: m('skill-calorie.exercise-records.c019'), v: v.end }]),
