@@ -50,7 +50,7 @@ importers:
         specifier: 0.3.55
         version: link:../base-entries
       dsh-life-pack:
-        specifier: 0.3.86
+        specifier: 0.3.87
         version: link:../plugin-manager
       skill-bill:
         specifier: 0.3.55
@@ -75,7 +75,7 @@ importers:
         specifier: 0.3.55
         version: link:../base-entries
       dsh-life-pack:
-        specifier: 0.3.86
+        specifier: 0.3.87
         version: link:../plugin-manager
       skill-calorie:
         specifier: 0.3.55
@@ -100,7 +100,7 @@ importers:
         specifier: 0.3.55
         version: link:../base-entries
       dsh-life-pack:
-        specifier: 0.3.86
+        specifier: 0.3.87
         version: link:../plugin-manager
       skill-chef:
         specifier: 0.3.55
@@ -125,7 +125,7 @@ importers:
         specifier: 0.3.55
         version: link:../base-entries
       dsh-life-pack:
-        specifier: 0.3.86
+        specifier: 0.3.87
         version: link:../plugin-manager
       skill-home:
         specifier: 0.3.55
@@ -175,7 +175,7 @@ importers:
         specifier: 0.3.55
         version: link:../base-entries
       dsh-life-pack:
-        specifier: 0.3.86
+        specifier: 0.3.87
         version: link:../plugin-manager
       skill-memo-ilife:
         specifier: 0.3.55
@@ -200,7 +200,7 @@ importers:
         specifier: 0.3.55
         version: link:../base-entries
       dsh-life-pack:
-        specifier: 0.3.86
+        specifier: 0.3.87
         version: link:../plugin-manager
       skill-schedule:
         specifier: 0.3.55
