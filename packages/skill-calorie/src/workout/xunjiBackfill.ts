@@ -26,6 +26,7 @@ import { XUNJI_STUB_ENV, invokeXunji, xunjiExitToCmd } from './xunjiRunner.js';
 import type { XunjiCall } from './xunjiRunner.js';
 import { xunjiKeyNext, xunjiKeyRow } from './xunjiKey.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 export const XUNJI_BACKFILL_KEY = 'calorie.workout.xunji-backfill';
 const XUNJI_BACKFILL_WAKE = '拉训记实绩';
@@ -106,7 +107,7 @@ function failBackfill(end: string, days: number, call: XunjiCall): never {
     m('skill-calorie.workout-xunjiBackfill.c007', {
       p0: String(end),
       p1: String(days),
-      p2: String(named.length === 0 ? '' : '：' + named.join('、')),
+      p2: String(named.length === 0 ? '' : '：' + listJoin(currentRenderLanguage(), named)),
       p3: String(call.stderr === '' ? '' : '（' + call.stderr + '）'),
     }),
   );

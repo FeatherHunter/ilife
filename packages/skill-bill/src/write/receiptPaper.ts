@@ -23,7 +23,7 @@
  * 谁在用（四个调用点，指名）：`./template-{expense,flow,batch,installment}.ts` 的回执支——
  *  四张模板各把 `spec.word` 与 `spec.kind` 递进来，其余一字不差，13 页由此实例化。
  */
-import { resolve } from 'base-entries';
+import { resolve, listJoin, currentRenderLanguage } from 'base-entries';
 import { escapeHtml } from 'base-paint';
 import { renderLedgerRows, renderSheetFrame, renderSummaryHead } from 'base-paint/blocks';
 import { checkListHtml } from '../shared/checkLine.js';
@@ -221,7 +221,7 @@ export function receiptPaper(input: ReceiptPaperInput): string {
           command: commandLine(key, params), source: receipt.source,
           detail: receipt.writtenFields.length === 0
             ? t('receipt-paper.copy.detail-no-fields', { count: receipt.affectedRows })
-            : t('receipt-paper.copy.detail-with-fields', { count: receipt.affectedRows, fields: receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') }),
+            : t('receipt-paper.copy.detail-with-fields', { count: receipt.affectedRows, fields: listJoin(currentRenderLanguage(), receipt.writtenFields.map((f) => fieldLabelOf(f))) }),
           actionAt: receipt.actionAt, version: envelope.version,
         }),
       },

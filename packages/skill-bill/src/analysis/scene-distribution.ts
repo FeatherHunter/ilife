@@ -15,7 +15,7 @@
  * 谁在用（一个调用点，指名）：`src/analysis/read.ts` 的 `pageOf`——`family === 'charts'` 的 4 件场景
  *  由落点表 `./scene.js` 取到本件。
  */
-import { runWithLanguage } from 'base-entries';
+import { runWithLanguage, listJoin, currentRenderLanguage } from 'base-entries';
 import { BillPolicyError } from '../fetch/errors.js';
 import { monthRange } from '../shared/dateRange.js';
 import { DIRECTION_WORDS } from '../shared/direction.js';
@@ -109,7 +109,7 @@ function buildScene(): AnalysisScene {
     const emptyTail = empties.length === 0
       ? m('skill-bill.analysis-scene-distribution.c008')
       : m('skill-bill.analysis-scene-distribution.c009', {
-        p0: String(empties.join('、')),
+        p0: String(listJoin(currentRenderLanguage(), empties)),
         p1: String(String(empties.length)),
       });
 

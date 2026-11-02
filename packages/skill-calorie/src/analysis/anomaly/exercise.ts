@@ -3,6 +3,7 @@ import type { DatabaseSync } from 'node:sqlite';
 import { base, degrade, exerciseRows, round, seriesAvg } from './common.js';
 import type { DaySeries, Diagnosis, ExRow } from './common.js';
 import { m } from '../../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 export function diagExerciseInsufficient(series: DaySeries[]): Diagnosis {
   const out = base(series, 'exercise_insufficient', m('skill-calorie.analysis-anomaly-exercise.c001'));
@@ -70,11 +71,11 @@ export function diagExerciseTypeImbalance(db: DatabaseSync, series: DaySeries[])
   const strengthShare = dist['力量']?.share ?? 0;
   out.findings.push({
     cause: m('skill-calorie.analysis-anomaly-exercise.c026'),
-    evidence: Object.entries(dist).map(([k, v]) => m('skill-calorie.analysis-anomaly-exercise.c027', {
+    evidence: listJoin(currentRenderLanguage(), Object.entries(dist).map(([k, v]) => m('skill-calorie.analysis-anomaly-exercise.c027', {
       p0: String(k),
       p1: String(v.share),
       p2: String(v.times),
-    })).join('、'),
+    }))),
     confidence: m('skill-calorie.analysis-anomaly-exercise.c028'),
     action: strengthShare < 30 ? m('skill-calorie.analysis-anomaly-exercise.c029', { p0: String(strengthShare) }) : m('skill-calorie.analysis-anomaly-exercise.c030'),
   });

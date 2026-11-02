@@ -13,6 +13,7 @@ import type { RecipeItem } from '../render/views.js';
 import { toRecipeItem } from '../render/views.js';
 import { fail } from '../shared/slots.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 // #43 F2 一期限制：FILTER 维度只读（recipe.search 透传过滤），本域独占（旧址 `cmd_read.ts`）。
 // #771：补 `ingredient`（按食材含）与 `ingredient_exclude`（排除食材 NOT 条件，老件 search-6），
@@ -126,7 +127,7 @@ export function runRecipeSearch(handle: ChefDb, params: Record<string, unknown>)
     if (!Object.keys(f).length) fail(2, m('skill-chef.search-run.c004'));
     if (Object.keys(f).length > 3) fail(2, m('skill-chef.search-run.c005', {
       p0: String(Object.keys(f).length),
-      p1: String(Object.keys(f).sort().join('、')),
+      p1: String(listJoin(currentRenderLanguage(), Object.keys(f).sort())),
     }));
     rows = filterRecipes(handle, f);
     kind = 'filter:' + Object.keys(f).sort().join(',');

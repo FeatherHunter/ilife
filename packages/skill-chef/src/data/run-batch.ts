@@ -13,6 +13,7 @@ import type { ChefDb } from '../fetch/db.js';
 import { getRecipeDetail, mustRecipe, qAll, qRun } from '../fetch/db.js';
 import { buildRecipeReceipt } from '../render/index.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 interface BatchDiff {
   action: string;
@@ -91,7 +92,7 @@ export function runDataBatch(handle: ChefDb, params: Record<string, unknown>): u
       for (const tag of tags) {
         qRun(handle, 'INSERT INTO recipe_diet_tags (id, recipe_id, tag) VALUES (?, ?, ?)', [randomUUID(), recipe.id, tag]);
       }
-      diffs.push({ action: 'mod', field: m('skill-chef.data-run-batch.c005'), before: before.join('、') || m('skill-chef.data-run-batch.c006'), after: tags.join('、') || m('skill-chef.data-run-batch.c007') });
+      diffs.push({ action: 'mod', field: m('skill-chef.data-run-batch.c005'), before: listJoin(currentRenderLanguage(), before) || m('skill-chef.data-run-batch.c006'), after: listJoin(currentRenderLanguage(), tags) || m('skill-chef.data-run-batch.c007') });
     }
     handle.db.exec('COMMIT');
   } catch (e) {

@@ -55,6 +55,7 @@ import type { DaySeries } from '../analysis/series.js';
 import type { DietOverview, MealDistribution } from './diet.js';
 import type { HealthPlate } from '../analysis/healthPlate.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；测试钉死一致）。 */
 const DOC_VERSION = '0.1.0';
@@ -364,7 +365,7 @@ export function buildHealthDoc(h: HealthPlate): string {
     { label: m('skill-calorie.render-dietDocs.c063'), value: fmt(h.avgDeficit), unit: m('skill-calorie.render-dietDocs.c064') },
     {
       label: m('skill-calorie.render-dietDocs.c065'), value: h.dashboard.status === 'ok' ? m('skill-calorie.render-dietDocs.c066') : m('skill-calorie.render-dietDocs.c067'),
-      detail: missing.length === 0 ? m('skill-calorie.render-dietDocs.c068') : m('skill-calorie.render-dietDocs.c069', { p0: String(missing.join('、')) }),
+      detail: missing.length === 0 ? m('skill-calorie.render-dietDocs.c068') : m('skill-calorie.render-dietDocs.c069', { p0: String(listJoin(currentRenderLanguage(), missing)) }),
       status: missing.length === 0 ? 'ok' : 'warn',
     },
   ])];
@@ -396,7 +397,7 @@ export function buildHealthDoc(h: HealthPlate): string {
     if (h.avgDeficit > 700) actions.push({ left: '🔥', main: m('skill-calorie.render-dietDocs.c077'), right: m('skill-calorie.render-dietDocs.c078', { p0: String(h.avgDeficit) }) });
     else if (h.avgDeficit < 0) actions.push({ left: '🍔', main: m('skill-calorie.render-dietDocs.c079'), right: m('skill-calorie.render-dietDocs.c080', { p0: String(Math.abs(h.avgDeficit)) }) });
   }
-  if (missing.length > 0) actions.push({ left: m('skill-calorie.render-dietDocs.c081'), main: m('skill-calorie.render-dietDocs.c082'), right: m('skill-calorie.render-dietDocs.c083', { p0: String(missing.join('、')) }) });
+  if (missing.length > 0) actions.push({ left: m('skill-calorie.render-dietDocs.c081'), main: m('skill-calorie.render-dietDocs.c082'), right: m('skill-calorie.render-dietDocs.c083', { p0: String(listJoin(currentRenderLanguage(), missing)) }) });
   if (actions.length === 0) actions.push({ left: '✓', main: m('skill-calorie.render-dietDocs.c084'), right: m('skill-calorie.render-dietDocs.c085') });
   parts.push(renderDisclosure({
     title: m('skill-calorie.render-dietDocs.c086', { p0: String(actions.length) }),

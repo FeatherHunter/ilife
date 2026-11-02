@@ -10,6 +10,7 @@ import { MEASUREMENT_ZH } from '../fetch/body.js';
 import type { DaySeries } from './series.js';
 import { BODY_ALIVE, EX_ALIVE } from './utils.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** #440 · 围度各部位在「变化 TOP」里的列序（**只定序**，不改行为：并列时按此取前 3）。
  *  中文名一律从 `fetch/body.ts` 的 `MEASUREMENT_ZH` 取，本处不自持第二份名表。 */
@@ -201,7 +202,7 @@ function strat(series: DaySeries[], mode: string, a: string, b: string, db?: Dat
           }
         }
         deltas.sort((a, b) => Math.abs(b[1] as number) - Math.abs(a[1] as number));
-        const topText = deltas.length > 0 ? deltas.slice(0, 3).map(([n, d]) => n + ' ' + (d >= 0 ? '+' : '') + (d as number).toFixed(1) + 'cm').join('、') : m('skill-calorie.analysis-cross.c031');
+        const topText = deltas.length > 0 ? listJoin(currentRenderLanguage(), deltas.slice(0, 3).map(([n, d]) => n + ' ' + (d >= 0 ? '+' : '') + (d as number).toFixed(1) + 'cm')) : m('skill-calorie.analysis-cross.c031');
         extra.push(m('skill-calorie.analysis-cross.c032', { p0: String(topText) }));
       } catch (e) { extra.push(m('skill-calorie.analysis-cross.c033', { p0: String((e as Error).message) })); }
     } else extra.push(m('skill-calorie.analysis-cross.c034'));

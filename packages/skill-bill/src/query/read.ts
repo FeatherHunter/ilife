@@ -47,7 +47,7 @@ import { detailEnvelope, listEnvelope, queryListDoc } from './list.js';
 import { queryDetailDoc } from './detail.js';
 import { MULTI_COND } from './declaration.js';
 import type { QueryCategoryRow, QueryDetailData, QueryListData, QueryTableRow } from './list.js';
-import { resolve } from 'base-entries';
+import { resolve, listJoin, currentRenderLanguage } from 'base-entries';
 import { SKILL_BILL_CATALOG, m } from '../entries/index.js';
 import type { SkillBillMessageId } from '../entries/index.js';
 
@@ -206,7 +206,7 @@ function recentSortOf(raw: unknown): RecentSort {
   if (raw === undefined || raw === null || raw === '') return RECENT_SORTS[0];
   const v = typeof raw === 'string' ? raw.trim() : '';
   if (!(RECENT_SORTS as readonly string[]).includes(v)) {
-    throw new BillPolicyError('POLICY_BAD_INPUT', '排序只认：' + RECENT_SORTS.join('、') + '；收到 ' + String(raw));
+    throw new BillPolicyError('POLICY_BAD_INPUT', '排序只认：' + listJoin(currentRenderLanguage(), RECENT_SORTS) + '；收到 ' + String(raw));
   }
   return v as RecentSort;
 }
@@ -586,7 +586,7 @@ export function viewRecordSearch(params: Record<string, unknown>, db: BillDb): V
     if (typeof rawItem === 'string' && rawItem.trim() !== '') bits.push(m('skill-bill.query-read.c045', { p0: String(rawItem.trim()) }));
     if (typeof params.account === 'string' && (params.account as string).trim() !== '') bits.push(m('skill-bill.query-read.c046', { p0: String((params.account as string).trim()) }));
     if (typeof params.status === 'string' && (params.status as string).trim() !== '' && (params.status as string).trim() !== INPUT_WORD.statusAll) bits.push((params.status as string).trim());
-    window = bits.length === 0 ? m('skill-bill.query-read.c047') : m('skill-bill.query-read.c048', { p0: String(bits.join('、')) });
+    window = bits.length === 0 ? m('skill-bill.query-read.c047') : m('skill-bill.query-read.c048', { p0: String(listJoin(currentRenderLanguage(), bits)) });
   } else {
     const rawQ = params.q;
     if (typeof rawQ !== 'string' || !rawQ.trim()) {

@@ -9,6 +9,7 @@
 import { fail } from './shared.js';
 import { COPY_FORMATS, CopyFormat, SERIALIZABLE_SHAPES, SerializableShape } from '../../spec/text.js';
 import { m } from '../../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /* ── 输入形态与校验 ─────────────────────────────────────────── */
 
@@ -35,7 +36,7 @@ export function resolveFormat(value: unknown): CopyFormat {
   }
   fail('format-unknown', m('base-render.components-text-input.c003', {
     p0: String(describeValue(value)),
-    p1: String(COPY_FORMATS.join('、')),
+    p1: String(listJoin(currentRenderLanguage(), COPY_FORMATS)),
   }));
 }
 
@@ -46,7 +47,7 @@ export function resolveShape(value: unknown): SerializableShape {
   }
   fail('shape-unsupported', m('base-render.components-text-input.c004', {
     p0: String(describeValue(value)),
-    p1: String(SERIALIZABLE_SHAPES.join('、')),
+    p1: String(listJoin(currentRenderLanguage(), SERIALIZABLE_SHAPES)),
   }));
 }
 

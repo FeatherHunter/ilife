@@ -14,6 +14,7 @@ import { WRITE_DECLARATION } from './declaration.js';
 import { categoryLabelOf } from '../shared/category.js';
 import type { SummaryFacts } from './summaryRow.js';
 import { fieldLabelOf } from './userWording.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** 回执分支（与 `UpdateSpec.receiptResult` 同一闭集，不另立第二份）。 */
 export type ReceiptResult = 'none' | 'undo' | 'restore';
@@ -41,7 +42,7 @@ export function receiptTitle(
     return escapeHtml(label) + (value === '' ? m('skill-bill.write-receiptSheet.c003') : m('skill-bill.write-receiptSheet.c004', { p1: String(escapeHtml(value)) }));
   }
   if (labels.length === 0) return m('skill-bill.write-receiptSheet.c005');
-  return m('skill-bill.write-receiptSheet.c006', { p1: String(labels.length), p2: String(escapeHtml(labels.join('、'))) });
+  return m('skill-bill.write-receiptSheet.c006', { p1: String(labels.length), p2: String(escapeHtml(listJoin(currentRenderLanguage(), labels))) });
 }
 
 /** 主数字头那枚印章：改记录支按有无改动；撤销／恢复两支按状态（tone 走公共层闭集）。 */

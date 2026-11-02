@@ -24,6 +24,7 @@ import {
 import { forbid, fmtPct, fmtQty, optInRange, optInt, reqDays, reqFlowLines, reqInt, reqPositive, reqWeeks,
   assertKeys, CASH_WATERLINE_INPUT_KEYS } from './fields.js';
 import { m } from '../../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** 横轴的两种出法：`columns`＝一格一天（逐格对齐）／`range`＝一行区间读数（天数多到格子站不下字）。 */
 export type CashWaterlineAxis =
@@ -282,7 +283,7 @@ function buildBullet(raw: Record<string, unknown>, common: CashWaterlineCommon):
     legendLow,
     headExtra: m('base-render.components-cash-waterline-model.c015', { p0: String(common.thresholdText) }),
     ariaLabel: m('base-render.components-cash-waterline-model.c016', {
-      p0: String(usedParts.join('、')),
+      p0: String(listJoin(currentRenderLanguage(), usedParts)),
       p1: String(common.thresholdText),
       p2: String(fmtPct(100 - common.thresholdPct)),
       p3: String(legendLow),

@@ -12,6 +12,7 @@ import { fail, needId, needNum, optNum, optStr } from '../shared/params.js';
 import { dietFieldLabel } from './fieldLabels.js';
 import { F, R, deleteStatus, out } from '../shared/writeParts.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** 字段键 → 中文标签（走 `./fieldLabels.ts` 那张域表；缺项回退原键名，不编词）。 */
 function zhLabel(key: string): string {
@@ -20,7 +21,7 @@ function zhLabel(key: string): string {
 
 /** 被改字段串：库列名（`note`／`dietary_fiber`）换中文，逗号顿开。 */
 function changedText(cols: readonly string[]): string {
-  return cols.map(zhLabel).join('、');
+  return listJoin(currentRenderLanguage(), cols.map(zhLabel));
 }
 
 /** `calorie.product.add` · 存食品。 */

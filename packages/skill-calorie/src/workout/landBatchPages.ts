@@ -17,6 +17,7 @@ import type { PlanSessionRow } from './planStore.js';
 import type { LandBatchSummary } from './landBatch.js';
 import { xunjiKeyRow } from './xunjiKey.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 const DOC_TITLE = (): string => m('skill-calorie.workout-landBatchPages.c071');
 
@@ -47,10 +48,10 @@ export function buildLandBatchProcessPage(input: {
       columns: [{ key: 'date', label: m('skill-calorie.workout-landBatchPages.c013') }, { key: 'segs', label: m('skill-calorie.workout-landBatchPages.c014') }, { key: 'moves', label: m('skill-calorie.workout-landBatchPages.c015') }],
       rows: perDay.map((d) => ({
         date: d.date,
-        segs: d.sessions.length === 0 ? m('skill-calorie.workout-landBatchPages.c016') : d.sessions.map((s) => s.session_label).join('、'),
+        segs: d.sessions.length === 0 ? m('skill-calorie.workout-landBatchPages.c016') : listJoin(currentRenderLanguage(), d.sessions.map((s) => s.session_label)),
         moves: d.sessions.length === 0
           ? m('skill-calorie.workout-landBatchPages.c017')
-          : d.sessions.map((s) => s.movements.map((mv) => mv.name ?? m('skill-calorie.workout-landBatchPages.c018')).join('、')).join('｜') || m('skill-calorie.workout-landBatchPages.c019'),
+          : d.sessions.map((s) => listJoin(currentRenderLanguage(), s.movements.map((mv) => mv.name ?? m('skill-calorie.workout-landBatchPages.c018')))).join('｜') || m('skill-calorie.workout-landBatchPages.c019'),
       })),
       caption: m('skill-calorie.workout-landBatchPages.c020'),
     }),

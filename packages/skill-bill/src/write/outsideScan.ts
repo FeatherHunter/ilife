@@ -28,6 +28,7 @@ import { renderDataTable, renderFeedbackBlock } from 'base-paint/blocks';
 import type { ToastInput } from 'base-paint/blocks';
 import { blockedPromptOf } from './photoEscape.js';
 import { textOf } from './recentPicks.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** 拍账单的图片数入参：本仓只说明「收到了几张」，不做上传控件（老侧也没有图片入口）。 */
 export interface PhotoScale {
@@ -89,7 +90,7 @@ export function escapeCard(input: {
     rows,
     caption: m('skill-bill.write-outsideScan.c022', { p1: missing.length === 0
         ? m('skill-bill.write-outsideScan.c038')
-        : m('skill-bill.write-outsideScan.c039', { p1: String(missing.map((f) => f.label).join('、')) }) }),
+        : m('skill-bill.write-outsideScan.c039', { p1: String(listJoin(currentRenderLanguage(), missing.map((f) => f.label))) }) }),
   }) + renderDataTable({
     columns: [
       { key: 'step', label: m('skill-bill.write-outsideScan.c023') },
@@ -119,7 +120,7 @@ export function escapePrompt(input: {
   const missing = ESCAPE_FIELDS.filter((f) => textOf(input.params[f.name]) === '');
   const head = m('skill-bill.write-outsideScan.c036', { p1: String(input.scale.count > 0 ? input.scale.count : 0), p2: missing.length === 0
       ? m('skill-bill.write-outsideScan.c040')
-      : m('skill-bill.write-outsideScan.c041', { p1: String(missing.map((f) => f.label).join('、')) }) });
+      : m('skill-bill.write-outsideScan.c041', { p1: String(listJoin(currentRenderLanguage(), missing.map((f) => f.label))) }) });
   const ask = m('skill-bill.write-outsideScan.c037', { p1: String(ESCAPE_FIELDS.map((f) => f.label).join('／')), p2: String(blockedPromptOf({
       key: 'bill.record.add',
       params: input.params,

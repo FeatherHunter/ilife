@@ -13,4 +13,6 @@ export type { ResolveOptions } from './resolve.js';
 export { evaluate } from './evaluate.js';
 export type { Evaluate, EvaluateRequest, MessageParams } from './evaluate.js';
 export { formatDate, formatNumber } from './format.js';
+// 显示面列表连接符按语言（#1311）：zh「、」「＋」逐字节，en 走英文惯用（内建 Intl.ListFormat）。
+export { listJoin, plusJoin, plusSign } from './list.js';
 export { EntriesError, MissingMessageError, MissingParamError } from './errors.js';

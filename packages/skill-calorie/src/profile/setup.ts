@@ -44,6 +44,7 @@ import { buildChangeSheetDoc } from './sheetDoc.js';
 import { profileSnapshot, PROFILE_SOURCE } from './view.js';
 import { PROFILE_ROUTES } from './routes.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
@@ -289,7 +290,7 @@ export function buildProfileSettingReceiptDoc(db: DatabaseSync, receipt: CrudRec
       {
         label: m('skill-calorie.profile-setup.c020'),
         value: m('skill-calorie.profile-setup.c021', { p0: String(receipt.writtenFields.length) }),
-        detail: receipt.writtenFields.map(fieldLabel).join('、') || m('skill-calorie.profile-setup.c022'),
+        detail: listJoin(currentRenderLanguage(), receipt.writtenFields.map(fieldLabel)) || m('skill-calorie.profile-setup.c022'),
       },
     ]),
     renderDataTable({

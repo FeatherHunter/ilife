@@ -28,6 +28,7 @@ import { PROFILE_SOURCE } from './view.js';
 import type { ProfileSettingView } from './setup.js';
 import { m } from '../entries/index.js';
 import { PROFILE_ROUTES } from './routes.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** 页脚「还原」那颗的 actionId（页内脚本按它绑定；不带载荷、初始禁用）。 */
 export const SHEET_RESET_ACTION = 'calorie-profile-sheet-reset';
@@ -344,7 +345,7 @@ export function buildChangeSheetDoc(v: ProfileSettingView): string {
    *  —— 词必须跟着本页走：2026-09-24 实拍里「设活动量」页说成「确认写入：改档案」，就是这里写死的。 */
   const changedRows = rows.filter((r) => r.afterRaw !== r.beforeRaw);
   const changedText = changedRows.length === 0 ? m('skill-calorie.profile-sheetDoc.c012')
-      : changedRows.map((r) => r.label + ' ' + r.after + (r.unit === '' ? '' : ' ' + r.unit)).join('、');
+      : listJoin(currentRenderLanguage(), changedRows.map((r) => r.label + ' ' + r.after + (r.unit === '' ? '' : ' ' + r.unit)));
   const instruction = m('skill-calorie.profile-sheetDoc.c013', { p0: String(wake), p1: String(changedText) });
   /** 改活动量之后的每日消耗（表里那一行的草稿值决定；拿不到就是 `null`，不编数）。 */
   const nextTdee = ((): number | null => {

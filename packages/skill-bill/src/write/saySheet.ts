@@ -20,6 +20,7 @@ import { writeSection } from "../shared/writeParts.js";
 import { sayWords } from "./sayWords.js";
 import { buildCollectCopyCsv, buildCollectCopyJson, buildCollectCopyText } from "./collectCopyText.js";
 import type { CollectCopyFacts, CollectExtra } from "./collectCopyText.js";
+import { currentRenderLanguage, listJoin, plusSign } from 'base-entries';
 
 /** 这一页的 SAY prompt 模板：**逐字取域声明的 `prompt_template`**，本件不抄第二份。 */
 function sayTemplateOf(word: string): string {
@@ -178,7 +179,7 @@ function optGroupHtml(spec: SayWordSpec, values: Readonly<Record<string, string>
   const fields = spec.optFields;
   if (fields === undefined || fields.length === 0) return "";
   return '<details class="say-opt">'
-    + '<summary><span class="plus">＋</span><span class="lbl">' + m('skill-bill.write-saySheet.c014') + '</span>'
+    + '<summary><span class="plus">' + plusSign(currentRenderLanguage()) + '</span><span class="lbl">' + m('skill-bill.write-saySheet.c014') + '</span>'
     + '<span class="sub">' + escapeHtml(spec.optSummary ?? "") + "</span>"
     + '<span class="cnt" id="say-opt-n"></span></summary>'
     + '<div class="say-form">' + fields.map((f) => fieldHtml(f, valueOf(values, f.slot), disabledOf(spec, values, f.slot))).join("") + "</div>"
@@ -358,7 +359,7 @@ export function sayCollectDoc(input: SayCollectInput): string {
   const values = input.values ?? {};
   const miss = missingLabels(s, values);
   const ready = miss.length === 0;
-  const hintText = ready ? m('skill-bill.write-saySheet.c008') : m('skill-bill.write-saySheet.c009', { p1: String(String(miss.length)), p2: String(miss.join("、")) });
+  const hintText = ready ? m('skill-bill.write-saySheet.c008') : m('skill-bill.write-saySheet.c009', { p1: String(String(miss.length)), p2: String(listJoin(currentRenderLanguage(), miss)) });
   const page = '<div class="say-page">'
     + '<div class="sheet-wrap"><div class="sheet-frame"><div class="sheet-inner">'
     + '<div class="shop-head"><div class="shop-brand">' + escapeHtml(brand) + "</div>"

@@ -1,5 +1,6 @@
 /** 场景件：**设置当前配置**（`op=config-write`）——本件只是差异声明，块位序列住 `./template-config.js`。 */
 import type { SetupScene } from './scene.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 const KEY = 'bill.setup.run' as const;
 
@@ -18,7 +19,7 @@ export const SCENE: SetupScene = {
       const v = params[k];
       if (typeof v === 'string' && v.trim() !== '') bits.push(label + '＝' + v.trim());
     }
-    const tail = bits.length === 0 ? '（还没说改哪格，先在弹窗里填）' : bits.join('、');
+    const tail = bits.length === 0 ? '（还没说改哪格，先在弹窗里填）' : listJoin(currentRenderLanguage(), bits);
     return '请加载「饼干记账」技能,帮我设置当前配置(唤醒词:设置当前配置):\n\n'
       + tail + '\n\n确认无误后跟助手说一遍「确认写入」。\n';
   },

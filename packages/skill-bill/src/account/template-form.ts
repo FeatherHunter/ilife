@@ -28,6 +28,7 @@ import { accountHelpPrompt, accountHelpTemplate, copyZoneOf, envelopeOf, money, 
 import { textOf } from '../shared/params.js';
 import type { AccountCollectInput, AccountReceipt, AccountReceiptInput, AccountWriteScene } from './scene.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** 场景给模板的**差异声明**：值、文案与「哪个可选块出不出」，**不含任何块位拼装**。
  *
@@ -92,7 +93,7 @@ function blockedMessageOf(word: string, blocked: readonly AccountBlocked[]): str
   return m('skill-bill.account-template-form.c002', {
     p0: String(word),
     p1: String(String(blocked.length)),
-    p2: String(blocked.map((b) => b.label).join('、')),
+    p2: String(listJoin(currentRenderLanguage(), blocked.map((b) => b.label))),
   });
 }
 
@@ -169,7 +170,7 @@ function collectPage(spec: AccountFormSpec, input: AccountCollectInput): string 
   const hint = missing > 0
     ? m('skill-bill.account-template-form.c044', {
       p0: String(String(missing)),
-      p1: String(blocked.map((b) => b.label).join('、')),
+      p1: String(listJoin(currentRenderLanguage(), blocked.map((b) => b.label))),
     })
     : m('skill-bill.account-template-form.c045');
   /* #1130：待填区按判地做成「编号 → 标签 → 右侧输入框」的横向行 ＋ 每格下面一行灰提示（共享件一处实现）。 */
@@ -184,7 +185,7 @@ function collectPage(spec: AccountFormSpec, input: AccountCollectInput): string 
       warn: true,
       value: String(missing),
       unit: m('skill-bill.account-template-form.c051'),
-      note: missing > 0 ? m('skill-bill.account-template-form.c052', { p0: String(blocked.map((b) => b.label).join('、')) }) : m('skill-bill.account-template-form.c053'),
+      note: missing > 0 ? m('skill-bill.account-template-form.c052', { p0: String(listJoin(currentRenderLanguage(), blocked.map((b) => b.label))) }) : m('skill-bill.account-template-form.c053'),
     },
     ledgerTitle: m('skill-bill.account-template-form.c054'),
     ledger: collectLedgerOf(input, at),

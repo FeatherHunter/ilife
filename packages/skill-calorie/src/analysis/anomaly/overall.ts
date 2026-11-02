@@ -7,6 +7,7 @@ import type { DatabaseSync } from 'node:sqlite';
 import { base, daysBetween, degrade, MIN_DAYS, PRED_MIN, round, seriesAvg, seriesDelta, weightVals } from './common.js';
 import type { DaySeries, Diagnosis } from './common.js';
 import { m } from '../../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 function commonOverall(series: DaySeries[], kind: string, title: string): Diagnosis {
   const out = base(series, kind, title);
@@ -127,7 +128,7 @@ export function diagStrategyCheck(series: DaySeries[]): Diagnosis {
   checks.push(ex && ex > 0 ? m('skill-calorie.analysis-anomaly-overall.c062') : m('skill-calorie.analysis-anomaly-overall.c063'));
   out.findings.push({ cause: m('skill-calorie.analysis-anomaly-overall.c064'), evidence: checks.join(';'), confidence: m('skill-calorie.analysis-anomaly-overall.c065'), action: m('skill-calorie.analysis-anomaly-overall.c066') });
   const bad = checks.filter((c) => c.includes('⚠️')).map((c) => c.split('⚠️ ')[1]);
-  out.insight = bad.length === 0 ? m('skill-calorie.analysis-anomaly-overall.c067') : m('skill-calorie.analysis-anomaly-overall.c068', { p0: String(bad.join('、')) });
+  out.insight = bad.length === 0 ? m('skill-calorie.analysis-anomaly-overall.c067') : m('skill-calorie.analysis-anomaly-overall.c068', { p0: String(listJoin(currentRenderLanguage(), bad)) });
   return out;
 }
 

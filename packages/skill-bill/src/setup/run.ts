@@ -18,7 +18,7 @@
  *   与写入域／账户域「`receipt` 那一格的形状由各域自己定」同一条口径（`src/shared/commandSpec.ts`）。
  */
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
-import { currentRenderLanguage } from 'base-entries';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 import { dirname, join } from 'node:path';
 import type { BillDb } from '../fetch/index.js';
 import { resolveBackupDir, resolveGoalsPath } from '../fetch/paths.js';
@@ -222,7 +222,7 @@ function runConfigWrite(key: string, params: Record<string, unknown>): WriteOut 
   ];
   if (!confirmed) {
     const view = readConfigView();
-    const message = m('skill-bill.setup-run.c029', { p0: String(preview.map((p) => p.label + '＝' + p.value).join('、')) });
+    const message = m('skill-bill.setup-run.c029', { p0: String(listJoin(currentRenderLanguage(), preview.map((p) => p.label + '＝' + p.value))) });
     const receipt = { op: 'config-write', confirmed: false, preview };
     const envelope = receiptEnvelopeOf(key, { ok: false, message, ...receipt });
     const html = configDoc({
@@ -255,7 +255,7 @@ export function setupRun(params: Record<string, unknown>, db: BillDb): WriteOut 
     const message = m('skill-bill.setup-run.c031', {
       p0: String(projectWakeWord({ key: 'bill.setup.run', op: 'import' })),
       p1: String(String(missing.length)),
-      p2: String(missing.map((b) => b.label).join('、')),
+      p2: String(listJoin(currentRenderLanguage(), missing.map((b) => b.label))),
     });
     return { data: { ok: false, message, receipt: { op: 'import', blocked: missing } }, page: { wakeWord: projectWakeWord({ key: key as BillKey, op: 'import' }), kind: 'single' }, html };
   }

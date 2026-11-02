@@ -14,6 +14,7 @@ import type { BillRow } from '../fetch/db.js';
 import { l1Of } from '../shared/category.js';
 import { calcKpi, isTransfer } from '../shared/kpi.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 // 分类聚合（支出侧绝对值降序，转账除外）。
 export function calcCategories(records: BillRow[]): { category: string; total: number; count: number }[] {
@@ -84,7 +85,7 @@ export function buildTrend(kind: string, records: BillRow[], opts: { limit?: num
   const lines = [m('skill-bill.analysis-views.c004', {
     p0: String(kind),
     p1: String(records.length),
-    p2: String(months.map(([m, v]) => `${m} ${v}`).join('、')),
+    p2: String(listJoin(currentRenderLanguage(), months.map(([m, v]) => `${m} ${v}`))),
   })];
   if (kind === 'top' || kind === 'trend') {
     const top = [...records].filter((r) => r.amount < 0 && !isTransfer(r)).sort((a, b) => a.amount - b.amount).slice(0, limit);
@@ -92,7 +93,7 @@ export function buildTrend(kind: string, records: BillRow[], opts: { limit?: num
   }
   if (kind === 'insight' || kind === 'anomaly') {
     const cats = calcCategories(records).slice(0, 3);
-    if (cats.length) lines.push(m('skill-bill.analysis-views.c005', { p0: String(cats.map((c) => `${c.category} ${c.total}`).join('、')) }));
+    if (cats.length) lines.push(m('skill-bill.analysis-views.c005', { p0: String(listJoin(currentRenderLanguage(), cats.map((c) => `${c.category} ${c.total}`))) }));
     else lines.push(m('skill-bill.analysis-views.c006'));
   }
   return { summary: lines.join('\n') };

@@ -33,6 +33,7 @@ import { XUNJI_STUB_ENV, invokeXunji, xunjiExitToCmd } from './xunjiRunner.js';
 import type { XunjiCall } from './xunjiRunner.js';
 import { xunjiKeyNext, xunjiKeyRow } from './xunjiKey.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 export const XUNJI_PUSH_KEY = 'calorie.workout.xunji-push';
 const XUNJI_PUSH_WAKE = '同步到训记';
@@ -189,7 +190,7 @@ function pushProcessPage(
   const content = [
     renderKpiGrid([
       { label: m('skill-calorie.workout-xunjiPush.c025'), value: date, detail: m('skill-calorie.workout-xunjiPush.c026') },
-      { label: m('skill-calorie.workout-xunjiPush.c027'), value: m('skill-calorie.workout-xunjiPush.c028', { p0: String(sessions.length) }), detail: sessions.map((s) => s.session_label).join('、') || m('skill-calorie.workout-xunjiPush.c029') },
+      { label: m('skill-calorie.workout-xunjiPush.c027'), value: m('skill-calorie.workout-xunjiPush.c028', { p0: String(sessions.length) }), detail: listJoin(currentRenderLanguage(), sessions.map((s) => s.session_label)) || m('skill-calorie.workout-xunjiPush.c029') },
       {
         label: m('skill-calorie.workout-xunjiPush.c030'),
         value: audit === null ? m('skill-calorie.workout-xunjiPush.c031') : m('skill-calorie.workout-xunjiPush.c032', { p0: String(auditOk) }),
@@ -209,7 +210,7 @@ function pushProcessPage(
       columns: [{ key: 'label', label: m('skill-calorie.workout-xunjiPush.c040') }, { key: 'moves', label: m('skill-calorie.workout-xunjiPush.c041') }],
       rows: sessions.length === 0
         ? [{ label: m('skill-calorie.workout-xunjiPush.c042'), moves: m('skill-calorie.workout-xunjiPush.c043') }]
-        : sessions.map((s) => ({ label: s.session_label, moves: s.movements.map((mv) => mv.name ?? m('skill-calorie.workout-xunjiPush.c044')).join('、') || m('skill-calorie.workout-xunjiPush.c045') })),
+        : sessions.map((s) => ({ label: s.session_label, moves: listJoin(currentRenderLanguage(), s.movements.map((mv) => mv.name ?? m('skill-calorie.workout-xunjiPush.c044'))) || m('skill-calorie.workout-xunjiPush.c045') })),
       caption: m('skill-calorie.workout-xunjiPush.c046'),
     }),
     renderDataTable({

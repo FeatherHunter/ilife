@@ -28,6 +28,7 @@ import type {
   PlanWizardView, WizardDay, WizardMovement, WizardSession, WizardTree, WizardWeek,
 } from './planPlate.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
@@ -119,7 +120,7 @@ function planHead(t: WizardTree): string {
   const facts: string[] = [
     t.startDate === '' ? '' : '<span class="ilw-fact"><b>起日</b>' + t.startDate + '</span>',
     t.level === '' ? '' : '<span class="ilw-fact"><b>等级</b>' + t.level + '</span>',
-    t.equipment.length === 0 ? '' : '<span class="ilw-fact"><b>器械</b>' + t.equipment.join('、') + '</span>',
+    t.equipment.length === 0 ? '' : '<span class="ilw-fact"><b>器械</b>' + listJoin(currentRenderLanguage(), t.equipment) + '</span>',
   ].filter((x) => x !== '');
   return '<div class="ilw-plan"><div class="ilw-plan-head">'
     + '<span class="ilw-plan-name">' + t.title + '</span>'

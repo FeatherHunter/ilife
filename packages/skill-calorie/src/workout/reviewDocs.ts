@@ -34,6 +34,7 @@ import type { PlannedSession, ReviewView } from '../render/exercisePort.js';
 import { nowStamp } from '../render/receipt.js';
 import { reviewViewCss } from './reviewDocsCss.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；测试钉死一致）。 */
 const DOC_VERSION = '0.1.0';
@@ -166,8 +167,8 @@ function detailRow(s: PlannedSession): Record<string, string> {
     date: s.date,
     week: m('skill-calorie.workout-reviewDocs.c010', { p0: String(s.week) }),
     label: s.label === '' ? m('skill-calorie.workout-reviewDocs.c011') : s.label,
-    moves: s.movements.length === 0 ? DASH : s.movements.join('、'),
-    actual: s.actualTypes.length === 0 ? DASH : s.actualTypes.join('、'),
+    moves: s.movements.length === 0 ? DASH : listJoin(currentRenderLanguage(), s.movements),
+    actual: s.actualTypes.length === 0 ? DASH : listJoin(currentRenderLanguage(), s.actualTypes),
     hit: s.hit ? m('skill-calorie.workout-reviewDocs.c012') : '未完成',
   };
 }
@@ -231,7 +232,7 @@ export function buildReviewDoc(v: ReviewView): string {
       contentHtml: renderListRows({
         items: v.unhit.map((s) => ({
           left: s.date,
-          main: (s.label === '' ? m('skill-calorie.workout-reviewDocs.c023') : s.label) + (s.movements.length > 0 ? '：' + s.movements.join('、') : ''),
+          main: (s.label === '' ? m('skill-calorie.workout-reviewDocs.c023') : s.label) + (s.movements.length > 0 ? '：' + listJoin(currentRenderLanguage(), s.movements) : ''),
           right: '未完成',
         })),
       }),

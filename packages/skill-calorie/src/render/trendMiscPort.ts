@@ -26,6 +26,7 @@ import { shiftISODate, todayISO } from '../analysis/utils.js';
 import { BODY_ALIVE, EX_ALIVE } from '../shared/alive.js';
 import { CalorieRenderError } from './errors.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 function assertRange(start: string, end: string): void {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(start) || !/^\d{4}-\d{2}-\d{2}$/.test(end)) {
@@ -304,7 +305,7 @@ export function buildLintHealthView(db: DatabaseSync): LintHealthView {
     {
       key: 'unmatched', label: m('skill-calorie.render-trendMiscPort.c024'),
       count: unmatched.length,
-      detail: unmatched.length > 0 ? m('skill-calorie.render-trendMiscPort.c025', { p0: String(unmatched.slice(0, 5).join('、')) }) : m('skill-calorie.render-trendMiscPort.c026'),
+      detail: unmatched.length > 0 ? m('skill-calorie.render-trendMiscPort.c025', { p0: String(listJoin(currentRenderLanguage(), unmatched.slice(0, 5))) }) : m('skill-calorie.render-trendMiscPort.c026'),
     },
     {
       key: 'bad-calorie', label: m('skill-calorie.render-trendMiscPort.c027'),

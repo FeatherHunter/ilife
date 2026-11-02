@@ -33,6 +33,7 @@ import {
 import { chefCopyArea } from '../render/copyArea.js';
 import { renderSceneShell } from '../render/sceneShell.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** 换行（仓库口径：不写字面换行转义，与 `blocks.ts`／`skin.ts` 同）。 */
 const LF = String.fromCharCode(10);
@@ -194,7 +195,7 @@ export function dataQualityPage(input: { items: QualityItem[] }): string {
     ...input.items.map((it) => {
       const backgroundMark = it.has_background ? m('skill-chef.data-pages.c011') : m('skill-chef.data-pages.c012');
       const gapLine = it.missing.length
-        ? m('skill-chef.data-pages.c013', { p0: String(it.name), p1: String(it.missing.join('、')) })
+        ? m('skill-chef.data-pages.c013', { p0: String(it.name), p1: String(listJoin(currentRenderLanguage(), it.missing)) })
         : m('skill-chef.data-pages.c014');
       return renderDisclosure({
         title: it.name,
@@ -237,7 +238,7 @@ export function dataQualityPage(input: { items: QualityItem[] }): string {
       dataActionId: 'quality-copy',
       data: {
         key: 'chef.history.query', shape: 'list',
-        items: input.items.map((it) => ({ 菜名: it.name, 完整度: it.score, 缺口: it.missing.join('、') })),
+        items: input.items.map((it) => ({ 菜名: it.name, 完整度: it.score, 缺口: listJoin(currentRenderLanguage(), it.missing) })),
         total: input.items.length,
       },
       log: {

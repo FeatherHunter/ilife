@@ -36,6 +36,7 @@ import { nowStamp } from '../render/receipt.js';
 import { chipRow, photoPickRows, photoUiCss } from './photoUi.js';
 import { editRows, noticeBar, wizardUiCss } from './wizardUi.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；测试钉死一致）。 */
 const DOC_VERSION = '0.1.0';
@@ -210,7 +211,7 @@ function gifCandidates(v: GifPlannerView): string {
   return photoPickRows(v.photos.map((p) => ({
     no: m('skill-calorie.photo-wizardPortDocs.c027', { p0: String(p.id) }),
     file: p.photoPath,
-    tag: p.tagList.join('、') || m('skill-calorie.photo-wizardPortDocs.c028'),
+    tag: listJoin(currentRenderLanguage(), p.tagList) || m('skill-calorie.photo-wizardPortDocs.c028'),
     ...(p.fileExists === false ? { badge: { tone: 'warn' as const, text: m('skill-calorie.photo-wizardPortDocs.c029') } } : {}),
     meta: [p.date, p.selected ? m('skill-calorie.photo-wizardPortDocs.c030') : m('skill-calorie.photo-wizardPortDocs.c031'), p.crop ? m('skill-calorie.photo-wizardPortDocs.c032') : m('skill-calorie.photo-wizardPortDocs.c033')],
   })));
@@ -325,7 +326,7 @@ export function buildGifPlannerDoc(v: GifPlannerView, command: string): string {
       // #474：原「文件丢失」其实数的是框选里点不到的 ID（`missingIds`）→ 换名，不再与表内冲突。
       {
         label: m('skill-calorie.photo-wizardPortDocs.c076'), value: String(v.missingIds.length),
-        ...(v.missingIds.length > 0 ? { detail: m('skill-calorie.photo-wizardPortDocs.c077', { p0: String(v.missingIds.join('、')) }) } : {}),
+        ...(v.missingIds.length > 0 ? { detail: m('skill-calorie.photo-wizardPortDocs.c077', { p0: String(listJoin(currentRenderLanguage(), v.missingIds.map(String))) }) } : {}),
       },
       // #474：本轮新立一格——文件找不到是另一回事，异常才挂状态徽标（正常格不出徽标）。
       notFound > 0

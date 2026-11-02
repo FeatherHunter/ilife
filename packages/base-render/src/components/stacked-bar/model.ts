@@ -17,6 +17,7 @@ import {
   type StackedBarForm,
   type StackedBarSegment,
 } from './attrs.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** 段里那行读数怎么写：`name`＝连名字一起（宽段）／`value`＝只写百分数（窄段）／`none`＝让位图例。 */
 export type StackedBarLabelKind = 'name' | 'value' | 'none';
@@ -151,7 +152,7 @@ export function normalizeStackedBar(input: unknown): StackedBarModel {
     unit: optText(raw.unit, 'stacked-bar: input.unit'),
     segments: built,
     note: optText(raw.note, 'stacked-bar: input.note'),
-    ariaLabel: title + '：' + built.map((s) => s.name + ' ' + s.pctText).join('、'),
+    ariaLabel: title + '：' + listJoin(currentRenderLanguage(), built.map((s) => s.name + ' ' + s.pctText)),
     extraClass: optExtraClass(raw.extraClass, 'stacked-bar: input.extraClass'),
   };
 }

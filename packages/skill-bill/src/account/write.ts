@@ -16,7 +16,7 @@
  *   ② 老侧转账备注写 `#转账 转出至X`／`#转账 转入自Y`，新侧逐字同形（搬迁前那份过渡实现写成
  *      `#转账（转出）`／`#转账（转入）`，随本票改回老侧原样）。
  */
-import { currentRenderLanguage } from 'base-entries';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 import { loadGoals, resolveGoalsPath, saveGoals } from '../fetch/index.js';
 import type { BillDb } from '../fetch/index.js';
 import type { WriteOut } from '../shared/commandSpec.js';
@@ -58,7 +58,7 @@ function blockedMessageOf(op: AccountOp, blocked: readonly AccountBlocked[]): st
   return m('skill-bill.account-write.c007', {
     p0: String(word),
     p1: String(String(blocked.length)),
-    p2: String(blocked.map((b) => b.label).join('、')),
+    p2: String(listJoin(currentRenderLanguage(), blocked.map((b) => b.label))),
     p3: String(pageText),
   });
 }

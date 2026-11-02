@@ -32,6 +32,7 @@ import { XUNJI_EXIT_CODES } from './subcommands.js';
 import type { XunjiSubcommand } from './subcommands.js';
 import type { XunjiRun } from './run.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** 四步的代号（顺序固定：plan → wish → push → backfill）。 */
 export type RunSyncPhase = 'plan' | 'wish' | 'push' | 'backfill';
@@ -304,7 +305,7 @@ export async function runRunSyncCommand(sub: XunjiSubcommand, values: Values, de
     return { subcommand: 'run-sync', code: state.failed_code ?? XUNJI_EXIT_CODES.api, message: line, data: state, stderr: line };
   }
   const skipped = state.results.filter((e) => e.skipped === true).map((e) => e.label);
-  const skipNote = skipped.length > 0 ? m('skill-calorie.xunji-run-sync.c012', { p0: String(skipped.join('、')) }) : m('skill-calorie.xunji-run-sync.c013');
+  const skipNote = skipped.length > 0 ? m('skill-calorie.xunji-run-sync.c012', { p0: String(listJoin(currentRenderLanguage(), skipped)) }) : m('skill-calorie.xunji-run-sync.c013');
   return {
     subcommand: 'run-sync', code: XUNJI_EXIT_CODES.ok,
     message: m('skill-calorie.xunji-run-sync.c014', { p0: String(days), p1: String(skipNote) }),

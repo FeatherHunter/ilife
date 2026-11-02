@@ -12,6 +12,7 @@ import { fail } from '../shared/fail.js';
 import { asLimit, asQueryString } from '../shared/params.js';
 import { buildLocationList, buildReceipt } from '../render/index.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 // #928 收口：**不给 limit 即全量**（页面不再按体积截断，用户裁定「不限制 html 文件大小」）；
 // 给了 limit 才截，超界大声失败。只住本能力，标签取行另住 items。
@@ -185,7 +186,7 @@ function recommendFor(handle: HomeDb, itemId: number, mode: string): Recommendat
     .map((h) => ({
       location: h.loc,
       // 理由逐件唯一（同证据＋件名后缀）：机审重复句按整行判等，证据相同也须逐件区分。
-      reason: m('skill-home.space-location.c003', { p0: String(h.n), p1: String(h.ex.join('、')) }),
+      reason: m('skill-home.space-location.c003', { p0: String(h.n), p1: String(listJoin(currentRenderLanguage(), h.ex)) }),
       score: h.n,
     }));
   const strong = ranked.filter((r) => r.score >= 2).sort((a, b) => b.score - a.score);

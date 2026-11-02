@@ -20,7 +20,7 @@
  * 谁在用（一个调用点，指名）：`src/analysis/read.ts` 的 `pageOf`——`family === 'charts'` 的 4 件场景
  *  由落点表 `./scene.js` 取到本件。
  */
-import { runWithLanguage } from 'base-entries';
+import { runWithLanguage, listJoin, currentRenderLanguage } from 'base-entries';
 import type { BillRow } from '../fetch/db.js';
 import { BillPolicyError } from '../fetch/errors.js';
 import { monthRange } from '../shared/dateRange.js';
@@ -186,7 +186,7 @@ function buildScene(): AnalysisScene {
       gaps.length === 0
         ? m('skill-bill.analysis-scene-anomaly.c011', { p0: String(String(series.length)) })
         : m('skill-bill.analysis-scene-anomaly.c012', {
-          p0: String(gaps.join('、')),
+          p0: String(listJoin(currentRenderLanguage(), gaps)),
           p1: String(String(gaps.length)),
         }),
       recorded.length < 2 ? m('skill-bill.analysis-scene-anomaly.c013') : '',

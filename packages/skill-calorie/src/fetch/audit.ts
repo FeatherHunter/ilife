@@ -6,6 +6,7 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { verifyMovements } from '../xunji/index.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 export type AuditStatus = 'ok' | 'warn' | 'fail';
 
@@ -66,5 +67,5 @@ export function auditPlanNames(
   if (notInCatalog.length === 0) {
     return { status: 'ok', data, message: m('skill-calorie.fetch-audit.c002', { p0: String(report.total) }) };
   }
-  return { status: 'warn', data, message: m('skill-calorie.fetch-audit.c003', { p0: String(notInCatalog.length), p1: String(notInCatalog.join('、')) }) };
+  return { status: 'warn', data, message: m('skill-calorie.fetch-audit.c003', { p0: String(notInCatalog.length), p1: String(listJoin(currentRenderLanguage(), notInCatalog)) }) };
 }

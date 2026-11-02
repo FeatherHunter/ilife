@@ -25,6 +25,7 @@ import { renderStatusBadge } from 'base-paint';
 import { renderCaliberLine, renderParamForm } from 'base-paint/blocks';
 import type { ParamFieldInput } from 'base-paint/blocks';
 import { emptyNote } from './emptyNote.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** 一列：参数名／中文名／提示／这一列是不是必需。 */
 export interface RowEditorField {
@@ -89,7 +90,7 @@ function rowFields(input: {
 
 /** 哪一列缺了，中文名列名（红标那句话说给人听，用中文名不用参数名）。 */
 function labelsOf(fields: readonly RowEditorField[], names: readonly string[]): string {
-  return names.map((n) => fields.find((f) => f.name === n)?.label ?? n).join('、');
+  return listJoin(currentRenderLanguage(), names.map((n) => fields.find((f) => f.name === n)?.label ?? n));
 }
 
 /** 合计那一句：只把解析得出数的格算进来；一列全解析不出就说清「算不出」。 */

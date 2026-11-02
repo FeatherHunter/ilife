@@ -17,6 +17,7 @@ import { copyBlock } from '../shared/copyBlock.js';
 import type { PlanSessionRow } from './planStore.js';
 import { xunjiKeyRow } from './xunjiKey.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 const DOC_TITLE = (): string => m('skill-calorie.workout-landPages.c085');
 
@@ -47,7 +48,7 @@ export function landTitleOf(s: PlanSessionRow, index = 0): string {
 
 /** 前 3 个动作用 `、` 连接（老 `; ` 改形状：`;` 不上屏）。 */
 export function landNotesOf(s: PlanSessionRow): string {
-  return (s.movements ?? []).slice(0, 3).map((mv) => m('skill-calorie.workout-landPages.c002', { p0: String(mv.name ?? '') })).join('、');
+  return listJoin(currentRenderLanguage(), (s.movements ?? []).slice(0, 3).map((mv) => m('skill-calorie.workout-landPages.c002', { p0: String(mv.name ?? '') })));
 }
 
 /** 实跑命令原文（过程页首位可复制 prompt：照抄即跑同一天，单引号包 JSON 照本仓一贯口径）。 */
@@ -70,7 +71,7 @@ export function buildLandProcessPage(input: {
       { label: m('skill-calorie.workout-landPages.c006'), value: date, detail: m('skill-calorie.workout-landPages.c007') },
       {
         label: m('skill-calorie.workout-landPages.c008'), value: m('skill-calorie.workout-landPages.c009', { p0: String(sessions.length) }),
-        detail: sessions.map((s) => s.session_label).join('、') || m('skill-calorie.workout-landPages.c010'),
+        detail: listJoin(currentRenderLanguage(), sessions.map((s) => s.session_label)) || m('skill-calorie.workout-landPages.c010'),
       },
       { label: m('skill-calorie.workout-landPages.c011'), value: m('skill-calorie.workout-landPages.c012', { p0: String(moves) }), detail: m('skill-calorie.workout-landPages.c013') },
     ]),
@@ -83,7 +84,7 @@ export function buildLandProcessPage(input: {
           return {
             label: s.session_label,
             time: m('skill-calorie.workout-landPages.c019', { p0: String(ts), p1: String(te) }),
-            moves: s.movements.map((mv) => mv.name ?? m('skill-calorie.workout-landPages.c020')).join('、') || m('skill-calorie.workout-landPages.c021'),
+            moves: listJoin(currentRenderLanguage(), s.movements.map((mv) => mv.name ?? m('skill-calorie.workout-landPages.c020'))) || m('skill-calorie.workout-landPages.c021'),
           };
         }),
       caption: m('skill-calorie.workout-landPages.c022'),

@@ -21,6 +21,7 @@ import { reconcileDisclosure, statusCard } from '../shared/receiptParts.js';
 import { commandLine } from '../shared/writeParts.js';
 import { workoutFieldLabel } from './fieldLabels.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
@@ -93,7 +94,7 @@ function itemsTable(receipt: CrudReceipt): string {
     ...(hasReason ? [{ key: 'reason', label: m('skill-calorie.workout-receipt.c014') }] : []),
     { key: 'change', label: m('skill-calorie.workout-receipt.c015') },
   ];
-  const fieldsText = receipt.writtenFields.join('、') || m('skill-calorie.workout-receipt.c016');
+  const fieldsText = listJoin(currentRenderLanguage(), receipt.writtenFields) || m('skill-calorie.workout-receipt.c016');
   return renderDataTable({
     columns,
     rows: hasReason ? rows : rows.map((r) => ({ ...r, reason: '—' })),
@@ -117,7 +118,7 @@ function buildWorkoutReceiptDoc(
         label: m('skill-calorie.workout-receipt.c022'),
         value: m('skill-calorie.workout-receipt.c023', { p0: String(receipt.writtenFields.length) }),
         // 原键名走域标签表（`./fieldLabels.ts`，本域表唯一定义地）：页上不出 `plan` 这类英文裸词。
-        detail: receipt.writtenFields.map((f) => workoutFieldLabel(f)).join('、') || m('skill-calorie.workout-receipt.c024'),
+        detail: listJoin(currentRenderLanguage(), receipt.writtenFields.map((f) => workoutFieldLabel(f))) || m('skill-calorie.workout-receipt.c024'),
       },
     ]),
     currentPlanTable(db),

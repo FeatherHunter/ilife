@@ -33,6 +33,7 @@ import type { HealthPlate } from '../analysis/healthPlate.js';
 import type { AllRankings } from '../diet/rankingPlate.js';
 import type { ProductLibrary, ProductSearch, ProductStats } from '../diet/libraryPlate.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 function pageShell(skill: string, slot: string, title: string, body: string): string {
   return (
@@ -96,7 +97,7 @@ export function renderPhotoReceiptHtml(r: CrudReceipt): string {
     : '<div style="color:' + token('muted') + '">无逐张明细</div>';
   const diff = r.tagDiff
     ? '<div>' + m('skill-calorie.render-html.c901', {
-      p0: escapeHtml(r.tagDiff.before.join('、') || '—'), p1: escapeHtml(r.tagDiff.after.join('、') || '—'),
+      p0: escapeHtml(listJoin(currentRenderLanguage(), r.tagDiff.before) || '—'), p1: escapeHtml(listJoin(currentRenderLanguage(), r.tagDiff.after) || '—'),
     }) + '</div>'
     : '';
   const dist = r.distance
@@ -215,7 +216,7 @@ export function renderGoalRecommendHtml(g: GoalRecommend): string {
     '</div>' +
     '<div style="color:' + token('muted') + '">' + r.planReasons.map((x) => escapeHtml(x)).join('<br>') + '</div>' +
     (r.missing.length > 0
-      ? '<div class="' + cx('warn') + '" style="color:' + token('danger') + '">缺项用默认补齐：' + escapeHtml(r.missing.join('、')) + '</div>'
+      ? '<div class="' + cx('warn') + '" style="color:' + token('danger') + '">缺项用默认补齐：' + escapeHtml(listJoin(currentRenderLanguage(), r.missing)) + '</div>'
       : '');
   return pageShell('calorie', 'ilife:calorie:goal-recommend', m('skill-calorie.render-html.c046', { p0: String(r.profileLabel) }), body);
 }

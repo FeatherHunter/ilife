@@ -16,7 +16,7 @@
  * 谁在用（一个调用点，指名）：`src/analysis/read.ts` 的 `pageOf`——`family === 'charts'` 的 4 件场景
  *  由落点表 `./scene.js` 取到本件（同 kind 的「看分类」「看分类对比」住别的命令名那一支）。
  */
-import { runWithLanguage } from 'base-entries';
+import { runWithLanguage, listJoin, currentRenderLanguage } from 'base-entries';
 import type { BillRow } from '../fetch/db.js';
 import { BillPolicyError } from '../fetch/errors.js';
 import { EXPENSE_L1 } from '../shared/category.js';
@@ -117,7 +117,7 @@ function buildScene(): AnalysisScene {
       gaps.length === 0
         ? m('skill-bill.analysis-scene-cat-trend.c008', { p0: String(String(series.length)) })
         : m('skill-bill.analysis-scene-cat-trend.c009', {
-          p0: String(gaps.join('、')),
+          p0: String(listJoin(currentRenderLanguage(), gaps)),
           p1: String(String(gaps.length)),
         }),
       m('skill-bill.analysis-scene-cat-trend.c010'),

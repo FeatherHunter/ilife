@@ -21,6 +21,7 @@ import { R, deleteStatus, out, softExcluded } from '../shared/writeParts.js';
 import { needId } from '../shared/params.js';
 import type { WriteOut } from '../shared/commandSpec.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** 缺值占位（裁定 2 的可见文本那一半；取数层与库内不给这个字）。 */
 const MISSING = '—';
@@ -37,7 +38,7 @@ function numLine(v: unknown, unit: string): string {
 
 /** 一条记录的**逐字段**删前值文本（`标签 值`，项间「、」；标签里无空格，值里可以有）。 */
 function fieldsLine(pairs: readonly (readonly [string, unknown])[]): string {
-  return pairs.map(([label, v]) => label + ' ' + cell(v)).join('、');
+  return listJoin(currentRenderLanguage(), pairs.map(([label, v]) => label + ' ' + cell(v)));
 }
 
 /** 体成分快照：逐字段（日期／来源／体脂率／7 点皮褶／备注），标签全部取自唯一来源。 */
@@ -82,7 +83,7 @@ function measureSummary(id: number, snap: Record<string, unknown>): string {
     .filter((f) => snap[f] !== null && snap[f] !== undefined)
     .map((f) => MEASUREMENT_ZH[f] + ' ' + String(snap[f]) + 'cm');
   const note = cell(snap['note']);
-  const filledText = (filled.length > 0 ? filled.join('、') : m('skill-calorie.body-remove.c007'));
+  const filledText = (filled.length > 0 ? listJoin(currentRenderLanguage(), filled) : m('skill-calorie.body-remove.c007'));
   const noteTail = (note === MISSING ? '' : m('skill-calorie.body-remove.c008', { p0: String(note) }));
   return m('skill-calorie.body-remove.c009', {
     p0: String(id),

@@ -20,6 +20,7 @@ import { importSteps, initSteps, restoreSteps } from './steps.js';
 import { wizardDoc } from './template-wizard.js';
 import type { ImportWizardInput, InitWizardInput, RestoreWizardInput } from './template-wizard.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** 缺项那一路的向导页（整页 HTML）。 */
 export function blockedWizardDoc(input: {
@@ -34,7 +35,7 @@ export function blockedWizardDoc(input: {
   const message = m('skill-bill.setup-blocked.c001', {
     p0: String(word),
     p1: String(String(input.blocked.length)),
-    p2: String(input.blocked.map((b) => b.label).join('、')),
+    p2: String(listJoin(currentRenderLanguage(), input.blocked.map((b) => b.label))),
   });
   const envelope = receiptEnvelopeOf(input.key, { ok: false, message, op: input.op, blocked: input.blocked });
   const common = {

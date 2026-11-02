@@ -24,6 +24,7 @@ import { R, definedKeys, out } from '../shared/writeParts.js';
 import { assertISO, fail, optInt, optNum, optStr, wday } from '../shared/params.js';
 import type { WriteOut } from '../shared/commandSpec.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** 体脂来源中文别名（`--source` 收英文枚举或这几个中文词，语义照旧）。 */
 const SOURCE_ALIASES: Record<string, SourceChoice> = { '家测皮褶钳': 'home_caliper', '医院测': 'hospital', '健身房测': 'gym', '健身房': 'gym', '医院': 'hospital', '皮褶钳': 'home_caliper' };
@@ -143,7 +144,7 @@ function numLine(v: unknown, unit: string): string {
 
 /** 一条记录的字段逐项文本（`标签 值`；项间「、」）。 */
 function fieldLine(pairs: [string, unknown][]): string {
-  return pairs.map(([label, v]) => label + ' ' + val(v)).join('、');
+  return listJoin(currentRenderLanguage(), pairs.map(([label, v]) => label + ' ' + val(v)));
 }
 
 /** 体脂既有记录的字段值（来源／体脂率／皮褶 7 点／备注；7 点站名取 `bodyPlate.ts` 的唯一来源）。 */
@@ -236,10 +237,10 @@ export function writeMeasureAdd(params: Record<string, unknown>, db: DatabaseSyn
   // #363 · **写前**查同日既有记录（口径同体脂那条）。
   const existing = measurementsOnDate(db, date);
   const r = addMeasurement(db, input as unknown as Parameters<typeof addMeasurement>[1]);
-  const filledCn = r.filled.map((f) => {
+  const filledCn = listJoin(currentRenderLanguage(), r.filled.map((f) => {
     const camel = Object.keys(MEASURE_CAMEL).find((c) => MEASURE_CAMEL[c] === f) ?? f;
     return camel + ' ' + String((input as Record<string, unknown>)[f]);
-  }).join('、');
+  }));
   return out(R(m('skill-calorie.body-log.c020'), 'create', withConflict(conflictLine(m('skill-calorie.body-log.c021'), date, existing, measureRowText), m('skill-calorie.body-log.c022', { p0: String(date), p1: String(filledCn) })), m('skill-calorie.body-log.c023'), m('skill-calorie.body-log.c024'), {
     recordId: r.id, ids: [r.id], writtenFields: measureCliNames(definedKeys(input)),
     items: [...conflictItems(existing, date, measureRowText), { id: r.id, date, status: m('skill-calorie.body-log.c025'), reason: '', detail: filledCn }],

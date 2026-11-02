@@ -47,6 +47,7 @@ import { copyArea, copyLog, notice } from '../shared/copyArea.js';
 import type { PhotoEmbed } from './photoThumb.js';
 import { chipRow, factRows, labelChips, receiptUiCss, sectionTitle, shotBlock } from './receiptUi.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
@@ -131,7 +132,7 @@ function tagChangeBlock(receipt: CrudReceipt): string {
  *  无变化时不出这句（真话由无变化提示块说，免得同一页自相矛盾）。 */
 function tagNoticeOf(receipt: CrudReceipt): string {
   if (receipt.noChange) {
-    const tags = tagListOf((receipt.tagDiff ?? { before: [], after: [] }).after).join('、');
+    const tags = listJoin(currentRenderLanguage(), tagListOf((receipt.tagDiff ?? { before: [], after: [] }).after));
     return notice({ icon: 'info', title: m('skill-calorie.photo-receipt.c020'), msg: m('skill-calorie.photo-receipt.c021'), detail: m('skill-calorie.photo-receipt.c022', { p0: String(tags) }) });
   }
   const diff = receipt.tagDiff ?? { before: [], after: [] };
@@ -139,13 +140,13 @@ function tagNoticeOf(receipt: CrudReceipt): string {
   const tail = m('skill-calorie.photo-receipt.c023', { p0: String(receipt.recordId ?? '—') });
   if (receipt.scene === '加照片标签') {
     const added = diff.after.filter((t) => !diff.before.includes(t));
-    return notice({ icon: 'ok', msg: (added.length > 0 ? m('skill-calorie.photo-receipt.c024', { p0: String(added.join('、')) }) : m('skill-calorie.photo-receipt.c025')) + tail });
+    return notice({ icon: 'ok', msg: (added.length > 0 ? m('skill-calorie.photo-receipt.c024', { p0: String(listJoin(currentRenderLanguage(), added)) }) : m('skill-calorie.photo-receipt.c025')) + tail });
   }
   if (receipt.scene === '删照片标签') {
     const gone = diff.before.filter((t) => !diff.after.includes(t));
-    return notice({ icon: 'ok', msg: (gone.length > 0 ? m('skill-calorie.photo-receipt.c026', { p0: String(gone.join('、')) }) : m('skill-calorie.photo-receipt.c027')) + tail });
+    return notice({ icon: 'ok', msg: (gone.length > 0 ? m('skill-calorie.photo-receipt.c026', { p0: String(listJoin(currentRenderLanguage(), gone)) }) : m('skill-calorie.photo-receipt.c027')) + tail });
   }
-  return notice({ icon: 'ok', msg: head.after + '：' + tagListOf(diff.after).join('、') + tail });
+  return notice({ icon: 'ok', msg: head.after + '：' + listJoin(currentRenderLanguage(), tagListOf(diff.after)) + tail });
 }
 
 /* ══════════════════════════════════════════════════════════════

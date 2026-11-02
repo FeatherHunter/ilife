@@ -27,6 +27,7 @@ import { renderCaliberLine, renderDataTable, renderPreBlock } from 'base-paint/b
 import { directionOf, money2 } from './summaryRow.js';
 import { errorReceipt } from './errorReceipt.js';
 import { fieldLabelOf } from './userWording.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** 一个阻断项：哪个槽位／中文名／为什么挡住。
  *
@@ -80,9 +81,9 @@ export function blockedMessage(
   blocked: readonly BlockedItem[],
 ): string {
   if (missing.length > 0) {
-    return m('skill-bill.write-blockedSlots.c004', { p1: String(missing.map((slot) => fieldLabelOf(slot.name)).join('、')) });
+    return m('skill-bill.write-blockedSlots.c004', { p1: String(listJoin(currentRenderLanguage(), missing.map((slot) => fieldLabelOf(slot.name)))) });
   }
-  return m('skill-bill.write-blockedSlots.c005', { p1: String(blocked.map((i) => fieldLabelOf(i.name) + '（' + i.why + '）').join('、')) });
+  return m('skill-bill.write-blockedSlots.c005', { p1: String(listJoin(currentRenderLanguage(), blocked.map((i) => fieldLabelOf(i.name) + '（' + i.why + '）'))) });
 }
 
 /** 阻断条的入参：判定结果 ＋ 那条「补齐后可重跑」的写库指令原文。 */

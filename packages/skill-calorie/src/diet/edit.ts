@@ -15,6 +15,7 @@ import type { WriteOut } from '../shared/commandSpec.js';
 import { assertISO, fail, needId, needStr, needWday, optNum, optStr } from '../shared/params.js';
 import { R, cliNames, deleteStatus, hardInner, hardWording, out } from '../shared/writeParts.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** `calorie.diet.update` · 改饮食。 */
 export function writeDietUpdate(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
@@ -33,7 +34,7 @@ export function writeDietUpdate(params: Record<string, unknown>, db: DatabaseSyn
   if (Object.keys(fields).length === 0) fail(2, m('skill-calorie.diet-edit.c001'));
   if (typeof fields['date'] === 'string') assertISO(fields['date'] as string, 'date');
   const r = updateMeal(db, id, fields);
-  const changedPhrase = r.changed.length ? r.changed.join('、') : m('skill-calorie.diet-edit.c002');
+  const changedPhrase = r.changed.length ? listJoin(currentRenderLanguage(), r.changed) : m('skill-calorie.diet-edit.c002');
   return out(R(m('skill-calorie.diet-edit.c003'), 'update', m('skill-calorie.diet-edit.c004', { p0: String(id), p1: String(changedPhrase) }), m('skill-calorie.diet-edit.c005'), m('skill-calorie.diet-edit.c006'), {
     recordId: id, ids: [id], writtenFields: cliNames(Object.keys(fields)), noChange: r.changed.length === 0,
     items: [{ id, status: m('skill-calorie.diet-edit.c007'), reason: '', detail: r.changed.join(',') || m('skill-calorie.diet-edit.c008') }],
@@ -57,7 +58,7 @@ export function writeDietUpdateByDate(params: Record<string, unknown>, db: Datab
   return out(R(m('skill-calorie.diet-edit.c010'), 'update', m('skill-calorie.diet-edit.c011', {
     p0: String(date),
     p1: String(r.updated),
-    p2: String(r.changedFields.join('、')),
+    p2: String(listJoin(currentRenderLanguage(), r.changedFields)),
   }), m('skill-calorie.diet-edit.c012'), m('skill-calorie.diet-edit.c013'), {
     ids: [], idSource: 'condition', writtenFields: cliNames(r.changedFields),
   }));

@@ -22,6 +22,7 @@ import { fieldLabel, localizeEnums } from './labels.js';
 import { reconcileDisclosure, statusCard } from '../shared/receiptParts.js';
 import { profileWrittenDetail } from './setup.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
@@ -52,7 +53,7 @@ export function buildProfileUpdateReceiptDoc(receipt: CrudReceipt, command: stri
     version: DOC_VERSION, skill: DOC_SKILL, shape: 'receipt', key: receipt.meta.wakeWord,
     data: { ok: true, message: receipt.summary },
   };
-  const writtenText = receipt.writtenFields.map(fieldLabel).join('、') || m('skill-calorie.profile-update.c002');
+  const writtenText = listJoin(currentRenderLanguage(), receipt.writtenFields.map(fieldLabel)) || m('skill-calorie.profile-update.c002');
   const content = [
     renderKpiGrid([
       statusCard(receipt, profileWrittenDetail()),

@@ -24,6 +24,7 @@ import { chefCopyArea } from '../render/copyArea.js';
 import { renderSceneShell } from '../render/sceneShell.js';
 import type { ShoppingItem } from '../fetch/db.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** 换行（仓库口径：不写字面换行转义，与 `blocks.ts`／皮肤件同）。 */
 const LF = String.fromCharCode(10);
@@ -127,7 +128,7 @@ export function shoppingListPage(input: {
     // 审计表与逐支读数记在证据件「第三轮」一节。
     renderConclusionBar(m('skill-chef.shopping-pages.c013', { p0: String(input.servingsText) })),
     renderKpiGrid([
-      { label: m('skill-chef.shopping-pages.c014'), value: String(input.recipes.length), unit: m('skill-chef.shopping-pages.c015'), detail: input.recipes.join('、') },
+      { label: m('skill-chef.shopping-pages.c014'), value: String(input.recipes.length), unit: m('skill-chef.shopping-pages.c015'), detail: listJoin(currentRenderLanguage(), input.recipes) },
       { label: m('skill-chef.shopping-pages.c016'), value: String(input.items.length), unit: m('skill-chef.shopping-pages.c017') },
       { label: m('skill-chef.shopping-pages.c018'), value: String(groups.length), unit: m('skill-chef.shopping-pages.c019') },
       { label: m('skill-chef.shopping-pages.c020'), value: input.servingsText },
@@ -164,7 +165,7 @@ export function shoppingListPage(input: {
             qty: g.quantity === null || g.quantity === undefined
               ? g.quantity_text || m('skill-chef.shopping-pages.c029')
               : String(round(Number(g.quantity))) + ' ' + g.unit,
-            from: g.recipes.join('、'),
+            from: listJoin(currentRenderLanguage(), g.recipes),
           })),
         }),
       }),
@@ -179,7 +180,7 @@ export function shoppingListPage(input: {
           用量: g.quantity === null || g.quantity === undefined
             ? g.quantity_text || m('skill-chef.shopping-pages.c030')
             : String(round(Number(g.quantity))) + ' ' + g.unit,
-          ...(input.recipes.length > 1 ? { 来自: g.recipes.join('、') } : {}),
+          ...(input.recipes.length > 1 ? { 来自: listJoin(currentRenderLanguage(), g.recipes) } : {}),
         })),
         total: input.items.length,
       },

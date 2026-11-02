@@ -8,6 +8,7 @@ import { fail } from '../shared/fail.js';
 import { asInt, asLimit, asQueryString } from '../shared/params.js';
 import { buildTagList, buildReceipt } from '../render/index.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 // #928 收口：**不给 limit 即全量**（页面不再按体积截断；用户裁定「不限制 html 文件大小」）。
 // 给了 limit 才截，超界大声失败。只住本能力，位置取行另住 space。
@@ -118,7 +119,7 @@ export function runTagWrite(params: Record<string, unknown>, handle: HomeDb): un
       }
     }
     if (!sims.length) return { ...buildReceipt(m('skill-home.items-tag.c004')), detail: { pairs: [], total: 0 } };
-    return { ...buildReceipt(m('skill-home.items-tag.c005', { p0: String(sims.slice(0, 10).join('、')) })), detail: { pairs: pairs.slice(0, 10), total: pairs.length } };
+    return { ...buildReceipt(m('skill-home.items-tag.c005', { p0: String(listJoin(currentRenderLanguage(), sims.slice(0, 10))) })), detail: { pairs: pairs.slice(0, 10), total: pairs.length } };
   }
   if (op === 'category') {
     const action = (params.action as string | undefined) ?? 'tree';

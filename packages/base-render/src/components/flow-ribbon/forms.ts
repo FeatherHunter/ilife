@@ -25,6 +25,7 @@ import {
 /* 构成轨那一段住 `forms-rails.ts`（`style-rails.ts` 同款拆法）：本文件原样转出，`model.ts` 不用改。 */
 import type { FlowRibbonRailsModel } from './forms-rails.js';
 import { m } from '../../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 export { railsModel, type FlowRibbonRailsModel, type FlowRibbonSeg } from './forms-rails.js';
 
 /** 图例的一项（形 ＋ 字）。 */
@@ -235,9 +236,9 @@ export function sankeyModel(base: FlowRibbonBase, sources: readonly FlowRibbonRe
     legend: srcNodes.map((n) => ({ mark: n.mark, text: n.name })),
     ariaLabel: m('base-render.components-flow-ribbon-forms.c003', {
       p0: String(String(srcNodes.length)),
-      p1: String(srcNodes.map((n) => n.name + ' ' + n.amountText).join('、')),
+      p1: String(listJoin(currentRenderLanguage(), srcNodes.map((n) => n.name + ' ' + n.amountText))),
       p2: String(String(useNodes.length)),
-      p3: String(useNodes.map((n) => n.name + ' ' + n.amountText).join('、')),
+      p3: String(listJoin(currentRenderLanguage(), useNodes.map((n) => n.name + ' ' + n.amountText))),
       p4: String(fmtAmount(base.total)),
       p5: String(base.unit),
       p6: String(perPctText),
@@ -316,9 +317,9 @@ export function matrixModel(base: FlowRibbonBase, sources: readonly FlowRibbonRe
     legend: [],
     ariaLabel: m('base-render.components-flow-ribbon-forms.c007', {
       p0: String(String(sources.length)),
-      p1: String(sources.map((s) => s.name + ' ' + s.amountText).join('、')),
+      p1: String(listJoin(currentRenderLanguage(), sources.map((s) => s.name + ' ' + s.amountText))),
       p2: String(String(uses.length)),
-      p3: String(uses.map((u) => u.name + ' ' + u.amountText).join('、')),
+      p3: String(listJoin(currentRenderLanguage(), uses.map((u) => u.name + ' ' + u.amountText))),
       p4: String(fmtAmount(maxCell)),
       p5: String(base.unit),
       p6: String(fmtAmount(base.total)),

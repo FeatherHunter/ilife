@@ -29,6 +29,7 @@ import { XUNJI_EXIT_CODES } from './subcommands.js';
 import type { XunjiSubcommand } from './subcommands.js';
 import type { XunjiRun } from './run.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** `missing` 策略（老 `overlay_day_plan` 签名同名同值）：`fail` 有缺即报／`skip` 跳过只推有的。 */
 export type OverlayMissing = 'fail' | 'skip';
@@ -135,7 +136,7 @@ export async function overlayDayPlan(dateStr: string, deps: OverlayDeps = {}): P
   if (missingInXunji.length > 0 && missingOpt === 'fail') {
     return {
       ...base(dateStr, sessions.length, trains.length), matched: [], missing_in_xunji: missingInXunji, extra_in_xunji: extra,
-      ok_count: 0, fail_count: 0, err: m('skill-calorie.xunji-overlay-plan.c003', { p0: String(missingInXunji.join('、')) }), note: null, failure: null,
+      ok_count: 0, fail_count: 0, err: m('skill-calorie.xunji-overlay-plan.c003', { p0: String(listJoin(currentRenderLanguage(), missingInXunji)) }), note: null, failure: null,
     };
   }
   if (resList.length === 0) {

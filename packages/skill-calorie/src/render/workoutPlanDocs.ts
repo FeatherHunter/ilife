@@ -32,6 +32,7 @@ import { assembleDocPage, metricsOf } from '../shared/docPage.js';
 import { copyLog } from '../shared/copyArea.js';
 import { DASH } from './workoutMovementTable.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
@@ -294,9 +295,9 @@ export function buildPlanVsActualDoc(v: PlanVsActualView, opts: PlanDocOpts): st
     .filter((d) => d.planned.length > 0 || d.logged.length > 0)
     .map((d) => ({
       date: d.date,
-      plan: d.planned.length > 0 ? d.planned.join('、') : DASH,
-      done: d.logged.length > 0 ? d.logged.join('、') : DASH,
-      miss: d.missed.length === 0 ? m('skill-calorie.render-workoutPlanDocs.c035') : m('skill-calorie.render-workoutPlanDocs.c036', { p0: String(d.missed.join('、')) }),
+      plan: d.planned.length > 0 ? listJoin(currentRenderLanguage(), d.planned) : DASH,
+      done: d.logged.length > 0 ? listJoin(currentRenderLanguage(), d.logged) : DASH,
+      miss: d.missed.length === 0 ? m('skill-calorie.render-workoutPlanDocs.c035') : m('skill-calorie.render-workoutPlanDocs.c036', { p0: String(listJoin(currentRenderLanguage(), d.missed)) }),
     }));
   const parts: string[] = [
     renderKpiGrid([

@@ -1,0 +1,1271 @@
+{
+  "$comment": "显示面列表连接符逐处台账（票 #1311）。display＝已改成 listJoin/plusJoin 的调用点，盘上不该再有裸 join；data＝存储值／文件名契约，随语言变会坏；keep＝注释、生成物字符串、语言解析期报错、实现本体。改源码时改这张表，门 tooling/check-i18n-join.mjs 逐条对账。",
+  "scan": {
+    "glob": "packages/*/src/**/*.ts",
+    "exclude": [
+      "**/*.d.ts",
+      "**/dist/**",
+      "**/node_modules/**"
+    ]
+  },
+  "summary": {
+    "raw_total": 157,
+    "display": 146,
+    "keep": 9,
+    "data": 2,
+    "remaining_raw": 11
+  },
+  "sites": [
+    {
+      "path": "packages/base-entries/src/list.ts",
+      "line": 7,
+      "snippet": "非 en（zh 及未设语言、将来未知的 ja 等）：**逐字节等于 items.join('、')",
+      "class": "keep",
+      "reason": "本票新增件：listJoin 的 zh 分支实现本体；注释里提到的 join 是说明文字，不是调用点"
+    },
+    {
+      "path": "packages/base-link-core/src/config/language.ts",
+      "line": 102,
+      "snippet": "e + '）：可用语言为 ' + AVAILABLE_LANGUAGES.join('、')",
+      "class": "keep",
+      "reason": "语言解析期自身的报错：此刻还没有已解析语言，且 base-link-core 零依赖红线不许 import base-entries",
+      "sep": "、"
+    },
+    {
+      "path": "packages/base-link-core/src/config/language.ts",
+      "line": 115,
+      "snippet": "n + '」须带一个语言值（可用：' + AVAILABLE_LANGUAGES.join('、')",
+      "class": "keep",
+      "reason": "同文件：语言解析期报错（可用语言清单），发生在语言解析之前",
+      "sep": "、"
+    },
+    {
+      "path": "packages/base-link-core/src/config/store.ts",
+      "line": 80,
+      "snippet": "ey + '」类型不对：默认值是一组键（' + Object.keys(def).join('、')",
+      "class": "keep",
+      "reason": "配置类型校验报错，live 在语言解析之前（base-link-core 零依赖）",
+      "sep": "、"
+    },
+    {
+      "path": "packages/base-render/src/components/cash-waterline/model.ts",
+      "line": 285,
+      "snippet": "usedParts.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/base-render/src/components/flow-ribbon/forms-rails.ts",
+      "line": 89,
+      "snippet": "sourceRows.map((s) => s.name + ' ' + s.shareText).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/base-render/src/components/flow-ribbon/forms-rails.ts",
+      "line": 90,
+      "snippet": "useRows.map((u) => u.name + ' ' + u.shareText).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/base-render/src/components/flow-ribbon/forms.ts",
+      "line": 238,
+      "snippet": "srcNodes.map((n) => n.name + ' ' + n.amountText).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/base-render/src/components/flow-ribbon/forms.ts",
+      "line": 240,
+      "snippet": "useNodes.map((n) => n.name + ' ' + n.amountText).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/base-render/src/components/flow-ribbon/forms.ts",
+      "line": 319,
+      "snippet": "sources.map((s) => s.name + ' ' + s.amountText).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/base-render/src/components/flow-ribbon/forms.ts",
+      "line": 321,
+      "snippet": "uses.map((u) => u.name + ' ' + u.amountText).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/base-render/src/components/stacked-bar/model.ts",
+      "line": 154,
+      "snippet": "built.map((s) => s.name + ' ' + s.pctText).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/base-render/src/components/text/input.ts",
+      "line": 38,
+      "snippet": "COPY_FORMATS.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/base-render/src/components/text/input.ts",
+      "line": 49,
+      "snippet": "SERIALIZABLE_SHAPES.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/base-render/src/helpShell.ts",
+      "line": 45,
+      "snippet": "gMissing(s, v);\\r\\n toastMsg(miss.join('、')",
+      "class": "keep",
+      "reason": "生成物：gen 产出的壳后缀大字符串（内含页面 JS），改源跑 gen"
+    },
+    {
+      "path": "packages/base-render/src/helpShell.ts",
+      "line": 45,
+      "snippet": "y(text);\\r\\n toast('已复制，还缺：' + miss.join('、')",
+      "class": "keep",
+      "reason": "生成物：gen 产出的壳后缀大字符串（内含页面 JS），改源跑 gen"
+    },
+    {
+      "path": "packages/skill-bill/src/account/pageParts.ts",
+      "line": 315,
+      "snippet": "parts.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/account/template-form.ts",
+      "line": 95,
+      "snippet": "blocked.map((b) => b.label).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/account/template-form.ts",
+      "line": 172,
+      "snippet": "blocked.map((b) => b.label).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/account/template-form.ts",
+      "line": 187,
+      "snippet": "blocked.map((b) => b.label).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/account/template-update.ts",
+      "line": 87,
+      "snippet": "blocked.map((b) => b.label).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/account/template-update.ts",
+      "line": 112,
+      "snippet": "blocked.map((b) => b.label).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/account/template-update.ts",
+      "line": 137,
+      "snippet": "blocked.map((b) => b.label).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/account/write.ts",
+      "line": 61,
+      "snippet": "blocked.map((b) => b.label).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/analysis/scene-anomaly.ts",
+      "line": 189,
+      "snippet": "gaps.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/analysis/scene-cat-trend.ts",
+      "line": 120,
+      "snippet": "gaps.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/analysis/scene-distribution.ts",
+      "line": 112,
+      "snippet": "empties.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/analysis/scene-trend.ts",
+      "line": 130,
+      "snippet": "gaps.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/analysis/views.ts",
+      "line": 87,
+      "snippet": "months.map(([m, v]) => `${m} ${v}`).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/analysis/views.ts",
+      "line": 95,
+      "snippet": "cats.map((c) => `${c.category} ${c.total}`).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/entries/zh.ts",
+      "line": 459,
+      "snippet": "。\" : (\"还差 \" + miss.length + \" 项：\" + miss.join(\"、\")",
+      "class": "keep",
+      "reason": "zh 文案目录里的页面脚本字符串（say 页 hint 的拼串）；en 目录同键自带 \", \"，无跨语言泄漏"
+    },
+    {
+      "path": "packages/skill-bill/src/goal/template-form.ts",
+      "line": 80,
+      "snippet": "blocked.map((b) => b.label).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/goal/template-form.ts",
+      "line": 152,
+      "snippet": "blocked.map((b) => b.label).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/goal/template-form.ts",
+      "line": 167,
+      "snippet": "blocked.map((b) => b.label).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/goal/write.ts",
+      "line": 74,
+      "snippet": "blocked.map((b) => b.label).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/help/lookupPage.ts",
+      "line": 123,
+      "snippet": "counts.join('＋')",
+      "class": "display",
+      "sep": "＋",
+      "replaced_with": "plusJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/query/read.ts",
+      "line": 209,
+      "snippet": "RECENT_SORTS.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/query/read.ts",
+      "line": 589,
+      "snippet": "bits.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/setup/blocked.ts",
+      "line": 37,
+      "snippet": "input.blocked.map((b) => b.label).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/setup/import.ts",
+      "line": 75,
+      "snippet": "blocked.map((b) => b.label + '（' + b.why + '）').join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/setup/import.ts",
+      "line": 87,
+      "snippet": "missing.map((f) => fieldLabelOf(f)).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/setup/import.ts",
+      "line": 90,
+      "snippet": "missing.map((f) => fieldLabelOf(f)).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/setup/run.ts",
+      "line": 225,
+      "snippet": "preview.map((p) => p.label + '＝' + p.value).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/setup/run.ts",
+      "line": 258,
+      "snippet": "missing.map((b) => b.label).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/setup/scene-config-write.ts",
+      "line": 21,
+      "snippet": "bits.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/shared/checkLine.ts",
+      "line": 24,
+      "snippet": "all.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/shared/checkLine.ts",
+      "line": 25,
+      "snippet": "all.slice(0, CHECK_ID_HEAD).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/triggers/wakeTable.ts",
+      "line": 45,
+      "snippet": "有 ' + sorted.map((d) => String(d.order)).join('、')",
+      "class": "keep",
+      "reason": "开发者不变式断言（模块初始化期 throw），非用户可见页面文本",
+      "sep": "、"
+    },
+    {
+      "path": "packages/skill-bill/src/write/blockedSlots.ts",
+      "line": 83,
+      "snippet": "missing.map((slot) => fieldLabelOf(slot.name)).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/write/blockedSlots.ts",
+      "line": 85,
+      "snippet": "blocked.map((i) => fieldLabelOf(i.name) + '（' + i.why + '）').join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/write/outsideScan.ts",
+      "line": 92,
+      "snippet": "missing.map((f) => f.label).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/write/outsideScan.ts",
+      "line": 122,
+      "snippet": "missing.map((f) => f.label).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/write/photoEscape.ts",
+      "line": 180,
+      "snippet": "input.blocked.map((i) => i.label + '（' + i.why + '）').join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/write/receiptPaper.ts",
+      "line": 224,
+      "snippet": "receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/write/receiptSheet.ts",
+      "line": 44,
+      "snippet": "labels.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/write/rowEditorTable.ts",
+      "line": 92,
+      "snippet": "names.map((n) => fields.find((f) => f.name === n)?.label ?? n).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/write/saySheet.ts",
+      "line": 361,
+      "snippet": "miss.join(\"、\")",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/write/template-update.ts",
+      "line": 304,
+      "snippet": "receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/write/template-update.ts",
+      "line": 311,
+      "snippet": "receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/write/template-update.ts",
+      "line": 322,
+      "snippet": "receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-bill/src/write/write.ts",
+      "line": 270,
+      "snippet": "fields.map((f) => fieldLabelOf(f)).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/analysis/anomaly/diet.ts",
+      "line": 29,
+      "snippet": "tops.slice(0, 3).map((t) => m('skill-calorie.analysis-anomaly-diet.c006', { p0: String(t.food), p1: String(round(t.total)) })).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/analysis/anomaly/diet.ts",
+      "line": 104,
+      "snippet": "off.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/analysis/anomaly/diet.ts",
+      "line": 111,
+      "snippet": "off.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/analysis/anomaly/diet.ts",
+      "line": 121,
+      "snippet": "Object.entries(meals).map(([k, v]) => m('skill-calorie.analysis-anomaly-diet.c046', { p0: String(k), p1: String(v.times), p2: String(v.share) })).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/analysis/anomaly/diet.ts",
+      "line": 129,
+      "snippet": "sparse.slice(0, 5).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/analysis/anomaly/exercise.ts",
+      "line": 73,
+      "snippet": "Object.entries(dist).map(([k, v]) => m('skill-calorie.analysis-anomaly-exercise.c027', { p0: String(k), p1: String(v.share), p2: String(v.times), })).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/analysis/anomaly/overall.ts",
+      "line": 130,
+      "snippet": "bad.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/analysis/anomaly/overall2.ts",
+      "line": 56,
+      "snippet": "items.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/analysis/anomaly/overall2.ts",
+      "line": 72,
+      "snippet": "items.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/analysis/cross.ts",
+      "line": 204,
+      "snippet": "deltas.slice(0, 3).map(([n, d]) => n + ' ' + (d >= 0 ? '+' : '') + (d as number).toFixed(1) + 'cm').join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/analysis/reportPlate.ts",
+      "line": 374,
+      "snippet": "base.profile.missing.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/body/log.ts",
+      "line": 146,
+      "snippet": "pairs.map(([label, v]) => label + ' ' + val(v)).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/body/log.ts",
+      "line": 239,
+      "snippet": "r.filled.map((f) => { const camel = Object.keys(MEASURE_CAMEL).find((c) => MEASURE_CAMEL[c] === f) ?? f; return camel + ' ' + String((input as Record<string, unknown>)[f]); }).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/body/remove.ts",
+      "line": 40,
+      "snippet": "pairs.map(([label, v]) => label + ' ' + cell(v)).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/body/remove.ts",
+      "line": 85,
+      "snippet": "filled.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/diet/edit.ts",
+      "line": 36,
+      "snippet": "r.changed.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/diet/edit.ts",
+      "line": 60,
+      "snippet": "r.changedFields.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/diet/log.ts",
+      "line": 49,
+      "snippet": "MEALS.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/diet/products.ts",
+      "line": 23,
+      "snippet": "cols.map(zhLabel).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/exercise/edit.ts",
+      "line": 98,
+      "snippet": "Object.keys(fields).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/fetch/audit.ts",
+      "line": 69,
+      "snippet": "notInCatalog.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/fetch/diet.ts",
+      "line": 83,
+      "snippet": "MEAL_NAMES.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/goal/goalPlates.ts",
+      "line": 71,
+      "snippet": "recommend.missing.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/goal/receipt.ts",
+      "line": 155,
+      "snippet": "labels.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/goal/receipt.ts",
+      "line": 219,
+      "snippet": "draft.energy.missing.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/goal/receipt.ts",
+      "line": 299,
+      "snippet": "d.energy.missing.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/photo/photo.ts",
+      "line": 303,
+      "snippet": "[...snapshot.tag_list].join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/photo/photo.ts",
+      "line": 343,
+      "snippet": "after.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/photo/photo.ts",
+      "line": 348,
+      "snippet": "before.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/photo/photo.ts",
+      "line": 349,
+      "snippet": "after.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/photo/photo.ts",
+      "line": 352,
+      "snippet": "before.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/photo/photo.ts",
+      "line": 353,
+      "snippet": "after.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/photo/pickerDoc.ts",
+      "line": 150,
+      "snippet": "sel.tagList.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/photo/receipt.ts",
+      "line": 134,
+      "snippet": "tagListOf((receipt.tagDiff ?? { before: [], after: [] }).after).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/photo/receipt.ts",
+      "line": 142,
+      "snippet": "added.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/photo/receipt.ts",
+      "line": 146,
+      "snippet": "gone.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/photo/receipt.ts",
+      "line": 148,
+      "snippet": "tagListOf(diff.after).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/photo/wizardPortDocs.ts",
+      "line": 213,
+      "snippet": "p.tagList.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/photo/wizardPortDocs.ts",
+      "line": 328,
+      "snippet": "v.missingIds.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/profile/setup.ts",
+      "line": 292,
+      "snippet": "receipt.writtenFields.map(fieldLabel).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/profile/sheetDoc.ts",
+      "line": 347,
+      "snippet": "changedRows.map((r) => r.label + ' ' + r.after + (r.unit === '' ? '' : ' ' + r.unit)).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/profile/update.ts",
+      "line": 55,
+      "snippet": "receipt.writtenFields.map(fieldLabel).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/render/dietDocs.ts",
+      "line": 367,
+      "snippet": "missing.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/render/dietDocs.ts",
+      "line": 399,
+      "snippet": "missing.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/render/html.ts",
+      "line": 99,
+      "snippet": "r.tagDiff.before.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/render/html.ts",
+      "line": 99,
+      "snippet": "r.tagDiff.after.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/render/html.ts",
+      "line": 218,
+      "snippet": "r.missing.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/render/planWizardDocs.ts",
+      "line": 122,
+      "snippet": "t.equipment.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/render/trendDocs.ts",
+      "line": 515,
+      "snippet": "h.usedIn.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/render/trendMiscPort.ts",
+      "line": 307,
+      "snippet": "unmatched.slice(0, 5).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/render/workoutPlanDocs.ts",
+      "line": 297,
+      "snippet": "d.planned.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/render/workoutPlanDocs.ts",
+      "line": 298,
+      "snippet": "d.logged.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/render/workoutPlanDocs.ts",
+      "line": 299,
+      "snippet": "d.missed.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/shared/contentSuffix.ts",
+      "line": 106,
+      "snippet": "); return tags.length > 0 ? tags.join('、')",
+      "class": "data",
+      "reason": "tags.join 产出落盘文件名后缀段，文件名契约不可随语言变",
+      "sep": "、"
+    },
+    {
+      "path": "packages/skill-calorie/src/weight/plateDocs.ts",
+      "line": 56,
+      "snippet": "）。 * #483 之前这里是 `receipt.writtenFields.join('、')",
+      "class": "keep",
+      "reason": "注释行（#483 历史说明），不是运行时字符串"
+    },
+    {
+      "path": "packages/skill-calorie/src/weight/plateDocs.ts",
+      "line": 59,
+      "snippet": "labels.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/weight/plateDocs.ts",
+      "line": 124,
+      "snippet": "ids.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/workout/land.ts",
+      "line": 123,
+      "snippet": "(d.errors as string[]).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/workout/land.ts",
+      "line": 330,
+      "snippet": "(d as { errors: string[] }).errors.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/workout/landBatchPages.ts",
+      "line": 50,
+      "snippet": "d.sessions.map((s) => s.session_label).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/workout/landBatchPages.ts",
+      "line": 53,
+      "snippet": "s.movements.map((mv) => mv.name ?? m('skill-calorie.workout-landBatchPages.c018')).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/workout/landPages.ts",
+      "line": 50,
+      "snippet": "(s.movements ?? []).slice(0, 3).map((mv) => m('skill-calorie.workout-landPages.c002', { p0: String(mv.name ?? '') })).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/workout/landPages.ts",
+      "line": 73,
+      "snippet": "sessions.map((s) => s.session_label).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/workout/landPages.ts",
+      "line": 86,
+      "snippet": "s.movements.map((mv) => mv.name ?? m('skill-calorie.workout-landPages.c020')).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/workout/receipt.ts",
+      "line": 96,
+      "snippet": "receipt.writtenFields.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/workout/receipt.ts",
+      "line": 120,
+      "snippet": "receipt.writtenFields.map((f) => workoutFieldLabel(f)).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/workout/reviewDocs.ts",
+      "line": 169,
+      "snippet": "s.movements.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/workout/reviewDocs.ts",
+      "line": 170,
+      "snippet": "s.actualTypes.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/workout/reviewDocs.ts",
+      "line": 234,
+      "snippet": "s.movements.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/workout/write.ts",
+      "line": 538,
+      "snippet": "(Object.keys(fields) as Array<keyof typeof fields>) .map((k) => String(CONFIG_LABEL()[k]) + '：' + String(plan.config?.[k] ?? m('skill-calorie.workout-write.c131'))).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/workout/write.ts",
+      "line": 542,
+      "snippet": "(Object.keys(fields) as Array<keyof typeof fields>) .map((k) => String(CONFIG_LABEL()[k]) + '：' + String(fields[k])).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/workout/write.ts",
+      "line": 628,
+      "snippet": "daySessions.map((s) => s.session_label || m('skill-calorie.workout-write.c157')).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/workout/write.ts",
+      "line": 675,
+      "snippet": "where.slice(0, 4).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/workout/xunjiBackfill.ts",
+      "line": 109,
+      "snippet": "named.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/workout/xunjiPush.ts",
+      "line": 192,
+      "snippet": "sessions.map((s) => s.session_label).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/workout/xunjiPush.ts",
+      "line": 212,
+      "snippet": "s.movements.map((mv) => mv.name ?? m('skill-calorie.workout-xunjiPush.c044')).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/xunji/overlay-plan.ts",
+      "line": 138,
+      "snippet": "missingInXunji.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/xunji/run-sync.ts",
+      "line": 307,
+      "snippet": "skipped.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-calorie/src/xunji/run.ts",
+      "line": 101,
+      "snippet": "report.results.filter((r) => r.valid === false).map((r) => r.name).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-chef/src/cook/run.ts",
+      "line": 304,
+      "snippet": "next.ingredients.map((u) => u.name).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-chef/src/data/pages.ts",
+      "line": 197,
+      "snippet": "it.missing.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-chef/src/data/pages.ts",
+      "line": 240,
+      "snippet": "it.missing.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-chef/src/data/run-batch.ts",
+      "line": 94,
+      "snippet": "before.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-chef/src/data/run-batch.ts",
+      "line": 94,
+      "snippet": "tags.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-chef/src/search/run.ts",
+      "line": 129,
+      "snippet": "Object.keys(f).sort().join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-chef/src/shopping/pages.ts",
+      "line": 130,
+      "snippet": "input.recipes.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-chef/src/shopping/pages.ts",
+      "line": 167,
+      "snippet": "g.recipes.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-chef/src/shopping/pages.ts",
+      "line": 182,
+      "snippet": "g.recipes.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-home/src/fetch/db.ts",
+      "line": 317,
+      "snippet": "(?,?,?)').run(id, 'update', [...changed].join('、')",
+      "class": "data",
+      "reason": "写进 SQLite item_events.detail 的存储值，不可随语言变",
+      "sep": "、"
+    },
+    {
+      "path": "packages/skill-home/src/items/tag.ts",
+      "line": 121,
+      "snippet": "sims.slice(0, 10).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-home/src/policy/category.ts",
+      "line": 27,
+      "snippet": "HOME_STATUSES.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-home/src/space/location.ts",
+      "line": 188,
+      "snippet": "h.ex.join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-schedule/src/policy/category.ts",
+      "line": 54,
+      "snippet": "[...LEVEL1_WHITELIST].sort().join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-schedule/src/policy/category.ts",
+      "line": 61,
+      "snippet": "(DEFAULT_WHITELIST[level1] || []).join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-schedule/src/render/views.ts",
+      "line": 115,
+      "snippet": "reds.map((a) => a.dim + (a.deltaPct >= 0 ? '+' : '') + a.deltaPct + '%').join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    },
+    {
+      "path": "packages/skill-schedule/src/render/views.ts",
+      "line": 153,
+      "snippet": "reds.map((a) => a.dim + (a.deltaPct >= 0 ? '+' : '') + a.deltaPct + '%').join('、')",
+      "class": "display",
+      "sep": "、",
+      "replaced_with": "listJoin(currentRenderLanguage(), <收件表达式>)"
+    }
+  ]
+}

@@ -48,6 +48,7 @@ import { buildHelpItems } from './items.js';
 import { helpEmptyNext, buildHelpCopyCsv, buildHelpCopyJson, buildHelpCopyText } from './copyTextHelp.js';
 import type { HelpCopyFacts } from './copyTextHelp.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, plusJoin } from 'base-entries';
 
 /** 页内速查索引的根类名（本页自有样式只挂在它下面，他页零命中）。 */
 const H02_INDEX_CLASS = 'ilife-h02-index';
@@ -120,7 +121,7 @@ export function buildLookupIndexInput(): LookupIndexInput {
     anchors: groups.map((g) => ({ id: 'lookup-' + g.label, label: g.label })),
     groups,
     total,
-    countNote: counts.join('＋') + '＝' + String(total),
+    countNote: plusJoin(currentRenderLanguage(), counts) + '＝' + String(total),
     aliasMark: m('skill-bill.help-lookupPage.c002'),
     extraClass: H02_INDEX_CLASS,
   };

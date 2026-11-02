@@ -29,6 +29,7 @@ import { runRunSyncCommand, type RunSyncDeps } from './run-sync.js';
 import { resolveDbDir, resolveDbFileName } from '../paths.js';
 import { exitForFailure } from './exitMap.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** 一次子命令调用的读数：退出码 ＋ 人话 ＋ 机器读数（＋ 命令行入口要打的那句）。 */
 export interface XunjiRun {
@@ -98,7 +99,7 @@ function runVerify(sub: XunjiSubcommand, names: readonly string[], catalogPath: 
     };
   }
   if (report.invalid_count > 0) {
-    const bad = report.results.filter((r) => r.valid === false).map((r) => r.name).join('、');
+    const bad = listJoin(currentRenderLanguage(), report.results.filter((r) => r.valid === false).map((r) => r.name));
     return { subcommand: 'verify', code: XUNJI_EXIT_CODES.invalid, message: m('skill-calorie.xunji-run.c004', { p0: String(report.invalid_count), p1: String(bad) }), data: report, stderr: null };
   }
   if (report.total === 0) return refusal(sub, m('skill-calorie.xunji-run.c005'), { usage: sub.usage });

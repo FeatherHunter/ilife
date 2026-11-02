@@ -44,6 +44,7 @@ import { buildLandNothingPage, buildLandProcessPage, buildLandResultPage, landNo
 import type { LandStepRead } from './landPages.js';
 import { xunjiKeyNext } from './xunjiKey.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 export const LAND_KEY = 'calorie.workout.land';
 const LAND_WAKE = '落地训练';
@@ -120,7 +121,7 @@ async function defaultLandPlan(dates: readonly string[], dbFile?: string): Promi
     if (call.code !== 0) {
       const d = call.data as { errors?: unknown } | null;
       const errs = typeof d === 'object' && d !== null && Array.isArray(d.errors)
-        ? (d.errors as string[]).join('、') : '';
+        ? listJoin(currentRenderLanguage(), (d.errors as string[])) : '';
       const errPhrase = errs !== '' ? errs : m('skill-calorie.workout-land.c009');
       return { ok: false, code: call.code === 2 ? 1 : 3, error: m('skill-calorie.workout-land.c010', { p0: String(errPhrase) }) };
     }
@@ -327,7 +328,7 @@ export function writeLand(params: Record<string, unknown>, db: DatabaseSync): Wr
     const d = call.data as { achieved?: unknown; errors?: unknown } | null;
     if (call.code !== 0) {
       const errs = typeof d === 'object' && d !== null && Array.isArray((d as { errors?: unknown }).errors)
-        ? ((d as { errors: string[] }).errors.join('、')) : '';
+        ? (listJoin(currentRenderLanguage(), (d as { errors: string[] }).errors)) : '';
       failStep(m('skill-calorie.workout-land.c043'), call.code === 2 ? 2 : 4, errs !== '' ? errs : m('skill-calorie.workout-land.c044'), call.stderr);
     }
     void d;

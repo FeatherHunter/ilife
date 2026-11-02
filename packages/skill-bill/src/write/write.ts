@@ -46,6 +46,7 @@ import type { RecordSlot } from './collect.js';
 import { recordSlots } from './slots.js';
 import { recordReceiptDoc } from './receipt.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** 记一笔写进库的列全集（**由槽位表派生，同一件事实一处定义**）：`add` 那一行的七个参数名就是它写进库的七个列
  *  （缺省值列也算写入：时间／账户／账本／币种都带缺省）。名单只有 `./collect.ts` 的 `RECORD_SLOTS` 一处。 */
@@ -267,7 +268,7 @@ export function writeRecordUpdate(params: Record<string, unknown>, db: BillDb, l
     db, key, params, language: textLanguage, op: 'update', row: r, fields, before, noChange,
     summary: m('skill-bill.write-write.c009', {
       p0: String(r.id),
-      p1: String(fields.map((f) => fieldLabelOf(f)).join('、')),
+      p1: String(listJoin(currentRenderLanguage(), fields.map((f) => fieldLabelOf(f)))),
     }),
     writtenDetail: m('skill-bill.write-write.c010'),
     detail: [

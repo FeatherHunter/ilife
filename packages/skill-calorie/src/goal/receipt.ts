@@ -45,6 +45,7 @@ import { copyArea, copyLog } from '../shared/copyArea.js';
 import { reconcileDisclosure, statusCard } from '../shared/receiptParts.js';
 import { commandLine } from '../shared/writeParts.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 const DOC_VERSION = '0.1.0';
 const DOC_SKILL = 'calorie';
@@ -152,7 +153,7 @@ function opCards(key: string, receipt: CrudReceipt): KpiCardInput[] {
     if (col !== undefined) labels.push(labelOf(col));
   }
   if (labels.length > 0) {
-    cards.push({ label: m('skill-calorie.goal-receipt.c007'), value: m('skill-calorie.goal-receipt.c008', { p0: String(labels.length) }), detail: labels.join('、') });
+    cards.push({ label: m('skill-calorie.goal-receipt.c007'), value: m('skill-calorie.goal-receipt.c008', { p0: String(labels.length) }), detail: listJoin(currentRenderLanguage(), labels) });
   }
   return cards;
 }
@@ -216,7 +217,7 @@ function macroSection(row: NutritionGoalRow | null, draft: GoalDraft): Section {
   const sum = p * 4 + c * 4 + f * 9, diff = sum - cal;
   const bmr = draft.energy.bmr;
   const below = bmr !== null && cal < bmr;
-  const verdict = bmr === null ? m('skill-calorie.goal-receipt.c028', { p0: String(draft.energy.missing.join('、')) }) : below ? m('skill-calorie.goal-receipt.c029', { p0: String(cal), p1: String(bmr) }) : m('skill-calorie.goal-receipt.c030', { p0: String(cal), p1: String(bmr) });
+  const verdict = bmr === null ? m('skill-calorie.goal-receipt.c028', { p0: String(listJoin(currentRenderLanguage(), draft.energy.missing)) }) : below ? m('skill-calorie.goal-receipt.c029', { p0: String(cal), p1: String(bmr) }) : m('skill-calorie.goal-receipt.c030', { p0: String(cal), p1: String(bmr) });
   const diffVerdict = Math.abs(diff) <= 50 ? m('skill-calorie.goal-receipt.c031') : m('skill-calorie.goal-receipt.c032');
   return { id: 'sec-macro', title: m('skill-calorie.goal-receipt.c033'), html: kvTable(m('skill-calorie.goal-receipt.c034'), [
       { k: m('skill-calorie.goal-receipt.c035'), v: m('skill-calorie.goal-receipt.c036', { p0: String(cal) }) },
@@ -296,7 +297,7 @@ function autoSection(db: DatabaseSync, receipt: CrudReceipt, profile: NutriProfi
   const id = 'sec-auto';
   const title = m('skill-calorie.goal-receipt.c070');
   const d = buildGoalDraft(db, { profile }), r = d.recommend;
-  if (r === null) return { id, title, html: renderCaliberLine(m('skill-calorie.goal-receipt.c071', { p0: String(d.energy.missing.join('、')) })) };
+  if (r === null) return { id, title, html: renderCaliberLine(m('skill-calorie.goal-receipt.c071', { p0: String(listJoin(currentRenderLanguage(), d.energy.missing)) })) };
   const recOf = (col: string): string => col === 'calorie_goal' ? m('skill-calorie.goal-receipt.c072', { p0: String(r.calorieGoal) })
     : col === 'protein_goal' ? r.proteinGoal + ' g'
     : col === 'carbs_goal' ? r.carbsGoal + ' g'

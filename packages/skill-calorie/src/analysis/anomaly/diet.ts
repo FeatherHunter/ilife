@@ -8,6 +8,7 @@ import type { DaySeries, Diagnosis } from './common.js';
    在同一份库上给出两个答案——同一条记录在两个页面上被判成两个结论。 */
 import { NUTRITION_RANGE, nutritionRangeNote } from '../../shared/nutritionRange.js';
 import { m } from '../../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 export function diagDietOver(db: DatabaseSync, series: DaySeries[]): Diagnosis {
   const out = base(series, 'diet_over', m('skill-calorie.analysis-anomaly-diet.c001'));
@@ -26,7 +27,7 @@ export function diagDietOver(db: DatabaseSync, series: DaySeries[]): Diagnosis {
   });
   if (overDays.length > 0) {
     const tops = topFoods(db, out.start as string, out.end as string, 'calories');
-    const topText = tops.slice(0, 3).map((t) => m('skill-calorie.analysis-anomaly-diet.c006', { p0: String(t.food), p1: String(round(t.total)) })).join('、');
+    const topText = listJoin(currentRenderLanguage(), tops.slice(0, 3).map((t) => m('skill-calorie.analysis-anomaly-diet.c006', { p0: String(t.food), p1: String(round(t.total)) })));
     out.findings.push({ cause: m('skill-calorie.analysis-anomaly-diet.c007'), evidence: m('skill-calorie.analysis-anomaly-diet.c008', { p0: String(topText) }), confidence: m('skill-calorie.analysis-anomaly-diet.c009'), action: m('skill-calorie.analysis-anomaly-diet.c010') });
   } else {
     out.findings.push({ cause: m('skill-calorie.analysis-anomaly-diet.c011'), evidence: m('skill-calorie.analysis-anomaly-diet.c012'), confidence: m('skill-calorie.analysis-anomaly-diet.c013'), action: m('skill-calorie.analysis-anomaly-diet.c014') });
@@ -101,14 +102,14 @@ export function diagDietUnbalanced(series: DaySeries[]): Diagnosis {
       p3: String(nutritionRangeNote()),
     }),
     confidence: m('skill-calorie.analysis-anomaly-diet.c035'),
-    action: off.length > 0 ? m('skill-calorie.analysis-anomaly-diet.c036', { p0: String(off.join('、')) }) : m('skill-calorie.analysis-anomaly-diet.c037'),
+    action: off.length > 0 ? m('skill-calorie.analysis-anomaly-diet.c036', { p0: String(listJoin(currentRenderLanguage(), off)) }) : m('skill-calorie.analysis-anomaly-diet.c037'),
   });
   const sodium = series.map((s) => s.sodiumMg).filter((v): v is number => v !== null && v !== undefined);
   if (sodium.length > 0) {
     const na = sodium.reduce((a, b) => a + b, 0) / sodium.length;
     out.findings.push({ cause: m('skill-calorie.analysis-anomaly-diet.c038'), evidence: m('skill-calorie.analysis-anomaly-diet.c039', { p0: String(na.toFixed(0)) }), confidence: m('skill-calorie.analysis-anomaly-diet.c040'), action: m('skill-calorie.analysis-anomaly-diet.c041') });
   }
-  out.insight = off.length === 0 ? m('skill-calorie.analysis-anomaly-diet.c042') : m('skill-calorie.analysis-anomaly-diet.c043', { p0: String(off.join('、')) });
+  out.insight = off.length === 0 ? m('skill-calorie.analysis-anomaly-diet.c042') : m('skill-calorie.analysis-anomaly-diet.c043', { p0: String(listJoin(currentRenderLanguage(), off)) });
   return out;
 }
 
@@ -118,7 +119,7 @@ export function diagDietStructure(db: DatabaseSync, series: DaySeries[]): Diagno
   const late = meals['加餐/夜宵'] as { times: number; share: number };
   out.findings.push({
     cause: m('skill-calorie.analysis-anomaly-diet.c045'),
-    evidence: Object.entries(meals).map(([k, v]) => m('skill-calorie.analysis-anomaly-diet.c046', { p0: String(k), p1: String(v.times), p2: String(v.share) })).join('、'),
+    evidence: listJoin(currentRenderLanguage(), Object.entries(meals).map(([k, v]) => m('skill-calorie.analysis-anomaly-diet.c046', { p0: String(k), p1: String(v.times), p2: String(v.share) }))),
     confidence: m('skill-calorie.analysis-anomaly-diet.c047'),
     action: late.share >= 20 ? m('skill-calorie.analysis-anomaly-diet.c048', { p0: String(late.share) }) : m('skill-calorie.analysis-anomaly-diet.c049'),
   });
@@ -126,7 +127,7 @@ export function diagDietStructure(db: DatabaseSync, series: DaySeries[]): Diagno
     m('skill-calorie.analysis-anomaly-diet.c050'),
   ).all(out.start as string, out.end as string) as unknown as Array<[string, number]>;
   const sparse = rows.filter((r) => r[1] <= 1).map((r) => r[0]);
-  const sampleNote = sparse.length > 0 ? m('skill-calorie.analysis-anomaly-diet.c051', { p0: String(sparse.slice(0, 5).join('、')) }) : '';
+  const sampleNote = sparse.length > 0 ? m('skill-calorie.analysis-anomaly-diet.c051', { p0: String(listJoin(currentRenderLanguage(), sparse.slice(0, 5))) }) : '';
   out.findings.push({
     cause: m('skill-calorie.analysis-anomaly-diet.c052'),
     evidence: m('skill-calorie.analysis-anomaly-diet.c053', { p0: String(sparse.length), p1: String(sampleNote) }),

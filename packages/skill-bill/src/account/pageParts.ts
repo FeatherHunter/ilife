@@ -30,6 +30,7 @@ import type { AccountCopy } from './copyTextAccount.js';
 import { ACCOUNT_DECLARATION } from './declaration.js';
 import { textOf, WHY_MISSING } from './params.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /* 1064 acct v2.2 新口径复制区＋填写 guards（1036-v2.1 两钮块居中文本居中左缘对齐▾补位＋1053-③不溢出）
    已按 #1124 §22 **逐字节搬进 base**：`packages/base-render/src/components/style/ticket-family.ts` 的票据族样式段
@@ -312,7 +313,7 @@ export function changeTextOf(params: Record<string, unknown>): string {
   if (next !== '') parts.push(m('skill-bill.account-pageParts.c027', { p0: String(next) }));
   if (params['disable'] === true) parts.push(m('skill-bill.account-pageParts.c028'));
   if (params['enable'] === true) parts.push(m('skill-bill.account-pageParts.c029'));
-  return parts.join('、');
+  return listJoin(currentRenderLanguage(), parts);
 }
 
 /** 采集页／确认页复制口令那一段（「照这句跟助手说一遍」）：说清是哪条词、每一格填什么。

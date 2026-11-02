@@ -28,6 +28,7 @@ import { chefSceneCss } from '../render/skin.js';
 import { COOK_STEP_CLASS, COOK_STEPS_CLASS, COOK_STEP_SIDE_CLASS, cookPageCss } from './page-css.js';
 import { cookCountNote, qtyText, servingsNoteReceipt, stepProseHtml, stepTitle, usageChip } from './page-text.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** 换行（仓库口径：`String.fromCharCode(10)`，不写字面换行转义）。 */
 const LF = String.fromCharCode(10);
@@ -301,7 +302,7 @@ export function renderCookingPage(data: CookingPageData, opts: { kind: CookCardK
             return {
               time: m('skill-chef.cook-run.c030', { p0: String(s.sequence) }),
               main: m('skill-chef.cook-run.c031', { p0: String(s.duration_minutes ?? '—') }),
-              note: next === undefined ? m('skill-chef.cook-run.c032') : next.ingredients.map((u) => u.name).join('、') || m('skill-chef.cook-run.c033'),
+              note: next === undefined ? m('skill-chef.cook-run.c032') : listJoin(currentRenderLanguage(), next.ingredients.map((u) => u.name)) || m('skill-chef.cook-run.c033'),
             };
           }),
         }),

@@ -15,6 +15,7 @@ import { MEAL_NAMES, MEAL_WINDOWS, inferMealType } from '../shared/meal.js';
 import type { MealName } from '../shared/meal.js';
 import { timeOfDayISO, todayISO } from '../shared/time.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 export const WATER_NAME = '💧水';
 /** 写入口的 `--meal` 值域（＝五类餐名，来自共用位正本；`MEALS`／`MealName` 两个对外名字照旧转出）。 */
@@ -80,7 +81,7 @@ export function addMeal(db: DatabaseSync, input: MealInput): AddMealResult {
     throw new FetchError('营养值不能为负，克数必须为正');
   }
   if (input.mealOverride !== undefined && !(MEAL_NAMES as readonly string[]).includes(input.mealOverride)) {
-    throw new FetchError(m('skill-calorie.fetch-diet.c007', { p0: MEAL_NAMES.join('、') }));
+    throw new FetchError(m('skill-calorie.fetch-diet.c007', { p0: listJoin(currentRenderLanguage(), MEAL_NAMES) }));
   }
   const today = input.date ?? todayStr();
   const now = input.time ?? nowStr();

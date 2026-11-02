@@ -27,6 +27,7 @@ import { accountSlots, changeSlot, textOf } from './params.js';
 import { accountHelpPrompt, accountHelpTemplate, changeTextOf, copyZoneOf, envelopeOf, money, slotFieldsOf, sourceCollect, sourceWrite, textOrDash, timeOf } from './pageParts.js';
 import type { AccountCollectInput, AccountReceiptInput, AccountWriteScene } from './scene.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** 场景给模板的**差异声明**：值、文案与「哪个可选块出不出」，**不含任何块位拼装**。
  *
@@ -84,7 +85,7 @@ function messageOf(word: string, blocked: readonly AccountBlocked[]): string {
   return m('skill-bill.account-template-update.c009', {
     p0: String(word),
     p1: String(String(blocked.length)),
-    p2: String(blocked.map((b) => b.label).join('、')),
+    p2: String(listJoin(currentRenderLanguage(), blocked.map((b) => b.label))),
   });
 }
 
@@ -109,7 +110,7 @@ function confirmPage(spec: AccountUpdateSpec, input: AccountCollectInput): strin
   const hint = missing > 0
     ? m('skill-bill.account-template-update.c018', {
       p0: String(String(missing)),
-      p1: String(blocked.map((b) => b.label).join('、')),
+      p1: String(listJoin(currentRenderLanguage(), blocked.map((b) => b.label))),
     })
     : m('skill-bill.account-template-update.c019');
   // A 路（严格按判地）：待填段只列判地那两行——「账户」「改成什么」。
@@ -134,7 +135,7 @@ function confirmPage(spec: AccountUpdateSpec, input: AccountCollectInput): strin
       warn: true,
       value: String(missing),
       unit: m('skill-bill.account-template-update.c025'),
-      note: missing > 0 ? m('skill-bill.account-template-update.c026', { p0: String(blocked.map((b) => b.label).join('、')) }) : m('skill-bill.account-template-update.c027'),
+      note: missing > 0 ? m('skill-bill.account-template-update.c026', { p0: String(listJoin(currentRenderLanguage(), blocked.map((b) => b.label))) }) : m('skill-bill.account-template-update.c027'),
     },
     ledgerTitle: m('skill-bill.account-template-update.c028'),
     ledger: confirmLedgerOf(input, target, at),

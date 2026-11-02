@@ -26,6 +26,7 @@ import { buildExerciseReceiptDoc } from './receipt.js';
 /* #717 批③·谓词归一：软删存活谓词正本住共用位 `shared/alive.ts`（本件原先内联同一句话）。 */
 import { EX_ALIVE } from '../shared/alive.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 const EX_CAMEL: Record<string, string> = {
   type: 'exercise_type', exerciseType: 'exercise_type', calories: 'calories_burned', caloriesBurned: 'calories_burned',
@@ -95,7 +96,7 @@ export function writeExerciseUpdate(params: Record<string, unknown>, db: Databas
   if (id !== undefined) {
     if (!Number.isInteger(id) || id <= 0) fail(2, m('skill-calorie.exercise-edit.c007'));
     const pair = updateRecord(db, id, fields);
-    const base = R(m('skill-calorie.exercise-edit.c008'), 'update', m('skill-calorie.exercise-edit.c009', { p0: String(id), p1: String(Object.keys(fields).join('、')) }), m('skill-calorie.exercise-edit.c010'), m('skill-calorie.exercise-edit.c011'), {
+    const base = R(m('skill-calorie.exercise-edit.c008'), 'update', m('skill-calorie.exercise-edit.c009', { p0: String(id), p1: String(listJoin(currentRenderLanguage(), Object.keys(fields))) }), m('skill-calorie.exercise-edit.c010'), m('skill-calorie.exercise-edit.c011'), {
       recordId: id, ids: [id], writtenFields: cliNames(Object.keys(fields)),
       items: [{ id, status: m('skill-calorie.exercise-edit.c012'), reason: '' }],
     });

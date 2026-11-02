@@ -38,6 +38,7 @@ import { pageChromeCss } from './pageChromeCss.js';
 import type { CombinedAnalysis } from './analysisPlate.js';
 import type { AnomalyView, ContraView } from './insightPlate.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；测试钉死一致）。
  *  W1（#518）：下面六件是**两族共件**——缺口／预测族（姊妹件 `trendPredictDocs.ts`）从这里导入，
@@ -512,7 +513,7 @@ export function buildContraDoc(v: ContraView): string {
         { key: 'reason', label: m('skill-calorie.render-trendDocs.c112') },
       ],
       rows: shown.map((h) => ({
-        movement: h.movementName + (h.usedIn.length > 0 ? '（' + h.usedIn.join('、') + '）' : ''),
+        movement: h.movementName + (h.usedIn.length > 0 ? '（' + listJoin(currentRenderLanguage(), h.usedIn) + '）' : ''),
         part: h.part, rule: h.ruleName, sev: SEV_ZH()[h.severity] ?? h.severity, reason: h.reason,
       })),
       caption: m('skill-calorie.render-trendDocs.c113', { p0: String(hitsSuffix) }),

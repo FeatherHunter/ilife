@@ -3,6 +3,7 @@
 // 无 --skip-validation 跳过通道：坏分类一律 throw。
 import { SchedulePolicyError } from '../fetch/errors.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 export const LEVEL1_WHITELIST: ReadonlySet<string> = new Set(
   ['维持', '健康', '工作', '学习', '创作', '投入', '调整', '日常'],
@@ -51,14 +52,14 @@ export function normalizeCategory(category: unknown): string {
   if (!LEVEL1_WHITELIST.has(level1)) {
     throw new SchedulePolicyError(
       'POLICY_BAD_CATEGORY',
-      'category 一级 ' + JSON.stringify(level1) + ' 不在白名单（允许：' + [...LEVEL1_WHITELIST].sort().join('、') + '）',
+      'category 一级 ' + JSON.stringify(level1) + ' 不在白名单（允许：' + listJoin(currentRenderLanguage(), [...LEVEL1_WHITELIST].sort()) + '）',
     );
   }
   if (level2 !== null && !(DEFAULT_WHITELIST[level1] || []).includes(level2)) {
     throw new SchedulePolicyError(
       'POLICY_BAD_CATEGORY',
       'category 二级 ' + JSON.stringify(level2) + ' 不在 ' + JSON.stringify(level1) + ' 白名单（允许：' +
-      (DEFAULT_WHITELIST[level1] || []).join('、') + '；怎么修：提议新增 ' + c + '，后续票登记）',
+      listJoin(currentRenderLanguage(), (DEFAULT_WHITELIST[level1] || [])) + '；怎么修：提议新增 ' + c + '，后续票登记）',
     );
   }
   return c;

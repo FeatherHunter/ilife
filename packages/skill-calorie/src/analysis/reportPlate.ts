@@ -28,6 +28,7 @@ import { buildSeries, seriesAvg, seriesCount } from './series.js';
 import type { DaySeries } from './series.js';
 import { ACTIVITY_LEVEL_LABELS, GENDER_LABELS, energyOf, shiftISODate } from './utils.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** 8 个形态的 kind（逐字取自老侧 `--kind` 表；`full` 归既有 `calorie.view.health`，不在这里）。 */
 export type ReportKind =
@@ -371,7 +372,7 @@ function scorePlate(db: DatabaseSync, base: ReportBase): Pick<ReportPlate, 'poin
 function bmrPlate(base: ReportBase): Pick<ReportPlate, 'points' | 'bmrDanger' | 'fourPiece'> {
   const bmr = base.profile.bmr;
   if (bmr === null) {
-    throw new CalorieRenderError('missing-data', '四要素不全算不了基础代谢（缺：' + base.profile.missing.join('、') + '）');
+    throw new CalorieRenderError('missing-data', '四要素不全算不了基础代谢（缺：' + listJoin(currentRenderLanguage(), base.profile.missing) + '）');
   }
   const points = base.series.map((s) => ({ date: s.date, value: s.calories }));
   const under = base.series

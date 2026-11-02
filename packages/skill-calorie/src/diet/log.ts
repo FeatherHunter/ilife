@@ -16,6 +16,7 @@ import { ENTRY_PRECHECK } from './precheckPort.js';
 import { buildLabelPrecheckDoc } from './precheckLabel.js';
 import { buildLabelPrecheckView } from './precheckPort.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** `calorie.diet.add` · 记一餐（唤醒词 记一餐）。 */
 export function writeDietAdd(params: Record<string, unknown>, db: DatabaseSync): WriteOut {
@@ -46,7 +47,7 @@ export function writeDietAdd(params: Record<string, unknown>, db: DatabaseSync):
   const date = wday(params, 'date');
   if (date) assertISO(date, 'date');
   const meal = optStr(params, 'meal') ?? optStr(params, 'mealOverride');
-  if (meal !== undefined && !(MEALS as readonly string[]).includes(meal)) fail(2, m('skill-calorie.diet-log.c009', { p0: String(MEALS.join('、')) }));
+  if (meal !== undefined && !(MEALS as readonly string[]).includes(meal)) fail(2, m('skill-calorie.diet-log.c009', { p0: String(listJoin(currentRenderLanguage(), MEALS)) }));
   const r = addMeal(db, {
     foodName: foodName.trim(), calories, protein,
     carbs: optNum(params, 'carbs') ?? 0, fat: optNum(params, 'fat') ?? 0,

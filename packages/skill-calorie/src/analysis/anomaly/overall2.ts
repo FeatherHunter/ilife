@@ -2,6 +2,7 @@
 import { base, MIN_DAYS, round, seriesAvg, seriesDelta, weightVals } from './common.js';
 import type { DaySeries, Diagnosis } from './common.js';
 import { m } from '../../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 /** 短板维度的显示名（按需取词）：判据用英文 id，出字才取词条。 */
 function dimLabelOf(id: string): string {
   if (id === 'weight') return m('skill-calorie.analysis-anomaly-overall2.c900');
@@ -53,7 +54,7 @@ export function diagMonthHighlights(series: DaySeries[]): Diagnosis {
   if (under >= 15) items.push(m('skill-calorie.analysis-anomaly-overall2.c017', { p0: String(under) }));
   if (items.length === 0) items.push(m('skill-calorie.analysis-anomaly-overall2.c018'));
   out.findings.push({ cause: m('skill-calorie.analysis-anomaly-overall2.c019'), evidence: items.join(';'), confidence: m('skill-calorie.analysis-anomaly-overall2.c020'), action: m('skill-calorie.analysis-anomaly-overall2.c021') });
-  out.insight = m('skill-calorie.analysis-anomaly-overall2.c022', { p0: String(items.join('、')) });
+  out.insight = m('skill-calorie.analysis-anomaly-overall2.c022', { p0: String(listJoin(currentRenderLanguage(), items)) });
   return out;
 }
 
@@ -69,7 +70,7 @@ export function diagMonthImprove(series: DaySeries[]): Diagnosis {
   if (water.length > 0 && water.filter((w) => w < 1500).length >= 10) items.push(m('skill-calorie.analysis-anomaly-overall2.c026'));
   if (items.length === 0) items.push(m('skill-calorie.analysis-anomaly-overall2.c027'));
   out.findings.push({ cause: m('skill-calorie.analysis-anomaly-overall2.c028'), evidence: items.join(';'), confidence: m('skill-calorie.analysis-anomaly-overall2.c029'), action: m('skill-calorie.analysis-anomaly-overall2.c030') });
-  out.insight = m('skill-calorie.analysis-anomaly-overall2.c031', { p0: String(items.join('、')) });
+  out.insight = m('skill-calorie.analysis-anomaly-overall2.c031', { p0: String(listJoin(currentRenderLanguage(), items)) });
   return out;
 }
 

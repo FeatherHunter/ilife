@@ -47,6 +47,7 @@ import type { PrefillMark } from './prefillNote.js';
 import { optionsFor, pickOf as pickValues, textOf } from './recentPicks.js';
 import type { SummaryFacts } from './summaryRow.js';
 import { commandLine } from '../shared/writeParts.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** 分类一侧的 L1 名单：收入词落收入侧、支出型词落支出侧、通用词两侧都给。**这一处是分类侧别的唯一落点**。 */
 function categorySideOf(kind: string): readonly string[] {
@@ -177,6 +178,6 @@ export function blockedPromptOf(input: {
     command: commandLine(input.key, filled),
     // #733：句尾原来缀着 `照这条说：<命令全名>。`（如 `bill.record.add`）——那是**具体脚本**，
     //   按维护者 2026-09-19 的口径不该出现在复制出去的 prompt 里，整句删掉。
-    prompt: m('skill-bill.write-photoEscape.c001', { p1: String(input.blocked.length), p2: String(input.blocked.map((i) => i.label + '（' + i.why + '）').join('、')) }),
+    prompt: m('skill-bill.write-photoEscape.c001', { p1: String(input.blocked.length), p2: String(listJoin(currentRenderLanguage(), input.blocked.map((i) => i.label + '（' + i.why + '）'))) }),
   };
 }

@@ -4,6 +4,7 @@ import {
   l1Of, fmtDur, fmtPct, computeHealthScore, detectAnomalies, getEmojiPrefix,
 } from '../policy/category.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 export interface RecordItem {
   id: number; date: string; time: string; activity: string; category: string;
@@ -112,7 +113,7 @@ export function buildRecordCompare(args: {
   }
   const reds = detectAnomalies(B.byL1, A.byL1).filter((a) => a.level === 'red');
   if (reds.length) lines.push(m('skill-schedule.render-views.c002', {
-    p0: String(reds.map((a) => a.dim + (a.deltaPct >= 0 ? '+' : '') + a.deltaPct + '%').join('、')),
+    p0: String(listJoin(currentRenderLanguage(), reds.map((a) => a.dim + (a.deltaPct >= 0 ? '+' : '') + a.deltaPct + '%'))),
   }));
   return { summary: lines.join('\n') };
 }
@@ -150,7 +151,7 @@ export function buildAnomaly(end: string, windowDays: number, daily: { date: str
     const reds = detectAnomalies(d.byL1, mean).filter((a) => a.level !== null);
     if (reds.length) {
       any = true;
-      lines.push(d.date + '：' + reds.map((a) => a.dim + (a.deltaPct >= 0 ? '+' : '') + a.deltaPct + '%').join('、') + '。');
+      lines.push(d.date + '：' + listJoin(currentRenderLanguage(), reds.map((a) => a.dim + (a.deltaPct >= 0 ? '+' : '') + a.deltaPct + '%')) + '。');
     }
   }
   if (!any) lines.push(m('skill-schedule.render-views.c006'));

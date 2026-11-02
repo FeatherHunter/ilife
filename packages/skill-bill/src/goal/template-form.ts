@@ -26,6 +26,7 @@ import { goalWriteSlots } from './params.js';
 import { copyZoneOf, envelopeOf, goalHelpPrompt, goalHelpTemplate, money, slotFieldsOf, sourceCollect, sourceWrite } from './pageParts.js';
 import type { GoalCollectInput, GoalExistingTable, GoalReceiptInput, GoalReceiptResult, GoalWriteScene } from './scene.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** 场景给模板件的**差异声明**：值、文案与「哪个可选块出不出」，**不含任何块位拼装**。
  *
@@ -77,7 +78,7 @@ function blockedMessageOf(word: string, blocked: readonly GoalBlocked[]): string
   return m('skill-bill.goal-template-form.c002', {
     p0: String(word),
     p1: String(String(blocked.length)),
-    p2: String(blocked.map((b) => b.label).join('、')),
+    p2: String(listJoin(currentRenderLanguage(), blocked.map((b) => b.label))),
   });
 }
 
@@ -149,7 +150,7 @@ function collectPage(spec: GoalFormSpec, input: GoalCollectInput): string {
   const hint = missing > 0
     ? m('skill-bill.goal-template-form.c040', {
       p0: String(String(missing)),
-      p1: String(blocked.map((b) => b.label).join('、')),
+      p1: String(listJoin(currentRenderLanguage(), blocked.map((b) => b.label))),
     })
     : m('skill-bill.goal-template-form.c041');
   /* #1130：待填区走共享件（编号 → 标签 → 右侧输入框 ＋ 每格一行灰提示），判地 g01／g03 逐字照抄。 */
@@ -164,7 +165,7 @@ function collectPage(spec: GoalFormSpec, input: GoalCollectInput): string {
       warn: true,
       value: String(missing),
       unit: m('skill-bill.goal-template-form.c047'),
-      note: missing > 0 ? m('skill-bill.goal-template-form.c048', { p0: String(blocked.map((b) => b.label).join('、')) }) : m('skill-bill.goal-template-form.c049'),
+      note: missing > 0 ? m('skill-bill.goal-template-form.c048', { p0: String(listJoin(currentRenderLanguage(), blocked.map((b) => b.label))) }) : m('skill-bill.goal-template-form.c049'),
     },
     ledgerTitle: input.op === 'set-budget' ? m('skill-bill.goal-template-form.c050') : m('skill-bill.goal-template-form.c051'),
     ledger: collectLedgerOf(input, input.actionAt),

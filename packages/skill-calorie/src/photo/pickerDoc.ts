@@ -36,6 +36,7 @@ import { chipRow, factRows, photoUiCss } from './photoUi.js';
 import type { PhotoCard } from './photo.js';
 import type { PhotoPickerView } from './picker.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；测试钉死一致）。 */
 const DOC_VERSION = '0.1.0';
@@ -147,7 +148,7 @@ function snapshotHtml(sel: PhotoCard | null, e: PhotoEmbed | null, snapInlined: 
     + factRows([
       { k: m('skill-calorie.photo-pickerDoc.c018'), v: sel.date + (sel.time === null ? '' : ' ' + sel.time) },
       { k: m('skill-calorie.photo-pickerDoc.c019'), v: rel === '' ? m('skill-calorie.photo-pickerDoc.c020') : rel },
-      { k: m('skill-calorie.photo-pickerDoc.c021'), v: sel.tagList.join('、') || m('skill-calorie.photo-pickerDoc.c022') },
+      { k: m('skill-calorie.photo-pickerDoc.c021'), v: listJoin(currentRenderLanguage(), sel.tagList) || m('skill-calorie.photo-pickerDoc.c022') },
       ...(sel.note === null || sel.note === '' ? [] : [{ k: m('skill-calorie.photo-pickerDoc.c023'), v: sel.note }]),
       { k: m('skill-calorie.photo-pickerDoc.c024'), v: sel.photoPath },
       ...(sel.fileExists === false ? [{ k: m('skill-calorie.photo-pickerDoc.c025'), v: m('skill-calorie.photo-pickerDoc.c026') }] : []),

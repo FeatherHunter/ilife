@@ -12,6 +12,7 @@ import { FLOW_RIBBON_SEG_MIN_PCT } from './attrs.js';
 import { fmtAmount, fmtPct, type FlowRibbonReadout } from './fields.js';
 import type { FlowRibbonBase } from './forms.js';
 import { m } from '../../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** 构成轨里的一格。 */
 export interface FlowRibbonSeg {
@@ -86,8 +87,8 @@ export function railsModel(base: FlowRibbonBase, sources: readonly FlowRibbonRea
     useHead: m('base-render.components-flow-ribbon-forms-rails.c004', { p0: String(String(uses.length)) }),
     legend: [],
     ariaLabel: m('base-render.components-flow-ribbon-forms-rails.c005', {
-      p0: String(sourceRows.map((s) => s.name + ' ' + s.shareText).join('、')),
-      p1: String(useRows.map((u) => u.name + ' ' + u.shareText).join('、')),
+      p0: String(listJoin(currentRenderLanguage(), sourceRows.map((s) => s.name + ' ' + s.shareText))),
+      p1: String(listJoin(currentRenderLanguage(), useRows.map((u) => u.name + ' ' + u.shareText))),
       p2: String(fmtAmount(base.total)),
       p3: String(base.unit),
     }),

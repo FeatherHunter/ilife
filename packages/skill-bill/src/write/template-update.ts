@@ -45,6 +45,7 @@ import type { BillReceipt } from '../shared/writeParts.js';
 import type { BillRow } from '../fetch/db.js';
 import type { CollectInput, ReceiptInput, Scene } from './scene.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** 采集页文案函数读到的那一份事实（形态判定只在本件做一次）。 */
 interface UpdatePage {
@@ -301,14 +302,14 @@ function brandOf(spec: UpdateSpec): string {
 
 /** 复制区日志那一行（改了 N 笔、写进去哪几项；一项都没改到时写明）。 */
 function changedDetailOf(receipt: BillReceipt): string {
-  const fields = receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、');
+  const fields = listJoin(currentRenderLanguage(), receipt.writtenFields.map((f) => fieldLabelOf(f)));
   const tail = fields === '' ? m('skill-bill.write-template-update.c022') : fields;
   return m('skill-bill.write-template-update.c023', { p0: String(receipt.affectedRows), p1: String(tail) });
 }
 
 /** 主数字头（判地 `.summary-head`）：**改记录支**判地是「改后落点 · <改的字段>／<改动笔数> 笔」（x28「改后落点 · 备注／1／笔」）；**撤销／恢复两支**判地是「<方向> · <分类>／金额 元」（x30「收入 · 工资／+8000.00／元」）。 */
 function summaryHeadOf(spec: UpdateSpec, input: ReceiptInput, receipt: BillReceipt) {
-  const fields = receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') || m('skill-bill.write-template-update.c024');
+  const fields = listJoin(currentRenderLanguage(), receipt.writtenFields.map((f) => fieldLabelOf(f))) || m('skill-bill.write-template-update.c024');
   if (spec.receiptResult === 'none') {
     return { eyebrow: m('skill-bill.write-template-update.c025', { p0: String(fields) }), value: String(receipt.affectedRows), unit: m('skill-bill.write-template-update.c026'), stamp: receiptStamp(spec.receiptResult, receipt), layout: 'ticket' as const };
   }
@@ -319,7 +320,7 @@ function summaryHeadOf(spec: UpdateSpec, input: ReceiptInput, receipt: BillRecei
 /** 摘要头下面那句小字：改记录支判地是「<改的字段>已更新为最新内容，其余字段未动」（x28 逐字）；撤销／恢复支看法 `RESULT_NOTE`。 */
 function summaryNoteOf(spec: UpdateSpec, receipt: BillReceipt): string {
   if (spec.receiptResult !== 'none') return resultNoteOf(spec.receiptResult);
-  const fields = receipt.writtenFields.map((f) => fieldLabelOf(f)).join('、') || m('skill-bill.write-template-update.c029');
+  const fields = listJoin(currentRenderLanguage(), receipt.writtenFields.map((f) => fieldLabelOf(f))) || m('skill-bill.write-template-update.c029');
   return m('skill-bill.write-template-update.c030', { p0: String(fields) });
 }
 

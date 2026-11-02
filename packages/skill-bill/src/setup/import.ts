@@ -10,7 +10,7 @@
  *   （老侧把被跳过的空行算进 `total`）。
  */
 import { existsSync } from 'node:fs';
-import { currentRenderLanguage } from 'base-entries';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 import type { BillDb } from '../fetch/index.js';
 import { resolveBackupDir, resolveGoalsPath } from '../fetch/paths.js';
 import { actionStamp } from '../shared/copyArea.js';
@@ -72,7 +72,7 @@ export function runImport(db: BillDb, key: string, params: Record<string, unknow
     const html = blockedWizardDoc({ op: 'import', scene, key, params, blocked, actionAt: actionStamp() });
     const message = m('skill-bill.setup-import.c013', {
       p0: String(String(blocked.length)),
-      p1: String(blocked.map((b) => b.label + '（' + b.why + '）').join('、')),
+      p1: String(listJoin(currentRenderLanguage(), blocked.map((b) => b.label + '（' + b.why + '）'))),
     });
     return { data: { ok: false, message, receipt: { op: 'import', blocked } }, page, html };
   }
@@ -84,10 +84,10 @@ export function runImport(db: BillDb, key: string, params: Record<string, unknow
   if (missing.length > 0) {
     const blocked2: SetupBlocked[] = [{
       name: 'mapping', label: m('skill-bill.setup-import.c014'),
-      why: m('skill-bill.setup-import.c015', { p0: String(missing.map((f) => fieldLabelOf(f)).join('、')) }),
+      why: m('skill-bill.setup-import.c015', { p0: String(listJoin(currentRenderLanguage(), missing.map((f) => fieldLabelOf(f)))) }),
     }];
     const html = blockedWizardDoc({ op: 'import', scene, key, params, blocked: blocked2, actionAt: actionStamp() });
-    const message = m('skill-bill.setup-import.c016', { p0: String(missing.map((f) => fieldLabelOf(f)).join('、')) });
+    const message = m('skill-bill.setup-import.c016', { p0: String(listJoin(currentRenderLanguage(), missing.map((f) => fieldLabelOf(f)))) });
     return { data: { ok: false, message, receipt: { op: 'import', blocked: blocked2 } }, page, html };
   }
   const plan: ImportPlan = planImport(csv, map, existingRows(db));

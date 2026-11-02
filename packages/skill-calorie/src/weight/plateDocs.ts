@@ -21,6 +21,7 @@ import { copyArea, copyLog } from '../shared/copyArea.js';
 import { weightFieldLabel } from './fieldLabels.js';
 import { weightUiCss } from './weightUi.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** envelope 头（值冻结对齐 cli/keys.ts ENVELOPE_VERSION／CALORIE_SKILL；测试钉死一致）。 */
 export const DOC_VERSION = '0.1.0';
@@ -56,7 +57,7 @@ export const signed = (n: number): string => (n >= 0 ? '+' : '') + n + ' kg';
  *  #483 之前这里是 `receipt.writtenFields.join('、')`——把 `kg、note、date、time` 这类参数名直接摆上屏。 */
 export function fieldLabelList(keys: readonly string[]): string {
   const labels = keys.map((k) => weightFieldLabel(k)).filter((s) => s !== '');
-  return labels.length === 0 ? '—' : labels.join('、');
+  return labels.length === 0 ? '—' : listJoin(currentRenderLanguage(), labels);
 }
 
 /** 状态卡（一页只此一处）：**三个槽各说一件事**——值槽＝本次动了几条（短数字＋单位），
@@ -121,7 +122,7 @@ function recordNoOf(receipt: CrudReceipt): string {
   const ids = receipt.ids.length > 0
     ? receipt.ids
     : receipt.items.map((it) => it.id).filter((n): n is number => typeof n === 'number');
-  return ids.length === 0 ? m('skill-calorie.weight-plateDocs.c012') : ids.join('、');
+  return ids.length === 0 ? m('skill-calorie.weight-plateDocs.c012') : listJoin(currentRenderLanguage(), ids.map(String));
 }
 
 /** 复制载荷（写命令一律 receipt 形，`test/cmd-registry-294.test.mjs:262`）：`message` 取**本页结论句 ＋

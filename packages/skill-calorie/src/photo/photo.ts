@@ -17,6 +17,7 @@ import { shiftISODate, todayISO } from '../analysis/utils.js';
 import { CalorieRenderError } from '../render/errors.js';
 import { buildCrudReceipt, type CrudReceipt, type PhotoDistance } from '../render/receipt.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 export interface PhotoCard {
   id: number;
@@ -300,7 +301,7 @@ export function buildAddReceipt(
  * 且全页只留 1 处，由 `receipt.ts` 自写副标题与状态句承担（页面不再直接印这两串）。
  */
 export function buildDeleteReceipt(snapshot: PhotoRow): CrudReceipt {
-  const tags = [...snapshot.tag_list].join('、') || m('skill-calorie.photo-photo.c015');
+  const tags = listJoin(currentRenderLanguage(), [...snapshot.tag_list]) || m('skill-calorie.photo-photo.c015');
   const summary = m('skill-calorie.photo-photo.c016', {
     p0: String(snapshot.id),
     p1: String(snapshot.date),
@@ -340,17 +341,17 @@ export function buildTagReceipt(
     const noChangeNote = noChange ? m('skill-calorie.photo-photo.c021') : '';
     summary = m('skill-calorie.photo-photo.c022', {
       p0: String(photoId),
-      p1: String(after.join('、')),
+      p1: String(listJoin(currentRenderLanguage(), after)),
       p2: String(noChangeNote),
     });
   } else if (scene === '加照片标签') {
     summary = noChange
-      ? m('skill-calorie.photo-photo.c023', { p0: String(before.join('、')) })
-      : m('skill-calorie.photo-photo.c024', { p0: String(photoId), p1: String(after.join('、')) });
+      ? m('skill-calorie.photo-photo.c023', { p0: String(listJoin(currentRenderLanguage(), before)) })
+      : m('skill-calorie.photo-photo.c024', { p0: String(photoId), p1: String(listJoin(currentRenderLanguage(), after)) });
   } else {
     summary = noChange
-      ? m('skill-calorie.photo-photo.c025', { p0: String(before.join('、')) })
-      : m('skill-calorie.photo-photo.c026', { p0: String(photoId), p1: String(after.join('、')) });
+      ? m('skill-calorie.photo-photo.c025', { p0: String(listJoin(currentRenderLanguage(), before)) })
+      : m('skill-calorie.photo-photo.c026', { p0: String(photoId), p1: String(listJoin(currentRenderLanguage(), after)) });
   }
   return buildCrudReceipt({
     scene,

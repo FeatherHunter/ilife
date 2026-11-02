@@ -20,7 +20,7 @@
  *  ③ 回执文案用规范词：空分类写「全月总预算」（老侧 CLI 那句写「总」、页面写「总预算」——**同域两套**，
  *     新侧取一处；见仓规 `用词纪律`）。
  */
-import { currentRenderLanguage } from 'base-entries';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 import { loadGoals, resolveGoalsPath, saveGoals } from '../fetch/index.js';
 import type { BillGoals } from '../fetch/index.js';
 import type { WriteOut } from '../shared/commandSpec.js';
@@ -71,7 +71,7 @@ function blockedMessageOf(word: string, blocked: readonly GoalBlocked[]): string
   return m('skill-bill.goal-write.c002', {
     p0: String(word),
     p1: String(blocked.length),
-    p2: String(blocked.map((b) => b.label).join('、')),
+    p2: String(listJoin(currentRenderLanguage(), blocked.map((b) => b.label))),
   });
 }
 

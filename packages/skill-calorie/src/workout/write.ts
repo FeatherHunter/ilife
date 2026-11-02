@@ -195,6 +195,7 @@ export function writePlanAddMovement(params: Record<string, unknown>, db: Databa
 export { dayPhrase } from './dayPhrase.js';
 import { dayPhrase } from './dayPhrase.js';
 import { m } from '../entries/index.js';
+import { currentRenderLanguage, listJoin } from 'base-entries';
 
 /** 写前预览里的**一行**：字段就是表里的列，不再把四件事挤成一个字符串。
  *  原来那一行是 `第1周周1·上肢（2动作）`／`第1周周2·休息日（0动作·休）`——拿 `·` 与括号顶替表格设计
@@ -535,12 +536,12 @@ export function writePlanUpdate(params: Record<string, unknown>, db: DatabaseSyn
   if (Object.keys(fields).length === 0) fail(2, m('skill-calorie.workout-write.c129'));
   const plan = getPlan(db);
   if (!plan.config) fail(4, m('skill-calorie.workout-write.c130'));
-  const before = (Object.keys(fields) as Array<keyof typeof fields>)
-    .map((k) => String(CONFIG_LABEL()[k]) + '：' + String(plan.config?.[k] ?? m('skill-calorie.workout-write.c131'))).join('、');
+  const before = listJoin(currentRenderLanguage(), (Object.keys(fields) as Array<keyof typeof fields>)
+    .map((k) => String(CONFIG_LABEL()[k]) + '：' + String(plan.config?.[k] ?? m('skill-calorie.workout-write.c131'))));
   const ok = updateConfig(db, fields);
   if (!ok) fail(4, m('skill-calorie.workout-write.c132'));
-  const after = (Object.keys(fields) as Array<keyof typeof fields>)
-    .map((k) => String(CONFIG_LABEL()[k]) + '：' + String(fields[k])).join('、');
+  const after = listJoin(currentRenderLanguage(), (Object.keys(fields) as Array<keyof typeof fields>)
+    .map((k) => String(CONFIG_LABEL()[k]) + '：' + String(fields[k])));
   const summary = m('skill-calorie.workout-write.c133', { p0: String(after) });
   // `#944` 边角一次收口：回执带上与预检页同源的影响话术（`CONFIG_IMPACT`，同一处定义），免得对账回头翻预检页。
   const impact = (Object.keys(fields) as Array<keyof ReturnType<typeof CONFIG_IMPACT>>)
@@ -625,7 +626,7 @@ export function writePlanDeleteDay(params: Record<string, unknown>, db: Database
   const plan = getPlan(db);
   const daySessions = plan.sessions.filter((s) => s.week_number === wn && s.day_of_week === dn);
   if (daySessions.length === 0) fail(4, m('skill-calorie.workout-write.c156', { p0: String(dayPhrase(wn, dn)) }));
-  const snapshot = daySessions.map((s) => s.session_label || m('skill-calorie.workout-write.c157')).join('、');
+  const snapshot = listJoin(currentRenderLanguage(), daySessions.map((s) => s.session_label || m('skill-calorie.workout-write.c157')));
   if (si !== undefined) {
     const hit = daySessions.filter((s) => s.session_index === si);
     if (hit.length === 0) fail(4, m('skill-calorie.workout-write.c158', { p0: String(dayPhrase(wn, dn)), p1: String(si) }));
@@ -672,7 +673,7 @@ export function writePlanUpdateMovement(params: Record<string, unknown>, db: Dat
     p0: String(String(oldName)),
     p1: String(String(newMove.name)),
     p2: String(n),
-    p3: String(where.slice(0, 4).join('、')),
+    p3: String(listJoin(currentRenderLanguage(), where.slice(0, 4))),
     p4: String(where.length > 4 ? '…' : ''),
   });
   return out(R(m('skill-calorie.workout-write.c176'), 'update', summary, m('skill-calorie.workout-write.c177'), m('skill-calorie.workout-write.c178'), {
