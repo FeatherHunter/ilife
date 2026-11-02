@@ -271,7 +271,7 @@ function figureCard(v: RecordsView): Card {
   return {
     id: 'sec-figures',
     label: m('skill-calorie.exercise-records.c020'),
-    html: '<h2 style="margin:0;font-size:15px;font-weight:700">指标</h2>' + renderKpiGrid([
+    html: '<h2 style="margin:0;font-size:15px;font-weight:700">' + m('skill-calorie.exercise-records.c020') + '</h2>' + renderKpiGrid([
       { label: m('skill-calorie.exercise-records.c021'), value: String(v.sessions), unit: m('skill-calorie.exercise-records.c022') },
       { label: m('skill-calorie.exercise-records.c023'), value: fmtNum(v.totalBurned), unit: m('skill-calorie.exercise-records.c024') },
       { label: m('skill-calorie.exercise-records.c025'), value: v.totalMinutes === null ? '—' : fmtNum(v.totalMinutes, 0), unit: m('skill-calorie.exercise-records.c054') },

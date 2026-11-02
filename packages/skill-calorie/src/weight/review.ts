@@ -483,7 +483,7 @@ function periodStrip(v: WeightReviewPeriodView, n: number, first: string, last: 
   if (n < 2) return '';
   const kg = (x: number | null): string => (x === null ? '—' : String(x)) + ' kg';
   const rows: string[] = [
-    '<span class="wui-fact"><span class="wui-fact-k">开头与最后</span>'
+    '<span class="wui-fact"><span class="wui-fact-k">' + m('skill-calorie.weight-review.c124') + '</span>'
     + pairStrip(first + ' kg', last + ' kg') + '</span>',
   ];
   const ends = [first, last];

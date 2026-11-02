@@ -248,7 +248,7 @@ function dayCard(db: DatabaseSync, date: string): Card | null {
   return {
     id: 'sec-day',
     label: m('skill-calorie.exercise-receipt.c012'),
-    html: '<p class="sui-fields-k">当日累计（写后现值）</p>' + factStrip([
+    html: '<p class="sui-fields-k">' + m('skill-calorie.exercise-receipt.c082') + '</p>' + factStrip([
       { k: m('skill-calorie.exercise-receipt.c013'), v: date },
       // #578：条数带 `（当天）`——计数卡那处 `N 条` 说的是本次，
       // 同屏两处同数不再裸奔（机读 dup 口径逐字比，见 t578 判据②）。
@@ -276,7 +276,7 @@ function sourceCard(receipt: CrudReceipt, dates: readonly string[], fallback: st
   return {
     id: 'sec-source',
     label: m('skill-calorie.exercise-receipt.c019'),
-    html: '<p class="sui-fields-k">数据来源</p>'
+    html: '<p class="sui-fields-k">' + m('skill-calorie.exercise-receipt.c019') + '</p>'
       + factStrip(s === '' ? facts : [{ k: m('skill-calorie.exercise-receipt.c020'), v: s }, ...facts]),
   };
 }

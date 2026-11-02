@@ -73,7 +73,7 @@ export function bodyReadUiCss(): string {
 export function windowBar(windowText: string, chipText?: string): string {
   const chip = chipText === undefined || chipText === ''
     ? '' : '<span class="bru-window-c">' + esc(chipText) + '</span>';
-  return '<div class="bru-window"><span class="bru-window-v">窗口：' + esc(windowText) + '</span>' + chip + '</div>';
+  return '<div class="bru-window"><span class="bru-window-v">' + m('skill-calorie.body-bodyReadUi.c010', { p0: esc(windowText) }) + '</span>' + chip + '</div>';
 }
 
 /** 窄屏横滚提示：只在 640 档出（`.bru-hint` 的宽屏态是 `display:none`）。 */
@@ -173,7 +173,7 @@ export function measureFullTable(
       + escapeHtml(date) + '</span>'
       + (note === '' ? '' : '<span class="msr-note">' + escapeHtml(note) + '</span>')
       + '</div><div class="msr-grid">'
-      + (cells === '' ? '<div class="msr-empty">未填围度</div>' : cells)
+      + (cells === '' ? '<div class="msr-empty">' + m('skill-calorie.body-bodyReadUi.c011') + '</div>' : cells)
       + '</div></div>';
   }).join('');
   return '<div class="msr-table">' + table + '</div><div class="msr-cards">' + cards + '</div>';

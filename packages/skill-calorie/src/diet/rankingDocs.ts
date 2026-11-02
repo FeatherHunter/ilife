@@ -206,7 +206,7 @@ function nutriBlock(items: readonly RankItem[]): string {
       + '<span class="ilife-block-rank-pct">' + escapeHtml(nutriText(it)) + '</span>'
       + '</div>';
   }).join('');
-  return '<h2 class="ilife-block-rank-h2">营养结构（按热量占比）</h2>' + rows;
+  return '<h2 class="ilife-block-rank-h2">' + m('skill-calorie.diet-rankingDocs.c073') + '</h2>' + rows;
 }
 
 /** 页内锚点清单 → 公共层页内导航（锚点与正文同一份清单派生，不手抄第二份 id）。 */

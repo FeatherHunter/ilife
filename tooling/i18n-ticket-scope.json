@@ -7587,7 +7587,7 @@
             "copy": 1,
             "concat": 3
           },
-          "reason": "命令键／属性名常量表（机器键，数据不译）"
+          "reason": "开发报文（badInput 入参/键表校验）"
         },
         {
           "path": "packages/base-render/src/components/bulk-bar/render.ts",
@@ -7614,7 +7614,7 @@
             "copy": 1,
             "concat": 4
           },
-          "reason": "标记拼装（文案在已迁 attrs/style）"
+          "reason": "开发报文（badInput 入参校验）"
         },
         {
           "path": "packages/base-render/src/components/command-palette/model.ts",

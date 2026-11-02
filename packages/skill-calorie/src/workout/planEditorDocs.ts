@@ -32,8 +32,8 @@ export function buildPlanEditorDoc(state: EditorState, opts: {
     renderCaliberLine(m('skill-calorie.workout-planEditorDocs.c001', { p0: String(state.maxSessionsPerDay) })),
     '<div id="pe-root"></div>',
     '<section class="pe-out">'
-      + '<h2 class="pe-out-t">生成的计划，照这张表落库</h2>'
-      + '<div id="pe-out-body"><p class="pe-hint">正在生成。这一块由页面按当前计划渲染。</p></div>'
+      + '<h2 class="pe-out-t">' + m('skill-calorie.workout-planEditorDocs.c007') + '</h2>'
+      + '<div id="pe-out-body"><p class="pe-hint">' + m('skill-calorie.workout-planEditorDocs.c008') + '</p></div>'
       + '</section>',
     planCopyBlock({
       envelope: {

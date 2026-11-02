@@ -137,14 +137,14 @@ function weekSection(index: number, w: PlanWeek): string {
     const dow = i + 1;
     const list = w.sessions.filter((s) => s.day_of_week === dow);
     const body = list.length === 0
-      ? '<p class="ilw-none">' + (dowOf(dow) ?? String(dow)) + ' 不排训练</p>'
+      ? '<p class="ilw-none">' + m('skill-calorie.render-workoutPlanLook.c018', { p0: dowOf(dow) ?? String(dow) }) + '</p>'
       : list.map(sessionCardHtml).join('');
     return '<div class="ilw-day' + (list.length === 0 ? ' ilw-day-empty' : '') + '" data-dow="' + dow + '">'
       + body + '</div>';
   });
   return '<section class="ilw-week" data-wk="' + index + '">'
-    + '<h2 class="ilw-week-head"><span class="ilw-week-n">第 ' + w.week + ' 周</span>'
-    + '<span class="ilw-week-count">' + w.sessions.length + ' 场</span></h2>'
+    + '<h2 class="ilw-week-head"><span class="ilw-week-n">' + m('skill-calorie.render-workoutPlanLook.c008', { p0: String(w.week) }) + '</span>'
+    + '<span class="ilw-week-count">' + m('skill-calorie.workout-receipt.c011', { p0: String(w.sessions.length) }) + '</span></h2>'
     + radios(prefix, 'ilw-dyr', items)
     + tabRow('ilw-day-tabs', 'ilw-day-tab', items, m('skill-calorie.render-workoutPlanLook.c007'))
     + panes.join('')

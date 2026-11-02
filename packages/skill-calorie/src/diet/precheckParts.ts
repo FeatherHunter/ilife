@@ -75,7 +75,7 @@ export function writeTargetBlock(
       rows: rows.map((r) => ({ field: cnOf(r.field), value: r.value })),
       caption,
       emptyText: m('skill-calorie.diet-precheckParts.c003'),
-    }) + '<p class="precheck-note">确认无误之后，要跑的那条命令在下方「复制日志」的第 4 段里，照抄即可重跑。</p>',
+    }) + '<p class="precheck-note">' + m('skill-calorie.diet-precheckParts.c019') + '</p>',
   });
 }
 

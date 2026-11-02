@@ -230,7 +230,7 @@ function bTechNote(v: MultiTrendView): string {
 function bTargetLegend(v: MultiTrendView): string {
   const t = v.target.calorieGoal;
   if (t === null) return '';
-  return '<div class="legend"><span><i class="b"></i>目标' + t + '卡</span></div>';
+  return '<div class="legend"><span><i class="b"></i>' + m('skill-calorie.analysis-multiTrendPage.c075', { p0: String(t) }) + '</span></div>';
 }
 
 /** B线按月汇总（年度页明细折叠前的总表用）。
@@ -397,7 +397,7 @@ function buildBDoc(v: MultiTrendView): string {
       emptyText: m('skill-calorie.analysis-multiTrendPage.c063'),
     }));
     if (monthly.emptyMonths > 0) {
-      parts.push('<div class="legend"><span>其余 ' + monthly.emptyMonths + ' 个月没有记录</span></div>');
+      parts.push('<div class="legend"><span>' + m('skill-calorie.analysis-multiTrendPage.c076', { p0: String(monthly.emptyMonths) }) + '</span></div>');
     }
     parts.push(renderDisclosure({
       /* #160 返工④：折叠标题与 pair 页同款「每天一行」（`trendDocs.ts` 同一句），并在括号里报窗口天数；

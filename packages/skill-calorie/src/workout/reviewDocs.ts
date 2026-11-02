@@ -81,7 +81,7 @@ function toneOf(pct: number | null): string {
 function dateCell(iso: string): string {
   const [, mo, dd] = iso.split('-');
   return '<span class="ilr-cell-date">' + Number(mo) + '/' + Number(dd)
-    + '<span class="ilr-cell-dow"> 周' + DOW_CN[dowOf(iso)] + '</span></span>';
+    + '<span class="ilr-cell-dow"> ' + m('skill-calorie.render-workoutPlanLook.c003', { p0: DOW_CN[dowOf(iso)] }) + '</span></span>';
 }
 
 /** 窗口条：这一页看的是哪一段。两枚日期块 ＋ 箭头 ＋ 天数胶囊（原来靠 `~` 与 `·` 串在一行字里）。
@@ -91,7 +91,7 @@ function windowStrip(start: string, end: string, days: number): string {
     + '<span class="ilr-date">' + start + '</span>'
     + '<span class="ilr-arrow">→</span>'
     + '<span class="ilr-date">' + end + '</span>'
-    + '<span class="ilr-pill">' + days + ' 天</span>'
+    + '<span class="ilr-pill">' + m('skill-calorie.render-html.c009', { p0: String(days) }) + '</span>'
     + '</div>';
 }
 
@@ -148,16 +148,16 @@ function heatmapSection(v: ReviewView, all: readonly string[]): string {
     // 无安排＝「未排训练」：窗内没排到（含计划的休息日与计划外的日子）。不写「休息日」——
     // 库里的休息日是计划主动排的，与「这天压根没排」不是一回事，页面不替它们编同一句话。
     if (s === undefined) return heatCell(d, 'ilr-rest', m('skill-calorie.workout-reviewDocs.c006'));
-    return s.hit ? heatCell(d, 'ilr-done', m('skill-calorie.workout-reviewDocs.c007')) : heatCell(d, 'ilr-miss', '未完成');
+    return s.hit ? heatCell(d, 'ilr-done', m('skill-calorie.workout-reviewDocs.c007')) : heatCell(d, 'ilr-miss', m('skill-calorie.workout-reviewDocs.c029'));
   }).join('');
   const note = all.length > shown.length
     ? '<p class="ilr-note">' + heatNote(shown.length, all.length) + '</p>'
     : '';
-  return '<section class="ilr-sec"><h2 class="ilr-sec-title">每日完成情况</h2>'
+  return '<section class="ilr-sec"><h2 class="ilr-sec-title">' + m('skill-calorie.workout-reviewDocs.c030') + '</h2>'
     + '<div class="ilr-hm">' + pads + cells + '</div>'
     + '<div class="ilr-legend">' + legendItem('ilr-dot-done', m('skill-calorie.workout-reviewDocs.c008'))
-    + legendItem('ilr-dot-miss', '未完成') + legendItem('ilr-dot-rest', m('skill-calorie.workout-reviewDocs.c009')) + '</div>'
-    + '<p class="ilr-legend-note">当天有运动记录就算完成，没排到训练的日子单独标出来</p>'
+    + legendItem('ilr-dot-miss', m('skill-calorie.workout-reviewDocs.c029')) + legendItem('ilr-dot-rest', m('skill-calorie.workout-reviewDocs.c009')) + '</div>'
+    + '<p class="ilr-legend-note">' + m('skill-calorie.workout-reviewDocs.c031') + '</p>'
     + note + '</section>';
 }
 
@@ -169,7 +169,7 @@ function detailRow(s: PlannedSession): Record<string, string> {
     label: s.label === '' ? m('skill-calorie.workout-reviewDocs.c011') : s.label,
     moves: s.movements.length === 0 ? DASH : listJoin(currentRenderLanguage(), s.movements),
     actual: s.actualTypes.length === 0 ? DASH : listJoin(currentRenderLanguage(), s.actualTypes),
-    hit: s.hit ? m('skill-calorie.workout-reviewDocs.c012') : '未完成',
+    hit: s.hit ? m('skill-calorie.workout-reviewDocs.c012') : m('skill-calorie.workout-reviewDocs.c029'),
   };
 }
 
@@ -233,7 +233,7 @@ export function buildReviewDoc(v: ReviewView): string {
         items: v.unhit.map((s) => ({
           left: s.date,
           main: (s.label === '' ? m('skill-calorie.workout-reviewDocs.c023') : s.label) + (s.movements.length > 0 ? '：' + listJoin(currentRenderLanguage(), s.movements) : ''),
-          right: '未完成',
+          right: m('skill-calorie.workout-reviewDocs.c029'),
         })),
       }),
     }));

@@ -35,7 +35,7 @@ export interface ReadArgs {
   formatLanguage: string | undefined;
 }
 
-const USAGE = '用法：cmd_read <calorie.key> [--params JSON对象] [--html 输出路径] [--timeout 毫秒] [--language zh|en]';
+const USAGE = m('skill-calorie.cli-readArgs.c007');
 
 function parseArgs(a: string[]): ReadArgs {
   const o: ReadArgs = {

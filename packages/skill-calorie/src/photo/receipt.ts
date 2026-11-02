@@ -269,7 +269,7 @@ function shotRowsOf(receipt: CrudReceipt, byName: ReadonlyMap<string, PhotoEmbed
     const media = e !== undefined && e.dataUri !== null
       ? '<img src="' + e.dataUri + '" alt="' + m('skill-calorie.photo-receipt.c069') + '"'
         + ' style="max-width:100%;max-height:240px;height:auto" />'
-      : '<div class="phr-shot-miss">这一张的原图没能放进页面</div>';
+      : '<div class="phr-shot-miss">' + m('skill-calorie.photo-receipt.c071') + '</div>';
     blocks.push(shotBlock('ok', media + renderListRows({
       items: [{ left: idTextOf(it.id), main: it.file ?? '—', right: m('skill-calorie.photo-receipt.c052') }],
     })));
@@ -318,7 +318,7 @@ function removeSnapshotOf(receipt: CrudReceipt, embed: PhotoEmbed | null): strin
     // #484：图给宽度约束＋缩略级上限（判据钉死这一处 240px）。
     ? '<div class="phr-shot-stage"><img src="' + embed.dataUri + '" alt="' + m('skill-calorie.photo-receipt.c070') + '"'
       + ' style="max-width:100%;max-height:240px;height:auto" /></div>'
-    : '<div class="phr-shot-stage"><span>这张图没能留下来（原图已经随删除一起移走了）</span></div>';
+    : '<div class="phr-shot-stage"><span>' + m('skill-calorie.photo-receipt.c072') + '</span></div>';
   return sectionTitle(m('skill-calorie.photo-receipt.c057')) + img
     + labelChips(m('skill-calorie.photo-receipt.c058'), tagListOf(it?.tagList))
     + factRows([
