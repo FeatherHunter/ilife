@@ -147,7 +147,12 @@ test('#1306 真仓库读数：四道 i18n 门 exit 0 且报真读数', () => {
 });
 
 test('#1306 两道带自证的门：--selftest 自证都过（红绿样例随门走，不靠人手复现）', () => {
-  const expected = { 'check-i18n-entries.mjs': /九条自证 OK/, 'check-i18n-params.mjs': /十条自证 OK/ };
+  const expected = {
+    'check-i18n-entries.mjs': /十一条自证 OK/,
+    'check-i18n-params.mjs': /十条自证 OK/,
+    'check-typography-langs.mjs': /十条自证 OK/,
+    'i18n-anchor.mjs': /四条自证 OK/,
+  };
   for (const [gate, tag] of Object.entries(expected)) {
     const r = spawnSync(NODE, [join(ROOT, 'tooling', gate), '--selftest'], { encoding: 'utf8', cwd: ROOT });
     assert.equal(r.status, 0, gate + ' --selftest 必须 exit 0：' + r.stderr + r.stdout);

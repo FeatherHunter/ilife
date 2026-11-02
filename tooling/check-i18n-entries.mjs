@@ -20,9 +20,13 @@
  *      与 packages/base-entries/src/resolve.ts 同口径：空白值视同未录，回退链取下一站；门禁则两头都不放行。
  *   ⑦ 范围清单 allowlist 里的串**不进「该进词条」的判据**（#1205）：豁免只给「语义上本就不该进词条的位」——
  *      命令关键字冻结、协议字段值、派生件。按串全等屏蔽，抽取阶段就剔除，不是判红后再放过。
- *   ⑧ **按包判归属**（#1199 S10）：key 在「这件文件 import 的那份词条表」里有没有，不是全仓并集有没有。
- *      命名空间＝包名（ADR-0004 §3）：跨包同名 key 不是同一条词条，拿别包的表判「本包有没有」会把缺失藏掉。
- *      归属怎么判：相对 import 进 `…/entries/(index|<语言>).js` 的按解析后的包判；否则按文件自身所属包判。
+ *   ⑧ **按包判归属**（#1199 S10）：key 在「本包表 ∪ 这件文件显式 import 的别包 catalog」里有没有，
+ *      不是全仓并集有没有。命名空间＝包名（ADR-0004 §3）：跨包同名 key 不是同一条词条，拿别包的表判
+ *      「本包有没有」会把缺失藏掉。
+ *      归属怎么判：① 本包表（`packages/<本包>/src/entries/<语言>.*`）**始终**算一处；
+ *      ② 相对 import 进 `…/entries/(index|<语言>).js` 的，按解析后的包再算一处；import 里点名的
+ *      catalog 标识（`import { X_CATALOG } from '…/entries/index.js'`）要在目标包的 `src/entries/index.ts`
+ *      里真导出过，拼错／指错包 ⇒ 报盲（门判不了这个 import，不许当有）。
  *      判不出归属（仓库根夹具件只 import base-entries）→ 回退跨包并集，夹具口径，真范围不出现。
  *
  * 用法：
@@ -130,38 +134,81 @@ function resolvePosix(baseDir, spec) {
   return out.join('/');
 }
 
+/** 某个包的 `src/entries/index.ts` 是否导出过这个标识（catalog 名）。
+ *  返回 true／false；文件不在（还没建索引）返回 null——判不了就不判，不猜缺也不猜有。 */
+export function catalogExports(root, pkg, id) {
+  for (const ext of ['ts', 'js']) {
+    const p = join(root, 'packages', pkg, 'src', 'entries', 'index.' + ext);
+    if (!existsSync(p)) continue;
+    const src = readFileSync(p, 'utf8');
+    // `export * from`：再导出集合看不出来，按「有」算（不猜缺；真缺由词条表判据兜）。
+    if (/export\s*\*\s*from/.test(src)) return true;
+    const decl = new RegExp('export\\s+(?:declare\\s+)?(?:const|let|var|function|class|type|interface|enum)\\s+' + id + '\\b');
+    if (decl.test(src)) return true;
+    const named = /export\s*\{([^}]*)\}/g;
+    let g;
+    while ((g = named.exec(src)) !== null) {
+      if (new RegExp('\\b' + id + '\\b').test(g[1])) return true;
+    }
+    return false;
+  }
+  return null;
+}
+
+/** 从 import 子句里摘 `{ A, type B, C as D }` 的本地标识（`type` 前缀剥掉；`* as ns` 摘不出就不摘）。 */
+function namedIds(clause) {
+  const t = String(clause || '').trim();
+  if (!t.startsWith('{')) return [];
+  return t.replace(/^\{/, '').replace(/\}$/, '').split(',')
+    .map((s) => s.trim().replace(/^type\s+/, '').split(/\s+as\s+/).pop().trim())
+    .filter((s) => /^[A-Za-z_$][\w$]*$/.test(s));
+}
+
 /**
- * 一件源文件的词条表归属包（#1199 S10：命名空间＝包名，key 得在**这件文件 import 的那份表**里）。
+ * 一件源文件的词条表归属（#1199 S10：命名空间＝包名，key 得在**本包表 ∪ 显式 import 的别包 catalog**里）。
  *
- *   ① 相对 import 进 `…/entries/(index|<语言>).js`：按解析后的路径判归属（`packages/<包>/src/entries/…`）——
- *      查询的是被 import 的那份表，归属跟着 import 走，不跟文件所在包走（组件跨包复用表时也不问错表）；
- *   ② 没有相对词条表 import：用文件自身所属包（同包表就近 import 的另一种写法）；
- *   ③ 都判不出（仓库根夹具件只 import base-entries）：返回 null，调用方回退跨包并集——夹具口径，真范围不出现。
- *   ④ import 了非相对路径的词条表：判不出归属，返回 `{ foreign }` 让调用方报盲（不静默猜）。
+ *   ① 本包表**始终**算一处（文件自身所属包）；
+ *   ② 相对 import 进 `…/entries/(index|<语言>).js`：按解析后的路径再算一处（组件跨包复用表时也不问错表）；
+ *   ③ import 里点名的 catalog 标识要在目标包的 `src/entries/index.ts` 里真导出过——拼错／指错包就报盲
+ *      （分不清这份 import 指哪张表，判不了，不当有）；
+ *   ④ 判不出归属（仓库根夹具件只 import base-entries）：返回 `{ packages: null }`，调用方回退跨包并集；
+ *   ⑤ import 了非相对路径的词条表：返回 `{ foreign }` 让调用方报盲（门不做 node 解析，不静默猜）。
+ *
+ *  返回 { packages: [包名…] | null, foreign, blind: [{why}] }。
  */
-export function catalogsOfSource(rel, source) {
+export function catalogsOfSource(rel, source, root = ROOT_DIR) {
   const norm = rel.replace(/\\/g, '/');
   const dir = norm.includes('/') ? norm.slice(0, norm.lastIndexOf('/')) : '';
   const pkgs = new Set();
+  const blind = [];
   let foreign = null;
-  const specRe = /from\s*['"]([^'"]+)['"]/g;
-  let m;
-  while ((m = specRe.exec(source)) !== null) {
-    const spec = m[1];
-    if (!/\/entries\/(?:index|[a-z-]+)\.js$/.test(spec)) continue;
-    if (spec.startsWith('.')) {
-      const target = resolvePosix(dir, spec);
-      const hit = /^packages\/([^/]+)\/src\/entries\//.exec(target);
-      if (hit) pkgs.add(hit[1]);
-      continue;
-    }
-    // 非相对路径（包名子路径）词条表：门不做 node 解析，判不出归属就显式报盲。
-    foreign = spec;
-  }
-  if (pkgs.size > 0) return { packages: [...pkgs].sort(), foreign: null };
   const own = packageOfSource(norm);
-  if (own !== undefined) return { packages: [own], foreign: null };
-  return { packages: null, foreign };
+  if (own !== undefined) pkgs.add(own); // ① 本包表始终算一处
+  const impRe = /import\s+(?:type\s+)?([^;'"]*?)\s*from\s*['"]([^'"]+)['"]/g;
+  let m;
+  while ((m = impRe.exec(source)) !== null) {
+    const clause = m[1];
+    const spec = m[2];
+    if (!/\/entries\/(?:index|[a-z-]+)\.js$/.test(spec)) continue;
+    if (!spec.startsWith('.')) { foreign = spec; continue; } // ⑤ 非相对路径：判不出归属
+    const target = resolvePosix(dir, spec);
+    const hit = /^packages\/([^/]+)\/(?:src|dist)\/entries\//.exec(target);
+    if (!hit) continue;
+    const pkg = hit[1];
+    pkgs.add(pkg); // ② 被 import 的那份表
+    if (!target.includes('/src/entries/')) continue; // dist 引用：只认包，不查标识
+    for (const id of namedIds(clause)) {
+      if (!/_CATALOG$/.test(id)) continue; // 只查 catalog 标识（类型名与 m 之类不查）
+      const ok = catalogExports(root, pkg, id); // ③ 标识必须真导出
+      if (ok === false) {
+        blind.push({ why: 'import 的 catalog 标识 ' + id + ' 在 packages/' + pkg + '/src/entries/index.ts 里没导出（拼错或指错包）' });
+      }
+    }
+  }
+  const list = [...pkgs].sort();
+  if (list.length > 0) return { packages: list, foreign: null, blind };
+  if (foreign !== null) return { packages: null, foreign, blind };
+  return { packages: null, foreign, blind };
 }
 
 /** 词条表在哪儿／长什么样／哪些值算「未录」：唯一实现搬到 tooling/i18n-tables.mjs（占位符门同用一份）。
@@ -220,7 +267,9 @@ export function audit(scope, root = ROOT_DIR, langs = LANGUAGES) {
     const ks = extracted.filter((k) => !allow.has(k));
     files.push({ file: rel, keys: ks });
     for (const k of ks) keys.add(k);
-    const cat = catalogsOfSource(rel, src);
+    const cat = catalogsOfSource(rel, src, root);
+    // ③ 标识对不上（import 点名的 catalog 在目标包里没导出）：门判不了这份 import 指哪张表，报盲。
+    for (const b of cat.blind) blind.push({ file: rel, why: b.why });
     if (cat.packages === null && cat.foreign !== null) {
       blind.push({ file: rel, why: 'import 了非相对路径的词条表（' + cat.foreign + '），门判不出归属：词条表须按包就近相对 import' });
       continue;
@@ -232,24 +281,23 @@ export function audit(scope, root = ROOT_DIR, langs = LANGUAGES) {
           if (!unions.get(lang).has(k)) missing.push({ file: rel, key: k, lang });
           continue;
         }
-        let known = false;
-        let found = false;
-        let tableAbsent = false;
+        // 本包表 ∪ 显式 import 的别包 catalog：**任一处**有这个 key 就算有（同一 key 跨包各自有值也兼容）。
+        const tables = [];
         for (const pkg of cat.packages) {
           const table = byPkg.packages.get(pkg)?.get(lang);
-          if (!table) { tableAbsent = true; continue; }
-          known = true;
-          if (table.entries.has(k)) { found = true; break; }
+          if (table) tables.push({ pkg, table });
         }
-        if (tableAbsent) {
+        if (tables.length === 0) {
           const tag = cat.packages.join('+') + '@' + lang;
           if (!missingTablesOfPkg.has(tag)) {
             missingTablesOfPkg.add(tag);
-            tableErrors.push({ lang, why: '包 ' + cat.packages.join('、') + ' 没建 ' + lang + ' 词条表（没有表就判不了缺词条）' });
+            tableErrors.push({ lang, why: '包 ' + cat.packages.join('、') + ' 都没建 ' + lang + ' 词条表（没有表就判不了缺词条）' });
           }
           continue;
         }
-        if (known && !found) missing.push({ file: rel, key: k, lang, pkg: cat.packages.join('+') });
+        if (!tables.some(({ table }) => table.entries.has(k))) {
+          missing.push({ file: rel, key: k, lang, pkg: tables.map((t) => t.pkg).join('+') });
+        }
       }
     }
   }
@@ -391,11 +439,46 @@ function selftest(scope) {
     const betaGood = audit({ files: ['packages/beta/src/use.ts'] }, tmp);
     want(betaGood.missing.length === 0, '本包表补上后必须零缺（实得 ' + betaGood.missing.length + '）');
     console.log('SELFTEST 按包归属读数：跨包藏缺 missing=' + betaBad.missing.length + '／本包补上后 missing=' + betaGood.missing.length);
+    // ⑩ 本包表 ∪ 显式 import 的别包 catalog（#1199 S10 补强）：gamma 包自己没有词条表，
+    //     文件显式 import delta 包的 DELTA_CATALOG —— key 在 delta 表里有＝有（绿），没有＝缺（红）。
+    const deltaDir = join(tmp, 'packages', 'delta', 'src', 'entries');
+    const gammaDir = join(tmp, 'packages', 'gamma', 'src');
+    mkdirSync(deltaDir, { recursive: true });
+    mkdirSync(join(gammaDir, 'entries'), { recursive: true });
+    writeFileSync(join(deltaDir, 'zh.json'), JSON.stringify({ 'demo.shared': '共享' }), 'utf8');
+    writeFileSync(join(deltaDir, 'en.json'), JSON.stringify({ 'demo.shared': 'Shared' }), 'utf8');
+    writeFileSync(join(deltaDir, 'index.ts'), "import { zh } from './zh.js';\nimport { en } from './en.js';\nexport const DELTA_CATALOG = defineCatalog({ zh, en });\n", 'utf8');
+    writeFileSync(join(gammaDir, 'entries', 'index.ts'), "export const GAMMA_CATALOG = defineCatalog({ zh: {}, en: {} });\n", 'utf8');
+    writeFileSync(join(gammaDir, 'use.ts'), [
+      "import { resolve } from 'base-entries';",
+      "import { DELTA_CATALOG } from '../../delta/src/entries/index.js';",
+      "export const a = resolve(DELTA_CATALOG, 'zh', 'demo.shared');",
+    ].join(nl), 'utf8');
+    const viaImport = audit({ files: ['packages/gamma/src/use.ts'] }, tmp);
+    want(viaImport.missing.length === 0, '显式 import 的别包 catalog 里有这个 key 必须算有（实得 missing=' + viaImport.missing.length + '）');
+    want(viaImport.blind.length === 0, 'catalog 标识真导出过就不许报盲（实得 ' + JSON.stringify(viaImport.blind) + '）');
+    writeFileSync(join(deltaDir, 'zh.json'), JSON.stringify({ 'demo.other': '别的' }), 'utf8');
+    writeFileSync(join(deltaDir, 'en.json'), JSON.stringify({ 'demo.other': 'Other' }), 'utf8');
+    const importMiss = audit({ files: ['packages/gamma/src/use.ts'] }, tmp);
+    want(importMiss.missing.length === 2, 'import 的那张表里没有这个 key 必须在 2 门语言里判缺（实得 ' + importMiss.missing.length + '）');
+    want(importMiss.missing.every((m) => m.pkg === 'delta'), '缺词条必须点名判据包 delta（实得 ' + JSON.stringify(importMiss.missing.map((m) => m.pkg)) + '）');
+    console.log('SELFTEST 别包 catalog 读数：表里有 missing=' + viaImport.missing.length + '／表里没有 missing=' + importMiss.missing.length);
+    // ⑪ import 点名的 catalog 标识在目标包里没导出：门判不了这份 import 指哪张表 → 必须报盲，不许当有。
+    const gammaWrite = join(gammaDir, 'write');
+    mkdirSync(gammaWrite, { recursive: true });
+    writeFileSync(join(gammaWrite, 'use.ts'), [
+      "import { resolve } from 'base-entries';",
+      "import { NOPE_CATALOG } from '../entries/index.js';",
+      "export const a = resolve(NOPE_CATALOG, 'zh', 'demo.shared');",
+    ].join(nl), 'utf8');
+    const idBlind = audit({ files: ['packages/gamma/src/write/use.ts'] }, tmp);
+    want(idBlind.blind.some((b) => /NOPE_CATALOG/.test(b.why)), 'import 的 catalog 标识没导出必须报盲（实得 ' + JSON.stringify(idBlind.blind) + '）');
+    console.log('SELFTEST 标识核对读数：blind=' + idBlind.blind.length + '（' + idBlind.blind.map((b) => b.why).join('；') + '）');
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
   if (bad.length) { for (const b of bad) console.error('SELFTEST FAIL ' + b); process.exit(1); }
-  console.log('SELFTEST: 空范围显式报数／缺词条必红／补上必绿／没迁完必红／缺表必红／失明必红／空白词条必红／allowlist 剔除／按包归属 九条自证 OK');
+  console.log('SELFTEST: 空范围显式报数／缺词条必红／补上必绿／没迁完必红／缺表必红／失明必红／空白词条必红／allowlist 剔除／按包归属／别包 catalog 计入／catalog 标识核对 十一条自证 OK');
 }
 
 /** 入口守卫（照 tooling/i18n-langs.mjs／skill-html-snapshot.mjs 的先例）：本件被别处 import 时**不跑** CLI，
