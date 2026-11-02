@@ -114,7 +114,7 @@ function str(v: unknown): string { return typeof v === 'string' ? v : ''; }
 function parseRow(name: string, count: unknown): RecRow {
   const parsed = str(name).match(/盘点#(\d+)\s*(.*)/);
   const raw = parsed ? parsed[2].trim() : '';
-  const scope = raw === '' || raw === 'all' ? '全屋' : raw === 'location' ? '按位置' : raw;
+  const scope = raw === '' || raw === 'all' ? m('skill-home.items-pages-inventory-records.c022') : raw === 'location' ? m('skill-home.items-pages-inventory-records.c023') : raw;
   return {
     id: parsed ? parsed[1] : '—',
     scope,

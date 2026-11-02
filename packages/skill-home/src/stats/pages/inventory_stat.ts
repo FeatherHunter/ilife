@@ -209,7 +209,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const sug = '<div class="st st-sug">' + (records === 0 ? L.k016 : diffTotal > 0 ? L.k015 : L.k014) + '</div>';
   // #865：明细逐条出（时间／范围／缺／多／异／状态），范围照老页面的写法归一成中文；
   // 「异」与「状态」两列本库盘点表还没有（老库权威 DDL 里有，落库另票），缺列时不占位、只用一行说明点出。
-  const scopeCn = (s: string, loc: string): string => (s === '' || s === 'all' ? '全屋' : s === 'location' ? (loc || '按位置') : s);
+  const scopeCn = (s: string, loc: string): string => (s === '' || s === 'all' ? m('skill-home.stats-pages-inventory-stat.c057') : s === 'location' ? (loc || m('skill-home.stats-pages-inventory-stat.c058')) : s);
   const missCols = [rows.some((r) => r.diff === null) ? m('skill-home.stats-pages-inventory-stat.c048') : '', rows.some((r) => !r.status) ? m('skill-home.stats-pages-inventory-stat.c049') : ''].filter(Boolean);
   const detailRows = rows.map((r) => '<div class="st-drow">' + '<div class="st-dhead">' + '<span class="st-dname">' + escapeHtml(latinFree(scopeCn(r.scope, r.location))) + '</span>' + '<span class="st-hint">' + escapeHtml(String(r.date || '')) + '</span>' + '</div>' + '<div class="st-dcells">' + '<span class="st-dcell">' + '<b>' + L.k017 + '</b>' + r.missing + '</span>' + '<span class="st-dcell">' + '<b>' + L.k018 + '</b>' + r.extra + '</span>' + (r.diff === null ? '' : '<span class="st-dcell">' + '<b>' + L.k019 + '</b>' + r.diff + '</span>') + (r.status ? '<span class="st-dcell">' + '<b>' + L.k020 + '</b>' + escapeHtml(latinFree(r.status)) + '</span>' : '') + '</div>' + '</div>').join('');
   const detail = records > 0

@@ -44,7 +44,7 @@ function pageText() {
     k018: m('skill-home.receipt-pages-accounts.c018'),
     k019: m('skill-home.receipt-pages-accounts.c019'),
     k020: m('skill-home.receipt-pages-accounts.c020'),
-    k021: '复制数据',
+    k021: m('skill-home.render-copyArea.c010'),
     k022: m('skill-home.receipt-pages-accounts.c021'),
     k023: m('skill-home.receipt-pages-accounts.c022'),
   };

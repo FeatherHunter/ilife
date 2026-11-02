@@ -651,6 +651,7 @@ export const en = {
   'skill-home.items-pages-add-form.c031': "Status options",
   'skill-home.items-pages-add-form.c032': "Next step",
   'skill-home.items-pages-add-form.c033': "List:",
+  'skill-home.items-pages-add-form.c034': "At home",
   /* ── packages/skill-home/src/items/pages/browse.ts（--files 迁入） ── */
   'skill-home.items-pages-browse.c001': "Uncategorized",
   'skill-home.items-pages-browse.c002': "Load the Home Manager skill and browse the {p0} group",
@@ -1160,6 +1161,8 @@ export const en = {
   'skill-home.items-pages-inventory-records.c019': "Inventory records | {p0} | {p1} records",
   'skill-home.items-pages-inventory-records.c020': " | {p0}",
   'skill-home.items-pages-inventory-records.c021': ", ",
+  'skill-home.items-pages-inventory-records.c022': "Whole home",
+  'skill-home.items-pages-inventory-records.c023': "By location",
   'skill-home.items-pages-inventory-round.c001': "Fill in, then confirm to finish",
   'skill-home.items-pages-inventory-round.c002': "Check each item: here / not here / unsure; a different count counts as off",
   'skill-home.items-pages-inventory-round.c003': "Scope",
@@ -1190,6 +1193,9 @@ export const en = {
   'skill-home.items-pages-inventory-round.c028': "Load the Home Manager skill and finish an inventory (wake word: inventory):\n\n  Record: {p0}\n  Here: ______\n  Not here: ______\n  Unsure: ______",
   'skill-home.items-pages-inventory-round.c029': "Load the Home Manager skill and view inventory records (wake word: inventory records):",
   'skill-home.items-pages-inventory-round.c030': "Inventory | {p0} | Record {p1} | Scope {p2} | List {p3}",
+  /* ── packages/skill-home/src/items/pages/inventory_round.ts（#1320 迁入） ── */
+  'skill-home.items-pages-inventory-round.c031': "Whole home",
+  'skill-home.items-pages-inventory-round.c032': "By location",
   /* ── packages/skill-home/src/express/pages/express.ts（--files 迁入） ── */
   'skill-home.express-pages-express.c001': "Express shopping",
   'skill-home.express-pages-express.c002': "Parcel tracking",
@@ -1289,6 +1295,7 @@ export const en = {
   'skill-home.express-pages-missing.c027': "Buy",
   'skill-home.express-pages-missing.c028': "Please load the Home Keeper skill and add the out-of-stock items to the shopping list:",
   'skill-home.express-pages-missing.c029': "Number",
+  'skill-home.express-pages-missing.c030': "Whole home",
   /* ── packages/skill-home/src/express/pages/stock.ts（--files 迁入） ── */
   'skill-home.express-pages-stock.c001': "Express shopping",
   'skill-home.express-pages-stock.c002': "Stocktake",
@@ -1377,6 +1384,12 @@ export const en = {
   'skill-home.outfit-pages-outfit-picker.c051': "Bottom",
   'skill-home.outfit-pages-outfit-picker.c052': "Hat",
   'skill-home.outfit-pages-outfit-picker.c053': "Accessory",
+  'skill-home.outfit-pages-outfit-picker.c054': "Custom",
+  'skill-home.outfit-pages-outfit-picker.c055': "Formal",
+  'skill-home.outfit-pages-outfit-picker.c056': "Home",
+  'skill-home.outfit-pages-outfit-picker.c057': "Sport",
+  'skill-home.outfit-pages-outfit-picker.c058': "Date",
+  'skill-home.outfit-pages-outfit-picker.c059': "Work",
   /* ── packages/skill-home/src/outfit/pages/travel_trip.ts（--files 迁入） ── */
   'skill-home.outfit-pages-travel-trip.c001': "{p0} days",
   'skill-home.outfit-pages-travel-trip.c002': "{p0} items on the list",
@@ -1418,6 +1431,7 @@ export const en = {
   'skill-home.outfit-pages-travel-trip.c038': "List item card (name, qty, location, reason)",
   'skill-home.outfit-pages-travel-trip.c039': "Select items first",
   'skill-home.outfit-pages-travel-trip.c040': " missing: {p0}",
+  'skill-home.outfit-pages-travel-trip.c041': "Travel",
   /* ── packages/skill-home/src/outfit/pages/trip_outfit_plan.ts（--files 迁入） ── */
   'skill-home.outfit-pages-trip-outfit-plan.c001': "{p0} days total",
   'skill-home.outfit-pages-trip-outfit-plan.c002': "{p0} packed",
@@ -1467,6 +1481,7 @@ export const en = {
   'skill-home.outfit-pages-trip-outfit-plan.c046': "Bottom",
   'skill-home.outfit-pages-trip-outfit-plan.c047': "Hat",
   'skill-home.outfit-pages-trip-outfit-plan.c048': "Accessory",
+  'skill-home.outfit-pages-trip-outfit-plan.c049': "Wear",
   /* ── packages/skill-home/src/outfit/pages/wardrobe_analyze.ts（--files 迁入） ── */
   'skill-home.outfit-pages-wardrobe-analyze.c001': "Wardrobe breakdown",
   'skill-home.outfit-pages-wardrobe-analyze.c002': "No clothes at home yet; log the first batch, then check the breakdown",
@@ -1848,6 +1863,7 @@ export const en = {
   'skill-home.setup-pages-import-restore.c040': "Status",
   'skill-home.setup-pages-import-restore.c041': "Each step has three states: done, in progress, and to do. The cards show where you are.",
   'skill-home.setup-pages-import-restore.c042': "Raw receipt",
+  'skill-home.setup-pages-import-restore.c043': "Done",
   /* ── packages/skill-home/src/space/pages/fixed_spot.ts（--files 迁入） ── */
   'skill-home.space-pages-fixed-spot.c001': "{p0} in total",
   'skill-home.space-pages-fixed-spot.c002': "Frequently used items are anchored to fixed spots; this list is what makes emergency lookup fast",
@@ -1930,6 +1946,7 @@ export const en = {
   'skill-home.space-pages-space-view.c032': "Copy storage advice",
   'skill-home.space-pages-space-view.c033': "Please load the \"Home Keeper\" skill and create a location for me:\nLocation: to fill",
   'skill-home.space-pages-space-view.c034': "(whole home)",
+  'skill-home.space-pages-space-view.c035': "Whole home",
   /* ── packages/skill-home/src/space/pages/suggest_storage.ts（--files 迁入） ── */
   'skill-home.space-pages-suggest-storage.c001': "{p0} in total",
   'skill-home.space-pages-suggest-storage.c002': "Recommendations come from the usual spot per category; accept one to run the move flow",
@@ -2130,6 +2147,8 @@ export const en = {
   'skill-home.stats-pages-inventory-stat.c054': "Error: data parse failed, data check failed",
   'skill-home.stats-pages-inventory-stat.c055': "Count details (time, range, missing, extra, diff, status)",
   'skill-home.stats-pages-inventory-stat.c056': "Smart advice",
+  'skill-home.stats-pages-inventory-stat.c057': "Whole home",
+  'skill-home.stats-pages-inventory-stat.c058': "By location",
   /* ── packages/skill-home/src/stats/pages/overview.ts（--files 迁入） ── */
   'skill-home.stats-pages-overview.c001': "Stats overview",
   'skill-home.stats-pages-overview.c002': "Item stats",

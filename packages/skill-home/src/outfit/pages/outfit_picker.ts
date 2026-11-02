@@ -25,12 +25,12 @@ function pageText() {
     k006: m('skill-home.outfit-pages-outfit-picker.c006'),
     k007: m('skill-home.outfit-pages-outfit-picker.c007'),
     k008: m('skill-home.outfit-pages-outfit-picker.c008'),
-    k009: '自定义',
-    k010: '正式',
-    k011: '家居',
-    k012: '运动',
-    k013: '约会',
-    k014: '上班',
+    k009: m('skill-home.outfit-pages-outfit-picker.c054'),
+    k010: m('skill-home.outfit-pages-outfit-picker.c055'),
+    k011: m('skill-home.outfit-pages-outfit-picker.c056'),
+    k012: m('skill-home.outfit-pages-outfit-picker.c057'),
+    k013: m('skill-home.outfit-pages-outfit-picker.c058'),
+    k014: m('skill-home.outfit-pages-outfit-picker.c059'),
     k015: m('skill-home.outfit-pages-outfit-picker.c009'),
     k016: m('skill-home.outfit-pages-outfit-picker.c010'),
     k017: m('skill-home.outfit-pages-outfit-picker.c011'),
@@ -110,9 +110,11 @@ function sectionOf(group: 'fields' | 'operations' | 'empty' | 'status', title: s
 type Card = { id: number; name: string; location: string; quantity: number; status: string; category: string; tags: string };
 type OutfitSet = { style: string; reason: string; slots: Partial<Record<string, Card>> };
 const SLOT_ORDER = ['outer', 'inner', 'bottom', 'shoes', 'hat', 'acce'];
+/** 场合码（数据位）：`data-occ` 取值与 `occasion` 比较都用中文码，可见标签走词条（#1320）。 */
+const OCC_CODES = ['上班', '约会', '运动', '家居', '正式', '自定义'];
 /** 本页可见文案（渲染期取词：写成函数，模块加载时不取词）。 */
 function slotLabel(): Record<string, string> {
-  return { outer: m('skill-home.outfit-pages-outfit-picker.c049'), inner: m('skill-home.outfit-pages-outfit-picker.c050'), bottom: m('skill-home.outfit-pages-outfit-picker.c051'), shoes: '鞋', hat: m('skill-home.outfit-pages-outfit-picker.c052'), acce: m('skill-home.outfit-pages-outfit-picker.c053') };
+  return { outer: m('skill-home.outfit-pages-outfit-picker.c049'), inner: m('skill-home.outfit-pages-outfit-picker.c050'), bottom: m('skill-home.outfit-pages-outfit-picker.c051'), shoes: m('skill-home.outfit-outfit.c030'), hat: m('skill-home.outfit-pages-outfit-picker.c052'), acce: m('skill-home.outfit-pages-outfit-picker.c053') };
 }
 
 const arr = (v: unknown): Record<string, unknown>[] => (Array.isArray(v) ? v as Record<string, unknown>[] : []);
@@ -151,7 +153,7 @@ const CSS = '<style>'
 function setsOf(data: Record<string, unknown>): OutfitSet[] {
   const o = data.outfit as Record<string, unknown> | undefined;
   return arr(o?.sets).map((s) => ({
-    style: str(s.style) || '日常',
+    style: str(s.style) || m('skill-home.outfit-outfit.c003'),
     reason: str(s.reason),
     slots: (s.slots ?? {}) as Partial<Record<string, Card>>,
   }));
@@ -171,7 +173,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     k007: m('skill-home.outfit-pages-outfit-picker.c032'),
     k008: m('skill-home.outfit-pages-outfit-picker.c033'),
     k009: m('skill-home.outfit-pages-outfit-picker.c034'),
-    k010: "鞋",
+    k010: m('skill-home.outfit-outfit.c030'),
     k011: m('skill-home.outfit-pages-outfit-picker.c035'),
     k012: m('skill-home.outfit-pages-outfit-picker.c036'),
     k013: m('skill-home.outfit-pages-outfit-picker.c037'),
@@ -225,7 +227,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     const hasLayers = !!(first.slots.outer && first.slots.inner);
     // 槽位／风格／理由三处各留一个 id：档位按钮与「换一套」都靠 ofPaint() 重画这一块（不只是改高亮）。
     // #817 复评 seq 34：风格行原先那个「拼贴穿搭」是常量标签，删；理由句随所选场合走，场合≠风格时不再声称「X场合适配」。
-    designed = '<div class="of-card" id="ofNow">' + '<h2>' + L.k005 + '</h2>' + '<div id="ofSlots">' + slotRows + '</div>' + '<div class="of-styles" id="ofStyles">' + '<span>' + escapeHtml(first.style) + '</span>' + '</div>' + '<p class="of-reason" id="ofReason">' + escapeHtml((occasion !== '' && occasion !== first.style ? first.reason.split(L.k007).join(L.k006) : first.reason) || '—') + '</p>' + '<div class="of-chips" id="ofOcc">' + '<span class="of-chiplab">' + L.k008 + '</span>' + [L.k014, L.k013, L.k012, L.k011, L.k010, L.k009].map((x) => '<button class="of-btn' + (occasion === x ? ' on' : '') + '" data-occ="' + x + '">' + x + '</button>').join('') + '</div>' + (hasLayers ? '<div class="of-chips" id="ofLayer">' + '<span class="of-chiplab">' + L.k015 + '</span>' + '<button class="of-btn on" data-layer="outer">' + L.k016 + '</button>' + '<button class="of-btn" data-layer="inner">' + L.k017 + '</button>' + '</div>' : '') + '</div>' + '<div class="of-card">' + '<h2>' + L.k018 + '</h2>' + '<div class="of-strip" id="ofStrip">' + sets.map((s, i) => '<div class="of-mini' + (i === 0 ? ' on' : '') + '" data-set="' + i + L.k020 + (i + 1) + L.k019 + escapeHtml(s.style) + '</div>').join('') + '</div>' + '<div class="of-pager">' + '<button class="of-btn" id="ofPrev">' + L.k021 + '</button>' + '<span id="ofCount">' + L.k022(String(sets.length)) + '</span>' + '<button class="of-btn" id="ofNext">' + L.k023 + '</button>' + '</div>' + '<div class="of-actions">' + '<button class="of-btn primary" id="ofAdopt">' + L.k024 + '</button>' + '</div>' + copyZone + '</div>' + (gap.length ? '<div class="of-gap">' + L.k026 + gap.map(escapeHtml).join(' ') + L.k025 + '</div>' : '');
+    designed = '<div class="of-card" id="ofNow">' + '<h2>' + L.k005 + '</h2>' + '<div id="ofSlots">' + slotRows + '</div>' + '<div class="of-styles" id="ofStyles">' + '<span>' + escapeHtml(first.style) + '</span>' + '</div>' + '<p class="of-reason" id="ofReason">' + escapeHtml((occasion !== '' && occasion !== first.style ? first.reason.split(L.k007).join(L.k006) : first.reason) || '—') + '</p>' + '<div class="of-chips" id="ofOcc">' + '<span class="of-chiplab">' + L.k008 + '</span>' + OCC_CODES.map((code, i) => '<button class="of-btn' + (occasion === code ? ' on' : '') + '" data-occ="' + code + '">' + [L.k014, L.k013, L.k012, L.k011, L.k010, L.k009][i] + '</button>').join('') + '</div>' + (hasLayers ? '<div class="of-chips" id="ofLayer">' + '<span class="of-chiplab">' + L.k015 + '</span>' + '<button class="of-btn on" data-layer="outer">' + L.k016 + '</button>' + '<button class="of-btn" data-layer="inner">' + L.k017 + '</button>' + '</div>' : '') + '</div>' + '<div class="of-card">' + '<h2>' + L.k018 + '</h2>' + '<div class="of-strip" id="ofStrip">' + sets.map((s, i) => '<div class="of-mini' + (i === 0 ? ' on' : '') + '" data-set="' + i + L.k020 + (i + 1) + L.k019 + escapeHtml(s.style) + '</div>').join('') + '</div>' + '<div class="of-pager">' + '<button class="of-btn" id="ofPrev">' + L.k021 + '</button>' + '<span id="ofCount">' + L.k022(String(sets.length)) + '</span>' + '<button class="of-btn" id="ofNext">' + L.k023 + '</button>' + '</div>' + '<div class="of-actions">' + '<button class="of-btn primary" id="ofAdopt">' + L.k024 + '</button>' + '</div>' + copyZone + '</div>' + (gap.length ? '<div class="of-gap">' + L.k026 + gap.map(escapeHtml).join(' ') + L.k025 + '</div>' : '');
   }
 
   const payload = JSON.stringify({ sets, occasion, gap }).replace(/</g, '\\u003c');

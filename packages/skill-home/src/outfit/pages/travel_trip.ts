@@ -163,7 +163,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const data = (env.data ?? {}) as Record<string, unknown>;
   const t = (data.trip ?? {}) as Record<string, unknown>;
   const mode = t.mode === 'return' ? 'return' : 'pack';
-  const tripType = str(t.tripType) || '旅行';
+  const tripType = str(t.tripType) || m('skill-home.outfit-pages-travel-trip.c041');
   const days = num(t.days) || 3;
   const items = arr(t.items).map((x) => ({
     id: num(x.id), name: str(x.name), location: str(x.location),

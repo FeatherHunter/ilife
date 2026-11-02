@@ -656,6 +656,7 @@ export const zh = {
   'skill-home.items-pages-add-form.c031': "状态候选",
   'skill-home.items-pages-add-form.c032': "下一步",
   'skill-home.items-pages-add-form.c033': "清单：",
+  'skill-home.items-pages-add-form.c034': "在家",
   /* ── packages/skill-home/src/items/pages/browse.ts（--files 迁入） ── */
   'skill-home.items-pages-browse.c001': "未分类",
   'skill-home.items-pages-browse.c002': "请加载居家管家技能，帮我筛选浏览{p0}分组",
@@ -1165,6 +1166,8 @@ export const zh = {
   'skill-home.items-pages-inventory-records.c019': "盘点记录｜{p0}｜共{p1}条",
   'skill-home.items-pages-inventory-records.c020': "｜{p0}",
   'skill-home.items-pages-inventory-records.c021': "、",
+  'skill-home.items-pages-inventory-records.c022': "全屋",
+  'skill-home.items-pages-inventory-records.c023': "按位置",
   'skill-home.items-pages-inventory-round.c001': "填写后确认完成",
   'skill-home.items-pages-inventory-round.c002': "逐件确认：在／不在／不确定；数量不同即为异",
   'skill-home.items-pages-inventory-round.c003': "范围",
@@ -1195,6 +1198,9 @@ export const zh = {
   'skill-home.items-pages-inventory-round.c028': "请加载「居家管家」技能,帮我完成盘点(唤醒词:盘点):\n\n  记  录: {p0}\n  在: ______\n  不在: ______\n  不确定: ______",
   'skill-home.items-pages-inventory-round.c029': "请加载「居家管家」技能,帮我查看盘点记录(唤醒词:盘点记录):",
   'skill-home.items-pages-inventory-round.c030': "盘点｜{p0}｜记录{p1}｜范围{p2}｜清单{p3}",
+  /* ── packages/skill-home/src/items/pages/inventory_round.ts（#1320 迁入） ── */
+  'skill-home.items-pages-inventory-round.c031': "全屋",
+  'skill-home.items-pages-inventory-round.c032': "按位置",
   /* ── packages/skill-home/src/express/pages/express.ts（--files 迁入） ── */
   'skill-home.express-pages-express.c001': "快递购物",
   'skill-home.express-pages-express.c002': "快递跟踪",
@@ -1294,6 +1300,7 @@ export const zh = {
   'skill-home.express-pages-missing.c027': "建议买",
   'skill-home.express-pages-missing.c028': "请加载居家管家技能，帮我将缺货物品加入购物清单：",
   'skill-home.express-pages-missing.c029': "编号",
+  'skill-home.express-pages-missing.c030': "全屋",
   /* ── packages/skill-home/src/express/pages/stock.ts（--files 迁入） ── */
   'skill-home.express-pages-stock.c001': "快递购物",
   'skill-home.express-pages-stock.c002': "囤货盘点",
@@ -1382,6 +1389,12 @@ export const zh = {
   'skill-home.outfit-pages-outfit-picker.c051': "下装",
   'skill-home.outfit-pages-outfit-picker.c052': "帽子",
   'skill-home.outfit-pages-outfit-picker.c053': "配饰",
+  'skill-home.outfit-pages-outfit-picker.c054': "自定义",
+  'skill-home.outfit-pages-outfit-picker.c055': "正式",
+  'skill-home.outfit-pages-outfit-picker.c056': "家居",
+  'skill-home.outfit-pages-outfit-picker.c057': "运动",
+  'skill-home.outfit-pages-outfit-picker.c058': "约会",
+  'skill-home.outfit-pages-outfit-picker.c059': "上班",
   /* ── packages/skill-home/src/outfit/pages/travel_trip.ts（--files 迁入） ── */
   'skill-home.outfit-pages-travel-trip.c001': "{p0}天",
   'skill-home.outfit-pages-travel-trip.c002': "清单{p0}件",
@@ -1423,6 +1436,7 @@ export const zh = {
   'skill-home.outfit-pages-travel-trip.c038': "清单物品卡片（名称数量位置理由）",
   'skill-home.outfit-pages-travel-trip.c039': "请先勾选物品",
   'skill-home.outfit-pages-travel-trip.c040': " 遗漏提示：{p0}没装",
+  'skill-home.outfit-pages-travel-trip.c041': "旅行",
   /* ── packages/skill-home/src/outfit/pages/trip_outfit_plan.ts（--files 迁入） ── */
   'skill-home.outfit-pages-trip-outfit-plan.c001': "共{p0}天",
   'skill-home.outfit-pages-trip-outfit-plan.c002': "行李{p0}件",
@@ -1472,6 +1486,7 @@ export const zh = {
   'skill-home.outfit-pages-trip-outfit-plan.c046': "下装",
   'skill-home.outfit-pages-trip-outfit-plan.c047': "帽子",
   'skill-home.outfit-pages-trip-outfit-plan.c048': "配饰",
+  'skill-home.outfit-pages-trip-outfit-plan.c049': "穿",
   /* ── packages/skill-home/src/outfit/pages/wardrobe_analyze.ts（--files 迁入） ── */
   'skill-home.outfit-pages-wardrobe-analyze.c001': "衣橱构成",
   'skill-home.outfit-pages-wardrobe-analyze.c002': "衣橱还没有在家衣物，先去录入第一批再来看构成",
@@ -1853,6 +1868,7 @@ export const zh = {
   'skill-home.setup-pages-import-restore.c040': "状态说明",
   'skill-home.setup-pages-import-restore.c041': "步骤状态分三种：已完成，进行中，待办。当前走到哪一步，卡片上看得出来。",
   'skill-home.setup-pages-import-restore.c042': "原始回执",
+  'skill-home.setup-pages-import-restore.c043': "已完成",
   /* ── packages/skill-home/src/space/pages/fixed_spot.ts（--files 迁入） ── */
   'skill-home.space-pages-fixed-spot.c001': "共{p0}件",
   'skill-home.space-pages-fixed-spot.c002': "常用件锚定固定位置，紧急定位依赖本清单",
@@ -1935,6 +1951,7 @@ export const zh = {
   'skill-home.space-pages-space-view.c032': "复制收纳建议",
   'skill-home.space-pages-space-view.c033': "请加载「居家管家」技能，帮我新建位置：\n位置：待填写",
   'skill-home.space-pages-space-view.c034': "(全屋)",
+  'skill-home.space-pages-space-view.c035': "全屋",
   /* ── packages/skill-home/src/space/pages/suggest_storage.ts（--files 迁入） ── */
   'skill-home.space-pages-suggest-storage.c001': "共{p0}件",
   'skill-home.space-pages-suggest-storage.c002': "按分类常用位置给出安放推荐，采纳后走移物品流程",
@@ -2135,6 +2152,8 @@ export const zh = {
   'skill-home.stats-pages-inventory-stat.c054': "异常：数据解析失败，数据校验失败",
   'skill-home.stats-pages-inventory-stat.c055': "盘点明细（时间，范围，缺，多，异，状态）",
   'skill-home.stats-pages-inventory-stat.c056': "智能建议",
+  'skill-home.stats-pages-inventory-stat.c057': "全屋",
+  'skill-home.stats-pages-inventory-stat.c058': "按位置",
   /* ── packages/skill-home/src/stats/pages/overview.ts（--files 迁入） ── */
   'skill-home.stats-pages-overview.c001': "统计总览",
   'skill-home.stats-pages-overview.c002': "统物品",

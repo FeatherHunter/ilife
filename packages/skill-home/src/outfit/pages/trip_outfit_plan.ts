@@ -31,7 +31,7 @@ function pageText() {
     k011: m('skill-home.outfit-pages-trip-outfit-plan.c011'),
     k012: m('skill-home.outfit-pages-trip-outfit-plan.c012'),
     k013: m('skill-home.outfit-pages-trip-outfit-plan.c013'),
-    k014: '穿',
+    k014: m('skill-home.outfit-pages-trip-outfit-plan.c049'),
     k015: m('skill-home.outfit-pages-trip-outfit-plan.c014'),
     k016: m('skill-home.outfit-pages-trip-outfit-plan.c015'),
     k017: m('skill-home.outfit-pages-trip-outfit-plan.c016'),
@@ -99,7 +99,7 @@ type Plan = { day: number; tempDesc: string; style: string; reason: string; slot
 const SLOT_ORDER = ['outer', 'inner', 'bottom', 'shoes', 'hat', 'acce'];
 /** 本页可见文案（渲染期取词：写成函数，模块加载时不取词）。 */
 function slotLabel(): Record<string, string> {
-  return { outer: m('skill-home.outfit-pages-trip-outfit-plan.c044'), inner: m('skill-home.outfit-pages-trip-outfit-plan.c045'), bottom: m('skill-home.outfit-pages-trip-outfit-plan.c046'), shoes: '鞋', hat: m('skill-home.outfit-pages-trip-outfit-plan.c047'), acce: m('skill-home.outfit-pages-trip-outfit-plan.c048') };
+  return { outer: m('skill-home.outfit-pages-trip-outfit-plan.c044'), inner: m('skill-home.outfit-pages-trip-outfit-plan.c045'), bottom: m('skill-home.outfit-pages-trip-outfit-plan.c046'), shoes: m('skill-home.outfit-outfit.c030'), hat: m('skill-home.outfit-pages-trip-outfit-plan.c047'), acce: m('skill-home.outfit-pages-trip-outfit-plan.c048') };
 }
 
 const arr = (v: unknown): Record<string, unknown>[] => (Array.isArray(v) ? v as Record<string, unknown>[] : []);
@@ -144,7 +144,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
     k005: m('skill-home.outfit-pages-trip-outfit-plan.c026'),
     k006: m('skill-home.outfit-pages-trip-outfit-plan.c027'),
     k007: m('skill-home.outfit-pages-trip-outfit-plan.c028'),
-    k008: "鞋",
+    k008: m('skill-home.outfit-outfit.c030'),
     k009: m('skill-home.outfit-pages-trip-outfit-plan.c029'),
     k010: m('skill-home.outfit-pages-trip-outfit-plan.c030'),
     k011: m('skill-home.outfit-pages-trip-outfit-plan.c031'),
@@ -167,7 +167,7 @@ export function renderFamilyPage(env: Envelope, ctx?: { readonly command?: strin
   const destination = str(p.destination) || m('skill-home.outfit-pages-trip-outfit-plan.c017');
   const plans = arr(p.plans).map((x) => ({
     day: num(x.day), tempDesc: str(x.tempDesc),
-    style: str(x.style) || '日常', reason: str(x.reason),
+    style: str(x.style) || m('skill-home.outfit-outfit.c003'), reason: str(x.reason),
     slots: ((x.slots ?? {}) as Partial<Record<string, Card>>),
   } as Plan));
   const conflicts = arr(p.conflicts).map((x) => str(x.hint)).filter(Boolean);
