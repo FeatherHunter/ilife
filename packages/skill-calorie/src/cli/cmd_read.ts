@@ -31,7 +31,7 @@ import { CalorieRenderError } from '../render/errors.js';
 
 // #330 · CLI 前置与交付装配住同目录两件（纯搬，行为不变）：`readArgs.ts`（参数＋预检）／
 // `delivery.ts`（envelope＋三态交付＋失败回执）。入口名与 `export function dispatch` 不挪。
-import { USAGE, bodySceneFor, parseReadArgs, preflight, toast } from './readArgs.js';
+import { usage, bodySceneFor, parseReadArgs, preflight, toast } from './readArgs.js';
 // #676 · 设置页的三个配置 key 由本文件在分派层之前拦下（见下行 main 里那一处拦截与 cli/config.ts 的件头）。
 import { isConfigKey, runConfigKey } from './config.js';
 import { resolveLanguageOrFail } from './language.js';
@@ -76,7 +76,7 @@ export function dispatch(key: string, params: Record<string, unknown>, db: Datab
 
 async function main(): Promise<void> {
   const o = parseReadArgs(process.argv.slice(2));
-  if (!o.key) fail(2, USAGE);
+  if (!o.key) fail(2, runWithLanguage(o.language ?? '', () => usage()));
   let params: Record<string, unknown> = {};
   if (o.params !== undefined) {
     try {
