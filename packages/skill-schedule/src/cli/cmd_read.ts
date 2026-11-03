@@ -2,7 +2,7 @@
 // 作息管家唯一出口 cmd_read：argv+JSON(stdout)+exit；非 0 走 stderr；超时 terminate+TOAST 降级标记。
 // 退出码对齐 skilllink 冻结：0 ok；1 预检；2 用法/参数；3 key；4 取数/超时；5 envelope/渲染/落盘。
 // stdout 纯净：成功只打 envelope JSON 一行（**缺省即落盘**：给 `delivery{mode,path,bytes}`，#843）。
-import { isLanguageArg } from 'base-link-core';
+import { isCallerLanguageArg, isLanguageArg } from 'base-link-core';
 import type { Envelope } from 'base-link-core';
 import { DatabaseSync } from 'node:sqlite';
 import { REGISTRY } from './registry.js';
@@ -90,6 +90,8 @@ function parseArgs(a: string[]): { key: string | undefined; params: string | und
     // `--html <路径>`＝显式落点（逐字覆盖写）；不给它＝落通式名的缺省产物（#843）。
     if (a[i] === '--params' && i + 1 < a.length) o.params = a[++i];
     else if (a[i] === '--html' && i + 1 < a.length) o.html = a[++i];
+    // 宿主传的调用方偏好（#1323）：只跳值，值由 resolveLanguage 统一摘。
+    else if (isCallerLanguageArg(a[i] as string) && i + 1 < a.length) i++;
     else if (isLanguageArg(a[i] as string) && i + 1 < a.length) {
       if (a[i] === '--language') o.language = a[++i];
       else o.formatLanguage = a[++i];

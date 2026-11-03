@@ -4,7 +4,7 @@
 // stdout 纯净：成功只打 envelope JSON 一行。
 import { existsSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
-import { isLanguageArg } from 'base-link-core';
+import { isCallerLanguageArg, isLanguageArg } from 'base-link-core';
 import type { Envelope } from 'base-link-core';
 import { saveHtmlFile, helpReuseWindowOf, type HtmlLanding, type HtmlReceipt } from 'base-paint/save-html';
 // #855：复制区载荷的装配与信封取形（`buildDataText`／`buildLogText`／`MemoCopyEnvelope` 位）随 `memo.init`
@@ -225,6 +225,8 @@ function parseArgs(a: string[]): { key: string | undefined; params: string | und
   for (let i = 1; i < a.length; i++) {
     if (a[i] === '--params' && i + 1 < a.length) o.params = a[++i];
     else if (a[i] === '--html' && i + 1 < a.length) o.html = a[++i];
+    // 宿主传的调用方偏好（#1323）：只跳值，值由 resolveLanguage 统一摘。
+    else if (isCallerLanguageArg(a[i] as string) && i + 1 < a.length) i++;
     else if (isLanguageArg(a[i] as string) && i + 1 < a.length) {
       if (a[i] === '--language') o.language = a[++i];
       else o.formatLanguage = a[++i];

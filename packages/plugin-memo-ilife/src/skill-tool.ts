@@ -14,6 +14,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { createRequire } from 'node:module';
 import type { ToolDefinitionMirror } from './dsh-ctx.js';
+import { withCallerLanguage } from 'dsh-life-pack';
 import { SKILL_PACKAGE, SPAWN_TIMEOUT_MS, SkillBridgeError, assertCliPresent, resolveNodeBin } from './bridge.js';
 import { m } from './entries/index.js';
 
@@ -72,6 +73,8 @@ export interface SkillToolDeps {
   readonly entry?: () => string;
   readonly execPath?: () => string;
   readonly run?: (bin: string, argv: readonly string[], env: Record<string, string | undefined>) => SpawnOutcome;
+  /** 调用方语言来源（#1323）：每次执行现读；缺席＝不追加 \`--caller-language\`。 */
+  readonly callerLanguage?: () => string | undefined;
 }
 
 function defaultRun(bin: string, argv: readonly string[], env: Record<string, string | undefined>): SpawnOutcome {
@@ -84,6 +87,7 @@ export function createSkillTool(deps: SkillToolDeps = {}): ToolDefinitionMirror 
   const entryOf = deps.entry ?? entryFromInstalledPackage;
   const execPathOf = deps.execPath ?? (() => process.execPath);
   const run = deps.run ?? defaultRun;
+  const callerLanguageOf = deps.callerLanguage;
   return {
     name: SKILL_TOOL_NAME,
     description: toolDescription(),
@@ -106,7 +110,9 @@ export function createSkillTool(deps: SkillToolDeps = {}): ToolDefinitionMirror 
       }
       const entry = entryOf();
       const { bin, extraEnv } = resolveNodeBin(execPathOf());
-      const outcome = run(bin, [entry, key, '--params', JSON.stringify(args?.params ?? {})], { ...process.env, ...extraEnv });
+      // #1323：宿主语言偏好按调用形态追加；来源缺席时 argv 与接线前逐字相同。
+      const argv = withCallerLanguage([entry, key, '--params', JSON.stringify(args?.params ?? {})], callerLanguageOf?.());
+      const outcome = run(bin, argv, { ...process.env, ...extraEnv });
       const stdout = outcome.stdout.trim();
       if (outcome.error) throw new Error('技能出口起不来：' + String(outcome.error.message) + '（' + entry + '）');
       if (outcome.status !== 0) {

@@ -24,7 +24,7 @@
 | 票 | 内容 | 为什么现在不修 |
 |---|---|---|
 | #1322 | US1：加语言只加词条文件、语言清单派生 | 跨 14 个包与两道门，属架构改造，非「可当场修」 |
-| #1323 | #1230：宿主 `locale.preference` → CLI `caller` 接线 | 需宿主插件侧通道，超出本轮包内改动 |
+| #1323 | #1230：宿主 `locale.preference` → CLI `caller` 接线 | **已交付（#1323）**：插件经 `ctx.get('settings')` 读 locale.preference，按调用形态以独立参数 `--caller-language` 透传；优先级 argv ＞ 配置 ＞ caller ＞ zh（详见 `docs/agents/多语言-宿主语言来路实测.md` §5） |
 | #1324 | 英文列账本补录（194＋2 件） | 依赖逐件生成英文产物与录账，工作量大 |
 | #1325 | seal-states 生成件语言化 | 涉及生成器与 `seals.yaml` 契约 |
 | #1326 | sort-toggle 运行时段全角括号 | 运行时段文案，需语言形态设计 |

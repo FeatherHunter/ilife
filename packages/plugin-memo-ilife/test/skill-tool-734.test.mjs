@@ -8,6 +8,7 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { apply, inject, SKILL_TOOL_NAME, resolveSkillEntry, createSkillTool } from '../dist/index.js';
+import { callerLanguageOf, setCallerLanguageReader } from '../dist/bridge.js';
 
 let root;
 let fixtureDir;
@@ -104,6 +105,43 @@ describe('#734 agent 工具：技能唯一出口的宿主调用通道', () => {
     assert.equal(seen[0].argv[1], 'memo.search');
     assert.deepEqual(seen[0].argv.slice(2), ['--params', '{}']);
     assert.equal(JSON.parse(out).data.output, '/tmp/x.html');
+  });
+
+  it('#1323 caller 来源 ⇒ argv 末尾追加 --caller-language（无来源时保持原 argv）', async () => {
+    const seen = [];
+    const tool = createSkillTool({
+      entry: () => fixtureEntry,
+      execPath: () => process.execPath,
+      callerLanguage: () => 'en',
+      run: (bin, argv) => {
+        seen.push([...argv]);
+        return { status: 0, stdout: JSON.stringify({ key: argv[1], data: { output: '/tmp/x.html' } }), stderr: '' };
+      },
+    });
+    await tool.execute({ key: 'calorie.view.home' });
+    assert.deepEqual(seen[0].slice(2), ['--params', '{}', '--caller-language', 'en']);
+
+    const plain = [];
+    const bare = createSkillTool({
+      entry: () => fixtureEntry,
+      execPath: () => process.execPath,
+      run: (bin, argv) => {
+        plain.push([...argv]);
+        return { status: 0, stdout: JSON.stringify({ key: argv[1], data: { output: '/tmp/x.html' } }), stderr: '' };
+      },
+    });
+    await bare.execute({ key: 'calorie.view.home' });
+    assert.deepEqual(plain[0].slice(2), ['--params', '{}'], '无来源时 argv 与接线前逐字相同（中文缺省路径不变）');
+  });
+
+  it('#1323 apply 从 ctx.get(settings) 读 locale.preference 并交给桥', async () => {
+    const { ctx } = stubCtx();
+    ctx.get = (name) => (name === 'settings'
+      ? { describe: () => [{ ns: 'locale', value: { preference: 'en' } }] }
+      : undefined);
+    apply(ctx);
+    assert.equal(callerLanguageOf(), 'en');
+    setCallerLanguageReader(undefined); // 收尾清掉模块级状态，免得串到别的用例
   });
 
   it('缺 key／出口非 0 都报人话（不吐原始 JSON）', async () => {
