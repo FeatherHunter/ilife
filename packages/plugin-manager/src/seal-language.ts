@@ -36,6 +36,21 @@ function activeLocaleOf(face: unknown): unknown {
   return undefined;
 }
 
+/** 按服务名去宿主取 locale 服务（软依赖）：取不到 / 宿主没声明这个服务名（getService 会抛）都回缺省。
+ *
+ *  六家 client.ts 的同一段「吞查找失败」收在这里（#1325 评审 J3）：调用方只交 `getService` 本身，
+ *  它自己的守卫语义（未声明服务就抛）保持原样透传，不许各家自己吞（#736 契约）。 */
+export function sealLanguageOfHost(
+  lookup: (name: string) => unknown,
+  fallback: SealLanguage = DEFAULT_SEAL_LANGUAGE,
+): SealLanguage {
+  try {
+    return sealLanguageOf(lookup('locale'), fallback);
+  } catch {
+    return fallback;
+  }
+}
+
 /** 把 locale 服务（或它缺席时的 undefined）归一成印章语言；任何异常都回缺省，绝不阻断面板。 */
 export function sealLanguageOf(face: unknown, fallback: SealLanguage = DEFAULT_SEAL_LANGUAGE): SealLanguage {
   try {

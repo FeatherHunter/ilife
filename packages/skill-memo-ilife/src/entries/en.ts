@@ -628,8 +628,5 @@ export const en = {
   'skill-memo-ilife.remind-run.c046': "Reminder set{p0}: {p1}",
   'skill-memo-ilife.remind-run.c047': "Active",
   'skill-memo-ilife.remind-run.c048': "Dismissed",
-  /* ── packages/skill-memo-ilife/src/render/memoPageAssets.ts（#1331 迁入） ── */
-  'skill-memo-ilife.render-memo-page-assets.c001': "Copy data",
-  'skill-memo-ilife.render-memo-page-assets.c002': "Copy log",
 } as const satisfies MessageTable;
 

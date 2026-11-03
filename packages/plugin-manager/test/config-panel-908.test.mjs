@@ -140,11 +140,11 @@ function bodyProps(over = {}) {
 }
 
 describe('#908 共用配置面板：出口面', () => {
-  it('出口对外给的名字就是那几个（运行时四个值 ＋ 源码面六个类型）', () => {
-    // 运行时：类型不进模块表，所以这里只该看到那四个值（#1325 起多一枚 `sealLanguageOf`）。
+  it('出口对外给的名字就是那几个（运行时五个值 ＋ 源码面六个类型）', () => {
+    // 运行时：类型不进模块表，所以这里只该看到那几个值（#1325 起多 `sealLanguageOf` 与 `sealLanguageOfHost`）。
     // #936：`StatusBlock`（状态行）成为第三个值——备忘／作息两家各有一段"不是配置项的状态"要画，
     // 这是第二个用法 ⇒ 形状收进共用件，两家只交数据。
-    assert.deepEqual(Object.keys(gate).sort(), ['ConfigPanel', 'Row', 'StatusBlock', 'sealLanguageOf'], '出口多给了或少给了值名');
+    assert.deepEqual(Object.keys(gate).sort(), ['ConfigPanel', 'Row', 'StatusBlock', 'sealLanguageOf', 'sealLanguageOfHost'], '出口多给了或少给了值名');
 
     // 源码面：把「对外给的名字」一个个数出来（值名与类型名一起数）。
     const src = readFileSync(join(PKG, 'src', 'config-panel-api.ts'), 'utf8');
@@ -157,7 +157,7 @@ describe('#908 共用配置面板：出口面', () => {
     }
     assert.deepEqual(
       [...names].sort(),
-      ['ConfigControl', 'ConfigItem', 'ConfigPanel', 'ConfigTier', 'Row', 'SealInstance', 'StatusBlock', 'StatusBlockProps', 'StatusTone', 'sealLanguageOf'], // 1145 ⑦；#1325 ⑧
+      ['ConfigControl', 'ConfigItem', 'ConfigPanel', 'ConfigTier', 'Row', 'SealInstance', 'StatusBlock', 'StatusBlockProps', 'StatusTone', 'sealLanguageOf', 'sealLanguageOfHost'], // 1145 ⑦；#1325 ⑧（⑨ sealLanguageOfHost）
       '出口对外给的名字对不上：' + [...names].join('、'),
     );
   });

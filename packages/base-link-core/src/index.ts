@@ -45,6 +45,9 @@ export {
   buildCursorCondition,
 } from './data-page.js';
 export type { CursorOrderSpec, CursorRowidSpec } from './data-page.js';
+// 目录故障码（#1327）：三家技能体检共用的结构化分类（记账／卡路里／作息）。
+export { dirFaultCodeOf } from './dir-health.js';
+export type { DirFaultCode, DirVerdictShape } from './dir-health.js';
 // 配置件（#694）：定位／读写校验／重置为默认，见 src/config/。
 export { AVAILABLE_LANGUAGES, CALLER_LANGUAGE_ARG, DEFAULT_LANGUAGE, callerLanguageFromArgv, configPaths, isCallerLanguageArg, isLanguageArg, loadConfig, parseLanguageArgs, resolveLanguage, resolveSkillLanguage, saveConfig, resetConfig } from './config/index.js';
 export type { ConfigPaths, LanguageArgs, LanguageTag, LoadedConfig, ResolveLanguageOptions, ResolvedLanguage, SkillLanguageOptions, ConfigRecord, ConfigGroup, ConfigValue } from './config/index.js';

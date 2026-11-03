@@ -15,15 +15,17 @@
  * 本件与卡路里那份 `packages/skill-calorie/src/health.ts` 同形（同一套受限子集解析、同一套写探针、
  * 同一个 `node:sqlite` 只读读表数），只换本家那份配置表与自有项——读的人一眼认得出是同一条链。
  */
-import { existsSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
-import { configPaths } from 'base-link-core';
+import { configPaths, dirFaultCodeOf } from 'base-link-core';
 import { BILL_CONFIG_DEFAULTS, BILL_CONFIG_STEM } from './config.js';
 // #749：落点算式只有一处定义地（`src/fetch/paths.ts`）——体检报的就是那几个落点，两处不许走散。
 // 本件只调**纯算式**（`*Of` 一族，不读配置、不碰盘）：体检不许调 `loadBillConfig()`（文件不在即落一份默认件）。
 import { backupDirOf, dbDirOf, dbFileOf, goalsFileOf, htmlDirOf } from './fetch/paths.js';
 import { m } from './entries/index.js';
+import { dirVerdict, type DirVerdict } from './health-dir.js';
+// 故障码的唯一定义地在 base-link-core（#1327 评审 HARD2：三家不许各抄一遍）；本件转出给测试用。
+export { dirFaultCodeOf } from 'base-link-core';
 
 /** 报告里的三档判据（与面板侧镜像同值）。 */
 export type HealthStatus = 'red' | 'yellow' | 'green';
@@ -265,46 +267,6 @@ function sourceOf(present: ReadonlySet<string>, key: string): string {
  *  `src/fetch/paths.ts` 的 `dirSegments`（#749 起落点算式只有那一处定义地），本件不自己再切一遍。
  */
 
-/** 目录项：在不在 ＋ 能不能写。 */
-interface DirVerdict {
-  readonly exists: boolean;
-  readonly writable: boolean;
-  readonly reason: string;
-}
-
-/** 目录能不能写：建一个探针文件再删掉（老技能三家同一套做法）。**不建目录本身**。 */
-function writeProbe(dir: string): { readonly ok: boolean; readonly reason: string } {
-  const probe = join(dir, '.ilife-health-probe-' + String(process.pid) + '-' + String(Date.now()));
-  try {
-    writeFileSync(probe, 'probe', { encoding: 'utf8', flag: 'wx' });
-    unlinkSync(probe);
-    return { ok: true, reason: '' };
-  } catch (e) {
-    return { ok: false, reason: e instanceof Error ? e.message : String(e) };
-  }
-}
-
-/** 已算过的目录结论按路径记一份：同一份报告里同一个目录不重复起写探针。 */
-const dirMemo = new Map<string, DirVerdict>();
-
-function dirVerdict(dir: string): DirVerdict {
-  const memoized = dirMemo.get(dir);
-  if (memoized !== undefined) return memoized;
-  const verdict = dirVerdictUncached(dir);
-  dirMemo.set(dir, verdict);
-  return verdict;
-}
-
-function dirVerdictUncached(dir: string): DirVerdict {
-  if (!existsSync(dir)) return { exists: false, writable: false, reason: '' };
-  try {
-    if (!statSync(dir).isDirectory()) return { exists: false, writable: false, reason: m('skill-bill.health.c016') };
-  } catch (e) {
-    return { exists: false, writable: false, reason: e instanceof Error ? e.message : String(e) };
-  }
-  const probe = writeProbe(dir);
-  return { exists: true, writable: probe.ok, reason: probe.reason };
-}
 
 /** 开库读表数（只读打开，不建库、不迁移）。打不开即当作「读不出」。 */
 function tableCount(file: string): { readonly ok: boolean; readonly count: number; readonly reason: string } {
@@ -325,19 +287,27 @@ function tableCount(file: string): { readonly ok: boolean; readonly count: numbe
   }
 }
 
-/** 目录结论 → 故障码（#1327）：只看结构化读数（在不在／能不能写），不看本地化报文。 */
-export function dirFaultCodeOf(verdict: { readonly exists: boolean; readonly writable: boolean }): 'DIR_MISSING' | 'DIR_UNWRITABLE' | undefined {
-  if (!verdict.exists) return 'DIR_MISSING';
-  return verdict.writable ? undefined : 'DIR_UNWRITABLE';
+/** `db.dir` 故障那句话：体检项与行告警共用一份，免得两处措辞走散。 */
+function billDbDirMessage(dir: string, verdict: DirVerdict): string {
+  return !verdict.exists
+    ? m('skill-bill.health.c028', {
+      p0: String(p(dir)),
+      p1: String(verdict.reason !== '' ? '（' + verdict.reason + '）' : ''),
+    })
+    : verdict.writable
+      ? m('skill-bill.health.c029', { p0: String(p(dir)) })
+      : m('skill-bill.health.c030', { p0: String(p(dir)), p1: String(verdict.reason) });
 }
 
-/** `db.dir` 的故障码：与体检②同一份只读推导（#1327 供行告警用，不解析本地化报文）。 */
-export function billDbDirFaultCode(): 'DIR_MISSING' | 'DIR_UNWRITABLE' | undefined {
+/** `db.dir` 行告警（#915 第二步；#1327 改结构化码）：红才回 `{code, message}`，与体检②同一份推导。 */
+export function billDbDirAlert(): { readonly code: string; readonly message: string } | undefined {
   const paths = configPaths(BILL_CONFIG_STEM);
   const read = readBillConfigReadOnly();
   const values = read.kind === 'ok' ? read.values : projectOnDefaults({});
   const dataDir = dbDirOf(paths.dataDir, textOf(readValue(values, 'db', 'dir')));
-  return dirFaultCodeOf(dirVerdict(dataDir));
+  const verdict = dirVerdict(dataDir);
+  const code = dirFaultCodeOf(verdict);
+  return code === undefined ? undefined : { code, message: billDbDirMessage(dataDir, verdict) };
 }
 
 /** 跑一次体检，返回整份报告。**只读**：任何一处都不落盘（只有写探针那一个文件，且当场删掉）。 */
@@ -380,14 +350,7 @@ export function buildBillHealthReport(): BillHealthReport {
   items.push({
     id: 'db.dir', title: m('skill-bill.health.c027'),
     status: !dataDirVerdict.exists || !dataDirVerdict.writable ? 'red' : 'green',
-    message: !dataDirVerdict.exists
-      ? m('skill-bill.health.c028', {
-        p0: String(p(dataDir)),
-        p1: String(dataDirVerdict.reason !== '' ? '（' + dataDirVerdict.reason + '）' : ''),
-      })
-      : dataDirVerdict.writable
-        ? m('skill-bill.health.c029', { p0: String(p(dataDir)) })
-        : m('skill-bill.health.c030', { p0: String(p(dataDir)), p1: String(dataDirVerdict.reason) }),
+    message: billDbDirMessage(dataDir, dataDirVerdict),
     action: !dataDirVerdict.exists
       ? m('skill-bill.health.c031')
       : dataDirVerdict.writable ? '' : m('skill-bill.health.c032'),

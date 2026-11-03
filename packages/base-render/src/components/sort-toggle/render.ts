@@ -20,7 +20,7 @@ export function sortErrorId(name: string): string {
 }
 
 /** 反向键的字：「反过来（从少到多）」——说的是**按下去会变成什么**。 */
-function flipText(m: SortToggleModel, dir: string): string {
+function flipLabelOf(m: SortToggleModel, dir: string): string {
   const to = dir === 'asc' ? SORT_DEFAULTS.toDesc : SORT_DEFAULTS.toAsc;
   return flipTextOf(m.flipLabel, to);
 }
@@ -66,7 +66,7 @@ export function renderSortToggle(input: unknown): string {
 
   const foot = '<div class="' + c + '-foot">'
     + '<button type="button" class="' + c + '-flip" ' + SORT_FLIP_ATTR + '="" aria-pressed="false"'
-    + (m.disabled ? ' disabled' : '') + '>' + esc(flipText(m, cur.dir)) + '</button>'
+    + (m.disabled ? ' disabled' : '') + '>' + esc(flipLabelOf(m, cur.dir)) + '</button>'
     + '<span class="' + c + '-status" role="status" ' + SORT_STATUS_ATTR + '="">'
     + '<span class="' + c + '-status-text"><b ' + SORT_SHOWN_ATTR + '="">' + SORT_DEFAULTS.unset + '</b> '
     + esc(m.unit) + '</span>'

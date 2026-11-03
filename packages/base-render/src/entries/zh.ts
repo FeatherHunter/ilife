@@ -2480,7 +2480,7 @@ export const zh = {
   'base-render.components-search-field-render.c003': "{noun}命中",
   'base-render.components-search-field-render.c004': "搜索范围",
   'base-render.components-search-field-render.c005': " · 范围 {p0}",
-  'base-render.components-search-field-render.c006': "第 {p0} {p1} / 共 {p2} {p3}",
+  'base-render.components-search-field-render.c006': "第 {p0} {noun} / 共 {p2} {noun}",
   /* ── packages/base-render/src/components/slider-row/render.ts（#1227 迁入） ── */
   'base-render.components-slider-row-render.c001': "这条读数",
   'base-render.components-slider-row-render.c002': "减 {word}",

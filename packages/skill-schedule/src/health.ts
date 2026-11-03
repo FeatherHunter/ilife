@@ -29,7 +29,9 @@ import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
-import { configPaths } from 'base-link-core';
+import { configPaths, dirFaultCodeOf } from 'base-link-core';
+// 故障码的唯一定义地在 base-link-core（#1327 评审 HARD2：三家不许各抄一遍）；本件转出给测试用。
+export { dirFaultCodeOf } from 'base-link-core';
 import { SCHEDULE_CONFIG_DEFAULTS, SCHEDULE_CONFIG_STEM } from './config.js';
 // #764：落点算式只有一处定义地（`src/fetch/paths.ts`）——体检报的就是那几个落点，两处不许走散。
 // 本件只调**纯算式**（`*Of` 一族，不读配置、不碰盘）：体检不许调 `loadScheduleConfig()`（文件不在即落一份默认件）。
@@ -435,12 +437,6 @@ export function dbDirHealthItem(
       : dataDirVerdict.writable ? '' : m('skill-schedule.health.c022'),
     source: dataDirSource,
   };
-}
-
-/** 目录结论 → 故障码（#1327）：只看结构化读数（在不在／能不能写），不看本地化报文。 */
-export function dirFaultCodeOf(verdict: { readonly exists: boolean; readonly writable: boolean }): 'DIR_MISSING' | 'DIR_UNWRITABLE' | undefined {
-  if (!verdict.exists) return 'DIR_MISSING';
-  return verdict.writable ? undefined : 'DIR_UNWRITABLE';
 }
 
 /** `db.dir` 的故障码：与 `dbDirHealthItem` 同一份只读推导（#1327 供行告警用，不解析本地化报文）。 */

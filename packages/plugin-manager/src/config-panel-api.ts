@@ -28,4 +28,4 @@ export { Row, StatusBlock } from './config-panel-view.js';
 export type { ConfigItem, ConfigControl, ConfigTier, SealInstance } from './config-panel-contract.js';
 export type { StatusBlockProps, StatusTone } from './config-panel-view.js';
 
-export { sealLanguageOf } from './seal-language.js';
+export { sealLanguageOf, sealLanguageOfHost } from './seal-language.js';

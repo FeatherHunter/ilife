@@ -99,8 +99,9 @@ export const SORT_DEFAULTS = {
   get caliberText(): string { return m('base-render.components-sort-toggle-attrs.c003', KEEP_PLACEHOLDERS); },
   get noCaliberText(): string { return m('base-render.components-sort-toggle-attrs.c011'); },
   get unset(): string { return '—'; },
-  /** 反向键整句模板：`{label}`＝字面根，`{to}`＝按下去会变成什么。括号形态住词条（中文全角、英文半角，#1326）。 */
-  get flipText(): string { return m('base-render.components-sort-toggle-attrs.c012', KEEP_PLACEHOLDERS); },
+  /** 反向键整句**模板**（名字带 Template 是要点：返回值含 `{label}`／`{to}`，不是成品字串；
+   *  成品取 `flipTextOf()`）。括号形态住词条（中文全角、英文半角，#1326）。 */
+  get flipTextTemplate(): string { return m('base-render.components-sort-toggle-attrs.c012', KEEP_PLACEHOLDERS); },
 };
 
 /** 反向键整句：字面根 ＋ 会变成什么，括号形态随语言（#1326）。 */

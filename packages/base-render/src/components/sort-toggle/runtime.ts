@@ -42,7 +42,7 @@ export function buildSortToggleJs(): string {
     + ', inkText:' + q(SORT_DEFAULTS.inkText) + ', caliberText:' + q(SORT_DEFAULTS.caliberText)
     + ', noCaliberText:' + q(SORT_DEFAULTS.noCaliberText)
     + ', noKeyText:' + q(SORT_DEFAULTS.noKeyText) + ', unwiredText:' + q(SORT_DEFAULTS.unwiredText)
-    + ', flipText:' + q(SORT_DEFAULTS.flipText) + '};' + '\n'
+    + ', flipText:' + q(SORT_DEFAULTS.flipTextTemplate) + '};' + '\n'
     + '  var SEL_ROOT="["+A_ROOT+"]", doc=document;' + '\n'
     + '  if (doc.documentElement.getAttribute(A_RUNTIME)==="1") return;' + '\n'
     + '  doc.documentElement.setAttribute(A_RUNTIME,"1");' + '\n'

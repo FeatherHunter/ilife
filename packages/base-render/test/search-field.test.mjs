@@ -85,12 +85,15 @@ describe('searchField ① 渲染契约', () => {
     assert.ok(!/\son[a-z]+=/i.test(html), '不产内联事件处理器');
   });
 
-  it('英文读数（#1330）：量词不重复、位置读数用「i of n」、状态读数不随数变单复数', () => {
+  it('英文读数（#1330／#1325 评审 HARD1）：量词走模板、不重复、渲染件不按语言分支', () => {
     const en = runWithLanguage('en', () => field());
     assert.ok(!en.includes('matches matches'), '英文不得重复量词：' + en.slice(0, 240));
     assert.equal(/matches of/.test(en), false, '不得出现「matches of … matches」');
     assert.match(en, /<b data-ilife-search-count="">—<\/b> found/, '状态读数：— found（count-neutral，1 found 也通顺）');
-    assert.match(en, /<b data-ilife-search-at="">—<\/b> of <b data-ilife-search-count="">—<\/b>/, '位置读数：— of —');
+    assert.match(en, /<b data-ilife-search-at="">—<\/b> of <b data-ilife-search-count="">—<\/b> found/, '位置读数：— of — found');
+    // 词条模板 + 两列各带量词（zh 处／en found），渲染件里不许出现按语言挑模板的分支（ADR-0004 决定 1）。
+    const src = readFileSync(join(HERE, '..', 'src', 'components', 'search-field', 'render.ts'), 'utf8');
+    assert.equal(src.includes('currentRenderLanguage'), false, '渲染件不得按语言分支：' + src.slice(0, 200));
     const zh = field();
     assert.ok(zh.includes('第 <b data-ilife-search-at="">—</b> 处 / 共 <b data-ilife-search-count="">—</b> 处'), '中文读数逐字节不变');
     assert.equal(zh.includes('found'), false, '中文列不得混入英文读数');

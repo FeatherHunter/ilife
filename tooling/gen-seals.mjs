@@ -3,8 +3,8 @@
 //   ② 各家的章状态 `packages/plugin-<x>/src/seal-states.generated.ts`（各家独立发版）
 // 跑法：node tooling/gen-seals.mjs（幂等；--check 只对账不落盘）。漂移由 `pnpm gen:check` 与
 //   test/seals-yaml-1158.test.mjs 守。
-// #1325：yaml 每个文本叶子是 { zh, en } 两列；生成件同时出中文扁平表（历史消费面沿用）
-//   与按语言的 BY_LANG 表／sealStates(product, language)。
+// #1325：yaml 每个文本叶子是 { zh, en } 两列；生成件出按语言的 BY_LANG 表／
+//   sealStates(product, language)（不再出中文扁平别名）。
 // 语言集合不在这里再写一遍：从 yaml 叶子的键派生（加语言＝每个叶子补一列，见 ADR-0004）。
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -19,6 +19,8 @@ const SECTIONS = ['progress', 'status', 'plan'];
 /** 叶子语言列的键：小写 BCP47 形状（与词条文件同名口径，如 zh／en／zh-hant）。 */
 const LANGUAGE_TAG = /^[a-z]{2,3}(?:-[a-z0-9]{1,8})*$/;
 const HEAD = '/** 自动生成 · **勿手改**：源 `seals.yaml`（仓库根），生成器 `node tooling/gen-seals.mjs`。 */';
+/** 生成件相对仓库根的路径（--check 与落盘两个分支共用，别各写一半）。 */
+const relOf = (file) => file.replace(ROOT + '\\', '');
 
 function die(msg) { throw new Error('seals.yaml: ' + msg); }
 function onlyKeys(obj, allowed, where) {
@@ -160,7 +162,7 @@ export function renderPlugin(pkg, cfg, vocab, langs) {
     'export const SEAL_SEED = ' + String(cfg.seed) + ';',
     '',
     '/** 三枚章（HELP／技能／插件；面板按角色定序）。label 用 `seals.yaml` 的 vocabulary.label 约定。 */',
-    'export function sealStates(product: string, language: ' + unionOf(langs) + " = 'zh') {",
+    'export function sealStates(product: string, language: ' + unionOf(langs) + ' = ' + q(langs[0]) + ') {',
     ...tables,
     '  return ' + chain + ';',
     '}',
@@ -182,14 +184,14 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   if (process.argv.includes('--check')) {
     let stale = 0;
     for (const [file, want] of all) {
-      const rel = file.replace(ROOT + '\\', '');
+      const rel = relOf(file);
       const have = existsSync(file) ? readFileSync(file, 'utf8') : null;
       if (have !== want) { stale += 1; console.log('STALE ' + rel + (have === null ? '（缺文件）' : '')); }
     }
     console.log('RESULT: files=' + all.size + ' stale=' + stale);
     if (stale > 0) process.exit(1);
   } else {
-    for (const [file, content] of all) { writeFileSync(file, content); console.log('written ' + file.replace(ROOT + '\\', '')); }
+    for (const [file, content] of all) { writeFileSync(file, content); console.log('written ' + relOf(file)); }
     console.log('共 ' + all.size + ' 份（1 份设计语言 + ' + (all.size - 1) + ' 份章状态）');
   }
 }

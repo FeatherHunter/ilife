@@ -2472,7 +2472,7 @@ export const en = {
   'base-render.components-search-field-render.c003': "{noun}",
   'base-render.components-search-field-render.c004': "Search scope",
   'base-render.components-search-field-render.c005': " · Scope {p0}",
-  'base-render.components-search-field-render.c006': "{p0}{p1} of {p2}{p3}",
+  'base-render.components-search-field-render.c006': "{p0} of {p2} {noun}",
   /* ── packages/base-render/src/components/slider-row/render.ts（#1227 迁入） ── */
   'base-render.components-slider-row-render.c001': "this readout",
   'base-render.components-slider-row-render.c002': "Decrease {word}",

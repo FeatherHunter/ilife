@@ -4,7 +4,6 @@
  *  渲染期**不写命中数**（写 `—`）：命中数是运行时的真读数（数出来的），渲染期不知道结果区有几条。
  *  这条是这一件的要害：计数若是渲染期编的，页面上就有一个看着像读数、其实是文案的数。
  */
-import { currentRenderLanguage } from 'base-entries';
 import { esc } from '../shared/escape.js';
 import {
   SEARCH_AT_ATTR, SEARCH_BOUND_ATTR, SEARCH_CLEAR_ATTR, SEARCH_COUNT_ATTR, SEARCH_DEFAULTS,
@@ -57,9 +56,8 @@ function scopeHtml(model: SearchFieldModel): string {
  *  真读数与载入字各占一个 `span`（同一行、原地换字）：换字时**不动**版面，也不重造计数位。 */
 function readoutHtml(model: SearchFieldModel): string {
   const c = SEARCH_ROOT_CLASS;
-  // 英文读数不带量词（#1330）：英文模板把四个占位符留着对齐中文模板（占位符门要求两门同集合），
-  // p1／p3 传空串，于是渲染成「3 of 5」；中文仍按原模板带「处」，产物逐字节不变。
-  const readoutNoun = currentRenderLanguage() === 'en' ? '' : esc(model.noun);
+  // 计数措辞由词条模板承载（#1330／#1325 评审 HARD1）：中文「第 {p0} {noun} / 共 {p2} {noun}」、
+  // 英文「{p0} of {p2} {noun}」；量词走 attrs 的 c008（zh 处／en found），本件不按语言分支。
   const picked = model.scope === undefined ? SEARCH_DEFAULTS.scopeAll : model.scope;
   const pickedLabel = model.scopes.length === 0 ? ''
     : (model.scopes.find((s) => s.value === picked) ?? { label: m('base-render.components-search-field-render.c002') }).label;
@@ -78,7 +76,7 @@ function readoutHtml(model: SearchFieldModel): string {
     + (model.disabled || model.loading ? ' disabled' : '') + '>‹</button>'
     + '<span class="' + c + '-pos" ' + SEARCH_POS_ATTR + '="">'
     + fillSlot(fillSlot(m('base-render.components-search-field-render.c006', {
-      p0: SLOT_A, p1: readoutNoun, p2: SLOT_B, p3: readoutNoun,
+      p0: SLOT_A, p2: SLOT_B, noun: esc(model.noun),
     }), SLOT_A, '<b ' + SEARCH_AT_ATTR + '="">' + SEARCH_DEFAULTS.unset + '</b>'),
     SLOT_B, '<b ' + SEARCH_COUNT_ATTR + '="">' + SEARCH_DEFAULTS.unset + '</b>')
     + '</span>'
