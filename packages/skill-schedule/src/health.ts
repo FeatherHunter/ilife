@@ -437,6 +437,22 @@ export function dbDirHealthItem(
   };
 }
 
+/** 目录结论 → 故障码（#1327）：只看结构化读数（在不在／能不能写），不看本地化报文。 */
+export function dirFaultCodeOf(verdict: { readonly exists: boolean; readonly writable: boolean }): 'DIR_MISSING' | 'DIR_UNWRITABLE' | undefined {
+  if (!verdict.exists) return 'DIR_MISSING';
+  return verdict.writable ? undefined : 'DIR_UNWRITABLE';
+}
+
+/** `db.dir` 的故障码：与 `dbDirHealthItem` 同一份只读推导（#1327 供行告警用，不解析本地化报文）。 */
+export function dbDirFaultCode(
+  values: Record<string, Record<string, unknown>>,
+  present: ReadonlySet<string>,
+  defaultDataDir: string,
+): 'DIR_MISSING' | 'DIR_UNWRITABLE' | undefined {
+  const dataDir = dbDirOf(defaultDataDir, textOf(readValue(values, 'db', 'dir')));
+  return dirFaultCodeOf(dirVerdict(dataDir));
+}
+
 /** `*.config.read` 行告警用的 `db.dir` 结论：红才回 `{code, message}`（`message` 原样），否则缺席。
  *  只读：读配置不落盘、不探 lark（见 `dbDirHealthItem` 的注释）。 */
 export function dbDirAlert(): { readonly code: string; readonly message: string } | undefined {
@@ -445,7 +461,8 @@ export function dbDirAlert(): { readonly code: string; readonly message: string 
   if (read.kind !== 'ok') return undefined;
   const item = dbDirHealthItem(read.values, read.present, paths.dataDir);
   if (item.status !== 'red') return undefined;
-  const code = item.message.startsWith('不在') || item.message.startsWith('同名') ? 'DIR_MISSING' : 'DIR_UNWRITABLE';
+  const code = dbDirFaultCode(read.values, read.present, paths.dataDir);
+  if (code === undefined) return undefined;
   return { code, message: item.message };
 }
 

@@ -24,6 +24,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { configDirOf, homeEnvOf, requireIsolatedHome, useHome } from '../../../test/helpers/home-test-base.mjs';
+import { dirFaultCodeOf } from '../dist/health.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CLI = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -145,5 +146,42 @@ describe('#915 第二步 · 卡路里行告警只报真用不了', () => {
     const src = readFileSync(join(HERE, '..', 'src', 'cli', 'config.ts'), 'utf8');
     assert.match(src, /calorieAlerts/);
     assert.equal(src.includes('现在生效的是'), false, '组装处源码不许写合成句');
+  });
+});
+
+/* ── #1327：分类判据不依赖本地化报文 ─────────────────────────────── */
+describe('#1327 · 英文下错误分类不失效（结构化判据）', () => {
+  it('英文：数据目录不在仍判 DIR_MISSING，message 是英文那句', () => {
+    const livePhotos = join(home, 'live-photos-1327');
+    mkdirSync(livePhotos, { recursive: true });
+    writeConfig(join(home, 'missing-1327'), livePhotos);
+    const alert = dataOf('calorie.config.read', {}, 'en').alerts?.['db.dir'];
+    assert.notEqual(alert, undefined, '不在 ⇒ 必须有 db.dir 这一格');
+    assert.equal(alert.code, 'DIR_MISSING', '英文下分类必须仍为 DIR_MISSING');
+    assert.equal(typeof alert.message, 'string', 'message 仍原样取自体检结论');
+  });
+
+  it('英文：同名文件占位仍判 DIR_MISSING', () => {
+    const liveDb = join(home, 'live-data-1327');
+    mkdirSync(liveDb, { recursive: true });
+    const blocked = join(home, 'file-block-1327');
+    writeFileSync(blocked, 'i am a file, not a dir', 'utf8');
+    writeConfig(liveDb, blocked);
+    const alert = dataOf('calorie.config.read', {}, 'en').alerts?.['photos.dir'];
+    assert.equal(alert?.code, 'DIR_MISSING', '同名的结构化读数＝目录不在，英文下不打折');
+  });
+
+  it('分类器只看结构：不在→MISSING，在但不可写→UNWRITABLE，在且可写→缺席', () => {
+    assert.equal(dirFaultCodeOf({ exists: false, writable: false }), 'DIR_MISSING');
+    assert.equal(dirFaultCodeOf({ exists: true, writable: false }), 'DIR_UNWRITABLE');
+    assert.equal(dirFaultCodeOf({ exists: true, writable: true }), undefined);
+  });
+
+  it('旧判据已消失：源码不再按本地化报文首字分类', () => {
+    for (const rel of ['src/cli/config.ts', 'src/health.ts']) {
+      const src = readFileSync(join(HERE, '..', rel), 'utf8');
+      assert.equal(src.includes("startsWith('不在')"), false, rel + ' 仍在按「不在」首字分类');
+      assert.equal(src.includes('startsWith("不在")'), false, rel + ' 仍在按「不在」首字分类');
+    }
   });
 });

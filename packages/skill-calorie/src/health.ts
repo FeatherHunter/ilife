@@ -327,6 +327,25 @@ function tableCount(file: string): { readonly ok: boolean; readonly count: numbe
   }
 }
 
+/** 目录结论 → 故障码（#1327）：只看结构化读数（在不在／能不能写），不看本地化报文。 */
+export function dirFaultCodeOf(verdict: { readonly exists: boolean; readonly writable: boolean }): 'DIR_MISSING' | 'DIR_UNWRITABLE' | undefined {
+  if (!verdict.exists) return 'DIR_MISSING';
+  return verdict.writable ? undefined : 'DIR_UNWRITABLE';
+}
+
+/** `db.dir`／`photos.dir` 的故障码：与体检②⑥同一份只读推导（#1327 供行告警用，不解析本地化报文）。
+ *  照片目录另有「还没建」（不在且没有同名挡位）＝绿，不给码。 */
+export function calorieDirFaultCode(id: 'db.dir' | 'photos.dir'): 'DIR_MISSING' | 'DIR_UNWRITABLE' | undefined {
+  const paths = configPaths(CALORIE_CONFIG_STEM);
+  const read = readCalorieConfigReadOnly();
+  const values = read.kind === 'ok' ? read.values : projectOnDefaults({});
+  const dataDir = dbDirOf(paths.dataDir, textOf(readValue(values, 'db', 'dir')));
+  if (id === 'db.dir') return dirFaultCodeOf(dirVerdict(dataDir));
+  const verdict = dirVerdict(photosDirOf(dataDir, textOf(readValue(values, 'photos', 'dir'))));
+  if (!verdict.exists) return verdict.reason === '' ? undefined : 'DIR_MISSING';
+  return verdict.writable ? undefined : 'DIR_UNWRITABLE';
+}
+
 /** 跑一次体检，返回整份报告。**只读**：任何一处都不落盘（只有写探针那一个文件，且当场删掉）。 */
 export function buildCalorieHealthReport(): CalorieHealthReport {
   const paths = configPaths(CALORIE_CONFIG_STEM);

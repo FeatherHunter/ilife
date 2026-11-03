@@ -21,6 +21,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { configDirOf, homeEnvOf, requireIsolatedHome, useHome } from '../../../test/helpers/home-test-base.mjs';
+import { dirFaultCodeOf } from '../dist/health.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CLI = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
@@ -29,8 +30,9 @@ const CLI = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
 let home = null;
 
 /** 跑一条作息命令：回 `{ code, stdout, stderr }`（非 0 不抛，交给断言判）。 */
-function runSchedule(key, params) {
+function runSchedule(key, params, lang) {
   const args = [CLI, key];
+  if (lang !== undefined) args.push('--language', lang);
   if (params !== undefined) args.push('--params', JSON.stringify(params));
   try {
     const stdout = execFileSync(process.execPath, args, { encoding: 'utf8', env: homeEnvOf(home) });
@@ -41,8 +43,8 @@ function runSchedule(key, params) {
 }
 
 /** 跑一条命令并拆出信封 `data`（非 0 即当场失败，报文带 stderr）。 */
-function dataOf(key, params) {
-  const r = runSchedule(key, params);
+function dataOf(key, params, lang) {
+  const r = runSchedule(key, params, lang);
   assert.equal(r.code, 0, key + ' 应 exit 0，stderr=' + r.stderr);
   const envelope = JSON.parse(r.stdout);
   assert.equal(envelope.key, key);
@@ -120,5 +122,39 @@ describe('#915 第二步 · 作息行告警只报真用不了', () => {
     const src = readFileSync(join(HERE, '..', 'src', 'cli', 'config.ts'), 'utf8');
     assert.match(src, /scheduleAlerts/);
     assert.equal(src.includes('现在生效的是'), false, '组装处源码不许写合成句');
+  });
+});
+
+/* ── #1327：分类判据不依赖本地化报文 ─────────────────────────────── */
+describe('#1327 · 英文下错误分类不失效（结构化判据）', () => {
+  it('英文：不存在的目录仍判 DIR_MISSING，message 是英文那句', () => {
+    writeConfigWithDbDir(join(home, 'missing-1327'));
+    const data = dataOf('schedule.config.read', {}, 'en');
+    const alert = data.alerts?.['db.dir'];
+    assert.notEqual(alert, undefined, '不在 ⇒ 必须有这一格');
+    assert.equal(alert.code, 'DIR_MISSING', '英文下分类必须仍为 DIR_MISSING');
+    assert.equal(typeof alert.message, 'string', 'message 仍原样取自体检结论');
+  });
+
+  it('英文：同名文件占位仍判 DIR_MISSING', () => {
+    const blocked = join(home, 'file-block-1327');
+    writeFileSync(blocked, 'i am a file, not a dir', 'utf8');
+    writeConfigWithDbDir(blocked);
+    const alert = dataOf('schedule.config.read', {}, 'en').alerts?.['db.dir'];
+    assert.equal(alert?.code, 'DIR_MISSING', '同名的结构化读数＝目录不在，英文下不打折');
+  });
+
+  it('分类器只看结构：不在→MISSING，在但不可写→UNWRITABLE，在且可写→缺席', () => {
+    assert.equal(dirFaultCodeOf({ exists: false, writable: false }), 'DIR_MISSING');
+    assert.equal(dirFaultCodeOf({ exists: true, writable: false }), 'DIR_UNWRITABLE');
+    assert.equal(dirFaultCodeOf({ exists: true, writable: true }), undefined);
+  });
+
+  it('旧判据已消失：源码不再按本地化报文首字分类', () => {
+    for (const rel of ['src/health.ts', 'src/cli/config.ts']) {
+      const src = readFileSync(join(HERE, '..', rel), 'utf8');
+      assert.equal(src.includes("startsWith('不在')"), false, rel + ' 仍在按「不在」首字分类');
+      assert.equal(src.includes('startsWith("不在")'), false, rel + ' 仍在按「不在」首字分类');
+    }
   });
 });

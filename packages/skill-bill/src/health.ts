@@ -325,6 +325,21 @@ function tableCount(file: string): { readonly ok: boolean; readonly count: numbe
   }
 }
 
+/** 目录结论 → 故障码（#1327）：只看结构化读数（在不在／能不能写），不看本地化报文。 */
+export function dirFaultCodeOf(verdict: { readonly exists: boolean; readonly writable: boolean }): 'DIR_MISSING' | 'DIR_UNWRITABLE' | undefined {
+  if (!verdict.exists) return 'DIR_MISSING';
+  return verdict.writable ? undefined : 'DIR_UNWRITABLE';
+}
+
+/** `db.dir` 的故障码：与体检②同一份只读推导（#1327 供行告警用，不解析本地化报文）。 */
+export function billDbDirFaultCode(): 'DIR_MISSING' | 'DIR_UNWRITABLE' | undefined {
+  const paths = configPaths(BILL_CONFIG_STEM);
+  const read = readBillConfigReadOnly();
+  const values = read.kind === 'ok' ? read.values : projectOnDefaults({});
+  const dataDir = dbDirOf(paths.dataDir, textOf(readValue(values, 'db', 'dir')));
+  return dirFaultCodeOf(dirVerdict(dataDir));
+}
+
 /** 跑一次体检，返回整份报告。**只读**：任何一处都不落盘（只有写探针那一个文件，且当场删掉）。 */
 export function buildBillHealthReport(): BillHealthReport {
   const paths = configPaths(BILL_CONFIG_STEM);

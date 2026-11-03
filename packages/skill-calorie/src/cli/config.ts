@@ -14,7 +14,7 @@ import type { ConfigRecord } from 'base-link-core';
 import { CALORIE_SKILL, ENVELOPE_VERSION } from './keys.js';
 import { loadCalorieConfig, resetCalorieConfig, saveCalorieConfig } from '../config.js';
 import { dbFileOf, gifsDirOf, htmlDirOf, photosDirOf, resolveDbDir, resolveDbFileName, stateDirOf } from '../paths.js';
-import { buildCalorieHealthReport } from '../health.js';
+import { buildCalorieHealthReport, calorieDirFaultCode } from '../health.js';
 import { XUNJI_CATALOG } from '../xunji/index.js';
 import { fail } from '../shared/params.js';
 import { m } from '../entries/index.js';
@@ -113,7 +113,7 @@ export function resolvedCaloriePaths(): CalorieResolvedPaths {
  * 结论复用体检对应项（`src/health.ts` 的 `dirVerdict`：不在／在但写不进去／在且能写），
  * 只有体检判红的那一格才进 `alerts`，`message` 原样取体检那句故障本身，不合成新句子；
  * 全绿＝缺席（面板不亮）。`xunji.key` 非目录不给，只读行一律不给。
- * 故障码只按体检报文首字区分（`不在`／`同名`→缺失，其余→写不进去），供判据与回执用，面板只画 `message`。
+ * 故障码取结构化目录结论（#1327：不解析本地化报文，zh／en 下分类一致），面板只画 `message`。
  */
 function calorieAlerts(): Record<string, { readonly code: string; readonly message: string }> | undefined {
   const items = buildCalorieHealthReport().items;
@@ -121,7 +121,8 @@ function calorieAlerts(): Record<string, { readonly code: string; readonly messa
   for (const id of ['db.dir', 'photos.dir'] as const) {
     const item = items.find((entry) => entry.id === id);
     if (item === undefined || item.status !== 'red') continue;
-    const code = item.message.startsWith('不在') || item.message.startsWith('同名') ? 'DIR_MISSING' : 'DIR_UNWRITABLE';
+    const code = calorieDirFaultCode(id);
+    if (code === undefined) continue;
     out[id] = { code, message: item.message };
   }
   return Object.keys(out).length === 0 ? undefined : out;
