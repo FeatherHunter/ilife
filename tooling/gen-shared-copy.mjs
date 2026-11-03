@@ -29,8 +29,21 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..');
 export const DEFAULT_TABLE = join(HERE, 'shared-copy.json');
 
-/** 词条表的语言列（与 tooling/i18n-langs.mjs 的 LANGUAGES 同两门；加语言时这里跟着加）。 */
-export const LANGS = ['zh', 'en'];
+/**
+ * 来源表自己的语言列（顺序＝ shared.advancedGroupTitle 的键顺序）。
+ *
+ * 为什么从表读、不写死：本件原先硬编码 ['zh','en']，加一门语言要改这里的 .ts 逻辑，
+ * 与 #1322「加语言＝加词条文件＋数据清单，不改逻辑代码」冲突。现在语言列由**数据清单**
+ * （tooling/shared-copy.json）声明：给该清单补一列即多一门语言，本件一行不改。
+ * 各函数都按传入表自己的列算，不依赖这个缺省读数；LANGS 只给导入方/测试一个默认值。
+ */
+export function langsOfTable(table) {
+  const adv = table && table.shared && table.shared.advancedGroupTitle;
+  return adv && typeof adv === 'object' ? Object.keys(adv) : [];
+}
+
+/** 默认来源表的语言列。 */
+export const LANGS = Object.freeze(langsOfTable(loadSharedCopy()));
 
 /** 生成段起点（含）。整行匹配，缩进两格＝表内一级。 */
 export const MARK_BEGIN = '  /* ══ #1231 共享词条：由 tooling/gen-shared-copy.mjs 自 tooling/shared-copy.json 生成，勿手改 ══ */';
@@ -57,7 +70,9 @@ export function validateTable(t) {
   const nonEmpty = (v) => typeof v === 'string' && v.trim().length > 0;
   if (!t || typeof t !== 'object') return ['表不是对象'];
   if (!t.shared || !t.manager || !Array.isArray(t.plugins)) return ['表缺 shared／manager／plugins 三块之一'];
-  for (const lang of LANGS) {
+  const langs = langsOfTable(t);
+  if (langs.length === 0) return ['shared.advancedGroupTitle 缺语言列（至少要一门）'];
+  for (const lang of langs) {
     if (!nonEmpty(t.shared.advancedGroupTitle?.[lang])) errs.push('shared.advancedGroupTitle.' + lang + ' 不是非空串');
     const hint = t.shared.missingManagerHint?.[lang];
     if (!nonEmpty(hint)) errs.push('shared.missingManagerHint.' + lang + ' 不是非空串');
@@ -78,7 +93,7 @@ export function validateTable(t) {
       seen[f].add(p[f]);
     }
     if (nonEmpty(p.channel) && !CHANNEL_RE.test(p.channel)) errs.push(at + '.channel 不是单段路由名：' + p.channel);
-    for (const lang of LANGS) if (!nonEmpty(p.productName?.[lang])) errs.push(at + '.productName.' + lang + ' 不是非空串');
+    for (const lang of langs) if (!nonEmpty(p.productName?.[lang])) errs.push(at + '.productName.' + lang + ' 不是非空串');
     for (const k of ['slot', 'settings', 'bridge']) {
       const key = p.entriesKeys?.[k];
       if (!nonEmpty(key)) { errs.push(at + '.entriesKeys.' + k + ' 不是非空串'); continue; }
@@ -97,15 +112,15 @@ export function validateTable(t) {
 /** 一个包该进生成段的那几条 (key, 值)：六家是 页签名／「高级」／缺总管提示，总管是「高级」＋六家页签名。 */
 export function sharedEntries(table, pkg) {
   const adv = table.shared.advancedGroupTitle;
+  const langs = langsOfTable(table);
+  const out = {};
   if (pkg.dir === table.manager.dir) {
-    const navs = table.plugins.map((p) => [p.managerNavKey, p.productName]);
-    return {
-      zh: [[table.manager.advancedKey, adv.zh], ...navs.map(([k, v]) => [k, v.zh])],
-      en: [[table.manager.advancedKey, adv.en], ...navs.map(([k, v]) => [k, v.en])],
-    };
+    for (const lang of langs) {
+      out[lang] = [[table.manager.advancedKey, adv[lang]], ...table.plugins.map((p) => [p.managerNavKey, p.productName[lang]])];
+    }
+    return out;
   }
-  const out = { zh: [], en: [] };
-  for (const lang of LANGS) {
+  for (const lang of langs) {
     out[lang] = [
       [pkg.entriesKeys.slot, pkg.productName[lang]],
       [pkg.entriesKeys.settings, adv[lang]],
@@ -118,7 +133,7 @@ export function sharedEntries(table, pkg) {
 /** 一个包在生成段里拥有的全部 key（两种语言同一批）。 */
 export function ownedKeys(table, pkg) {
   const byLang = sharedEntries(table, pkg);
-  return [...new Set(LANGS.flatMap((lang) => byLang[lang].map(([k]) => k)))];
+  return [...new Set(langsOfTable(table).flatMap((lang) => byLang[lang].map(([k]) => k)))];
 }
 
 /** 词条行（与既有表逐字同形：两空格缩进、单引号 key、双引号值、末尾逗号）。 */
@@ -194,10 +209,11 @@ export function renderGeneratedTs(table, pkg) {
 /** 全部产物：{ file: 仓库相对路径, kind, current, next }。只读盘，不写。 */
 export function plan(table, root = ROOT) {
   const pkgs = [...table.plugins, { dir: table.manager.dir }];
+  const langs = langsOfTable(table);
   const out = [];
   for (const pkg of pkgs) {
     const byLang = sharedEntries(table, pkg);
-    for (const lang of LANGS) {
+    for (const lang of langs) {
       const file = 'packages/' + pkg.dir + '/src/entries/' + lang + '.ts';
       const full = join(root, file);
       if (!existsSync(full)) throw new Error('词条表不存在：' + file);
@@ -265,7 +281,7 @@ function main() {
       console.log('WRITE ' + f.file);
     }
   }
-  console.log('SAME  ' + same.length + '／CHANGED ' + changed.length + '（产物 ' + files.length + ' 份：词条表 ' + LANGS.length * (table.plugins.length + 1) + ' ＋ generated.ts ' + (table.plugins.length + 1) + '）');
+  console.log('SAME  ' + same.length + '／CHANGED ' + changed.length + '（产物 ' + files.length + ' 份：词条表 ' + langsOfTable(table).length * (table.plugins.length + 1) + ' ＋ generated.ts ' + (table.plugins.length + 1) + '）');
   if (check) {
     if (changed.length > 0) {
       console.error('FAIL: ' + changed.length + ' 份产物与来源表对不上——跑 node tooling/gen-shared-copy.mjs 重生成，别手改生成段');

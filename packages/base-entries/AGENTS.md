@@ -27,7 +27,7 @@
 - **零运行时依赖**：`dependencies` 必须是 `{}`；门是 `tooling/check-boundaries.mjs` 里那行 `base-entries 零依赖`。数字与日期走运行时自带的 `Intl`，不引第三方。
 - **语言清单不在这里**：唯一权威是 `packages/base-link-core/src/config/languages.generated.ts`（`AVAILABLE_LANGUAGES`，由 `tooling/gen-entry-catalogs.mjs` 从各包词条目录生成，`language.ts` 转出；`DEFAULT_LANGUAGE` 仍在 `language.ts`）。本包对 `language` 只收 `string`，不复制清单、不判合法性——清单复制一份就是第二个定义地（铁律二）。
 - **基准语言 zh 是另一个概念**：词条表以它为准（`MessageId` 从它派生），与「语言选择的缺省值」不是同一件事。见 `src/catalog.ts` 头注释。
-- **加一门语言＝加一个词条文件＋跑 `pnpm gen`**：词条表的语言键就是语言，key 集合以基准语言那份表为准；产品侧由 `tooling/gen-entry-catalogs.mjs` 写 `catalog.generated.ts`（#1322），其余语言可暂时缺词条，缺的走回退链。
+- **加一门语言＝加一个词条文件＋跑 `pnpm gen`**：词条表的语言键就是语言，key 集合以基准语言那份表为准；产品侧由 `tooling/gen-entry-catalogs.mjs` 写 `catalog.generated.ts`（#1322），其余语言可暂时缺词条，缺的走回退链。另有三处**数据清单**随语言一起补、不属于逻辑代码：`tooling/shared-copy.json` 的共享词条段补该语言列；`tooling/i18n-langs.mjs` 的 `LANG_REGISTERS` 补该语言排印规则（未登记时排印门显式 `MISSING-REGISTER`，其余门与 `tsc -b` 照跑）；语言清单是并集，缺词条的包回退 zh，缺词条门用 `COVERAGE` 行报覆盖。加完先 `pnpm gen` 再 `pnpm gen:check`。
 - **两处非源码位**：`test-d/` 是类型面自证（被 `tsconfig.json` 这个 solution 工程收进 `tsc -b`），`test/` 读编译产物 `dist/`（先 `tsc -b` 再 `node --test`，与兄弟包同形）。
 - 端口契约、回退链、换后端怎么接：`docs/base/base-entries/端口契约.md`。
 

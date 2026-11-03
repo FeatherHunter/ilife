@@ -146,8 +146,8 @@ export function registerOf(lang, options = {}) {
   const reg = LANG_REGISTERS[t];
   if (reg) return reg;
   if (options.allowFallback === true) {
-    return { ...LANG_REGISTERS.en, label: t + '（未登记名册，按拉丁文字兜底）',
-      why: '语言 ' + t + ' 已在词条目录出现，但 LANG_REGISTERS 还没登记专属名册；先按拉丁文字名册兜底。' };
+    return { ...LANG_REGISTERS.en, fallback: true, label: t + '（未登记名册，按拉丁文字名册兜底）',
+      why: '语言 ' + t + ' 已在词条目录出现，但 LANG_REGISTERS 还没登记专属名册；先按拉丁文字名册兜底（只供 key 残留门判「成句散文」；排印门另报 MISSING-REGISTER）。' };
   }
   throw new Error('缺语言名册：' + t + '（LANG_REGISTERS 里没有；新增语言先登记名册）');
 }
@@ -156,9 +156,9 @@ export function bareLatinIsFault(lang) {
   return registerOf(lang).bareLatinIsFault;
 }
 
-/** 全部语言名册（列表用；顺序＝LANGUAGES）。 */
+/** 全部语言名册（列表用；顺序＝LANGUAGES）。未登记名册的语言也列出来（带 fallback 标记），不许静默丢一门语言。 */
 export function allRegisters() {
-  return LANGUAGES.filter((l) => LANG_REGISTERS[l] !== undefined).map((l) => ({ lang: l, ...LANG_REGISTERS[l] }));
+  return LANGUAGES.map((l) => ({ lang: l, ...registerOf(l, { allowFallback: true }) }));
 }
 
 // 扫描面纪律

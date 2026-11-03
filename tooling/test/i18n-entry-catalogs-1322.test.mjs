@@ -60,7 +60,8 @@ test('#1322 生成 catalog：加语言只改 ENTRY_TABLES，不动 index；窄�
     assert.match(cat.text, /^import \{ zh as _t_zh_0 \} from '\.\/zh\.js';$/m);
     assert.match(cat.text, /^import \{ ja as _t_ja_0 \} from '\.\/ja\.js';$/m);
     assert.match(cat.text, /readonly ja: typeof _t_ja_0;/);
-    assert.match(cat.text, /ja: _ja,/);
+    assert.match(cat.text, /ja: _t_ja_0,/);
+    assert.ok(!/const _ja = _t_ja_0;/.test(cat.text), '单文件语言不许再套一层中间别名');
     assert.ok(!files.some((f) => f.rel.endsWith('/index.ts')), '生成器不许改词条入口 index.ts');
     const roster = files.find((f) => f.rel === ROSTER_SOURCE);
     assert.ok(roster, '必须生成语言清单 ' + ROSTER_SOURCE);
@@ -100,4 +101,5 @@ test('#1322 多分册同语言：合并成一个语言键，生成对象展开',
   const text = renderCatalog(pkg);
   assert.match(text, /const _zh = \{ \.\.\._t_zh_0, \.\.\._t_zh_1 \};/);
   assert.match(text, /readonly zh: typeof _t_zh_0 & typeof _t_zh_1;/);
+  assert.match(text, /zh: _zh,/);
 });

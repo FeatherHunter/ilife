@@ -23,8 +23,23 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, sep } from 'node:path';
 
-import { DEFAULT_LANGUAGE } from './i18n-langs.mjs';
+import { DEFAULT_LANGUAGE, LANGUAGES, ROSTER_SOURCE } from './i18n-langs.mjs';
 import { isLanguageTag } from './entry-languages.mjs';
+
+/**
+ * 语言值的唯一解析口：空值落基准语言，形状不对就抛（带可用语言清单与清单出处）。
+ *
+ * 为什么按词条文件形状（isLanguageTag）而不是按名册闭集：selftest 在临时仓库里造「仓库还没有的第三语言」，
+ * 名册是**产品仓的**闭集，不能拿来拒临时仓库的语言；真仓里出现的语言一定同时进 LANGUAGES（同源派生，
+ * 见 tooling/entry-languages.mjs），故这里放宽形状不会让真仓绕过名册。
+ */
+function tableLang(raw) {
+  const want = (raw === undefined || raw === null || raw === '') ? DEFAULT_LANGUAGE : String(raw);
+  if (!isLanguageTag(want)) {
+    throw new Error('未识别语言：' + want + '（可用：' + LANGUAGES.join('、') + '；词条文件形状见 ' + ROSTER_SOURCE + ' 同源口径）');
+  }
+  return want;
+}
 
 /** 具名占位符：与 packages/base-entries/src/evaluate.ts 的 PLACEHOLDER 同形（只认 {name}）。 */
 const PLACEHOLDER = /\{([A-Za-z_][A-Za-z0-9_]*)\}/g;
@@ -38,8 +53,7 @@ export function placeholdersOf(template) {
 
 /** 这门语言的表文件（按包现找，不写死路径；返回绝对路径，已排序保证读数可复跑）。 */
 export function entryTableFiles(root, lang) {
-  const want = (lang === undefined || lang === null || lang === '') ? DEFAULT_LANGUAGE : String(lang);
-  if (!isLanguageTag(want)) throw new Error('未识别语言：' + want);
+  const want = tableLang(lang);
   const pkgs = join(root, 'packages');
   const out = [];
   if (!existsSync(pkgs)) return out;
@@ -53,6 +67,10 @@ export function entryTableFiles(root, lang) {
     for (const file of readdirSync(dir, { withFileTypes: true })) {
       if (file.isFile() && suffix.test(file.name)) out.push(join(dir, file.name));
     }
+  }
+  // 空结果 ＋ 不在名册里＝多半是语言值拼错：显式抛，不静默读成「零张表」（#1322 spec 评审）。
+  if (out.length === 0 && !LANGUAGES.includes(want)) {
+    throw new Error('未识别语言：' + want + '（可用：' + LANGUAGES.join('、') + '；仓库里也没有任何词条文件叫 ' + want + '）');
   }
   return out.sort();
 }
@@ -194,8 +212,7 @@ export function loadTablesByPackage(root, langs) {
   const errors = [];
   const owners = new Map();
   for (const lang of langs) {
-  const want = (lang === undefined || lang === null || lang === '') ? DEFAULT_LANGUAGE : String(lang);
-  if (!isLanguageTag(want)) throw new Error('未识别语言：' + want);
+    const want = tableLang(lang);
     for (const path of entryTableFiles(root, want)) {
       const pkg = packageOfTablePath(root, path);
       if (pkg === undefined) { errors.push({ path, why: '表文件不在 packages/<包>/src/entries 下，判不了归属' }); continue; }

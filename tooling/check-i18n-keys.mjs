@@ -195,6 +195,11 @@ export function residueOf(text, lang, devTexts = new Set()) {
   if (lang === DEFAULT_LANGUAGE) {
     return new RegExp(reg.scriptRe).test(t) ? "含中文（该进 " + lang + " 词条表）" : null;
   }
+  // 未登记排印名册的语言（#1322）：兜底名册是拉丁文字，判不出中文；但非基准语言列里出现中文必定是漏译，
+  // 不判就等于「第三语言 residue=0」白送。只这条保守判据，不把英文列也改成判 CJK（英文列里有合法中文数据值）。
+  if (reg.fallback === true && /[\u4e00-\u9fff]/.test(t)) {
+    return "含中文（该进 " + lang + " 词条表；该语言尚未登记排印名册，先按「非基准语言列不得出现中文」保守判）";
+  }
   // ⑤ 内联脚本行（#1205）：花括号 ＋ 分号/等号，或箭头函数——代码，不是句子。中文列不走这条分支。
   if ((/[{}]/.test(t) && /[;=]/.test(t)) || /=>/.test(t)) return null;
   // ⑥ SQL 语句（#1220）：大写关键字开头的是数据库代码，不是句子（中文列已在上面的分支判过）。

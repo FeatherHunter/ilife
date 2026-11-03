@@ -237,6 +237,13 @@ export function audit(scope, root = ROOT_DIR, langs = LANGUAGES) {
       for (const path of table.emptyFiles) emptyTables.push({ lang, path });
     }
   }
+  // 语言×包覆盖矩阵（#1322）：某门语言只在一部分包有表时，这门语言在其余包会回退 zh——
+  // 那是合法暂态（翻译分批次），但不能静默：读数里显式印出「几包有/共几包」。
+  const coverage = new Map(langs.map((lang) => [lang, new Set()]));
+  for (const [pkg, byLang] of byPkg.packages) {
+    for (const lang of langs) if (byLang.has(lang)) coverage.get(lang).add(pkg);
+  }
+  const coveragePackages = byPkg.packages.size;
   // 跨包并集只留给两处：判不出归属的夹具件；表里多出来的 key（stray）读数。
   const unions = new Map();
   for (const lang of langs) {
@@ -282,6 +289,16 @@ export function audit(scope, root = ROOT_DIR, langs = LANGUAGES) {
     const catLangs = cat.packages === null
       ? langs.filter((lang) => (unions.get(lang)?.size ?? 0) > 0)
       : langs.filter((lang) => cat.packages.some((pkg) => byPkg.packages.get(pkg)?.has(lang)));
+    // 判据包一份词条表都没有（任何语言）：catLangs 会空，下面的缺词条循环一次都不跑——
+    // 这正是「失明必红」要抓的：没有表不是「不欠词条」，是判不了。旧写法只在逐语言循环里报，这里先兜底。
+    if (cat.packages !== null && catLangs.length === 0) {
+      const tag = cat.packages.join('+');
+      if (!missingTablesOfPkg.has(tag)) {
+        missingTablesOfPkg.add(tag);
+        tableErrors.push({ lang: '*', why: '包 ' + cat.packages.join('、') + ' 一份词条表都没有（' + langs.join('／') + ' 都找不到）——没有表就判不了缺词条（失明）' });
+      }
+      continue;
+    }
     for (const k of ks) {
       for (const lang of catLangs) {
         // 判不出归属（仓库根夹具件只 import base-entries）：回退跨包并集——夹具口径，真范围不出现。
@@ -313,7 +330,7 @@ export function audit(scope, root = ROOT_DIR, langs = LANGUAGES) {
   const used = keys;
   for (const lang of langs) for (const k of unions.get(lang).keys()) if (!used.has(k)) stray.push({ lang, key: k });
   const tableSizes = new Map(langs.map((lang) => [lang, unions.get(lang).size]));
-  return { files, keys: [...keys].sort(), missing, blind, stray, tableErrors, blanks, tableSizes, emptyTables };
+  return { files, keys: [...keys].sort(), missing, blind, stray, tableErrors, blanks, tableSizes, emptyTables, coverage, coveragePackages };
 }
 
 function main() {
@@ -354,6 +371,8 @@ function main() {
   }
   for (const b of r.blanks) { console.error('RED 空白词条：语言 ' + b.lang + ' 的表 ' + b.path + ' 里 key ' + b.key + ' 的值是空串／纯空白（不是「显式空白」，是待译漏记）'); bad += 1; }
   console.log('TABLES: ' + [...LANGUAGES].map((l) => l + '=' + (r.tableSizes.get(l) ?? 'MISSING')).join(' '));
+  console.log('COVERAGE: ' + [...LANGUAGES].map((l) => l + '=' + (r.coverage.get(l)?.size ?? 0) + '/' + r.coveragePackages).join(' ')
+    + '（有该语言词条表的包数／已建词条表的包数；缺的包回退 zh，属翻译批次暂态，不判红）');
   const emptyGroups = new Map();
   for (const { lang, path } of r.emptyTables) {
     const rel = path.startsWith(ROOT_DIR) ? path.slice(ROOT_DIR.length).replace(/^[\\/]/, '').replace(/\\/g, '/') : path;
@@ -535,11 +554,23 @@ function selftest(scope) {
     want(zetaGap.missing.length === 2 && zetaGap.missing.every((m) => m.lang !== 'ja'),
       '没 ja 的包对 ja 跳过，缺词条只报 zh/en 两门（实得 ' + JSON.stringify(zetaGap.missing.map((m) => m.lang)) + '）');
     console.log('SELFTEST 单包第三语言读数：全齐 missing=' + third.missing.length + '／没 ja 的包跳过 ja 后 missing=' + zetaGap.missing.length);
+    // ⑭ 判据包一份词条表都没有（#1322）：不能因为「没有语言可判」就绿——必须报 tableErrors（失明必红）。
+    const etaDir = join(tmp, 'packages', 'eta', 'src', 'entries');
+    mkdirSync(etaDir, { recursive: true });
+    writeFileSync(join(etaDir, 'index.ts'), 'export const ETA_CATALOG = defineCatalog({ zh: {}, en: {} });' + nl, 'utf8');
+    writeFileSync(join(tmp, 'packages', 'eta', 'src', 'use.ts'), [
+      "import { resolve } from 'base-entries';",
+      "import { ETA_CATALOG } from '../entries/index.js';",
+      "export const a = resolve(ETA_CATALOG, 'zh', 'demo.eta');",
+    ].join(nl), 'utf8');
+    const noTables = audit({ files: ['packages/eta/src/use.ts'] }, tmp);
+    want(noTables.tableErrors.some((t) => /一份词条表都没有/.test(t.why) && /eta/.test(t.why)), '判据包没有任何词条表必须报 tableErrors（失明必红）（实得 ' + JSON.stringify(noTables.tableErrors) + '）');
+    console.log('SELFTEST 判据包无表读数：tableErrors=' + noTables.tableErrors.length);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
   if (bad.length) { for (const b of bad) console.error('SELFTEST FAIL ' + b); process.exit(1); }
-  console.log('SELFTEST: 空范围显式报数／缺词条必红／补上必绿／没迁完必红／缺表必红／失明必红／空白词条必红／allowlist 剔除／按包归属／别包 catalog 计入／catalog 标识核对／同串两用（数据位剔除·界面位判缺）／单包第三语言（有 ja 判 ja·没 ja 跳过） 十三条自证 OK');
+  console.log('SELFTEST: 空范围显式报数／缺词条必红／补上必绿／没迁完必红／缺表必红／失明必红／空白词条必红／allowlist 剔除／按包归属／别包 catalog 计入／catalog 标识核对／同串两用（数据位剔除·界面位判缺）／单包第三语言（有 ja 判 ja·没 ja 跳过）／判据包无表失明 十四条自证 OK');
 }
 
 /** 入口守卫（照 tooling/i18n-langs.mjs／skill-html-snapshot.mjs 的先例）：本件被别处 import 时**不跑** CLI，

@@ -56,15 +56,14 @@ export function renderCatalog(pkg) {
     aliases.set(lang, list);
   }
   const lines = [HEADER];
-  lines.push('/** 本包词条表清单：语言键 → 词条文件导出的表；加语言文件后由 pnpm gen 重写本文件。 */');
+  lines.push('/** 本包词条表清单（生成数据，不是逻辑）：语言键 → 词条文件导出的表；加语言文件后由 pnpm gen 重写本文件。 */');
   lines.push(...imports);
   lines.push('');
   for (const lang of langs) {
     const list = aliases.get(lang);
-    if (list.length === 1) lines.push('const _' + ident(lang) + ' = ' + list[0] + ';');
-    else lines.push('const _' + ident(lang) + ' = { ...' + list.join(', ...') + ' };');
+    if (list.length > 1) lines.push('const _' + ident(lang) + ' = { ...' + list.join(', ...') + ' };');
   }
-  lines.push('');
+  if (langs.some((lang) => aliases.get(lang).length > 1)) lines.push('');
   lines.push('/** 词条表集合的窄类型（只引用各表导出，不把逐 key 字面量写进声明文件——TS7056 口径）。 */');
   lines.push('export type EntryTables = {');
   for (const lang of langs) {
@@ -75,7 +74,10 @@ export function renderCatalog(pkg) {
   lines.push('');
   lines.push('/** 本包词条表集合。 */');
   lines.push('export const ENTRY_TABLES: EntryTables = {');
-  for (const lang of langs) lines.push('  ' + lang + ': _' + ident(lang) + ',');
+  for (const lang of langs) {
+    const list = aliases.get(lang);
+    lines.push('  ' + lang + ': ' + (list.length === 1 ? list[0] : '_' + ident(lang)) + ',');
+  }
   lines.push('};');
   return lines.join('\n') + '\n';
 }

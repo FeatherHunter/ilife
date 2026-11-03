@@ -8,7 +8,8 @@
  * 口径（与 docs/base/base-entries/端口契约.md §5 一致）：
  *   packages/<包>/src/entries/<语言>.ts|json          基准形态
  *   packages/<包>/src/entries/<分册>.<语言>.ts|json    分册形态
- * 语言段是**文件名最后一个点之后**的那一段，形如 BCP 47 的低写标签（ja、en-US）；
+ * 语言段是**文件名最后一个点之后**的那一段，形如 BCP 47 的低写 canonical 形（ja、zh-hant；
+ * 区域子标签一律小写，大写区域段如 en-US 不是合法文件名，先转小写）；
  * 只认 .ts／.json；index.ts、catalog.generated.ts 这类逻辑件不参与语言发现。
  *
  * 本件只读；不写文件、不判红绿。
@@ -25,26 +26,23 @@ export const ROOT = resolve(HERE, '..');
 /** 基准语言：与 packages/base-entries/src/catalog.ts 的 BASE_LANGUAGE 同值。 */
 export const DEFAULT_LANGUAGE = 'zh';
 
-/** 语言标签形状：低写主语言（2–3 字母）＋可选低写子标签（最多 8 字符）。 */
-const LANGUAGE_TAG = /^[a-z]{2,3}(?:-[a-z0-9]{1,8})*$/;
+/** 语言段形状：低写主语言（2–3 字母）＋可选低写子标签（最多 8 字符）；正则字符串与文件名正则共用一份。 */
+const LANGUAGE_SEGMENT = '[a-z]{2,3}(?:-[a-z0-9]{1,8})*';
+const LANGUAGE_TAG = new RegExp('^' + LANGUAGE_SEGMENT + '$');
+
+/** 词条文件名：<语言>.ts|json 或 <分册>.<语言>.ts|json。 */
+const ENTRY_FILE = new RegExp('^(?:(.+)\\.)?(' + LANGUAGE_SEGMENT + ')\\.(ts|json)$');
 
 /** 是不是语言标签形状（不查是否已在名册里）。 */
 export function isLanguageTag(tag) {
   return LANGUAGE_TAG.test(String(tag));
 }
 
-/** 逻辑件名字（不是语言文件）；即使形状碰巧像语言标签也不收。 */
-const RESERVED = new Set(['index', 'catalog', 'generated', 'manifest']);
-
 /** 文件名 → { part, lang, ext }；不是词条文件返回 null。 */
 export function parseEntryFileName(name) {
-  const m = /^(?:(.+)\.)?([a-z]{2,3}(?:-[a-z0-9]{1,8})*)\.(ts|json)$/.exec(String(name));
+  const m = ENTRY_FILE.exec(String(name));
   if (!m) return null;
-  const part = m[1] ?? null;
-  const lang = m[2];
-  const ext = m[3];
-  if (RESERVED.has(lang)) return null;
-  return { part, lang, ext };
+  return { part: m[1] ?? null, lang: m[2], ext: m[3] };
 }
 
 /** 从 .ts 表文件里读它导出的那份表的标识（第一个 export const）。 */

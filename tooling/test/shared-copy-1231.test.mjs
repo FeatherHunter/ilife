@@ -18,7 +18,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
   LANGS, MARK_BEGIN, MARK_END, TABLE_END,
-  entryLine, loadSharedCopy, plan, sharedEntries, spliceTable,
+  entryLine, langsOfTable, loadSharedCopy, plan, sharedEntries, spliceTable, validateTable,
 } from '../gen-shared-copy.mjs';
 
 const LF = String.fromCharCode(10);
@@ -130,6 +130,32 @@ describe('#1231 共享串：七份通道名副本同源', () => {
     for (const q of table.plugins) {
       assert.ok(!nav.includes("'" + q.channel + "'"), 'packages/' + table.manager.dir + '/src/nav.ts 里还留着写死的通道名 ' + q.channel);
     }
+  });
+});
+
+describe('#1231／#1322 共享串：语言列由数据清单声明', () => {
+  it('来源表补一列 ja：共享段自动多出 ja 的一组，生成器一行不改', () => {
+    const mutated = JSON.parse(JSON.stringify(table));
+    mutated.shared.advancedGroupTitle.ja = 'アドバンス';
+    mutated.shared.missingManagerHint.ja = mutated.shared.missingManagerHint.zh;
+    for (const q of mutated.plugins) q.productName.ja = q.productName.zh + '（ja）';
+    assert.deepEqual(langsOfTable(mutated), ['zh', 'en', 'ja'], '语言列顺序＝数据清单里的键顺序');
+    assert.deepEqual(LANGS, langsOfTable(table), '默认 LANGS 也必须从数据清单派生，不写死');
+    const one = mutated.plugins[0];
+    const byLang = sharedEntries(mutated, one);
+    assert.equal(byLang.ja.length, byLang.zh.length, 'ja 共享段条数与 zh 相同');
+    assert.deepEqual(byLang.ja.map(([k]) => k), byLang.zh.map(([k]) => k), '三列共享段的 key 相同');
+    assert.equal(byLang.ja[0][1], one.productName.ja);
+    const mgr = sharedEntries(mutated, { dir: mutated.manager.dir });
+    assert.equal(mgr.ja[0][0], mutated.manager.advancedKey);
+    assert.equal(mgr.ja[0][1], 'アドバンス');
+    assert.equal(mgr.ja.length, 1 + mutated.plugins.length);
+  });
+
+  it('数据清单没有语言列：显式报错，不静默生成空共享段', () => {
+    const broken = JSON.parse(JSON.stringify(table));
+    broken.shared.advancedGroupTitle = {};
+    assert.match(validateTable(broken).join('；'), /缺语言列/);
   });
 });
 

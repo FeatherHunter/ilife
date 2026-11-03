@@ -8,7 +8,7 @@ import { currentRenderLanguage, defineCatalog, resolve, type MessageId, type Mes
 import { ENTRY_TABLES, type EntryTables } from './catalog.generated.js';
 
 /** 本包词条表集合。key 类型从 zh 那份派生：**拼错 key 编译期红**（TS2345）。 */
-export const PLUGIN_BILL_ILIFE_CATALOG: EntryTables = defineCatalog({ ...ENTRY_TABLES });
+export const PLUGIN_BILL_ILIFE_CATALOG: EntryTables = defineCatalog(ENTRY_TABLES);
 
 /** 本包词条 key 的窄类型。 */
 export type PluginBillIlifeMessageId = MessageId<typeof PLUGIN_BILL_ILIFE_CATALOG>;
