@@ -92,6 +92,7 @@ export function memoRuntimeJs(): string {
   // JSON 字面量拼进页内 JS；中文下逐字节等于改动前的 "复制数据"／"复制日志"。
   const copyDataText = JSON.stringify(m('skill-memo-ilife.render-memo-page-assets.c001'));
   const copyLogText = JSON.stringify(m('skill-memo-ilife.render-memo-page-assets.c002'));
+  const retryText = JSON.stringify(m('skill-memo-ilife.render-memo-page-assets.c003'));
   const src = [
     '(function () {',
     "  'use strict';",
@@ -243,7 +244,7 @@ export function memoRuntimeJs(): string {
     '    if (!logText && ok) { try { logText = window.buildLogText(payload); } catch (e) { logText = ""; } }',
     '    var retry = typeof cfg.retryPrompt === "string" && cfg.retryPrompt !== "" ? cfg.retryPrompt : "";',
     '    var btns = "";',
-    '    if (retry) btns += errorCopyBtn("memo-error-retry", "ilife-copy-btn-primary ilife-copy-btn-wide", "修正重试", retry);',
+    '    if (retry) btns += errorCopyBtn("memo-error-retry", "ilife-copy-btn-primary ilife-copy-btn-wide", ' + retryText + ', retry);',
     '    var pairs = "";',
     '    if (dataText) pairs += errorCopyBtn("memo-error-copy-data", "ilife-copy-btn-ghost", ' + copyDataText + ', dataText);',
     '    if (logText) pairs += errorCopyBtn("memo-error-copy-log", "ilife-copy-btn-ghost", ' + copyLogText + ', logText);',

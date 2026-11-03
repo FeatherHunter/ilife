@@ -10,4 +10,5 @@ import type { MessageTable } from 'base-entries';
 export const MEMO_PAGE_ASSETS_ZH = {
   'skill-memo-ilife.render-memo-page-assets.c001': "复制数据",
   'skill-memo-ilife.render-memo-page-assets.c002': "复制日志",
+  'skill-memo-ilife.render-memo-page-assets.c003': "修正重试",
 } as const satisfies MessageTable;

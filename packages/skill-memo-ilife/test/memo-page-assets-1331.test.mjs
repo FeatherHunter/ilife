@@ -17,12 +17,18 @@ const ZH_DATA_LINE = 'errorCopyBtn("memo-error-copy-data", "ilife-copy-btn-ghost
 const ZH_LOG_LINE = 'errorCopyBtn("memo-error-copy-log", "ilife-copy-btn-ghost", "复制日志", logText);';
 const EN_DATA_LINE = 'errorCopyBtn("memo-error-copy-data", "ilife-copy-btn-ghost", "Copy data", dataText);';
 const EN_LOG_LINE = 'errorCopyBtn("memo-error-copy-log", "ilife-copy-btn-ghost", "Copy log", logText);';
+const ZH_RETRY_LINE =
+  'errorCopyBtn("memo-error-retry", "ilife-copy-btn-primary ilife-copy-btn-wide", "修正重试", retry);';
+const EN_RETRY_LINE =
+  'errorCopyBtn("memo-error-retry", "ilife-copy-btn-primary ilife-copy-btn-wide", "Retry", retry);';
+const CJK = /[\u4e00-\u9fff]/u;
 
 describe('#1331 备忘录页内资产复制按钮文案', () => {
   it('中文：两行生成文本与改动前逐字相同', () => {
     const js = runWithLanguage('zh', () => memoRuntimeJs());
     assert.ok(js.includes(ZH_DATA_LINE), '中文数据按钮行必须逐字不变');
     assert.ok(js.includes(ZH_LOG_LINE), '中文日志按钮行必须逐字不变');
+    assert.ok(js.includes(ZH_RETRY_LINE), '中文修正重试按钮行必须逐字不变');
     assert.equal(js.includes('Copy data'), false, '中文资产不得混英文');
   });
 
@@ -30,7 +36,17 @@ describe('#1331 备忘录页内资产复制按钮文案', () => {
     const js = runWithLanguage('en', () => memoRuntimeJs());
     assert.ok(js.includes(EN_DATA_LINE), '英文数据按钮行须取英文词条');
     assert.ok(js.includes(EN_LOG_LINE), '英文日志按钮行须取英文词条');
+    assert.ok(js.includes(EN_RETRY_LINE), '英文修正重试按钮行须取英文词条');
     assert.equal(js.includes('"复制数据"'), false, '英文资产不得残留中文数据按钮标签');
     assert.equal(js.includes('"复制日志"'), false, '英文资产不得残留中文日志按钮标签');
+    assert.equal(js.includes('"修正重试"'), false, '英文资产不得残留中文修正重试按钮标签');
+    // 英文页内资产里凡 errorCopyBtn 调用行的标签都不得含汉字（#1331 验收：不含硬编码中文按钮标签）。
+    const btnLines = js.split(String.fromCharCode(10)).filter((line) => line.includes('errorCopyBtn('));
+    assert.ok(btnLines.length >= 3, 'errorCopyBtn 调用行应在生成文本里可见');
+    for (const line of btnLines) {
+      // 第 1 行是函数定义（形参无文案），其余是调用行；调用行的三参必须是英文。
+      if (line.includes('function errorCopyBtn(')) continue;
+      assert.equal(CJK.test(line), false, '英文资产仍含中文按钮标签行：' + line.trim());
+    }
   });
 });

@@ -8,4 +8,5 @@ import type { MessageTable } from 'base-entries';
 export const MEMO_PAGE_ASSETS_EN = {
   'skill-memo-ilife.render-memo-page-assets.c001': "Copy data",
   'skill-memo-ilife.render-memo-page-assets.c002': "Copy log",
+  'skill-memo-ilife.render-memo-page-assets.c003': "Retry",
 } as const satisfies MessageTable;

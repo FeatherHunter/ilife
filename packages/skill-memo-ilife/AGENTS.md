@@ -74,8 +74,8 @@
 | `src/db/readonly.ts` | 333 | 334 | 未越线，在册备查 |
 | `src/entries/catalog.generated.ts` | 22 | 22 | 未越线，在册备查 |
 | `src/entries/index.ts` | 20 | 19 | 未越线，在册备查 |
-| `src/entries/memoPageAssets.en.ts` | 11 | 11 | 未越线，在册备查 |
-| `src/entries/memoPageAssets.zh.ts` | 13 | 13 | 未越线，在册备查 |
+| `src/entries/memoPageAssets.en.ts` | 11 | 12 | 未越线，在册备查 |
+| `src/entries/memoPageAssets.zh.ts` | 13 | 14 | 未越线，在册备查 |
 | `src/health.ts` | 17 | 17 | 未越线，在册备查 |
 | `src/help/booklet.ts` | 92 | 95 | 未越线，在册备查 |
 | `src/help/helpFile.ts` | 220 | 233 | 未越线，在册备查 |
@@ -120,7 +120,7 @@
 | `src/render/html.ts` | 50 | 52 | 未越线，在册备查 |
 | `src/render/index.ts` | 23 | 27 | 未越线，在册备查 |
 | `src/render/listPage.ts` | 69 | 72 | 未越线，在册备查 |
-| `src/render/memoPageAssets.ts` | 229 | 335 | 未越线，在册备查 |
+| `src/render/memoPageAssets.ts` | 229 | 336 | 未越线，在册备查 |
 | `src/render/pages.ts` | 261 | 267 | 未越线，在册备查 |
 | `src/render/receipt.ts` | 107 | 172 | 未越线，在册备查 |
 | `src/render/templates.ts` | 27 | 27 | 未越线，在册备查 |

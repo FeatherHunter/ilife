@@ -15,8 +15,8 @@
  */
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -67,6 +67,24 @@ function writeConfigWithDbDir(dirValue) {
   writeFileSync(yamlFile(), text, 'utf8');
 }
 
+/** 只读目录模拟（跨平台）：win32 用 icacls 拒绝写；POSIX 用 chmod 555。
+ *  返回还原函数；无法模拟（如 root／无 icacls）返回 null，调用方 `t.skip`。 */
+function makeDirReadOnly(dir) {
+  if (process.platform === 'win32') {
+    const r = spawnSync('icacls', [dir, '/deny', '*S-1-1-0:(W,AD,WD)'], { encoding: 'utf8' });
+    if (r.status !== 0) return null;
+    return () => spawnSync('icacls', [dir, '/remove:d', '*S-1-1-0'], { encoding: 'utf8' });
+  }
+  try { chmodSync(dir, 0o555); } catch { return null; }
+  return () => { try { chmodSync(dir, 0o755); } catch { /* 还原尽力而为 */ } };
+}
+
+/** 还原之后确认目录真的还能写（否则「已还原」是假的）。 */
+function canWrite(dir) {
+  const probe = join(dir, '.t1327-probe');
+  try { writeFileSync(probe, 'x'); rmSync(probe); return true; } catch { return false; }
+}
+
 beforeEach(() => {
   home = mkdtempSync(join(tmpdir(), 'schedule-915-'));
   mkdirSync(configDirOf(home), { recursive: true });
@@ -108,6 +126,7 @@ describe('#915 第二步 · 作息行告警只报真用不了', () => {
     const data = dataOf('schedule.config.read', {});
     const alert = data.alerts?.['db.dir'];
     assert.notEqual(alert, undefined, '形状不对 ⇒ 必须有这一格');
+    assert.equal(alert.code, 'DIR_MISSING', '同名的结构化读数＝目录不在（不按 message 首字分类）');
     assert.match(String(alert.message), /不在|同名文件/, 'message 应说那件故障本身，实为 ' + String(alert.message));
     assert.equal(JSON.stringify(data).includes('现在生效的是'), false, '回执里不许出现合成句');
   });
@@ -158,3 +177,37 @@ describe('#1327 · 英文下错误分类不失效（结构化判据）', () => {
     }
   });
 });
+
+/* ── #1327 验收：目录不存在／不可写／同名三形态在 zh 与 en 下分类一致 ───────── */
+describe('#1327 · 三形态 × 两语言分类一致', () => {
+  it('目录不存在：zh 与 en 都判 DIR_MISSING', () => {
+    writeConfigWithDbDir(join(home, 'missing-1327-parity'));
+    assert.equal(dataOf('schedule.config.read', {}, 'zh').alerts?.['db.dir']?.code, 'DIR_MISSING');
+    assert.equal(dataOf('schedule.config.read', {}, 'en').alerts?.['db.dir']?.code, 'DIR_MISSING');
+  });
+
+  it('同名文件占位：zh 与 en 都判 DIR_MISSING', () => {
+    const blocked = join(home, 'file-block-1327-parity');
+    writeFileSync(blocked, 'i am a file, not a dir', 'utf8');
+    writeConfigWithDbDir(blocked);
+    assert.equal(dataOf('schedule.config.read', {}, 'zh').alerts?.['db.dir']?.code, 'DIR_MISSING');
+    assert.equal(dataOf('schedule.config.read', {}, 'en').alerts?.['db.dir']?.code, 'DIR_MISSING');
+  });
+
+  it('目录在但不可写：zh 与 en 都判 DIR_UNWRITABLE', (t) => {
+    const ro = join(home, 'readonly-1327');
+    mkdirSync(ro, { recursive: true });
+    const restore = makeDirReadOnly(ro);
+    if (restore === null) { t.skip('当前环境无法模拟只读目录（root／无 icacls）'); return; }
+    if (canWrite(ro)) { restore(); t.skip('拒绝写未生效（ACL 被继承绕过）'); return; }
+    try {
+      writeConfigWithDbDir(ro);
+      assert.equal(dataOf('schedule.config.read', {}, 'zh').alerts?.['db.dir']?.code, 'DIR_UNWRITABLE');
+      assert.equal(dataOf('schedule.config.read', {}, 'en').alerts?.['db.dir']?.code, 'DIR_UNWRITABLE');
+    } finally {
+      restore();
+      assert.equal(canWrite(ro), true, '还原后目录应恢复可写');
+    }
+  });
+});
+

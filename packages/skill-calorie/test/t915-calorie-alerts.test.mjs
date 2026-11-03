@@ -18,8 +18,8 @@
  */
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -33,8 +33,9 @@ const CLI = join(HERE, '..', 'dist', 'cli', 'cmd_read.js');
 let home = null;
 
 /** 跑一条卡路里命令：回 `{ code, stdout, stderr }`（非 0 不抛，交给断言判）。 */
-function runCalorie(key, params) {
+function runCalorie(key, params, lang) {
   const args = [CLI, key];
+  if (lang !== undefined) args.push('--language', lang);
   if (params !== undefined) args.push('--params', JSON.stringify(params));
   try {
     const stdout = execFileSync(process.execPath, args, { encoding: 'utf8', env: homeEnvOf(home) });
@@ -45,8 +46,8 @@ function runCalorie(key, params) {
 }
 
 /** 跑一条命令并拆出信封 `data`（非 0 即当场失败，报文带 stderr）。 */
-function dataOf(key, params) {
-  const r = runCalorie(key, params);
+function dataOf(key, params, lang) {
+  const r = runCalorie(key, params, lang);
   assert.equal(r.code, 0, key + ' 应 exit 0，stderr=' + r.stderr);
   const envelope = JSON.parse(r.stdout);
   assert.equal(envelope.key, key);
@@ -78,6 +79,24 @@ function writeConfig(dbDir, photosDir) {
     '',
   ].join('\n');
   writeFileSync(yamlFile(), text, 'utf8');
+}
+
+/** 只读目录模拟（跨平台）：win32 用 icacls 拒绝写；POSIX 用 chmod 555。
+ *  返回还原函数；无法模拟（如 root／无 icacls）返回 null，调用方 `t.skip`。 */
+function makeDirReadOnly(dir) {
+  if (process.platform === 'win32') {
+    const r = spawnSync('icacls', [dir, '/deny', '*S-1-1-0:(W,AD,WD)'], { encoding: 'utf8' });
+    if (r.status !== 0) return null;
+    return () => spawnSync('icacls', [dir, '/remove:d', '*S-1-1-0'], { encoding: 'utf8' });
+  }
+  try { chmodSync(dir, 0o555); } catch { return null; }
+  return () => { try { chmodSync(dir, 0o755); } catch { /* 还原尽力而为 */ } };
+}
+
+/** 还原之后确认目录真的还能写（否则「已还原」是假的）。 */
+function canWrite(dir) {
+  const probe = join(dir, '.t1327-probe');
+  try { writeFileSync(probe, 'x'); rmSync(probe); return true; } catch { return false; }
 }
 
 beforeEach(() => {
@@ -185,3 +204,43 @@ describe('#1327 · 英文下错误分类不失效（结构化判据）', () => {
     }
   });
 });
+
+/* ── #1327 验收：目录不存在／不可写／同名三形态在 zh 与 en 下分类一致 ───────── */
+describe('#1327 · 三形态 × 两语言分类一致', () => {
+  it('数据目录不存在：zh 与 en 都判 DIR_MISSING', () => {
+    const livePhotos = join(home, 'live-photos-1327-parity');
+    mkdirSync(livePhotos, { recursive: true });
+    writeConfig(join(home, 'missing-1327-parity'), livePhotos);
+    assert.equal(dataOf('calorie.config.read', {}, 'zh').alerts?.['db.dir']?.code, 'DIR_MISSING');
+    assert.equal(dataOf('calorie.config.read', {}, 'en').alerts?.['db.dir']?.code, 'DIR_MISSING');
+  });
+
+  it('照片目录被同名文件占位：zh 与 en 都判 DIR_MISSING', () => {
+    const liveDb = join(home, 'live-data-1327-parity');
+    mkdirSync(liveDb, { recursive: true });
+    const blocked = join(home, 'file-block-1327-parity');
+    writeFileSync(blocked, 'i am a file, not a dir', 'utf8');
+    writeConfig(liveDb, blocked);
+    assert.equal(dataOf('calorie.config.read', {}, 'zh').alerts?.['photos.dir']?.code, 'DIR_MISSING');
+    assert.equal(dataOf('calorie.config.read', {}, 'en').alerts?.['photos.dir']?.code, 'DIR_MISSING');
+  });
+
+  it('数据目录在但不可写：zh 与 en 都判 DIR_UNWRITABLE', (t) => {
+    const ro = join(home, 'readonly-1327');
+    mkdirSync(ro, { recursive: true });
+    const livePhotos = join(home, 'live-photos-1327-ro');
+    mkdirSync(livePhotos, { recursive: true });
+    const restore = makeDirReadOnly(ro);
+    if (restore === null) { t.skip('当前环境无法模拟只读目录（root／无 icacls）'); return; }
+    if (canWrite(ro)) { restore(); t.skip('拒绝写未生效（ACL 被继承绕过）'); return; }
+    try {
+      writeConfig(ro, livePhotos);
+      assert.equal(dataOf('calorie.config.read', {}, 'zh').alerts?.['db.dir']?.code, 'DIR_UNWRITABLE');
+      assert.equal(dataOf('calorie.config.read', {}, 'en').alerts?.['db.dir']?.code, 'DIR_UNWRITABLE');
+    } finally {
+      restore();
+      assert.equal(canWrite(ro), true, '还原后目录应恢复可写');
+    }
+  });
+});
+

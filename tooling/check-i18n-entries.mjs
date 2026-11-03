@@ -38,6 +38,7 @@
  * 末行固定：RESULT: files=<n> keys=<n> missing=<n> blanks=<n>
  * 依赖：零第三方；读源码与词条表，**不写任何文件**。
  */
+import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
@@ -583,14 +584,29 @@ function selftest(scope) {
     want(tsBlanks.blanks.length === 2, '.ts 表形态的空串与纯空白两个值都必须报 blanks=2（实得 ' + tsBlanks.blanks.length + '）');
     want(tsBlanks.blanks.every((b) => b.lang === 'en' && b.path.endsWith('en.ts')), '.ts 空白词条必须点名语言与表文件（实得 ' + JSON.stringify(tsBlanks.blanks.map((b) => b.path)) + '）');
     console.log('SELFTEST 空白 .ts 读数：blanks=' + tsBlanks.blanks.length + '（' + tsBlanks.blanks.map((b) => b.key).join(',') + '）');
+    // ⑮补：票面契约是「造空白 → blanks=2 exit 1；补译文 → exit 0」——进程内 audit() 读数不能证明 exit 码，
+    //      故在同一夹具上真跑一遍本门 CLI（子进程），钉住退出码与红行。
+    const thetaScope = join(tmp, 'scope-theta.json');
+    writeFileSync(thetaScope, JSON.stringify({ files: ['packages/theta/src/use.ts'], allowlist: [] }), 'utf8');
+    const runThetaCli = () => spawnSync(process.execPath, [fileURLToPath(import.meta.url), '--scope', thetaScope, '--root', tmp], { encoding: 'utf8' });
+    const cliRed = runThetaCli();
+    const resultLineOf = (r) => String(r.stdout).split(nl).find((l) => l.startsWith('RESULT:')) ?? '(无 RESULT 行)';
+    want(cliRed.status === 1, 'CLI 契约：.ts 空白词条必须 exit 1（实得 ' + String(cliRed.status) + '）');
+    want(/blanks=2/.test(String(cliRed.stdout)), 'CLI 契约：RESULT 行必须报 blanks=2（实得 ' + resultLineOf(cliRed) + '）');
+    want(/RED 空白词条/.test(String(cliRed.stderr)), 'CLI 契约：stderr 必须点名空白词条（实得 ' + String(cliRed.stderr).slice(0, 200) + '）');
+    console.log('SELFTEST 空白 .ts CLI 读数：exit=' + String(cliRed.status) + '／' + resultLineOf(cliRed));
     writeFileSync(join(thetaDir, 'en.ts'), "export const en = {\n  'demo.tsblank': 'Title',\n  'demo.tsspace': 'Some value',\n};\n", 'utf8');
     const tsFilled = audit({ files: ['packages/theta/src/use.ts'] }, tmp);
     want(tsFilled.blanks.length === 0, '补上 .ts 译文后必须零空白（实得 ' + tsFilled.blanks.length + '）');
+    const cliGreen = runThetaCli();
+    want(cliGreen.status === 0, 'CLI 契约：补上译文后必须 exit 0（实得 ' + String(cliGreen.status) + '）');
+    want(/blanks=0/.test(String(cliGreen.stdout)), 'CLI 契约：补上后 RESULT 行必须报 blanks=0（实得 ' + resultLineOf(cliGreen) + '）');
+    console.log('SELFTEST 空白 .ts CLI 还原读数：exit=' + String(cliGreen.status) + '／' + resultLineOf(cliGreen));
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
   if (bad.length) { for (const b of bad) console.error('SELFTEST FAIL ' + b); process.exit(1); }
-  console.log('SELFTEST: 空范围显式报数／缺词条必红／补上必绿／没迁完必红／缺表必红／失明必红／空白词条必红／allowlist 剔除／按包归属／别包 catalog 计入／catalog 标识核对／同串两用（数据位剔除·界面位判缺）／单包第三语言（有 ja 判 ja·没 ja 跳过）／判据包无表失明／空白词条 .ts 形态（#1328；#1306 复核 P3） 十五条自证 OK');
+  console.log('SELFTEST: 空范围显式报数／缺词条必红／补上必绿／没迁完必红／缺表必红／失明必红／空白词条必红／allowlist 剔除／按包归属／别包 catalog 计入／catalog 标识核对／同串两用（数据位剔除·界面位判缺）／单包第三语言（有 ja 判 ja·没 ja 跳过）／判据包无表失明／空白词条 .ts 形态＋CLI 退出码契约（#1328；#1306 复核 P3） 十五条自证 OK');
 }
 
 /** 入口守卫（照 tooling/i18n-langs.mjs／skill-html-snapshot.mjs 的先例）：本件被别处 import 时**不跑** CLI，
