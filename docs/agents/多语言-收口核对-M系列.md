@@ -16,7 +16,7 @@
 | M6 | #1306 无第二方复核结论 | 记录缺失 | 独立子代理复核 PASS-with-notes；已验证 resolve 空白回退、entries 空白判红、params 集合相等、i18n-tables 共用；真仓 entries `keys=19082 blanks=0`、params `keys=19270 mismatch=0` | **已结案**：`docs/agents/多语言-收口复核-1306.md`；P2（skew 计对）与 P3（少参语义注释）已在收口修复分支改正，P3/P4 边界转 **#1328** |
 | M7 | 英文唤醒词 23 条 vs 裁决约 30 条 | 范围缩减 | 六份 `wake-en.json` 合计 30 条（bill 5／calorie 6／chef 5／home 5／memo 4／schedule 5）；`node tooling/wake-en.mjs --check` EXIT 0；六家 `wake-en-1310` 测试全绿 | **已结案**（补到 30）；747 全覆盖仍按 #1236 裁决不做 |
 | M8 | 英文列账本 `recorded=0` | 机制空转 | `tooling/skill-html.snapshot.en.json`、`tooling/calorie-html.snapshot.en.json` 均 `artifactCount=0`；门输出 `PENDING: 英文列 0 件`；bill `t689-页面指纹.en.json` 44/44 为可用先例 | **承接票 #1324**；`_en` 命名机制已在收口修复分支交付 |
-| M9 | US9 整句化无第二方逐处比对记录 | 记录缺失 | 独立第二方复核 PASS-with-notes：三处模板与基线拼接逐字节一致、申报↔zh 3/3、23 处 `m()` 与申报 21 行对齐、无未申报改写；组件 103/103、快照 24/24 | **已结案**：`docs/agents/多语言-整句化申报.md`；范围外盲区 `sort-toggle/runtime.ts:86` 转 **#1326** |
+| M9 | US9 整句化无第二方逐处比对记录 | 记录缺失 | 独立第二方复核 PASS-with-notes：三处模板与基线拼接逐字节一致、申报↔zh 3/3、23 处 `m()` 与申报 21 行对齐、无未申报改写；组件 103/103、快照 24/24 | **已结案**：`docs/agents/多语言-整句化申报.md`；第二方复核另发现 en c006 模板级缺陷（同一名词放两处、单复数不匹配），原记录归「范围外／非模板问题」不成立，已订正并转 **#1330**；②③ 无直接断言的覆盖缺口并入 #1330 验收；范围外盲区 `sort-toggle/runtime.ts:86` 转 **#1326** |
 | M10 | HELP 正文英文模式仍中文 | 裁决待确认 | bill en HELP：可见文本 0 处中文（页壳已英文化），注入数据 JSON 仍有中文（`groups[0].label=写入`、`wake_word=记支出` 等）；数据源属 363 件不迁类（bill／calorie `wake-assets.ts` #1309、home `helpAssets.ts` #1220、schedule `help-assets.ts` #1222） | **裁决记录**：`docs/agents/多语言-HELP正文语言裁决.md`「本轮保持中文」；**待用户确认**，不另开票 |
 
 ## 二、新增承接票（本收尾建立）
@@ -30,6 +30,7 @@
 | #1326 | sort-toggle 运行时段全角括号 | 运行时段文案，需语言形态设计 |
 | #1327 | bill／schedule 用本地化报文 startsWith 判错误分类 | 运行逻辑缺口，需结构化错误码 |
 | #1328 | 门禁边界加固（#1306 复核 notes） | 不阻断当前绿，属边界加固 |
+| #1330 | 英文搜索结果计数措辞（c006 重复名词、`1 matches`） | #1316 整句化的英文模板缺陷，需改词条/模板并补断言，不在本轮收口范围 |
 
 ## 三、待用户确认项（规格关闭前）
 
