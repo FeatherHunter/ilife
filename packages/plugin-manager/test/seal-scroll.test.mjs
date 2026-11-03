@@ -131,6 +131,27 @@ describe('印章卷轴 · 九档材质逐档对得上', () => {
   }
 });
 
+describe('印章卷轴 · 语言（#1325）', () => {
+  /** 英文用例的正文也换英文：否则正文里的中文会被下面的「不许出现中文段标题」误判。 */
+  const EN_PROPS = { title: 'Bill HELP', progress: 'one progress line', status: 'usable', plan: 'fix import' };
+  it('language: en 时三段标题、档位话、关闭钮字都换成英文', () => {
+    const tree = expand(React.createElement(SealScroll, { ...EN_PROPS, role: 'help', tier: 'gold', language: 'en' }));
+    const text = textsOf(tree).join('|');
+    for (const name of ['Progress', 'Status', 'Plan']) assert.ok(text.includes(name), '缺英文段标题：' + name);
+    assert.ok(text.includes('Fine polishing'), '缺英文档位话');
+    assert.ok(!text.includes('进展') && !text.includes('状态') && !text.includes('计划'), 'en 下不许再出现中文段标题');
+    const dialog = expand(React.createElement(SealScrollDialog, { ...PROPS, role: 'help', tier: 'gold', open: true, onClose: () => {}, language: 'en' }));
+    const dtext = textsOf(dialog).join('|');
+    assert.ok(dtext.includes('Close'), '关闭钮（绦带）英文');
+    assert.ok(dtext.includes('Progress') && dtext.includes('Fine polishing'), '浮层里也是英文');
+    assert.ok(!dtext.includes('收卷'), 'en 下不许再出现「收卷」');
+  });
+  it('language 缺席仍是中文（与 #1325 前逐字节同）', () => {
+    const tree = expand(React.createElement(SealScroll, { ...PROPS, role: 'help', tier: 'gold' }));
+    const text = textsOf(tree).join('|');
+    for (const name of ['进展', '状态', '计划', '精雕细琢中']) assert.ok(text.includes(name), '缺中文：' + name);
+  });
+});
 describe('印章卷轴 · 三段内容与档位话', () => {
   for (const role of ROLES) {
     for (const tier of TIERS) {

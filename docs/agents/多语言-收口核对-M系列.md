@@ -1,6 +1,6 @@
 # 多语言收口核对 M1–M10（#1197）
 
-状态：M1／M3／M6／M7／M9 已结案；M2／M4／M8 已转承接票；M10 为裁决记录、待用户确认；M5 为历史记录缺口，按现状登记。日期：2026-11-03。
+状态：M1／M3／M6／M7／M9 已结案；M2 已交付（#1325）；M4／M8 已转承接票；M10 为裁决记录、待用户确认；M5 为历史记录缺口，按现状登记。日期：2026-11-03。
 
 本记录回答 #1197 规格 US21「遗留（既有红、待定件、未合并分支）在票面显式登记」与收口核对里的 M1–M10 清单（原始清单见会话产物 `.scratch/verify-1197/verify-1318.md` 第 6 节）。每条都写清「谁看哪个读数」，不代替用户确认。
 
@@ -9,7 +9,7 @@
 | # | 项 | 性质 | 当前读数／证据 | 处置与落点 |
 |---|---|---|---|---|
 | M1 | #1227 申报的纯英文注释新增 | 记录缺失 | `git show 78590c28` 逐行扫：源码级纯英文注释新增 `SOURCE_COMMENT_EN=0`；唯一真实偏离 `packages/base-render/src/components/sort-toggle/runtime.ts:104-106` 与申报一致 | **已结案**：`docs/agents/多语言-收口复核-1227.md` 固化方法与读数 |
-| M2 | seal-states 生成件各 5 行中文 | 生成器未处理 | 六个 `packages/plugin-*/src/seal-states.generated.ts` 各 5 行中文；源 `seals.yaml`、生成器 `node tooling/gen-seals.mjs` | **承接票 #1325** |
+| M2 | seal-states 生成件各 5 行中文 | 生成器未处理 | 六个 `packages/plugin-*/src/seal-states.generated.ts` 各 5 行中文；源 `seals.yaml`、生成器 `node tooling/gen-seals.mjs` | **已交付（#1325）**：`seals.yaml` 每个文本叶子 `{zh,en}`，生成器产出中／英两套表与 `sealStates(product, language)`；中文列逐字不变，英文列见六份生成件与 `seal-states-1325` 断言 |
 | M3 | #1225「911 条」只在已清理 worktree | 记录缺失 | 可从仓内 JSON 复算：`tooling/i18n-ticket-scope.json` 的 `tickets['1225'].excluded` 43 件、合计 `literals=911`（迁移入 32 件／795 条） | **已结案**：本记录给出复算命令，无另票 |
 | M4 | #1198 语言清单派生化（=US1） | 规格承诺未达成 | 14 个 `packages/*/src/entries/index.ts` 写死 `defineCatalog({ zh, en })`；`packages/base-link-core/src/config/language.ts:21` `AVAILABLE_LANGUAGES=['zh','en']`；`tooling/i18n-langs.mjs:25` `LANGUAGES=['zh','en']` | **承接票 #1322**；规格关闭时按「缩减需用户确认」登记 |
 | M5 | #1308 关闭缺带会话 id 的用户原话 | 历史记录缺口 | #1308 已于 2026-11-02T03:14:27Z 关闭，票面最后一条为「进度：100%…按票面保持 open 待用户确认后关闭」；原会话原话不在仓内，无法回溯 | **按现状登记**；属旧四步闸门遗留，不重开（重开只能由人做），规格收口评论如实写明 |

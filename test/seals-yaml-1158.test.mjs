@@ -35,8 +35,12 @@ describe('seals.yaml → 生成件（1 份设计语言 ＋ 6 份章状态）', (
       if (file.includes(VOCAB_FILE)) continue;
       plugins += 1;
       const roles = [...body.matchAll(/role: '([a-z]+)'/g)].map((m) => m[1]);
-      assert.deepEqual(roles, ['help', 'skill', 'plugin'], file + ' 要按 HELP／技能／插件三枚');
-      for (const m of body.matchAll(/tier: '([a-z]+)'/g)) assert.ok(['copper', 'silver', 'gold'].includes(m[1]), file + ' 档位只能是铜／银／金，现为 ' + m[1]);
+      assert.deepEqual(roles, ['help', 'skill', 'plugin', 'help', 'skill', 'plugin'], file + ' 要按 HELP／技能／插件三枚 × zh/en 各一份');
+      const tiers = [...body.matchAll(/tier: '([a-z]+)'/g)].map((m) => m[1]);
+      assert.equal(tiers.length, 6, file + ' 两语言共六条');
+      for (const t of tiers) assert.ok(['copper', 'silver', 'gold'].includes(t), file + ' 档位只能是铜／银／金，现为 ' + t);
+      assert.ok(body.includes('const zh = [') && body.includes('const en = ['), file + ' 两种语言的章表都要在');
+      assert.ok(body.includes("return language === 'en' ? en : zh;"), file + ' 语言开关只此一处');
     }
     assert.equal(plugins, 6, '六家');
   });

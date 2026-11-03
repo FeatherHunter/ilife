@@ -18,7 +18,7 @@
  * 状态读数也已移出（读数属技能功能页）。
  */
 import * as React from 'react';
-import { ConfigPanel } from 'dsh-life-pack/config-panel';
+import { ConfigPanel, sealLanguageOf } from 'dsh-life-pack/config-panel';
 import { RPC_CHANNEL, RPC_ENDPOINT_READ, DEFAULT_READ_KEY, isRpcResult } from './contract.js';
 import { SLOT_TITLE, slotTitle, PLUGIN } from './slot.js';
 import { SEAL_SEED, sealStates } from './seal-states.generated.js';
@@ -305,19 +305,24 @@ export function apply(ctx: ClientCtx): void {
         // 它因此不必在源码里写死任何一家的通道名（零单品依赖照旧成立）。
         channel: RPC_CHANNEL,
       },
-      () => React.createElement(ConfigPanel, {
-        channel: RPC_CHANNEL,
-        items: configItems(),
-        title: slotTitle(),
-        // 三枚签（1145）：HELP＋技能＋插件，各家只说自家档位与三段文案。
-        seals: sealStates(SLOT_TITLE),
-        sealSeed: SEAL_SEED,
-        followKeysOf,
-        // #934：原先这里挂了一行版本行（`CalorieVersionLine`）——维护者裁定整条撤掉；
-        // 版本仍可从 sidebar 干活区卡片、装机包描述文件、版本魔键三路取到。
-        getCall,
-        getService,
-      }),
+      () => {
+        // 印章文案跟宿主语言走（#1325）：locale 服务是软依赖，缺席即中文。
+        const language = sealLanguageOf(getService('locale'));
+        return React.createElement(ConfigPanel, {
+          channel: RPC_CHANNEL,
+          items: configItems(),
+          title: slotTitle(),
+          // 三枚签（1145）：HELP＋技能＋插件，各家只说自家档位与三段文案。
+          seals: sealStates(SLOT_TITLE, language),
+          sealSeed: SEAL_SEED,
+          language,
+          followKeysOf,
+          // #934：原先这里挂了一行版本行（`CalorieVersionLine`）——维护者裁定整条撤掉；
+          // 版本仍可从 sidebar 干活区卡片、装机包描述文件、版本魔键三路取到。
+          getCall,
+          getService,
+        });
+      },
     ),
   );
 

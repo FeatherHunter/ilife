@@ -54,7 +54,9 @@ export const SEAL_ROUGH_INK_ID = ROUGH_INK;
 
 // 档位话（＝悬停气泡）是**设计语言**，住生成件 `seal-vocabulary.generated.ts`（源 `seals.yaml` 的 vocabulary 段）：
 // 改一句 → 改 yaml → 重跑生成器 → 七包一起重打，不必碰任何一家的源码。
-import { TIER_TEXT } from './seal-vocabulary.generated.js';
+// #1325 起按语言取（中文表仍以 `TIER_TEXT = TIER_TEXT_BY_LANG.zh` 导出给历史消费面）。
+import { TIER_TEXT, TIER_TEXT_BY_LANG } from './seal-vocabulary.generated.js';
+import type { SealLanguage } from './seal-vocabulary.generated.js';
 export { TIER_TEXT };
 
 /** 卷轴展开动画名（文档作用域，印前缀防撞；`S.popInner` 求值期即用，必须住 `S` 之前）。 */
@@ -188,6 +190,8 @@ export interface SealScrollProps {
   readonly status: string;
   /** 计划。 */
   readonly plan: string;
+  /** 语言（#1325：档位话、三段小标题、关闭钮字按语言取；缺席＝中文，与改动前逐字节同）。 */
+  readonly language?: SealLanguage | undefined;
 }
 
 /** 外框专有的内阴影（随档；底色与边线不在这张表里，从调色板来）。
@@ -329,6 +333,7 @@ export function SealFilterDefs(): React.ReactElement {
 
 /** 一卷：外框材质 ＋ 纯纸 ＋ 进展／状态／计划三段。 */
 export function SealScroll(props: SealScrollProps): React.ReactElement {
+  const language = props.language ?? 'zh';
   const material = materialOf(props.role, props.tier);
   // 【已还原】框面噪点层（grain/fleck）撤掉：它们整体提亮了红底，框色与原版不一致。
   // 需要“碎金”效果时再按需加回（原型留档见 .scratch）。
@@ -356,10 +361,11 @@ export function SealScroll(props: SealScrollProps): React.ReactElement {
   /** 纸面字排：定稿件直出五件。 */
   const parts = paperParts({
     tierKey: props.tier,
-    tierText: TIER_TEXT[props.tier],
+    tierText: TIER_TEXT_BY_LANG[language][props.tier],
     progress: props.progress,
     status: props.status,
     plan: props.plan,
+    language,
     accent: material.accent,
     ruler: material.ruler,
     paperEdge: PAPER_EDGE,
@@ -408,6 +414,7 @@ export function SealScrollDialog(
     progress: props.progress,
     status: props.status,
     plan: props.plan,
+    language: props.language,
   };
   return React.createElement(
     React.Fragment,
@@ -424,7 +431,7 @@ export function SealScrollDialog(
         { style: S.popInner },
         // #1160 T1：按压收缩＋焦点双环（卷轴浮层渲染在卡片内，样式由卡片那枚 <style> 罩住；印章本体仍豁免）。
         (() => {
-          const look = closeLook(props.tier);
+          const look = closeLook(props.tier, props.language);
           // zIndex 20：关闭钮要压在卷轴（框＋纸）之上，否则骑在边上的那几档会被红框吃掉半边。
           return React.createElement('button', { type: 'button', className: 'dshLifeSealBtn', style: { zIndex: 20, ...look.style }, 'data-ilife-press': 'seal-close', 'data-ilife-close': 'tie', onClick: props.onClose }, look.decor ?? null, look.label);
         })(),

@@ -16,8 +16,9 @@ import * as React from 'react';
 import { SEAL_ROUGH_INK_ID } from './seal-scroll.js';
 // 档位级两个色从调色板引（一份定义）；本件自己的纸面三色（绦带朱砂／飘尾亮朱砂／印泥大红）住本件。
 import { TIER_EDGE, TIER_METAL } from './seal-palette.js';
-// 三段小标题与关闭钮字也是设计语言（源 `seals.yaml` 的 vocabulary 段）。
-import { CLOSE_LABEL, SECTION_LABEL } from './seal-vocabulary.generated.js';
+// 三段小标题与关闭钮字也是设计语言（源 `seals.yaml` 的 vocabulary 段）；#1325 起按语言取。
+import { CLOSE_LABEL_BY_LANG, SECTION_LABEL_BY_LANG } from './seal-vocabulary.generated.js';
+import type { SealLanguage } from './seal-vocabulary.generated.js';
 
 /** 关闭钮的样子：样式 ＋ 字面 ＋ 可选装饰件。 */
 export interface CloseLook {
@@ -44,7 +45,7 @@ const KAI = '"Kaiti SC","KaiTi","STKaiti",serif';
 
 /** 关闭钮（定稿：绦带·飘尾）。右上角一枚斜披 45° 的朱砂菱形，两条飘尾分挂两条下边，尾先画、带后画压住尾根。
  *  悬停／焦点时**菱形那层**淡入一圈辉光——按钮方框是透明的，反馈的形状必须跟菱形走（见 `SealFilterDefs`）。 */
-export function closeLook(tierKey: string): CloseLook {
+export function closeLook(tierKey: string, language: SealLanguage = 'zh'): CloseLook {
   const crimson = 'linear-gradient(135deg,#c63d2a 8%,#a32216 50%,#7e1a10)';
   /** 档位金属边（铜／银／金）：绦带**只借这一条**——主体恒朱砂，边随档走，跟章「红底＋金属边」同构。 */
   const edge = edgeOf(tierKey);
@@ -81,7 +82,7 @@ export function closeLook(tierKey: string): CloseLook {
     style: { position: 'absolute', inset: 0, borderRadius: '0.375em', transform: 'rotate(45deg)', pointerEvents: 'none' },
   });
   return {
-    label: crisp(CLOSE_LABEL, {
+    label: crisp(CLOSE_LABEL_BY_LANG[language], {
       fontFamily: KAI, fontSize: '0.8125em', letterSpacing: '0.22em', textIndent: '0.22em',
       color: '#f8f1e2', textShadow: '0 1px 2px #000000aa',
     }),
@@ -121,6 +122,8 @@ export interface PaperCtx {
   readonly progress: string;
   readonly status: string;
   readonly plan: string;
+  /** 语言（#1325：三段小标题按语言取；缺席＝中文，渲染结果与改动前逐字节同）。 */
+  readonly language?: SealLanguage | undefined;
   /** 印色（材质那一份，固定色）。 */
   readonly accent: string;
   /** 分隔线同族色。 */
@@ -175,6 +178,9 @@ function inkMark(section: string, name: string): React.ReactElement {
 
 /** 三段：一行紧凑（行首朱砂小方印＋标签＋正文同一基线）。 */
 function inlineRows(st: PaperStyles, ctx: PaperCtx): React.ReactNode {
+  /** #1325：段标签按语言取；中文冒号／英文冒号各自成对（英文冒号后由 0.5em gap 当空格）。 */
+  const labels = SECTION_LABEL_BY_LANG[ctx.language ?? 'zh'];
+  const sep = (ctx.language ?? 'zh') === 'en' ? ':' : '：';
   // 末行吃回半个行距：行高 1.9 会在字形下留 ~6px 半行距，叠在纸底内垫上就是“底比顶空一截”。
   // 实测（像素扫描）：不吃回时 顶 24／底 32；吃回 0.5em 后两端齐。
   const one = (key: string, name: string, text: string, last = false): React.ReactElement =>
@@ -182,13 +188,13 @@ function inlineRows(st: PaperStyles, ctx: PaperCtx): React.ReactNode {
       'div',
       { key, style: { margin: last ? '0 0 -0.5em' : '0 0 0.5em', display: 'flex', alignItems: 'baseline', gap: '0.5em' } },
       inkMark(key, name),
-      React.createElement('span', { style: { ...st.label, flex: '0 0 auto', display: 'inline', marginBottom: 0, fontSize: '0.8em', color: ctx.accent } }, name + '：'),
+      React.createElement('span', { style: { ...st.label, flex: '0 0 auto', display: 'inline', marginBottom: 0, fontSize: '0.8em', color: ctx.accent } }, name + sep),
       React.createElement('span', { style: { ...st.text, flex: '1 1 auto', display: 'inline', margin: 0, fontSize: '0.9em' } }, text),
     );
   return React.createElement(React.Fragment, null,
-    one('status', SECTION_LABEL.status, ctx.status),
-    one('progress', SECTION_LABEL.progress, ctx.progress),
-    one('plan', SECTION_LABEL.plan, ctx.plan, true));
+    one('status', labels.status, ctx.status),
+    one('progress', labels.progress, ctx.progress),
+    one('plan', labels.plan, ctx.plan, true));
 }
 
 /** 档位语（一行）：该档金属渐变压进字里。 */

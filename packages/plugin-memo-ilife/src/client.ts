@@ -22,7 +22,7 @@
  * （`VERSION_READ_KEY`）取到后**纯渲染**（读不到显示 unknown，形状照卡路里 #130 那条）。
  */
 import * as React from 'react';
-import { ConfigPanel, StatusBlock } from 'dsh-life-pack/config-panel';
+import { ConfigPanel, StatusBlock, sealLanguageOf } from 'dsh-life-pack/config-panel';
 import { RPC_CHANNEL, RPC_ENDPOINT_READ, RPC_ENDPOINT_CONFIG_CHECK, DEFAULT_READ_KEY, VERSION_READ_KEY, VERSION_UNKNOWN, isRpcResult } from './contract.js';
 import type { InstalledVersions, LarkState } from './contract.js';
 import { SLOT_TITLE, slotTitle } from './slot.js';
@@ -554,23 +554,28 @@ export function apply(ctx: ClientCtx): void {
         // 它因此不必在源码里写死任何一家的通道名（零单品依赖照旧成立）。
         channel: RPC_CHANNEL,
       },
-      () => React.createElement(ConfigPanel, {
-        channel: RPC_CHANNEL,
-        items: configItems(),
-        title: slotTitle(),
-        // 三枚签（1145）：HELP＋技能＋插件，各家只说自家档位与三段文案。
-        seals: sealStates(SLOT_TITLE),
-        sealSeed: SEAL_SEED,
-        followKeysOf,
-        extra: (parts) => React.createElement(MemoExtras, {
-          hasReply: parts.reply !== null,
-          fallback: larkOf(parts.reply),
-          styles: parts.styles,
+      () => {
+        // 印章文案跟宿主语言走（#1325）：locale 服务是软依赖，缺席即中文。
+        const language = sealLanguageOf(getService('locale'));
+        return React.createElement(ConfigPanel, {
+          channel: RPC_CHANNEL,
+          items: configItems(),
+          title: slotTitle(),
+          // 三枚签（1145）：HELP＋技能＋插件，各家只说自家档位与三段文案。
+          seals: sealStates(SLOT_TITLE, language),
+          sealSeed: SEAL_SEED,
+          language,
+          followKeysOf,
+          extra: (parts) => React.createElement(MemoExtras, {
+            hasReply: parts.reply !== null,
+            fallback: larkOf(parts.reply),
+            styles: parts.styles,
+            getCall,
+          }),
           getCall,
-        }),
-        getCall,
-        getService,
-      }),
+          getService,
+        });
+      },
     ),
   );
 
