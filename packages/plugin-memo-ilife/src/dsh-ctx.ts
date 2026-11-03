@@ -109,6 +109,11 @@ export interface HostConnectionFace {
 }
 
 export interface HostCtx {
+  /** 平台认可的软查找（#1323）：宿主语言偏好经 get('settings') 读。
+   *
+   *  **不许写进 inject**：settings 是可选服务，写进 inject 会让插件在无该服务的宿主上起不来；
+   *  口径见 docs/agents/dsh-client-contract.md「Prefer ctx.get(name) with an undefined check」。 */
+  get?<T = unknown>(name: string): T | undefined;
   readonly connection: {
     readonly fetch: { register(options: ConnectionFetchRegisterOptions): () => void };
     readonly rpc?: { handle(channel: string, handler: RpcHandler): () => void };
