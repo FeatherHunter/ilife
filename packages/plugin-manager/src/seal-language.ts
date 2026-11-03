@@ -20,11 +20,20 @@ interface LocaleFaceLike {
 function activeLocaleOf(face: unknown): unknown {
   if (face === null || typeof face !== 'object') return undefined;
   const f = face as LocaleFaceLike;
-  const read = typeof f.getSnapshot === 'function' ? f.getSnapshot : typeof f.getLocale === 'function' ? f.getLocale : undefined;
-  if (read === undefined) return undefined;
-  const snap = read.call(face);
-  if (snap === null || typeof snap !== 'object') return undefined;
-  return (snap as { active?: unknown }).active;
+  // 宿主 LocaleRuntime 两种读法都认：快照优先，快照里读不出 active 时再问 getLocale。
+  if (typeof f.getSnapshot === 'function') {
+    const snap = f.getSnapshot.call(face);
+    if (snap !== null && typeof snap === 'object') {
+      const active = (snap as { active?: unknown }).active;
+      if (typeof active === 'string') return active;
+    }
+  }
+  if (typeof f.getLocale === 'function') {
+    const raw = f.getLocale.call(face);
+    if (typeof raw === 'string') return raw;
+    if (raw !== null && typeof raw === 'object') return (raw as { active?: unknown }).active;
+  }
+  return undefined;
 }
 
 /** 把 locale 服务（或它缺席时的 undefined）归一成印章语言；任何异常都回缺省，绝不阻断面板。 */

@@ -54,10 +54,9 @@ export const SEAL_ROUGH_INK_ID = ROUGH_INK;
 
 // 档位话（＝悬停气泡）是**设计语言**，住生成件 `seal-vocabulary.generated.ts`（源 `seals.yaml` 的 vocabulary 段）：
 // 改一句 → 改 yaml → 重跑生成器 → 七包一起重打，不必碰任何一家的源码。
-// #1325 起按语言取（中文表仍以 `TIER_TEXT = TIER_TEXT_BY_LANG.zh` 导出给历史消费面）。
-import { TIER_TEXT, TIER_TEXT_BY_LANG } from './seal-vocabulary.generated.js';
+// #1325 起按语言取（中文表在生成件里就是 TIER_TEXT_BY_LANG.zh）。
+import { TIER_TEXT_BY_LANG } from './seal-vocabulary.generated.js';
 import type { SealLanguage } from './seal-vocabulary.generated.js';
-export { TIER_TEXT };
 
 /** 卷轴展开动画名（文档作用域，印前缀防撞；`S.popInner` 求值期即用，必须住 `S` 之前）。 */
 const UNROLL_ANIMATION = 'dshLifeSealUnroll';

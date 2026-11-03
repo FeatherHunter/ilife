@@ -307,7 +307,10 @@ export function apply(ctx: ClientCtx): void {
       },
       () => {
         // 印章文案跟宿主语言走（#1325）：locale 服务是软依赖，缺席即中文。
-        const language = sealLanguageOf(getService('locale'));
+        // 只在这里吞查找失败（宿主未声明该服务名时 getService 会抛）；getService 本身保持原样透传（#736 契约不许自己吞）。
+        let localeService: unknown;
+        try { localeService = getService('locale'); } catch { localeService = undefined; }
+        const language = sealLanguageOf(localeService);
         return React.createElement(ConfigPanel, {
           channel: RPC_CHANNEL,
           items: configItems(),
