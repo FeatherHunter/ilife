@@ -79,7 +79,7 @@ import { m } from '../../entries/index.js';
 
 /** 模板原样返回（占位符由本件的运行时替换，求值端口不碰）：`{名}` 映射回它自己。 */
 const KEEP_PLACEHOLDERS: Readonly<Record<string, string>> = {
-  field: '{field}', label: '{label}', caliber: '{caliber}',
+  field: '{field}', label: '{label}', caliber: '{caliber}', to: '{to}',
 };
 
 export const SORT_DEFAULTS = {
@@ -99,7 +99,14 @@ export const SORT_DEFAULTS = {
   get caliberText(): string { return m('base-render.components-sort-toggle-attrs.c003', KEEP_PLACEHOLDERS); },
   get noCaliberText(): string { return m('base-render.components-sort-toggle-attrs.c011'); },
   get unset(): string { return '—'; },
+  /** 反向键整句模板：`{label}`＝字面根，`{to}`＝按下去会变成什么。括号形态住词条（中文全角、英文半角，#1326）。 */
+  get flipText(): string { return m('base-render.components-sort-toggle-attrs.c012', KEEP_PLACEHOLDERS); },
 };
+
+/** 反向键整句：字面根 ＋ 会变成什么，括号形态随语言（#1326）。 */
+export function flipTextOf(label: string, to: string): string {
+  return m('base-render.components-sort-toggle-attrs.c012', { label, to });
+}
 
 export interface SortViewInput {
   /** 机器值（`aria-pressed` 的载荷与条目的 `data-ilife-sort-tags` 按它对号）。 */

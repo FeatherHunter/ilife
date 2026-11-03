@@ -41,7 +41,8 @@ export function buildSortToggleJs(): string {
     + ', toDesc:' + q(SORT_DEFAULTS.toDesc) + ', toAsc:' + q(SORT_DEFAULTS.toAsc)
     + ', inkText:' + q(SORT_DEFAULTS.inkText) + ', caliberText:' + q(SORT_DEFAULTS.caliberText)
     + ', noCaliberText:' + q(SORT_DEFAULTS.noCaliberText)
-    + ', noKeyText:' + q(SORT_DEFAULTS.noKeyText) + ', unwiredText:' + q(SORT_DEFAULTS.unwiredText) + '};' + '\n'
+    + ', noKeyText:' + q(SORT_DEFAULTS.noKeyText) + ', unwiredText:' + q(SORT_DEFAULTS.unwiredText)
+    + ', flipText:' + q(SORT_DEFAULTS.flipText) + '};' + '\n'
     + '  var SEL_ROOT="["+A_ROOT+"]", doc=document;' + '\n'
     + '  if (doc.documentElement.getAttribute(A_RUNTIME)==="1") return;' + '\n'
     + '  doc.documentElement.setAttribute(A_RUNTIME,"1");' + '\n'
@@ -83,7 +84,8 @@ export function buildSortToggleJs(): string {
     + '  function flipText(root,dir){' + '\n'
     + '    var b=one(root,A_FLIP);' + '\n'
     + '    var label=root.getAttribute(A_FLIPLAB)||D.flipLabel;' + '\n'
-    + '    return label+"（"+(dir==="asc"?D.toDesc:D.toAsc)+"）";' + '\n'
+    + '    var to=dir==="asc"?D.toDesc:D.toAsc;' + '\n'
+    + '    return D.flipText.split("{label}").join(label).split("{to}").join(to);' + '\n'
     + '  }' + '\n'
     /* 排序：同一父节点内按序 appendChild（真重排） */
     + '  function sortItems(root,items,field,dir){' + '\n'

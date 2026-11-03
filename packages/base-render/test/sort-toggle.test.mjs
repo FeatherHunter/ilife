@@ -17,6 +17,7 @@ import { PAGE_UI_CLASS } from '../dist/components/page-ui/index.js';
 import { skinCss } from '../dist/components/skin/index.js';
 import { renderDocShell } from '../dist/docShell.js';
 import { CSS_VAR_TOKENS } from '../dist/spec/index.js';
+import { runWithLanguage } from 'base-entries';
 import { buildF6Html, startF6Page } from './_f6-chrome-probe.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -137,6 +138,28 @@ describe('sortToggle ① 渲染契约', () => {
     bad({ name: 'a', views: ['x'], loading: 'x' }, 'loading 不是布尔');
     bad({ name: 'a', views: ['x'], unit: 7 }, 'unit 不是字符串');
     bad({ name: 'a', views: ['x'], extraClass: '.bad' }, '非法附加类名');
+  });
+});
+
+describe('sortToggle ①·语言：反向键括号随语言（#1326）', () => {
+  it('中文：全角括号逐字不变（默认渲染语言）', () => {
+    const html = toggle();
+    assert.ok(html.includes('反过来（从少到多）'), '中文反向键＝全角括号：' + html);
+    assert.equal(html.includes('Reverse'), false, '中文产物不得混英文');
+  });
+
+  it('英文：半角括号 ＋ 英文档位话，不混全角', () => {
+    const html = runWithLanguage('en', () => toggle());
+    assert.ok(html.includes('Reverse (Low to high)'), '英文反向键＝半角括号：' + html);
+    assert.equal(html.includes('（'), false, '英文产物不得出现全角括号');
+  });
+
+  it('运行时段模板同样随语言（中文全角／英文半角）', () => {
+    const zh = buildSortToggleJs();
+    assert.ok(zh.includes('"{label}（{to}）"'), '中文运行时段模板是全角：' + zh.slice(0, 400));
+    const en = runWithLanguage('en', () => buildSortToggleJs());
+    assert.ok(en.includes('"{label} ({to})"'), '英文运行时段模板是半角');
+    assert.ok(en.includes('.split("{to}")'), '运行时按模板替换，不自造标点');
   });
 });
 

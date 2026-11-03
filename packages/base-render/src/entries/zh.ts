@@ -2312,6 +2312,7 @@ export const zh = {
   'base-render.components-sort-toggle-attrs.c009': "这个视图里没有记录",
   'base-render.components-sort-toggle-attrs.c010': "这个排序没接上条目区：页面上找不到可排的条目",
   'base-render.components-sort-toggle-attrs.c011': "（这一档没写口径句）",
+  'base-render.components-sort-toggle-attrs.c012': "{label}（{to}）",
   /* ── packages/base-render/src/components/prompt-box/render.ts（#1227 迁入） ── */
   'base-render.components-prompt-box-render.c001': "复制",
   /* ── packages/base-render/src/components/radio-cards/attrs.ts（#1227 迁入） ── */

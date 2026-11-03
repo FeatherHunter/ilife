@@ -9,7 +9,7 @@ import {
   SORT_DIR_ATTR, SORT_DISABLED_ATTR, SORT_EMPTY_ATTR, SORT_ERROR_ATTR, SORT_FIELD_ATTR,
   SORT_FLIP_ATTR, SORT_FLIP_LABEL_ATTR, SORT_FORM_ATTR, SORT_INK_ATTR, SORT_INVALID_ATTR,
   SORT_LOADING_ATTR, SORT_NAME_ATTR, SORT_N_ATTR, SORT_ROOT_CLASS, SORT_SHOWN_ATTR, SORT_STATUS_ATTR,
-  SORT_TARGET_ATTR, SORT_VIEW_ATTR, SORT_VIEW_LABEL_ATTR,
+  SORT_TARGET_ATTR, SORT_VIEW_ATTR, SORT_VIEW_LABEL_ATTR, flipTextOf,
 } from './attrs.js';
 import { normalizeSortToggle } from './model.js';
 import type { SortToggleModel, SortView } from './model.js';
@@ -22,7 +22,7 @@ export function sortErrorId(name: string): string {
 /** 反向键的字：「反过来（从少到多）」——说的是**按下去会变成什么**。 */
 function flipText(m: SortToggleModel, dir: string): string {
   const to = dir === 'asc' ? SORT_DEFAULTS.toDesc : SORT_DEFAULTS.toAsc;
-  return m.flipLabel + '（' + to + '）';
+  return flipTextOf(m.flipLabel, to);
 }
 
 /** 渲染一个视图条。入参不合规一律 `bad-input`。 */

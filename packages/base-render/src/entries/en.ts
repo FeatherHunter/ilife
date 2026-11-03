@@ -2304,6 +2304,7 @@ export const en = {
   'base-render.components-sort-toggle-attrs.c009': "No records in this view",
   'base-render.components-sort-toggle-attrs.c010': "This sort is not wired to an entry region: no sortable entries on the page",
   'base-render.components-sort-toggle-attrs.c011': "(no caliber sentence for this tier)",
+  'base-render.components-sort-toggle-attrs.c012': "{label} ({to})",
   /* ── packages/base-render/src/components/prompt-box/render.ts（#1227 迁入） ── */
   'base-render.components-prompt-box-render.c001': "Copy",
   /* ── packages/base-render/src/components/radio-cards/attrs.ts（#1227 迁入） ── */
