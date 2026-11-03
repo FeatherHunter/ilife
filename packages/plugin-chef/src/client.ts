@@ -15,7 +15,7 @@
  * 照 CONTEXT.md，「技能设置页」只配置、不干活：本页没有搜菜、记做菜之类的入口。
  */
 import * as React from 'react';
-import { ConfigPanel, sealLanguageOf } from 'dsh-life-pack/config-panel';
+import { ConfigPanel, sealLanguageOfHost } from 'dsh-life-pack/config-panel';
 import { RPC_CHANNEL } from './contract.js';
 import { PLUGIN, SLOT_TITLE, slotTitle } from './slot.js';
 import { SEAL_SEED, sealStates } from './seal-states.generated.js';
@@ -54,7 +54,8 @@ export function apply(ctx: ClientCtx): void {
       },
       () => {
         // 印章文案跟宿主语言走（#1325）：locale 服务是软依赖，缺席即中文。
-        const language = sealLanguageOf(getService('locale'));
+        // 查找失败只在共用件 sealLanguageOfHost 里吞（宿主未声明该服务名时 getService 会抛）；getService 本身照旧透传（#736 契约不许自己吞）。
+        const language = sealLanguageOfHost(getService);
         return React.createElement(ConfigPanel, {
           channel: RPC_CHANNEL,
           items: configItems(),

@@ -20,11 +20,35 @@ interface LocaleFaceLike {
 function activeLocaleOf(face: unknown): unknown {
   if (face === null || typeof face !== 'object') return undefined;
   const f = face as LocaleFaceLike;
-  const read = typeof f.getSnapshot === 'function' ? f.getSnapshot : typeof f.getLocale === 'function' ? f.getLocale : undefined;
-  if (read === undefined) return undefined;
-  const snap = read.call(face);
-  if (snap === null || typeof snap !== 'object') return undefined;
-  return (snap as { active?: unknown }).active;
+  // 宿主 LocaleRuntime 两种读法都认：快照优先，快照里读不出 active 时再问 getLocale。
+  if (typeof f.getSnapshot === 'function') {
+    const snap = f.getSnapshot.call(face);
+    if (snap !== null && typeof snap === 'object') {
+      const active = (snap as { active?: unknown }).active;
+      if (typeof active === 'string') return active;
+    }
+  }
+  if (typeof f.getLocale === 'function') {
+    const raw = f.getLocale.call(face);
+    if (typeof raw === 'string') return raw;
+    if (raw !== null && typeof raw === 'object') return (raw as { active?: unknown }).active;
+  }
+  return undefined;
+}
+
+/** 按服务名去宿主取 locale 服务（软依赖）：取不到 / 宿主没声明这个服务名（getService 会抛）都回缺省。
+ *
+ *  六家 client.ts 的同一段「吞查找失败」收在这里（#1325 评审 J3）：调用方只交 `getService` 本身，
+ *  它自己的守卫语义（未声明服务就抛）保持原样透传，不许各家自己吞（#736 契约）。 */
+export function sealLanguageOfHost(
+  lookup: (name: string) => unknown,
+  fallback: SealLanguage = DEFAULT_SEAL_LANGUAGE,
+): SealLanguage {
+  try {
+    return sealLanguageOf(lookup('locale'), fallback);
+  } catch {
+    return fallback;
+  }
 }
 
 /** 把 locale 服务（或它缺席时的 undefined）归一成印章语言；任何异常都回缺省，绝不阻断面板。 */

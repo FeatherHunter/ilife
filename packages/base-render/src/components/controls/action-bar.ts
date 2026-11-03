@@ -11,6 +11,7 @@ import { assertActionId, assertNoInlineHandler, assertPlainObject, badInput, esc
 import { ACTION_BAR_DEFAULTS, ACTION_BAR_KINDS, ACTION_ID_ATTR, ActionBarButton, ActionBarInput, ActionBarKind, COPY_FORMATS, CopyButtonInput, CopyFormatTexts, DEFAULT_DATA_ATTR, RenderActionBar } from '../../spec/index.js';
 import { STYLE_PREFIX } from '../../style.js';
 import { m } from '../../entries/index.js';
+import { copyDataLabel, copyLogLabel } from './copy-labels.js';
 
 /* ── actionBar（复制三件套） ──────────────────────────────────────────── */
 
@@ -196,8 +197,8 @@ export const renderActionBar: RenderActionBar = (input) => {
   assertPlainObject(input, 'renderActionBar: input');
   const bar = input as ActionBarInput;
   const buttons = normalizeButtons(bar.buttons);
-  const copyData = normalizeCopyButton(bar.copyData, ACTION_BAR_DEFAULTS.copyDataLabel, 'copyData');
-  const copyLog = normalizeCopyButton(bar.copyLog, ACTION_BAR_DEFAULTS.copyLogLabel, 'copyLog');
+  const copyData = normalizeCopyButton(bar.copyData, copyDataLabel(), 'copyData');
+  const copyLog = normalizeCopyButton(bar.copyLog, copyLogLabel(), 'copyLog');
 
   const ids = new Set<string>();
   for (const button of buttons) {

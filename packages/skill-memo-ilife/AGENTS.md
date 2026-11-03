@@ -38,9 +38,9 @@
 <!-- warning-line-ledger:begin -->
 | 件 | 挂号值（首次挂号时的 LF，永不回改） | 当场实测 | 结论 |
 |---|---|---|---|
-| `src/cli/cmd_read.ts` | 367 | 358 | 超线在册（拆法见 #855 证据件；只许变短） |
-| `src/entries/en.ts` | 632 | 632 | 已超线：词条数据表，行数随词条数线性增长（#1197 全量迁移后 632 行），不适用 350 行逻辑件告警；拆法：按域拆 `src/entries/<域>.{zh,en}.ts` 再 spread 合成，需先扩展 defineCatalog 收多文件。 |
-| `src/entries/zh.ts` | 638 | 638 | 已超线：词条数据表，行数随词条数线性增长（#1197 全量迁移后 638 行），不适用 350 行逻辑件告警；拆法同 en 列。 |
+| `src/cli/cmd_read.ts` | 367 | 360 | 超线在册（拆法见 #855 证据件；只许变短） |
+| `src/entries/en.ts` | 632 | 632 | 超线在册（拆法见 #855 证据件；只许变短） |
+| `src/entries/zh.ts` | 638 | 638 | 超线在册（拆法见 #855 证据件；只许变短） |
 | `scripts/build-help.mjs` | 38 | 46 | 未越线，在册备查 |
 | `scripts/check-warning-line.mjs` | 112 | 133 | 未越线，在册备查 |
 | `scripts/gen-cli.mjs` | 380 | 299 | 已回线内（挂号值 380 留档，只许变短） |
@@ -72,7 +72,10 @@
 | `src/data/schema.ts` | 31 | 31 | 未越线，在册备查 |
 | `src/data/tables.ts` | 19 | 19 | 未越线，在册备查 |
 | `src/db/readonly.ts` | 333 | 334 | 未越线，在册备查 |
-| `src/entries/index.ts` | 20 | 20 | 未越线，在册备查 |
+| `src/entries/catalog.generated.ts` | 22 | 22 | 未越线，在册备查 |
+| `src/entries/index.ts` | 20 | 19 | 未越线，在册备查 |
+| `src/entries/memoPageAssets.en.ts` | 11 | 12 | 未越线，在册备查 |
+| `src/entries/memoPageAssets.zh.ts` | 13 | 14 | 未越线，在册备查 |
 | `src/health.ts` | 17 | 17 | 未越线，在册备查 |
 | `src/help/booklet.ts` | 92 | 95 | 未越线，在册备查 |
 | `src/help/helpFile.ts` | 220 | 233 | 未越线，在册备查 |
@@ -117,7 +120,7 @@
 | `src/render/html.ts` | 50 | 52 | 未越线，在册备查 |
 | `src/render/index.ts` | 23 | 27 | 未越线，在册备查 |
 | `src/render/listPage.ts` | 69 | 72 | 未越线，在册备查 |
-| `src/render/memoPageAssets.ts` | 229 | 330 | 未越线，在册备查 |
+| `src/render/memoPageAssets.ts` | 229 | 336 | 未越线，在册备查 |
 | `src/render/pages.ts` | 261 | 267 | 未越线，在册备查 |
 | `src/render/receipt.ts` | 107 | 172 | 未越线，在册备查 |
 | `src/render/templates.ts` | 27 | 27 | 未越线，在册备查 |
@@ -139,7 +142,7 @@
 | `src/sync/run.ts` | 57 | 58 | 未越线，在册备查 |
 | `src/sync/sentinel.ts` | 175 | 177 | 未越线，在册备查 |
 | `src/triggers/routeSpec.ts` | 36 | 36 | 未越线，在册备查 |
-| `src/triggers/routes.en.generated.ts` | 23 | 23 | 未越线，在册备查 |
+| `src/triggers/routes.en.generated.ts` | 23 | 24 | 未越线，在册备查 |
 | `src/triggers/routing.ts` | 41 | 66 | 未越线，在册备查 |
 | `src/wish/commands.ts` | 22 | 22 | 未越线，在册备查 |
 | `src/wish/complete.ts` | 78 | 79 | 未越线，在册备查 |

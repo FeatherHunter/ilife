@@ -203,11 +203,57 @@ function selftest() {
     want(!vacant.errors.some((e) => String(e.path).includes('vacant')), '空表不许当「词条表读不出」（errors=' + vacant.errors.length + '）');
     want(vacant.emptyTables.length === 2, '空表必须显式报数（实得 ' + vacant.emptyTables.length + '）');
     console.log('SELFTEST 空表读数：emptyTables=' + vacant.emptyTables.join(','));
+    // 后三条是 #1328 的解析边界用例：各自用独立临时仓，免得前几组夹具的包混进读数。
+    // ⑪ 死词条（#1328；#1306 复核 P4／§3 问题 7）：只在 en 里存在的 key 不进 pairs，其占位符写错也永远比不到。
+    //    本门只报 skew（覆盖缺口归缺词条门）：这是登记在案的边界，用例钉住「不多算、不误报」。
+    const edgeRoots = [];
+    const makeEdge = () => {
+      const root = mkdtempSync(join(tmpdir(), 't1306-params-edge-'));
+      edgeRoots.push(root);
+      return root;
+    };
+    const writeEdge = (root, pkg, lang, body) => {
+      const dir = join(root, 'packages', pkg, 'src', 'entries');
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(join(dir, lang + '.ts'), body, 'utf8');
+    };
+    try {
+      const deadEdge = makeEdge();
+      writeEdge(deadEdge, 'dead', 'zh', "export const zh = {\n  'dead.total': '共 {count} 件',\n};\n");
+      writeEdge(deadEdge, 'dead', 'en', "export const en = {\n  'dead.total': 'Total {count}',\n  'dead.orphan': 'Only English {n}',\n};\n");
+      const dead = audit(deadEdge);
+      want(dead.mismatch.length === 0, '死词条（只有一门语言）不是占位符不一致（实得 ' + dead.mismatch.length + '）');
+      want(dead.skew.some((s) => s.key === 'dead.orphan'), '死词条必须进 skew 报数（实得 ' + JSON.stringify(dead.skew.map((s) => s.key)) + '）');
+      want(dead.pairs === 1, '死词条不得计入 pairs（只算真比较过的那一对，实得 ' + dead.pairs + '）');
+      console.log('SELFTEST 死词条读数：skew=' + dead.skew.length + ' pairs=' + dead.pairs + ' mismatch=' + dead.mismatch.length);
+
+      // ⑫ 注释伪词条（#1328；#1306 复核 P4／§3 问题 6）：.ts 扫描扫全文含注释，注释里的 key: 值 会被当成词条。
+      //    方向是 fail-closed（假红），不是漏判；用例钉住「注释伪词条会被当真」这条已知边界。
+      const noteEdge = makeEdge();
+      writeEdge(noteEdge, 'note', 'zh', "export const zh = {\n  'note.total': '共 {count} 件',\n  'note.commented': '共 {count} 条',\n};\n");
+      writeEdge(noteEdge, 'note', 'en', "export const en = {\n  'note.total': 'Total {count}',\n  // 'note.commented': 'Commented {n}',\n};\n");
+      const note = audit(noteEdge);
+      want(note.mismatch.length === 1 && note.mismatch[0].key === 'note.commented', '注释里的伪词条会被当真（fail-closed 假红），必须报 1 处（实得 ' + JSON.stringify(note.mismatch.map((m) => m.key)) + '）');
+      console.log('SELFTEST 注释伪词条读数：mismatch=' + note.mismatch.length + '（' + note.mismatch.map((m) => m.key).join(',') + '）');
+
+      // ⑬ ZWSP（零宽空格）解析边界（#1328；#1306 复核 P4／§3 问题 6）：空白判定用 trim()，U+200B 不算空白。
+      //    带占位符的那条：en 只剩 ZWSP ⇒ 占位符集合丢失，本门判红；两侧都无占位符的那条：本门与空白判据都不红（登记在案的边界）。
+      const zwspEdge = makeEdge();
+      writeEdge(zwspEdge, 'zwsp', 'zh', "export const zh = {\n  'zwsp.total': '共 {count} 件',\n  'zwsp.plain': '纯文字',\n};\n");
+      writeEdge(zwspEdge, 'zwsp', 'en', "export const en = {\n  'zwsp.total': '\\u200B',\n  'zwsp.plain': '\\u200B',\n};\n");
+      const zwsp = audit(zwspEdge);
+      want(zwsp.mismatch.length === 1 && zwsp.mismatch[0].key === 'zwsp.total', 'ZWSP 值丢掉 {count} 时必须报 1 处（实得 ' + JSON.stringify(zwsp.mismatch.map((m) => m.key)) + '）');
+      want(zwsp.mismatch[0] && zwsp.mismatch[0].got.length === 0, 'ZWSP 值抽不出占位符（实得 ' + JSON.stringify(zwsp.mismatch[0] && zwsp.mismatch[0].got) + '）');
+      want(!zwsp.mismatch.some((m) => m.key === 'zwsp.plain'), '两侧都无占位符的 ZWSP 值不判红（已知边界）');
+      console.log('SELFTEST ZWSP 读数：mismatch=' + zwsp.mismatch.length + '（无占位符那条不红：trim() 不裁 U+200B，已知边界）');
+    } finally {
+      for (const root of edgeRoots) rmSync(root, { recursive: true, force: true });
+    }
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
   if (bad.length) { for (const b of bad) console.error('SELFTEST FAIL ' + b); process.exit(1); }
-  console.log('SELFTEST: 空转显式报数／单语言包报数／占位符不一致必红／补齐必绿／多占位必红／顺序重复不判红／缺列只报数且不计 pairs／读不出必红／多份表重复 key 必红／空表显式报数 十一条自证 OK');
+  console.log('SELFTEST: 空转显式报数／单语言包报数／占位符不一致必红／补齐必绿／多占位必红／顺序重复不判红／缺列只报数且不计 pairs／读不出必红／多份表重复 key 必红／空表显式报数／死词条只报 skew／注释伪词条 fail-closed／ZWSP 解析边界（后三条 #1328；#1306 复核 P4） 十四条自证 OK');
 }
 
 /** 入口守卫（照 check-i18n-entries.mjs 先例）：被别处 import 时不跑 CLI。 */

@@ -6,7 +6,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { DEFAULT_SEAL_LANGUAGE, sealLanguageOf } from '../dist/seal-language.js';
-import { CLOSE_LABEL_BY_LANG, SECTION_LABEL_BY_LANG, TIER_TEXT, TIER_TEXT_BY_LANG } from '../dist/seal-vocabulary.generated.js';
+import { CLOSE_LABEL_BY_LANG, SECTION_LABEL_BY_LANG, TIER_TEXT_BY_LANG } from '../dist/seal-vocabulary.generated.js';
 import { sealTipOf } from '../dist/seal-stamp.js';
 import { sealLanguageOf as fromGate } from '../dist/config-panel-api.js';
 
@@ -36,6 +36,9 @@ describe('sealLanguageOf：宿主语言归一', () => {
   it('宿主的两种公开读法都认（getSnapshot 优先，其次 getLocale）', () => {
     assert.equal(sealLanguageOf({ getLocale: () => ({ active: 'en' }) }), 'en');
     assert.equal(sealLanguageOf({ getSnapshot: () => ({ active: 'zh' }), getLocale: () => ({ active: 'en' }) }), 'zh');
+    // 快照里读不出 active（例如服务刚注册还没填）时回退 getLocale，而不是直接判中文。
+    assert.equal(sealLanguageOf({ getSnapshot: () => ({}), getLocale: () => ({ active: 'en' }) }), 'en');
+    assert.equal(sealLanguageOf({ getSnapshot: () => null, getLocale: () => 'en' }), 'en');
   });
   it('公开门 config-panel 转出的就是本件（六家只 import 那一门）', () => {
     assert.equal(fromGate, sealLanguageOf);
@@ -45,7 +48,7 @@ describe('sealLanguageOf：宿主语言归一', () => {
 
 describe('印章文案按语言取（生成件）', () => {
   it('中文列与 #1325 前逐字同，英文列齐且不是中文', () => {
-    assert.deepEqual(TIER_TEXT, { gold: '精雕细琢中', silver: '全场景打通中', copper: '基础建设中' });
+    assert.deepEqual(TIER_TEXT_BY_LANG.zh, { gold: '精雕细琢中', silver: '全场景打通中', copper: '基础建设中' });
     assert.deepEqual(SECTION_LABEL_BY_LANG.zh, { progress: '进展', status: '状态', plan: '计划' });
     assert.deepEqual(CLOSE_LABEL_BY_LANG.zh, '收卷');
     for (const tier of ['gold', 'silver', 'copper']) {

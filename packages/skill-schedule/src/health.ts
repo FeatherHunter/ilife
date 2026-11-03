@@ -29,7 +29,9 @@ import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
-import { configPaths } from 'base-link-core';
+import { configPaths, dirFaultCodeOf } from 'base-link-core';
+// 故障码的唯一定义地在 base-link-core（#1327 评审 HARD2：三家不许各抄一遍）；本件转出给测试用。
+export { dirFaultCodeOf } from 'base-link-core';
 import { SCHEDULE_CONFIG_DEFAULTS, SCHEDULE_CONFIG_STEM } from './config.js';
 // #764：落点算式只有一处定义地（`src/fetch/paths.ts`）——体检报的就是那几个落点，两处不许走散。
 // 本件只调**纯算式**（`*Of` 一族，不读配置、不碰盘）：体检不许调 `loadScheduleConfig()`（文件不在即落一份默认件）。
@@ -437,6 +439,16 @@ export function dbDirHealthItem(
   };
 }
 
+/** `db.dir` 的故障码：与 `dbDirHealthItem` 同一份只读推导（#1327 供行告警用，不解析本地化报文）。 */
+export function dbDirFaultCode(
+  values: Record<string, Record<string, unknown>>,
+  present: ReadonlySet<string>,
+  defaultDataDir: string,
+): 'DIR_MISSING' | 'DIR_UNWRITABLE' | undefined {
+  const dataDir = dbDirOf(defaultDataDir, textOf(readValue(values, 'db', 'dir')));
+  return dirFaultCodeOf(dirVerdict(dataDir));
+}
+
 /** `*.config.read` 行告警用的 `db.dir` 结论：红才回 `{code, message}`（`message` 原样），否则缺席。
  *  只读：读配置不落盘、不探 lark（见 `dbDirHealthItem` 的注释）。 */
 export function dbDirAlert(): { readonly code: string; readonly message: string } | undefined {
@@ -445,7 +457,8 @@ export function dbDirAlert(): { readonly code: string; readonly message: string 
   if (read.kind !== 'ok') return undefined;
   const item = dbDirHealthItem(read.values, read.present, paths.dataDir);
   if (item.status !== 'red') return undefined;
-  const code = item.message.startsWith('不在') || item.message.startsWith('同名') ? 'DIR_MISSING' : 'DIR_UNWRITABLE';
+  const code = dbDirFaultCode(read.values, read.present, paths.dataDir);
+  if (code === undefined) return undefined;
   return { code, message: item.message };
 }
 

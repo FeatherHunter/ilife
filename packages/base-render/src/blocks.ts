@@ -31,10 +31,10 @@
 
 import { charts } from './charts.js';
 import { renderActionBar, renderEmptyState, renderErrorReceipt, renderStatusBadge, renderToast, TOAST_ICON_GLYPHS, TOAST_ICON_LABELS } from './controls.js';
+import { copyDataLabel, copyLogLabel } from './components/controls/copy-labels.js';
 import { m } from './entries/index.js';
 import { BODY_FONT_STACK } from './font.js';
 import {
-  ACTION_BAR_DEFAULTS,
   ACTION_ID_ATTR,
   CHART_KINDS,
   COPY_ACTION_IDS,
@@ -1759,13 +1759,15 @@ export interface CopyBlockInput {
 /** B-11：复制区块（冻结 `renderActionBar`；id 缺省取 `COPY_ACTION_IDS.actionBar.*`，调用方须保页内唯一）。
  *  `dataFormats` 给三格式形态（`dataText` 单格式），两者同给 → `bad-input`。
  *  标题去重（#336 base 侧兜底，与 `copyArea` 的 `COPY_TITLE_DUP_OF_BUTTON` 同口径）：
- *  `title` 与复制数据按钮同名（`ACTION_BAR_DEFAULTS.copyDataLabel`＝「复制数据」）时不出 `<h2>`
+ *  `title` 与复制数据按钮**当前语言的**文案同名（中文「复制数据」／英文「Copy data」）时不出 `<h2>`
  *  （只留动作不留说明文本）；其他标题照旧。
  *  可选说明行（#870 `hint`）落在标题与按钮排之间的那一行，见该字段注释。 */
 export function renderCopyBlock(input: CopyBlockInput): string {
   assertPlainObject(input, 'renderCopyBlock: input');
   assertNoInlineHandler(input, 'renderCopyBlock: input');
   const block = input as CopyBlockInput;
+  // 缺省按钮文案按当前渲染语言取词（#1331）；中文下与冻结常量同值，英文下出英文。
+  const dataLabel = copyDataLabel();
   if (block.dataFormats !== undefined && block.dataText !== undefined) {
     badInput('renderCopyBlock: input.dataFormats 与 input.dataText 只能给一个');
   }
@@ -1777,7 +1779,7 @@ export function renderCopyBlock(input: CopyBlockInput): string {
   if (block.dataText !== undefined || block.dataActionId !== undefined || block.dataFormats !== undefined) {
     (bar as { copyData?: CopyButtonInput }).copyData = {
       actionId: block.dataActionId ?? COPY_ACTION_IDS.actionBar.copyData,
-      label: ACTION_BAR_DEFAULTS.copyDataLabel,
+      label: dataLabel,
       ...(block.dataText === undefined ? {} : { text: block.dataText }),
       ...(block.dataFormats === undefined ? {} : { formats: block.dataFormats }),
     };
@@ -1785,13 +1787,13 @@ export function renderCopyBlock(input: CopyBlockInput): string {
   if (block.logText !== undefined || block.logActionId !== undefined) {
     (bar as { copyLog?: CopyButtonInput }).copyLog = {
       actionId: block.logActionId ?? COPY_ACTION_IDS.actionBar.copyLog,
-      label: ACTION_BAR_DEFAULTS.copyLogLabel,
+      label: copyLogLabel(),
       ...(block.logText === undefined ? {} : { text: block.logText }),
     };
   }
   const rawTitle = optText(block.title);
   // #336：与按钮同名的标题只留按钮（`copyArea` 去重口径的 base 侧兜底，直调本函数同样生效）。
-  const title = rawTitle === ACTION_BAR_DEFAULTS.copyDataLabel ? undefined : rawTitle;
+  const title = rawTitle === dataLabel ? undefined : rawTitle;
   const hint = block.hint as string | undefined;
   return '<section class="' + blockRoot('copyBlock') + '">'
     + (title === undefined ? '' : '<h2 class="' + blockPart('copyBlock', 'title') + '">' + esc(title) + '</h2>')

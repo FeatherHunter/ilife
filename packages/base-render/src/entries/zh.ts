@@ -2312,6 +2312,7 @@ export const zh = {
   'base-render.components-sort-toggle-attrs.c009': "这个视图里没有记录",
   'base-render.components-sort-toggle-attrs.c010': "这个排序没接上条目区：页面上找不到可排的条目",
   'base-render.components-sort-toggle-attrs.c011': "（这一档没写口径句）",
+  'base-render.components-sort-toggle-attrs.c012': "{label}（{to}）",
   /* ── packages/base-render/src/components/prompt-box/render.ts（#1227 迁入） ── */
   'base-render.components-prompt-box-render.c001': "复制",
   /* ── packages/base-render/src/components/radio-cards/attrs.ts（#1227 迁入） ── */
@@ -2479,7 +2480,7 @@ export const zh = {
   'base-render.components-search-field-render.c003': "{noun}命中",
   'base-render.components-search-field-render.c004': "搜索范围",
   'base-render.components-search-field-render.c005': " · 范围 {p0}",
-  'base-render.components-search-field-render.c006': "第 {p0} {p1} / 共 {p2} {p3}",
+  'base-render.components-search-field-render.c006': "第 {p0} {noun} / 共 {p2} {noun}",
   /* ── packages/base-render/src/components/slider-row/render.ts（#1227 迁入） ── */
   'base-render.components-slider-row-render.c001': "这条读数",
   'base-render.components-slider-row-render.c002': "减 {word}",
@@ -2494,6 +2495,9 @@ export const zh = {
   'base-render.components-window-picker-render.c002': "止",
   /* ── packages/base-render/src/components/wizard-shell/render.ts（#1227 迁入） ── */
   'base-render.components-wizard-shell-render.c001': "第 {p0} / {p1} 问",
+  /* ── packages/base-render/src/components/controls/copy-labels.ts（#1331 迁入） ── */
+  'base-render.components-controls-copy-labels.c001': "复制数据",
+  'base-render.components-controls-copy-labels.c002': "复制日志",
   'help-shell.text.capability-title': '能力速查台',
   'help-shell.meta.generated-at': '本页数据生成于 ',
   'help-shell.meta.snapshot-at': '快照于 ',

@@ -13,7 +13,7 @@ import { ENVELOPE_VERSION } from 'base-link-core';
 import type { ConfigRecord, EnvelopeShape } from 'base-link-core';
 import { loadBillConfig, resetBillConfig, saveBillConfig } from '../config.js';
 import { resolvedBillPaths } from '../fetch/paths.js';
-import { buildBillHealthReport } from '../health.js';
+import { billDbDirAlert } from '../health.js';
 import { m } from '../entries/index.js';
 
 /** 三个 key 的唯一定义地（插件侧镜像同值，见 `packages/plugin-bill-ilife/src/bridge.ts`）。 */
@@ -63,15 +63,13 @@ function withHumanError<T>(run: () => T): T {
 /**
  * #915 第二步：只给可改目录行 `db.dir` 的行告警。
  *
- * 结论复用体检 `db.dir` 那一项（`src/health.ts` 的 `dirVerdict`：不在／在但写不进去／
- * 在且能写），`message` 原样取体检那句故障本身，不合成新句子；在且能写＝缺席（面板不亮）。
- * 故障码只按体检报文首字区分（`不在`→缺失，其余→写不进去），供判据与回执用，面板只画 `message`。
+ * 结论与体检 `db.dir` 那一项**同一份推导**（`src/health.ts` 的 `billDbDirAlert`：读一次配置、
+ * 算一次目录结论，`message` 与 `code` 同源）；在且能写＝缺席（面板不亮）。
+ * 故障码取结构化目录结论（#1327：不解析本地化报文，zh／en 下分类一致），面板只画 `message`。
  */
 function billAlerts(): Record<string, { readonly code: string; readonly message: string }> | undefined {
-  const item = buildBillHealthReport().items.find((entry) => entry.id === 'db.dir');
-  if (item === undefined || item.status === 'green') return undefined;
-  const code = item.message.startsWith('不在') ? 'DIR_MISSING' : 'DIR_UNWRITABLE';
-  return { 'db.dir': { code, message: item.message } };
+  const alert = billDbDirAlert();
+  return alert === undefined ? undefined : { 'db.dir': alert };
 }
 
 /**

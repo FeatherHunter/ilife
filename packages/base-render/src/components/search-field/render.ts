@@ -56,6 +56,8 @@ function scopeHtml(model: SearchFieldModel): string {
  *  真读数与载入字各占一个 `span`（同一行、原地换字）：换字时**不动**版面，也不重造计数位。 */
 function readoutHtml(model: SearchFieldModel): string {
   const c = SEARCH_ROOT_CLASS;
+  // 计数措辞由词条模板承载（#1330／#1325 评审 HARD1）：中文「第 {p0} {noun} / 共 {p2} {noun}」、
+  // 英文「{p0} of {p2} {noun}」；量词走 attrs 的 c008（zh 处／en found），本件不按语言分支。
   const picked = model.scope === undefined ? SEARCH_DEFAULTS.scopeAll : model.scope;
   const pickedLabel = model.scopes.length === 0 ? ''
     : (model.scopes.find((s) => s.value === picked) ?? { label: m('base-render.components-search-field-render.c002') }).label;
@@ -74,7 +76,7 @@ function readoutHtml(model: SearchFieldModel): string {
     + (model.disabled || model.loading ? ' disabled' : '') + '>‹</button>'
     + '<span class="' + c + '-pos" ' + SEARCH_POS_ATTR + '="">'
     + fillSlot(fillSlot(m('base-render.components-search-field-render.c006', {
-      p0: SLOT_A, p1: esc(model.noun), p2: SLOT_B, p3: esc(model.noun),
+      p0: SLOT_A, p2: SLOT_B, noun: esc(model.noun),
     }), SLOT_A, '<b ' + SEARCH_AT_ATTR + '="">' + SEARCH_DEFAULTS.unset + '</b>'),
     SLOT_B, '<b ' + SEARCH_COUNT_ATTR + '="">' + SEARCH_DEFAULTS.unset + '</b>')
     + '</span>'

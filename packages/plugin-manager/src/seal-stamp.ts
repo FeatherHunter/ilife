@@ -14,7 +14,7 @@
 
 import * as React from 'react';
 import { SEAL_ROUGH_EDGE_ID } from './seal-scroll.js';
-// 档位话按语言取（#1325）；中文表是生成件的 `TIER_TEXT = TIER_TEXT_BY_LANG.zh`。
+// 档位话按语言取（#1325）；生成件只出按语言的 BY_LANG 表（不再出中文扁平别名）。
 import { TIER_TEXT_BY_LANG } from './seal-vocabulary.generated.js';
 import type { SealLanguage } from './seal-vocabulary.generated.js';
 // 底色与边线从调色板取（与卷轴外框同一份取值）；**下面这三张表是印面自己的排法**，不是共享值。

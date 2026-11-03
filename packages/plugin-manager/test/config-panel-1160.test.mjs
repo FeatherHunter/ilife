@@ -204,3 +204,28 @@ describe('#1160 T1: buttons press, inputs focus, card carries style seam', () =>
     assert.match(out, /PIXEL_T1_RESULT=PASS/);
   });
 });
+describe('#1325 面板级：印章语言一路透到气泡与卷轴', () => {
+  const EN_SEALS = [
+    { role: 'help', tier: 'gold', label: 'Demo HELP', progress: '80% complete', status: 'All connected', plan: 'Connect every feature and scenario' },
+    { role: 'skill', tier: 'silver', label: 'Demo Skill', progress: '80% complete', status: 'All connected', plan: 'Connect every feature and scenario' },
+    { role: 'plugin', tier: 'copper', label: 'Demo Plugin', progress: '60% complete', status: 'Usable', plan: 'Fix obvious bugs and connect the remaining scenarios' },
+  ];
+  it('PanelBody(language:en) 的章气泡与卷轴取英文词表，不混中文', () => {
+    const tree = expandTree(view.PanelBody(bodyProps({ seals: EN_SEALS, sealSeed: 0, selectedSeal: 0, onSealSelect: () => {}, onSealClose: () => {}, language: 'en' })));
+    const html = JSON.stringify(tree);
+    assert.ok(html.includes('Fine polishing'), '档位气泡应是英文');
+    assert.ok(html.includes('Connect every feature and scenario'), '卷轴计划段应是英文');
+    assert.ok(html.includes('Close'), '关闭钮应是英文');
+    assert.equal(html.includes('精雕细琢中'), false, '英文面板不许混中文档位话');
+    assert.equal(html.includes('收卷'), false, '英文面板不许混中文关闭钮');
+  });
+  it('缺 language 时面板仍取中文表（默认路径逐字节不变）', () => {
+    const zhSeals = [
+      { role: 'help', tier: 'gold', label: '示例 HELP', progress: '完成度 80%', status: '全打通', plan: '将所有功能和场景全部打通' },
+    ];
+    const zhTree = expandTree(view.PanelBody(bodyProps({ seals: zhSeals, sealSeed: 0, selectedSeal: 0, onSealSelect: () => {}, onSealClose: () => {}, language: 'zh' })));
+    const html = JSON.stringify(zhTree);
+    assert.ok(html.includes('精雕细琢中'));
+    assert.ok(html.includes('收卷'));
+  });
+});

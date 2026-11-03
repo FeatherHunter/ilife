@@ -3,10 +3,10 @@
   "anchors": [
     {
       "path": "tooling/skill-html.snapshot.json",
-      "commit": "746123ffb313ff581cf92e7e799fe94bdcf7f85d",
-      "blob": "854872a30611ecf7372721c6c8c62aa18b88d45a",
-      "sha256": "c3477e474a7aa216b3e6e8b8fc41ace41fba22c0d4e1f297d6058499f6e7e081",
-      "bytes": 117875
+      "commit": "2f043bb66d45b997e4ca3fed989189c98ae248b4",
+      "blob": "2a6fb25900982ff0647fece8d2aef9fdf9105840",
+      "sha256": "f13be26336767108f917868f5cffc7e1dda942e3d76a0d09e944eeedabdb9923",
+      "bytes": 99972
     },
     {
       "path": "tooling/calorie-html.snapshot.json",

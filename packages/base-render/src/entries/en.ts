@@ -2227,7 +2227,7 @@ export const en = {
   'base-render.components-search-field-attrs.c005': "No match, try another word or widen the range",
   'base-render.components-search-field-attrs.c006': "Searching…",
   'base-render.components-search-field-attrs.c007': "This search box is not wired to a result region: no searchable entries on the page",
-  'base-render.components-search-field-attrs.c008': "matches",
+  'base-render.components-search-field-attrs.c008': "found",
   'base-render.components-search-field-attrs.c009': "No searchable entries in the result region",
   /* ── packages/base-render/src/components/step-flow/attrs.ts（#1227 迁入） ── */
   'base-render.components-step-flow-attrs.c001': "In progress",
@@ -2304,6 +2304,7 @@ export const en = {
   'base-render.components-sort-toggle-attrs.c009': "No records in this view",
   'base-render.components-sort-toggle-attrs.c010': "This sort is not wired to an entry region: no sortable entries on the page",
   'base-render.components-sort-toggle-attrs.c011': "(no caliber sentence for this tier)",
+  'base-render.components-sort-toggle-attrs.c012': "{label} ({to})",
   /* ── packages/base-render/src/components/prompt-box/render.ts（#1227 迁入） ── */
   'base-render.components-prompt-box-render.c001': "Copy",
   /* ── packages/base-render/src/components/radio-cards/attrs.ts（#1227 迁入） ── */
@@ -2468,10 +2469,10 @@ export const en = {
   /* ── packages/base-render/src/components/search-field/render.ts（#1227 迁入） ── */
   'base-render.components-search-field-render.c001': "All",
   'base-render.components-search-field-render.c002': "All",
-  'base-render.components-search-field-render.c003': "{noun} matches",
+  'base-render.components-search-field-render.c003': "{noun}",
   'base-render.components-search-field-render.c004': "Search scope",
   'base-render.components-search-field-render.c005': " · Scope {p0}",
-  'base-render.components-search-field-render.c006': "{p0} {p1} of {p2} {p3}",
+  'base-render.components-search-field-render.c006': "{p0} of {p2} {noun}",
   /* ── packages/base-render/src/components/slider-row/render.ts（#1227 迁入） ── */
   'base-render.components-slider-row-render.c001': "this readout",
   'base-render.components-slider-row-render.c002': "Decrease {word}",
@@ -2486,6 +2487,9 @@ export const en = {
   'base-render.components-window-picker-render.c002': "to",
   /* ── packages/base-render/src/components/wizard-shell/render.ts（#1227 迁入） ── */
   'base-render.components-wizard-shell-render.c001': "Question {p0} / {p1}",
+  /* ── packages/base-render/src/components/controls/copy-labels.ts（#1331 迁入） ── */
+  'base-render.components-controls-copy-labels.c001': "Copy data",
+  'base-render.components-controls-copy-labels.c002': "Copy log",
   'help-shell.text.capability-title': 'Capability reference',
   'help-shell.meta.generated-at': 'This page was generated at ',
   'help-shell.meta.snapshot-at': 'Snapshot at ',

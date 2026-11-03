@@ -1,5 +1,5 @@
 /** 自动生成 · **勿手改**：源 `seals.yaml`（仓库根），生成器 `node tooling/gen-seals.mjs`。 */
-/** 设计语言支持的语言（#1325）：zh 中文／en English。 */
+/** 设计语言支持的语言（#1325；由 seals.yaml 叶子的语言列派生，加语言＝每个叶子补一列）。 */
 export type SealLanguage = 'zh' | 'en';
 
 /** 档位话（按语言）：卷轴标题下那一行 ＝ 悬停章的气泡（同一句话，两处渲染）。 */
@@ -25,9 +25,3 @@ export const CLOSE_LABEL_BY_LANG: Record<SealLanguage, string> = {
   zh: '收卷',
   en: 'Close',
 };
-
-/** 中文扁平表（历史消费面与快照沿用；＝ 对应 *_BY_LANG.zh）。 */
-export const TIER_TEXT = TIER_TEXT_BY_LANG.zh;
-export const SECTION_LABEL = SECTION_LABEL_BY_LANG.zh;
-export const SEAL_LABEL = SEAL_LABEL_BY_LANG.zh;
-export const CLOSE_LABEL = CLOSE_LABEL_BY_LANG.zh;

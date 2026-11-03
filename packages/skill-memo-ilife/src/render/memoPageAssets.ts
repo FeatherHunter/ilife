@@ -18,6 +18,7 @@
 //    只有「备忘录信封怎么投影成一段可粘贴文本」这一件是本域自己的口径。
 import { blocksCss } from 'base-paint/blocks';
 import { buildSharedHelpersJs, buildStyleSheet, pageShapeCss, pageUiCss } from 'base-paint';
+import { m } from '../entries/index.js';
 
 /** `fillTemplate` 的两个资产槽（与 `TemplateAssets` 的 `sharedCssText`／`sharedHelpersJs` 同名同义）。 */
 export interface MemoPageAssets {
@@ -87,6 +88,11 @@ export function memoPageAssets(): MemoPageAssets {
  *  **#878 追加**：键值行的页面侧产出者 `factStrip`（只拼公共层类名，不产样式）—— 同步报告页状态卡
  *  与两份向导页页头那三处「生成时间 · 场景」的串，由它落成键值行。 */
 export function memoRuntimeJs(): string {
+  // 错误回执卡两颗 copy 按钮的缺省文案（#1331）：生成时刻按当前渲染语言取词，
+  // JSON 字面量拼进页内 JS；中文下逐字节等于改动前的 "复制数据"／"复制日志"。
+  const copyDataText = JSON.stringify(m('skill-memo-ilife.render-memo-page-assets.c001'));
+  const copyLogText = JSON.stringify(m('skill-memo-ilife.render-memo-page-assets.c002'));
+  const retryText = JSON.stringify(m('skill-memo-ilife.render-memo-page-assets.c003'));
   const src = [
     '(function () {',
     "  'use strict';",
@@ -238,10 +244,10 @@ export function memoRuntimeJs(): string {
     '    if (!logText && ok) { try { logText = window.buildLogText(payload); } catch (e) { logText = ""; } }',
     '    var retry = typeof cfg.retryPrompt === "string" && cfg.retryPrompt !== "" ? cfg.retryPrompt : "";',
     '    var btns = "";',
-    '    if (retry) btns += errorCopyBtn("memo-error-retry", "ilife-copy-btn-primary ilife-copy-btn-wide", "修正重试", retry);',
+    '    if (retry) btns += errorCopyBtn("memo-error-retry", "ilife-copy-btn-primary ilife-copy-btn-wide", ' + retryText + ', retry);',
     '    var pairs = "";',
-    '    if (dataText) pairs += errorCopyBtn("memo-error-copy-data", "ilife-copy-btn-ghost", "复制数据", dataText);',
-    '    if (logText) pairs += errorCopyBtn("memo-error-copy-log", "ilife-copy-btn-ghost", "复制日志", logText);',
+    '    if (dataText) pairs += errorCopyBtn("memo-error-copy-data", "ilife-copy-btn-ghost", ' + copyDataText + ', dataText);',
+    '    if (logText) pairs += errorCopyBtn("memo-error-copy-log", "ilife-copy-btn-ghost", ' + copyLogText + ', logText);',
     '    var html = \'<div class="ilife-error"><div class="ilife-error-title">\' + esc("❌ " + (cfg.message || "操作失败")) + "</div>";',
     '    if (btns || pairs) {',
     '      html += \'<div class="ilife-error-actions">\' + btns + "</div>";',

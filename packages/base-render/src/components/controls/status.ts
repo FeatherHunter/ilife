@@ -10,8 +10,9 @@
 import { resolve } from 'base-entries';
 import { assertActionId, assertPlainObject, badInput, esc, isStatusKind } from './shared.js';
 import { BASE_RENDER_CATALOG, type BaseRenderMessageId, m } from '../../entries/index.js';
-import { ACTION_BAR_DEFAULTS, ACTION_ID_ATTR, COPY_ACTION_IDS, DEFAULT_DATA_ATTR, EmptyStateInput, ErrorReceiptInput, RenderEmptyState, RenderErrorReceipt, RenderStatusBadge, STATUS_DEFAULT_TEXT, StatusBadgeInput, StatusKind } from '../../spec/index.js';
+import { ACTION_ID_ATTR, COPY_ACTION_IDS, DEFAULT_DATA_ATTR, EmptyStateInput, ErrorReceiptInput, RenderEmptyState, RenderErrorReceipt, RenderStatusBadge, STATUS_DEFAULT_TEXT, StatusBadgeInput, StatusKind } from '../../spec/index.js';
 import { STYLE_PREFIX } from '../../style.js';
+import { copyDataLabel, copyLogLabel } from './copy-labels.js';
 
 /* ── 状态三控件 ───────────────────────────────────────────────────────── */
 
@@ -96,8 +97,8 @@ export const renderErrorReceipt: RenderErrorReceipt = (input) => {
     actions.push('<button type="button" class="' + STYLE_PREFIX + 'copy-btn ' + STYLE_PREFIX + 'copy-btn-ghost" '
       + ACTION_ID_ATTR + '="' + esc(actionId) + '" ' + DEFAULT_DATA_ATTR + '="' + esc(text) + '">' + esc(label) + '</button>');
   };
-  pushCopy(receipt.dataText, receipt.dataActionId, COPY_ACTION_IDS.errorReceipt.copyData, ACTION_BAR_DEFAULTS.copyDataLabel, 'dataActionId');
-  pushCopy(receipt.logText, receipt.logActionId, COPY_ACTION_IDS.errorReceipt.copyLog, ACTION_BAR_DEFAULTS.copyLogLabel, 'logActionId');
+  pushCopy(receipt.dataText, receipt.dataActionId, COPY_ACTION_IDS.errorReceipt.copyData, copyDataLabel(), 'dataActionId');
+  pushCopy(receipt.logText, receipt.logActionId, COPY_ACTION_IDS.errorReceipt.copyLog, copyLogLabel(), 'logActionId');
 
   return '<div class="' + STYLE_PREFIX + 'error">'
     + '<div class="' + STYLE_PREFIX + 'error-title">' + esc(ERROR_TITLE_PREFIX + receipt.message) + '</div>'

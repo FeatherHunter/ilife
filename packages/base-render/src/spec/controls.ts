@@ -265,7 +265,7 @@ export interface CopyButtonInput {
    *  渲染期写入 `ACTION_ID_ATTR` 属性，供 `CopyActionHostPort.listActionIds()` 发现。
    *  空串／非字符串／与同一次渲染内其它按钮重复 → 抛 `ControlsError` code `bad-input`。 */
   readonly actionId: string;
-  /** 缺省 `ACTION_BAR_DEFAULTS.copyDataLabel`／`copyLogLabel`（按用途）。 */
+  /** 缺省取 `components/controls/copy-labels.ts` 的 `copyDataLabel()`／`copyLogLabel()`（#1331；按用途自动跟随渲染语言）。 */
   readonly label?: string;
   /** 渲染期已序列化的文本（走 buildDataText／buildLogText），存 `data-t`，零注入面。 */
   readonly text?: string;

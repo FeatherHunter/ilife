@@ -12,16 +12,19 @@
  * 六家通用 5 条（配置文件本身／数据目录／库文件表数／产物目录／这个值从哪来）
  * ＋ 卡路里特有 7 条（照片目录／GIF 子目录／训记 KEY／训记 CLI／训记状态目录／跨技能两个出口／动作库预置）。
  */
-import { existsSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
-import { configPaths } from 'base-link-core';
+import { configPaths, dirFaultCodeOf } from 'base-link-core';
 import { CALORIE_CONFIG_DEFAULTS, CALORIE_CONFIG_STEM } from './config.js';
 import { dbDirOf, gifsDirOf, htmlDirOf, photosDirOf, stateDirOf } from './paths.js';
 import { XUNJI_CATALOG } from './xunji/index.js';
 import { m } from './entries/index.js';
+import { dirVerdict, type DirVerdict } from './health-dir.js';
+// 故障码的唯一定义地在 base-link-core（#1327 评审 HARD2：三家不许各抄一遍）；本件转出给测试用。
+export { dirFaultCodeOf } from 'base-link-core';
 
 /** 报告里的三档判据（与面板侧镜像同值）。 */
 export type HealthStatus = 'red' | 'yellow' | 'green';
@@ -267,46 +270,6 @@ function sourceOf(present: ReadonlySet<string>, key: string): string {
   return present.has(key) ? m('skill-calorie.health.c014') : m('skill-calorie.health.c015');
 }
 
-/** 目录项：在不在 ＋ 能不能写。 */
-interface DirVerdict {
-  readonly exists: boolean;
-  readonly writable: boolean;
-  readonly reason: string;
-}
-
-/** 目录能不能写：建一个探针文件再删掉（老技能三家同一套做法）。**不建目录本身**。 */
-function writeProbe(dir: string): { readonly ok: boolean; readonly reason: string } {
-  const probe = join(dir, '.ilife-health-probe-' + String(process.pid) + '-' + String(Date.now()));
-  try {
-    writeFileSync(probe, 'probe', { encoding: 'utf8', flag: 'wx' });
-    unlinkSync(probe);
-    return { ok: true, reason: '' };
-  } catch (e) {
-    return { ok: false, reason: e instanceof Error ? e.message : String(e) };
-  }
-}
-
-/** 已算过的目录结论按路径记一份：同一份报告里同一个目录不重复起写探针。 */
-const dirMemo = new Map<string, DirVerdict>();
-
-function dirVerdict(dir: string): DirVerdict {
-  const memoized = dirMemo.get(dir);
-  if (memoized !== undefined) return memoized;
-  const verdict = dirVerdictUncached(dir);
-  dirMemo.set(dir, verdict);
-  return verdict;
-}
-
-function dirVerdictUncached(dir: string): DirVerdict {
-  if (!existsSync(dir)) return { exists: false, writable: false, reason: '' };
-  try {
-    if (!statSync(dir).isDirectory()) return { exists: false, writable: false, reason: m('skill-calorie.health.c016') };
-  } catch (e) {
-    return { exists: false, writable: false, reason: e instanceof Error ? e.message : String(e) };
-  }
-  const probe = writeProbe(dir);
-  return { exists: true, writable: probe.ok, reason: probe.reason };
-}
 
 /** 开库读表数（只读打开，不建库、不迁移）。打不开即当作「读不出」。 */
 function tableCount(file: string): { readonly ok: boolean; readonly count: number; readonly reason: string } {
@@ -325,6 +288,49 @@ function tableCount(file: string): { readonly ok: boolean; readonly count: numbe
       /* 关不掉不影响结论 */
     }
   }
+}
+
+/** `db.dir` 故障那句话：体检项与行告警共用一份，免得两处措辞走散。 */
+function calorieDbDirMessage(dir: string, verdict: DirVerdict): string {
+  return !verdict.exists
+    ? m('skill-calorie.health.c030', {
+      p0: String(p(dir)),
+      p1: String(verdict.reason !== '' ? '（' + verdict.reason + '）' : ''),
+    })
+    : verdict.writable
+      ? m('skill-calorie.health.c031', { p0: String(p(dir)) })
+      : m('skill-calorie.health.c032', { p0: String(p(dir)), p1: String(verdict.reason) });
+}
+
+/** `photos.dir` 故障那句话：体检项与行告警共用一份。 */
+function caloriePhotosDirMessage(dir: string, verdict: DirVerdict): string {
+  return !verdict.exists
+    ? (verdict.reason !== ''
+      ? m('skill-calorie.health.c055', { p0: String(p(dir)), p1: String(verdict.reason) })
+      : m('skill-calorie.health.c056', { p0: String(p(dir)) }))
+    : verdict.writable
+      ? m('skill-calorie.health.c057', { p0: String(p(dir)) })
+      : m('skill-calorie.health.c058', { p0: String(p(dir)), p1: String(verdict.reason) });
+}
+
+/** 可改目录行（`db.dir`／`photos.dir`）的告警（#915 第二步；#1327 改结构化码）：
+ *  红才进 `{code, message}`，与体检②⑥**同一份推导**（读一次配置、算一次目录结论，message 与 code 同源）。 */
+export function calorieDirAlerts(): Record<string, { readonly code: string; readonly message: string }> | undefined {
+  const paths = configPaths(CALORIE_CONFIG_STEM);
+  const read = readCalorieConfigReadOnly();
+  const values = read.kind === 'ok' ? read.values : projectOnDefaults({});
+  const dataDir = dbDirOf(paths.dataDir, textOf(readValue(values, 'db', 'dir')));
+  const out: Record<string, { readonly code: string; readonly message: string }> = {};
+  const dataDirVerdict = dirVerdict(dataDir);
+  const dataDirCode = dirFaultCodeOf(dataDirVerdict);
+  if (dataDirCode !== undefined) out['db.dir'] = { code: dataDirCode, message: calorieDbDirMessage(dataDir, dataDirVerdict) };
+  const photosDir = photosDirOf(dataDir, textOf(readValue(values, 'photos', 'dir')));
+  const photosVerdict = dirVerdict(photosDir);
+  const photosBlocked = !photosVerdict.exists ? photosVerdict.reason !== '' : !photosVerdict.writable;
+  if (photosBlocked) {
+    out['photos.dir'] = { code: photosVerdict.exists ? 'DIR_UNWRITABLE' : 'DIR_MISSING', message: caloriePhotosDirMessage(photosDir, photosVerdict) };
+  }
+  return Object.keys(out).length === 0 ? undefined : out;
 }
 
 /** 跑一次体检，返回整份报告。**只读**：任何一处都不落盘（只有写探针那一个文件，且当场删掉）。 */
@@ -370,14 +376,7 @@ export function buildCalorieHealthReport(): CalorieHealthReport {
   items.push({
     id: 'db.dir', title: m('skill-calorie.health.c029'),
     status: !dataDirVerdict.exists || !dataDirVerdict.writable ? 'red' : 'green',
-    message: !dataDirVerdict.exists
-      ? m('skill-calorie.health.c030', {
-        p0: String(p(dataDir)),
-        p1: String(dataDirVerdict.reason !== '' ? '（' + dataDirVerdict.reason + '）' : ''),
-      })
-      : dataDirVerdict.writable
-        ? m('skill-calorie.health.c031', { p0: String(p(dataDir)) })
-        : m('skill-calorie.health.c032', { p0: String(p(dataDir)), p1: String(dataDirVerdict.reason) }),
+    message: calorieDbDirMessage(dataDir, dataDirVerdict),
     action: !dataDirVerdict.exists
       ? m('skill-calorie.health.c033')
       : dataDirVerdict.writable ? '' : m('skill-calorie.health.c034'),
@@ -466,13 +465,7 @@ export function buildCalorieHealthReport(): CalorieHealthReport {
   items.push({
     id: 'photos.dir', title: m('skill-calorie.health.c054'),
     status: photosBlocked ? 'red' : 'green',
-    message: !photosVerdict.exists
-      ? (photosVerdict.reason !== ''
-        ? m('skill-calorie.health.c055', { p0: String(p(photosDir)), p1: String(photosVerdict.reason) })
-        : m('skill-calorie.health.c056', { p0: String(p(photosDir)) }))
-      : photosVerdict.writable
-        ? m('skill-calorie.health.c057', { p0: String(p(photosDir)) })
-        : m('skill-calorie.health.c058', { p0: String(p(photosDir)), p1: String(photosVerdict.reason) }),
+    message: caloriePhotosDirMessage(photosDir, photosVerdict),
     action: photosBlocked
       ? m('skill-calorie.health.c059')
       : '',

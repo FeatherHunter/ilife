@@ -9725,7 +9725,7 @@
           "byClass": {
             "derived": 11
           },
-          "reason": "生成件：文件头「自动生成 · 勿手改」；sealStates() 的 label/progress/status 全 zh，须由生成器处置"
+          "reason": "生成件：文件头「自动生成 · 勿手改」；#1325 起中／英两列都由 seals.yaml 生成（sealStates(product, language)），无需人工迁移"
         },
         {
           "path": "packages/plugin-calorie/src/seal-states.generated.ts",
@@ -9733,7 +9733,7 @@
           "byClass": {
             "derived": 11
           },
-          "reason": "生成件：文件头「自动生成 · 勿手改」；sealStates() 的 label/progress/status 全 zh，须由生成器处置"
+          "reason": "生成件：文件头「自动生成 · 勿手改」；#1325 起中／英两列都由 seals.yaml 生成（sealStates(product, language)），无需人工迁移"
         },
         {
           "path": "packages/plugin-chef/src/seal-states.generated.ts",
@@ -9741,7 +9741,7 @@
           "byClass": {
             "derived": 11
           },
-          "reason": "生成件：文件头「自动生成 · 勿手改」；sealStates() 的 label/progress/status 全 zh，须由生成器处置"
+          "reason": "生成件：文件头「自动生成 · 勿手改」；#1325 起中／英两列都由 seals.yaml 生成（sealStates(product, language)），无需人工迁移"
         },
         {
           "path": "packages/plugin-home-ilife/src/seal-states.generated.ts",
@@ -9749,7 +9749,7 @@
           "byClass": {
             "derived": 11
           },
-          "reason": "生成件：文件头「自动生成 · 勿手改」；sealStates() 的 label/progress/status 全 zh，须由生成器处置"
+          "reason": "生成件：文件头「自动生成 · 勿手改」；#1325 起中／英两列都由 seals.yaml 生成（sealStates(product, language)），无需人工迁移"
         },
         {
           "path": "packages/plugin-manager/src/config-panel-contract.ts",
@@ -9798,7 +9798,7 @@
           "byClass": {
             "derived": 9
           },
-          "reason": "生成件：印章词汇表（关闭钮/SECTION 标题等）全 zh，改源重生成"
+          "reason": "生成件：印章词汇表由 seals.yaml 生成，按语言分列（#1325）"
         },
         {
           "path": "packages/plugin-memo-ilife/src/seal-states.generated.ts",
@@ -9806,7 +9806,7 @@
           "byClass": {
             "derived": 11
           },
-          "reason": "生成件：文件头「自动生成 · 勿手改」；sealStates() 的 label/progress/status 全 zh，须由生成器处置"
+          "reason": "生成件：文件头「自动生成 · 勿手改」；#1325 起中／英两列都由 seals.yaml 生成（sealStates(product, language)），无需人工迁移"
         },
         {
           "path": "packages/plugin-schedule-ilife/src/seal-states.generated.ts",
@@ -9814,7 +9814,7 @@
           "byClass": {
             "derived": 11
           },
-          "reason": "生成件：文件头「自动生成 · 勿手改」；sealStates() 的 label/progress/status 全 zh，须由生成器处置"
+          "reason": "生成件：文件头「自动生成 · 勿手改」；#1325 起中／英两列都由 seals.yaml 生成（sealStates(product, language)），无需人工迁移"
         }
       ]
     },
