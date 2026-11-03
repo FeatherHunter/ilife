@@ -104,6 +104,11 @@ export function isCallerLanguageArg(token: string): boolean {
   return token === CALLER_LANGUAGE_ARG;
 }
 
+/** 参数缺值的统一报错：两处 argv 解析共用一句文案（#1323 去重，台账 tooling/i18n-join-sites.json）。 */
+function languageValueMissing(token: string): ConfigError {
+  return new ConfigError('CONFIG_LANGUAGE_ARGV_MISSING', '参数「' + token + '」须带一个语言值（可用：' + AVAILABLE_LANGUAGES.join('、') + '）');
+}
+
 /** 从 argv 里摘宿主传的调用方偏好（只摘不判；缺值／值落在 `--` 开头即报错）。
  *
  *  与 `parseLanguageArgs` 分开：那件只摘两枚用户覆盖参数，返回形状被既有调用方
@@ -114,7 +119,7 @@ export function callerLanguageFromArgv(argv: readonly string[]): string | undefi
     if (argv[i] !== CALLER_LANGUAGE_ARG) continue;
     const value = argv[i + 1];
     if (value === undefined || value.startsWith('--')) {
-      throw new ConfigError('CONFIG_LANGUAGE_ARGV_MISSING', '参数「' + CALLER_LANGUAGE_ARG + '」须带一个语言值（可用：' + AVAILABLE_LANGUAGES.join('、') + '）');
+      throw languageValueMissing(CALLER_LANGUAGE_ARG);
     }
     caller = value;
     i++;
@@ -157,7 +162,7 @@ export function parseLanguageArgs(argv: readonly string[]): LanguageArgs {
     if (token === '--language' || token === '--format-language') {
       const value = argv[i + 1];
       if (value === undefined || value.startsWith('--')) {
-        throw new ConfigError('CONFIG_LANGUAGE_ARGV_MISSING', '参数「' + token + '」须带一个语言值（可用：' + AVAILABLE_LANGUAGES.join('、') + '）');
+        throw languageValueMissing(token);
       }
       if (token === '--language') language = value;
       else formatLanguage = value;
