@@ -120,3 +120,7 @@ export { createSkillCliBridge } from './skill-cli/bridge-factory.js';
 export { resolveNodeBin } from './skill-cli/node-bin.js';
 export { SPAWN_TIMEOUT_MS } from './skill-cli/contract.js';
 export type { SkillCliErrorCode } from './skill-cli/contract.js';
+// #1323：宿主语言来路（settings.locale.preference → 技能 CLI 的 --caller-language）。
+// 六家插件共用这一份读取／追加实现，不各抄一遍。
+export { CALLER_LANGUAGE_FLAG, LOCALE_PREFERENCE_FIELD, LOCALE_SETTINGS_NAMESPACE, callerLanguageReader, localePreferenceOf, withCallerLanguage } from './skill-cli/host-locale.js';
+export type { LocaleHostCtx } from './skill-cli/host-locale.js';

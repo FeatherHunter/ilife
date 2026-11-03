@@ -6,6 +6,7 @@
  */
 import { MAX_STDOUT_BYTES, SPAWN_TIMEOUT_MS, type HostCallFace, type SkillCliBridge, type SkillCliSpec } from './contract.js';
 import { createCliLocator } from './cli-locator.js';
+import { withCallerLanguage } from './host-locale.js';
 import { resolveNodeBin, runSkillCli, type CliRunFailure } from './node-bin.js';
 
 /** 回执信封里本件要用的两格。 */
@@ -47,7 +48,8 @@ export function createSkillCliBridge(spec: SkillCliSpec): SkillCliBridge {
     const { bin, extraEnv } = resolveNodeBin();
     let outcome;
     try {
-      outcome = await runSkillCli(bin, [cli, key, '--params', JSON.stringify(params)], { ...process.env, ...extraEnv }, spawnTimeoutMs);
+      const argv = withCallerLanguage([cli, key, '--params', JSON.stringify(params)], spec.callerLanguage?.());
+      outcome = await runSkillCli(bin, argv, { ...process.env, ...extraEnv }, spawnTimeoutMs);
     } catch (failure) {
       throw failureError(spec, failure as CliRunFailure, spawnTimeoutMs);
     }

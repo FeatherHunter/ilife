@@ -9,6 +9,8 @@
 //   · 配置文件 `language.text`／`language.format`，空串＝跟随调用方，最终回退 `zh`；
 //   · 命令行参数可覆盖（`--language`／`--format-language`，只认空格式，与各家既有解析同形）；
 //   · 未识别的值报错并列出可用语言；值是 BCP 47（大小写不敏感，取小写 canonical 形）；
+//   · 调用方偏好（宿主设置 locale.preference）由插件在 spawn 时以 `--caller-language <BCP47>`
+//     追加进 argv（#1323）：它低于配置文件、高于缺省，不是用户显式覆盖（那仍是 `--language`）；
 //   · 可用语言清单由词条目录生成（`tooling/gen-entry-catalogs.mjs`；加语言＝加词条文件＋`pnpm gen`）；
 // text 与 format 两条链互相独立：format 空串时跟随调用方、无调用方回退 `zh`，
 // 不跟随已解析的 text（ADR 原文“每键空串＝跟随调用方，缺省回退 zh”；format 跟随 text
@@ -38,7 +40,8 @@ export interface LanguageArgs {
 export interface ResolveLanguageOptions {
   /** 配置文件的值（`loadConfig` 回来的 `values`；缺 `language` 组＝两格都空串，老文件直接兼容）。 */
   readonly values?: unknown;
-  /** 调用方（宿主插件读设置 `locale.preference` 透传过来那一位；空串／缺席＝没有调用方偏好）。 */
+  /** 调用方（宿主插件读设置 `locale.preference` 透传过来那一位；空串／缺席＝没有调用方偏好）。
+   *  程序内直调时可显式给；命令行路径由 {@link CALLER_LANGUAGE_ARG} 从 argv 摘（#1323）。 */
   readonly caller?: string | undefined;
   /** 完整 argv（含命令本身；覆盖最优先）。 */
   readonly argv?: readonly string[] | undefined;
@@ -57,8 +60,8 @@ export interface ResolvedLanguage {
  *  故这里只收**表与主体名**，不收技能自己的类型。
  *
  *  空串＝跟随调用方（插件透传的设置值，见 docs/agents/多语言-宿主语言来路实测.md）；
- *  caller 本轮一律不传（正式接线归 #1198 的 CLI 收口那一步），故实际生效链＝
- *  `--language` ＞ `language.text` ＞ `zh`。 */
+ *  调用方链路已由 #1323 接通：插件把设置值作为 `--caller-language <BCP47>` 追加进 argv，
+ *  `resolveLanguage` 统一摘取，故实际生效链＝`--language` ＞ `language.text` ＞ caller ＞ `zh`。 */
 export interface SkillLanguageOptions {
   /** 技能配置文件主体名（configPaths 的那个 stem）。 */
   readonly stem: string;
@@ -84,6 +87,46 @@ export function resolveSkillLanguage(options: SkillLanguageOptions): ResolvedLan
  *  值是 BCP 47（大小写不敏感）；**这里只摘不判对错**——值合不合法由 `resolveLanguage` 一处判。 */
 export function isLanguageArg(token: string): boolean {
   return token === '--language' || token === '--format-language';
+}
+
+/** 宿主透传调用方偏好的参数名（#1323）：值是该设置里的 BCP 47 串。
+ *
+ *  为什么另起一个参数而不复用 `--language`：`--language` 是**用户显式覆盖**，优先级最高；
+ *  设置只是「用户没指定时跟随」，按 #1198 的链它必须低于配置文件（argv ＞ 配置 ＞ caller ＞ zh）。
+ *  两个优先级不能共用一个 argv 形状，故宿主传这一枚，命令行解析件照 `--language` 同形只摘不判。
+ *
+ *  六家插件侧的镜像常量在 `dsh-life-pack` 根入口的 `CALLER_LANGUAGE_FLAG`（值同字面，
+ *  单仓不许跨包 import 私家实现，对齐由 `test/i18n-language-1323.test.mjs` 锁死）。 */
+export const CALLER_LANGUAGE_ARG = '--caller-language';
+
+/** 出口参数解析件要跳过的宿主参数：只认名字，值由 {@link callerLanguageFromArgv} 统一摘。 */
+export function isCallerLanguageArg(token: string): boolean {
+  return token === CALLER_LANGUAGE_ARG;
+}
+
+/** 从 argv 里摘宿主传的调用方偏好（只摘不判；缺值／值落在 `--` 开头即报错）。
+ *
+ *  与 `parseLanguageArgs` 分开：那件只摘两枚用户覆盖参数，返回形状被既有调用方
+ *  （含默认值表的 `deepEqual` 断言）冻结；这件只在 `resolveLanguage` 内部用。 */
+export function callerLanguageFromArgv(argv: readonly string[]): string | undefined {
+  let caller: string | undefined;
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i] !== CALLER_LANGUAGE_ARG) continue;
+    const value = argv[i + 1];
+    if (value === undefined || value.startsWith('--')) {
+      throw new ConfigError('CONFIG_LANGUAGE_ARGV_MISSING', '参数「' + CALLER_LANGUAGE_ARG + '」须带一个语言值（可用：' + AVAILABLE_LANGUAGES.join('、') + '）');
+    }
+    caller = value;
+    i++;
+  }
+  return caller;
+}
+
+/** 本次判定的调用方偏好：程序内显式传的优先；否则从 argv 摘（命令行路径）。 */
+function callerOf(options: ResolveLanguageOptions): string {
+  if (typeof options.caller === 'string' && options.caller.trim() !== '') return options.caller;
+  if (options.argv === undefined) return '';
+  return callerLanguageFromArgv(options.argv) ?? '';
 }
 
 /** BCP 47 大小写不敏感：两端去空白后取小写 canonical 形（`EN` → `en`）。 */
@@ -154,8 +197,9 @@ function resolveOne(raw: string, caller: string, where: string): LanguageTag {
 export function resolveLanguage(options: ResolveLanguageOptions = {}): ResolvedLanguage {
   const group = groupOf(options.values);
   const args = options.argv === undefined ? { language: undefined, formatLanguage: undefined } : parseLanguageArgs(options.argv);
-  const caller = typeof options.caller === 'string' ? canonical(options.caller) : '';
-  if (caller !== '' && !isAvailable(caller)) throw unknownLanguageError('调用方偏好', options.caller);
+  const callerRaw = callerOf(options);
+  const caller = canonical(callerRaw);
+  if (caller !== '' && !isAvailable(caller)) throw unknownLanguageError('调用方偏好', callerRaw);
   const textRaw = args.language !== undefined ? args.language : group.text;
   const formatRaw = args.formatLanguage !== undefined ? args.formatLanguage : group.format;
   return {
