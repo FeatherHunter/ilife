@@ -11,6 +11,14 @@
     {
       "zh": "录物品",
       "en": "add item"
+    },
+    {
+      "zh": "查快递",
+      "en": "track delivery"
+    },
+    {
+      "zh": "盘物品",
+      "en": "start inventory"
     }
   ]
 }

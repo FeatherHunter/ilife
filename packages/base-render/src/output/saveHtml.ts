@@ -21,9 +21,11 @@
  *
  * ## 名字怎么给：`stem` 与 `file` 是**两个正交的口子**
  *
- *  - `stem`：**文件名主体，不含扩展名**——「按通式落一份」的调用者只给主体；
- *  - `file`：**确切文件名，含扩展名**——「用户逐字指定的落点」的调用者给这个（`--output`／`--html` 那一路）；
- *    给了 `file` 就不给 `stem`（同时给即 `EINVAL`：说不清要落哪个）。扩展名由调用者给时本件不再补。
+ *  - `stem`：**文件名主体，不含扩展名**——「按通式落一份」的调用者只给主体；落盘前按**渲染语言**加后缀：
+ *    基准语言（`zh`／未进入语言上下文）原样，其它语言 `<stem>_<主标签>`（英文 `_en`，见 `artifactLanguage.ts`）；
+ *  - `file`：**确切文件名，含扩展名**——「用户逐字指定的落点」的调用者给这个（`--output`／`--html` 那一路），
+ *    **不加工语言后缀**（逐字就是逐字）；给了 `file` 就不给 `stem`（同时给即 `EINVAL`：说不清要落哪个）。
+ *    扩展名由调用者给时本件不再补。
  *  - **`onExists` 只表态「撞名怎么办」，不改名字怎么解释**——两件事各走各的口子，一个参数不背两个语义。
  *
  * `onExists` 四态：
@@ -59,6 +61,7 @@
 import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
+import { artifactStemForLanguage } from './artifactLanguage.js';
 
 /** 撞名策略（四态；只表态「撞名怎么办」，**不改** `stem`／`file` 怎么解释。四支 `reuse` 见件头）。
  *
@@ -223,7 +226,7 @@ function resolveName(input: { stem?: string; file?: string }, withStamp: boolean
   if (input.stem === undefined) {
     throw err('EINVAL', '[base-paint] saveHtmlFile 缺落点名（`stem` 或 `file` 至少给一个）。');
   }
-  const stem = sanitizeStem(input.stem);
+  const stem = artifactStemForLanguage(sanitizeStem(input.stem));
   return { name: withStamp ? stem + '_' + formatStamp(now) + HTML_EXT : stem + HTML_EXT, stem };
 }
 
