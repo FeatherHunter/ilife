@@ -10,9 +10,9 @@
     },
     {
       "path": "tooling/calorie-html.snapshot.json",
-      "commit": "b7966d40f21ece803bc5765172abfe0361bbe02f",
-      "blob": "f044b24d463f12797ad7880ae163676929f2ae9d",
-      "sha256": "3e18b00d43761c412cf1ada210357ecdedf75c9971a1c9eb82f8a5fad9053bc2",
+      "commit": "142d1d8e3940cf46b63b3d84417f2b81fa712565",
+      "blob": "77903a741a124f64c75ae6f43813a590b6a3f48c",
+      "sha256": "384600426ad7d5e55b03c0a8b63a3703a59af2c1f344fe918b315fcdc363ca9e",
       "bytes": 915
     },
     {
