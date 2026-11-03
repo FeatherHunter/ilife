@@ -2487,6 +2487,9 @@ export const en = {
   'base-render.components-window-picker-render.c002': "to",
   /* ── packages/base-render/src/components/wizard-shell/render.ts（#1227 迁入） ── */
   'base-render.components-wizard-shell-render.c001': "Question {p0} / {p1}",
+  /* ── packages/base-render/src/components/controls/copy-labels.ts（#1331 迁入） ── */
+  'base-render.components-controls-copy-labels.c001': "Copy data",
+  'base-render.components-controls-copy-labels.c002': "Copy log",
   'help-shell.text.capability-title': 'Capability reference',
   'help-shell.meta.generated-at': 'This page was generated at ',
   'help-shell.meta.snapshot-at': 'Snapshot at ',

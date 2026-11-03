@@ -36,38 +36,38 @@
       "note": "英文列版本（#1324 录入：与中文列逐字不同＝确实取到英文词条）"
     },
     "memo/tpl/change_category": {
-      "sha256": "beb49fe869b9369646d54e94b89b31f0",
-      "bytes": 140044,
+      "sha256": "45bf4f464d571ba58e6e73e6cf305f02",
+      "bytes": 140037,
       "note": "英文列版本（#1324 录入：与中文列逐字不同＝确实取到英文词条）"
     },
     "memo/tpl/init_report": {
-      "sha256": "21cef8f817dc32c172dbd3d8b0a1895a",
-      "bytes": 136892,
+      "sha256": "34dd91a094d2ba35dd20172bdd184240",
+      "bytes": 136885,
       "note": "英文列版本（#1324 录入：与中文列逐字不同＝确实取到英文词条）"
     },
     "memo/tpl/memo_query": {
-      "sha256": "caeb9722bbf4f5b667bcac7d3be5c471",
-      "bytes": 142280,
+      "sha256": "4abbef73316b6e558c94865c1870e0ed",
+      "bytes": 142273,
       "note": "英文列版本（#1324 录入：与中文列逐字不同＝确实取到英文词条）"
     },
     "memo/tpl/receipt": {
-      "sha256": "fe579e1e873461d0fabf5ac0d4dc8751",
-      "bytes": 137110,
+      "sha256": "b17e0e8a9f52408e14352f8ce8c3fa4f",
+      "bytes": 137103,
       "note": "英文列版本（#1324 录入：与中文列逐字不同＝确实取到英文词条）"
     },
     "memo/tpl/sync_report": {
-      "sha256": "8af3ae08db4a64e577339343191922db",
-      "bytes": 146616,
+      "sha256": "dad64a0ca9ccf99b93296855a7f620a9",
+      "bytes": 146609,
       "note": "英文列版本（#1324 录入：与中文列逐字不同＝确实取到英文词条）"
     },
     "memo/tpl/wish_complete": {
-      "sha256": "15f3f13fd1c07b9e3b21967d84d99df8",
-      "bytes": 138539,
+      "sha256": "ce127dbc80b45f5f812dd349a56d3402",
+      "bytes": 138532,
       "note": "英文列版本（#1324 录入：与中文列逐字不同＝确实取到英文词条）"
     },
     "memo/tpl/wish_plan": {
-      "sha256": "9353a329d5e42b27fc163676da0f4320",
-      "bytes": 138792,
+      "sha256": "b3848ef816b5a013e66da8d62505bb1a",
+      "bytes": 138785,
       "note": "英文列版本（#1324 录入：与中文列逐字不同＝确实取到英文词条）"
     },
     "schedule/shape/list-empty": {

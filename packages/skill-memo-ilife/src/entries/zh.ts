@@ -634,5 +634,8 @@ export const zh = {
   'skill-memo-ilife.remind-run.c046': "提醒已设置{p0}：{p1}",
   'skill-memo-ilife.remind-run.c047': "有效",
   'skill-memo-ilife.remind-run.c048': "已废弃",
+  /* ── packages/skill-memo-ilife/src/render/memoPageAssets.ts（#1331 迁入） ── */
+  'skill-memo-ilife.render-memo-page-assets.c001': "复制数据",
+  'skill-memo-ilife.render-memo-page-assets.c002': "复制日志",
 } as const satisfies MessageTable;
 

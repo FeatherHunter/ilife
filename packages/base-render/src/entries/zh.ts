@@ -2495,6 +2495,9 @@ export const zh = {
   'base-render.components-window-picker-render.c002': "止",
   /* ── packages/base-render/src/components/wizard-shell/render.ts（#1227 迁入） ── */
   'base-render.components-wizard-shell-render.c001': "第 {p0} / {p1} 问",
+  /* ── packages/base-render/src/components/controls/copy-labels.ts（#1331 迁入） ── */
+  'base-render.components-controls-copy-labels.c001': "复制数据",
+  'base-render.components-controls-copy-labels.c002': "复制日志",
   'help-shell.text.capability-title': '能力速查台',
   'help-shell.meta.generated-at': '本页数据生成于 ',
   'help-shell.meta.snapshot-at': '快照于 ',
