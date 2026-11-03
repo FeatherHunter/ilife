@@ -3,16 +3,19 @@
  * #96 · 其余 5 技能 HTML 不回归门（base-* 变更影响面）。
  *
  * 背景：`base-paint`（目录 `packages/base-render`）是共享层地基，#74–#78 已改注入器／样式／
- * 控件／图表／HELP 壳。**本票冻结的 5 个技能（bill／chef／home／schedule／memo-ilife）当前
- * 只依赖 `base-link-core`，与 base-* 无任何运行时耦合**；本门把这条「零影响」变成可机械判定的
- * 两件事：
+ * 控件／图表／HELP 壳。本门把「base-* 变更对 5 个技能（bill／chef／home／schedule／memo-ilife）
+ * 的 HTML 影响」变成可机械判定的两件事（2026-11 #1324 复核：#1197 已把 home／memo 的页面
+ * **有意**迁到共享 base-paint，这 31 件产物在 MARKER_ALLOW 逐件登记；bill／chef／schedule
+ * 仍要求零标记——新增命名空间标记照旧红，见下文 ②）：
  *
  *   ① **行为冻结**：把 5 技能渲染层的**全部 HTML 产物**（16/8/21/8/10 个 key 的 section 片段、
  *      6 形状片段、59 个模板填充页、共享 CSS／helpers 文本、escape 探针）取归一化 sha256 入快照。
  *      base-* 变更后重算必须**逐件相同**；任何一件不同即红，并打印首个差异行。
  *   ② **影响面断言**：任一产物文本**不得**出现 base-paint 命名空间标记（`ilife-`／`ilife-base`
- *      ／`data-ilife`）——出现即说明 base-* 的样式／控件／图表资产已经渗进这 5 个技能，
- *      本门必须先被显式修改（＝一次受审查的迁移），而不是静默变绿。
+ *      ／`data-ilife`）；出现即说明 base-* 的样式／控件／图表资产渗进了某个技能页面，本门必须
+ *      先被显式修改（＝一次受审查的迁移），而不是静默变绿。#1197 把 home（`base-paint/blocks`
+ *      的复制区与 `blocksCss`）与 memo（`pageUiCss`／`buildStyleSheet`）迁到共享层后，
+ *      那 31 件是唯一允许带标记的产物（MARKER_ALLOW 逐件登记，其余一律红）。
  *
  * 比较口径：**逐件 sha256**（文本归一化：去 BOM ＋ CRLF→LF，跨 3 个 CI OS 同值）。
  * `text` 字段只作人工定位差异的辅助；若它与自身 sha256 不自洽（手改快照）即红。
@@ -23,6 +26,7 @@
  *
  * 用法：
  *   node tooling/skill-html-snapshot.mjs --write        # 重建快照（**先校验后落盘**：影响面标记命中即 exit 1 且一个字节都不写）
+ *   node tooling/skill-html-snapshot.mjs --write-en     # 重建英文列账本（只记英文列偏离中文列的产物）
  *   node tooling/skill-html-snapshot.mjs --check        # 校验（默认动作，差异即 exit 1）
  *   node tooling/skill-html-snapshot.mjs --show <id>    # 打印单件「快照 vs 实际」全文
  *   node tooling/skill-html-snapshot.mjs --list         # 列出全部产物 id ＋ 出处
@@ -68,8 +72,27 @@ export const SKILLS = [
 /** base-paint 命名空间标记：出现即说明 base-* 资产渗入（影响面断言）。 */
 export const BASE_PAINT_MARKERS = ['ilife-base', 'data-ilife', 'ilife-'];
 
-/** 影响面断言白名单（**必须为空**）：id → 允许出现的标记。留空是刻意的，见文件头 ②。 */
-export const MARKER_ALLOW = {};
+/** 影响面断言白名单：id → 允许出现的标记。**只登记已审查过的迁移**，见文件头 ②。
+ *  2026-11（#1324）复核：#1197 把 home／memo 页面有意迁到 base-paint，实测这 31 件产物带标记
+ *  （home 23 件、memo 8 件，命中 89 次）；逐件登记而不是按技能前缀放行，新增件／新增标记照旧红。
+ *  bill／chef／schedule 三技能的产物仍是零标记。 */
+const ALL_MARKERS = ['ilife-base', 'data-ilife', 'ilife-'];
+const HOME_MIGRATED_TEMPLATES = [
+  'care_query', 'care_receipt', 'help', 'inventory_records', 'inventory_round', 'item_detail',
+  'item_receipt', 'item_search', 'item_update_receipt', 'location_query', 'location_receipt',
+  'outfit_pick', 'shopping_query', 'shopping_receipt', 'stats_alert', 'stats_overview',
+  'tag_query', 'tag_receipt', 'ticket_query', 'ticket_receipt', 'trip_receipt',
+];
+const MEMO_MIGRATED_TEMPLATES = [
+  'change_category', 'init_report', 'memo_query', 'receipt', 'sync_report', 'wish_complete', 'wish_plan',
+];
+export const MARKER_ALLOW = {
+  'home/shared-css': ['ilife-base', 'ilife-'],
+  'home/shared-helpers': ['data-ilife', 'ilife-'],
+  ...Object.fromEntries(HOME_MIGRATED_TEMPLATES.map((t) => ['home/tpl/' + t, ALL_MARKERS])),
+  'memo/shape/list-empty': ['ilife-'],
+  ...Object.fromEntries(MEMO_MIGRATED_TEMPLATES.map((t) => ['memo/tpl/' + t, ALL_MARKERS])),
+};
 
 const TEXT_KEEP_MAX = 2048;
 
@@ -260,6 +283,66 @@ export async function collectArtifacts() {
   return new Map([...out.entries()].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)));
 }
 
+/** 以指定语言上下文采集产物（#1324）：中文列＝现状（不进上下文）；其它语言用 base-entries 的
+ *  runWithLanguage 包住**同一个采集器**——语言只影响 m() 取词，采集面与夹具完全一致，
+ *  因此两列的 id 集合必然相同，差异只可能来自「有没有英文词条」。 */
+export async function collectArtifactsLang(lang = DEFAULT_LANGUAGE) {
+  const L = normalizeLang(lang);
+  if (L === DEFAULT_LANGUAGE) return collectArtifacts();
+  const p = join(root, 'packages/base-entries/dist/index.js');
+  if (!existsSync(p)) throw new Error('dist 缺失：packages/base-entries/dist/index.js —— 请先 pnpm build');
+  const { runWithLanguage } = await import(pathToFileURL(p).href);
+  return runWithLanguage(L, () => collectArtifacts());
+}
+
+/** 英文列账本（records 形）的构造器（--write-en／自证共用）：只把**英文列 sha ≠ 中文列 sha**
+ *  的件写进 records；同哈希件＝英文列与中文列逐字相同，按账本语义不入 records（中文列就是它的基线）。 */
+export function buildEnColumn(enArtifacts, zhArtifacts) {
+  const records = {};
+  for (const [id, cur] of enArtifacts) {
+    const zh = zhArtifacts.get(id);
+    if (!zh) throw new Error('英文列采集到中文列没有的产物：' + id);
+    const sha = sha256(cur.text);
+    if (sha === sha256(zh.text)) continue;
+    records[id] = {
+      sha256: sha,
+      bytes: byteLen(cur.text),
+      note: '英文列版本（#1324 录入：与中文列逐字不同＝确实取到英文词条）',
+    };
+  }
+  return {
+    generatedBy: 'tooling/skill-html-snapshot.mjs',
+    ticket: '#1324',
+    purpose: '5 技能 HTML 产物账本的**英文列**记录：键＝英文列偏离中文列的那些产物；未偏离的不进本账本（中文列本身就是它的基线）',
+    lang: 'en',
+    basedOn: SNAP_BASE,
+    hashAlgo: 'sha256(归一化文本) 前 32 hex；归一化＝去 BOM ＋ CRLF→LF（与中文列同一口径）',
+    notations: [
+      '记录形：{ "<产物 id>": { "sha256": "<32hex>", "bytes": <n>, "note": "<为什么偏离中文列>" } }',
+      '键集必须是中文列 artifacts 的子集（英文列不许凭空多产物）',
+      '记录的 sha256 必须 ≠ 中文列同件（相等＝没记，空转绿）',
+      '本账本只记**偏离中文列**的产物；与中文列逐字节相同的件不进这里（中文列 194 件的绝大多数如此）',
+      'readonlyUntilMigrated: false＝英文列已录入；--check 按英文列**当刻实际**判漏记／错记',
+    ],
+    readonlyUntilMigrated: false,
+    artifactCount: Object.keys(records).length,
+    records,
+  };
+}
+
+/** 写英文列账本：同目录临时文件再 rename（与中文列 --write 的原子写法同形）。 */
+export function writeEnColumn(snap, { snapPath = snapPathOf('en') } = {}) {
+  const tmp = `${snapPath}.tmp-${process.pid}`;
+  try {
+    writeFileSync(tmp, JSON.stringify(snap, null, 2) + '\n', 'utf8');
+    renameSync(tmp, snapPath);
+  } catch (e) {
+    if (existsSync(tmp)) unlinkSync(tmp);
+    throw e;
+  }
+  return snapPath;
+}
+
 // ---------------------------------------------------------------- 语言列账本
 
 /** 语言列账本的**前半**（除 artifacts 之外的元信息）：两种语言同形，故共用。 */
@@ -298,21 +381,31 @@ export function loadLangColumn(lang, { snapPath = undefined, basePath = SNAP_PAT
   return { lang: L, kind: 'records', meta: snapMeta(snap), artifacts: baseArtifacts, records };
 }
 
-/** 英文列记录 vs **英文列当刻实际**：只有拿到英文列对照读数（--en-artifacts）才判漏记。
- *  没给对照读数＝**待对照**，既不当绿也不当红——这是「0 件＝待录入」的显式形态：
- *  英文页还没生成，就没有「英文页通过了」这句话可说。 */
+/** 英文列记录 vs **英文列当刻实际**：给了对照读数就逐件判（漏记／错记／多余），
+ *  没给＝**待对照**（pending），既不当绿也不当红——英文页还没采集到，就没有「英文页通过了」
+ *  这句话可说。对照读数两种形状都收：采集器给的 {text}，或外部读数的 {sha256}。 */
 export function englishGaps(col, enArtifacts) {
   const recorded = col.kind === 'records' ? Object.keys(col.records).length : 0;
-  if (!enArtifacts) return { recorded, pending: true, unrecorded: [], extra: [] };
+  if (!enArtifacts) return { recorded, pending: true, unrecorded: [], extra: [], mismatched: [], missing: [] };
   const unrecorded = [];
   const extra = [];
-  for (const [id, cur] of enArtifacts) {
+  const mismatched = [];
+  const list = enArtifacts instanceof Map ? [...enArtifacts.entries()] : Object.entries(enArtifacts);
+  for (const [id, cur] of list) {
     const zh = col.artifacts[id];
     if (!zh) { extra.push(id); continue; }
-    const curSha = sha256(cur.text);
-    if (curSha !== zh.sha256 && col.records[id] === undefined) unrecorded.push(id);
+    const curSha = typeof cur?.sha256 === 'string' ? cur.sha256 : sha256(cur.text);
+    const rec = col.records[id];
+    if (curSha !== zh.sha256) {
+      if (rec === undefined) unrecorded.push(id);
+      else if (rec.sha256 !== curSha) mismatched.push(id + ' 记录 ' + rec.sha256 + ' 实际 ' + curSha);
+    } else if (rec !== undefined) {
+      mismatched.push(id + ' 记录 ' + rec.sha256 + ' 实际与中文列同哈希（记录应删除：同哈希不入 records）');
+    }
   }
-  return { recorded, pending: false, unrecorded, extra };
+  const has = (id) => (enArtifacts instanceof Map ? enArtifacts.has(id) : enArtifacts[id] !== undefined);
+  const missing = Object.keys(col.records).filter((id) => !has(id));
+  return { recorded, pending: false, unrecorded, extra, mismatched, missing };
 }
 
 // ---------------------------------------------------------------- 快照读写
@@ -475,8 +568,7 @@ if (isEntry) {
   const has = (f) => argv.includes(f);
   const valOf = (f) => { const i = argv.indexOf(f); return i >= 0 ? argv[i + 1] : undefined; };
   const fullDiff = has('--full-diff');
-  const lang = resolveLang(argv);
-  // --en-artifacts：英文列对照读数入口（迁移票生成英文产物后从这里喂进来，本门才判「英文列漏记」）。
+  // --en-artifacts：英文列对照读数入口（外部生成的英文产物 sha 从这里喂进来；不给就自己采集英文上下文）。
   const enArtifactsFile = valOf('--en-artifacts');
   if (has('--selftest')) {
     const bad = [];
@@ -494,7 +586,26 @@ if (isEntry) {
     want(enCol.meta.basedOn === SNAP_BASE, '英文列必须声明 basedOn=' + SNAP_BASE);
     const gaps0 = englishGaps(enCol, null);
     want(gaps0.pending === true, '没给英文列对照读数时必须报 pending（0 件＝待录入），不许当绿');
+    // ③′ 英文列真实采集：与中文列同一 id 集合；偏离件正好由 buildEnColumn 记进 records
+    const zhArts = await collectArtifacts();
+    const enArts = await collectArtifactsLang('en');
+    want(enArts.size === zhArts.size, '英文列与中文列产物数必须相同：' + enArts.size + ' vs ' + zhArts.size);
+    const built = buildEnColumn(enArts, zhArts);
+    const gapsEn = englishGaps({ ...enCol, records: built.records }, enArts);
+    want(gapsEn.unrecorded.length === 0 && gapsEn.mismatched.length === 0,
+      '英文列对实际采集的漏记／错记必须为 0：' + JSON.stringify({ unrecorded: gapsEn.unrecorded, mismatched: gapsEn.mismatched }));
+    want(built.artifactCount > 0, '英文列偏离中文列的件数必须 > 0（0＝英文词条没生效，门失明）：' + built.artifactCount);
+    // ③″ 变异：删一条记录 → 漏记必红；改一条 sha → 错记必红（还原即下面 gapsEn 的 0 读数）
+    const enFirst = Object.keys(built.records)[0];
+    const dropped = { ...built.records };
+    delete dropped[enFirst];
+    const gapsDropped = englishGaps({ ...enCol, records: dropped }, enArts);
+    want(gapsDropped.unrecorded.includes(enFirst), '删掉英文列一条记录必须报漏记：' + enFirst);
+    const wrongRec = { ...built.records, [enFirst]: { ...built.records[enFirst], sha256: 'deadbeefdeadbeefdeadbeefdeadbeef' } };
+    const gapsWrong = englishGaps({ ...enCol, records: wrongRec }, enArts);
+    want(gapsWrong.mismatched.length === 1, '改坏英文列记录必须报错记：' + JSON.stringify(gapsWrong.mismatched));
     console.log('SELFTEST 读数：形状闭集 ' + JSON.stringify(closure) + '；英文列 recorded=' + gaps0.recorded + ' pending=' + gaps0.pending);
+    console.log('SELFTEST 英文列读数：' + JSON.stringify({ artifacts: enArts.size, recorded: built.artifactCount, unrecorded: gapsEn.unrecorded.length, dropped: gapsDropped.unrecorded.length, mismatch: gapsWrong.mismatched.length }));
     // ④ 变异：往英文列记录里塞一条与中文列同哈希的假记录 → 必须抛（同件同哈希＝没记＝空转绿）
     const zhNow = readSnapshot(SNAP_PATH);
     const anyId = Object.keys(zhNow.artifacts)[0];
@@ -517,7 +628,7 @@ if (isEntry) {
     want(!cBase.staleText.length, '账本自洽性：text 与 sha256 必须一致');
     console.log('SELFTEST 变异读数：同哈希假记录 threw=' + threwSame + '；改账本值 changed=' + cMut.changed.length + '（含 ' + anyId + '=' + cMut.changed.includes(anyId) + '）');
     if (bad.length) { for (const b of bad) console.error('SELFTEST FAIL ' + b); process.exit(1); }
-    console.log('SELFTEST: 形状闭集／语言列路径／英文列记录通道／改坏必红 四条自证 OK');
+    console.log('SELFTEST: 形状闭集／语言列路径／英文列记录通道／英文列真实采集与变异／改坏必红 六条自证 OK');
     console.log('SELFTEST: 还原必绿 = 下面这次 --check 的读数');
     process.exit(0);
   }
@@ -548,23 +659,46 @@ if (isEntry) {
       process.exit(0);
     }
 
-    // 中文列：与改造前完全同一个账本、同一套比较（默认动作＝中文列）。
-    const snap = readSnapshot(zhPath);
-    // 英文列：另起一份账本（records 形）。空列＝0 件待录入，显式报，不当绿。
-    const enCol = loadLangColumn('en', { snapPath: enPath, basePath: zhPath });
-    const enCount = enCol.kind === 'records' ? Object.keys(enCol.records).length : 0;
-    const gaps = englishGaps(enCol, null);
-    console.log('COLUMN zh  artifacts=' + artifacts.size + ' ledger=' + snapPathOf(DEFAULT_LANGUAGE).slice(root.length + 1));
-    console.log('COLUMN en  recorded=' + enCount + ' ledger=' + enPath.slice(root.length + 1)
-      + (enCount === 0 ? '（0 件＝待录入：英文列骨架已立，迁移票按批次录入；空列不许当绿，故此处显式报数）' : '')
-      + ' 未录入=' + gaps.unrecorded.length);
-    const roster = shapeRoster();
-    console.log('SHAPES render=' + roster.render.join(',') + ' nonRender=' + roster.nonRender.join(',') + '（非渲染面不取片段，只在渲染入口上判「必须拒」）');
-    if (lang === 'en' && enCount === 0) {
-      console.log('PENDING: 英文列 0 件（骨架已立、无记录可比）：这不是「英文页通过」，是「还没有英文页」。');
-      console.log('RESULT: lang=en recorded=0 pending=1 zhArtifacts=' + artifacts.size);
+    if (has('--write-en')) {
+      // 英文列重录（#1324）：采集英文上下文产物 → 只记偏离中文列的件 → 原子写盘。
+      const enArts = await collectArtifactsLang('en');
+      if (enArts.size !== artifacts.size) {
+        console.error('FAIL: 英文列与中文列产物数不同（' + enArts.size + ' vs ' + artifacts.size + '）——两列必须同集合');
+        process.exit(1);
+      }
+      const snapEn = buildEnColumn(enArts, artifacts);
+      const zhCol = Object.fromEntries([...artifacts].map(([id, a]) => [id, { sha256: sha256(a.text) }]));
+      const gaps = englishGaps({ kind: 'records', artifacts: zhCol, records: snapEn.records }, enArts);
+      if (gaps.unrecorded.length || gaps.mismatched.length) {
+        console.error('FAIL: 英文列自校失败 unrecorded=' + gaps.unrecorded.length + ' mismatched=' + gaps.mismatched.length);
+        process.exit(1);
+      }
+      const p = writeEnColumn(snapEn);
+      console.log('wrote ' + p.slice(root.length + 1) + ' records=' + snapEn.artifactCount
+        + '（同哈希不入账 ' + (artifacts.size - snapEn.artifactCount) + ' 件＝英文列与中文列逐字相同）');
       process.exit(0);
     }
+
+    // 中文列：与改造前完全同一个账本、同一套比较（默认动作＝中文列）。
+    const snap = readSnapshot(zhPath);
+    // 英文列：另起一份账本（records 形）；对照读数默认按英文上下文现采（同一采集器，见 collectArtifactsLang）。
+    const enCol = loadLangColumn('en', { snapPath: enPath, basePath: zhPath });
+    const enCount = enCol.kind === 'records' ? Object.keys(enCol.records).length : 0;
+    const enArtifacts = enArtifactsFile
+      ? new Map(Object.entries(JSON.parse(readFileSync(enArtifactsFile, 'utf8'))))
+      : await collectArtifactsLang('en');
+    const gaps = englishGaps(enCol, enArtifacts);
+    const sameAsZh = [...enArtifacts.keys()].filter((id) => {
+      const cur = enArtifacts.get(id);
+      const zhSha = snap.artifacts?.[id]?.sha256;
+      return zhSha !== undefined && (typeof cur?.sha256 === 'string' ? cur.sha256 : sha256(cur.text)) === zhSha;
+    }).length;
+    console.log('COLUMN zh  artifacts=' + artifacts.size + ' ledger=' + snapPathOf(DEFAULT_LANGUAGE).slice(root.length + 1));
+    console.log('COLUMN en  recorded=' + enCount + ' ledger=' + enPath.slice(root.length + 1)
+      + ' unrecorded=' + gaps.unrecorded.length + ' sameAsZh=' + sameAsZh
+      + '（同哈希件＝英文列与中文列逐字相同，按账本语义不入 records）');
+    const roster = shapeRoster();
+    console.log('SHAPES render=' + roster.render.join(',') + ' nonRender=' + roster.nonRender.join(',') + '（非渲染面不取片段，只在渲染入口上判「必须拒」）');
 
     if (showId) {
       const prev = snap.artifacts?.[showId];
@@ -581,25 +715,26 @@ if (isEntry) {
     const warn = staleness();
     for (const w of warn) console.error(`WARN: dist 可能陈旧 → ${w}`);
 
-    // 英文列：只有**已录入**的产物上判「实际 == 记录」，没录入的走上面那条「未录入」读数。
-    const enBad = [];
-    for (const [id, rec] of Object.entries(enCol.records || {})) {
-      const cur = artifacts.get(id);
-      if (!cur) { enBad.push(id + '（产物已消失，中文列会先报 removed）'); continue; }
-      const curSha = sha256(cur.text);
-      if (curSha !== rec.sha256) enBad.push(id + ' 记录 ' + rec.sha256 + ' 实际 ' + curSha);
+    // 英文列：records 与**英文列当刻实际**逐条比（records 是偏离中文列的记录，不能拿中文列产物比）。
+    if (gaps.mismatched.length) {
+      console.error('FAIL: 英文列记录与英文列实际不符 ' + gaps.mismatched.length + ' 件（英文列是**偏离中文列**的记录，不是中文列的复制）');
+      for (const x of gaps.mismatched.slice(0, 40)) console.error('  ! ' + x);
+      console.error('  处置：英文列产物确有变更 → 跑 --write-en 重录；不该变 → 修回。');
+      console.error('RESULT: lang=en recorded=' + enCount + ' mismatch=' + gaps.mismatched.length);
+      process.exit(1);
     }
-    if (enBad.length) {
-      console.error('FAIL: 英文列记录与实际不符 ' + enBad.length + ' 件（英文列是**偏离中文列**的记录，不是中文列的复制）');
-      for (const x of enBad.slice(0, 40)) console.error('  ! ' + x);
-      console.error('  处置：英文列产物确有变更 → 显式重录英文列账本；不该变 → 修回。');
-      console.error('RESULT: lang=en recorded=' + enCount + ' mismatch=' + enBad.length);
+    if (gaps.missing.length) {
+      console.error('FAIL: 英文列记录点名了英文列里不存在的产物 ' + gaps.missing.length + ' 件：' + gaps.missing.slice(0, 20).join('、'));
+      process.exit(1);
+    }
+    if (gaps.extra.length) {
+      console.error('FAIL: 英文列采集到中文列没有的产物 ' + gaps.extra.length + ' 件：' + gaps.extra.slice(0, 20).join('、'));
       process.exit(1);
     }
     if (gaps.unrecorded.length) {
       console.error('FAIL: 英文列有 ' + gaps.unrecorded.length + ' 件产物偏离中文列却没录入英文列账本（漏记＝假绿）');
       for (const id of gaps.unrecorded.slice(0, 40)) console.error('  ! ' + id);
-      console.error('  处置：这些产物的英文列版本必须显式录入 ' + enPath.slice(root.length + 1) + ' 的 records。');
+      console.error('  处置：这些产物的英文列版本必须显式录入 ' + enPath.slice(root.length + 1) + ' 的 records（--write-en）。');
       console.error('RESULT: lang=en recorded=' + enCount + ' unrecorded=' + gaps.unrecorded.length);
       process.exit(1);
     }
@@ -634,7 +769,7 @@ if (isEntry) {
       process.exit(1);
     }
     console.log(`OK: 5 技能 HTML 快照 == 实际（${artifacts.size} 件产物，中文列账本 ${SNAP_BASE}，base-* 指纹 ${fp.sha256}，base-* 文件 ${fp.files} 件）`);
-    console.log(`COLUMN en  recorded=${enCount} unrecorded=0（未录入口为 0 即英文列已追上中文列）`);
+    console.log(`COLUMN en  recorded=${enCount} unrecorded=0 sameAsZh=${sameAsZh}（未录入口为 0 即英文列已追上中文列）`);
     console.log(`RESULT: artifacts=${artifacts.size} changed=0 added=0 removed=0 base-* fingerprint=${fp.sha256}`);
     process.exit(0);
   } catch (e) {
