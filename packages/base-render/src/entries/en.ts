@@ -2227,7 +2227,7 @@ export const en = {
   'base-render.components-search-field-attrs.c005': "No match, try another word or widen the range",
   'base-render.components-search-field-attrs.c006': "Searching…",
   'base-render.components-search-field-attrs.c007': "This search box is not wired to a result region: no searchable entries on the page",
-  'base-render.components-search-field-attrs.c008': "matches",
+  'base-render.components-search-field-attrs.c008': "found",
   'base-render.components-search-field-attrs.c009': "No searchable entries in the result region",
   /* ── packages/base-render/src/components/step-flow/attrs.ts（#1227 迁入） ── */
   'base-render.components-step-flow-attrs.c001': "In progress",
@@ -2469,10 +2469,10 @@ export const en = {
   /* ── packages/base-render/src/components/search-field/render.ts（#1227 迁入） ── */
   'base-render.components-search-field-render.c001': "All",
   'base-render.components-search-field-render.c002': "All",
-  'base-render.components-search-field-render.c003': "{noun} matches",
+  'base-render.components-search-field-render.c003': "{noun}",
   'base-render.components-search-field-render.c004': "Search scope",
   'base-render.components-search-field-render.c005': " · Scope {p0}",
-  'base-render.components-search-field-render.c006': "{p0} {p1} of {p2} {p3}",
+  'base-render.components-search-field-render.c006': "{p0}{p1} of {p2}{p3}",
   /* ── packages/base-render/src/components/slider-row/render.ts（#1227 迁入） ── */
   'base-render.components-slider-row-render.c001': "this readout",
   'base-render.components-slider-row-render.c002': "Decrease {word}",

@@ -12,6 +12,7 @@
  * 期望值一律从组件自己的常量与夹具数据派生，不抄字面量：改了名字／改了数法这里跟着红。
  */
 import { describe, it } from 'node:test';
+import { runWithLanguage } from 'base-entries';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -82,6 +83,17 @@ describe('searchField ① 渲染契约', () => {
     assert.ok(html.includes('data-ilife-search-empty'), '空态行在标记里');
     assert.ok(!/<script/i.test(html), '不产脚本');
     assert.ok(!/\son[a-z]+=/i.test(html), '不产内联事件处理器');
+  });
+
+  it('英文读数（#1330）：量词不重复、位置读数用「i of n」、状态读数不随数变单复数', () => {
+    const en = runWithLanguage('en', () => field());
+    assert.ok(!en.includes('matches matches'), '英文不得重复量词：' + en.slice(0, 240));
+    assert.equal(/matches of/.test(en), false, '不得出现「matches of … matches」');
+    assert.match(en, /<b data-ilife-search-count="">—<\/b> found/, '状态读数：— found（count-neutral，1 found 也通顺）');
+    assert.match(en, /<b data-ilife-search-at="">—<\/b> of <b data-ilife-search-count="">—<\/b>/, '位置读数：— of —');
+    const zh = field();
+    assert.ok(zh.includes('第 <b data-ilife-search-at="">—</b> 处 / 共 <b data-ilife-search-count="">—</b> 处'), '中文读数逐字节不变');
+    assert.equal(zh.includes('found'), false, '中文列不得混入英文读数');
   });
 
   it('命中数是运行时的真读数：渲染期一律写「—」，不给假初值', () => {
