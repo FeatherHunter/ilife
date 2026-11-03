@@ -23,6 +23,7 @@ import { audit as keysAudit, literalsOf, residueOf, isFrozen } from '../check-i1
 import { auditRegisters as typoRegisters, auditFixture as typoFixture, compareBaseline, FIXTURE_BASELINE } from '../check-typography-langs.mjs';
 import { LANG_REGISTERS } from '../i18n-langs.mjs';
 import { loadEnColumn, enGaps } from '../calorie-html-snapshot.mjs';
+import { entryTableFiles } from '../i18n-tables.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..');
@@ -38,6 +39,19 @@ test('#1199 语言列：中文列走存量路径、英文列另起、未识别�
   assert.ok(STRUCTURAL_RULES.length >= 3, '语言无关结构约束至少三条');
   assert.ok(registerOf('zh').maxSegChars < registerOf('en').maxSegChars, '英文并列段长上限须宽于中文');
   assert.equal(registerOf('en').separators.length, 0, '英文列不得把半角分号当懒政');
+});
+
+test('#1322 语言派生：名录外语言不静默读成零张表；未登记名册的第三语言列里中文必红', () => {
+  const tmp = mkdtempSync(join(tmpdir(), 't1322-lang-'));
+  try {
+    const dir = join(tmp, 'packages', 'demo', 'src', 'entries');
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, 'zh.ts'), "export const zh = { 'demo.title': '标题' };\n", 'utf8');
+    assert.throws(() => entryTableFiles(tmp, 'fr'), /未识别语言：fr/, '名册外且仓库里没有 fr 文件：必须显式抛，不许静默 []');
+    assert.equal(entryTableFiles(tmp, 'zh').length, 1);
+  } finally { rmSync(tmp, { recursive: true, force: true }); }
+  // ja 列的 residueOf 口径要在「仓库里真有 ja 词条文件」时才有意义（LANGUAGES 是模块加载时按目录算的）；
+  // 该读数由票面验收的临时第三语言复跑取证：residueOf('保存成功','ja') 必须非 null，见 .scratch/verify-1197/ja-accept-1322.log。
 });
 
 test('#1199 缺词条门：范围 0 件显式报数且 exit 0；缺词条必红；补上必绿', () => {

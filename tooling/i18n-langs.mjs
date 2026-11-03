@@ -3,9 +3,10 @@
  * 语言列地基（#1199 门禁改造 ①②③ 的共用件，落在 tooling 是刻意的）：
  * 「加一门语言＝加一条语言名册」，门只从这里读语言事实，不各写各的。
  *
- * 为什么是 tooling 而不是 packages/：本件是**门的输入**不是产品代码。产品侧的语言唯一定义地
- * 仍是 packages/base-link-core/src/config/language.ts（#1198／ADR-0004 §4）；两者关系用
- * LANGUAGES 数组逐条对账（见 sameRoster／--selftest），不靠人记。
+ * 为什么是 tooling 而不是 packages/：本件是**门的输入**不是产品代码。产品侧的语言清单由
+ * packages/base-link-core/src/config/languages.generated.ts 承载（生成器 tooling/gen-entry-catalogs.mjs
+ * 从各包词条目录派生，见 #1322）；本件用**同一份发现逻辑**（tooling/entry-languages.mjs）算 LANGUAGES，
+ * 两者关系用 sameRoster 对账（见 check-typography-langs.mjs 的 ROSTER），不靠人记。
  *
  * 三件事，各管一半：
  *   ① 语言列（column）：一门语言一份**账本文件**。中文列＝存量路径（文件名不含 .en.），英文列＝
@@ -21,15 +22,16 @@
  * 零依赖（只 node: 内置），不改任何文件。
  */
 
-/** 语言闭集。与 packages/base-link-core/src/config/language.ts 的 AVAILABLE_LANGUAGES 逐字对账。 */
-export const LANGUAGES = ['zh', 'en'];
+import { DEFAULT_LANGUAGE as ENTRY_DEFAULT_LANGUAGE, ROOT, entryLanguages } from './entry-languages.mjs';
 
-/** 缺省语言＝基准语言（其余语言的缺词条回退链终点）。与 base-link-core 的 DEFAULT_LANGUAGE 同值。 */
-export const DEFAULT_LANGUAGE = 'zh';
+/** 语言闭集：各包词条目录里出现过的语言并集（#1322 从目录派生；生成器写产品侧清单，本件按同一逻辑算）。 */
+export const LANGUAGES = entryLanguages(ROOT);
 
-/** 产品侧唯一定义地（只作对账引用，本件不 import 它——门要在没有 dist 时也能读语言事实）。 */
-export const ROSTER_SOURCE = 'packages/base-link-core/src/config/language.ts';
+/** 缺省语言＝基准语言（其余语言的缺词条回退链终点）。与 base-entries 的 BASE_LANGUAGE 同值。 */
+export const DEFAULT_LANGUAGE = ENTRY_DEFAULT_LANGUAGE;
 
+/** 产品侧语言清单的生成文件（门侧 LANGUAGES 与它同源；排印门用 sameRoster 对账）。 */
+export const ROSTER_SOURCE = 'packages/base-link-core/src/config/languages.generated.ts';
 /** 账本文件名里，非缺省语言的后缀段（zh 不带，存量路径不动）。 */
 export function langSuffix(lang) {
   if (!LANGUAGES.includes(lang)) throw new Error('未知语言：' + lang + '（可用：' + LANGUAGES.join('、') + '）');
@@ -137,20 +139,26 @@ export const LANG_REGISTERS = {
   },
 };
 
-/** 取某语言的排印名册（未识别即抛）。 */
-export function registerOf(lang) {
+/** 取某语言的排印名册。未识别语言默认抛；新增语言尚未登记名册时，调用方可显式 allowFallback
+ *  用拉丁文字名册兜底（#1322：词条目录里出现第三语言时，key 残留门不能因缺名册整门失明）。 */
+export function registerOf(lang, options = {}) {
   const t = normalizeLang(lang);
-  return LANG_REGISTERS[t];
+  const reg = LANG_REGISTERS[t];
+  if (reg) return reg;
+  if (options.allowFallback === true) {
+    return { ...LANG_REGISTERS.en, fallback: true, label: t + '（未登记名册，按拉丁文字名册兜底）',
+      why: '语言 ' + t + ' 已在词条目录出现，但 LANG_REGISTERS 还没登记专属名册；先按拉丁文字名册兜底（只供 key 残留门判「成句散文」；排印门另报 MISSING-REGISTER）。' };
+  }
+  throw new Error('缺语言名册：' + t + '（LANG_REGISTERS 里没有；新增语言先登记名册）');
 }
-
 /** 某语言是否判「裸拉丁词」为缺陷。 */
 export function bareLatinIsFault(lang) {
   return registerOf(lang).bareLatinIsFault;
 }
 
-/** 全部语言名册（列表用；顺序＝LANGUAGES）。 */
+/** 全部语言名册（列表用；顺序＝LANGUAGES）。未登记名册的语言也列出来（带 fallback 标记），不许静默丢一门语言。 */
 export function allRegisters() {
-  return LANGUAGES.map((l) => ({ lang: l, ...LANG_REGISTERS[l] }));
+  return LANGUAGES.map((l) => ({ lang: l, ...registerOf(l, { allowFallback: true }) }));
 }
 
 // 扫描面纪律

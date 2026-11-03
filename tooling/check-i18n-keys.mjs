@@ -187,13 +187,18 @@ export function devMessageTexts(source) {
  *   本件 `--selftest` 因此同时钉一句中文与一句英文的变异／还原两行。 */
 export function residueOf(text, lang, devTexts = new Set()) {
   const t = String(text);
-  const reg = registerOf(lang);
+  const reg = registerOf(lang, { allowFallback: true });
   if (devTexts.has(t)) return null;
   if (isFrozen(t)) return null;
   if (t.includes(String.fromCharCode(60)) || t.includes(String.fromCharCode(62))) return null;
   if (/^[A-Za-z][A-Za-z0-9_.-]*$/.test(t.trim())) return null;
   if (lang === DEFAULT_LANGUAGE) {
     return new RegExp(reg.scriptRe).test(t) ? "含中文（该进 " + lang + " 词条表）" : null;
+  }
+  // 未登记排印名册的语言（#1322）：兜底名册是拉丁文字，判不出中文；但非基准语言列里出现中文必定是漏译，
+  // 不判就等于「第三语言 residue=0」白送。只这条保守判据，不把英文列也改成判 CJK（英文列里有合法中文数据值）。
+  if (reg.fallback === true && /[\u4e00-\u9fff]/.test(t)) {
+    return "含中文（该进 " + lang + " 词条表；该语言尚未登记排印名册，先按「非基准语言列不得出现中文」保守判）";
   }
   // ⑤ 内联脚本行（#1205）：花括号 ＋ 分号/等号，或箭头函数——代码，不是句子。中文列不走这条分支。
   if ((/[{}]/.test(t) && /[;=]/.test(t)) || /=>/.test(t)) return null;
@@ -249,7 +254,7 @@ export function htmlHintOf(text, devTexts = new Set(), allow = new Set()) {
 }
 
 /** 主判据：返回 {files, literals, residue:[{file,line,lang,why,text}], blind:[{file,why}]}。 */
-export function audit(scope, root = ROOT_DIR) {
+export function audit(scope, root = ROOT_DIR, langs = LANGUAGES) {
   const allow = compileAllowlist(parseAllowlist(scope.allowlist || [], '范围清单的 allowlist'));
   const files = [];
   const blind = [];
@@ -269,7 +274,7 @@ export function audit(scope, root = ROOT_DIR) {
     const allowed = allow.textsFor(rel);
     for (const l of lits) {
       if (allowed.has(l.text)) continue;
-      for (const lang of LANGUAGES) {
+      for (const lang of langs) {
         const why = residueOf(l.text, lang, devTexts);
         if (why) found.push({ file: rel, line: l.line, lang, why, text: l.text.slice(0, 80) });
       }

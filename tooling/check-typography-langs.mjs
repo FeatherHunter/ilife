@@ -237,6 +237,11 @@ async function main() {
   console.log('STRUCTURAL（语言无关，所有语言同一套）: ' + STRUCTURAL_RULES.map((r) => r.id + (r.enforced === true ? '' : '(本工具未判)')).join(', '));
   for (const lang of LANGUAGES) {
     const r = LANG_REGISTERS[lang];
+    if (!r) {
+      // 词条目录里出现但排印名册没登记：显式红（auditRegisters 已 push MISSING-REGISTER），这里不许崩在读数行上。
+      console.log('REGISTER ' + lang + ': MISSING（词条目录已有该语言；LANG_REGISTERS 未登记——新增语言须补语言规则数据，其余门不受影响）');
+      continue;
+    }
     console.log('REGISTER ' + lang + ': separators=' + JSON.stringify(r.separators) + ' maxSegChars=' + r.maxSegChars
       + ' fontFloorPx=' + r.fontFloorPx + ' boxGridPx=' + r.boxGridPx + ' bareLatinIsFault=' + r.bareLatinIsFault
       + ' halfPunct=' + JSON.stringify(r.halfPunct));
