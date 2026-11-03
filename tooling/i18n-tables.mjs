@@ -23,7 +23,8 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, sep } from 'node:path';
 
-import { normalizeLang } from './i18n-langs.mjs';
+import { DEFAULT_LANGUAGE } from './i18n-langs.mjs';
+import { isLanguageTag } from './entry-languages.mjs';
 
 /** 具名占位符：与 packages/base-entries/src/evaluate.ts 的 PLACEHOLDER 同形（只认 {name}）。 */
 const PLACEHOLDER = /\{([A-Za-z_][A-Za-z0-9_]*)\}/g;
@@ -37,7 +38,8 @@ export function placeholdersOf(template) {
 
 /** 这门语言的表文件（按包现找，不写死路径；返回绝对路径，已排序保证读数可复跑）。 */
 export function entryTableFiles(root, lang) {
-  const want = normalizeLang(lang);
+  const want = (lang === undefined || lang === null || lang === '') ? DEFAULT_LANGUAGE : String(lang);
+  if (!isLanguageTag(want)) throw new Error('未识别语言：' + want);
   const pkgs = join(root, 'packages');
   const out = [];
   if (!existsSync(pkgs)) return out;
@@ -192,7 +194,8 @@ export function loadTablesByPackage(root, langs) {
   const errors = [];
   const owners = new Map();
   for (const lang of langs) {
-    const want = normalizeLang(lang);
+  const want = (lang === undefined || lang === null || lang === '') ? DEFAULT_LANGUAGE : String(lang);
+  if (!isLanguageTag(want)) throw new Error('未识别语言：' + want);
     for (const path of entryTableFiles(root, want)) {
       const pkg = packageOfTablePath(root, path);
       if (pkg === undefined) { errors.push({ path, why: '表文件不在 packages/<包>/src/entries 下，判不了归属' }); continue; }

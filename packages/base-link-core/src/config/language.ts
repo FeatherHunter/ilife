@@ -9,18 +9,20 @@
 //   · 配置文件 `language.text`／`language.format`，空串＝跟随调用方，最终回退 `zh`；
 //   · 命令行参数可覆盖（`--language`／`--format-language`，只认空格式，与各家既有解析同形）；
 //   · 未识别的值报错并列出可用语言；值是 BCP 47（大小写不敏感，取小写 canonical 形）；
-//   · 可用语言清单本期由代码常量给（后续改为从词条目录派生，见 #1198 遗留出口）。
+//   · 可用语言清单由词条目录生成（`tooling/gen-entry-catalogs.mjs`；加语言＝加词条文件＋`pnpm gen`）；
 // text 与 format 两条链互相独立：format 空串时跟随调用方、无调用方回退 `zh`，
 // 不跟随已解析的 text（ADR 原文“每键空串＝跟随调用方，缺省回退 zh”；format 跟随 text
 // 的写法曾考虑过，否决理由：那是另一条回退语义，票面与 ADR 都没写，不能悄悄加魔法）。
 import { ConfigError } from '../errors.js';
 import { loadConfig } from './store.js';
 import type { ConfigRecord } from './yaml.js';
+import { AVAILABLE_LANGUAGES } from './languages.generated.js';
 
-/** 可用语言清单（本期代码常量；后续从词条目录派生）。 */
-export const AVAILABLE_LANGUAGES = ['zh', 'en'] as const;
+// 可用语言清单：唯一权威由 tooling/gen-entry-catalogs.mjs 从各包词条目录生成（#1322）。
+// 加一门语言＝加词条文件＋跑 `pnpm gen` 重生成，这里不手写清单。
+export { AVAILABLE_LANGUAGES };
 
-/** 语言标识：本期即上面清单的成员。 */
+/** 语言标识：上面清单的成员（清单随词条目录重生成，故这里是索引类型而不是手写联合）。 */
 export type LanguageTag = (typeof AVAILABLE_LANGUAGES)[number];
 
 /** 缺省语言（配置文件、调用方、argv 三处全空时的回退）。 */

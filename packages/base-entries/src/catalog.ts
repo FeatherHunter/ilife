@@ -5,8 +5,9 @@
 // 变化频率：表形状几乎不动，取词与回退链随语言增补变，求值实现由消费方可换。
 //
 // 铁律二（概念唯一）：**可用语言清单不在这里**。清单的唯一权威是
-// `packages/base-link-core/src/config/language.ts`（AVAILABLE_LANGUAGES／DEFAULT_LANGUAGE，
-// ADR-0004 §4）；本包零运行时依赖，故不 import 它、也不复制那份清单，`language` 一律只收 `string`。
+// `packages/base-link-core/src/config/languages.generated.ts`（AVAILABLE_LANGUAGES，由
+// `tooling/gen-entry-catalogs.mjs` 从各包词条目录生成）与 `language.ts` 的 DEFAULT_LANGUAGE
+// （ADR-0004 §4／#1322）；本包零运行时依赖，故不 import 它、也不复制那份清单，`language` 一律只收 `string`。
 
 /** 一门语言的词条表：key → 词条文本。 */
 export type MessageTable = Readonly<Record<string, string>>;
@@ -14,7 +15,8 @@ export type MessageTable = Readonly<Record<string, string>>;
 /**
  * 词条表集合：基准语言那份表 ＋ 其余语言各一份。
  *
- * **加一门语言＝加一个语言键**（加一个词条文件即可）：不改代码、不改任何清单，
+ * **加一门语言＝加一个语言键**：产品侧 14 个包的语言键与清单由
+ * `tooling/gen-entry-catalogs.mjs` 按词条目录生成（#1322），本层只吃表对象、不改代码；
  * key 集合仍以基准语言那份表为准（ADR-0004 §1／§3）。
  */
 export interface Catalog {

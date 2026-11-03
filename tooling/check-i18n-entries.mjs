@@ -277,8 +277,13 @@ export function audit(scope, root = ROOT_DIR, langs = LANGUAGES) {
       blind.push({ file: rel, why: 'import 了非相对路径的词条表（' + cat.foreign + '），门判不出归属：词条表须按包就近相对 import' });
       continue;
     }
+    // #1322：语言按包发现——只判「这件文件 import 的 catalog 里真有的语言」。
+    // 单包加 ja 时，其余包对 ja 跳过（回退 zh），不再把「别的包还没 ja」误报成缺词条。
+    const catLangs = cat.packages === null
+      ? langs.filter((lang) => (unions.get(lang)?.size ?? 0) > 0)
+      : langs.filter((lang) => cat.packages.some((pkg) => byPkg.packages.get(pkg)?.has(lang)));
     for (const k of ks) {
-      for (const lang of langs) {
+      for (const lang of catLangs) {
         // 判不出归属（仓库根夹具件只 import base-entries）：回退跨包并集——夹具口径，真范围不出现。
         if (cat.packages === null) {
           if (!unions.get(lang).has(k)) missing.push({ file: rel, key: k, lang });
@@ -497,11 +502,44 @@ function selftest(scope) {
     const idBlind = audit({ files: ['packages/gamma/src/write/use.ts'] }, tmp);
     want(idBlind.blind.some((b) => /NOPE_CATALOG/.test(b.why)), 'import 的 catalog 标识没导出必须报盲（实得 ' + JSON.stringify(idBlind.blind) + '）');
     console.log('SELFTEST 标识核对读数：blind=' + idBlind.blind.length + '（' + idBlind.blind.map((b) => b.why).join('；') + '）');
+    // ⑬ 单包加第三语言（#1322）：epsilon 有 ja，zeta 只有 zh/en——zeta 不许因「别的包有 ja」被判缺 ja。
+    const epsDir = join(tmp, 'packages', 'epsilon', 'src', 'entries');
+    const zetaDir = join(tmp, 'packages', 'zeta', 'src', 'entries');
+    mkdirSync(epsDir, { recursive: true });
+    mkdirSync(zetaDir, { recursive: true });
+    writeFileSync(join(epsDir, 'zh.json'), JSON.stringify({ 'demo.eps': '艾普西龙' }), 'utf8');
+    writeFileSync(join(epsDir, 'en.json'), JSON.stringify({ 'demo.eps': 'Epsilon' }), 'utf8');
+    writeFileSync(join(epsDir, 'ja.json'), JSON.stringify({ 'demo.eps': 'イプシロン' }), 'utf8');
+    writeFileSync(join(epsDir, 'index.ts'), "export const EPS_CATALOG = defineCatalog({ zh, en, ja });" + nl, 'utf8');
+    writeFileSync(join(zetaDir, 'zh.json'), JSON.stringify({ 'demo.zeta': '泽塔' }), 'utf8');
+    writeFileSync(join(zetaDir, 'en.json'), JSON.stringify({ 'demo.zeta': 'Zeta' }), 'utf8');
+    writeFileSync(join(zetaDir, 'index.ts'), "export const ZETA_CATALOG = defineCatalog({ zh, en });" + nl, 'utf8');
+    writeFileSync(join(tmp, 'packages', 'epsilon', 'src', 'use.ts'), [
+      "import { resolve } from 'base-entries';",
+      "import { EPS_CATALOG } from '../entries/index.js';",
+      "export const a = resolve(EPS_CATALOG, 'zh', 'demo.eps');",
+    ].join(nl), 'utf8');
+    writeFileSync(join(tmp, 'packages', 'zeta', 'src', 'use.ts'), [
+      "import { resolve } from 'base-entries';",
+      "import { ZETA_CATALOG } from '../entries/index.js';",
+      "export const a = resolve(ZETA_CATALOG, 'zh', 'demo.zeta');",
+    ].join(nl), 'utf8');
+    const third = audit({ files: ['packages/epsilon/src/use.ts', 'packages/zeta/src/use.ts'] }, tmp, ['zh', 'en', 'ja']);
+    want(third.missing.length === 0, '有 ja 的包判 ja、没 ja 的包跳过 ja，必须零缺（实得 ' + JSON.stringify(third.missing) + '）');
+    writeFileSync(join(tmp, 'packages', 'zeta', 'src', 'use.ts'), [
+      "import { resolve } from 'base-entries';",
+      "import { ZETA_CATALOG } from '../entries/index.js';",
+      "export const a = resolve(ZETA_CATALOG, 'zh', 'demo.gone');",
+    ].join(nl), 'utf8');
+    const zetaGap = audit({ files: ['packages/zeta/src/use.ts'] }, tmp, ['zh', 'en', 'ja']);
+    want(zetaGap.missing.length === 2 && zetaGap.missing.every((m) => m.lang !== 'ja'),
+      '没 ja 的包对 ja 跳过，缺词条只报 zh/en 两门（实得 ' + JSON.stringify(zetaGap.missing.map((m) => m.lang)) + '）');
+    console.log('SELFTEST 单包第三语言读数：全齐 missing=' + third.missing.length + '／没 ja 的包跳过 ja 后 missing=' + zetaGap.missing.length);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
   if (bad.length) { for (const b of bad) console.error('SELFTEST FAIL ' + b); process.exit(1); }
-  console.log('SELFTEST: 空范围显式报数／缺词条必红／补上必绿／没迁完必红／缺表必红／失明必红／空白词条必红／allowlist 剔除／按包归属／别包 catalog 计入／catalog 标识核对／同串两用（数据位剔除·界面位判缺） 十二条自证 OK');
+  console.log('SELFTEST: 空范围显式报数／缺词条必红／补上必绿／没迁完必红／缺表必红／失明必红／空白词条必红／allowlist 剔除／按包归属／别包 catalog 计入／catalog 标识核对／同串两用（数据位剔除·界面位判缺）／单包第三语言（有 ja 判 ja·没 ja 跳过） 十三条自证 OK');
 }
 
 /** 入口守卫（照 tooling/i18n-langs.mjs／skill-html-snapshot.mjs 的先例）：本件被别处 import 时**不跑** CLI，

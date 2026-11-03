@@ -187,7 +187,7 @@ export function devMessageTexts(source) {
  *   本件 `--selftest` 因此同时钉一句中文与一句英文的变异／还原两行。 */
 export function residueOf(text, lang, devTexts = new Set()) {
   const t = String(text);
-  const reg = registerOf(lang);
+  const reg = registerOf(lang, { allowFallback: true });
   if (devTexts.has(t)) return null;
   if (isFrozen(t)) return null;
   if (t.includes(String.fromCharCode(60)) || t.includes(String.fromCharCode(62))) return null;
@@ -249,7 +249,7 @@ export function htmlHintOf(text, devTexts = new Set(), allow = new Set()) {
 }
 
 /** 主判据：返回 {files, literals, residue:[{file,line,lang,why,text}], blind:[{file,why}]}。 */
-export function audit(scope, root = ROOT_DIR) {
+export function audit(scope, root = ROOT_DIR, langs = LANGUAGES) {
   const allow = compileAllowlist(parseAllowlist(scope.allowlist || [], '范围清单的 allowlist'));
   const files = [];
   const blind = [];
@@ -269,7 +269,7 @@ export function audit(scope, root = ROOT_DIR) {
     const allowed = allow.textsFor(rel);
     for (const l of lits) {
       if (allowed.has(l.text)) continue;
-      for (const lang of LANGUAGES) {
+      for (const lang of langs) {
         const why = residueOf(l.text, lang, devTexts);
         if (why) found.push({ file: rel, line: l.line, lang, why, text: l.text.slice(0, 80) });
       }
