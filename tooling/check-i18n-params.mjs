@@ -3,8 +3,9 @@
  * #1306 · 占位符门（同一 key 在 zh／en 的 {name} 集合必须相等）。
  *
  * 它守什么：词条表是数据，占位符是代码与表之间的接口。同一条 key 在 zh 与 en 的占位符集合不同，
- * 运行期就会踩两类已知 BUG：① 少一个参 → 值里留着 {name} 原文上屏；② 多一个参 → MissingParamError
- * 直接抛（缺参口径见 packages/base-entries/src/evaluate.ts）。两门语言各写各的时，这类错在中文下全绿、
+ * 运行期会踩两类已知 BUG：① 本语言模板少一个占位符 → 调用方多传的那个值永远不上屏（静默丢信息，
+ * 求值端不报错）；② 多一个占位符 → 调用方没传这个参，MissingParamError 直接抛（求值口径见
+ * packages/base-entries/src/evaluate.ts）。两门语言各写各的时，这类错在中文下全绿、
  * 英文下才炸——所以必须在门禁里按 key 逐对判，不能靠人眼比。
  *
  * 判据（缺一即 FAIL，exit 1）：
@@ -79,11 +80,11 @@ export function audit(root = ROOT_DIR, langs = LANGUAGES) {
         skew.push({ pkg, key, missingLangs });
         if (!values.has(REFERENCE)) continue;
       }
-      pairs += 1;
       const refValue = values.get(REFERENCE);
       const want = placeholdersOf(refValue);
       for (const [lang, value] of values) {
         if (lang === REFERENCE) continue;
+        pairs += 1; // 只计真实比较过的「基准语言 × 另一语言」对；skew key 缺的那一门不算
         const got = placeholdersOf(value);
         if (want.join(',') === got.join(',')) continue;
         mismatch.push({ pkg, key, lang, refLang: REFERENCE, want, got, refValue, value });
@@ -182,6 +183,7 @@ function selftest() {
     const skew = audit(tmp);
     want(skew.mismatch.length === 0, '缺列不是占位符不一致（实得 ' + skew.mismatch.length + '）');
     want(skew.skew.length === 1 && skew.skew[0].key === 'demo.only-zh', '缺列必须报数（实得 ' + skew.skew.length + '）');
+    want(skew.pairs === 1, '缺列 key 不得计入 pairs（只算真比较过的那一对，实得 ' + skew.pairs + '）');
 
     write('demo', 'en', "export const en = {\n  'demo.total': count,\n};\n");
     const broken = audit(tmp);
@@ -205,7 +207,7 @@ function selftest() {
     rmSync(tmp, { recursive: true, force: true });
   }
   if (bad.length) { for (const b of bad) console.error('SELFTEST FAIL ' + b); process.exit(1); }
-  console.log('SELFTEST: 空转显式报数／单语言包报数／占位符不一致必红／补齐必绿／多占位必红／顺序重复不判红／缺列只报数／读不出必红／多份表重复 key 必红／空表显式报数 十条自证 OK');
+  console.log('SELFTEST: 空转显式报数／单语言包报数／占位符不一致必红／补齐必绿／多占位必红／顺序重复不判红／缺列只报数且不计 pairs／读不出必红／多份表重复 key 必红／空表显式报数 十一条自证 OK');
 }
 
 /** 入口守卫（照 check-i18n-entries.mjs 先例）：被别处 import 时不跑 CLI。 */

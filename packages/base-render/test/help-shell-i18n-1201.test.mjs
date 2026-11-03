@@ -9,7 +9,7 @@
  *   ④ **接线防漂移**：每条词条的 zh 值必须在模板（PREFIX∪SUFFIX）里真实存在——词条写错时这条先红，
  *      而不是等产物里悄悄少翻一句。
  *
- *  HELP 正文（技能注入的 5 键 JSON）按 #1235 仍为中文：本地化层只碰模板两段，不碰数据。
+ *  HELP 正文（技能注入的 5 键 JSON）按 docs/agents/多语言-HELP正文语言裁决.md 保持中文：本地化层只碰模板两段，不碰数据。
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';

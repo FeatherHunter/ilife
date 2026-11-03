@@ -9,7 +9,7 @@
  *     逐字相等，中文产物一个字节都不动（未启用多语言＝原样返回，不碰文本）。
  *   · 单遍替换（alternation 按长度降序）：长的先赢、替换产物不再被扫，天然不级联、不漂移。
  *   · 数据位不译：`KEEP_LITERALS` 里的片段先换占位符再复原——它们是和 HELP 数据逐字比对的值。
- *   · 只吃模板段，不吃拼好的整页：技能注入的 5 键 JSON 里的中文是数据，不是壳文案（HELP 正文另票 #1235）。
+ *   · 只吃模板段，不吃拼好的整页：技能注入的 5 键 JSON 里的中文是数据，不是壳文案（正文语言裁决见 `docs/agents/多语言-HELP正文语言裁决.md`）。
  *   · 文档 lang 与 `components/help/template.ts`／`docShell.ts` 同一个映射（`contract.ts` 的 `documentLang`）。
  */
 import { currentRenderLanguage } from 'base-entries';
