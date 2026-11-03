@@ -7,11 +7,20 @@
   "hashAlgo": "sha256(归一化文本) 前 32 hex；归一化＝去 BOM ＋ CRLF→LF（与中文列同一口径）",
   "fixedNow": "2026-01-02T03:04:05",
   "notation": {
-    "records": "id → { sha256, bytes, note }；键集必须是中文列 artifacts 的子集；记录的 sha256 必须 ≠ 中文列同件（相等＝没记，空转绿）",
-    "emptyColumn": "records={} 合法（0 件＝待录入）：门显式印 PENDING 与 recorded=0，不当绿也不当红",
-    "writeChannel": "node tooling/calorie-html-snapshot.mjs --write-en（显式动作）"
+    "records": "id → { sha256, bytes, note }；键集必须是中文列 artifacts 的子集；记录的 sha256 必须 ≠ 中文列同件"
   },
-  "readonlyUntilMigrated": true,
-  "artifactCount": 0,
-  "records": {}
+  "readonlyUntilMigrated": false,
+  "artifactCount": 2,
+  "records": {
+    "calorie/help-html": {
+      "sha256": "0f25a1e6dcd7404485e26fbee7377462",
+      "bytes": 458650,
+      "note": "英文列版本（偏离中文列；note 由迁移票补）"
+    },
+    "calorie/help-meta": {
+      "sha256": "1db39098c1e502c856ae797f7ae8ad8c",
+      "bytes": 142,
+      "note": "英文列版本（偏离中文列；note 由迁移票补）"
+    }
+  }
 }
