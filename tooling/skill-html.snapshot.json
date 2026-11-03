@@ -69,6 +69,12 @@
       "sha256": "ee48c1bada64daa0dc37151c0509247b",
       "text": "<section data-skill=\"bill\" data-shape=\"analysis\" data-key=\"bill.analysis.trend\"><div class=\"analysis\">汇总 &lt;&amp;&gt;<br>第二行</div></section>"
     },
+    "bill/frag/bill.category.merge": {
+      "src": "packages/skill-bill/src/render/envelope.ts",
+      "bytes": 139,
+      "sha256": "ebae95d9e5d8aa32ad80e85852ff87d6",
+      "text": "<section data-skill=\"bill\" data-shape=\"receipt\" data-key=\"bill.category.merge\"><div class=\"receipt\">已记录 &lt;&amp;&gt;</div></section>"
+    },
     "bill/frag/bill.goal.query": {
       "src": "packages/skill-bill/src/render/envelope.ts",
       "bytes": 550,
@@ -137,9 +143,9 @@
     },
     "bill/keys": {
       "src": "packages/skill-bill/src/render/envelope.ts",
-      "bytes": 498,
-      "sha256": "d70cf5938dbc28af85253a74d1b3966d",
-      "text": "[[\"bill.account.query\",\"list\"],[\"bill.account.write\",\"receipt\"],[\"bill.analysis.compare\",\"analysis\"],[\"bill.analysis.overview\",\"stat\"],[\"bill.analysis.trend\",\"analysis\"],[\"bill.goal.query\",\"list\"],[\"bill.goal.write\",\"receipt\"],[\"bill.help.lookup\",\"list\"],[\"bill.link.submit\",\"receipt\"],[\"bill.record.add\",\"receipt\"],[\"bill.record.detail\",\"detail\"],[\"bill.record.range\",\"list\"],[\"bill.record.search\",\"list\"],[\"bill.record.today\",\"list\"],[\"bill.record.update\",\"receipt\"],[\"bill.setup.run\",\"receipt\"]]"
+      "bytes": 597,
+      "sha256": "afd61394fe827c46860d3b16f6393e3b",
+      "text": "[[\"bill.account.query\",\"list\"],[\"bill.account.write\",\"receipt\"],[\"bill.analysis.compare\",\"analysis\"],[\"bill.analysis.overview\",\"stat\"],[\"bill.analysis.trend\",\"analysis\"],[\"bill.category.merge\",\"receipt\"],[\"bill.data.query\",\"resultset\"],[\"bill.data.schema\",\"resultset\"],[\"bill.goal.query\",\"list\"],[\"bill.goal.write\",\"receipt\"],[\"bill.help.lookup\",\"list\"],[\"bill.link.submit\",\"receipt\"],[\"bill.record.add\",\"receipt\"],[\"bill.record.detail\",\"detail\"],[\"bill.record.range\",\"list\"],[\"bill.record.search\",\"list\"],[\"bill.record.today\",\"list\"],[\"bill.record.update\",\"receipt\"],[\"bill.setup.run\",\"receipt\"]]"
     },
     "bill/shape-throw": {
       "src": "packages/skill-bill/src/render/html.ts",
@@ -383,9 +389,9 @@
     },
     "chef/keys": {
       "src": "packages/skill-chef/src/render/envelope.ts",
-      "bytes": 369,
-      "sha256": "4e15c7194a9ea1717dcef1c268e283d3",
-      "text": "[[\"chef.cooking.run\",\"list\"],[\"chef.data.batch\",\"receipt\"],[\"chef.help.lookup\",\"list\"],[\"chef.history.query\",\"list\"],[\"chef.history.record\",\"receipt\"],[\"chef.recipe.search\",\"list\"],[\"chef.recipe.view\",\"detail\"],[\"chef.recipe.write\",\"receipt\"],[\"chef.relation.query\",\"list\"],[\"chef.relation.write\",\"receipt\"],[\"chef.setup.init\",\"receipt\"],[\"chef.shopping.query\",\"list\"]]"
+      "bytes": 434,
+      "sha256": "297df9a267d07efe6af24a8b05e9a829",
+      "text": "[[\"chef.cooking.run\",\"list\"],[\"chef.data.batch\",\"receipt\"],[\"chef.data.query\",\"resultset\"],[\"chef.data.schema\",\"resultset\"],[\"chef.help.lookup\",\"list\"],[\"chef.history.query\",\"list\"],[\"chef.history.record\",\"receipt\"],[\"chef.recipe.search\",\"list\"],[\"chef.recipe.view\",\"detail\"],[\"chef.recipe.write\",\"receipt\"],[\"chef.relation.query\",\"list\"],[\"chef.relation.write\",\"receipt\"],[\"chef.setup.init\",\"receipt\"],[\"chef.shopping.query\",\"list\"]]"
     },
     "chef/shape-throw": {
       "src": "packages/skill-chef/src/render/html.ts",
@@ -509,9 +515,9 @@
     },
     "home/frag/home.care.query": {
       "src": "packages/skill-home/src/render/envelope.ts",
-      "bytes": 396,
-      "sha256": "74ffe05a125f2cdc87082d13430297b0",
-      "text": "<section data-skill=\"home\" data-shape=\"list\" data-key=\"home.care.query\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#1</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#2</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅</div></div></section>"
+      "bytes": 402,
+      "sha256": "1ba7a0280b3cd96b7e682f0fd34f6657",
+      "text": "<section data-skill=\"home\" data-shape=\"list\" data-key=\"home.care.query\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#1</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅 ok</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#2</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅 ok</div></div></section>"
     },
     "home/frag/home.care.write": {
       "src": "packages/skill-home/src/render/envelope.ts",
@@ -521,15 +527,15 @@
     },
     "home/frag/home.help.lookup": {
       "src": "packages/skill-home/src/render/envelope.ts",
-      "bytes": 397,
-      "sha256": "a115028c5cd110fa24e0e4c75a4c2858",
-      "text": "<section data-skill=\"home\" data-shape=\"list\" data-key=\"home.help.lookup\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#1</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#2</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅</div></div></section>"
+      "bytes": 403,
+      "sha256": "29b92540ce1ecd68dd686b3d06b08a61",
+      "text": "<section data-skill=\"home\" data-shape=\"list\" data-key=\"home.help.lookup\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#1</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅 ok</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#2</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅 ok</div></div></section>"
     },
     "home/frag/home.inventory.records": {
       "src": "packages/skill-home/src/render/envelope.ts",
-      "bytes": 403,
-      "sha256": "eeab8ddcc54b8dd2089832cde128759c",
-      "text": "<section data-skill=\"home\" data-shape=\"list\" data-key=\"home.inventory.records\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#1</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#2</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅</div></div></section>"
+      "bytes": 409,
+      "sha256": "621ab5980ddb3d10f23f4d35d730dbe5",
+      "text": "<section data-skill=\"home\" data-shape=\"list\" data-key=\"home.inventory.records\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#1</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅 ok</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#2</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅 ok</div></div></section>"
     },
     "home/frag/home.inventory.round": {
       "src": "packages/skill-home/src/render/envelope.ts",
@@ -545,15 +551,15 @@
     },
     "home/frag/home.item.detail": {
       "src": "packages/skill-home/src/render/envelope.ts",
-      "bytes": 242,
-      "sha256": "043d5453933734a308ec9f07e9e8e4b0",
-      "text": "<section data-skill=\"home\" data-shape=\"detail\" data-key=\"home.item.detail\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#1</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅</div></div></section>"
+      "bytes": 245,
+      "sha256": "847ee765bd17742da7b9a2676d29cf43",
+      "text": "<section data-skill=\"home\" data-shape=\"detail\" data-key=\"home.item.detail\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#1</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅 ok</div></div></section>"
     },
     "home/frag/home.item.search": {
       "src": "packages/skill-home/src/render/envelope.ts",
-      "bytes": 397,
-      "sha256": "b1f90e43048cf4179123910d15971fe0",
-      "text": "<section data-skill=\"home\" data-shape=\"list\" data-key=\"home.item.search\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#1</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#2</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅</div></div></section>"
+      "bytes": 403,
+      "sha256": "30e686d471432343d8b8132ef7b23647",
+      "text": "<section data-skill=\"home\" data-shape=\"list\" data-key=\"home.item.search\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#1</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅 ok</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#2</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅 ok</div></div></section>"
     },
     "home/frag/home.item.update": {
       "src": "packages/skill-home/src/render/envelope.ts",
@@ -563,9 +569,9 @@
     },
     "home/frag/home.location.query": {
       "src": "packages/skill-home/src/render/envelope.ts",
-      "bytes": 400,
-      "sha256": "810e3bd9a8b8144832086080dd8bbcfb",
-      "text": "<section data-skill=\"home\" data-shape=\"list\" data-key=\"home.location.query\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#1</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#2</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅</div></div></section>"
+      "bytes": 406,
+      "sha256": "316860b93223b2dabd459887188222c8",
+      "text": "<section data-skill=\"home\" data-shape=\"list\" data-key=\"home.location.query\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#1</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅 ok</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#2</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅 ok</div></div></section>"
     },
     "home/frag/home.location.write": {
       "src": "packages/skill-home/src/render/envelope.ts",
@@ -575,15 +581,15 @@
     },
     "home/frag/home.outfit.pick": {
       "src": "packages/skill-home/src/render/envelope.ts",
-      "bytes": 397,
-      "sha256": "8dd08dc090bf2eabdddc36492e11621e",
-      "text": "<section data-skill=\"home\" data-shape=\"list\" data-key=\"home.outfit.pick\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#1</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#2</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅</div></div></section>"
+      "bytes": 403,
+      "sha256": "7cd4bae4b43f90314ee4eca137e0404c",
+      "text": "<section data-skill=\"home\" data-shape=\"list\" data-key=\"home.outfit.pick\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#1</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅 ok</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#2</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅 ok</div></div></section>"
     },
     "home/frag/home.shopping.query": {
       "src": "packages/skill-home/src/render/envelope.ts",
-      "bytes": 400,
-      "sha256": "d1d39e9cb3b184679e0855449faafaf7",
-      "text": "<section data-skill=\"home\" data-shape=\"list\" data-key=\"home.shopping.query\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#1</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#2</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅</div></div></section>"
+      "bytes": 406,
+      "sha256": "4e7f4cb8d789a23ff7e0a45df1d5ab71",
+      "text": "<section data-skill=\"home\" data-shape=\"list\" data-key=\"home.shopping.query\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#1</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅 ok</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#2</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅 ok</div></div></section>"
     },
     "home/frag/home.shopping.write": {
       "src": "packages/skill-home/src/render/envelope.ts",
@@ -593,9 +599,9 @@
     },
     "home/frag/home.stats.alert": {
       "src": "packages/skill-home/src/render/envelope.ts",
-      "bytes": 397,
-      "sha256": "b7f3cd71b5d22218b0501f97393dc98e",
-      "text": "<section data-skill=\"home\" data-shape=\"list\" data-key=\"home.stats.alert\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#1</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#2</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅</div></div></section>"
+      "bytes": 403,
+      "sha256": "150bf27b47110cd25e003b4fcef90dea",
+      "text": "<section data-skill=\"home\" data-shape=\"list\" data-key=\"home.stats.alert\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#1</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅 ok</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#2</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅 ok</div></div></section>"
     },
     "home/frag/home.stats.overview": {
       "src": "packages/skill-home/src/render/envelope.ts",
@@ -605,9 +611,9 @@
     },
     "home/frag/home.tag.query": {
       "src": "packages/skill-home/src/render/envelope.ts",
-      "bytes": 395,
-      "sha256": "31280337cb2a4fc10df467b81bf26a60",
-      "text": "<section data-skill=\"home\" data-shape=\"list\" data-key=\"home.tag.query\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#1</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#2</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅</div></div></section>"
+      "bytes": 401,
+      "sha256": "6bd2d31833a79a08507141ba22e528e0",
+      "text": "<section data-skill=\"home\" data-shape=\"list\" data-key=\"home.tag.query\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#1</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅 ok</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#2</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅 ok</div></div></section>"
     },
     "home/frag/home.tag.write": {
       "src": "packages/skill-home/src/render/envelope.ts",
@@ -617,9 +623,9 @@
     },
     "home/frag/home.ticket.query": {
       "src": "packages/skill-home/src/render/envelope.ts",
-      "bytes": 398,
-      "sha256": "458483d3db92b8a89fb9f1392a25b596",
-      "text": "<section data-skill=\"home\" data-shape=\"list\" data-key=\"home.ticket.query\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#1</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#2</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅</div></div></section>"
+      "bytes": 404,
+      "sha256": "6ffb09d232199a3aa3001f732cec7671",
+      "text": "<section data-skill=\"home\" data-shape=\"list\" data-key=\"home.ticket.query\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#1</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅 ok</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#2</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅 ok</div></div></section>"
     },
     "home/frag/home.ticket.write": {
       "src": "packages/skill-home/src/render/envelope.ts",
@@ -635,9 +641,9 @@
     },
     "home/keys": {
       "src": "packages/skill-home/src/render/envelope.ts",
-      "bytes": 636,
-      "sha256": "74618b039b72200a52e6072a9b363a15",
-      "text": "[[\"home.care.query\",\"list\"],[\"home.care.write\",\"receipt\"],[\"home.help.lookup\",\"list\"],[\"home.inventory.records\",\"list\"],[\"home.inventory.round\",\"receipt\"],[\"home.item.add\",\"receipt\"],[\"home.item.detail\",\"detail\"],[\"home.item.search\",\"list\"],[\"home.item.update\",\"receipt\"],[\"home.location.query\",\"list\"],[\"home.location.write\",\"receipt\"],[\"home.outfit.pick\",\"list\"],[\"home.shopping.query\",\"list\"],[\"home.shopping.write\",\"receipt\"],[\"home.stats.alert\",\"list\"],[\"home.stats.overview\",\"stat\"],[\"home.tag.query\",\"list\"],[\"home.tag.write\",\"receipt\"],[\"home.ticket.query\",\"list\"],[\"home.ticket.write\",\"receipt\"],[\"home.trip.manage\",\"receipt\"]]"
+      "bytes": 701,
+      "sha256": "8194ce4c5b51cf84e675e27f930e58c7",
+      "text": "[[\"home.care.query\",\"list\"],[\"home.care.write\",\"receipt\"],[\"home.data.query\",\"resultset\"],[\"home.data.schema\",\"resultset\"],[\"home.help.lookup\",\"list\"],[\"home.inventory.records\",\"list\"],[\"home.inventory.round\",\"receipt\"],[\"home.item.add\",\"receipt\"],[\"home.item.detail\",\"detail\"],[\"home.item.search\",\"list\"],[\"home.item.update\",\"receipt\"],[\"home.location.query\",\"list\"],[\"home.location.write\",\"receipt\"],[\"home.outfit.pick\",\"list\"],[\"home.shopping.query\",\"list\"],[\"home.shopping.write\",\"receipt\"],[\"home.stats.alert\",\"list\"],[\"home.stats.overview\",\"stat\"],[\"home.tag.query\",\"list\"],[\"home.tag.write\",\"receipt\"],[\"home.ticket.query\",\"list\"],[\"home.ticket.write\",\"receipt\"],[\"home.trip.manage\",\"receipt\"]]"
     },
     "home/shape-throw": {
       "src": "packages/skill-home/src/render/html.ts",
@@ -653,9 +659,9 @@
     },
     "home/shape/detail": {
       "src": "packages/skill-home/src/render/html.ts",
-      "bytes": 246,
-      "sha256": "1cce14f41610e658b8fa0d41aaddcc28",
-      "text": "<section data-skill=\"home\" data-shape=\"detail\" data-key=\"home.snapshot.detail\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#1</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅</div></div></section>"
+      "bytes": 249,
+      "sha256": "de6c93040536455df8b731f51b0321a2",
+      "text": "<section data-skill=\"home\" data-shape=\"detail\" data-key=\"home.snapshot.detail\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#1</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅 ok</div></div></section>"
     },
     "home/shape/fallback": {
       "src": "packages/skill-home/src/render/html.ts",
@@ -665,9 +671,9 @@
     },
     "home/shape/list": {
       "src": "packages/skill-home/src/render/html.ts",
-      "bytes": 399,
-      "sha256": "c91a53af63961a71692bdfb241a45831",
-      "text": "<section data-skill=\"home\" data-shape=\"list\" data-key=\"home.snapshot.list\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#1</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#2</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅</div></div></section>"
+      "bytes": 405,
+      "sha256": "e7b9f218629752b1dd7d0e69cc7c88af",
+      "text": "<section data-skill=\"home\" data-shape=\"list\" data-key=\"home.snapshot.list\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#1</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅 ok</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">#2</span><span class=\"name\">名称&lt;&amp;&gt;</span></div><div class=\"content\">客厅 ok</div></div></section>"
     },
     "home/shape/list-empty": {
       "src": "packages/skill-home/src/render/html.ts",
@@ -689,15 +695,15 @@
     },
     "home/shared-css": {
       "src": "packages/skill-home/src/render/html.ts",
-      "bytes": 419,
-      "sha256": "24491a53d797e8eef39c617e96498344",
-      "text": ".page{font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:12px}.item{border:1px solid #ddd;border-radius:8px;padding:8px;margin:8px 0}.item-head{display:flex;gap:8px;align-items:center}.badge{background:#eee;border-radius:4px;padding:0 6px}.receipt{background:#f0fff0;border:1px solid #090;border-radius:8px;padding:12px}.stat{display:flex;gap:8px}.analysis{white-space:pre-wrap}.hm-empty{color:#888}"
+      "bytes": 87888,
+      "sha256": "2a4a7ed00b1faef9619ac42d077b30c2",
+      "textOmitted": true
     },
     "home/shared-helpers": {
       "src": "packages/skill-home/src/render/html.ts",
-      "bytes": 145,
-      "sha256": "512ae1c3963c16e1787aed9be862e3da",
-      "text": "<script>function copyItem(id){var e=document.getElementById(id);if(e&&navigator.clipboard){navigator.clipboard.writeText(e.innerText);}}</script>"
+      "bytes": 23503,
+      "sha256": "b66fbb233aae9787467b9357e879a976",
+      "textOmitted": true
     },
     "home/templates": {
       "src": "packages/skill-home/src/render/templates.ts",
@@ -707,129 +713,129 @@
     },
     "home/tpl/care_query": {
       "src": "packages/skill-home/templates/care_query.html",
-      "bytes": 832,
-      "sha256": "f6981411ad6c0c68a8c25e8579021ffb",
-      "text": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n<meta charset=\"utf-8\">\n<title>协作查询</title>\n<style>.page{font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:12px}.item{border:1px solid #ddd;border-radius:8px;padding:8px;margin:8px 0}.item-head{display:flex;gap:8px;align-items:center}.badge{background:#eee;border-radius:4px;padding:0 6px}.receipt{background:#f0fff0;border:1px solid #090;border-radius:8px;padding:12px}.stat{display:flex;gap:8px}.analysis{white-space:pre-wrap}.hm-empty{color:#888}</style>\n</head>\n<body>\n<div class=\"page\">\n<h1>协作查询</h1>\n<p class=\"cmd\">home-cmd-read home.care.query</p>\n<p>probe &amp; &lt;x&gt;</p>\n</div>\n<script>function copyItem(id){var e=document.getElementById(id);if(e&&navigator.clipboard){navigator.clipboard.writeText(e.innerText);}}</script>\n</body>\n</html>\n"
+      "bytes": 111760,
+      "sha256": "1640eb00445007971072bb92f65bead3",
+      "textOmitted": true
     },
     "home/tpl/care_receipt": {
       "src": "packages/skill-home/templates/care_receipt.html",
-      "bytes": 832,
-      "sha256": "d1efa306ad5493fb864a7ca07fa2c6da",
-      "text": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n<meta charset=\"utf-8\">\n<title>协作回执</title>\n<style>.page{font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:12px}.item{border:1px solid #ddd;border-radius:8px;padding:8px;margin:8px 0}.item-head{display:flex;gap:8px;align-items:center}.badge{background:#eee;border-radius:4px;padding:0 6px}.receipt{background:#f0fff0;border:1px solid #090;border-radius:8px;padding:12px}.stat{display:flex;gap:8px}.analysis{white-space:pre-wrap}.hm-empty{color:#888}</style>\n</head>\n<body>\n<div class=\"page\">\n<h1>协作回执</h1>\n<p class=\"cmd\">home-cmd-read home.care.write</p>\n<p>probe &amp; &lt;x&gt;</p>\n</div>\n<script>function copyItem(id){var e=document.getElementById(id);if(e&&navigator.clipboard){navigator.clipboard.writeText(e.innerText);}}</script>\n</body>\n</html>\n"
+      "bytes": 111760,
+      "sha256": "d79093f4db1e7e847871f75e09346e30",
+      "textOmitted": true
     },
     "home/tpl/help": {
       "src": "packages/skill-home/templates/help.html",
-      "bytes": 843,
-      "sha256": "3762cc051baa8f1affa656c4ca0619be",
-      "text": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n<meta charset=\"utf-8\">\n<title>居家管家 HELP</title>\n<style>.page{font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:12px}.item{border:1px solid #ddd;border-radius:8px;padding:8px;margin:8px 0}.item-head{display:flex;gap:8px;align-items:center}.badge{background:#eee;border-radius:4px;padding:0 6px}.receipt{background:#f0fff0;border:1px solid #090;border-radius:8px;padding:12px}.stat{display:flex;gap:8px}.analysis{white-space:pre-wrap}.hm-empty{color:#888}</style>\n</head>\n<body>\n<div class=\"page\">\n<h1>居家管家 HELP</h1>\n<p class=\"cmd\">home-cmd-read home.help.lookup</p>\n<p>probe &amp; &lt;x&gt;</p>\n</div>\n<script>function copyItem(id){var e=document.getElementById(id);if(e&&navigator.clipboard){navigator.clipboard.writeText(e.innerText);}}</script>\n</body>\n</html>\n"
+      "bytes": 111771,
+      "sha256": "0bd563e7d46b518e5b6c5670efbdca74",
+      "textOmitted": true
     },
     "home/tpl/inventory_records": {
       "src": "packages/skill-home/templates/inventory_records.html",
-      "bytes": 839,
-      "sha256": "0a00f2eee479f7b12296ba91036d7bee",
-      "text": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n<meta charset=\"utf-8\">\n<title>盘点记录</title>\n<style>.page{font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:12px}.item{border:1px solid #ddd;border-radius:8px;padding:8px;margin:8px 0}.item-head{display:flex;gap:8px;align-items:center}.badge{background:#eee;border-radius:4px;padding:0 6px}.receipt{background:#f0fff0;border:1px solid #090;border-radius:8px;padding:12px}.stat{display:flex;gap:8px}.analysis{white-space:pre-wrap}.hm-empty{color:#888}</style>\n</head>\n<body>\n<div class=\"page\">\n<h1>盘点记录</h1>\n<p class=\"cmd\">home-cmd-read home.inventory.records</p>\n<p>probe &amp; &lt;x&gt;</p>\n</div>\n<script>function copyItem(id){var e=document.getElementById(id);if(e&&navigator.clipboard){navigator.clipboard.writeText(e.innerText);}}</script>\n</body>\n</html>\n"
+      "bytes": 111767,
+      "sha256": "c4d45f71d409f17e3e0111da356df047",
+      "textOmitted": true
     },
     "home/tpl/inventory_round": {
       "src": "packages/skill-home/templates/inventory_round.html",
-      "bytes": 837,
-      "sha256": "15d1ce7ea7089205683ea037c81570bc",
-      "text": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n<meta charset=\"utf-8\">\n<title>盘点回执</title>\n<style>.page{font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:12px}.item{border:1px solid #ddd;border-radius:8px;padding:8px;margin:8px 0}.item-head{display:flex;gap:8px;align-items:center}.badge{background:#eee;border-radius:4px;padding:0 6px}.receipt{background:#f0fff0;border:1px solid #090;border-radius:8px;padding:12px}.stat{display:flex;gap:8px}.analysis{white-space:pre-wrap}.hm-empty{color:#888}</style>\n</head>\n<body>\n<div class=\"page\">\n<h1>盘点回执</h1>\n<p class=\"cmd\">home-cmd-read home.inventory.round</p>\n<p>probe &amp; &lt;x&gt;</p>\n</div>\n<script>function copyItem(id){var e=document.getElementById(id);if(e&&navigator.clipboard){navigator.clipboard.writeText(e.innerText);}}</script>\n</body>\n</html>\n"
+      "bytes": 111765,
+      "sha256": "872b8b3e3381d82fe8749e9336afb32a",
+      "textOmitted": true
     },
     "home/tpl/item_detail": {
       "src": "packages/skill-home/templates/item_detail.html",
-      "bytes": 827,
-      "sha256": "20fe7492e0854f5b90da528b515c7da0",
-      "text": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n<meta charset=\"utf-8\">\n<title>看物品</title>\n<style>.page{font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:12px}.item{border:1px solid #ddd;border-radius:8px;padding:8px;margin:8px 0}.item-head{display:flex;gap:8px;align-items:center}.badge{background:#eee;border-radius:4px;padding:0 6px}.receipt{background:#f0fff0;border:1px solid #090;border-radius:8px;padding:12px}.stat{display:flex;gap:8px}.analysis{white-space:pre-wrap}.hm-empty{color:#888}</style>\n</head>\n<body>\n<div class=\"page\">\n<h1>看物品</h1>\n<p class=\"cmd\">home-cmd-read home.item.detail</p>\n<p>probe &amp; &lt;x&gt;</p>\n</div>\n<script>function copyItem(id){var e=document.getElementById(id);if(e&&navigator.clipboard){navigator.clipboard.writeText(e.innerText);}}</script>\n</body>\n</html>\n"
+      "bytes": 111755,
+      "sha256": "3c60089ba67952353c2a5b46097d10ec",
+      "textOmitted": true
     },
     "home/tpl/item_receipt": {
       "src": "packages/skill-home/templates/item_receipt.html",
-      "bytes": 836,
-      "sha256": "d65ee6df4ee62711249b944fefae8263",
-      "text": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n<meta charset=\"utf-8\">\n<title>录物品回执</title>\n<style>.page{font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:12px}.item{border:1px solid #ddd;border-radius:8px;padding:8px;margin:8px 0}.item-head{display:flex;gap:8px;align-items:center}.badge{background:#eee;border-radius:4px;padding:0 6px}.receipt{background:#f0fff0;border:1px solid #090;border-radius:8px;padding:12px}.stat{display:flex;gap:8px}.analysis{white-space:pre-wrap}.hm-empty{color:#888}</style>\n</head>\n<body>\n<div class=\"page\">\n<h1>录物品回执</h1>\n<p class=\"cmd\">home-cmd-read home.item.add</p>\n<p>probe &amp; &lt;x&gt;</p>\n</div>\n<script>function copyItem(id){var e=document.getElementById(id);if(e&&navigator.clipboard){navigator.clipboard.writeText(e.innerText);}}</script>\n</body>\n</html>\n"
+      "bytes": 111764,
+      "sha256": "a7641360615f79b7cc38fa56e92ea28a",
+      "textOmitted": true
     },
     "home/tpl/item_search": {
       "src": "packages/skill-home/templates/item_search.html",
-      "bytes": 827,
-      "sha256": "e2e1b7fcf538a1c05e088af654b96116",
-      "text": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n<meta charset=\"utf-8\">\n<title>查物品</title>\n<style>.page{font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:12px}.item{border:1px solid #ddd;border-radius:8px;padding:8px;margin:8px 0}.item-head{display:flex;gap:8px;align-items:center}.badge{background:#eee;border-radius:4px;padding:0 6px}.receipt{background:#f0fff0;border:1px solid #090;border-radius:8px;padding:12px}.stat{display:flex;gap:8px}.analysis{white-space:pre-wrap}.hm-empty{color:#888}</style>\n</head>\n<body>\n<div class=\"page\">\n<h1>查物品</h1>\n<p class=\"cmd\">home-cmd-read home.item.search</p>\n<p>probe &amp; &lt;x&gt;</p>\n</div>\n<script>function copyItem(id){var e=document.getElementById(id);if(e&&navigator.clipboard){navigator.clipboard.writeText(e.innerText);}}</script>\n</body>\n</html>\n"
+      "bytes": 111755,
+      "sha256": "93d629a641389ac10e75c9c401971927",
+      "textOmitted": true
     },
     "home/tpl/item_update_receipt": {
       "src": "packages/skill-home/templates/item_update_receipt.html",
-      "bytes": 839,
-      "sha256": "3b83e4cce9fb37d84cf732b5305dba94",
-      "text": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n<meta charset=\"utf-8\">\n<title>改物品回执</title>\n<style>.page{font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:12px}.item{border:1px solid #ddd;border-radius:8px;padding:8px;margin:8px 0}.item-head{display:flex;gap:8px;align-items:center}.badge{background:#eee;border-radius:4px;padding:0 6px}.receipt{background:#f0fff0;border:1px solid #090;border-radius:8px;padding:12px}.stat{display:flex;gap:8px}.analysis{white-space:pre-wrap}.hm-empty{color:#888}</style>\n</head>\n<body>\n<div class=\"page\">\n<h1>改物品回执</h1>\n<p class=\"cmd\">home-cmd-read home.item.update</p>\n<p>probe &amp; &lt;x&gt;</p>\n</div>\n<script>function copyItem(id){var e=document.getElementById(id);if(e&&navigator.clipboard){navigator.clipboard.writeText(e.innerText);}}</script>\n</body>\n</html>\n"
+      "bytes": 111767,
+      "sha256": "08f543ade74669cb3c856f3b6a195db0",
+      "textOmitted": true
     },
     "home/tpl/location_query": {
       "src": "packages/skill-home/templates/location_query.html",
-      "bytes": 836,
-      "sha256": "a19f327a38a856b97ec9b33c10de5dbe",
-      "text": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n<meta charset=\"utf-8\">\n<title>位置查询</title>\n<style>.page{font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:12px}.item{border:1px solid #ddd;border-radius:8px;padding:8px;margin:8px 0}.item-head{display:flex;gap:8px;align-items:center}.badge{background:#eee;border-radius:4px;padding:0 6px}.receipt{background:#f0fff0;border:1px solid #090;border-radius:8px;padding:12px}.stat{display:flex;gap:8px}.analysis{white-space:pre-wrap}.hm-empty{color:#888}</style>\n</head>\n<body>\n<div class=\"page\">\n<h1>位置查询</h1>\n<p class=\"cmd\">home-cmd-read home.location.query</p>\n<p>probe &amp; &lt;x&gt;</p>\n</div>\n<script>function copyItem(id){var e=document.getElementById(id);if(e&&navigator.clipboard){navigator.clipboard.writeText(e.innerText);}}</script>\n</body>\n</html>\n"
+      "bytes": 111764,
+      "sha256": "2f7adba86b24e7f365cc8a9f714e0127",
+      "textOmitted": true
     },
     "home/tpl/location_receipt": {
       "src": "packages/skill-home/templates/location_receipt.html",
-      "bytes": 836,
-      "sha256": "beea1cdce7fcace96996f5cb21bcbda3",
-      "text": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n<meta charset=\"utf-8\">\n<title>位置回执</title>\n<style>.page{font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:12px}.item{border:1px solid #ddd;border-radius:8px;padding:8px;margin:8px 0}.item-head{display:flex;gap:8px;align-items:center}.badge{background:#eee;border-radius:4px;padding:0 6px}.receipt{background:#f0fff0;border:1px solid #090;border-radius:8px;padding:12px}.stat{display:flex;gap:8px}.analysis{white-space:pre-wrap}.hm-empty{color:#888}</style>\n</head>\n<body>\n<div class=\"page\">\n<h1>位置回执</h1>\n<p class=\"cmd\">home-cmd-read home.location.write</p>\n<p>probe &amp; &lt;x&gt;</p>\n</div>\n<script>function copyItem(id){var e=document.getElementById(id);if(e&&navigator.clipboard){navigator.clipboard.writeText(e.innerText);}}</script>\n</body>\n</html>\n"
+      "bytes": 111764,
+      "sha256": "3d8135ab5ad7baabbf5a770c68ec3fcc",
+      "textOmitted": true
     },
     "home/tpl/outfit_pick": {
       "src": "packages/skill-home/templates/outfit_pick.html",
-      "bytes": 833,
-      "sha256": "71d1587dee95848e28367f7121aaa983",
-      "text": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n<meta charset=\"utf-8\">\n<title>穿搭推荐</title>\n<style>.page{font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:12px}.item{border:1px solid #ddd;border-radius:8px;padding:8px;margin:8px 0}.item-head{display:flex;gap:8px;align-items:center}.badge{background:#eee;border-radius:4px;padding:0 6px}.receipt{background:#f0fff0;border:1px solid #090;border-radius:8px;padding:12px}.stat{display:flex;gap:8px}.analysis{white-space:pre-wrap}.hm-empty{color:#888}</style>\n</head>\n<body>\n<div class=\"page\">\n<h1>穿搭推荐</h1>\n<p class=\"cmd\">home-cmd-read home.outfit.pick</p>\n<p>probe &amp; &lt;x&gt;</p>\n</div>\n<script>function copyItem(id){var e=document.getElementById(id);if(e&&navigator.clipboard){navigator.clipboard.writeText(e.innerText);}}</script>\n</body>\n</html>\n"
+      "bytes": 111761,
+      "sha256": "a5249c4a850d140f95f77cca604e2780",
+      "textOmitted": true
     },
     "home/tpl/shopping_query": {
       "src": "packages/skill-home/templates/shopping_query.html",
-      "bytes": 836,
-      "sha256": "5cbe8d4431348b7b821d410151338596",
-      "text": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n<meta charset=\"utf-8\">\n<title>购物查询</title>\n<style>.page{font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:12px}.item{border:1px solid #ddd;border-radius:8px;padding:8px;margin:8px 0}.item-head{display:flex;gap:8px;align-items:center}.badge{background:#eee;border-radius:4px;padding:0 6px}.receipt{background:#f0fff0;border:1px solid #090;border-radius:8px;padding:12px}.stat{display:flex;gap:8px}.analysis{white-space:pre-wrap}.hm-empty{color:#888}</style>\n</head>\n<body>\n<div class=\"page\">\n<h1>购物查询</h1>\n<p class=\"cmd\">home-cmd-read home.shopping.query</p>\n<p>probe &amp; &lt;x&gt;</p>\n</div>\n<script>function copyItem(id){var e=document.getElementById(id);if(e&&navigator.clipboard){navigator.clipboard.writeText(e.innerText);}}</script>\n</body>\n</html>\n"
+      "bytes": 111764,
+      "sha256": "32c27a17c7cafe65acbba18c47aeebf6",
+      "textOmitted": true
     },
     "home/tpl/shopping_receipt": {
       "src": "packages/skill-home/templates/shopping_receipt.html",
-      "bytes": 836,
-      "sha256": "1a5627730d9c283fd9e7f38031953e1c",
-      "text": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n<meta charset=\"utf-8\">\n<title>购物回执</title>\n<style>.page{font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:12px}.item{border:1px solid #ddd;border-radius:8px;padding:8px;margin:8px 0}.item-head{display:flex;gap:8px;align-items:center}.badge{background:#eee;border-radius:4px;padding:0 6px}.receipt{background:#f0fff0;border:1px solid #090;border-radius:8px;padding:12px}.stat{display:flex;gap:8px}.analysis{white-space:pre-wrap}.hm-empty{color:#888}</style>\n</head>\n<body>\n<div class=\"page\">\n<h1>购物回执</h1>\n<p class=\"cmd\">home-cmd-read home.shopping.write</p>\n<p>probe &amp; &lt;x&gt;</p>\n</div>\n<script>function copyItem(id){var e=document.getElementById(id);if(e&&navigator.clipboard){navigator.clipboard.writeText(e.innerText);}}</script>\n</body>\n</html>\n"
+      "bytes": 111764,
+      "sha256": "16aeb4be31c5eb132420c64954907e95",
+      "textOmitted": true
     },
     "home/tpl/stats_alert": {
       "src": "packages/skill-home/templates/stats_alert.html",
-      "bytes": 833,
-      "sha256": "4995810b93ddc09ce19fc33d49425e74",
-      "text": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n<meta charset=\"utf-8\">\n<title>闲置过期</title>\n<style>.page{font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:12px}.item{border:1px solid #ddd;border-radius:8px;padding:8px;margin:8px 0}.item-head{display:flex;gap:8px;align-items:center}.badge{background:#eee;border-radius:4px;padding:0 6px}.receipt{background:#f0fff0;border:1px solid #090;border-radius:8px;padding:12px}.stat{display:flex;gap:8px}.analysis{white-space:pre-wrap}.hm-empty{color:#888}</style>\n</head>\n<body>\n<div class=\"page\">\n<h1>闲置过期</h1>\n<p class=\"cmd\">home-cmd-read home.stats.alert</p>\n<p>probe &amp; &lt;x&gt;</p>\n</div>\n<script>function copyItem(id){var e=document.getElementById(id);if(e&&navigator.clipboard){navigator.clipboard.writeText(e.innerText);}}</script>\n</body>\n</html>\n"
+      "bytes": 111761,
+      "sha256": "656efdced0070b7454526312a78ddffd",
+      "textOmitted": true
     },
     "home/tpl/stats_overview": {
       "src": "packages/skill-home/templates/stats_overview.html",
-      "bytes": 836,
-      "sha256": "51186d80bc0bf230a39340b3de7cbae1",
-      "text": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n<meta charset=\"utf-8\">\n<title>物品总览</title>\n<style>.page{font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:12px}.item{border:1px solid #ddd;border-radius:8px;padding:8px;margin:8px 0}.item-head{display:flex;gap:8px;align-items:center}.badge{background:#eee;border-radius:4px;padding:0 6px}.receipt{background:#f0fff0;border:1px solid #090;border-radius:8px;padding:12px}.stat{display:flex;gap:8px}.analysis{white-space:pre-wrap}.hm-empty{color:#888}</style>\n</head>\n<body>\n<div class=\"page\">\n<h1>物品总览</h1>\n<p class=\"cmd\">home-cmd-read home.stats.overview</p>\n<p>probe &amp; &lt;x&gt;</p>\n</div>\n<script>function copyItem(id){var e=document.getElementById(id);if(e&&navigator.clipboard){navigator.clipboard.writeText(e.innerText);}}</script>\n</body>\n</html>\n"
+      "bytes": 111764,
+      "sha256": "e4219f67a7a9ea80bb511fe4497ff99d",
+      "textOmitted": true
     },
     "home/tpl/tag_query": {
       "src": "packages/skill-home/templates/tag_query.html",
-      "bytes": 825,
-      "sha256": "7022b0691a5b4162982d9ae4b796f0ff",
-      "text": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n<meta charset=\"utf-8\">\n<title>看标签</title>\n<style>.page{font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:12px}.item{border:1px solid #ddd;border-radius:8px;padding:8px;margin:8px 0}.item-head{display:flex;gap:8px;align-items:center}.badge{background:#eee;border-radius:4px;padding:0 6px}.receipt{background:#f0fff0;border:1px solid #090;border-radius:8px;padding:12px}.stat{display:flex;gap:8px}.analysis{white-space:pre-wrap}.hm-empty{color:#888}</style>\n</head>\n<body>\n<div class=\"page\">\n<h1>看标签</h1>\n<p class=\"cmd\">home-cmd-read home.tag.query</p>\n<p>probe &amp; &lt;x&gt;</p>\n</div>\n<script>function copyItem(id){var e=document.getElementById(id);if(e&&navigator.clipboard){navigator.clipboard.writeText(e.innerText);}}</script>\n</body>\n</html>\n"
+      "bytes": 111753,
+      "sha256": "fb973686459412c5804d26a94a8f5ba7",
+      "textOmitted": true
     },
     "home/tpl/tag_receipt": {
       "src": "packages/skill-home/templates/tag_receipt.html",
-      "bytes": 837,
-      "sha256": "5f2c768b35d3f638a3c1908420ee6887",
-      "text": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n<meta charset=\"utf-8\">\n<title>管标签回执</title>\n<style>.page{font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:12px}.item{border:1px solid #ddd;border-radius:8px;padding:8px;margin:8px 0}.item-head{display:flex;gap:8px;align-items:center}.badge{background:#eee;border-radius:4px;padding:0 6px}.receipt{background:#f0fff0;border:1px solid #090;border-radius:8px;padding:12px}.stat{display:flex;gap:8px}.analysis{white-space:pre-wrap}.hm-empty{color:#888}</style>\n</head>\n<body>\n<div class=\"page\">\n<h1>管标签回执</h1>\n<p class=\"cmd\">home-cmd-read home.tag.write</p>\n<p>probe &amp; &lt;x&gt;</p>\n</div>\n<script>function copyItem(id){var e=document.getElementById(id);if(e&&navigator.clipboard){navigator.clipboard.writeText(e.innerText);}}</script>\n</body>\n</html>\n"
+      "bytes": 111765,
+      "sha256": "1cdd23e802b8ad4848f537bb2d246691",
+      "textOmitted": true
     },
     "home/tpl/ticket_query": {
       "src": "packages/skill-home/templates/ticket_query.html",
-      "bytes": 834,
-      "sha256": "5e3be7f9a4c8e82f594f05fdaf2cbd91",
-      "text": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n<meta charset=\"utf-8\">\n<title>票据查询</title>\n<style>.page{font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:12px}.item{border:1px solid #ddd;border-radius:8px;padding:8px;margin:8px 0}.item-head{display:flex;gap:8px;align-items:center}.badge{background:#eee;border-radius:4px;padding:0 6px}.receipt{background:#f0fff0;border:1px solid #090;border-radius:8px;padding:12px}.stat{display:flex;gap:8px}.analysis{white-space:pre-wrap}.hm-empty{color:#888}</style>\n</head>\n<body>\n<div class=\"page\">\n<h1>票据查询</h1>\n<p class=\"cmd\">home-cmd-read home.ticket.query</p>\n<p>probe &amp; &lt;x&gt;</p>\n</div>\n<script>function copyItem(id){var e=document.getElementById(id);if(e&&navigator.clipboard){navigator.clipboard.writeText(e.innerText);}}</script>\n</body>\n</html>\n"
+      "bytes": 111762,
+      "sha256": "b787a0e601a88dc5255ee114ff672d19",
+      "textOmitted": true
     },
     "home/tpl/ticket_receipt": {
       "src": "packages/skill-home/templates/ticket_receipt.html",
-      "bytes": 834,
-      "sha256": "21a590b22651c0661503f1b48576899c",
-      "text": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n<meta charset=\"utf-8\">\n<title>票据回执</title>\n<style>.page{font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:12px}.item{border:1px solid #ddd;border-radius:8px;padding:8px;margin:8px 0}.item-head{display:flex;gap:8px;align-items:center}.badge{background:#eee;border-radius:4px;padding:0 6px}.receipt{background:#f0fff0;border:1px solid #090;border-radius:8px;padding:12px}.stat{display:flex;gap:8px}.analysis{white-space:pre-wrap}.hm-empty{color:#888}</style>\n</head>\n<body>\n<div class=\"page\">\n<h1>票据回执</h1>\n<p class=\"cmd\">home-cmd-read home.ticket.write</p>\n<p>probe &amp; &lt;x&gt;</p>\n</div>\n<script>function copyItem(id){var e=document.getElementById(id);if(e&&navigator.clipboard){navigator.clipboard.writeText(e.innerText);}}</script>\n</body>\n</html>\n"
+      "bytes": 111762,
+      "sha256": "c9fc00a582281ecc6786341556524233",
+      "textOmitted": true
     },
     "home/tpl/trip_receipt": {
       "src": "packages/skill-home/templates/trip_receipt.html",
-      "bytes": 833,
-      "sha256": "a55610736700e91d54ff05e4f40c5be2",
-      "text": "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n<meta charset=\"utf-8\">\n<title>出行回执</title>\n<style>.page{font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:12px}.item{border:1px solid #ddd;border-radius:8px;padding:8px;margin:8px 0}.item-head{display:flex;gap:8px;align-items:center}.badge{background:#eee;border-radius:4px;padding:0 6px}.receipt{background:#f0fff0;border:1px solid #090;border-radius:8px;padding:12px}.stat{display:flex;gap:8px}.analysis{white-space:pre-wrap}.hm-empty{color:#888}</style>\n</head>\n<body>\n<div class=\"page\">\n<h1>出行回执</h1>\n<p class=\"cmd\">home-cmd-read home.trip.manage</p>\n<p>probe &amp; &lt;x&gt;</p>\n</div>\n<script>function copyItem(id){var e=document.getElementById(id);if(e&&navigator.clipboard){navigator.clipboard.writeText(e.innerText);}}</script>\n</body>\n</html>\n"
+      "bytes": 111761,
+      "sha256": "52eba22fe2bcedb540faaaf2b7cae67d",
+      "textOmitted": true
     },
     "memo/escape": {
       "src": "packages/skill-memo-ilife/src/render/html.ts",
@@ -897,12 +903,6 @@
       "sha256": "7e51ee0e89a060057459219d8ece2c38",
       "text": "<section data-skill=\"memo\" data-shape=\"list\"><div class=\"item\"><div class=\"item-head\"><span class=\"id\">1</span><span class=\"badge\">餐饮&lt;&amp;&gt;</span></div><div class=\"content\">内容&lt;&amp;&gt;</div></div><div class=\"item\"><div class=\"item-head\"><span class=\"id\">2</span><span class=\"badge\">交通/地铁</span></div><div class=\"content\">内容&lt;&amp;&gt;</div></div></section>"
     },
-    "memo/frag/memo.stats": {
-      "src": "packages/skill-memo-ilife/src/render/envelope.ts",
-      "bytes": 195,
-      "sha256": "68ad0ef092088f7e04f832f04f1d58f3",
-      "text": "<section data-skill=\"memo\" data-shape=\"stat\"><div class=\"stat\"><b>1</b><span>a</span></div><div class=\"stat\"><b>2.5</b><span>b</span></div><div class=\"stat\"><b>0</b><span>c</span></div></section>"
-    },
     "memo/frag/memo.sync": {
       "src": "packages/skill-memo-ilife/src/render/envelope.ts",
       "bytes": 108,
@@ -923,9 +923,9 @@
     },
     "memo/keys": {
       "src": "packages/skill-memo-ilife/src/render/envelope.ts",
-      "bytes": 346,
-      "sha256": "51465a4279396b3ebdc244a26a4e3716",
-      "text": "[[\"memo.auth\",\"receipt\"],[\"memo.batch\",\"receipt\"],[\"memo.create\",\"receipt\"],[\"memo.detail\",\"detail\"],[\"memo.help.lookup\",\"list\"],[\"memo.init\",\"receipt\"],[\"memo.remind\",\"list\"],[\"memo.reminder\",\"receipt\"],[\"memo.remove\",\"receipt\"],[\"memo.search\",\"list\"],[\"memo.stats\",\"stat\"],[\"memo.sync\",\"receipt\"],[\"memo.update\",\"receipt\"],[\"memo.wish\",\"list\"]]"
+      "bytes": 389,
+      "sha256": "60f59ee86847e1716d24d08a0dbc3d4e",
+      "text": "[[\"memo.auth\",\"receipt\"],[\"memo.batch\",\"receipt\"],[\"memo.create\",\"receipt\"],[\"memo.data.query\",\"resultset\"],[\"memo.data.schema\",\"resultset\"],[\"memo.detail\",\"detail\"],[\"memo.help.lookup\",\"list\"],[\"memo.init\",\"receipt\"],[\"memo.remind\",\"list\"],[\"memo.reminder\",\"receipt\"],[\"memo.remove\",\"receipt\"],[\"memo.search\",\"list\"],[\"memo.sync\",\"receipt\"],[\"memo.update\",\"receipt\"],[\"memo.wish\",\"list\"]]"
     },
     "memo/shape-throw": {
       "src": "packages/skill-memo-ilife/src/render/html.ts",
@@ -959,9 +959,9 @@
     },
     "memo/shape/list-empty": {
       "src": "packages/skill-memo-ilife/src/render/html.ts",
-      "bytes": 95,
-      "sha256": "92c28614cb5fa21141e9b407f4c96b89",
-      "text": "<section data-skill=\"memo\" data-shape=\"list\"><div class=\"hm-empty\">暂无记录</div></section>"
+      "bytes": 98,
+      "sha256": "9d475004ea7167823e816b6b23ecac51",
+      "text": "<section data-skill=\"memo\" data-shape=\"list\"><div class=\"ilife-empty\">暂无记录</div></section>"
     },
     "memo/shape/receipt": {
       "src": "packages/skill-memo-ilife/src/render/html.ts",
@@ -983,44 +983,44 @@
     },
     "memo/tpl/change_category": {
       "src": "packages/skill-memo-ilife/templates/change_category.html",
-      "bytes": 22331,
-      "sha256": "1106a4837bb34843562d7ca50a36f992",
+      "bytes": 137041,
+      "sha256": "eb9da3bf71488422ef904101b9435d11",
       "textOmitted": true
     },
     "memo/tpl/init_report": {
       "src": "packages/skill-memo-ilife/templates/init_report.html",
-      "bytes": 21010,
-      "sha256": "4d4c866888e88ba8bfaba744bc054709",
+      "bytes": 133889,
+      "sha256": "b606aef6d064ecb13ea9e4c75a3cc244",
       "textOmitted": true
     },
     "memo/tpl/memo_query": {
       "src": "packages/skill-memo-ilife/templates/memo_query.html",
-      "bytes": 22951,
-      "sha256": "7b053a231d5a0bfc9b330cfe700c9706",
+      "bytes": 139277,
+      "sha256": "3a5cf63c724d4d0ee648061ed672cbe9",
       "textOmitted": true
     },
     "memo/tpl/receipt": {
       "src": "packages/skill-memo-ilife/templates/receipt.html",
-      "bytes": 16604,
-      "sha256": "e05a3a618ad5cd58e91513faea38c775",
+      "bytes": 134107,
+      "sha256": "473dab01a53cea439bad734f0ac11ae2",
       "textOmitted": true
     },
     "memo/tpl/sync_report": {
       "src": "packages/skill-memo-ilife/templates/sync_report.html",
-      "bytes": 27825,
-      "sha256": "0a4495c501f411520a51560960e6b9e2",
+      "bytes": 143613,
+      "sha256": "15f78dbf49752ca2d7e6327f60d1277a",
       "textOmitted": true
     },
     "memo/tpl/wish_complete": {
       "src": "packages/skill-memo-ilife/templates/wish_complete.html",
-      "bytes": 21378,
-      "sha256": "ef5a778cf07205b610f349f0553e7f1b",
+      "bytes": 135536,
+      "sha256": "273822f98d50e32dd5f23a298c5986b2",
       "textOmitted": true
     },
     "memo/tpl/wish_plan": {
       "src": "packages/skill-memo-ilife/templates/wish_plan.html",
-      "bytes": 22025,
-      "sha256": "8f5bf57077f4cb20d21f21ecffbf813a",
+      "bytes": 135789,
+      "sha256": "b2c6e0f9fa8b8d7236520cabdb455b43",
       "textOmitted": true
     },
     "schedule/escape": {
@@ -1079,9 +1079,9 @@
     },
     "schedule/keys": {
       "src": "packages/skill-schedule/src/render/envelope.ts",
-      "bytes": 275,
-      "sha256": "1ed0ab9975ad6da4cdb10b0753f19f1b",
-      "text": "[[\"schedule.help.lookup\",\"list\"],[\"schedule.plan.today\",\"list\"],[\"schedule.plan.write\",\"receipt\"],[\"schedule.record.compare\",\"analysis\"],[\"schedule.record.detail\",\"detail\"],[\"schedule.record.range\",\"stat\"],[\"schedule.record.today\",\"list\"],[\"schedule.record.write\",\"receipt\"]]"
+      "bytes": 348,
+      "sha256": "23d536db2bcc95dfc2a4623360da0f9b",
+      "text": "[[\"schedule.data.query\",\"resultset\"],[\"schedule.data.schema\",\"resultset\"],[\"schedule.help.lookup\",\"list\"],[\"schedule.plan.today\",\"list\"],[\"schedule.plan.write\",\"receipt\"],[\"schedule.record.compare\",\"analysis\"],[\"schedule.record.detail\",\"detail\"],[\"schedule.record.range\",\"stat\"],[\"schedule.record.today\",\"list\"],[\"schedule.record.write\",\"receipt\"]]"
     },
     "schedule/shape-throw": {
       "src": "packages/skill-schedule/src/render/html.ts",

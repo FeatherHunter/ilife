@@ -14,6 +14,7 @@
  * 用法：
  *   node tooling/calorie-html-snapshot.mjs --check     # 校验（默认，差异即 exit 1）
  *   node tooling/calorie-html-snapshot.mjs --write     # 重录基线（显式动作）
+ *   node tooling/calorie-html-snapshot.mjs --write-en  # 重录英文列账本（只记英文列偏离中文列的产物）
  *   node tooling/calorie-html-snapshot.mjs --list      # 列出产物 id＋出处
  *   node tooling/calorie-html-snapshot.mjs --show <id> # 打印单件基线 vs 实际对照
  *   node tooling/calorie-html-snapshot.mjs --selftest  # 自证：改一处必红，还原必绿
@@ -22,7 +23,7 @@
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join } from 'node:path';
 import { DEFAULT_LANGUAGE, LANGUAGES, ledgerPath, langFromArgv, normalizeLang } from './i18n-langs.mjs';
 
@@ -68,7 +69,15 @@ async function loadCalorie() {
   }
 }
 
-export async function collect() {
+/** 以指定语言上下文采集两件产物（#1324）：语言只影响 m() 取词，采集面与固定 now 完全一致。 */
+export async function collect(lang = DEFAULT_LANGUAGE) {
+  const L = normalizeLang(lang);
+  if (L !== DEFAULT_LANGUAGE) {
+    const p = join(root, 'packages/base-entries/dist/index.js');
+    if (!existsSync(p)) throw new Error('dist 缺失：packages/base-entries/dist/index.js —— 请先 pnpm build');
+    const { runWithLanguage } = await import(pathToFileURL(p).href);
+    return runWithLanguage(L, () => collect());
+  }
   const mod = await loadCalorie();
   const data = mod.buildHelpFileData(new Date(FIXED_NOW.getTime()));
   const html = mod.renderHelpFileHtml(data);
@@ -127,8 +136,12 @@ export function enGaps(col, enArtifacts) {
     const zh = col.artifacts[id];
     if (!zh) { undocumented.push(id + '（中文列也没有这件）'); continue; }
     const enSha = cur && typeof cur === 'object' ? cur.sha256 : cur;
-    // 英文列与中文列**同哈希**＝这件没偏离，本来就不该进 records（与 loadEnColumn 的完整性判据同口径）。
-    if (enSha === zh.sha256) continue;
+    // 英文列与中文列**同哈希**＝这件没偏离，本来就不该进 records（与 loadEnColumn 的完整性判据同口径）；
+    //   但若 records 里还留着它，说明英文列已回退、记录过期，必须红。
+    if (enSha === zh.sha256) {
+      if (col.records[id] !== undefined) shapeChanged.push(id + ' 记录 ' + col.records[id].sha256 + ' 实际与中文列同哈希（记录应删除）');
+      continue;
+    }
     const rec = col.records[id];
     if (rec === undefined) { undocumented.push(id); continue; }
     if (rec.sha256 !== enSha) shapeChanged.push(id + ' 记录 ' + rec.sha256 + ' 实际 ' + enSha);
@@ -157,21 +170,24 @@ async function cmdCheck() {
   }
   if (bad > 0) { console.error('RESULT: 基线不一致（' + bad + ' 件）；中文列数值不许改，先查是谁动的'); process.exit(1); }
   console.log('COLUMN zh  artifacts=' + Object.keys(artifacts).length + ' ledger=' + SNAP_BASE);
-  // 英文列：另起一份账本（records 形）。空列＝0 件待录入，**显式报数**，不当绿也不当红。
+  // 英文列：另起一份账本（records 形）；对照读数默认按英文上下文现采（#1324）。
   let enCol;
   try { enCol = loadEnColumn(); } catch (e) {
     console.error('RED 英文列账本不可用：' + (e && e.message ? e.message : e));
     process.exit(1);
   }
   const enCount = Object.keys(enCol.records).length;
-  // 英文列对照读数入口：CLI `--en-artifacts <文件>`（JSON：id → { sha256 }）；不给＝待对照（pending）。
-  const gaps = enGaps(enCol, EN_ARTIFACTS);
+  const enActual = EN_ARTIFACTS || (await collect('en')).artifacts;
+  const gaps = enGaps(enCol, enActual);
+  const sameAsZh = Object.keys(enActual).filter((id) => {
+    const zh = artifacts[id];
+    const cur = enActual[id];
+    const sha = cur && typeof cur === 'object' && typeof cur.sha256 === 'string' ? cur.sha256 : undefined;
+    return zh !== undefined && sha !== undefined && sha === zh.sha256;
+  }).length;
   console.log('COLUMN en  recorded=' + enCount + ' ledger=' + ledgerPath(SNAP_BASE, 'en')
-    + (enCount === 0 ? '（0 件＝待录入：英文列骨架已立，迁移票按批次录入；空列不许当绿，故此处显式报数）' : '')
-    + (gaps.pending ? ' 待对照=' + Object.keys(artifacts).length + '（没有英文列对照读数）' : ' 未录入=' + gaps.undocumented.length));
-  if (gaps.pending) {
-    console.log('PENDING: 英文列 0 件（骨架已立、无记录可比）：这不是「英文页通过」，是「还没有英文页」。');
-  }
+    + ' unrecorded=' + gaps.undocumented.length + ' sameAsZh=' + sameAsZh
+    + '（同哈希件＝英文列与中文列逐字相同，按账本语义不入 records）');
   if (gaps.shapeChanged.length) {
     console.error('FAIL: 英文列记录与实际不符 ' + gaps.shapeChanged.length + ' 件（英文列是**偏离中文列**的记录，不是中文列的复制）');
     for (const x of gaps.shapeChanged.slice(0, 20)) console.error('  ! ' + x);
@@ -225,6 +241,25 @@ async function cmdSelftest() {
   const b = sha256(html + 'X');
   if (a === b) { console.error('SELFTEST RED:  mutation 未改变哈希（门失明）'); process.exit(1); }
   console.log('SELFTEST: 改一处必红 OK（' + a + ' vs ' + b + '）');
+  // 英文列自证（#1324）：真实采集英文产物 → 记录与当刻实际一致；删一条必报漏记、改一条必报错记。
+  const enCol = loadEnColumn();
+  const enActual = (await collect('en')).artifacts;
+  const gapsOk = enGaps(enCol, enActual);
+  if (gapsOk.undocumented.length || gapsOk.shapeChanged.length || gapsOk.missing.length) {
+    console.error('SELFTEST RED: 英文列记录与英文列实际不一致 ' + JSON.stringify(gapsOk));
+    process.exit(1);
+  }
+  const firstId = Object.keys(enCol.records)[0];
+  const dropped = { ...enCol.records };
+  delete dropped[firstId];
+  const gapsDropped = enGaps({ ...enCol, records: dropped }, enActual);
+  const wrong = { ...enCol.records, [firstId]: { ...enCol.records[firstId], sha256: 'deadbeefdeadbeefdeadbeefdeadbeef' } };
+  const gapsWrong = enGaps({ ...enCol, records: wrong }, enActual);
+  if (!gapsDropped.undocumented.includes(firstId) || gapsWrong.shapeChanged.length !== 1) {
+    console.error('SELFTEST RED: 英文列变异未变红 ' + JSON.stringify({ dropped: gapsDropped.undocumented, wrong: gapsWrong.shapeChanged }));
+    process.exit(1);
+  }
+  console.log('SELFTEST 英文列读数：' + JSON.stringify({ recorded: Object.keys(enCol.records).length, unrecorded: gapsOk.undocumented.length, dropped: gapsDropped.undocumented.length, mismatch: gapsWrong.shapeChanged.length }));
   await cmdCheck();
   console.log('SELFTEST: 还原必绿 OK');
 }
@@ -232,14 +267,14 @@ async function cmdSelftest() {
 /** 英文列记录的重录入口（显式动作）：把当刻**偏离中文列**的产物写进英文列账本。 */
 async function cmdWriteEn() {
   const { artifacts } = await collect();
-  // 英文列的**当刻实际**：给了 --en-artifacts 用对照读数，没给就用当刻原生采集。
-  //   迁移完成前两者逐字节相同 ⇒ 记录为空（0 件），这正是「没有偏离」的意思。
-  const enActual = EN_ARTIFACTS || artifacts;
+  // 英文列的**当刻实际**：给了 --en-artifacts 用对照读数，没给就按英文上下文现采（#1324）。
+  const enActual = EN_ARTIFACTS || (await collect('en')).artifacts;
   const enSnap = existsSync(SNAP_EN) ? JSON.parse(readFileSync(SNAP_EN, 'utf8')) : null;
+  const zhSnap = loadSnap();
   const records = {};
   for (const [id, cur] of Object.entries(enActual)) {
-    const zh = JSON.parse(readFileSync(SNAP_PATH, 'utf8')).artifacts?.[id];
-    if (!zh) continue;
+    const zh = zhSnap.artifacts?.[id];
+    if (!zh) throw new Error('英文列采集到中文列没有的产物：' + id);
     if (cur.sha256 === zh.sha256) continue;
     const prev = enSnap && enSnap.records ? enSnap.records[id] : undefined;
     records[id] = {

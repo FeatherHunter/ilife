@@ -1,6 +1,6 @@
 # 多语言收口核对 M1–M10（#1197）
 
-状态：M1／M3／M6／M7／M9 已结案；M2／M4／M8 已转承接票；M10 为裁决记录、待用户确认；M5 为历史记录缺口，按现状登记。日期：2026-11-03。
+状态：M1／M3／M6／M7／M9 已结案；M2 已交付（#1325）；M4／M8 已交付（#1322／#1324）；M10 为裁决记录、待用户确认；M5 为历史记录缺口，按现状登记。日期：2026-11-03（M4／M8 交付状态 2026-11-04 更新）。
 
 本记录回答 #1197 规格 US21「遗留（既有红、待定件、未合并分支）在票面显式登记」与收口核对里的 M1–M10 清单（原始清单见会话产物 `.scratch/verify-1197/verify-1318.md` 第 6 节）。每条都写清「谁看哪个读数」，不代替用户确认。
 
@@ -15,7 +15,7 @@
 | M5 | #1308 关闭缺带会话 id 的用户原话 | 历史记录缺口 | #1308 已于 2026-11-02T03:14:27Z 关闭，票面最后一条为「进度：100%…按票面保持 open 待用户确认后关闭」；原会话原话不在仓内，无法回溯 | **按现状登记**；属旧四步闸门遗留，不重开（重开只能由人做），规格收口评论如实写明 |
 | M6 | #1306 无第二方复核结论 | 记录缺失 | 独立子代理复核 PASS-with-notes；已验证 resolve 空白回退、entries 空白判红、params 集合相等、i18n-tables 共用；真仓 entries `keys=19082 blanks=0`、params `keys=19270 mismatch=0` | **已结案**：`docs/agents/多语言-收口复核-1306.md`；P2（skew 计对）与 P3（少参语义注释）已在收口修复分支改正，P3/P4 边界转 **#1328** |
 | M7 | 英文唤醒词 23 条 vs 裁决约 30 条 | 范围缩减 | 六份 `wake-en.json` 合计 30 条（bill 5／calorie 6／chef 5／home 5／memo 4／schedule 5）；`node tooling/wake-en.mjs --check` EXIT 0；六家 `wake-en-1310` 测试全绿 | **已结案**（补到 30）；747 全覆盖仍按 #1236 裁决不做 |
-| M8 | 英文列账本 `recorded=0` | 机制空转 | `tooling/skill-html.snapshot.en.json`、`tooling/calorie-html.snapshot.en.json` 均 `artifactCount=0`；门输出 `PENDING: 英文列 0 件`；bill `t689-页面指纹.en.json` 44/44 为可用先例 | **承接票 #1324**；`_en` 命名机制已在收口修复分支交付 |
+| M8 | 英文列账本 `recorded=0` | 机制空转 | **已交付（#1324）**：`tooling/skill-html.snapshot.en.json` `records=12`（英文列 194 件产物中只有 12 件随语言变化，其余 182 件与中文列逐字节相同、按语义不入 records），门输出 `COLUMN en recorded=12 unrecorded=0 sameAsZh=182`；`tooling/calorie-html.snapshot.en.json` `records=2`，`COLUMN en recorded=2 unrecorded=0 sameAsZh=0`；`--check` 按英文上下文现采真判漏记／错记，不再印 `PENDING`。同票重录过一次过期中文列账本（账本 51 条差异，产物未改）并把 #1197 迁到 base-paint 的 home／memo 31 件显式登记进 `MARKER_ALLOW` | **承接票 #1324（已交付）**；`_en` 命名机制已在收口修复分支交付 |
 | M9 | US9 整句化无第二方逐处比对记录 | 记录缺失 | 独立第二方复核 PASS-with-notes：三处模板与基线拼接逐字节一致、申报↔zh 3/3、23 处 `m()` 与申报 21 行对齐、无未申报改写；组件 103/103、快照 24/24 | **已结案**：`docs/agents/多语言-整句化申报.md`；第二方复核另发现 en c006 模板级缺陷（同一名词放两处、单复数不匹配），原记录归「范围外／非模板问题」不成立，已订正并转 **#1330**；②③ 无直接断言的覆盖缺口并入 #1330 验收；范围外盲区 `sort-toggle/runtime.ts:86` 转 **#1326** |
 | M10 | HELP 正文英文模式仍中文 | 裁决待确认 | bill en HELP：可见文本 0 处中文（页壳已英文化），注入数据 JSON 仍有中文（`groups[0].label=写入`、`wake_word=记支出` 等）；数据源属 363 件不迁类（bill／calorie `wake-assets.ts` #1309、home `helpAssets.ts` #1220、schedule `help-assets.ts` #1222） | **裁决记录**：`docs/agents/多语言-HELP正文语言裁决.md`「本轮保持中文」；**待用户确认**，不另开票 |
 
@@ -25,7 +25,8 @@
 |---|---|---|
 | #1322 | US1：加语言只加词条文件、语言清单派生 | 跨 14 个包与两道门，属架构改造，非「可当场修」 |
 | #1323 | #1230：宿主 `locale.preference` → CLI `caller` 接线 | **已交付（#1323）**：插件经 `ctx.get('settings')` 读 locale.preference，按调用形态以独立参数 `--caller-language` 透传；优先级 argv ＞ 配置 ＞ caller ＞ zh（详见 `docs/agents/多语言-宿主语言来路实测.md` §5） |
-| #1324 | 英文列账本补录（194＋2 件） | 依赖逐件生成英文产物与录账，工作量大 |
+| #1324 | 英文列账本补录（194＋2 件覆盖；records 记 12＋2 件偏离项） | **已交付（#1324）**：英文上下文真采集、漏记／错记／同哈希回退全红，`recorded=12`＋`recorded=2`、`unrecorded=0`；中文列账本追平既有漂移、home／memo 31 件标记显式登记 |
+| #1325 | seal-states 生成件语言化 | 涉及生成器与 `seals.yaml` 契约（已交付 #1325；中文列逐字不变，英文列随语言取） |
 | #1325 | seal-states 生成件语言化 | 涉及生成器与 `seals.yaml` 契约 |
 | #1326 | sort-toggle 运行时段全角括号 | 运行时段文案，需语言形态设计 |
 | #1327 | bill／schedule 用本地化报文 startsWith 判错误分类 | 运行逻辑缺口，需结构化错误码 |
