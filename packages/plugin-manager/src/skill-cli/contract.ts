@@ -54,6 +54,8 @@ export interface SkillCliSpec {
   readonly specialReads?: ReadonlyMap<string, () => unknown>;
   /** 单家 spawn 上限（毫秒）：测试可注入短时限；生产六家不传，一律取 {@link SPAWN_TIMEOUT_MS}。 */
   readonly spawnTimeoutMs?: number;
+  /** 调用方语言来源（#1323）：每次取数**现读**（DSH 设置可 live 改）；缺席＝不追加 `--caller-language`。 */
+  readonly callerLanguage?: (() => string | undefined) | undefined;
 }
 
 /** host.call 那一侧的最小面（面板请求函数只认这一格）。 */

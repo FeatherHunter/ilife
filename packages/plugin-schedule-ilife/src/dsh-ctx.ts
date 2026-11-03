@@ -112,6 +112,11 @@ export interface HostConnectionFace {
 
 /** 本插件用到的宿主面（apply 入参）。 */
 export interface SkillHostCtx {
+  /** 平台认可的软查找（#1323）：宿主语言偏好经 get('settings') 读。
+   *
+   *  **不许写进 inject**：settings 是可选服务，写进 inject 会让插件在无该服务的宿主上起不来；
+   *  口径见 docs/agents/dsh-client-contract.md「Prefer ctx.get(name) with an undefined check」。 */
+  get?<T = unknown>(name: string): T | undefined;
   readonly skills: SkillsFace;
   /** 模型工具注册表（#734）：本包把技能唯一出口开成 agent 工具。 */
   readonly tools?: ToolsFace;

@@ -77,6 +77,19 @@ export class SkillBridgeError extends Error {
 export const SKILL_CLI_REL = 'dist/cli/cmd_read.js' as const;
 
 /** 本家的桥：规格只此一份（出口在哪、错误类是谁、版本魔键走同步读）。 */
+/** 调用方语言来源（#1323）：index.ts 装配时登记读取器；每次取数现读（设置可 live 改）。 */
+let readCallerLanguage: (() => string | undefined) | undefined;
+
+/** 装配时登记读取器（宿主没有 settings 服务时，登记进来的读取器恒回 undefined）。 */
+export function setCallerLanguageReader(reader: (() => string | undefined) | undefined): void {
+  readCallerLanguage = reader;
+}
+
+/** 桥规格与 agent 工具共用的来源函数：现读，缺席＝不追加 --caller-language（中文缺省不变）。 */
+export function callerLanguageOf(): string | undefined {
+  return readCallerLanguage?.();
+}
+
 const bridge = createSkillCliBridge({
   skillPackage: SKILL_PACKAGE,
   repoRelativeCli: SKILL_CLI,
@@ -84,6 +97,7 @@ const bridge = createSkillCliBridge({
   moduleUrl: import.meta.url,
   hostCallMethod: HOST_CALL_METHOD,
   makeError: (code, message) => new SkillBridgeError(code, message),
+  callerLanguage: callerLanguageOf,
   specialReads: new Map([[VERSION_READ_KEY, () => readInstalledVersions()]]),
 });
 

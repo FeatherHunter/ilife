@@ -6,7 +6,7 @@
  *
  * #676 · 库目录不再读环境变量：唯一真相是配置文件（`paths.ts:resolveDbDir`，见那里件头）。
  */
-import { isLanguageArg } from 'base-link-core';
+import { isCallerLanguageArg, isLanguageArg } from 'base-link-core';
 import { runWithLanguage } from 'base-entries';
 import { resolveDbDir } from '../paths.js';
 import { fail } from '../shared/params.js';
@@ -57,6 +57,8 @@ function parseArgs(a: string[]): ReadArgs {
   for (let i = 1; i < a.length; i++) {
     if (a[i] === '--params' && i + 1 < a.length) o.params = a[++i] as string;
     else if (a[i] === '--html' && i + 1 < a.length) o.html = a[++i] as string;
+    // 宿主传的调用方偏好（#1323）：只跳值，值由 resolveLanguage 统一摘。
+    else if (isCallerLanguageArg(a[i] as string) && i + 1 < a.length) i++;
     else if (isLanguageArg(a[i] as string) && i + 1 < a.length) {
       if (a[i] === '--language') o.language = a[++i] as string;
       else o.formatLanguage = a[++i] as string;

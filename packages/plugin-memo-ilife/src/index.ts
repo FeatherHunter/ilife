@@ -16,7 +16,8 @@
 import { PROVIDER_NAME, provider as skillProvider } from './skill-provider.js';
 import { RPC_CHANNEL, RPC_ENDPOINT_READ, RPC_ENDPOINT_CONFIG_GET, RPC_ENDPOINT_CONFIG_SAVE, RPC_ENDPOINT_CONFIG_RESET, RPC_ENDPOINT_CONFIG_CHECK, ok, fail, parseReadPayload, parseSavePayload } from './contract.js';
 import type { RpcResult } from './contract.js';
-import { SkillBridgeError, readViaCli, readConfigSurface, writeConfigValues, resetConfigToDefaults, readConfigHealth } from './bridge.js';
+import { callerLanguageReader } from 'dsh-life-pack';
+import { SkillBridgeError, readViaCli, readConfigSurface, writeConfigValues, resetConfigToDefaults, readConfigHealth, setCallerLanguageReader, callerLanguageOf } from './bridge.js';
 import type { HostCtx, HostConnectionFace, RpcHandler } from './dsh-ctx.js';
 import { SKILL_TOOL_NAME, createSkillTool, resolveSkillEntry } from './skill-tool.js';
 import { m } from './entries/index.js';
@@ -61,6 +62,9 @@ const handleMemoRpc: RpcHandler = async (endpoint, payload): Promise<RpcResult> 
 };
 
 export function apply(ctx: HostCtx): void {
+  // #1323：宿主语言偏好（DSH 设置 locale.preference）在这里现读，随每次技能调用透传；
+  // 没有 settings 服务的宿主（web 等）恒回 undefined，即中文缺省，绝不阻断调用。
+  setCallerLanguageReader(callerLanguageReader(ctx));
   const loggerSource: unknown = ctx?.logger;
   const logger: HostLogger =
     (typeof loggerSource === 'function'
@@ -77,7 +81,7 @@ export function apply(ctx: HostCtx): void {
   // #734 路线①：把技能唯一出口开成 agent 工具。宿主进程里 spawn（自带运行时，不读 PATH），
   // 纯 DSH 机器上会话没有 `node` 也照样能用。契约与两级回退见 docs/agents/技能调用契约.md。
   try {
-    const disposeTool = ctx.tools?.register(createSkillTool());
+    const disposeTool = ctx.tools?.register(createSkillTool({ callerLanguage: callerLanguageOf }));
     if (disposeTool) ctx.effect(() => disposeTool, 'dsh-memo-ilife: skill tool cleanup');
     else logger.warn?.('[dsh-memo-ilife] tools face missing; agent tool ' + SKILL_TOOL_NAME + ' not registered');
   } catch (error) {

@@ -5,7 +5,7 @@
 // 取数（#839 起按域落位，以各域签名为准）：开闭库与多域查询住 `fetch/db.ts`；
 // 单域独占的取数住各域 run（search／history／shopping／data 内；旧址由 `fetch/index.ts` 转出）。
 // 口径：policy WriteOp（add/update/deprecate）+ RecipeOp（add/update/discard/add-ingredient/add-step，CLI 兼容 discard=deprecate）；queryHistory 无参返全量；buildShoppingList 合并行含 optional/category 标记（住 shopping）。
-import { isLanguageArg } from 'base-link-core';
+import { isCallerLanguageArg, isLanguageArg } from 'base-link-core';
 import { join, resolve } from 'node:path';
 import { writeFileSync } from 'node:fs';
 import {
@@ -192,6 +192,8 @@ function parseArgs(a: string[]): { key: string | undefined; params: string | und
   for (let i = 1; i < a.length; i++) {
     if (a[i] === '--params' && i + 1 < a.length) o.params = a[++i];
     else if (a[i] === '--html' && i + 1 < a.length) o.html = a[++i];
+    // 宿主传的调用方偏好（#1323）：只跳值，值由 resolveLanguage 统一摘。
+    else if (isCallerLanguageArg(a[i] as string) && i + 1 < a.length) i++;
     else if (isLanguageArg(a[i] as string) && i + 1 < a.length) {
       if (a[i] === '--language') o.language = a[++i];
       else o.formatLanguage = a[++i];
