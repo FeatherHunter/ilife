@@ -1,6 +1,6 @@
 # 多语言收口核对 M1–M10（#1197）
 
-状态：M1／M3／M6／M7／M9 已结案；M2 已交付（#1325）；M4／M8 已交付（#1322／#1324）；M10 为裁决记录、待用户确认；M5 为历史记录缺口，按现状登记。日期：2026-11-03（M4／M8 交付状态 2026-11-04 更新）。
+状态：M1／M3／M6／M7／M9 已结案；M2／M4／M8 已交付（#1325／#1322／#1324）；M10 为裁决记录、待用户确认；M5 为历史记录缺口，按现状登记。日期：2026-11-03（M2／M4／M8 交付状态 2026-11-04 更新）。
 
 本记录回答 #1197 规格 US21「遗留（既有红、待定件、未合并分支）在票面显式登记」与收口核对里的 M1–M10 清单（原始清单见会话产物 `.scratch/verify-1197/verify-1318.md` 第 6 节）。每条都写清「谁看哪个读数」，不代替用户确认。
 
@@ -9,9 +9,9 @@
 | # | 项 | 性质 | 当前读数／证据 | 处置与落点 |
 |---|---|---|---|---|
 | M1 | #1227 申报的纯英文注释新增 | 记录缺失 | `git show 78590c28` 逐行扫：源码级纯英文注释新增 `SOURCE_COMMENT_EN=0`；唯一真实偏离 `packages/base-render/src/components/sort-toggle/runtime.ts:104-106` 与申报一致 | **已结案**：`docs/agents/多语言-收口复核-1227.md` 固化方法与读数 |
-| M2 | seal-states 生成件各 5 行中文 | 生成器未处理 | 六个 `packages/plugin-*/src/seal-states.generated.ts` 各 5 行中文；源 `seals.yaml`、生成器 `node tooling/gen-seals.mjs` | **承接票 #1325** |
+| M2 | seal-states 生成件各 5 行中文 | 生成器未处理 | 六个 `packages/plugin-*/src/seal-states.generated.ts` 各 5 行中文；源 `seals.yaml`、生成器 `node tooling/gen-seals.mjs` | **已交付（#1325）**：`seals.yaml` 每个文本叶子 `{zh,en}`，生成器产出中／英两套表与 `sealStates(product, language)`；中文列逐字不变，英文列见六份生成件与 `seal-states-1325` 断言 |
 | M3 | #1225「911 条」只在已清理 worktree | 记录缺失 | 可从仓内 JSON 复算：`tooling/i18n-ticket-scope.json` 的 `tickets['1225'].excluded` 43 件、合计 `literals=911`（迁移入 32 件／795 条） | **已结案**：本记录给出复算命令，无另票 |
-| M4 | #1198 语言清单派生化（=US1） | 规格承诺未达成 | 14 个 `packages/*/src/entries/index.ts` 写死 `defineCatalog({ zh, en })`；`packages/base-link-core/src/config/language.ts:21` `AVAILABLE_LANGUAGES=['zh','en']`；`tooling/i18n-langs.mjs:25` `LANGUAGES=['zh','en']` | **承接票 #1322**；规格关闭时按「缩减需用户确认」登记 |
+| M4 | #1198 语言清单派生化（=US1） | 规格承诺未达成 | **已交付（#1322）**：语言清单由 `tooling/gen-entry-catalogs.mjs` 从各包 `src/entries/<lang>.ts` 派生（`packages/base-link-core/src/config/languages.generated.ts`），14 个 `entries/index.ts` 不再手写语言键；`tooling/i18n-langs.mjs` 同源派生；加语言＝加词条文件＋`pnpm gen`（数据清单 `tooling/shared-copy.json`／排印名册另补） | 规格关闭时按「缩减已交付」登记；车次见 #1322 |
 | M5 | #1308 关闭缺带会话 id 的用户原话 | 历史记录缺口 | #1308 已于 2026-11-02T03:14:27Z 关闭，票面最后一条为「进度：100%…按票面保持 open 待用户确认后关闭」；原会话原话不在仓内，无法回溯 | **按现状登记**；属旧四步闸门遗留，不重开（重开只能由人做），规格收口评论如实写明 |
 | M6 | #1306 无第二方复核结论 | 记录缺失 | 独立子代理复核 PASS-with-notes；已验证 resolve 空白回退、entries 空白判红、params 集合相等、i18n-tables 共用；真仓 entries `keys=19082 blanks=0`、params `keys=19270 mismatch=0` | **已结案**：`docs/agents/多语言-收口复核-1306.md`；P2（skew 计对）与 P3（少参语义注释）已在收口修复分支改正，P3/P4 边界转 **#1328** |
 | M7 | 英文唤醒词 23 条 vs 裁决约 30 条 | 范围缩减 | 六份 `wake-en.json` 合计 30 条（bill 5／calorie 6／chef 5／home 5／memo 4／schedule 5）；`node tooling/wake-en.mjs --check` EXIT 0；六家 `wake-en-1310` 测试全绿 | **已结案**（补到 30）；747 全覆盖仍按 #1236 裁决不做 |
@@ -26,8 +26,7 @@
 | #1322 | US1：加语言只加词条文件、语言清单派生 | 跨 14 个包与两道门，属架构改造，非「可当场修」 |
 | #1323 | #1230：宿主 `locale.preference` → CLI `caller` 接线 | **已交付（#1323）**：插件经 `ctx.get('settings')` 读 locale.preference，按调用形态以独立参数 `--caller-language` 透传；优先级 argv ＞ 配置 ＞ caller ＞ zh（详见 `docs/agents/多语言-宿主语言来路实测.md` §5） |
 | #1324 | 英文列账本补录（194＋2 件覆盖；records 记 12＋2 件偏离项） | **已交付（#1324）**：英文上下文真采集、漏记／错记／同哈希回退全红，`recorded=12`＋`recorded=2`、`unrecorded=0`；中文列账本追平既有漂移、home／memo 31 件标记显式登记 |
-| #1325 | seal-states 生成件语言化 | 涉及生成器与 `seals.yaml` 契约（已交付 #1325；中文列逐字不变，英文列随语言取） |
-| #1325 | seal-states 生成件语言化 | 涉及生成器与 `seals.yaml` 契约 |
+| #1325 | seal-states 生成件语言化 | **已交付（#1325）**：`seals.yaml` 每个文本叶子 `{zh,en}`，生成器产双语表与 `sealStates(product, language)`；中文列逐字不变，英文列见六份生成件与 `seal-states-1325` 断言 |
 | #1326 | sort-toggle 运行时段全角括号 | 运行时段文案，需语言形态设计 |
 | #1327 | bill／schedule 用本地化报文 startsWith 判错误分类 | 运行逻辑缺口，需结构化错误码 |
 | #1328 | 门禁边界加固（#1306 复核 notes） | 不阻断当前绿，属边界加固 |

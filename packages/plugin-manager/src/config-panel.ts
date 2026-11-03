@@ -30,6 +30,8 @@ import {
 } from './config-panel-value.js';
 import type { GetCall } from './config-panel-value.js';
 import { PanelBody } from './config-panel-view.js';
+// 印章文案的语言（#1325）：本件只透传（六家从 locale 服务取到后交给这里）。
+import type { SealLanguage } from './seal-language.js';
 import type { PanelParts, PanelState } from './config-panel-view.js';
 import { openRowBrowser, pickerModeOf, readPickAnswer } from './directory-browser-api.js';
 import type { DirectoryRowBrowser, DirectoryRowEntry, PickOutcome } from './directory-browser-api.js';
@@ -97,6 +99,8 @@ export interface ConfigPanelProps {
   readonly seals?: readonly SealInstance[] | undefined;
   /** 家下标（1158：决定三枚倾角；本件只透传）。 */
   readonly sealSeed?: number | undefined;
+  /** 印章文案的语言（#1325：只透传给视图；缺席＝中文，与改动前逐字节同）。 */
+  readonly language?: SealLanguage | undefined;
   /** 跟随映射（钩子之一）：脏键 → 要显示「将跟随更新」的只读行；不给＝一行都不跟随。 */
   readonly followKeysOf?: ((dirtyKeys: readonly string[]) => readonly string[]) | undefined;
   /** 自家附加块（钩子之一：版本行／状态行）：画在面板主体之后、动作条之前。 */
@@ -334,6 +338,7 @@ export function ConfigPanel(props: ConfigPanelProps): React.ReactElement {
     title: props.title,
     seals: props.seals,
     sealSeed: props.sealSeed,
+    language: props.language,
     selectedSeal,
     // popover 开合：点章置下标、再点同一枚即收起（无遮罩可点，故章本身就是开关）。
     onSealSelect: (index: number) => setSelectedSeal((prev) => (prev === index ? null : index)),

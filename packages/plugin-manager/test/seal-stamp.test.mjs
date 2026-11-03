@@ -137,6 +137,14 @@ describe('seal-stamp 九档', () => {
       assert.equal(btn.props['data-tip'], want[tier], role + '/' + tier + ' tooltip 须讲清级别含义');
     }
   });
+  it('级别 tooltip 跟语言（#1325）：en 用英文档位话、缺省仍是中文', () => {
+    const want = { copper: 'Under construction', silver: 'Connecting all scenarios', gold: 'Fine polishing' };
+    for (const role of ROLES) for (const tier of TIERS) {
+      const tree = expand(React.createElement(SealStamp, { role, tier, label: LABEL[role], language: 'en' }));
+      const btn = nodesOf(tree, (n) => n.type === 'button')[0];
+      assert.equal(btn.props['data-tip'], want[tier], role + '/' + tier + ' en tooltip');
+    }
+  });
   it('按钮语义：可点＋弹卷＋印文标签', () => {
     const tree = expand(React.createElement(SealStamp, { role: 'help', tier: 'gold', label: '饼干记账 HELP' }));
     const btn = nodesOf(tree, (n) => n.type === 'button')[0];

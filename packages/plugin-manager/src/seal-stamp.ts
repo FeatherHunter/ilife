@@ -13,7 +13,10 @@
  */
 
 import * as React from 'react';
-import { SEAL_ROUGH_EDGE_ID, TIER_TEXT } from './seal-scroll.js';
+import { SEAL_ROUGH_EDGE_ID } from './seal-scroll.js';
+// 档位话按语言取（#1325）；中文表是生成件的 `TIER_TEXT = TIER_TEXT_BY_LANG.zh`。
+import { TIER_TEXT_BY_LANG } from './seal-vocabulary.generated.js';
+import type { SealLanguage } from './seal-vocabulary.generated.js';
 // 底色与边线从调色板取（与卷轴外框同一份取值）；**下面这三张表是印面自己的排法**，不是共享值。
 import { SEAL_PALETTE, SEAL_RIVET } from './seal-palette.js';
 import type { SealRole, SealTier } from './config-panel-contract.js';
@@ -27,6 +30,8 @@ export interface SealStampProps {
   readonly tier: SealTier;
   /** 印文那一行（技能／某 HELP／插件）。 */
   readonly label: string;
+  /** 语言（#1325：悬停气泡里的档位话按语言取；缺席＝中文）。 */
+  readonly language?: SealLanguage | undefined;
   readonly onSelect?: (() => void) | undefined;
 }
 
@@ -56,9 +61,9 @@ const BAND_EDGE: Record<SealTier, string> = {
   gold: 'inset 0 1px 0 #fff8d8dd,inset 0 -2px 5px #0005,0 0 0 1px #8a6a15,0 3px 14px #c9a22766',
 };
 
-/** 级别 tooltip 那一句（印本体与面板槽位共用一份定义）：**只说档位话**（金＝精雕细琢中／银＝全场景打通中／铜＝基础建设中）。 */
-export function sealTipOf(tier: SealTier): string {
-  return TIER_TEXT[tier];
+/** 级别 tooltip 那一句（印本体与面板槽位共用一份定义）：**只说档位话**（金＝精雕细琢中／银＝全场景打通中／铜＝基础建设中；#1325 起按语言取）。 */
+export function sealTipOf(tier: SealTier, language: SealLanguage = 'zh'): string {
+  return TIER_TEXT_BY_LANG[language][tier];
 }
 
 /** 一枚印章（button，点章弹卷）。未知组合直接抛错，不静默退化。 */
@@ -79,7 +84,7 @@ export function SealStamp(props: SealStampProps): React.ReactElement {
     ...FACE_EXTRA[props.role][props.tier],
   };
   // 悬停 tooltip 讲清级别含义（档位话即完善进度）；样式住 `SealFilterDefs` 旁那枚 scoped `<style>`，纯 CSS、无 hook。
-  const buttonProps = { type: 'button' as const, style, className: 'dshLifeSealBtn', 'aria-label': props.label, 'aria-haspopup': 'dialog' as const, 'data-tip': sealTipOf(props.tier), onClick: props.onSelect };
+  const buttonProps = { type: 'button' as const, style, className: 'dshLifeSealBtn', 'aria-label': props.label, 'aria-haspopup': 'dialog' as const, 'data-tip': sealTipOf(props.tier, props.language), onClick: props.onSelect };
   if (props.role !== 'plugin') return React.createElement('button', buttonProps, props.label);
   const band: React.CSSProperties = { position: 'absolute', top: '-1px', bottom: '-1px', left: '-1px', right: '-1px', zIndex: 1, borderRadius: '4px', boxShadow: BAND_EDGE[props.tier], background: palette.background };
   const rivet: React.CSSProperties = { position: 'absolute', zIndex: 3, width: '0.5em', height: '0.5em', borderRadius: '50%', top: '50%', transform: 'translateY(-50%)', ...SEAL_RIVET[props.tier] };

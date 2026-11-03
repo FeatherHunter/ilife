@@ -40,6 +40,9 @@ import type { DirectoryRowBrowser } from './directory-browser-state.js';
 import type { DirectoryRowEntry } from './directory-browser-api.js';
 import { TitleBlock } from './title-seal.js';
 import { SealStamp, sealTipOf } from './seal-stamp.js';
+// 印章文案的语言（#1325）：调用方交给面板，面板只往下传；缺席＝中文。
+import { DEFAULT_SEAL_LANGUAGE } from './seal-language.js';
+import type { SealLanguage } from './seal-language.js';
 import { SealFilterDefs, SealScrollDialog } from './seal-scroll.js';
 import type { SealInstance } from './config-panel-contract.js';
 import { m } from './entries/index.js';
@@ -861,6 +864,8 @@ export interface PanelBodyProps {
   readonly seals?: readonly SealInstance[] | undefined;
   /** 家下标（1158：六家各取 0-5 之一，决定自家三枚倾角与槽位）。 */
   readonly sealSeed?: number | undefined;
+  /** 印章文案的语言（#1325：档位话／三段小标题／关闭钮字；缺席＝中文，与改动前逐字节同）。 */
+  readonly language?: SealLanguage | undefined;
   /** 点开的那枚下标（弹卷开合住状态层，本件只读；缺席＝全关）。 */
   readonly selectedSeal?: number | null | undefined;
   /** 点章（本件只回调，状态在 `config-panel.ts`）。 */
@@ -926,6 +931,7 @@ export function PanelBody(props: PanelBodyProps): React.ReactElement {
   const product = title ?? '';
   const seals = props.seals ?? [];
   const seed = props.sealSeed ?? 0;
+  const language = props.language ?? DEFAULT_SEAL_LANGUAGE;
   /** 三行定序：**由面板按角色定**（HELP 上／技能中／插件下；HELP 永远 z 最上）。
    *  调用方给的数组顺序无关紧要，缺哪一枚就只画剩下的（位置顺次上移）——
    *  少给一枚不该把整块面板炸掉（旧写法按位置取 `seals[2]`，两枚时直接 TypeError）。 */
@@ -964,13 +970,13 @@ const slotGeom = (slot: number, seed: number): { readonly top: string; readonly 
     ...order.map((dataIndex, slot) => React.createElement(
       'span',
       // 槽位包裹层：**不过滤镜**，气泡挂这一层（字才清晰）＋ 悬停整枚抬起（盖得住卡片内容）。
-      { key: seals[dataIndex].role + ':' + seals[dataIndex].tier, className: 'dshLifeSealSlot', 'data-tip': sealTipOf(seals[dataIndex].tier), style: ((): React.CSSProperties => { const g = slotGeom(slot, seed); return { position: 'absolute', top: g.top, right: g.padRight, zIndex: zOfRole(seals[dataIndex].role), pointerEvents: 'auto', display: 'inline-flex', transform: 'rotate(' + g.tilt + 'deg)' }; })() },
+      { key: seals[dataIndex].role + ':' + seals[dataIndex].tier, className: 'dshLifeSealSlot', 'data-tip': sealTipOf(seals[dataIndex].tier, language), style: ((): React.CSSProperties => { const g = slotGeom(slot, seed); return { position: 'absolute', top: g.top, right: g.padRight, zIndex: zOfRole(seals[dataIndex].role), pointerEvents: 'auto', display: 'inline-flex', transform: 'rotate(' + g.tilt + 'deg)' }; })() },
       // 章面按簇缩放：印本体（九档锁死值）不动，只在用法处压一层字号——印内 em 全跟下来，3px 边线原样保留。
       // 0.616em ＝ 0.8em（原用法字号）× SEAL_SCALE（0.77，#1176 放大 10%）。这里必须是**em 字面量**：全仓门禁 panel-type-739 逐条扫
       // 共用件的 fontSize，只认 '\d.em'（"字号一律相对单位、不出现 px 绝对量"）；写成 sealEm(0.8) 那种调用式会被它判红。
       // 两个数的一致性由 config-panel-1160 用例咬住：它同时锁这一格与三行落位（改 SEAL_SCALE 落位先红）。
       React.createElement('span', { style: { fontSize: '0.616em', display: 'inline-flex' } },
-        React.createElement(SealStamp, { role: seals[dataIndex].role, tier: seals[dataIndex].tier, label: seals[dataIndex].label, onSelect: props.onSealSelect === undefined ? undefined : props.onSealSelect.bind(null, dataIndex) })),
+        React.createElement(SealStamp, { role: seals[dataIndex].role, tier: seals[dataIndex].tier, label: seals[dataIndex].label, language, onSelect: props.onSealSelect === undefined ? undefined : props.onSealSelect.bind(null, dataIndex) })),
    )),
   );
   const openSeal = props.selectedSeal === null || props.selectedSeal === undefined ? null : seals[props.selectedSeal] ?? null;
@@ -981,6 +987,7 @@ const slotGeom = (slot: number, seed: number): { readonly top: string; readonly 
     open: true, onClose: props.onSealClose ?? (() => undefined),
     role: openSeal.role, tier: openSeal.tier, title: openSeal.label,
     progress: openSeal.progress, status: openSeal.status, plan: openSeal.plan,
+    language,
     anchor,
   });
   const headDataDir = surface === null ? '' : surface.resolved?.['dbDir'] ?? surface.dataDir;

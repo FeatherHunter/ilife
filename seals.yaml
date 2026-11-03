@@ -6,27 +6,29 @@
 # 合并  逐叶子覆盖：某家写了哪个键就覆盖哪个键，没写的继承 vocabulary。
 # 校验  未知键／未知角色／未知档位／越界 seed／占位符放错地方，生成器直接报错，绝不静默吞。
 # 占位符 {product} 只允许出现在 label 里，运行时代入该家产品名。
+# 语言  每个文本叶子是 { zh, en } 两列（#1325）：zh 是原值、一字不改；en 是英文列。
+#       加一门语言＝给每个叶子补一列＋改生成器的 LANGS，跑一次 `node tooling/gen-seals.mjs`。
 # ============================================================================
 
 # ── vocabulary：设计语言（六家共用）→ 生成到总管，组件直接用 ──────────────────
 vocabulary:
   # 档位话：卷轴标题下那一行，同时就是鼠标悬停章的气泡（同一句话，两处渲染）。
   tierText:
-    gold: 精雕细琢中
-    silver: 全场景打通中
-    copper: 基础建设中
+    gold: { zh: 精雕细琢中, en: Fine polishing }
+    silver: { zh: 全场景打通中, en: Connecting all scenarios }
+    copper: { zh: 基础建设中, en: Under construction }
   # 卷轴三段的小标题；行首朱砂小印取**首字**（进展→进／状态→状／计划→计）。
   sections:
-    progress: 进展
-    status: 状态
-    plan: 计划
+    progress: { zh: 进展, en: Progress }
+    status: { zh: 状态, en: Status }
+    plan: { zh: 计划, en: Plan }
   # 三枚章的印文约定；它同时是**卷轴里的标题**（卷轴标题就是同一枚章）。
   label:
-    help: '{product} HELP'
-    skill: 技能
-    plugin: 插件
+    help: { zh: '{product} HELP', en: '{product} HELP' }
+    skill: { zh: 技能, en: Skill }
+    plugin: { zh: 插件, en: Plugin }
   # 关闭钮（右上角绦带）上的字。
-  close: 收卷
+  close: { zh: 收卷, en: Close }
 
 # ── plugins：各家的章状态与卷轴正文 ──────────────────────────────────────────
 plugins:
@@ -36,51 +38,111 @@ plugins:
     seals:
       help:
         tier: gold                   # gold=金／silver=银／copper=铜：章面、卷轴外框、档位语金属都跟它走
-        progress: '完成度 30%'
-        status: 精磨
-        plan: 将所有功能和页面打磨至完美
+        progress: { zh: '完成度 30%', en: '30% complete' }
+        status: { zh: 精磨, en: Fine polish }
+        plan: { zh: 将所有功能和页面打磨至完美, en: Polish every feature and page to perfection }
       skill:
         tier: silver
-        progress: '完成度 80%'
-        status: 全打通
-        plan: 将所有功能和场景全部打通
+        progress: { zh: '完成度 80%', en: '80% complete' }
+        status: { zh: 全打通, en: All connected }
+        plan: { zh: 将所有功能和场景全部打通, en: Connect every feature and scenario }
       plugin:
         tier: copper
-        progress: '完成度 60%'
-        status: 基本可用
-        plan: 修复明显bug并将未打通场景打通
+        progress: { zh: '完成度 60%', en: '60% complete' }
+        status: { zh: 基本可用, en: Usable }
+        plan: { zh: 修复明显bug并将未打通场景打通, en: Fix obvious bugs and connect the remaining scenarios }
 
   dsh-calorie:                       # 卡路里
     layout: { seed: 1 }
     seals:
-      help:   { tier: silver, progress: '完成度 50%', status: 全打通, plan: 将所有功能和场景全部打通 }
-      skill:  { tier: silver, progress: '完成度 80%', status: 全打通, plan: 将所有功能和场景全部打通 }
-      plugin: { tier: copper, progress: '完成度 60%', status: 基本可用, plan: 修复明显bug并将未打通场景打通 }
+      help:
+        tier: silver
+        progress: { zh: '完成度 50%', en: '50% complete' }
+        status: { zh: 全打通, en: All connected }
+        plan: { zh: 将所有功能和场景全部打通, en: Connect every feature and scenario }
+      skill:
+        tier: silver
+        progress: { zh: '完成度 80%', en: '80% complete' }
+        status: { zh: 全打通, en: All connected }
+        plan: { zh: 将所有功能和场景全部打通, en: Connect every feature and scenario }
+      plugin:
+        tier: copper
+        progress: { zh: '完成度 60%', en: '60% complete' }
+        status: { zh: 基本可用, en: Usable }
+        plan: { zh: 修复明显bug并将未打通场景打通, en: Fix obvious bugs and connect the remaining scenarios }
 
   dsh-chef:                          # 私家大厨
     layout: { seed: 2 }
     seals:
-      help:   { tier: silver, progress: '完成度 50%', status: 全打通, plan: 将所有功能和场景全部打通 }
-      skill:  { tier: copper, progress: '完成度 60%', status: 基本可用, plan: 修复明显bug并将未打通场景打通 }
-      plugin: { tier: copper, progress: '完成度 60%', status: 基本可用, plan: 修复明显bug并将未打通场景打通 }
+      help:
+        tier: silver
+        progress: { zh: '完成度 50%', en: '50% complete' }
+        status: { zh: 全打通, en: All connected }
+        plan: { zh: 将所有功能和场景全部打通, en: Connect every feature and scenario }
+      skill:
+        tier: copper
+        progress: { zh: '完成度 60%', en: '60% complete' }
+        status: { zh: 基本可用, en: Usable }
+        plan: { zh: 修复明显bug并将未打通场景打通, en: Fix obvious bugs and connect the remaining scenarios }
+      plugin:
+        tier: copper
+        progress: { zh: '完成度 60%', en: '60% complete' }
+        status: { zh: 基本可用, en: Usable }
+        plan: { zh: 修复明显bug并将未打通场景打通, en: Fix obvious bugs and connect the remaining scenarios }
 
   dsh-home-ilife:                    # 居家管家
     layout: { seed: 3 }
     seals:
-      help:   { tier: silver, progress: '完成度 50%', status: 全打通, plan: 将所有功能和场景全部打通 }
-      skill:  { tier: copper, progress: '完成度 60%', status: 基本可用, plan: 修复明显bug并将未打通场景打通 }
-      plugin: { tier: copper, progress: '完成度 60%', status: 基本可用, plan: 修复明显bug并将未打通场景打通 }
+      help:
+        tier: silver
+        progress: { zh: '完成度 50%', en: '50% complete' }
+        status: { zh: 全打通, en: All connected }
+        plan: { zh: 将所有功能和场景全部打通, en: Connect every feature and scenario }
+      skill:
+        tier: copper
+        progress: { zh: '完成度 60%', en: '60% complete' }
+        status: { zh: 基本可用, en: Usable }
+        plan: { zh: 修复明显bug并将未打通场景打通, en: Fix obvious bugs and connect the remaining scenarios }
+      plugin:
+        tier: copper
+        progress: { zh: '完成度 60%', en: '60% complete' }
+        status: { zh: 基本可用, en: Usable }
+        plan: { zh: 修复明显bug并将未打通场景打通, en: Fix obvious bugs and connect the remaining scenarios }
 
   dsh-memo-ilife:                    # 备忘录
     layout: { seed: 4 }
     seals:
-      help:   { tier: silver, progress: '完成度 50%', status: 全打通, plan: 将所有功能和场景全部打通 }
-      skill:  { tier: copper, progress: '完成度 60%', status: 基本可用, plan: 修复明显bug并将未打通场景打通 }
-      plugin: { tier: copper, progress: '完成度 60%', status: 基本可用, plan: 修复明显bug并将未打通场景打通 }
+      help:
+        tier: silver
+        progress: { zh: '完成度 50%', en: '50% complete' }
+        status: { zh: 全打通, en: All connected }
+        plan: { zh: 将所有功能和场景全部打通, en: Connect every feature and scenario }
+      skill:
+        tier: copper
+        progress: { zh: '完成度 60%', en: '60% complete' }
+        status: { zh: 基本可用, en: Usable }
+        plan: { zh: 修复明显bug并将未打通场景打通, en: Fix obvious bugs and connect the remaining scenarios }
+      plugin:
+        tier: copper
+        progress: { zh: '完成度 60%', en: '60% complete' }
+        status: { zh: 基本可用, en: Usable }
+        plan: { zh: 修复明显bug并将未打通场景打通, en: Fix obvious bugs and connect the remaining scenarios }
 
   dsh-schedule-ilife:                # 作息管家
     layout: { seed: 5 }
     seals:
-      help:   { tier: silver, progress: '完成度 50%', status: 全打通, plan: 将所有功能和场景全部打通 }
-      skill:  { tier: copper, progress: '完成度 60%', status: 基本可用, plan: 修复明显bug并将未打通场景打通 }
-      plugin: { tier: copper, progress: '完成度 60%', status: 基本可用, plan: 修复明显bug并将未打通场景打通 }
+      help:
+        tier: silver
+        progress: { zh: '完成度 50%', en: '50% complete' }
+        status: { zh: 全打通, en: All connected }
+        plan: { zh: 将所有功能和场景全部打通, en: Connect every feature and scenario }
+      skill:
+        tier: copper
+        progress: { zh: '完成度 60%', en: '60% complete' }
+        status: { zh: 基本可用, en: Usable }
+        plan: { zh: 修复明显bug并将未打通场景打通, en: Fix obvious bugs and connect the remaining scenarios }
+      plugin:
+        tier: copper
+        progress: { zh: '完成度 60%', en: '60% complete' }
+        status: { zh: 基本可用, en: Usable }
+        plan: { zh: 修复明显bug并将未打通场景打通, en: Fix obvious bugs and connect the remaining scenarios }
