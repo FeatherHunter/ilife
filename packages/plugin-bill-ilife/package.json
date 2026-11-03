@@ -30,9 +30,9 @@
     "node": ">=22.13"
   },
   "dependencies": {
-    "base-entries": "0.3.55",
+    "base-entries": "0.3.56",
     "dsh-life-pack": "0.3.87",
-    "skill-bill": "0.3.55"
+    "skill-bill": "0.3.56"
   },
   "dsh": {
     "bundle": {

@@ -27,7 +27,7 @@ importers:
   packages/base-combos:
     dependencies:
       base-link-core:
-        specifier: 0.3.55
+        specifier: 0.3.56
         version: link:../base-link-core
 
   packages/base-entries: {}
@@ -37,23 +37,23 @@ importers:
   packages/base-render:
     dependencies:
       base-entries:
-        specifier: 0.3.55
+        specifier: 0.3.56
         version: link:../base-entries
     devDependencies:
       base-link-core:
-        specifier: 0.3.55
+        specifier: 0.3.56
         version: link:../base-link-core
 
   packages/plugin-bill-ilife:
     dependencies:
       base-entries:
-        specifier: 0.3.55
+        specifier: 0.3.56
         version: link:../base-entries
       dsh-life-pack:
         specifier: 0.3.87
         version: link:../plugin-manager
       skill-bill:
-        specifier: 0.3.55
+        specifier: 0.3.56
         version: link:../skill-bill
     devDependencies:
       '@types/react':
@@ -72,13 +72,13 @@ importers:
   packages/plugin-calorie:
     dependencies:
       base-entries:
-        specifier: 0.3.55
+        specifier: 0.3.56
         version: link:../base-entries
       dsh-life-pack:
         specifier: 0.3.87
         version: link:../plugin-manager
       skill-calorie:
-        specifier: 0.3.55
+        specifier: 0.3.56
         version: link:../skill-calorie
     devDependencies:
       '@types/react':
@@ -97,13 +97,13 @@ importers:
   packages/plugin-chef:
     dependencies:
       base-entries:
-        specifier: 0.3.55
+        specifier: 0.3.56
         version: link:../base-entries
       dsh-life-pack:
         specifier: 0.3.87
         version: link:../plugin-manager
       skill-chef:
-        specifier: 0.3.55
+        specifier: 0.3.56
         version: link:../skill-chef
     devDependencies:
       '@types/react':
@@ -122,13 +122,13 @@ importers:
   packages/plugin-home-ilife:
     dependencies:
       base-entries:
-        specifier: 0.3.55
+        specifier: 0.3.56
         version: link:../base-entries
       dsh-life-pack:
         specifier: 0.3.87
         version: link:../plugin-manager
       skill-home:
-        specifier: 0.3.55
+        specifier: 0.3.56
         version: link:../skill-home
     devDependencies:
       '@types/react':
@@ -147,7 +147,7 @@ importers:
   packages/plugin-manager:
     dependencies:
       base-entries:
-        specifier: 0.3.55
+        specifier: 0.3.56
         version: link:../base-entries
       dsh-plugin-update:
         specifier: ^0.18.39
@@ -172,13 +172,13 @@ importers:
   packages/plugin-memo-ilife:
     dependencies:
       base-entries:
-        specifier: 0.3.55
+        specifier: 0.3.56
         version: link:../base-entries
       dsh-life-pack:
         specifier: 0.3.87
         version: link:../plugin-manager
       skill-memo-ilife:
-        specifier: 0.3.55
+        specifier: 0.3.56
         version: link:../skill-memo-ilife
     devDependencies:
       '@types/react':
@@ -197,13 +197,13 @@ importers:
   packages/plugin-schedule-ilife:
     dependencies:
       base-entries:
-        specifier: 0.3.55
+        specifier: 0.3.56
         version: link:../base-entries
       dsh-life-pack:
         specifier: 0.3.87
         version: link:../plugin-manager
       skill-schedule:
-        specifier: 0.3.55
+        specifier: 0.3.56
         version: link:../skill-schedule
     devDependencies:
       '@types/react':
@@ -222,73 +222,73 @@ importers:
   packages/skill-bill:
     dependencies:
       base-entries:
-        specifier: 0.3.55
+        specifier: 0.3.56
         version: link:../base-entries
       base-link-core:
-        specifier: 0.3.55
+        specifier: 0.3.56
         version: link:../base-link-core
       base-paint:
-        specifier: 0.3.55
+        specifier: 0.3.56
         version: link:../base-render
 
   packages/skill-calorie:
     dependencies:
       base-entries:
-        specifier: 0.3.55
+        specifier: 0.3.56
         version: link:../base-entries
       base-link-core:
-        specifier: 0.3.55
+        specifier: 0.3.56
         version: link:../base-link-core
       base-paint:
-        specifier: 0.3.55
+        specifier: 0.3.56
         version: link:../base-render
 
   packages/skill-chef:
     dependencies:
       base-entries:
-        specifier: 0.3.55
+        specifier: 0.3.56
         version: link:../base-entries
       base-link-core:
-        specifier: 0.3.55
+        specifier: 0.3.56
         version: link:../base-link-core
       base-paint:
-        specifier: 0.3.55
+        specifier: 0.3.56
         version: link:../base-render
 
   packages/skill-home:
     dependencies:
       base-entries:
-        specifier: 0.3.55
+        specifier: 0.3.56
         version: link:../base-entries
       base-link-core:
-        specifier: 0.3.55
+        specifier: 0.3.56
         version: link:../base-link-core
       base-paint:
-        specifier: 0.3.55
+        specifier: 0.3.56
         version: link:../base-render
 
   packages/skill-memo-ilife:
     dependencies:
       base-entries:
-        specifier: 0.3.55
+        specifier: 0.3.56
         version: link:../base-entries
       base-link-core:
-        specifier: 0.3.55
+        specifier: 0.3.56
         version: link:../base-link-core
       base-paint:
-        specifier: 0.3.55
+        specifier: 0.3.56
         version: link:../base-render
 
   packages/skill-schedule:
     dependencies:
       base-entries:
-        specifier: 0.3.55
+        specifier: 0.3.56
         version: link:../base-entries
       base-link-core:
-        specifier: 0.3.55
+        specifier: 0.3.56
         version: link:../base-link-core
       base-paint:
-        specifier: 0.3.55
+        specifier: 0.3.56
         version: link:../base-render
 
 packages:

@@ -54,7 +54,7 @@
     "verify:self-check:json": "dsh-verify self-check --json"
   },
   "dependencies": {
-    "base-entries": "0.3.55",
+    "base-entries": "0.3.56",
     "dsh-plugin-update": "^0.18.39"
   },
   "devDependencies": {

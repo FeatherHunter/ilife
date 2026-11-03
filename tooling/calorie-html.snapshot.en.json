@@ -13,12 +13,12 @@
   "artifactCount": 2,
   "records": {
     "calorie/help-html": {
-      "sha256": "0f25a1e6dcd7404485e26fbee7377462",
+      "sha256": "e987029fc0ea93ced9e341f6338f07a6",
       "bytes": 458650,
       "note": "英文列版本（偏离中文列；note 由迁移票补）"
     },
     "calorie/help-meta": {
-      "sha256": "1db39098c1e502c856ae797f7ae8ad8c",
+      "sha256": "eb2f400ebb5a6f4d9f3a915875f18c20",
       "bytes": 142,
       "note": "英文列版本（偏离中文列；note 由迁移票补）"
     }
