@@ -566,11 +566,31 @@ function selftest(scope) {
     const noTables = audit({ files: ['packages/eta/src/use.ts'] }, tmp);
     want(noTables.tableErrors.some((t) => /一份词条表都没有/.test(t.why) && /eta/.test(t.why)), '判据包没有任何词条表必须报 tableErrors（失明必红）（实得 ' + JSON.stringify(noTables.tableErrors) + '）');
     console.log('SELFTEST 判据包无表读数：tableErrors=' + noTables.tableErrors.length);
+    // ⑮ 空白词条的自证必须覆盖真实表形态 .ts（#1328；#1306 复核 P3「自证只覆盖 JSON」）。
+    //    先红：en.ts 里一条空串、一条纯空白（含 \t 转义）→ blanks=2；补译文后必绿。
+    const thetaDir = join(tmp, 'packages', 'theta', 'src', 'entries');
+    mkdirSync(thetaDir, { recursive: true });
+    writeFileSync(join(thetaDir, 'zh.ts'), "export const zh = {\n  'demo.tsblank': '标题',\n  'demo.tsspace': '有值',\n};\n", 'utf8');
+    writeFileSync(join(thetaDir, 'en.ts'), "export const en = {\n  'demo.tsblank': '',\n  'demo.tsspace': '  \\t ', // 纯空白\n};\n", 'utf8');
+    writeFileSync(join(thetaDir, 'index.ts'), 'export const THETA_CATALOG = defineCatalog({ zh, en });\n', 'utf8');
+    writeFileSync(join(tmp, 'packages', 'theta', 'src', 'use.ts'), [
+      "import { resolve } from 'base-entries';",
+      "import { THETA_CATALOG } from '../entries/index.js';",
+      "export const a = resolve(THETA_CATALOG, 'zh', 'demo.tsblank');",
+      "export const b = resolve(THETA_CATALOG, 'zh', 'demo.tsspace');",
+    ].join(nl), 'utf8');
+    const tsBlanks = audit({ files: ['packages/theta/src/use.ts'] }, tmp);
+    want(tsBlanks.blanks.length === 2, '.ts 表形态的空串与纯空白两个值都必须报 blanks=2（实得 ' + tsBlanks.blanks.length + '）');
+    want(tsBlanks.blanks.every((b) => b.lang === 'en' && b.path.endsWith('en.ts')), '.ts 空白词条必须点名语言与表文件（实得 ' + JSON.stringify(tsBlanks.blanks.map((b) => b.path)) + '）');
+    console.log('SELFTEST 空白 .ts 读数：blanks=' + tsBlanks.blanks.length + '（' + tsBlanks.blanks.map((b) => b.key).join(',') + '）');
+    writeFileSync(join(thetaDir, 'en.ts'), "export const en = {\n  'demo.tsblank': 'Title',\n  'demo.tsspace': 'Some value',\n};\n", 'utf8');
+    const tsFilled = audit({ files: ['packages/theta/src/use.ts'] }, tmp);
+    want(tsFilled.blanks.length === 0, '补上 .ts 译文后必须零空白（实得 ' + tsFilled.blanks.length + '）');
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
   if (bad.length) { for (const b of bad) console.error('SELFTEST FAIL ' + b); process.exit(1); }
-  console.log('SELFTEST: 空范围显式报数／缺词条必红／补上必绿／没迁完必红／缺表必红／失明必红／空白词条必红／allowlist 剔除／按包归属／别包 catalog 计入／catalog 标识核对／同串两用（数据位剔除·界面位判缺）／单包第三语言（有 ja 判 ja·没 ja 跳过）／判据包无表失明 十四条自证 OK');
+  console.log('SELFTEST: 空范围显式报数／缺词条必红／补上必绿／没迁完必红／缺表必红／失明必红／空白词条必红／allowlist 剔除／按包归属／别包 catalog 计入／catalog 标识核对／同串两用（数据位剔除·界面位判缺）／单包第三语言（有 ja 判 ja·没 ja 跳过）／判据包无表失明／空白词条 .ts 形态（#1328；#1306 复核 P3） 十五条自证 OK');
 }
 
 /** 入口守卫（照 tooling/i18n-langs.mjs／skill-html-snapshot.mjs 的先例）：本件被别处 import 时**不跑** CLI，
