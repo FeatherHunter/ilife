@@ -4,33 +4,31 @@
   <text x="420" y="34" text-anchor="middle" font-size="21">⭐ Star History</text>
   <text x="64" y="54" font-size="12" font-weight="600" fill="#ff6b6b">Total Stars</text>
   <text x="776" y="54" text-anchor="end" font-size="12" font-weight="600" fill="#38bdf8">Daily New</text>
-  <line x1="64" y1="350.4" x2="776" y2="350.4" stroke="#232b3a" stroke-width="1" opacity="0.7"/>
-  <line x1="64" y1="278.8" x2="776" y2="278.8" stroke="#232b3a" stroke-width="1" opacity="0.7"/>
-  <line x1="64" y1="207.2" x2="776" y2="207.2" stroke="#232b3a" stroke-width="1" opacity="0.7"/>
-  <line x1="64" y1="135.6" x2="776" y2="135.6" stroke="#232b3a" stroke-width="1" opacity="0.7"/>
+  <line x1="64" y1="302.7" x2="776" y2="302.7" stroke="#232b3a" stroke-width="1" opacity="0.7"/>
+  <line x1="64" y1="183.3" x2="776" y2="183.3" stroke="#232b3a" stroke-width="1" opacity="0.7"/>
   <line x1="64" y1="64.0" x2="776" y2="64.0" stroke="#232b3a" stroke-width="1" opacity="0.7"/>
-  <path d="M 64 422 L 152.6 421.5 L 242.6 422.6 L 330.8 421.7 L 420.5 422.8 L 508.1 422.5 L 598.1 422.4 L 687.7 422.6 L 776.7 421.2" stroke="#cdd9e5" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-  <path d="M 64 64 L 63.2 109.7 L 65.0 153.0 L 63.9 197.9 L 63.4 242.0 L 64.4 288.7 L 64.5 332.1 L 63.6 376.7 L 63.3 421.2" stroke="#ff6b6b" stroke-width="1.6" fill="none" stroke-linecap="round" data-axis="total"/>
-  <path d="M 776 64 L 776.9 108.4 L 776.0 153.8 L 776.0 198.8 L 775.2 244.0 L 774.9 287.5 L 776.1 331.4 L 775.1 376.5 L 776.7 422.5" stroke="#38bdf8" stroke-width="1.6" fill="none" stroke-linecap="round" data-axis="daily"/>
-  <path d="M 770 422 L 770.6 421.4 L 771.8 421.3 L 771.6 422.9 L 773.1 421.9 L 773.1 420.9 L 773.4 421.3 L 776.0 422.1 L 776.6 421.8" stroke="#38bdf8" stroke-width="1.4" fill="none" stroke-linecap="round"/>
-  <path d="M 770 64 L 770.8 64.9 L 771.8 63.6 L 771.1 64.1 L 771.9 63.2 L 774.6 63.9 L 773.3 62.9 L 774.6 65.2 L 775.5 64.7" stroke="#38bdf8" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+  <path d="M 64 422 L 153.8 420.9 L 242.0 423.1 L 331.7 422.2 L 420.2 423.2 L 507.9 421.6 L 597.0 420.9 L 687.8 421.3 L 776.7 421.7" stroke="#cdd9e5" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  <path d="M 64 64 L 63.9 107.6 L 63.4 153.2 L 65.2 197.4 L 64.2 242.0 L 64.4 287.8 L 63.3 331.5 L 63.1 378.1 L 65.1 421.2" stroke="#ff6b6b" stroke-width="1.6" fill="none" stroke-linecap="round" data-axis="total"/>
+  <path d="M 776 64 L 774.8 108.4 L 775.1 152.5 L 775.0 199.1 L 776.7 244.1 L 776.0 287.2 L 776.7 332.7 L 776.1 376.6 L 776.4 423.2" stroke="#38bdf8" stroke-width="1.6" fill="none" stroke-linecap="round" data-axis="daily"/>
+  <path d="M 770 422 L 771.0 421.7 L 772.0 422.3 L 773.3 420.9 L 772.0 422.9 L 773.6 421.1 L 774.2 421.9 L 776.3 422.8 L 775.0 423.1" stroke="#38bdf8" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+  <path d="M 770 243 L 771.9 241.8 L 770.8 243.4 L 772.9 242.4 L 773.4 243.8 L 774.8 242.2 L 775.5 243.9 L 774.6 244.0 L 776.7 242.4" stroke="#38bdf8" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+  <path d="M 770 64 L 769.8 65.0 L 771.6 64.5 L 771.9 64.9 L 774.1 63.9 L 774.5 65.1 L 774.0 63.1 L 775.6 64.3 L 776.5 63.5" stroke="#38bdf8" stroke-width="1.4" fill="none" stroke-linecap="round"/>
   <text x="54" y="426.0" text-anchor="end" font-size="13" fill="#ff6b6b" data-axis="total">0</text>
-  <text x="54" y="354.4" text-anchor="end" font-size="13" fill="#ff6b6b" data-axis="total">5</text>
-  <text x="54" y="282.8" text-anchor="end" font-size="13" fill="#ff6b6b" data-axis="total">10</text>
-  <text x="54" y="211.2" text-anchor="end" font-size="13" fill="#ff6b6b" data-axis="total">15</text>
-  <text x="54" y="139.6" text-anchor="end" font-size="13" fill="#ff6b6b" data-axis="total">20</text>
-  <text x="54" y="68.0" text-anchor="end" font-size="13" fill="#ff6b6b" data-axis="total">25</text>
+  <text x="54" y="306.7" text-anchor="end" font-size="13" fill="#ff6b6b" data-axis="total">10</text>
+  <text x="54" y="187.3" text-anchor="end" font-size="13" fill="#ff6b6b" data-axis="total">20</text>
+  <text x="54" y="68.0" text-anchor="end" font-size="13" fill="#ff6b6b" data-axis="total">30</text>
   <text x="786" y="426.0" text-anchor="start" font-size="13" fill="#38bdf8" data-axis="daily">0</text>
-  <text x="786" y="68.0" text-anchor="start" font-size="13" fill="#38bdf8" data-axis="daily">5</text>
+  <text x="786" y="247.0" text-anchor="start" font-size="13" fill="#38bdf8" data-axis="daily">5</text>
+  <text x="786" y="68.0" text-anchor="start" font-size="13" fill="#38bdf8" data-axis="daily">10</text>
   <text x="64.0" y="446" text-anchor="middle" font-size="13" fill="#9aa3b2">09/05</text>
-  <text x="180.9" y="446" text-anchor="middle" font-size="13" fill="#9aa3b2">09/16</text>
-  <text x="446.6" y="446" text-anchor="middle" font-size="13" fill="#9aa3b2">10/11</text>
-  <text x="627.2" y="446" text-anchor="middle" font-size="13" fill="#9aa3b2">10/28</text>
-  <text x="776.0" y="446" text-anchor="middle" font-size="13" fill="#9aa3b2">11/11</text>
+  <text x="179.2" y="446" text-anchor="middle" font-size="13" fill="#9aa3b2">09/16</text>
+  <text x="472.4" y="446" text-anchor="middle" font-size="13" fill="#9aa3b2">10/14</text>
+  <text x="618.9" y="446" text-anchor="middle" font-size="13" fill="#9aa3b2">10/28</text>
+  <text x="776.0" y="446" text-anchor="middle" font-size="13" fill="#9aa3b2">11/12</text>
   <text x="420" y="468" font-size="12" fill="#9aa3b2" text-anchor="middle">Date</text>
-  <path d="M 64.6 421.8 C 68.0 397.7, 71.5 349.5, 75.0 349.5 C 99.5 349.5, 123.9 350.5, 148.4 350.5 C 151.9 350.5, 155.4 277.7, 158.9 277.7 C 162.8 277.7, 166.7 349.7, 170.6 349.7 C 173.8 349.7, 177.0 279.3, 180.2 279.3 C 191.3 279.3, 202.4 351.0, 213.4 351.0 C 241.8 351.0, 270.1 350.6, 298.4 350.6 C 319.2 350.6, 339.9 350.6, 360.7 350.6 C 389.4 350.7, 418.0 351.0, 446.7 351.0 C 457.2 351.0, 467.6 279.3, 478.1 279.3 C 485.4 279.3, 492.8 351.5, 500.2 351.5 C 517.8 351.5, 535.5 349.6, 553.1 349.6 C 567.1 349.6, 581.1 349.6, 595.1 349.7 C 605.7 349.7, 616.3 351.4, 626.9 351.4 C 633.8 351.4, 640.7 350.9, 647.7 350.9 C 651.3 350.9, 655.0 350.9, 658.7 350.9 C 662.4 350.9, 666.0 350.6, 669.7 350.5 C 704.9 349.8, 740.2 350.0, 775.4 349.7" fill="none" stroke="#38bdf8" stroke-width="1.8" stroke-dasharray="6 4" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
-  <path d="M 63.1 421.1 C 64.9 418.8, 59.5 411.7, 73.9 407.2 C 88.3 402.7, 135.2 401.0, 149.4 394.1 C 163.7 387.2, 155.9 373.0, 159.4 365.7 C 163.0 358.4, 166.9 357.7, 170.7 350.3 C 174.4 343.0, 174.8 328.6, 182.0 321.6 C 189.1 314.6, 194.1 313.4, 213.6 308.5 C 233.1 303.6, 274.1 297.2, 298.8 292.3 C 323.6 287.4, 337.3 283.7, 361.9 279.1 C 386.5 274.5, 426.7 272.1, 446.3 264.7 C 465.8 257.3, 470.4 242.1, 479.2 235.0 C 488.0 227.9, 486.6 226.9, 498.9 222.1 C 511.2 217.3, 537.0 211.1, 553.0 206.2 C 569.0 201.4, 582.7 197.5, 595.0 192.8 C 607.3 188.1, 618.1 182.8, 626.9 178.0 C 635.7 173.3, 642.3 169.1, 647.8 164.5 C 653.2 159.9, 655.8 155.4, 659.4 150.6 C 663.1 145.7, 650.1 140.6, 669.7 135.6 C 689.3 130.5, 759.1 123.0, 777.0 120.4" fill="none" stroke="#ff6b6b" stroke-width="3" stroke-linecap="round"/>
-  <text x="771.0" y="110.4" text-anchor="end" font-size="13" font-weight="600" fill="#ff6b6b" stroke="#0b0e14" stroke-width="3" paint-order="stroke" stroke-linejoin="round" data-peak="total">21</text>
-  <text x="158.9" y="267.7" text-anchor="middle" font-size="13" font-weight="600" fill="#38bdf8" stroke="#0b0e14" stroke-width="3" paint-order="stroke" stroke-linejoin="round" data-peak="daily">2</text>
-  <text x="776" y="466" text-anchor="end" font-size="12" fill="#9aa3b2">21 stars · 2026-11-11</text>
+  <path d="M 64.1 421.9 C 67.7 409.9, 71.2 386.1, 74.8 386.0 C 98.8 385.4, 122.8 385.7, 146.9 385.2 C 150.9 385.1, 154.9 350.4, 158.9 350.4 C 162.5 350.4, 166.0 385.6, 169.6 385.6 C 172.5 385.6, 175.4 350.5, 178.3 350.5 C 188.9 350.5, 199.5 385.6, 210.2 385.6 C 238.2 385.6, 266.3 385.1, 294.3 385.1 C 315.4 385.1, 336.4 385.9, 357.5 386.1 C 385.5 386.4, 413.6 386.6, 441.6 386.6 C 452.1 386.6, 462.7 350.2, 473.3 350.2 C 480.2 350.2, 487.1 385.8, 494.1 385.9 C 511.3 386.2, 528.5 386.1, 545.7 386.2 C 560.0 386.2, 574.3 387.0, 588.6 387.0 C 598.5 387.0, 608.3 385.3, 618.2 385.3 C 625.7 385.3, 633.2 385.4, 640.7 385.6 C 644.2 385.7, 647.8 385.9, 651.4 385.9 C 654.7 385.9, 658.0 385.9, 661.3 385.2 C 695.9 378.2, 730.5 350.4, 765.1 350.4 C 768.5 350.4, 771.9 373.7, 775.3 385.3" fill="none" stroke="#38bdf8" stroke-width="1.8" stroke-dasharray="6 4" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+  <path d="M 64.6 422.9 C 66.1 420.6, 59.8 413.2, 73.6 409.1 C 87.4 405.0, 133.3 404.2, 147.3 398.4 C 161.4 392.5, 154.4 380.0, 157.9 373.9 C 161.3 367.7, 164.5 367.2, 167.9 361.3 C 171.3 355.5, 171.2 344.6, 178.4 338.6 C 185.5 332.6, 191.6 329.6, 210.9 325.5 C 230.2 321.5, 269.6 318.2, 294.1 314.4 C 318.6 310.5, 333.3 306.1, 357.9 302.3 C 382.4 298.5, 422.3 297.5, 441.5 291.5 C 460.7 285.5, 464.4 272.7, 472.8 266.6 C 481.3 260.5, 480.3 259.0, 492.2 255.0 C 504.2 251.1, 528.9 246.7, 544.8 242.9 C 560.6 239.0, 575.0 236.0, 587.3 232.1 C 599.6 228.2, 610.1 223.7, 618.8 219.4 C 627.4 215.1, 633.9 210.4, 639.0 206.3 C 644.1 202.2, 645.8 198.5, 649.4 194.8 C 652.9 191.0, 640.9 189.4, 660.1 183.7 C 679.4 177.9, 745.6 166.3, 765.0 160.4 C 784.4 154.5, 774.4 150.2, 776.3 148.2" fill="none" stroke="#ff6b6b" stroke-width="3" stroke-linecap="round"/>
+  <text x="770.3" y="138.2" text-anchor="end" font-size="13" font-weight="600" fill="#ff6b6b" stroke="#0b0e14" stroke-width="3" paint-order="stroke" stroke-linejoin="round" data-peak="total">23</text>
+  <text x="158.9" y="340.4" text-anchor="middle" font-size="13" font-weight="600" fill="#38bdf8" stroke="#0b0e14" stroke-width="3" paint-order="stroke" stroke-linejoin="round" data-peak="daily">2</text>
+  <text x="776" y="466" text-anchor="end" font-size="12" fill="#9aa3b2">23 stars · 2026-11-12</text>
 </svg>
