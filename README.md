@@ -89,9 +89,9 @@ pnpm test           # 全仓测试
 <div align="center">
 
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/FeatherHunter/ilife/master/docs/star-history-dark.svg?v=202611120000" />
-    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/FeatherHunter/ilife/master/docs/star-history-light.svg?v=202611120000" />
-  <img alt="Star History Chart" src="https://raw.githubusercontent.com/FeatherHunter/ilife/master/docs/star-history-light.svg?v=202611120000" />
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/FeatherHunter/ilife/master/docs/star-history-dark.svg?v=202611130000" />
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/FeatherHunter/ilife/master/docs/star-history-light.svg?v=202611130000" />
+  <img alt="Star History Chart" src="https://raw.githubusercontent.com/FeatherHunter/ilife/master/docs/star-history-light.svg?v=202611130000" />
   </picture>
 
 </div>
